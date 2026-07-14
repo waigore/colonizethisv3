@@ -19,6 +19,36 @@ import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
+Future<void> _pumpNaval(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  AppEventBus? bus,
+  MapTopology topology = const MapTopology(),
+  Orders draftOrders = const Orders(),
+  String? locationScopeKey,
+}) async {
+  await tester.pumpWidget(
+    buildNavalPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      topology: topology,
+      draftOrders: draftOrders,
+      locationScopeKey: locationScopeKey,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+(AppEventBus bus, List<ClosePanelEvent> events) _wireCloseCapture() {
+  final events = <ClosePanelEvent>[];
+  final bus = AppEventBus.create();
+  final sub = bus.on<ClosePanelEvent>().listen(events.add);
+  addTearDown(sub.cancel);
+  return (bus, events);
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -40,10 +70,7 @@ void main() {
       const playerId = 'p_beach';
       final gameBeach = buildNavalPanelBeachheadMissionGame(humanId: playerId);
 
-      await tester.pumpWidget(
-        buildNavalPanel(game: gameBeach, humanPlayerId: playerId),
-      );
-      await tester.pumpAndSettle();
+      await _pumpNaval(tester, game: gameBeach, humanPlayerId: playerId);
 
       expect(find.textContaining('Beachhead'), findsWidgets);
     });
@@ -54,10 +81,7 @@ void main() {
       const playerId = 'p_empty';
       final emptyGame = buildNavalPanelEmptyHumanGame(humanId: playerId);
 
-      await tester.pumpWidget(
-        buildNavalPanel(game: emptyGame, humanPlayerId: playerId),
-      );
-      await tester.pumpAndSettle();
+      await _pumpNaval(tester, game: emptyGame, humanPlayerId: playerId);
 
       expect(find.text('No naval units'), findsOneWidget);
     });
@@ -89,9 +113,7 @@ void main() {
               ownerId: humanId,
               regionId: 'oldWorld',
               inPortAtProvinceId: capitalPrefixedId,
-              ships: const [
-                ShipInstance(id: 'home_ship_1', typeId: 'carrack'),
-              ],
+              ships: const [ShipInstance(id: 'home_ship_1', typeId: 'carrack')],
             ),
           ],
           tileKeysByProvince: const {
@@ -99,14 +121,12 @@ void main() {
           },
         );
 
-        await tester.pumpWidget(
-          buildNavalPanel(
-            game: markerScopeGame,
-            humanPlayerId: humanId,
-            locationScopeKey: markerScope,
-          ),
+        await _pumpNaval(
+          tester,
+          game: markerScopeGame,
+          humanPlayerId: humanId,
+          locationScopeKey: markerScope,
         );
-        await tester.pumpAndSettle();
 
         expect(
           find.widgetWithText(ExpansionTile, 'Home Fleet'),
@@ -140,16 +160,14 @@ void main() {
           toZoneId: 'newWorld|s2',
         );
 
-        await tester.pumpWidget(
-          buildNavalPanel(
-            game: scopedGame,
-            humanPlayerId: humanId,
-            topology: topology,
-            draftOrders: draftOrders,
-            locationScopeKey: 'sea:newWorld|s2',
-          ),
+        await _pumpNaval(
+          tester,
+          game: scopedGame,
+          humanPlayerId: humanId,
+          topology: topology,
+          draftOrders: draftOrders,
+          locationScopeKey: 'sea:newWorld|s2',
         );
-        await tester.pumpAndSettle();
 
         expect(find.text('NEW WORLD'), findsOneWidget);
         expect(find.text('OLD WORLD'), findsNothing);
@@ -161,10 +179,7 @@ void main() {
       'AC: Scoped panel auto-closes after confirmed move empties scope',
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_yes';
-        final bus = AppEventBus.create();
-        final closeEvents = <ClosePanelEvent>[];
-        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
-        addTearDown(closeSub.cancel);
+        final (bus, closeEvents) = _wireCloseCapture();
 
         final scopedGame = buildNavalPanelSingleSeaFleetGame(
           humanId: humanId,
@@ -204,10 +219,7 @@ void main() {
       'AC: Full-list mode move confirm does not emit scoped auto-close event',
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_no_full';
-        final bus = AppEventBus.create();
-        final closeEvents = <ClosePanelEvent>[];
-        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
-        addTearDown(closeSub.cancel);
+        final (bus, closeEvents) = _wireCloseCapture();
 
         final gameFull = buildNavalPanelSingleSeaFleetGame(
           humanId: humanId,
@@ -246,10 +258,7 @@ void main() {
       'AC: Scoped empty state without move confirm does not auto-close',
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_no_external';
-        final bus = AppEventBus.create();
-        final closeEvents = <ClosePanelEvent>[];
-        final closeSub = bus.on<ClosePanelEvent>().listen(closeEvents.add);
-        addTearDown(closeSub.cancel);
+        final (bus, closeEvents) = _wireCloseCapture();
 
         final gameScoped = buildNavalPanelSingleSeaFleetGame(
           humanId: humanId,
@@ -286,10 +295,7 @@ void main() {
         homeShips: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
       );
 
-      await tester.pumpWidget(
-        buildNavalPanel(game: moveHomeGame, humanPlayerId: humanId),
-      );
-      await tester.pumpAndSettle();
+      await _pumpNaval(tester, game: moveHomeGame, humanPlayerId: humanId);
 
       final homeTile = find.widgetWithText(ExpansionTile, 'Home Fleet');
       expect(homeTile, findsOneWidget);
@@ -315,8 +321,7 @@ void main() {
         if (nonHomeFleets.isEmpty) return;
         final targetFleet = nonHomeFleets.first;
 
-        await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
-        await tester.pumpAndSettle();
+        await _pumpNaval(tester, game: game, humanPlayerId: humanId);
 
         final fleetTile = find.widgetWithText(
           ExpansionTile,
@@ -357,8 +362,7 @@ void main() {
       if (nonHomeFleets.isEmpty) return;
       final targetFleet = nonHomeFleets.first;
 
-      await tester.pumpWidget(buildNavalPanel(game: game, humanPlayerId: humanId));
-      await tester.pumpAndSettle();
+      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
 
       final fleetTile = find.widgetWithText(
         ExpansionTile,
@@ -416,14 +420,12 @@ void main() {
         addTearDown(sub.cancel);
         addTearDown(subTransferNeverDelete.cancel);
 
-        await tester.pumpWidget(
-          buildNavalPanel(
-            game: homeNeverDeleteGame,
-            humanPlayerId: humanId,
-            bus: bus,
-          ),
+        await _pumpNaval(
+          tester,
+          game: homeNeverDeleteGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
         final donorFinder = find.widgetWithText(ExpansionTile, 'Fleet donor');
@@ -505,10 +507,12 @@ void main() {
         addTearDown(sub.cancel);
         addTearDown(subSplit.cancel);
 
-        await tester.pumpWidget(
-          buildNavalPanel(game: nonHomeSplitGame, humanPlayerId: humanId, bus: bus),
+        await _pumpNaval(
+          tester,
+          game: nonHomeSplitGame,
+          humanPlayerId: humanId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final fleetFinder = find.widgetWithText(
           ExpansionTile,
@@ -526,7 +530,6 @@ void main() {
         );
         expect(splitButton, findsOneWidget);
         await tester.ensureVisible(splitButton);
-        await tester.pumpAndSettle();
         await tester.tap(splitButton);
         await tester.pumpAndSettle();
 

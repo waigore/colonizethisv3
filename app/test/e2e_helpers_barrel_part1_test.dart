@@ -63,43 +63,23 @@ void main() {
   group('AC1 barrel: public name + signature pins', () {
     test('E2ePerfLog is constructible through the barrel', () {
       final perf = E2ePerfLog('e2e_helpers_barrel_test');
-      expect(
-        perf,
-        isA<E2ePerfLog>(),
-        reason:
-            'E2ePerfLog is the AC1 perf marker surface every scenario uses to emit ',
-      );
+      expect(perf, isA<E2ePerfLog>());
     });
 
     test('pumpFor exposes the (WidgetTester, Duration) tear-off', () {
       final Future<void> Function(WidgetTester, Duration) ref = pumpFor;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'pumpFor is the AC1 fixed-step pump primitive. A rename or arg-order ch',
-      );
+      expect(ref, isNotNull);
     });
 
     test('waitUntilFound exposes the documented named-arg surface', () {
       final ref = waitUntilFound;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'waitUntilFound is the AC1 adaptive-poll primitive; its named {required',
-      );
+      expect(ref, isNotNull);
     });
 
     test('dismissTransientUi exposes the {E2ePerfLog?} tear-off', () {
       final Future<void> Function(WidgetTester, {E2ePerfLog? perf}) ref =
           dismissTransientUi;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'dismissTransientUi is the canonical transient-overlay closer AC1 stand',
-      );
+      expect(ref, isNotNull);
     });
 
     test('closeBottomSheet exposes the {E2ePerfLog?, Duration} tear-off', () {
@@ -109,12 +89,7 @@ void main() {
         Duration overallTimeout,
       })
       ref = closeBottomSheet;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'closeBottomSheet is the AC1 deterministic sheet dismisser. The optiona',
-      );
+      expect(ref, isNotNull);
     });
 
     test(
@@ -126,34 +101,22 @@ void main() {
           Duration overallCap,
         })
         ref = bootstrapNewGameToMap;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'bootstrapNewGameToMap is the AC1 single-canonical-bootstrap helper (#2',
-        );
+        expect(ref, isNotNull);
       },
     );
 
-    test('collectTextPreorder exposes the (Element, List<String>) tear-off', () {
-      final void Function(Element, List<String>) ref = collectTextPreorder;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'collectTextPreorder is the AC1 snapshot-text traversal helper. Its syn',
-      );
-    });
+    test(
+      'collectTextPreorder exposes the (Element, List<String>) tear-off',
+      () {
+        final void Function(Element, List<String>) ref = collectTextPreorder;
+        expect(ref, isNotNull);
+      },
+    );
 
     test('expandEachExpansionTileOnce exposes the (WidgetTester) tear-off', () {
       final Future<void> Function(WidgetTester) ref =
           expandEachExpansionTileOnce;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'expandEachExpansionTileOnce is the AC1 ExpansionTile expander (#2336 B',
-      );
+      expect(ref, isNotNull);
     });
 
     test(
@@ -163,12 +126,7 @@ void main() {
         final Future<void> Function() refSuite =
             ensureAllRelocated64pxPngsLoadSuiteOnce;
         expect(ref, isNotNull);
-        expect(
-          refSuite,
-          isNotNull,
-          reason:
-              'AC1 names cover both the direct and suite-once asset preload entrypoin',
-        );
+        expect(refSuite, isNotNull);
       },
     );
 
@@ -207,12 +165,7 @@ void main() {
         expect(civ, isNotNull);
         expect(nav, isNotNull);
         expect(prod, isNotNull);
-        expect(
-          fromMarker,
-          isNotNull,
-          reason:
-              'AC1 + AC5 require a single canonical panel-opener per panel type (#233',
-        );
+        expect(fromMarker, isNotNull);
       },
     );
 
@@ -234,12 +187,7 @@ void main() {
         })
         waitAdvance = waitForNextTurnLabelAdvance;
         expect(advance, isNotNull);
-        expect(
-          waitAdvance,
-          isNotNull,
-          reason:
-              'AC5 names both turn-advancing helpers as the canonical wait-for-next-t',
-        );
+        expect(waitAdvance, isNotNull);
       },
     );
 
@@ -259,77 +207,56 @@ void main() {
           tapAssignOnCivilianRowWithTitle;
       expect(split, isNotNull);
       expect(tapFirst, isNotNull);
-      expect(
-        tapWithTitle,
-        isNotNull,
-        reason:
-            'AC1 dedup standardizes split + assign helpers across the fleet-reach a',
-      );
+      expect(tapWithTitle, isNotNull);
     });
 
-    testWidgets('tapMoveOnFirstNonHomeFleet is re-exported through the barrel', (
-      tester,
-    ) async {
-      final Future<bool> Function(WidgetTester) ref =
-          tapMoveOnFirstNonHomeFleet;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet-reach hot path (`_tryNavalMoveSegment` in `new_game_fleet_re',
-      );
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
-      );
-      expect(
-        await ref(tester),
-        isFalse,
-        reason:
-            'Sanity smoke through the barrel: an empty scaffold has no naval-panel ',
-      );
-    });
+    testWidgets(
+      'tapMoveOnFirstNonHomeFleet is re-exported through the barrel',
+      (tester) async {
+        final Future<bool> Function(WidgetTester) ref =
+            tapMoveOnFirstNonHomeFleet;
+        expect(ref, isNotNull);
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(await ref(tester), isFalse);
+      },
+    );
 
-    testWidgets('anyExplorerHasEnabledExploreAssignFleet is re-exported through '
-        'the barrel', (tester) async {
-      final Future<bool> Function(
-        WidgetTester, {
-        Duration maxUiResponseWait,
-        int maxPanelSweepSteps,
-      })
-      ref = anyExplorerHasEnabledExploreAssignFleet;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet bundled-Explore retry loop (`checkExploreEnabledFromCivilian',
-      );
-      ctE2eCivilianPanelSnapshot = const CtE2eCivilianPanelSnapshot(
-        game: Game(
-          id: 'barrel-smoke-no-explore',
-          worldState: WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
+    testWidgets(
+      'anyExplorerHasEnabledExploreAssignFleet is re-exported through '
+      'the barrel',
+      (tester) async {
+        final Future<bool> Function(
+          WidgetTester, {
+          Duration maxUiResponseWait,
+          int maxPanelSweepSteps,
+        })
+        ref = anyExplorerHasEnabledExploreAssignFleet;
+        expect(ref, isNotNull);
+        ctE2eCivilianPanelSnapshot = const CtE2eCivilianPanelSnapshot(
+          game: Game(
+            id: 'barrel-smoke-no-explore',
+            worldState: WorldState(
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+              oldWorld: RegionData(),
+              newWorld: RegionData(),
+            ),
+            players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
           ),
-          players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
-        ),
-        humanPlayerId: 'gp1',
-        currentOrders: Orders(),
-        availableWorkTargets: <String, List<String>>{},
-      );
-      addTearDown(() {
-        ctE2eCivilianPanelSnapshot = null;
-      });
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
-      );
-      expect(
-        await ref(tester, maxPanelSweepSteps: 0),
-        isFalse,
-        reason:
-            'Sanity smoke through the barrel: an empty-targets civilian-panel snaps',
-      );
-    });
+          humanPlayerId: 'gp1',
+          currentOrders: Orders(),
+          availableWorkTargets: <String, List<String>>{},
+        );
+        addTearDown(() {
+          ctE2eCivilianPanelSnapshot = null;
+        });
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        expect(await ref(tester, maxPanelSweepSteps: 0), isFalse);
+      },
+    );
 
     testWidgets('tryNavalMoveSegment is re-exported through the barrel', (
       tester,
@@ -344,18 +271,8 @@ void main() {
         Duration maxUiResponseWait,
       })
       ref = tryNavalMoveSegment;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet-reach hot path consumes this segment composer via the AC1 ba',
-      );
-      expect(
-        kE2eDefaultNavalMoveSegmentUiWait,
-        const Duration(seconds: 5),
-        reason:
-            'Default UI-wait constant must remain the legacy 5 s `_kMaxUiResponseWa',
-      );
+      expect(ref, isNotNull);
+      expect(kE2eDefaultNavalMoveSegmentUiWait, const Duration(seconds: 5));
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: SizedBox())),
@@ -363,74 +280,49 @@ void main() {
       await ref(tester, l10n, navalPanelAlreadyOpen: true);
     });
 
-    testWidgets('pickMoveDestinationAndConfirm is re-exported through the barrel', (
-      tester,
-    ) async {
-      final Future<void> Function(
-        WidgetTester,
-        AppLocalizations, {
-        bool allowWarpDestinations,
-        Duration moveDialogBudget,
-        int maxWarpDragProbes,
-      })
-      ref = pickMoveDestinationAndConfirm;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet-reach hot path (`_tryNavalMoveSegment` in `new_game_fleet_re',
-      );
-      expect(
-        kE2eDefaultMoveFleetDialogBudget,
-        const Duration(seconds: 5),
-        reason:
-            'Default-budget constant must remain the legacy 5 s per-call cap so the',
-      );
-      expect(
-        kE2eDefaultMoveFleetWarpDragProbes,
-        8,
-        reason:
-            'Default warp-probe constant must remain the legacy `maxWarpDragProbes ',
-      );
-      // Sanity smoke through the barrel: pumping an empty scaffold has
-      // no AlertDialog, so the helper must fail via e2eWaitUntilFound's
-      // deterministic timeout. A wrapper that swallowed the missing
-      // dialog and silently returned would pass the tear-off pin
-      // without exercising the helper at all.
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
-      );
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      Object? caught;
-      try {
-        await ref(tester, l10n, moveDialogBudget: const Duration(seconds: 10));
-      } catch (e) {
-        caught = e;
-      }
-      expect(
-        caught,
-        isNotNull,
-        reason:
-            'Empty scaffold has no AlertDialog — the barrel-aliased helper must thr',
-      );
-    });
+    testWidgets(
+      'pickMoveDestinationAndConfirm is re-exported through the barrel',
+      (tester) async {
+        final Future<void> Function(
+          WidgetTester,
+          AppLocalizations, {
+          bool allowWarpDestinations,
+          Duration moveDialogBudget,
+          int maxWarpDragProbes,
+        })
+        ref = pickMoveDestinationAndConfirm;
+        expect(ref, isNotNull);
+        expect(kE2eDefaultMoveFleetDialogBudget, const Duration(seconds: 5));
+        expect(kE2eDefaultMoveFleetWarpDragProbes, 8);
+        // Sanity smoke through the barrel: pumping an empty scaffold has
+        // no AlertDialog, so the helper must fail via e2eWaitUntilFound's
+        // deterministic timeout. A wrapper that swallowed the missing
+        // dialog and silently returned would pass the tear-off pin
+        // without exercising the helper at all.
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: SizedBox())),
+        );
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        Object? caught;
+        try {
+          await ref(
+            tester,
+            l10n,
+            moveDialogBudget: const Duration(seconds: 10),
+          );
+        } catch (e) {
+          caught = e;
+        }
+        expect(caught, isNotNull);
+      },
+    );
 
     test(
       'e2eTextLooksLikeNewWorldLocationLine is re-exported through the barrel',
       () {
         final bool Function(String?) ref = e2eTextLooksLikeNewWorldLocationLine;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'Fleet-reach detection in `new_game_fleet_reaches_new_world_e2e_helpers',
-        );
-        expect(
-          ref('New World — Outer Sea'),
-          isTrue,
-          reason:
-              'Sanity smoke through the barrel: the canonical em-dash shape must stil',
-        );
+        expect(ref, isNotNull);
+        expect(ref('New World — Outer Sea'), isTrue);
       },
     );
 
@@ -439,21 +331,11 @@ void main() {
       (tester) async {
         final bool Function(WidgetTester) ref =
             e2eNavalPanelShowsNonHomeFleetInNewWorld;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'Fleet-reach harness fallback in `new_game_fleet_reaches_new_world_e2e_',
-        );
+        expect(ref, isNotNull);
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
         );
-        expect(
-          ref(tester),
-          isFalse,
-          reason:
-              'Sanity smoke through the barrel: an empty tree must return false after',
-        );
+        expect(ref(tester), isFalse);
       },
     );
 
@@ -461,18 +343,8 @@ void main() {
         'the barrel', () {
       final bool Function(CtE2eNavalPanelSnapshot?) ref =
           e2eNonHomeHumanFleetInNewWorldFromCtSnapshot;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'Fleet-reach short-circuit in `new_game_fleet_reaches_new_world_e2e_hel',
-      );
-      expect(
-        ref(null),
-        isFalse,
-        reason:
-            'Sanity smoke through the barrel: a null snapshot must keep returning f',
-      );
+      expect(ref, isNotNull);
+      expect(ref(null), isFalse);
     });
 
     test(
@@ -502,72 +374,32 @@ void main() {
         're-exported through the barrel', () {
       final bool Function(CtE2eNavalPanelSnapshot?) ref =
           e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The bundled-explore readiness loop in `new_game_fleet_reaches_new_worl',
-      );
-      expect(
-        ref(null),
-        isFalse,
-        reason:
-            'Sanity smoke through the barrel: a null snapshot must keep returning f',
-      );
+      expect(ref, isNotNull);
+      expect(ref(null), isFalse);
     });
 
     test('e2eNwCoastalProvincesAdjacentToFleetSea is re-exported through the '
         'barrel', () {
       final Set<String> Function(MapTopology, String, String) ref =
           e2eNwCoastalProvincesAdjacentToFleetSea;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The two-tier coastal adjacency lookup (verbatim sea id, then `Province',
-      );
-      expect(
-        ref(const MapTopology(), 'sea1', 'newWorld'),
-        isEmpty,
-        reason:
-            'Sanity smoke through the barrel: an empty topology must yield an empty',
-      );
+      expect(ref, isNotNull);
+      expect(ref(const MapTopology(), 'sea1', 'newWorld'), isEmpty);
     });
 
     test('e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot is re-exported '
         'through the barrel', () {
       final bool Function(CtE2eNavalPanelSnapshot?) ref =
           e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The bundled-explore readiness loop in `new_game_fleet_reaches_new_worl',
-      );
-      expect(
-        ref(null),
-        isFalse,
-        reason:
-            'Sanity smoke through the barrel: a null snapshot must keep returning f',
-      );
+      expect(ref, isNotNull);
+      expect(ref(null), isFalse);
     });
 
     test('e2eExploreAssignEnabledFromCivilianSnapshot is re-exported '
         'through the barrel', () {
       final bool? Function(CtE2eCivilianPanelSnapshot?) ref =
           e2eExploreAssignEnabledFromCivilianSnapshot;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet-reach tests `_anyExplorerHasEnabledExploreAssignFleetE2e` ',
-      );
-      expect(
-        ref(null),
-        isNull,
-        reason:
-            'Sanity smoke through the barrel: a null snapshot must keep returning n',
-      );
+      expect(ref, isNotNull);
+      expect(ref(null), isNull);
       const Game game = Game(
         id: 'barrel-smoke',
         worldState: WorldState(
@@ -583,33 +415,18 @@ void main() {
         currentOrders: Orders(),
         availableWorkTargets: <String, List<String>>{},
       );
-      expect(
-        ref(emptySnap),
-        isFalse,
-        reason:
-            'Empty `availableWorkTargets` is a definitive "panel mounted but no civ',
-      );
+      expect(ref(emptySnap), isFalse);
     });
 
     testWidgets(
       'e2eRadioListTilesInAlertDialogs is re-exported through the barrel',
       (tester) async {
         final Finder Function() ref = e2eRadioListTilesInAlertDialogs;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The fleet-reach move dialog consumes this scoped lookup via the AC1 ba',
-        );
+        expect(ref, isNotNull);
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
         );
-        expect(
-          ref(),
-          findsNothing,
-          reason:
-              'Sanity smoke through the barrel: with no AlertDialog mounted the finde',
-        );
+        expect(ref(), findsNothing);
       },
     );
 
@@ -618,12 +435,7 @@ void main() {
       (tester) async {
         final Future<void> Function(WidgetTester) ref =
             e2eTapNewWorldRegionTabIfPresent;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The fleet-reach hot path (`_tryNavalMoveSegment` and `_awaitNwCoastalO',
-        );
+        expect(ref, isNotNull);
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
         );
@@ -641,12 +453,7 @@ void main() {
     ) async {
       final Future<void> Function(WidgetTester, AppLocalizations) ref =
           e2eTapOldWorldRegionTab;
-      expect(
-        ref,
-        isNotNull,
-        reason:
-            'The fleet-reach OW-split move path (`_tryNavalMoveSegment` in `new_gam',
-      );
+      expect(ref, isNotNull);
       // Sanity smoke: pumpWidget empty, then exercise the helper
       // forwarding with a real AppLocalizations instance via a
       // MaterialApp `localizationsDelegates` is heavyweight, so the
@@ -658,19 +465,9 @@ void main() {
     test('AC1 timing constants are exposed as Duration values', () {
       const Duration maxWallClock = kE2eMaxWallClock;
       const Duration nextTurnTimeout = kE2eNextTurnResolutionTimeout;
-      expect(
-        maxWallClock,
-        isA<Duration>(),
-        reason:
-            'kE2eMaxWallClock is the 5-minute scenario wall-clock cap from `coloniz',
-      );
+      expect(maxWallClock, isA<Duration>());
       expect(nextTurnTimeout, isA<Duration>());
-      expect(
-        maxWallClock.inMicroseconds,
-        greaterThan(0),
-        reason:
-            'Sanity: a non-positive wall-clock cap would silently short-circuit the',
-      );
+      expect(maxWallClock.inMicroseconds, greaterThan(0));
       expect(nextTurnTimeout.inMicroseconds, greaterThan(0));
     });
   });

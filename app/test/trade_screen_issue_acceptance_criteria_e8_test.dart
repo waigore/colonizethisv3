@@ -119,6 +119,19 @@ Future<ProviderContainer> _pumpFilledMarket(WidgetTester tester) {
   );
 }
 
+Future<void> _incrementCommodity(
+  WidgetTester tester,
+  CommodityId commodityId,
+  int taps,
+) async {
+  for (int i = 0; i < taps; i++) {
+    await tester.tap(
+      find.byKey(TradeScreen.marketRowIncrementKey(commodityId)),
+    );
+    await tester.pump();
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -160,12 +173,19 @@ void main() {
       ),
   ];
 
-  Widget buildLeftRailHost({bool globalObserve = false}) {
+  Widget routeHostShell({required Widget child, bool globalObserve = false}) {
     return buildAppShell(
       overrides: routeHostOverrides(globalObserve: globalObserve),
       navigatorKey: appNavigatorKey,
       onGenerateRoute: Routes.generate,
       shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: child,
+    );
+  }
+
+  Widget buildLeftRailHost({bool globalObserve = false}) {
+    return routeHostShell(
+      globalObserve: globalObserve,
       child: Scaffold(
         body: Stack(
           children: [
@@ -187,11 +207,8 @@ void main() {
     // Route host: pushes RoutePaths.trade through Routes.generate, so it uses
     // the shared shell's onGenerateRoute + appNavigatorKey seams and the
     // shellWrapper seam to keep AppEventHandlerScope above routing (Refs #3730).
-    return buildAppShell(
-      overrides: routeHostOverrides(globalObserve: globalObserve),
-      navigatorKey: appNavigatorKey,
-      onGenerateRoute: Routes.generate,
-      shellWrapper: (app) => AppEventHandlerScope(child: app),
+    return routeHostShell(
+      globalObserve: globalObserve,
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -319,26 +336,15 @@ void main() {
       await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
       await tester.pump();
       // Increment from 1 → 5 (4 taps).
-      for (int i = 0; i < 4; i++) {
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
-      }
+      await _incrementCommodity(tester, _timber, 4);
 
       final TradeOrder? staged = _stagedOrder(container, _timber);
       expect(staged, isNotNull);
       expect(staged!.commodityId, _timber);
       expect(staged.type, TradeOrderType.bid);
       expect(staged.quantity, 5);
-      // SPEC/ui/trade-screen.md § Body — planned follow-up `#2993`
-      // E5b cont.: the interactive priority dropdown is deferred
-      // until `kMaxTradePriority` is exposed by `#2989`. Until then
-      // staged orders use `marketRowDefaultPriority` (1). The
-      // priority-2 leg of issue AC #2 is therefore covered by the
-      // deferred slice and tracked in SPEC.
+      // Priority-2 AC deferred until #2989 exposes kMaxTradePriority (SPEC).
       expect(staged.priority, TradeScreen.marketRowDefaultPriority);
-      // Exactly one staged TradeOrder for the player on timber.
       expect(_stagedRowCountForPlayer(container), 1);
     });
 
@@ -372,14 +378,7 @@ void main() {
         // Stage Bid + increment to qty 3.
         await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
         await tester.pump();
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
+        await _incrementCommodity(tester, _timber, 2);
         TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged?.type, TradeOrderType.bid);
         expect(staged?.quantity, 3);
