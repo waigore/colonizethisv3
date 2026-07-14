@@ -1,7 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'support/init_game_map_view_fixtures.dart';
 
 void main() {
   group('computePortDrawableSeaCellForMap', () {
@@ -157,17 +158,9 @@ void main() {
         ['p1', 's1'],
         ['p1', 'p1'],
       ]);
-      final game = Game(
+      final game = minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(provinces: [], units: []),
-          newWorld: const RegionData(provinces: [], units: []),
-          portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-        ),
-        players: const [],
-        minorNations: const [],
-        tribes: const [],
+        portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
       );
       final key = harborDrawableSeaTileKeyForPortProvince(
         game: game,
@@ -181,17 +174,7 @@ void main() {
 
     test('returns null when no seaboard entry for province', () {
       final map = tm([['p1']]);
-      final game = Game(
-        id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(provinces: [], units: []),
-          newWorld: const RegionData(provinces: [], units: []),
-        ),
-        players: const [],
-        minorNations: const [],
-        tribes: const [],
-      );
+      final game = minimalGame(id: 't');
       expect(
         harborDrawableSeaTileKeyForPortProvince(
           game: game,

@@ -1,8 +1,19 @@
-/// Sentinel value for "land not yet assigned to a province". Replaced in Pass 9.
+/// Shared map-generation grid/seed parameters and pure helpers.
+///
+/// **Vs [TileMapParams]:** [MapGenerationParams] drives grid-size derivation and
+/// locked-pair seed config (`targetTilesPerProvince`, `seaFraction`, continent
+/// counts) before a concrete `TileMapParams(width/height/…)` is built for
+/// [TileMapGenerator] passes. `TileMapParams` holds per-pass knobs once the
+/// grid size is known. Both remain distinct types — do not merge without an
+/// explicit SPEC change. SPEC/program/tile-map-gen-config.md § Grid size
+/// derivation. Refs #4022 (ex-#3588 types part → standalone library).
+library;
 
-part of 'tile_map_generator.dart';
+import 'dart:math';
 
-const String _landSentinel = kTileMapLandSentinel;
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import 'tile_map_land_seed_contract.dart';
 
 /// Centralized map generation parameters. SPEC/program/tile-map-gen-config.md § Grid size derivation.
 class MapGenerationParams {
@@ -162,8 +173,3 @@ void _continentBfsEnqueueNeighbors(
     queue.add(n);
   }
 }
-
-// `TileMapParams` was moved out of this part file into the standalone library
-// `tile_map_params.dart` (Refs #3588) so the extracted generation passes can
-// reference it without `part`/`part of` coupling. It is imported and
-// re-exported by `tile_map_generator.dart`.

@@ -29,6 +29,7 @@ void main() {
         height: 20,
         seed: 42,
       );
+      // map-generation-harness-exempt: constructor/DI probe
       final gen = TileMapGenerator(params: params);
       final (a, _) = gen.generate(
         numProvinces: 8,
@@ -57,6 +58,7 @@ void main() {
       const numContinents = 3;
       const regionId = 'oldWorld';
 
+      // map-generation-harness-exempt: constructor/DI probe
       final gen = TileMapGenerator(params: params);
       final (firstResult, firstTopology) = gen.generate(
         numProvinces: numProvinces,

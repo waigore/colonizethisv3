@@ -5,22 +5,13 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:path/path.dart' as p;
 
 const _mapSrcRoot = 'packages/colonizethis_map/lib/src';
-const _allowedPartClassPaths = <String>{
-  'packages/colonizethis_map/lib/src/gen/tile_map_generator_types.dart',
-};
 
 /// Generation-layer and view-layer roots that must remain free of `part` /
-/// `part of` coupling after the #3588 decomposition. The sole permitted part
-/// file is [_allowedPartOfPath] (shared parameter types).
+/// `part of` coupling after the #3588 / #4022 decomposition.
 const _mapGenViewRoots = <String>[
   'packages/colonizethis_map/lib/src/gen',
   'packages/colonizethis_map/lib/src/view',
 ];
-
-/// The only file allowed to participate in a `part` / `part of` relationship
-/// under the generation/view layers (shared parameter types — Refs #3588).
-const _allowedPartOfPath =
-    'packages/colonizethis_map/lib/src/gen/tile_map_generator_types.dart';
 
 int runCheckMapNoPartfileClasses(
   String repoRoot, {
@@ -67,9 +58,6 @@ List<_Violation> _findViolations({
   required String relativePath,
   required String source,
 }) {
-  if (_allowedPartClassPaths.contains(relativePath)) {
-    return const [];
-  }
   final parsed = parseString(
     content: source,
     path: relativePath,
@@ -99,9 +87,8 @@ List<_Violation> _findViolations({
   return violations;
 }
 
-/// Entry point for `repo.map_gen_no_new_partfiles`: forbids any new `part` /
-/// `part of` coupling under the generation/view layers. The sole permitted
-/// part file is [_allowedPartOfPath] (shared parameter types — Refs #3588).
+/// Entry point for `repo.map_gen_no_new_partfiles`: forbids any `part` /
+/// `part of` coupling under the generation/view layers (Refs #3588, #4022).
 int runCheckMapGenNoNewPartfiles(
   String repoRoot, {
   Iterable<String>? scanRoots,
@@ -153,8 +140,7 @@ int runCheckMapGenNoNewPartfiles(
 
   logE(
     'ERROR: colonizethis_map generation/view layers must not use part/part-of '
-    'coupling (only $_allowedPartOfPath is permitted). Move shared code into '
-    'standalone library files.',
+    'coupling. Move shared code into standalone library files.',
   );
   for (final violation in violations) {
     logE(
@@ -181,8 +167,7 @@ class MapGenPartDirectiveViolation {
   final String message;
 }
 
-/// Flags any `part` / `part of` directive in [source] (at [relativePath]) that
-/// participates in coupling other than the permitted [_allowedPartOfPath].
+/// Flags any `part` / `part of` directive in [source] at [relativePath].
 List<MapGenPartDirectiveViolation> findMapGenPartDirectiveViolations({
   required String relativePath,
   required String source,
@@ -195,7 +180,6 @@ List<MapGenPartDirectiveViolation> findMapGenPartDirectiveViolations({
   final violations = <MapGenPartDirectiveViolation>[];
   for (final directive in parsed.unit.directives) {
     if (directive is PartOfDirective) {
-      if (relativePath == _allowedPartOfPath) continue;
       final location = parsed.unit.lineInfo.getLocation(directive.offset);
       violations.add(
         MapGenPartDirectiveViolation(
@@ -211,9 +195,6 @@ List<MapGenPartDirectiveViolation> findMapGenPartDirectiveViolations({
     }
     if (directive is PartDirective) {
       final uri = directive.uri.stringValue;
-      if (uri != null && p.basename(uri) == p.basename(_allowedPartOfPath)) {
-        continue;
-      }
       final location = parsed.unit.lineInfo.getLocation(directive.offset);
       violations.add(
         MapGenPartDirectiveViolation(

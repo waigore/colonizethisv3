@@ -45,7 +45,9 @@ import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
+import 'check_map_test_minimal_game_shared.dart';
 import 'check_map_test_no_duplicate_view_fixtures.dart';
+import 'check_map_test_run_generation_harness.dart';
 import 'check_map_test_shared_topology_fixtures.dart';
 import 'check_map_test_view_builder_file_count.dart';
 import 'check_map_region_dispatch_central.dart';
@@ -1076,6 +1078,10 @@ int? _tryRunMapRuleInProcess({
       return runCheckMapTestViewBuilderFileCount(repoRoot);
     case 'repo.map_test_shared_topology_fixtures':
       return runCheckMapTestSharedTopologyFixtures(repoRoot);
+    case 'repo.map_test_run_generation_harness':
+      return runCheckMapTestRunGenerationHarness(repoRoot);
+    case 'repo.map_test_minimal_game_shared':
+      return runCheckMapTestMinimalGameShared(repoRoot);
     default:
       return null;
   }
