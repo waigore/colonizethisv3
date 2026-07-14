@@ -192,6 +192,7 @@ Game buildNavalPanelOwFleetsGame({
   String? capitalProvinceId,
   Map<String, List<String>> tileKeysByProvince = const {},
   Map<String, String> portsByProvinceSeaboard = const {},
+  Map<String, String> seaZoneDisplayNameById = const {},
   int? nextShipInstanceSeq,
   int treasury = 0,
 }) {
@@ -223,6 +224,7 @@ Game buildNavalPanelOwFleetsGame({
       newWorld: const RegionData(),
       fleets: fleets,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
+      seaZoneDisplayNameById: seaZoneDisplayNameById,
       tileKeysByRegionAndProvince: {
         'oldWorld': tileKeysByProvince,
       },
@@ -449,5 +451,185 @@ MapTopology buildNavalTwoSeaZonesTopology({
       ),
     ],
     edges: [TopologyEdge(id1: fromZoneId, id2: toZoneId)],
+  );
+}
+
+/// Panel ExpansionTile title for [fleet] owned by [humanId].
+String navalFleetTileLabel(Fleet fleet, String humanId) {
+  return fleet.id == homeFleetIdFor(humanId)
+      ? 'Home Fleet'
+      : 'Fleet ${fleet.id}';
+}
+
+/// Appends [extraFleets] onto [base] (dual-region / locate inject helpers).
+Game withNavalPanelExtraFleets(Game base, List<Fleet> extraFleets) {
+  return base.copyWith(
+    worldState: base.worldState.copyWith(
+      fleets: [...base.worldState.fleets, ...extraFleets],
+    ),
+  );
+}
+
+/// Drops fleets the panel would treat as Home Fleet at [humanId]'s capital.
+Game withoutNavalPanelCapitalHomeFleets(Game base, String humanId) {
+  final player = base.players.firstWhere(
+    (p) => p.id == humanId,
+    orElse: () => base.players.first,
+  );
+  final capitalTile = player.capitalTile;
+  if (capitalTile == null) {
+    return base;
+  }
+  final capitalParts = capitalTile.toTileKey().split('|');
+  final capitalRegionId = capitalParts[0];
+  final capitalProvinceLocalId = capitalParts[1];
+  final filtered = base.worldState.fleets.where((f) {
+    if (f.ownerId != humanId) return true;
+    if (f.isAtSea) return true;
+    final inPortId = f.inPortAtProvinceId;
+    if (inPortId == null) return true;
+    return !(f.regionId == capitalRegionId &&
+        (inPortId == capitalProvinceLocalId ||
+            inPortId == '$capitalRegionId|$capitalProvinceLocalId'));
+  }).toList();
+  return base.copyWith(
+    worldState: base.worldState.copyWith(fleets: filtered),
+  );
+}
+
+/// First non-capital province with a resolvable locate tile key, if any.
+({Province province, String tileKey})? firstNavalNonCapitalLocateTarget(
+  Game game,
+  String humanId,
+) {
+  final player = game.players.firstWhere(
+    (p) => p.id == humanId,
+    orElse: () => game.players.first,
+  );
+  final capitalTile = player.capitalTile;
+  if (capitalTile == null) return null;
+  final capitalRegionId = capitalTile.toTileKey().split('|').first;
+
+  for (final province in [
+    ...game.worldState.oldWorld.provinces,
+    ...game.worldState.newWorld.provinces,
+  ]) {
+    if (province.regionId == capitalRegionId) continue;
+    final tileKey = navalProvinceLocateTileKey(game, province);
+    if (tileKey == null) continue;
+    return (province: province, tileKey: tileKey);
+  }
+  return null;
+}
+
+/// Mirrors production `tileKeyForProvinceLocation` selection for locate pins.
+String? navalProvinceLocateTileKey(Game game, Province province) {
+  if (province.townTileKey != null && province.townTileKey!.isNotEmpty) {
+    return province.townTileKey;
+  }
+  final byProvince =
+      game.worldState.tileKeysByRegionAndProvince[province.regionId];
+  final prefixedId = '${province.regionId}|${province.id}';
+  final tiles = byProvince?[prefixedId] ?? byProvince?[province.id];
+  if (tiles != null && tiles.isNotEmpty) return tiles.first;
+  return null;
+}
+
+/// Wide MediaQuery shell so [UnitsPanelShell] can exceed the 400dp base width.
+Widget buildNavalPanelWideViewport({
+  required Game game,
+  required String humanPlayerId,
+  Size size = const Size(1400, 900),
+  AppEventBus? bus,
+  MapTopology topology = const MapTopology(),
+}) {
+  return MediaQuery(
+    data: MediaQueryData(size: size),
+    child: MaterialApp(
+      home: Scaffold(
+        body: NavalUnitsPanel(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          bus: bus ?? AppEventBus.create(),
+          topology: topology,
+        ),
+      ),
+    ),
+  );
+}
+
+/// Panel host plus an external fleet-count watcher for cross-panel event pins.
+Widget buildNavalPanelWithFleetCountWatcher({
+  required Game game,
+  required String humanPlayerId,
+  required AppEventBus bus,
+  required ValueNotifier<int> observedFleetCount,
+}) {
+  return MaterialApp(
+    home: Scaffold(
+      body: Column(
+        children: [
+          ValueListenableBuilder<int>(
+            valueListenable: observedFleetCount,
+            builder: (context, count, _) =>
+                Text('observed-fleet-count:$count'),
+          ),
+          Expanded(
+            child: NavalUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: bus,
+              topology: const MapTopology(),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Home + at-sea fleet with a draft-move target display name (part5 subtitle).
+Game buildNavalPanelDraftMoveSubtitleGame({
+  String humanId = 'gp_draft_line',
+  String gameId = 'g_draft_line',
+  String capitalLocalId = 'capital',
+  String seaFleetId = 'f_at_sea',
+  String seaZoneId = 'sz0',
+  String destinationZoneId = 'sz1',
+  String destinationDisplayName = 'Target Sea',
+}) {
+  final capProvince = 'oldWorld|$capitalLocalId';
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: 'P',
+    capitalProvinceId: capProvince,
+    oldWorldProvinces: [
+      Province(
+        id: capitalLocalId,
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: homeFleetIdFor(humanId),
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: capProvince,
+        ships: const [],
+      ),
+      Fleet(
+        id: seaFleetId,
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: seaZoneId,
+        ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+      ),
+    ],
+    seaZoneDisplayNameById: {
+      'oldWorld|$destinationZoneId': destinationDisplayName,
+    },
   );
 }

@@ -148,6 +148,73 @@ void main() {
     },
   );
 
+  test('withoutNavalPanelCapitalHomeFleets drops in-port capital fleets', () {
+    final base = buildNavalPanelTestGame();
+    final next = withoutNavalPanelCapitalHomeFleets(
+      base,
+      kPanelTestHumanPlayerId,
+    );
+    expect(
+      next.worldState.fleets.any(
+        (f) => f.id == homeFleetIdFor(kPanelTestHumanPlayerId),
+      ),
+      isFalse,
+    );
+    expect(next.worldState.fleets.any((f) => f.id == 'fleet_nh1'), isTrue);
+  });
+
+  test('withNavalPanelExtraFleets appends fleets', () {
+    final base = buildNavalPanelTestGame();
+    final next = withNavalPanelExtraFleets(base, [
+      Fleet(
+        id: 'extra',
+        ownerId: kPanelTestHumanPlayerId,
+        regionId: 'oldWorld',
+        seaZoneId: 'sz9',
+        ships: const [ShipInstance(id: 'e1', typeId: 'carrack')],
+      ),
+    ]);
+    expect(next.worldState.fleets.length, base.worldState.fleets.length + 1);
+    expect(next.worldState.fleets.any((f) => f.id == 'extra'), isTrue);
+  });
+
+  test('navalFleetTileLabel distinguishes home vs peer fleets', () {
+    const humanId = 'gp_label';
+    expect(
+      navalFleetTileLabel(
+        Fleet(
+          id: homeFleetIdFor(humanId),
+          ownerId: humanId,
+          regionId: 'oldWorld',
+          ships: const [],
+        ),
+        humanId,
+      ),
+      'Home Fleet',
+    );
+    expect(
+      navalFleetTileLabel(
+        Fleet(
+          id: 'peer',
+          ownerId: humanId,
+          regionId: 'oldWorld',
+          ships: const [],
+        ),
+        humanId,
+      ),
+      'Fleet peer',
+    );
+  });
+
+  test('buildNavalPanelDraftMoveSubtitleGame seeds target sea display name', () {
+    final game = buildNavalPanelDraftMoveSubtitleGame();
+    expect(
+      game.worldState.seaZoneDisplayNameById['oldWorld|sz1'],
+      'Target Sea',
+    );
+    expect(game.worldState.fleets.any((f) => f.id == 'f_at_sea'), isTrue);
+  });
+
   test('buildNavalPanelEmptyHumanGame has no fleets', () {
     final game = buildNavalPanelEmptyHumanGame();
     expect(game.worldState.fleets, isEmpty);
