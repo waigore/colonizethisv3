@@ -59,6 +59,109 @@ class _MapAreaHostState extends State<_MapAreaHost> {
   }
 }
 
+class _EventFeedHarness {
+  _EventFeedHarness(this.game, this.mapViewData, this.bus)
+    : humanId = game.players.firstWhere((p) => p.isHuman).id {
+    opponentId = game.players.firstWhere((p) => p.id != humanId).id;
+  }
+
+  final Game game;
+  final InitGameMapViewData mapViewData;
+  final AppEventBus bus;
+  final String humanId;
+  late final String opponentId;
+
+  String get playerDisplayName =>
+      game.players.firstWhere((p) => p.id == humanId).displayName;
+
+  String get opponentDisplayName =>
+      game.players.firstWhere((p) => p.id == opponentId).displayName;
+}
+
+_EventFeedHarness _newHarness({bool disposeBus = true}) {
+  final harness = _EventFeedHarness(
+    buildMapAreaEventFeedTestGame(),
+    buildLightweightMapViewData(),
+    AppEventBus.create(),
+  );
+  if (disposeBus) {
+    addTearDown(harness.bus.dispose);
+  }
+  return harness;
+}
+
+Future<void> _pumpMapArea(
+  WidgetTester tester, {
+  required Box<dynamic> gamesBox,
+  required _EventFeedHarness harness,
+  Widget? home,
+  bool debugConsoleEnabled = false,
+  Size? mediaQuerySize,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        appEventBusProvider.overrideWith((ref) => harness.bus),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(harness.game),
+        ),
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        mapViewDataProvider.overrideWith((ref) => harness.mapViewData),
+        if (debugConsoleEnabled)
+          debugConsoleEnabledProvider.overrideWithValue(true),
+      ],
+      child: MaterialApp(
+        builder: mediaQuerySize == null
+            ? null
+            : (context, child) => MediaQuery(
+                data: MediaQueryData(size: mediaQuerySize),
+                child: child!,
+              ),
+        home:
+            home ??
+            Scaffold(
+              body: GameMapArea(
+                game: harness.game,
+                mapViewData: harness.mapViewData,
+              ),
+            ),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 16));
+}
+
+Future<void> _commitTurnEvents(
+  WidgetTester tester,
+  _EventFeedHarness harness,
+  List<AppEvent> events, {
+  required int turnNumber,
+  bool openFeed = true,
+}) async {
+  for (final event in events) {
+    harness.bus.emit(event);
+  }
+  harness.bus.emit(
+    TurnResolutionCompleteEvent(
+      gameId: harness.game.id,
+      turnNumber: turnNumber,
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 16));
+  if (openFeed) {
+    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
+    await tester.pump();
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -72,100 +175,61 @@ void main() {
   testWidgets('GameMapArea dispose cancels AppEventBus subscriptions', (
     WidgetTester tester,
   ) async {
-    final game = buildMapAreaEventFeedTestGame();
-    final mapViewData = buildLightweightMapViewData();
-    final bus = AppEventBus.create();
-    final sampleUnitId = game.worldState.oldWorld.units.isNotEmpty
-        ? game.worldState.oldWorld.units.first.id
-        : game.worldState.newWorld.units.isNotEmpty
-        ? game.worldState.newWorld.units.first.id
+    final harness = _newHarness(disposeBus: false);
+    final sampleUnitId = harness.game.worldState.oldWorld.units.isNotEmpty
+        ? harness.game.worldState.oldWorld.units.first.id
+        : harness.game.worldState.newWorld.units.isNotEmpty
+        ? harness.game.worldState.newWorld.units.first.id
         : 'missing-unit-id';
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: _MapAreaHost(game: game, mapViewData: mapViewData),
-        ),
-      ),
+    await _pumpMapArea(
+      tester,
+      gamesBox: gamesBox,
+      harness: harness,
+      home: _MapAreaHost(game: harness.game, mapViewData: harness.mapViewData),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
 
     await tester.tap(find.text('dispose-map-area'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
-    bus.emit(
+    harness.bus.emit(
       const LocateMapTileEvent(
         tileKey: 'oldWorld|dummy|0|0',
         regionId: 'oldWorld',
       ),
     );
-    bus.emit(
+    harness.bus.emit(
       StartCivilianWorkTargetSelectionEvent(
         unitId: sampleUnitId,
         workTarget: kWorkTargetExplore,
       ),
     );
-    bus.emit(const UnitsPanelClosedEvent('civilian'));
+    harness.bus.emit(const UnitsPanelClosedEvent('civilian'));
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    bus.dispose();
+    harness.bus.dispose();
   });
 
   testWidgets('debug console overlay toggles when feature is enabled', (
     WidgetTester tester,
   ) async {
-    final game = buildMapAreaEventFeedTestGame();
-    final mapViewData = buildLightweightMapViewData();
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          debugConsoleEnabledProvider.overrideWithValue(true),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
+    final harness = _newHarness();
+    await _pumpMapArea(
+      tester,
+      gamesBox: gamesBox,
+      harness: harness,
+      debugConsoleEnabled: true,
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
 
     expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
 
-    bus.emit(const ToggleDebugConsolePanelEvent());
+    harness.bus.emit(const ToggleDebugConsolePanelEvent());
     await tester.pump();
     expect(find.byType(DebugConsoleOverlayPanel), findsOneWidget);
 
-    bus.emit(const CloseDebugConsolePanelEvent());
+    harness.bus.emit(const CloseDebugConsolePanelEvent());
     await tester.pump();
     expect(find.byType(DebugConsoleOverlayPanel), findsNothing);
   });
@@ -173,49 +237,15 @@ void main() {
   testWidgets('Player turn event feed commits batch on turn complete', (
     WidgetTester tester,
   ) async {
-    final game = buildMapAreaEventFeedTestGame();
-    final mapViewData = buildLightweightMapViewData();
-    final humanId = game.players.firstWhere((p) => p.isHuman).id;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    bus.emit(
+    final harness = _newHarness();
+    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await _commitTurnEvents(tester, harness, [
       AppResearchCompleteEvent(
-        playerId: humanId,
+        playerId: harness.humanId,
         techId: 'agri_1',
         turnNumber: 1,
       ),
-    );
-    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-    await tester.pump();
+    ], turnNumber: 2);
 
     expect(
       find.textContaining('Research complete! agri_1 unlocked!'),
@@ -226,60 +256,27 @@ void main() {
   testWidgets(
     'Player turn event feed naval line emits LocateMapTileEvent on tap',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
-      final seaKey = game.worldState.portsByProvinceSeaboard.keys.first;
+      final harness = _newHarness(disposeBus: false);
+      final seaKey = harness.game.worldState.portsByProvinceSeaboard.keys.first;
       final seaParts = seaKey.split('|');
       final seaZoneId = '${seaParts.first}|${seaParts.last}';
-      final bus = AppEventBus.create();
       final locateEvents = <LocateMapTileEvent>[];
-      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
       addTearDown(() async {
         await sub.cancel();
-        bus.dispose();
+        harness.bus.dispose();
       });
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: seaZoneId,
-          side1OwnerId: humanId,
-          side2OwnerId: opponentId,
+          side1OwnerId: harness.humanId,
+          side2OwnerId: harness.opponentId,
           outcomeName: 'side1Victory',
           turnNumber: 1,
         ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
+      ], turnNumber: 2);
 
       final navalLine = find.textContaining('naval battle resolved');
       expect(navalLine, findsOneWidget);
@@ -295,57 +292,24 @@ void main() {
   testWidgets(
     'Player turn event feed unresolved naval anchor is non-tappable',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final opponentId = game.players.firstWhere((p) => p.id != humanId).id;
-      final bus = AppEventBus.create();
+      final harness = _newHarness(disposeBus: false);
       final locateEvents = <LocateMapTileEvent>[];
-      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
       addTearDown(() async {
         await sub.cancel();
-        bus.dispose();
+        harness.bus.dispose();
       });
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: 'missing_zone_anchor',
-          side1OwnerId: humanId,
-          side2OwnerId: opponentId,
+          side1OwnerId: harness.humanId,
+          side2OwnerId: harness.opponentId,
           outcomeName: 'side1Victory',
           turnNumber: 1,
         ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
+      ], turnNumber: 2);
 
       final navalLine = find.textContaining('naval battle resolved');
       expect(navalLine, findsOneWidget);
@@ -359,60 +323,22 @@ void main() {
   testWidgets('Player turn event feed uses specific diplomacy war copy', (
     WidgetTester tester,
   ) async {
-    final game = buildMapAreaEventFeedTestGame();
-    final mapViewData = buildLightweightMapViewData();
-    final humanId = game.players.firstWhere((p) => p.isHuman).id;
-    final otherId = game.players.firstWhere((p) => p.id != humanId).id;
-    final humanName = game.players
-        .firstWhere((p) => p.id == humanId)
-        .displayName;
-    final otherName = game.players
-        .firstWhere((p) => p.id == otherId)
-        .displayName;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    bus.emit(
+    final harness = _newHarness();
+    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await _commitTurnEvents(tester, harness, [
       AppDiplomacyChangeEvent(
-        actorId: humanId,
-        targetId: otherId,
+        actorId: harness.humanId,
+        targetId: harness.opponentId,
         changeType: 'declare_war',
         turnNumber: 1,
       ),
-    );
-    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-    await tester.pump();
+    ], turnNumber: 2);
 
     expect(
-      find.textContaining('$humanName declared war on $otherName!'),
+      find.textContaining(
+        '${harness.playerDisplayName} declared war on '
+        '${harness.opponentDisplayName}!',
+      ),
       findsOneWidget,
     );
   });
@@ -420,57 +346,25 @@ void main() {
   testWidgets(
     'Player turn event feed renders work completion and taps map tile',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus.create();
+      final harness = _newHarness(disposeBus: false);
       final locateEvents = <LocateMapTileEvent>[];
-      final sub = bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
       addTearDown(() async {
         await sub.cancel();
-        bus.dispose();
+        harness.bus.dispose();
       });
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
         AppWorkOrderCompletedEvent(
-          playerId: humanId,
+          playerId: harness.humanId,
           unitId: 'u1',
           workTarget: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|1|0|0',
           provinceId: 'oldWorld|1',
           turnNumber: 1,
         ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
+      ], turnNumber: 2);
 
       final line = find.textContaining('work completed');
       expect(line, findsOneWidget);
@@ -486,58 +380,21 @@ void main() {
   testWidgets('Player turn event feed includes discovery and overture lines', (
     WidgetTester tester,
   ) async {
-    final game = buildMapAreaEventFeedTestGame();
-    final mapViewData = buildLightweightMapViewData();
-    final humanId = game.players.firstWhere((p) => p.isHuman).id;
-    final otherId = game.players.firstWhere((p) => p.id != humanId).id;
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appEventBusProvider.overrideWith((ref) => bus),
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          gamesBoxProvider.overrideWith((ref) => gamesBox),
-          gameServiceProvider.overrideWith(
-            (ref) => GameService(gamesBox, GameSaveAdapter()),
-          ),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          mapViewDataProvider.overrideWith((ref) => mapViewData),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    bus.emit(
+    final harness = _newHarness();
+    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await _commitTurnEvents(tester, harness, [
       AppPlayerProvinceDiscoveredEvent(
-        playerId: humanId,
+        playerId: harness.humanId,
         provinceId: 'oldWorld|1',
         turnNumber: 1,
       ),
-    );
-    bus.emit(
       AppOvertureAdvancedEvent(
-        offererGpId: humanId,
-        targetFactionId: otherId,
+        offererGpId: harness.humanId,
+        targetFactionId: harness.opponentId,
         newStage: 'embassy',
         turnNumber: 1,
       ),
-    );
-    bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 16));
-
-    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-    await tester.pump();
+    ], turnNumber: 2);
 
     expect(find.textContaining('discovered!'), findsOneWidget);
     expect(find.textContaining('Overture advanced!'), findsOneWidget);
@@ -546,46 +403,21 @@ void main() {
   testWidgets(
     'Player turn event feed is hidden by default and toggles from news button',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+      final harness = _newHarness();
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(
+        tester,
+        harness,
+        [
+          AppResearchCompleteEvent(
+            playerId: harness.humanId,
+            techId: 'agri_1',
+            turnNumber: 1,
           ),
-        ),
+        ],
+        turnNumber: 2,
+        openFeed: false,
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
-        AppResearchCompleteEvent(
-          playerId: humanId,
-          techId: 'agri_1',
-          turnNumber: 1,
-        ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
 
       expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
       expect(find.text('1'), findsOneWidget);
@@ -617,53 +449,31 @@ void main() {
   testWidgets(
     'Player turn event feed replaces previous turn entries on next commit',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus.create();
+      final harness = _newHarness(disposeBus: false);
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
-        bus.dispose();
+        harness.bus.dispose();
       });
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            builder: (context, child) => MediaQuery(
-              data: const MediaQueryData(size: Size(500, 900)),
-              child: child!,
-            ),
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+      await _pumpMapArea(
+        tester,
+        gamesBox: gamesBox,
+        harness: harness,
+        mediaQuerySize: const Size(500, 900),
+      );
+
+      await _commitTurnEvents(
+        tester,
+        harness,
+        [
+          AppResearchCompleteEvent(
+            playerId: harness.humanId,
+            techId: 'agri_1',
+            turnNumber: 1,
           ),
-        ),
+        ],
+        turnNumber: 2,
+        openFeed: false,
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
-        AppResearchCompleteEvent(
-          playerId: humanId,
-          techId: 'agri_1',
-          turnNumber: 1,
-        ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
       expect(
         find.textContaining('Research complete! agri_1 unlocked!'),
         findsNothing,
@@ -679,17 +489,19 @@ void main() {
       await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
       await tester.pump();
 
-      bus.emit(
-        AppOrderRejectedEvent(
-          playerId: humanId,
-          orderSummary: 'Build road',
-          reasonCode: 'insufficient_treasury',
-        ),
+      await _commitTurnEvents(
+        tester,
+        harness,
+        [
+          AppOrderRejectedEvent(
+            playerId: harness.humanId,
+            orderSummary: 'Build road',
+            reasonCode: 'insufficient_treasury',
+          ),
+        ],
+        turnNumber: 3,
+        openFeed: false,
       );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 3));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
       expect(
         find.textContaining('Research complete! agri_1 unlocked!'),
         findsNothing,
@@ -707,52 +519,30 @@ void main() {
   testWidgets(
     'Player turn event feed shows entries in narrow layout when toggled',
     (WidgetTester tester) async {
-      final game = buildMapAreaEventFeedTestGame();
-      final mapViewData = buildLightweightMapViewData();
-      final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final bus = AppEventBus.create();
+      final harness = _newHarness(disposeBus: false);
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
-        bus.dispose();
+        harness.bus.dispose();
       });
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameServiceProvider.overrideWith(
-              (ref) => GameService(gamesBox, GameSaveAdapter()),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            mapViewDataProvider.overrideWith((ref) => mapViewData),
-          ],
-          child: MaterialApp(
-            builder: (context, child) => MediaQuery(
-              data: const MediaQueryData(size: Size(500, 900)),
-              child: child!,
-            ),
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+      await _pumpMapArea(
+        tester,
+        gamesBox: gamesBox,
+        harness: harness,
+        mediaQuerySize: const Size(500, 900),
+      );
+      await _commitTurnEvents(
+        tester,
+        harness,
+        [
+          AppResearchCompleteEvent(
+            playerId: harness.humanId,
+            techId: 'agri_1',
+            turnNumber: 1,
           ),
-        ),
+        ],
+        turnNumber: 2,
+        openFeed: false,
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      bus.emit(
-        AppResearchCompleteEvent(
-          playerId: humanId,
-          techId: 'agri_1',
-          turnNumber: 1,
-        ),
-      );
-      bus.emit(TurnResolutionCompleteEvent(gameId: game.id, turnNumber: 2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
 
       final eventsButton = find.byKey(kPlayerTurnFeedToggleButtonKey);
       expect(eventsButton, findsOneWidget);

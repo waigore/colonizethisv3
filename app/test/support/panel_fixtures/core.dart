@@ -37,6 +37,7 @@ Game buildPanelTestGame({
   Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
       const {},
   Map<String, String> seaZoneDisplayNameById = const {},
+  Map<String, String> resourceByTileKey = const {},
   List<Tribe> tribes = const [],
   List<MinorNation> minorNations = const [],
   String id = 'panel-widget-test',
@@ -62,6 +63,7 @@ Game buildPanelTestGame({
       portsByProvinceSeaboard: portsByProvinceSeaboard,
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
       seaZoneDisplayNameById: seaZoneDisplayNameById,
+      resourceByTileKey: resourceByTileKey,
     ),
     players: players ?? [panelTestHumanPlayer()],
     tribes: tribes,

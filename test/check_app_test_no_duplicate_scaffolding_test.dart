@@ -90,8 +90,8 @@ void main() {
     expect(
       logs.join('\n'),
       contains(
-        'no duplicated min-viewport, widgetbook use-case, or trade-screen '
-        'host scaffolding found',
+        'no duplicated min-viewport, widgetbook use-case, trade-screen host, '
+        'or units-panel Game scaffolding found',
       ),
     );
   });

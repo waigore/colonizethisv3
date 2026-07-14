@@ -13,6 +13,90 @@ import 'support/diplomacy_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
+const _humanId = kPanelTestHumanPlayerId;
+const _gp2 = 'gp2';
+const _minorId = 'm1';
+
+Game _colonyGame({List<BoycottState> boycotts = const []}) {
+  return buildDiplomacyPanelTestGame().copyWith(
+    colonyStates: const [
+      ColonyState(tribeId: 't1', colonyOfGpId: _humanId, sinceTurn: 1),
+    ],
+    tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
+    boycottStates: boycotts,
+  );
+}
+
+Game _minorEmbassyGame({List<SubsidyState> subsidies = const []}) {
+  return buildDiplomacyRichPanelTestGame().copyWith(
+    overtureStates: const [
+      OvertureState(
+        gpId: _humanId,
+        targetId: _minorId,
+        stage: OvertureStage.embassy,
+      ),
+    ],
+    subsidyStates: subsidies,
+  );
+}
+
+Orders _pendingOrders(DiplomaticOrder order) {
+  return Orders(
+    diplomaticOrdersByPlayerId: {
+      _humanId: [order],
+    },
+  );
+}
+
+void _autoConfirm(AppEventBus bus) {
+  final sub = bus.on<ConfirmDialogEvent>().listen((event) {
+    event.result(true);
+  });
+  addTearDown(sub.cancel);
+}
+
+Future<void> _pumpOrders(
+  WidgetTester tester, {
+  required Game game,
+  String humanId = _humanId,
+  AppEventBus? bus,
+  Orders currentOrders = const Orders(),
+  bool tall = false,
+  bool minorsTab = false,
+  bool settle = false,
+}) async {
+  if (tall) {
+    await bindDiplomacyTallTestSurface(tester);
+  }
+  await tester.pumpWidget(
+    buildDiplomacyPanelShell(
+      game: game,
+      humanPlayerId: humanId,
+      topology: const MapTopology(),
+      currentOrders: currentOrders,
+      bus: bus ?? AppEventBus.create(),
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+  if (minorsTab) {
+    await tester.tap(find.text('Minors only'));
+    await tester.pump();
+  }
+}
+
+Finder _minorRow() =>
+    find.byKey(ValueKey('${kDiplomacyRowBodyKeyPrefix}$_minorId'));
+
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.tap(finder);
+  await tester.pump();
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -30,17 +114,12 @@ void main() {
     'when no factions discovered',
     (WidgetTester tester) async {
       final game = buildDiplomacyPanelGameWithNoDiscoveredFactions();
-      final humanId = game.players.first.id;
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: AppEventBus.create(),
-        ),
+      await _pumpOrders(
+        tester,
+        game: game,
+        humanId: game.players.first.id,
+        settle: true,
       );
-      await tester.pumpAndSettle();
 
       // SPEC/ui/diplomacy-panel.md § Section headings (Refs #3341).
       expect(find.text('Great Powers'), findsOneWidget);
@@ -60,21 +139,9 @@ void main() {
           .on<AppendDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
+      _autoConfirm(bus);
 
-      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
-        event.result(true);
-      });
-      addTearDown(confirmSub.cancel);
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
-        ),
-      );
-      await tester.pump();
+      await _pumpOrders(tester, game: game, humanId: humanId, bus: bus);
 
       const actionLabels = <String>['Declare War', 'Offer Peace', 'Alliance'];
       Finder? actionFinder;
@@ -91,10 +158,7 @@ void main() {
         reason: 'Expected at least one non-parameter diplomacy action button',
       );
 
-      await tester.ensureVisible(actionFinder!);
-      await tester.tap(actionFinder);
-      await tester.pump();
-
+      await _tapVisible(tester, actionFinder!);
       final event = await appendFuture;
       expect(event.playerId, humanId);
     },
@@ -115,31 +179,13 @@ void main() {
       );
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
       final bus = AppEventBus.create();
-      final breakFuture = bus
-          .on<BreakAllianceImmediatelyEvent>()
-          .first
-          .timeout(const Duration(seconds: 2));
-
-      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
-        event.result(true);
-      });
-      addTearDown(confirmSub.cancel);
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
-        ),
+      final breakFuture = bus.on<BreakAllianceImmediatelyEvent>().first.timeout(
+        const Duration(seconds: 2),
       );
-      await tester.pump();
+      _autoConfirm(bus);
 
-      final breakButton = find.text('Break Alliance');
-      expect(breakButton, findsOneWidget);
-      await tester.ensureVisible(breakButton);
-      await tester.tap(breakButton);
-      await tester.pump();
+      await _pumpOrders(tester, game: game, humanId: humanId, bus: bus);
+      await _tapVisible(tester, find.text('Break Alliance'));
 
       final event = await breakFuture;
       expect(event.playerId, humanId);
@@ -159,32 +205,19 @@ void main() {
           .first
           .timeout(const Duration(seconds: 2));
 
-      final currentOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: target,
-            ),
-          ],
-        },
-      );
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          currentOrders: currentOrders,
-          bus: bus,
+      await _pumpOrders(
+        tester,
+        game: game,
+        humanId: humanId,
+        bus: bus,
+        currentOrders: _pendingOrders(
+          DiplomaticOrder(
+            type: DiplomaticOrderType.declareWar,
+            targetFactionId: target,
+          ),
         ),
       );
-      await tester.pump();
-
-      final cancelButton = find.text('Cancel').first;
-      await tester.ensureVisible(cancelButton);
-      await tester.tap(cancelButton);
-      await tester.pump();
+      await _tapVisible(tester, find.text('Cancel').first);
 
       final event = await removeFuture;
       expect(event.playerId, humanId);
@@ -196,221 +229,122 @@ void main() {
   testWidgets(
     'DiplomacyPanel colony holder shows Boycott enabled on GP row (Refs #3753 S14)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const target = 'gp2';
-      final game = buildDiplomacyPanelTestGame().copyWith(
-        colonyStates: const [
-          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
-        ],
-        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
-      );
       final bus = AppEventBus.create();
       final appendFuture = bus
           .on<AppendDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
+      _autoConfirm(bus);
 
-      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
-        event.result(true);
-      });
-      addTearDown(confirmSub.cancel);
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
-        ),
-      );
-      await tester.pump();
-
+      await _pumpOrders(tester, game: _colonyGame(), bus: bus);
       expect(find.text('Boycott'), findsOneWidget);
       expect(find.text('Revoke Boycott'), findsOneWidget);
 
-      await tester.ensureVisible(find.text('Boycott'));
-      await tester.tap(find.text('Boycott'));
-      await tester.pump();
-
+      await _tapVisible(tester, find.text('Boycott'));
       final event = await appendFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.order.type, DiplomaticOrderType.boycott);
-      expect(event.order.targetFactionId, target);
+      expect(event.order.targetFactionId, _gp2);
     },
   );
 
   testWidgets(
     'DiplomacyPanel active boycott shows Revoke Boycott enabled on GP row (Refs #3753 S14)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const target = 'gp2';
-      final game = buildDiplomacyPanelTestGame().copyWith(
-        colonyStates: const [
-          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
-        ],
-        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
-        boycottStates: const [
-          BoycottState(gpId: humanId, targetGpId: target, sinceTurn: 1),
-        ],
-      );
       final bus = AppEventBus.create();
       final appendFuture = bus
           .on<AppendDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
+      _autoConfirm(bus);
 
-      final confirmSub = bus.on<ConfirmDialogEvent>().listen((event) {
-        event.result(true);
-      });
-      addTearDown(confirmSub.cancel);
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
+      await _pumpOrders(
+        tester,
+        game: _colonyGame(
+          boycotts: const [
+            BoycottState(gpId: _humanId, targetGpId: _gp2, sinceTurn: 1),
+          ],
         ),
+        bus: bus,
       );
-      await tester.pump();
-
       expect(find.text('Revoke Boycott'), findsOneWidget);
 
-      await tester.ensureVisible(find.text('Revoke Boycott'));
-      await tester.tap(find.text('Revoke Boycott'));
-      await tester.pump();
-
+      await _tapVisible(tester, find.text('Revoke Boycott'));
       final event = await appendFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.order.type, DiplomaticOrderType.revokeBoycott);
-      expect(event.order.targetFactionId, target);
+      expect(event.order.targetFactionId, _gp2);
     },
   );
 
   testWidgets(
     'DiplomacyPanel pending boycott shows Cancel and removes on tap (Refs #3753 S14)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const target = 'gp2';
-      final game = buildDiplomacyPanelTestGame().copyWith(
-        colonyStates: const [
-          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
-        ],
-        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
-      );
       final bus = AppEventBus.create();
       final removeFuture = bus
           .on<RemoveDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
 
-      final currentOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.boycott,
-              targetFactionId: target,
-            ),
-          ],
-        },
-      );
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          currentOrders: currentOrders,
-          bus: bus,
+      await _pumpOrders(
+        tester,
+        game: _colonyGame(),
+        bus: bus,
+        currentOrders: _pendingOrders(
+          DiplomaticOrder(
+            type: DiplomaticOrderType.boycott,
+            targetFactionId: _gp2,
+          ),
         ),
       );
-      await tester.pump();
-
       expect(find.text('Boycott'), findsNothing);
-      final cancelButton = find.text('Cancel').first;
-      expect(cancelButton, findsOneWidget);
-      await tester.ensureVisible(cancelButton);
-      await tester.tap(cancelButton);
-      await tester.pump();
+      await _tapVisible(tester, find.text('Cancel').first);
 
       final event = await removeFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.type, DiplomaticOrderType.boycott);
-      expect(event.targetFactionId, target);
+      expect(event.targetFactionId, _gp2);
     },
   );
 
   testWidgets(
     'DiplomacyPanel pending revokeBoycott shows Cancel and removes on tap (Refs #3753 S14)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const target = 'gp2';
-      final game = buildDiplomacyPanelTestGame().copyWith(
-        colonyStates: const [
-          ColonyState(tribeId: 't1', colonyOfGpId: humanId, sinceTurn: 1),
-        ],
-        tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
-        boycottStates: const [
-          BoycottState(gpId: humanId, targetGpId: target, sinceTurn: 1),
-        ],
-      );
       final bus = AppEventBus.create();
       final removeFuture = bus
           .on<RemoveDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
 
-      final currentOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.revokeBoycott,
-              targetFactionId: target,
-            ),
+      await _pumpOrders(
+        tester,
+        game: _colonyGame(
+          boycotts: const [
+            BoycottState(gpId: _humanId, targetGpId: _gp2, sinceTurn: 1),
           ],
-        },
-      );
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          currentOrders: currentOrders,
-          bus: bus,
+        ),
+        bus: bus,
+        currentOrders: _pendingOrders(
+          DiplomaticOrder(
+            type: DiplomaticOrderType.revokeBoycott,
+            targetFactionId: _gp2,
+          ),
         ),
       );
-      await tester.pump();
-
       expect(find.text('Revoke Boycott'), findsNothing);
-      final cancelButton = find.text('Cancel').first;
-      expect(cancelButton, findsOneWidget);
-      await tester.ensureVisible(cancelButton);
-      await tester.tap(cancelButton);
-      await tester.pump();
+      await _tapVisible(tester, find.text('Cancel').first);
 
       final event = await removeFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.type, DiplomaticOrderType.revokeBoycott);
-      expect(event.targetFactionId, target);
+      expect(event.targetFactionId, _gp2);
     },
   );
 
   testWidgets(
     'DiplomacyPanel Boycott disabled when human holds no colony (Refs #3753 S14)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      final game = buildDiplomacyPanelTestGame();
-
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: AppEventBus.create(),
-        ),
-      );
-      await tester.pump();
+      await _pumpOrders(tester, game: buildDiplomacyPanelTestGame());
 
       final boycottButton = find.widgetWithText(CtNinePatchButton, 'Boycott');
       expect(boycottButton, findsOneWidget);
@@ -421,22 +355,12 @@ void main() {
   testWidgets(
     'DiplomacyPanel Minor row omits Boycott controls (Refs #3753 S14 negative)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      final game = buildDiplomacyRichPanelTestGame();
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: AppEventBus.create(),
-        ),
+      await _pumpOrders(
+        tester,
+        game: buildDiplomacyRichPanelTestGame(),
+        tall: true,
+        minorsTab: true,
       );
-      await tester.pump();
-
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
 
       expect(find.text('Free City'), findsOneWidget);
       expect(find.text('Boycott'), findsNothing);
@@ -447,42 +371,27 @@ void main() {
   testWidgets(
     'DiplomacyPanel pending setSubsidy shows percent line and Cancel (Refs #3753 S15)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const minorId = 'm1';
       const percent = 15;
-      final game = buildDiplomacyRichPanelTestGame();
       final bus = AppEventBus.create();
       final removeFuture = bus
           .on<RemoveDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
 
-      final currentOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.setSubsidy,
-              targetFactionId: minorId,
-              amount: percent,
-            ),
-          ],
-        },
-      );
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          currentOrders: currentOrders,
-          bus: bus,
+      await _pumpOrders(
+        tester,
+        game: buildDiplomacyRichPanelTestGame(),
+        bus: bus,
+        tall: true,
+        minorsTab: true,
+        currentOrders: _pendingOrders(
+          DiplomaticOrder(
+            type: DiplomaticOrderType.setSubsidy,
+            targetFactionId: _minorId,
+            amount: percent,
+          ),
         ),
       );
-      await tester.pump();
-
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
 
       expect(
         find.text('Pending subsidy: $percent% (resolves end of turn)'),
@@ -490,50 +399,32 @@ void main() {
       );
       expect(find.text('Set Subsidy ($percent%)'), findsNothing);
 
-      final cancelButton = find.text('Cancel').first;
-      await tester.ensureVisible(cancelButton);
-      await tester.tap(cancelButton);
-      await tester.pump();
-
+      await _tapVisible(tester, find.text('Cancel').first);
       final event = await removeFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.type, DiplomaticOrderType.setSubsidy);
-      expect(event.targetFactionId, minorId);
+      expect(event.targetFactionId, _minorId);
     },
   );
 
   testWidgets(
     'DiplomacyPanel active subsidy shows outgoing percent line (Refs #3753 S15)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const minorId = 'm1';
       const percent = 10;
-      final game = buildDiplomacyRichPanelTestGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: humanId,
-            targetId: minorId,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-        subsidyStates: const [
-          SubsidyState(payerId: humanId, targetId: minorId, percent: percent),
-        ],
-      );
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: AppEventBus.create(),
+      await _pumpOrders(
+        tester,
+        game: _minorEmbassyGame(
+          subsidies: const [
+            SubsidyState(
+              payerId: _humanId,
+              targetId: _minorId,
+              percent: percent,
+            ),
+          ],
         ),
+        tall: true,
+        minorsTab: true,
       );
-      await tester.pump();
-
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
 
       expect(
         find.text('Outgoing subsidy: $percent% to Free City'),
@@ -545,47 +436,29 @@ void main() {
   testWidgets(
     'DiplomacyPanel pending grantAid shows amount line and Cancel (Refs #3753 R2)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const minorId = 'm1';
       const amount = 2000;
-      final game = buildDiplomacyRichPanelTestGame();
       final bus = AppEventBus.create();
       final removeFuture = bus
           .on<RemoveDiplomaticOrderRequestedEvent>()
           .first
           .timeout(const Duration(seconds: 2));
 
-      final currentOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          humanId: [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.grantAid,
-              targetFactionId: minorId,
-              amount: amount,
-            ),
-          ],
-        },
-      );
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          currentOrders: currentOrders,
-          bus: bus,
+      await _pumpOrders(
+        tester,
+        game: buildDiplomacyRichPanelTestGame(),
+        bus: bus,
+        tall: true,
+        minorsTab: true,
+        currentOrders: _pendingOrders(
+          DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: _minorId,
+            amount: amount,
+          ),
         ),
       );
-      await tester.pump();
 
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
-
-      final minorRow = find.byKey(
-        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
-      );
-
+      final minorRow = _minorRow();
       expect(
         find.descendant(
           of: minorRow,
@@ -600,122 +473,72 @@ void main() {
         findsNothing,
       );
 
-      final cancelButton = find.descendant(
-        of: minorRow,
-        matching: find.text('Cancel'),
+      await _tapVisible(
+        tester,
+        find.descendant(of: minorRow, matching: find.text('Cancel')),
       );
-      await tester.ensureVisible(cancelButton);
-      await tester.tap(cancelButton);
-      await tester.pump();
-
       final event = await removeFuture;
-      expect(event.playerId, humanId);
+      expect(event.playerId, _humanId);
       expect(event.type, DiplomaticOrderType.grantAid);
-      expect(event.targetFactionId, minorId);
+      expect(event.targetFactionId, _minorId);
     },
   );
 
   testWidgets(
     'DiplomacyPanel Grant Aid emits grantOrSubsidy dialog (Refs #3753 R2)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const minorId = 'm1';
-      final game = buildDiplomacyRichPanelTestGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: humanId,
-            targetId: minorId,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-      );
       final bus = AppEventBus.create();
-      final openFuture = bus
-          .on<OpenDialogEvent>()
-          .first
-          .timeout(const Duration(seconds: 2));
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
-        ),
+      final openFuture = bus.on<OpenDialogEvent>().first.timeout(
+        const Duration(seconds: 2),
       );
-      await tester.pump();
 
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
-
-      final minorRow = find.byKey(
-        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
+      await _pumpOrders(
+        tester,
+        game: _minorEmbassyGame(),
+        bus: bus,
+        tall: true,
+        minorsTab: true,
       );
+
       final grantAidButton = find.descendant(
-        of: minorRow,
+        of: _minorRow(),
         matching: find.text('Grant Aid'),
       );
-      await tester.ensureVisible(grantAidButton);
-      await tester.tap(grantAidButton);
-      await tester.pump();
+      await _tapVisible(tester, grantAidButton);
 
       final event = await openFuture;
       expect(event.dialogId, grantOrSubsidyDialogId);
       expect(event.params?['isSubsidy'], isFalse);
-      expect(event.params?['targetFactionId'], minorId);
+      expect(event.params?['targetFactionId'], _minorId);
     },
   );
 
   testWidgets(
     'DiplomacyPanel Set Subsidy emits grantOrSubsidy dialog (Refs #3753 S15)',
     (WidgetTester tester) async {
-      const humanId = kPanelTestHumanPlayerId;
-      const minorId = 'm1';
-      final game = buildDiplomacyRichPanelTestGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: humanId,
-            targetId: minorId,
-            stage: OvertureStage.embassy,
-          ),
-        ],
-      );
       final bus = AppEventBus.create();
-      final openFuture = bus
-          .on<OpenDialogEvent>()
-          .first
-          .timeout(const Duration(seconds: 2));
-
-      await bindDiplomacyTallTestSurface(tester);
-      await tester.pumpWidget(
-        buildDiplomacyPanelShell(
-          game: game,
-          humanPlayerId: humanId,
-          topology: const MapTopology(),
-          bus: bus,
-        ),
+      final openFuture = bus.on<OpenDialogEvent>().first.timeout(
+        const Duration(seconds: 2),
       );
-      await tester.pump();
 
-      await tester.tap(find.text('Minors only'));
-      await tester.pump();
-
-      final minorRow = find.byKey(
-        ValueKey('${kDiplomacyRowBodyKeyPrefix}m1'),
+      await _pumpOrders(
+        tester,
+        game: _minorEmbassyGame(),
+        bus: bus,
+        tall: true,
+        minorsTab: true,
       );
+
       final setSubsidyButton = find.descendant(
-        of: minorRow,
+        of: _minorRow(),
         matching: find.text('Set Subsidy (5%)'),
       );
-      await tester.ensureVisible(setSubsidyButton);
-      await tester.tap(setSubsidyButton);
-      await tester.pump();
+      await _tapVisible(tester, setSubsidyButton);
 
       final event = await openFuture;
       expect(event.dialogId, grantOrSubsidyDialogId);
       expect(event.params?['isSubsidy'], isTrue);
-      expect(event.params?['targetFactionId'], minorId);
+      expect(event.params?['targetFactionId'], _minorId);
     },
   );
 }

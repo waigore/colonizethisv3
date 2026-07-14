@@ -1,46 +1,19 @@
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
-    show
-        AppEventBus,
-        OpenCivilianUnitsPanelEvent,
-        OpenNavalUnitsPanelEvent,
-        OpenProvinceDetailPanelEvent,
-        kUnitTypeBuilder;
+    show AppEventBus, OpenCivilianUnitsPanelEvent, OpenNavalUnitsPanelEvent;
 
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show
-        BaseLayerDisplayMode,
-        CtMapVisibilityMode,
-        extractionIndicatorDisplaySizePx,
-        extractionIndicatorRectsForIconRect,
-        isCellUnderFleetRevealHalo,
-        resolveProvinceLabelIconIds,
-        resolveProvinceLabelPresenceIconIds,
-        resolveSeaZoneLabelPrefixIconIds,
-        resolveSeaZoneNamePlateCenterWorld,
-        resourceIconDisplaySizePx,
-        shouldEllipsizeProvinceLabelText,
-        shouldShowExtractionUnitIndicators,
-        shouldApplyFogToFeatureOverlay,
-        shouldApplyFogToInteriorPlainsVariantBase,
-        shouldApplyFogToInteriorPlainsVariantOverlay,
-        shouldApplyFogToLandBase,
-        shouldWrapProvinceLabelPresenceIcons,
-        visibilityForTerrainForMapCell;
+    show BaseLayerDisplayMode, CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
-
 
 void main() {
   suppressLogsForTests();
@@ -258,37 +231,12 @@ void main() {
       'work target selection mode ignores invalid tile taps without canceling',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 2,
           height: 1,
           cellSize: 32,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-            ),
-            CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
+          regionCellId: 'p1',
         );
         const validTileKey = 'oldWorld|p1|0|0';
         var selectedCallCount = 0;
@@ -314,8 +262,7 @@ void main() {
 
         final mapFinder = find.byType(CtRegionMap);
         final mapTopLeft = tester.getTopLeft(mapFinder);
-        final invalidTap = mapTopLeft + const Offset(300, 160);
-        await tester.tapAt(invalidTap);
+        await tester.tapAt(mapTopLeft + const Offset(300, 160));
         await tester.pump();
 
         expect(selectedCallCount, 0);
@@ -328,28 +275,12 @@ void main() {
       'work target selection mode commits on valid tile tap',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 1,
           height: 1,
           cellSize: 32,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
+          regionCellId: 'p1',
         );
         const validTileKey = 'oldWorld|p1|0|0';
         String? selectedTileKey;
@@ -371,8 +302,7 @@ void main() {
         );
         await tester.pump();
 
-        final mapFinder = find.byType(CtRegionMap);
-        await tester.tap(mapFinder);
+        await tester.tap(find.byType(CtRegionMap));
         await tester.pump();
 
         expect(selectedTileKey, equals(validTileKey));
@@ -384,45 +314,22 @@ void main() {
       'tap on civilian marker tile invokes civilian callback and suppresses detail tap callback',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
         const markerTileKey = 'oldWorld|pMarker|0|0';
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 1,
           height: 1,
           cellSize: 24,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'pMarker',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-              provinceDisplayName: 'Marker Province',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          townMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: const [],
+          regionCellId: 'pMarker',
+          displayName: 'Marker Province',
           civilianTileMarkers: [
-            CivilianTileMarkerView(
+            ctRegionMapCivilianMarker(
               tileKey: markerTileKey,
               x: 0,
               y: 0,
               localProvinceId: 'pMarker',
-              unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': kUnitTypeBuilder},
-              representativeUnitType: kUnitTypeBuilder,
-              stackCount: 1,
             ),
           ],
-          warpMarkers: const [],
         );
         String? tappedCivilianTileKey;
         String? detailTileKey;
@@ -449,9 +356,7 @@ void main() {
           ),
         );
         await tester.pump();
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
+        await tester.tap(find.byType(CtRegionMap));
         await tester.pump();
 
         expect(tappedCivilianTileKey, equals(markerTileKey));
@@ -468,44 +373,23 @@ void main() {
       'tapping fleet marker emits naval units panel event',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final seaTemplate = base.cells.firstWhere((c) => c.isSea);
         const markerTileKey = 'oldWorld|sMarker|0|0';
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 1,
           height: 1,
           cellSize: 24,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'sMarker',
-              isSea: true,
-              terrainTypeId: seaTemplate.terrainTypeId,
-              terrainType: seaTemplate.terrainType,
-              ownerFactionId: seaTemplate.ownerFactionId,
-              provinceDisplayName: 'Marker Sea',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          townMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: const [],
+          regionCellId: 'sMarker',
+          displayName: 'Marker Sea',
+          sea: true,
           fleetTileMarkers: [
-            FleetTileMarkerView(
+            ctRegionMapFleetMarker(
               tileKey: markerTileKey,
               x: 0,
               y: 0,
               locationScopeKey: 'sea:oldWorld|fleet_scope',
-              fleetIds: const ['fleet_1'],
-              stackCount: 1,
             ),
           ],
-          civilianTileMarkers: const [],
-          warpMarkers: const [],
         );
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
@@ -543,55 +427,23 @@ void main() {
       'tapping non-civilian tile clears civilian selection and still opens tile detail',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
         const cellSize = 32;
         const selectedMarkerTileKey = 'oldWorld|p1|0|0';
         const otherTileKey = 'oldWorld|p1|1|0';
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 2,
           height: 1,
           cellSize: cellSize,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-            ),
-            CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          townMarkers: const [],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: const [],
+          regionCellId: 'p1',
           civilianTileMarkers: [
-            CivilianTileMarkerView(
+            ctRegionMapCivilianMarker(
               tileKey: selectedMarkerTileKey,
               x: 0,
               y: 0,
               localProvinceId: 'p1',
-              unitIds: const ['u_builder'],
-              unitTypes: const {'u_builder': kUnitTypeBuilder},
-              representativeUnitType: kUnitTypeBuilder,
-              stackCount: 1,
             ),
           ],
-          warpMarkers: const [],
         );
         var clearCount = 0;
         String? detailTileKey;
@@ -609,8 +461,7 @@ void main() {
         );
         await tester.pump();
 
-        final mapFinder = find.byType(CtRegionMap);
-        final topLeft = tester.getTopLeft(mapFinder);
+        final topLeft = tester.getTopLeft(find.byType(CtRegionMap));
         await tester.tapAt(
           topLeft + const Offset(cellSize * 1.5, cellSize * 0.5),
         );
@@ -626,26 +477,13 @@ void main() {
       'tap on a town tile still invokes map tile and province selection callbacks',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final landTemplate = base.cells.firstWhere((c) => !c.isSea);
-        final region = RegionMapViewData(
-          regionId: 'oldWorld',
+        final region = ctRegionMapMiniLandStrip(
+          base: base,
           width: 1,
           height: 1,
           cellSize: 24,
-          cells: [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'pTown',
-              isSea: false,
-              terrainTypeId: landTemplate.terrainTypeId,
-              terrainType: landTemplate.terrainType,
-              ownerFactionId: landTemplate.ownerFactionId,
-              provinceDisplayName: 'Town Province',
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
+          regionCellId: 'pTown',
+          displayName: 'Town Province',
           townMarkers: const [
             TownMarkerView(
               x: 0,
@@ -658,9 +496,6 @@ void main() {
               townIconStyle: 'euro',
             ),
           ],
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
         );
         const townTileKey = 'oldWorld|pTown|0|0';
         String? selectedId;
@@ -677,10 +512,7 @@ void main() {
           ),
         );
         await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
+        await tester.tap(find.byType(CtRegionMap));
         await tester.pump();
 
         expect(selectedId, equals('oldWorld|pTown'));
@@ -716,36 +548,9 @@ void main() {
       'tap still selects province when all tiles are unrevealed in player-constrained mode',
       (WidgetTester tester) async {
         final base = ctRegionMapTestOldWorldRegion();
-        final unrevealedCells = base.cells
-            .map(
-              (c) => CellViewData(
-                x: c.x,
-                y: c.y,
-                regionCellId: c.regionCellId,
-                isSea: c.isSea,
-                terrainTypeId: c.terrainTypeId,
-                terrainType: c.terrainType,
-                resourceId: c.resourceId,
-                ownerFactionId: c.ownerFactionId,
-                provinceDisplayName: c.provinceDisplayName,
-                improvementLevel: c.improvementLevel,
-                roadLevel: c.roadLevel,
-                visibility: TileVisibility.unrevealed,
-              ),
-            )
-            .toList();
-        final region = RegionMapViewData(
-          regionId: base.regionId,
-          width: base.width,
-          height: base.height,
-          cellSize: base.cellSize,
-          cells: unrevealedCells,
-          capitalMarkers: base.capitalMarkers,
-          portMarkers: base.portMarkers,
-          factionColors: base.factionColors,
-          greatPowerFactionIds: base.greatPowerFactionIds,
-          terrainColors: base.terrainColors,
-          unitMarkers: base.unitMarkers,
+        final region = ctRegionMapWithUniformVisibility(
+          base: base,
+          visibility: TileVisibility.unrevealed,
         );
 
         String? selectedId;
@@ -758,10 +563,7 @@ void main() {
           ),
         );
         await tester.pump();
-
-        final mapFinder = find.byType(CtRegionMap);
-        expect(mapFinder, findsOneWidget);
-        await tester.tap(mapFinder);
+        await tester.tap(find.byType(CtRegionMap));
         await tester.pump();
 
         expect(selectedId, isNotNull);
@@ -773,24 +575,10 @@ void main() {
     testWidgets(
       'map throws StateError when terrain tileset fails to load (no silent fallback)',
       (WidgetTester tester) async {
-        // This test verifies that the map fails loudly instead of falling back to solid colors
-        // when terrain tilesets cannot be loaded. The behavior is:
-        // - region_map_component.dart throws StateError when tileset is null
-        // - This ensures missing tilesets are visible as errors, not silently rendered as solid colors
-
-        // The global terrainTilesetCache must be loaded for the map to render properly.
-        // If it fails to load (e.g., missing assets), the component will throw.
-        // This test documents the expected behavior: map should NOT silently fall back.
+        // Loud failure (no solid-color fallback) when tilesets cannot load.
         final region = ctRegionMapTestOldWorldRegion();
-
-        // Build map - if tileset loading failed, this would throw a StateError
-        // rather than rendering solid color fallback
         await tester.pumpWidget(ctRegionMapTestHarness(region: region));
         await tester.pump();
-
-        // If we reach here, tilesets loaded successfully.
-        // The test verifies that if tilesets failed to load, an error would be thrown
-        // rather than silently falling back to solid colors.
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
@@ -848,53 +636,8 @@ void main() {
     );
 
     testWidgets(
-      'map renders with resource icons in terrainAndResources mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-          ),
-        );
-        await tester.pump();
-
-        // Widget should render without errors when resource icons are loaded
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders with resource icons in terrainAndResourcesImprovementLabels mode (SPEC/ui/map-widget.md § Base layer display mode)',
-      (WidgetTester tester) async {
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-          await resourceIconCache.load();
-        });
-
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'map renders with resource icons in terrainAndResourcesImprovementsRoads mode (SPEC/ui/map-widget.md § Base layer display mode)',
+      'map renders with resource icons across resource base-layer modes '
+      '(SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
@@ -903,18 +646,19 @@ void main() {
         });
 
         final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            baseLayerDisplayMode:
-                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-          ),
-        );
-        await tester.pump();
-
-        expect(find.byType(CtRegionMap), findsOneWidget);
+        for (final mode in [
+          BaseLayerDisplayMode.terrainAndResources,
+          BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
+          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+        ]) {
+          await tester.pumpWidget(
+            ctRegionMapTestHarness(region: region, baseLayerDisplayMode: mode),
+          );
+          await tester.pump();
+          expect(find.byType(CtRegionMap), findsOneWidget);
+        }
       },
-      timeout: const Timeout(Duration(seconds: 10)),
+      timeout: const Timeout(Duration(seconds: 15)),
     );
 
     testWidgets(
