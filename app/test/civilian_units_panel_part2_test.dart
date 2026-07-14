@@ -12,6 +12,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;
@@ -319,7 +320,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -383,7 +384,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -465,7 +466,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -535,7 +536,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -634,7 +635,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork != null,
         );
         if (workingCivilians.isEmpty) return;
@@ -687,10 +688,4 @@ void main() {
       },
     );
   });
-}
-
-bool _isCivilian(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
 }

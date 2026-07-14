@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -145,7 +146,7 @@ void main() {
           (u) =>
               u.ownerId == humanPlayerIdWithUnits &&
               u.tileKey != null &&
-              _isCivilian(u) &&
+              isCivilianUnit(u) &&
               u.currentWork == null,
         );
         if (idleCivilians.isEmpty) return;
@@ -223,7 +224,7 @@ void main() {
         (u) =>
             u.ownerId == humanPlayerIdWithUnits &&
             u.tileKey != null &&
-            _isCivilian(u) &&
+            isCivilianUnit(u) &&
             u.currentWork == null,
       );
       // Skip if no idle civilians in test game
@@ -549,10 +550,4 @@ void main() {
       },
     );
   });
-}
-
-bool _isCivilian(Unit unit) {
-  final role = unitRoleForType(unit.type);
-  if (role == null) return false;
-  return role != UnitRole.military && role != UnitRole.naval;
 }
