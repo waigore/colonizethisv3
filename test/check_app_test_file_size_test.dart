@@ -23,6 +23,7 @@ void main() {
   });
 
   test('allowlisted offenders still exceed the cap (shrink-only)', () {
+    // Allowlist may be empty once the shrink-only baseline is cleared.
     for (final relativePath in appTestFileSizeAllowlistForTests) {
       final file = File('${Directory.current.path}/$relativePath');
       expect(file.existsSync(), isTrue, reason: relativePath);

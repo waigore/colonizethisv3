@@ -290,7 +290,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 | Family | Parts | Stay-split reason |
 |--------|-------|-------------------|
 | `naval_units_panel_test` | 5 | Combined LOC ≫1000 |
-| `ct_region_map_widget_test` | 3 | Combined LOC ≫1000 |
+| `ct_region_map_widget_test` | 4 | Combined LOC ≫1000 |
 | `game_map_area_state_logic_test` | 3 | Combined LOC ≫1000 |
 | `military_units_panel_test` | 5 | Combined LOC ≫1000 |
 | `civilian_units_panel_test` | 3 | Combined LOC ≫1000 |
@@ -299,7 +299,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 **Approved `app/test/support/` harness modules (Refs #3847, #3952, #4013):** Shared widget-test scaffolding MUST live under `app/test/support/` — not re-declared in individual test files. Canonical modules include `app_shell_harness.dart` (`buildAppShell`, `pumpAppShell`), `min_viewport_harness.dart`, `diplomacy_panel_test_support.dart`, `widgetbook_test_harness.dart`, `province_overlay_test_harness.dart`, `editorial_monocle_dark_token_assertions.dart` (`expectMutedSingleSource`, `expectMutedObfuscated`, `expectEditorialMonocleDarkChrome`), `military_units_panel_test_support.dart`, `naval_units_panel_test_support.dart`, `trade_screen_test_support.dart`, `golden_capture_harness.dart`, `yarn_test_fixtures.dart`, and the `panel_fixtures/` barrel. AST gates `check_app_test_no_duplicate_scaffolding.dart`, `check_app_test_no_duplicate_diplomacy_host.dart`, `check_app_test_no_duplicate_golden_host.dart`, `check_app_test_no_duplicate_yarn_bundle.dart`, `check_app_test_no_duplicate_dark_token_asserts.dart`, and the Widgetbook `_useCase` pattern in the scaffolding gate enforce this.
 
-**App test file size (Refs #4013):** `repo.app_test_file_size` caps every `app/test/**/*.dart` file at **1000 physical lines**. Files over the cap must appear on the shrink-only allowlist in `tool/check_app_test_file_size.dart`; adding a new oversized file requires removing another allowlist entry or shrinking first. Stale allowlist entries (missing path or file now ≤ cap) fail CI.
+**App test file size (Refs #4013):** `repo.app_test_file_size` caps every `app/test/**/*.dart` file at **1000 physical lines**. Files over the cap must appear on the shrink-only allowlist in `tool/check_app_test_file_size.dart`; adding a new oversized file requires removing another allowlist entry or shrinking first. Stale allowlist entries (missing path or file now ≤ cap) fail CI. After the wave-4 `ct_region_map_widget` split, the allowlist is **empty**.
 
 **Feature-screen top-bar helper (Refs #3952):** Diplomacy / Production / Technology / Trade screens build Map-back + 18×18 icon + title chrome via `app/lib/widgets/game_feature_screen_top_bar.dart` (`GameFeatureScreenTopBar.build`); screen-specific `topBarKey` / title / icon asset constants remain on each screen.
 

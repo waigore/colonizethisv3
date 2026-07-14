@@ -16,10 +16,8 @@ const String _appTestsRelativePath = 'app/test';
 
 /// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4013).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
-const List<String> appTestFileSizeAllowlistForTests = [
-  'app/test/ct_region_map_widget_part1_test.dart',
-  'app/test/ct_region_map_widget_part2_test.dart',
-];
+/// Empty after wave-4 allowlist clear (ct_region_map_widget parts under cap).
+const List<String> appTestFileSizeAllowlistForTests = <String>[];
 
 int runCheckAppTestFileSize(
   String repoRoot, {
