@@ -61,11 +61,7 @@ DecoratedBox _findButtonSurfaceDecoratedBox(WidgetTester tester) {
           (widget.decoration as BoxDecoration).gradient != null,
     ),
   );
-  expect(
-    boxes,
-    findsAtLeastNWidgets(1),
-    reason: 'CtNinePatchButton must paint a gradient surface',
-  );
+  expect(boxes, findsAtLeastNWidgets(1));
   return tester.widget<DecoratedBox>(boxes.first);
 }
 
@@ -79,13 +75,35 @@ TextSpan _labelSpan(WidgetTester tester, String label) {
   return rich.text as TextSpan;
 }
 
-Finder _opacityFinder(double opacity) {
-  return find.descendant(
-    of: find.byType(CtNinePatchButton),
-    matching: find.byWidgetPredicate(
-      (Widget w) => w is Opacity && w.opacity == opacity,
-    ),
-  );
+Finder _opacityFinder(double opacity) => find.descendant(
+      of: find.byType(CtNinePatchButton),
+      matching: find.byWidgetPredicate(
+        (Widget w) => w is Opacity && w.opacity == opacity,
+      ),
+    );
+
+void _expectGradientColors(
+  WidgetTester tester,
+  List<Color> colors, {
+  String? reason,
+}) {
+  final LinearGradient gradient =
+      _surfaceDecoration(tester).gradient! as LinearGradient;
+  expect(gradient.colors, colors, reason: reason);
+}
+
+void _expectBorderColor(WidgetTester tester, Color color, {String? reason}) {
+  final Border border = _surfaceDecoration(tester).border! as Border;
+  expect(border.top.color, color, reason: reason);
+}
+
+void _expectLabelColor(
+  WidgetTester tester,
+  String label,
+  Color color, {
+  String? reason,
+}) {
+  expect(_labelSpan(tester, label).style?.color, color, reason: reason);
 }
 
 Future<TestGesture> _hoverOverButton(WidgetTester tester) async {
@@ -102,6 +120,16 @@ Future<TestGesture> _hoverOverButton(WidgetTester tester) async {
   return gesture;
 }
 
+Future<TestGesture> _holdPress(WidgetTester tester) async {
+  final TestGesture gesture = await tester.startGesture(
+    tester.getCenter(find.byType(CtNinePatchButton)),
+  );
+  await tester.pump();
+  await tester.pump(CtNinePatchButton.animationDuration);
+  await tester.pumpAndSettle();
+  return gesture;
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -110,10 +138,7 @@ void main() {
     'default state paints buttonGradient and 1px --border border',
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
-
       final BoxDecoration decoration = _surfaceDecoration(tester);
-
-      expect(decoration.gradient, isA<LinearGradient>());
       final LinearGradient gradient = decoration.gradient! as LinearGradient;
       expect(gradient.begin, Alignment.topCenter);
       expect(gradient.end, Alignment.bottomCenter);
@@ -121,12 +146,7 @@ void main() {
         EditorialMonoclePalette.surfaceLite,
         EditorialMonoclePalette.surface,
       ]);
-      expect(
-        gradient.colors,
-        CtGradients.buttonGradient.colors,
-        reason: 'Surface gradient must originate from CtGradients.buttonGradient',
-      );
-
+      expect(gradient.colors, CtGradients.buttonGradient.colors);
       final Border? border = decoration.border as Border?;
       expect(border, isNotNull);
       expect(border!.top.width, CtNinePatchButton.borderWidth);
@@ -138,23 +158,11 @@ void main() {
     'hover brightens corner brackets and shifts border to --accent',
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
-
       final TestGesture gesture = await _hoverOverButton(tester);
-
-      final BoxDecoration hoverDecoration = _surfaceDecoration(tester);
-      final Border hoverBorder = hoverDecoration.border! as Border;
-      expect(
-        hoverBorder.top.color,
-        EditorialMonoclePalette.accent,
-        reason: 'Hover state must shift border to --accent',
-      );
-
+      _expectBorderColor(tester, EditorialMonoclePalette.accent);
       await gesture.moveTo(const Offset(-50, -50));
       await tester.pumpAndSettle();
-
-      final BoxDecoration restDecoration = _surfaceDecoration(tester);
-      final Border restBorder = restDecoration.border! as Border;
-      expect(restBorder.top.color, EditorialMonoclePalette.border);
+      _expectBorderColor(tester, EditorialMonoclePalette.border);
     },
   );
 
@@ -162,21 +170,13 @@ void main() {
     'engraved label text uses a 1px downward shadow coloured from --surface',
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
-
-      final Finder labelFinder = find.text('Confirm');
-      expect(labelFinder, findsOneWidget);
-
-      final TextSpan span = _labelSpan(tester, 'Confirm');
-      final List<Shadow>? shadows = span.style?.shadows;
+      expect(find.text('Confirm'), findsOneWidget);
+      final List<Shadow>? shadows = _labelSpan(tester, 'Confirm').style?.shadows;
       expect(shadows, isNotNull);
       expect(shadows!.length, 1);
       expect(shadows.first.offset, CtNinePatchButton.engravedShadowOffset);
       expect(shadows.first.blurRadius, 0);
-      expect(
-        shadows.first.color,
-        EditorialMonoclePalette.surface,
-        reason: 'Engraved-text shadow must resolve from the --surface token',
-      );
+      expect(shadows.first.color, EditorialMonoclePalette.surface);
     },
   );
 
@@ -184,27 +184,12 @@ void main() {
     'disabled state wraps button in 0.4 opacity and suppresses taps',
     (WidgetTester tester) async {
       int taps = 0;
-      await _pumpButton(
-        tester,
-        onPressed: () => taps += 1,
-        enabled: false,
-      );
-
-      final Finder opacityFinder =
-          _opacityFinder(CtNinePatchButton.disabledOpacity);
-      expect(
-        opacityFinder,
-        findsOneWidget,
-        reason: 'Disabled CtNinePatchButton must render at 0.4 opacity',
-      );
+      await _pumpButton(tester, onPressed: () => taps += 1, enabled: false);
+      expect(_opacityFinder(CtNinePatchButton.disabledOpacity), findsOneWidget);
       expect(CtNinePatchButton.disabledOpacity, 0.4);
-
-      await tester.tap(
-        find.byType(CtNinePatchButton),
-        warnIfMissed: false,
-      );
+      await tester.tap(find.byType(CtNinePatchButton), warnIfMissed: false);
       await tester.pumpAndSettle();
-      expect(taps, 0, reason: 'Disabled button must not fire onPressed');
+      expect(taps, 0);
     },
   );
 
@@ -212,36 +197,14 @@ void main() {
     'disabledOpacityOverride replaces the catalog 0.4 default when set '
     '(positive path — issue #2861 R1 / AC#9 next-turn button uses 0.35)',
     (WidgetTester tester) async {
-      // Mirrors the in-game Next-turn button contract: a per-instance
-      // override of 0.35 replaces the shared catalog default (0.4) for
-      // this widget tree only. SPEC: SPEC/ui/game-screen.md Acceptance
-      // Criteria + .next-turn.disabled in
-      // SPEC/ui/mockups/GAME10001-game-screen.html.
       await _pumpButton(
         tester,
         onPressed: () {},
         enabled: false,
         disabledOpacityOverride: 0.35,
       );
-
-      final Finder overrideFinder = _opacityFinder(0.35);
-      expect(
-        overrideFinder,
-        findsOneWidget,
-        reason:
-            'disabledOpacityOverride: 0.35 must apply Opacity(opacity: 0.35) '
-            'instead of the catalog default 0.4.',
-      );
-
-      final Finder defaultFinder =
-          _opacityFinder(CtNinePatchButton.disabledOpacity);
-      expect(
-        defaultFinder,
-        findsNothing,
-        reason:
-            'When disabledOpacityOverride is set the catalog default 0.4 '
-            'Opacity wrapper must not also paint (no double dim).',
-      );
+      expect(_opacityFinder(0.35), findsOneWidget);
+      expect(_opacityFinder(CtNinePatchButton.disabledOpacity), findsNothing);
     },
   );
 
@@ -250,34 +213,9 @@ void main() {
     '(negative / regression guard — every other CtNinePatchButton call '
     'site must keep the shared disabled convention)',
     (WidgetTester tester) async {
-      await _pumpButton(
-        tester,
-        onPressed: () {},
-        enabled: false,
-      );
-
-      final Finder defaultFinder =
-          _opacityFinder(CtNinePatchButton.disabledOpacity);
-      expect(
-        defaultFinder,
-        findsOneWidget,
-        reason:
-            'CtNinePatchButton with no disabledOpacityOverride must keep '
-            'the shared catalog convention CtNinePatchButton.disabledOpacity '
-            '(0.4) so CtBackButton, CtToggleSwitch, CtProgressBar, etc. '
-            'continue to read consistently with every other dark-theme '
-            'disabled control.',
-      );
-
-      // Confirm 0.35 is not accidentally applied to non-next-turn buttons.
-      final Finder strayNextTurnFinder = _opacityFinder(0.35);
-      expect(
-        strayNextTurnFinder,
-        findsNothing,
-        reason:
-            'Default CtNinePatchButton must not pick up the 0.35 next-turn '
-            'override when no disabledOpacityOverride is passed.',
-      );
+      await _pumpButton(tester, onPressed: () {}, enabled: false);
+      expect(_opacityFinder(CtNinePatchButton.disabledOpacity), findsOneWidget);
+      expect(_opacityFinder(0.35), findsNothing);
     },
   );
 
@@ -290,22 +228,17 @@ void main() {
         onPressed: () {},
         disabledOpacityOverride: 0.35,
       );
-
-      final Finder opacityFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is Opacity &&
-              (w.opacity == 0.35 ||
-                  w.opacity == CtNinePatchButton.disabledOpacity),
-        ),
-      );
       expect(
-        opacityFinder,
+        find.descendant(
+          of: find.byType(CtNinePatchButton),
+          matching: find.byWidgetPredicate(
+            (Widget w) =>
+                w is Opacity &&
+                (w.opacity == 0.35 ||
+                    w.opacity == CtNinePatchButton.disabledOpacity),
+          ),
+        ),
         findsNothing,
-        reason:
-            'disabledOpacityOverride must only activate when the button is '
-            'disabled; enabled buttons never paint the dimming wrapper.',
       );
     },
   );
@@ -315,7 +248,6 @@ void main() {
     (WidgetTester tester) async {
       int taps = 0;
       await _pumpButton(tester, onPressed: () => taps += 1);
-
       await tester.tap(find.byType(CtNinePatchButton));
       await tester.pumpAndSettle();
       expect(taps, 1);
@@ -326,21 +258,19 @@ void main() {
     'four brass corner brackets are painted via CustomPaint',
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
-
-      // The painter sits behind the surface so the brackets remain non-
-      // interactive. We verify exactly one painter instance is present
-      // (it paints all four corners).
-      final Finder painters = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is CustomPaint &&
-              w.painter != null &&
-              w.painter.runtimeType.toString() ==
-                  '_BrassCornerBracketsPainter',
+      expect(
+        find.descendant(
+          of: find.byType(CtNinePatchButton),
+          matching: find.byWidgetPredicate(
+            (Widget w) =>
+                w is CustomPaint &&
+                w.painter != null &&
+                w.painter.runtimeType.toString() ==
+                    '_BrassCornerBracketsPainter',
+          ),
         ),
+        findsOneWidget,
       );
-      expect(painters, findsOneWidget);
       expect(CtNinePatchButton.cornerBracketSize, 10);
     },
   );
@@ -349,54 +279,26 @@ void main() {
     'pressedGradient swaps the surface gradient transiently while held; '
     'reverts to the rest gradient after the gesture completes',
     (WidgetTester tester) async {
-      // SPEC/ui/main-menu.md AC `Wood-panel button pressed gradient
-      // inversion`. Drives the button via a fine-grained TestGesture so the
-      // pressed-state surface can be inspected between onTapDown and
-      // onTap/onTapCancel.
       await _pumpButton(
         tester,
         onPressed: () {},
         gradient: CtGradients.woodPanelButtonGradient,
         pressedGradient: CtGradients.woodPanelButtonGradientPressed,
       );
-
-      final BoxDecoration restDecoration = _surfaceDecoration(tester);
-      final LinearGradient restGradient =
-          restDecoration.gradient! as LinearGradient;
-      expect(
-        restGradient.colors,
+      _expectGradientColors(
+        tester,
         CtGradients.woodPanelButtonGradient.colors,
-        reason: 'Rest state must paint the wood-panel rest gradient.',
       );
-
-      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
-      final TestGesture gesture = await tester.startGesture(center);
-      await tester.pump();
-      await tester.pump(CtNinePatchButton.animationDuration);
-      await tester.pumpAndSettle();
-
-      final BoxDecoration pressedDecoration = _surfaceDecoration(tester);
-      final LinearGradient pressedGradientPainted =
-          pressedDecoration.gradient! as LinearGradient;
-      expect(
-        pressedGradientPainted.colors,
+      final TestGesture gesture = await _holdPress(tester);
+      _expectGradientColors(
+        tester,
         CtGradients.woodPanelButtonGradientPressed.colors,
-        reason:
-            'Pressed-state surface must swap to the inverted wood-panel '
-            'pressed gradient (bgDeep → surface → surfaceLite).',
       );
-
       await gesture.up();
       await tester.pumpAndSettle();
-
-      final BoxDecoration releasedDecoration = _surfaceDecoration(tester);
-      final LinearGradient releasedGradient =
-          releasedDecoration.gradient! as LinearGradient;
-      expect(
-        releasedGradient.colors,
+      _expectGradientColors(
+        tester,
         CtGradients.woodPanelButtonGradient.colors,
-        reason: 'Surface must revert to the rest gradient once the gesture '
-            'completes (inversion is strictly transient).',
       );
     },
   );
@@ -405,28 +307,9 @@ void main() {
     'when pressedGradient is omitted, pressing the button does not swap the '
     'surface gradient (default 2-stop CtGradients.buttonGradient is preserved)',
     (WidgetTester tester) async {
-      // Negative AC: callers that do not opt-in (every non-main-menu
-      // CtNinePatchButton) keep the prior 2-stop visual contract regardless
-      // of press state.
       await _pumpButton(tester, onPressed: () {});
-
-      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
-      final TestGesture gesture = await tester.startGesture(center);
-      await tester.pump();
-      await tester.pump(CtNinePatchButton.animationDuration);
-      await tester.pumpAndSettle();
-
-      final BoxDecoration pressedDecoration = _surfaceDecoration(tester);
-      final LinearGradient pressedGradientPainted =
-          pressedDecoration.gradient! as LinearGradient;
-      expect(
-        pressedGradientPainted.colors,
-        CtGradients.buttonGradient.colors,
-        reason:
-            'Without an opt-in pressedGradient, the canonical 2-stop button '
-            'gradient must still paint while the button is held.',
-      );
-
+      final TestGesture gesture = await _holdPress(tester);
+      _expectGradientColors(tester, CtGradients.buttonGradient.colors);
       await gesture.up();
       await tester.pumpAndSettle();
     },
@@ -435,41 +318,15 @@ void main() {
   testWidgets(
     'danger variant resolves border and engraved label to --danger',
     (WidgetTester tester) async {
-      // SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
-      // (CtNinePatchButton) → Danger variant: border + label switch to
-      // `--danger`, gradient surface and brass corner brackets unchanged.
       await _pumpButton(
         tester,
         onPressed: () {},
         dangerVariant: true,
         child: const Text('Declare War'),
       );
-
-      final BoxDecoration decoration = _surfaceDecoration(tester);
-
-      // Gradient unchanged.
-      final LinearGradient gradient = decoration.gradient! as LinearGradient;
-      expect(
-        gradient.colors,
-        CtGradients.buttonGradient.colors,
-        reason: 'Danger variant must keep the canonical button gradient.',
-      );
-
-      // Border resolves to --danger (not --border).
-      final Border border = decoration.border! as Border;
-      expect(
-        border.top.color,
-        EditorialMonoclePalette.danger,
-        reason: 'Danger variant must paint a --danger border.',
-      );
-
-      // Engraved label colour resolves to --danger (not --accent).
-      final TextSpan span = _labelSpan(tester, 'Declare War');
-      expect(
-        span.style?.color,
-        EditorialMonoclePalette.danger,
-        reason: 'Danger variant must paint the engraved label in --danger.',
-      );
+      _expectGradientColors(tester, CtGradients.buttonGradient.colors);
+      _expectBorderColor(tester, EditorialMonoclePalette.danger);
+      _expectLabelColor(tester, 'Declare War', EditorialMonoclePalette.danger);
     },
   );
 
@@ -477,49 +334,19 @@ void main() {
     'muted variant resolves idle border to --accent-dim and idle label to '
     '--muted (positive — issue #2867 R26b)',
     (WidgetTester tester) async {
-      // SPEC/ui/pixel-art-ui-catalog.md § Pixel-art component catalog
-      // (CtNinePatchButton) → Muted variant: idle border swaps from
-      // `--border` to `--accent-dim` and idle label swaps from `--accent`
-      // to `--muted`. Used by Diplomatic protest / Do naught in the
-      // intervention overlay (SPEC/ui/screens/pending-intervention-overlay
-      // .md § Choice-button styling).
       await _pumpButton(
         tester,
         onPressed: () {},
         mutedVariant: true,
         child: const Text('Do naught'),
       );
-
-      final BoxDecoration decoration = _surfaceDecoration(tester);
-
-      final Border border = decoration.border! as Border;
+      _expectBorderColor(tester, EditorialMonoclePalette.accentDim);
       expect(
-        border.top.color,
-        EditorialMonoclePalette.accentDim,
-        reason: 'Muted variant idle border must paint --accent-dim.',
-      );
-      expect(
-        border.top.color,
+        (_surfaceDecoration(tester).border! as Border).top.color,
         isNot(EditorialMonoclePalette.border),
-        reason:
-            'Muted variant must not paint the default --border border at '
-            'rest (otherwise primary and muted siblings render identically).',
       );
-
-      final TextSpan span = _labelSpan(tester, 'Do naught');
-      expect(
-        span.style?.color,
-        EditorialMonoclePalette.muted,
-        reason: 'Muted variant idle label must paint --muted.',
-      );
-
-      // Surface gradient unchanged so muted buttons stay aligned with
-      // their primary siblings (per catalog Muted variant contract).
-      expect(
-        (decoration.gradient! as LinearGradient).colors,
-        CtGradients.buttonGradient.colors,
-        reason: 'Muted variant must keep the canonical button gradient.',
-      );
+      _expectLabelColor(tester, 'Do naught', EditorialMonoclePalette.muted);
+      _expectGradientColors(tester, CtGradients.buttonGradient.colors);
     },
   );
 
@@ -533,34 +360,16 @@ void main() {
         mutedVariant: true,
         child: const Text('Diplomatic protest'),
       );
-
       await _hoverOverButton(tester);
-
-      final BoxDecoration hoverDecoration = _surfaceDecoration(tester);
-      final Border hoverBorder = hoverDecoration.border! as Border;
-      expect(
-        hoverBorder.top.color,
+      _expectBorderColor(tester, EditorialMonoclePalette.accent);
+      _expectLabelColor(
+        tester,
+        'Diplomatic protest',
         EditorialMonoclePalette.accent,
-        reason:
-            'Muted variant hover state must lift the border to --accent so '
-            'the affordance still reads as interactive.',
-      );
-
-      final TextSpan hoverSpan = _labelSpan(tester, 'Diplomatic protest');
-      expect(
-        hoverSpan.style?.color,
-        EditorialMonoclePalette.accent,
-        reason:
-            'Muted variant hover label must lift to --accent (vs primary '
-            'variant which lifts to --accent-bright).',
       );
       expect(
-        hoverSpan.style?.color,
+        _labelSpan(tester, 'Diplomatic protest').style?.color,
         isNot(EditorialMonoclePalette.accentBright),
-        reason:
-            'Muted variant must not lift label to --accent-bright on hover; '
-            'that brighter hover ramp is reserved for the default / primary '
-            'variant so primary remains visually emphasised.',
       );
     },
   );
@@ -569,10 +378,6 @@ void main() {
     'mutedVariant + dangerVariant: dangerVariant wins (negative — issue '
     '#2867 R26b mutual-exclusivity contract)',
     (WidgetTester tester) async {
-      // Catalog rule: when both variant flags are passed `true`, the
-      // destructive `dangerVariant` styling wins so destructive intent is
-      // never visually weakened by the muted token. This guards against a
-      // future refactor that accidentally lets muted override danger.
       await _pumpButton(
         tester,
         onPressed: () {},
@@ -580,32 +385,12 @@ void main() {
         mutedVariant: true,
         child: const Text('Declare War'),
       );
-
-      final BoxDecoration decoration = _surfaceDecoration(tester);
-
-      final Border border = decoration.border! as Border;
+      _expectBorderColor(tester, EditorialMonoclePalette.danger);
       expect(
-        border.top.color,
-        EditorialMonoclePalette.danger,
-        reason:
-            'When dangerVariant and mutedVariant both resolve true, the '
-            'danger token must paint the border (danger wins).',
-      );
-      expect(
-        border.top.color,
+        (_surfaceDecoration(tester).border! as Border).top.color,
         isNot(EditorialMonoclePalette.accentDim),
-        reason:
-            'Muted token must never paint over a dangerVariant border; the '
-            'destructive intent of the action would be visually weakened.',
       );
-
-      expect(
-        _labelSpan(tester, 'Declare War').style?.color,
-        EditorialMonoclePalette.danger,
-        reason:
-            'When both variants are set, the engraved label must paint in '
-            '--danger (not --muted).',
-      );
+      _expectLabelColor(tester, 'Declare War', EditorialMonoclePalette.danger);
     },
   );
 
@@ -613,34 +398,16 @@ void main() {
     'default (no muted, no danger) keeps --border idle border and --accent '
     'idle label (negative regression guard for muted variant introduction)',
     (WidgetTester tester) async {
-      // Regression guard: introducing `mutedVariant` must not change the
-      // default rendering for any existing CtNinePatchButton call site.
-      // Every CtNinePatchButton in the repo that does not opt in must
-      // continue painting the canonical primary chrome.
       await _pumpButton(tester, onPressed: () {});
-
-      final BoxDecoration decoration = _surfaceDecoration(tester);
-
-      final Border border = decoration.border! as Border;
-      expect(border.top.color, EditorialMonoclePalette.border);
+      _expectBorderColor(tester, EditorialMonoclePalette.border);
       expect(
-        border.top.color,
+        (_surfaceDecoration(tester).border! as Border).top.color,
         isNot(EditorialMonoclePalette.accentDim),
-        reason:
-            'Default CtNinePatchButton must not adopt the muted --accent-dim '
-            'idle border just because the variant flag was added to the API.',
       );
-
-      expect(
-        _labelSpan(tester, 'Confirm').style?.color,
-        EditorialMonoclePalette.accent,
-      );
+      _expectLabelColor(tester, 'Confirm', EditorialMonoclePalette.accent);
       expect(
         _labelSpan(tester, 'Confirm').style?.color,
         isNot(EditorialMonoclePalette.muted),
-        reason:
-            'Default CtNinePatchButton must not paint a muted label when no '
-            'mutedVariant flag is set.',
       );
     },
   );
@@ -650,10 +417,6 @@ void main() {
     '#2867 R26b — keeps brackets visible at narrow viewports while reading '
     'as half-strength against a sibling primary)',
     () {
-      // The numeric value is part of the catalog contract: with the
-      // canonical 0.75 idle / 1.0 hover alpha cycle, a 0.5 scale resolves
-      // to 0.375 / 0.5. Pin the constant so refactors of the painter do
-      // not silently change the muted-vs-primary visual ratio.
       expect(CtNinePatchButton.mutedCornerAlphaScale, 0.5);
       expect(
         CtNinePatchButton.defaultCornerAlpha *
