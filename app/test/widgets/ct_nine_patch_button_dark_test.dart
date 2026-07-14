@@ -69,6 +69,39 @@ DecoratedBox _findButtonSurfaceDecoratedBox(WidgetTester tester) {
   return tester.widget<DecoratedBox>(boxes.first);
 }
 
+BoxDecoration _surfaceDecoration(WidgetTester tester) =>
+    _findButtonSurfaceDecoratedBox(tester).decoration as BoxDecoration;
+
+TextSpan _labelSpan(WidgetTester tester, String label) {
+  final RichText rich = tester.widget<RichText>(
+    find.descendant(of: find.text(label), matching: find.byType(RichText)),
+  );
+  return rich.text as TextSpan;
+}
+
+Finder _opacityFinder(double opacity) {
+  return find.descendant(
+    of: find.byType(CtNinePatchButton),
+    matching: find.byWidgetPredicate(
+      (Widget w) => w is Opacity && w.opacity == opacity,
+    ),
+  );
+}
+
+Future<TestGesture> _hoverOverButton(WidgetTester tester) async {
+  final TestGesture gesture = await tester.createGesture(
+    kind: PointerDeviceKind.mouse,
+  );
+  addTearDown(gesture.removePointer);
+  await gesture.addPointer(location: const Offset(1, 1));
+  await tester.pumpAndSettle();
+  await gesture.moveTo(tester.getCenter(find.byType(CtNinePatchButton)));
+  await tester.pump();
+  await tester.pump(CtNinePatchButton.animationDuration);
+  await tester.pumpAndSettle();
+  return gesture;
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -78,8 +111,7 @@ void main() {
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
 
-      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration decoration = box.decoration as BoxDecoration;
+      final BoxDecoration decoration = _surfaceDecoration(tester);
 
       expect(decoration.gradient, isA<LinearGradient>());
       final LinearGradient gradient = decoration.gradient! as LinearGradient;
@@ -107,22 +139,9 @@ void main() {
     (WidgetTester tester) async {
       await _pumpButton(tester, onPressed: () {});
 
-      final TestGesture gesture = await tester.createGesture(
-        kind: PointerDeviceKind.mouse,
-      );
-      addTearDown(gesture.removePointer);
-      await gesture.addPointer(location: const Offset(1, 1));
-      await tester.pumpAndSettle();
+      final TestGesture gesture = await _hoverOverButton(tester);
 
-      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
-      await gesture.moveTo(center);
-      await tester.pump();
-      await tester.pump(CtNinePatchButton.animationDuration);
-      await tester.pumpAndSettle();
-
-      final DecoratedBox hoverBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration hoverDecoration =
-          hoverBox.decoration as BoxDecoration;
+      final BoxDecoration hoverDecoration = _surfaceDecoration(tester);
       final Border hoverBorder = hoverDecoration.border! as Border;
       expect(
         hoverBorder.top.color,
@@ -133,8 +152,7 @@ void main() {
       await gesture.moveTo(const Offset(-50, -50));
       await tester.pumpAndSettle();
 
-      final DecoratedBox restBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration restDecoration = restBox.decoration as BoxDecoration;
+      final BoxDecoration restDecoration = _surfaceDecoration(tester);
       final Border restBorder = restDecoration.border! as Border;
       expect(restBorder.top.color, EditorialMonoclePalette.border);
     },
@@ -148,10 +166,7 @@ void main() {
       final Finder labelFinder = find.text('Confirm');
       expect(labelFinder, findsOneWidget);
 
-      final RichText rich = tester.widget<RichText>(
-        find.descendant(of: labelFinder, matching: find.byType(RichText)),
-      );
-      final TextSpan span = rich.text as TextSpan;
+      final TextSpan span = _labelSpan(tester, 'Confirm');
       final List<Shadow>? shadows = span.style?.shadows;
       expect(shadows, isNotNull);
       expect(shadows!.length, 1);
@@ -175,13 +190,8 @@ void main() {
         enabled: false,
       );
 
-      final Finder opacityFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
-        ),
-      );
+      final Finder opacityFinder =
+          _opacityFinder(CtNinePatchButton.disabledOpacity);
       expect(
         opacityFinder,
         findsOneWidget,
@@ -214,12 +224,7 @@ void main() {
         disabledOpacityOverride: 0.35,
       );
 
-      final Finder overrideFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) => w is Opacity && w.opacity == 0.35,
-        ),
-      );
+      final Finder overrideFinder = _opacityFinder(0.35);
       expect(
         overrideFinder,
         findsOneWidget,
@@ -228,13 +233,8 @@ void main() {
             'instead of the catalog default 0.4.',
       );
 
-      final Finder defaultFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
-        ),
-      );
+      final Finder defaultFinder =
+          _opacityFinder(CtNinePatchButton.disabledOpacity);
       expect(
         defaultFinder,
         findsNothing,
@@ -256,13 +256,8 @@ void main() {
         enabled: false,
       );
 
-      final Finder defaultFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) =>
-              w is Opacity && w.opacity == CtNinePatchButton.disabledOpacity,
-        ),
-      );
+      final Finder defaultFinder =
+          _opacityFinder(CtNinePatchButton.disabledOpacity);
       expect(
         defaultFinder,
         findsOneWidget,
@@ -275,12 +270,7 @@ void main() {
       );
 
       // Confirm 0.35 is not accidentally applied to non-next-turn buttons.
-      final Finder strayNextTurnFinder = find.descendant(
-        of: find.byType(CtNinePatchButton),
-        matching: find.byWidgetPredicate(
-          (Widget w) => w is Opacity && w.opacity == 0.35,
-        ),
-      );
+      final Finder strayNextTurnFinder = _opacityFinder(0.35);
       expect(
         strayNextTurnFinder,
         findsNothing,
@@ -370,8 +360,7 @@ void main() {
         pressedGradient: CtGradients.woodPanelButtonGradientPressed,
       );
 
-      final DecoratedBox restBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration restDecoration = restBox.decoration as BoxDecoration;
+      final BoxDecoration restDecoration = _surfaceDecoration(tester);
       final LinearGradient restGradient =
           restDecoration.gradient! as LinearGradient;
       expect(
@@ -386,9 +375,7 @@ void main() {
       await tester.pump(CtNinePatchButton.animationDuration);
       await tester.pumpAndSettle();
 
-      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration pressedDecoration =
-          pressedBox.decoration as BoxDecoration;
+      final BoxDecoration pressedDecoration = _surfaceDecoration(tester);
       final LinearGradient pressedGradientPainted =
           pressedDecoration.gradient! as LinearGradient;
       expect(
@@ -402,9 +389,7 @@ void main() {
       await gesture.up();
       await tester.pumpAndSettle();
 
-      final DecoratedBox releasedBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration releasedDecoration =
-          releasedBox.decoration as BoxDecoration;
+      final BoxDecoration releasedDecoration = _surfaceDecoration(tester);
       final LinearGradient releasedGradient =
           releasedDecoration.gradient! as LinearGradient;
       expect(
@@ -431,9 +416,7 @@ void main() {
       await tester.pump(CtNinePatchButton.animationDuration);
       await tester.pumpAndSettle();
 
-      final DecoratedBox pressedBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration pressedDecoration =
-          pressedBox.decoration as BoxDecoration;
+      final BoxDecoration pressedDecoration = _surfaceDecoration(tester);
       final LinearGradient pressedGradientPainted =
           pressedDecoration.gradient! as LinearGradient;
       expect(
@@ -462,8 +445,7 @@ void main() {
         child: const Text('Declare War'),
       );
 
-      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration decoration = box.decoration as BoxDecoration;
+      final BoxDecoration decoration = _surfaceDecoration(tester);
 
       // Gradient unchanged.
       final LinearGradient gradient = decoration.gradient! as LinearGradient;
@@ -482,13 +464,7 @@ void main() {
       );
 
       // Engraved label colour resolves to --danger (not --accent).
-      final RichText rich = tester.widget<RichText>(
-        find.descendant(
-          of: find.text('Declare War'),
-          matching: find.byType(RichText),
-        ),
-      );
-      final TextSpan span = rich.text as TextSpan;
+      final TextSpan span = _labelSpan(tester, 'Declare War');
       expect(
         span.style?.color,
         EditorialMonoclePalette.danger,
@@ -514,8 +490,7 @@ void main() {
         child: const Text('Do naught'),
       );
 
-      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration decoration = box.decoration as BoxDecoration;
+      final BoxDecoration decoration = _surfaceDecoration(tester);
 
       final Border border = decoration.border! as Border;
       expect(
@@ -531,13 +506,7 @@ void main() {
             'rest (otherwise primary and muted siblings render identically).',
       );
 
-      final RichText rich = tester.widget<RichText>(
-        find.descendant(
-          of: find.text('Do naught'),
-          matching: find.byType(RichText),
-        ),
-      );
-      final TextSpan span = rich.text as TextSpan;
+      final TextSpan span = _labelSpan(tester, 'Do naught');
       expect(
         span.style?.color,
         EditorialMonoclePalette.muted,
@@ -565,22 +534,9 @@ void main() {
         child: const Text('Diplomatic protest'),
       );
 
-      final TestGesture gesture = await tester.createGesture(
-        kind: PointerDeviceKind.mouse,
-      );
-      addTearDown(gesture.removePointer);
-      await gesture.addPointer(location: const Offset(1, 1));
-      await tester.pumpAndSettle();
+      await _hoverOverButton(tester);
 
-      final Offset center = tester.getCenter(find.byType(CtNinePatchButton));
-      await gesture.moveTo(center);
-      await tester.pump();
-      await tester.pump(CtNinePatchButton.animationDuration);
-      await tester.pumpAndSettle();
-
-      final DecoratedBox hoverBox = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration hoverDecoration =
-          hoverBox.decoration as BoxDecoration;
+      final BoxDecoration hoverDecoration = _surfaceDecoration(tester);
       final Border hoverBorder = hoverDecoration.border! as Border;
       expect(
         hoverBorder.top.color,
@@ -590,21 +546,16 @@ void main() {
             'the affordance still reads as interactive.',
       );
 
-      final RichText hoverRich = tester.widget<RichText>(
-        find.descendant(
-          of: find.text('Diplomatic protest'),
-          matching: find.byType(RichText),
-        ),
-      );
+      final TextSpan hoverSpan = _labelSpan(tester, 'Diplomatic protest');
       expect(
-        (hoverRich.text as TextSpan).style?.color,
+        hoverSpan.style?.color,
         EditorialMonoclePalette.accent,
         reason:
             'Muted variant hover label must lift to --accent (vs primary '
             'variant which lifts to --accent-bright).',
       );
       expect(
-        (hoverRich.text as TextSpan).style?.color,
+        hoverSpan.style?.color,
         isNot(EditorialMonoclePalette.accentBright),
         reason:
             'Muted variant must not lift label to --accent-bright on hover; '
@@ -630,8 +581,7 @@ void main() {
         child: const Text('Declare War'),
       );
 
-      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration decoration = box.decoration as BoxDecoration;
+      final BoxDecoration decoration = _surfaceDecoration(tester);
 
       final Border border = decoration.border! as Border;
       expect(
@@ -649,14 +599,8 @@ void main() {
             'destructive intent of the action would be visually weakened.',
       );
 
-      final RichText rich = tester.widget<RichText>(
-        find.descendant(
-          of: find.text('Declare War'),
-          matching: find.byType(RichText),
-        ),
-      );
       expect(
-        (rich.text as TextSpan).style?.color,
+        _labelSpan(tester, 'Declare War').style?.color,
         EditorialMonoclePalette.danger,
         reason:
             'When both variants are set, the engraved label must paint in '
@@ -675,8 +619,7 @@ void main() {
       // continue painting the canonical primary chrome.
       await _pumpButton(tester, onPressed: () {});
 
-      final DecoratedBox box = _findButtonSurfaceDecoratedBox(tester);
-      final BoxDecoration decoration = box.decoration as BoxDecoration;
+      final BoxDecoration decoration = _surfaceDecoration(tester);
 
       final Border border = decoration.border! as Border;
       expect(border.top.color, EditorialMonoclePalette.border);
@@ -688,18 +631,12 @@ void main() {
             'idle border just because the variant flag was added to the API.',
       );
 
-      final RichText rich = tester.widget<RichText>(
-        find.descendant(
-          of: find.text('Confirm'),
-          matching: find.byType(RichText),
-        ),
-      );
       expect(
-        (rich.text as TextSpan).style?.color,
+        _labelSpan(tester, 'Confirm').style?.color,
         EditorialMonoclePalette.accent,
       );
       expect(
-        (rich.text as TextSpan).style?.color,
+        _labelSpan(tester, 'Confirm').style?.color,
         isNot(EditorialMonoclePalette.muted),
         reason:
             'Default CtNinePatchButton must not paint a muted label when no '
