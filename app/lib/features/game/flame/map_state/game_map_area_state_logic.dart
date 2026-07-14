@@ -11,7 +11,4 @@ part 'game_map_area_state_logic_shell.dart';
 part 'game_map_area_state_logic_work_targets.dart';
 part 'game_map_area_state_logic_draft_projection.dart';
 part 'game_map_area_state_logic_province_actions.dart';
-part 'game_map_area_state_logic_forwarders_shell_work.dart';
-part 'game_map_area_state_logic_forwarders_draft.dart';
-part 'game_map_area_state_logic_forwarders_province.dart';
 part 'game_map_area_state_logic_forwarders.dart';

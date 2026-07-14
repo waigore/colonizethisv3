@@ -1,4 +1,6 @@
 // SPEC/ui/components/dialogue-tristate-decision-row.md + #4018 helpers.
+import 'dart:io';
+
 import 'package:colonizethis_app/features/game/widgets/dialogue/dialogue_tristate_decision_row.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/titled_dialogue_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/tree_builders/draft_move_destination_line.dart';
@@ -10,6 +12,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   suppressLogsForTests();
@@ -202,4 +205,45 @@ void main() {
       expect(detailBuilds, detailAfterMount);
     },
   );
+
+  group('GameMapAreaStateLogic Api hop collapse (#4018)', () {
+    test('positive: public facade has no middle Api* part files', () {
+      final mapStateDir = Directory(
+        '${Directory.current.path}/lib/features/game/flame/map_state',
+      );
+      final names = mapStateDir
+          .listSync()
+          .whereType<File>()
+          .map((f) => p.basename(f.path))
+          .toList();
+      expect(names, contains('game_map_area_state_logic_forwarders.dart'));
+      expect(
+        names.where((n) => n.contains('forwarders_')).toList(),
+        isEmpty,
+      );
+      final facade = File(
+        '${mapStateDir.path}/game_map_area_state_logic_forwarders.dart',
+      ).readAsStringSync();
+      expect(facade.contains('_GameMapAreaStateLogicApi'), isFalse);
+      expect(facade.contains('GameMapAreaStateLogicShell.'), isTrue);
+      expect(facade.contains('GameMapAreaStateLogicWorkTargets.'), isTrue);
+      expect(facade.contains('GameMapAreaStateLogicDraftProjection.'), isTrue);
+      expect(facade.contains('GameMapAreaStateLogicProvinceActions.'), isTrue);
+    });
+
+    test('negative: library entry does not declare Api* part directives', () {
+      final library = File(
+        '${Directory.current.path}/lib/features/game/flame/map_state/'
+        'game_map_area_state_logic.dart',
+      ).readAsStringSync();
+      expect(
+        library.contains("part 'game_map_area_state_logic_forwarders_"),
+        isFalse,
+      );
+      expect(
+        library.contains("part 'game_map_area_state_logic_forwarders.dart';"),
+        isTrue,
+      );
+    });
+  });
 }
