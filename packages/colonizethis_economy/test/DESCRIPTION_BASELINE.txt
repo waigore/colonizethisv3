@@ -1,6 +1,3 @@
-FirstRightProfit equality works on identical (rate, treasury)
-FirstRightProfit.zero has zero rate and zero treasury
-GP town-connected timber yields lumber bonus in bonusByFactionId
 accumulates on existing stockpile
 accumulates onto an existing entry
 adds extracted quantities to stockpile
@@ -8,18 +5,22 @@ applies per-player extraction to player stockpiles
 bronze limiting input min(8,2)=2 → floor(2/4)=0
 can remove merchant ships when interception triggers and RNG hits
 canAffordWorkMaterialCost is false when any commodity is short
+capital grain bonus adds equal effective and full
 capital tile grain bonus is unconditional on connectivity
 cargo cap limits delivered overseas
 collects the seaboard port tile keys as a set
+combined limits aggregate to a single effective (full) pair
 converts multiple riches and sums treasury delta
 converts spices to treasury at base price
 cotton fabric requires cotton_weaving tech
+counts improvable tiles including partially improved below cap
 creates a new entry starting from zero
 custom priorityOrder is respected
 decrements running treasury tally after a priced fill
 deductWorkMaterialCost reduces quantities
 deduplicates seaboards that map to the same tile key
 delegates canAffordBuildOrder to build_cost canAffordBuild
+disconnected improved tile contributes 0 (N)
 does not boost gathering tech
 does not filter zero or negative deltas (caller guards)
 empty extracted returns same stockpile
@@ -27,18 +28,23 @@ empty extractedByPlayerId returns game unchanged
 empty input yields empty index
 empty precondition list passes (returns null)
 empty stockpile yields zero delta
+empty when no improvable tiles
 empty world produces an empty index
 enemy blockade fleet sets the blockade flag
 enemy with privateering reduces cargo more (strictly less kept)
 enemy without privateering reduces cargo by the baseline
 every Resource.name resolves to a catalog commodity id
 every riches commodity is not tradeable
+excludes unprospected mineral tiles
 falls back to game.worldState when index misses
 fed peasants contribute labour without luxury
 fed-but-unluxuried trained worker contributes no labour
 first attribution per tileKey wins on duplicates
+FirstRightProfit equality works on identical (rate, treasury)
+FirstRightProfit.zero has zero rate and zero treasury
 fleetsById index matches default linear home-fleet lookup
 floor(7/4)*1 = 1 lumber at level 2
+GP town-connected timber yields lumber bonus in bonusByFactionId
 handles equal ids (degenerate self-pair) deterministically
 honours canonical priority: earlier failure wins over later
 ignores negative values in extracted
@@ -59,6 +65,7 @@ matches resolveRichesToTreasury treasuryDelta
 matches the inline fold idiom it replaces
 military upkeep consumes food before workers
 minor town-connected timber accumulates delivered raw extraction
+negative: out-of-bounds improvement keys do not throw during snapshot build
 no enemy patrol/blockade fleets yields zero intercept score
 no food leaves workers on strike (zero labour)
 no ports produces an empty set
@@ -94,6 +101,7 @@ returns resource context for valid tile key
 returns the first failing reason in list order
 returns zero when stockpile has no riches
 richesCashMultiplier scales treasury delta
+road-rule path with no binding constraints has no brackets
 short-circuits: no later check runs once one fails
 skips decrement on missing-price free-fill path
 steel from iron and coal is eligible (all raw inputs)
@@ -105,10 +113,12 @@ sums units committed by allocateOverseasToStockpile
 the mapping is total over all Resource values
 tile extraction contribution is null for disconnected tile
 toString is informative for trace logs
+town development cap yields effective < full
 town-rule-only + non-port: townDevelopmentLevel does NOT cap yield
 town-rule-only + port: townDevelopmentLevel DOES cap yield
 townManufacturingBonusToAutoOffers emits priority-1 offers for minors
 trained worker needs both food and luxury to count
+transport limit yields effective < full with brackets
 treasury equals filledQuantity * pricePerUnit * profitRate
 zero idle counts contribute no labour
 zero quantities do not change stockpile

@@ -38,6 +38,9 @@ class TileExtractionDisplayContribution {
 
 /// Computes production (full) and effective yield for one improved tile,
 /// including disconnected tiles where effective is 0 and full > 0.
+///
+/// Shares resolve/clamp/production with [computeTileYieldContribution] via
+/// [resolveImprovedTileProductionPrelude] (Refs #4014).
 TileExtractionDisplayContribution? computeTileExtractionDisplayContribution({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -52,57 +55,32 @@ TileExtractionDisplayContribution? computeTileExtractionDisplayContribution({
   isCommodityExtractable,
   Map<String, Province>? provincesByFullId,
 }) {
-  final tileContext = resolveTileKeyExtractionContext(
-    tileKey: tileKey,
-    tileMapByRegion: tileMapByRegion,
-    provincesByFullId: provincesByFullId,
+  final prelude = resolveImprovedTileProductionPrelude(
     game: game,
+    tileMapByRegion: tileMapByRegion,
+    tileKey: tileKey,
+    provincesByFullId: provincesByFullId,
     logContext: 'provinceExtractionSnapshot',
+    techCapForCommodity: techCapForCommodity,
+    isCommodityExtractable: isCommodityExtractable,
   );
-  if (tileContext == null) {
-    return null;
-  }
-
-  final commodityId = tileContext.commodityId;
-  if (!isCommodityExtractable(tileKey, commodityId)) {
-    return null;
-  }
-
-  final improvementLevel = game.worldState.tileState
-      .improvementLevel(tileKey)
-      .clamp(0, 4);
-  if (improvementLevel < 1) {
-    return null;
-  }
-
-  final rawTechCap = techCapForCommodity(commodityId);
-  final terrain = tileMapByRegion[tileContext.regionId]?.terrainAt(
-    tileContext.resourceContext.x,
-    tileContext.resourceContext.y,
-  );
-  final techCap = terrain == null
-      ? rawTechCap
-      : clampExtractionCapForTerrain(rawTechCap, commodityId, terrain);
-
-  final production = (improvementLevel < techCap ? improvementLevel : techCap)
-      .clamp(0, 4);
-  if (production <= 0) {
+  if (prelude == null) {
     return null;
   }
 
   var effective = 0;
   if (connectedTileKeys.contains(tileKey)) {
-    final province = tileContext.province;
+    final province = prelude.province;
     final townTileKey = province.townTileKey;
     final townTileIsPort =
         townTileKey != null && portTileKeys.contains(townTileKey);
     effective = computeEffectiveTileYield(
       tileState: game.worldState.tileState,
       tileKey: tileKey,
-      techCap: techCap,
+      techCap: prelude.techCap,
       townDevelopmentCap: province.townDevelopmentLevel,
       townTileIsPort: townTileIsPort,
-      isCapitalProvince: tileContext.provinceId == capitalProvinceId,
+      isCapitalProvince: prelude.provinceId == capitalProvinceId,
       usesRoadRule: connectedByRoadRule.contains(tileKey),
       portTileKeys: portTileKeys,
       pathTransportCap: pathTransportCap,
@@ -110,10 +88,10 @@ TileExtractionDisplayContribution? computeTileExtractionDisplayContribution({
   }
 
   return TileExtractionDisplayContribution(
-    provinceId: tileContext.provinceId,
-    commodityId: commodityId,
+    provinceId: prelude.provinceId,
+    commodityId: prelude.commodityId,
     effective: effective,
-    full: production,
+    full: prelude.production,
     tileKey: tileKey,
   );
 }

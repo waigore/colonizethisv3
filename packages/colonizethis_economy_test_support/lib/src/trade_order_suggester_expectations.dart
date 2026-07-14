@@ -1,21 +1,16 @@
 // dart format off
 // Compact TradeOrderSuggester result assertions (Refs #3939 phase 3 slice 14).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Pins for a single suggested offer or bid row.
 typedef SuggesterOrderPin = ({String commodityId, int? quantity, TradeOrderType? type, int? priority, bool? isFtp});
-
 /// Ordered bid quantity pins for multi-bid cargo/treasury scenarios.
 typedef SuggesterBidQuantityPin = ({String commodityId, int quantity});
-
 /// Data-driven expectations for [TradeOrderSuggesterScenario] rows.
 class SuggesterExpectation {
   const SuggesterExpectation({this.isEmpty, this.offersEmpty, this.bidsEmpty, this.offersNotEmpty, this.bidsNotEmpty, this.offersLength, this.bidsLength, this.offerCommodityIds, this.bidCommodityIds, this.bidQuantities, this.singleOffer, this.singleBid, this.validatorAllAccepted, this.offerBidDisjoint, this.offersContain, this.bidsContainAll, this.custom});
-
   final bool? isEmpty;
   final bool? offersEmpty;
   final bool? bidsEmpty;
@@ -34,13 +29,10 @@ class SuggesterExpectation {
   final Set<String>? bidsContainAll;
   final void Function(TradeSuggestionContext context, TradeSuggestionResult result)? custom;
 }
-
 /// Single-offer pin sugar (Refs #3939 slice 62).
 SuggesterExpectation suggesterSingleOfferExpect(String commodityId, int quantity, {bool pinDefaults = false, bool bidsEmpty = false, int? offersLength = 1}) => SuggesterExpectation(offersLength: offersLength, bidsEmpty: bidsEmpty ? true : null, singleOffer: (commodityId: commodityId, quantity: quantity, type: pinDefaults ? TradeOrderType.offer : null, priority: pinDefaults ? TradeSuggestionContext.defaultOfferPriority : null, isFtp: pinDefaults ? false : null));
-
 /// Single-bid pin sugar (Refs #3939 slice 62).
 SuggesterExpectation suggesterSingleBidExpect(String commodityId, int quantity, {bool pinDefaults = false, bool offersEmpty = false, int? bidsLength = 1}) => SuggesterExpectation(bidsLength: bidsLength, offersEmpty: offersEmpty ? true : null, singleBid: (commodityId: commodityId, quantity: quantity, type: pinDefaults ? TradeOrderType.bid : null, priority: pinDefaults ? TradeSuggestionContext.defaultBidPriority : null, isFtp: pinDefaults ? false : null));
-
 void assertSuggesterExpectation(TradeSuggestionContext context, TradeSuggestionResult result, SuggesterExpectation expectation) {
   if (expectation.isEmpty != null) {
     expect(result.isEmpty, expectation.isEmpty);

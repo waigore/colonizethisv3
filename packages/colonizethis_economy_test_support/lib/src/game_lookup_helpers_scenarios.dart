@@ -1,19 +1,14 @@
 // dart format off
 // Table-driven game lookup helper scenarios (Refs #3939 phase 3).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
-
 import 'game_lookup_helpers_expectations.dart';
-
 /// One row in [buildProvinceIndexScenarios] (Refs #3939 slice 64).
 typedef BuildProvinceIndexScenario = ({String label, Game Function() gameBuilder, BuildProvinceIndexExpectation expect, String? refs});
-
 void runBuildProvinceIndexScenario(BuildProvinceIndexScenario scenario) {
   assertBuildProvinceIndexExpectation(buildProvinceIndex(scenario.gameBuilder()), scenario.expect);
 }
-
 /// Canonical scenarios for [buildProvinceIndex].
 List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
   (
@@ -34,28 +29,22 @@ List<BuildProvinceIndexScenario> buildProvinceIndexScenarios() => [
   ),
   (label: 'empty world produces an empty index', gameBuilder: TestFixtures.minimalGame, expect: const BuildProvinceIndexExpectation(isEmpty: true), refs: '#3939'),
 ];
-
 /// One row in [collectPortTileKeysScenarios] (Refs #3939 slice 64).
 typedef CollectPortTileKeysScenario = ({String label, Game Function() gameBuilder, CollectPortTileKeysExpectation expect, String? refs});
-
 void runCollectPortTileKeysScenario(CollectPortTileKeysScenario scenario) {
   assertCollectPortTileKeysExpectation(collectPortTileKeys(scenario.gameBuilder()), scenario.expect);
 }
-
 /// Canonical scenarios for [collectPortTileKeys].
 List<CollectPortTileKeysScenario> collectPortTileKeysScenarios() => [
   (label: 'collects the seaboard port tile keys as a set', gameBuilder: () => TestFixtures.minimalGame(portsByProvinceSeaboard: const {'oldWorld|harbor|north': 'oldWorld|harbor|0|0', 'newWorld|harbor|south': 'newWorld|harbor|1|1'}), expect: const CollectPortTileKeysExpectation(expected: {'oldWorld|harbor|0|0', 'newWorld|harbor|1|1'}), refs: '#3939'),
   (label: 'deduplicates seaboards that map to the same tile key', gameBuilder: () => TestFixtures.minimalGame(portsByProvinceSeaboard: const {'oldWorld|harbor|north': 'oldWorld|harbor|0|0', 'oldWorld|harbor|east': 'oldWorld|harbor|0|0'}), expect: const CollectPortTileKeysExpectation(expected: {'oldWorld|harbor|0|0'}), refs: '#3939'),
   (label: 'no ports produces an empty set', gameBuilder: TestFixtures.minimalGame, expect: const CollectPortTileKeysExpectation(isEmpty: true), refs: '#3939'),
 ];
-
 /// One row in [capitalFactionLookupScenarios] (Refs #3939 slice 64).
 typedef CapitalFactionLookupScenario = ({String label, Game Function() gameBuilder, CapitalFactionLookupExpectation expect, String? refs});
-
 void runCapitalFactionLookupScenario(CapitalFactionLookupScenario scenario) {
   assertCapitalFactionLookupExpectation(scenario.gameBuilder(), scenario.expect);
 }
-
 /// Canonical scenarios for [capitalProvinceIdForFaction] /
 /// [capitalRegionIdForFaction].
 List<CapitalFactionLookupScenario> capitalFactionLookupScenarios() => [

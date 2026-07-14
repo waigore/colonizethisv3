@@ -1,14 +1,11 @@
 // dart format off
 // Compact PriceDiscovery market-activity assertions (Refs #3939 phase 3 slice 19).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Data-driven expectations for [PriceDiscovery.computeMarketActivity] rows.
 class PriceDiscoveryMarketActivityExpectation {
   const PriceDiscoveryMarketActivityExpectation({this.totalBidQuantity, this.totalOfferQuantity, this.filledQuantity, this.priceChangePercent, this.priceChangePercentCloseTo, this.equalsEmpty = false});
-
   final int? totalBidQuantity;
   final int? totalOfferQuantity;
   final int? filledQuantity;
@@ -16,7 +13,6 @@ class PriceDiscoveryMarketActivityExpectation {
   final double? priceChangePercentCloseTo;
   final bool equalsEmpty;
 }
-
 void assertPriceDiscoveryMarketActivityExpectation(MarketActivity activity, PriceDiscoveryMarketActivityExpectation expectation) {
   if (expectation.totalBidQuantity != null) {
     expect(activity.totalBidQuantity, expectation.totalBidQuantity);

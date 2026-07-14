@@ -1,39 +1,31 @@
 // dart format off
 // Table-driven purchased-tile index scenarios (Refs #3856, #3939 slice 17).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'purchased_tile_expectations.dart';
 import 'purchased_tile_index_test_support.dart';
-
 /// One row in [purchasedTileAttributionSemanticsScenarios] (Refs #3979).
 typedef PurchasedTileAttributionSemanticsScenario = ({
   String label,
   PurchasedTileAttributionSemanticsTarget target,
   String? refs,
 });
-
 void runPurchasedTileAttributionSemanticsScenario(
   PurchasedTileAttributionSemanticsScenario scenario,
 ) {
   runPurchasedTileAttributionSemanticsExpectation(scenario.target);
 }
-
 /// Discriminator for attribution semantics rows (Refs #3979).
 enum PurchasedTileAttributionSemanticsTarget {
   equality,
   inequality,
   toStringFields,
 }
-
 /// Canonical K1 attribution for semantics rows (Refs #3939 slice 56).
 const PurchasedTileAttribution _kAttrM1GpA = PurchasedTileAttribution(tileKey: 'oldWorld|M1|0|0', owningGpId: 'gpA', sourceFactionId: 'M1', provinceId: 'oldWorld|M1');
-
 PurchasedTileAttribution _attr({String? tileKey, String? owningGpId, String? sourceFactionId, String? provinceId}) => PurchasedTileAttribution(tileKey: tileKey ?? _kAttrM1GpA.tileKey, owningGpId: owningGpId ?? _kAttrM1GpA.owningGpId, sourceFactionId: sourceFactionId ?? _kAttrM1GpA.sourceFactionId, provinceId: provinceId ?? _kAttrM1GpA.provinceId);
-
 void runPurchasedTileAttributionSemanticsExpectation(
   PurchasedTileAttributionSemanticsTarget target,
 ) {
@@ -55,20 +47,16 @@ void runPurchasedTileAttributionSemanticsExpectation(
       expect(s, contains('M1'));
   }
 }
-
 /// Canonical scenarios for [PurchasedTileAttribution] value semantics.
 List<PurchasedTileAttributionSemanticsScenario> purchasedTileAttributionSemanticsScenarios() => [
   (label: 'equality holds across all four fields', target: PurchasedTileAttributionSemanticsTarget.equality, refs: null),
   (label: 'inequality on any differing field', target: PurchasedTileAttributionSemanticsTarget.inequality, refs: null),
   (label: 'toString surfaces every field for trace logs', target: PurchasedTileAttributionSemanticsTarget.toStringFields, refs: null),
 ];
-
 /// One row in [purchasedTileIndexFromGameScenarios] (Refs #3939 slice 64).
 typedef PurchasedTileIndexFromGameScenario = ({String label, Game Function() buildGame, void Function(PurchasedTileIndex index) verify, String? refs});
-
 /// Compact expect-wired row (Refs #3939 slice 59).
 PurchasedTileIndexFromGameScenario purchasedTileIndexRow({required String label, required Game Function() buildGame, required PurchasedTileIndexExpectation expect, String? refs}) => (label: label, buildGame: buildGame, verify: (index) => assertPurchasedTileIndexExpectation(index, expect, gameForDeterminismRerun: expect.deterministicIndexRerun ? buildGame() : null), refs: refs);
-
 /// Canonical scenarios for [PurchasedTileIndex.fromGame].
 List<PurchasedTileIndexFromGameScenario> purchasedTileIndexFromGameScenarios() => [
   purchasedTileIndexRow(
@@ -133,7 +121,6 @@ List<PurchasedTileIndexFromGameScenario> purchasedTileIndexFromGameScenarios() =
   ),
   purchasedTileIndexRow(label: 'empty owningGpId entry is dropped defensively', buildGame: emptyOwningGpPurchasedTileGame, expect: const PurchasedTileIndexExpectation(length: 0)),
 ];
-
 /// Builds [PurchasedTileIndex] for one [PurchasedTileIndexFromGameScenario].
 PurchasedTileIndex runPurchasedTileIndexFromGameScenario(PurchasedTileIndexFromGameScenario scenario) {
   return PurchasedTileIndex.fromGame(scenario.buildGame());

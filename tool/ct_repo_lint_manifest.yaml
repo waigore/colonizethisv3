@@ -216,6 +216,20 @@ rules:
     runner: dart
     script: tool/check_economy_scenario_table_runner.dart
 
+  - rule_id: repo.economy_test_support_loc
+    group: testing
+    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7999 (Refs #4014)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_support_loc.dart
+
+  - rule_id: repo.economy_test_no_local_run_scenarios
+    group: testing
+    title: colonizethis_economy test/ must not define local void Function() run scenario shells (Refs #4014)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_no_local_run_scenarios.dart
+
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
     title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)

@@ -1,19 +1,14 @@
 // dart format off
 // Compact world-market player-context facade assertions (Refs #3939 phase 3 slice 19).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'treasury_test_support.dart';
-
 /// Which factory path [PlayerContextExpectation] exercises.
 enum PlayerContextScenarioTarget { snapshot, factoryParityScalars, factoryParityTreasury, suggestion }
-
 /// Data-driven expectations for [PlayerContextScenario] rows.
 class PlayerContextExpectation {
   const PlayerContextExpectation({required this.target, this.treasury = 100, this.playerId = humanPlayerId, this.treasuryBudgetForBids, this.worldMarketStateSameAsGame = false, this.stagedBids = const [], this.projectedTreasuryDelta = 0, this.availableStockpileByCommodityId = const {}, this.commodityNeedByCommodityId, this.offerPriority, this.bidPriority, this.checkDefaultNeedAndPriorities = false});
-
   final PlayerContextScenarioTarget target;
   final int treasury;
   final String playerId;
@@ -27,11 +22,9 @@ class PlayerContextExpectation {
   final int? bidPriority;
   final bool checkDefaultNeedAndPriorities;
 }
-
 void assertPlayerContextExpectation(PlayerContextExpectation expectation) {
   final game = buildTreasuryBidBudgetGame(treasury: expectation.treasury);
   final Orders? stagedOrders = expectation.stagedBids.isNotEmpty ? humanOrdersWith(expectation.stagedBids) : (expectation.projectedTreasuryDelta != 0 ? humanOrdersWith(const <TradeOrder>[]) : null);
-
   switch (expectation.target) {
     case PlayerContextScenarioTarget.snapshot:
       final base = worldMarketPlayerContextFromGame(game, expectation.playerId, stagedOrders: stagedOrders, projectedTreasuryDelta: expectation.projectedTreasuryDelta);

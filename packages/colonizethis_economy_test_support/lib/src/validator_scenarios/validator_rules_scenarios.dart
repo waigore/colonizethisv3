@@ -1,25 +1,18 @@
 // Rules 1–3 and empty/accept validator scenarios (Refs #3856, #3939 phase 3 slice 30).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-
 import 'trade_order_validator_test_support.dart';
 import 'validator_expectations.dart';
 import 'validator_scenario.dart';
-
 /// Rules 1–3 and empty/accept paths from
 /// `world_market_trade_order_validator_test.dart` (Refs #3856 slice 8).
 List<TradeOrderValidatorScenario> tradeOrderValidatorEmptyAcceptScenarios() =>
     tradeOrderValidatorRulesScenarios().take(5).toList();
-
 List<TradeOrderValidatorScenario> tradeOrderValidatorRule1Scenarios() =>
     tradeOrderValidatorRulesScenarios().skip(5).take(2).toList();
-
 List<TradeOrderValidatorScenario> tradeOrderValidatorRule2Scenarios() =>
     tradeOrderValidatorRulesScenarios().skip(7).take(6).toList();
-
 List<TradeOrderValidatorScenario> tradeOrderValidatorRule3Scenarios() =>
     tradeOrderValidatorRulesScenarios().skip(13).toList();
-
 // dart format off
 List<TradeOrderValidatorScenario> tradeOrderValidatorRulesScenarios() => [
   validatorRow(label: 'empty proposed orders returns empty result list', expect: const ValidatorExpectation(resultsEmpty: true)),
