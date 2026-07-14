@@ -14,7 +14,8 @@
 
 import 'dart:async';
 
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show MapTopology, TopologyEdge, TopologyNode, TopologyNodeType;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         applyNavalSplitFleet,
@@ -171,51 +172,275 @@ Game buildNavalPanelNamedSeaZoneGame({
 
 /// Single home-fleet game used for ship-type display-name composition asserts.
 Game buildNavalPanelShipLabelGame({String humanId = 'gp_ship_display'}) {
-  const capProvince = 'oldWorld|cap1';
-  final homeId = homeFleetIdFor(humanId);
+  return buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: 'g_ship_labels',
+    displayName: 'Ship Label Tester',
+    peerFleets: const [],
+    homeShips: const [ShipInstance(id: 'h1', typeId: 'carrack')],
+  );
+}
+
+/// OW capital + optional extra provinces / fleets for naval panel scenarios
+/// (Refs #4013 densify of `naval_units_panel_part{3,4}_test.dart`).
+Game buildNavalPanelOwFleetsGame({
+  required String gameId,
+  required String humanId,
+  required String displayName,
+  required List<Province> oldWorldProvinces,
+  required List<Fleet> fleets,
+  String? capitalProvinceId,
+  Map<String, List<String>> tileKeysByProvince = const {},
+  Map<String, String> portsByProvinceSeaboard = const {},
+  int? nextShipInstanceSeq,
+  int treasury = 0,
+}) {
+  final player = capitalProvinceId == null
+      ? Player(
+          id: humanId,
+          displayName: displayName,
+          isHuman: true,
+          treasury: treasury,
+        )
+      : Player(
+          id: humanId,
+          displayName: displayName,
+          isHuman: true,
+          capitalProvinceId: capitalProvinceId,
+          capitalTile: CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: capitalProvinceId,
+            x: 0,
+            y: 0,
+          ),
+          treasury: treasury,
+        );
   return Game(
-    id: 'g_ship_labels',
+    id: gameId,
     worldState: WorldState(
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: 'cap1',
-            regionId: 'oldWorld',
-            ownerId: humanId,
-            displayName: 'Capital',
-          ),
-        ],
+      oldWorld: RegionData(provinces: oldWorldProvinces),
+      newWorld: const RegionData(),
+      fleets: fleets,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+      tileKeysByRegionAndProvince: {
+        'oldWorld': tileKeysByProvince,
+      },
+      nextShipInstanceSeq: nextShipInstanceSeq ?? 1,
+    ),
+    players: [player],
+  );
+}
+
+/// Capital province owned by [humanId] with a home fleet plus peer fleets.
+Game buildNavalPanelCapitalHomeAndPeersGame({
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  required List<Fleet> peerFleets,
+  List<ShipInstance> homeShips = const [
+    ShipInstance(id: 'home_1', typeId: 'carrack'),
+  ],
+  String capitalLocalId = 'cap1',
+  int? nextShipInstanceSeq,
+}) {
+  final capProvince = 'oldWorld|$capitalLocalId';
+  final homeId = homeFleetIdFor(humanId);
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: displayName,
+    capitalProvinceId: capProvince,
+    oldWorldProvinces: [
+      Province(
+        id: capitalLocalId,
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital',
       ),
+    ],
+    fleets: [
+      Fleet(
+        id: homeId,
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: capProvince,
+        ships: homeShips,
+      ),
+      ...peerFleets,
+    ],
+    tileKeysByProvince: {
+      capProvince: ['$capProvince|0|0'],
+    },
+    nextShipInstanceSeq: nextShipInstanceSeq,
+  );
+}
+
+/// Capital + merge-port provinces with fleets typically berthed at the merge port.
+Game buildNavalPanelCapitalMergePortFleetsGame({
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  required List<Fleet> fleets,
+  String capitalLocalId = 'cap1',
+  String mergePortLocalId = 'mergeport',
+  String mergePortDisplayName = 'Merge Port',
+  int? nextShipInstanceSeq,
+  bool playerHasCapital = true,
+}) {
+  final capProvince = 'oldWorld|$capitalLocalId';
+  final mergePort = 'oldWorld|$mergePortLocalId';
+  final provinces = <Province>[
+    if (playerHasCapital)
+      Province(
+        id: capitalLocalId,
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital',
+      ),
+    Province(
+      id: mergePortLocalId,
+      regionId: 'oldWorld',
+      ownerId: humanId,
+      displayName: mergePortDisplayName,
+    ),
+  ];
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: displayName,
+    capitalProvinceId: playerHasCapital ? capProvince : null,
+    oldWorldProvinces: provinces,
+    fleets: fleets,
+    tileKeysByProvince: {
+      if (playerHasCapital) capProvince: ['$capProvince|0|0'],
+      mergePort: ['$mergePort|0|0'],
+    },
+    nextShipInstanceSeq: nextShipInstanceSeq,
+  );
+}
+
+/// Single sea-fleet game (no capital) for location-scope / auto-close pins.
+Game buildNavalPanelSingleSeaFleetGame({
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  String fleetId = 'f1',
+  String seaZoneId = 's1',
+  String shipId = 'ship_1',
+  String shipTypeId = 'frigate',
+}) {
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: displayName,
+    oldWorldProvinces: const [],
+    fleets: [
+      Fleet(
+        id: fleetId,
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: seaZoneId,
+        ships: [ShipInstance(id: shipId, typeId: shipTypeId)],
+      ),
+    ],
+  );
+}
+
+/// Empty-world human with no fleets (empty-state message pins).
+Game buildNavalPanelEmptyHumanGame({
+  String humanId = 'p_empty',
+  String gameId = 'empty_naval',
+  String displayName = 'Solo',
+}) {
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: displayName,
+    oldWorldProvinces: const [],
+    fleets: const [],
+  );
+}
+
+/// Beachhead-mission sea fleet for status-line pins.
+Game buildNavalPanelBeachheadMissionGame({
+  String humanId = 'p_beach',
+  String gameId = 'beach_test',
+  String fleetId = 'bf1',
+  String seaZoneId = 'atlantic',
+}) {
+  return Game(
+    id: gameId,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(units: []),
       newWorld: const RegionData(),
       fleets: [
         Fleet(
-          id: homeId,
+          id: fleetId,
           ownerId: humanId,
           regionId: 'oldWorld',
-          inPortAtProvinceId: capProvince,
-          ships: const [ShipInstance(id: 'h1', typeId: 'carrack')],
+          seaZoneId: seaZoneId,
+          shipTypeIds: const ['carrack'],
+          mission: FleetMission.beachhead,
         ),
       ],
-      tileKeysByRegionAndProvince: const {
+      portsByProvinceSeaboard: {
+        'oldWorld|lisbon|$seaZoneId': 'oldWorld|lisbon|0|0',
+      },
+      tileKeysByRegionAndProvince: {
         'oldWorld': {
-          capProvince: ['oldWorld|cap1|0|0'],
+          'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
         },
       },
     ),
-    players: [
-      Player(
-        id: humanId,
-        displayName: 'Ship Label Tester',
-        isHuman: true,
-        capitalProvinceId: capProvince,
-        capitalTile: const CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: capProvince,
-          x: 0,
-          y: 0,
-        ),
+    players: [Player(id: humanId, displayName: 'P', isHuman: true)],
+  );
+}
+
+/// Capital province adjacent to a named sea zone (Combine adjacency cases).
+MapTopology buildNavalCapitalAdjacentSeaTopology({
+  String capitalNodeId = 'oldWorld|cap1',
+  String seaZoneId = 'zone_alpha',
+  bool includeEdge = true,
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: capitalNodeId,
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: seaZoneId,
+        regionId: 'oldWorld',
+        type: TopologyNodeType.seaZone,
       ),
     ],
+    edges: [
+      if (includeEdge) TopologyEdge(id1: capitalNodeId, id2: seaZoneId),
+    ],
+  );
+}
+
+/// Two OW sea zones linked for Move / scoped auto-close cases.
+MapTopology buildNavalTwoSeaZonesTopology({
+  String fromZoneId = 'oldWorld|s1',
+  String toZoneId = 'oldWorld|s2',
+}) {
+  return MapTopology(
+    nodes: [
+      TopologyNode(
+        id: fromZoneId,
+        regionId: fromZoneId.split('|').first,
+        type: TopologyNodeType.seaZone,
+      ),
+      TopologyNode(
+        id: toZoneId,
+        regionId: toZoneId.split('|').first,
+        type: TopologyNodeType.seaZone,
+      ),
+    ],
+    edges: [TopologyEdge(id1: fromZoneId, id2: toZoneId)],
   );
 }

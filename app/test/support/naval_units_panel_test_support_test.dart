@@ -54,6 +54,75 @@ void main() {
   );
 
   test(
+    'buildNavalPanelCapitalHomeAndPeersGame adds home plus peer fleets',
+    () {
+      const humanId = 'gp_home_peers';
+      final game = buildNavalPanelCapitalHomeAndPeersGame(
+        humanId: humanId,
+        gameId: 'g_home_peers',
+        displayName: 'Peers',
+        peerFleets: [
+          Fleet(
+            id: 'peer',
+            ownerId: humanId,
+            regionId: 'oldWorld',
+            seaZoneId: 'z1',
+            ships: const [ShipInstance(id: 'p1', typeId: 'fluyte')],
+          ),
+        ],
+      );
+      expect(game.worldState.fleets, hasLength(2));
+      expect(
+        game.worldState.fleets.any((f) => f.id == homeFleetIdFor(humanId)),
+        isTrue,
+      );
+      expect(game.worldState.fleets.any((f) => f.id == 'peer'), isTrue);
+    },
+  );
+
+  test(
+    'buildNavalPanelCapitalMergePortFleetsGame without capital omits capital player',
+    () {
+      const humanId = 'gp_no_cap';
+      final game = buildNavalPanelCapitalMergePortFleetsGame(
+        humanId: humanId,
+        gameId: 'g_no_cap',
+        displayName: 'No Cap',
+        playerHasCapital: false,
+        fleets: [
+          Fleet(
+            id: 'mp1',
+            ownerId: humanId,
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|mergeport',
+            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+          ),
+        ],
+      );
+      expect(game.players.single.capitalProvinceId, isNull);
+      expect(game.worldState.oldWorld.provinces, hasLength(1));
+      expect(game.worldState.fleets, hasLength(1));
+    },
+  );
+
+  test('buildNavalPanelEmptyHumanGame has no fleets', () {
+    final game = buildNavalPanelEmptyHumanGame();
+    expect(game.worldState.fleets, isEmpty);
+  });
+
+  test(
+    'buildNavalCapitalAdjacentSeaTopology omits edge when requested',
+    () {
+      final withEdge = buildNavalCapitalAdjacentSeaTopology();
+      final withoutEdge = buildNavalCapitalAdjacentSeaTopology(
+        includeEdge: false,
+      );
+      expect(withEdge.edges, hasLength(1));
+      expect(withoutEdge.edges, isEmpty);
+    },
+  );
+
+  test(
     'wireNavalSplitForWidgetTest applies the split and re-emits the update',
     () async {
       final bus = AppEventBus.create();
