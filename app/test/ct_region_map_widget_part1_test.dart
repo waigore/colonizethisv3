@@ -1,14 +1,9 @@
-import 'dart:ui' as ui;
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show TerrainType;
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart'
-    show AppEventBus, OpenProvinceDetailPanelEvent;
 
 import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/caches/province_label_icon_cache.dart';
@@ -18,25 +13,20 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         CtMapVisibilityMode,
         extractionIndicatorDisplaySizePx,
         extractionIndicatorRectsForIconRect,
-        isCellUnderFleetRevealHalo,
         resolveProvinceLabelIconIds,
         resolveProvinceLabelPresenceIconIds,
         resolveSeaZoneLabelPrefixIconIds,
-        resolveSeaZoneNamePlateCenterWorld,
-        resourceIconDisplaySizePx,
         shouldEllipsizeProvinceLabelText,
         shouldShowExtractionUnitIndicators,
         shouldApplyFogToFeatureOverlay,
         shouldApplyFogToInteriorPlainsVariantBase,
         shouldApplyFogToInteriorPlainsVariantOverlay,
         shouldApplyFogToLandBase,
-        shouldWrapProvinceLabelPresenceIcons,
-        visibilityForTerrainForMapCell;
+        shouldWrapProvinceLabelPresenceIcons;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
-
 
 void main() {
   suppressLogsForTests();
@@ -246,80 +236,7 @@ void main() {
           final data = await rootBundle.load(
             'assets/icons/64/ui_icon_map_capital_star.png',
           );
-          expect(data.lengthInBytes, greaterThan(0));
-          final codec = await ui.instantiateImageCodec(
-            data.buffer.asUint8List(),
-          );
-          final frame = await codec.getNextFrame();
-          final image = frame.image;
-          final bytes = await image.toByteData(
-            format: ui.ImageByteFormat.rawRgba,
-          );
-          expect(bytes, isNotNull);
-          final rgba = bytes!.buffer.asUint8List();
-          expect(rgba.length, image.width * image.height * 4);
-
-          var opaqueCount = 0;
-          var goldCount = 0;
-          var minX = image.width;
-          var minY = image.height;
-          var maxX = -1;
-          var maxY = -1;
-          for (var y = 0; y < image.height; y++) {
-            for (var x = 0; x < image.width; x++) {
-              final i = (y * image.width + x) * 4;
-              final r = rgba[i];
-              final g = rgba[i + 1];
-              final b = rgba[i + 2];
-              final a = rgba[i + 3];
-              if (a < 200) continue;
-              opaqueCount++;
-              if (r >= 150 && g >= 110 && b <= 120 && r >= g) {
-                goldCount++;
-              }
-              if (x < minX) minX = x;
-              if (y < minY) minY = y;
-              if (x > maxX) maxX = x;
-              if (y > maxY) maxY = y;
-            }
-          }
-
-          expect(opaqueCount, greaterThan(20));
-          expect(
-            goldCount / opaqueCount,
-            greaterThan(0.20),
-            reason: 'Capital icon should be dominantly gold/yellow',
-          );
-
-          final boxWidth = (maxX - minX + 1).toDouble();
-          final boxHeight = (maxY - minY + 1).toDouble();
-          expect(boxWidth, greaterThan(6));
-          expect(boxHeight, greaterThan(6));
-          final bboxArea = boxWidth * boxHeight;
-          final fillRatio = opaqueCount / bboxArea;
-          expect(
-            fillRatio,
-            lessThan(0.75),
-            reason:
-                'Star silhouette should not fill a rectangular bounding box',
-          );
-
-          final rowCounts = List<int>.filled(image.height, 0);
-          final colCounts = List<int>.filled(image.width, 0);
-          for (var y = minY; y <= maxY; y++) {
-            for (var x = minX; x <= maxX; x++) {
-              final i = (y * image.width + x) * 4;
-              if (rgba[i + 3] < 200) continue;
-              rowCounts[y]++;
-              colCounts[x]++;
-            }
-          }
-          final midRow = (minY + maxY) ~/ 2;
-          final midCol = (minX + maxX) ~/ 2;
-          expect(rowCounts[midRow], greaterThan(rowCounts[minY] * 2));
-          expect(rowCounts[midRow], greaterThan(rowCounts[maxY] * 2));
-          expect(colCounts[midCol], greaterThan(colCounts[minX] * 2));
-          expect(colCounts[midCol], greaterThan(colCounts[maxX] * 2));
+          await expectCapitalStarSilhouette(data);
         });
       },
       timeout: const Timeout(Duration(seconds: 10)),
@@ -464,45 +381,17 @@ void main() {
             .regionCellId;
         final fullProvinceId = '${base.regionId}|$localProvinceId';
 
-        RegionMapViewData withPresence({
-          required int civilianCount,
-          required int regimentCount,
-          required int shipCount,
-          required bool intelVisible,
-        }) {
-          return RegionMapViewData(
-            regionId: base.regionId,
-            width: base.width,
-            height: base.height,
-            cellSize: base.cellSize,
-            cells: base.cells,
-            capitalMarkers: base.capitalMarkers,
-            portMarkers: base.portMarkers,
-            factionColors: base.factionColors,
-            greatPowerFactionIds: base.greatPowerFactionIds,
-            terrainColors: base.terrainColors,
-            unitMarkers: base.unitMarkers,
-            warpMarkers: base.warpMarkers,
-            townMarkers: base.townMarkers,
-            provinceUnitPresenceByProvinceId: {
-              ...base.provinceUnitPresenceByProvinceId,
-              fullProvinceId: ProvinceUnitPresenceView(
-                civilianCount: civilianCount,
-                regimentCount: regimentCount,
-                shipCount: shipCount,
-                intelVisible: intelVisible,
-              ),
-            },
-          );
-        }
-
-        final initial = withPresence(
+        final initial = ctRegionMapWithPresence(
+          base: base,
+          fullProvinceId: fullProvinceId,
           civilianCount: 0,
           regimentCount: 0,
           shipCount: 0,
           intelVisible: true,
         );
-        final refreshed = withPresence(
+        final refreshed = ctRegionMapWithPresence(
+          base: base,
+          fullProvinceId: fullProvinceId,
           civilianCount: 1,
           regimentCount: 1,
           shipCount: 1,
@@ -516,26 +405,23 @@ void main() {
           (w) => w.runtimeType.toString().startsWith('GameWidget<'),
         );
         expect(gameWidgetFinder, findsOneWidget);
-        final beforeWidget = tester.widget(gameWidgetFinder);
         final beforeRegion =
-            (beforeWidget as dynamic).game.region as RegionMapViewData;
+            (tester.widget(gameWidgetFinder) as dynamic).game.region
+                as RegionMapViewData;
         final beforePresence =
-            beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
-        expect(beforePresence, isNotNull);
-        expect(beforePresence!.civilianCount, 0);
+            beforeRegion.provinceUnitPresenceByProvinceId[fullProvinceId]!;
+        expect(beforePresence.civilianCount, 0);
         expect(beforePresence.regimentCount, 0);
         expect(beforePresence.shipCount, 0);
 
         await tester.pumpWidget(ctRegionMapTestHarness(region: refreshed));
         await tester.pump();
 
-        final afterWidget = tester.widget(gameWidgetFinder);
-        final afterRegion =
-            (afterWidget as dynamic).game.region as RegionMapViewData;
         final afterPresence =
-            afterRegion.provinceUnitPresenceByProvinceId[fullProvinceId];
-        expect(afterPresence, isNotNull);
-        expect(afterPresence!.civilianCount, 1);
+            ((tester.widget(gameWidgetFinder) as dynamic).game.region
+                    as RegionMapViewData)
+                .provinceUnitPresenceByProvinceId[fullProvinceId]!;
+        expect(afterPresence.civilianCount, 1);
         expect(afterPresence.regimentCount, 1);
         expect(afterPresence.shipCount, 1);
       },
@@ -546,21 +432,9 @@ void main() {
       'required transport overlay atlas/spec assets are present in test bundle',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
-
-        const paths = [
-          'assets/images/terrain/tilesets/tileset_transport_road_64.png',
-          'assets/images/terrain/tilesets/tileset_transport_road_64.json',
-          'assets/images/terrain/tilesets/tileset_transport_rail_64.png',
-          'assets/images/terrain/tilesets/tileset_transport_rail_64.json',
-        ];
-        for (final path in paths) {
-          final data = await rootBundle.load(path);
-          expect(
-            data.lengthInBytes,
-            greaterThan(0),
-            reason: 'Transport overlay asset $path is empty',
-          );
-        }
+        await expectCtRegionMapAssetsNonEmpty(
+          ctRegionMapTransportOverlayAssetPaths,
+        );
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -568,29 +442,11 @@ void main() {
     testWidgets(
       'required Wang tileset asset files are present in test asset bundle',
       (WidgetTester tester) async {
-        // Pump a minimal widget tree so the test binding and asset bundle are initialized.
         await tester.pumpWidget(const SizedBox.shrink());
-
-        const pngPaths = [
-          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
-          'assets/images/terrain/tilesets/tileset_sea_desert.png',
-          'assets/images/terrain/tilesets/tileset_plains_desert.png',
-        ];
-        const jsonPaths = [
-          'assets/data/map_terrain_tilesets.json',
-          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.json',
-          'assets/images/terrain/tilesets/tileset_sea_desert.json',
-          'assets/images/terrain/tilesets/tileset_plains_desert.json',
-        ];
-
-        for (final path in [...pngPaths, ...jsonPaths]) {
-          final data = await rootBundle.load(path);
-          expect(
-            data.lengthInBytes,
-            greaterThan(0),
-            reason: 'Asset $path is empty',
-          );
-        }
+        await expectCtRegionMapAssetsNonEmpty([
+          ...ctRegionMapWangPngAssetPaths,
+          ...ctRegionMapWangJsonAssetPaths,
+        ]);
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -599,34 +455,7 @@ void main() {
       'required canonical and variant L2 overlay PNGs exist in bundle',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
-
-        const paths = [
-          'assets/images/terrain/tile_plains_grain.png',
-          'assets/images/terrain/tile_plains_meat.png',
-          'assets/images/terrain/tile_plains_horses.png',
-          'assets/images/terrain/tile_plains_sugar_cane.png',
-          'assets/images/terrain/tile_plains_tobacco.png',
-          'assets/images/terrain/tile_plains_cotton.png',
-          'assets/images/terrain/tile_plains_spices.png',
-          'assets/images/terrain/tile_hardwood_forest.png',
-          'assets/images/terrain/tile_hardwood_forest_timber.png',
-          'assets/images/terrain/tile_scrub_forest.png',
-          'assets/images/terrain/tile_scrub_forest_timber.png',
-          'assets/images/terrain/tile_hills.png',
-          'assets/images/terrain/tile_hills_mine.png',
-          'assets/images/terrain/tile_hills_wool.png',
-          'assets/images/terrain/tile_mountain.png',
-          'assets/images/terrain/tile_swamp.png',
-        ];
-
-        for (final path in paths) {
-          final data = await rootBundle.load(path);
-          expect(
-            data.lengthInBytes,
-            greaterThan(0),
-            reason: 'Asset $path is empty',
-          );
-        }
+        await expectCtRegionMapAssetsNonEmpty(ctRegionMapL2OverlayAssetPaths);
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -660,26 +489,15 @@ void main() {
           await terrainTilesetCache.load();
         });
 
-        expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.hardwoodForest),
-          isNotNull,
-        );
-        expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.scrubForest),
-          isNotNull,
-        );
-        expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.hills),
-          isNotNull,
-        );
-        expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.mountain),
-          isNotNull,
-        );
-        expect(
-          terrainTilesetCache.getStandaloneTile(TerrainType.swamp),
-          isNotNull,
-        );
+        for (final t in [
+          TerrainType.hardwoodForest,
+          TerrainType.scrubForest,
+          TerrainType.hills,
+          TerrainType.mountain,
+          TerrainType.swamp,
+        ]) {
+          expect(terrainTilesetCache.getStandaloneTile(t), isNotNull);
+        }
       },
       timeout: const Timeout(Duration(seconds: 10)),
     );
@@ -693,36 +511,16 @@ void main() {
         });
 
         final keys = <String>[
-          // Plains variants for supported plains resources.
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'grain',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'meat',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'horses',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'sugarCane',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'tobacco',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'cotton',
-          )!,
-          terrainVariantTileKey(
-            terrain: TerrainType.plains,
-            resourceId: 'spices',
-          )!,
-          // Forest: non-timber should keep canonical default.
+          for (final id in [
+            'grain',
+            'meat',
+            'horses',
+            'sugarCane',
+            'tobacco',
+            'cotton',
+            'spices',
+          ])
+            terrainVariantTileKey(terrain: TerrainType.plains, resourceId: id)!,
           featureOverlayTileKey(
             terrain: TerrainType.hardwoodForest,
             resourceId: 'furs',
@@ -735,7 +533,6 @@ void main() {
             terrain: TerrainType.scrubForest,
             resourceId: null,
           ),
-          // Hills: non-mine and non-wool should keep canonical default.
           featureOverlayTileKey(
             terrain: TerrainType.hills,
             resourceId: 'iron',
@@ -746,7 +543,6 @@ void main() {
             resourceId: null,
             improvementLevel: 0,
           ),
-          // Mountain/swamp always canonical defaults.
           featureOverlayTileKey(
             terrain: TerrainType.mountain,
             resourceId: 'gold',
