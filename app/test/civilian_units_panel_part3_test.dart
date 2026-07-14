@@ -25,15 +25,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetPurchaseLand,
         kWorkTargetUpgradeTown;
 
-import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'support/civilian_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   late Game game;
   late String humanPlayerIdWithUnits;
-  const String humanPlayerIdWithNoUnits = 'no-such-player';
 
   setUpAll(() {
     game = buildCivilianPanelTestGame();
@@ -46,33 +44,12 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianSingleUnitOwGame(
           id: 'g_civ_pending_build',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          unitId: 'b1',
+          unitType: kUnitTypeBuilder,
+          tileKey: tileKey,
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -116,33 +93,12 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianSingleUnitOwGame(
           id: 'g_civ_pending_explore',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'e1',
-                  type: kUnitTypeExplorer,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          unitId: 'e1',
+          unitType: kUnitTypeExplorer,
+          tileKey: tileKey,
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -176,34 +132,13 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianSingleUnitOwGame(
           id: 'g_civ_pending_land',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'm1',
-                  type: kUnitTypeMerchant,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            resourceByTileKey: {tileKey: 'grain'},
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          unitId: 'm1',
+          unitType: kUnitTypeMerchant,
+          tileKey: tileKey,
+          resourceByTileKey: {tileKey: 'grain'},
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -236,33 +171,12 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianSingleUnitOwGame(
           id: 'g_civ_pending_land_nores',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'm1',
-                  type: kUnitTypeMerchant,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          unitId: 'm1',
+          unitType: kUnitTypeMerchant,
+          tileKey: tileKey,
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -332,42 +246,24 @@ void main() {
         for (var i = 0; i < cases.length; i++) {
           final c = cases[i];
           final unitId = 'u_$i';
-          final miniGame = Game(
+          final miniGame = buildCivilianOwUnitsGame(
             id: 'g_civ_pending_turns_${c.target}_$i',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 1,
-              ),
-              oldWorld: RegionData(
-                provinces: const [
-                  Province(
-                    id: 'oldWorld|p1',
-                    regionId: 'oldWorld',
-                    displayName: 'Alpha',
-                    fortLevel: 2,
-                  ),
-                ],
-                units: [
-                  Unit(
-                    id: unitId,
-                    type: c.unitType,
-                    ownerId: human,
-                    locationProvinceId: 'oldWorld|p1',
-                    tileKey: tileKey,
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-              resourceByTileKey: const {targetTileKey: 'grain'},
-              tileKeysByRegionAndProvince: const {
-                'oldWorld': {
-                  'oldWorld|p1': [tileKey, targetTileKey],
-                },
+            humanId: human,
+            fortLevel: 2,
+            resourceByTileKey: const {targetTileKey: 'grain'},
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                'oldWorld|p1': [tileKey, targetTileKey],
               },
-            ),
-            players: const [
-              Player(id: human, displayName: 'Human', isHuman: true),
+            },
+            units: [
+              civilianIdleUnit(
+                id: unitId,
+                type: c.unitType,
+                ownerId: human,
+                provinceId: 'oldWorld|p1',
+                tileKey: tileKey,
+              ),
             ],
           );
           final orders = Orders(
@@ -419,31 +315,12 @@ void main() {
     ) async {
       const human = 'h1';
       const tileKey = 'oldWorld|p1|0|0';
-      final miniGame = Game(
+      final miniGame = buildCivilianSingleUnitOwGame(
         id: 'g_civ_pending_rail',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                displayName: 'Alpha',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: kUnitTypeRailBuilder,
-                ownerId: human,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: tileKey,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: human, displayName: 'Human', isHuman: true)],
+        humanId: human,
+        unitId: 'r1',
+        unitType: kUnitTypeRailBuilder,
+        tileKey: tileKey,
       );
       final orders = Orders(
         workOrdersByPlayerId: {
@@ -485,38 +362,9 @@ void main() {
     ) async {
       const human = 'h1';
       const tileKey = 'oldWorld|p1|0|0';
-      final miniGame = Game(
-        id: 'g_civ_working',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(
-                id: 'oldWorld|p1',
-                regionId: 'oldWorld',
-                displayName: 'Alpha',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'b1',
-                type: kUnitTypeBuilder,
-                ownerId: human,
-                locationProvinceId: 'oldWorld|p1',
-                tileKey: tileKey,
-                status: UnitStatus.working,
-                currentWork: const CurrentWork(
-                  workTarget: kWorkTargetBuildImprovement,
-                  tileKey: tileKey,
-                  totalTurns: 5,
-                  remainingTurns: 2,
-                ),
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: human, displayName: 'Human', isHuman: true)],
+      final miniGame = buildCivilianWorkingBuilderGame(
+        humanId: human,
+        tileKey: tileKey,
       );
       await tester.pumpWidget(
         buildCivilianPanel(game: miniGame, humanPlayerId: human),

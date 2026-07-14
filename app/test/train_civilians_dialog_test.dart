@@ -25,20 +25,21 @@ void main() {
 
   setUpAll(() {
     game = buildTrainPanelTestGame();
-    humanPlayerId = game.players.isNotEmpty
-        ? game.players.firstWhere((p) => p.isHuman).id
-        : game.players.first.id;
+    humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
   });
 
-  Player getPlayer(String pid) {
-    return game.players.firstWhere((p) => p.id == pid);
+  Player getPlayer(String pid) => game.players.firstWhere((p) => p.id == pid);
+
+  String humanCapitalId() {
+    final player = getPlayer(humanPlayerId);
+    return (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
   }
 
   Game gameWithResources({
     required int treasury,
     required int paper,
     String? techUnlocked,
-    String? capitalProvinceId,
+    Map<String, bool>? techUnlockedMap,
   }) {
     final player = getPlayer(humanPlayerId);
     final updatedPlayer = player.copyWith(
@@ -46,8 +47,11 @@ void main() {
       stockpile: player.stockpile.merge(
         Stockpile(quantities: {'paper': paper}),
       ),
-      techUnlocked: techUnlocked != null ? {techUnlocked: true} : null,
-      capitalProvinceId: capitalProvinceId ?? player.capitalTile?.provinceId,
+      techUnlocked:
+          techUnlockedMap ??
+          (techUnlocked != null ? {techUnlocked: true} : null),
+      capitalProvinceId:
+          player.capitalProvinceId ?? player.capitalTile?.provinceId,
     );
     return game.copyWith(
       players: [
@@ -57,9 +61,42 @@ void main() {
     );
   }
 
+  Orders builderOrders(int count) {
+    final capital = humanCapitalId();
+    return Orders(
+      buildUnitOrdersByPlayerId: {
+        humanPlayerId: [
+          for (var i = 0; i < count; i++)
+            BuildUnitOrder(
+              unitType: kUnitTypeBuilder,
+              isMilitary: false,
+              spawnProvinceId: capital,
+            ),
+        ],
+      },
+    );
+  }
+
+  /// Affordance-feedback fixtures replace stockpile (paper-only), matching #3601.
+  Game gameWithCapital({required int treasury, required int paper}) {
+    final player = getPlayer(humanPlayerId);
+    final capital = player.capitalProvinceId ?? player.capitalTile?.provinceId;
+    return game.copyWith(
+      players: [
+        player.copyWith(
+          treasury: treasury,
+          stockpile: const Stockpile().merge(
+            Stockpile(quantities: {'paper': paper}),
+          ),
+          capitalProvinceId: capital,
+        ),
+        ...game.players.where((p) => p.id != humanPlayerId),
+      ],
+    );
+  }
+
   Widget buildDialog({
     required Game game,
-    required String humanPlayerId,
     Orders currentOrders = const Orders(),
     AppEventBus? bus,
   }) {
@@ -75,13 +112,47 @@ void main() {
     );
   }
 
+  /// AppEventHandlerScope host so Train opens [TrainCiviliansDialog] via bus.
+  Widget civilianPanelWithAppHandler(Game panelGame) {
+    return ProviderScope(
+      overrides: [
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(panelGame)),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+        availableWorkTargetIdsForUnitProvider.overrideWith(
+          (ref, _) => const <String>[],
+        ),
+      ],
+      child: AppEventHandlerScope(
+        child: MaterialApp(
+          navigatorKey: appNavigatorKey,
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) {
+                return CivilianUnitsPanel(
+                  game: panelGame,
+                  humanPlayerId: humanPlayerId,
+                  bus: ref.watch(appEventBusProvider),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   group('TrainCiviliansDialog', () {
     testWidgets('AC: Dialog shows title Train Civilians', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: game));
       await tester.pumpAndSettle();
 
       expect(find.text('Train Civilians'), findsOneWidget);
@@ -90,9 +161,7 @@ void main() {
     testWidgets('AC: Resource bar shows Treasury and Paper', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: game));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Treasury:'), findsOneWidget);
@@ -103,9 +172,7 @@ void main() {
       'AC: Treasury renders with £ + comma grouping (£5,000), not 5k',
       (WidgetTester tester) async {
         final richGame = gameWithResources(treasury: 5000, paper: 12);
-        await tester.pumpWidget(
-          buildDialog(game: richGame, humanPlayerId: humanPlayerId),
-        );
+        await tester.pumpWidget(buildDialog(game: richGame));
         await tester.pumpAndSettle();
 
         expect(find.textContaining('£5,000'), findsOneWidget);
@@ -117,9 +184,7 @@ void main() {
       'AC: Unlocked cost line reads "£1,000 + 2 paper" (lowercase paper)',
       (WidgetTester tester) async {
         final richGame = gameWithResources(treasury: 10000, paper: 100);
-        await tester.pumpWidget(
-          buildDialog(game: richGame, humanPlayerId: humanPlayerId),
-        );
+        await tester.pumpWidget(buildDialog(game: richGame));
         await tester.pumpAndSettle();
 
         // Builder costs 1,000 treasury + 2 paper (mockup UNIT40001).
@@ -130,49 +195,14 @@ void main() {
     testWidgets(
       'AC: Both-resource deficit reads "Treasury low, Paper low" (comma-join)',
       (WidgetTester tester) async {
-        final player = getPlayer(humanPlayerId);
-        final capital =
-            player.capitalProvinceId ?? player.capitalTile?.provinceId;
-        expect(capital, isNotNull, reason: 'debug game needs capital');
-        // Treasury 1,500 + paper 3: two queued Builders (2,000 treasury,
-        // 4 paper) exceed both resources, so both deficit clauses show.
-        final limitedPlayer = player.copyWith(
-          treasury: 1500,
-          stockpile: const Stockpile(quantities: {'paper': 3}),
-          capitalProvinceId: capital,
-        );
-        final limitedGame = game.copyWith(
-          players: [
-            limitedPlayer,
-            ...game.players.where((p) => p.id != humanPlayerId),
-          ],
-        );
-        final orders = Orders(
-          buildUnitOrdersByPlayerId: {
-            humanPlayerId: [
-              BuildUnitOrder(
-                unitType: kUnitTypeBuilder,
-                isMilitary: false,
-                spawnProvinceId: capital!,
-              ),
-              BuildUnitOrder(
-                unitType: kUnitTypeBuilder,
-                isMilitary: false,
-                spawnProvinceId: capital,
-              ),
-            ],
-          },
-        );
-
+        // Treasury 1,500 + paper 3: two queued Builders exceed both resources.
         await tester.pumpWidget(
           buildDialog(
-            game: limitedGame,
-            humanPlayerId: humanPlayerId,
-            currentOrders: orders,
+            game: gameWithCapital(treasury: 1500, paper: 3),
+            currentOrders: builderOrders(2),
           ),
         );
         await tester.pumpAndSettle();
-
         expect(find.text('Treasury low, Paper low'), findsOneWidget);
         expect(find.textContaining(' and '), findsNothing);
       },
@@ -181,9 +211,7 @@ void main() {
     testWidgets('AC: All 6 civilian unit types are listed', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: game));
       await tester.pumpAndSettle();
 
       for (final econ in CivilianEconomyCatalog.all) {
@@ -194,7 +222,8 @@ void main() {
         expect(
           bare.evaluate().isNotEmpty || locked.evaluate().isNotEmpty,
           isTrue,
-          reason: '${econ.id} row should render (bare or 🔒-prefixed if locked)',
+          reason:
+              '${econ.id} row should render (bare or 🔒-prefixed if locked)',
         );
       }
     });
@@ -202,9 +231,7 @@ void main() {
     testWidgets('AC: Stepper starts at 0 for each unit type', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: game));
       await tester.pumpAndSettle();
 
       final plusButtons = find.text('+');
@@ -218,37 +245,13 @@ void main() {
     testWidgets(
       'AC: Steppers reflect existing train-at-capital civilian build orders',
       (WidgetTester tester) async {
-        final richGame = gameWithResources(treasury: 10000, paper: 100);
-        final player = getPlayer(humanPlayerId);
-        final capital =
-            player.capitalProvinceId ?? player.capitalTile?.provinceId;
-        expect(capital, isNotNull, reason: 'debug game needs capital');
-        final cap = capital!;
-        final orders = Orders(
-          buildUnitOrdersByPlayerId: {
-            humanPlayerId: [
-              BuildUnitOrder(
-                unitType: kUnitTypeBuilder,
-                isMilitary: false,
-                spawnProvinceId: cap,
-              ),
-              BuildUnitOrder(
-                unitType: kUnitTypeBuilder,
-                isMilitary: false,
-                spawnProvinceId: cap,
-              ),
-            ],
-          },
-        );
         await tester.pumpWidget(
           buildDialog(
-            game: richGame,
-            humanPlayerId: humanPlayerId,
-            currentOrders: orders,
+            game: gameWithResources(treasury: 10000, paper: 100),
+            currentOrders: builderOrders(2),
           ),
         );
         await tester.pumpAndSettle();
-
         expect(find.text('2'), findsWidgets);
       },
     );
@@ -257,9 +260,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await tester.pumpWidget(
-        buildDialog(game: richGame, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: richGame));
       await tester.pumpAndSettle();
 
       // Find the first + button and tap it
@@ -276,9 +277,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await tester.pumpWidget(
-        buildDialog(game: richGame, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: richGame));
       await tester.pumpAndSettle();
 
       // First tap + to get to 1
@@ -298,9 +297,7 @@ void main() {
     });
 
     testWidgets('AC: Cannot decrement below 0', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: game));
       await tester.pumpAndSettle();
 
       // Try tapping - when count is 0
@@ -330,9 +327,7 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildDialog(game: gameWithLimited, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: gameWithLimited));
       await tester.pumpAndSettle();
 
       // Tap + once for Builder (should succeed)
@@ -370,9 +365,7 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildDialog(game: gameWithNoTech, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: gameWithNoTech));
       await tester.pumpAndSettle();
 
       // Locked rows prefix the unit name with the 🔒 glyph (#3568 chrome
@@ -398,9 +391,7 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildDialog(game: gameWithNoTech, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: gameWithNoTech));
       await tester.pumpAndSettle();
 
       // Find the + button for a locked unit (Merchant)
@@ -422,9 +413,7 @@ void main() {
 
     testWidgets('AC: Reset clears all steppers', (WidgetTester tester) async {
       final richGame = gameWithResources(treasury: 10000, paper: 100);
-      await tester.pumpWidget(
-        buildDialog(game: richGame, humanPlayerId: humanPlayerId),
-      );
+      await tester.pumpWidget(buildDialog(game: richGame));
       await tester.pumpAndSettle();
 
       // Increment a few steppers
@@ -517,88 +506,19 @@ void main() {
     testWidgets('AC: Train button visible in CivilianUnitsPanel header', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(const Orders()),
-            ),
-            appEventBusProvider.overrideWith((ref) {
-              final bus = AppEventBus.create();
-              ref.onDispose(bus.dispose);
-              return bus;
-            }),
-            availableWorkTargetIdsForUnitProvider.overrideWith(
-              (ref, _) => const <String>[],
-            ),
-          ],
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Consumer(
-                  builder: (context, ref, _) {
-                    return CivilianUnitsPanel(
-                      game: game,
-                      humanPlayerId: humanPlayerId,
-                      bus: ref.watch(appEventBusProvider),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(civilianPanelWithAppHandler(game));
       await tester.pumpAndSettle();
-
       expect(find.text('Train'), findsOneWidget);
     });
 
     testWidgets(
       'AC: Train button opens TrainCiviliansDialog via app event bus',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-              currentOrdersProvider.overrideWith(
-                () => CurrentOrdersNotifier(const Orders()),
-              ),
-              appEventBusProvider.overrideWith((ref) {
-                final bus = AppEventBus.create();
-                ref.onDispose(bus.dispose);
-                return bus;
-              }),
-              availableWorkTargetIdsForUnitProvider.overrideWith(
-                (ref, _) => const <String>[],
-              ),
-            ],
-            child: AppEventHandlerScope(
-              child: MaterialApp(
-                navigatorKey: appNavigatorKey,
-                home: Scaffold(
-                  body: Consumer(
-                    builder: (context, ref, _) {
-                      return CivilianUnitsPanel(
-                        game: game,
-                        humanPlayerId: humanPlayerId,
-                        bus: ref.watch(appEventBusProvider),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
+        await tester.pumpWidget(civilianPanelWithAppHandler(game));
         await tester.pumpAndSettle();
-
         await tester.tap(find.text('Train'));
         await tester.pump();
         await tester.pumpAndSettle();
-
         expect(find.byType(TrainCiviliansDialog), findsOneWidget);
         expect(find.text('Train Civilians'), findsOneWidget);
       },
@@ -623,49 +543,11 @@ void main() {
     Iterable<CtNinePatchButton> plusButtons(WidgetTester tester) {
       return tester.widgetList<CtNinePatchButton>(
         find.byWidgetPredicate(
-          (w) => w is CtNinePatchButton && w.child is Text &&
+          (w) =>
+              w is CtNinePatchButton &&
+              w.child is Text &&
               (w.child as Text).data == '+',
         ),
-      );
-    }
-
-    Game gameWithCapital({
-      required int treasury,
-      required int paper,
-    }) {
-      final player = getPlayer(humanPlayerId);
-      final capital =
-          player.capitalProvinceId ?? player.capitalTile?.provinceId;
-      final updated = player.copyWith(
-        treasury: treasury,
-        stockpile: const Stockpile().merge(
-          Stockpile(quantities: {'paper': paper}),
-        ),
-        capitalProvinceId: capital,
-      );
-      return game.copyWith(
-        players: [
-          updated,
-          ...game.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-    }
-
-    Orders builderOrders(int count) {
-      final player = getPlayer(humanPlayerId);
-      final capital =
-          (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
-      return Orders(
-        buildUnitOrdersByPlayerId: {
-          humanPlayerId: [
-            for (var i = 0; i < count; i++)
-              BuildUnitOrder(
-                unitType: kUnitTypeBuilder,
-                isMilitary: false,
-                spawnProvinceId: capital,
-              ),
-          ],
-        },
       );
     }
 
@@ -676,7 +558,6 @@ void main() {
         await tester.pumpWidget(
           buildDialog(
             game: gameWithCapital(treasury: 5000, paper: 12),
-            humanPlayerId: humanPlayerId,
             currentOrders: builderOrders(2),
           ),
         );
@@ -693,7 +574,6 @@ void main() {
         await tester.pumpWidget(
           buildDialog(
             game: gameWithCapital(treasury: 5000, paper: 12),
-            humanPlayerId: humanPlayerId,
             currentOrders: builderOrders(2),
           ),
         );
@@ -717,7 +597,6 @@ void main() {
         await tester.pumpWidget(
           buildDialog(
             game: gameWithCapital(treasury: 1500, paper: 5),
-            humanPlayerId: humanPlayerId,
             currentOrders: builderOrders(1),
           ),
         );
@@ -735,10 +614,7 @@ void main() {
       'AC (negative): sufficient resources leave cost segments uncoloured',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildDialog(
-            game: gameWithCapital(treasury: 10000, paper: 100),
-            humanPlayerId: humanPlayerId,
-          ),
+          buildDialog(game: gameWithCapital(treasury: 10000, paper: 100)),
         );
         await tester.pumpAndSettle();
 
@@ -758,17 +634,13 @@ void main() {
         await tester.pumpWidget(
           buildDialog(
             game: gameWithCapital(treasury: 1500, paper: 5),
-            humanPlayerId: humanPlayerId,
             currentOrders: builderOrders(1),
           ),
         );
         await tester.pumpAndSettle();
 
         // At least one unlocked row can no longer afford +1 → danger [+].
-        expect(
-          plusButtons(tester).any((b) => b.dangerVariant),
-          isTrue,
-        );
+        expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
       },
     );
 
@@ -776,17 +648,11 @@ void main() {
       'AC (negative): affordable rows never use the danger [+] variant',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildDialog(
-            game: gameWithCapital(treasury: 100000, paper: 1000),
-            humanPlayerId: humanPlayerId,
-          ),
+          buildDialog(game: gameWithCapital(treasury: 100000, paper: 1000)),
         );
         await tester.pumpAndSettle();
 
-        expect(
-          plusButtons(tester).every((b) => !b.dangerVariant),
-          isTrue,
-        );
+        expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
       },
     );
 
@@ -806,9 +672,7 @@ void main() {
             ...game.players.where((p) => p.id != humanPlayerId),
           ],
         );
-        await tester.pumpWidget(
-          buildDialog(game: gameNoTech, humanPlayerId: humanPlayerId),
-        );
+        await tester.pumpWidget(buildDialog(game: gameNoTech));
         await tester.pumpAndSettle();
 
         // Locked rows (Merchant, Rail Builder) must not show the danger
@@ -817,14 +681,12 @@ void main() {
             .where((e) => unlockingTechByCivilianId[e.id] != null)
             .length;
         expect(lockedCount, greaterThan(0));
-        final dangerCount =
-            plusButtons(tester).where((b) => b.dangerVariant).length;
+        final dangerCount = plusButtons(
+          tester,
+        ).where((b) => b.dangerVariant).length;
         // Locked rows are excluded from danger styling; only unlocked,
         // unaffordable rows may show it.
-        expect(
-          dangerCount,
-          CivilianEconomyCatalog.all.length - lockedCount,
-        );
+        expect(dangerCount, CivilianEconomyCatalog.all.length - lockedCount);
       },
     );
   });

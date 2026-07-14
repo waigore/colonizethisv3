@@ -67,10 +67,7 @@ void main() {
         perf,
         isA<E2ePerfLog>(),
         reason:
-            'E2ePerfLog is the AC1 perf marker surface every scenario uses '
-            'to emit E2E_COUNTER / E2E_TIMING lines; the barrel must keep '
-            'it constructible by name so call sites stay decoupled from the '
-            'private e2e_test_shared.dart import path.',
+            'E2ePerfLog is the AC1 perf marker surface every scenario uses to emit ',
       );
     });
 
@@ -80,9 +77,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'pumpFor is the AC1 fixed-step pump primitive. A rename or '
-            'arg-order change must fail this typed tear-off capture, not '
-            'silently downgrade to dynamic at scenario call sites.',
+            'pumpFor is the AC1 fixed-step pump primitive. A rename or arg-order ch',
       );
     });
 
@@ -92,11 +87,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'waitUntilFound is the AC1 adaptive-poll primitive; its named '
-            '{required Duration timeout, Duration diagnoseAfter, '
-            'E2ePerfLog?, String phaseName} surface is consumed across '
-            'every panel opener — pin the tear-off to catch signature '
-            'drift here, not at E2E runtime.',
+            'waitUntilFound is the AC1 adaptive-poll primitive; its named {required',
       );
     });
 
@@ -107,10 +98,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'dismissTransientUi is the canonical transient-overlay closer '
-            'AC1 standardizes across the four E2E scenarios; pin the '
-            'optional perf-log slot so scenario-level callers can keep '
-            'attaching markers without paying a regression.',
+            'dismissTransientUi is the canonical transient-overlay closer AC1 stand',
       );
     });
 
@@ -125,10 +113,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'closeBottomSheet is the AC1 deterministic sheet dismisser. '
-            'The optional `overallTimeout` knob is consumed by '
-            'panel openers that need to bound the post-tap settle; pin '
-            'both named slots in the wrapper.',
+            'closeBottomSheet is the AC1 deterministic sheet dismisser. The optiona',
       );
     });
 
@@ -145,30 +130,20 @@ void main() {
           ref,
           isNotNull,
           reason:
-              'bootstrapNewGameToMap is the AC1 single-canonical-bootstrap '
-              'helper (#2336 Bottleneck 3); pin the {perf, overallCap} '
-              'named-slot surface so the documented "60s default cap" '
-              'contract stays callable through one barrel import.',
+              'bootstrapNewGameToMap is the AC1 single-canonical-bootstrap helper (#2',
         );
       },
     );
 
-    test(
-      'collectTextPreorder exposes the (Element, List<String>) tear-off',
-      () {
-        final void Function(Element, List<String>) ref = collectTextPreorder;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'collectTextPreorder is the AC1 snapshot-text traversal '
-              'helper. Its sync (Element, List<String>) signature is what '
-              'the orderedEquals snapshot mirrors depend on; pin the '
-              'tear-off so a return-type or arg-shape regression surfaces '
-              'in widget-test layer.',
-        );
-      },
-    );
+    test('collectTextPreorder exposes the (Element, List<String>) tear-off', () {
+      final void Function(Element, List<String>) ref = collectTextPreorder;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'collectTextPreorder is the AC1 snapshot-text traversal helper. Its syn',
+      );
+    });
 
     test('expandEachExpansionTileOnce exposes the (WidgetTester) tear-off', () {
       final Future<void> Function(WidgetTester) ref =
@@ -177,10 +152,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'expandEachExpansionTileOnce is the AC1 ExpansionTile expander '
-            '(#2336 Bottleneck 6 / H10); pin the tear-off so the '
-            'parameter-free wrapper stays the single AC1 entrypoint and '
-            'a regression to required-perf-log would fail here.',
+            'expandEachExpansionTileOnce is the AC1 ExpansionTile expander (#2336 B',
       );
     });
 
@@ -195,11 +167,7 @@ void main() {
           refSuite,
           isNotNull,
           reason:
-              'AC1 names cover both the direct and suite-once asset preload '
-              'entrypoints (#2336 AC3 parallel decode + memoization). Pin '
-              'both tear-offs so a barrel that loses the suite-once name '
-              'fails this test instead of regressing cross-scenario decode '
-              'work to per-scenario.',
+              'AC1 names cover both the direct and suite-once asset preload entrypoin',
         );
       },
     );
@@ -243,11 +211,7 @@ void main() {
           fromMarker,
           isNotNull,
           reason:
-              'AC1 + AC5 require a single canonical panel-opener per panel '
-              'type (#2336 Bottleneck 6 deduplication). Pin every opener '
-              'tear-off with its named-slot surface so a regression to '
-              'positional-only or to a private name surfaces in this test '
-              'instead of an E2E flake.',
+              'AC1 + AC5 require a single canonical panel-opener per panel type (#233',
         );
       },
     );
@@ -274,10 +238,7 @@ void main() {
           waitAdvance,
           isNotNull,
           reason:
-              'AC5 names both turn-advancing helpers as the canonical '
-              'wait-for-next-turn surface; pin tear-offs so a rename or '
-              'return-type change (e.g. from Future<Duration> to '
-              'Future<void>) fails here instead of E2E.',
+              'AC5 names both turn-advancing helpers as the canonical wait-for-next-t',
         );
       },
     );
@@ -302,115 +263,73 @@ void main() {
         tapWithTitle,
         isNotNull,
         reason:
-            'AC1 dedup standardizes split + assign helpers across the '
-            'fleet-reach and full-turn E2E scenarios; pin the three '
-            'tear-offs so a barrel that loses one stops compiling here.',
+            'AC1 dedup standardizes split + assign helpers across the fleet-reach a',
       );
     });
 
-    testWidgets(
-      'tapMoveOnFirstNonHomeFleet is re-exported through the barrel',
-      (tester) async {
-        final Future<bool> Function(WidgetTester) ref =
-            tapMoveOnFirstNonHomeFleet;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The fleet-reach hot path '
-              '(`_tryNavalMoveSegment` in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
-              'consumes this Move-tap helper via the AC1 barrel up to '
-              '`_kMaxNextTurnTapsForNwFleetReach (35)` times per '
-              'scenario. A regression that dropped the barrel wrapper '
-              'or that flipped the return-type from `Future<bool>` to '
-              '`Future<void>` would break the segment\'s `if (!tappedMove) '
-              'return;` short-circuit and silently re-introduce '
-              'redundant move-dialog probes (Bottleneck 4 in '
-              '`SPEC/program/e2e-integration-tests.md` § Determinism).',
-        );
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
-        expect(
-          await ref(tester),
-          isFalse,
-          reason:
-              'Sanity smoke through the barrel: an empty scaffold has no '
-              'naval-panel root key, so the helper must return false '
-              'without tapping. A wrapper that ignored the panel-absent '
-              'guard would either throw on a missing tap target or '
-              'short-circuit to true (masking real fleet-reach '
-              'regressions); pin both the typed tear-off and the '
-              'no-panel return so the contract surfaces here.',
-        );
-      },
-    );
+    testWidgets('tapMoveOnFirstNonHomeFleet is re-exported through the barrel', (
+      tester,
+    ) async {
+      final Future<bool> Function(WidgetTester) ref =
+          tapMoveOnFirstNonHomeFleet;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The fleet-reach hot path (`_tryNavalMoveSegment` in `new_game_fleet_re',
+      );
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox())),
+      );
+      expect(
+        await ref(tester),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: an empty scaffold has no naval-panel ',
+      );
+    });
 
-    testWidgets(
-      'anyExplorerHasEnabledExploreAssignFleet is re-exported through '
-      'the barrel',
-      (tester) async {
-        final Future<bool> Function(
-          WidgetTester, {
-          Duration maxUiResponseWait,
-          int maxPanelSweepSteps,
-        })
-        ref = anyExplorerHasEnabledExploreAssignFleet;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The fleet bundled-Explore retry loop '
-              '(`checkExploreEnabledFromCivilianPanel` in '
-              '`new_game_fleet_reaches_new_world_e2e_test.dart`) '
-              'consumes this readiness helper via the AC1 barrel inside '
-              'the `maxBoundedTurnRetries = 8` retry window. A '
-              'regression that dropped the barrel wrapper, flipped the '
-              'return type, or removed the `maxUiResponseWait` / '
-              '`maxPanelSweepSteps` named parameters would either break '
-              'the retry loop\'s budget plumbing or silently inflate '
-              'every retry by the slow-path `maxPanelSweepSteps (16) × '
-              'per-step Assign sweep` cost (Bottleneck 5 in '
-              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
-              '#2336 AC1 / AC5).',
-        );
-        ctE2eCivilianPanelSnapshot = const CtE2eCivilianPanelSnapshot(
-          game: Game(
-            id: 'barrel-smoke-no-explore',
-            worldState: WorldState(
-              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-              oldWorld: RegionData(),
-              newWorld: RegionData(),
-            ),
-            players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
+    testWidgets('anyExplorerHasEnabledExploreAssignFleet is re-exported through '
+        'the barrel', (tester) async {
+      final Future<bool> Function(
+        WidgetTester, {
+        Duration maxUiResponseWait,
+        int maxPanelSweepSteps,
+      })
+      ref = anyExplorerHasEnabledExploreAssignFleet;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The fleet bundled-Explore retry loop (`checkExploreEnabledFromCivilian',
+      );
+      ctE2eCivilianPanelSnapshot = const CtE2eCivilianPanelSnapshot(
+        game: Game(
+          id: 'barrel-smoke-no-explore',
+          worldState: WorldState(
+            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+            oldWorld: RegionData(),
+            newWorld: RegionData(),
           ),
-          humanPlayerId: 'gp1',
-          currentOrders: Orders(),
-          availableWorkTargets: <String, List<String>>{},
-        );
-        addTearDown(() {
-          ctE2eCivilianPanelSnapshot = null;
-        });
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
-        expect(
-          await ref(tester, maxPanelSweepSteps: 0),
-          isFalse,
-          reason:
-              'Sanity smoke through the barrel: an empty-targets civilian-'
-              'panel snapshot short-circuits the helper via '
-              '[e2eExploreAssignEnabledFromCivilianSnapshot] (which '
-              'returns `false`), so the helper returns `false` without '
-              'ever consulting `kCtE2ECivilianPanelRootKey`. A wrapper '
-              'that swallowed the snapshot path or short-circuited to '
-              '`true` would pass the tear-off pin silently — this smoke '
-              'distinguishes the snapshot-driven false verdict from the '
-              'panel-sweep fallback.',
-        );
-      },
-    );
+          players: [Player(id: 'gp1', displayName: 'You', isHuman: true)],
+        ),
+        humanPlayerId: 'gp1',
+        currentOrders: Orders(),
+        availableWorkTargets: <String, List<String>>{},
+      );
+      addTearDown(() {
+        ctE2eCivilianPanelSnapshot = null;
+      });
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox())),
+      );
+      expect(
+        await ref(tester, maxPanelSweepSteps: 0),
+        isFalse,
+        reason:
+            'Sanity smoke through the barrel: an empty-targets civilian-panel snaps',
+      );
+    });
 
     testWidgets('tryNavalMoveSegment is re-exported through the barrel', (
       tester,
@@ -429,21 +348,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The fleet-reach hot path consumes this segment composer via '
-            'the AC1 barrel up to `_kMaxNextTurnTapsForNwFleetReach (35)` '
-            'times per scenario. A regression that dropped the barrel '
-            'wrapper or removed the `navalPanelAlreadyOpen` / '
-            '`allowWarpDestinations` / `maxUiResponseWait` named parameters '
-            'would break Bottleneck 4 short-circuits or re-introduce '
-            'redundant naval-panel open/close work (#2336 AC1 / H1–H4).',
+            'The fleet-reach hot path consumes this segment composer via the AC1 ba',
       );
       expect(
         kE2eDefaultNavalMoveSegmentUiWait,
         const Duration(seconds: 5),
         reason:
-            'Default UI-wait constant must remain the legacy 5 s '
-            '`_kMaxUiResponseWait` contract for open-naval + move-dialog '
-            'budget forwarding.',
+            'Default UI-wait constant must remain the legacy 5 s `_kMaxUiResponseWa',
       );
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
@@ -452,85 +363,57 @@ void main() {
       await ref(tester, l10n, navalPanelAlreadyOpen: true);
     });
 
-    testWidgets(
-      'pickMoveDestinationAndConfirm is re-exported through the barrel',
-      (tester) async {
-        final Future<void> Function(
-          WidgetTester,
-          AppLocalizations, {
-          bool allowWarpDestinations,
-          Duration moveDialogBudget,
-          int maxWarpDragProbes,
-        })
-        ref = pickMoveDestinationAndConfirm;
-        expect(
-          ref,
-          isNotNull,
-          reason:
-              'The fleet-reach hot path '
-              '(`_tryNavalMoveSegment` in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
-              'consumes this move-dialog picker via the AC1 barrel up to '
-              '`_kMaxNextTurnTapsForNwFleetReach (35)` times per scenario. '
-              "A regression that dropped the barrel wrapper, flipped the "
-              "return type, or removed the `allowWarpDestinations` / "
-              "`moveDialogBudget` / `maxWarpDragProbes` named parameters "
-              'would break the segment\'s NW-warp vs sea-radio routing or '
-              'silently inflate the warp-row drag loop past the legacy '
-              "`maxWarpDragProbes = 8` cap (Bottleneck 4 / H4 in "
-              '`SPEC/program/e2e-integration-tests.md` § Determinism, '
-              '#2336 AC1 / AC4).',
-        );
-        expect(
-          kE2eDefaultMoveFleetDialogBudget,
-          const Duration(seconds: 5),
-          reason:
-              'Default-budget constant must remain the legacy 5 s per-call '
-              'cap so the barrel signature matches the pre-lift '
-              '`_kMaxUiResponseWait` contract. A barrel re-export that '
-              'aliased the constant to a different value would silently '
-              'change call-site behaviour.',
-        );
-        expect(
-          kE2eDefaultMoveFleetWarpDragProbes,
-          8,
-          reason:
-              'Default warp-probe constant must remain the legacy '
-              '`maxWarpDragProbes = 8` bound. A regression that re-exported '
-              'a wider bound (for example the pre-#2336 36-probe loop) '
-              'would silently re-introduce Bottleneck 2 / H4 wall-clock '
-              'blow-out.',
-        );
-        // Sanity smoke through the barrel: pumping an empty scaffold has
-        // no AlertDialog, so the helper must fail via e2eWaitUntilFound's
-        // deterministic timeout. A wrapper that swallowed the missing
-        // dialog and silently returned would pass the tear-off pin
-        // without exercising the helper at all.
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
-        );
-        final l10n = lookupAppLocalizations(const Locale('en'));
-        Object? caught;
-        try {
-          await ref(
-            tester,
-            l10n,
-            moveDialogBudget: const Duration(seconds: 10),
-          );
-        } catch (e) {
-          caught = e;
-        }
-        expect(
-          caught,
-          isNotNull,
-          reason:
-              'Empty scaffold has no AlertDialog — the barrel-aliased '
-              'helper must throw via e2eWaitUntilFound rather than '
-              'silently no-op, so the tear-off smoke catches a wrapper '
-              'that swallowed the missing-dialog path.',
-        );
-      },
-    );
+    testWidgets('pickMoveDestinationAndConfirm is re-exported through the barrel', (
+      tester,
+    ) async {
+      final Future<void> Function(
+        WidgetTester,
+        AppLocalizations, {
+        bool allowWarpDestinations,
+        Duration moveDialogBudget,
+        int maxWarpDragProbes,
+      })
+      ref = pickMoveDestinationAndConfirm;
+      expect(
+        ref,
+        isNotNull,
+        reason:
+            'The fleet-reach hot path (`_tryNavalMoveSegment` in `new_game_fleet_re',
+      );
+      expect(
+        kE2eDefaultMoveFleetDialogBudget,
+        const Duration(seconds: 5),
+        reason:
+            'Default-budget constant must remain the legacy 5 s per-call cap so the',
+      );
+      expect(
+        kE2eDefaultMoveFleetWarpDragProbes,
+        8,
+        reason:
+            'Default warp-probe constant must remain the legacy `maxWarpDragProbes ',
+      );
+      // Sanity smoke through the barrel: pumping an empty scaffold has
+      // no AlertDialog, so the helper must fail via e2eWaitUntilFound's
+      // deterministic timeout. A wrapper that swallowed the missing
+      // dialog and silently returned would pass the tear-off pin
+      // without exercising the helper at all.
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox())),
+      );
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      Object? caught;
+      try {
+        await ref(tester, l10n, moveDialogBudget: const Duration(seconds: 10));
+      } catch (e) {
+        caught = e;
+      }
+      expect(
+        caught,
+        isNotNull,
+        reason:
+            'Empty scaffold has no AlertDialog — the barrel-aliased helper must thr',
+      );
+    });
 
     test(
       'e2eTextLooksLikeNewWorldLocationLine is re-exported through the barrel',
@@ -540,20 +423,13 @@ void main() {
           ref,
           isNotNull,
           reason:
-              'Fleet-reach detection in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-              'consumes this predicate via the AC1 barrel; a regression '
-              'that dropped it from the `show` clause would break the '
-              'naval-panel "New World — …" location row detection at '
-              'E2E time. Pin the tear-off so the regression surfaces here.',
+              'Fleet-reach detection in `new_game_fleet_reaches_new_world_e2e_helpers',
         );
         expect(
           ref('New World — Outer Sea'),
           isTrue,
           reason:
-              'Sanity smoke through the barrel: the canonical em-dash '
-              'shape must still match after re-export, otherwise a '
-              'wrapper that swallowed the argument would pass silently.',
+              'Sanity smoke through the barrel: the canonical em-dash shape must stil',
         );
       },
     );
@@ -567,13 +443,7 @@ void main() {
           ref,
           isNotNull,
           reason:
-              'Fleet-reach harness fallback in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-              '(`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
-              'widget predicate via the AC1 barrel when '
-              'ctE2eNavalPanelSnapshot is null. A regression that dropped it '
-              'from the `show` clause would break the UI fallback path at '
-              'E2E time.',
+              'Fleet-reach harness fallback in `new_game_fleet_reaches_new_world_e2e_',
         );
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
@@ -582,9 +452,7 @@ void main() {
           ref(tester),
           isFalse,
           reason:
-              'Sanity smoke through the barrel: an empty tree must return '
-              'false after re-export. A wrapper that swallowed the tester '
-              'argument would pass the tear-off pin silently.',
+              'Sanity smoke through the barrel: an empty tree must return false after',
         );
       },
     );
@@ -597,25 +465,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'Fleet-reach short-circuit in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-            '(`_fleetReachDoneFromCtSnapshotOnly`, '
-            '`_harnessDetectsNonHomeFleetInNewWorld`) consumes this '
-            'snapshot-driven predicate via the AC1 barrel. A regression '
-            'that dropped it from the `show` clause would re-introduce '
-            'the `_kMaxNextTurnTapsForNwFleetReach (35) × ~5 s` stall '
-            'documented in #2336 Bottleneck 4 (`SPEC/program/'
-            'e2e-integration-tests.md` § Determinism).',
+            'Fleet-reach short-circuit in `new_game_fleet_reaches_new_world_e2e_hel',
       );
       expect(
         ref(null),
         isFalse,
         reason:
-            'Sanity smoke through the barrel: a null snapshot must keep '
-            'returning false after re-export. A wrapper that swallowed '
-            'the argument and returned a constant would pass the '
-            'tear-off pin silently; null is the canonical no-plumbing '
-            'state and must short-circuit before any field access.',
+            'Sanity smoke through the barrel: a null snapshot must keep returning f',
       );
     });
 
@@ -650,26 +506,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The bundled-explore readiness loop in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) '
-            'short-circuits on this coastal-NW predicate alongside '
-            'e2ePlayerHasAnyNewWorldFoggedOrBetterFromCtSnapshot. A '
-            'regression that dropped it from the `show` clause would '
-            're-introduce the 35-turn × ~5 s stall documented in #2336 '
-            'Bottleneck 4 (`SPEC/program/e2e-integration-tests.md` '
-            '§ Determinism) for the open-ocean NW fleet branch where '
-            'ship reveal never paints coastal land.',
+            'The bundled-explore readiness loop in `new_game_fleet_reaches_new_worl',
       );
       expect(
         ref(null),
         isFalse,
         reason:
-            'Sanity smoke through the barrel: a null snapshot must keep '
-            'returning false after re-export. A wrapper that swallowed '
-            'the argument and returned a constant would pass the '
-            'tear-off pin silently; null is the canonical no-plumbing '
-            'state and must short-circuit before any field access.',
+            'Sanity smoke through the barrel: a null snapshot must keep returning f',
       );
     });
 
@@ -681,27 +524,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The two-tier coastal adjacency lookup (verbatim sea id, '
-            'then `ProvinceId.full(regionId, seaZoneId)` fallback) is '
-            'the helper '
-            '`e2eNonHomeHumanFleetInCoastalNewWorldSeaFromCtSnapshot` '
-            'consumes per fleet. A regression that dropped it from the '
-            '`show` clause would force scenarios to re-implement the '
-            'fallback (silently divergent across files) or fail to '
-            'compile entirely; pin the tear-off so the AC1 barrel keeps '
-            'this canonical entrypoint exported.',
+            'The two-tier coastal adjacency lookup (verbatim sea id, then `Province',
       );
       expect(
         ref(const MapTopology(), 'sea1', 'newWorld'),
         isEmpty,
         reason:
-            'Sanity smoke through the barrel: an empty topology must '
-            'yield an empty adjacency set for any sea zone. A wrapper '
-            'that swallowed the topology and returned a constant '
-            'non-empty set would pass the tear-off pin silently; the '
-            'empty-topology baseline is the canonical "no edges" state '
-            'that must surface as an empty result rather than a fake '
-            'coastal hit.',
+            'Sanity smoke through the barrel: an empty topology must yield an empty',
       );
     });
 
@@ -713,30 +542,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The bundled-explore readiness loop in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-            '(`_awaitNwCoastalOrVisibleLandForBundledExploreE2e`) and '
-            'the fleet-reach test\'s final skip guard '
-            '(`new_game_fleet_reaches_new_world_e2e_test.dart`) both '
-            'consume this snapshot-driven predicate via the AC1 '
-            'barrel. A regression that dropped it from the `show` '
-            'clause would either stall the readiness loop for the '
-            'full 35-turn cap (Bottleneck 4 in `SPEC/program/'
-            'e2e-integration-tests.md` § Determinism) or convert the '
-            'strict bundled-explore assertion into a silent skip — '
-            'both directly inflate the wall-clock cap #2336 is '
-            'reducing.',
+            'The bundled-explore readiness loop in `new_game_fleet_reaches_new_worl',
       );
       expect(
         ref(null),
         isFalse,
         reason:
-            'Sanity smoke through the barrel: a null snapshot must '
-            'keep returning false after re-export. A wrapper that '
-            'swallowed the argument and returned a constant would '
-            'pass the tear-off pin silently; null is the canonical '
-            'no-plumbing state and must short-circuit before any '
-            'field access.',
+            'Sanity smoke through the barrel: a null snapshot must keep returning f',
       );
     });
 
@@ -748,31 +560,13 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The fleet-reach test\'s '
-            '`_anyExplorerHasEnabledExploreAssignFleetE2e` helper in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers_part2.dart` '
-            'short-circuits on this snapshot-driven predicate before '
-            'scrolling the civilian panel `Assign` sheet. A regression '
-            'that dropped it from the `show` clause would force the '
-            'panel-sweep loop to fall through to the '
-            '`maxPanelSweepSteps (16) × per-step Assign sweep` slow '
-            'path on every fleet-reach turn (Bottleneck 5 in '
-            '`SPEC/program/e2e-integration-tests.md` § Determinism, '
-            '#2336 AC5). The bool? return is part of the contract — '
-            '`null` distinguishes "no snapshot plumbed" from `false` '
-            '("panel mounted, no Explore"); pinning the typed tear-off '
-            'fails this test on any future signature mutation.',
+            'The fleet-reach tests `_anyExplorerHasEnabledExploreAssignFleetE2e` ',
       );
       expect(
         ref(null),
         isNull,
         reason:
-            'Sanity smoke through the barrel: a null snapshot must keep '
-            'returning null (NOT false) after re-export. A wrapper that '
-            'collapsed null → false would silently skip the slow-path '
-            'fallback whenever the panel is mid-mount, masking real '
-            'bundled-Explore regressions; the typed `bool?` return is '
-            'the contract that keeps these two states distinct.',
+            'Sanity smoke through the barrel: a null snapshot must keep returning n',
       );
       const Game game = Game(
         id: 'barrel-smoke',
@@ -793,12 +587,7 @@ void main() {
         ref(emptySnap),
         isFalse,
         reason:
-            'Empty `availableWorkTargets` is a definitive "panel '
-            'mounted but no civilian can be assigned anything" verdict '
-            '— `false` (not `null`). A wrapper that ignored the '
-            'snapshot and returned a constant would not distinguish '
-            'this from the null branch above; the typed `bool?` tear-'
-            'off plus both smoke probes catch that regression.',
+            'Empty `availableWorkTargets` is a definitive "panel mounted but no civ',
       );
     });
 
@@ -810,16 +599,7 @@ void main() {
           ref,
           isNotNull,
           reason:
-              'The fleet-reach move dialog consumes this scoped lookup via '
-              'the AC1 barrel (`e2ePickMoveDestinationAndConfirm` in '
-              '`e2e_test_shared_panels.dart` taps '
-              '`e2eRadioListTilesInAlertDialogs().first` to pick the sea '
-              'radio when the warp row is absent). A regression that '
-              'dropped it from the `show` clause would force the move '
-              'helper to either re-roll a private duplicate (Bottleneck 6) '
-              'or fall back to an unscoped RadioListTile finder that '
-              'matches panels outside the dialog (`SPEC/program/'
-              'e2e-integration-tests.md` § Determinism).',
+              'The fleet-reach move dialog consumes this scoped lookup via the AC1 ba',
         );
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
@@ -828,12 +608,7 @@ void main() {
           ref(),
           findsNothing,
           reason:
-              'Sanity smoke through the barrel: with no AlertDialog '
-              'mounted the finder must resolve to zero matches. A '
-              'wrapper that returned a constant non-empty Finder, or '
-              'that dropped the AlertDialog scope and matched every '
-              'RadioListTile in the tree, would pass the tear-off pin '
-              'silently.',
+              'Sanity smoke through the barrel: with no AlertDialog mounted the finde',
         );
       },
     );
@@ -847,17 +622,7 @@ void main() {
           ref,
           isNotNull,
           reason:
-              'The fleet-reach hot path '
-              '(`_tryNavalMoveSegment` and '
-              '`_awaitNwCoastalOrVisibleLandForBundledExploreE2e` in '
-              '`new_game_fleet_reaches_new_world_e2e_helpers*.dart`) '
-              'consumes this region-tab tap via the AC1 barrel inside '
-              'the `_kMaxNextTurnTapsForNwFleetReach = 35` loop. A '
-              'regression that dropped it from the `show` clause would '
-              'force the fleet helpers to either re-roll a private '
-              'duplicate (Bottleneck 6) or revert to a fixed post-tap '
-              'pump, both of which inflate the wall clock cap #2336 '
-              'is shrinking.',
+              'The fleet-reach hot path (`_tryNavalMoveSegment` and `_awaitNwCoastalO',
         );
         await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: SizedBox())),
@@ -880,16 +645,7 @@ void main() {
         ref,
         isNotNull,
         reason:
-            'The fleet-reach OW-split move path '
-            '(`_tryNavalMoveSegment` in '
-            '`new_game_fleet_reaches_new_world_e2e_helpers.dart`) '
-            'consumes this OW region-tab tap via the AC1 barrel to '
-            'flip the map HUD back to Old World before issuing naval '
-            'moves. A regression that dropped it from the `show` '
-            'clause would re-introduce a private duplicate of the '
-            'CtChoiceChip-label tap pattern (Bottleneck 6) or stall '
-            'on the wrong map region — both regress the fleet-reach '
-            'wall clock (#2336).',
+            'The fleet-reach OW-split move path (`_tryNavalMoveSegment` in `new_gam',
       );
       // Sanity smoke: pumpWidget empty, then exercise the helper
       // forwarding with a real AppLocalizations instance via a
@@ -906,19 +662,14 @@ void main() {
         maxWallClock,
         isA<Duration>(),
         reason:
-            'kE2eMaxWallClock is the 5-minute scenario wall-clock cap from '
-            '`colonizethis-e2e-ui-stability.mdc`; pin its Duration type so '
-            'a regression to int milliseconds fails this test instead of '
-            'an awkward runtime conversion at scenario start.',
+            'kE2eMaxWallClock is the 5-minute scenario wall-clock cap from `coloniz',
       );
       expect(nextTurnTimeout, isA<Duration>());
       expect(
         maxWallClock.inMicroseconds,
         greaterThan(0),
         reason:
-            'Sanity: a non-positive wall-clock cap would silently '
-            'short-circuit the cap helper and defeat the AC1 budget '
-            'plumbing.',
+            'Sanity: a non-positive wall-clock cap would silently short-circuit the',
       );
       expect(nextTurnTimeout.inMicroseconds, greaterThan(0));
     });

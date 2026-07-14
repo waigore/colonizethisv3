@@ -9,14 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
-import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore, kWorkTargetProspect;
 
-import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'support/civilian_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -212,40 +208,10 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianExplorerBuilderShortcutGame(
           id: 'g_civ_prospect_shortcut',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'e1',
-                  type: kUnitTypeExplorer,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          tileKey: tileKey,
         );
         final bus = AppEventBus.create();
         final events = <Type>[];
@@ -296,40 +262,10 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianExplorerBuilderShortcutGame(
           id: 'g_civ_explore_shortcut',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'e1',
-                  type: kUnitTypeExplorer,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          tileKey: tileKey,
         );
         final bus = AppEventBus.create();
         final events = <Type>[];
@@ -380,40 +316,11 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianExplorerBuilderShortcutGame(
           id: 'g_civ_build_improvement_shortcut',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'b1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-                Unit(
-                  id: 'e1',
-                  type: kUnitTypeExplorer,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          tileKey: tileKey,
+          builderFirst: true,
         );
         final bus = AppEventBus.create();
         final events = <Type>[];

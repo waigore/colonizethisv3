@@ -95,6 +95,53 @@ RegionMapViewData _tinyRegion({required String regionId}) {
   );
 }
 
+class _MinimapBus {
+  _MinimapBus() : bus = AppEventBus.create();
+  final AppEventBus bus;
+  void disposeLater() => addTearDown(bus.dispose);
+}
+
+Future<RegionMapViewData> _pumpTinyMinimap(
+  WidgetTester tester, {
+  required String regionId,
+  required AppEventBus bus,
+  RegionMapViewportSnapshot? viewportSnapshot,
+  double cellSizePx = 24,
+}) async {
+  final region = _tinyRegion(regionId: regionId);
+  await tester.pumpWidget(
+    _minimapTestShell(
+      GameRegionMinimap(
+        region: region,
+        viewportSnapshot: viewportSnapshot,
+        bus: bus,
+        cellSizePx: cellSizePx,
+      ),
+    ),
+  );
+  await tester.pump();
+  return region;
+}
+
+RegionMapViewportSnapshot _snapFor(
+  RegionMapViewData region, {
+  required double zoom,
+}) {
+  const cellSizePx = 24.0;
+  return RegionMapViewportSnapshot(
+    regionId: region.regionId,
+    cellSizePx: cellSizePx,
+    mapWidthWorld: region.width * cellSizePx,
+    mapHeightWorld: region.height * cellSizePx,
+    cameraCenterX: 48,
+    cameraCenterY: 48,
+    zoom: zoom,
+    fitMapZoom: 1.0,
+    viewportWidthLogical: 400,
+    viewportHeightLogical: 400,
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -253,37 +300,14 @@ void main() {
   testWidgets(
     'matching viewport snapshot shows slider value from zoomMultiplier',
     (WidgetTester tester) async {
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
+      final mb = _MinimapBus()..disposeLater();
       final region = _tinyRegion(regionId: 'minimapZoomRegion');
-      const cellSizePx = 24.0;
-      final mw = region.width * cellSizePx;
-      final mh = region.height * cellSizePx;
-      final snap = RegionMapViewportSnapshot(
+      await _pumpTinyMinimap(
+        tester,
         regionId: 'minimapZoomRegion',
-        cellSizePx: cellSizePx,
-        mapWidthWorld: mw,
-        mapHeightWorld: mh,
-        cameraCenterX: 48,
-        cameraCenterY: 48,
-        zoom: 2.0,
-        fitMapZoom: 1.0,
-        viewportWidthLogical: 400,
-        viewportHeightLogical: 400,
+        bus: mb.bus,
+        viewportSnapshot: _snapFor(region, zoom: 2.0),
       );
-
-      await tester.pumpWidget(
-        _minimapTestShell(
-          GameRegionMinimap(
-            region: region,
-            viewportSnapshot: snap,
-            bus: bus,
-            cellSizePx: cellSizePx,
-          ),
-        ),
-      );
-      await tester.pump();
 
       expect(find.text('200%'), findsOneWidget);
       final slider = tester.widget<CtSlider>(
@@ -305,35 +329,13 @@ void main() {
       await sub.cancel();
       bus.dispose();
     });
-
     final region = _tinyRegion(regionId: 'minimapSliderEmitRegion');
-    const cellSizePx = 24.0;
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-    final snap = RegionMapViewportSnapshot(
+    await _pumpTinyMinimap(
+      tester,
       regionId: 'minimapSliderEmitRegion',
-      cellSizePx: cellSizePx,
-      mapWidthWorld: mw,
-      mapHeightWorld: mh,
-      cameraCenterX: 48,
-      cameraCenterY: 48,
-      zoom: 1.0,
-      fitMapZoom: 1.0,
-      viewportWidthLogical: 400,
-      viewportHeightLogical: 400,
+      bus: bus,
+      viewportSnapshot: _snapFor(region, zoom: 1.0),
     );
-
-    await tester.pumpWidget(
-      _minimapTestShell(
-        GameRegionMinimap(
-          region: region,
-          viewportSnapshot: snap,
-          bus: bus,
-          cellSizePx: cellSizePx,
-        ),
-      ),
-    );
-    await tester.pump();
 
     final sliderFinder = find.byKey(kRegionMinimapZoomSliderKey);
     final track = tester.getRect(sliderFinder);
@@ -361,35 +363,13 @@ void main() {
         await sub.cancel();
         bus.dispose();
       });
-
       final region = _tinyRegion(regionId: 'minimapMultiTapZoomRegion');
-      const cellSizePx = 24.0;
-      final mw = region.width * cellSizePx;
-      final mh = region.height * cellSizePx;
-      final snap = RegionMapViewportSnapshot(
+      await _pumpTinyMinimap(
+        tester,
         regionId: 'minimapMultiTapZoomRegion',
-        cellSizePx: cellSizePx,
-        mapWidthWorld: mw,
-        mapHeightWorld: mh,
-        cameraCenterX: 48,
-        cameraCenterY: 48,
-        zoom: 1.0,
-        fitMapZoom: 1.0,
-        viewportWidthLogical: 400,
-        viewportHeightLogical: 400,
+        bus: bus,
+        viewportSnapshot: _snapFor(region, zoom: 1.0),
       );
-
-      await tester.pumpWidget(
-        _minimapTestShell(
-          GameRegionMinimap(
-            region: region,
-            viewportSnapshot: snap,
-            bus: bus,
-            cellSizePx: cellSizePx,
-          ),
-        ),
-      );
-      await tester.pump();
 
       final box = tester.getRect(find.byKey(kRegionMinimapZoomSliderKey));
       final y = box.center.dy;
@@ -408,22 +388,12 @@ void main() {
   testWidgets('toggle hides gesture target but keeps slider row', (
     WidgetTester tester,
   ) async {
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-
-    final region = _tinyRegion(regionId: 'minimapToggleRegion');
-
-    await tester.pumpWidget(
-      _minimapTestShell(
-        GameRegionMinimap(
-          region: region,
-          viewportSnapshot: null,
-          bus: bus,
-          cellSizePx: 24,
-        ),
-      ),
+    final mb = _MinimapBus()..disposeLater();
+    final region = await _pumpTinyMinimap(
+      tester,
+      regionId: 'minimapToggleRegion',
+      bus: mb.bus,
     );
-    await tester.pump();
 
     expect(find.byKey(kRegionMinimapGestureKey), findsOneWidget);
     await tester.tap(find.byKey(kRegionMinimapToggleKey));
@@ -437,22 +407,12 @@ void main() {
     testWidgets(
       'panel ancestor decoration uses --bg-deep fill + --border outline',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        final region = _tinyRegion(regionId: 'minimapChromePanelRegion');
-
-        await tester.pumpWidget(
-          _minimapTestShell(
-            GameRegionMinimap(
-              region: region,
-              viewportSnapshot: null,
-              bus: bus,
-              cellSizePx: 24,
-            ),
-          ),
+        final mb = _MinimapBus()..disposeLater();
+        await _pumpTinyMinimap(
+          tester,
+          regionId: 'minimapChromePanelRegion',
+          bus: mb.bus,
         );
-        await tester.pump();
 
         final paintCtx = tester.element(
           find.byKey(kRegionMinimapCustomPaintKey),
@@ -489,22 +449,12 @@ void main() {
     testWidgets(
       'no Material under minimap paints with white or black background',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        final region = _tinyRegion(regionId: 'minimapChromeNoLightThemeRegion');
-
-        await tester.pumpWidget(
-          _minimapTestShell(
-            GameRegionMinimap(
-              region: region,
-              viewportSnapshot: null,
-              bus: bus,
-              cellSizePx: 24,
-            ),
-          ),
+        final mb = _MinimapBus()..disposeLater();
+        await _pumpTinyMinimap(
+          tester,
+          regionId: 'minimapChromeNoLightThemeRegion',
+          bus: mb.bus,
         );
-        await tester.pump();
 
         final materials = tester.widgetList<Material>(
           find.descendant(
@@ -580,22 +530,12 @@ void main() {
     testWidgets(
       'toggle default state paints --bg-deep + --border + accent-dim glyph tint',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        final region = _tinyRegion(regionId: 'minimapToggleDarkChrome');
-
-        await tester.pumpWidget(
-          _minimapTestShell(
-            GameRegionMinimap(
-              region: region,
-              viewportSnapshot: null,
-              bus: bus,
-              cellSizePx: 24,
-            ),
-          ),
+        final mb = _MinimapBus()..disposeLater();
+        await _pumpTinyMinimap(
+          tester,
+          regionId: 'minimapToggleDarkChrome',
+          bus: mb.bus,
         );
-        await tester.pump();
 
         final toggle = find.byKey(kRegionMinimapToggleKey);
         expect(toggle, findsOneWidget);
@@ -629,22 +569,12 @@ void main() {
     testWidgets(
       'hover transitions toggle glyph tint to accent-bright + outline to accent-dim',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        addTearDown(bus.dispose);
-
-        final region = _tinyRegion(regionId: 'minimapToggleHoverChrome');
-
-        await tester.pumpWidget(
-          _minimapTestShell(
-            GameRegionMinimap(
-              region: region,
-              viewportSnapshot: null,
-              bus: bus,
-              cellSizePx: 24,
-            ),
-          ),
+        final mb = _MinimapBus()..disposeLater();
+        await _pumpTinyMinimap(
+          tester,
+          regionId: 'minimapToggleHoverChrome',
+          bus: mb.bus,
         );
-        await tester.pump();
 
         final toggleFinder = find.byKey(kRegionMinimapToggleKey);
         final gesture = await tester.createGesture(

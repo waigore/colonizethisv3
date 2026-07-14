@@ -1686,10 +1686,17 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 1000 physical lines (shrink-only allowlist; Refs #4013)"
+    title: "app/test files must stay at or below 800 physical lines (shrink-only allowlist; Refs #4021)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart
+
+  - rule_id: repo.app_test_support_loc
+    group: testing
+    title: "app/test/support physical LOC must stay at or below ratchet ceiling (Refs #4021)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_support_loc.dart
 
   - rule_id: repo.app_test_no_duplicate_dark_token_asserts
     group: testing

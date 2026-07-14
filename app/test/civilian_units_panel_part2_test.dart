@@ -12,19 +12,16 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate
 import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
-import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;
 
-import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'support/civilian_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
   late Game game;
   late String humanPlayerIdWithUnits;
-  const String humanPlayerIdWithNoUnits = 'no-such-player';
 
   setUpAll(() {
     game = buildCivilianPanelTestGame();
@@ -37,33 +34,12 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianSingleUnitOwGame(
           id: 'g_civ_locate_icon',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'civ1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+          humanId: human,
+          unitId: 'civ1',
+          unitType: kUnitTypeBuilder,
+          tileKey: tileKey,
         );
         var closeCount = 0;
         LocateMapTileEvent? locateEvent;
@@ -99,39 +75,24 @@ void main() {
       (WidgetTester tester) async {
         const human = 'h1';
         const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = Game(
+        final miniGame = buildCivilianOwUnitsGame(
           id: 'g_civ_locate_tile_scope',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'civ_a',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-                Unit(
-                  id: 'civ_b',
-                  type: kUnitTypeEngineer,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: tileKey,
-                ),
-              ],
+          humanId: human,
+          units: [
+            civilianIdleUnit(
+              id: 'civ_a',
+              type: kUnitTypeBuilder,
+              ownerId: human,
+              provinceId: 'oldWorld|p1',
+              tileKey: tileKey,
             ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
+            civilianIdleUnit(
+              id: 'civ_b',
+              type: kUnitTypeEngineer,
+              ownerId: human,
+              provinceId: 'oldWorld|p1',
+              tileKey: tileKey,
+            ),
           ],
         );
         var closeCount = 0;
@@ -189,38 +150,9 @@ void main() {
         const human = 'gp1';
         const standingTile = 'oldWorld|p1|0|0';
         const pendingTile = 'oldWorld|p2|0|0';
-        final gameWithPending = Game(
-          id: 'g_pending_projection',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  displayName: 'Alpha',
-                ),
-                Province(
-                  id: 'oldWorld|p2',
-                  regionId: 'oldWorld',
-                  displayName: 'Beta',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: kUnitTypeBuilder,
-                  ownerId: human,
-                  locationProvinceId: 'oldWorld|p1',
-                  tileKey: standingTile,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: human, displayName: 'Human', isHuman: true),
-          ],
+        final gameWithPending = buildCivilianPendingProjectionGame(
+          humanId: human,
+          standingTile: standingTile,
         );
         final orders = const Orders(
           workOrdersByPlayerId: {

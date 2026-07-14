@@ -84,12 +84,21 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedUnitsPanelPartFile(relativePath)) {
+      final visitor = _UnitsPanelInlineGameVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, or trade-screen host scaffolding found.',
+      'widgetbook use-case, trade-screen host, or units-panel Game scaffolding '
+      'found.',
     );
     return 0;
   }
@@ -108,7 +117,10 @@ int runCheckAppTestNoDuplicateScaffolding(
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/support/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
-    'app/test/support/trade_screen_test_support.dart.',
+    'app/test/support/trade_screen_test_support.dart. '
+    'Units-panel: use shared factories in '
+    'civilian_units_panel_test_support.dart / '
+    'military_units_panel_test_support.dart / units_panel_test_shared.dart.',
   );
   return 1;
 }
@@ -151,6 +163,19 @@ bool _isGovernedTradeScreenFile(String relativePath) {
     return false;
   }
   return true;
+}
+
+/// True for civilian part suites and the military panel core suite (Refs #4021).
+bool _isGovernedUnitsPanelPartFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  if (name.startsWith('civilian_units_panel_part') &&
+      name.endsWith('_test.dart')) {
+    return true;
+  }
+  return name == 'military_units_panel_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -286,6 +311,37 @@ class _TradeScreenHostVisitor extends RecursiveAstVisitor<void> {
       );
     }
     super.visitFunctionDeclaration(node);
+  }
+}
+
+/// Flags inline `Game(` construction in units-panel part suites (Refs #4021).
+class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
+  _UnitsPanelInlineGameVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final typeName = node.constructorName.type.name.lexeme;
+    if (typeName == 'Game') {
+      _report(
+        node.offset,
+        'inline Game( construction; use civilian/military units-panel '
+        'test support factories',
+      );
+    }
+    super.visitInstanceCreationExpression(node);
   }
 }
 
