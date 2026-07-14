@@ -27,34 +27,31 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
     final log = widget.logger ?? packageLogger('dialogue');
     try {
       final bundle = widget.assetBundle ?? rootBundle;
-      final text = await bundle.loadString(kDialogueInterventionAsset);
-      final project = YarnProject();
       // Jenny resolves `{$var}` interpolation at PARSE time, so the interpolated
       // faction variables must exist (with the `$` prefix) before `parse` or it
       // throws a `NameError` (#3463). Real per-prompt values are bound before
       // each node runs; StringVariable reads storage at runtime.
-      project.variables.setVariable(r'$aggressorName', '');
-      project.variables.setVariable(r'$defenderName', '');
-      project.variables.setVariable(r'$interveningName', '');
-      project.parse(text);
-      for (final node in [
-        _kIntro,
-        _kSituation,
-        _kReactIntervene,
-        _kReactNothing,
-        _kReactProtest,
-      ]) {
-        if (!project.nodes.containsKey(node)) {
-          throw StateError(
-            'Intervention node "$node" missing in $kDialogueInterventionAsset',
-          );
-        }
-      }
-      final view = _createInterventionDialogueView(log);
-      final runner = DialogueRunner(
-        yarnProject: project,
-        dialogueViews: [view],
+      final session = await loadYarnDialogueSession(
+        bundle: bundle,
+        assetPath: kDialogueInterventionAsset,
+        logger: log,
+        createView: _createInterventionDialogueView,
+        beforeParse: (project) {
+          project.variables.setVariable(r'$aggressorName', '');
+          project.variables.setVariable(r'$defenderName', '');
+          project.variables.setVariable(r'$interveningName', '');
+        },
+        requiredNodes: const [
+          _kIntro,
+          _kSituation,
+          _kReactIntervene,
+          _kReactNothing,
+          _kReactProtest,
+        ],
       );
+      final project = session.project;
+      final view = session.view;
+      final runner = session.runner;
       if (!mounted) return;
       setState(() {
         interventionProject = project;

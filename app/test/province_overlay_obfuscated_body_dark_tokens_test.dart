@@ -31,6 +31,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         demoRegionForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
+import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/province_overlay_test_harness.dart';
 
 /// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
@@ -103,44 +104,6 @@ List<Text> _obfuscatedTextWidgets(WidgetTester tester) {
       .toList(growable: false);
 }
 
-void _expectMutedObfuscated(Text widget, {required String context}) {
-  // Each obfuscated `???` body row MUST declare its own
-  // `TextStyle.color`. A bare `Text(line)` (no `style`) resolves
-  // `style` to `null` and rendering falls through to ambient
-  // `DefaultTextStyle`. Asserting `style?.color != null` catches any
-  // regression that drops the explicit `EditorialMonoclePalette.muted`
-  // colour back to `null`.
-  expect(
-    widget.style?.color,
-    isNotNull,
-    reason:
-        'Material defaults regression guard: obfuscated body row '
-        '"${widget.data}" ($context) must declare its own '
-        'TextStyle.color rather than relying on DefaultTextStyle '
-        'fall-through.',
-  );
-  // The bare dark-Material `bodyMedium` colour without the
-  // `editorialMonocle` override is `Colors.white`; explicitly forbid it
-  // so a future theme swap that lost the
-  // `EditorialMonoclePalette.muted` override is surfaced.
-  expect(
-    widget.style?.color,
-    isNot(equals(Colors.white)),
-    reason:
-        'Material defaults regression guard: obfuscated body row '
-        '"${widget.data}" ($context) must not resolve to the dark '
-        'Material `Colors.white` fallback.',
-  );
-  expect(
-    widget.style?.color,
-    equals(EditorialMonoclePalette.muted),
-    reason:
-        'Obfuscated body row "${widget.data}" ($context) must resolve '
-        'TextStyle.color to EditorialMonoclePalette.muted per SPEC '
-        '§ Dark-theme obfuscated `???` body tokens.',
-  );
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -189,7 +152,7 @@ void main() {
             '`???` placeholder Text in the obfuscated sections column.',
       );
       for (final widget in obfuscated) {
-        _expectMutedObfuscated(
+        expectMutedObfuscated(
           widget,
           context: 'fully-unrevealed province sections',
         );
@@ -232,7 +195,7 @@ void main() {
             '`???` placeholder Text (Political + Naval).',
       );
       for (final widget in obfuscated) {
-        _expectMutedObfuscated(
+        expectMutedObfuscated(
           widget,
           context: 'fully-unrevealed sea-zone sections',
         );
@@ -304,7 +267,7 @@ void main() {
               '"$expected" placeholder exactly once.',
         );
         final Text row = tester.widget<Text>(finder);
-        _expectMutedObfuscated(
+        expectMutedObfuscated(
           row,
           context: 'partially-revealed Tile section row',
         );

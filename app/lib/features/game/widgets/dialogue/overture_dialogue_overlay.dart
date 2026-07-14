@@ -6,7 +6,6 @@ import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:jenny/jenny.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
@@ -17,6 +16,7 @@ import '../../../../../widgets/ct_spacing.dart';
 import '../../../../../widgets/ct_toggle_switch.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
+import 'yarn_dialogue_bootstrap.dart';
 
 part 'overture_dialogue_overlay_flow.dart';
 part 'overture_dialogue_overlay_offer_row.dart';

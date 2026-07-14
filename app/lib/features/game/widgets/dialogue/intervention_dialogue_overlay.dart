@@ -19,6 +19,7 @@ import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 import 'intervention_choice_buttons.dart';
+import 'yarn_dialogue_bootstrap.dart';
 
 part 'intervention_dialogue_overlay_flow.dart';
 part 'intervention_dialogue_overlay_shell.dart';
