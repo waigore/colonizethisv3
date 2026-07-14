@@ -57,6 +57,7 @@ part 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 part 'province_sea_zone_detail_overlay_province_content_intel.dart';
 part 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 part 'province_sea_zone_detail_overlay_economic_section.dart';
+part 'province_sea_zone_detail_overlay_economic_condensed.dart';
 part 'province_sea_zone_detail_overlay_military_section.dart';
 part 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 part 'province_sea_zone_detail_overlay_close_button.dart';
