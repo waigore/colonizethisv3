@@ -319,54 +319,41 @@ void main() {
       _expectOverlayTexts(const ['Sea zone', 'POLITICAL', 'NAVAL']);
     });
 
-    testWidgets('sea zone overlay uses sea-zone display name field', (
+    testWidgets('sea zone display name follows reveal/fog visibility', (
       WidgetTester tester,
     ) async {
       await _pumpNamedSea(tester);
       expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
+
+      await _pumpNamedSea(
+        tester,
+        region: _regionWithVisibility(
+          demoRegionForOverlay,
+          (_) => TileVisibility.unrevealed,
+        ),
+      );
+      expect(find.textContaining('Named Test Sea'), findsNothing);
+      expect(find.textContaining('Sea zone:'), findsNothing);
+      expect(find.text('???'), findsWidgets);
+
+      final seaParts = sampleSeaZoneIdForOverlay.split('|');
+      final localSea = seaParts.length >= 2
+          ? seaParts.sublist(1).join('|')
+          : sampleSeaZoneIdForOverlay;
+      var revealOneSeaInZone = true;
+      await _pumpNamedSea(
+        tester,
+        region: _regionWithVisibility(demoRegionForOverlay, (c) {
+          final inZone = c.isSea && c.regionCellId == localSea;
+          if (inZone && revealOneSeaInZone) {
+            revealOneSeaInZone = false;
+            return TileVisibility.fogged;
+          }
+          return TileVisibility.unrevealed;
+        }),
+      );
+      expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
     });
-
-    testWidgets(
-      'AC: sea zone hides canonical name when all sea tiles in zone are unrevealed',
-      (WidgetTester tester) async {
-        await _pumpNamedSea(
-          tester,
-          region: _regionWithVisibility(
-            demoRegionForOverlay,
-            (_) => TileVisibility.unrevealed,
-          ),
-        );
-
-        expect(find.textContaining('Named Test Sea'), findsNothing);
-        expect(find.textContaining('Sea zone:'), findsNothing);
-        expect(find.text('???'), findsWidgets);
-      },
-    );
-
-    testWidgets(
-      'AC: sea zone shows display name when at least one sea tile in zone is fogged',
-      (WidgetTester tester) async {
-        final seaPrefixed = sampleSeaZoneIdForOverlay;
-        final seaParts = seaPrefixed.split('|');
-        final localSea = seaParts.length >= 2
-            ? seaParts.sublist(1).join('|')
-            : seaPrefixed;
-        var revealOneSeaInZone = true;
-        await _pumpNamedSea(
-          tester,
-          region: _regionWithVisibility(demoRegionForOverlay, (c) {
-            final inZone = c.isSea && c.regionCellId == localSea;
-            if (inZone && revealOneSeaInZone) {
-              revealOneSeaInZone = false;
-              return TileVisibility.fogged;
-            }
-            return TileVisibility.unrevealed;
-          }),
-        );
-
-        expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
-      },
-    );
 
     testWidgets('AC: Close button invokes onClose', (
       WidgetTester tester,

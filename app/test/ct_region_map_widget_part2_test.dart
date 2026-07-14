@@ -208,26 +208,7 @@ void main() {
     );
 
     testWidgets(
-      'tap on map invokes onProvinceSelected with prefixed province id (mobile/touch)',
-      (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        String? selectedId;
-        await _pumpOw(
-          tester,
-          region: region,
-          onProvinceSelected: (id) => selectedId = id,
-        );
-        expect(_map, findsOneWidget);
-        await _tapMap(tester);
-        expect(selectedId, isNotNull);
-        expect(selectedId!, startsWith('${region.regionId}|'));
-        expect(selectedId!.split('|').length, 2);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
-
-    testWidgets(
-      'tap invokes onMapTileTappedForDetail with full tile key',
+      'tap selects prefixed province and invokes detail tile key callback',
       (WidgetTester tester) async {
         final region = ctRegionMapTestOldWorldRegion();
         String? selectedId;
@@ -241,6 +222,8 @@ void main() {
         expect(_map, findsOneWidget);
         await _tapMap(tester);
         expect(selectedId, isNotNull);
+        expect(selectedId!, startsWith('${region.regionId}|'));
+        expect(selectedId!.split('|').length, 2);
         expect(detailTileKey, isNotNull);
         final parts = detailTileKey!.split('|');
         expect(parts.length, 4);
@@ -253,21 +236,21 @@ void main() {
     );
 
     testWidgets(
-      'work target selection mode ignores invalid tile taps without canceling',
+      'work target mode ignores invalid taps and commits on valid tile',
       (WidgetTester tester) async {
-        final region = ctRegionMapMiniLandStrip(
-          base: ctRegionMapTestOldWorldRegion(),
-          width: 2,
-          height: 1,
-          cellSize: 32,
-          regionCellId: 'p1',
-        );
+        const validTileKey = 'oldWorld|p1|0|0';
         var selectedCallCount = 0;
         var cancelCallCount = 0;
         await _pumpWorkTarget(
           tester,
-          region: region,
-          validTileKeys: {'oldWorld|p1|0|0'},
+          region: ctRegionMapMiniLandStrip(
+            base: ctRegionMapTestOldWorldRegion(),
+            width: 2,
+            height: 1,
+            cellSize: 32,
+            regionCellId: 'p1',
+          ),
+          validTileKeys: {validTileKey},
           onTileSelected: (_) => selectedCallCount++,
           onWorkTargetSelectionCancelled: () => cancelCallCount++,
         );
@@ -275,14 +258,7 @@ void main() {
         await tester.pump();
         expect(selectedCallCount, 0);
         expect(cancelCallCount, 0);
-      },
-      timeout: const Timeout(Duration(seconds: 5)),
-    );
 
-    testWidgets(
-      'work target selection mode commits on valid tile tap',
-      (WidgetTester tester) async {
-        const validTileKey = 'oldWorld|p1|0|0';
         String? selectedTileKey;
         await _pumpWorkTarget(
           tester,
@@ -523,7 +499,7 @@ void main() {
     );
 
     testWidgets(
-      'required resource icon asset files are present in test asset bundle',
+      'resource icon assets are non-empty and all load via cache path',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
         for (final resourceId in kResourceIconIds) {
@@ -535,13 +511,6 @@ void main() {
             reason: 'Resource icon $path is empty',
           );
         }
-      },
-      timeout: const Timeout(Duration(seconds: 15)),
-    );
-
-    testWidgets(
-      'resource icon cache loads all icons successfully',
-      (WidgetTester tester) async {
         var loadedCount = 0;
         await tester.runAsync(() async {
           loadedCount = await _countResourceIconAssets();

@@ -537,51 +537,33 @@ void main() {
     // Dark editorial-monocle chrome contract (#2867 S6 / R1 / R2 / R21).
     group('Dark editorial-monocle chrome (#2867 S6)', () {
       testWidgets(
-        'title resolves --accent color and letterSpacing == fontSize * 0.05',
+        'title/intro/divider use editorial-monocle tokens (not raw theme)',
         (WidgetTester tester) async {
           await pumpNewGameLeaderSelectionDialog(tester);
           final Text title = keyedText(tester, 'leaderSelectionDialogTitle');
           expect(title.style?.color, EditorialMonoclePalette.accent);
           final double fontSize = title.style?.fontSize ?? 16;
           expect(title.style?.letterSpacing, closeTo(fontSize * 0.05, 1e-9));
+          expect(
+            title.style?.color,
+            isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
+          );
+
+          final dividerFinder = keyed('leaderSelectionDialogBrassDivider');
+          expect(dividerFinder, findsOneWidget);
+          expect(find.byType(CtBrassDivider), findsOneWidget);
+          expect(
+            tester.getRect(dividerFinder).top,
+            greaterThanOrEqualTo(
+              tester.getRect(keyed('leaderSelectionDialogTitle')).bottom,
+            ),
+          );
+
+          final Text intro = keyedText(tester, 'leaderSelectionDialogIntro');
+          expect(intro.style?.color, EditorialMonoclePalette.muted);
+          expect(intro.style?.fontStyle, FontStyle.italic);
         },
       );
-
-      testWidgets('renders exactly one CtBrassDivider keyed below the title', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        final dividerFinder = keyed('leaderSelectionDialogBrassDivider');
-        expect(dividerFinder, findsOneWidget);
-        expect(find.byType(CtBrassDivider), findsOneWidget);
-        expect(
-          tester.getRect(dividerFinder).top,
-          greaterThanOrEqualTo(
-            tester.getRect(keyed('leaderSelectionDialogTitle')).bottom,
-          ),
-        );
-      });
-
-      testWidgets('intro paints --muted italic body color', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        final Text intro = keyedText(tester, 'leaderSelectionDialogIntro');
-        expect(intro.style?.color, EditorialMonoclePalette.muted);
-        expect(intro.style?.fontStyle, FontStyle.italic);
-      });
-
-      testWidgets('title does NOT use the raw textTheme.titleMedium color '
-          '(regression guard against unstyled headings)', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        final Text title = keyedText(tester, 'leaderSelectionDialogTitle');
-        expect(
-          title.style?.color,
-          isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
-        );
-      });
     });
   });
 }
