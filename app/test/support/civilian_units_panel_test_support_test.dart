@@ -1,5 +1,7 @@
 // Smoke coverage for civilian units-panel shared scenario factories (Refs #4021).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetExplore;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -29,7 +31,7 @@ void main() {
     final orders = civilianSinglePendingWorkOrder(
       humanId: 'h1',
       unitId: 'u1',
-      target: 'explore',
+      target: kWorkTargetExplore,
       targetTileKey: 'oldWorld|p1|0|0',
     );
     expect(orders.workOrdersByPlayerId['h1'], hasLength(1));
