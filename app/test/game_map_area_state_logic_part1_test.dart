@@ -64,6 +64,33 @@ void main() {
     );
   }
 
+  ct_models.Province prov(String regionId, String localId) =>
+      ct_models.Province(id: '$regionId|$localId', regionId: regionId);
+
+  ct_models.Unit unit({
+    required String id,
+    required String type,
+    required String provinceId,
+    required String tileKey,
+  }) => ct_models.Unit(
+    id: id,
+    type: type,
+    ownerId: humanPlayerId,
+    locationProvinceId: provinceId,
+    tileKey: tileKey,
+    status: ct_models.UnitStatus.idle,
+  );
+
+  ct_models.WorkOrder workOrder({
+    required String unitId,
+    required String target,
+    required String targetTileKey,
+  }) => ct_models.WorkOrder(
+    unitId: unitId,
+    target: target,
+    targetTileKey: targetTileKey,
+  );
+
   ct_models.Game humanGame({
     ct_models.RegionData? oldWorld,
     ct_models.RegionData? newWorld,
@@ -97,45 +124,49 @@ void main() {
   ct_models.Game gameExplorerOldToNew({required String sourceTile}) {
     return humanGame(
       oldWorld: ct_models.RegionData(
-        provinces: const [
-          ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-          ct_models.Province(id: 'oldWorld|pA', regionId: 'oldWorld'),
-        ],
+        provinces: [prov('oldWorld', 'p1'), prov('oldWorld', 'pA')],
         units: [
-          ct_models.Unit(
+          unit(
             id: explorerId,
             type: ct_models.kUnitTypeExplorer,
-            ownerId: humanPlayerId,
-            locationProvinceId: 'oldWorld|p1',
+            provinceId: 'oldWorld|p1',
             tileKey: sourceTile,
-            status: ct_models.UnitStatus.idle,
           ),
         ],
       ),
-      newWorld: const ct_models.RegionData(
+      newWorld: ct_models.RegionData(
         provinces: [
-          ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
-          ct_models.Province(id: 'newWorld|pA', regionId: 'newWorld'),
-          ct_models.Province(id: 'newWorld|pB', regionId: 'newWorld'),
+          prov('newWorld', 'p1'),
+          prov('newWorld', 'pA'),
+          prov('newWorld', 'pB'),
         ],
-        units: [],
+        units: const [],
       ),
     );
   }
 
-  ct_models.Orders prospectOrder(String targetTile) {
-    return ct_models.Orders(
-      workOrdersByPlayerId: {
-        humanPlayerId: [
-          ct_models.WorkOrder(
-            unitId: explorerId,
-            target: kWorkTargetProspect,
-            targetTileKey: targetTile,
-          ),
-        ],
-      },
-    );
-  }
+  ct_models.Orders prospectOrder(String targetTile) => ct_models.Orders(
+    workOrdersByPlayerId: {
+      humanPlayerId: [
+        workOrder(
+          unitId: explorerId,
+          target: kWorkTargetProspect,
+          targetTileKey: targetTile,
+        ),
+      ],
+    },
+  );
+
+  RegionMapViewData projectDraft({
+    required RegionMapViewData region,
+    required ct_models.Game game,
+    required ct_models.Orders orders,
+  }) => GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+    region: region,
+    game: game,
+    orders: orders,
+    humanPlayerId: humanPlayerId,
+  );
 
   group('GameMapAreaStateLogic', () {
     test(
@@ -157,17 +188,13 @@ void main() {
         );
         final game = humanGame(
           oldWorld: ct_models.RegionData(
-            provinces: const [
-              ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-            ],
+            provinces: [prov('oldWorld', 'p1')],
             units: [
-              ct_models.Unit(
+              unit(
                 id: unitId,
                 type: ct_models.kUnitTypeBuilder,
-                ownerId: humanPlayerId,
-                locationProvinceId: 'oldWorld|p1',
+                provinceId: 'oldWorld|p1',
                 tileKey: sourceTile,
-                status: ct_models.UnitStatus.idle,
               ),
             ],
           ),
@@ -175,10 +202,10 @@ void main() {
             humanPlayerId: {targetTile: 'fogged'},
           },
         );
-        final orders = const ct_models.Orders(
+        final orders = ct_models.Orders(
           workOrdersByPlayerId: {
             humanPlayerId: [
-              ct_models.WorkOrder(
+              workOrder(
                 unitId: unitId,
                 target: kWorkTargetBuildImprovement,
                 targetTileKey: targetTile,
@@ -187,13 +214,11 @@ void main() {
           },
         );
 
-        final projected =
-            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-              region: region,
-              game: game,
-              orders: orders,
-              humanPlayerId: humanPlayerId,
-            );
+        final projected = projectDraft(
+          region: region,
+          game: game,
+          orders: orders,
+        );
 
         expect(projected.civilianTileMarkers, hasLength(1));
         final marker = projected.civilianTileMarkers.single;
@@ -226,26 +251,22 @@ void main() {
           final newRegion = baseRegion('newWorld');
           final orders = prospectOrder(targetTile);
 
-          final projectedNw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: newRegion,
-                game: game,
-                orders: orders,
-                humanPlayerId: humanPlayerId,
-              );
+          final projectedNw = projectDraft(
+            region: newRegion,
+            game: game,
+            orders: orders,
+          );
           expect(projectedNw.civilianTileMarkers, hasLength(1));
           final nwMarker = projectedNw.civilianTileMarkers.single;
           expect(nwMarker.tileKey, targetTile);
           expect(nwMarker.localProvinceId, 'p1');
           expect(nwMarker.unitIds, contains(explorerId));
 
-          final projectedOw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: oldRegion,
-                game: game,
-                orders: orders,
-                humanPlayerId: humanPlayerId,
-              );
+          final projectedOw = projectDraft(
+            region: oldRegion,
+            game: game,
+            orders: orders,
+          );
           expect(projectedOw.civilianTileMarkers, isEmpty);
         });
 
@@ -254,24 +275,18 @@ void main() {
           const sourceTile = 'newWorld|p1|0|0';
           const targetTile = 'oldWorld|p1|1|0';
           final game = humanGame(
-            oldWorld: const ct_models.RegionData(
-              provinces: [
-                ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-              ],
-              units: [],
+            oldWorld: ct_models.RegionData(
+              provinces: [prov('oldWorld', 'p1')],
+              units: const [],
             ),
             newWorld: ct_models.RegionData(
-              provinces: const [
-                ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
-              ],
+              provinces: [prov('newWorld', 'p1')],
               units: [
-                ct_models.Unit(
+                unit(
                   id: explorerId,
                   type: ct_models.kUnitTypeExplorer,
-                  ownerId: humanPlayerId,
-                  locationProvinceId: 'newWorld|p1',
+                  provinceId: 'newWorld|p1',
                   tileKey: sourceTile,
-                  status: ct_models.UnitStatus.idle,
                 ),
               ],
             ),
@@ -289,23 +304,19 @@ void main() {
           final oldRegion = baseRegion('oldWorld');
           final orders = prospectOrder(targetTile);
 
-          final projectedOw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: oldRegion,
-                game: game,
-                orders: orders,
-                humanPlayerId: humanPlayerId,
-              );
+          final projectedOw = projectDraft(
+            region: oldRegion,
+            game: game,
+            orders: orders,
+          );
           expect(projectedOw.civilianTileMarkers, hasLength(1));
           expect(projectedOw.civilianTileMarkers.single.tileKey, targetTile);
 
-          final projectedNw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: newRegion,
-                game: game,
-                orders: orders,
-                humanPlayerId: humanPlayerId,
-              );
+          final projectedNw = projectDraft(
+            region: newRegion,
+            game: game,
+            orders: orders,
+          );
           expect(projectedNw.civilianTileMarkers, isEmpty);
         });
 
@@ -317,13 +328,11 @@ void main() {
             final game = gameExplorerOldToNew(sourceTile: sourceTile);
             final newRegion = baseRegion('newWorld');
             final orders = prospectOrder(targetTile);
-            final projectedNw =
-                GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                  region: newRegion,
-                  game: game,
-                  orders: orders,
-                  humanPlayerId: humanPlayerId,
-                );
+            final projectedNw = projectDraft(
+              region: newRegion,
+              game: game,
+              orders: orders,
+            );
             expect(projectedNw.civilianTileMarkers.single.tileKey, targetTile);
             expect(
               projectedNw.civilianTileMarkers.single.tileKey,
@@ -351,30 +360,25 @@ void main() {
           final cleared = const ct_models.Orders();
 
           expect(
-            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+            projectDraft(
               region: newRegion,
               game: game,
               orders: ordersDraft,
-              humanPlayerId: humanPlayerId,
             ).civilianTileMarkers,
             isNotEmpty,
           );
-          final afterCancelNw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: newRegion,
-                game: game,
-                orders: cleared,
-                humanPlayerId: humanPlayerId,
-              );
+          final afterCancelNw = projectDraft(
+            region: newRegion,
+            game: game,
+            orders: cleared,
+          );
           expect(afterCancelNw.civilianTileMarkers, isEmpty);
 
-          final afterCancelOw =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: oldRegion,
-                game: game,
-                orders: cleared,
-                humanPlayerId: humanPlayerId,
-              );
+          final afterCancelOw = projectDraft(
+            region: oldRegion,
+            game: game,
+            orders: cleared,
+          );
           expect(afterCancelOw.civilianTileMarkers, hasLength(1));
           expect(afterCancelOw.civilianTileMarkers.single.tileKey, sourceTile);
         });
@@ -397,21 +401,18 @@ void main() {
             final ordersB = prospectOrder(targetB);
 
             expect(
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+              projectDraft(
                 region: newRegion,
                 game: game,
                 orders: ordersA,
-                humanPlayerId: humanPlayerId,
               ).civilianTileMarkers.single.tileKey,
               targetA,
             );
-            final markerB =
-                GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                  region: newRegion,
-                  game: game,
-                  orders: ordersB,
-                  humanPlayerId: humanPlayerId,
-                ).civilianTileMarkers.single;
+            final markerB = projectDraft(
+              region: newRegion,
+              game: game,
+              orders: ordersB,
+            ).civilianTileMarkers.single;
             expect(markerB.tileKey, targetB);
             expect(markerB.localProvinceId, 'pB');
           },
@@ -424,32 +425,24 @@ void main() {
           const merchantId = 'u_merchant';
           final game = humanGame(
             oldWorld: ct_models.RegionData(
-              provinces: const [
-                ct_models.Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-              ],
+              provinces: [prov('oldWorld', 'p1')],
               units: [
-                ct_models.Unit(
+                unit(
                   id: explorerId,
                   type: ct_models.kUnitTypeExplorer,
-                  ownerId: humanPlayerId,
-                  locationProvinceId: 'oldWorld|p1',
+                  provinceId: 'oldWorld|p1',
                   tileKey: sourceTile,
-                  status: ct_models.UnitStatus.idle,
                 ),
               ],
             ),
             newWorld: ct_models.RegionData(
-              provinces: const [
-                ct_models.Province(id: 'newWorld|p1', regionId: 'newWorld'),
-              ],
+              provinces: [prov('newWorld', 'p1')],
               units: [
-                ct_models.Unit(
+                unit(
                   id: merchantId,
                   type: ct_models.kUnitTypeMerchant,
-                  ownerId: humanPlayerId,
-                  locationProvinceId: 'newWorld|p1',
+                  provinceId: 'newWorld|p1',
                   tileKey: targetTile,
-                  status: ct_models.UnitStatus.idle,
                 ),
               ],
             ),
@@ -466,13 +459,11 @@ void main() {
             ],
           );
           final orders = prospectOrder(targetTile);
-          final projected =
-              GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-                region: newRegion,
-                game: game,
-                orders: orders,
-                humanPlayerId: humanPlayerId,
-              );
+          final projected = projectDraft(
+            region: newRegion,
+            game: game,
+            orders: orders,
+          );
           expect(projected.civilianTileMarkers, hasLength(1));
           final m = projected.civilianTileMarkers.single;
           expect(m.tileKey, targetTile);
@@ -489,11 +480,10 @@ void main() {
             ],
           );
           expect(
-            GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
+            projectDraft(
               region: oldRegion,
               game: game,
               orders: orders,
-              humanPlayerId: humanPlayerId,
             ).civilianTileMarkers,
             isEmpty,
           );

@@ -15,6 +15,30 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
+Future<void> _pumpOw(
+  WidgetTester tester, {
+  RegionMapViewData? region,
+  double width = 400,
+  double height = 320,
+  double cellSizePx = 24,
+  void Function()? onRegionViewChanged,
+  BaseLayerDisplayMode? baseLayerDisplayMode,
+  AppEventBus? bus,
+}) async {
+  await tester.pumpWidget(
+    ctRegionMapTestHarness(
+      region: region ?? ctRegionMapTestOldWorldRegion(),
+      width: width,
+      height: height,
+      cellSizePx: cellSizePx,
+      onRegionViewChanged: onRegionViewChanged,
+      baseLayerDisplayMode: baseLayerDisplayMode,
+      bus: bus,
+    ),
+  );
+  await tester.pump();
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -24,22 +48,9 @@ void main() {
     testWidgets(
       'camera resize logic runs when parent size changes',
       (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(region: region, width: 400, height: 320),
-        );
-        await tester.pump();
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(region: region, width: 640, height: 360),
-        );
-        await tester.pump();
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(region: region, width: 320, height: 240),
-        );
-        await tester.pump();
+        await _pumpOw(tester, width: 400, height: 320);
+        await _pumpOw(tester, width: 640, height: 360);
+        await _pumpOw(tester, width: 320, height: 240);
 
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
@@ -49,23 +60,8 @@ void main() {
     testWidgets(
       'small cell size triggers map-smaller-than-viewport clamp path',
       (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(region: region, width: 600, height: 600),
-        );
-        await tester.pump();
-
-        // Rebuild with tiny cell size so that the map is smaller than the viewport.
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            width: 600,
-            height: 600,
-            // Use a small cell size so the map is smaller than the viewport.
-            cellSizePx: 4,
-          ),
-        );
-        await tester.pump();
+        await _pumpOw(tester, width: 600, height: 600);
+        await _pumpOw(tester, width: 600, height: 600, cellSizePx: 4);
 
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
@@ -75,18 +71,13 @@ void main() {
     testWidgets(
       'onRegionViewChanged fires when camera moves',
       (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
         var callbackCount = 0;
-
-        await tester.pumpWidget(
-          ctRegionMapTestHarness(
-            region: region,
-            onRegionViewChanged: () {
-              callbackCount++;
-            },
-          ),
+        await _pumpOw(
+          tester,
+          onRegionViewChanged: () {
+            callbackCount++;
+          },
         );
-        await tester.pump();
 
         final mapFinder = find.byType(CtRegionMap);
         expect(mapFinder, findsOneWidget);
@@ -110,9 +101,7 @@ void main() {
     testWidgets(
       'hover and exit events are forwarded into the game',
       (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
-        await tester.pump();
+        await _pumpOw(tester);
 
         final mapFinder = find.byType(CtRegionMap);
         expect(mapFinder, findsOneWidget);
@@ -136,9 +125,7 @@ void main() {
     testWidgets(
       'scroll wheel events are forwarded to zoom handler',
       (WidgetTester tester) async {
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
-        await tester.pump();
+        await _pumpOw(tester);
 
         final mapFinder = find.byType(CtRegionMap);
         expect(mapFinder, findsOneWidget);
@@ -576,9 +563,7 @@ void main() {
       'map throws StateError when terrain tileset fails to load (no silent fallback)',
       (WidgetTester tester) async {
         // Loud failure (no solid-color fallback) when tilesets cannot load.
-        final region = ctRegionMapTestOldWorldRegion();
-        await tester.pumpWidget(ctRegionMapTestHarness(region: region));
-        await tester.pump();
+        await _pumpOw(tester);
         expect(find.byType(CtRegionMap), findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
