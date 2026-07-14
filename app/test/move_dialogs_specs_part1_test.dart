@@ -247,46 +247,17 @@ void main() {
     );
 
     testWidgets(
-      'invasion row shows declare-war trigger in danger italic (Refs #2867 R8)',
+      'invasion row shows declare-war trigger in danger italic, not display font '
+      '(Refs #2867 R8)',
       (WidgetTester tester) async {
         final style = await invasionDeclareWarTriggerStyle(tester);
-        expect(
-          style?.color,
-          equals(EditorialMonoclePalette.danger),
-          reason:
-              'R8 requires the trigger label color to resolve to '
-              '--danger (EditorialMonoclePalette.danger).',
-        );
-        expect(
-          style?.fontStyle,
-          equals(FontStyle.italic),
-          reason:
-              'R8 requires the trigger label to render in italic body '
-              'style so a serif italic glyph fires.',
-        );
-        expect(
-          style?.fontWeight,
-          equals(FontWeight.w600),
-          reason:
-              'R8 requires the trigger label to render at semi-bold '
-              'weight (w600) so the danger emphasis reads against a busy row.',
-        );
-      },
-    );
-
-    testWidgets(
-      'invasion row trigger label does NOT pin the editorial-monocle display font (Refs #2867 R8 negative)',
-      (WidgetTester tester) async {
-        final style = await invasionDeclareWarTriggerStyle(tester);
+        expect(style?.color, EditorialMonoclePalette.danger);
+        expect(style?.fontStyle, FontStyle.italic);
+        expect(style?.fontWeight, FontWeight.w600);
         // R8: Cinzel has no italic variant; pinning display font regresses emphasis.
         expect(
           style?.fontFamily,
           isNot(equals(editorialMonocleDisplayFontFamily)),
-          reason:
-              'R8 forbids the trigger label from being pinned to the '
-              'editorial-monocle display font ($editorialMonocleDisplayFontFamily) '
-              'because that family has no italic variant; the label must '
-              'inherit the body font stack so italic glyphs render.',
         );
       },
     );
@@ -329,7 +300,8 @@ void main() {
     );
 
     testWidgets(
-      'war-confirmation sub-dialog renders inside CtDialogShell with --danger 1px border (Refs #2867 R9)',
+      'war-confirmation sub-dialog uses danger CtDialogShell + nine-patch actions '
+      '(Refs #2867 R9)',
       (WidgetTester tester) async {
         await openInvasionWarConfirm(tester, AppEventBus.create());
 
@@ -340,35 +312,33 @@ void main() {
         expect(shell.borderColor, EditorialMonoclePalette.danger);
         expect(shell.borderWidth, CtDialogShell.dangerBorderWidth);
         expect(shell.borderWidth, 1);
-      },
-    );
-
-    testWidgets(
-      'war-confirmation actions are CtNinePatchButton with danger primary (Refs #2867 R9)',
-      (WidgetTester tester) async {
-        await openInvasionWarConfirm(tester, AppEventBus.create());
 
         final subShell = warConfirmSubShell();
-        final CtNinePatchButton primary = tester.widget<CtNinePatchButton>(
-          find.descendant(
-            of: subShell,
-            matching: find.widgetWithText(
-              CtNinePatchButton,
-              'Declare war and move',
-            ),
-          ),
+        expect(
+          tester
+              .widget<CtNinePatchButton>(
+                find.descendant(
+                  of: subShell,
+                  matching: find.widgetWithText(
+                    CtNinePatchButton,
+                    'Declare war and move',
+                  ),
+                ),
+              )
+              .dangerVariant,
+          isTrue,
         );
-        expect(primary.dangerVariant, isTrue);
-
-        final CtNinePatchButton cancel = tester.widget<CtNinePatchButton>(
-          find.descendant(
-            of: subShell,
-            matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
-          ),
+        expect(
+          tester
+              .widget<CtNinePatchButton>(
+                find.descendant(
+                  of: subShell,
+                  matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
+                ),
+              )
+              .dangerVariant,
+          isFalse,
         );
-        expect(cancel.dangerVariant, isFalse);
-
-        // No Material AlertDialog/TextButton chrome (SPEC pixel-art catalog ban).
         expect(
           find.descendant(of: subShell, matching: find.byType(AlertDialog)),
           findsNothing,
