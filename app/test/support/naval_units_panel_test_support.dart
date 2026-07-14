@@ -28,6 +28,7 @@ import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_p
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
+import 'units_panel_test_shared.dart';
 
 /// Mirrors the running shell's handling of [NavalSplitFleetRequestedEvent] for
 /// widget tests: applies [applyNavalSplitFleet] to the latest game snapshot and
@@ -407,28 +408,17 @@ Game buildNavalPanelBeachheadMissionGame({
   );
 }
 
-/// Capital province adjacent to a named sea zone (Combine adjacency cases).
+/// Capital province adjacent to a named sea zone (Combine adjacency cases;
+/// shared via [buildUnitsPanelCapitalAdjacentSeaTopology], Refs #4021).
 MapTopology buildNavalCapitalAdjacentSeaTopology({
   String capitalNodeId = 'oldWorld|cap1',
   String seaZoneId = 'zone_alpha',
   bool includeEdge = true,
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: capitalNodeId,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: seaZoneId,
-        regionId: 'oldWorld',
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [
-      if (includeEdge) TopologyEdge(id1: capitalNodeId, id2: seaZoneId),
-    ],
+  return buildUnitsPanelCapitalAdjacentSeaTopology(
+    capitalNodeId: capitalNodeId,
+    seaZoneId: seaZoneId,
+    includeEdge: includeEdge,
   );
 }
 
