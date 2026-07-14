@@ -283,7 +283,7 @@ Runs Flutter widget tests for the **app** package (`app/test/` only). Use this (
 melos run test_app
 ```
 
-Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_test.dart`
+Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_part1_test.dart`
 
 ---
 
