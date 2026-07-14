@@ -61,15 +61,13 @@
 // which the S5 orchestrator refactor will replace with phase-planner
 // dispatch.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
+import '../support/colonial_phase_planner_test_support.dart';
 
 // Province ids laid out per SPEC/game/world-model-identity.md. The
 // region prefix doubles as the tile-key region segment, so deriving
@@ -94,60 +92,12 @@ const String _nwTileTown = 'newWorld|p_gamma|0|0';
 const String _nwTileImproved = 'newWorld|p_delta|9|9';
 const String _nwForeignTile = 'newWorld|p_foreign|5|5';
 
-Game _civilianGame({
-  required List<Province> provinces,
-  required List<Unit> owUnits,
-  List<Unit> nwUnits = const [],
-  Map<String, String> resourceByTileKey = const {},
-  TileMapState tileState = const TileMapState(),
-}) {
-  final byRegion = <String, List<Province>>{};
-  for (final province in provinces) {
-    byRegion.putIfAbsent(province.regionId, () => <Province>[]).add(province);
-  }
-  return Game(
-    id: 'g-2509-colonial-phase-planner-civilian',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 132, phase: TurnPhase.orders),
-      oldWorld: RegionData(
-        provinces: byRegion[kOldWorldRegionId] ?? const [],
-        units: owUnits,
-      ),
-      newWorld: RegionData(
-        provinces: byRegion[kNewWorldRegionId] ?? const [],
-        units: nwUnits,
-      ),
-      resourceByTileKey: resourceByTileKey,
-      tileState: tileState,
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-  );
-}
-
-/// Minimal snapshot with the active player [_gp1]. The planner does not
-/// re-check the phase, so phase-routing fields (`conquest`, `colonial`)
-/// stay empty; the in-module contract is what these tests pin.
-AIWorldSnapshot _civilianSnapshot() {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(atWarWith: []),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 Unit _idleBuilder(String id, {String regionId = kOldWorldRegionId}) {
   final provinceId = regionId == kOldWorldRegionId ? _owProv1 : _nwProv1;
   return Unit(
     id: id,
     type: kUnitTypeBuilder,
-    ownerId: _gp1,
+    ownerId: kColonialPhaseGp1,
     locationProvinceId: provinceId,
     tileKey: '$provinceId|9|9',
   );
@@ -163,15 +113,22 @@ void main() {
       // NW-province-ownership filter would emit `build_improvement`
       // toward OW tiles in violation of the COLONIAL Suppressions
       // rule ("No OW build_improvement except port/supply").
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _owProv1,
+            regionId: kOldWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b1')],
         resourceByTileKey: const {_owTileA: 'grain'},
       );
       expect(
-        planColonialCivilian(game: game, snapshot: _civilianSnapshot()),
+        planColonialCivilian(
+          game: game,
+          snapshot: buildColonialCivilianSnapshot(),
+        ),
         isEmpty,
         reason:
             'Active player owns zero NW provinces -> no eligible tiles. '
@@ -185,15 +142,22 @@ void main() {
       // tile, but no Builder units exist. A regression that emitted a
       // `build_improvement` order without a builder would fail unit
       // assignment validation downstream.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: const [],
         resourceByTileKey: const {_nwTileA: 'tobacco'},
       );
       expect(
-        planColonialCivilian(game: game, snapshot: _civilianSnapshot()),
+        planColonialCivilian(
+          game: game,
+          snapshot: buildColonialCivilianSnapshot(),
+        ),
         isEmpty,
         reason:
             'No idle Builders -> no orders. The function must skip its '
@@ -209,16 +173,27 @@ void main() {
       // except tiles needed for port/supply to active NW objectives"
       // in its default form (no active-NW-objective set is yet wired,
       // so the planner suppresses OW improvements unconditionally).
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _owProv1,
+            regionId: kOldWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b1')],
         resourceByTileKey: const {_owTileA: 'grain'},
       );
       expect(
-        planColonialCivilian(game: game, snapshot: _civilianSnapshot()),
+        planColonialCivilian(
+          game: game,
+          snapshot: buildColonialCivilianSnapshot(),
+        ),
         isEmpty,
         reason:
             'OW resource tile is structurally suppressed in COLONIAL. '
@@ -234,13 +209,17 @@ void main() {
       // tiles carry rich resources. A regression that scanned
       // `resourceByTileKey` without the province-ownership filter
       // would route the lone Builder onto a foreign NW tile.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
           Province(
             id: _nwForeignProv,
             regionId: kNewWorldRegionId,
-            ownerId: _gp2,
+            ownerId: kColonialPhaseGp2,
           ),
         ],
         owUnits: [_idleBuilder('b1')],
@@ -248,7 +227,7 @@ void main() {
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.map((o) => o.targetTileKey), const [_nwTileA]);
     });
@@ -260,12 +239,12 @@ void main() {
       // planner must skip it; relying on `resourceByTileKey` alone
       // would permit a regression that places a resource on a town
       // tile and emits an improvement order against the town.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
           Province(
             id: _nwProv1,
             regionId: kNewWorldRegionId,
-            ownerId: _gp1,
+            ownerId: kColonialPhaseGp1,
             townTileKey: _nwTileTown,
           ),
         ],
@@ -274,7 +253,7 @@ void main() {
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.map((o) => o.targetTileKey), const [_nwTileA]);
     });
@@ -286,16 +265,23 @@ void main() {
       // waste a Builder cycle and could re-trigger work that the
       // resolver rejects (or, worse, double-count toward the
       // turn-150 improvement gate).
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv2, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv2,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b1')],
         resourceByTileKey: const {_nwTileImproved: 'cotton'},
         tileState: const TileMapState(improvementByTile: {_nwTileImproved: 1}),
       );
       expect(
-        planColonialCivilian(game: game, snapshot: _civilianSnapshot()),
+        planColonialCivilian(
+          game: game,
+          snapshot: buildColonialCivilianSnapshot(),
+        ),
         isEmpty,
         reason:
             'All eligible NW tiles already at improvementLevel >= 1; '
@@ -308,16 +294,20 @@ void main() {
       // Builder -> exactly one order on the lex-first tile key. The
       // surplus tile remains unimproved this turn (acceptable; the
       // next-turn pass will fill another builder slot).
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b1')],
         resourceByTileKey: const {_nwTileA: 'tobacco', _nwTileB: 'sugar'},
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.length, 1);
       expect(orders.single.unitId, 'b1');
@@ -329,16 +319,20 @@ void main() {
       // Reverse cap: two idle Builders, one NW tile -> exactly one
       // order bound to the lex-first builder id. The surplus builder
       // remains idle (no fabricated order, no duplicate targeting).
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b1'), _idleBuilder('b2')],
         resourceByTileKey: const {_nwTileA: 'tobacco'},
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.length, 1);
       expect(orders.single.unitId, 'b1');
@@ -357,10 +351,18 @@ void main() {
       // unbound (builder cap). Builder input order is intentionally
       // shuffled (`b2` first) so a regression that dropped the
       // builder sort would surface as the wrong unit-to-tile pairing.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
-          Province(id: _nwProv2, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
+          Province(
+            id: _nwProv2,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b2'), _idleBuilder('b1')],
         resourceByTileKey: const {
@@ -371,7 +373,7 @@ void main() {
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.length, 2);
       expect(orders[0].unitId, 'b1');
@@ -390,15 +392,19 @@ void main() {
       // and idle non-Builder civilians (e.g. Merchant) must be
       // skipped. With no idle Builder present the planner returns
       // empty even when an eligible NW tile exists.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         nwUnits: [
           Unit(
             id: 'b_busy',
             type: kUnitTypeBuilder,
-            ownerId: _gp1,
+            ownerId: kColonialPhaseGp1,
             locationProvinceId: _nwProv1,
             tileKey: '$_nwProv1|7|7',
             status: UnitStatus.working,
@@ -406,7 +412,7 @@ void main() {
           Unit(
             id: 'merchant1',
             type: kUnitTypeMerchant,
-            ownerId: _gp1,
+            ownerId: kColonialPhaseGp1,
             locationProvinceId: _nwProv1,
             tileKey: '$_nwProv1|6|6',
           ),
@@ -415,7 +421,10 @@ void main() {
         resourceByTileKey: const {_nwTileA: 'tobacco'},
       );
       expect(
-        planColonialCivilian(game: game, snapshot: _civilianSnapshot()),
+        planColonialCivilian(
+          game: game,
+          snapshot: buildColonialCivilianSnapshot(),
+        ),
         isEmpty,
         reason:
             'Working builders + non-Builder civilians are filtered out; '
@@ -431,16 +440,20 @@ void main() {
       // the "any idle Builder" contract from the function docstring
       // and prevents a regression that adds an implicit region gate
       // on the builder side.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _nwProv1, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv1,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b_ow')],
         resourceByTileKey: const {_nwTileA: 'tobacco'},
       );
       final orders = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(orders.length, 1);
       expect(orders.single.unitId, 'b_ow');
@@ -453,16 +466,24 @@ void main() {
       // suppression, town exclusion, improvement-level filter,
       // builder-status filter, builder sort, and the min cap in one
       // pass. Two calls must produce the same list.
-      final game = _civilianGame(
+      final game = buildColonialCivilianGame(
         provinces: const [
-          Province(id: _owProv1, regionId: kOldWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _owProv1,
+            regionId: kOldWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
           Province(
             id: _nwProv1,
             regionId: kNewWorldRegionId,
-            ownerId: _gp1,
+            ownerId: kColonialPhaseGp1,
             townTileKey: _nwTileTown,
           ),
-          Province(id: _nwProv2, regionId: kNewWorldRegionId, ownerId: _gp1),
+          Province(
+            id: _nwProv2,
+            regionId: kNewWorldRegionId,
+            ownerId: kColonialPhaseGp1,
+          ),
         ],
         owUnits: [_idleBuilder('b2'), _idleBuilder('b1')],
         nwUnits: [_idleBuilder('b3', regionId: kNewWorldRegionId)],
@@ -477,11 +498,11 @@ void main() {
       );
       final first = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       final second = planColonialCivilian(
         game: game,
-        snapshot: _civilianSnapshot(),
+        snapshot: buildColonialCivilianSnapshot(),
       );
       expect(
         first.map((o) => '${o.unitId}->${o.targetTileKey}').toList(),

@@ -55,16 +55,18 @@ void main() {
         hiddenAgendaId: 'warmonger',
       );
       final scores = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.declareWar,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.declareWar,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
       );
       expect(scores.single, 0);
     });
@@ -114,16 +116,18 @@ void main() {
         hiddenAgendaId: 'peacemaker',
       );
       final scores = computeDiplomaticCandidateScores(
-        candidates: const [
-          DiplomaticOrder(
-            type: DiplomaticOrderType.establishOverture,
-            targetFactionId: 'gp2',
-          ),
-        ],
-        nationId: 'gp1',
-        game: game,
-        snapshot: snapshot,
-        config: config,
+        DiplomaticCandidateScoringInput(
+          candidates: const [
+            DiplomaticOrder(
+              type: DiplomaticOrderType.establishOverture,
+              targetFactionId: 'gp2',
+            ),
+          ],
+          nationId: 'gp1',
+          game: game,
+          snapshot: snapshot,
+          config: config,
+        ),
       );
       expect(scores.single, 0);
     });

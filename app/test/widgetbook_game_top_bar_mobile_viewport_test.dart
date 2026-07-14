@@ -8,9 +8,9 @@
 //     lose the mobile-viewport story for the in-game top bar).
 //  2. The builder pumps without exceptions inside the shared `mobileViewport`
 //     (360 × 640 dp `MediaQuery.size`) frame and mounts a narrow-layout
-//     [GameTopBar] (hamburger + trailing Next-turn button only; no center turn
-//     label or pause affordance) per `SPEC/ui/in-game-shell-narrow.md` § Top bar
-//     and `SPEC/ui/mobile-adaptation.md` § 4 In-game shell.
+//     [GameTopBar] (hamburger + pause + trailing Next-turn; no center turn
+//     label) per `SPEC/ui/in-game-shell-narrow.md` § Top bar and
+//     `SPEC/ui/mobile-adaptation.md` § 4 In-game shell (Refs #3959).
 
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kGameMapNextTurnButtonKey;
@@ -65,9 +65,9 @@ void main() {
 
           expect(find.byType(GameTopBar), findsOneWidget);
           expect(find.byKey(GameTopBar.hamburgerKey), findsOneWidget);
+          expect(find.byKey(GameTopBar.pauseButtonKey), findsOneWidget);
           expect(find.byKey(kGameMapNextTurnButtonKey), findsOneWidget);
           expect(find.byKey(GameTopBar.turnDisplayKey), findsNothing);
-          expect(find.byKey(GameTopBar.pauseButtonKey), findsNothing);
           expect(find.byKey(GameTopBar.observeBannerKey), findsNothing);
         },
       );

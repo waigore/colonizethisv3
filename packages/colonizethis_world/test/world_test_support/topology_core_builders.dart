@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'topology_constants.dart';
+import 'topology_graph_dsl.dart';
 
 /// Province topology node with a prefixed id (`regionId|localId`).
 TopologyNode prefixedProvinceNode(String prefixedId) => TopologyNode(
@@ -31,20 +32,11 @@ MapTopology provinceSeaZoneTopology({
   required String provinceLocalId,
   required String seaZoneId,
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: provinceLocalId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: seaZoneId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [TopologyEdge(id1: seaZoneId, id2: provinceLocalId)],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [provinceLocalId],
+    seas: [seaZoneId],
+    edges: [(seaZoneId, provinceLocalId)],
   );
 }
 
@@ -55,33 +47,17 @@ MapTopology dualRegionLinkedSeaTopology({
   String owSeaId = 'sea1',
   String nwSeaId = 'sea2',
 }) {
-  return MapTopology(
+  return topologyGraphNodes(
     nodes: [
-      TopologyNode(
-        id: owProvinceId,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nwProvinceId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: owSeaId,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: nwSeaId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.seaZone,
-      ),
+      provinceRow(kWorldTestOw, owProvinceId),
+      provinceRow(kWorldTestNw, nwProvinceId),
+      seaRow(kWorldTestOw, owSeaId),
+      seaRow(kWorldTestNw, nwSeaId),
     ],
     edges: [
-      TopologyEdge(id1: owProvinceId, id2: owSeaId),
-      TopologyEdge(id1: nwProvinceId, id2: nwSeaId),
-      TopologyEdge(id1: owSeaId, id2: nwSeaId),
+      (owProvinceId, owSeaId),
+      (nwProvinceId, nwSeaId),
+      (owSeaId, nwSeaId),
     ],
   );
 }
@@ -124,16 +100,7 @@ MapTopology singleProvinceTopology({
   required String regionId,
   required String provinceLocalId,
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: provinceLocalId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-    ],
-    edges: const [],
-  );
+  return topologyGraph(regionId: regionId, provinces: [provinceLocalId]);
 }
 
 /// Two provinces each adjacent to their own sea zone (no cross-province links).
@@ -144,33 +111,11 @@ MapTopology dualProvinceDualSeaTopology({
   String sea1Id = 's1',
   String sea2Id = 's2',
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: province1Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: province2Id,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: sea1Id,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: sea2Id,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [
-      TopologyEdge(id1: province1Id, id2: sea1Id),
-      TopologyEdge(id1: province2Id, id2: sea2Id),
-    ],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [province1Id, province2Id],
+    seas: [sea1Id, sea2Id],
+    edges: [(province1Id, sea1Id), (province2Id, sea2Id)],
   );
 }
 
@@ -181,28 +126,11 @@ MapTopology provinceSeaChainTopology({
   String nearSeaId = 's1',
   String distantSeaId = 's2',
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: provinceLocalId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nearSeaId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-      TopologyNode(
-        id: distantSeaId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: [
-      TopologyEdge(id1: provinceLocalId, id2: nearSeaId),
-      TopologyEdge(id1: nearSeaId, id2: distantSeaId),
-    ],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [provinceLocalId],
+    seas: [nearSeaId, distantSeaId],
+    edges: [(provinceLocalId, nearSeaId), (nearSeaId, distantSeaId)],
   );
 }
 
@@ -212,20 +140,10 @@ MapTopology provinceAndSeaUnlinkedTopology({
   String provinceLocalId = 'p1',
   String seaZoneId = 's1',
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: provinceLocalId,
-        regionId: regionId,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: seaZoneId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [],
+  return topologyGraph(
+    regionId: regionId,
+    provinces: [provinceLocalId],
+    seas: [seaZoneId],
   );
 }
 
@@ -234,16 +152,7 @@ MapTopology isolatedSeaZoneTopology({
   required String regionId,
   required String seaZoneId,
 }) {
-  return MapTopology(
-    nodes: [
-      TopologyNode(
-        id: seaZoneId,
-        regionId: regionId,
-        type: TopologyNodeType.seaZone,
-      ),
-    ],
-    edges: const [],
-  );
+  return topologyGraph(regionId: regionId, seas: [seaZoneId]);
 }
 
 /// OW single province plus NW single province (land only, no sea).
@@ -251,20 +160,11 @@ MapTopology dualRegionLandOnlyTopology({
   String owProvinceId = 'p1',
   String nwProvinceId = 'P2',
 }) {
-  return MapTopology(
+  return topologyGraphNodes(
     nodes: [
-      TopologyNode(
-        id: owProvinceId,
-        regionId: kWorldTestOw,
-        type: TopologyNodeType.province,
-      ),
-      TopologyNode(
-        id: nwProvinceId,
-        regionId: kWorldTestNw,
-        type: TopologyNodeType.province,
-      ),
+      provinceRow(kWorldTestOw, owProvinceId),
+      provinceRow(kWorldTestNw, nwProvinceId),
     ],
-    edges: const [],
   );
 }
 

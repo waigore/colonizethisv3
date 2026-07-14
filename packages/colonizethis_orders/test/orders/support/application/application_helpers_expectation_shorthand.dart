@@ -1,28 +1,15 @@
-// Compact application-helpers expectation shorthands (Refs #3949).
+// Compact application-helpers expectation shorthands (Refs #3949 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-TileMapResult ahSingleTileMap({
-  required TerrainType terrain,
-  Resource? resource,
-}) {
-  return TileMapResult(
-    width: 1,
-    height: 1,
-    grid: const [
-      ['p1'],
-    ],
-    terrainGrid: [
-      [terrain],
-    ],
-    resourceGrid: [
-      [resource],
-    ],
-  );
-}
+import '../common/game_graphs.dart';
+
+// dart format off
+TileMapResult ahSingleTileMap({required TerrainType terrain, Resource? resource}) =>
+    TileMapResult(width: 1, height: 1, grid: const [['p1']], terrainGrid: [[terrain]], resourceGrid: [[resource]]);
 
 Unit ahWorkingUnit({
   required String id,
@@ -36,30 +23,19 @@ Unit ahWorkingUnit({
   String workTileKey = 'oldWorld|P1|3|3',
   int remainingTurns = 2,
   int totalTurns = 3,
-}) {
-  return Unit(
-    id: id,
-    type: type,
-    ownerId: ownerId,
-    locationProvinceId: locationProvinceId,
-    tileKey: tileKey,
-    originTileKey: originTileKey,
-    assignedTileKey: assignedTileKey,
-    status: UnitStatus.working,
-    currentWork: CurrentWork(
-      workTarget: workTarget,
-      tileKey: workTileKey,
-      remainingTurns: remainingTurns,
-      totalTurns: totalTurns,
-    ),
-  );
-}
+}) => Unit(
+  id: id,
+  type: type,
+  ownerId: ownerId,
+  locationProvinceId: locationProvinceId,
+  tileKey: tileKey,
+  originTileKey: originTileKey,
+  assignedTileKey: assignedTileKey,
+  status: UnitStatus.working,
+  currentWork: CurrentWork(workTarget: workTarget, tileKey: workTileKey, remainingTurns: remainingTurns, totalTurns: totalTurns),
+);
 
-void ahExpectCancelWorkClearsState(
-  Unit unit, {
-  String? restoredTile,
-  required String expectedTile,
-}) {
+void ahExpectCancelWorkClearsState(Unit unit, {String? restoredTile, required String expectedTile}) {
   final cancelled = cancelUnitWork(unit, restoredTile: restoredTile);
   expect(cancelled.status, UnitStatus.idle);
   expect(cancelled.tileKey, expectedTile);
@@ -70,27 +46,13 @@ void ahExpectCancelWorkClearsState(
   }
 }
 
-Game ahOwBuilderGame(
-  Unit unit, {
-  String playerId = 'gp1',
-  String ow = 'oldWorld',
-  String provinceLocalId = 'p1',
-}) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|$provinceLocalId', regionId: ow, ownerId: playerId),
-        ],
-        units: [unit],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
-  );
-}
+Game ahOwBuilderGame(Unit unit, {String playerId = 'gp1', String ow = 'oldWorld', String provinceLocalId = 'p1'}) =>
+    ordersOwRegionGame(
+      id: 'g1',
+      turnNumber: 1,
+      players: [Player(id: playerId, displayName: 'GP', isHuman: false)],
+      oldWorld: RegionData(provinces: [Province(id: '$ow|$provinceLocalId', regionId: ow, ownerId: playerId)], units: [unit]),
+    );
 
 void ahExpectMineralEligible({
   required Map<String, String> resourceByTile,
@@ -105,12 +67,7 @@ void ahExpectMineralEligible({
         players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         minorNations: const [],
         tribes: const [],
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          resourceByTileKey: resourceByTile,
-        ),
+        worldState: WorldState(turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1), oldWorld: const RegionData(), newWorld: const RegionData(), resourceByTileKey: resourceByTile),
       ),
       tileMapByRegion,
       tileKey,
@@ -120,3 +77,4 @@ void ahExpectMineralEligible({
 }
 
 const ahMineralTileKey = 'oldWorld|p1|0|0';
+// dart format on

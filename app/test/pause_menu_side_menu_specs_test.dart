@@ -7,13 +7,15 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -28,9 +30,16 @@ void main() {
   suppressLogsForTests();
 
   group('PauseMenuPanel (SPEC/ui/pause-menu-panel.md)', () {
-    Widget pauseHost(AppEventBus bus) {
-      return MaterialApp(
-        home: Scaffold(body: PauseMenuPanel(bus: bus)),
+    Widget pauseHost(AppEventBus bus, {bool blocking = false}) {
+      return ProviderScope(
+        overrides: [
+          turnResolutionBlockingProvider.overrideWith(
+            () => StateToggleNotifier(blocking),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(body: PauseMenuPanel(bus: bus)),
+        ),
       );
     }
 
@@ -128,23 +137,44 @@ void main() {
     );
 
     testWidgets(
-      'AC: Save Game / Load Game / Settings are disabled placeholders',
+      'AC: when not blocking, Save/Load are enabled; Settings stays disabled',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
+        final events = <AppEvent>[];
+        final sub = bus.stream.listen(events.add);
+        addTearDown(sub.cancel);
 
         await tester.pumpWidget(pauseHost(bus));
         await tester.pumpAndSettle();
 
-        for (final key in const <Key>[
-          PauseMenuPanel.saveGameButtonKey,
-          PauseMenuPanel.loadGameButtonKey,
-          PauseMenuPanel.settingsButtonKey,
-        ]) {
-          final widget = tester.widget<CtNinePatchButton>(find.byKey(key));
-          expect(widget.enabled, isFalse, reason: '$key must be disabled');
-          expect(widget.onPressed, isNull);
-        }
+        final save = tester.widget<CtNinePatchButton>(
+          find.byKey(PauseMenuPanel.saveGameButtonKey),
+        );
+        final load = tester.widget<CtNinePatchButton>(
+          find.byKey(PauseMenuPanel.loadGameButtonKey),
+        );
+        final settings = tester.widget<CtNinePatchButton>(
+          find.byKey(PauseMenuPanel.settingsButtonKey),
+        );
+        expect(save.enabled, isTrue);
+        expect(load.enabled, isTrue);
+        expect(settings.enabled, isFalse);
+        expect(settings.onPressed, isNull);
+
+        await tester.tap(find.byKey(PauseMenuPanel.saveGameButtonKey));
+        await tester.pumpAndSettle();
+        expect(
+          events.whereType<OpenDialogEvent>().single.dialogId,
+          'save_game_name',
+        );
+
+        events.clear();
+        await tester.tap(find.byKey(PauseMenuPanel.loadGameButtonKey));
+        await tester.pumpAndSettle();
+        final loadEvent = events.whereType<OpenDialogEvent>().single;
+        expect(loadEvent.dialogId, 'load_game_list');
+        expect(loadEvent.params?['fromPause'], isTrue);
       },
     );
 

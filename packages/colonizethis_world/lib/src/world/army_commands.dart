@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'game_world_mutations.dart';
+import 'military_list_helpers.dart';
 
 /// Merges [armyIds] into one army at the same province. Home army wins as target.
 /// SPEC/ui/military-units-army-management.md.
@@ -85,9 +86,7 @@ Game applyArmySplit({
     return game;
   }
 
-  final remaining = source.regimentUnitIds
-      .where((id) => !moveSet.contains(id))
-      .toList();
+  final remaining = idsNotIn(source.regimentUnitIds, moveSet);
   final newId = 'army_${game.worldState.nextArmySeq}';
   final newArmy = Army(
     id: newId,
@@ -99,9 +98,12 @@ Game applyArmySplit({
   );
 
   final updatedSource = source.copyWith(regimentUnitIds: remaining);
-  var armies = game.worldState.armies
-      .map((a) => a.id == source.id ? updatedSource : a)
-      .toList();
+  var armies = replaceById(
+    items: game.worldState.armies,
+    id: source.id,
+    replacement: updatedSource,
+    idOf: (a) => a.id,
+  );
   armies = [...armies, newArmy]..sort((a, b) => a.id.compareTo(b.id));
 
   return game.updateWorldState(

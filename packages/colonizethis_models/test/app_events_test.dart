@@ -15,10 +15,14 @@ void main() {
       expect(identical(AppEventBus(), a), isFalse);
     });
 
-    test('create returns a fresh, non-singleton bus', () {
-      final fresh = AppEventBus.create();
-      expect(identical(fresh, AppEventBus()), isFalse);
-      fresh.dispose();
+    test('dropUnconsumedEvents bumps delivery generation', () {
+      final bus = AppEventBus.create();
+      expect(bus.deliveryGeneration, 0);
+      bus.dropUnconsumedEvents();
+      expect(bus.deliveryGeneration, 1);
+      bus.dropUnconsumedEvents();
+      expect(bus.deliveryGeneration, 2);
+      bus.dispose();
     });
 
     test('on<T> filters the broadcast stream by event type', () async {

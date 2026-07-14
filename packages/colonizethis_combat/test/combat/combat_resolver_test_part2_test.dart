@@ -1,10 +1,9 @@
 import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
-import 'package:colonizethis_test/test.dart';
 
 void main() {
-  group('resolveEngagement', () {
-    for (final scenario in combatResolverPart2Scenarios()) {
-      test(scenario.label, () => runCombatResolverPart2Scenario(scenario));
-    }
-  });
+  runLabeledScenarioGroup(
+    'resolveEngagement',
+    combatResolverPart2Scenarios(),
+    (s) => s.run(),
+  );
 }

@@ -60,7 +60,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // Explicit NW-acquisition-zero phase plan emulating the legacy
 // hard-suppress contract for EXPAND-phase regression assertions
@@ -129,69 +128,8 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> EXPAND (below the observer quota of 10).
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      provincesToVictory: 24,
-    ),
-    // Tribe is both a visible NW invadable owner **and** a preferred
-    // colonial target so the EXPAND `declareWar` score collapse path in
-    // `computeDiplomaticCandidateScores` is exercised across all
-    // triggering predicates (tribe / preferred / invadable owner) —
-    // matches the scoring-level fixture for `EXPAND suppresses NW
-    // declareWar scoring`.
-    colonial: ColonialSummary(
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
-
-AIWorldSnapshot _colonialSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 11 OW provinces -> COLONIAL when colonial acquisition targets are
-    // visible. The EXPAND NW declareWar suppression must **not** fire
-    // here so the COLONIAL acquisition path "declare-war + NW invasion"
-    // remains reachable (SPEC § COLONIAL phase, acquisition priority).
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 11,
-      provincesToVictory: 20,
-    ),
-    colonial: ColonialSummary(
-      newWorldProvincesOwned: 0,
-      invadableNewWorldProvinceIdsSorted: [_tribeNwProvince],
-      adjacentNewWorldOwnerFactionIdsSorted: [_tribeId],
-      preferredColonialTargetFactionIdsSorted: [_tribeId],
-    ),
-    economy: EconomySummary(ownProvinceCount: 11),
-    relations: {
-      _tribeId: DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        state: RelationState.atPeace,
-        score: 0,
-      ),
-    },
-  );
-}
+// Snapshots: buildOrchestratorExpandNwTribeTargetSnapshot /
+// buildOrchestratorColonialNwTribeTargetSnapshot (Refs #3997).
 
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
@@ -216,7 +154,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -229,25 +167,27 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(2509240),
-        suggestionAPI: _nwTribeDeclareWarApi,
-        economyPlan: _economyPlan,
-        // Pin the legacy EXPAND hard-suppress contract by threading an
-        // explicit `newWorldAcquisition = 0.0` override through the
-        // orchestrator (Refs #2847 Phase 3). Under the soft-weight
-        // production curve `_curveWeightsForOw(7)` returns 0.05 and the
-        // scoring path now keeps NW declare-war reachable at low
-        // priority — see
-        // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
-        // This test continues to assert the strict regression contract.
-        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(2509240),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+          // Pin the legacy EXPAND hard-suppress contract by threading an
+          // explicit `newWorldAcquisition = 0.0` override through the
+          // orchestrator (Refs #2847 Phase 3). Under the soft-weight
+          // production curve `_curveWeightsForOw(7)` returns 0.05 and the
+          // scoring path now keeps NW declare-war reachable at low
+          // priority — see
+          // `phase_planner_diplomacy_declare_war_nw_suppression_test.dart`.
+          // This test continues to assert the strict regression contract.
+          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        ),
       );
 
       expect(
@@ -284,7 +224,7 @@ void main() {
         );
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
-        final snapshot = _colonialSnapshot();
+        final snapshot = buildOrchestratorColonialNwTribeTargetSnapshot(tribeRelationScore: 0);
 
         expect(
           observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -299,16 +239,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.conquer,
-          seeds: AISeedBundle.fromTurnSeed(2509241),
-          suggestionAPI: _nwTribeDeclareWarApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.conquer,
+            seeds: AISeedBundle.fromTurnSeed(2509241),
+            suggestionAPI: _nwTribeDeclareWarApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         expect(
@@ -340,20 +282,22 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandNwTribeTargetSnapshot(tribePeaceRelationScore: 0);
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(turnSeed),
-        suggestionAPI: _nwTribeDeclareWarApi,
-        economyPlan: _economyPlan,
-        options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _nwTribeDeclareWarApi,
+          economyPlan: _economyPlan,
+          options: OrchestratorOptions(phasePlan: _expandPhasePlanHardSuppressNw),
+        ),
       );
 
       final firstRun = runOnce(2509242);

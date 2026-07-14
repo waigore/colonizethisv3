@@ -116,14 +116,14 @@ DiplomacyRelation _rel(
 );
 
 List<TradeOrder> _run(Game game, {AIWorldSnapshot? snapshot}) =>
-    runTreasuryPlanner(
+    runTreasuryPlanner(TreasuryPlannerInput(
       game: game,
       playerId: _gp,
       stockpile: game.players.first.stockpile,
       productionAssignments: _assignments,
       treasury: game.players.first.treasury,
       snapshot: snapshot,
-    );
+    ));
 
 bool _hasBid(List<TradeOrder> orders, String commodityId) => orders.any(
   (o) => o.type == TradeOrderType.bid && o.commodityId == commodityId,

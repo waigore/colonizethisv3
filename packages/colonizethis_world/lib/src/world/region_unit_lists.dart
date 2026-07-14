@@ -34,6 +34,38 @@ extension RegionUnitListsAccess on RegionUnitLists {
   /// nw` region-dispatch ternary across movement/migration helpers (Refs #3544).
   List<Unit> unitListForRegion(String regionId) =>
       regionId == kRegionOldWorld ? ow : nw;
+
+  /// Same-region replace-by-id used by civilian movement and army migration
+  /// (Refs #3978). Uses ternary region dispatch (not `if (regionId ==
+  /// kRegionOldWorld)`) so `repo.logic_dual_region_province_field_access`
+  /// stays at budget 0 — see SPEC/program/logic-dual-region-province-access.md.
+  RegionUnitLists replaceUnitInRegion(
+    String regionId,
+    String unitId,
+    Unit replacement,
+  ) {
+    List<Unit> mapList(List<Unit> list) => [
+      for (final u in list)
+        if (u.id == unitId) replacement else u,
+    ];
+    return regionId == kRegionOldWorld
+        ? (ow: mapList(ow), nw: nw)
+        : (ow: ow, nw: mapList(nw));
+  }
+
+  /// Cross-region remove-by-id then append [moved] into [destRegion]
+  /// (Refs #3978). Ternary dest dispatch matches [replaceUnitInRegion].
+  RegionUnitLists moveUnitAcrossRegions(
+    String unitId,
+    Unit moved,
+    String destRegion,
+  ) {
+    final nextOw = List<Unit>.from(ow)..removeWhere((u) => u.id == unitId);
+    final nextNw = List<Unit>.from(nw)..removeWhere((u) => u.id == unitId);
+    return destRegion == kRegionOldWorld
+        ? (ow: [...nextOw, moved], nw: nextNw)
+        : (ow: nextOw, nw: [...nextNw, moved]);
+  }
 }
 
 extension WorldStateRegionUnitLists on WorldState {

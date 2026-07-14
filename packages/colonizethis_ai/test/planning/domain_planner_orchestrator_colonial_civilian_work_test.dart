@@ -96,16 +96,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: nationId,
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(25091),
-          suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: nationId,
+            view: view,
+            snapshot: snapshot,
+            config: config,
+            primaryGoal: StrategicGoal.diplomacy,
+            seeds: AISeedBundle.fromTurnSeed(25091),
+            suggestionAPI: fakeApi,
+            economyPlan: economyPlan,
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[nationId] ?? [];
@@ -208,16 +210,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: nationId,
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(25092),
-          suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: nationId,
+            view: view,
+            snapshot: snapshot,
+            config: config,
+            primaryGoal: StrategicGoal.diplomacy,
+            seeds: AISeedBundle.fromTurnSeed(25092),
+            suggestionAPI: fakeApi,
+            economyPlan: economyPlan,
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[nationId] ?? [];
@@ -316,16 +320,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: nationId,
-          view: view,
-          snapshot: snapshot,
-          config: config,
-          primaryGoal: StrategicGoal.diplomacy,
-          seeds: AISeedBundle.fromTurnSeed(25093),
-          suggestionAPI: fakeApi,
-          economyPlan: economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: nationId,
+            view: view,
+            snapshot: snapshot,
+            config: config,
+            primaryGoal: StrategicGoal.diplomacy,
+            seeds: AISeedBundle.fromTurnSeed(25093),
+            suggestionAPI: fakeApi,
+            economyPlan: economyPlan,
+          ),
         );
 
         final work = orders.workOrdersByPlayerId[nationId] ?? [];

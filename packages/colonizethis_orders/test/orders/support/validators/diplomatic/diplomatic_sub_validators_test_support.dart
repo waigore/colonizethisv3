@@ -7,6 +7,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/validators/diplomatic/diplomatic_sub_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../common/game_graphs.dart';
+
 export '../../diplomatic/diplomatic_orders_test_fixtures.dart' show gpMinorGame;
 
 DiplomaticSubValidatorContext diplomaticSubValidatorContext(
@@ -26,13 +28,10 @@ Game twoGpGame({
   List<AllianceBreakCooldownState> allianceBreakCooldowns = const [],
   Map<String, bool>? gp1TechUnlocked,
 }) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
+  final game = ordersTwoGpEmptyGame(
+    turnNumber: turnNumber,
+    state: state,
+    formalAlliance: formalAlliance,
     players: [
       Player(
         id: 'gp1',
@@ -41,16 +40,11 @@ Game twoGpGame({
         techUnlocked:
             gp1TechUnlocked ?? const {kTechIdDiplomaticExpertise: true},
       ),
-      const Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+      ordersCommonGp2,
     ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        state: state,
-        formalAlliance: formalAlliance,
-      ),
-    ],
-    allianceBreakCooldowns: allianceBreakCooldowns,
   );
+  if (allianceBreakCooldowns.isEmpty) {
+    return game;
+  }
+  return game.copyWith(allianceBreakCooldowns: allianceBreakCooldowns);
 }

@@ -25,9 +25,10 @@ extension on ProductionBreakdownTableBody {
     }
 
     List<DataRow> rowsFor(List<Commodity> list) {
+      final l10n = appL10n(context);
       return list.map((c) {
         final total = _rowTotal(c.id);
-        final name = c.displayName ?? c.id;
+        final name = commodityDisplayName(l10n, c.id);
         final rowShade = commodityRowIndex.isEven
             ? Colors.transparent
             : EditorialMonoclePalette.surface.withValues(alpha: 0.4);

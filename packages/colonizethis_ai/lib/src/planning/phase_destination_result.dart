@@ -1,13 +1,25 @@
 import 'planning_helpers.dart' show planningListEquals;
 
 /// Shared value-class shape for phase-planner destination filters (Refs #3822
-/// Phase 4). Concrete plan types expose domain-specific field names while
-/// delegating equality to the shared province/owner list pair.
+/// Phase 4 / #3967 step 5). Concrete plan types expose domain-specific field
+/// names while storing the shared province/owner list pair here so
+/// [ExpandMilitaryPlan] / [ColonialMilitaryPlan] / naval plan shells do not
+/// re-declare identical private fields and equality.
 abstract base class PhaseDestinationResult {
-  const PhaseDestinationResult();
+  const PhaseDestinationResult({
+    required List<String> priorityProvinceIdsSorted,
+    required List<String> priorityTargetOwnerFactionIdsSorted,
+  }) : _priorityProvinceIdsSorted = priorityProvinceIdsSorted,
+       _priorityTargetOwnerFactionIdsSorted =
+           priorityTargetOwnerFactionIdsSorted;
 
-  List<String> get priorityProvinceIdsSorted;
-  List<String> get priorityTargetOwnerFactionIdsSorted;
+  final List<String> _priorityProvinceIdsSorted;
+  final List<String> _priorityTargetOwnerFactionIdsSorted;
+
+  List<String> get priorityProvinceIdsSorted => _priorityProvinceIdsSorted;
+
+  List<String> get priorityTargetOwnerFactionIdsSorted =>
+      _priorityTargetOwnerFactionIdsSorted;
 
   @override
   bool operator ==(Object other) =>

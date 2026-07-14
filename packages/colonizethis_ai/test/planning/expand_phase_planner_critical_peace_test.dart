@@ -65,112 +65,18 @@
 //     required so the legacy fixtures and the in-file consumer
 //     chains agree on both deciders.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
     as diplomacy_planner_peace_targets;
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
 const String _gpStronger = 'gp_stronger';
 const String _gpThird = 'gp_third';
 const String _gpFourth = 'gp_fourth';
 const String _minor1 = 'minor1';
 const String _tribe1 = 'tribe1';
-
-/// Builds a minimal `Game` where `gp_own` holds [ownProvinces] OW
-/// provinces and each GP in [gpRivalProvincesById] owns the listed
-/// OW province ids (lets the test set a precise lead). Minors named
-/// in [minorIds] each own a single OW province. Tribes named in
-/// [tribeIds] each appear in `game.tribes`. `gp_own` is at war with
-/// every faction in [atWarFactionIds] (GPs, minors, and tribes
-/// uniformly).
-Game _criticalGame({
-  required int ownProvinces,
-  Map<String, List<String>> gpRivalProvincesById = const {},
-  List<String> minorIds = const [],
-  List<String> tribeIds = const [],
-  List<String> atWarFactionIds = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in gpRivalProvincesById.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-    for (final minorId in minorIds)
-      Province(
-        id: 'oldWorld|${minorId}_home',
-        regionId: 'oldWorld',
-        ownerId: minorId,
-      ),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in gpRivalProvincesById.keys)
-      Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final minorId in minorIds)
-      MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final tribes = <Tribe>[
-    for (final tribeId in tribeIds) Tribe(id: tribeId, displayName: tribeId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarFactionIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-critical-peace-canonical-'
-        'own$ownProvinces-${gpRivalProvincesById.keys.join("-")}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  List<String> invadableProvinceIdsSorted = const [],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
 
 /// Generates a list of [count] OW province ids belonging to [factionId]
 /// (used to set a deterministic lead).
@@ -185,12 +91,12 @@ void main() {
       // dominant stronger GP must not be peaced (the broader
       // criticalOwHoldPeaceTargets and band-specific deciders own
       // this region of the band).
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold + 1,
         gpRivalProvincesById: {_gpStronger: _rivalProvinces(_gpStronger, 14)},
         atWarFactionIds: const [_gpStronger],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold + 1,
         atWarWith: const [_gpStronger],
       );
@@ -208,13 +114,13 @@ void main() {
     test('returns const [] when no Great Powers are at war', () {
       // Only a minor and tribe in atWarWith; Game.playerById filters
       // them out and the lead loop has nothing to emit.
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: 5,
         minorIds: const [_minor1],
         tribeIds: const [_tribe1],
         atWarFactionIds: const [_minor1, _tribe1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 5,
         atWarWith: const [_minor1, _tribe1],
       );
@@ -236,7 +142,7 @@ void main() {
         // ownOw = default-start + 1 = 8 → row threshold is minLead 1;
         // enemy GP holds 9 OW provinces (lead exactly 1) → peace.
         const ownOw = kObserverDefaultStartOldWorldProvincesPerGp + 1;
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: ownOw,
           gpRivalProvincesById: {
             _gpStronger: _rivalProvinces(_gpStronger, ownOw + 1),
@@ -249,7 +155,7 @@ void main() {
         // production. Validate via the lower default-start row
         // (ownOw == defend threshold == 6) where the minLead = 1 arm
         // still applies (6 <= 7 + 1 = 8).
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: ownOw,
           atWarWith: const [_gpStronger],
         );
@@ -268,12 +174,12 @@ void main() {
       // ownOw = 6 (the outer guard ceiling and the band where the
       // <= 8 default-start row also applies). Enemy GP holds 7 OW
       // provinces (lead == 1) → peace by the minLead == 1 arm.
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold,
         gpRivalProvincesById: {_gpStronger: _rivalProvinces(_gpStronger, 7)},
         atWarFactionIds: const [_gpStronger],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
         atWarWith: const [_gpStronger],
       );
@@ -292,12 +198,12 @@ void main() {
     test(
       'default-start critical band does NOT fire at lead == 0 (equal strength)',
       () {
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kFewOldWorldProvincesDefendThreshold,
           gpRivalProvincesById: {_gpStronger: _rivalProvinces(_gpStronger, 6)},
           atWarFactionIds: const [_gpStronger],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
           atWarWith: const [_gpStronger],
         );
@@ -326,7 +232,7 @@ void main() {
       // stub). This test pins the row identity via determinism on
       // two structurally-identical calls (guards against a future
       // refactor wiring the wrong constant in this row).
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: 5,
         gpRivalProvincesById: {
           _gpStronger: _rivalProvinces(_gpStronger, 7),
@@ -334,7 +240,7 @@ void main() {
         },
         atWarFactionIds: const [_gpStronger, _gpThird],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 5,
         atWarWith: const [_gpStronger, _gpThird],
       );
@@ -364,7 +270,7 @@ void main() {
       // strength. Only stronger GPs (lead >= 1 on the default-start
       // row at ownOw = 6) surface; minors and tribes are dropped.
       // Result must be lex-ascending by factionId.
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold,
         gpRivalProvincesById: {
           _gpStronger: _rivalProvinces(_gpStronger, 7),
@@ -381,7 +287,7 @@ void main() {
           _tribe1,
         ],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
         atWarWith: const [_gpFourth, _minor1, _gpStronger, _tribe1, _gpThird],
       );
@@ -403,7 +309,7 @@ void main() {
 
   group('criticalWeakGpSurvivalPeaceTargets — stub delegation parity', () {
     test('diplomacy_planner_peace_targets stub returns the canonical list', () {
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold,
         gpRivalProvincesById: {
           _gpStronger: _rivalProvinces(_gpStronger, 7),
@@ -411,7 +317,7 @@ void main() {
         },
         atWarFactionIds: const [_gpStronger, _gpThird],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
         atWarWith: const [_gpStronger, _gpThird],
       );
@@ -439,12 +345,12 @@ void main() {
       'stub returns const [] outer guard match (above defend threshold)',
       () {
         // Both stub and canonical must agree on the outer-guard skip.
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kFewOldWorldProvincesDefendThreshold + 1,
           gpRivalProvincesById: {_gpStronger: _rivalProvinces(_gpStronger, 12)},
           atWarFactionIds: const [_gpStronger],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold + 1,
           atWarWith: const [_gpStronger],
         );
@@ -464,7 +370,7 @@ void main() {
     test(
       'two consecutive invocations return identical lists (Must-have #7)',
       () {
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kFewOldWorldProvincesDefendThreshold,
           gpRivalProvincesById: {
             _gpStronger: _rivalProvinces(_gpStronger, 7),
@@ -472,7 +378,7 @@ void main() {
           },
           atWarFactionIds: const [_gpStronger, _gpFourth],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kFewOldWorldProvincesDefendThreshold,
           atWarWith: const [_gpFourth, _gpStronger],
         );
@@ -497,7 +403,7 @@ void main() {
         // ownOw above quota → isObserverConquestExpansionPressure is
         // false AND isAtObserverConquestQuotaBand is false → outer
         // guard fires regardless of GP count.
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp + 2,
           gpRivalProvincesById: {
             _gpStronger: _rivalProvinces(_gpStronger, 6),
@@ -505,7 +411,7 @@ void main() {
           },
           atWarFactionIds: const [_gpStronger, _gpThird],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp + 2,
           atWarWith: const [_gpStronger, _gpThird],
           invadableProvinceIdsSorted: const [],
@@ -527,12 +433,12 @@ void main() {
       // multi-front shape does not hold; sole-non-blocker is handled
       // by multiFrontNonBlockerGpPeaceTargets directly (not via this
       // critical wrapper).
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold,
         gpRivalProvincesById: {_gpStronger: _rivalProvinces(_gpStronger, 9)},
         atWarFactionIds: const [_gpStronger],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
         atWarWith: const [_gpStronger],
         invadableProvinceIdsSorted: const ['oldWorld|${_gpStronger}_1'],
@@ -550,13 +456,13 @@ void main() {
     });
 
     test('returns const [] when only minors/tribes are at war (no GPs)', () {
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold,
         minorIds: const [_minor1],
         tribeIds: const [_tribe1],
         atWarFactionIds: const [_minor1, _tribe1],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
         atWarWith: const [_minor1, _tribe1],
       );
@@ -582,7 +488,7 @@ void main() {
           // non-blocker GP wars to drop. multiFrontNonBlockerGpPeaceTargets
           // keeps the blocker and peaces gp_third + gp_fourth sorted.
           const invadable = 'oldWorld|frontier_invadable';
-          final game = _criticalGame(
+          final game = buildCriticalExpandPeaceGame(
             ownProvinces: kStalledOldWorldProvinceThreshold,
             gpRivalProvincesById: {
               _gpStronger: [invadable],
@@ -591,7 +497,7 @@ void main() {
             },
             atWarFactionIds: const [_gpStronger, _gpThird, _gpFourth],
           );
-          final snapshot = _ownSnapshot(
+          final snapshot = ownSnapshot(
             oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
             atWarWith: const [_gpFourth, _gpStronger, _gpThird],
             invadableProvinceIdsSorted: const [invadable],
@@ -614,7 +520,7 @@ void main() {
         // passes via the at-quota arm even though
         // isObserverConquestExpansionPressure is false.
         const invadable = 'oldWorld|frontier_invadable';
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp,
           gpRivalProvincesById: {
             _gpStronger: [invadable],
@@ -622,7 +528,7 @@ void main() {
           },
           atWarFactionIds: const [_gpStronger, _gpThird],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
           atWarWith: const [_gpStronger, _gpThird],
           invadableProvinceIdsSorted: const [invadable],
@@ -642,7 +548,7 @@ void main() {
   group('criticalMultiFrontGpPeaceTargets — stub delegation parity', () {
     test('stub returns the canonical list for the multi-front fire path', () {
       const invadable = 'oldWorld|frontier_invadable';
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold,
         gpRivalProvincesById: {
           _gpStronger: [invadable],
@@ -651,7 +557,7 @@ void main() {
         },
         atWarFactionIds: const [_gpStronger, _gpThird, _gpFourth],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
         atWarWith: const [_gpStronger, _gpThird, _gpFourth],
         invadableProvinceIdsSorted: const [invadable],
@@ -674,7 +580,7 @@ void main() {
     });
 
     test('stub returns const [] when the outer guard fires (above-quota)', () {
-      final game = _criticalGame(
+      final game = buildCriticalExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp + 2,
         gpRivalProvincesById: {
           _gpStronger: _rivalProvinces(_gpStronger, 5),
@@ -682,7 +588,7 @@ void main() {
         },
         atWarFactionIds: const [_gpStronger, _gpThird],
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp + 2,
         atWarWith: const [_gpStronger, _gpThird],
       );
@@ -702,7 +608,7 @@ void main() {
       'two consecutive invocations return identical lists (Must-have #7)',
       () {
         const invadable = 'oldWorld|frontier_invadable';
-        final game = _criticalGame(
+        final game = buildCriticalExpandPeaceGame(
           ownProvinces: kStalledOldWorldProvinceThreshold,
           gpRivalProvincesById: {
             _gpStronger: [invadable],
@@ -711,7 +617,7 @@ void main() {
           },
           atWarFactionIds: const [_gpStronger, _gpThird, _gpFourth],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
           atWarWith: const [_gpFourth, _gpStronger, _gpThird],
           invadableProvinceIdsSorted: const [invadable],

@@ -15,18 +15,14 @@ import 'package:colonizethis_test/test.dart';
 /// Tied to the colonizethis_economy leaf-package coverage gate (Refs #3290).
 void main() {
   group('canAffordRecruitWorker', () {
-    for (final scenario in canAffordRecruitWorkerScenarios()) {
-      test(scenario.label, () {
-        runWorkerActionCostScenario(scenario);
-      });
-    }
+    runLabeledScenarios(canAffordRecruitWorkerScenarios(), (scenario) {
+      runWorkerActionCostScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('applyRecruitWorkerCostDeduction', () {
-    for (final scenario in applyRecruitWorkerCostDeductionScenarios()) {
-      test(scenario.label, () {
-        runWorkerActionCostScenario(scenario);
-      });
-    }
+    runLabeledScenarios(applyRecruitWorkerCostDeductionScenarios(), (scenario) {
+      runWorkerActionCostScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

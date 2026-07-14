@@ -406,7 +406,7 @@ void main() {
   );
 
   testWidgets(
-    'narrow layout (< kNarrowBreakpoint) shows hamburger + Next turn only',
+    'narrow layout (< kNarrowBreakpoint) shows hamburger + pause + Next turn',
     (WidgetTester tester) async {
       await tester.pumpWidget(
         hostFor(
@@ -434,7 +434,7 @@ void main() {
       expect(find.byKey(kGameMapNextTurnButtonKey), findsOneWidget);
       expect(find.textContaining('Next turn'), findsOneWidget);
       expect(find.byKey(GameTopBar.turnDisplayKey), findsNothing);
-      expect(find.byKey(GameTopBar.pauseButtonKey), findsNothing);
+      expect(find.byKey(GameTopBar.pauseButtonKey), findsOneWidget);
       expect(find.byKey(GameTopBar.observeBannerKey), findsNothing);
     },
   );

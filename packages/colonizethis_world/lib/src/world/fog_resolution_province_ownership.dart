@@ -1,4 +1,8 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'game_world_mutations.dart';
+import 'province_lookup.dart';
+import 'visibility_map_helpers.dart';
 
 /// Immediate visibility adjustment when province [provinceId] (prefixed id or
 /// legacy short id from [resolveProvinceRowForOwnershipTransfer]) transfers from
@@ -45,8 +49,8 @@ applyProvinceOwnershipChangeVisibility(
     );
   }
 
-  final visMaps = game.worldState.playerVisibilityByTile.map(
-    (k, v) => MapEntry(k, Map<String, String>.from(v)),
+  final visMaps = mutableVisibilityByPlayerCopy(
+    game.worldState.playerVisibilityByTile,
   );
 
   final newVis = Map<String, String>.from(visMaps[newOwnerId] ?? {});

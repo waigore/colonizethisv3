@@ -6,9 +6,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'combat_resolver_test_support.dart';
+import 'scenario_runner.dart';
 
 /// One row in a land resolver part-2 scenario table.
-class CombatResolverPart2Scenario {
+class CombatResolverPart2Scenario implements LabeledScenario {
   const CombatResolverPart2Scenario({
     required this.scenarioId,
     required this.label,
@@ -16,14 +17,11 @@ class CombatResolverPart2Scenario {
   });
 
   final String scenarioId;
+  @override
   final String label;
   final void Function() run;
 }
 
-/// Runs [scenario].
-void runCombatResolverPart2Scenario(CombatResolverPart2Scenario scenario) {
-  scenario.run();
-}
 
 /// Scenarios for tie-break determinism and garrison recovery (part 2).
 List<CombatResolverPart2Scenario> combatResolverPart2Scenarios() => [

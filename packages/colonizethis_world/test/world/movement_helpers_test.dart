@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/movement.dart';
 import 'package:colonizethis_test/test.dart';
@@ -14,11 +13,7 @@ import '../world_test_support/world_test_support.dart';
 /// SPEC/game/world-model-identity.md.
 const String _civ = kUnitTypeBuilder;
 
-Unit _civilian(
-  String id, {
-  String ownerId = 'p1',
-  required String tileKey,
-}) {
+Unit _civilian(String id, {String ownerId = 'p1', required String tileKey}) {
   final province = Unit.provinceIdFromTileKey(tileKey)!;
   return Unit(
     id: id,
@@ -60,11 +55,17 @@ void main() {
 
     test('valid neighbor move is accepted, non-neighbor rejected', () {
       expect(isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p2'), isTrue);
-      expect(isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p3'), isFalse);
+      expect(
+        isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p3'),
+        isFalse,
+      );
     });
 
     test('a move onto the same province is invalid', () {
-      expect(isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p1'), isFalse);
+      expect(
+        isValidLandMoveInRegion(topology, 'oldWorld', 'p1', 'p1'),
+        isFalse,
+      );
     });
   });
 
@@ -141,8 +142,12 @@ void main() {
           ],
         },
         onCivilianMoveOrderTrace:
-            ({required playerId, required order, required applied, ignoreReason}) =>
-                reasons.add(ignoreReason),
+            ({
+              required playerId,
+              required order,
+              required applied,
+              ignoreReason,
+            }) => reasons.add(ignoreReason),
       );
       expect(reasons, ['unit_not_found', 'owner_mismatch', 'military_unit']);
     });
@@ -158,8 +163,12 @@ void main() {
           'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'badkey')],
         },
         onCivilianMoveOrderTrace:
-            ({required playerId, required order, required applied, ignoreReason}) =>
-                reasons.add(ignoreReason),
+            ({
+              required playerId,
+              required order,
+              required applied,
+              ignoreReason,
+            }) => reasons.add(ignoreReason),
       );
       expect(reasons, ['invalid_destination']);
     });
@@ -170,14 +179,9 @@ void main() {
       const region = RegionData(
         provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
       );
-      final result = applyMoveOrdersToRegion(
-        region,
-        kEmptyMapTopology,
-        const {
-          'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0')],
-        },
-        regionId: 'oldWorld',
-      );
+      final result = applyMoveOrdersToRegion(region, kEmptyMapTopology, const {
+        'p1': [MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|p2|0|0')],
+      }, regionId: 'oldWorld');
       expect(result, same(region));
     });
   });

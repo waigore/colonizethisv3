@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 /// Shared region id for [NavalOrderValidator] test topologies.
 const kNavalOrderValidatorTestRegionId = 'oldWorld';
 
@@ -89,15 +91,11 @@ Game navalOrderValidatorTestGame({
   List<Province> oldWorldProvinces = const [],
   List<Player> players = const [_defaultHumanPlayer],
   String gameId = 'g1',
-}) => Game(
+}) => ordersOwRegionGame(
   id: gameId,
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: oldWorldProvinces),
-    newWorld: const RegionData(),
-    fleets: fleets,
-  ),
   players: players,
+  oldWorld: RegionData(provinces: oldWorldProvinces),
+  fleets: fleets,
 );
 
 NavalOrderValidator navalOrderValidatorForTest({

@@ -12,52 +12,46 @@ import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('WorldMarketContextBase', () {
-    for (final scenario in worldMarketContextBaseScenarios()) {
-      test(scenario.label, () {
-        final ctx = buildWorldMarketContextBaseScenario(scenario);
-        assertWorldMarketContextBaseExpectation(ctx, scenario.expect);
-      });
-    }
+    runLabeledScenarios(worldMarketContextBaseScenarios(), (scenario) {
+      final ctx = buildWorldMarketContextBaseScenario(scenario);
+      assertWorldMarketContextBaseExpectation(ctx, scenario.expect);
+    }, labelOf: (s) => s.label);
   });
 
   group('worldMarketPlayerContextFromGame (Refs #3615 Cluster 2)', () {
-    for (final scenario in worldMarketPlayerContextSnapshotScenarios()) {
-      test(scenario.label, () {
-        runPlayerContextScenario(scenario);
-      });
-    }
+    runLabeledScenarios(worldMarketPlayerContextSnapshotScenarios(), (
+      scenario,
+    ) {
+      runPlayerContextScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('factory parity over the shared snapshot (single build path)', () {
-    for (final scenario in worldMarketPlayerContextFactoryParityScenarios()) {
-      test(scenario.label, () {
-        runPlayerContextScenario(scenario);
-      });
-    }
+    runLabeledScenarios(worldMarketPlayerContextFactoryParityScenarios(), (
+      scenario,
+    ) {
+      runPlayerContextScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('tradeSuggestionContextFromGame concern-specific behavior', () {
-    for (final scenario in tradeSuggestionContextFromGameBehaviorScenarios()) {
-      test(scenario.label, () {
-        runPlayerContextScenario(scenario);
-      });
-    }
+    runLabeledScenarios(tradeSuggestionContextFromGameBehaviorScenarios(), (
+      scenario,
+    ) {
+      runPlayerContextScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('PriceDiscovery.computeNextPrice', () {
-    for (final scenario in priceDiscoveryNextPriceScenarios) {
-      test(scenario.label, () {
-        runPriceDiscoveryNextPriceScenario(scenario);
-      });
-    }
+    runLabeledScenarios(priceDiscoveryNextPriceScenarios, (scenario) {
+      runPriceDiscoveryNextPriceScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('PriceDiscovery.computeMarketActivity', () {
-    for (final scenario in priceDiscoveryMarketActivityScenarios()) {
-      test(scenario.label, () {
-        runPriceDiscoveryMarketActivityScenario(scenario);
-      });
-    }
+    runLabeledScenarios(priceDiscoveryMarketActivityScenarios(), (scenario) {
+      runPriceDiscoveryMarketActivityScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('PriceDiscovery constants', () {
@@ -69,28 +63,26 @@ void main() {
   });
 
   group('PurchasedTileAttribution value semantics', () {
-    for (final scenario in purchasedTileAttributionSemanticsScenarios()) {
-      test(scenario.label, scenario.run);
-    }
+    runLabeledScenarios(purchasedTileAttributionSemanticsScenarios(), (
+      scenario,
+    ) {
+      runPurchasedTileAttributionSemanticsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('PurchasedTileIndex.fromGame', () {
-    for (final scenario in purchasedTileIndexFromGameScenarios()) {
-      test(scenario.label, () {
-        final index = runPurchasedTileIndexFromGameScenario(scenario);
-        scenario.verify(index);
-      });
-    }
+    runLabeledScenarios(purchasedTileIndexFromGameScenarios(), (scenario) {
+      final index = runPurchasedTileIndexFromGameScenario(scenario);
+      scenario.verify(index);
+    }, labelOf: (s) => s.label);
   });
 
   group('computePurchasedTileRichesCredits — riches handoff per #2991 C5', () {
-    for (final scenario in purchasedTileRichesScenarios()) {
-      test(scenario.label, () {
-        final game = scenario.buildGame();
-        final index = PurchasedTileIndex.fromGame(game);
-        final result = runPurchasedTileRichesScenario(scenario);
-        scenario.verify(result, index, game);
-      });
-    }
+    runLabeledScenarios(purchasedTileRichesScenarios(), (scenario) {
+      final game = scenario.buildGame();
+      final index = PurchasedTileIndex.fromGame(game);
+      final result = runPurchasedTileRichesScenario(scenario);
+      scenario.verify(result, index, game);
+    }, labelOf: (s) => s.label);
   });
 }

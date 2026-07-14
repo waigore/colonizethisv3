@@ -11,6 +11,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'per_player_work_target_selection_cache_fixtures.dart';
 import 'scenario_runner.dart';
+// dart format off
 
 void ppwtscRunDefaultStrategiesRefreshAllPaths() {
   const playerId = 'gp1';
@@ -20,50 +21,16 @@ void ppwtscRunDefaultStrategiesRefreshAllPaths() {
   const t1 = '$p1|1|0';
   final game = TestFixtures.minimalGame(
     players: const [Player(id: playerId, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(
-      provinces: const [Province(id: p1, regionId: ow, ownerId: playerId)],
-      units: [
-        Unit(
-          id: 'explorer-0',
-          type: kUnitTypeExplorer,
-          ownerId: playerId,
-          locationProvinceId: p1,
-          tileKey: t0,
-        ),
-        Unit(
-          id: 'builder-0',
-          type: kUnitTypeBuilder,
-          ownerId: playerId,
-          locationProvinceId: p1,
-          tileKey: t0,
-          status: UnitStatus.idle,
-        ),
-      ],
-    ),
-    tileKeysByRegionAndProvince: {
-      ow: {
-        p1: [t0, t1],
-      },
-    },
-    playerVisibilityByTile: {
-      playerId: {t0: 'fullyVisible', t1: 'unknown'},
-    },
+    oldWorld: RegionData(provinces: const [Province(id: p1, regionId: ow, ownerId: playerId)], units: [
+      Unit(id: 'explorer-0', type: kUnitTypeExplorer, ownerId: playerId, locationProvinceId: p1, tileKey: t0),
+      Unit(id: 'builder-0', type: kUnitTypeBuilder, ownerId: playerId, locationProvinceId: p1, tileKey: t0, status: UnitStatus.idle),
+    ]),
+    tileKeysByRegionAndProvince: {ow: {p1: [t0, t1]}},
+    playerVisibilityByTile: {playerId: {t0: 'fullyVisible', t1: 'unknown'}},
   );
-  const topology = MapTopology(
-    nodes: [
-      TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
-  );
+  const topology = MapTopology(nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)], edges: []);
   final view = buildPlayerView(game, topology, playerId);
-  final snapshot = WorkTargetSelectionSnapshot(
-    game: game,
-    playerId: playerId,
-    playerView: view,
-    topology: topology,
-    currentOrders: const Orders(),
-    tileMapByRegion: null,
-  );
+  final snapshot = WorkTargetSelectionSnapshot(game: game, playerId: playerId, playerView: view, topology: topology, currentOrders: const Orders(), tileMapByRegion: null);
   final cache = PerPlayerWorkTargetSelectionCache();
   cache.refresh(snapshot);
   expect(cache.sorted(playerId, kWorkTargetExplore), isNotEmpty);
@@ -71,226 +38,34 @@ void ppwtscRunDefaultStrategiesRefreshAllPaths() {
   expect(cache.get(playerId, kWorkTargetExplore), isEmpty);
 }
 
-void ppwtscRunSortedDeterministicOrdering() {
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (_) => {
-        'oldWorld|p1|2|0',
-        'oldWorld|p1|0|0',
-        'oldWorld|p1|1|0',
-      },
-    },
-  );
-  cache.refresh(ppwtscSnapshotForPlayer('gp1'));
-  expect(cache.sorted('gp1', kWorkTargetExplore), [
-    'oldWorld|p1|0|0',
-    'oldWorld|p1|1|0',
-    'oldWorld|p1|2|0',
-  ]);
-}
+void ppwtscRunSortedDeterministicOrdering() {final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (_) => {'oldWorld|p1|2|0','oldWorld|p1|0|0','oldWorld|p1|1|0',},},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); expect(cache.sorted('gp1',kWorkTargetExplore),['oldWorld|p1|0|0','oldWorld|p1|1|0','oldWorld|p1|2|0',]);}
 
-void ppwtscRunContainsMissingMembership() {
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetBuildImprovement: (_) => {'oldWorld|p2|1|1'},
-    },
-  );
-  cache.refresh(ppwtscSnapshotForPlayer('gp1'));
-  expect(
-    cache.contains('gp1', kWorkTargetBuildImprovement, 'oldWorld|p2|2|2'),
-    isFalse,
-  );
-}
+void ppwtscRunContainsMissingMembership() {final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetBuildImprovement: (_) => {'oldWorld|p2|1|1'},},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); expect(cache.contains('gp1',kWorkTargetBuildImprovement,'oldWorld|p2|2|2'),isFalse,);}
 
-void ppwtscRunRefreshReplacesOnTurnBoundary() {
-  var turnNumber = 1;
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (_) =>
-          turnNumber == 1 ? {'oldWorld|p1|0|0'} : {'oldWorld|p1|1|0'},
-    },
-  );
-  final snapshot = ppwtscSnapshotForPlayer('gp1');
-  cache.refresh(snapshot);
-  expect(cache.get('gp1', kWorkTargetExplore), {'oldWorld|p1|0|0'});
-  turnNumber = 2;
-  cache.refresh(snapshot);
-  expect(cache.get('gp1', kWorkTargetExplore), {'oldWorld|p1|1|0'});
-  expect(cache.contains('gp1', kWorkTargetExplore, 'oldWorld|p1|0|0'), isFalse);
-}
+void ppwtscRunRefreshReplacesOnTurnBoundary() {var turnNumber = 1; final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (_) => turnNumber == 1 ? {'oldWorld|p1|0|0'} : {'oldWorld|p1|1|0'},},); final snapshot = ppwtscSnapshotForPlayer('gp1'); cache.refresh(snapshot); expect(cache.get('gp1',kWorkTargetExplore),{'oldWorld|p1|0|0'}); turnNumber = 2; cache.refresh(snapshot); expect(cache.get('gp1',kWorkTargetExplore),{'oldWorld|p1|1|0'}); expect(cache.contains('gp1',kWorkTargetExplore,'oldWorld|p1|0|0'),isFalse);}
 
-void ppwtscRunRefreshIsolatedPerPlayer() {
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (snapshot) => {'${snapshot.playerId}|tile'},
-    },
-  );
-  cache.refresh(ppwtscSnapshotForPlayer('gp1'));
-  cache.refresh(ppwtscSnapshotForPlayer('gp2'));
-  expect(cache.get('gp1', kWorkTargetExplore), {'gp1|tile'});
-  expect(cache.get('gp2', kWorkTargetExplore), {'gp2|tile'});
-}
+void ppwtscRunRefreshIsolatedPerPlayer() {final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (snapshot) => {'${snapshot.playerId}|tile'},},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); cache.refresh(ppwtscSnapshotForPlayer('gp2')); expect(cache.get('gp1',kWorkTargetExplore),{'gp1|tile'}); expect(cache.get('gp2',kWorkTargetExplore),{'gp2|tile'});}
 
-void ppwtscRunRefreshProspectMembership() {
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetProspect: (_) => {'oldWorld|p3|4|2', 'oldWorld|p3|2|1'},
-    },
-  );
-  cache.refresh(ppwtscSnapshotForPlayer('gp1'));
-  expect(cache.get('gp1', kWorkTargetProspect), {
-    'oldWorld|p3|4|2',
-    'oldWorld|p3|2|1',
-  });
-  expect(cache.sorted('gp1', kWorkTargetProspect), [
-    'oldWorld|p3|2|1',
-    'oldWorld|p3|4|2',
-  ]);
-}
+void ppwtscRunRefreshProspectMembership() {final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetProspect: (_) => {'oldWorld|p3|4|2','oldWorld|p3|2|1'},},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); expect(cache.get('gp1',kWorkTargetProspect),{'oldWorld|p3|4|2','oldWorld|p3|2|1',}); expect(cache.sorted('gp1',kWorkTargetProspect),['oldWorld|p3|2|1','oldWorld|p3|4|2',]);}
 
-void ppwtscRunRefreshSharedIncrementalValidator() {
-  Object? exploreValidator;
-  Object? prospectValidator;
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (snapshot) {
-        exploreValidator = snapshot.sharedCandidateValidator;
-        return const {'t1'};
-      },
-      kWorkTargetProspect: (snapshot) {
-        prospectValidator = snapshot.sharedCandidateValidator;
-        return const {'t2'};
-      },
-    },
-  );
-  cache.refresh(ppwtscSnapshotForPlayer('gp1'));
-  expect(exploreValidator, isNotNull);
-  expect(prospectValidator, same(exploreValidator));
-}
+void ppwtscRunRefreshSharedIncrementalValidator() {Object? exploreValidator; Object? prospectValidator; final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (snapshot) {exploreValidator = snapshot.sharedCandidateValidator; return const {'t1'}; },kWorkTargetProspect: (snapshot) {prospectValidator = snapshot.sharedCandidateValidator; return const {'t2'}; },},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); expect(exploreValidator,isNotNull); expect(prospectValidator,same(exploreValidator));}
 
-void ppwtscRunRefreshReusesPlayerOwnedProvinceIds() {
-  final base = ppwtscSnapshotForPlayer('gp1');
-  final ownedIds = <String>{
-    for (final e in base.playerView.provincesById.entries)
-      if (e.value.ownerId == base.playerId) e.key,
-  };
-  Object? seenOwned;
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (snapshot) {
-        seenOwned = snapshot.playerOwnedProvinceIds;
-        return const {'t1'};
-      },
-    },
-  );
-  cache.refresh(
-    WorkTargetSelectionSnapshot(
-      game: base.game,
-      playerId: base.playerId,
-      playerView: base.playerView,
-      topology: base.topology,
-      currentOrders: base.currentOrders,
-      tileMapByRegion: base.tileMapByRegion,
-      playerOwnedProvinceIds: ownedIds,
-    ),
-  );
-  expect(seenOwned, same(ownedIds));
-}
+void ppwtscRunRefreshReusesPlayerOwnedProvinceIds() {final base = ppwtscSnapshotForPlayer('gp1'); final ownedIds = <String>{for (final e in base.playerView.provincesById.entries) if (e.value.ownerId == base.playerId) e.key,}; Object? seenOwned; final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (snapshot) {seenOwned = snapshot.playerOwnedProvinceIds; return const {'t1'}; },},); cache.refresh(WorkTargetSelectionSnapshot(game: base.game,playerId: base.playerId,playerView: base.playerView,topology: base.topology,currentOrders: base.currentOrders,tileMapByRegion: base.tileMapByRegion,playerOwnedProvinceIds: ownedIds,),); expect(seenOwned,same(ownedIds));}
 
-void ppwtscRunRefreshValidatorReusesPlayerView() {
-  final base = ppwtscSnapshotForPlayer('gp1');
-  Object? validatorView;
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (snapshot) {
-        validatorView = snapshot.sharedCandidateValidator?.view;
-        return const {'t1'};
-      },
-    },
-  );
-  cache.refresh(base);
-  expect(validatorView, same(base.playerView));
-}
+void ppwtscRunRefreshValidatorReusesPlayerView() {final base = ppwtscSnapshotForPlayer('gp1'); Object? validatorView; final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (snapshot) {validatorView = snapshot.sharedCandidateValidator?.view; return const {'t1'}; },},); cache.refresh(base); expect(validatorView,same(base.playerView));}
 
-void ppwtscRunRefreshReusesSharedCandidateValidator() {
-  final base = ppwtscSnapshotForPlayer('gp1');
-  final external = IncrementalCandidateValidator.forPlayer(
-    game: base.game,
-    topology: base.topology,
-    playerId: base.playerId,
-    basePrefix: base.currentOrders,
-    tileMapByRegion: base.tileMapByRegion,
-    resolution: orderResolutionContextFromView(base.playerView, base.game),
-  );
-  Object? seen;
-  final cache = PerPlayerWorkTargetSelectionCache(
-    strategies: {
-      kWorkTargetExplore: (snapshot) {
-        seen = snapshot.sharedCandidateValidator;
-        return const {'t1'};
-      },
-    },
-  );
-  cache.refresh(
-    WorkTargetSelectionSnapshot(
-      game: base.game,
-      playerId: base.playerId,
-      playerView: base.playerView,
-      topology: base.topology,
-      currentOrders: base.currentOrders,
-      tileMapByRegion: base.tileMapByRegion,
-      sharedCandidateValidator: external,
-    ),
-  );
-  expect(seen, same(external));
-}
+void ppwtscRunRefreshReusesSharedCandidateValidator() {final base = ppwtscSnapshotForPlayer('gp1'); final external = IncrementalCandidateValidator.forPlayer(game: base.game,topology: base.topology,playerId: base.playerId,basePrefix: base.currentOrders,tileMapByRegion: base.tileMapByRegion,resolution: orderResolutionContextFromView(base.playerView,base.game),); Object? seen; final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (snapshot) {seen = snapshot.sharedCandidateValidator; return const {'t1'}; },},); cache.refresh(WorkTargetSelectionSnapshot(game: base.game,playerId: base.playerId,playerView: base.playerView,topology: base.topology,currentOrders: base.currentOrders,tileMapByRegion: base.tileMapByRegion,sharedCandidateValidator: external,),); expect(seen,same(external));}
 
 /// Canonical scenarios for PerPlayerWorkTargetSelectionCache family tests.
-List<RunnableScenario> perPlayerWorkTargetSelectionCacheScenarios() => const [
-  RunnableScenario(
-    label: 'default strategies refresh runs all population paths',
-    run: ppwtscRunDefaultStrategiesRefreshAllPaths,
-  ),
-  RunnableScenario(
-    label: 'sorted returns deterministic ordering',
-    run: ppwtscRunSortedDeterministicOrdering,
-  ),
-  RunnableScenario(
-    label: 'contains returns false for missing membership',
-    run: ppwtscRunContainsMissingMembership,
-  ),
-  RunnableScenario(
-    label: 'refresh replaces target membership on turn-boundary style update',
-    run: ppwtscRunRefreshReplacesOnTurnBoundary,
-  ),
-  RunnableScenario(
-    label: 'refresh keeps cache isolated per player',
-    run: ppwtscRunRefreshIsolatedPerPlayer,
-  ),
-  RunnableScenario(
-    label: 'refresh stores and reads prospect membership',
-    run: ppwtscRunRefreshProspectMembership,
-  ),
-  RunnableScenario(
-    label:
-        'refresh injects one shared incremental validator for all strategies',
-    run: ppwtscRunRefreshSharedIncrementalValidator,
-  ),
-  RunnableScenario(
-    label:
-        'refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394)',
-    run: ppwtscRunRefreshReusesPlayerOwnedProvinceIds,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label: 'refresh built validator reuses snapshot playerView (Refs #2394)',
-    run: ppwtscRunRefreshValidatorReusesPlayerView,
-    refs: '#2394',
-  ),
-  RunnableScenario(
-    label:
-        'refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)',
-    run: ppwtscRunRefreshReusesSharedCandidateValidator,
-    refs: '#2394',
-  ),
+List<RunnableScenario> perPlayerWorkTargetSelectionCacheScenarios() => [
+  rs('default strategies refresh runs all population paths', ppwtscRunDefaultStrategiesRefreshAllPaths),
+  rs('sorted returns deterministic ordering', ppwtscRunSortedDeterministicOrdering),
+  rs('contains returns false for missing membership', ppwtscRunContainsMissingMembership),
+  rs('refresh replaces target membership on turn-boundary style update', ppwtscRunRefreshReplacesOnTurnBoundary),
+  rs('refresh keeps cache isolated per player', ppwtscRunRefreshIsolatedPerPlayer),
+  rs('refresh stores and reads prospect membership', ppwtscRunRefreshProspectMembership),
+  rs('refresh injects one shared incremental validator for all strategies', ppwtscRunRefreshSharedIncrementalValidator),
+  rs('refresh reuses caller-supplied playerOwnedProvinceIds when set (Refs #2394)', ppwtscRunRefreshReusesPlayerOwnedProvinceIds, '#2394'),
+  rs('refresh built validator reuses snapshot playerView (Refs #2394)', ppwtscRunRefreshValidatorReusesPlayerView, '#2394'),
+  rs('refresh reuses caller-supplied sharedCandidateValidator when set (Refs #2394)', ppwtscRunRefreshReusesSharedCandidateValidator, '#2394'),
 ];

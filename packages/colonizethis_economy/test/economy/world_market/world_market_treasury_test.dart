@@ -13,107 +13,95 @@ void main() {
   final data.ResourceRules rules = data.ResourceRules.defaultRules;
 
   group('capBidQuantityForBudgets (Refs #3836)', () {
-    for (final scenario in capBidQuantityForBudgetsScenarios) {
-      test(scenario.label, () {
-        expect(
-          capBidQuantityForBudgets(
-            bidQuantity: scenario.bidQuantity,
-            remainingCargoBudget: scenario.remainingCargoBudget,
-            remainingTreasuryBudget: scenario.remainingTreasuryBudget,
-            unitPrice: scenario.unitPrice,
-          ),
-          scenario.expected,
-        );
-      });
-    }
+    runLabeledScenarios(capBidQuantityForBudgetsScenarios, (scenario) {
+      expect(
+        capBidQuantityForBudgets(
+          bidQuantity: scenario.bidQuantity,
+          remainingCargoBudget: scenario.remainingCargoBudget,
+          remainingTreasuryBudget: scenario.remainingTreasuryBudget,
+          unitPrice: scenario.unitPrice,
+        ),
+        scenario.expected,
+      );
+    }, labelOf: (s) => s.label);
   });
 
   group('effectiveMarketPriceForCommodityId (Refs #3093)', () {
-    for (final scenario in effectiveMarketPriceScenarios) {
-      test(scenario.label, () {
-        final game = buildTreasuryBidBudgetGame(prices: scenario.prices);
-        final expected = expectedEffectiveMarketPrice(scenario, rules);
-        if (scenario.useCatalogDefault) {
-          expect(expected, isNotNull);
-        }
-        expect(
-          effectiveMarketPriceForCommodityId(
-            commodityId: scenario.commodityId,
-            worldMarket: game.worldMarketState,
-            resourceRules: rules,
-          ),
-          expected,
-        );
-      });
-    }
+    runLabeledScenarios(effectiveMarketPriceScenarios, (scenario) {
+      final game = buildTreasuryBidBudgetGame(prices: scenario.prices);
+      final expected = expectedEffectiveMarketPrice(scenario, rules);
+      if (scenario.useCatalogDefault) {
+        expect(expected, isNotNull);
+      }
+      expect(
+        effectiveMarketPriceForCommodityId(
+          commodityId: scenario.commodityId,
+          worldMarket: game.worldMarketState,
+          resourceRules: rules,
+        ),
+        expected,
+      );
+    }, labelOf: (s) => s.label);
   });
 
   group('stagedBidTotalSpendByPlayer (Refs #3093)', () {
-    for (final scenario in stagedBidSpendScenarios(rules)) {
-      test(scenario.label, () {
-        runStagedBidSpendScenario(scenario, rules);
-      });
-    }
+    runLabeledScenarios(stagedBidSpendScenarios(rules), (scenario) {
+      runStagedBidSpendScenario(scenario, rules);
+    }, labelOf: (s) => s.label);
   });
 
   group('carryForwardBidNotionalByPlayer (Refs #3122)', () {
-    for (final scenario in carryForwardBidNotionalScenarios()) {
-      test(scenario.label, () {
-        runCarryForwardBidNotionalScenario(scenario, rules);
-      });
-    }
+    runLabeledScenarios(carryForwardBidNotionalScenarios(), (scenario) {
+      runCarryForwardBidNotionalScenario(scenario, rules);
+    }, labelOf: (s) => s.label);
   });
 
   group('shared bid-spend helper parity (Refs #3427)', () {
-    for (final scenario in bidSpendParityScenarios()) {
-      test(scenario.label, () {
-        runBidSpendParityScenario(scenario, rules);
-      });
-    }
+    runLabeledScenarios(bidSpendParityScenarios(), (scenario) {
+      runBidSpendParityScenario(scenario, rules);
+    }, labelOf: (s) => s.label);
   });
 
   group('treasuryAvailableForBidsByPlayer (Refs #3093)', () {
-    for (final scenario in treasuryAvailableForBidsScenarios) {
-      test(scenario.label, () => runTreasuryAvailableScenario(scenario));
-    }
+    runLabeledScenarios(treasuryAvailableForBidsScenarios, (scenario) {
+      runTreasuryAvailableScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('composition: UI clamp budget math (Refs #3093)', () {
-    for (final scenario in treasuryUiCompositionScenarios(rules)) {
-      test(scenario.label, () => runTreasuryUiCompositionScenario(scenario, rules));
-    }
+    runLabeledScenarios(treasuryUiCompositionScenarios(rules), (scenario) {
+      runTreasuryUiCompositionScenario(scenario, rules);
+    }, labelOf: (s) => s.label);
   });
 
   group('maxAffordableBidQuantity (Refs #3856)', () {
-    for (final scenario in maxAffordableBidQuantityScenarios) {
-      test(scenario.label, () {
-        expect(
-          maxAffordableBidQuantity(
-            bidRemaining: scenario.bidRemaining,
-            pricePerUnit: scenario.pricePerUnit,
-            remainingTreasuryBudget: scenario.remainingTreasuryBudget,
-          ),
-          scenario.expected,
-        );
-      });
-    }
+    runLabeledScenarios(maxAffordableBidQuantityScenarios, (scenario) {
+      expect(
+        maxAffordableBidQuantity(
+          bidRemaining: scenario.bidRemaining,
+          pricePerUnit: scenario.pricePerUnit,
+          remainingTreasuryBudget: scenario.remainingTreasuryBudget,
+        ),
+        scenario.expected,
+      );
+    }, labelOf: (s) => s.label);
   });
 
   group('decrementTreasuryForFill (Refs #3856)', () {
-    for (final scenario in decrementTreasuryForFillScenarios) {
-      test(scenario.label, () => runDecrementTreasuryForFillScenario(scenario));
-    }
+    runLabeledScenarios(decrementTreasuryForFillScenarios, (scenario) {
+      runDecrementTreasuryForFillScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('GpTreasuryCreditAccumulator<int>', () {
-    for (final scenario in gpTreasuryCreditIntScenarios()) {
-      test(scenario.label, () => runGpTreasuryCreditIntScenario(scenario));
-    }
+    runLabeledScenarios(gpTreasuryCreditIntScenarios(), (scenario) {
+      runGpTreasuryCreditIntScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('GpTreasuryCreditAccumulator<double> (FRR zero-profit semantics)', () {
-    for (final scenario in gpTreasuryCreditDoubleScenarios()) {
-      test(scenario.label, () => runGpTreasuryCreditDoubleScenario(scenario));
-    }
+    runLabeledScenarios(gpTreasuryCreditDoubleScenarios(), (scenario) {
+      runGpTreasuryCreditDoubleScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

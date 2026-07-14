@@ -4,17 +4,14 @@ import 'package:colonizethis_test/test.dart';
 /// Tests for economy_riches_to_treasury.dart. SPEC/program/turn-resolution-phases.md.
 void main() {
   group('resolveRichesToTreasury', () {
-    for (final scenario in resolveRichesToTreasuryScenarios()) {
-      test(scenario.label, () => verifyResolveRichesToTreasuryScenario(scenario));
-    }
+    runLabeledScenarios(resolveRichesToTreasuryScenarios(), (scenario) {
+      verifyResolveRichesToTreasuryScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('pendingRichesTreasuryDelta', () {
-    for (final scenario in pendingRichesTreasuryDeltaScenarios()) {
-      test(
-        scenario.label,
-        () => verifyPendingRichesTreasuryDeltaScenario(scenario),
-      );
-    }
+    runLabeledScenarios(pendingRichesTreasuryDeltaScenarios(), (scenario) {
+      verifyPendingRichesTreasuryDeltaScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

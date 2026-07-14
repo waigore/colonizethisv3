@@ -15,6 +15,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_resource_cell.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
+import 'commodity_ui_helpers.dart';
 
 part 'production_commodity_breakdown_dialog_layout.dart';
 part 'production_commodity_breakdown_dialog_table_cells.dart';

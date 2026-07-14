@@ -5,11 +5,13 @@ void main() {
     'ProjectedCostEngine work material',
     projectedCostEngineWorkMaterialScenarios(),
     runProjectedCostEngineWorkMaterialScenario,
+    labelOf: (s) => s.label,
   );
 
   runLabeledScenarioGroup(
     'ProjectedCostEngine build',
     projectedCostEngineBuildScenarios(),
     runProjectedCostEngineBuildScenario,
+    labelOf: (s) => s.label,
   );
 }

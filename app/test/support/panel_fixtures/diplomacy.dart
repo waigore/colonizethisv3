@@ -212,3 +212,70 @@ Game buildDiplomacyRichPanelTestGame() {
     ],
   );
 }
+
+/// Solo human GP with one owned Old-World province and **no**
+/// [DiplomacyRelation]s — used for empty-section / no-discovered-faction pins
+/// in `diplomacy_panel_test` and `diplomacy_panel_rows_test` (Refs #4013).
+Game buildDiplomacyPanelGameWithNoDiscoveredFactions() {
+  const ow = 'oldWorld';
+  final p1 = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'P1',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorld: RegionData(provinces: [p1], units: const []),
+    newWorld: const RegionData(),
+    playerVisibilityByTile: const {},
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'empty-diplo',
+    worldState: world,
+    players: const [player],
+    diplomacyRelations: const [],
+  );
+}
+
+/// Fixture for the discovery-via-visibility ACs (Refs #3341): the human GP
+/// `gp1` has fully-visible tile sight into a New-World province owned by Tribe
+/// `t1` but holds **no** [DiplomacyRelation] with the tribe. Per
+/// SPEC/ui/diplomacy-panel.md § Discovered factions, the panel must discover
+/// the tribe via `knownDiplomaticTargetFactionIds` and surface the default
+/// neutral first-contact standing.
+Game buildDiplomacyPanelGameWithTribeDiscoveredByVisibility() {
+  const nw = 'newWorld';
+  const ow = 'oldWorld';
+  final tribeProvince = Province(
+    id: '$nw|t1prov',
+    regionId: nw,
+    displayName: 'Tribe Land',
+    ownerId: 't1',
+  );
+  final homeProvince = Province(
+    id: '$ow|p1',
+    regionId: ow,
+    displayName: 'Home',
+    ownerId: 'gp1',
+  );
+  final world = WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+    oldWorld: RegionData(provinces: [homeProvince], units: const []),
+    newWorld: RegionData(provinces: [tribeProvince], units: const []),
+    playerVisibilityByTile: const {
+      'gp1': {'newWorld|t1prov|0|0': 'fullyVisible'},
+    },
+    playerProspectedTiles: const {},
+  );
+  const player = Player(id: 'gp1', displayName: 'Solo', isHuman: true);
+  return Game(
+    id: 'tribe-visibility',
+    worldState: world,
+    players: const [player],
+    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
+    diplomacyRelations: const [],
+  );
+}

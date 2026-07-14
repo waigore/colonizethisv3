@@ -102,9 +102,10 @@ int runCheckEconomyTestPreservedDescriptions(
   return 1;
 }
 
-/// Returns the set of single-line `test`/`testWidgets` descriptions found in
+/// Returns the set of `test`/`testWidgets` descriptions found in
 /// [sourcesByPath] (relative path -> source), plus scenario `label:` strings
-/// from [scenarioSourcesByPath] when provided.
+/// from [scenarioSourcesByPath] when provided. Descriptions may span lines
+/// after `dart format` wraps a long first argument.
 Set<String> collectEconomyTestDescriptions({
   required Map<String, String> sourcesByPath,
   Map<String, String> scenarioSourcesByPath = const {},
@@ -112,15 +113,17 @@ Set<String> collectEconomyTestDescriptions({
   final descriptions = <String>{};
   final paths = sourcesByPath.keys.toList()..sort();
   for (final path in paths) {
-    final lines = sourcesByPath[path]!.split('\n');
-    for (final line in lines) {
-      if (economyTestDescriptionIsCommentLine(line)) continue;
-      for (final match
-          in economyTestDescriptionPattern.allMatches(line)) {
-        final description = match.group(1) ?? match.group(2);
-        if (description == null || description.isEmpty) continue;
-        descriptions.add(description);
-      }
+    // Match against the full file so `dart format` may place the string on the
+    // line after `test(` without dropping the pin (Refs #3939).
+    // Drop full-line comments first so `// test('…')` is not counted.
+    final source = sourcesByPath[path]!
+        .split('\n')
+        .map((line) => economyTestDescriptionIsCommentLine(line) ? '' : line)
+        .join('\n');
+    for (final match in economyTestDescriptionPattern.allMatches(source)) {
+      final description = match.group(1) ?? match.group(2);
+      if (description == null || description.isEmpty) continue;
+      descriptions.add(description);
     }
   }
 

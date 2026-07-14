@@ -1,4 +1,15 @@
-part of 'fog_resolution.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'connectivity_tile_helpers.dart' show fullProvinceIdFromTileKey;
+import 'fog_spy_reveal_decay.dart';
+import 'naval_coastal_visibility.dart'
+    show coastalLandTileKeysFromNavalPresenceAtSea;
+import 'player_view.dart';
+import 'province_lookup.dart';
+import 'province_owner_cache.dart';
+import 'unit_lookup.dart';
+import 'visibility_map_helpers.dart' show mutableVisibilityByPlayerCopy;
 
 /// Spy 5-turn fog decay: decrement timers; when they expire, set other-faction
 /// provinces back to fogged for that player. Timers MUST NOT affect a player's
@@ -6,14 +17,13 @@ part of 'fog_resolution.dart';
 (Map<String, Map<String, String>>, Map<String, Map<String, int>>)
 applySpyRevealTimerDecay(Game game) {
   final world = game.worldState;
-  var visibilityByTile = Map<String, Map<String, String>>.from(
-    world.playerVisibilityByTile.map(
-      (k, v) => MapEntry(k, Map<String, String>.from(v)),
-    ),
+  var visibilityByTile = mutableVisibilityByPlayerCopy(
+    world.playerVisibilityByTile,
   );
 
   // Province ownership lookup so we can ensure timers only affect other-faction provinces.
-  final ownerByProvinceId = ownerByProvinceIdMap(world);
+  final ownerByProvinceId =
+      ProvinceOwnerCache.of(world).ownerByProvinceId;
 
   final nextSpyTimers = <String, Map<String, int>>{};
   for (final entry in world.spyRevealTurnsByPlayer.entries) {
@@ -45,7 +55,7 @@ Map<String, Map<String, String>> applyFogDecay(
   MapTopology? navalCoastalIntelTopology,
 }) {
   const explorerTypes = {'explorer', 'spy'};
-  final ownerByProvince = ownerByProvinceIdMap(game.worldState);
+  final owners = ProvinceOwnerCache.of(game.worldState);
 
   final navalCoastalIntelByPlayer = <String, Set<String>>{};
   if (navalCoastalIntelTopology != null) {
@@ -67,17 +77,19 @@ Map<String, Map<String, String>> applyFogDecay(
           .add(u.locationProvinceId);
     }
   }
-  final result = <String, Map<String, String>>{};
-  for (final entry in game.worldState.playerVisibilityByTile.entries) {
+  final result = mutableVisibilityByPlayerCopy(
+    game.worldState.playerVisibilityByTile,
+  );
+  for (final entry in result.entries) {
     final playerId = entry.key;
-    final visibility = Map<String, String>.from(entry.value);
+    final visibility = entry.value;
     final hasExplorerIn = provincesWithExplorerByPlayer[playerId] ?? const {};
     final navalCoastalIntel = navalCoastalIntelByPlayer[playerId] ?? const {};
 
     for (final tileKey in visibility.keys.toList()) {
       final fullProvinceId = fullProvinceIdFromTileKey(tileKey);
       if (fullProvinceId == null) continue;
-      final ownerId = ownerByProvince[fullProvinceId];
+      final ownerId = owners.ownerOf(fullProvinceId);
       if (ownerId == null || ownerId == playerId) continue;
       if (hasExplorerIn.contains(fullProvinceId)) continue;
       if (navalCoastalIntel.contains(tileKey)) continue;
@@ -85,7 +97,6 @@ Map<String, Map<String, String>> applyFogDecay(
       if (cur != VisibilityLevel.fullyVisible.name) continue;
       visibility[tileKey] = VisibilityLevel.fogged.name;
     }
-    result[playerId] = visibility;
   }
   return result;
 }

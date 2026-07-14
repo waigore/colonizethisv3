@@ -36,14 +36,16 @@ class _PauseMenuPanelStoryHostState extends State<_PauseMenuPanelStoryHost> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.dialogScrim,
-        body: Center(
-          child: PauseMenuPanel(bus: _bus),
+    return ProviderScope(
+      child: MaterialApp(
+        theme: AppThemes.editorialMonocle,
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          backgroundColor: EditorialMonoclePalette.dialogScrim,
+          body: Center(
+            child: PauseMenuPanel(bus: _bus),
+          ),
         ),
       ),
     );
@@ -62,6 +64,174 @@ List<WidgetbookNode> get pauseMenuPanelDirectories => [
     ],
   ),
 ];
+
+/// Save / load dialog stories. SPEC/ui/save-game-name-dialog.md,
+/// SPEC/ui/load-game-list-dialog.md.
+List<WidgetbookNode> get saveLoadDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Save Game Name Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — name field',
+        builder: (context) => const _SaveGameNameDialogStoryHost(),
+      ),
+    ],
+  ),
+  WidgetbookFolder(
+    name: 'Load Game List Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Empty list',
+        builder: (context) =>
+            const _LoadGameListDialogStoryHost(variant: _LoadListStory.empty),
+      ),
+      WidgetbookUseCase(
+        name: 'Populated ≤10 (mobile)',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.populated,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Multi-page manuals',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.multiPage,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Auto-save pinned',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.autoPinned,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Delete confirm',
+        builder: (context) => const _LoadGameListDialogStoryHost(
+          variant: _LoadListStory.deleteConfirm,
+        ),
+      ),
+    ],
+  ),
+];
+
+enum _LoadListStory { empty, populated, multiPage, autoPinned, deleteConfirm }
+
+class _SaveGameNameDialogStoryHost extends StatelessWidget {
+  const _SaveGameNameDialogStoryHost();
+
+  @override
+  Widget build(BuildContext context) {
+    final game = Game(
+      id: 'story_save',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 3),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+      ),
+      players: const [
+        Player(
+          id: 'gp1',
+          displayName: 'England',
+          isHuman: true,
+          leaderKey: 'england_leader',
+        ),
+      ],
+    );
+    return ProviderScope(
+      overrides: [
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(game),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppThemes.editorialMonocle,
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          backgroundColor: EditorialMonoclePalette.dialogScrim,
+          body: const Center(child: SaveGameNameDialog()),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadGameListDialogStoryHost extends StatelessWidget {
+  const _LoadGameListDialogStoryHost({required this.variant});
+
+  final _LoadListStory variant;
+
+  List<LoadableSaveEntry> _entries() {
+    switch (variant) {
+      case _LoadListStory.empty:
+        return const [];
+      case _LoadListStory.populated:
+      case _LoadListStory.autoPinned:
+      case _LoadListStory.deleteConfirm:
+        return const [
+          LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 12,
+            calendarYear: 1522,
+            humanNation: 'England',
+          ),
+          LoadableSaveEntry(
+            storageId: 'England_-_Queen_Victoria_-_3',
+            label: 'England - Queen Victoria - 3',
+            kind: LoadableSaveKind.manual,
+            turnNumber: 3,
+            calendarYear: 1513,
+            humanNation: 'England',
+          ),
+        ];
+      case _LoadListStory.multiPage:
+        return [
+          const LoadableSaveEntry(
+            storageId: kAutoSaveSlotId,
+            label: kAutoSaveListLabel,
+            kind: LoadableSaveKind.autoSave,
+            turnNumber: 99,
+          ),
+          for (var i = 0; i < 12; i++)
+            LoadableSaveEntry(
+              storageId: 'manual_$i',
+              label: 'Manual save $i',
+              kind: LoadableSaveKind.manual,
+              turnNumber: i + 1,
+            ),
+        ];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = _entries();
+    final pendingDelete = variant == _LoadListStory.deleteConfirm
+        ? 'England_-_Queen_Victoria_-_3'
+        : null;
+    return ProviderScope(
+      child: MaterialApp(
+        theme: AppThemes.editorialMonocle,
+        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: MediaQuery(
+          data: const MediaQueryData(size: Size(390, 844)),
+          child: Scaffold(
+            backgroundColor: EditorialMonoclePalette.dialogScrim,
+            body: Center(
+              child: LoadGameListDialog(
+                fromPause: false,
+                previewEntries: entries,
+                previewPendingDeleteId: pendingDelete,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Next turn confirmation (DLG60001) and Game Initializing (SHEL30001)
 /// Widgetbook stories live in `catalog_part8.dart` — extracted to keep

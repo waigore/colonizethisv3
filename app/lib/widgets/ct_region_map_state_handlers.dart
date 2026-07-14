@@ -56,6 +56,7 @@ CtRegionMapGame _buildCtRegionMapGame(_CtRegionMapState state) {
     selectedTileKey: state.widget.selectedTileKey,
     selectedCivilianTileKey: state.widget.selectedCivilianTileKey,
     secondaryHighlightTileKey: state.widget.secondaryHighlightTileKey,
+    secondaryHighlightTileKeys: state.widget.secondaryHighlightTileKeys,
     validTileKeys: state.widget.validTileKeys,
     onTileSelected: state.widget.onTileSelected,
     onWorkTargetSelectionCancelled:

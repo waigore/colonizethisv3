@@ -49,6 +49,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpBlocker = 'gp_blocker';
@@ -115,25 +116,6 @@ Game _weakHoldingsGame({
   );
 }
 
-AIWorldSnapshot _ownSnapshot({
-  required int oldWorldProvincesOwned,
-  required List<String> atWarWith,
-  required List<String> invadableProvinceIdsSorted,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gpOwn,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      invadableProvinceIdsSorted: invadableProvinceIdsSorted,
-    ),
-    colonial: const ColonialSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
 void main() {
   group(
     'weakHoldingsInvadableBlockerPeaceTargets — canonical outer guards',
@@ -150,7 +132,7 @@ void main() {
             _minor1: ['oldWorld|inv_minor'],
           },
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 12,
           atWarWith: const [_gpBlocker],
           invadableProvinceIdsSorted: const [
@@ -184,7 +166,7 @@ void main() {
           },
           minorNations: const [],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 5,
           atWarWith: const [_gpBlocker],
           invadableProvinceIdsSorted: const ['oldWorld|inv_blocker'],
@@ -214,7 +196,7 @@ void main() {
           },
           atWarFactionIds: const [_minor1],
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 5,
           atWarWith: const [_minor1],
           invadableProvinceIdsSorted: const [
@@ -251,7 +233,7 @@ void main() {
             _minor1: ['oldWorld|inv_minor'],
           },
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
           atWarWith: const [_gpBlocker],
           invadableProvinceIdsSorted: const [
@@ -284,7 +266,7 @@ void main() {
             _minor1: ['oldWorld|inv_minor'],
           },
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
           atWarWith: const [_gpBlocker],
           invadableProvinceIdsSorted: const [
@@ -317,7 +299,7 @@ void main() {
             _minor1: ['oldWorld|inv_minor'],
           },
         );
-        final snapshot = _ownSnapshot(
+        final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 8,
           atWarWith: const [_gpBlocker],
           invadableProvinceIdsSorted: const [
@@ -349,7 +331,7 @@ void main() {
           _minor1: ['oldWorld|inv_minor'],
         },
       );
-      final snapshot = _ownSnapshot(
+      final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
         atWarWith: const [_gpBlocker],
         invadableProvinceIdsSorted: const [
@@ -383,7 +365,7 @@ void main() {
               _minor1: ['oldWorld|inv_minor'],
             },
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 12,
             atWarWith: const [_gpBlocker],
             invadableProvinceIdsSorted: const [
@@ -402,7 +384,7 @@ void main() {
             },
             minorNations: const [],
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 5,
             atWarWith: const [_gpBlocker],
             invadableProvinceIdsSorted: const ['oldWorld|inv_blocker'],
@@ -418,7 +400,7 @@ void main() {
               _minor1: ['oldWorld|inv_minor'],
             },
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 7,
             atWarWith: const [_gpBlocker],
             invadableProvinceIdsSorted: const [
@@ -437,7 +419,7 @@ void main() {
               _minor1: ['oldWorld|inv_minor'],
             },
           ),
-          snapshot: _ownSnapshot(
+          snapshot: ownSnapshot(
             oldWorldProvincesOwned: 8,
             atWarWith: const [_gpBlocker],
             invadableProvinceIdsSorted: const [

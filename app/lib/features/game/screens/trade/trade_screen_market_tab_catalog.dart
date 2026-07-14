@@ -32,6 +32,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
     required void Function(CommodityId commodityId, TradeOrderType? next)
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
+    required AppLocalizations l10n,
     bool isFirstSection = true,
   }) {
     if (commodities.isEmpty) return const <Widget>[];
@@ -46,7 +47,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
           child: _MarketCommodityRow(
             commodityId: commodities[index].id,
             commodityDisplayName:
-                commodities[index].displayName ?? commodities[index].id,
+                commodityDisplayName(l10n, commodities[index].id),
             priceText: _formatPrice(
               market.prices[commodities[index].id],
               commodityId: commodities[index].id,

@@ -63,7 +63,6 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _minorId = kOrchestratorAdjacentMinorId;
-const String _minorOwProvince = kOrchestratorAdjacentMinorOwProvince;
 
 // Below-quota set: kGp1OwProvincesBelowQuota (Refs #3941).
 // Past-quota DEVELOP set: kGp1OwProvincesDevelop (Refs #3941).
@@ -107,51 +106,8 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-AIWorldSnapshot _expandSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 7 OW provinces -> EXPAND (`isBelowObserverConquestQuota` true,
-    // observer goal phase routes to EXPAND). `provincesToVictory` 24
-    // sits above `kConquerScoreFloorProvincesToVictoryThreshold` so the
-    // `behindVictoryPace` minor relation override
-    // (`kDeclareWarMinorMaxRelationWhenFarFromVictory`) keeps the
-    // declare-war candidate eligible regardless of relation score
-    // initialization in `computeDiplomaticCandidateScores`.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 7,
-      provincesToVictory: 24,
-      invadableProvinceIdsSorted: [_minorOwProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(ownProvinceCount: 7),
-    relations: {},
-  );
-}
-
-AIWorldSnapshot _developSnapshot() {
-  return const AIWorldSnapshot(
-    playerId: _nationId,
-    threats: ThreatSummary(),
-    opportunities: OpportunitySummary(),
-    // 12 OW provinces past the observer quota with no colonial
-    // acquisition targets: `observerGoalPhaseFor` routes to DEVELOP.
-    // `provincesToVictory` 19 keeps `behindVictoryPace` false (<= 20)
-    // so the negative case isolates the DEVELOP suppression rather
-    // than relying on the behind-victory-pace minor relation override.
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: 12,
-      provincesToVictory: 19,
-      invadableProvinceIdsSorted: [_minorOwProvince],
-      adjacentOwnerFactionIdsSorted: [_minorId],
-    ),
-    colonial: ColonialSummary(),
-    economy: EconomySummary(ownProvinceCount: 12),
-    relations: {},
-  );
-}
+// Snapshots: buildOrchestratorExpandAdjacentMinorSnapshot /
+// buildOrchestratorDevelopAdjacentMinorSnapshot (Refs #3997).
 
 List<String> _declareWarTargets(Orders orders) => <String>[
   for (final order
@@ -168,7 +124,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandAdjacentMinorSnapshot();
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -182,16 +138,18 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(2509101),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(2509101),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       expect(
@@ -213,7 +171,7 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _developSnapshot();
+      final snapshot = buildOrchestratorDevelopAdjacentMinorSnapshot();
 
       expect(
         observerGoalPhaseFor(snapshot: snapshot, game: game),
@@ -226,16 +184,18 @@ void main() {
       );
 
       final orders = runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.diplomacy,
-        seeds: AISeedBundle.fromTurnSeed(2509102),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.diplomacy,
+          seeds: AISeedBundle.fromTurnSeed(2509102),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       expect(
@@ -257,19 +217,21 @@ void main() {
       );
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
-      final snapshot = _expandSnapshot();
+      final snapshot = buildOrchestratorExpandAdjacentMinorSnapshot();
 
       Orders runOnce(int turnSeed) => runDomainPlanners(
-        game: game,
-        topology: topology,
-        nationId: _nationId,
-        view: view,
-        snapshot: snapshot,
-        config: _aiConfig,
-        primaryGoal: StrategicGoal.expand,
-        seeds: AISeedBundle.fromTurnSeed(turnSeed),
-        suggestionAPI: _minorDeclareWarApi,
-        economyPlan: _economyPlan,
+        DomainPlannerInput(
+          game: game,
+          topology: topology,
+          nationId: _nationId,
+          view: view,
+          snapshot: snapshot,
+          config: _aiConfig,
+          primaryGoal: StrategicGoal.expand,
+          seeds: AISeedBundle.fromTurnSeed(turnSeed),
+          suggestionAPI: _minorDeclareWarApi,
+          economyPlan: _economyPlan,
+        ),
       );
 
       final firstRun = runOnce(2509103);

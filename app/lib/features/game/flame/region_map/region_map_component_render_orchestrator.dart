@@ -41,7 +41,10 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     if (selectedTileKey != null) {
       _paintSelectedTile(canvas);
     }
-    if (secondaryHighlightTileKey != null) {
+    final multiSecondary = secondaryHighlightTileKeys;
+    if (multiSecondary != null && multiSecondary.isNotEmpty) {
+      _paintSecondaryHighlightTiles(canvas, multiSecondary);
+    } else if (secondaryHighlightTileKey != null) {
       _paintSecondaryHighlightTile(canvas);
     }
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {

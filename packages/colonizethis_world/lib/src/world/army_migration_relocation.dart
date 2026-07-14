@@ -1,9 +1,16 @@
-part of 'army_migration.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../world_constants.dart';
+import 'army_lookup.dart';
+import 'army_migration_region.dart';
+import 'province_lookup.dart';
+import 'region_unit_lists.dart';
+import 'unit_lookup.dart';
 
 // Army station retargeting and per-regiment relocation across regions
 // (Refs #3290 Phase-0 file-split). Behaviour-preserving move: same library
 // scope as `army_migration.dart`, so imports, constants ([kRegionOldWorld],
-// [kRegionNewWorld]), and shared helpers ([_regionIdForProvinceInWorld]) are
+// [kRegionNewWorld]), and shared helpers ([regionIdForProvinceInWorld]) are
 // unchanged.
 
 /// Updates army [stationedProvinceId] and all regiment locations for [armyId].
@@ -12,7 +19,7 @@ WorldState updateArmyStation(
   String armyId,
   String destinationProvinceId,
 ) {
-  final regionId = _regionIdForProvinceInWorld(
+  final regionId = regionIdForProvinceInWorld(
     worldState,
     destinationProvinceId,
   );
@@ -152,53 +159,22 @@ RegionUnitLists _relocateRegimentInSameRegion({
   required String destinationProvinceId,
   required bool inOldWorld,
 }) {
-  if (inOldWorld) {
-    return _relocateRegimentInOldWorld(
-      ow,
-      nw,
-      regimentUnitId,
-      destinationProvinceId,
-    );
+  final lists = (ow: ow, nw: nw);
+  final regionId = inOldWorld ? kRegionOldWorld : kRegionNewWorld;
+  Unit? current;
+  for (final u in lists.unitListForRegion(regionId)) {
+    if (u.id == regimentUnitId) {
+      current = u;
+      break;
+    }
   }
-  return _relocateRegimentInNewWorld(
-    ow,
-    nw,
+  if (current == null) return lists;
+  return lists.replaceUnitInRegion(
+    regionId,
     regimentUnitId,
-    destinationProvinceId,
+    current.copyWith(locationProvinceId: destinationProvinceId),
   );
 }
-
-RegionUnitLists _relocateRegimentInOldWorld(
-  List<Unit> ow,
-  List<Unit> nw,
-  String regimentUnitId,
-  String destinationProvinceId,
-) => (
-  ow: ow
-      .map(
-        (u) => u.id == regimentUnitId
-            ? u.copyWith(locationProvinceId: destinationProvinceId)
-            : u,
-      )
-      .toList(),
-  nw: nw,
-);
-
-RegionUnitLists _relocateRegimentInNewWorld(
-  List<Unit> ow,
-  List<Unit> nw,
-  String regimentUnitId,
-  String destinationProvinceId,
-) => (
-  ow: ow,
-  nw: nw
-      .map(
-        (u) => u.id == regimentUnitId
-            ? u.copyWith(locationProvinceId: destinationProvinceId)
-            : u,
-      )
-      .toList(),
-);
 
 RegionUnitLists _relocateRegimentAcrossRegions({
   required List<Unit> ow,
@@ -209,10 +185,11 @@ RegionUnitLists _relocateRegimentAcrossRegions({
   required String destinationRegionId,
   required bool inOldWorld,
 }) {
-  final unit = inOldWorld ? ow.removeAt(owIdx) : nw.removeAt(nwIdx);
+  final unit = inOldWorld ? ow[owIdx] : nw[nwIdx];
   final moved = unit.copyWith(locationProvinceId: destinationProvinceId);
-  if (destinationRegionId == kRegionOldWorld) {
-    return (ow: [...ow, moved], nw: nw);
-  }
-  return (ow: ow, nw: [...nw, moved]);
+  return (ow: ow, nw: nw).moveUnitAcrossRegions(
+    unit.id,
+    moved,
+    destinationRegionId,
+  );
 }

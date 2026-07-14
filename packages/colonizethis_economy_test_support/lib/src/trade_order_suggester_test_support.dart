@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 /// Shared [TradeSuggestionContext] builder for suggester unit tests (Refs #3831).
+// dart format off
 TradeSuggestionContext suggesterCtx({
   String playerId = 'gp1',
   int bidTypeCap = 3,
@@ -12,14 +12,14 @@ TradeSuggestionContext suggesterCtx({
   Map<String, int> commodityNeedByCommodityId = const {},
   WorldMarketState worldMarketState = const WorldMarketState(),
   ResourceRules? resourceRules,
-}) =>
-    TradeSuggestionContext(
-      playerId: playerId,
-      bidTypeCap: bidTypeCap,
-      tradeCargoCapacity: tradeCargoCapacity,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      availableStockpileByCommodityId: availableStockpileByCommodityId,
-      commodityNeedByCommodityId: commodityNeedByCommodityId,
-      worldMarketState: worldMarketState,
-      resourceRules: resourceRules,
-    );
+}) => TradeSuggestionContext(
+  playerId: playerId,
+  bidTypeCap: bidTypeCap,
+  tradeCargoCapacity: tradeCargoCapacity,
+  treasuryBudgetForBids: treasuryBudgetForBids,
+  availableStockpileByCommodityId: availableStockpileByCommodityId,
+  commodityNeedByCommodityId: commodityNeedByCommodityId,
+  worldMarketState: worldMarketState,
+  resourceRules: resourceRules,
+);
+// dart format on

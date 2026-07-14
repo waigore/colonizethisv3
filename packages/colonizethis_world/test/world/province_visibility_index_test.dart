@@ -20,7 +20,12 @@ void main() {
       final players = <Player>[
         const Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
         if (gp2Visibility != null)
-          const Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
+          const Player(
+            id: 'gp2',
+            displayName: 'B',
+            isHuman: false,
+            treasury: 0,
+          ),
       ];
       final visibility = <String, Map<String, String>>{'gp1': gp1Visibility};
       if (gp2Visibility != null) visibility['gp2'] = gp2Visibility;
@@ -28,40 +33,36 @@ void main() {
         turnNumber: 0,
         players: players,
         oldWorld: RegionData(
-          provinces: [Province(id: fullPid, regionId: regionId, ownerId: 'gp1')],
+          provinces: [
+            Province(id: fullPid, regionId: regionId, ownerId: 'gp1'),
+          ],
         ),
         tileKeysByRegionAndProvince: {
-          regionId: {fullPid: tileKeys ?? [tileKey1, tileKey2]},
+          regionId: {
+            fullPid: tileKeys ?? [tileKey1, tileKey2],
+          },
         },
         playerVisibilityByTile: visibility,
       );
     }
 
-    test(
-      'Given player tile with fogged visibility When build Then province '
-      'reported known to that player and to any player',
-      () {
-        final game = gameWithSingleProvince(
-          gp1Visibility: {tileKey1: 'fogged'},
-        );
-        final index = buildProvinceVisibilityIndex(game);
-        expect(index.isKnownToPlayer('gp1', fullPid), isTrue);
-        expect(index.isKnownToAnyPlayer(fullPid), isTrue);
-      },
-    );
+    test('Given player tile with fogged visibility When build Then province '
+        'reported known to that player and to any player', () {
+      final game = gameWithSingleProvince(gp1Visibility: {tileKey1: 'fogged'});
+      final index = buildProvinceVisibilityIndex(game);
+      expect(index.isKnownToPlayer('gp1', fullPid), isTrue);
+      expect(index.isKnownToAnyPlayer(fullPid), isTrue);
+    });
 
-    test(
-      'Given player tile with unknown visibility When build Then province '
-      'not reported known to that player',
-      () {
-        final game = gameWithSingleProvince(
-          gp1Visibility: {tileKey1: 'unknown', tileKey2: 'unknown'},
-        );
-        final index = buildProvinceVisibilityIndex(game);
-        expect(index.isKnownToPlayer('gp1', fullPid), isFalse);
-        expect(index.isKnownToAnyPlayer(fullPid), isFalse);
-      },
-    );
+    test('Given player tile with unknown visibility When build Then province '
+        'not reported known to that player', () {
+      final game = gameWithSingleProvince(
+        gp1Visibility: {tileKey1: 'unknown', tileKey2: 'unknown'},
+      );
+      final index = buildProvinceVisibilityIndex(game);
+      expect(index.isKnownToPlayer('gp1', fullPid), isFalse);
+      expect(index.isKnownToAnyPlayer(fullPid), isFalse);
+    });
 
     test(
       'Given fullyVisible tile for one player and unknown for another When build '

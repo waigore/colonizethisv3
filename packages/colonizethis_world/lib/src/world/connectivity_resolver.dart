@@ -3,13 +3,10 @@ import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'connectivity_blockade_target.dart';
+import 'connectivity_faction_input.dart';
 import 'connectivity_metrics.dart';
-import 'connectivity_propagation.dart';
 import 'connectivity_result.dart';
-import 'connectivity_tile_helpers.dart';
 import 'diplomatic_relation_lookup.dart';
-import 'province_traversal.dart';
-import 'topology_helpers.dart';
 
 // Re-export so deep importers of `connectivity_resolver.dart` (e.g. economy
 // tests) keep seeing `ConnectivityResult` after its extraction to its own
@@ -68,47 +65,30 @@ Map<String, ConnectivityResult> resolveConnectivity({
   worldLog.d(
     'connectivity resolve start players=${game.players.length} regions=${tileMapByRegion.keys.join(",")}',
   );
-  final provinceIdsByType = provinceNodeIds(topology);
-  final topologySeaZones = seaZoneNodeIds(topology);
   final blockadedByPlayer =
       blockadedPortProvincesByPlayerId ??
       computeBlockadedPortProvincesByPlayer(game, topology);
-  // Pre-compute once for all players; worldState is fixed across the player loop.
-  final portInfo = portToProvinceSeaZone(game.worldState);
-  // Single dual-region province scan: bucket ownership and town-tile lookups by
-  // playerId so per-player loops below run O(1) lookups instead of repeating
-  // O(provinces) scans (Refs #2394).
-  final perPlayer = _buildPerPlayerProvinceCaches(game);
-  final ownedByPlayer = perPlayer.ownedByPlayer;
-  final townByTileKeyByPlayer = perPlayer.townByTileKeyByPlayer;
+  final input = ConnectivityFactionInput.fromGame(
+    game: game,
+    topology: topology,
+  );
   final result = <String, ConnectivityResult>{};
 
   for (final player in game.players) {
-    final capital = player.capitalTile;
-    if (capital == null || player.capitalProvinceId == null) {
-      worldLog.d(
-        'connectivity resolve player=${player.id} skipped (no capital)',
-      );
-      result[player.id] = const ConnectivityResult(connected: {});
-      continue;
-    }
-
-    final cr = connectedTilesForPlayer(
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
       game: game,
-      playerId: player.id,
-      capital: capital,
+      factionId: player.id,
+      capitalTile: player.capitalTile,
+      capitalProvinceId: player.capitalProvinceId,
       tileMapByRegion: tileMapByRegion,
       topology: topology,
-      provinceIdsByType: provinceIdsByType,
-      seaZoneNodeIds: topologySeaZones,
-      portInfo: portInfo,
-      owned: ownedByPlayer[player.id] ?? const <String>{},
-      townByTileKey:
-          townByTileKeyByPlayer[player.id] ?? const <String, Province>{},
       blockadedPortProvinces: blockadedByPlayer[player.id] ?? const {},
       metrics: metrics,
+      skipLogMessage:
+          'connectivity resolve player=${player.id} skipped (no capital)',
     );
-    result[player.id] = cr;
   }
 
   final summary = result.entries
@@ -161,61 +141,42 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
     'tribes=${game.tribes.length} '
     'regions=${tileMapByRegion.keys.join(",")}',
   );
-  final provinceIdsByType = provinceNodeIds(topology);
-  final topologySeaZones = seaZoneNodeIds(topology);
-  final portInfo = portToProvinceSeaZone(game.worldState);
-  // Reuses the same single dual-region province scan used for Great Powers
-  // (Refs #2394). The cache buckets ownership by `Province.ownerId`, which for
-  // non-Great-Power-owned provinces equals the `MinorNation.id` or `Tribe.id`,
-  // so the cache surface is faction-agnostic and no separate bucketing is
-  // required.
-  final perFaction = _buildPerPlayerProvinceCaches(game);
-  final ownedByFaction = perFaction.ownedByPlayer;
-  final townByTileKeyByFaction = perFaction.townByTileKeyByPlayer;
+  final input = ConnectivityFactionInput.fromGame(
+    game: game,
+    topology: topology,
+  );
   final result = <String, ConnectivityResult>{};
 
-  void runForFaction({
-    required String factionId,
-    required CapitalTile? capitalTile,
-    required String? capitalProvinceId,
-  }) {
-    if (capitalTile == null || capitalProvinceId == null) {
-      worldLog.d(
-        'non_gp connectivity resolve faction=$factionId skipped (no capital)',
-      );
-      result[factionId] = const ConnectivityResult(connected: {});
-      return;
-    }
-    final cr = connectedTilesForPlayer(
-      game: game,
-      playerId: factionId,
-      capital: capitalTile,
-      tileMapByRegion: tileMapByRegion,
-      topology: topology,
-      provinceIdsByType: provinceIdsByType,
-      seaZoneNodeIds: topologySeaZones,
-      portInfo: portInfo,
-      owned: ownedByFaction[factionId] ?? const <String>{},
-      townByTileKey:
-          townByTileKeyByFaction[factionId] ?? const <String, Province>{},
-      blockadedPortProvinces: const <String>{},
-      metrics: metrics,
-    );
-    result[factionId] = cr;
-  }
-
   for (final minor in game.minorNations) {
-    runForFaction(
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
+      game: game,
       factionId: minor.id,
       capitalTile: minor.capitalTile,
       capitalProvinceId: minor.capitalProvinceId,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+      blockadedPortProvinces: const <String>{},
+      metrics: metrics,
+      skipLogMessage:
+          'non_gp connectivity resolve faction=${minor.id} skipped (no capital)',
     );
   }
   for (final tribe in game.tribes) {
-    runForFaction(
+    _putFactionConnectivityResult(
+      result: result,
+      input: input,
+      game: game,
       factionId: tribe.id,
       capitalTile: tribe.capitalTile,
       capitalProvinceId: tribe.capitalProvinceId,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+      blockadedPortProvinces: const <String>{},
+      metrics: metrics,
+      skipLogMessage:
+          'non_gp connectivity resolve faction=${tribe.id} skipped (no capital)',
     );
   }
 
@@ -226,31 +187,36 @@ Map<String, ConnectivityResult> resolveNonGreatPowerConnectivity({
   return result;
 }
 
-/// Buckets a single dual-region province pass by playerId so per-player work
-/// below avoids repeating that scan. Returned maps key by `Province.ownerId`
-/// and include only provinces with a non-null owner. (Refs #2394.)
-({
-  Map<String, Set<String>> ownedByPlayer,
-  Map<String, Map<String, Province>> townByTileKeyByPlayer,
-})
-_buildPerPlayerProvinceCaches(Game game) {
-  final ownedByPlayer = <String, Set<String>>{};
-  final townByTileKeyByPlayer = <String, Map<String, Province>>{};
-  for (final entry in traverseProvinces(game.worldState)) {
-    final ownerId = entry.ownerId;
-    if (ownerId == null) continue;
-    final province = entry.province;
-    ownedByPlayer.putIfAbsent(ownerId, () => <String>{}).add(province.id);
-    final tk = province.townTileKey;
-    if (tk != null) {
-      townByTileKeyByPlayer.putIfAbsent(
-        ownerId,
-        () => <String, Province>{},
-      )[tk] = province;
-    }
+/// Shared per-faction resolve shell for GP and non-GP entrypoints (Refs #3978).
+///
+/// Policy (blockade set, faction source, log prefix) stays on the public
+/// callers — this helper only centralizes missing-capital → empty result and
+/// the [ConnectivityFactionInput.resolveFaction] call.
+void _putFactionConnectivityResult({
+  required Map<String, ConnectivityResult> result,
+  required ConnectivityFactionInput input,
+  required Game game,
+  required String factionId,
+  required CapitalTile? capitalTile,
+  required String? capitalProvinceId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+  required Set<String> blockadedPortProvinces,
+  required String skipLogMessage,
+  ConnectivityHotPathMetrics? metrics,
+}) {
+  if (capitalTile == null || capitalProvinceId == null) {
+    worldLog.d(skipLogMessage);
+    result[factionId] = const ConnectivityResult(connected: {});
+    return;
   }
-  return (
-    ownedByPlayer: ownedByPlayer,
-    townByTileKeyByPlayer: townByTileKeyByPlayer,
+  result[factionId] = input.resolveFaction(
+    game: game,
+    factionId: factionId,
+    capital: capitalTile,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+    blockadedPortProvinces: blockadedPortProvinces,
+    metrics: metrics,
   );
 }

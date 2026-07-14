@@ -48,6 +48,8 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
         widget.selectedCivilianTileKey != oldWidget.selectedCivilianTileKey ||
         widget.secondaryHighlightTileKey !=
             oldWidget.secondaryHighlightTileKey ||
+        widget.secondaryHighlightTileKeys !=
+            oldWidget.secondaryHighlightTileKeys ||
         widget.onTileSelected != oldWidget.onTileSelected ||
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
@@ -72,6 +74,9 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
         secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
         clearSecondaryHighlightTileKey:
             widget.secondaryHighlightTileKey == null,
+        secondaryHighlightTileKeys: widget.secondaryHighlightTileKeys,
+        clearSecondaryHighlightTileKeys:
+            widget.secondaryHighlightTileKeys == null,
         validTileKeys: widget.validTileKeys,
         clearValidTileKeys:
             widget.validTileKeys == null && oldWidget.validTileKeys != null,

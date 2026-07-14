@@ -9,5 +9,6 @@ void main() {
     'scanTradeInterceptionInputs',
     tradeInterceptionScanScenarios(),
     runTradeInterceptionScanScenario,
+    labelOf: (s) => s.label,
   );
 }

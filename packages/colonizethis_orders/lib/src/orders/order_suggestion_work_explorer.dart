@@ -11,6 +11,18 @@ import 'order_work_constants.dart';
 import 'orders_application_helpers.dart';
 import 'work_suggestion_pipeline.dart';
 
+// Explore-only logic retained in this library (Refs #3971 wave-4 AC):
+// - Province probe cap `kMaxExploreProvinceProbesPerUnit` and per-province
+//   tile pick / visibility / usefulness gates in
+//   `_tryExploreWorkOrderForProvince`.
+// - Explore candidate assembly + ranking in `suggestExploreWorkOrders` that
+//   has no worker/spy counterpart (fogged-province usefulness + bundled move
+//   leg for explore targets).
+// Shared with worker/spy where behavior-identical: bundled move-leg rejection,
+// incremental candidate validation, and pipeline candidacy helpers imported
+// above. Do not extract explore-only probe scaffolding until a second call
+// site appears outside this file.
+
 ({WorkOrder? chosen, String lastReason}) _tryExploreWorkOrderForProvince({
   required PlayerView view,
   required Game game,

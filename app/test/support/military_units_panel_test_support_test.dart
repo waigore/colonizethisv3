@@ -19,69 +19,6 @@ import 'military_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
 
-/// Minimal game with one home army of two regiments, sized so the split-UI can
-/// produce a second army when one regiment is moved.
-Game _buildHomeArmyGame() {
-  const playerId = kPanelTestHumanPlayerId;
-  const cap = 'oldWorld|cap';
-  return Game(
-    id: 'g_military_support_smoke',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: cap,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: 'Capital',
-            townTileKey: 'tk_cap',
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'r1',
-            type: 'musketeers',
-            ownerId: playerId,
-            locationProvinceId: cap,
-          ),
-          Unit(
-            id: 'r2',
-            type: 'musketeers',
-            ownerId: playerId,
-            locationProvinceId: cap,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: 'home_army',
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: cap,
-          regimentUnitIds: const ['r1', 'r2'],
-          isHomeArmy: true,
-        ),
-      ],
-      nextArmySeq: 1,
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          cap: const ['tk_cap'],
-        },
-      },
-    ),
-    players: const [
-      Player(
-        id: playerId,
-        displayName: 'Splitter',
-        isHuman: true,
-        capitalProvinceId: cap,
-      ),
-    ],
-  );
-}
-
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -126,6 +63,131 @@ void main() {
     },
   );
 
+  test('buildMilitarySeaFleetDisplayGame seeds one fleet at the sea zone', () {
+    final game = buildMilitarySeaFleetDisplayGame(
+      id: 'sea_smoke',
+      playerId: 'p_sea',
+      shipTypeIds: const ['galleon'],
+      mission: FleetMission.patrol,
+      includeLisbonProvince: true,
+    );
+    expect(game.worldState.fleets, hasLength(1));
+    expect(game.worldState.fleets.single.seaZoneId, 'atlantic');
+    expect(game.worldState.oldWorld.provinces, hasLength(1));
+  });
+
+  test(
+    'buildMilitarySeaFleetDisplayGame omits land province when not requested',
+    () {
+      final game = buildMilitarySeaFleetDisplayGame(
+        id: 'sea_empty_land',
+        playerId: 'p_sea',
+        shipTypeIds: const ['fluyte'],
+        mission: FleetMission.defend,
+      );
+      expect(game.worldState.oldWorld.provinces, isEmpty);
+      expect(game.worldState.fleets.single.mission, FleetMission.defend);
+    },
+  );
+
+  test('buildMilitaryArmyAtLisbonDisplayGame wires regiment ids onto the army', () {
+    const playerId = 'p_land';
+    final game = buildMilitaryArmyAtLisbonDisplayGame(
+      id: 'army_smoke',
+      playerId: playerId,
+      armyId: 'army_x',
+      units: [
+        Unit(
+          id: 'u1',
+          type: 'musketeers',
+          ownerId: playerId,
+          locationProvinceId: 'oldWorld|lisbon',
+        ),
+        Unit(
+          id: 'u2',
+          type: 'musketeers',
+          ownerId: playerId,
+          locationProvinceId: 'oldWorld|lisbon',
+        ),
+      ],
+    );
+    expect(game.worldState.armies.single.regimentUnitIds, ['u1', 'u2']);
+    expect(game.worldState.oldWorld.units, hasLength(2));
+  });
+
+  test('buildMilitaryProvinceTileLookupGame exposes tile keys without townTileKey', () {
+    final game = buildMilitaryProvinceTileLookupGame(tileKey: 'oldWorld|p1|1|1');
+    final province = game.worldState.oldWorld.provinces.single;
+    expect(province.townTileKey, isNull);
+    expect(
+      game.worldState.tileKeysByRegionAndProvince['oldWorld']!['oldWorld|p1'],
+      ['oldWorld|p1|1|1'],
+    );
+  });
+
+  test('buildMilitaryAdjacentOwProvincesTopology links the default OW pair', () {
+    final topology = buildMilitaryAdjacentOwProvincesTopology();
+    expect(topology.nodes, hasLength(2));
+    expect(topology.edges.single.id1, 'oldWorld|p2');
+    expect(topology.edges.single.id2, 'oldWorld|p3');
+  });
+
+  test('buildMilitaryTwoFieldArmiesAtProvinceGame seeds two non-home armies', () {
+    final game = buildMilitaryTwoFieldArmiesAtProvinceGame(
+      id: 'combine_smoke',
+      playerId: 'gp_c',
+    );
+    expect(game.worldState.armies, hasLength(2));
+    expect(game.worldState.armies.every((a) => !a.isHomeArmy), isTrue);
+    expect(game.worldState.oldWorld.units, hasLength(2));
+  });
+
+  test(
+    'buildMilitaryFieldArmyWithAdjacentOwnedGame omits tiles when visibility off',
+    () {
+      final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
+        id: 'draft_smoke',
+        playerId: 'gp_d',
+        armyId: 'a1',
+        regimentUnitIds: const ['u1'],
+        includeTileKeysAndVisibility: false,
+      );
+      expect(game.worldState.tileKeysByRegionAndProvince, isEmpty);
+      expect(game.worldState.playerVisibilityByTile, isEmpty);
+      expect(game.worldState.oldWorld.provinces, hasLength(2));
+    },
+  );
+
+  test('buildMilitaryCrossRegionOwnedMoveGame includes OW and NW owned ports', () {
+    final game = buildMilitaryCrossRegionOwnedMoveGame(
+      id: 'xr_smoke',
+      playerId: 'gp_xr',
+    );
+    expect(game.worldState.oldWorld.provinces, hasLength(2));
+    expect(game.worldState.newWorld.provinces, hasLength(1));
+    expect(game.worldState.newWorld.provinces.single.displayName, 'New Port');
+  });
+
+  test(
+    'buildMilitaryInvasionAdjacentHostileGame keeps empty diplomacy relations',
+    () {
+      final game = buildMilitaryInvasionAdjacentHostileGame(
+        id: 'inv_smoke',
+        playerId: 'gp_a',
+        enemyId: 'gp_b',
+      );
+      expect(game.players, hasLength(2));
+      expect(game.diplomacyRelations, isEmpty);
+      expect(
+        game.worldState.oldWorld.provinces
+            .where((p) => p.ownerId == 'gp_b')
+            .single
+            .displayName,
+        'Hostile',
+      );
+    },
+  );
+
   testWidgets(
     'ArmySplitTestHarness renders the panel and applies a bus-driven split',
     (WidgetTester tester) async {
@@ -134,7 +196,11 @@ void main() {
 
       await pumpArmySplitHarness(
         tester,
-        initialGame: _buildHomeArmyGame(),
+        initialGame: buildMilitaryHomeArmyAtCapitalGame(
+          id: 'g_military_support_smoke',
+          playerId: kPanelTestHumanPlayerId,
+          regimentIds: const ['r1', 'r2'],
+        ),
         humanPlayerId: kPanelTestHumanPlayerId,
         bus: bus,
       );

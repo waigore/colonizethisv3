@@ -1,33 +1,36 @@
-// Table-driven `computeTileExtractionContributionForPlayer` scenarios (Refs #3939).
-
+// dart format off
+// Table-driven `computeTileExtractionContributionForPlayer` scenarios (Refs #3939, #3979).
 import 'package:colonizethis_data/colonizethis_data.dart';
-
+import 'extraction_fixture_support.dart';
 import 'tile_extraction_contribution_expectations.dart';
-
-/// One row for per-tile extraction contribution scenario tables.
-class TileExtractionContributionScenario {
-  const TileExtractionContributionScenario({
-    required this.label,
-    required this.run,
-    this.refs,
-  });
-
-  final String label;
-  final void Function() run;
-  final String? refs;
-}
-
+/// One row for per-tile extraction contribution scenario tables (Refs #3979).
+typedef TileExtractionContributionScenario = ({
+  String label,
+  TileExtractionContributionPin pin,
+  TileContributionConnectedPin? connectedPins,
+  TileMapResult? grainTileMap,
+  String? refs,
+});
 void runTileExtractionContributionScenario(
   TileExtractionContributionScenario scenario,
 ) {
-  scenario.run();
+  final tileMap = scenario.grainTileMap ?? singleTileMap(Resource.grain);
+  switch (scenario.pin) {
+    case TileExtractionContributionPin.connectedGrainExcludesCapitalBonus:
+      runTileContributionConnectedPin(
+        grainTileMap: tileMap,
+        pins: scenario.connectedPins!,
+      );
+    case TileExtractionContributionPin.disconnectedNull:
+      runTileContributionDisconnectedPin(grainTileMap: tileMap);
+  }
 }
-
 List<TileExtractionContributionScenario> tileExtractionContributionScenarios({
   required TileMapResult grainTileMap,
 }) => [
   tileExtractionContributionScenario(
-    label: 'tile extraction contribution excludes aggregate capital grain bonus',
+    label:
+        'tile extraction contribution excludes aggregate capital grain bonus',
     pin: TileExtractionContributionPin.connectedGrainExcludesCapitalBonus,
     grainTileMap: grainTileMap,
     connectedPins: (
@@ -42,3 +45,4 @@ List<TileExtractionContributionScenario> tileExtractionContributionScenarios({
     grainTileMap: grainTileMap,
   ),
 ];
+// dart format on

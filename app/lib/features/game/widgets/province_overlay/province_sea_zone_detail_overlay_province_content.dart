@@ -24,6 +24,10 @@ _OverlayContent _provinceContent({
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
+  ProvinceExtractionSnapshot? extractionSnapshot,
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
+      const {},
+  void Function(Iterable<String>?)? onHighlightTiles,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
@@ -112,6 +116,9 @@ _OverlayContent _provinceContent({
           byResImproved: tileIntel.byResImproved,
           byResImprovable: tileIntel.byResImprovable,
           onHighlightTile: onHighlightTile,
+          onHighlightTiles: onHighlightTiles,
+          extractionSnapshot: extractionSnapshot,
+          availableByCommodity: availableByCommodity,
           townProductionBonusByCommodity: townProductionBonusByCommodity,
         )
       : _buildSection(

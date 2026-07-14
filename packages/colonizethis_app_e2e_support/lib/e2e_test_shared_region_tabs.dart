@@ -34,7 +34,7 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 /// The behavioural pins live at
 /// `app/test/e2e_region_chip_selected_test.dart` (predicate branches),
 /// `app/test/e2e_tap_region_tab_test.dart` (tap + short-circuit branches),
-/// and `app/test/e2e_helpers_barrel_test.dart` (AC1 barrel re-export
+/// and `app/test/e2e_helpers_barrel_part1_test.dart` (AC1 barrel re-export
 /// contract). All four pin files continue to import via the
 /// `e2e_test_shared.dart` / `e2e_helpers.dart` barrels so the lift is
 /// transparent to them.

@@ -547,6 +547,7 @@ void main() {
       expect(loaded.mapViewState.showProvinceOwnershipTint, isTrue);
       expect(loaded.mapViewState.showProvinceNamesLayer, isFalse);
       expect(loaded.mapViewState.showPlayerTurnEventsFeed, isTrue);
+      expect(loaded.mapViewState.showPlayersBar, isTrue);
 
       final legacyGameJson = Map<String, dynamic>.from(game.toJson())
         ..remove('mapViewState');
@@ -558,6 +559,19 @@ void main() {
       expect(legacyLoaded, isNotNull);
       expect(legacyLoaded!.mapViewState, MapViewState.defaults);
       expect(legacyLoaded.mapViewState.showPlayerTurnEventsFeed, isFalse);
+      expect(legacyLoaded.mapViewState.showPlayersBar, isTrue);
+
+      final rematerializeId = 'legacyMapViewStateRematerialize';
+      adapter.save(box, legacyLoaded.copyWith(id: rematerializeId));
+      final rematerialized = box.get(rematerializeId) as Map<dynamic, dynamic>;
+      final rematerializedGame =
+          rematerialized['game'] as Map<dynamic, dynamic>;
+      expect(rematerializedGame.containsKey('mapViewState'), isTrue);
+      expect(
+        (rematerializedGame['mapViewState']
+            as Map<dynamic, dynamic>)['showPlayersBar'],
+        isTrue,
+      );
     });
 
     test(
@@ -896,6 +910,66 @@ void main() {
       box.put('missingVersion', {'game': game.toJson()});
       final loaded = adapter.load(box, 'missingVersion');
       expect(loaded, isNull);
+    });
+
+    test('draft envelope round-trip preserves orders desired and displayName', () {
+      final game = Game(
+        id: 'draft_rt',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 4),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      const drafts = Orders(
+        buildUnitOrdersByPlayerId: {
+          'pl1': [
+            BuildUnitOrder(
+              unitType: 'peasant',
+              isMilitary: false,
+              spawnProvinceId: 'oldWorld|cap',
+            ),
+          ],
+        },
+      );
+      const desired = {'recipe_grain': 3};
+      adapter.save(
+        box,
+        game,
+        draftOrders: drafts,
+        productionDesiredOutputByRecipe: desired,
+        displayName: 'Spain - Leader - 4',
+      );
+      final session = adapter.loadSession(box, 'draft_rt');
+      expect(session, isNotNull);
+      expect(session!.displayName, 'Spain - Leader - 4');
+      expect(session.productionDesiredOutputByRecipe, desired);
+      expect(
+        session.draftOrders.buildUnitOrdersByPlayerId['pl1']!.single.unitType,
+        'peasant',
+      );
+    });
+
+    test('legacy v1 envelope loads empty draft defaults', () {
+      final game = Game(
+        id: 'legacy_v1',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+        players: const [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+      );
+      box.put('legacy_v1', {
+        'saveFormatVersion': 1,
+        'game': game.toJson(),
+      });
+      final session = adapter.loadSession(box, 'legacy_v1');
+      expect(session, isNotNull);
+      expect(session!.draftOrders, const Orders());
+      expect(session.productionDesiredOutputByRecipe, isEmpty);
+      expect(session.displayName, isNull);
     });
   });
 }

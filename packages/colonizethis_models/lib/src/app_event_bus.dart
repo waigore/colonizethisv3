@@ -31,6 +31,18 @@ class AppEventBus {
 
   final StreamController<AppEvent> _controller;
 
+  /// Delivery generation for session clear. Deferred handlers must discard work
+  /// captured under an older generation. SPEC/program/save-load-session-clear.md.
+  int _deliveryGeneration = 0;
+
+  /// Current delivery generation (bumped by [dropUnconsumedEvents]).
+  int get deliveryGeneration => _deliveryGeneration;
+
+  /// Invalidates deferred/async deliveries from the prior session.
+  void dropUnconsumedEvents() {
+    _deliveryGeneration++;
+  }
+
   void emit(AppEvent event) => _controller.add(event);
 
   Stream<AppEvent> get stream => _controller.stream;

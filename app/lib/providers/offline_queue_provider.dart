@@ -13,6 +13,10 @@ class OfflineQueueNotifier extends Notifier<List<Object?>> {
     if (state.isEmpty) return;
     state = state.skip(1).toList();
   }
+
+  void clear() {
+    state = const [];
+  }
 }
 
 final offlineQueueProvider =

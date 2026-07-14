@@ -1,4 +1,4 @@
-import 'dart:collection' show UnmodifiableListView;
+import 'dart:collection' show UnmodifiableListView, UnmodifiableMapView;
 
 import 'package:colonizethis_models/colonizethis_models.dart'
     show Game, Province, WorldState;
@@ -80,6 +80,13 @@ class ProvinceOwnerCache {
   final Map<String, List<Province>> _provincesByOwner;
   final Map<String, Map<String, List<Province>>> _provincesByOwnerAndRegion;
   final List<Province> _unownedProvinces;
+
+  /// Read-only province-id → owner-id projection (`null` = unowned).
+  ///
+  /// Prefer [ownerOf] / [isOwnedBy] on hot paths; expose the map only when a
+  /// caller needs bulk membership (e.g. spy-timer decay) (Refs #3978).
+  Map<String, String?> get ownerByProvinceId =>
+      UnmodifiableMapView(_ownerByProvinceId);
 
   /// Owner id of the province with [fullProvinceId], or `null` when the
   /// province is unowned or not present in either region.

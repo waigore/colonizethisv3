@@ -1,39 +1,35 @@
-// Shared order-effects projector seam scenario fixtures (Refs #3949 wave 3).
+// Shared order-effects projector seam scenario fixtures (Refs #3949 / #3971).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 const oepsRegionId = 'oldWorld';
 
-final oepsTopology = MapTopology(
-  nodes: const [
-    TopologyNode(
-      id: 'P1',
-      regionId: oepsRegionId,
-      type: TopologyNodeType.province,
-    ),
+// dart format off
+final oepsTopology = const MapTopology(
+  nodes: [
+    TopologyNode(id: 'P1', regionId: oepsRegionId, type: TopologyNodeType.province),
   ],
-  edges: const [],
+  edges: [],
 );
+// dart format on
 
-Game oepsGameWithPlayer(Player player) => Game(
+Game oepsGameWithPlayer(Player player) => ordersOwRegionGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: '$oepsRegionId|P1',
-          regionId: oepsRegionId,
-          ownerId: player.id,
-        ),
-      ],
-      units: const [],
-    ),
-    newWorld: const RegionData(),
-  ),
   players: [player],
+  oldWorld: RegionData(
+    provinces: [
+      Province(
+        id: '$oepsRegionId|P1',
+        regionId: oepsRegionId,
+        ownerId: player.id,
+      ),
+    ],
+    units: const [],
+  ),
 );
 
 int oepsFakeProjectorInvocations = 0;

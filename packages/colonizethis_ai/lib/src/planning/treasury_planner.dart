@@ -76,8 +76,36 @@ const int kSpeculativeBidStockpileTarget = kShortageThreshold;
 
 /// Treasury band at which speculative bidding activates. Refs #2924 F10.
 int treasuryAffluenceThreshold() =>
-    kTreasuryAffluenceThresholdMultiplier *
-        cheapestRegimentBuildTreasuryCost();
+    kTreasuryAffluenceThresholdMultiplier * cheapestRegimentBuildTreasuryCost();
+
+/// Bundles inputs for [runTreasuryPlanner] (Refs #3972 AC5).
+final class TreasuryPlannerInput {
+  const TreasuryPlannerInput({
+    required this.game,
+    required this.playerId,
+    required this.stockpile,
+    required this.productionAssignments,
+    required this.treasury,
+    this.snapshot,
+    this.tileMapByRegion,
+    this.topology,
+    this.currentOrders = const Orders(),
+    this.resourceRules,
+    this.extractionById,
+  });
+
+  final Game game;
+  final String playerId;
+  final Stockpile stockpile;
+  final List<AssignedRecipe> productionAssignments;
+  final int treasury;
+  final AIWorldSnapshot? snapshot;
+  final Map<String, TileMapResult>? tileMapByRegion;
+  final MapTopology? topology;
+  final Orders currentOrders;
+  final ResourceRules? resourceRules;
+  final Map<String, ExtractionTotals>? extractionById;
+}
 
 /// Returns trade orders for one AI-controlled GP after production planning.
 ///
@@ -86,20 +114,28 @@ int treasuryAffluenceThreshold() =>
 /// bid priorities. Refs #2994 F1–F5, F8 (carry-forward de-duplication and
 /// prior-fill-rate-aware offer urgency, see SPEC/ai/treasury-planner.md
 /// § Partial-fill-aware forecasting).
-List<TradeOrder> runTreasuryPlanner({
-  required Game game,
-  required String playerId,
-  required Stockpile stockpile,
-  required List<AssignedRecipe> productionAssignments,
-  required int treasury,
-  AIWorldSnapshot? snapshot,
-  Map<String, TileMapResult>? tileMapByRegion,
-  MapTopology? topology,
-  Orders currentOrders = const Orders(),
-  ResourceRules? resourceRules,
-  Map<String, ExtractionTotals>? extractionById,
-}) {
-  final ResourceRules rules = resourceRules ?? ResourceRules.defaultRules;
+List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input) {
+  final emitInput = _buildEmitTradeOrdersInput(input);
+  if (emitInput == null) {
+    return const <TradeOrder>[];
+  }
+  return _emitTradeOrders(emitInput);
+}
+
+/// Assembles surplus/need maps and emission inputs for [runTreasuryPlanner]
+/// (Refs #3977 AC6). Returns `null` when both offer and bid maps are empty.
+_EmitTradeOrdersInput? _buildEmitTradeOrdersInput(TreasuryPlannerInput input) {
+  final game = input.game;
+  final playerId = input.playerId;
+  final stockpile = input.stockpile;
+  final productionAssignments = input.productionAssignments;
+  final treasury = input.treasury;
+  final snapshot = input.snapshot;
+  final tileMapByRegion = input.tileMapByRegion;
+  final topology = input.topology;
+  final currentOrders = input.currentOrders;
+  final extractionById = input.extractionById;
+  final ResourceRules rules = input.resourceRules ?? ResourceRules.defaultRules;
   final bidTypeCap = worldMarketBidTypeCap(game, playerId);
   final tradeCargoCapacity = _resolveTradeCargoCapacity(
     game: game,
@@ -169,11 +205,11 @@ List<TradeOrder> runTreasuryPlanner({
   // improvement-input supplier source.
   final regimentBuildInputMarketSupplyActive =
       lockRecoveryScan.anySellerNeedsRegimentBuildInput ||
-          lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
-          peerLockRecoverySellerNeededProducibleImprovementInputs(
-            game,
-            excludePlayerId: playerId,
-          ).isNotEmpty;
+      lockRecoveryScan.anySellerNeedsCastIronLabourPeasantRecruitFabric ||
+      peerLockRecoverySellerNeededProducibleImprovementInputs(
+        game,
+        excludePlayerId: playerId,
+      ).isNotEmpty;
   // Refs #2847 H8-extraction supply-side fix: releasing a *surplus* (stock held
   // above the GP's own consumption + production-input reserve) is selling, not
   // speculating, so the supplier role must not be gated on the supplier's own
@@ -192,16 +228,18 @@ List<TradeOrder> runTreasuryPlanner({
       regimentBuildInputMarketSupplyActive && !isLockRecoverySeller;
 
   _populateTreasurySurplusAndNeedMaps(
-    trackedCommodityIds: trackedCommodityIds,
-    inputNeeds: inputNeeds,
-    projected: projected,
-    carryForwardOffers: carryForwardOffers,
-    carryForwardBids: carryForwardBids,
-    marketPrices: marketPrices,
-    isLockRecoverySeller: isLockRecoverySeller,
-    isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
-    available: available,
-    need: need,
+    _TreasurySurplusNeedMapsInput(
+      trackedCommodityIds: trackedCommodityIds,
+      inputNeeds: inputNeeds,
+      projected: projected,
+      carryForwardOffers: carryForwardOffers,
+      carryForwardBids: carryForwardBids,
+      marketPrices: marketPrices,
+      isLockRecoverySeller: isLockRecoverySeller,
+      isRegimentBuildInputMarketSupplier: isRegimentBuildInputMarketSupplier,
+      available: available,
+      need: need,
+    ),
   );
 
   // Refs #3122: treasury budget that bounds total bid notional this turn.
@@ -219,10 +257,12 @@ List<TradeOrder> runTreasuryPlanner({
   );
   final treasuryBudgetForBidsRaw =
       rawTreasury - pendingCosts - carryForwardBidNotional;
-  final treasuryBudgetForBids =
-      treasuryBudgetForBidsRaw < 0 ? 0 : treasuryBudgetForBidsRaw;
+  final treasuryBudgetForBids = treasuryBudgetForBidsRaw < 0
+      ? 0
+      : treasuryBudgetForBidsRaw;
 
-  final treasuryForecast = treasury +
+  final treasuryForecast =
+      treasury +
       _expectedOfferInflow(
         available: available,
         marketPrices: marketPrices,
@@ -278,14 +318,13 @@ List<TradeOrder> runTreasuryPlanner({
   // exclusion). Other broke GPs sell only (F13).
   if (isLiquidityBuyer || isAffluentDesignatedBuyer) {
     _applyLockRecoveryLiquidityBid(
-      playerId: playerId,
-      game: game,
-      need: need,
-      available: available,
-      carryForwardBids: carryForwardBids,
-      treasuryBudgetForBids: treasuryBudgetForBids,
-      treasuryForecast: treasuryForecast,
-      addSyntheticBid: isLiquidityBuyer,
+      _LockRecoveryLiquidityBidInput(
+        game: game,
+        need: need,
+        available: available,
+        treasuryBudgetForBids: treasuryBudgetForBids,
+        addSyntheticBid: isLiquidityBuyer,
+      ),
     );
     if (isLiquidityBuyer) {
       final liquidity = _lockRecoveryLiquidityCommodity(game.worldMarketState);
@@ -301,15 +340,17 @@ List<TradeOrder> runTreasuryPlanner({
   // feedstock reservation. SPEC/ai/treasury-planner.md
   // § Lock-recovery seller regiment build-input bootstrap.
   _applyLockRecoverySellerRegimentRebuildBids(
-    isLockRecoverySeller: isLockRecoverySeller,
-    rawTreasury: rawTreasury,
-    threshold: threshold,
-    game: game,
-    playerId: playerId,
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
-    available: available,
+    _LockRecoverySellerRegimentRebuildBidsInput(
+      isLockRecoverySeller: isLockRecoverySeller,
+      rawTreasury: rawTreasury,
+      threshold: threshold,
+      game: game,
+      playerId: playerId,
+      projected: projected,
+      carryForwardBids: carryForwardBids,
+      need: need,
+      available: available,
+    ),
   );
 
   // Refs #3758 S7/R12: drop bids for commodities only sourceable from a colony
@@ -332,7 +373,7 @@ List<TradeOrder> runTreasuryPlanner({
   }
 
   if (available.isEmpty && need.isEmpty) {
-    return const <TradeOrder>[];
+    return null;
   }
 
   // Refs #3758 S9/R10: trade-deal relation-boost-aware bid preference. Resolve
@@ -343,7 +384,8 @@ List<TradeOrder> runTreasuryPlanner({
   // and a no-op when no qualifying partner holds a standing matching offer, so
   // common-path emission (and seed-42 tuning) is byte-identical. Deterministic.
   // SPEC/ai/treasury-planner.md § Trade-deal relation-boost-aware bid preference.
-  final tradeDealPreferredBidCommodityId = (snapshot != null &&
+  final tradeDealPreferredBidCommodityId =
+      (snapshot != null &&
           !isLiquidityBuyer &&
           !isAffluentDesignatedBuyer &&
           !isLockRecoverySeller &&
@@ -356,11 +398,12 @@ List<TradeOrder> runTreasuryPlanner({
         )
       : null;
 
-  // Refs #3758 file-split: offer/bid suggestion, supplier offer-tier alignment,
-  // and treasury/cargo-clamped bid prioritization are assembled in
-  // [_emitTradeOrders] so this planner body stays within the function-size
-  // budget. Behaviour-preserving (same library scope, identical emission path).
-  return _emitTradeOrders(
+  // Refs #3758 file-split / #3967: offer/bid suggestion, supplier offer-tier
+  // alignment, and treasury/cargo-clamped bid prioritization are assembled in
+  // [_emitTradeOrders] via [_EmitTradeOrdersInput] so this planner body stays
+  // within the function-size budget. Behaviour-preserving (same library scope,
+  // identical emission path).
+  return _EmitTradeOrdersInput(
     game: game,
     playerId: playerId,
     bidTypeCap: bidTypeCap,
@@ -387,7 +430,9 @@ int _resolveTradeCargoCapacity({
   required MapTopology? topology,
   Map<String, ExtractionTotals>? extractionById,
 }) {
-  if (tileMapByRegion != null && tileMapByRegion.isNotEmpty && topology != null) {
+  if (tileMapByRegion != null &&
+      tileMapByRegion.isNotEmpty &&
+      topology != null) {
     return tradeCargoCapacityForGreatPower(
       game: game,
       playerId: playerId,
@@ -429,21 +474,38 @@ int _resolveTradeCargoCapacity({
 /// regiment. SPEC/ai/treasury-planner.md
 /// § Lock-recovery seller regiment build-input bootstrap +
 /// § Lock-recovery seller build-input feedstock reservation.
-void _applyLockRecoverySellerRegimentRebuildBids({
-  required bool isLockRecoverySeller,
-  required int rawTreasury,
-  required int threshold,
-  required Game game,
-  required String playerId,
-  required Stockpile projected,
-  required Map<CommodityId, int> carryForwardBids,
-  required Map<CommodityId, int> need,
-  required Map<CommodityId, int> available,
-}) {
-  if (!isLockRecoverySeller) {
+/// Parameter bag for [_applyLockRecoverySellerRegimentRebuildBids] (Refs #3997).
+final class _LockRecoverySellerRegimentRebuildBidsInput {
+  const _LockRecoverySellerRegimentRebuildBidsInput({
+    required this.isLockRecoverySeller,
+    required this.rawTreasury,
+    required this.threshold,
+    required this.game,
+    required this.playerId,
+    required this.projected,
+    required this.carryForwardBids,
+    required this.need,
+    required this.available,
+  });
+
+  final bool isLockRecoverySeller;
+  final int rawTreasury;
+  final int threshold;
+  final Game game;
+  final String playerId;
+  final Stockpile projected;
+  final Map<CommodityId, int> carryForwardBids;
+  final Map<CommodityId, int> need;
+  final Map<CommodityId, int> available;
+}
+
+void _applyLockRecoverySellerRegimentRebuildBids(
+  _LockRecoverySellerRegimentRebuildBidsInput input,
+) {
+  if (!input.isLockRecoverySeller) {
     return;
   }
-  final zeroRegimentRebuildPath = regimentCountForPlayer(game, playerId) == 0;
+  final zeroRegimentRebuildPath = regimentCountForPlayer(input.game, input.playerId) == 0;
   // Refs #2847 § castIron-labour peasant-recruit fabric staging: the recruit
   // row costs 2 `fabric` while the regiment build input needs only 1, so a
   // seller holding one unit clears the regiment missing-input check yet still
@@ -451,9 +513,9 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // `fabric >= 2` when the population-bound castIron labour path is active.
   final peasantRecruitFabricStaging =
       isCastIronLabourPeasantRecruitFabricMarketPathActive(
-        game: game,
-        playerId: playerId,
-        projected: projected,
+        game: input.game,
+        playerId: input.playerId,
+        projected: input.projected,
       );
   final castIronLabourPeasantRecruitMarketPath = peasantRecruitFabricStaging;
   if (!zeroRegimentRebuildPath && !castIronLabourPeasantRecruitMarketPath) {
@@ -477,13 +539,13 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   if (zeroRegimentRebuildPath || castIronLabourPeasantRecruitMarketPath) {
     for (final buildInputId
         in RegimentEconomyCatalog.peasantLevies.buildInputs.keys) {
-      available.remove(buildInputId);
+      input.available.remove(buildInputId);
     }
     for (final feedstockId in _regimentBuildInputFeedstockIds(
-      projected,
+      input.projected,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     )) {
-      available.remove(feedstockId);
+      input.available.remove(feedstockId);
     }
   }
   // Refs #2847 § H8 bootstrap bids: market bids spend treasury (the buyer's
@@ -492,22 +554,22 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // offers-only (minus the staged input reservations above) until it crosses
   // the regiment cost. SPEC/ai/treasury-planner.md § Lock-recovery seller
   // regiment build-input bootstrap.
-  if (rawTreasury < threshold) {
+  if (input.rawTreasury < input.threshold) {
     return;
   }
   if (castIronLabourPeasantRecruitMarketPath &&
       isDomesticFabricProductionLabourInfeasible(
-        game: game,
-        playerId: playerId,
+        game: input.game,
+        playerId: input.playerId,
       )) {
     // Domestic `fabric_from_*` is material-feasible yet labour-walled
     // (`labourPerOutput == 2` > effective labour). Feedstock bids cannot unblock
     // the peasant recruit — buy finished `fabric` from affluent suppliers instead
     // (Refs #2847 § labour-infeasible fabric market path).
     _addRegimentBuildInputDirectNeed(
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: true,
     );
     return;
@@ -517,19 +579,19 @@ void _applyLockRecoverySellerRegimentRebuildBids({
     // feedstock / direct bids only (no zero-regiment improvement-input chain).
     final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
       feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
-        projected,
+        input.projected,
         peasantRecruitFabricStaging: peasantRecruitFabricStaging,
       ),
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     );
     if (!feedstockStillMissing) {
       _addRegimentBuildInputDirectNeed(
-        projected: projected,
-        carryForwardBids: carryForwardBids,
-        need: need,
+        projected: input.projected,
+        carryForwardBids: input.carryForwardBids,
+        need: input.need,
         peasantRecruitFabricStaging: peasantRecruitFabricStaging,
       );
     }
@@ -544,29 +606,29 @@ void _applyLockRecoverySellerRegimentRebuildBids({
   // bid slot targets the prerequisite supply. Self-clears once the inputs land
   // (or the tile is improved / a regiment is owned).
   if (_addRegimentFeedstockImprovementInputNeed(
-    game: game,
-    playerId: playerId,
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
+    game: input.game,
+    playerId: input.playerId,
+    projected: input.projected,
+    carryForwardBids: input.carryForwardBids,
+    need: input.need,
   )) {
     return;
   }
   final feedstockStillMissing = _addRegimentBuildInputFeedstockBootstrapNeed(
     feedstockCandidates: _sortedRegimentBuildInputFeedstockIds(
-      projected,
+      input.projected,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     ),
-    projected: projected,
-    carryForwardBids: carryForwardBids,
-    need: need,
+    projected: input.projected,
+    carryForwardBids: input.carryForwardBids,
+    need: input.need,
     peasantRecruitFabricStaging: peasantRecruitFabricStaging,
   );
   if (!feedstockStillMissing) {
     _addRegimentBuildInputDirectNeed(
-      projected: projected,
-      carryForwardBids: carryForwardBids,
-      need: need,
+      projected: input.projected,
+      carryForwardBids: input.carryForwardBids,
+      need: input.need,
       peasantRecruitFabricStaging: peasantRecruitFabricStaging,
     );
   }

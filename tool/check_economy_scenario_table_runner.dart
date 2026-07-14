@@ -11,15 +11,13 @@ import 'ct_repo_lint_scan_contract.dart';
 const _economyTestPrefix = 'packages/colonizethis_economy/test/';
 const _maxImperativeTestBodyLines = 15;
 
-/// Files exempt from the scenario-table preference (documented in
-/// `packages/colonizethis_economy/REFACTOR_TRACE.md` phase-3 exceptions).
-const _allowlistedRelativePaths = <String>{
-  'packages/colonizethis_economy/test/resource_extractor_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/world_market_deal_matcher_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/first_right_credits_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/world_market_treasury_test.dart',
-  'packages/colonizethis_economy/test/economy/world_market/world_market_trade_order_validator_test.dart',
-};
+/// Permanent micro-exceptions for the scenario-table preference.
+///
+/// Empty after Phase 5 (#3979): former allowlisted runners already use
+/// `runLabeledScenarios` / `runLabeledScenarioGroup`. Keep this set at
+/// ≤2 paths if a future constant-pin suite needs a documented exemption
+/// (see `packages/colonizethis_economy/REFACTOR_TRACE.md`).
+const _allowlistedRelativePaths = <String>{};
 
 final RegExp _scenarioLoopPattern = RegExp(
   r'for\s*\(\s*final\s+scenario\s+in\s+',

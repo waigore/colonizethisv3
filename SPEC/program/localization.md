@@ -8,6 +8,7 @@
   - Screen titles, buttons, labels, tooltips, dialogs, error messages.
   - Dynamic strings (interpolated values, plurals where applicable).
   - UI-visible game content surfaced by the app (e.g., resources, units, tech names/descriptions) when displayed as UI copy.
+  - **Commodity display names** use `AppLocalizations` keys `commodity_<catalogId>` (raw camelCase catalog id, e.g. `commodity_sugarCane`). UI helpers such as `commodityDisplayName(AppLocalizations, String)` resolve these keys; `CommodityCatalog.displayName` is **not** the UI source of truth. CI rule `repo.commodity_l10n_coverage` (`tool/check_commodity_l10n_coverage.dart`) fails when any catalog commodity lacks a matching ARB key (Refs #3987).
 
 ## Mechanism (built-in Flutter i18n)
 - Use Flutter `gen_l10n` + ARB files to generate `AppLocalizations`.
@@ -18,7 +19,7 @@
 - **Config:** `packages/colonizethis_app_l10n/l10n.yaml`
 - **ARB inputs only:** `packages/colonizethis_app_l10n/lib/l10n/arb/` (e.g. `app_en.arb`) — `l10n.yaml` **`arb-dir`**.
 - **Generated output:** `packages/colonizethis_app_l10n/l10n.yaml` sets **`output-dir: lib/l10n/gen`** and **`output-localization-file: app_l10n_flutter_gen.dart`**, so `flutter gen-l10n` writes **`app_l10n_flutter_gen*.dart`**, **`untranslated.json`**, and related artifacts **only** under **`packages/colonizethis_app_l10n/lib/l10n/gen/`** (entire directory **gitignored**). Hand-maintained Dart stays in **`packages/colonizethis_app_l10n/lib/l10n/*.dart`** outside `gen/`.
-- **Hand-maintained Dart:** `packages/colonizethis_app_l10n/lib/l10n/app_localizations_contract.dart`, delegate, lookup, `l10n.dart`, `app_localizations_en.dart`, `app_localizations_en_part*.dart`, etc. App code and tests import **`package:colonizethis_app_l10n/l10n/l10n.dart`**, which exports the contract + delegate (`Refs #2021`) and defines **`appL10n`**.
+- Hand-maintained Dart: `packages/colonizethis_app_l10n/lib/l10n/app_localizations_contract.dart`, delegate, lookup, `l10n.dart`, `app_localizations_en.dart`, `app_localizations_en_part*.dart` (parts 1–6), etc. App code and tests import **`package:colonizethis_app_l10n/l10n/l10n.dart`**, which exports the contract + delegate (`Refs #2021`) and defines **`appL10n`**.
 - **Maintainability:** Keys are namespaced/prefixed by feature (e.g. `mainMenu_newGame`, `victory_titleMilitary`), and messages include ARB metadata for translator context.
 
 ## Merge / local validation prerequisite
@@ -41,4 +42,5 @@
 - **AC4:** The Quality workflow fails if the untranslated report produced by `untranslated-messages-file` contains any entries.
 - **AC5:** `en` is the default/fallback locale.
 - **AC6:** Given a hardcoded user-visible string in `app/lib/**` in a covered widget slot (see CI gate list above), when the Quality workflow runs `dart run tool/ct_repo_lint.dart` with the app rule enabled (`CT_REPO_LINT_INCLUDE_APP=true`), then the PR fails with a violation listing the file and line.
+- **AC7:** Given `CommodityCatalog.all` is loaded, when CI runs `tool/check_commodity_l10n_coverage.dart`, then every catalog commodity id has a corresponding `commodity_<catalogId>` entry in `app_en.arb` and the job fails if any are missing (Refs #3987).
 

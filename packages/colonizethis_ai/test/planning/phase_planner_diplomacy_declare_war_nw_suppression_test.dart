@@ -119,17 +119,19 @@ Game _buildGame() => Game(
 
 int _tribeDeclareWarScore({required PhasePlanOutcome? phasePlan}) {
   return computeDiplomaticCandidateScores(
-    candidates: const [
-      DiplomaticOrder(
-        type: DiplomaticOrderType.declareWar,
-        targetFactionId: 'tribe1',
-      ),
-    ],
-    nationId: 'gp1',
-    game: _buildGame(),
-    snapshot: _atQuotaColonialAdjacentTribeSnap,
-    config: _config,
-    phasePlan: phasePlan,
+    DiplomaticCandidateScoringInput(
+      candidates: const [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.declareWar,
+          targetFactionId: 'tribe1',
+        ),
+      ],
+      nationId: 'gp1',
+      game: _buildGame(),
+      snapshot: _atQuotaColonialAdjacentTribeSnap,
+      config: _config,
+      phasePlan: phasePlan,
+    ),
   ).single;
 }
 

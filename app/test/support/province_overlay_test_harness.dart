@@ -3,7 +3,11 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel, buildPlayerView;
+    show
+        PlayerView,
+        ProvinceImprovableCommodityCount,
+        VisibilityLevel,
+        buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -82,6 +86,10 @@ Widget buildProvinceOverlayDarkThemeShell({
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
+  ProvinceExtractionSnapshot? extractionSnapshot,
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
+      const {},
+  void Function(Iterable<String>? tileKeys)? onHighlightTiles,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -93,6 +101,7 @@ Widget buildProvinceOverlayDarkThemeShell({
     draftOrders: draftOrders,
     onClose: onClose,
     onHighlightTile: onHighlightTile,
+    onHighlightTiles: onHighlightTiles,
     showProspectActionIcon: showProspectActionIcon,
     prospectActionEnabled: prospectActionEnabled,
     onProspectWithExplorerTap: onProspectWithExplorerTap,
@@ -104,6 +113,8 @@ Widget buildProvinceOverlayDarkThemeShell({
     onBuildImprovementTap: onBuildImprovementTap,
     omniscientDetail: omniscientDetail,
     townProductionBonusByCommodity: townProductionBonusByCommodity,
+    extractionSnapshot: extractionSnapshot,
+    availableByCommodity: availableByCommodity,
   );
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
@@ -138,6 +149,10 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
+  ProvinceExtractionSnapshot? extractionSnapshot,
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
+      const {},
+  void Function(Iterable<String>? tileKeys)? onHighlightTiles,
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -151,6 +166,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       shellWidth: shellWidth,
       onClose: onClose,
       onHighlightTile: onHighlightTile,
+      onHighlightTiles: onHighlightTiles,
       showProspectActionIcon: showProspectActionIcon,
       prospectActionEnabled: prospectActionEnabled,
       onProspectWithExplorerTap: onProspectWithExplorerTap,
@@ -162,6 +178,8 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       onBuildImprovementTap: onBuildImprovementTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
+      extractionSnapshot: extractionSnapshot,
+      availableByCommodity: availableByCommodity,
     ),
   );
   await tester.pump();

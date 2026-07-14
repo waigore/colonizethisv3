@@ -26,14 +26,18 @@ A typed event bus lets emitters publish **`AppEvent`** subclasses without depend
 
 **Local-by-design exception:** **`Navigator.pop`** / **`showDialog`** entirely **inside one widget’s local UX** (same panel subtree, confirm steps, internal pickers; see **Local by design** in app-ui-wiring) remain allowed; they must not replace the bus for cross-cutting actions.
 
-### Turn-resolution active guards (#2160)
+### Turn-resolution active guards (#2160 / #3989)
 
 While background **turn resolution** is active from the map, **`turnResolutionBlockingProvider`** is `true`. In that window:
 
-- **`AppEventHandler`** suppresses **`UIActionEvent`** types that drive navigation/panels/dialogs (**not** **`OpenPauseMenuPanelEvent`** nor **`ClosePanelEvent`**) and logs **`logic:`** rejects for blocked actions.
+- **`AppEventHandler`** suppresses **`UIActionEvent`** types that drive navigation/panels/dialogs, including **`OpenPauseMenuPanelEvent`** (pause disabled mid-resolve so session clear cannot start; see [save-load-session-clear.md](save-load-session-clear.md)). **`ClosePanelEvent`** remains allowed. Blocked actions log **`logic:`** rejects.
 - **`AppEventHandlerScope`** session-command listeners suppress mutations (orders/game/debug session commands); **`LandArmiesUpdatedEvent`** ingestion is also guarded so routed updates cannot slip past map **`IgnorePointer`**.
 
 Locate intents (**`LocateMapTileEvent`**) remain map-local listeners; the handler ignores them regardless (unchanged routing).
+
+### Session clear and bus delivery (#3989)
+
+`AppEventBus.dropUnconsumedEvents()` bumps a delivery generation so deferred/async handlers from a prior game session discard stale work. Called from `clearActiveGameSession` ([save-load-session-clear.md](save-load-session-clear.md)).
 
 ---
 

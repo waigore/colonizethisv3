@@ -6,6 +6,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../common/game_graphs.dart';
+
 abstract final class OrdersApplicationTestSupport {
   OrdersApplicationTestSupport._();
 
@@ -53,20 +55,18 @@ abstract final class OrdersApplicationTestSupport {
     List<OvertureState>? overtureStates,
     List<DiplomacyRelation>? diplomacyRelations,
   }) {
-    return Game(
+    final base = ordersOwRegionGame(
       id: id,
-      globalGameSeed: globalGameSeed,
-      worldState: WorldState(
-        turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-        oldWorld: RegionData(provinces: provinces, units: units),
-        newWorld: const RegionData(),
-        resourceByTileKey: resourceByTileKey ?? const {},
-        tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
-      ),
+      turnNumber: turnNumber,
       players: players ?? const [defaultPlayer],
+      oldWorld: RegionData(provinces: provinces, units: units),
+      resourceByTileKey: resourceByTileKey ?? const {},
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
       minorNations: minorNations ?? const [],
       overtureStates: overtureStates ?? const [],
       diplomacyRelations: diplomacyRelations ?? const [],
     );
+    if (globalGameSeed == null) return base;
+    return base.copyWith(globalGameSeed: globalGameSeed);
   }
 }

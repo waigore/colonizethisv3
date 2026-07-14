@@ -8,6 +8,8 @@ import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.dart';
+import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
+import 'package:colonizethis_app/features/shell/save_load/save_load_dialog_builders.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
@@ -26,12 +28,23 @@ class _DummyGameService extends GameService {
 
   Game? _loadedGame;
   List<String> _ids = const [];
+  List<LoadableSaveEntry> _loadable = const [];
 
   @override
   List<String> listGameIds() => _ids;
 
   @override
+  List<LoadableSaveEntry> listLoadableSaves() => _loadable;
+
+  @override
   Game? loadGame(String gameId) => _loadedGame;
+
+  @override
+  GameSaveSession? loadGameSession(String gameId) {
+    final game = _loadedGame;
+    if (game == null || game.id != gameId) return null;
+    return GameSaveSession(game: game);
+  }
 
   @override
   Future<Game> createNewGameAsync({
@@ -62,6 +75,14 @@ class _DummyGameService extends GameService {
     );
     _loadedGame = game;
     _ids = [game.id];
+    _loadable = [
+      LoadableSaveEntry(
+        storageId: game.id,
+        label: game.id,
+        kind: LoadableSaveKind.manual,
+        turnNumber: 0,
+      ),
+    ];
     return game;
   }
 }
@@ -90,11 +111,11 @@ void main() {
         appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
       ],
       child: AppEventHandlerScope(
-        // Mirror the composition root (main.dart): the shell new-game leader
-        // dialog builder lives in features/shell and is injected here so the
-        // New Game flow can open its dialog (Refs #3546).
+        // Mirror the composition root (main.dart): shell dialog builders
+        // live in features/shell and are injected here (Refs #3546 / #3959).
         extraDialogBuilders: const {
           newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
+          loadGameListDialogId: buildLoadGameListDialog,
         },
         child: MaterialApp(
           navigatorKey: appNavigatorKey,
@@ -147,20 +168,24 @@ void main() {
     },
   );
 
-  testWidgets('ShellScreen Load Game loads first game id when available', (
-    WidgetTester tester,
-  ) async {
-    // Seed the dummy service with a pre-existing game.
-    dummyService.createNewGame(id: 'saved_game');
+  testWidgets(
+    'ShellScreen Load Game opens list dialog then loads selected save',
+    (WidgetTester tester) async {
+      dummyService.createNewGame(id: 'saved_game');
 
-    await tester.pumpWidget(buildApp());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(buildApp());
+      await tester.pumpAndSettle();
 
-    expect(find.text('Load Game'), findsOneWidget);
+      expect(find.text('Load Game'), findsOneWidget);
 
-    await tester.tap(find.text('Load Game'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Load Game'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('In game'), findsOneWidget);
-  });
+      expect(find.byType(LoadGameListDialog), findsOneWidget);
+      await tester.tap(find.byKey(LoadGameListDialog.rowKey('saved_game')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('In game'), findsOneWidget);
+    },
+  );
 }

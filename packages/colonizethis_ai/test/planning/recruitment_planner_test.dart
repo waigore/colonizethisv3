@@ -1,4 +1,4 @@
-// Tests for runRecruitmentPlanner (Refs #2692 S8). SPEC/ai/economy-planner.md
+// Tests for runRecruitmentPlanner(RecruitmentPlannerInput(Refs #2692 S8)). SPEC/ai/economy-planner.md
 // § Recruitment planner. Uses a deterministic fake [OrderSuggestionAPI] so
 // planner-side rules (peasant reservation, soft luxury cap, phase emit order,
 // determinism) are testable independently of the suggestion-validation chain.
@@ -80,7 +80,7 @@ void main() {
           ],
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: currentOrders,
@@ -88,7 +88,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(42),
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
-        );
+        ));
 
         expect(plan.recruitOrders, isEmpty);
         expect(plan.buildUnitOrders, isEmpty);
@@ -118,7 +118,7 @@ void main() {
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -126,7 +126,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(7),
         goalPhase: ObserverGoalPhase.develop,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.recruitOrders, hasLength(1));
       expect(plan.recruitOrders.single.targetTier, WorkerTier.peasant);
@@ -158,7 +158,7 @@ void main() {
           ],
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -166,7 +166,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(0),
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
-        );
+        ));
 
         expect(plan.recruitOrders, hasLength(1));
         expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
@@ -197,7 +197,7 @@ void main() {
           recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -205,7 +205,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(0),
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
-        );
+        ));
 
         expect(plan.recruitOrders, isEmpty);
         expect(plan.rejected, hasLength(1));
@@ -243,7 +243,7 @@ void main() {
           cargoPreference: CargoPreference.none,
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -252,7 +252,7 @@ void main() {
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
           economyPlanHint: hint,
-        );
+        ));
 
         expect(plan.recruitOrders, isEmpty);
         expect(plan.rejected, hasLength(1));
@@ -280,7 +280,7 @@ void main() {
           recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -288,7 +288,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(0),
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
-        );
+        ));
 
         expect(plan.recruitOrders, hasLength(1));
         expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
@@ -324,7 +324,7 @@ void main() {
           cargoPreference: CargoPreference.none,
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -333,7 +333,7 @@ void main() {
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
           economyPlanHint: hint,
-        );
+        ));
 
         expect(plan.recruitOrders, hasLength(1));
         expect(plan.rejected, isEmpty);
@@ -364,7 +364,7 @@ void main() {
         ],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -372,7 +372,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(0),
         goalPhase: ObserverGoalPhase.develop,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.recruitOrders, hasLength(1));
       expect(plan.recruitOrders.single.targetTier, WorkerTier.apprentice);
@@ -396,7 +396,7 @@ void main() {
         ],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -404,7 +404,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(0),
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.buildUnitOrders, hasLength(1));
       expect(plan.buildUnitOrders.single.unitType, 'peasant_levies');
@@ -428,7 +428,7 @@ void main() {
         ],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -436,7 +436,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(0),
         goalPhase: ObserverGoalPhase.colonial,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.buildUnitOrders, hasLength(1));
       expect(plan.recruitOrders, isEmpty);
@@ -469,7 +469,7 @@ void main() {
         ],
       );
 
-      final plan1 = runRecruitmentPlanner(
+      final plan1 = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -477,8 +477,8 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(42),
         goalPhase: ObserverGoalPhase.develop,
         suggestionApi: api,
-      );
-      final plan2 = runRecruitmentPlanner(
+      ));
+      final plan2 = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -486,7 +486,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(42),
         goalPhase: ObserverGoalPhase.develop,
         suggestionApi: api,
-      );
+      ));
 
       expect(
         plan1.recruitOrders.map((o) => o.targetTier).toList(),
@@ -525,7 +525,7 @@ void main() {
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
       );
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: emptyGame,
         view: view,
         currentOrders: const Orders(),
@@ -533,7 +533,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(0),
         goalPhase: ObserverGoalPhase.develop,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.recruitOrders, isEmpty);
       expect(plan.buildUnitOrders, isEmpty);
@@ -552,7 +552,7 @@ void main() {
       final view = buildPlayerView(game, _topology, 'gp1');
       final api = _fakeApi();
 
-      final plan = runRecruitmentPlanner(
+      final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
         game: game,
         view: view,
         currentOrders: const Orders(),
@@ -560,7 +560,7 @@ void main() {
         seeds: AISeedBundle.fromTurnSeed(0),
         goalPhase: ObserverGoalPhase.expand,
         suggestionApi: api,
-      );
+      ));
 
       expect(plan.recruitOrders, isEmpty);
       expect(plan.buildUnitOrders, isEmpty);
@@ -594,7 +594,7 @@ void main() {
           ],
         );
 
-        final plan = runRecruitmentPlanner(
+        final plan = runRecruitmentPlanner(RecruitmentPlannerInput(
           game: game,
           view: view,
           currentOrders: const Orders(),
@@ -602,7 +602,7 @@ void main() {
           seeds: AISeedBundle.fromTurnSeed(0),
           goalPhase: ObserverGoalPhase.develop,
           suggestionApi: api,
-        );
+        ));
 
         expect(
           plan.recruitOrders.map((o) => o.targetTier).toList(),

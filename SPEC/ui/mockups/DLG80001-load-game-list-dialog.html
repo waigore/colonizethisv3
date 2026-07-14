@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ColonizeThis — Load Game List (DLG80001)</title>
+<style>
+:root {
+  --bg: oklch(16% 0.018 50); --bg-deep: oklch(12% 0.015 45);
+  --surface: oklch(24% 0.015 45); --surface-lite: oklch(30% 0.016 52);
+  --fg: oklch(88% 0.015 80); --muted: oklch(65% 0.025 70);
+  --accent: oklch(72% 0.14 85); --accent-dim: oklch(60% 0.12 82);
+  --font-display: 'Iowan Old Style','Cinzel',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh;background:var(--bg);color:var(--fg);font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+.scrim{position:fixed;inset:0;background:oklch(0% 0 0 / 0.55)}
+.shell{position:relative;z-index:1;width:min(420px,92vw);padding:20px;background:linear-gradient(180deg,var(--surface-lite),var(--surface) 40%,var(--bg-deep));border:2px solid var(--accent-dim)}
+h1{font-family:var(--font-display);color:var(--accent);font-size:1.1rem;margin-bottom:14px}
+.auto{border:2px solid var(--accent);padding:8px;margin-bottom:10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep))}
+.auto .badge{font-family:var(--font-display);color:var(--accent);font-size:0.75rem;letter-spacing:0.04em;margin-bottom:6px}
+.row{display:flex;gap:8px;align-items:stretch;margin-bottom:8px}
+.row .load{flex:1;text-align:left;padding:10px 12px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--accent-dim);color:var(--fg);cursor:pointer}
+.row .load small{display:block;color:var(--muted);margin-top:4px}
+.row .del{padding:8px 10px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);cursor:pointer}
+.divider{height:8px;margin:10px 0;background:linear-gradient(90deg,transparent,var(--accent-dim),transparent);position:relative}
+.divider::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;transform:translate(-50%,-50%) rotate(45deg);background:var(--accent);border:1px solid oklch(82% 0.13 90)}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0;color:var(--muted);font-size:0.9rem}
+.pager button{padding:6px 12px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);cursor:pointer}
+.actions{display:flex;justify-content:flex-end;margin-top:12px}
+button.close{padding:8px 14px;background:linear-gradient(180deg,var(--surface-lite),var(--bg-deep));border:1px solid var(--accent-dim);color:var(--fg);font-family:var(--font-display);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="scrim"></div>
+<div class="shell">
+  <h1>Load Game</h1>
+  <div class="auto">
+    <div class="badge">Auto-save</div>
+    <div class="row">
+      <button class="load" type="button">Auto-save<small>Turn 12 · 1522 · England</small><small>7/12/2026, 8:30 AM</small></button>
+      <button class="del" type="button">Delete</button>
+    </div>
+  </div>
+  <div class="divider" aria-hidden="true"></div>
+  <div class="row">
+    <button class="load" type="button">England - Victoria - 12<small>Turn 12 · 1522 · England</small><small>7/11/2026, 6:00 PM</small></button>
+    <button class="del" type="button">Delete</button>
+  </div>
+  <div class="row">
+    <button class="load" type="button">Spain Save<small>Turn 9 · 1519 · Spain</small><small>7/10/2026, 2:15 PM</small></button>
+    <button class="del" type="button">Delete</button>
+  </div>
+  <div class="pager">
+    <button type="button">Previous</button>
+    <span>Page 1 of 2</span>
+    <button type="button">Next</button>
+  </div>
+  <div class="actions"><button class="close" type="button">Close</button></div>
+</div>
+</body>
+</html>

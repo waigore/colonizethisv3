@@ -39,7 +39,7 @@ class GameMapControls extends StatelessWidget {
 
   final bool sideMenuOpen;
   final VoidCallback onToggleSideMenu;
-  final VoidCallback onPausePressed;
+  final VoidCallback? onPausePressed;
   final Future<void> Function() onNextTurn;
   final bool nextTurnEnabled;
   final int regionIndex;

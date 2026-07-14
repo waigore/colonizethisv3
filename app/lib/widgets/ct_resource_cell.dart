@@ -25,7 +25,11 @@ part 'ct_resource_cell_trailing.dart';
 ///   * `delta > 0`  → `+N`, colour `--success`
 ///   * `delta < 0`  → `-N` (numeric sign), colour `--danger`
 ///   * `delta == 0` → `0`, colour `--muted`
-///   * `delta == null` → delta region is not laid out
+///   * `delta == null` → delta glyphs omitted; fixed-width delta **slot** still
+///     reserved for panel-wide quantity alignment (Refs #3999)
+///
+/// Trailing quantity + reserved delta use intrinsic width + [FittedBox]
+/// scale-down so amounts stay visible at Available grid widths (Refs #3999).
 ///
 /// All colors resolve from [EditorialMonoclePalette] tokens (issue #2858);
 /// no hard-coded hex literals.
@@ -51,8 +55,7 @@ class CtResourceCell extends StatelessWidget {
   /// dark-theme monospace slot.
   final int quantity;
 
-  /// Optional signed delta. See class dartdoc for colour and prefix rules.
-  /// `null` omits the delta region entirely.
+  /// Optional signed delta. See class dartdoc; `null` omits delta glyphs only.
   final int? delta;
 
   /// Outer padding for the cell (`4px` vertical / `CtSpacing.s` (6px)
@@ -90,33 +93,25 @@ class CtResourceCell extends StatelessWidget {
   static const double deltaFontSize = 9;
 
   /// Returns the formatted delta string for the supplied [delta] per R10.
-  /// Returns `null` if the delta region should not be laid out.
+  /// Returns `null` if the delta glyphs should not be painted.
   static String? formattedDeltaText(int? delta) =>
       _ctResourceCellFormattedDeltaText(delta);
 
   /// Returns the colour token for the supplied [delta] per R10. Returns
-  /// `null` if the delta region should not be laid out.
+  /// `null` if the delta glyphs should not be painted.
   static Color? deltaColor(int? delta) => _ctResourceCellDeltaColor(delta);
 
   /// Renders an integer with thousands separators (`1_240` → `1,240`).
   static String formatQuantity(int value) => _ctResourceCellFormatQuantity(value);
 
-  /// Outer-[Row] flex factor of the [Expanded] name column relative to the
-  /// trailing quantity/delta cluster ([trailingFlex]). The name claims the
-  /// large majority of residual width so canonical commodity / worker names
-  /// render in full at normal grid widths instead of being squeezed into
-  /// ellipsis by an equal-flex trailing cluster (issue #3485 regression).
-  static const int nameFlex = 3;
+  /// Quantity [Text] key for visibility / panel-wide alignment tests (#3999).
+  static const Key quantityTextKey = ValueKey<String>('ct_resource_cell_quantity');
 
-  /// Outer-[Row] flex factor of the trailing quantity/delta cluster. The
-  /// cluster's slot is the **last** flex child, so its right edge coincides
-  /// with the card's inner-right edge; the cluster's content is right-aligned
-  /// within the slot (see trailing-cluster part) so the amount is pinned to that
-  /// edge. The small flex (vs [nameFlex]) keeps the slot wide enough to show
-  /// the quantity + optional delta in full at normal widths while still
-  /// collapsing — and letting the values ellipsize — at pathologically narrow
-  /// widths instead of overflowing.
-  static const int trailingFlex = 1;
+  /// Delta [Text] key when a non-null [delta] is painted.
+  static const Key deltaTextKey = ValueKey<String>('ct_resource_cell_delta');
+
+  /// Reserved delta slot width (fits `-999` at [deltaFontSize]; Refs #3999).
+  static const double reservedDeltaSlotWidth = 28;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +129,6 @@ class CtResourceCell extends StatelessWidget {
         padding: padding,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             SizedBox(
               width: leadingIconSize,
@@ -143,20 +137,32 @@ class CtResourceCell extends StatelessWidget {
             ),
             const SizedBox(width: itemGap),
             Expanded(
-              flex: nameFlex,
-              child: Text(
-                name,
-                style: nameStyle(context),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final double budget = constraints.maxWidth;
+                  return Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: nameStyle(context),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: budget),
+                        child: trailingCluster(
+                          context,
+                          quantityText: formatQuantity(quantity),
+                          deltaText: deltaText,
+                          deltaTextColor: deltaTextColor,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-            const SizedBox(width: itemGap),
-            trailingCluster(
-              context,
-              quantityText: formatQuantity(quantity),
-              deltaText: deltaText,
-              deltaTextColor: deltaTextColor,
             ),
           ],
         ),

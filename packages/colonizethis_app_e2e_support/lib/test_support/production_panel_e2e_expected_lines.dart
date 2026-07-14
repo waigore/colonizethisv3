@@ -164,10 +164,7 @@ void _addAllocationTexts(
       out.add(l10n.production_recipeLocked);
     }
     out.add(
-      l10n.production_recipeAffordance(
-        maxAchievable,
-        affordance.limitingLabel,
-      ),
+      l10n.production_recipeAffordance(maxAchievable, affordance.limitingLabel),
     );
     out.add(desired.toString());
   }
@@ -248,8 +245,10 @@ List<String> productionPanelWideExpectedTexts(
   final effectiveLabour = effectiveLabourForWorkers(
     workers: snap.player.workerPool,
     stockpile: snap.player.stockpile,
-    regimentCountsById: regimentCounts,
-    shipCountsById: shipCounts,
+    foodCounts: MilitaryNavyFoodCounts(
+      regimentCountsById: regimentCounts,
+      shipCountsById: shipCounts,
+    ),
   );
 
   final out = <String>[];

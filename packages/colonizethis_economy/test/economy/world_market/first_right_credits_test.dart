@@ -37,11 +37,9 @@ void main() {
   });
 
   group('computeFirstRightProfitRate (#3753 R8.2 — full relation-linear)', () {
-    for (final scenario in firstRightProfitRateScenarios()) {
-      test(scenario.label, () {
-        runFirstRightProfitRateScenario(scenario);
-      });
-    }
+    runLabeledScenarios(firstRightProfitRateScenarios(), (scenario) {
+      runFirstRightProfitRateScenario(scenario);
+    }, labelOf: (s) => s.label);
 
     test('is monotonically non-decreasing across 0..100', () {
       double prev = -1.0;
@@ -55,11 +53,9 @@ void main() {
   });
 
   group('computeFirstRightProfit (#2992 D3 + D4 helper)', () {
-    for (final scenario in firstRightProfitScenarios()) {
-      test(scenario.label, () {
-        runFirstRightProfitScenario(scenario);
-      });
-    }
+    runLabeledScenarios(firstRightProfitScenarios(), (scenario) {
+      runFirstRightProfitScenario(scenario);
+    }, labelOf: (s) => s.label);
 
     test('treasury equals filledQuantity * pricePerUnit * profitRate', () {
       const rs = 50;
@@ -92,52 +88,32 @@ void main() {
   });
 
   group('computeEmbassyKickback (#3753 R8.3 — 10% of relation portion)', () {
-    for (final scenario in embassyKickbackScenarios()) {
-      test(scenario.label, () {
-        runEmbassyKickbackScenario(scenario);
-      });
-    }
+    runLabeledScenarios(embassyKickbackScenarios(), (scenario) {
+      runEmbassyKickbackScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits (#2992 D4)', () {
-    for (final scenario in frrCreditsDefensiveScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsDefensiveScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits aggregation (#3753 R8.2 full share)', () {
-    for (final scenario in frrCreditsAggregationScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsAggregationScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
   group('computeFirstRightCredits embassy kickbacks (#3753 R8.3)', () {
-    for (final scenario in frrCreditsKickbackScenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+    runLabeledScenarios(frrCreditsKickbackScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 
-  group('AC #2 — relation 75 credits 10*20*0.75 = 150 treasury (full)', () {
-    for (final scenario in frrIssueAcD5CreditsAc2Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #3 — relation 100 credits exactly 100% of sale value', () {
-    for (final scenario in frrIssueAcD5CreditsAc3Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #4 — relation 0 credits 0 treasury (no overseas profit)', () {
-    for (final scenario in frrIssueAcD5CreditsAc4Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
-  });
-
-  group('AC #5 — multi-GP attribution, no cross-credit', () {
-    for (final scenario in frrIssueAcD5CreditsAc5Scenarios()) {
-      test(scenario.label, () => runFrrCreditsScenario(scenario));
-    }
+  group('computeFirstRightCredits D5 AC2–AC5 (#2992)', () {
+    runLabeledScenarios(frrIssueAcD5CreditsScenarios(), (scenario) {
+      runFrrCreditsScenario(scenario);
+    }, labelOf: (s) => s.label);
   });
 }

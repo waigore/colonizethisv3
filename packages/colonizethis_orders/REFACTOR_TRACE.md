@@ -2335,8 +2335,217 @@ Preserved: description baseline, support-layout, prefer-scenario-tables, domain 
 
 test/ LOC after slice 153: **32,565** (net −2,809 from post–slice 152). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
 
+## Wave 3 — Slice 154: merge remaining mid-size run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| oec-run-rows-merge | merge order_engine_core_run_rows into scenarios; oecEmptyUnitsP1Game densify | order_engine_core_run_rows.dart (deleted) | order_engine_core_scenarios.dart + fixtures | #3949 |
+| om-run-rows-merge | merge order_merge_run_rows; omDeclareWar / omRoadWork / omTradeOrder sugar | order_merge_run_rows.dart (deleted) | order_merge_scenarios.dart + shorthand | #3949 |
+| but-run-rows-merge | densify fluyte/civilian/merchant asserts; merge build_unit_training_run_rows | build_unit_training_run_rows.dart (deleted) | build_unit_training_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 154: **32475** (net +90 from post–slice 153 / 32,565). Remaining split run_rows families: order_suggestion_core, valid_work_tiles, work_order_application, work_completion. Lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 155: merge final run_rows families (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| wcc-run-rows-merge | densify rail/explore/dispatch helpers; merge work_completion_run_rows | work_completion_run_rows.dart (deleted) | work_completion_scenarios.dart + shorthand | #3949 |
+| vwt-run-rows-merge | densify explore/build/move helpers; merge valid_work_tiles run_rows (+tail) | valid_work_tiles_run_rows*.dart (deleted) | valid_work_tiles_scenarios.dart + shorthand | #3949 |
+| waa-run-rows-merge | densify purchase/explore/port helpers; merge work_order_application run_rows (+tail) | work_order_application_run_rows*.dart (deleted) | work_order_application_scenarios.dart + shorthand | #3949 |
+| osc-run-rows-merge | densify move/build/spy/purchase helpers; merge order_suggestion_core run_rows (+tail) | order_suggestion_core_run_rows*.dart (deleted) | order_suggestion_core_scenarios.dart + shorthand | #3949 |
+
+test/ LOC after slice 155: **32251** (net −224 from post–slice 154 / 32,475). **All `*_run_rows.dart` eliminated.** Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 156: densify scenario tables via compact `rs` rows (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| rs-helper | add shared `rs(label, run, [refs])` for densified scenario tables | `support/scenario_runner.dart` | same | #3949 |
+| rs-collapse | collapse 746 multi-line `RunnableScenario(` rows → single-line `rs(...)` across 108 scenario modules | `test/orders/support/**/*_scenarios.dart` | same | #3949 |
+| rs-baseline-gate | teach preserved-description gate to collect `rs('…')` first-arg pins | `tool/check_orders_test_preserved_descriptions.dart` | same + unit test | #3949 |
+| wcc-capital-tile | add `workAppCapitalTile` + densify port topology / capital propagate bodies | `work_application_fixtures.dart`, `work_completion_scenarios.dart` | same | #3949 |
+
+test/ LOC after slice 156: **29602** (net −2,649 from post–slice 155 / 32,251). Remaining: further fixture/scenario-data compaction toward ≤26,400; lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred.
+
+## Wave 3 — Slice 157: densify scenario run helpers + drop invalid const lists (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| run-helper-densify | collapse multi-line `void *Run*` / family helper bodies to single-line under `// dart format off` across scenario modules | `test/orders/support/**/*_scenarios.dart` (~99 files) | same | #3949 |
+| rs-row-collapse | finish collapsing remaining multi-line `rs(...)` table rows to single-line | `order_engine_validate_work_scenarios.dart` + 6 others | same | #3949 |
+| const-rs-fix | remove invalid `=> const [` wrappers around `rs(...)` tear-off tables (preexisting analyzer errors) | 95 `*_scenarios.dart` | same | #3949 |
+| unused-import-sweep | `dart fix` unnecessary imports after densify | touched scenario/fixture modules | same | #3949 |
+
+test/ LOC after slice 157: **20512** (net −9,090 from post–slice 156 / 29,602). **≥20% LOC target ≤26,400 met.** Remaining: lib opportunistic precheck/feedstock/army-move cleanup (item 7) still deferred; optional further fixture/shorthand compaction.
+
+## Wave 3 — Slice 158: opportunistic precheck DRY (item 7) (Refs #3949)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| precheck-resource-mineral | extract `_resourceOrMineralRejection` for purchase_land + build_improvement | `work_order_target_prechecks.dart` | same | #3949 |
+| precheck-embassy-access | extract `_rejectIfUncontrolledWithoutEmbassyWork` for build_improvement + default foreign | `work_order_target_prechecks.dart` | same | #3949 |
+
+Feedstock / army-move: remaining cross-file duplication insufficient after slices 99–100; no further extraction this slice (issue: do not chase LOC).
+
 ## Wave 3 — documented exceptions (kickoff)
 
 | file | retained test description(s) | rationale | refs |
 |------|------------------------------|-----------|------|
 | (none after slice 96) | — | All former imperative suites migrated; `ordersPreferScenarioTablesAllowlist` empty | #3949 |
+
+## Wave 4 — Slice 1: shared game-graph module + support LOC gate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| game-graphs | add parameterized `ordersTwoGpEmptyGame` / `ordersThreeGpEmptyGame` / `ordersTwoProvinceOwnedGame` / `ordersDualRegionOwnerMapGame` | — | `test/orders/support/common/game_graphs.dart` | #3971 |
+| migrate-two-gp | migrate ≥20 family-local empty/two-province Game builders onto shared graphs or `TestFixtures.minimalGame` | diplomatic/suggestion/validator fixture modules (see list below) | thin wrappers calling `common/game_graphs.dart` | #3971 |
+| support-loc-gate | ratchet physical-LOC ceiling for `test/orders/support/` | — | `tool/check_orders_test_support_loc.dart` + `repo.orders_test_support_loc` | #3971 |
+
+Migrated builders (slice 1): `twoGpGame`, `dvrTwoGpPeaceGame`, `dvrThreeGpPeaceGame`, `diplomaticAppendabilityTwoGpNeutralGame`, `diplomaticAppendabilityTwoGpAlliedGame`, `diplomaticApiImplGame`, `orderSuggestionDiplomaticBoycottTwoGpGame`, `breakAllianceValidatorTwoGpAllianceGame`, `boycottValidatorColonyHolderGame`, `orderSuggestionDiplomacyFilterDualRegionGame`, `orderSuggestionDiplomacyFilterEmptyStringOwnerGame`, `orderSuggestionDiplomacyFilterOldWorldTwoGpGame`, `orderSuggestionDiplomacyFilterNewWorldTwoGpGame`, `orderSuggestionDiplomacyFilterPeacefulTwoGpGame`, `orderSuggestionDiplomacyFilterAtWarTwoGpGame`, `orderSuggestionPassContextOwnedProvincesGame`, `diplomaticMinorApiImplUnknownFactionGame`, `diplomaticMinorApiImplJoinEmpireDeclareWarGame`, `navalValidatorReuseScenarioGame`, `amvArmiesByIdSampleGame`, `amvArmiesByIdTwoGpPeaceGame`, `simpleAiValidatorReuseTwoGpWarGame`.
+
+Deferred: support LOC ≤14,900 / test ≤16,400; `valid_work_tiles_fixtures_tail.dart` elimination; expectation_shorthand shrink; lib explorer/precheck extractions; raw `Game(` sprawl gate.
+
+## Wave 4 — Slice 2: eliminate fixtures_tail + densify shorthand (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| vwt-tail-elim | remove `valid_work_tiles_fixtures_tail.dart`; split NW partial-reveal + explore fixtures | `valid_work_tiles_fixtures_tail.dart` (deleted) | `valid_work_tiles_fixtures.dart` + `nw_partial_reveal_home_target.dart` + `valid_work_tiles_explore_fixtures.dart` | #3971 |
+| shared-asserts | add shared idle / current-work / stockpile assert helpers | — | `test/orders/support/common/expectation_asserts.dart` | #3971 |
+| shorthand-densify | shrink ≥3 of 5 largest `*expectation_shorthand*` by ≥25% LOC | `order_suggestion_core` / `work_order_application` / `work_completion` shorthand | same (+ shared asserts) | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18600 → 18150 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Shorthand LOC: osc 370→145 (−61%), waa 369→218 (−41%), wcc 312→134 (−57%). Support LOC after slice 2: **18092** (from 18588). Remaining: drive ≤14,900 / test ≤16,400; lib explorer/precheck; raw `Game(` sprawl gate; further shorthand/fixture compaction.
+
+## Wave 4 — Slice 3: OW region graph + raw Game ratchet (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ow-region-graph | add `ordersOwRegionGame` shared OW/dual-region builder | — | `test/orders/support/common/game_graphs.dart` | #3971 |
+| migrate-engine-app-mv | migrate engine core / validate-work / work-app / move-validator Games onto `ordersOwRegionGame` | `order_engine_core_fixtures.dart`, `order_engine_validate_work_fixtures.dart`, `work_application_fixtures.dart`, `move_validator_fixtures.dart` | thin wrappers | #3971 |
+| raw-game-gate | ratchet raw `Game(` count outside `support/common/` | — | `tool/check_orders_test_support_raw_game.dart` + `repo.orders_test_support_raw_game` | #3971 |
+| explorer-doc | document remaining explore-only probe/ranking logic | `order_suggestion_work_explorer.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18150 → 18100 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **71** (ceiling 71). Support LOC after slice 3: **18083**. Remaining: drive ≤14,900 / test ≤16,400; further fixture migrations; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 4: suggestion/naval migrate + ICE densify (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| fleets-knob | extend `ordersOwRegionGame` with `fleets` | `common/game_graphs.dart` | same | #3971 |
+| migrate-vwt-prefilter | migrate valid-work-tiles + town/purchase prefilter + unit-availability Games onto shared builders | `valid_work_tiles_*.dart`, `*_prefilter_*_fixtures.dart`, `order_suggestion_unit_availability_fixtures.dart` | thin wrappers | #3971 |
+| osc-minimal | route `oscGame` through `TestFixtures.minimalGame` (preserves fleets) | `order_suggestion_core_fixtures.dart` | same | #3971 |
+| naval-migrate | migrate naval/build shorthand Games onto `ordersOwRegionGame` | `order_engine_naval_build_validation_expectation_shorthand.dart` | same | #3971 |
+| ice-densify | collapse ICE family/row helpers with `// dart format off` (269→102, −62%) | `incremental_candidate_validator_equivalence_expectation_shorthand.dart` | same | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 71 → 56 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 18100 → 17850 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **56**. Support LOC after slice 4: **17819**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 5: colonial/api-impl migrate + shorthand densify (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| colonial-graph | shared `colonialAcquisitionRegionGame` for embassy / intervention / discovery | declare-war + colonial acquisition fixtures | `order_suggestion_colonial_acquisition_fixtures.dart` | #3971 |
+| migrate-api-impl | migrate api-impl / trade / recruit-worker / diplomatic-minor / helpers / snapshot / draft-work Games | suggestion fixture modules | thin `ordersOwRegionGame` wrappers | #3971 |
+| migrate-app-ice-oemwc | migrate run-build / append-military / ICE corpus / oemwc Games | application + incremental + engine shorthand | thin wrappers | #3971 |
+| shorthand-densify | densify validate-work / naval-build / oemwc / osc fixtures with `// dart format off` | engine + suggestion shorthand/fixtures | same | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 56 → 34 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17850 → 17400 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **34**. Support LOC after slice 5: **17381**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 6: army-move / precheck / feedstock / app migrate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| migrate-army-move | migrate army-move picker / fixtures / heuristics onto `ordersOwRegionGame` | `order_suggestion_army_move_*_fixtures.dart` | thin wrappers | #3971 |
+| migrate-precheck-feedstock | migrate work-order prechecks + feedstock priority Games | `work_order_target_prechecks_fixtures.dart`, `order_suggestion_work_feedstock_priority_fixtures.dart` | thin wrappers | #3971 |
+| migrate-app-engine-naval | migrate app/engine/naval/diplomatic/context/research empty-region Games | application + engine + validators + diplomatic support | thin wrappers / `TestFixtures.minimalGame` | #3971 |
+| migrate-nw-declare-purchase | migrate NW partial-reveal, declare-war, purchase-land colonial Games | suggestion fixtures | thin wrappers | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 34 → 5 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17400 → 17150 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **5**. Support LOC after slice 6: **17134**. Remaining: drive ≤14,900 / test ≤16,400; migrate last WorldState-first prospect/feedstock Games; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 7: feedstock gate graph + prospect/logging migrate (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| feedstock-gate-common | extract shared two-GP feedstock-gate builder | bootstrap / NW-projection / priority fixtures | `support/common/feedstock_gate_graphs.dart` | #3971 |
+| migrate-prospect | migrate prospect budget/tile-cap/location Games onto `ordersOwRegionGame` | `order_suggestion_prospect_*_fixtures.dart` | thin wrappers | #3971 |
+| densify-logging | densify work-logging + no-engine-full-pass + tile-keys + colonial-intel + explore adjacency | suggestion fixtures | `ordersOwRegionGame` / `ordersProvinceTopology` | #3971 |
+| raw-game-ratchet | lower raw `Game(` ceiling 5 → 0 | `tool/check_orders_test_support_raw_game.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 17150 → 16950 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 7: **16937**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 8: densify fixtures/asserts + drop WorldState bridge (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| ossve-assert-densify | collapse shared-validator pairwise suggest asserts via `_expectSuggestEq` | `order_suggestion_shared_validator_equivalence_scenarios.dart` | same | #3971 |
+| osgw-shared-builder | shared `_osgwOwGame` + densify work-logging builders | `order_suggestion_work_logging_fixtures.dart` | same | #3971 |
+| osua-densify | shared player/unit helpers + densify unit-availability fixtures | `order_suggestion_unit_availability_fixtures.dart` | same | #3971 |
+| nw-drop-worldstate | delete `NwPartialRevealHomeTarget.world()`; build `ordersOwRegionGame` directly | `nw_partial_reveal_home_target.dart` | same | #3971 |
+| ice-corpus-densify | densify ICE corpus units/topology/fleets under format-off | `incremental_candidate_validator_equivalence_corpus.dart` | same | #3971 |
+| vwt-shorthand-densify | densify valid-work-tiles expectation shorthand | `valid_work_tiles_expectation_shorthand.dart` | same | #3971 |
+| vw-multi-unit-fold | extend `vwSingleProvinceUnitGame` with `units`; fold exclusivity + densify foreign province | `order_engine_validate_work_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 16950 → 16475 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 8: **16451**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
+## Wave 4 — Slice 9: densify training / recruit / army-move / VWT / ICE fixtures (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| but-densify | shared `_butPlayer` / sea topology + format-off densify | `build_unit_training_fixtures.dart` | same | #3971 |
+| recruit-densify | shared `_rwPlayer` + tech consts for recruit-worker Games | `order_suggestion_recruit_worker_fixtures.dart` | same | #3971 |
+| army-move-densify | densify army-move game/topology builders under format-off | `order_suggestion_army_move_fixtures.dart` | same | #3971 |
+| work-app-densify | densify work-application fixture helpers | `work_application_fixtures.dart` | same | #3971 |
+| vwt-densify | densify valid-work-tiles + explore + merchant purchase fixtures | `valid_work_tiles_*.dart`, `merchant_purchase_land_*_fixtures.dart` | same | #3971 |
+| ice-vw-densify | densify ICE helpers + validate-work fixtures | ICE helpers + `order_engine_validate_work_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 16475 → 15800 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 9: **15783**. Remaining: drive ≤14,900 / test ≤16,400; further fixture/shorthand compaction; optional precheck/replay lib extracts.
+
+
+## Wave 4 — Slice 10: densify graphs / oemwc / naval / VWT / application shorthand (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| game-graphs-densify | format-off densify shared `ordersOwRegionGame` / two-GP builders | `common/game_graphs.dart` | same | #3971 |
+| oemwc-foreign-gp | extract `oemwcForeignGpTileGame` + migrate raw `Game(` scenario bodies | oemwc expectation + scenarios | same | #3971 |
+| naval-shorthand-densify | shared `_novExpectResult` + densify at-sea/in-port/dock helpers | `naval_order_validator_expectation_shorthand.dart` | same | #3971 |
+| nw-vwt-densify | densify NW partial-reveal + VWT fixtures/test-support | `nw_partial_reveal_*`, `valid_work_tiles_*` | same | #3971 |
+| osc-waa-vw-densify | densify osc/waa/vw fixtures + expectation shorthand | suggestion + application + engine | same | #3971 |
+| osua-api-logging | densify unit-availability scenarios + api-impl + work-logging | suggestion fixtures/scenarios | same | #3971 |
+| feedstock-but-densify | densify feedstock-gate graphs + build-unit training fixtures | `feedstock_gate_graphs.dart`, `build_unit_training_fixtures.dart` | same | #3971 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 15800 → 14900 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 10: **14852** (AC ≤14,900 met). Remaining: package `test/` ≤16,400; optional precheck/replay lib extracts.
+
+
+## Wave 4 — Slice 11: densify remaining fixtures/scenarios + package test LOC AC (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| mv-tribe-extract | extract `mvNwTribeArmyGame` / densify move fixtures | `move_validator_*.dart` | same | #3971 |
+| prospect-budget-densify | format-off densify own-province prospect budget fixtures | `order_suggestion_prospect_own_province_budget_priority_fixtures.dart` | same | #3971 |
+| rbp-ah-densify | densify run-build-phase + application-helpers shorthand | `run_build_phase_index_maps_fixtures.dart`, `application_helpers_expectation_shorthand.dart` | same | #3971 |
+| research-ppwtsc-densify | densify multi-slot research + ppwtsc default-path scenarios | research multi-slot + ppwtsc scenarios | same | #3971 |
+| feedstock-colonial-densify | densify feedstock priority + colonial acquisition fixtures | feedstock + colonial fixtures | same | #3971 |
+| package-test-loc-gate | ratchet support ceiling 14900→14500; gate package `test/` ≤16400 | `tool/check_orders_test_support_loc.dart` | same | #3971 |
+
+Raw `Game(` outside `common/`: **0**. Support LOC after slice 11: **14373**. Package `test/` LOC: **16252** (AC ≤16,400 met). Remaining: optional precheck/replay lib extracts where 2+ reuse appears.
+
+## Wave 4 — Slice 12: precheck/replay lib extracts (Refs #3971)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| peacetime-embassy-helper | extract `hasPeaceTimeEmbassy` + `rejectAtWarOrWithoutEmbassy` (2+ call sites) | prechecks private helper + candidacy + civilian embassy | `diplomatic_access_helpers.dart` | #3971 |
+| wire-precheck-candidacy | consume shared helpers from prechecks + town-tile candidacy | `work_order_target_prechecks.dart`, `work_tile_candidate_index.dart` | same | #3971 |
+| replay-work-validator | collapse duplicate `createWorkOrderValidator` in ICE prefix/probe | `incremental_candidate_validator_replay.dart` | `_workOrderValidatorForProbe` | #3971 |
+
+Behaviour unchanged (rejection messages + candidacy filters preserved). Remaining for #3971: none expected after this slice (LOC ACs + balanced lib extracts landed).
+

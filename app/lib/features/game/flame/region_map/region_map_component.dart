@@ -79,6 +79,7 @@ class CtRegionMapComponent extends PositionComponent {
     this.selectedTileKey,
     this.selectedCivilianTileKey,
     this.secondaryHighlightTileKey,
+    this.secondaryHighlightTileKeys,
     this.validTileKeys,
     this.onTownIconTapped,
     this.playerViewForResources,
@@ -116,6 +117,7 @@ class CtRegionMapComponent extends PositionComponent {
   String? selectedTileKey;
   String? selectedCivilianTileKey;
   String? secondaryHighlightTileKey;
+  Set<String>? secondaryHighlightTileKeys;
   Set<String>? validTileKeys;
   void Function(String provinceId)? onTownIconTapped;
 

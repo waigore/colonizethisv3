@@ -4,13 +4,16 @@ import 'package:colonizethis_test/test.dart';
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 void main() {
   group('canonicalizeSeaZoneId', () {
-    test('returns the input unchanged when already prefixed for the region', () {
-      final result = canonicalizeSeaZoneId(
-        regionId: 'oldWorld',
-        seaZoneId: 'oldWorld|sz1',
-      );
-      expect(result, 'oldWorld|sz1');
-    });
+    test(
+      'returns the input unchanged when already prefixed for the region',
+      () {
+        final result = canonicalizeSeaZoneId(
+          regionId: 'oldWorld',
+          seaZoneId: 'oldWorld|sz1',
+        );
+        expect(result, 'oldWorld|sz1');
+      },
+    );
 
     test('prefixes a local sea-zone id with the region', () {
       final result = canonicalizeSeaZoneId(

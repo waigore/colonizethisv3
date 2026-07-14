@@ -8,6 +8,7 @@
 
 - Define the save/load contract implemented by `colonizethis_save` (GameSaveAdapter): storage backend, key convention, schema, required map data, and behaviour on load for the current schema.
 - Cross-referenced by: [world-model.md](../game/world-model.md) (serialization), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve; auto-save mirror on complete), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) (GP colour override persisted on Game), [main-menu.md](../ui/main-menu.md) (Resume game).
+- **In-memory session wipe before load/resume/new-game/exit:** [save-load-session-clear.md](save-load-session-clear.md) (`clearActiveGameSession`, ordered activate sequence, pause disabled while turn resolution blocks).
 
 ---
 
@@ -15,12 +16,19 @@
 
 - **Storage backend:** Hive box. One box per store; keys are strings. Hive uses a **lock file** (e.g. `games.lock`) in the store directory so only one process has the box open at a time. Human-facing clients that open the box (**Flutter app** and **ctdev**) must handle lock failure in a user-visible way (e.g. explain that another instance may hold the store, offer retry or safe exit) and must not delete the lock file without explicit user consent.
 - **Key convention:**
-  - **Game:** key = `gameId`; value = envelope JSON `{ saveFormatVersion, game }`.
-    - `saveFormatVersion`: integer persisted by `colonizethis_save` as a hardcoded program constant.
+  - **Game:** key = `gameId`; value = envelope JSON `{ saveFormatVersion, game, draftOrders?, productionDesiredOutputByRecipe?, displayName? }`.
+    - `saveFormatVersion`: integer; current write version is **3** (`kSaveFormatVersion`). Supported read set is `{1, 2, 3}`.
     - `game`: `Game.toJson()` payload. `Game.toJson()` includes all core fields, including `politicalGlyphByPlayerId` (1-character political owner glyphs) so that ownership glyphs on political maps are stable across loads, and `mapViewState` (Empire overview map zoom + map display toggles) so map UI state restores across load. Diplomacy persistence includes `diplomacyRelations[].formalAlliance` (treaty flag; normalized to `false` on load when `state = atWar`) and `allianceBreakCooldowns` (bilateral post-break overture cooldown records keyed by sorted faction pair + `sinceTurn`; Refs #3811).
+    - **Mid-turn draft envelope (v2+):** `draftOrders` (`Orders.toJson()`), `productionDesiredOutputByRecipe` (recipe id → int ≥ 0), `displayName` (user-facing label). Written by app named saves and mid-turn auto-save mirrors. **Legacy v1:** missing draft keys load as empty `Orders()`, `{}`, and null `displayName`.
+    - **List metadata (v3+):** see [save-load-list-metadata.md](save-load-list-metadata.md) (`listMeta`, list gate, capacity, ordering).
+  - **Hive gameId vs display name:** Hive keys remain storage identity. User-typed names are stored as `displayName`. `sanitizeGameId(typed)` trims, replaces whitespace runs with `_`, strips map-data suffixes (`_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`, `_warpLinks`), and returns null when empty. Overwrite detection uses sanitized id equality with existing manual keys.
   - **gameId constraints:** The `gameId` must be a non-empty string. It may contain any characters except those that would create ambiguity with map-data keys (see below). For clarity, avoid gameIds that end with `_tileMapByRegion`, `_topologyByRegion`, or `_combinedTopology` unless you intentionally want the game to be treated as a potential map-data key (see listGameIds behavior).
   - **Required map data:** keys = `gameId + suffix`; suffixes: `_tileMapByRegion`, `_topologyByRegion`, `_combinedTopology`. Values = JSON produced by the respective model `toJson()` (e.g. `TileMapResult`, `MapTopology`).
 - **Province/region identity:** Province and region ids stored in the saved payload are whatever the model stores; for consistency with [world-model-identity.md](../game/world-model-identity.md), any province or region id in saved state follows the same prefixed form and lookup rules as at runtime (no separate serialization format).
+
+### listLoadableSaves
+
+- Returns ordered `LoadableSaveEntry` rows per [save-load-list-metadata.md](save-load-list-metadata.md): list-gate manuals (v3+ `listMeta`) newest-first, plus a pinned auto-save row when the slot is listable. Label = envelope `displayName` ?? id (auto-save uses `kAutoSaveListLabel`). Does **not** change `listGameIds` exclusion of the auto-save stem.
 
 ### Auto-save slot (Flutter app)
 
@@ -74,8 +82,9 @@
 - **Required map data missing.** Given a Hive box and a `gameId` for which any required map-data key is missing, when the system calls `loadMapData` for that `gameId`, then `loadMapData` fails with an explicit error that identifies missing required map data.
 - **Delete.** Given a Hive box and a `gameId`, when the system deletes the game, then the system removes the key `gameId` and the three map-data keys (`gameId + _tileMapByRegion`, etc.); no-op if the game key is not present.
 - **Round-trip Game fields.** Given a Game with worldState, players, greatPowerColorOverride, turnTimeMapping, and other serialized fields, when the system saves and then loads by the same game id, then the loaded Game equals the original for all fields covered by `Game.toJson()`/`fromJson()` (as covered by existing game_save_adapter_test.dart).
-- **Round-trip map view state fields.** Given a Game with `mapViewState.zoomMultiplier`, `mapViewState.showProvinceOverlay`, `mapViewState.showProvinceOwnershipTint`, `mapViewState.showProvinceNamesLayer`, `mapViewState.showPlayerTurnEventsFeed`, and `mapViewState.showPlayersBar` set to non-default values, when the system saves and then loads by the same game id, then the loaded Game preserves those map view fields exactly.
-- **Legacy save default map view state.** Given a current-envelope save payload where `mapViewState` is absent (legacy save), when the system loads the game, then the loaded Game uses default map view state values (`zoomMultiplier = 1.0`, `showProvinceOverlay = true`, `showProvinceOwnershipTint = false`, `showProvinceNamesLayer = true`, `showPlayerTurnEventsFeed = false`, `showPlayersBar = true`) and gameplay remains functional.
+- **Round-trip map view state fields.** Given a Game with `mapViewState.zoomMultiplier`, `mapViewState.showProvinceOverlay`, `mapViewState.showProvinceOwnershipTint`, `mapViewState.showProvinceNamesLayer`, `mapViewState.showPlayerTurnEventsFeed`, and `mapViewState.showPlayersBar` set to any values (including model defaults), when the system saves and then loads by the same game id, then the loaded Game preserves those map view fields exactly. `Game.toJson()` always writes `mapViewState` (including when equal to `MapViewState.defaults`) so preferences such as `showPlayersBar` are explicit on disk.
+- **Legacy save default map view state.** Given a current-envelope save payload where `mapViewState` is absent (legacy save), when the system loads the game, then the loaded Game uses model default map view state values (`zoomMultiplier = 1.0`, `showProvinceOverlay = true`, `showProvinceOwnershipTint = false`, `showProvinceNamesLayer = true`, `showPlayerTurnEventsFeed = false`, `showPlayersBar = true`) and gameplay remains functional. These model defaults are the legacy/missing-field fallback only; **new campaigns** created through standard game setup initialize `showPlayersBar = false` (see `SPEC/ui/empire-overview.md` § Players bar) while keeping the same legacy load fallback.
+- **Legacy players-bar preference materialization.** Given a legacy save loaded with implicit `showPlayersBar == true`, when the system saves that game without the player toggling the bar, then the saved `game.mapViewState` object includes `showPlayersBar: true`.
 - **Round-trip civilian assignment placement fields.** Given a Game where a civilian `Unit` has `tileKey`, `originTileKey`, and `assignedTileKey` set while work is in progress, when the system saves and then loads by the same game id, then the loaded unit preserves those three fields exactly.
 - **Logging.** Save/load operations use the `save:` prefix and log gameId and success or failure per [ctdev-logging.md](ctdev-logging.md).
 
@@ -84,3 +93,16 @@
 - **Auto-save excluded from list.** Given a Hive box that contains only the auto-save stem and its map keys, when the system lists game ids, then the returned list is empty.
 
 - **Auto-save corrupt cleared.** Given a Hive box where the auto-save stem key holds invalid JSON or map data is missing/invalid, when the system validates the slot (e.g. `hasValidAutoSave`), then the system removes all keys for that stem and logs with prefix `save:`; subsequent listing still excludes the stem.
+
+- **Draft envelope round-trip.** Given a Hive box and a Game with non-empty `draftOrders` and `productionDesiredOutputByRecipe` plus a `displayName`, when the system saves via the v2 envelope and loads with `loadSession`, then the loaded session restores those draft fields and display name exactly.
+
+- **Legacy v1 empty drafts.** Given a v1 envelope with only `saveFormatVersion` and `game`, when the system loads with `loadSession`, then `draftOrders` is empty, `productionDesiredOutputByRecipe` is `{}`, and `displayName` is null.
+
+- **listLoadableSaves includes auto.** Given a Hive box with at least one list-gate (v3+) manual save and a valid listable auto-save, when the system calls `listLoadableSaves`, then the result places the auto-save first (`storageId == kAutoSaveSlotId`, label `Auto-save`) then manuals newest-first, while `listGameIds` still excludes `kAutoSaveSlotId`. See [save-load-list-metadata.md](save-load-list-metadata.md).
+
+- **sanitizeGameId.** Given typed names with whitespace, map-data suffixes, or empty/whitespace-only input, when the system calls `sanitizeGameId`, then whitespace becomes `_`, forbidden suffixes are stripped, and empty results return null.
+
+## Province last-turn extraction snapshot
+
+`WorldState.lastTurnProvinceExtractionByProvinceId` round-trips with the game save (JSON key of the same name). Missing field → empty map. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4002.
+

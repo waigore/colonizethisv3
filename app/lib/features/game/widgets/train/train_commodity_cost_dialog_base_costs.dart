@@ -36,14 +36,14 @@ extension _CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
   int remainingCommodity(String commodityId, Map<String, int> committed) =>
       stockpileQty(commodityId) - (committed[commodityId] ?? 0);
 
-  String? get commodityCostDeficitHint {
+  String? commodityCostDeficitHint(AppLocalizations l10n) {
     final deficits = <String>[];
     if (totalTreasuryCost() > treasury) deficits.add('Treasury');
     if (totalPeasantCost() > peasants) deficits.add('Peasants');
     final totalComms = totalCommodityCosts();
     for (final e in totalComms.entries) {
       if (e.value > stockpileQty(e.key)) {
-        deficits.add(commodityDisplayName(e.key));
+        deficits.add(commodityDisplayName(l10n, e.key));
       }
     }
     if (deficits.isEmpty) return null;

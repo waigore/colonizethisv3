@@ -1,3 +1,4 @@
+// dart format off
 /// Shared world-market test fixtures for `colonizethis_economy` and its
 /// sibling test suites (`colonizethis_orders`, `colonizethis_logic`,
 /// `colonizethis_diplomacy`).
@@ -6,7 +7,6 @@
 /// validator_test_support.dart` and `world_market_deal_matcher_test_support.
 /// dart` copies into one canonical location (Refs #3615 Cluster 6).
 library colonizethis_economy_test_support;
-
 export 'src/build_cost_scenarios.dart';
 export 'src/commodity_totals_expectations.dart';
 export 'src/commodity_totals_scenarios.dart';
@@ -17,6 +17,7 @@ export 'src/consumption_expectations.dart';
 export 'src/consumption_phases_expectations.dart';
 export 'src/consumption_phases_scenarios.dart';
 export 'src/consumption_scenarios.dart';
+export 'src/cost_check_expectations.dart';
 export 'src/cost_check_scenarios.dart';
 export 'src/core_economy_test_support.dart';
 export 'src/economy_extraction_expectations.dart';
@@ -44,6 +45,8 @@ export 'src/tile_extraction_pipeline_scenarios.dart';
 export 'src/trade_cargo_capacity_scenarios.dart';
 export 'src/treasury_scenarios/treasury_scenarios.dart';
 export 'src/projected_cost_engine_scenarios.dart';
+export 'src/province_extraction_snapshot_expectations.dart';
+export 'src/province_extraction_snapshot_scenarios.dart';
 export 'src/purchased_tile_fixture_support.dart';
 export 'src/purchased_tile_scenarios/purchased_tile_expectations.dart';
 export 'src/purchased_tile_scenarios/purchased_tile_scenarios.dart';
@@ -59,3 +62,4 @@ export 'src/trade_order_suggester_expectations.dart';
 export 'src/trade_order_suggester_scenarios.dart';
 export 'src/trade_order_suggester_test_support.dart';
 export 'src/validator_scenarios/validator_scenarios.dart';
+// dart format on

@@ -170,19 +170,21 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          // `expand` (or `conquer`/`defend`) resolves the naval base
-          // weight to `domainWeights.military` for henry (20), so the
-          // colonial boost is the only path past the < 25 skip floor.
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509200),
-          suggestionAPI: _navalCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            // `expand` (or `conquer`/`defend`) resolves the naval base
+            // weight to `domainWeights.military` for henry (20), so the
+            // colonial boost is the only path past the < 25 skip floor.
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(2509200),
+            suggestionAPI: _navalCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final navalMoves = _navalMoves(orders);
@@ -251,16 +253,18 @@ void main() {
         );
 
         final orders = runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(2509201),
-          suggestionAPI: _navalCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(2509201),
+            suggestionAPI: _navalCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         // Phase 3 soft-phase intent: at OW=9 the curve sets
@@ -300,16 +304,18 @@ void main() {
         final snapshot = _nearQuotaSnapshotWithColonialTarget();
 
         Orders runOnce(int turnSeed) => runDomainPlanners(
-          game: game,
-          topology: topology,
-          nationId: _nationId,
-          view: view,
-          snapshot: snapshot,
-          config: _aiConfig,
-          primaryGoal: StrategicGoal.expand,
-          seeds: AISeedBundle.fromTurnSeed(turnSeed),
-          suggestionAPI: _navalCandidateApi,
-          economyPlan: _economyPlan,
+          DomainPlannerInput(
+            game: game,
+            topology: topology,
+            nationId: _nationId,
+            view: view,
+            snapshot: snapshot,
+            config: _aiConfig,
+            primaryGoal: StrategicGoal.expand,
+            seeds: AISeedBundle.fromTurnSeed(turnSeed),
+            suggestionAPI: _navalCandidateApi,
+            economyPlan: _economyPlan,
+          ),
         );
 
         final first = runOnce(2509202);

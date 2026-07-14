@@ -9,7 +9,7 @@
 // If drift fails tests, align this file with the overlay widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show isMilitaryUnit, terrainDisplayName;
+    show CommodityCatalog, isMilitaryUnit, terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,6 +18,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
+import 'package:colonizethis_app/widgets/commodity_display_name.dart';
 
 /// Duplicated from [province_sea_zone_detail_overlay] so e2e expectations stay in sync
 /// without importing @visibleForTesting symbols from production code.
@@ -344,6 +345,41 @@ void _appendProvincePanelEconomicSection(
   AppLocalizations l10n,
 ) {
   _appendProvincePanelSection(out, 'Economic', () {
+    out.add(l10n.provinceOverlay_extractionHeading);
+    final extraction = provinceExtractionSnapshotForDisplay(
+      snapshot: ctx
+          .game
+          .worldState
+          .lastTurnProvinceExtractionByProvinceId[ctx.provinceId],
+      currentOwnerId: ctx.province?.ownerId,
+    );
+    if (extraction == null || extraction.byCommodity.isEmpty) {
+      out.add('—');
+    } else {
+      final parts = <String>[];
+      for (final commodity in CommodityCatalog.all) {
+        final totals = extraction.byCommodity[commodity.id];
+        if (totals == null) continue;
+        if (totals.effective == 0 && totals.full == 0) continue;
+        final name = commodityDisplayName(l10n, commodity.id);
+        parts.add(
+          totals.effective < totals.full
+              ? l10n.provinceOverlay_extractionQuantityPartial(
+                  totals.effective,
+                  totals.full,
+                  name,
+                )
+              : l10n.provinceOverlay_extractionQuantity(totals.effective, name),
+        );
+      }
+      out.add(parts.isEmpty ? '—' : parts.join(', '));
+    }
+
+    out.add(l10n.provinceOverlay_availableHeading);
+    // Available counts require tile maps; e2e snapshot path uses empty when
+    // map data is not in the panel snapshot context — emit dash placeholder.
+    out.add('—');
+
     var wroteAny = false;
     for (final resId in ctx.resourceKeysSorted) {
       final improved = ctx.byResImproved[resId] ?? const [];
@@ -366,6 +402,8 @@ void _appendProvincePanelEconomicSection(
     if (!wroteAny) {
       out.add('—');
     }
+    out.add(l10n.provinceOverlay_townProductionHeading);
+    out.add('—');
   });
 }
 

@@ -1,5 +1,6 @@
 /// Shared fixture for `order_suggestion_recruit_worker_*_test.dart`
-/// (Refs #2692 S7, SPEC/program/order-suggestions.md § Recruit worker orders).
+/// (Refs #2692 S7, SPEC/program/order-suggestions.md § Recruit worker orders,
+/// #3971 wave 4).
 ///
 /// Centralizes the single-province / single-player topology and the
 /// `OrderEngine.addRecruitWorkerOrderWithContext` round-trip helper used to
@@ -10,6 +11,8 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../common/game_graphs.dart';
 
 const recruitWorkerTestRegionId = 'oldWorld';
 const recruitWorkerTestProvinceId = '$recruitWorkerTestRegionId|P1';
@@ -26,22 +29,18 @@ final recruitWorkerTestTopology = MapTopology(
 );
 
 /// Builds a single-province game owned by [player] in Orders phase.
-Game recruitWorkerTestGameWith({required Player player}) => Game(
+Game recruitWorkerTestGameWith({required Player player}) => ordersOwRegionGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(
-      provinces: [
-        Province(
-          id: recruitWorkerTestProvinceId,
-          regionId: recruitWorkerTestRegionId,
-          ownerId: player.id,
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-  ),
   players: [player],
+  oldWorld: RegionData(
+    provinces: [
+      Province(
+        id: recruitWorkerTestProvinceId,
+        regionId: recruitWorkerTestRegionId,
+        ownerId: player.id,
+      ),
+    ],
+  ),
 );
 
 /// Builds the canonical [PlayerView] for [playerId] in [game].

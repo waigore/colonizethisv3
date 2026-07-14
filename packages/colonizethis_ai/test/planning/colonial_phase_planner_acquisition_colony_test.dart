@@ -19,115 +19,22 @@
 // excluded, and a multi-target case where the own colony is skipped in
 // favour of a valid sibling tribe.
 
-import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/colonial_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/colonial_acquisition_test_support.dart';
 import 'ai_planner_fixtures.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _tribe1 = 'tribe1';
-const String _tribe2 = 'tribe2';
+const String _gp1 = kColonialPhaseGp1;
+const String _gp2 = kColonialPhaseGp2;
+const String _tribe1 = kColonialPhaseTribe1;
+const String _tribe2 = kColonialPhaseTribe2;
 
-const String _nwProv1 = 'newWorld|tribe1_a';
-const String _nwProv2 = 'newWorld|tribe2_b';
+const String _nwProv1 = kColonialAcquisitionNwProv1;
+const String _nwProv2 = kColonialAcquisitionNwProv2;
 
-const String _nwTile1 = 'newWorld|tribe1_a|1|1';
-
-Game _acquisitionGame({
-  int turnNumber = 130,
-  int activePlayerTreasury = 100000,
-  List<Province> newWorldProvinces = const [],
-  List<Unit> newWorldUnits = const [],
-  List<Army> armies = const [],
-  Map<String, String> resourceByTileKey = const {},
-  List<OvertureState> overtureStates = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-  List<ColonyState> colonyStates = const [],
-}) {
-  return Game(
-    id: 'g-3758-colony-filter-t$turnNumber',
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: turnNumber, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: RegionData(provinces: newWorldProvinces, units: newWorldUnits),
-      armies: armies,
-      resourceByTileKey: resourceByTileKey,
-    ),
-    players: [
-      Player(
-        id: _gp1,
-        displayName: 'GP1',
-        isHuman: false,
-        treasury: activePlayerTreasury,
-      ),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-    tribes: const [
-      Tribe(id: _tribe1, displayName: 'T1'),
-      Tribe(id: _tribe2, displayName: 'T2'),
-    ],
-    overtureStates: overtureStates,
-    diplomacyRelations: diplomacyRelations,
-    colonyStates: colonyStates,
-  );
-}
-
-AIWorldSnapshot _snapshot({
-  required List<String> invadableNw,
-  int treasury = 100000,
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(
-      oldWorldProvincesOwned: 10,
-      provincesToVictory: 31,
-    ),
-    colonial: ColonialSummary(invadableNewWorldProvinceIdsSorted: invadableNw),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
-OvertureState _nap(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.nap,
-      sinceTurn: sinceTurn,
-    );
-
-OvertureState _embassy(String gpId, String targetId, {int sinceTurn = 100}) =>
-    OvertureState(
-      gpId: gpId,
-      targetId: targetId,
-      stage: OvertureStage.embassy,
-      sinceTurn: sinceTurn,
-    );
-
-DiplomacyRelation _friendly(String a, String b, {int score = 60}) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
-      level: RelationLevel.friendly,
-    );
-
-Unit _merchant(String id, {String provinceId = _nwProv1}) => Unit(
-  id: id,
-  type: kUnitTypeMerchant,
-  ownerId: _gp1,
-  locationProvinceId: provinceId,
-  tileKey: '$provinceId|5|5',
-  status: UnitStatus.idle,
-);
-
-ColonyState _ownColony(String tribeId) =>
-    ColonyState(tribeId: tribeId, colonyOfGpId: _gp1, sinceTurn: 100);
+const String _nwTile1 = kColonialAcquisitionNwTile1;
 
 void main() {
   group('planColonialAcquisition own-colony exclusion (Refs #3758 S3)', () {
@@ -137,15 +44,20 @@ void main() {
       // filter the planner would return (tribe1, joinEmpire). Because
       // tribe1 is already gp1's colony, the planner must skip it and
       // return null (no other candidate exists).
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-3758-colony-filter',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
-        colonyStates: <ColonyState>[_ownColony(_tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
+        colonyStates: <ColonyState>[colonialAcquisitionOwnColony(_tribe1)],
       );
-      final snapshot = _snapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -161,17 +73,24 @@ void main() {
       // (not `nap`) so the Join Empire arm is unavailable. Without the
       // colony filter the planner would return (tribe1, purchaseLand);
       // the own-colony exclusion flips it to null.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-3758-colony-filter',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        newWorldUnits: <Unit>[_merchant('m1')],
+        newWorldUnits: <Unit>[colonialAcquisitionMerchant('m1')],
         resourceByTileKey: const {_nwTile1: 'grain'},
-        overtureStates: <OvertureState>[_embassy(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
-        colonyStates: <ColonyState>[_ownColony(_tribe1)],
+        overtureStates: <OvertureState>[
+          colonialAcquisitionEmbassy(_gp1, _tribe1),
+        ],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
+        colonyStates: <ColonyState>[colonialAcquisitionOwnColony(_tribe1)],
       );
-      final snapshot = _snapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -188,15 +107,20 @@ void main() {
       // planner would return (tribe1, declareWar); the own-colony
       // exclusion flips it to null — a GP must not conquer its own
       // colony.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-3758-colony-filter',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
         armies: <Army>[homeArmyWithRegimentsAtCapital(_gp1, 5)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
-        colonyStates: <ColonyState>[_ownColony(_tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
+        colonyStates: <ColonyState>[colonialAcquisitionOwnColony(_tribe1)],
       );
-      final snapshot = _snapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         isNull,
@@ -212,17 +136,22 @@ void main() {
       // only to gp1's own colonies, so tribe1 stays eligible and the
       // Join Empire arm returns (tribe1, joinEmpire). Re-resolution
       // replaces the prior record per SPEC/game/diplomacy.md.
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-3758-colony-filter',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
         ],
-        overtureStates: <OvertureState>[_nap(_gp1, _tribe1)],
-        diplomacyRelations: <DiplomacyRelation>[_friendly(_gp1, _tribe1)],
+        overtureStates: <OvertureState>[colonialAcquisitionNap(_gp1, _tribe1)],
+        diplomacyRelations: <DiplomacyRelation>[
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+        ],
         colonyStates: <ColonyState>[
           ColonyState(tribeId: _tribe1, colonyOfGpId: _gp2, sinceTurn: 100),
         ],
       );
-      final snapshot = _snapshot(invadableNw: const [_nwProv1]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(
@@ -239,22 +168,25 @@ void main() {
       // tribe1 (gp1\'s colony) sorts first in the invadable list but is
       // excluded; tribe2 satisfies the Join Empire gates and is not a
       // colony, so the planner falls through to (tribe2, joinEmpire).
-      final game = _acquisitionGame(
+      final game = buildColonialAcquisitionGame(
+        gameIdPrefix: 'g-3758-colony-filter',
         newWorldProvinces: const [
           Province(id: _nwProv1, regionId: 'newWorld', ownerId: _tribe1),
           Province(id: _nwProv2, regionId: 'newWorld', ownerId: _tribe2),
         ],
         overtureStates: <OvertureState>[
-          _nap(_gp1, _tribe1),
-          _nap(_gp1, _tribe2),
+          colonialAcquisitionNap(_gp1, _tribe1),
+          colonialAcquisitionNap(_gp1, _tribe2),
         ],
         diplomacyRelations: <DiplomacyRelation>[
-          _friendly(_gp1, _tribe1),
-          _friendly(_gp1, _tribe2),
+          colonialAcquisitionFriendly(_gp1, _tribe1),
+          colonialAcquisitionFriendly(_gp1, _tribe2),
         ],
-        colonyStates: <ColonyState>[_ownColony(_tribe1)],
+        colonyStates: <ColonyState>[colonialAcquisitionOwnColony(_tribe1)],
       );
-      final snapshot = _snapshot(invadableNw: const [_nwProv1, _nwProv2]);
+      final snapshot = buildColonialAcquisitionSnapshot(
+        invadableNw: const [_nwProv1, _nwProv2],
+      );
       expect(
         planColonialAcquisition(game: game, snapshot: snapshot),
         const ColonialAcquisitionTarget(

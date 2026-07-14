@@ -1,16 +1,6 @@
-
 part of 'province_sea_zone_detail_overlay.dart';
 
-/// Shared empty-state placeholder body used by the Economic, Military,
-/// Civilian, and Naval sections when their content list is empty.
-///
-/// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-/// § Style / implementation — Dark-theme empty-state body tokens (S9).
-///
-/// `EditorialMonoclePalette.muted` is a runtime OKLCH→`Color` getter, so
-/// the [TextStyle] cannot be `const`; the helper centralizes the token
-/// so every empty surface stays in sync (mirroring the obfuscated
-/// `???` helper's single-source pattern).
+/// Shared empty-state body for Economic/Military/Civilian/Naval (S9 muted).
 Widget _emptyBodyDashText() {
   return Text('—', style: TextStyle(color: EditorialMonoclePalette.muted));
 }
@@ -23,9 +13,29 @@ Widget _buildEconomicSection({
   required Map<String, List<({String tileKey, String terrain})>>
   byResImprovable,
   void Function(String?)? onHighlightTile,
+  void Function(Iterable<String>?)? onHighlightTiles,
+  ProvinceExtractionSnapshot? extractionSnapshot,
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   Map<String, int> townProductionBonusByCommodity = const {},
 }) {
-  final children = <Widget>[];
+  final children = <Widget>[
+    _extractionAvailableSubsection(
+      heading: l10n.provinceOverlay_extractionHeading,
+      child: _extractionCondensedLine(
+        l10n: l10n,
+        snapshot: extractionSnapshot,
+        onHighlightTiles: onHighlightTiles,
+      ),
+    ),
+    _extractionAvailableSubsection(
+      heading: l10n.provinceOverlay_availableHeading,
+      child: _availableCondensedLine(
+        l10n: l10n,
+        availableByCommodity: availableByCommodity,
+        onHighlightTiles: onHighlightTiles,
+      ),
+    ),
+  ];
 
   for (final resId in resourceKeysSorted) {
     final improved = byResImproved[resId] ?? const [];
@@ -46,7 +56,7 @@ Widget _buildEconomicSection({
                 child: Text(
                   l10n.province_economic_resourceRow(
                     row.terrain,
-                    resId,
+                    commodityDisplayName(l10n, resId),
                     l10n.province_economic_withImprovement(row.impBase),
                   ),
                   style: TextStyle(color: EditorialMonoclePalette.fg),
@@ -75,7 +85,7 @@ Widget _buildEconomicSection({
                 child: Text(
                   l10n.province_economic_resourceRow(
                     row.terrain,
-                    resId,
+                    commodityDisplayName(l10n, resId),
                     l10n.province_economic_improvableSuffix,
                   ),
                   style: TextStyle(color: EditorialMonoclePalette.muted),

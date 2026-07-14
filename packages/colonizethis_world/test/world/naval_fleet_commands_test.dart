@@ -2,28 +2,22 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
-
-Game _gameWithFleets(List<Fleet> fleets) => TestFixtures.minimalGame(
-  id: 'g_naval_split',
-  players: const [
-    Player(id: 'gp_human', displayName: 'Human', isHuman: true),
-  ],
-  fleets: fleets,
-);
+import '../world_test_support/world_test_support.dart';
 
 void main() {
   group('applyNavalSplitFleet', () {
     test('Given empty split set When applied Then returns unchanged game', () {
-      final original = _gameWithFleets([
-        Fleet(
-          id: '1',
-          ownerId: 'gp_human',
-          regionId: 'oldWorld',
-          seaZoneId: 'sea_a',
-          ships: [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-        ),
-      ]);
+      final original = gameWithFleets(
+        fleets: [
+          Fleet(
+            id: '1',
+            ownerId: 'gp_human',
+            regionId: 'oldWorld',
+            seaZoneId: 'sea_a',
+            ships: [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+          ),
+        ],
+      );
 
       final next = applyNavalSplitFleet(
         game: original,
@@ -38,25 +32,27 @@ void main() {
     test(
       'Given existing fleet and selected ships When applied Then creates split fleet and updates original',
       () {
-        final original = _gameWithFleets([
-          Fleet(
-            id: '1',
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            seaZoneId: 'sea_a',
-            ships: [
-              ShipInstance(id: 'ship_1', typeId: 'carrack'),
-              ShipInstance(id: 'ship_2', typeId: 'fluyte'),
-            ],
-          ),
-          Fleet(
-            id: '2',
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            seaZoneId: 'sea_b',
-            ships: [ShipInstance(id: 'ship_3', typeId: 'carrack')],
-          ),
-        ]);
+        final original = gameWithFleets(
+          fleets: [
+            Fleet(
+              id: '1',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              seaZoneId: 'sea_a',
+              ships: [
+                ShipInstance(id: 'ship_1', typeId: 'carrack'),
+                ShipInstance(id: 'ship_2', typeId: 'fluyte'),
+              ],
+            ),
+            Fleet(
+              id: '2',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              seaZoneId: 'sea_b',
+              ships: [ShipInstance(id: 'ship_3', typeId: 'carrack')],
+            ),
+          ],
+        );
 
         final next = applyNavalSplitFleet(
           game: original,
@@ -86,22 +82,24 @@ void main() {
       'Given Home Fleet split-all When applied Then Home Fleet remains with zero ships',
       () {
         final homeFleetId = homeFleetIdFor('gp_human');
-        final original = _gameWithFleets([
-          Fleet(
-            id: homeFleetId,
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|capital',
-            ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-          ),
-          Fleet(
-            id: '2',
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            seaZoneId: 'sea_b',
-            ships: const [ShipInstance(id: 'ship_3', typeId: 'carrack')],
-          ),
-        ]);
+        final original = gameWithFleets(
+          fleets: [
+            Fleet(
+              id: homeFleetId,
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|capital',
+              ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+            ),
+            Fleet(
+              id: '2',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              seaZoneId: 'sea_b',
+              ships: const [ShipInstance(id: 'ship_3', typeId: 'carrack')],
+            ),
+          ],
+        );
 
         final next = applyNavalSplitFleet(
           game: original,
@@ -127,25 +125,27 @@ void main() {
     test(
       'Given subset selected When transferred Then target gains selected and source remains',
       () {
-        final game = _gameWithFleets([
-          Fleet(
-            id: 'source',
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            seaZoneId: 'sea_a',
-            ships: const [
-              ShipInstance(id: 'ship_1', typeId: 'carrack'),
-              ShipInstance(id: 'ship_2', typeId: 'fluyte'),
-            ],
-          ),
-          Fleet(
-            id: homeFleetIdFor('gp_human'),
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|cap',
-            ships: const [ShipInstance(id: 'ship_home', typeId: 'carrack')],
-          ),
-        ]);
+        final game = gameWithFleets(
+          fleets: [
+            Fleet(
+              id: 'source',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              seaZoneId: 'sea_a',
+              ships: const [
+                ShipInstance(id: 'ship_1', typeId: 'carrack'),
+                ShipInstance(id: 'ship_2', typeId: 'fluyte'),
+              ],
+            ),
+            Fleet(
+              id: homeFleetIdFor('gp_human'),
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|cap',
+              ships: const [ShipInstance(id: 'ship_home', typeId: 'carrack')],
+            ),
+          ],
+        );
 
         final next = applyNavalTransferShipsBetweenFleets(
           game: game,
@@ -169,22 +169,24 @@ void main() {
     test(
       'Given all source ships selected When transferred Then source is removed',
       () {
-        final game = _gameWithFleets([
-          Fleet(
-            id: 'source',
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            seaZoneId: 'sea_a',
-            ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
-          ),
-          Fleet(
-            id: homeFleetIdFor('gp_human'),
-            ownerId: 'gp_human',
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|cap',
-            ships: const [],
-          ),
-        ]);
+        final game = gameWithFleets(
+          fleets: [
+            Fleet(
+              id: 'source',
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              seaZoneId: 'sea_a',
+              ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+            ),
+            Fleet(
+              id: homeFleetIdFor('gp_human'),
+              ownerId: 'gp_human',
+              regionId: 'oldWorld',
+              inPortAtProvinceId: 'oldWorld|cap',
+              ships: const [],
+            ),
+          ],
+        );
 
         final next = applyNavalTransferShipsBetweenFleets(
           game: game,

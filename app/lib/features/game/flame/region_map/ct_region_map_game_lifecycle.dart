@@ -21,6 +21,7 @@ extension _CtRegionMapGameLifecycle on CtRegionMapGame {
       selectedTileKey: selectedTileKey,
       selectedCivilianTileKey: selectedCivilianTileKey,
       secondaryHighlightTileKey: secondaryHighlightTileKey,
+      secondaryHighlightTileKeys: secondaryHighlightTileKeys,
       onTileTapped: (tileKey) {
         if (onTileSelected != null && validTileKeys != null) {
           if (tileKey != null &&

@@ -285,8 +285,7 @@ class Game {
     if (lastHumanResearchCategoryCompletionTurn != null)
       'lastHumanResearchCategoryCompletionTurn':
           lastHumanResearchCategoryCompletionTurn,
-    if (mapViewState != MapViewState.defaults)
-      'mapViewState': mapViewState.toJson(),
+    'mapViewState': mapViewState.toJson(),
     if (worldMarketState != WorldMarketState.empty)
       'worldMarketState': worldMarketState.toJson(),
     if (ftpPartnershipKeys.isNotEmpty)
