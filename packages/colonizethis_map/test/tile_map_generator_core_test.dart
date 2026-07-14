@@ -13,9 +13,12 @@ void main() {
         height: 15,
         seed: 1,
       );
-      final (result, topology) = TileMapGenerator(
+      final (result, topology) = runTileMapGeneration(
         params: params,
-      ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+      );
       expect(result.width, 20);
       expect(result.height, 15);
       expect(result.grid.length, 15);
@@ -43,6 +46,7 @@ void main() {
             height: 15,
             seed: 1,
           );
+          // map-generation-harness-exempt: constructor/DI probe
           final gen = TileMapGenerator(params: params);
 
           final (_, topology) = gen.generate(
@@ -81,14 +85,18 @@ void main() {
         seed: 42,
         maxEnforceIterations: 5,
       );
-      final (result, _) = TileMapGenerator(
+      final (result, _) = runTileMapGeneration(
         params: params,
-      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+      );
       final pairs = result.adjacentRegionPairs();
       expect(pairs.contains('p1|p2'), isTrue);
     });
 
     test('numProvinces 0 throws', () {
+      // map-generation-harness-exempt: constructor/DI probe
       final gen = TileMapGenerator(
         params: genParams(width: 10, height: 10),
       );
@@ -99,6 +107,7 @@ void main() {
     });
 
     test('numContinents 0 throws', () {
+      // map-generation-harness-exempt: constructor/DI probe
       final gen = TileMapGenerator(
         params: genParams(width: 10, height: 10),
       );
@@ -120,9 +129,12 @@ void main() {
           seed: 12345,
           seaFraction: seaFraction,
         );
-        final (result, _) = TileMapGenerator(
+        final (result, _) = runTileMapGeneration(
           params: params,
-        ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+          numProvinces: 1,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         var landCount = 0;
         for (var y = 0; y < h; y++) {
           for (var x = 0; x < w; x++) {
@@ -136,13 +148,13 @@ void main() {
 
     test('onLog receives a line per pass', () {
       final logLines = <String>[];
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(width: 10, height: 10, seed: 1),
-      ).generate(
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
         onLog: (msg) => logLines.add(msg),
+        omitResourceRules: true,
       );
       expect(logLines.any((s) => s.contains('Pass 1')), isTrue);
       expect(logLines.any((s) => s.contains('Pass 2')), isTrue);
@@ -172,9 +184,13 @@ void main() {
           skipFillLakes: true,
           seedBeforeAssignment: false,
         );
-        TileMapGenerator(
+        runTileMapGeneration(
           params: params,
-        ).generate(numProvinces: 3, numContinents: 2, regionId: 'oldWorld');
+          numProvinces: 3,
+          numContinents: 2,
+          regionId: 'oldWorld',
+          omitResourceRules: true,
+        );
 
         final message = capturedEvents
             .map((e) => e.message.toString())
@@ -195,13 +211,16 @@ void main() {
     test(
       'final grid has only province and sea zone ids (no land sentinel)',
       () {
-        final (result, topology) = TileMapGenerator(
+        final (result, topology) = runTileMapGeneration(
           params: genParams(
             width: 24,
             height: 24,
             seed: 7,
           ),
-        ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+          numProvinces: 2,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         final validIds = topology.nodes.map((n) => n.id).toSet();
         for (var y = 0; y < result.height; y++) {
           for (var x = 0; x < result.width; x++) {
@@ -216,13 +235,16 @@ void main() {
     );
 
     test('inferred topology matches grid adjacencies', () {
-      final (result, topology) = TileMapGenerator(
+      final (result, topology) = runTileMapGeneration(
         params: genParams(
           width: 30,
           height: 30,
           seed: 42,
         ),
-      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+      );
       final validation = validateTileMapTopology(topology, result);
       expect(validation.missing, isEmpty);
       expect(validation.extra, isEmpty);
@@ -247,9 +269,12 @@ void main() {
           continentBufferTiles: mapGenParams.continentBufferTiles,
           skipFillLakes: mapGenParams.skipFillLakes,
         );
-        final (_, topology) = TileMapGenerator(
+        final (_, topology) = runTileMapGeneration(
           params: params,
-        ).generate(numProvinces: 60, numContinents: 3, regionId: 'oldWorld');
+          numProvinces: 60,
+          numContinents: 3,
+          regionId: 'oldWorld',
+        );
         final p6p33Key = 'p6|p33';
         final hasBridge = topology.edges.any((e) {
           final key = e.id1.compareTo(e.id2) < 0
@@ -270,9 +295,12 @@ void main() {
             height: 18,
             seed: seed,
           );
-          TileMapGenerator(
+          runTileMapGeneration(
             params: params,
-          ).generate(numProvinces: 6, numContinents: 3, regionId: 'oldWorld');
+            numProvinces: 6,
+            numContinents: 3,
+            regionId: 'oldWorld',
+          );
         }
       },
     );

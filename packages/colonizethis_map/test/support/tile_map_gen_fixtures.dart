@@ -79,15 +79,17 @@ String tileMapGenerationDigest(TileMapResult result) {
 
 List<(String, TopologyNodeType, String)> topologyNodeKeys(
   Iterable<TopologyNode> nodes,
-) =>
-    nodes.map((n) => (n.id, n.type, n.regionId)).toList();
+) => nodes.map((n) => (n.id, n.type, n.regionId)).toList();
 
-List<String> topologyEdgeKeys(Iterable<TopologyEdge> edges) => edges
-    .map((e) => '${e.id1}|${e.id2}')
-    .toList()
-  ..sort();
+List<String> topologyEdgeKeys(Iterable<TopologyEdge> edges) =>
+    edges.map((e) => '${e.id1}|${e.id2}').toList()..sort();
 
 /// Runs [TileMapGenerator.generate] with shared defaults for generator tests.
+///
+/// Pass [omitResourceRules] to call [TileMapGenerator.generate] without a
+/// `resourceRules` argument (null / unspecified). Callbacks ([onLog], seed
+/// probes) are forwarded so suites can avoid re-inlining
+/// `TileMapGenerator(...).generate(...)`. Refs #4022.
 (TileMapResult result, MapTopology topology) runTileMapGeneration({
   TileMapParams? params,
   int width = 100,
@@ -97,17 +99,25 @@ List<String> topologyEdgeKeys(Iterable<TopologyEdge> edges) => edges
   int numContinents = 2,
   String regionId = 'oldWorld',
   ResourceRules? resourceRules,
+  bool omitResourceRules = false,
+  void Function(String)? onLog,
+  void Function(List<(int x, int y)> landSeeds, List<int> continentIndices)?
+  onLandSeedsPlaced,
+  void Function(List<(int x, int y)> continentSeeds)? onContinentSeedsPlaced,
+  List<int>? continentProvinceSizes,
 }) {
-  final resolvedParams = params ??
-      genParams(
-        width: width,
-        height: height,
-        seed: seed,
-      );
+  final resolvedParams =
+      params ?? genParams(width: width, height: height, seed: seed);
   return TileMapGenerator(params: resolvedParams).generate(
     numProvinces: numProvinces,
     numContinents: numContinents,
     regionId: regionId,
-    resourceRules: resourceRules ?? ResourceRules.defaultRules,
+    resourceRules: omitResourceRules
+        ? null
+        : (resourceRules ?? ResourceRules.defaultRules),
+    onLog: onLog,
+    onLandSeedsPlaced: onLandSeedsPlaced,
+    onContinentSeedsPlaced: onContinentSeedsPlaced,
+    continentProvinceSizes: continentProvinceSizes,
   );
 }

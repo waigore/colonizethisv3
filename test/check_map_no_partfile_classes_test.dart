@@ -6,12 +6,10 @@ import '../tool/check_map_no_partfile_classes.dart';
 
 const _genRoot = 'packages/colonizethis_map/lib/src/gen';
 const _viewRoot = 'packages/colonizethis_map/lib/src/view';
-const _allowedPartOf =
-    'packages/colonizethis_map/lib/src/gen/tile_map_generator_types.dart';
 
 void main() {
   group('findMapGenPartDirectiveViolations', () {
-    test('flags a `part of` directive in a non-whitelisted gen file', () {
+    test('flags a `part of` directive in a gen file', () {
       const src = "part of 'tile_map_generator.dart';\n";
       final violations = findMapGenPartDirectiveViolations(
         relativePath: '$_genRoot/some_pass.dart',
@@ -21,25 +19,29 @@ void main() {
       expect(violations.single.message, contains('part of'));
     });
 
-    test('allows the whitelisted shared-types part file', () {
+    test('flags former types part path when it still uses part of', () {
       const src = "part of 'tile_map_generator.dart';\n";
       final violations = findMapGenPartDirectiveViolations(
-        relativePath: _allowedPartOf,
+        relativePath: '$_genRoot/tile_map_generator_types.dart',
         source: src,
       );
-      expect(violations, isEmpty);
+      expect(violations, hasLength(1));
     });
 
-    test('allows a `part` directive referencing the whitelisted types file', () {
+    test('flags any `part` directive under gen/view', () {
       const src = "library;\npart 'tile_map_generator_types.dart';\n";
       final violations = findMapGenPartDirectiveViolations(
         relativePath: '$_genRoot/tile_map_generator.dart',
         source: src,
       );
-      expect(violations, isEmpty);
+      expect(violations, hasLength(1));
+      expect(
+        violations.single.message,
+        contains('tile_map_generator_types.dart'),
+      );
     });
 
-    test('flags a `part` directive referencing a non-whitelisted file', () {
+    test('flags a `part` directive referencing any other file', () {
       const src = "library;\npart 'some_other_part.dart';\n";
       final violations = findMapGenPartDirectiveViolations(
         relativePath: '$_genRoot/tile_map_generator.dart',
@@ -92,7 +94,9 @@ void main() {
     });
 
     test('fails when a scanned root is missing (anti-rot existence check)', () {
-      final temp = Directory.systemTemp.createTempSync('check_map_partfile_gone_');
+      final temp = Directory.systemTemp.createTempSync(
+        'check_map_partfile_gone_',
+      );
       addTearDown(() => temp.deleteSync(recursive: true));
 
       final logs = <String>[];

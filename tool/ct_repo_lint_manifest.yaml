@@ -1366,6 +1366,20 @@ rules:
     runner: dart
     script: tool/check_map_test_shared_topology_fixtures.dart
 
+  - rule_id: repo.map_test_run_generation_harness
+    group: architecture
+    title: colonizethis_map generator tests must use runTileMapGeneration (Refs #4022)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_run_generation_harness.dart
+
+  - rule_id: repo.map_test_minimal_game_shared
+    group: architecture
+    title: colonizethis_map colour/capital/format tests must use minimalGame (Refs #4022)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_minimal_game_shared.dart
+
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture
     title: colonizethis_combat tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3716)

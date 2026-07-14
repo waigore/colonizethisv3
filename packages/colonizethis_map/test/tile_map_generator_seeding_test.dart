@@ -1,5 +1,4 @@
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
 
@@ -9,13 +8,12 @@ void main() {
       'Pass 2 places continent seeds and clustered land seeds (log reports counts)',
       () {
         final logLines = <String>[];
-        TileMapGenerator(
+        runTileMapGeneration(
           params: genParams(
             width: 24,
             height: 24,
             seed: 5,
           ),
-        ).generate(
           numProvinces: 2,
           numContinents: 1,
           regionId: 'r1',
@@ -33,13 +31,12 @@ void main() {
       () {
         List<(int x, int y)>? capturedPositions;
         List<int>? capturedIndices;
-        TileMapGenerator(
+        runTileMapGeneration(
           params: genParams(
             width: 20,
             height: 15,
             seed: 1,
           ),
-        ).generate(
           numProvinces: 1,
           numContinents: 1,
           regionId: 'r1',
@@ -64,9 +61,8 @@ void main() {
 
     test('onContinentSeedsPlaced is invoked with one seed per continent', () {
       List<(int x, int y)>? continentSeeds;
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(width: 24, height: 24, seed: 7),
-      ).generate(
         numProvinces: 2,
         numContinents: 1,
         regionId: 'r1',
@@ -89,9 +85,12 @@ void main() {
           seaFraction: seaFraction,
           seedBeforeAssignment: true,
         );
-        final (result, _) = TileMapGenerator(
+        final (result, _) = runTileMapGeneration(
           params: params,
-        ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+          numProvinces: 1,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         var landCount = 0;
         for (var y = 0; y < h; y++) {
           for (var x = 0; x < w; x++) {
@@ -112,9 +111,12 @@ void main() {
           seed: 42,
           seedBeforeAssignment: false,
         );
-        final (result, _) = TileMapGenerator(
+        final (result, _) = runTileMapGeneration(
           params: params,
-        ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+          numProvinces: 2,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         var landCount = 0;
         for (var y = 0; y < result.height; y++) {
           for (var x = 0; x < result.width; x++) {
@@ -128,18 +130,18 @@ void main() {
 
     test('organic mode logs Pass 2–3 (organic)', () {
       final logLines = <String>[];
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(
           width: 10,
           height: 10,
           seed: 1,
           seedBeforeAssignment: false,
         ),
-      ).generate(
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
         onLog: (msg) => logLines.add(msg),
+        omitResourceRules: true,
       );
       expect(logLines.any((s) => s.contains('organic')), isTrue);
     });
