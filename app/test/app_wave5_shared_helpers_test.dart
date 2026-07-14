@@ -6,11 +6,14 @@ import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_full_screen_dialogue_shell.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
+
   group('dialogueTristateAllDecided', () {
     test('positive: all non-null returns true', () {
       expect(dialogueTristateAllDecided(const [true, false, true]), isTrue);
