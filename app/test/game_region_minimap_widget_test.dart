@@ -101,6 +101,22 @@ class _MinimapBus {
   void disposeLater() => addTearDown(bus.dispose);
 }
 
+/// Binds [bus] to collect [E] events and dispose both on tear-down.
+List<E> _captureBusEvents<E extends AppEvent>(AppEventBus bus) {
+  final events = <E>[];
+  final sub = bus.on<E>().listen(events.add);
+  addTearDown(() async {
+    await sub.cancel();
+    bus.dispose();
+  });
+  return events;
+}
+
+(double mw, double mh) _worldDims(
+  RegionMapViewData region, {
+  double cellSizePx = 24,
+}) => (region.width * cellSizePx, region.height * cellSizePx);
+
 Future<RegionMapViewData> _pumpTinyMinimap(
   WidgetTester tester, {
   required String regionId,
@@ -128,11 +144,12 @@ RegionMapViewportSnapshot _snapFor(
   required double zoom,
 }) {
   const cellSizePx = 24.0;
+  final (mw, mh) = _worldDims(region, cellSizePx: cellSizePx);
   return RegionMapViewportSnapshot(
     regionId: region.regionId,
     cellSizePx: cellSizePx,
-    mapWidthWorld: region.width * cellSizePx,
-    mapHeightWorld: region.height * cellSizePx,
+    mapWidthWorld: mw,
+    mapHeightWorld: mh,
     cameraCenterX: 48,
     cameraCenterY: 48,
     zoom: zoom,
@@ -149,31 +166,15 @@ void main() {
     WidgetTester tester,
   ) async {
     final bus = AppEventBus.create();
-    final centers = <RequestRegionMapCameraCenterWorldEvent>[];
-    final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
-      centers.add,
+    final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
+      bus,
     );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
-
-    final region = _tinyRegion(regionId: 'minimapTapRegion');
-    const cellSizePx = 24.0;
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-
-    await tester.pumpWidget(
-      _minimapTestShell(
-        GameRegionMinimap(
-          region: region,
-          viewportSnapshot: null,
-          bus: bus,
-          cellSizePx: cellSizePx,
-        ),
-      ),
+    final region = await _pumpTinyMinimap(
+      tester,
+      regionId: 'minimapTapRegion',
+      bus: bus,
     );
-    await tester.pump();
+    final (mw, mh) = _worldDims(region);
 
     await tester.tap(find.byKey(kRegionMinimapGestureKey));
     await tester.pump();
@@ -197,31 +198,15 @@ void main() {
     WidgetTester tester,
   ) async {
     final bus = AppEventBus.create();
-    final centers = <RequestRegionMapCameraCenterWorldEvent>[];
-    final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
-      centers.add,
+    final centers = _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(
+      bus,
     );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
-
-    final region = _tinyRegion(regionId: 'minimapCornerRegion');
-    const cellSizePx = 24.0;
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-
-    await tester.pumpWidget(
-      _minimapTestShell(
-        GameRegionMinimap(
-          region: region,
-          viewportSnapshot: null,
-          bus: bus,
-          cellSizePx: cellSizePx,
-        ),
-      ),
+    final region = await _pumpTinyMinimap(
+      tester,
+      regionId: 'minimapCornerRegion',
+      bus: bus,
     );
-    await tester.pump();
+    final (mw, mh) = _worldDims(region);
 
     final topLeft = tester.getTopLeft(find.byKey(kRegionMinimapGestureKey));
     await tester.tapAt(topLeft + const Offset(2, 2));
@@ -244,31 +229,15 @@ void main() {
     WidgetTester tester,
   ) async {
     final bus = AppEventBus.create();
-    final pans = <RequestRegionMapCameraPanWorldDeltaEvent>[];
-    final sub = bus.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen(
-      pans.add,
+    final pans = _captureBusEvents<RequestRegionMapCameraPanWorldDeltaEvent>(
+      bus,
     );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
-
-    final region = _tinyRegion(regionId: 'minimapPanRegion');
-    const cellSizePx = 24.0;
-    final mw = region.width * cellSizePx;
-    final mh = region.height * cellSizePx;
-
-    await tester.pumpWidget(
-      _minimapTestShell(
-        GameRegionMinimap(
-          region: region,
-          viewportSnapshot: null,
-          bus: bus,
-          cellSizePx: cellSizePx,
-        ),
-      ),
+    final region = await _pumpTinyMinimap(
+      tester,
+      regionId: 'minimapPanRegion',
+      bus: bus,
     );
-    await tester.pump();
+    final (mw, mh) = _worldDims(region);
 
     const dragLogical = Offset(24, -16);
     await tester.drag(
@@ -321,14 +290,9 @@ void main() {
     WidgetTester tester,
   ) async {
     final bus = AppEventBus.create();
-    final zooms = <RequestRegionMapSetZoomMultiplierEvent>[];
-    final sub = bus.on<RequestRegionMapSetZoomMultiplierEvent>().listen(
-      zooms.add,
+    final zooms = _captureBusEvents<RequestRegionMapSetZoomMultiplierEvent>(
+      bus,
     );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
     final region = _tinyRegion(regionId: 'minimapSliderEmitRegion');
     await _pumpTinyMinimap(
       tester,
@@ -355,14 +319,9 @@ void main() {
     'sequential taps on zoom track emit multiple RequestRegionMapSetZoomMultiplierEvent',
     (WidgetTester tester) async {
       final bus = AppEventBus.create();
-      final zooms = <RequestRegionMapSetZoomMultiplierEvent>[];
-      final sub = bus.on<RequestRegionMapSetZoomMultiplierEvent>().listen(
-        zooms.add,
+      final zooms = _captureBusEvents<RequestRegionMapSetZoomMultiplierEvent>(
+        bus,
       );
-      addTearDown(() async {
-        await sub.cancel();
-        bus.dispose();
-      });
       final region = _tinyRegion(regionId: 'minimapMultiTapZoomRegion');
       await _pumpTinyMinimap(
         tester,
@@ -389,7 +348,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final mb = _MinimapBus()..disposeLater();
-    final region = await _pumpTinyMinimap(
+    await _pumpTinyMinimap(
       tester,
       regionId: 'minimapToggleRegion',
       bus: mb.bus,
@@ -480,51 +439,28 @@ void main() {
     testWidgets('no Material design buttons paint inside minimap', (
       WidgetTester tester,
     ) async {
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+      final mb = _MinimapBus()..disposeLater();
+      await _pumpTinyMinimap(
+        tester,
+        regionId: 'minimapNoMaterialButtons',
+        bus: mb.bus,
+      );
 
-      final region = _tinyRegion(regionId: 'minimapNoMaterialButtons');
-
-      await tester.pumpWidget(
-        _minimapTestShell(
-          GameRegionMinimap(
-            region: region,
-            viewportSnapshot: null,
-            bus: bus,
-            cellSizePx: 24,
+      const forbidden = <Type>[
+        ElevatedButton,
+        OutlinedButton,
+        FilledButton,
+        IconButton,
+      ];
+      for (final type in forbidden) {
+        expect(
+          find.descendant(
+            of: find.byType(GameRegionMinimap),
+            matching: find.byType(type),
           ),
-        ),
-      );
-      await tester.pump();
-
-      expect(
-        find.descendant(
-          of: find.byType(GameRegionMinimap),
-          matching: find.byType(ElevatedButton),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(GameRegionMinimap),
-          matching: find.byType(OutlinedButton),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(GameRegionMinimap),
-          matching: find.byType(FilledButton),
-        ),
-        findsNothing,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(GameRegionMinimap),
-          matching: find.byType(IconButton),
-        ),
-        findsNothing,
-      );
+          findsNothing,
+        );
+      }
     });
 
     testWidgets(
@@ -614,31 +550,14 @@ void main() {
       'panel padding does not affect minimap gesture local coordinates',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
-        final centers = <RequestRegionMapCameraCenterWorldEvent>[];
-        final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
-          centers.add,
+        final centers =
+            _captureBusEvents<RequestRegionMapCameraCenterWorldEvent>(bus);
+        final region = await _pumpTinyMinimap(
+          tester,
+          regionId: 'minimapPanelPaddingRegion',
+          bus: bus,
         );
-        addTearDown(() async {
-          await sub.cancel();
-          bus.dispose();
-        });
-
-        final region = _tinyRegion(regionId: 'minimapPanelPaddingRegion');
-        const cellSizePx = 24.0;
-        final mw = region.width * cellSizePx;
-        final mh = region.height * cellSizePx;
-
-        await tester.pumpWidget(
-          _minimapTestShell(
-            GameRegionMinimap(
-              region: region,
-              viewportSnapshot: null,
-              bus: bus,
-              cellSizePx: cellSizePx,
-            ),
-          ),
-        );
-        await tester.pump();
+        final (mw, mh) = _worldDims(region);
 
         final gestureBox = tester.getSize(find.byKey(kRegionMinimapGestureKey));
         expect(gestureBox.width, 132);

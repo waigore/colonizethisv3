@@ -14,6 +14,20 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'support/widget_test_assets.dart';
 
+Future<void> _tapFleetCheckboxes(
+  WidgetTester tester,
+  Iterable<String> fleetLabels,
+) async {
+  for (final label in fleetLabels) {
+    final tile = find.widgetWithText(ExpansionTile, label);
+    expect(tile, findsOneWidget);
+    final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+    await tester.ensureVisible(cb);
+    await tester.tap(cb);
+    await tester.pumpAndSettle();
+  }
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -68,19 +82,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        final sourceFinder = find.widgetWithText(
-          ExpansionTile,
+        await _tapFleetCheckboxes(tester, [
+          'Home Fleet',
           'Fleet sea_source',
-        );
-        await tester.tap(
-          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        ]);
         await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
 
@@ -154,19 +159,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        final sourceFinder = find.widgetWithText(
-          ExpansionTile,
+        await _tapFleetCheckboxes(tester, [
+          'Home Fleet',
           'Fleet sea_far',
-        );
-        await tester.tap(
-          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        ]);
 
         final combineBtn = tester.widget<CtActionTextButton>(
           find.widgetWithText(CtActionTextButton, 'Combine'),
@@ -241,19 +237,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final finder1 = find.widgetWithText(ExpansionTile, 'Fleet sea_1');
-        final finder2 = find.widgetWithText(ExpansionTile, 'Fleet sea_2');
-        expect(finder1, findsOneWidget);
-        expect(finder2, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: finder1, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: finder2, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        await _tapFleetCheckboxes(tester, ['Fleet sea_1', 'Fleet sea_2']);
 
         final combineBtn = tester.widget<CtActionTextButton>(
           find.widgetWithText(CtActionTextButton, 'Combine'),
@@ -317,16 +301,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final t1 = find.widgetWithText(ExpansionTile, 'Fleet m1');
-        final t2 = find.widgetWithText(ExpansionTile, 'Fleet m2');
-        await tester.tap(
-          find.descendant(of: t1, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: t2, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        await _tapFleetCheckboxes(tester, ['Fleet m1', 'Fleet m2']);
 
         await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
@@ -543,16 +518,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final tileStays = find.widgetWithText(ExpansionTile, 'Fleet stays');
-        final tileRemoved = find.widgetWithText(ExpansionTile, 'Fleet removed');
-        await tester.tap(
-          find.descendant(of: tileStays, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: tileRemoved, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        await _tapFleetCheckboxes(tester, ['Fleet stays', 'Fleet removed']);
 
         await tester.pumpWidget(
           buildNavalPanel(game: gameOne, humanPlayerId: humanId),
@@ -560,6 +526,7 @@ void main() {
         await tester.pump();
         await tester.pumpAndSettle();
 
+        final tileStays = find.widgetWithText(ExpansionTile, 'Fleet stays');
         final staysCb = find.descendant(
           of: tileStays,
           matching: find.byType(Checkbox),
@@ -631,14 +598,7 @@ void main() {
           findsOne,
         );
 
-        await tester.tap(
-          find.descendant(of: tileA, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: tileB, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
+        await _tapFleetCheckboxes(tester, ['Fleet col_a', 'Fleet col_b']);
 
         expect(
           find.descendant(of: tileA, matching: find.byTooltip('Split')),

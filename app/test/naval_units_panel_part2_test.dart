@@ -14,6 +14,46 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'support/widget_test_assets.dart';
 
+Fleet _portShipFleet({
+  required String id,
+  required String humanId,
+  required String port,
+  required String shipId,
+  String typeId = 'carrack',
+}) {
+  return Fleet(
+    id: id,
+    ownerId: humanId,
+    regionId: 'oldWorld',
+    inPortAtProvinceId: port,
+    ships: [ShipInstance(id: shipId, typeId: typeId)],
+  );
+}
+
+Future<void> _tapFleetCheckboxes(
+  WidgetTester tester,
+  Iterable<String> fleetLabels,
+) async {
+  for (final label in fleetLabels) {
+    final tile = find.widgetWithText(ExpansionTile, label);
+    expect(tile, findsOneWidget);
+    final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+    await tester.ensureVisible(cb);
+    await tester.tap(cb);
+    await tester.pumpAndSettle();
+  }
+}
+
+Future<void> _expectCombineEnabled(
+  WidgetTester tester, {
+  required bool enabled,
+}) async {
+  final combineBtn = tester.widget<CtActionTextButton>(
+    find.widgetWithText(CtActionTextButton, 'Combine'),
+  );
+  expect(combineBtn.enabled, enabled);
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,19 +76,18 @@ void main() {
           includeMergePortTileKeys: false,
           nextShipInstanceSeq: 3,
           fleets: [
-            Fleet(
+            _portShipFleet(
               id: 'a',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+              humanId: humanId,
+              port: mergePort,
+              shipId: 'ship_1',
             ),
-            Fleet(
+            _portShipFleet(
               id: 'b',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 'ship_2', typeId: 'fluyte')],
+              humanId: humanId,
+              port: mergePort,
+              shipId: 'ship_2',
+              typeId: 'fluyte',
             ),
           ],
         );
@@ -98,19 +137,18 @@ void main() {
         includeMergePortTileKeys: false,
         nextShipInstanceSeq: 3,
         fleets: [
-          Fleet(
+          _portShipFleet(
             id: 'test_fleet_1',
-            ownerId: humanId,
-            regionId: 'oldWorld',
-            inPortAtProvinceId: mergePort,
-            ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+            humanId: humanId,
+            port: mergePort,
+            shipId: 'ship_1',
           ),
-          Fleet(
+          _portShipFleet(
             id: 'test_fleet_2',
-            ownerId: humanId,
-            regionId: 'oldWorld',
-            inPortAtProvinceId: mergePort,
-            ships: const [ShipInstance(id: 'ship_2', typeId: 'fluyte')],
+            humanId: humanId,
+            port: mergePort,
+            shipId: 'ship_2',
+            typeId: 'fluyte',
           ),
         ],
       );
@@ -127,33 +165,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final fleet1Finder = find.widgetWithText(
-        ExpansionTile,
+      await _tapFleetCheckboxes(tester, [
         'Fleet test_fleet_1',
-      );
-      expect(fleet1Finder, findsOneWidget);
-
-      final fleet2Finder = find.widgetWithText(
-        ExpansionTile,
         'Fleet test_fleet_2',
-      );
-      expect(fleet2Finder, findsOneWidget);
-
-      final cb1 = find.descendant(
-        of: fleet1Finder,
-        matching: find.byType(Checkbox),
-      );
-      final cb2 = find.descendant(
-        of: fleet2Finder,
-        matching: find.byType(Checkbox),
-      );
-      await tester.ensureVisible(cb1);
-      await tester.tap(cb1);
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(cb2);
-      await tester.tap(cb2);
-      await tester.pumpAndSettle();
-
+      ]);
       final combineFinder = find.widgetWithText(CtActionTextButton, 'Combine');
       await tester.ensureVisible(combineFinder);
       await tester.tap(combineFinder);
@@ -227,24 +242,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final fleetAFinder = find.widgetWithText(ExpansionTile, 'Fleet fa');
-        final fleetBFinder = find.widgetWithText(ExpansionTile, 'Fleet fb');
-        expect(fleetAFinder, findsOneWidget);
-        expect(fleetBFinder, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: fleetAFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: fleetBFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isFalse);
+        await _tapFleetCheckboxes(tester, ['Fleet fa', 'Fleet fb']);
+        await _expectCombineEnabled(tester, enabled: false);
       },
     );
 
@@ -294,23 +293,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        final otherFinder = find.widgetWithText(
-          ExpansionTile,
+        await _tapFleetCheckboxes(tester, [
+          'Home Fleet',
           'Fleet at_capital',
-        );
-        expect(homeFinder, findsOneWidget);
-        expect(otherFinder, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: otherFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-
+        ]);
         await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
         expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
@@ -356,26 +342,24 @@ void main() {
           includeMergePortTileKeys: false,
           nextShipInstanceSeq: 4,
           fleets: [
-            Fleet(
+            _portShipFleet(
               id: 'c1',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+              humanId: humanId,
+              port: mergePort,
+              shipId: 's1',
             ),
-            Fleet(
+            _portShipFleet(
               id: 'c2',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 's2', typeId: 'fluyte')],
+              humanId: humanId,
+              port: mergePort,
+              shipId: 's2',
+              typeId: 'fluyte',
             ),
-            Fleet(
+            _portShipFleet(
               id: 'c3',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              inPortAtProvinceId: mergePort,
-              ships: const [ShipInstance(id: 's3', typeId: 'carrack')],
+              humanId: humanId,
+              port: mergePort,
+              shipId: 's3',
             ),
           ],
         );
@@ -392,17 +376,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        for (final label in ['Fleet c1', 'Fleet c2', 'Fleet c3']) {
-          final tile = find.widgetWithText(ExpansionTile, label);
-          expect(tile, findsOneWidget);
-          final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
-          await tester.scrollUntilVisible(cb, 120);
-          await tester.pumpAndSettle();
-          await tester.ensureVisible(cb);
-          await tester.tap(cb);
-          await tester.pumpAndSettle();
-        }
-
+        await _tapFleetCheckboxes(tester, [
+          'Fleet c1',
+          'Fleet c2',
+          'Fleet c3',
+        ]);
         final combineBtnFinder = find.widgetWithText(
           CtActionTextButton,
           'Combine',
@@ -482,24 +460,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final finderA = find.widgetWithText(ExpansionTile, 'Fleet sea_a');
-        final finderB = find.widgetWithText(ExpansionTile, 'Fleet sea_b');
-        expect(finderA, findsOneWidget);
-        expect(finderB, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: finderA, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: finderB, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isFalse);
+        await _tapFleetCheckboxes(tester, ['Fleet sea_a', 'Fleet sea_b']);
+        await _expectCombineEnabled(tester, enabled: false);
       },
     );
 
@@ -567,24 +529,8 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final seaFinder = find.widgetWithText(ExpansionTile, 'Fleet at_sea');
-        final portFinder = find.widgetWithText(ExpansionTile, 'Fleet in_port');
-        expect(seaFinder, findsOneWidget);
-        expect(portFinder, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: seaFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: portFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isFalse);
+        await _tapFleetCheckboxes(tester, ['Fleet at_sea', 'Fleet in_port']);
+        await _expectCombineEnabled(tester, enabled: false);
       },
     );
 
@@ -621,27 +567,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final homeFinder = find.widgetWithText(ExpansionTile, 'Home Fleet');
-        final sourceFinder = find.widgetWithText(
-          ExpansionTile,
+        await _tapFleetCheckboxes(tester, [
+          'Home Fleet',
           'Fleet sea_source',
-        );
-        expect(homeFinder, findsOneWidget);
-        expect(sourceFinder, findsOneWidget);
-
-        await tester.tap(
-          find.descendant(of: homeFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.descendant(of: sourceFinder, matching: find.byType(Checkbox)),
-        );
-        await tester.pumpAndSettle();
-
-        final combineBtn = tester.widget<CtActionTextButton>(
-          find.widgetWithText(CtActionTextButton, 'Combine'),
-        );
-        expect(combineBtn.enabled, isTrue);
+        ]);
+        await _expectCombineEnabled(tester, enabled: true);
 
         await tester.tap(find.widgetWithText(CtActionTextButton, 'Combine'));
         await tester.pumpAndSettle();
