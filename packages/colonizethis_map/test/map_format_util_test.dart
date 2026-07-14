@@ -2,6 +2,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 void main() {
   group('formatTileKey', () {
     test('returns x,y when tile key has four pipe-separated parts', () {
@@ -25,39 +27,57 @@ void main() {
   });
 
   group('greatPowerColorOverrideFromGame', () {
-    Game minimalGame({Map<String, List<int>>? greatPowerColorOverride}) {
-      return Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
-        minorNations: const [],
-        tribes: const [],
-        greatPowerColorOverride: greatPowerColorOverride,
-      );
-    }
-
     test('returns null when game has no override', () {
-      expect(greatPowerColorOverrideFromGame(minimalGame()), isNull);
       expect(
-        greatPowerColorOverrideFromGame(minimalGame(greatPowerColorOverride: null)),
+        greatPowerColorOverrideFromGame(
+          minimalGame(
+            id: 'g',
+            players: const [
+              Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+            ],
+          ),
+        ),
+        isNull,
+      );
+      expect(
+        greatPowerColorOverrideFromGame(
+          minimalGame(
+            id: 'g',
+            players: const [
+              Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+            ],
+            greatPowerColorOverride: null,
+          ),
+        ),
         isNull,
       );
     });
 
     test('returns null when override is empty', () {
       expect(
-        greatPowerColorOverrideFromGame(minimalGame(greatPowerColorOverride: {})),
+        greatPowerColorOverrideFromGame(
+          minimalGame(
+            id: 'g',
+            players: const [
+              Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+            ],
+            greatPowerColorOverride: {},
+          ),
+        ),
         isNull,
       );
     });
 
     test('converts list form to tuple form', () {
       final game = minimalGame(
-        greatPowerColorOverride: {'gp1': [1, 2, 3], 'gp2': [255, 0, 0]},
+        id: 'g',
+        players: const [
+          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+        ],
+        greatPowerColorOverride: {
+          'gp1': [1, 2, 3],
+          'gp2': [255, 0, 0],
+        },
       );
       final result = greatPowerColorOverrideFromGame(game);
       expect(result, isNotNull);

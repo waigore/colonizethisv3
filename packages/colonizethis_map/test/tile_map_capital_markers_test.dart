@@ -2,14 +2,12 @@ import 'package:colonizethis_map/src/tile_map_capital_markers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 Game _gameWithCapitals() {
-  return Game(
+  return minimalGame(
     id: 'test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(provinces: [], units: []),
-      newWorld: const RegionData(provinces: [], units: []),
-    ),
+    turnNumber: 1,
     players: const [
       Player(
         id: 'gp1',

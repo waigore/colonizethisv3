@@ -1,6 +1,5 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
 
@@ -14,7 +13,8 @@ void main() {
           height: 15,
           seed: 2,
         );
-        final (result, _) = TileMapGenerator(params: params).generate(
+        final (result, _) = runTileMapGeneration(
+          params: params,
           numProvinces: 1,
           numContinents: 1,
           regionId: 'oldWorld',
@@ -37,7 +37,8 @@ void main() {
         height: 25,
         seed: 3,
       );
-      final (result, _) = TileMapGenerator(params: params).generate(
+      final (result, _) = runTileMapGeneration(
+        params: params,
         numProvinces: 1,
         numContinents: 1,
         regionId: 'oldWorld',
@@ -62,7 +63,8 @@ void main() {
         height: 30,
         seed: 17,
       );
-      final (result, _) = TileMapGenerator(params: params).generate(
+      final (result, _) = runTileMapGeneration(
+        params: params,
         numProvinces: 2,
         numContinents: 1,
         regionId: 'newWorld',
@@ -90,7 +92,8 @@ void main() {
           seed: 42,
           seaFraction: 0.5,
         );
-        final (result, _) = TileMapGenerator(params: params).generate(
+        final (result, _) = runTileMapGeneration(
+          params: params,
           numProvinces: 2,
           numContinents: 1,
           regionId: 'newWorld',
@@ -134,7 +137,8 @@ void main() {
           seed: 99,
           seaFraction: 0.5,
         );
-        final (result, _) = TileMapGenerator(params: params).generate(
+        final (result, _) = runTileMapGeneration(
+          params: params,
           numProvinces: 2,
           numContinents: 1,
           regionId: 'oldWorld',
@@ -176,9 +180,13 @@ void main() {
     });
 
     test('without resourceRules leaves terrain and resource grids null', () {
-      final (result, _) = TileMapGenerator(
+      final (result, _) = runTileMapGeneration(
         params: genParams(width: 10, height: 10, seed: 1),
-      ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+        numProvinces: 1,
+        numContinents: 1,
+        regionId: 'r1',
+        omitResourceRules: true,
+      );
       expect(result.terrainGrid, isNull);
       expect(result.resourceGrid, isNull);
     });
@@ -187,9 +195,8 @@ void main() {
       final (
         result,
         _,
-      ) = TileMapGenerator(
+      ) = runTileMapGeneration(
         params: genParams(width: 25, height: 25, seed: 4),
-      ).generate(
         numProvinces: 1,
         numContinents: 1,
         regionId: 'oldWorld',
@@ -206,22 +213,20 @@ void main() {
     });
 
     test('jitter params produce terrain and resource grids', () {
-      final (result, _) =
-          TileMapGenerator(
-            params: genParams(
-              width: 24,
-              height: 24,
-              seed: 3,
-              jitterHomogeneityThreshold: 0.5,
-              jitterProbability: 0.5,
-              jitterMaxFraction: 0.2,
-            ),
-          ).generate(
-            numProvinces: 2,
-            numContinents: 1,
-            regionId: 'oldWorld',
-            resourceRules: ResourceRules.defaultRules,
-          );
+      final (result, _) = runTileMapGeneration(
+        params: genParams(
+          width: 24,
+          height: 24,
+          seed: 3,
+          jitterHomogeneityThreshold: 0.5,
+          jitterProbability: 0.5,
+          jitterMaxFraction: 0.2,
+        ),
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'oldWorld',
+        resourceRules: ResourceRules.defaultRules,
+      );
       expect(result.terrainGrid, isNotNull);
       expect(result.resourceGrid, isNotNull);
       expect(result.terrainGrid!.length, result.height);

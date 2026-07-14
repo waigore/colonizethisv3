@@ -54,7 +54,7 @@ void main() {
     test(
       'full generate seed-before-assignment still has edge-reachable sea',
       () {
-        final (result, _) = TileMapGenerator(
+        final (result, _) = runTileMapGeneration(
           params: genParams(
             width: 28,
             height: 22,
@@ -62,7 +62,10 @@ void main() {
             seaFraction: 0.58,
             seedBeforeAssignment: true,
           ),
-        ).generate(numProvinces: 4, numContinents: 2, regionId: 'r1');
+          numProvinces: 4,
+          numContinents: 2,
+          regionId: 'r1',
+        );
         final seaCells = <(int, int)>{};
         for (var y = 0; y < result.height; y++) {
           for (var x = 0; x < result.width; x++) {

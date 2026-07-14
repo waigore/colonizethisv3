@@ -2,6 +2,8 @@ import 'package:colonizethis_map/src/render/tile_map_visualization_shared.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 void main() {
   group('factionOwnershipColorMap', () {
     test('Portugal gets GDD green when no override', () {
@@ -62,13 +64,9 @@ void main() {
 
   group('initGameFactionColorData', () {
     test('returns great-power ids and full-game colour map', () {
-      final game = Game(
+      final game = minimalGame(
         id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(provinces: [], units: []),
-          newWorld: const RegionData(provinces: [], units: []),
-        ),
+        turnNumber: 1,
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
         minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
         tribes: const [Tribe(id: 't1', displayName: 'T1')],
@@ -81,13 +79,9 @@ void main() {
 
   group('factionOwnershipColorMapForGame', () {
     test('matches low-level map for all faction types', () {
-      final game = Game(
+      final game = minimalGame(
         id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(provinces: [], units: []),
-          newWorld: const RegionData(provinces: [], units: []),
-        ),
+        turnNumber: 1,
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
         minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
         tribes: const [Tribe(id: 't1', displayName: 'T1')],
@@ -105,15 +99,10 @@ void main() {
 
   group('factionOwnershipColorMapForOldWorld', () {
     test('excludes tribes', () {
-      final game = Game(
+      final game = minimalGame(
         id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(provinces: [], units: []),
-          newWorld: const RegionData(provinces: [], units: []),
-        ),
+        turnNumber: 1,
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
-        minorNations: const [],
         tribes: const [Tribe(id: 't1', displayName: 'T1')],
       );
       final map = factionOwnershipColorMapForOldWorld(game);
@@ -123,13 +112,9 @@ void main() {
   });
 
   group('factionOwnershipColorMapForRegion (Refs #3459 AC3)', () {
-    Game gameWithFactions() => Game(
+    Game gameWithFactions() => minimalGame(
       id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(provinces: [], units: []),
-        newWorld: const RegionData(provinces: [], units: []),
-      ),
+      turnNumber: 1,
       players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
       minorNations: const [MinorNation(id: 'm1', displayName: 'M1')],
       tribes: const [Tribe(id: 't1', displayName: 'T1')],
