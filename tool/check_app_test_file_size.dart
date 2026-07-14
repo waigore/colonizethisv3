@@ -21,8 +21,6 @@ const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/ct_region_map_widget_part2_test.dart',
   'app/test/e2e_helpers_barrel_part1_test.dart',
   'app/test/game_map_area_state_logic_part1_test.dart',
-  'app/test/support/military_units_panel_test_support.dart',
-  'app/test/trade_screen_issue_acceptance_criteria_e8_test.dart',
   'app/test/train_civilians_dialog_test.dart',
 ];
 

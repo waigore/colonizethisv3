@@ -1,50 +1,11 @@
 // Issue-AC-mapped widget tests for `TradeScreen` (`#2993` E8).
 // SPEC/ui/trade-screen.md.
 //
-// This file consolidates the trade-screen acceptance criteria listed
-// at the bottom of issue [#2993](https://github.com/waigore/colonizethisv3/issues/2993)
-// into a single E8 contract file. Each `group(...)` below maps 1:1 to
-// one issue AC so reviewers (and the `verify-github-issue` workflow)
-// can audit AC↔test coverage without cross-referencing slice files.
-// The per-slice tests (E1+E2+E3+E4 scaffold, E5a, E5b, E5c, E6, E7)
-// continue to exercise the broader SPEC AC table — this file's role
-// is to pin the canonical issue-level scenarios that map to the six
-// numbered ACs in the issue body.
-//
-// Issue AC → group mapping
-// ------------------------
-//  AC #1 — Left rail Trade icon opens TradeScreen full-screen dark
-//          feature surface (`E8 (a)` in the issue body subtask list).
-//  AC #2 — Bid toggle + quantity stepper stages a `TradeOrder` with
-//          the correct `type`, `quantity`, and (default) `priority`
-//          in `currentOrdersProvider` (`E8 (b)`). The interactive
-//          priority dropdown is deferred (SPEC/ui/trade-screen.md
-//          §Body — planned follow-up `#2993` E5b cont.) so the test
-//          pins `priority == marketRowDefaultPriority` (1).
-//  AC #3 — Per-commodity mutual exclusion: staging `Bid` on X then
-//          toggling X to `Offer` (or vice versa) leaves exactly one
-//          staged `TradeOrder` per `(player, commodityId)` (`E8 (c)`).
-//  AC #4 — Deal Book renders previous-turn filled and carry-forward
-//          rows in the correct per-side panel with correct
-//          quantities, prices, and treasury totals (`E8 (d)`).
-//  AC #5 — Cross-commodity cargo cap: with `tradeCargoCapacity == 10`
-//          attempting to stage bids totalling 12 across commodities
-//          (i) clamps the cargo indicator to 0, (ii) caps the
-//          offending stepper, and (iii) mounts the cargo-limit
-//          warning row (`E8 (e)`).
-//  AC #6 — Observe mode: when `shellPanelsNotDefined(ref) == true`
-//          the body short-circuits to `ObserveModeNotDefinedPanel`
-//          (the "Observe mode is indicated" path per
-//          SPEC/ui/trade-screen.md § Variant `c`), no bid/offer
-//          controls are mounted, and the screen still surfaces the
-//          dark `CtTopBar` chrome (`E8 (f)`).
-//
-// The harness mirrors the per-slice test patterns (`trade_screen_*`
-// files) so the tests share their proven `ProviderScope` + tall
-// surface layout. The file is intentionally self-contained — no
-// helpers are imported from sibling slice test files — so an audit
-// can read this single file from top to bottom and verify every
-// issue AC against its scenario without chasing imports.
+// Pins the six issue-body ACs (E8 a–f) in one contract file; per-slice
+// trade_screen_* suites cover the broader SPEC table. Groups map 1:1:
+// AC1 open TradeScreen; AC2 bid+qty (default priority); AC3 mutual
+// exclusion; AC4 Deal Book; AC5 cargo cap; AC6 observe variant.
+// Harness matches sibling trade_screen_* ProviderScope patterns.
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
