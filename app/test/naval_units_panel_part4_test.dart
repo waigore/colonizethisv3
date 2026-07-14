@@ -49,6 +49,45 @@ Future<void> _pumpNaval(
   return (bus, events);
 }
 
+Future<void> _pumpScopedHarness(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  required AppEventBus bus,
+  required MapTopology topology,
+  required String? locationScopeKey,
+  bool removeFleetOnNextFrame = false,
+}) async {
+  await tester.pumpWidget(
+    _ScopedNavalPanelHarness(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      topology: topology,
+      locationScopeKey: locationScopeKey,
+      removeFleetOnNextFrame: removeFleetOnNextFrame,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _emitScopedMove(
+  WidgetTester tester,
+  AppEventBus bus,
+  String humanId,
+) async {
+  bus.emit(
+    NavalMoveFleetRequestedEvent(
+      humanPlayerId: humanId,
+      moveOrder: const NavalMoveOrder(
+        fleetId: 'f1',
+        destinationSeaZoneId: 'oldWorld|s2',
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -180,37 +219,20 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_yes';
         final (bus, closeEvents) = _wireCloseCapture();
-
-        final scopedGame = buildNavalPanelSingleSeaFleetGame(
-          humanId: humanId,
-          gameId: 'g_scope_autoclose_yes',
-          displayName: 'Scoped AutoClose',
-        );
-        final topology = buildNavalTwoSeaZonesTopology();
-
-        await tester.pumpWidget(
-          _ScopedNavalPanelHarness(
-            game: scopedGame,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-            locationScopeKey: 'sea:oldWorld|s1',
+        await _pumpScopedHarness(
+          tester,
+          game: buildNavalPanelSingleSeaFleetGame(
+            humanId: humanId,
+            gameId: 'g_scope_autoclose_yes',
+            displayName: 'Scoped AutoClose',
           ),
+          humanPlayerId: humanId,
+          bus: bus,
+          topology: buildNavalTwoSeaZonesTopology(),
+          locationScopeKey: 'sea:oldWorld|s1',
         );
-        await tester.pumpAndSettle();
         expect(find.textContaining('Fleet f1'), findsOneWidget);
-
-        bus.emit(
-          NavalMoveFleetRequestedEvent(
-            humanPlayerId: humanId,
-            moveOrder: NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'oldWorld|s2',
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
+        await _emitScopedMove(tester, bus, humanId);
         expect(closeEvents.length, 1);
       },
     );
@@ -220,36 +242,19 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_no_full';
         final (bus, closeEvents) = _wireCloseCapture();
-
-        final gameFull = buildNavalPanelSingleSeaFleetGame(
-          humanId: humanId,
-          gameId: 'g_scope_autoclose_no_full',
-          displayName: 'Full List',
-        );
-        final topology = buildNavalTwoSeaZonesTopology();
-
-        await tester.pumpWidget(
-          _ScopedNavalPanelHarness(
-            game: gameFull,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: topology,
-            locationScopeKey: null,
+        await _pumpScopedHarness(
+          tester,
+          game: buildNavalPanelSingleSeaFleetGame(
+            humanId: humanId,
+            gameId: 'g_scope_autoclose_no_full',
+            displayName: 'Full List',
           ),
+          humanPlayerId: humanId,
+          bus: bus,
+          topology: buildNavalTwoSeaZonesTopology(),
+          locationScopeKey: null,
         );
-        await tester.pumpAndSettle();
-
-        bus.emit(
-          NavalMoveFleetRequestedEvent(
-            humanPlayerId: humanId,
-            moveOrder: NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'oldWorld|s2',
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
+        await _emitScopedMove(tester, bus, humanId);
         expect(closeEvents, isEmpty);
       },
     );
@@ -259,25 +264,19 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_scope_autoclose_no_external';
         final (bus, closeEvents) = _wireCloseCapture();
-
-        final gameScoped = buildNavalPanelSingleSeaFleetGame(
-          humanId: humanId,
-          gameId: 'g_scope_autoclose_no_external',
-          displayName: 'Scoped External',
-        );
-
-        await tester.pumpWidget(
-          _ScopedNavalPanelHarness(
-            game: gameScoped,
-            humanPlayerId: humanId,
-            bus: bus,
-            topology: const MapTopology(),
-            locationScopeKey: 'sea:oldWorld|s1',
-            removeFleetOnNextFrame: true,
+        await _pumpScopedHarness(
+          tester,
+          game: buildNavalPanelSingleSeaFleetGame(
+            humanId: humanId,
+            gameId: 'g_scope_autoclose_no_external',
+            displayName: 'Scoped External',
           ),
+          humanPlayerId: humanId,
+          bus: bus,
+          topology: const MapTopology(),
+          locationScopeKey: 'sea:oldWorld|s1',
+          removeFleetOnNextFrame: true,
         );
-        await tester.pumpAndSettle();
-
         expect(closeEvents, isEmpty);
       },
     );

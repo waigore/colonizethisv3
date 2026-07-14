@@ -492,21 +492,25 @@ void main() {
     );
 
     test('selectionAfterWorkAssignment clears stale selected marker tile', () {
-      final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
-        currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
-        assignedTileKey: 'oldWorld|p1|1|0',
+      expect(
+        GameMapAreaStateLogic.selectionAfterWorkAssignment(
+          currentSelectedCivilianTileKey: 'oldWorld|p1|0|0',
+          assignedTileKey: 'oldWorld|p1|1|0',
+        ),
+        isNull,
       );
-      expect(next, isNull);
     });
 
     test(
       'selectionAfterWorkAssignment preserves selection on assigned tile',
       () {
-        final next = GameMapAreaStateLogic.selectionAfterWorkAssignment(
-          currentSelectedCivilianTileKey: 'oldWorld|p1|1|0',
-          assignedTileKey: 'oldWorld|p1|1|0',
+        expect(
+          GameMapAreaStateLogic.selectionAfterWorkAssignment(
+            currentSelectedCivilianTileKey: 'oldWorld|p1|1|0',
+            assignedTileKey: 'oldWorld|p1|1|0',
+          ),
+          'oldWorld|p1|1|0',
         );
-        expect(next, 'oldWorld|p1|1|0');
       },
     );
 
@@ -525,14 +529,11 @@ void main() {
     });
 
     group('regionIndexFromWorldRegionId', () {
-      test('newWorld maps to index 1', () {
+      test('maps newWorld to 1 and other regions to 0', () {
         expect(
           GameMapAreaStateLogic.regionIndexFromWorldRegionId('newWorld'),
           1,
         );
-      });
-
-      test('any other region maps to index 0', () {
         expect(
           GameMapAreaStateLogic.regionIndexFromWorldRegionId('oldWorld'),
           0,
@@ -541,101 +542,94 @@ void main() {
     });
 
     group('translateWorkTargetTileKey', () {
-      test('explore preserves exact assigned tile key', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1|10|20',
-          workTarget: kWorkTargetExplore,
+      test('preserves tile keys for explore, move, and short keys', () {
+        const tile = 'oldWorld|p1|10|20';
+        expect(
+          GameMapAreaStateLogic.translateWorkTargetTileKey(
+            tileKey: tile,
+            workTarget: kWorkTargetExplore,
+          ),
+          tile,
         );
-        expect(translated, 'oldWorld|p1|10|20');
-      });
-
-      test('non-province-based work targets preserve tileKey', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1|10|20',
-          workTarget: 'move',
+        expect(
+          GameMapAreaStateLogic.translateWorkTargetTileKey(
+            tileKey: tile,
+            workTarget: 'move',
+          ),
+          tile,
         );
-        expect(translated, 'oldWorld|p1|10|20');
-      });
-
-      test('short tile keys are returned unchanged', () {
-        final translated = GameMapAreaStateLogic.translateWorkTargetTileKey(
-          tileKey: 'oldWorld|p1',
-          workTarget: kWorkTargetExplore,
+        expect(
+          GameMapAreaStateLogic.translateWorkTargetTileKey(
+            tileKey: 'oldWorld|p1',
+            workTarget: kWorkTargetExplore,
+          ),
+          'oldWorld|p1',
         );
-        expect(translated, 'oldWorld|p1');
       });
     });
 
     group('addHumanWorkOrder', () {
       test('appends work order under given humanPlayerId', () {
-        final orders = ct_models.Orders(
-          workOrdersByPlayerId: const {humanPlayerId: []},
-        );
-        final workOrder = ct_models.WorkOrder(
+        const work = ct_models.WorkOrder(
           unitId: 'u1',
           target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p1|0|0',
         );
-
         final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
+          orders: const ct_models.Orders(
+            workOrdersByPlayerId: {humanPlayerId: []},
+          ),
           humanPlayerId: humanPlayerId,
-          workOrder: workOrder,
+          workOrder: work,
         );
-
-        expect(updated.workOrdersByPlayerId[humanPlayerId], [workOrder]);
+        expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
       });
 
       test('replaces existing pending work order for same unit', () {
         const unitId = 'u1';
-        final orders = ct_models.Orders(
-          workOrdersByPlayerId: const {
-            humanPlayerId: [
-              ct_models.WorkOrder(
-                unitId: unitId,
-                target: kWorkTargetBuildImprovement,
-                targetTileKey: 'oldWorld|p1|0|0',
-              ),
-            ],
-          },
-        );
         const replacement = ct_models.WorkOrder(
           unitId: unitId,
           target: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|p1|1|0',
         );
-
         final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
+          orders: const ct_models.Orders(
+            workOrdersByPlayerId: {
+              humanPlayerId: [
+                ct_models.WorkOrder(
+                  unitId: unitId,
+                  target: kWorkTargetBuildImprovement,
+                  targetTileKey: 'oldWorld|p1|0|0',
+                ),
+              ],
+            },
+          ),
           humanPlayerId: humanPlayerId,
           workOrder: replacement,
         );
-
         expect(updated.workOrdersByPlayerId[humanPlayerId], [replacement]);
       });
 
       test('drops pending civilian move for same unit when assigning work', () {
-        const pendingMove = ct_models.MoveOrder(
-          unitId: 'u1',
-          destinationTileKey: 'oldWorld|p2|0|0',
-        );
-        final orders = ct_models.Orders(
-          moveOrdersByPlayerId: {
-            humanPlayerId: [pendingMove],
-          },
-        );
         const work = ct_models.WorkOrder(
           unitId: 'u1',
           target: kWorkTargetExplore,
           targetTileKey: 'oldWorld|p2|0|0',
         );
-
         final updated = GameMapAreaStateLogic.addHumanWorkOrder(
-          orders: orders,
+          orders: ct_models.Orders(
+            moveOrdersByPlayerId: {
+              humanPlayerId: const [
+                ct_models.MoveOrder(
+                  unitId: 'u1',
+                  destinationTileKey: 'oldWorld|p2|0|0',
+                ),
+              ],
+            },
+          ),
           humanPlayerId: humanPlayerId,
           workOrder: work,
         );
-
         expect(updated.moveOrdersByPlayerId[humanPlayerId], isEmpty);
         expect(updated.workOrdersByPlayerId[humanPlayerId], [work]);
       });
