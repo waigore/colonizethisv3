@@ -119,6 +119,36 @@ const List<_CanonicalHelper> _trackedCanonicalHelpers = <_CanonicalHelper>[
         'app/lib/features/game/widgets/train/train_unit_dialog_helper.dart',
     kind: 'train dialog helper',
   ),
+  _CanonicalHelper(
+    symbol: 'buildTitledDialogueChrome',
+    canonicalRelativePath:
+        'app/lib/features/game/widgets/dialogue/titled_dialogue_chrome.dart',
+    kind: 'dialogue chrome helper',
+  ),
+  _CanonicalHelper(
+    symbol: 'dialogueTristateAllDecided',
+    canonicalRelativePath:
+        'app/lib/features/game/widgets/dialogue/dialogue_tristate_decision_row.dart',
+    kind: 'dialogue tristate helper',
+  ),
+  _CanonicalHelper(
+    symbol: 'buildProvinceSeaZoneDetailOverlayForPanel',
+    canonicalRelativePath:
+        'app/lib/features/game/flame/overlays/province_detail_overlay_host_support_factory.dart',
+    kind: 'province detail host factory',
+  ),
+  _CanonicalHelper(
+    symbol: 'formatDraftMoveDestinationLine',
+    canonicalRelativePath:
+        'app/lib/features/game/widgets/panels/tree_builders/draft_move_destination_line.dart',
+    kind: 'draft-move destination line helper',
+  ),
+  _CanonicalHelper(
+    symbol: 'applyDiplomacyResumeDecisions',
+    canonicalRelativePath:
+        'app/lib/features/game/screens/game/diplomacy_resume_helper.dart',
+    kind: 'diplomacy resume helper',
+  ),
 ];
 
 /// Removed private helpers that were extracted to shared canonical helpers.

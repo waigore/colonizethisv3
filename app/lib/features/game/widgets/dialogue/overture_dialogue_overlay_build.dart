@@ -1,12 +1,7 @@
 part of 'overture_dialogue_overlay.dart';
 
 extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
-  bool get _allDecided {
-    for (final bool? value in _accepted) {
-      if (value == null) return false;
-    }
-    return true;
-  }
+  bool get _allDecided => dialogueTristateAllDecided(_accepted);
 
   String _offererDisplayName(String offererGpId) {
     for (final p in widget.game.players) {
