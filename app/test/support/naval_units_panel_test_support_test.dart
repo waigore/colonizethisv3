@@ -105,6 +105,49 @@ void main() {
     },
   );
 
+  test(
+    'buildNavalPanelCapitalMergePortFleetsGame can omit merge-port locate tiles',
+    () {
+      const humanId = 'gp_no_merge_tiles';
+      final game = buildNavalPanelCapitalMergePortFleetsGame(
+        humanId: humanId,
+        gameId: 'g_no_merge_tiles',
+        displayName: 'No Merge Tiles',
+        includeMergePortTileKeys: false,
+        fleets: [
+          Fleet(
+            id: 'mp1',
+            ownerId: humanId,
+            regionId: 'oldWorld',
+            inPortAtProvinceId: 'oldWorld|mergeport',
+            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+          ),
+        ],
+      );
+      final tiles = game.worldState.tileKeysByRegionAndProvince['oldWorld']!;
+      expect(tiles.containsKey('oldWorld|cap1'), isTrue);
+      expect(tiles.containsKey('oldWorld|mergeport'), isFalse);
+    },
+  );
+
+  test(
+    'buildNavalPanelCapitalHomeAndPeersGame can seed home mission',
+    () {
+      const humanId = 'gp_home_mission';
+      final game = buildNavalPanelCapitalHomeAndPeersGame(
+        humanId: humanId,
+        gameId: 'g_home_mission',
+        displayName: 'Home Mission',
+        homeMission: FleetMission.patrol,
+        peerFleets: const [],
+      );
+      final home = game.worldState.fleets.singleWhere(
+        (f) => f.id == homeFleetIdFor(humanId),
+      );
+      expect(home.mission, FleetMission.patrol);
+    },
+  );
+
   test('buildNavalPanelEmptyHumanGame has no fleets', () {
     final game = buildNavalPanelEmptyHumanGame();
     expect(game.worldState.fleets, isEmpty);

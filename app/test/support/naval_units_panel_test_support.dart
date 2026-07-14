@@ -241,6 +241,7 @@ Game buildNavalPanelCapitalHomeAndPeersGame({
   List<ShipInstance> homeShips = const [
     ShipInstance(id: 'home_1', typeId: 'carrack'),
   ],
+  FleetMission homeMission = FleetMission.none,
   String capitalLocalId = 'cap1',
   int? nextShipInstanceSeq,
 }) {
@@ -266,6 +267,7 @@ Game buildNavalPanelCapitalHomeAndPeersGame({
         regionId: 'oldWorld',
         inPortAtProvinceId: capProvince,
         ships: homeShips,
+        mission: homeMission,
       ),
       ...peerFleets,
     ],
@@ -277,6 +279,10 @@ Game buildNavalPanelCapitalHomeAndPeersGame({
 }
 
 /// Capital + merge-port provinces with fleets typically berthed at the merge port.
+///
+/// When [includeMergePortTileKeys] is false, only the capital province has a
+/// locate tile key so merge-port fleet rows are not wrapped in a locate
+/// [InkWell] (widget tests need taps to reach [ExpansionTile] / checkboxes).
 Game buildNavalPanelCapitalMergePortFleetsGame({
   required String humanId,
   required String gameId,
@@ -287,6 +293,7 @@ Game buildNavalPanelCapitalMergePortFleetsGame({
   String mergePortDisplayName = 'Merge Port',
   int? nextShipInstanceSeq,
   bool playerHasCapital = true,
+  bool includeMergePortTileKeys = true,
 }) {
   final capProvince = 'oldWorld|$capitalLocalId';
   final mergePort = 'oldWorld|$mergePortLocalId';
@@ -314,7 +321,7 @@ Game buildNavalPanelCapitalMergePortFleetsGame({
     fleets: fleets,
     tileKeysByProvince: {
       if (playerHasCapital) capProvince: ['$capProvince|0|0'],
-      mergePort: ['$mergePort|0|0'],
+      if (includeMergePortTileKeys) mergePort: ['$mergePort|0|0'],
     },
     nextShipInstanceSeq: nextShipInstanceSeq,
   );
