@@ -1,24 +1,14 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/game_screen_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -45,39 +35,17 @@ void main() {
     required Game game,
     required InitGameMapViewData? mapViewData,
     required Set<String> introShownIds,
-  }) {
-    return ProviderScope(
-      overrides: [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => mapViewData),
-        gameIdsWithIntroShownProvider.overrideWith(
-          () => GameIdsWithIntroShownNotifier(introShownIds),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-      ],
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          theme: AppThemes.colonial,
-          home: MediaQuery(
-            data: MediaQueryData(size: Size(width, height)),
-            child: const GameScreen(),
-          ),
-        ),
-      ),
-    );
-  }
+  }) => buildGameScreenHost(
+    gamesBox: gamesBox,
+    game: game,
+    mapViewData: mapViewData,
+    width: width,
+    height: height,
+    navigatorKey: appNavigatorKey,
+    introShownIds: introShownIds,
+    includeHomeFleetCargo: false,
+    includeTreasury: false,
+  );
 
   testWidgets('GameScreen shows VictoryOverlay when game.victory is set', (
     WidgetTester tester,

@@ -18,32 +18,23 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart'
     show GameScreen, kPlayerTurnFeedToggleButtonKey;
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/home_fleet_cargo_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/providers/treasury_summary_provider.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'support/map_view_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
+import 'support/game_screen_test_support.dart';
 
 const Size _kWideViewport = Size(1024, 768);
 
@@ -78,57 +69,18 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  gameShellOverrides({
-    required Game game,
-    required InitGameMapViewData? mapViewData,
-  }) => [
-    gamesBoxProvider.overrideWith((ref) => gamesBox),
-    gameServiceProvider.overrideWith(
-      (ref) => GameService(gamesBox, GameSaveAdapter()),
-    ),
-    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    currentOrdersProvider.overrideWith(
-      () => CurrentOrdersNotifier(const Orders()),
-    ),
-    mapViewDataProvider.overrideWith((ref) => mapViewData),
-    gameIdsWithIntroShownProvider.overrideWith(
-      () => GameIdsWithIntroShownNotifier({game.id}),
-    ),
-    appEventBusProvider.overrideWith((ref) {
-      final bus = AppEventBus.create();
-      ref.onDispose(bus.dispose);
-      return bus;
-    }),
-    homeFleetCargoSummaryProvider.overrideWith(
-      (ref) => const HomeFleetCargoSummary(used: 0, capacity: 0),
-    ),
-    treasurySummaryProvider.overrideWith(
-      (ref) => const TreasurySummary(treasury: 12345),
-    ),
-  ];
-
-  Future<void> pumpGameScreen(
-    WidgetTester tester, {
-    required Size size,
-  }) async {
+  Future<void> pumpGameScreen(WidgetTester tester, {required Size size}) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(size);
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: gameShellOverrides(
-          game: baseGame,
-          mapViewData: lightMapViewData,
-        ),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            theme: AppThemes.editorialMonocle,
-            home: MediaQuery(
-              data: MediaQueryData(size: size),
-              child: const GameScreen(),
-            ),
-          ),
-        ),
+      buildGameScreenHost(
+        gamesBox: gamesBox,
+        game: baseGame,
+        mapViewData: lightMapViewData,
+        width: size.width,
+        height: size.height,
+        theme: AppThemes.editorialMonocle,
+        navigatorKey: appNavigatorKey,
       ),
     );
     await tester.pump();

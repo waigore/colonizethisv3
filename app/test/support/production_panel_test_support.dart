@@ -1,3 +1,5 @@
+// Shared ProductionPanel players, wrappers, and host (Refs #4013).
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
