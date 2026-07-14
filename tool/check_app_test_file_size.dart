@@ -20,8 +20,6 @@ const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/ct_region_map_widget_part1_test.dart',
   'app/test/ct_region_map_widget_part2_test.dart',
   'app/test/e2e_helpers_barrel_part1_test.dart',
-  'app/test/game_map_area_state_logic_part1_test.dart',
-  'app/test/train_civilians_dialog_test.dart',
 ];
 
 int runCheckAppTestFileSize(
