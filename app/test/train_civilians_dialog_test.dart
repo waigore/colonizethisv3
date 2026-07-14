@@ -176,128 +176,131 @@ void main() {
   }
 
   group('TrainCiviliansDialog', () {
-    testWidgets('AC: Dialog shows title Train Civilians', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, game: game);
-
-      expect(find.text('Train Civilians'), findsOneWidget);
-    });
-
-    testWidgets('AC: Resource bar shows Treasury and Paper', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, game: game);
-
-      expect(find.textContaining('Treasury:'), findsOneWidget);
-      expect(find.textContaining('Paper:'), findsOneWidget);
-    });
-
-    testWidgets(
-      'AC: Treasury renders with £ + comma grouping (£5,000), not 5k',
-      (WidgetTester tester) async {
-        final richGame = gameWithResources(treasury: 5000, paper: 12);
-        await pumpDialog(tester, game: richGame);
-
-        expect(find.textContaining('£5,000'), findsOneWidget);
-        expect(find.textContaining('5k'), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'AC: Unlocked cost line reads "£1,000 + 2 paper" (lowercase paper)',
-      (WidgetTester tester) async {
-        final richGame = gameWithResources(treasury: 10000, paper: 100);
-        await pumpDialog(tester, game: richGame);
-
-        // Builder costs 1,000 treasury + 2 paper (mockup UNIT40001).
-        expect(find.textContaining('£1,000 + 2 paper'), findsWidgets);
-      },
-    );
-
-    testWidgets(
-      'AC: Both-resource deficit reads "Treasury low, Paper low" (comma-join)',
-      (WidgetTester tester) async {
-        // Treasury 1,500 + paper 3: two queued Builders exceed both resources.
-        await pumpDialog(tester, game: gameWithCapital(treasury: 1500, paper: 3), currentOrders: builderOrders(2));
-        expect(find.text('Treasury low, Paper low'), findsOneWidget);
-        expect(find.textContaining(' and '), findsNothing);
-      },
-    );
-
-    testWidgets('AC: All 6 civilian unit types are listed', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, game: game);
-
-      for (final econ in CivilianEconomyCatalog.all) {
-        // Locked rows prefix the name with the 🔒 glyph (#3568 parity), so a
-        // row renders either the bare name or the lock-prefixed name.
-        final bare = find.text(econ.id);
-        final locked = find.text('\u{1F512} ${econ.id}');
-        expect(
-          bare.evaluate().isNotEmpty || locked.evaluate().isNotEmpty,
-          isTrue,
-          reason:
-              '${econ.id} row should render (bare or 🔒-prefixed if locked)',
+    // Table-registered chrome pins (isolated testWidgets per case — Refs #4021).
+    for (final case_
+        in <
+          ({
+            String name,
+            Game Function() game,
+            Orders Function() orders,
+            void Function(WidgetTester tester) expectUi,
+          })
+        >[
+          (
+            name: 'Dialog shows title Train Civilians',
+            game: () => game,
+            orders: () => const Orders(),
+            expectUi: (tester) =>
+                expect(find.text('Train Civilians'), findsOneWidget),
+          ),
+          (
+            name: 'Resource bar shows Treasury and Paper',
+            game: () => game,
+            orders: () => const Orders(),
+            expectUi: (tester) {
+              expect(find.textContaining('Treasury:'), findsOneWidget);
+              expect(find.textContaining('Paper:'), findsOneWidget);
+            },
+          ),
+          (
+            name: 'Treasury renders with £ + comma grouping (£5,000), not 5k',
+            game: () => gameWithResources(treasury: 5000, paper: 12),
+            orders: () => const Orders(),
+            expectUi: (tester) {
+              expect(find.textContaining('£5,000'), findsOneWidget);
+              expect(find.textContaining('5k'), findsNothing);
+            },
+          ),
+          (
+            name:
+                'Unlocked cost line reads "£1,000 + 2 paper" (lowercase paper)',
+            game: () => gameWithResources(treasury: 10000, paper: 100),
+            orders: () => const Orders(),
+            expectUi: (tester) =>
+                expect(find.textContaining('£1,000 + 2 paper'), findsWidgets),
+          ),
+          (
+            name:
+                'Both-resource deficit reads "Treasury low, Paper low" (comma-join)',
+            game: () => gameWithCapital(treasury: 1500, paper: 3),
+            orders: () => builderOrders(2),
+            expectUi: (tester) {
+              expect(find.text('Treasury low, Paper low'), findsOneWidget);
+              expect(find.textContaining(' and '), findsNothing);
+            },
+          ),
+          (
+            name: 'All 6 civilian unit types are listed',
+            game: () => game,
+            orders: () => const Orders(),
+            expectUi: (tester) {
+              for (final econ in CivilianEconomyCatalog.all) {
+                final bare = find.text(econ.id);
+                final locked = find.text('\u{1F512} ${econ.id}');
+                expect(
+                  bare.evaluate().isNotEmpty || locked.evaluate().isNotEmpty,
+                  isTrue,
+                  reason:
+                      '${econ.id} row should render (bare or 🔒-prefixed if locked)',
+                );
+              }
+            },
+          ),
+          (
+            name: 'Stepper starts at 0 for each unit type',
+            game: () => game,
+            orders: () => const Orders(),
+            expectUi: (tester) {
+              expect(find.text('0'), findsWidgets);
+              expect(
+                find.text('+'),
+                findsNWidgets(CivilianEconomyCatalog.all.length),
+              );
+              expect(
+                find.text('−'),
+                findsNWidgets(CivilianEconomyCatalog.all.length),
+              );
+            },
+          ),
+          (
+            name:
+                'Steppers reflect existing train-at-capital civilian build orders',
+            game: () => gameWithResources(treasury: 10000, paper: 100),
+            orders: () => builderOrders(2),
+            expectUi: (tester) => expect(find.text('2'), findsWidgets),
+          ),
+          (
+            name: 'Locked units show 🔒 name prefix and tech requirement',
+            game: () => gameWithNoTech(),
+            orders: () => const Orders(),
+            expectUi: (tester) {
+              expect(find.textContaining('\u{1F512}'), findsWidgets);
+              expect(find.textContaining('Requires:'), findsNWidgets(2));
+            },
+          ),
+        ]) {
+      testWidgets('AC: ${case_.name}', (WidgetTester tester) async {
+        await pumpDialog(
+          tester,
+          game: case_.game(),
+          currentOrders: case_.orders(),
         );
-      }
-    });
+        case_.expectUi(tester);
+      });
+    }
 
-    testWidgets('AC: Stepper starts at 0 for each unit type', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, game: game);
-
-      final plusButtons = find.text('+');
-      final minusButtons = find.text('−');
-      // All steppers start at 0
-      expect(find.text('0'), findsWidgets);
-      expect(plusButtons, findsNWidgets(CivilianEconomyCatalog.all.length));
-      expect(minusButtons, findsNWidgets(CivilianEconomyCatalog.all.length));
-    });
-
-    testWidgets(
-      'AC: Steppers reflect existing train-at-capital civilian build orders',
-      (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithResources(treasury: 10000, paper: 100), currentOrders: builderOrders(2));
-        expect(find.text('2'), findsWidgets);
-      },
-    );
-
-    testWidgets('AC: Tapping + increments the count', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(
-        tester,
-        game: gameWithResources(treasury: 10000, paper: 100),
-      );
-      await tapStepper(tester, '+');
-      expect(find.text('1'), findsWidgets);
-    });
-
-    testWidgets('AC: Tapping - decrements the count', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(
-        tester,
-        game: gameWithResources(treasury: 10000, paper: 100),
-      );
+    testWidgets('AC: stepper interactions', (WidgetTester tester) async {
+      final rich = gameWithResources(treasury: 10000, paper: 100);
+      await pumpDialog(tester, game: rich);
       await tapStepper(tester, '+');
       expect(find.text('1'), findsWidgets);
       await tapStepper(tester, '−');
       expect(find.text('1'), findsNothing);
-    });
 
-    testWidgets('AC: Cannot decrement below 0', (WidgetTester tester) async {
       await pumpDialog(tester, game: game);
       await tapStepper(tester, '−');
       expect(find.text('0'), findsWidgets);
-    });
 
-    testWidgets('AC: Deficit hint shows when resources insufficient', (
-      WidgetTester tester,
-    ) async {
       // Builder costs 1000 treasury + 2 paper; 1500 treasury allows 1 not 2.
       await pumpDialog(
         tester,
@@ -310,32 +313,15 @@ void main() {
       expect(find.text('1'), findsWidgets);
       await tapStepper(tester, '+', index: builderIndex);
       expect(find.text('1'), findsWidgets);
-    });
 
-    testWidgets('AC: Locked units show 🔒 name prefix and tech requirement', (
-      WidgetTester tester,
-    ) async {
-      await pumpDialog(tester, game: gameWithNoTech());
-      expect(find.textContaining('\u{1F512}'), findsWidgets);
-      expect(find.textContaining('Requires:'), findsNWidgets(2));
-    });
-
-    testWidgets('AC: Locked units have disabled steppers', (
-      WidgetTester tester,
-    ) async {
       await pumpDialog(tester, game: gameWithNoTech());
       final merchantIndex = CivilianEconomyCatalog.all.indexWhere(
         (e) => e.id == kUnitTypeMerchant,
       );
       await tapStepper(tester, '+', index: merchantIndex);
       expect(find.text('0'), findsWidgets);
-    });
 
-    testWidgets('AC: Reset clears all steppers', (WidgetTester tester) async {
-      await pumpDialog(
-        tester,
-        game: gameWithResources(treasury: 10000, paper: 100),
-      );
+      await pumpDialog(tester, game: rich);
       await tapStepper(tester, '+');
       await tapStepper(tester, '+', index: 1);
       await tester.tap(find.text('Reset'));
@@ -454,7 +440,11 @@ void main() {
       'AC (positive): resource bar shows remaining / total per resource',
       (WidgetTester tester) async {
         // Treasury 5000, paper 12; 2 Builders queued (£1,000 + 2 paper each).
-        await pumpDialog(tester, game: gameWithCapital(treasury: 5000, paper: 12), currentOrders: builderOrders(2));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 5000, paper: 12),
+          currentOrders: builderOrders(2),
+        );
 
         expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
         expect(find.textContaining('8 / 12'), findsOneWidget);
@@ -464,7 +454,11 @@ void main() {
     testWidgets(
       'AC (positive): Reset restores remaining == total in resource bar',
       (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithCapital(treasury: 5000, paper: 12), currentOrders: builderOrders(2));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 5000, paper: 12),
+          currentOrders: builderOrders(2),
+        );
 
         await tester.ensureVisible(find.text('Reset'));
         await tester.pumpAndSettle();
@@ -481,7 +475,11 @@ void main() {
       (WidgetTester tester) async {
         // Treasury 1500, paper 5, 1 Builder queued → remaining treasury 500
         // (< 1000 Builder cost → red) and remaining paper 3 (>= 2 → normal).
-        await pumpDialog(tester, game: gameWithCapital(treasury: 1500, paper: 5), currentOrders: builderOrders(1));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 1500, paper: 5),
+          currentOrders: builderOrders(1),
+        );
 
         final spans = costLineSpans(tester, '£1,000 + 2 paper');
         final treasurySpan = spans.first as TextSpan;
@@ -494,7 +492,10 @@ void main() {
     testWidgets(
       'AC (negative): sufficient resources leave cost segments uncoloured',
       (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithCapital(treasury: 10000, paper: 100));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 10000, paper: 100),
+        );
 
         final spans = costLineSpans(tester, '£1,000 + 2 paper');
         for (final span in spans) {
@@ -509,7 +510,11 @@ void main() {
     testWidgets(
       'AC (positive): disabled [+] uses danger variant when unaffordable',
       (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithCapital(treasury: 1500, paper: 5), currentOrders: builderOrders(1));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 1500, paper: 5),
+          currentOrders: builderOrders(1),
+        );
 
         // At least one unlocked row can no longer afford +1 → danger [+].
         expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
@@ -519,7 +524,10 @@ void main() {
     testWidgets(
       'AC (negative): affordable rows never use the danger [+] variant',
       (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithCapital(treasury: 100000, paper: 1000));
+        await pumpDialog(
+          tester,
+          game: gameWithCapital(treasury: 100000, paper: 1000),
+        );
 
         expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
       },
