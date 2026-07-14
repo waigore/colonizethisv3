@@ -108,6 +108,17 @@ Future<void> _switchToDealBook(WidgetTester tester) async {
   await tester.pump();
 }
 
+/// Shared Market pump for E8 AC#2–#6 (Refs #4021 densify).
+Future<ProviderContainer> _pumpFilledMarket(WidgetTester tester) {
+  return pumpTradeScreenWithContainer(
+    tester,
+    game: buildTradeTestGame(
+      id: 'test_trade_screen_e8',
+      stockpile: tradeableStockpileFilled(99),
+    ),
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -302,13 +313,7 @@ void main() {
         'TradeOrder(type=bid, quantity=5, priority=1) for timber', (
       tester,
     ) async {
-      final ProviderContainer container = await pumpTradeScreenWithContainer(
-        tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e8',
-          stockpile: tradeableStockpileFilled(99),
-        ),
-      );
+      final ProviderContainer container = await _pumpFilledMarket(tester);
       expect(_stagedOrder(container, _timber), isNull);
 
       await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
@@ -341,13 +346,7 @@ void main() {
         'priority=1) with no quantity carry-over from an unstaged row', (
       tester,
     ) async {
-      final ProviderContainer container = await pumpTradeScreenWithContainer(
-        tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e8',
-          stockpile: tradeableStockpileFilled(99),
-        ),
-      );
+      final ProviderContainer container = await _pumpFilledMarket(tester);
 
       await tester.tap(find.byKey(TradeScreen.marketRowOfferChipKey(_fabric)));
       await tester.pump();
@@ -368,13 +367,7 @@ void main() {
       'single TradeOrder(type=offer, quantity=3) — at most one staged '
       'TradeOrder per (player, commodityId)',
       (tester) async {
-        final ProviderContainer container = await pumpTradeScreenWithContainer(
-          tester,
-          game: buildTradeTestGame(
-            id: 'test_trade_screen_e8',
-            stockpile: tradeableStockpileFilled(99),
-          ),
-        );
+        final ProviderContainer container = await _pumpFilledMarket(tester);
 
         // Stage Bid + increment to qty 3.
         await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
@@ -426,13 +419,7 @@ void main() {
       'staging Bid on timber AND Offer on fabric keeps both staged '
       '(tradeOrdersByPlayerId[player.id].length == 2)',
       (tester) async {
-        final ProviderContainer container = await pumpTradeScreenWithContainer(
-          tester,
-          game: buildTradeTestGame(
-            id: 'test_trade_screen_e8',
-            stockpile: tradeableStockpileFilled(99),
-          ),
-        );
+        final ProviderContainer container = await _pumpFilledMarket(tester);
 
         await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
         await tester.pump();

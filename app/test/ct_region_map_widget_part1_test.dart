@@ -28,6 +28,33 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
+void _expectLandFog({
+  required CtMapVisibilityMode visibilityMode,
+  required TerrainType terrain,
+  required bool landBase,
+  required bool featureOverlay,
+  String? reason,
+}) {
+  expect(
+    shouldApplyFogToLandBase(
+      visibilityMode: visibilityMode,
+      tileVisibility: TileVisibility.fogged,
+      terrain: terrain,
+    ),
+    landBase,
+    reason: reason,
+  );
+  expect(
+    shouldApplyFogToFeatureOverlay(
+      visibilityMode: visibilityMode,
+      tileVisibility: TileVisibility.fogged,
+      terrain: terrain,
+    ),
+    featureOverlay,
+    reason: reason,
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -38,84 +65,46 @@ void main() {
       'land-base fog application skips feature terrains to prevent double darkening',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
-
-        expect(
-          shouldApplyFogToLandBase(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.plains,
-          ),
-          isTrue,
-          reason: 'Fogged plains should darken in land-base pass',
+        const constrained = CtMapVisibilityMode.playerConstrained;
+        _expectLandFog(
+          visibilityMode: constrained,
+          terrain: TerrainType.plains,
+          landBase: true,
+          featureOverlay: false,
+          reason: 'Fogged plains darken in land-base only',
         );
-        expect(
-          shouldApplyFogToLandBase(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.desert,
-          ),
-          isTrue,
-          reason: 'Fogged desert should darken in land-base pass',
+        _expectLandFog(
+          visibilityMode: constrained,
+          terrain: TerrainType.desert,
+          landBase: true,
+          featureOverlay: false,
+          reason: 'Fogged desert darkens in land-base only',
         );
-        expect(
-          shouldApplyFogToLandBase(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.swamp,
-          ),
-          isFalse,
+        _expectLandFog(
+          visibilityMode: constrained,
+          terrain: TerrainType.swamp,
+          landBase: false,
+          featureOverlay: true,
           reason: 'Fogged feature tiles darken in overlay pass only',
         );
-        expect(
-          shouldApplyFogToFeatureOverlay(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.swamp,
-          ),
-          isTrue,
-          reason: 'Fogged feature tiles should darken in overlay pass',
+        _expectLandFog(
+          visibilityMode: constrained,
+          terrain: TerrainType.hardwoodForest,
+          landBase: false,
+          featureOverlay: true,
         );
-        expect(
-          shouldApplyFogToLandBase(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.hardwoodForest,
-          ),
-          isFalse,
-        );
-        expect(
-          shouldApplyFogToFeatureOverlay(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.hardwoodForest,
-          ),
-          isTrue,
-        );
-        expect(
-          shouldApplyFogToFeatureOverlay(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.plains,
-          ),
-          isFalse,
-          reason: 'Fogged non-feature tiles darken in land-base pass only',
-        );
-        expect(
-          shouldApplyFogToLandBase(
-            visibilityMode: CtMapVisibilityMode.full,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.plains,
-          ),
-          isFalse,
+        _expectLandFog(
+          visibilityMode: CtMapVisibilityMode.full,
+          terrain: TerrainType.plains,
+          landBase: false,
+          featureOverlay: false,
           reason: 'Full visibility mode must not apply fog',
         );
-        expect(
-          shouldApplyFogToFeatureOverlay(
-            visibilityMode: CtMapVisibilityMode.full,
-            tileVisibility: TileVisibility.fogged,
-            terrain: TerrainType.swamp,
-          ),
-          isFalse,
+        _expectLandFog(
+          visibilityMode: CtMapVisibilityMode.full,
+          terrain: TerrainType.swamp,
+          landBase: false,
+          featureOverlay: false,
           reason: 'Full visibility mode must not apply fog',
         );
       },
@@ -126,45 +115,52 @@ void main() {
       'fogged interior plains variants apply fog exactly once on overlay pass',
       (WidgetTester tester) async {
         await tester.pumpWidget(const SizedBox.shrink());
-
-        expect(
-          shouldApplyFogToInteriorPlainsVariantBase(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-          ),
-          isFalse,
-          reason:
-              'Variant base must remain un-fogged to avoid double darkening',
-        );
-        expect(
-          shouldApplyFogToInteriorPlainsVariantOverlay(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.fogged,
-          ),
-          isTrue,
-          reason: 'Variant overlay is the single fog attenuation pass',
-        );
-        expect(
-          shouldApplyFogToInteriorPlainsVariantBase(
-            visibilityMode: CtMapVisibilityMode.full,
-            tileVisibility: TileVisibility.fogged,
-          ),
-          isFalse,
-        );
-        expect(
-          shouldApplyFogToInteriorPlainsVariantOverlay(
-            visibilityMode: CtMapVisibilityMode.full,
-            tileVisibility: TileVisibility.fogged,
-          ),
-          isFalse,
-        );
-        expect(
-          shouldApplyFogToInteriorPlainsVariantOverlay(
-            visibilityMode: CtMapVisibilityMode.playerConstrained,
-            tileVisibility: TileVisibility.visible,
-          ),
-          isFalse,
-        );
+        for (final case_
+            in <
+              ({
+                CtMapVisibilityMode mode,
+                TileVisibility visibility,
+                bool base,
+                bool overlay,
+              })
+            >[
+              (
+                mode: CtMapVisibilityMode.playerConstrained,
+                visibility: TileVisibility.fogged,
+                base: false,
+                overlay: true,
+              ),
+              (
+                mode: CtMapVisibilityMode.full,
+                visibility: TileVisibility.fogged,
+                base: false,
+                overlay: false,
+              ),
+              (
+                mode: CtMapVisibilityMode.playerConstrained,
+                visibility: TileVisibility.visible,
+                base: false,
+                overlay: false,
+              ),
+            ]) {
+          expect(
+            shouldApplyFogToInteriorPlainsVariantBase(
+              visibilityMode: case_.mode,
+              tileVisibility: case_.visibility,
+            ),
+            case_.base,
+            reason:
+                'Variant base must remain un-fogged to avoid double darkening',
+          );
+          expect(
+            shouldApplyFogToInteriorPlainsVariantOverlay(
+              visibilityMode: case_.mode,
+              tileVisibility: case_.visibility,
+            ),
+            case_.overlay,
+            reason: 'Variant overlay is the single fog attenuation pass',
+          );
+        }
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );
