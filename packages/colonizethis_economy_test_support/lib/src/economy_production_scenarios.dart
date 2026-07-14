@@ -1,32 +1,23 @@
 // dart format off
 // Table-driven resolveProduction / effectiveLabourForWorkers scenarios (Refs #3856, #3979).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'core_economy_test_support.dart';
 import 'economy_production_expectations.dart';
-
 /// One row for [resolveProduction] tables (Refs #3979).
 typedef ResolveProductionScenario = ({String label, ResolveProductionPins pins, String? refs});
-
 void runResolveProductionScenario(ResolveProductionScenario scenario) {
   runResolveProductionExpectation(scenario.pins);
 }
-
 /// One row for production [effectiveLabourForWorkers] tables (Refs #3979).
 typedef ProductionEffectiveLabourScenario = ({String label, ProductionEffectiveLabourPins pins, String? refs});
-
 void runProductionEffectiveLabourScenario(ProductionEffectiveLabourScenario scenario) {
   runProductionEffectiveLabourExpectation(scenario.pins);
 }
-
 /// Canonical scenarios for [resolveProduction].
 List<ResolveProductionScenario> resolveProductionScenarios() => [..._resolveProductionRecipeScenarios(), ..._resolveProductionEdgeScenarios()];
-
 /// Canonical scenarios for [effectiveLabourForWorkers].
 List<ProductionEffectiveLabourScenario> effectiveLabourForWorkersScenarios() => [..._effectiveLabourForWorkersScenarios()];
-
 List<ResolveProductionScenario> _resolveProductionRecipeScenarios() => [
   resolveProductionScenario(
     label: 'consumes inputs and produces output per recipe',
@@ -64,7 +55,6 @@ List<ResolveProductionScenario> _resolveProductionRecipeScenarios() => [
     ),
   ),
 ];
-
 List<ResolveProductionScenario> _resolveProductionEdgeScenarios() => [
   resolveProductionScenario(
     label: 'unknown recipe id is ignored',
@@ -76,7 +66,6 @@ List<ResolveProductionScenario> _resolveProductionEdgeScenarios() => [
   ),
   resolveProductionScenario(label: 'empty assignments leave stockpile unchanged', pins: (stockpileDeltas: {'grain': 5}, workers: const WorkerPool(peasants: 5), idleLabour: WorkerIdleCounts(peasants: 5), assignments: const [], expectedQuantities: {'grain': 5}, expectedWorkers: null)),
 ];
-
 List<ProductionEffectiveLabourScenario> _effectiveLabourForWorkersScenarios() => [
   productionEffectiveLabourScenario(label: 'peasants contribute 1 labour each when fed', pins: (workers: const WorkerPool(peasants: 10), stockpileDeltas: {'grain': 10}, expectedLabour: 10)),
   productionEffectiveLabourScenario(label: 'trained workers capped by luxury after food', pins: (workers: const WorkerPool(peasants: 2, apprentices: 3, journeymen: 0, masters: 0), stockpileDeltas: {'grain': 8, 'refinedSugar': 1}, expectedLabour: 6)),

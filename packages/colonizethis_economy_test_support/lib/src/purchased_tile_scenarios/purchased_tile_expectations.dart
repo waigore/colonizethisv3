@@ -1,15 +1,12 @@
 // dart format off
 // Compact purchased-tile index and riches assertions (Refs #3939 phase 3 slice 17).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Data-driven expectations for [PurchasedTileIndexFromGameScenario] rows.
 class PurchasedTileIndexExpectation {
   const PurchasedTileIndexExpectation({this.length, this.isEmpty, this.isNotEmpty, this.attributionForTileKeyNull, this.attributionForTileKeysNull, this.attributionsEmpty = false, this.singleAttribution, this.multiAttributions, this.attributionsTileKeysContainAll, this.deterministicIndexRerun = false, this.deterministicRerunTileKey});
-
   final int? length;
   final bool? isEmpty;
   final bool? isNotEmpty;
@@ -22,16 +19,13 @@ class PurchasedTileIndexExpectation {
   final bool deterministicIndexRerun;
   final String? deterministicRerunTileKey;
 }
-
 class PurchasedTileAttributionExpectation {
   const PurchasedTileAttributionExpectation({required this.tileKey, this.owningGpId, this.sourceFactionId, this.provinceId});
-
   final String tileKey;
   final String? owningGpId;
   final String? sourceFactionId;
   final String? provinceId;
 }
-
 void assertPurchasedTileIndexExpectation(PurchasedTileIndex index, PurchasedTileIndexExpectation expectation, {Game? gameForDeterminismRerun}) {
   if (expectation.length != null) {
     expect(index.length, expectation.length);
@@ -97,11 +91,9 @@ void assertPurchasedTileIndexExpectation(PurchasedTileIndex index, PurchasedTile
     }
   }
 }
-
 /// Data-driven expectations for [PurchasedTileRichesScenario] rows.
 class PurchasedTileRichesExpectation {
   const PurchasedTileRichesExpectation({this.indexLength, this.creditsLength, this.creditsEmpty = false, this.treasuryCreditEmpty = false, this.equalsEmpty = false, this.isEmpty, this.singleCredit, this.treasuryCreditByGpId, this.treasuryCreditCloseTo, this.totalTreasuryCredit, this.totalTreasuryCreditCloseTo, this.deterministicRichesRerun = false});
-
   final int? indexLength;
   final int? creditsLength;
   final bool creditsEmpty;
@@ -115,10 +107,8 @@ class PurchasedTileRichesExpectation {
   final int? totalTreasuryCreditCloseTo;
   final bool deterministicRichesRerun;
 }
-
 class PurchasedTileRichesCreditExpectation {
   const PurchasedTileRichesCreditExpectation({this.tileKey, this.owningGpId, this.sourceFactionId, this.commodityId, this.units, this.treasuryDelta, this.treasuryDeltaCloseTo});
-
   final String? tileKey;
   final String? owningGpId;
   final String? sourceFactionId;
@@ -127,7 +117,6 @@ class PurchasedTileRichesCreditExpectation {
   final int? treasuryDelta;
   final int? treasuryDeltaCloseTo;
 }
-
 void assertPurchasedTileRichesExpectation(PurchasedTileRichesResult result, PurchasedTileIndex index, Game game, PurchasedTileRichesExpectation expectation, {Map<String, TileMapResult> tileMapByRegion = const {}, double richesCashMultiplier = 1.0}) {
   if (expectation.indexLength != null) {
     expect(index.length, expectation.indexLength);

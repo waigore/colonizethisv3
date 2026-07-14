@@ -1,12 +1,9 @@
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
-
 /// Empty-input and basic-fill scenarios from `world_market_deal_matcher_test.dart`.
 // dart format off
 List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
@@ -17,14 +14,12 @@ List<DealMatcherScenario> dealMatcherEmptyAndBasicScenarios() => [
   matcherPairRow(label: 'missing price for commodity records pricePerUnit = 0.0', commodity: 'iron', offerQty: 5, bidQty: 5, pricesByCommodityId: const <CommodityId, double>{}, expect: matcherSingleFillExpect(pricePerUnit: 0.0)),
   matcherPairRow(label: 'zero-quantity offer emits no deal and no carry-forward', offerQty: 0, expect: matcherNoFillExpect(unfilledOffersEmpty: true, unfilledBidsByFactionId: matcherUnfilledBid('b', 5))),
 ];
-
 /// Cargo-enforcement scenarios from `world_market_deal_matcher_test.dart`.
 List<DealMatcherScenario> dealMatcherCargoScenarios() => [
   matcherPairRow(label: 'buyer with no tradeCapacity entry treated as zero cargo', buyerCapacity: null, expect: matcherNoFillExpect(unfilledBidsByFactionId: matcherUnfilledBid('b', 5))),
   matcherRow(label: 'cross-commodity cargo: A=8 priority-1, B=10 priority-2 with tradeCapacity 15 -> A fills 8, B partial 7, B carry 3', inputs: matcherInputs(offersByFactionId: {'sellerA': [matcherOffer('alpha', 100, priority: 1)], 'sellerB': [matcherOffer('beta', 100, priority: 2)]}, bidsByFactionId: {'buyer': [matcherBid('alpha', 8, priority: 1), matcherBid('beta', 10, priority: 2)]}, tradeCapacityByFactionId: {'buyer': 15}, pricesByCommodityId: const {'alpha': 5.0, 'beta': 10.0}), expect: DealMatchExpectation(filledDealsLength: 2, filledDealQuantityByCommodityId: const {'alpha': 8, 'beta': 7}, unfilledBidsByFactionId: matcherUnfilledBid('buyer', 3, commodity: 'beta', priority: 2), activityByCommodityId: {'alpha': matcherActivity(bid: 8, offer: 100, filled: 8), 'beta': matcherActivity(bid: 10, offer: 100, filled: 7)}), refs: null),
   matcherPairRow(label: 'negative tradeCapacity is clamped to zero', offerQty: 5, buyerCapacity: -50, expect: matcherNoFillExpect(unfilledBidsByFactionId: matcherUnfilledBid('b', 5))),
 ];
-
 /// Boycott exclusion scenarios from `world_market_deal_matcher_boycott_test.dart`.
 List<DealMatcherScenario> dealMatcherBoycottScenarios() => [
   boycottTradeRow(label: 'blocks trade where target GP buys goods a colony Tribe sells', seller: 'tribeT', buyer: 'gpB', boycottBlockedPairKeys: {DealMatcher.pairKey('tribeT', 'gpB')}, expect: matcherNoFillExpect(unfilledOffersByFactionId: matcherUnfilledOffer('tribeT', 10), unfilledBidsByFactionId: matcherUnfilledBid('gpB', 10))),

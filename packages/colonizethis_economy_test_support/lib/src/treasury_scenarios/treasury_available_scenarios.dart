@@ -1,17 +1,13 @@
 // dart format off
 // Table-driven treasuryAvailableForBidsByPlayer scenarios (Refs #3836).
-
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'treasury_expectations.dart';
 import 'treasury_test_support.dart';
-
 /// One row for [treasuryAvailableForBidsScenarios].
 typedef TreasuryAvailableScenario = ({String label, int treasury, String playerId, int projectedNonBidTreasuryDelta, int expected, String? refs, TreasuryAvailableExpectation? extra});
-
 final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
   treasuryAvailableRow(label: "returns the player's raw treasury for known players", treasury: 250, expected: 250, refs: '#3093'),
   treasuryAvailableRow(label: 'clamps negative treasury to 0 (defensive guard)', treasury: -10, expected: 0, refs: null),
@@ -24,7 +20,6 @@ final List<TreasuryAvailableScenario> treasuryAvailableForBidsScenarios = [
   treasuryAvailableRow(label: 'projectedNonBidTreasuryDelta is ignored when treasury is already 0', treasury: 0, projectedNonBidTreasuryDelta: 25, expected: 0, refs: null, extra: const TreasuryAvailableExpectation(ignoredProjectedDeltaWhenTreasuryZero: -25)),
   treasuryAvailableRow(label: 'unknown playerId returns 0 even when a non-zero projectedNonBidTreasuryDelta is supplied', treasury: 100, playerId: 'gp_ghost', projectedNonBidTreasuryDelta: -30, expected: 0, refs: null),
 ];
-
 void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury);
   if (scenario.extra != null) {
@@ -33,14 +28,11 @@ void runTreasuryAvailableScenario(TreasuryAvailableScenario scenario) {
   final actual = treasuryAvailableForBidsByPlayer(game: game, playerId: scenario.playerId, projectedNonBidTreasuryDelta: scenario.projectedNonBidTreasuryDelta);
   expect(actual, scenario.expected);
 }
-
 /// UI composition scenarios reconstructing treasury-bid-cap math end-to-end
 /// (Refs #3939 slice 63).
 typedef TreasuryUiCompositionScenario = ({String label, int treasury, Map<CommodityId, int> prices, List<TradeOrder> stagedBids, int projectedNonBidTreasuryDelta, void Function({required Game game, required data.ResourceRules rules, required int budget, required int currentSpend}) verify, String? refs});
-
 /// Compact UI composition row (Refs #3939 slice 52).
 TreasuryUiCompositionScenario treasuryUiCompositionRow({required String label, required TreasuryUiCompositionExpectation expect, int treasury = 100, Map<CommodityId, int> prices = const {}, List<TradeOrder> stagedBids = const [], int projectedNonBidTreasuryDelta = 0, String? refs = '#3093'}) => (label: label, treasury: treasury, prices: prices, stagedBids: stagedBids, projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta, verify: ({required game, required rules, required budget, required currentSpend}) => assertTreasuryUiCompositionExpectation(game: game, rules: rules, budget: budget, currentSpend: currentSpend, expectation: expect), refs: refs);
-
 List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(data.ResourceRules rules) => [
   treasuryUiCompositionRow(
     label: 'treasury 100, market price timber 30, no staged bids → headroom for fresh row equals raw treasury (allows up to qty 3)',
@@ -73,7 +65,6 @@ List<TreasuryUiCompositionScenario> treasuryUiCompositionScenarios(data.Resource
     expect: const TreasuryUiCompositionExpectation(budget: 0, commodityPrices: {'timber': 30}, budgetLessThanCommodity: 'timber'),
   ),
 ];
-
 void runTreasuryUiCompositionScenario(TreasuryUiCompositionScenario scenario, data.ResourceRules rules) {
   final game = buildTreasuryBidBudgetGame(treasury: scenario.treasury, prices: scenario.prices);
   final orders = scenario.stagedBids.isEmpty ? const Orders() : humanOrdersWith(scenario.stagedBids);

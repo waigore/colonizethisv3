@@ -1,26 +1,19 @@
 // dart format off
 // Table-driven non-GP extraction scenarios (Refs #3836, #3939 slice 46 / 58 / 62).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-
 import 'extraction_fixture_support.dart';
 import 'non_gp_extraction_expectations.dart';
-
 /// One row for `computeNonGreatPowerExtraction` scenario tables.
 typedef NonGpExtractionScenario = ({String label, Game game, Map<String, TileMapResult> tileMapByRegion, Map<String, ConnectivityResult> connectivityByFactionId, void Function(Map<String, Map<CommodityId, int>> result) verify, String? refs});
-
 NonGpExtractionScenario nonGpExtractionRow({required String label, required Game game, required Map<String, TileMapResult> tileMapByRegion, required Map<String, ConnectivityResult> connectivityByFactionId, required NonGpExtractionExpectation expect, String? refs}) => (label: label, game: game, tileMapByRegion: tileMapByRegion, connectivityByFactionId: connectivityByFactionId, verify: (result) => assertNonGpExtractionExpectation(result, expect), refs: refs);
-
 NonGpExtractionScenario nonGpEmptyExtractionRow({required String label, Game? game, Map<String, TileMapResult> tileMapByRegion = const {}, Map<String, ConnectivityResult> connectivityByFactionId = const {}, String? refs = '#2991'}) => nonGpExtractionRow(label: label, game: game ?? nonGpEmptyGame(), tileMapByRegion: tileMapByRegion, connectivityByFactionId: connectivityByFactionId, expect: const NonGpExtractionExpectation(empty: true), refs: refs);
-
 void runNonGpExtractionScenario(NonGpExtractionScenario scenario) {
   final result = computeNonGreatPowerExtraction(game: scenario.game, tileMapByRegion: scenario.tileMapByRegion, connectivityByFactionId: scenario.connectivityByFactionId);
   scenario.verify(result);
 }
-
 /// Compact minor `m1` OW extraction row (Refs #3939 slice 47 / 57 / 58 / 66).
 NonGpExtractionScenario nonGpMinorRow({required String label, required NonGpExtractionExpectation expect, required List<List<Resource?>> resources, required Set<String> connected, List<TileImprovementSpec> tileSpecs = const [], int townDev = 1, int capitalTileGrainBonusPerTurn = 0, String? refs}) => nonGpExtractionRow(
   label: label,
@@ -30,7 +23,6 @@ NonGpExtractionScenario nonGpMinorRow({required String label, required NonGpExtr
   expect: expect,
   refs: refs,
 );
-
 /// SPEC-AC happy paths from `non_gp_extraction_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
   nonGpMinorRow(
@@ -106,10 +98,8 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
     refs: '#2991',
   ),
 ];
-
 /// Boundary / multi-faction cases from `non_gp_extraction_test.dart`.
 List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [..._nonGpExtractionBoundarySkipScenarios(), ..._nonGpExtractionBoundaryAggregationScenarios()];
-
 List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
   nonGpEmptyExtractionRow(label: 'empty minors and tribes lists yield an empty result and skip lookups'),
   nonGpEmptyExtractionRow(
@@ -159,7 +149,6 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
     refs: '#2991',
   ),
 ];
-
 List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
   final dual = nonGpMinorTribeTimberFursFixture();
   return [

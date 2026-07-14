@@ -1,10 +1,8 @@
 // dart format off
 // Table-driven DealMatcher scenarios (Refs #3836, #3939).
-
 import 'deal_matcher_expectations.dart';
 import 'deal_matcher_scenario.dart';
 import 'deal_matcher_test_support.dart';
-
 /// Priority and FTP precedence from `world_market_deal_matcher_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
   matcherFtpTimberRow(
@@ -62,7 +60,6 @@ List<DealMatcherScenario> dealMatcherPriorityAndFtpScenarios() => [
     expect: DealMatchExpectation(filledDealExpectations: [matcherFilled(isFtpMatch: true)]),
   ),
 ];
-
 /// Multi-commodity and carry-forward from priority test file.
 List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
   matcherRow(
@@ -93,7 +90,6 @@ List<DealMatcherScenario> dealMatcherMultiCommodityScenarios() => [
     expect: DealMatchExpectation(filledDealExpectations: [matcherFilled(quantity: 4)], unfilledOffersEmpty: true, unfilledBidsByFactionId: matcherUnfilledBid('b', 5, priority: 3)),
   ),
 ];
-
 /// Lock-recovery seller priority (Refs #2924 F12).
 List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
   matcherRow(
@@ -115,7 +111,6 @@ List<DealMatcherScenario> dealMatcherLockRecoveryScenarios() => [
     refs: '#2924',
   ),
 ];
-
 /// Activity bookkeeping from priority test file.
 List<DealMatcherScenario> dealMatcherActivityScenarios() => [
   matcherRow(
@@ -146,7 +141,6 @@ List<DealMatcherScenario> dealMatcherActivityScenarios() => [
     expect: const DealMatchExpectation(activityPriceChangePercent: {'timber': 0.0}),
   ),
 ];
-
 /// Sell-priority relation tiebreaker from
 /// `world_market_deal_matcher_sell_priority_test.dart`.
 List<DealMatcherScenario> dealMatcherSellPriorityScenarios() => [

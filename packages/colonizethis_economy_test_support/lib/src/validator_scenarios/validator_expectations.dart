@@ -1,20 +1,15 @@
 // dart format off
 // Compact TradeOrderValidator result assertions (Refs #3939 phase 3 slice 10+).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import '../treasury_scenarios/treasury_test_support.dart';
-
 /// Per-order validation outcome for data-driven validator scenarios.
 typedef ValidatorOrderOutcome = ({bool accepted, String? reason});
-
 /// Data-driven expectations for validator scenario rows.
 class ValidatorExpectation {
   const ValidatorExpectation({this.outcomes, this.allAccepted = false, this.allRejectedWithReason, this.allSameReason, this.singleAccepted, this.singleRejectedWithReason, this.resultsEmpty = false, this.firstNAccepted, this.thenRejectedWithReason, this.catalogDefaultCommodityId, this.catalogDefaultNotNullReason, this.orderAcceptedPin, this.firstOrderReason, this.custom});
-
   final List<ValidatorOrderOutcome>? outcomes;
   final bool allAccepted;
   final String? allRejectedWithReason;
@@ -30,7 +25,6 @@ class ValidatorExpectation {
   final String? firstOrderReason;
   final void Function(List<OrderValidationResult> results)? custom;
 }
-
 void assertValidatorExpectation(List<OrderValidationResult> results, ValidatorExpectation expectation) {
   if (expectation.resultsEmpty) {
     expect(results, isEmpty);
@@ -89,14 +83,11 @@ void assertValidatorExpectation(List<OrderValidationResult> results, ValidatorEx
   }
   expectation.custom?.call(results);
 }
-
 /// Which factory path [ValidatorContextExpectation] exercises.
 enum ValidatorContextScenarioTarget { treasuryBudget, treasuryClampsRejectPricedBid, ghostPlayerZeroBudget, projectedDeltaReducesBudget, nonNegativeProjectedDeltaUnchanged, omitProjectedDeltaUnchanged }
-
 /// Data-driven expectations for [TradeOrderValidatorContextScenario] rows.
 class ValidatorContextExpectation {
   const ValidatorContextExpectation({required this.target, this.treasury = 175, this.playerId = humanPlayerId, this.treasuryBudgetForBids, this.prices = const {'timber': 30}, this.treasuryValuesToClamp = const [-25, 0], this.projectedTreasuryDelta = 0, this.stagedOrdersEmpty = false});
-
   final ValidatorContextScenarioTarget target;
   final int treasury;
   final String playerId;
@@ -106,7 +97,6 @@ class ValidatorContextExpectation {
   final int projectedTreasuryDelta;
   final bool stagedOrdersEmpty;
 }
-
 void assertValidatorContextExpectation(ValidatorContextExpectation expectation) {
   switch (expectation.target) {
     case ValidatorContextScenarioTarget.treasuryBudget:

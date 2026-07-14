@@ -1,11 +1,8 @@
 // dart format off
 // Table-driven economy extraction scenarios (Refs #3939 phase 3 slice 34, #3979).
-
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'core_economy_test_support.dart';
 import 'economy_extraction_expectations.dart';
-
 /// One row in [applyExtractionToStockpileScenarios] (Refs #3979).
 typedef ApplyExtractionToStockpileScenario = ({
   String label,
@@ -15,7 +12,6 @@ typedef ApplyExtractionToStockpileScenario = ({
   StockpileQuantityPins expectedQuantities,
   String? refs,
 });
-
 void runApplyExtractionToStockpileScenario(ApplyExtractionToStockpileScenario scenario) {
   runApplyExtractionToStockpileExpectation(
     initialStockpile: scenario.initialStockpile,
@@ -24,7 +20,6 @@ void runApplyExtractionToStockpileScenario(ApplyExtractionToStockpileScenario sc
     expectedQuantities: scenario.expectedQuantities,
   );
 }
-
 /// Canonical scenarios for [applyExtractionToStockpile].
 List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() => [
   applyExtractionToStockpileScenario(label: 'adds extracted quantities to stockpile', extracted: {'grain': 5, 'iron': 2}, expectedQuantities: {'grain': 5, 'iron': 2}),
@@ -34,7 +29,6 @@ List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() =
   applyExtractionToStockpileScenario(label: 'empty extracted returns same stockpile', initialDeltas: {'grain': 5}, extracted: const {}, expectedQuantities: {'grain': 5}),
   applyExtractionToStockpileScenario(label: 'adds large extraction without storage cap (unbounded strategic stockpile)', initialDeltas: {'grain': 1000000}, extracted: {'grain': 500000}, expectedQuantities: {'grain': 1500000}),
 ];
-
 /// One row in [applyExtractionForPlayersScenarios] (Refs #3979).
 typedef ApplyExtractionForPlayersScenario = ({
   String label,
@@ -44,7 +38,6 @@ typedef ApplyExtractionForPlayersScenario = ({
   bool expectUnchangedPlayers,
   String? refs,
 });
-
 void runApplyExtractionForPlayersScenario(ApplyExtractionForPlayersScenario scenario) {
   runApplyExtractionForPlayersExpectation(
     game: scenario.game,
@@ -53,7 +46,6 @@ void runApplyExtractionForPlayersScenario(ApplyExtractionForPlayersScenario scen
     expectUnchangedPlayers: scenario.expectUnchangedPlayers,
   );
 }
-
 /// Canonical scenarios for [applyExtractionForPlayers].
 List<ApplyExtractionForPlayersScenario> applyExtractionForPlayersScenarios() => [
   applyExtractionForPlayersScenario(

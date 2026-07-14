@@ -1,23 +1,18 @@
 // dart format off
 // Compact non-GP auto-offer result assertions (Refs #3939 phase 3 slice 12).
-
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 /// Pins purchased-tile index attribution resolved from an auto-offer origin tile.
 class PurchasedTileFrrAttributionExpectation {
   const PurchasedTileFrrAttributionExpectation({required this.factionId, required this.owningGpId, required this.sourceFactionId});
-
   final String factionId;
   final String owningGpId;
   final String sourceFactionId;
 }
-
 /// Per-faction offer list pins for [NonGpAutoOffersExpectation].
 class FactionAutoOffersExpectation {
   const FactionAutoOffersExpectation({this.length, this.commodityIds, this.originTileKeys, this.singleCommodityId, this.singleOriginTileKey, this.standardPriorityOneOffers = false, this.excludeCommodity});
-
   final int? length;
   final List<CommodityId>? commodityIds;
   final List<String>? originTileKeys;
@@ -26,11 +21,9 @@ class FactionAutoOffersExpectation {
   final bool standardPriorityOneOffers;
   final CommodityId? excludeCommodity;
 }
-
 /// Data-driven expectations for `computeNonGreatPowerAutoOffers` scenario rows.
 class NonGpAutoOffersExpectation {
   const NonGpAutoOffersExpectation({this.empty = false, this.factionKeys, this.factionKeysUnordered, this.offersByFaction, this.purchasedTileFrrAttribution, this.custom});
-
   final bool empty;
   final Set<String>? factionKeys;
   final Iterable<String>? factionKeysUnordered;
@@ -38,16 +31,13 @@ class NonGpAutoOffersExpectation {
   final PurchasedTileFrrAttributionExpectation? purchasedTileFrrAttribution;
   final void Function(Map<String, List<TradeOrder>> result)? custom;
 }
-
 /// Compact `m1` offer-list pin (Refs #3939 slice 62).
 NonGpAutoOffersExpectation nonGpM1OffersExpect({int? length, List<CommodityId>? commodityIds, List<String>? originTileKeys, CommodityId? singleCommodityId, String? singleOriginTileKey, bool standardPriorityOneOffers = false, CommodityId? excludeCommodity, Set<String>? factionKeys = const {'m1'}}) => NonGpAutoOffersExpectation(
   factionKeys: factionKeys,
   offersByFaction: {'m1': FactionAutoOffersExpectation(length: length, commodityIds: commodityIds, originTileKeys: originTileKeys, singleCommodityId: singleCommodityId, singleOriginTileKey: singleOriginTileKey, standardPriorityOneOffers: standardPriorityOneOffers, excludeCommodity: excludeCommodity)},
 );
-
 /// Dual-faction offer pins (Refs #3939 slice 62).
 NonGpAutoOffersExpectation nonGpDualFactionOffersExpect({required FactionAutoOffersExpectation m1, required FactionAutoOffersExpectation t1, Iterable<String>? factionKeysUnordered = const ['m1', 't1']}) => NonGpAutoOffersExpectation(factionKeysUnordered: factionKeysUnordered, offersByFaction: {'m1': m1, 't1': t1});
-
 void _assertStandardPriorityOneOffer(TradeOrder order) {
   expect(order.type, equals(TradeOrderType.offer));
   expect(order.priority, equals(1));
@@ -55,7 +45,6 @@ void _assertStandardPriorityOneOffer(TradeOrder order) {
   expect(order.originTileKey, isNotNull);
   expect(order.isFtp, isFalse);
 }
-
 void _assertFactionAutoOffersExpectation(List<TradeOrder>? orders, FactionAutoOffersExpectation factionExpectation) {
   if (factionExpectation.length != null) {
     expect(orders, hasLength(factionExpectation.length));
@@ -83,7 +72,6 @@ void _assertFactionAutoOffersExpectation(List<TradeOrder>? orders, FactionAutoOf
     }
   }
 }
-
 void assertNonGpAutoOffersExpectation(Map<String, List<TradeOrder>> result, NonGpAutoOffersExpectation expectation, {Game? game}) {
   if (expectation.empty) {
     expect(result, isEmpty);

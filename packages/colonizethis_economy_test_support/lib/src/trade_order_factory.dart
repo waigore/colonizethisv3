@@ -4,9 +4,7 @@
 // builder keeps the construction shape consistent across every world-market
 // test file in `colonizethis_economy` and its sibling packages
 // (`colonizethis_orders`, `colonizethis_logic`, `colonizethis_diplomacy`).
-
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 /// Builds a `bid`-type [TradeOrder]. `priority` defaults to 1 (the common
 /// single-priority test case); callers needing a specific priority pass it.
 // dart format off
@@ -17,7 +15,6 @@ TradeOrder testBid(String commodityId, int quantity, {int priority = 1}) =>
       quantity: quantity,
       priority: priority,
     );
-
 /// Builds an `offer`-type [TradeOrder]. `originTileKey` is optional so the
 /// same factory covers both plain offers and origin-tracked (FRR/purchased
 /// tile) offers.

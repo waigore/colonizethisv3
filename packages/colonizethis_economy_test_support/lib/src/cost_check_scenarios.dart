@@ -1,15 +1,11 @@
 // dart format off
 // Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35, #3979).
-
 import 'cost_check_expectations.dart';
-
 /// One row for `CheckPreconditionsInOrderScenario` tables (Refs #3979).
 typedef CheckPreconditionsInOrderScenario = ({String label, CheckPreconditionsInOrderPins pins, String? refs});
-
 void runCheckPreconditionsInOrderScenario(CheckPreconditionsInOrderScenario scenario) {
   runCheckPreconditionsInOrderExpectation(scenario.pins);
 }
-
 /// Canonical scenarios for [checkPreconditionsInOrder].
 List<CheckPreconditionsInOrderScenario> checkPreconditionsInOrderScenarios() => [
   checkPreconditionsInOrderScenario(label: 'returns null when every check passes', pins: (steps: [(failReason: 'a', pass: true, trackEvaluation: false), (failReason: 'b', pass: true, trackEvaluation: false), (failReason: 'c', pass: true, trackEvaluation: false)], expectedReason: null, expectedEvaluated: null), refs: '#3517'),

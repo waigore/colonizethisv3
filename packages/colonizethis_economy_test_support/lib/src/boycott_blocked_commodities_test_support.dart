@@ -1,18 +1,13 @@
 // dart format off
 // Shared fixtures for `boycottedColonySellableCommodityIds` tests (Refs #3758
 // S7/R12; #3831 Phase 4 hoisting from near-cap economy test files).
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'extraction_fixture_support.dart';
-
 /// New-World region id used by boycott colony-tribe fixtures.
 const boycottColonyTribeNwRegionId = 'newWorld';
-
 /// Prefixed province id for the single-tile colony Tribe in boycott fixtures.
 const boycottColonyTribeProvinceId = 'newWorld|t1';
-
 /// Builds a minimal game with a one-tile New-World tribe `t1` whose developed
 /// tile produces furs so `computeNonGreatPowerAutoOffers` emits a furs offer.
 Game gameWithColonyTribeBoycottTest({List<ColonyState> colonyStates = const [], List<BoycottState> boycottStates = const []}) {
@@ -36,14 +31,12 @@ Game gameWithColonyTribeBoycottTest({List<ColonyState> colonyStates = const [], 
     boycottStates: boycottStates,
   );
 }
-
 /// Tile maps for [gameWithColonyTribeBoycottTest] (single furs tile in `t1`).
 Map<String, TileMapResult> tileMapsForBoycottColonyTribeTest() => {
   boycottColonyTribeNwRegionId: nonGpProvMap(boycottColonyTribeProvinceId, const [
     [Resource.furs],
   ]),
 };
-
 /// Minimal topology for boycott colony-tribe fixtures.
 MapTopology topologyForBoycottColonyTribeTest() => const MapTopology(
   nodes: [TopologyNode(id: 't1', regionId: boycottColonyTribeNwRegionId, type: TopologyNodeType.province)],
