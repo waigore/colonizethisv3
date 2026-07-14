@@ -413,8 +413,6 @@ void main() {
   // Issue #3601 R1–R3: dynamic remaining/total resource display, red
   // insufficient-cost item styling, and red disabled `[+]` button styling.
   group('TrainCiviliansDialog affordance feedback (#3601)', () {
-    /// Returns the cost-line `Text.rich` spans for the first row whose
-    /// plain text equals [plainText] (e.g. `£1,000 + 2 paper`).
     List<InlineSpan> costLineSpans(WidgetTester tester, String plainText) {
       final text = tester
           .widgetList<Text>(find.byType(Text))
@@ -436,116 +434,80 @@ void main() {
       );
     }
 
-    testWidgets(
-      'AC (positive): resource bar shows remaining / total per resource',
-      (WidgetTester tester) async {
-        // Treasury 5000, paper 12; 2 Builders queued (£1,000 + 2 paper each).
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 5000, paper: 12),
-          currentOrders: builderOrders(2),
+    testWidgets('AC: resource bar remaining/total and Reset restore', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialog(
+        tester,
+        game: gameWithCapital(treasury: 5000, paper: 12),
+        currentOrders: builderOrders(2),
+      );
+      expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
+      expect(find.textContaining('8 / 12'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Reset'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reset'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
+      expect(find.textContaining('12 / 12'), findsOneWidget);
+    });
+
+    testWidgets('AC: cost-line danger segments follow affordability', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialog(
+        tester,
+        game: gameWithCapital(treasury: 1500, paper: 5),
+        currentOrders: builderOrders(1),
+      );
+      final deficient = costLineSpans(tester, '£1,000 + 2 paper');
+      expect(
+        (deficient.first as TextSpan).style?.color,
+        EditorialMonoclePalette.danger,
+      );
+      expect(
+        (deficient.last as TextSpan).style?.color,
+        isNot(EditorialMonoclePalette.danger),
+      );
+
+      await pumpDialog(
+        tester,
+        game: gameWithCapital(treasury: 10000, paper: 100),
+      );
+      for (final span in costLineSpans(tester, '£1,000 + 2 paper')) {
+        expect(
+          (span as TextSpan).style?.color,
+          isNot(EditorialMonoclePalette.danger),
         );
+      }
+    });
 
-        expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
-        expect(find.textContaining('8 / 12'), findsOneWidget);
-      },
-    );
+    testWidgets('AC: [+] danger variant tracks unaffordable vs locked rows', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialog(
+        tester,
+        game: gameWithCapital(treasury: 1500, paper: 5),
+        currentOrders: builderOrders(1),
+      );
+      expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
 
-    testWidgets(
-      'AC (positive): Reset restores remaining == total in resource bar',
-      (WidgetTester tester) async {
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 5000, paper: 12),
-          currentOrders: builderOrders(2),
-        );
+      await pumpDialog(
+        tester,
+        game: gameWithCapital(treasury: 100000, paper: 1000),
+      );
+      expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
 
-        await tester.ensureVisible(find.text('Reset'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Reset'));
-        await tester.pumpAndSettle();
-
-        expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
-        expect(find.textContaining('12 / 12'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AC (positive): only the deficient cost segment renders in danger',
-      (WidgetTester tester) async {
-        // Treasury 1500, paper 5, 1 Builder queued → remaining treasury 500
-        // (< 1000 Builder cost → red) and remaining paper 3 (>= 2 → normal).
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 1500, paper: 5),
-          currentOrders: builderOrders(1),
-        );
-
-        final spans = costLineSpans(tester, '£1,000 + 2 paper');
-        final treasurySpan = spans.first as TextSpan;
-        final paperSpan = spans.last as TextSpan;
-        expect(treasurySpan.style?.color, EditorialMonoclePalette.danger);
-        expect(paperSpan.style?.color, isNot(EditorialMonoclePalette.danger));
-      },
-    );
-
-    testWidgets(
-      'AC (negative): sufficient resources leave cost segments uncoloured',
-      (WidgetTester tester) async {
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 10000, paper: 100),
-        );
-
-        final spans = costLineSpans(tester, '£1,000 + 2 paper');
-        for (final span in spans) {
-          expect(
-            (span as TextSpan).style?.color,
-            isNot(EditorialMonoclePalette.danger),
-          );
-        }
-      },
-    );
-
-    testWidgets(
-      'AC (positive): disabled [+] uses danger variant when unaffordable',
-      (WidgetTester tester) async {
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 1500, paper: 5),
-          currentOrders: builderOrders(1),
-        );
-
-        // At least one unlocked row can no longer afford +1 → danger [+].
-        expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
-      },
-    );
-
-    testWidgets(
-      'AC (negative): affordable rows never use the danger [+] variant',
-      (WidgetTester tester) async {
-        await pumpDialog(
-          tester,
-          game: gameWithCapital(treasury: 100000, paper: 1000),
-        );
-
-        expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
-      },
-    );
-
-    testWidgets(
-      'AC (negative): tech-locked rows keep the non-danger disabled [+]',
-      (WidgetTester tester) async {
-        await pumpDialog(tester, game: gameWithNoTech(treasury: 0));
-        final lockedCount = CivilianEconomyCatalog.all
-            .where((e) => unlockingTechByCivilianId[e.id] != null)
-            .length;
-        expect(lockedCount, greaterThan(0));
-        final dangerCount = plusButtons(
-          tester,
-        ).where((b) => b.dangerVariant).length;
-        expect(dangerCount, CivilianEconomyCatalog.all.length - lockedCount);
-      },
-    );
+      await pumpDialog(tester, game: gameWithNoTech(treasury: 0));
+      final lockedCount = CivilianEconomyCatalog.all
+          .where((e) => unlockingTechByCivilianId[e.id] != null)
+          .length;
+      expect(lockedCount, greaterThan(0));
+      expect(
+        plusButtons(tester).where((b) => b.dangerVariant).length,
+        CivilianEconomyCatalog.all.length - lockedCount,
+      );
+    });
   });
 }

@@ -347,20 +347,20 @@ void main() {
       );
     });
 
-    testWidgets('AC: Home Fleet collapsed row does not show Move action', (
+    testWidgets('AC: Move/narrow actions — Home no Move; non-home opens dialog', (
       WidgetTester tester,
     ) async {
-      const humanId = 'gp_move_home';
+      const homeId = 'gp_move_home';
       await _pumpNaval(
         tester,
         game: _capPeers(
-          humanId: humanId,
+          humanId: homeId,
           gameId: 'g_move_home',
           displayName: 'Move Home Test',
           peerFleets: const [],
           homeShips: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
         ),
-        humanPlayerId: humanId,
+        humanPlayerId: homeId,
       );
       expect(
         find.descendant(
@@ -369,47 +369,32 @@ void main() {
         ),
         findsNothing,
       );
-    });
 
-    testWidgets(
-      'AC: Non-home collapsed Move action opens MoveFleetDialog without expansion',
-      (WidgetTester tester) async {
-        final humanId = humanPlayerIdWithFleets;
-        final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
-        if (nonHomeFleets.isEmpty) return;
-        final fleetTile = find.widgetWithText(
-          ExpansionTile,
-          'Fleet ${nonHomeFleets.first.id}',
-        );
-        await _pumpNaval(tester, game: game, humanPlayerId: humanId);
-        expect(fleetTile, findsOneWidget);
-        await tester.ensureVisible(fleetTile);
-        final moveButton = find.descendant(
-          of: fleetTile,
-          matching: find.byTooltip('Move'),
-        );
-        expect(moveButton, findsOneWidget);
-        await tester.ensureVisible(moveButton);
-        await tester.tap(moveButton);
-        await tester.pumpAndSettle();
-        expect(find.byType(MoveFleetDialog), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      },
-    );
-
-    testWidgets('AC: Narrow row switches inline actions to icon-only mode', (
-      WidgetTester tester,
-    ) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(320, 800));
       final humanId = humanPlayerIdWithFleets;
       final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
       if (nonHomeFleets.isEmpty) return;
-      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
       final fleetTile = find.widgetWithText(
         ExpansionTile,
         'Fleet ${nonHomeFleets.first.id}',
       );
+
+      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
+      expect(fleetTile, findsOneWidget);
+      await tester.ensureVisible(fleetTile);
+      final moveButton = find.descendant(
+        of: fleetTile,
+        matching: find.byTooltip('Move'),
+      );
+      expect(moveButton, findsOneWidget);
+      await tester.ensureVisible(moveButton);
+      await tester.tap(moveButton);
+      await tester.pumpAndSettle();
+      expect(find.byType(MoveFleetDialog), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
       expect(fleetTile, findsOneWidget);
       expect(
         find.descendant(of: fleetTile, matching: find.byIcon(Icons.route)),

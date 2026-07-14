@@ -367,23 +367,19 @@ void main() {
         showProspectActionIcon: true,
         prospectActionEnabled: true,
         onProspectWithExplorerTap: () {},
+        showBuildImprovementActionIcon: true,
+        buildImprovementActionEnabled: true,
+        onBuildImprovementTap: () {},
       );
       final exploreFinder = find.byTooltip('Explore with explorer');
       final prospectFinder = find.byTooltip('Prospect with explorer');
       expect(exploreFinder, findsOneWidget);
       expect(prospectFinder, findsOneWidget);
+      expect(find.byTooltip('Build improvement'), findsOneWidget);
       expect(
         tester.getTopLeft(exploreFinder).dx,
         lessThan(tester.getTopLeft(prospectFinder).dx),
       );
-
-      await _pumpProvinceDemo(
-        tester,
-        showBuildImprovementActionIcon: true,
-        buildImprovementActionEnabled: true,
-        onBuildImprovementTap: () {},
-      );
-      expect(find.byTooltip('Build improvement'), findsOneWidget);
     });
 
     testWidgets('AC: overlay height — narrow one-third vs desktop full', (

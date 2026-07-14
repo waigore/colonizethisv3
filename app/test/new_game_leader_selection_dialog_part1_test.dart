@@ -128,14 +128,10 @@ void main() {
   }
 
   group('parseSeedInput', () {
-    test('empty and invalid map to 42', () {
-      expect(NewGameLeaderSelectionDialog.parseSeedInput(''), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('   '), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('abc'), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('-3'), 42);
-    });
-
-    test('accepts non-negative integers', () {
+    test('maps empty/invalid to 42; accepts non-negative integers', () {
+      for (final input in ['', '   ', 'abc', '-3']) {
+        expect(NewGameLeaderSelectionDialog.parseSeedInput(input), 42);
+      }
       expect(NewGameLeaderSelectionDialog.parseSeedInput('0'), 0);
       expect(NewGameLeaderSelectionDialog.parseSeedInput(' 99 '), 99);
     });
@@ -143,13 +139,12 @@ void main() {
 
   group('NewGameLeaderSelectionDialog', () {
     testWidgets(
-      'shows six GP colour swatches, default labels, and 540×720 dialog shell',
+      'shows six GP swatches, shell chrome, seed/infinite, and terrain slider',
       (WidgetTester tester) async {
         await pumpNewGameLeaderSelectionDialog(tester);
 
         expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
         expect(find.text('England'), findsWidgets);
-        // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
         expectDialogChromeTexts(const [
           'Choose nations and leaders',
           'Choose six great powers and a leader variant for each',
@@ -160,12 +155,13 @@ void main() {
           'Game seed',
           'Enter 0 for a random seed',
           'Infinite mode (no victory condition)',
+          'Terrain variation:',
+          '50%',
+          '0% flat — 100% extreme',
         ]);
-        // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
         expect(find.byType(CtToggleSwitch), findsOneWidget);
         expect(find.byType(CheckboxListTile), findsNothing);
-        // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
-        // pinned to mockup `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1).
+        expect(find.byType(CtSlider), findsOneWidget);
         final shell = tester.widget<CtDialogShell>(find.byType(CtDialogShell));
         expect(shell.maxWidth, 540);
         expect(shell.maxHeight, 720);
@@ -409,19 +405,6 @@ void main() {
         },
       );
     });
-
-    testWidgets(
-      'shows terrain variation slider with default helper and label',
-      (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester);
-        expect(find.byType(CtSlider), findsOneWidget);
-        expectDialogChromeTexts(const [
-          'Terrain variation:',
-          '50%',
-          '0% flat — 100% extreme',
-        ]);
-      },
-    );
 
     testWidgets('Start passes terrainVariation default and left/right edges', (
       WidgetTester tester,

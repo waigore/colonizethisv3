@@ -406,12 +406,11 @@ void main() {
     );
 
     testWidgets(
-      'loads required Wang tilesets before rendering map',
+      'Wang tilesets load for map; L2 defaults and terrain overlays resolve',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           await terrainTilesetCache.load();
         });
-
         expect(terrainTilesetCache.isLoaded, isTrue);
         expect(terrainTilesetCache.getSeaPlainsTileset(), isNotNull);
         expect(terrainTilesetCache.getSeaDesertTileset(), isNotNull);
@@ -419,17 +418,6 @@ void main() {
 
         await _pumpOwMap(tester);
         expect(find.byType(CtRegionMap), findsOneWidget);
-      },
-      timeout: const Timeout(Duration(seconds: 10)),
-    );
-
-    testWidgets(
-      'canonical L2 defaults and terrain situations resolve in tileset cache',
-      (WidgetTester tester) async {
-        await _pumpBlank(tester);
-        await tester.runAsync(() async {
-          await terrainTilesetCache.load();
-        });
 
         for (final t in [
           TerrainType.hardwoodForest,
@@ -440,7 +428,6 @@ void main() {
         ]) {
           expect(terrainTilesetCache.getStandaloneTile(t), isNotNull);
         }
-
         final keys = <String>[
           for (final id in const [
             'grain',
@@ -467,7 +454,6 @@ void main() {
               improvementLevel: args.$3,
             ),
         ];
-
         for (final key in keys) {
           expect(
             terrainTilesetCache.getStandaloneTileByKey(key),
@@ -476,7 +462,7 @@ void main() {
           );
         }
       },
-      timeout: const Timeout(Duration(seconds: 10)),
+      timeout: const Timeout(Duration(seconds: 15)),
     );
 
     testWidgets(
