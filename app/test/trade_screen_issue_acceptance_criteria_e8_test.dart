@@ -108,15 +108,30 @@ Future<void> _switchToDealBook(WidgetTester tester) async {
   await tester.pump();
 }
 
-/// Shared Market pump for E8 AC#2–#6 (Refs #4021 densify).
-Future<ProviderContainer> _pumpFilledMarket(WidgetTester tester) {
+Future<ProviderContainer> _pumpMarket(
+  WidgetTester tester, {
+  WorldMarketState? worldMarketState,
+  int? tradeCargoCapacityOverride,
+  Orders initialOrders = const Orders(),
+  bool canMutateViaUi = true,
+  int treasury = 500,
+}) {
   return pumpTradeScreenWithContainer(
     tester,
     game: buildTradeTestGame(
       id: 'test_trade_screen_e8',
+      treasury: treasury,
       stockpile: tradeableStockpileFilled(99),
+      worldMarketState: worldMarketState,
+      tradeCargoCapacityOverride: tradeCargoCapacityOverride,
     ),
+    initialOrders: initialOrders,
+    canMutateViaUi: canMutateViaUi,
   );
+}
+
+Future<ProviderContainer> _pumpFilledMarket(WidgetTester tester) {
+  return _pumpMarket(tester);
 }
 
 Future<void> _incrementCommodity(
@@ -132,6 +147,50 @@ Future<void> _incrementCommodity(
   }
 }
 
+Future<void> _tapBid(WidgetTester tester, CommodityId commodityId) async {
+  await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(commodityId)));
+  await tester.pump();
+}
+
+Future<void> _tapOffer(WidgetTester tester, CommodityId commodityId) async {
+  await tester.tap(find.byKey(TradeScreen.marketRowOfferChipKey(commodityId)));
+  await tester.pump();
+}
+
+void _expectCargoSaturated(WidgetTester tester) {
+  expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
+  expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+  expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
+}
+
+WorldMarketState _partialTimberDealBookMarket() {
+  return WorldMarketState(
+    prices: const <CommodityId, int>{},
+    lastTurnActivity: const <CommodityId, MarketActivity>{
+      'timber': MarketActivity(
+        totalBidQuantity: 10,
+        totalOfferQuantity: 5,
+        filledQuantity: 5,
+        deals: <FilledDeal>[
+          FilledDeal(
+            sellerFactionId: 'gp_a',
+            buyerFactionId: _humanPlayerId,
+            commodityId: 'timber',
+            quantity: 5,
+            pricePerUnit: 8.4,
+          ),
+        ],
+      ),
+    },
+    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
+      _humanPlayerId: <TradeOrder>[_bid('timber', 5)],
+    },
+    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+      _humanPlayerId: <TradeOrder>[_offer('fabric', 3)],
+    },
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -140,10 +199,8 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    // Lightweight fixture (Refs #3656): the route-host + left-rail tests
-    // (AC #1, #6) only need a Game with a human player for navigation and the
-    // TradeScreen chrome — no generated map/topology data — so the ~7-11s
-    // procedural map generator is avoided.
+    // Lightweight fixture (Refs #3656): route-host + left-rail tests
+    // (AC #1, #6) only need a Game with a human player.
     routeHostGame = buildTradeScaffoldTestGame();
     routeHostPlayer = routeHostGame.players.firstWhere(
       (p) => p.isHuman,
@@ -204,9 +261,6 @@ void main() {
   }
 
   Widget buildTradeRouteHost({bool globalObserve = false}) {
-    // Route host: pushes RoutePaths.trade through Routes.generate, so it uses
-    // the shared shell's onGenerateRoute + appNavigatorKey seams and the
-    // shellWrapper seam to keep AppEventHandlerScope above routing (Refs #3730).
     return routeHostShell(
       globalObserve: globalObserve,
       child: Builder(
@@ -233,6 +287,16 @@ void main() {
     );
   }
 
+  Future<void> openTradeFromRouteHost(
+    WidgetTester tester, {
+    bool globalObserve = false,
+  }) async {
+    await tester.pumpWidget(buildTradeRouteHost(globalObserve: globalObserve));
+    await pumpSettleCapped(tester);
+    await tester.tap(find.text('open trade'));
+    await pumpSettleCapped(tester);
+  }
+
   group('AC #1 — Left rail Trade icon opens TradeScreen full-screen dark '
       'editorial-monocle surface (#2993 E8 (a))', () {
     testWidgets(
@@ -243,9 +307,6 @@ void main() {
         await tester.pumpWidget(buildLeftRailHost());
         await pumpSettleCapped(tester);
 
-        // Given the left rail is visible, the Trade button sits below
-        // Production and above Civilian Units per SPEC § Trigger
-        // conditions (Refs `#2993` R4).
         final trade = find.byKey(kEmpireTradeButtonKey);
         expect(trade, findsOneWidget);
         final productionY = tester
@@ -261,8 +322,6 @@ void main() {
         await tester.tap(trade);
         await pumpSettleCapped(tester);
 
-        // Then the Trade Screen mounts with the editorial-monocle
-        // dark chrome (no light Material AppBar).
         expect(find.byType(TradeScreen), findsOneWidget);
         expect(find.byType(AppBar), findsNothing);
 
@@ -272,7 +331,6 @@ void main() {
         expect(topBar.title, TradeScreen.topBarTitle);
         expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
 
-        // And the body hosts the two-tab Market + Deal Book strip.
         expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
         final stripFinder = find.descendant(
           of: find.byKey(TradeScreen.tabsBodyKey),
@@ -284,9 +342,6 @@ void main() {
           TradeScreen.marketTabLabel,
           TradeScreen.dealBookTabLabel,
         ]);
-
-        // The dark editorial-monocle CtPanel surface wraps the strip
-        // (no hardcoded light-theme parchment).
         expect(
           find.descendant(
             of: find.byKey(TradeScreen.tabsBodyKey),
@@ -302,11 +357,7 @@ void main() {
       'is dismissed) — confirms the full-screen feature contract pops '
       'cleanly without leaking chrome',
       (tester) async {
-        await tester.pumpWidget(buildTradeRouteHost());
-        await pumpSettleCapped(tester);
-
-        await tester.tap(find.text('open trade'));
-        await pumpSettleCapped(tester);
+        await openTradeFromRouteHost(tester);
         expect(find.byType(TradeScreen), findsOneWidget);
 
         final back = find.descendant(
@@ -333,9 +384,7 @@ void main() {
       final ProviderContainer container = await _pumpFilledMarket(tester);
       expect(_stagedOrder(container, _timber), isNull);
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
-      await tester.pump();
-      // Increment from 1 → 5 (4 taps).
+      await _tapBid(tester, _timber);
       await _incrementCommodity(tester, _timber, 4);
 
       final TradeOrder? staged = _stagedOrder(container, _timber);
@@ -343,7 +392,6 @@ void main() {
       expect(staged!.commodityId, _timber);
       expect(staged.type, TradeOrderType.bid);
       expect(staged.quantity, 5);
-      // Priority-2 AC deferred until #2989 exposes kMaxTradePriority (SPEC).
       expect(staged.priority, TradeScreen.marketRowDefaultPriority);
       expect(_stagedRowCountForPlayer(container), 1);
     });
@@ -354,8 +402,7 @@ void main() {
     ) async {
       final ProviderContainer container = await _pumpFilledMarket(tester);
 
-      await tester.tap(find.byKey(TradeScreen.marketRowOfferChipKey(_fabric)));
-      await tester.pump();
+      await _tapOffer(tester, _fabric);
 
       final TradeOrder? staged = _stagedOrder(container, _fabric);
       expect(staged, isNotNull);
@@ -375,27 +422,18 @@ void main() {
       (tester) async {
         final ProviderContainer container = await _pumpFilledMarket(tester);
 
-        // Stage Bid + increment to qty 3.
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
-        await tester.pump();
+        await _tapBid(tester, _timber);
         await _incrementCommodity(tester, _timber, 2);
         TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged?.type, TradeOrderType.bid);
         expect(staged?.quantity, 3);
 
-        // Toggle to Offer: prior quantity is preserved across the
-        // direction change (SPEC § Behavior — User actions table).
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        );
-        await tester.pump();
+        await _tapOffer(tester, _timber);
 
         staged = _stagedOrder(container, _timber);
         expect(staged?.type, TradeOrderType.offer);
         expect(staged?.quantity, 3);
 
-        // Mutual exclusion guarantee — exactly one TradeOrder for the
-        // commodity in the player's staged trade orders list.
         final Orders orders = container.read(currentOrdersProvider);
         final List<TradeOrder>? list =
             orders.tradeOrdersByPlayerId[_humanPlayerId];
@@ -407,8 +445,8 @@ void main() {
           timberCount,
           1,
           reason:
-              'Mutual exclusion contract: tradeOrdersByPlayerId must '
-              'contain at most one TradeOrder per (player, commodityId).',
+              'Mutual exclusion: at most one TradeOrder per '
+              '(player, commodityId).',
         );
       },
     );
@@ -420,12 +458,8 @@ void main() {
       (tester) async {
         final ProviderContainer container = await _pumpFilledMarket(tester);
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
-        await tester.pump();
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_fabric)),
-        );
-        await tester.pump();
+        await _tapBid(tester, _timber);
+        await _tapOffer(tester, _fabric);
 
         expect(_stagedOrder(container, _timber)?.type, TradeOrderType.bid);
         expect(_stagedOrder(container, _fabric)?.type, TradeOrderType.offer);
@@ -443,61 +477,12 @@ void main() {
         'carry-forward row + total spent of 40 (= 5 × floor(8.4)), and '
         'the offers panel shows the fabric carry-forward row with total '
         'received of 0', (tester) async {
-      final WorldMarketState worldMarket = WorldMarketState(
-        prices: const <CommodityId, int>{},
-        lastTurnActivity: const <CommodityId, MarketActivity>{
-          // Filled portion of the timber bid (5 of 10 at 8.4).
-          'timber': MarketActivity(
-            totalBidQuantity: 10,
-            totalOfferQuantity: 5,
-            filledQuantity: 5,
-            deals: <FilledDeal>[
-              FilledDeal(
-                sellerFactionId: 'gp_a',
-                buyerFactionId: _humanPlayerId,
-                commodityId: 'timber',
-                quantity: 5,
-                pricePerUnit: 8.4,
-              ),
-            ],
-          ),
-        },
-        carryForwardBidsByFactionId: <String, List<TradeOrder>>{
-          _humanPlayerId: <TradeOrder>[
-            // Unfilled remainder of the timber bid (5 of 10).
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.bid,
-              quantity: 5,
-              priority: 1,
-            ),
-          ],
-        },
-        carryForwardOffersByFactionId: <String, List<TradeOrder>>{
-          _humanPlayerId: <TradeOrder>[
-            // Fully unfilled fabric offer (3 of 3).
-            TradeOrder(
-              commodityId: 'fabric',
-              type: TradeOrderType.offer,
-              quantity: 3,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-
-      await pumpTradeScreenWithContainer(
+      await _pumpMarket(
         tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e8',
-          stockpile: tradeableStockpileFilled(99),
-          worldMarketState: worldMarket,
-        ),
+        worldMarketState: _partialTimberDealBookMarket(),
       );
       await _switchToDealBook(tester);
 
-      // Filled timber row in the bids panel: qty 5 × floor(8.4) = 5 × 8 = 40
-      // per `SPEC/ui/trade-screen.md` § Deal Book (integer filled-row prices).
       expect(
         find.byKey(
           TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
@@ -506,8 +491,6 @@ void main() {
       );
       // ignore: avoid_hardcoded_strings_in_widgets
       expect(find.text('timber — qty 5 × 8 = 40'), findsOneWidget);
-
-      // Unfilled timber carry-forward row in the bids panel.
       expect(
         find.byKey(
           TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideBids, 0),
@@ -517,16 +500,11 @@ void main() {
       // ignore: avoid_hardcoded_strings_in_widgets
       expect(find.text('timber — qty 5 (priority 1)'), findsOneWidget);
 
-      // Bids panel total spent = filled notional only with integer
-      // unit prices: quantity × floor(pricePerUnit) = 5 × 8 = 40
-      // (carry-forwards do not contribute to treasury totals per
-      // `SPEC/ui/trade-screen.md` § Deal Book).
       final Text bidsTotals = tester.widget<Text>(
         find.byKey(TradeScreen.dealBookBidsTotalsKey),
       );
       expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: 40');
 
-      // Offers panel: no filled deal, one carry-forward fabric offer.
       expect(
         find.byKey(
           TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 0),
@@ -546,9 +524,6 @@ void main() {
         find.byKey(TradeScreen.dealBookOffersTotalsKey),
       );
       expect(offersTotals.data, '${TradeScreen.dealBookTotalReceivedLabel}: 0');
-
-      // Per-side empty-state copy must NOT render — both sides are
-      // non-empty (bids has filled+unfilled, offers has unfilled).
       expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
       expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsNothing);
     });
@@ -564,46 +539,30 @@ void main() {
         'either toggling a third commodity to Bid or incrementing an '
         'existing bid is rejected — the staged bid total never exceeds '
         '10 and the warning row stays mounted.', (tester) async {
-      final ProviderContainer container = await pumpTradeScreenWithContainer(
+      final ProviderContainer container = await _pumpMarket(
         tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e8',
-          treasury: 100000,
-          stockpile: tradeableStockpileFilled(99),
-          tradeCargoCapacityOverride: 10,
-        ),
+        treasury: 100000,
+        tradeCargoCapacityOverride: 10,
         initialOrders: _ordersWith(<TradeOrder>[
           _bid(_timber, 6),
           _bid(_iron, 4),
         ]),
       );
 
-      // (i) Cargo indicator clamps at 0 once total bids == capacity.
-      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      // (iii) Warning row is mounted.
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
-      expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
+      _expectCargoSaturated(tester);
 
-      // (ii) Offending stepper is capped — increment on timber is
-      // a silent no-op because cross-commodity bid total already
-      // saturates the cargo budget.
       await tester.tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
       await tester.pump();
       expect(
         _stagedOrder(container, _timber)?.quantity,
         6,
         reason:
-            'Refs #2993 E5c: bid increment blocked when cross-'
-            'commodity bid total saturates tradeCargoCapacity.',
+            'Refs #2993 E5c: bid increment blocked when cargo saturated.',
       );
 
-      // Toggle Bid on a fresh commodity (grain) is also a no-op
-      // because maxAllowedBidQuantity == 0 at saturation.
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_grain)));
-      await tester.pump();
+      await _tapBid(tester, _grain);
       expect(_stagedOrder(container, _grain), isNull);
 
-      // Cross-commodity total never exceeds the capacity.
       final Orders orders = container.read(currentOrdersProvider);
       final int totalBidUnits =
           orders.tradeOrdersByPlayerId[_humanPlayerId]
@@ -611,8 +570,7 @@ void main() {
               .fold<int>(0, (sum, o) => sum + o.quantity) ??
           0;
       expect(totalBidUnits, 10);
-      expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      _expectCargoSaturated(tester);
     });
 
     testWidgets(
@@ -620,22 +578,17 @@ void main() {
       'tapping `Bid` on fabric clamps the new staged quantity to the '
       'remaining cargo (1, not the prior offer\'s 5)',
       (tester) async {
-        final ProviderContainer container = await pumpTradeScreenWithContainer(
+        final ProviderContainer container = await _pumpMarket(
           tester,
-          game: buildTradeTestGame(
-            id: 'test_trade_screen_e8',
-            treasury: 100000,
-            stockpile: tradeableStockpileFilled(99),
-            tradeCargoCapacityOverride: 10,
-          ),
+          treasury: 100000,
+          tradeCargoCapacityOverride: 10,
           initialOrders: _ordersWith(<TradeOrder>[
             _bid(_timber, 9),
             _offer(_fabric, 5),
           ]),
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
-        await tester.pump();
+        await _tapBid(tester, _fabric);
 
         final TradeOrder? fabric = _stagedOrder(container, _fabric);
         expect(fabric?.type, TradeOrderType.bid);
@@ -643,12 +596,9 @@ void main() {
           fabric?.quantity,
           1,
           reason:
-              'Refs #2993 E5c: bid toggle clamps quantity to '
-              'maxAllowedBidQuantity (remainingCargo + '
-              'priorBidContribution).',
+              'Refs #2993 E5c: bid toggle clamps to remaining cargo.',
         );
-        expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+        _expectCargoSaturated(tester);
       },
     );
   });
@@ -660,19 +610,11 @@ void main() {
         'no Market or Deal Book tab bodies and no bid/offer chips or '
         'stepper buttons are mounted, but the dark CtTopBar chrome '
         'still paints', (tester) async {
-      await tester.pumpWidget(buildTradeRouteHost(globalObserve: true));
-      await pumpSettleCapped(tester);
+      await openTradeFromRouteHost(tester, globalObserve: true);
 
-      await tester.tap(find.text('open trade'));
-      await pumpSettleCapped(tester);
-
-      // TradeScreen mounted with dark chrome still present.
       expect(find.byType(TradeScreen), findsOneWidget);
       expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
 
-      // Observe-mode indicator: the ObserveModeNotDefinedPanel
-      // titled "Trade" is the SPEC-canonical surface that signals
-      // observe mode is active (variant `c`).
       final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
       expect(observePanelFinder, findsOneWidget);
       final ObserveModeNotDefinedPanel observePanel = tester
@@ -680,15 +622,10 @@ void main() {
       // ignore: avoid_hardcoded_strings_in_widgets
       expect(observePanel.title, 'Trade');
 
-      // No Market / Deal Book tab bodies → no bid/offer chips and
-      // no stepper buttons can be mounted in the tree (controls
-      // are scoped under the tab strip which itself is absent).
       expect(find.byKey(TradeScreen.tabsBodyKey), findsNothing);
       expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
       expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
       expect(find.byType(CtTabStrip), findsNothing);
-      // Per-row chip and stepper keys for the canonical timber row
-      // must not exist anywhere in the widget tree under observe.
       expect(
         find.byKey(TradeScreen.marketRowBidChipKey(_timber)),
         findsNothing,
@@ -708,23 +645,13 @@ void main() {
         'still renders) but the IgnorePointer wrapper blocks taps; '
         'currentOrdersProvider is not mutated when the player tries '
         'to stage a Bid', (tester) async {
-      final ProviderContainer container = await pumpTradeScreenWithContainer(
+      final ProviderContainer container = await _pumpMarket(
         tester,
-        game: buildTradeTestGame(
-          id: 'test_trade_screen_e8',
-          stockpile: tradeableStockpileFilled(99),
-        ),
         canMutateViaUi: false,
       );
 
-      // Market tab body is mounted (chrome stays read-only, not
-      // hidden behind the global-observe sentinel).
       expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
 
-      // Attempting to tap Bid / increment is absorbed by the
-      // IgnorePointer; `warnIfMissed: false` silences the expected
-      // hit-test warning that the wrapper surfaces when it
-      // swallows pointer events.
       await tester.tap(
         find.byKey(TradeScreen.marketRowBidChipKey(_timber)),
         warnIfMissed: false,
@@ -740,9 +667,7 @@ void main() {
         _stagedOrder(container, _timber),
         isNull,
         reason:
-            'Per-GP observe variant must not mutate '
-            'currentOrdersProvider even when the player attempts '
-            'to drive the chip / stepper controls.',
+            'Per-GP observe must not mutate currentOrdersProvider.',
       );
     });
   });
