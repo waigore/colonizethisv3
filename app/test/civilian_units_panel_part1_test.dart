@@ -4,11 +4,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
@@ -32,56 +30,12 @@ void main() {
     humanPlayerIdWithUnits = game.players.first.id;
   });
 
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    Orders currentOrders = const Orders(),
-    Map<String, List<String>> availableWorkTargets = const {},
-    AppEventBus? bus,
-    bool explorerOnly = false,
-    bool builderOnly = false,
-    String? prospectShortcutTargetTileKey,
-    String? exploreShortcutTargetTileKey,
-    String? buildImprovementShortcutTargetTileKey,
-  }) {
-    final resolvedBus = bus ?? AppEventBus.create();
-    final navigatorKey = GlobalKey<NavigatorState>();
-    return ProviderScope(
-      overrides: [
-        availableWorkTargetIdsForUnitProvider.overrideWith(
-          (ref, unitId) => availableWorkTargets[unitId] ?? const [],
-        ),
-      ],
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: CivilianPanelBusDialogHost(
-            bus: resolvedBus,
-            navigatorKey: navigatorKey,
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              currentOrders: currentOrders,
-              bus: resolvedBus,
-              explorerOnly: explorerOnly,
-              builderOnly: builderOnly,
-              prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  buildImprovementShortcutTargetTileKey,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   group('CivilianUnitsPanel', () {
     testWidgets('AC: Panel shows title Civilian Units', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        buildCivilianPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
       );
       await tester.pumpAndSettle();
 
@@ -92,7 +46,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        buildCivilianPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
       );
       await tester.pumpAndSettle();
 
@@ -104,7 +58,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+        buildCivilianPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
       );
       await tester.pumpAndSettle();
 
@@ -116,7 +70,7 @@ void main() {
       'AC: When player has civilians, list shows units with status, location, assigned-to',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+          buildCivilianPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
         );
         await tester.pumpAndSettle();
 
@@ -160,7 +114,7 @@ void main() {
         final availableWorkTargets = <String, List<String>>{};
 
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             availableWorkTargets: availableWorkTargets,
@@ -205,7 +159,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        buildCivilianPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
       );
       await tester.pumpAndSettle();
 
@@ -231,7 +185,7 @@ void main() {
       if (idleCivilians.isEmpty) return;
 
       await tester.pumpWidget(
-        buildPanel(
+        buildCivilianPanel(
           game: game,
           humanPlayerId: humanPlayerIdWithUnits,
           // Pass empty availableWorkTargets - all options will be disabled
@@ -301,7 +255,7 @@ void main() {
           (event) => upsertEvent = event,
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             bus: bus,
@@ -385,7 +339,7 @@ void main() {
           (event) => upsertEvent = event,
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             bus: bus,
@@ -469,7 +423,7 @@ void main() {
           (event) => upsertEvent = event,
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             bus: bus,
@@ -507,7 +461,11 @@ void main() {
       bus.on<OpenDialogEvent>().listen((e) => openDialogEvent = e);
 
       await tester.pumpWidget(
-        buildPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+        buildCivilianPanel(
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          bus: bus,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -529,7 +487,7 @@ void main() {
         bus.stream.listen((e) => sequence.add(e.runtimeType));
 
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: game,
             humanPlayerId: humanPlayerIdWithUnits,
             bus: bus,

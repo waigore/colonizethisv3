@@ -1,19 +1,24 @@
 // Shared widget-test scaffolding for diplomacy and civilian panel bus/dialog
-// hosts. Refs #3847.
+// hosts. Refs #3847, #4013.
 //
 // Diplomacy tests previously duplicated `_EventHandlingWrapper`,
 // `_pumpPanelBuilt`, and `_bindTallTestSurface` across multiple files.
 // Civilian panel tests duplicated a related bus host with
-// [ClosePanelEvent] handling.
+// [ClosePanelEvent] handling, plus an identical local `buildPanel` closure
+// across `civilian_units_panel_part*_test.dart` (consolidated as
+// [buildCivilianPanel]).
 
 import 'dart:async';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -142,7 +147,8 @@ class CivilianPanelBusDialogHost extends StatefulWidget {
       _CivilianPanelBusDialogHostState();
 }
 
-class _CivilianPanelBusDialogHostState extends State<CivilianPanelBusDialogHost> {
+class _CivilianPanelBusDialogHostState
+    extends State<CivilianPanelBusDialogHost> {
   StreamSubscription? _confirmSub;
   StreamSubscription? _closeSub;
 
@@ -239,4 +245,74 @@ Widget wrapDiplomacyPanelAtViewport({
       ),
     ),
   );
+}
+
+/// Canonical [CivilianUnitsPanel] host used across the three
+/// `civilian_units_panel_part*_test.dart` files (Refs #4013).
+Widget buildCivilianPanel({
+  required Game game,
+  required String humanPlayerId,
+  Orders currentOrders = const Orders(),
+  Map<String, List<String>> availableWorkTargets = const {},
+  AppEventBus? bus,
+  bool explorerOnly = false,
+  bool builderOnly = false,
+  String? prospectShortcutTargetTileKey,
+  String? exploreShortcutTargetTileKey,
+  String? buildImprovementShortcutTargetTileKey,
+}) {
+  final resolvedBus = bus ?? AppEventBus.create();
+  final navigatorKey = GlobalKey<NavigatorState>();
+  return ProviderScope(
+    overrides: [
+      availableWorkTargetIdsForUnitProvider.overrideWith(
+        (ref, unitId) => availableWorkTargets[unitId] ?? const [],
+      ),
+    ],
+    child: MaterialApp(
+      navigatorKey: navigatorKey,
+      home: Scaffold(
+        body: CivilianPanelBusDialogHost(
+          bus: resolvedBus,
+          navigatorKey: navigatorKey,
+          child: CivilianUnitsPanel(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: currentOrders,
+            bus: resolvedBus,
+            explorerOnly: explorerOnly,
+            builderOnly: builderOnly,
+            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+            exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+            buildImprovementShortcutTargetTileKey:
+                buildImprovementShortcutTargetTileKey,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Reads the percentage and tier span colors from the [RelativePowerLine]
+/// rendered inside the diplomacy row keyed by [factionId]. The line is a
+/// `Text.rich` whose root `TextSpan` children are
+/// `[prefix, percentage, separator, tier]`.
+({Color? pctColor, Color? tierColor}) relativePowerSpanColors(
+  WidgetTester tester,
+  String factionId,
+) {
+  final lineFinder = find.descendant(
+    of: find.byKey(ValueKey('$kDiplomacyRowBodyKeyPrefix$factionId')),
+    matching: find.byType(RelativePowerLine),
+  );
+  final richText = tester.widget<RichText>(
+    find.descendant(of: lineFinder, matching: find.byType(RichText)).first,
+  );
+  // `Text.rich` nests the supplied root span under the effective-style span
+  // that `Text` builds, so the relative-power spans live one level deeper.
+  final root = (richText.text as TextSpan).children!.first as TextSpan;
+  final children = root.children!;
+  final pctSpan = children[1] as TextSpan;
+  final tierSpan = children[3] as TextSpan;
+  return (pctColor: pctSpan.style?.color, tierColor: tierSpan.style?.color);
 }

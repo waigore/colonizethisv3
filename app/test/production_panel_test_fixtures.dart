@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -91,4 +92,50 @@ class _ProductionPanelTestWrapperState
       currentOrders: widget.currentOrders,
     );
   }
+}
+
+/// Canonical [ProductionPanel] host for widget tests (Refs #4013).
+Widget buildProductionPanel({
+  required Player player,
+  Game? gameOverride,
+  Map<String, int> desiredOutputByRecipe = const {},
+  ValueChanged<Map<String, int>>? onDesiredOutputChanged,
+  VoidCallback? onOpenCommodityBreakdown,
+  Orders? currentOrders,
+  double width = 800,
+  double height = 500,
+}) {
+  final displayGame = gameOverride ?? productionPanelTestGameFor(player);
+  final netDeltasByCommodity = <String, int>{};
+  for (final entry in desiredOutputByRecipe.entries) {
+    final recipe = ProductionRecipesCatalog.byId[entry.key];
+    if (recipe == null) continue;
+    for (final input in recipe.inputQuantities.entries) {
+      netDeltasByCommodity[input.key] =
+          (netDeltasByCommodity[input.key] ?? 0) - (input.value * entry.value);
+    }
+    netDeltasByCommodity[recipe.outputCommodityId] =
+        (netDeltasByCommodity[recipe.outputCommodityId] ?? 0) +
+        (recipe.outputQuantity * entry.value);
+  }
+  return MaterialApp(
+    home: MediaQuery(
+      data: MediaQueryData(size: Size(width, height)),
+      child: Scaffold(
+        body: SizedBox(
+          width: width,
+          height: height,
+          child: ProductionPanelTestWrapper(
+            displayGame: displayGame,
+            player: player,
+            initialDesiredOutput: desiredOutputByRecipe,
+            netDeltasByCommodity: netDeltasByCommodity,
+            onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+            currentOrders: currentOrders,
+          ),
+        ),
+      ),
+    ),
+  );
 }

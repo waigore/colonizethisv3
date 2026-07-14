@@ -40,50 +40,6 @@ void main() {
     humanPlayerIdWithUnits = game.players.first.id;
   });
 
-  Widget buildPanel({
-    required Game game,
-    required String humanPlayerId,
-    Orders currentOrders = const Orders(),
-    Map<String, List<String>> availableWorkTargets = const {},
-    AppEventBus? bus,
-    bool explorerOnly = false,
-    bool builderOnly = false,
-    String? prospectShortcutTargetTileKey,
-    String? exploreShortcutTargetTileKey,
-    String? buildImprovementShortcutTargetTileKey,
-  }) {
-    final resolvedBus = bus ?? AppEventBus.create();
-    final navigatorKey = GlobalKey<NavigatorState>();
-    return ProviderScope(
-      overrides: [
-        availableWorkTargetIdsForUnitProvider.overrideWith(
-          (ref, unitId) => availableWorkTargets[unitId] ?? const [],
-        ),
-      ],
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: CivilianPanelBusDialogHost(
-            bus: resolvedBus,
-            navigatorKey: navigatorKey,
-            child: CivilianUnitsPanel(
-              game: game,
-              humanPlayerId: humanPlayerId,
-              currentOrders: currentOrders,
-              bus: resolvedBus,
-              explorerOnly: explorerOnly,
-              builderOnly: builderOnly,
-              prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-              exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-              buildImprovementShortcutTargetTileKey:
-                  buildImprovementShortcutTargetTileKey,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   group('CivilianUnitsPanel', () {
     testWidgets(
       'AC: pending build_improvement shows ResourceIcons and omits (pending)',
@@ -130,7 +86,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             currentOrders: orders,
@@ -200,7 +156,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             currentOrders: orders,
@@ -261,7 +217,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             currentOrders: orders,
@@ -320,7 +276,7 @@ void main() {
           },
         );
         await tester.pumpWidget(
-          buildPanel(
+          buildCivilianPanel(
             game: miniGame,
             humanPlayerId: human,
             currentOrders: orders,
@@ -426,7 +382,7 @@ void main() {
             },
           );
           await tester.pumpWidget(
-            buildPanel(
+            buildCivilianPanel(
               game: miniGame,
               humanPlayerId: human,
               currentOrders: orders,
@@ -501,7 +457,11 @@ void main() {
         },
       );
       await tester.pumpWidget(
-        buildPanel(game: miniGame, humanPlayerId: human, currentOrders: orders),
+        buildCivilianPanel(
+          game: miniGame,
+          humanPlayerId: human,
+          currentOrders: orders,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -558,7 +518,9 @@ void main() {
         ),
         players: const [Player(id: human, displayName: 'Human', isHuman: true)],
       );
-      await tester.pumpWidget(buildPanel(game: miniGame, humanPlayerId: human));
+      await tester.pumpWidget(
+        buildCivilianPanel(game: miniGame, humanPlayerId: human),
+      );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('2/5'), findsOneWidget);
