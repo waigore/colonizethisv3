@@ -874,6 +874,9 @@ void main() {
         'diplomacy_standing_chips_test.dart',
         'diplomacy_relative_power_line_test.dart',
         'tech_gp_pennant_widget_test.dart',
+        'quick_battle_screen_test.dart',
+        'quick_battle_deployment_view_dark_tokens_test.dart',
+        'quick_battle_action_selector_dark_tokens_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -946,6 +949,9 @@ Widget host() => MaterialApp(home: const Placeholder());
         'diplomacy_standing_chips_test.dart',
         'diplomacy_relative_power_line_test.dart',
         'tech_gp_pennant_widget_test.dart',
+        'quick_battle_screen_test.dart',
+        'quick_battle_deployment_view_dark_tokens_test.dart',
+        'quick_battle_action_selector_dark_tokens_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

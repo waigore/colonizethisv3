@@ -6,6 +6,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -44,8 +46,8 @@ void main() {
         (WidgetTester tester) async {
       QuickBattleResult? completed;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: QuickBattleScreen(
               input: input(),
               onComplete: (r) => completed = r,
@@ -67,8 +69,8 @@ void main() {
     testWidgets('interactive shows actions; selecting one produces result view',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: QuickBattleScreen(
               input: input(),
               onComplete: (_) {},
@@ -90,4 +92,3 @@ void main() {
     });
   });
 }
-

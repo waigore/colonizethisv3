@@ -332,7 +332,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `game_map_area_shell_entry_center`), catalog/diplomacy widget hosts
 /// (`ct_choice_chip`, `ct_transfer_list`, `gp_default_map_color_swatch`,
 /// `diplomacy_standing_chips`, `diplomacy_relative_power_line`,
-/// `tech_gp_pennant_widget`).
+/// `tech_gp_pennant_widget`), and quick-battle hosts (`quick_battle_screen`,
+/// `quick_battle_deployment_view_dark_tokens`,
+/// `quick_battle_action_selector_dark_tokens`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -459,7 +461,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'gp_default_map_color_swatch_test.dart' ||
       name == 'diplomacy_standing_chips_test.dart' ||
       name == 'diplomacy_relative_power_line_test.dart' ||
-      name == 'tech_gp_pennant_widget_test.dart';
+      name == 'tech_gp_pennant_widget_test.dart' ||
+      name == 'quick_battle_screen_test.dart' ||
+      name == 'quick_battle_deployment_view_dark_tokens_test.dart' ||
+      name == 'quick_battle_action_selector_dark_tokens_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
