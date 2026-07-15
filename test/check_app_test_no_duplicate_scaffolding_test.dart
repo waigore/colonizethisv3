@@ -1389,7 +1389,53 @@ Widget host() => MaterialApp(home: const Placeholder());
   );
 
   test(
-    'passes when transfer/move/map-options/pause dialog suites use buildAppShell only',
+    'fails when save_game_name dialog suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_save_name_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'save_game_name_dialog_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when load_game_list dialog suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_load_list_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'load_game_list_dialog_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'passes when transfer/move/map-options/pause/save-load dialog suites use buildAppShell only',
     () {
       final temp = Directory.systemTemp.createTempSync(
         'check_app_test_no_dup_scaffolding_unit_order_ok_',
@@ -1444,6 +1490,28 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'pause_menu_side_menu_specs_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'save_game_name_dialog_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'load_game_list_dialog_test.dart', '''
 import 'support/app_shell_harness.dart';
 
 void main() {

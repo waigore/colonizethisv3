@@ -294,7 +294,8 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// (`production_commodity_breakdown_dialog_spec` /
 /// `production_commodity_breakdown_dialog_wide_full_width`), move-dialogs
 /// specs part suites, `game_map_options_dialog_test`, next-turn / turn-news
-/// dialog suites, and pause-menu / side-menu spec suites.
+/// dialog suites, pause-menu / side-menu spec suites, and save/load dialog
+/// suites (`save_game_name_dialog` / `load_game_list_dialog`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -344,7 +345,9 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'next_turn_confirmation_dialog_test.dart' ||
       name == 'turn_news_dialog_test.dart' ||
       name == 'pause_menu_panel_test.dart' ||
-      name == 'pause_menu_side_menu_specs_test.dart';
+      name == 'pause_menu_side_menu_specs_test.dart' ||
+      name == 'save_game_name_dialog_test.dart' ||
+      name == 'load_game_list_dialog_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
