@@ -5,6 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
@@ -63,8 +65,10 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       );
     }
     final hostArgs = resolveProvinceDetailHostOverlayArgs(
-      ref: ref,
+      gameService: ref.watch(gameServiceProvider),
       gameId: game.id,
+      panelNotifier: ref.read(mapProvincePanelProvider.notifier),
+      bus: ref.read(appEventBusProvider),
     );
     final overlay = SizedBox(
       width: double.infinity,

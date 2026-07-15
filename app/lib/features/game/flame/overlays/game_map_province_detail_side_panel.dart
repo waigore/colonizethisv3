@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
 import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
@@ -69,8 +71,10 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       );
     }
     final hostArgs = resolveProvinceDetailHostOverlayArgs(
-      ref: ref,
+      gameService: ref.watch(gameServiceProvider),
       gameId: game.id,
+      panelNotifier: ref.read(mapProvincePanelProvider.notifier),
+      bus: ref.read(appEventBusProvider),
     );
     Widget overlay = buildProvinceSeaZoneDetailOverlayForPanel(
       game: game,

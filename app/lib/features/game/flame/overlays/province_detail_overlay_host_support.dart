@@ -24,13 +24,11 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart'
-    show displayProvinceOrSeaIdFromTileKey, mapProvincePanelProvider;
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
+    show displayProvinceOrSeaIdFromTileKey, MapProvincePanelNotifier;
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
 import '../map_state/map_state.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';

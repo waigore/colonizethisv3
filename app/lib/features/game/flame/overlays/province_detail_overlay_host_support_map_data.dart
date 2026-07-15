@@ -14,19 +14,22 @@ GameMapData? tryGetGameMapData(GameMapData? Function() load) {
 }
 
 /// Shared map-data load + highlight/close/bus args for both province-detail
-/// hosts (wide side panel and narrow bottom sheet). Refs #4035 AC3.
+/// hosts (wide side panel and narrow bottom sheet).
+///
+/// Callers pass narrow deps (service, notifier, bus) from their own `build`
+/// — do not thread [WidgetRef] into this helper (`repo.app_widget_ref_parameter_smell`).
+/// Refs #4035 AC3.
 ProvinceDetailHostOverlayArgs resolveProvinceDetailHostOverlayArgs({
-  required WidgetRef ref,
+  required GameService gameService,
   required String gameId,
+  required MapProvincePanelNotifier panelNotifier,
+  required ct_models.AppEventBus bus,
 }) {
-  final notifier = ref.read(mapProvincePanelProvider.notifier);
   return (
-    mapData: tryGetGameMapData(
-      () => ref.watch(gameServiceProvider).getMapData(gameId),
-    ),
-    onHighlightTile: notifier.setSecondaryHighlight,
-    onHighlightTiles: notifier.setSecondaryHighlights,
-    onClose: notifier.closeOverlay,
-    bus: ref.read(appEventBusProvider),
+    mapData: tryGetGameMapData(() => gameService.getMapData(gameId)),
+    onHighlightTile: panelNotifier.setSecondaryHighlight,
+    onHighlightTiles: panelNotifier.setSecondaryHighlights,
+    onClose: panelNotifier.closeOverlay,
+    bus: bus,
   );
 }
