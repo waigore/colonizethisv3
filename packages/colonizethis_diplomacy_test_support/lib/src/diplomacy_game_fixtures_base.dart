@@ -302,8 +302,7 @@ Game fourGpBreakDecayGame({
 }
 
 /// Minimal game with configurable overtures for overture-clear helper tests.
-Game diplomacyGameWithOvertures(List<OvertureState> overtures) =>
-    TestFixtures.minimalGame(
+Game diplomacyGameWithOvertures(List<OvertureState> overtures) => diplomacyGame(
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       overtureStates: overtures,
     );

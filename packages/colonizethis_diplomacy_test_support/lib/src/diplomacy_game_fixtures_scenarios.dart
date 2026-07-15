@@ -12,6 +12,27 @@ const gpMinorEmbassyOverture = OvertureState(
   sinceTurn: 0,
 );
 
+const _minor1 = MinorNation(id: 'minor1', displayName: 'Minor 1');
+const _defaultSubsidy = [SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 10)];
+
+const _gpMutualEmbassy = [
+  OvertureState(gpId: 'gp1', targetId: 'gp2', stage: OvertureStage.embassy),
+  OvertureState(gpId: 'gp2', targetId: 'gp1', stage: OvertureStage.embassy),
+];
+
+const _aiInvestorMinorEmbassies = [
+  OvertureState(gpId: 'gp_ai', targetId: 'minor1', stage: OvertureStage.embassy, sinceTurn: 0),
+  OvertureState(gpId: 'gp_ai', targetId: 'minor2', stage: OvertureStage.embassy, sinceTurn: 0),
+];
+
+Player _gp1Treasury(int treasury, {bool expertise = false}) => Player(
+      id: 'gp1',
+      displayName: 'GP1',
+      isHuman: true,
+      treasury: treasury,
+      techUnlocked: expertise ? const {kTechIdDiplomaticExpertise: true} : null,
+    );
+
 /// Neutral gp1–minor relation row for subsidy and grant-aid scenarios.
 DiplomacyRelation gpMinorNeutralRelation({
   String minorId = 'minor1',
@@ -30,17 +51,8 @@ Game subsidyResolverGame({
   int turnNumber = 2,
   int gp1Treasury = 10_000,
   RelationState relationState = RelationState.atPeace,
-  List<OvertureState> overtureStates = const [
-    OvertureState(
-      gpId: 'gp1',
-      targetId: 'minor1',
-      stage: OvertureStage.embassy,
-      sinceTurn: 0,
-    ),
-  ],
-  List<SubsidyState> subsidyStates = const [
-    SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 10),
-  ],
+  List<OvertureState> overtureStates = const [gpMinorEmbassyOverture],
+  List<SubsidyState> subsidyStates = _defaultSubsidy,
   bool includeSubsidy = true,
   bool includeDiplomaticExpertiseTech = false,
 }) =>
@@ -61,35 +73,16 @@ Game gpMinorEmbassySubsidyGame({
   int turnNumber = 2,
   int gp1Treasury = 10_000,
   RelationState relationState = RelationState.atPeace,
-  List<OvertureState> overtureStates = const [
-    OvertureState(
-      gpId: 'gp1',
-      targetId: 'minor1',
-      stage: OvertureStage.embassy,
-      sinceTurn: 0,
-    ),
-  ],
-  List<SubsidyState> subsidyStates = const [
-    SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 10),
-  ],
+  List<OvertureState> overtureStates = const [gpMinorEmbassyOverture],
+  List<SubsidyState> subsidyStates = _defaultSubsidy,
   bool includeSubsidy = true,
   bool includeDiplomaticExpertiseTech = false,
 }) =>
     diplomacyGame(
       id: id,
       turnNumber: turnNumber,
-      players: [
-        Player(
-          id: 'gp1',
-          displayName: 'GP1',
-          isHuman: true,
-          treasury: gp1Treasury,
-          techUnlocked: includeDiplomaticExpertiseTech
-              ? const {kTechIdDiplomaticExpertise: true}
-              : null,
-        ),
-      ],
-      minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
+      players: [_gp1Treasury(gp1Treasury, expertise: includeDiplomaticExpertiseTech)],
+      minorNations: const [_minor1],
       diplomacyRelations: [
         DiplomacyRelation(
           factionId1: 'gp1',
@@ -125,27 +118,12 @@ Game gpGpEmbassyGame({
           level: RelationLevel.friendly,
         ),
       ],
-      overtureStates: const [
-        OvertureState(
-          gpId: 'gp1',
-          targetId: 'gp2',
-          stage: OvertureStage.embassy,
-        ),
-        OvertureState(
-          gpId: 'gp2',
-          targetId: 'gp1',
-          stage: OvertureStage.embassy,
-        ),
-      ],
+      overtureStates: _gpMutualEmbassy,
       ftpPartnershipKeys: existingFtpKeys,
     );
 
 /// Intervention dedup: one aggressor GP, one AI investor, two minors at war.
-Game twoMinorWarGame({
-  String id = 'g',
-  int turnNumber = 4,
-}) =>
-    diplomacyGame(
+Game twoMinorWarGame({String id = 'g', int turnNumber = 4}) => diplomacyGame(
       id: id,
       turnNumber: turnNumber,
       players: const [
@@ -156,31 +134,10 @@ Game twoMinorWarGame({
         MinorNation(id: 'minor1', displayName: 'Minor 1'),
         MinorNation(id: 'minor2', displayName: 'Minor 2'),
       ],
-      overtureStates: const [
-        OvertureState(
-          gpId: 'gp_ai',
-          targetId: 'minor1',
-          stage: OvertureStage.embassy,
-          sinceTurn: 0,
-        ),
-        OvertureState(
-          gpId: 'gp_ai',
-          targetId: 'minor2',
-          stage: OvertureStage.embassy,
-          sinceTurn: 0,
-        ),
-      ],
+      overtureStates: _aiInvestorMinorEmbassies,
       diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'gp_attacker',
-          factionId2: 'minor1',
-          state: RelationState.atPeace,
-        ),
-        DiplomacyRelation(
-          factionId1: 'gp_attacker',
-          factionId2: 'minor2',
-          state: RelationState.atPeace,
-        ),
+        DiplomacyRelation(factionId1: 'gp_attacker', factionId2: 'minor1', state: RelationState.atPeace),
+        DiplomacyRelation(factionId1: 'gp_attacker', factionId2: 'minor2', state: RelationState.atPeace),
       ],
     );
 
@@ -196,16 +153,10 @@ Game boycottResolverGame({
       turnNumber: 7,
       tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
       diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          state: gp1gp2State,
-        ),
+        DiplomacyRelation(factionId1: 'gp1', factionId2: 'gp2', state: gp1gp2State),
       ],
       colonyStates: gp1HoldsColony
-          ? const [
-              ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
-            ]
+          ? const [ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1)]
           : const [],
       boycottStates: boycotts,
       subsidyStates: subsidies,
@@ -227,6 +178,13 @@ Game boycottKeysGame({
       boycottStates: boycotts,
     );
 
+const _minor2Embassy = OvertureState(
+  gpId: 'gp1',
+  targetId: 'minor2',
+  stage: OvertureStage.embassy,
+  sinceTurn: 0,
+);
+
 /// GP with embassy overtures to two minors for multi-target subsidy tests.
 Game gpTwoMinorsEmbassySubsidyGame({
   String id = 'g-two-minors',
@@ -237,39 +195,19 @@ Game gpTwoMinorsEmbassySubsidyGame({
     diplomacyGame(
       id: id,
       turnNumber: turnNumber,
-      players: [
-        Player(
-          id: 'gp1',
-          displayName: 'GP1',
-          isHuman: true,
-          treasury: gp1Treasury,
-          techUnlocked: includeDiplomaticExpertiseTech
-              ? const {kTechIdDiplomaticExpertise: true}
-              : null,
-        ),
-      ],
+      players: [_gp1Treasury(gp1Treasury, expertise: includeDiplomaticExpertiseTech)],
       minorNations: const [
-        MinorNation(id: 'minor1', displayName: 'Minor 1'),
+        _minor1,
         MinorNation(id: 'minor2', displayName: 'Minor 2'),
       ],
       diplomacyRelations: [
         gpMinorNeutralRelation(),
         gpMinorNeutralRelation(minorId: 'minor2'),
       ],
-      overtureStates: const [
-        gpMinorEmbassyOverture,
-        OvertureState(
-          gpId: 'gp1',
-          targetId: 'minor2',
-          stage: OvertureStage.embassy,
-          sinceTurn: 0,
-        ),
-      ],
+      overtureStates: const [gpMinorEmbassyOverture, _minor2Embassy],
     );
 
 /// Shared `Game` fixture for dossier evidence rule tests (`test/dossier/`).
-///
-/// Builds on [TestFixtures.minimalGame] (Refs #3715, #3825).
 Game evidenceGame({
   String id = 'g1',
   int turnNumber = 2,

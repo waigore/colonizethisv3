@@ -4,6 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_game_fixtures_base.dart';
 
+const _ow = 'oldWorld';
+const _nw = 'newWorld';
+
 /// Shared topology for GP–tribe first-contact tests with no sea routes.
 const gpTribeEmptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -11,33 +14,28 @@ const gpTribeEmptyTopology = MapTopology(nodes: [], edges: []);
 /// colony, with zero New World tile visibility (Refs #3463, #3825).
 const gpTribeSeaReachableTopology = MapTopology(
   nodes: [
-    TopologyNode(
-      id: 'oldWorld|home',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|owSea',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|nwSea',
-      regionId: 'newWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|colony',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
+    TopologyNode(id: '$_ow|home', regionId: _ow, type: TopologyNodeType.province),
+    TopologyNode(id: '$_ow|owSea', regionId: _ow, type: TopologyNodeType.seaZone),
+    TopologyNode(id: '$_nw|nwSea', regionId: _nw, type: TopologyNodeType.seaZone),
+    TopologyNode(id: '$_nw|colony', regionId: _nw, type: TopologyNodeType.province),
   ],
   edges: [
-    TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
-    TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
-    TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+    TopologyEdge(id1: '$_ow|home', id2: '$_ow|owSea'),
+    TopologyEdge(id1: '$_ow|owSea', id2: '$_nw|nwSea'),
+    TopologyEdge(id1: '$_nw|nwSea', id2: '$_nw|colony'),
   ],
 );
+
+const _mayaTribe = Tribe(id: 'tribe1', displayName: 'Maya', capitalProvinceId: '$_nw|t1');
+const _spainGp = Player(id: 'gp1', displayName: 'Spain', isHuman: true);
+
+Map<String, Map<String, String>> _nwTileVisibility(String tileKey) => {
+      'gp1': {tileKey: 'fullyVisible'},
+    };
+
+Map<String, Map<String, List<String>>> _nwTileKeys(String provId, String tileKey) => {
+      _nw: {provId: [tileKey]},
+    };
 
 /// Human GP with NW tribe colony visibility and no GP–Tribe relation (Refs #3825).
 Game gpTribeFirstContactGame({
@@ -46,84 +44,47 @@ Game gpTribeFirstContactGame({
   int turnNumber = 3,
   Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
   Map<String, Map<String, String>>? playerVisibilityByTile,
-}) {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  return diplomacyGame(
-    id: id,
-    phase: phase,
-    turnNumber: turnNumber,
-    players: const [
-      Player(id: 'gp1', displayName: 'Spain', isHuman: true),
-    ],
-    oldWorld: RegionData(
-      provinces: [
-        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-      ],
-    ),
-    newWorld: RegionData(
-      provinces: [
-        Province(
-          id: '$nw|t1',
-          regionId: nw,
-          ownerId: 'tribe1',
-          displayName: 'Maya Capital',
-        ),
-      ],
-    ),
-    playerVisibilityByTile: playerVisibilityByTile ??
-        const {
-          'gp1': {'$nw|t1|0|0': 'fullyVisible'},
-        },
-    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ??
-        {
-          nw: {
-            '$nw|t1': ['$nw|t1|0|0'],
-          },
-        },
-    tribes: const [
-      Tribe(
-        id: 'tribe1',
-        displayName: 'Maya',
-        capitalProvinceId: '$nw|t1',
-      ),
-    ],
-    diplomacyRelations: const [],
-  );
-}
-
-/// Sea-reachable tribe colony with zero NW tile visibility (Refs #3825).
-Game gpTribeSeaReachableNoNwVisibilityGame({String id = 'g_sea'}) =>
+}) =>
     diplomacyGame(
       id: id,
-      turnNumber: 1,
-      players: const [
-        Player(id: 'gp1', displayName: 'Spain', isHuman: true),
-      ],
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
+      phase: phase,
+      turnNumber: turnNumber,
+      players: const [_spainGp],
+      oldWorld: RegionData(
+        provinces: [Province(id: '$_ow|p1', regionId: _ow, ownerId: 'gp1')],
       ),
-      newWorld: const RegionData(
+      newWorld: RegionData(
         provinces: [
           Province(
-            id: 'newWorld|colony',
-            regionId: 'newWorld',
+            id: '$_nw|t1',
+            regionId: _nw,
             ownerId: 'tribe1',
+            displayName: 'Maya Capital',
           ),
         ],
       ),
-      playerVisibilityByTile: const {
-        'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
-      },
+      playerVisibilityByTile: playerVisibilityByTile ?? _nwTileVisibility('$_nw|t1|0|0'),
+      tileKeysByRegionAndProvince:
+          tileKeysByRegionAndProvince ?? _nwTileKeys('$_nw|t1', '$_nw|t1|0|0'),
+      tribes: const [_mayaTribe],
+      diplomacyRelations: const [],
+    );
+
+/// Sea-reachable tribe colony with zero NW tile visibility (Refs #3825).
+Game gpTribeSeaReachableNoNwVisibilityGame({String id = 'g_sea'}) => diplomacyGame(
+      id: id,
+      turnNumber: 1,
+      players: const [_spainGp],
+      oldWorld: const RegionData(
+        provinces: [Province(id: '$_ow|home', regionId: _ow, ownerId: 'gp1')],
+      ),
+      newWorld: const RegionData(
+        provinces: [Province(id: '$_nw|colony', regionId: _nw, ownerId: 'tribe1')],
+      ),
+      playerVisibilityByTile: const {'gp1': {'$_ow|home|0|0': 'fullyVisible'}},
       tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          'oldWorld|home': ['oldWorld|home|0|0'],
-        },
-        'newWorld': {
-          'newWorld|colony': ['newWorld|colony|0|0'],
-        },
+        _ow: {'$_ow|home': ['$_ow|home|0|0']},
+        _nw: {'$_nw|colony': ['$_nw|colony|0|0']},
       },
       tribes: const [Tribe(id: 'tribe1', displayName: 'Maya')],
       diplomacyRelations: const [],
@@ -134,43 +95,32 @@ Game humanAndAiGpTribeVisibilityGame({
   Map<String, bool> aiControlByGpId = const {},
   TurnPhase phase = TurnPhase.endOfTurn,
   int turnNumber = 4,
-}) {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
-  return diplomacyGame(
-    phase: phase,
-    turnNumber: turnNumber,
-    players: const [
-      Player(id: 'gp1', displayName: 'Spain', isHuman: true),
-      Player(id: 'gp2', displayName: 'France', isHuman: false),
-    ],
-    oldWorld: const RegionData(
-      provinces: [
-        Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        Province(id: '$ow|p2', regionId: ow, ownerId: 'gp2'),
+}) =>
+    diplomacyGame(
+      phase: phase,
+      turnNumber: turnNumber,
+      players: const [
+        _spainGp,
+        Player(id: 'gp2', displayName: 'France', isHuman: false),
       ],
-    ),
-    newWorld: RegionData(
-      provinces: [
-        Province(id: '$nw|t1', regionId: nw, ownerId: 'tribe1'),
-      ],
-    ),
-    playerVisibilityByTile: const {
-      'gp1': {'$nw|t1|0|0': 'fullyVisible'},
-      'gp2': {'$nw|t1|0|0': 'fullyVisible'},
-    },
-    tileKeysByRegionAndProvince: const {
-      nw: {
-        '$nw|t1': ['$nw|t1|0|0'],
+      oldWorld: const RegionData(
+        provinces: [
+          Province(id: '$_ow|p1', regionId: _ow, ownerId: 'gp1'),
+          Province(id: '$_ow|p2', regionId: _ow, ownerId: 'gp2'),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: [Province(id: '$_nw|t1', regionId: _nw, ownerId: 'tribe1')],
+      ),
+      playerVisibilityByTile: {
+        'gp1': {'$_nw|t1|0|0': 'fullyVisible'},
+        'gp2': {'$_nw|t1|0|0': 'fullyVisible'},
       },
-    },
-    tribes: const [Tribe(id: 'tribe1', displayName: 'Maya')],
-    aiControlByGpId: aiControlByGpId,
-    diplomacyRelations: const [],
-  );
-}
-
-const _knownTargetsOw = 'oldWorld';
+      tileKeysByRegionAndProvince: _nwTileKeys('$_nw|t1', '$_nw|t1|0|0'),
+      tribes: const [Tribe(id: 'tribe1', displayName: 'Maya')],
+      aiControlByGpId: aiControlByGpId,
+      diplomacyRelations: const [],
+    );
 
 /// GP with relation, visibility, and unit anchors for known-target tests.
 Game knownDiplomaticTargetsAnchoredGame() => diplomacyGame(
@@ -179,33 +129,21 @@ Game knownDiplomaticTargetsAnchoredGame() => diplomacyGame(
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
       oldWorld: RegionData(
         provinces: const [
-          Province(
-            id: '$_knownTargetsOw|p1',
-            regionId: _knownTargetsOw,
-            ownerId: 'gp1',
-          ),
-          Province(
-            id: '$_knownTargetsOw|p2',
-            regionId: _knownTargetsOw,
-            ownerId: 'minor1',
-          ),
+          Province(id: '$_ow|p1', regionId: _ow, ownerId: 'gp1'),
+          Province(id: '$_ow|p2', regionId: _ow, ownerId: 'minor1'),
         ],
         units: [
           Unit(
             id: 'u1',
             type: kUnitTypeBuilder,
             ownerId: 'gp1',
-            locationProvinceId: '$_knownTargetsOw|p1',
+            locationProvinceId: '$_ow|p1',
           ),
         ],
       ),
-      playerVisibilityByTile: const {
-        'gp1': {'$_knownTargetsOw|p2|0|0': 'fullyVisible'},
-      },
-      tileKeysByRegionAndProvince: const {
-        _knownTargetsOw: {
-          '$_knownTargetsOw|p2': ['$_knownTargetsOw|p2|0|0'],
-        },
+      playerVisibilityByTile: const {'gp1': {'$_ow|p2|0|0': 'fullyVisible'}},
+      tileKeysByRegionAndProvince: {
+        _ow: {'$_ow|p2': ['$_ow|p2|0|0']},
       },
       minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
       diplomacyRelations: const [
@@ -225,11 +163,7 @@ Game survivalPeaceProvinceGame({
   for (final entry in provinceCountsByGpId.entries) {
     for (var i = 1; i <= entry.value; i++) {
       provinces.add(
-        Province(
-          id: 'oldWorld|${entry.key}_$i',
-          regionId: 'oldWorld',
-          ownerId: entry.key,
-        ),
+        Province(id: '$_ow|${entry.key}_$i', regionId: _ow, ownerId: entry.key),
       );
     }
   }
@@ -246,18 +180,12 @@ Game survivalPeaceProvinceGame({
 Game tradeSlotsBidCapTestGame({
   Map<String, bool> techUnlocked = const {},
   List<OvertureState> overtureStates = const [],
-  List<Player> players = const [
-    Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-  ],
+  List<Player> players = const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
 }) =>
     diplomacyGame(
-      players: players
-          .map(
-            (p) => techUnlocked.isEmpty
-                ? p
-                : p.copyWith(techUnlocked: techUnlocked),
-          )
-          .toList(),
+      players: techUnlocked.isEmpty
+          ? players
+          : players.map((p) => p.copyWith(techUnlocked: techUnlocked)).toList(),
       overtureStates: overtureStates,
     );
 
@@ -267,12 +195,6 @@ Game knownDiplomaticTargetsIsolatedGame() => diplomacyGame(
       turnNumber: 1,
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: true)],
       oldWorld: const RegionData(
-        provinces: [
-          Province(
-            id: '$_knownTargetsOw|p1',
-            regionId: _knownTargetsOw,
-            ownerId: 'gp1',
-          ),
-        ],
+        provinces: [Province(id: '$_ow|p1', regionId: _ow, ownerId: 'gp1')],
       ),
     );
