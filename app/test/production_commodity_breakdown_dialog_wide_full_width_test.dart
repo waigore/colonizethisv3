@@ -15,15 +15,14 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -118,31 +117,29 @@ void main() {
         final game = buildProductionBreakdownPanelTestGame();
         final player = game.players.firstWhere((p) => p.isHuman);
 
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          ProviderScope(
-            child: MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: Builder(
-                  builder: (context) => TextButton(
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        barrierColor: EditorialMonoclePalette.dialogScrim,
-                        builder: (_) => ProductionCommodityBreakdownDialog(
-                          game: game,
-                          player: player,
-                          topology: const MapTopology(nodes: [], edges: []),
-                          tileMapByRegion: null,
-                          currentOrders: const Orders(),
-                        ),
-                      );
-                    },
-                    child: const Text('open'),
-                  ),
+          buildAppShell(
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () {
+                    showDialog<void>(
+                      context: context,
+                      barrierColor: EditorialMonoclePalette.dialogScrim,
+                      builder: (_) => ProductionCommodityBreakdownDialog(
+                        game: game,
+                        player: player,
+                        topology: const MapTopology(nodes: [], edges: []),
+                        tileMapByRegion: null,
+                        currentOrders: const Orders(),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
                 ),
               ),
             ),

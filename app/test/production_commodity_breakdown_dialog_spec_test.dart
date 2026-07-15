@@ -6,10 +6,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
@@ -17,6 +15,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 class _SeededProductionDesiredOutputNotifier
@@ -54,37 +53,35 @@ void main() {
         final game = buildProductionBreakdownDeltaTestGame();
         final humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
         final player = game.playerById(humanPlayerId) ?? game.players.first;
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          ProviderScope(
+          buildAppShell(
             overrides: [
               if (desiredOutput != null)
                 productionDesiredOutputProvider.overrideWith(
                   () => _SeededProductionDesiredOutputNotifier(desiredOutput),
                 ),
             ],
-            child: MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: Builder(
-                  builder: (context) => TextButton(
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        barrierColor: EditorialMonoclePalette.dialogScrim,
-                        builder: (_) => ProductionCommodityBreakdownDialog(
-                          game: game,
-                          player: player,
-                          topology: const MapTopology(),
-                          tileMapByRegion: null,
-                          currentOrders: const Orders(),
-                        ),
-                      );
-                    },
-                    child: const Text('open'),
-                  ),
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () {
+                    showDialog<void>(
+                      context: context,
+                      barrierColor: EditorialMonoclePalette.dialogScrim,
+                      builder: (_) => ProductionCommodityBreakdownDialog(
+                        game: game,
+                        player: player,
+                        topology: const MapTopology(),
+                        tileMapByRegion: null,
+                        currentOrders: const Orders(),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
                 ),
               ),
             ),

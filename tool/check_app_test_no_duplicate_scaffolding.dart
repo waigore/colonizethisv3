@@ -288,8 +288,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// section / step-surface / expected-lines mirror, allocation row chrome /
 /// buttons, icons), military panel suites, technology panel suites that
 /// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, train
-/// dialog suites migrated onto `buildAppShell`, and unit-order dialog suites
-/// (`split_army` / `split_fleet` / `move_fleet`).
+/// dialog suites migrated onto `buildAppShell`, unit-order dialog suites
+/// (`split_army` / `split_fleet` / `move_fleet`), and commodity-breakdown
+/// dialog suites (`production_commodity_breakdown_dialog_spec` /
+/// `production_commodity_breakdown_dialog_wide_full_width`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -330,7 +332,9 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'train_civilians_dialog_test.dart' ||
       name == 'split_army_dialog_test.dart' ||
       name == 'split_fleet_dialog_test.dart' ||
-      name == 'move_fleet_dialog_test.dart';
+      name == 'move_fleet_dialog_test.dart' ||
+      name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
+      name == 'production_commodity_breakdown_dialog_wide_full_width_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
