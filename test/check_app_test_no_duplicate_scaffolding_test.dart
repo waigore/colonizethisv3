@@ -917,6 +917,12 @@ void main() {
         'widgetbook_leader_selection_dialog_mobile_viewport_test.dart',
         'widgetbook_map_widget_mobile_viewport_test.dart',
         'widgetbook_province_overlay_mobile_viewport_test.dart',
+        'widgetbook_game_top_bar_mobile_viewport_test.dart',
+        'widgetbook_shell_mobile_viewport_test.dart',
+        'widgetbook_main_menu_mobile_viewport_test.dart',
+        'widgetbook_diplomacy_panel_mobile_viewport_test.dart',
+        'widgetbook_player_turn_event_feed_mobile_viewport_test.dart',
+        'widgetbook_technology_screen_mobile_viewport_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1032,6 +1038,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'widgetbook_leader_selection_dialog_mobile_viewport_test.dart',
         'widgetbook_map_widget_mobile_viewport_test.dart',
         'widgetbook_province_overlay_mobile_viewport_test.dart',
+        'widgetbook_game_top_bar_mobile_viewport_test.dart',
+        'widgetbook_shell_mobile_viewport_test.dart',
+        'widgetbook_main_menu_mobile_viewport_test.dart',
+        'widgetbook_diplomacy_panel_mobile_viewport_test.dart',
+        'widgetbook_player_turn_event_feed_mobile_viewport_test.dart',
+        'widgetbook_technology_screen_mobile_viewport_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

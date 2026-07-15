@@ -362,8 +362,14 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_technology_funding_preview_story`,
 /// `widgetbook_production_panel_mobile_viewport`,
 /// `widgetbook_leader_selection_dialog_mobile_viewport`,
-/// `widgetbook_map_widget_mobile_viewport`, and
-/// `widgetbook_province_overlay_mobile_viewport`.
+/// `widgetbook_map_widget_mobile_viewport`,
+/// `widgetbook_province_overlay_mobile_viewport`,
+/// `widgetbook_game_top_bar_mobile_viewport`,
+/// `widgetbook_shell_mobile_viewport`,
+/// `widgetbook_main_menu_mobile_viewport`,
+/// `widgetbook_diplomacy_panel_mobile_viewport`,
+/// `widgetbook_player_turn_event_feed_mobile_viewport`, and
+/// `widgetbook_technology_screen_mobile_viewport`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -533,7 +539,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_production_panel_mobile_viewport_test.dart' ||
       name == 'widgetbook_leader_selection_dialog_mobile_viewport_test.dart' ||
       name == 'widgetbook_map_widget_mobile_viewport_test.dart' ||
-      name == 'widgetbook_province_overlay_mobile_viewport_test.dart';
+      name == 'widgetbook_province_overlay_mobile_viewport_test.dart' ||
+      name == 'widgetbook_game_top_bar_mobile_viewport_test.dart' ||
+      name == 'widgetbook_shell_mobile_viewport_test.dart' ||
+      name == 'widgetbook_main_menu_mobile_viewport_test.dart' ||
+      name == 'widgetbook_diplomacy_panel_mobile_viewport_test.dart' ||
+      name == 'widgetbook_player_turn_event_feed_mobile_viewport_test.dart' ||
+      name == 'widgetbook_technology_screen_mobile_viewport_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
