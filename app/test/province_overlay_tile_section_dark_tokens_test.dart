@@ -43,7 +43,7 @@ Future<void> _pumpFullPlayerRoad(
   await tester.pumpAndSettle();
 }
 
-Future<void> _expectMutedCaption(
+Future<void> _assertMutedRoadCaption(
   WidgetTester tester, {
   required int roadLevel,
   required String caption,
@@ -93,7 +93,7 @@ void main() {
       testWidgets(
         'land transport level ${c.level} — "${c.caption}" resolves to muted',
         (WidgetTester tester) async {
-          await _expectMutedCaption(
+          await _assertMutedRoadCaption(
             tester,
             roadLevel: c.level,
             caption: c.caption,
