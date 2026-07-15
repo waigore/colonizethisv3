@@ -857,6 +857,11 @@ void main() {
         'game_map_corner_controls_dark_chrome_test.dart',
         'game_map_corner_controls_narrow_test.dart',
         'game_map_players_bar_test.dart',
+        'game_map_empire_left_rail_test.dart',
+        'game_map_empire_left_rail_chrome_test.dart',
+        'game_map_empire_left_rail_narrow_test.dart',
+        'game_region_minimap_widget_test.dart',
+        'game_region_minimap_narrow_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -912,6 +917,11 @@ Widget host() => MaterialApp(home: const Placeholder());
         'game_map_corner_controls_dark_chrome_test.dart',
         'game_map_corner_controls_narrow_test.dart',
         'game_map_players_bar_test.dart',
+        'game_map_empire_left_rail_test.dart',
+        'game_map_empire_left_rail_chrome_test.dart',
+        'game_map_empire_left_rail_narrow_test.dart',
+        'game_region_minimap_widget_test.dart',
+        'game_region_minimap_narrow_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

@@ -23,10 +23,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -71,13 +71,22 @@ void main() {
     debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
   ];
 
-  Widget railScaffold({bool debugConsoleEnabled = false}) {
-    return ProviderScope(
+  Widget railScaffold({
+    bool debugConsoleEnabled = false,
+    RouteFactory? onGenerateRoute,
+    Size? viewport,
+    Widget? child,
+  }) {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: overrides(debugConsoleEnabled: debugConsoleEnabled),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          home: Scaffold(
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: onGenerateRoute,
+      viewport: viewport,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child:
+          child ??
+          Scaffold(
             body: Stack(
               children: [
                 Positioned(
@@ -91,8 +100,6 @@ void main() {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 
@@ -100,29 +107,7 @@ void main() {
     'GameMapEmpireLeftRail tapping Production navigates to ProductionScreen',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              onGenerateRoute: Routes.generate,
-              home: Scaffold(
-                body: Stack(
-                  children: [
-                    Positioned(
-                      left: 20,
-                      top: 0,
-                      child: GameMapEmpireLeftRail(
-                        game: game,
-                        humanPlayerId: humanId(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        railScaffold(onGenerateRoute: Routes.generate),
       );
       await tester.pumpAndSettle();
 
@@ -137,29 +122,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides(),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            onGenerateRoute: Routes.generate,
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  Positioned(
-                    left: 20,
-                    top: 0,
-                    child: GameMapEmpireLeftRail(
-                      game: game,
-                      humanPlayerId: humanId(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      railScaffold(onGenerateRoute: Routes.generate),
     );
     await tester.pumpAndSettle();
 
@@ -173,31 +136,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(size: Size(480, 1600)),
-        child: ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Stack(
-                  children: [
-                    Positioned(
-                      left: 20,
-                      top: 0,
-                      child: GameMapEmpireLeftRail(
-                        game: game,
-                        humanPlayerId: humanId(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      railScaffold(viewport: const Size(480, 1600)),
     );
     await tester.pumpAndSettle();
 
@@ -210,31 +149,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(size: Size(480, 1600)),
-        child: ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Stack(
-                  children: [
-                    Positioned(
-                      left: 20,
-                      top: 0,
-                      child: GameMapEmpireLeftRail(
-                        game: game,
-                        humanPlayerId: humanId(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      railScaffold(viewport: const Size(480, 1600)),
     );
     await tester.pumpAndSettle();
 
@@ -277,14 +192,8 @@ void main() {
     'Train presents dialog after opening Civilian Units from rail (regression)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: _RailOnlyHost(game: game, humanPlayerId: humanId()),
-            ),
-          ),
+        railScaffold(
+          child: _RailOnlyHost(game: game, humanPlayerId: humanId()),
         ),
       );
       await tester.pumpAndSettle();
@@ -304,14 +213,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides(),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            home: _RailOnlyHost(game: game, humanPlayerId: humanId()),
-          ),
-        ),
+      railScaffold(
+        child: _RailOnlyHost(game: game, humanPlayerId: humanId()),
       ),
     );
     await tester.pumpAndSettle();
@@ -341,30 +244,7 @@ void main() {
   testWidgets(
     'GameMapEmpireLeftRail Military Train opens TrainMilitaryDialog via bus',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: overrides(),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Stack(
-                  children: [
-                    Positioned(
-                      left: 20,
-                      top: 0,
-                      child: GameMapEmpireLeftRail(
-                        game: game,
-                        humanPlayerId: humanId(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(railScaffold());
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(kEmpireMilitaryUnitsButtonKey));
@@ -382,29 +262,7 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides(),
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            onGenerateRoute: Routes.generate,
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  Positioned(
-                    left: 20,
-                    top: 0,
-                    child: GameMapEmpireLeftRail(
-                      game: game,
-                      humanPlayerId: humanId(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      railScaffold(onGenerateRoute: Routes.generate),
     );
     await tester.pumpAndSettle();
 

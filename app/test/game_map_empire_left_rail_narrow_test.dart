@@ -14,10 +14,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Narrow-layout contract for [GameMapEmpireLeftRail] (issue #2870 S3).
@@ -78,26 +78,24 @@ void main() {
     required bool narrow,
     bool debugConsoleEnabled = false,
   }) {
-    return ProviderScope(
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: overrides(debugConsoleEnabled: debugConsoleEnabled),
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          home: Scaffold(
-            body: Stack(
-              children: <Widget>[
-                Positioned(
-                  left: 20,
-                  top: 0,
-                  child: GameMapEmpireLeftRail(
-                    game: game,
-                    humanPlayerId: humanId(),
-                    narrow: narrow,
-                  ),
-                ),
-              ],
+      navigatorKey: appNavigatorKey,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Scaffold(
+        body: Stack(
+          children: <Widget>[
+            Positioned(
+              left: 20,
+              top: 0,
+              child: GameMapEmpireLeftRail(
+                game: game,
+                humanPlayerId: humanId(),
+                narrow: narrow,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
