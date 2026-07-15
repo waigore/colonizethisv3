@@ -22,6 +22,7 @@ Game diplomacyGame({
       const {},
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, String>? purchasedTilesByTileKey,
+  Map<String, Set<String>>? playerProspectedTiles,
   List<Fleet> fleets = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
   List<OvertureState> overtureStates = const [],
@@ -48,6 +49,7 @@ Game diplomacyGame({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     playerVisibilityByTile: playerVisibilityByTile,
     purchasedTilesByTileKey: purchasedTilesByTileKey,
+    playerProspectedTiles: playerProspectedTiles,
     fleets: fleets,
     minorNations: minorNations,
     tribes: tribes,
@@ -302,8 +304,7 @@ Game fourGpBreakDecayGame({
 }
 
 /// Minimal game with configurable overtures for overture-clear helper tests.
-Game diplomacyGameWithOvertures(List<OvertureState> overtures) =>
-    TestFixtures.minimalGame(
+Game diplomacyGameWithOvertures(List<OvertureState> overtures) => diplomacyGame(
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       overtureStates: overtures,
     );

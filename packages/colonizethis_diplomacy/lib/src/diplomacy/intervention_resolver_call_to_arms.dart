@@ -96,7 +96,7 @@ Game _applyCallToArmsAccept(
     aggressorGpId,
     warStateRelationUpdater(allyGpId, aggressorGpId, turn),
   );
-  var g = game.copyWith(diplomacyRelations: relationsIndex.toList());
+  var g = withCommittedRelations(game, relationsIndex);
   g = cancelSubsidiesBetweenGps(
     g,
     allyGpId,

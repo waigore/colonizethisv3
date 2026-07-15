@@ -10,19 +10,19 @@ import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_
 
 void main() {
   group('evidenceForLandBattleVictory', () {
-    for (final scenario in evidenceRulesBattleAndMirrorScenarios().take(4)) {
+    for (final scenario in evidenceRulesLandBattleVictoryScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });
 
   group('evidenceForNavalBattleVictory', () {
-    for (final scenario in evidenceRulesBattleAndMirrorScenarios().skip(4).take(2)) {
+    for (final scenario in evidenceRulesNavalBattleVictoryScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });
 
   group('evidenceForEnvyResearchMirror', () {
-    for (final scenario in evidenceRulesBattleAndMirrorScenarios().skip(6)) {
+    for (final scenario in evidenceRulesEnvyResearchMirrorScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });

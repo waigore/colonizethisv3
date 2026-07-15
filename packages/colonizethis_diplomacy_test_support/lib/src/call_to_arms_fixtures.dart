@@ -1,15 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import 'diplomacy_game_fixtures.dart';
 
 /// Shared three-power game fixture for call-to-arms (alliance mutual defence)
 /// tests. Extracted so the call-to-arms suites stay within the split
 /// domain-package test file size cap (Refs #3625).
 ///
-/// Built on [TestFixtures.minimalGame] (Refs #3715): the previous inline
-/// `Game`/`WorldState` builder matched `minimalGame` with empty New World and an
-/// orders-phase turn 1, so only the GP3-owned Old World provinces, the three
-/// players, and the diplomacy relations remain expressed here.
+/// Built on [diplomacyGame] (Refs #3715, #4028): GP3-owned Old World provinces,
+/// three players, and diplomacy relations remain expressed here.
 Game threePowerCallToArmsGame({
   required bool gp1Human,
   required bool gp2Human,
@@ -17,7 +16,7 @@ Game threePowerCallToArmsGame({
   RelationLevel gp1gp2Level = RelationLevel.allied,
   bool gp1gp2FormalAlliance = true,
 }) {
-  return TestFixtures.minimalGame(
+  return diplomacyGame(
     id: 'g1',
     oldWorld: RegionData(
       provinces: [
@@ -80,7 +79,7 @@ Game threePowerCallToArmsGame({
 }
 
 /// Four-GP call-to-arms game where gp1 is allied with gp2 but at war with gp3.
-Game fourGpCallToArmsAtWarGame() => TestFixtures.minimalGame(
+Game fourGpCallToArmsAtWarGame() => diplomacyGame(
       id: 'g-multi',
       turnNumber: 25,
       players: const [
@@ -122,7 +121,7 @@ Game fourGpCallToArmsAtWarGame() => TestFixtures.minimalGame(
     );
 
 /// Four-GP cascade penalty game for human refuse call-to-arms (Refs #3825).
-Game fourGpCallToArmsCascadeGame() => TestFixtures.minimalGame(
+Game fourGpCallToArmsCascadeGame() => diplomacyGame(
       id: 'g-cascade',
       turnNumber: 5,
       players: const [

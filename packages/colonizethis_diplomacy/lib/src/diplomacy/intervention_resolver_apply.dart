@@ -124,7 +124,7 @@ Game applyInterventionAgainstAggressor(
     });
   }
 
-  var g = game.copyWith(diplomacyRelations: relationsIndex.toList());
+  var g = withCommittedRelations(game, relationsIndex);
   final eventType = choice == InterventionChoice.intervene
       ? DiplomaticEventType.interventionIntervene
       : DiplomaticEventType.interventionProtest;
