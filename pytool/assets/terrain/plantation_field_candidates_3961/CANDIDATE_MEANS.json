@@ -1,0 +1,58 @@
+{
+  "refs": 3961,
+  "note": "Candidates only; do not ship until PO locks a letter per crop.",
+  "tobacco": "unchanged; not generated here",
+  "field_mask_means": {
+    "sugar_cane": {
+      "A_sage_olive": [
+        109,
+        137,
+        77
+      ],
+      "B_tea_green": [
+        103,
+        141,
+        114
+      ],
+      "C_warm_olive_cane": [
+        127,
+        145,
+        71
+      ]
+    },
+    "cotton": {
+      "A_soft_taupe": [
+        194,
+        183,
+        158
+      ],
+      "B_grey_fibre": [
+        181,
+        179,
+        173
+      ],
+      "C_warm_cream": [
+        202,
+        184,
+        155
+      ]
+    },
+    "spices": {
+      "A_cinnamon_umber": [
+        149,
+        102,
+        59
+      ],
+      "B_muted_paprika": [
+        153,
+        88,
+        58
+      ],
+      "C_ochre_turmeric": [
+        161,
+        122,
+        56
+      ]
+    }
+  }
+}

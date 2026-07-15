@@ -31,6 +31,26 @@ python pytool/recolour_plains_plantation_tiles.py --base pytool/assets/terrain/t
 
 ---
 
+### paint_plains_plantation_field_gradients.py
+
+**Purpose:** Generate **hand-painted field-gradient candidates** for sugar cane / cotton / spices (Refs #3961 PO sample gate). Keeps plantation base buildings/soil/path/alpha; paints only field-highlight pixels with multi-stop banding, dither, and luminance shade. Writes 1× 64×64 PNGs under `pytool/assets/terrain/plantation_field_candidates_3961/` (not shipped app terrain). Tobacco is never generated. After PO locks letters, `--promote sugar_cane=A,cotton=B,spices=C` copies picks into `app/assets/images/terrain/`. Authority: [layered-terrain-rendering.md](layered-terrain-rendering.md) § Plains plantation variants.
+
+**Dependencies:** Pillow (see `pytool/requirements.txt`).
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py
+uv run --project pytool python pytool/test_paint_plains_plantation_field_gradients.py
+# After PO lock only:
+uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py \
+  --promote sugar_cane=A,cotton=B,spices=C
+```
+
+**Behaviour:** Exactly three candidates per retune crop (A/B/C). Asserts alpha silhouette unchanged vs base. Promote rejects tobacco and invalid letters.
+
+---
+
 ### button_contrast_wood_pil.py
 
 **Purpose:** Apply higher border/center contrast and randomised wood grain to a button PNG. Reads an image file and writes a new PNG. Tuned for the main-menu colonial wood palette (reddish-brown frame, warm inner wood, gold accents).
