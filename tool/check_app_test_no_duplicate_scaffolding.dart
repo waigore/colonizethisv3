@@ -299,6 +299,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
       name == 'production_labour_section_test.dart' ||
+      name == 'production_panel_icons_test.dart' ||
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
