@@ -285,8 +285,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `buildProductionPanel` / `buildNavalPanel` instead of an inline
 /// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
 /// production specialty hosts (cotton-weaving lock, available grid, labour
-/// section), military panel suites, and technology panel suites that already
-/// compose `buildTechnologyPanel` / `pumpTechnologyPanel`.
+/// section / step-surface / expected-lines mirror, allocation row chrome /
+/// buttons, icons), military panel suites, and technology panel suites that
+/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -299,6 +300,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
       name == 'production_labour_section_test.dart' ||
+      name == 'production_labour_section_step_surface_test.dart' ||
+      name == 'production_labour_controls_expected_lines_test.dart' ||
+      name == 'production_allocation_row_buttons_test.dart' ||
+      name == 'production_allocation_row_chrome_test.dart' ||
       name == 'production_panel_icons_test.dart' ||
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||

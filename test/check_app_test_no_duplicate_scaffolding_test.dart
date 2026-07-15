@@ -819,4 +819,144 @@ void main() {
       expect(code, 0);
     },
   );
+
+  test(
+    'fails when production labour step-surface suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_step_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_labour_section_step_surface_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when production labour expected-lines suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_lines_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_labour_controls_expected_lines_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when production allocation-row buttons suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_alloc_btn_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_allocation_row_buttons_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when production allocation-row chrome suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_alloc_chrome_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_allocation_row_chrome_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'passes when production labour step-surface suite uses buildAppShell',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_step_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_labour_section_step_surface_test.dart',
+        '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''',
+      );
+
+      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+      expect(code, 0);
+    },
+  );
 }
