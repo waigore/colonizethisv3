@@ -819,4 +819,71 @@ void main() {
       expect(code, 0);
     },
   );
+
+  test(
+    'fails when catalog widget unit host suites reintroduce MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_catalog_units_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      for (final name in <String>[
+        'base_units_panel_test.dart',
+        'units_combine_header_actions_test.dart',
+        'units_panel_shared_widgets_test.dart',
+        'unit_panels_viewport_sizing_test.dart',
+        'unit_panels_widgetbook_dark_chrome_test.dart',
+      ]) {
+        _writeGovernedFile(temp, name, '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+      }
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'passes when catalog widget unit host suites use buildAppShell only',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_catalog_units_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      for (final name in <String>[
+        'base_units_panel_test.dart',
+        'units_combine_header_actions_test.dart',
+        'units_panel_shared_widgets_test.dart',
+        'unit_panels_viewport_sizing_test.dart',
+        'unit_panels_widgetbook_dark_chrome_test.dart',
+      ]) {
+        _writeGovernedFile(
+          temp,
+          name,
+          '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''',
+        );
+      }
+
+      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+      expect(code, 0);
+    },
+  );
 }

@@ -323,7 +323,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 **App test file size (Refs #4013, #4021):** `repo.app_test_file_size` caps every `app/test/**/*.dart` file at **800 physical lines**. Files over the cap must appear on the shrink-only allowlist in `tool/check_app_test_file_size.dart`; adding a new oversized file requires removing another allowlist entry or shrinking first. Stale allowlist entries (missing path or file now ≤ cap) fail CI. Wave-6 densify cleared the shrink-only allowlist (region-map / e2e barrel / game-map-area / train-civilians / debug-console / labour / dialogs-320dp-part2 / train-naval / app-event-handler suites now ≤800). Distinguishes from `repo.dart_file_non_comment_line_size` (1000 NCL, unchanged).
 
-**App test support LOC (Refs #4021, #4035):** `repo.app_test_support_loc` fails when physical LOC of all Dart under `app/test/support/` exceeds the documented post-densify ceiling (**8750**). Ratchet downward as densify slices shrink the tree.
+**App test support LOC (Refs #4021, #4035):** `repo.app_test_support_loc` fails when physical LOC of all Dart under `app/test/support/` exceeds the documented post-densify ceiling (**8771**). Ratchet downward as densify slices shrink the tree.
 
 **Feature-screen top-bar helper (Refs #3952):** Diplomacy / Production / Technology / Trade screens build Map-back + 18×18 icon + title chrome via `app/lib/widgets/game_feature_screen_top_bar.dart` (`GameFeatureScreenTopBar.build`); screen-specific `topBarKey` / title / icon asset constants remain on each screen.
 

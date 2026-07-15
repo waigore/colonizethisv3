@@ -17,8 +17,12 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
+import 'support/app_shell_harness.dart';
+
 Future<void> _pumpBody(WidgetTester tester, Widget body) async {
-  await tester.pumpWidget(MaterialApp(home: Scaffold(body: body)));
+  await tester.pumpWidget(
+    buildAppShell(child: Scaffold(body: body)),
+  );
 }
 
 Border _headerBorder(WidgetTester tester, Type headerType) {

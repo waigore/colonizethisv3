@@ -309,7 +309,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `province_overlay_section_label_material_fallback_guard_test`). Also
 /// province-sea-zone overlay suites (`province_sea_zone_overlay_detail_paths`,
 /// `province_sea_zone_overlay_naval_port_pending_omission`,
-/// `province_sea_zone_resource_labels`).
+/// `province_sea_zone_resource_labels`), and catalog widget unit hosts
+/// (`base_units_panel`, `units_combine_header_actions`,
+/// `units_panel_shared_widgets`, `unit_panels_viewport_sizing`,
+/// `unit_panels_widgetbook_dark_chrome`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -390,7 +393,12 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'province_overlay_tile_resource_row_label_inline_dark_token_test.dart' ||
       name == 'province_sea_zone_overlay_detail_paths_test.dart' ||
       name == 'province_sea_zone_overlay_naval_port_pending_omission_test.dart' ||
-      name == 'province_sea_zone_resource_labels_test.dart';
+      name == 'province_sea_zone_resource_labels_test.dart' ||
+      name == 'base_units_panel_test.dart' ||
+      name == 'units_combine_header_actions_test.dart' ||
+      name == 'units_panel_shared_widgets_test.dart' ||
+      name == 'unit_panels_viewport_sizing_test.dart' ||
+      name == 'unit_panels_widgetbook_dark_chrome_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

@@ -17,6 +17,8 @@ import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -130,8 +132,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: const Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(
