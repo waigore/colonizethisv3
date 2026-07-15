@@ -16,6 +16,50 @@ class EvidenceRulesScenario {
 
 void runEvidenceRulesScenario(EvidenceRulesScenario scenario) => scenario.run();
 
+const _pHuman = Player(id: 'gp1', displayName: 'Human', isHuman: true);
+const _pAi = Player(id: 'gp2', displayName: 'AI', isHuman: false);
+const _pOther = Player(id: 'gp3', displayName: 'Other', isHuman: false);
+const _pAi1 = Player(id: 'gp1', displayName: 'AI1', isHuman: false);
+const _pAi2 = Player(id: 'gp2', displayName: 'AI2', isHuman: false);
+const _pHumanNamed = Player(id: 'human', displayName: 'Human', isHuman: true);
+const _pAiNamed = Player(id: 'ai', displayName: 'AI', isHuman: false);
+
+EvidenceRulesScenario _emptyBattle({
+  required String label,
+  required List<Player> players,
+  required List<DossierEvidenceEntry> Function(Game) fn,
+}) =>
+    EvidenceRulesScenario(
+      label: label,
+      run: () {
+        expect(fn(evidenceGame(players: players)), isEmpty);
+      },
+    );
+
+EvidenceRulesScenario _emptyMirror({
+  required String label,
+  required int refTurn,
+  required int currentTurn,
+  required String category,
+  List<DossierEvidenceEntry> pending = const [],
+}) =>
+    EvidenceRulesScenario(
+      label: label,
+      run: () {
+        final game = _baseMirrorGame(refTurn: refTurn, currentTurn: currentTurn);
+        expect(
+          evidenceForEnvyResearchMirror(
+            game,
+            'ai',
+            category,
+            currentTurn,
+            pending,
+          ),
+          isEmpty,
+        );
+      },
+    );
+
 Game _baseMirrorGame({required int refTurn, required int currentTurn}) {
   return evidenceGame(
     turnNumber: currentTurn,
@@ -54,8 +98,8 @@ Game _ctaRefuseGame({
   );
 }
 
-/// Battle victory + research mirror scenarios from `evidence_rules_test.dart`.
-List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
+/// Land-battle victory scenarios from `evidence_rules_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
   EvidenceRulesScenario(
     label: 'AI victor vs defender appends warmonger evidence for human observer',
     run: () {
@@ -112,41 +156,25 @@ List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
       expect(entries.first.description, contains('attacker'));
     },
   ),
-  EvidenceRulesScenario(
+  _emptyBattle(
     label: 'human victor returns no evidence',
-    run: () {
-      final game = evidenceGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-          Player(id: 'gp2', displayName: 'AI', isHuman: false),
-        ],
-      );
-      final entries = evidenceForLandBattleVictory(game, 'gp1', 'gp2', 2);
-      expect(entries, isEmpty);
-    },
+    players: const [_pHuman, _pAi],
+    fn: (g) => evidenceForLandBattleVictory(g, 'gp1', 'gp2', 2),
   ),
-  EvidenceRulesScenario(
+  _emptyBattle(
     label: 'land battle: no human observer returns no evidence',
-    run: () {
-      final game = evidenceGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'AI1', isHuman: false),
-          Player(id: 'gp2', displayName: 'AI2', isHuman: false),
-        ],
-      );
-      final entries = evidenceForLandBattleVictory(game, 'gp1', 'gp2', 2);
-      expect(entries, isEmpty);
-    },
+    players: const [_pAi1, _pAi2],
+    fn: (g) => evidenceForLandBattleVictory(g, 'gp1', 'gp2', 2),
   ),
+];
+
+/// Naval-battle victory scenarios from `evidence_rules_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesNavalBattleVictoryScenarios() => [
   EvidenceRulesScenario(
     label: 'AI victor appends warmonger evidence for human observer',
     run: () {
       final game = evidenceGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-          Player(id: 'gp2', displayName: 'AI', isHuman: false),
-          Player(id: 'gp3', displayName: 'Other', isHuman: false),
-        ],
+        players: const [_pHuman, _pAi, _pOther],
       );
       final entries = evidenceForNavalBattleVictory(game, 'gp2', 'gp3', 2);
       expect(entries.length, 1);
@@ -157,19 +185,15 @@ List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
       expect(entries.first.description, contains('naval'));
     },
   ),
-  EvidenceRulesScenario(
+  _emptyBattle(
     label: 'human victor returns no evidence',
-    run: () {
-      final game = evidenceGame(
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true),
-          Player(id: 'gp2', displayName: 'AI', isHuman: false),
-        ],
-      );
-      final entries = evidenceForNavalBattleVictory(game, 'gp1', 'gp2', 2);
-      expect(entries, isEmpty);
-    },
+    players: const [_pHuman, _pAi],
+    fn: (g) => evidenceForNavalBattleVictory(g, 'gp1', 'gp2', 2),
   ),
+];
+
+/// Research-mirror envy scenarios from `evidence_rules_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesEnvyResearchMirrorScenarios() => [
   EvidenceRulesScenario(
     label: 'adds envy when category matches within window',
     run: () {
@@ -186,33 +210,17 @@ List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
       expect(entries.single.scoreDelta, 1);
     },
   ),
-  EvidenceRulesScenario(
+  _emptyMirror(
     label: 'empty when category differs',
-    run: () {
-      final game = _baseMirrorGame(refTurn: 1, currentTurn: 2);
-      final entries = evidenceForEnvyResearchMirror(
-        game,
-        'ai',
-        'military',
-        2,
-        const [],
-      );
-      expect(entries, isEmpty);
-    },
+    refTurn: 1,
+    currentTurn: 2,
+    category: 'military',
   ),
-  EvidenceRulesScenario(
+  _emptyMirror(
     label: 'empty when outside 2-turn window',
-    run: () {
-      final game = _baseMirrorGame(refTurn: 1, currentTurn: 4);
-      final entries = evidenceForEnvyResearchMirror(
-        game,
-        'ai',
-        'gathering',
-        4,
-        const [],
-      );
-      expect(entries, isEmpty);
-    },
+    refTurn: 1,
+    currentTurn: 4,
+    category: 'gathering',
   ),
   EvidenceRulesScenario(
     label: 'respects per-turn cap of 3',
@@ -240,6 +248,7 @@ List<EvidenceRulesScenario> evidenceRulesBattleAndMirrorScenarios() => [
     },
   ),
 ];
+
 
 /// Declare-war scenarios from `evidence_rules_war_peace_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
@@ -375,10 +384,7 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
     label: 'human actor returns no evidence',
     run: () {
       final game = evidenceGame(
-        players: const [
-          Player(id: 'human', displayName: 'Human', isHuman: true),
-          Player(id: 'ai', displayName: 'AI', isHuman: false),
-        ],
+        players: const [_pHumanNamed, _pAiNamed],
       );
       final entries = evidenceForDeclareWar(game, 'human', 'ai', 2);
       expect(entries, isEmpty);
@@ -399,16 +405,13 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   ),
 ];
 
-/// Offer-peace and follow-on war scenarios from `evidence_rules_war_peace_test.dart`.
+/// Offer-peace scenarios from `evidence_rules_war_peace_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   EvidenceRulesScenario(
     label: 'AI offering peace adds peacemaker evidence for human observer',
     run: () {
       final game = evidenceGame(
-        players: const [
-          Player(id: 'human', displayName: 'Human', isHuman: true),
-          Player(id: 'ai', displayName: 'AI', isHuman: false),
-        ],
+        players: const [_pHumanNamed, _pAiNamed],
       );
       final entries = evidenceForOfferPeace(game, 'ai', 'human', 2);
       expect(entries.length, 1);
@@ -420,32 +423,23 @@ List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
       expect(entry.description, contains('peace'));
     },
   ),
-  EvidenceRulesScenario(
+  _emptyBattle(
     label: 'human offering peace returns no evidence',
-    run: () {
-      final game = evidenceGame(
-        players: const [
-          Player(id: 'human', displayName: 'Human', isHuman: true),
-          Player(id: 'ai', displayName: 'AI', isHuman: false),
-        ],
-      );
-      final entries = evidenceForOfferPeace(game, 'human', 'ai', 2);
-      expect(entries, isEmpty);
-    },
+    players: const [_pHumanNamed, _pAiNamed],
+    fn: (g) => evidenceForOfferPeace(g, 'human', 'ai', 2),
   ),
-  EvidenceRulesScenario(
+  _emptyBattle(
     label: 'offer peace: no human observer returns no evidence',
-    run: () {
-      final game = evidenceGame(
-        players: const [
-          Player(id: 'ai', displayName: 'AI', isHuman: false),
-          Player(id: 'other', displayName: 'Other', isHuman: false),
-        ],
-      );
-      final entries = evidenceForOfferPeace(game, 'ai', 'other', 2);
-      expect(entries, isEmpty);
-    },
+    players: const [
+      Player(id: 'ai', displayName: 'AI', isHuman: false),
+      Player(id: 'other', displayName: 'Other', isHuman: false),
+    ],
+    fn: (g) => evidenceForOfferPeace(g, 'ai', 'other', 2),
   ),
+];
+
+/// Treaty-break / call-to-arms follow-on war scenarios from `evidence_rules_war_peace_test.dart`.
+List<EvidenceRulesScenario> evidenceRulesTreatyBreakWindowScenarios() => [
   EvidenceRulesScenario(
     label: 'adds backstabber when war follows callToArmsRefused within 3 turns',
     run: () {
@@ -498,11 +492,6 @@ List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   ),
 ];
 
-/// Declare-war / offer-peace scenarios from `evidence_rules_war_peace_test.dart`.
-List<EvidenceRulesScenario> evidenceRulesWarPeaceScenarios() => [
-  ...evidenceRulesDeclareWarScenarios(),
-  ...evidenceRulesOfferPeaceScenarios(),
-];
 
 /// Isolationist call-to-arms scenarios from `evidence_rules_isolationist_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesIsolationistScenarios() => [

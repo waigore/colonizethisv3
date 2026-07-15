@@ -34,9 +34,8 @@ final _oldWorldBorderTopology = MapTopology(
   edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
 );
 
-/// Fort and human-attack reactive scenarios from `event_dialogue_reactive_test.dart`.
-List<EventDialogueReactiveScenario> eventDialogueReactiveFortAndAttackScenarios() =>
-    [
+/// Forts-on-border reactive scenarios from `event_dialogue_reactive_test.dart`.
+List<EventDialogueReactiveScenario> eventDialogueReactiveFortsOnBorderScenarios() => [
   EventDialogueReactiveScenario(
     label: 'returns empty when builder is AI',
     run: () {
@@ -121,6 +120,10 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveFortAndAttackScenarios(
       expect(events.first.variables['province'], 'newWorld|N1');
     },
   ),
+];
+
+/// Human-attack reactive scenarios from `event_dialogue_reactive_test.dart`.
+List<EventDialogueReactiveScenario> eventDialogueReactiveHumanAttackScenarios() => [
   EventDialogueReactiveScenario(
     label: 'emits attack_on_ally for AI with a formal alliance with defender',
     run: () {
@@ -361,8 +364,3 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
   ),
 ];
 
-/// Reactive scenarios from `event_dialogue_reactive_test.dart`.
-List<EventDialogueReactiveScenario> eventDialogueReactiveScenarios() => [
-  ...eventDialogueReactiveFortAndAttackScenarios(),
-  ...eventDialogueReactiveDiscoveryAndSpyScenarios(),
-];

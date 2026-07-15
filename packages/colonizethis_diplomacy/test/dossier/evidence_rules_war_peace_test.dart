@@ -7,19 +7,19 @@ import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_
 
 void main() {
   group('evidenceForDeclareWar', () {
-    for (final scenario in evidenceRulesWarPeaceScenarios().take(5)) {
+    for (final scenario in evidenceRulesDeclareWarScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });
 
   group('evidenceForOfferPeace', () {
-    for (final scenario in evidenceRulesWarPeaceScenarios().skip(5).take(3)) {
+    for (final scenario in evidenceRulesOfferPeaceScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });
 
   group('evidenceForDeclareWar treaty-break window', () {
-    for (final scenario in evidenceRulesWarPeaceScenarios().skip(8)) {
+    for (final scenario in evidenceRulesTreatyBreakWindowScenarios()) {
       test(scenario.label, () => runEvidenceRulesScenario(scenario));
     }
   });

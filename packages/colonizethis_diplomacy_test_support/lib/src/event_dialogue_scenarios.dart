@@ -16,8 +16,8 @@ class EventDialogueScenario {
 
 void runEventDialogueScenario(EventDialogueScenario scenario) => scenario.run();
 
-/// Battle scenarios from `event_dialogue_test.dart`.
-List<EventDialogueScenario> eventDialogueCoreBattleScenarios() => [
+/// Land-battle dialogue scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreLandBattleScenarios() => [
   EventDialogueScenario(
     label:
         'AI victor and AI loser both emit event with era from turn-time mapping',
@@ -100,6 +100,10 @@ List<EventDialogueScenario> eventDialogueCoreBattleScenarios() => [
       expect(events.first.leaderId, 'gp2');
     },
   ),
+];
+
+/// Naval-battle dialogue scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreNavalBattleScenarios() => [
   EventDialogueScenario(
     label: 'AI victor and AI loser both emit event',
     run: () {
@@ -153,8 +157,9 @@ List<EventDialogueScenario> eventDialogueCoreBattleScenarios() => [
   ),
 ];
 
-/// Era-change and negotiation scenarios from `event_dialogue_test.dart`.
-List<EventDialogueScenario> eventDialogueCoreEraAndNegotiationScenarios() => [
+
+/// eraFromYear mapping scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreEraFromYearScenarios() => [
   EventDialogueScenario(
     label: 'maps year to dialogue era bands',
     run: () {
@@ -166,6 +171,10 @@ List<EventDialogueScenario> eventDialogueCoreEraAndNegotiationScenarios() => [
       expect(eraFromYear(1800), 'industrial');
     },
   ),
+];
+
+/// Era-change dialogue scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreEraChangeScenarios() => [
   EventDialogueScenario(
     label: 'emits one event per AI leader with era_change situation',
     run: () {
@@ -212,6 +221,10 @@ List<EventDialogueScenario> eventDialogueCoreEraAndNegotiationScenarios() => [
       expect(events, isEmpty);
     },
   ),
+];
+
+/// Negotiation dialogue scenarios from `event_dialogue_test.dart`.
+List<EventDialogueScenario> eventDialogueCoreNegotiationScenarios() => [
   EventDialogueScenario(
     label: 'builds event with category negotiation and optional mood',
     run: () {
@@ -245,8 +258,4 @@ List<EventDialogueScenario> eventDialogueCoreEraAndNegotiationScenarios() => [
   ),
 ];
 
-/// Battle / era / negotiation scenarios from `event_dialogue_test.dart`.
-List<EventDialogueScenario> eventDialogueCoreScenarios() => [
-  ...eventDialogueCoreBattleScenarios(),
-  ...eventDialogueCoreEraAndNegotiationScenarios(),
-];
+
