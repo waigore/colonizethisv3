@@ -51,7 +51,10 @@ int runCheckAppTestNoDuplicateScaffolding(
 
   final violations = <String>[];
 
-  for (final entity in appTestDir.listSync(recursive: true, followLinks: false)) {
+  for (final entity in appTestDir.listSync(
+    recursive: true,
+    followLinks: false,
+  )) {
     if (entity is! File || !entity.path.endsWith('.dart')) {
       continue;
     }
@@ -114,6 +117,17 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedTechnologyPanelFile(relativePath)) {
+      final visitor = _PanelPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+        forbiddenNames: const {'_pumpPanel', 'pumpPanel'},
+        canonicalHelper: 'pumpTechnologyPanel',
+        supportModule: 'technology_panel_test_support.dart',
+      );
+      parsed.unit.accept(visitor);
+    }
     if (_isGovernedAppShellHostFamilyFile(relativePath)) {
       final visitor = _InlineMaterialAppVisitor(
         relativePath: relativePath,
@@ -127,8 +141,8 @@ int runCheckAppTestNoDuplicateScaffolding(
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, trade-screen host, units-panel Game, naval/military '
-      'pump, or panel MaterialApp scaffolding found.',
+      'widgetbook use-case, trade-screen host, units-panel Game, naval/military/'
+      'technology pump, or panel MaterialApp scaffolding found.',
     );
     return 0;
   }
@@ -156,8 +170,11 @@ int runCheckAppTestNoDuplicateScaffolding(
     'naval_units_panel_test_support.dart. '
     'Military panel pumps: use pumpMilitaryPanel from '
     'military_units_panel_test_support.dart. '
-    'Production/naval/civilian/narrow-overlay hosts: use '
+    'Technology panel pumps: use pumpTechnologyPanel from '
+    'technology_panel_test_support.dart. '
+    'Production/naval/civilian/narrow-overlay/technology hosts: use '
     'buildProductionPanel / buildNavalPanel / buildCivilianPanel / '
+    'buildMilitaryPanel / buildTechnologyPanel / '
     'buildAppShell (no inline MaterialApp).',
   );
   return 1;
@@ -249,12 +266,27 @@ bool _isGovernedMilitaryUnitsPanelFile(String relativePath) {
       name == 'military_units_panel_army_test.dart';
 }
 
+/// True for technology panel suites that must call shared
+/// [pumpTechnologyPanel] (Refs #4035).
+bool _isGovernedTechnologyPanelFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name == 'technology_panel_test.dart' ||
+      name == 'technology_panel_interaction_test.dart' ||
+      name == 'technology_panel_funding_toggles_test.dart' ||
+      name == 'technology_panel_choose_tech_dialog_test.dart' ||
+      name == 'technology_panel_slot_occupancy_test.dart' ||
+      name == 'technology_panel_dark_chrome_test.dart';
+}
+
 /// True for panel-host families that must compose `buildAppShell` /
 /// `buildProductionPanel` / `buildNavalPanel` instead of an inline
 /// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
 /// production specialty hosts (cotton-weaving lock, available grid, labour
-/// section) and military panel suites that already compose
-/// `buildMilitaryPanel` / `pumpMilitaryPanel`.
+/// section), military panel suites, and technology panel suites that already
+/// compose `buildTechnologyPanel` / `pumpTechnologyPanel`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -274,7 +306,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_map_narrow_detail_overlay_test.dart' ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
-      name == 'military_units_panel_army_test.dart';
+      name == 'military_units_panel_army_test.dart' ||
+      name == 'technology_panel_test.dart' ||
+      name == 'technology_panel_interaction_test.dart' ||
+      name == 'technology_panel_funding_toggles_test.dart' ||
+      name == 'technology_panel_choose_tech_dialog_test.dart' ||
+      name == 'technology_panel_slot_occupancy_test.dart' ||
+      name == 'technology_panel_dark_chrome_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -521,7 +559,8 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
         offset,
         'inline MaterialApp( host; use buildProductionPanel / '
         'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
-        'buildAppShell / buildAppShellWithContainer from app/test/support/',
+        'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer '
+        'from app/test/support/',
       );
     }
   }

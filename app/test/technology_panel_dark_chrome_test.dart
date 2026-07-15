@@ -14,7 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
+import 'package:colonizethis_app/config/themes.dart'
+    show editorialMonocleDisplayFontFamily;
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
@@ -25,6 +26,7 @@ import 'package:colonizethis_app/widgets/ct_progress_bar.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -36,21 +38,6 @@ void main() {
     game = buildTechnologyPanelTestGame();
     basePlayer = game.players.first;
   });
-
-  Widget host(Game g, Player p, {Orders orders = const Orders()}) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: TechnologyPanel(
-            game: g,
-            player: p,
-            currentOrders: orders,
-            onOrdersChanged: (_) {},
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<(Game, Player)> pumpPlayer(
     WidgetTester tester, {
@@ -75,67 +62,75 @@ void main() {
         researchProgressByTechId: researchProgressByTechId,
       );
     }
-    final localGame = game.copyWith(
-      players: [player, ...game.players.skip(1)],
-    );
+    final localGame = game.copyWith(players: [player, ...game.players.skip(1)]);
     final panelPlayer = researchProgressByTechId != null
         ? localGame.players.first
         : player;
-    await tester.pumpWidget(host(localGame, panelPlayer, orders: orders));
-    await tester.pumpAndSettle();
+    await pumpTechnologyPanel(
+      tester,
+      game: localGame,
+      player: panelPlayer,
+      currentOrders: orders,
+      onOrdersChanged: (_) {},
+      wrapInScrollView: true,
+    );
     return (localGame, panelPlayer);
   }
 
   Orders mediumOrder(Player p, String techId) => Orders(
-        researchOrdersByPlayerId: {
-          p.id: [
-            ResearchOrder(
-              slotIndex: 0,
-              techId: techId,
-              funding: ResearchFundingLevel.medium,
-            ),
-          ],
-        },
-      );
+    researchOrdersByPlayerId: {
+      p.id: [
+        ResearchOrder(
+          slotIndex: 0,
+          techId: techId,
+          funding: ResearchFundingLevel.medium,
+        ),
+      ],
+    },
+  );
 
   group('Slots tab always renders four slot cards (Refs #2864 AC always-4)', () {
-    for (final c in <({
-      String name,
-      int? slots,
-      int active,
-      Matcher locked,
-      Matcher slot4,
-      Matcher slot4University,
-      Matcher? requiresUniversity,
-    })>[
-      (
-        name: 'researchSlots = 3 renders three active + one locked',
-        slots: 3,
-        active: 3,
-        locked: findsOneWidget,
-        slot4: findsNothing,
-        slot4University: findsOneWidget,
-        requiresUniversity: null,
-      ),
-      (
-        name: 'researchSlots = 4 renders four active, no locked',
-        slots: 4,
-        active: 4,
-        locked: findsNothing,
-        slot4: findsOneWidget,
-        slot4University: findsNothing,
-        requiresUniversity: findsNothing,
-      ),
-      (
-        name: 'researchSlots = null still renders four-card grid (locked slot 4)',
-        slots: null,
-        active: 3,
-        locked: findsOneWidget,
-        slot4: findsNothing,
-        slot4University: findsNothing,
-        requiresUniversity: null,
-      ),
-    ]) {
+    for (final c
+        in <
+          ({
+            String name,
+            int? slots,
+            int active,
+            Matcher locked,
+            Matcher slot4,
+            Matcher slot4University,
+            Matcher? requiresUniversity,
+          })
+        >[
+          (
+            name: 'researchSlots = 3 renders three active + one locked',
+            slots: 3,
+            active: 3,
+            locked: findsOneWidget,
+            slot4: findsNothing,
+            slot4University: findsOneWidget,
+            requiresUniversity: null,
+          ),
+          (
+            name: 'researchSlots = 4 renders four active, no locked',
+            slots: 4,
+            active: 4,
+            locked: findsNothing,
+            slot4: findsOneWidget,
+            slot4University: findsNothing,
+            requiresUniversity: findsNothing,
+          ),
+          (
+            name:
+                'researchSlots = null still renders four-card grid (locked slot 4)',
+            slots: null,
+            active: 3,
+            locked: findsOneWidget,
+            slot4: findsNothing,
+            slot4University: findsNothing,
+            requiresUniversity: null,
+          ),
+        ]) {
       testWidgets(c.name, (WidgetTester tester) async {
         await pumpPlayer(tester, researchSlots: c.slots);
         expect(find.byType(ResearchSlotCard), findsNWidgets(c.active));
@@ -153,20 +148,19 @@ void main() {
   });
 
   group('Locked slot 4 rule (Refs #2864 AC locked-slot)', () {
-    testWidgets(
-      'locked slot card opacity is exactly 0.45',
-      (WidgetTester tester) async {
-        await pumpPlayer(tester);
-        final opacity = tester.widget<Opacity>(
-          find.descendant(
-            of: find.byType(LockedResearchSlotCard),
-            matching: find.byType(Opacity),
-          ),
-        );
-        expect(opacity.opacity, kTechnologyLockedSlotOpacity);
-        expect(kTechnologyLockedSlotOpacity, 0.45);
-      },
-    );
+    testWidgets('locked slot card opacity is exactly 0.45', (
+      WidgetTester tester,
+    ) async {
+      await pumpPlayer(tester);
+      final opacity = tester.widget<Opacity>(
+        find.descendant(
+          of: find.byType(LockedResearchSlotCard),
+          matching: find.byType(Opacity),
+        ),
+      );
+      expect(opacity.opacity, kTechnologyLockedSlotOpacity);
+      expect(kTechnologyLockedSlotOpacity, 0.45);
+    });
 
     testWidgets(
       'locked slot 4 shows footnote and no Cancel / Choose tech buttons',
@@ -244,10 +238,7 @@ void main() {
   });
 
   group('Slots-tab section ordering (Refs #2864 S0/S6 ordering AC)', () {
-    for (final c in <({
-      String name,
-      Map<String, bool> unlocked,
-    })>[
+    for (final c in <({String name, Map<String, bool> unlocked})>[
       (
         name:
             'Researched Techs heading renders strictly above Research Slots heading',
@@ -261,8 +252,9 @@ void main() {
     ]) {
       testWidgets(c.name, (WidgetTester tester) async {
         await pumpPlayer(tester, techUnlocked: c.unlocked);
-        final researchedHeadingY =
-            tester.getTopLeft(find.text('Researched Techs')).dy;
+        final researchedHeadingY = tester
+            .getTopLeft(find.text('Researched Techs'))
+            .dy;
         final slotsHeadingY = tester.getTopLeft(find.text('Research Slots')).dy;
         expect(
           researchedHeadingY,
@@ -279,10 +271,7 @@ void main() {
   group('Mockup-faithful canonical heading style (Refs #3510)', () {
     Future<void> pumpWithTwoTechs(WidgetTester tester) {
       final ids = techCatalog.keys.take(2).toList();
-      return pumpPlayer(
-        tester,
-        techUnlocked: {for (final id in ids) id: true},
-      );
+      return pumpPlayer(tester, techUnlocked: {for (final id in ids) id: true});
     }
 
     testWidgets(
@@ -322,24 +311,20 @@ void main() {
   });
 
   group('Compact slot action controls (Refs #3510)', () {
-    testWidgets(
-      'positive: Choose tech uses CtActionTextButton and Cancel uses '
-      'CtDangerTextButton (no heavy nine-patch chrome on slot actions)',
-      (WidgetTester tester) async {
-        final techId = techCatalog.keys.first;
-        final player = basePlayer.copyWith(researchSlots: 3);
-        await pumpPlayer(
-          tester,
-          orders: mediumOrder(player, techId),
-        );
+    testWidgets('positive: Choose tech uses CtActionTextButton and Cancel uses '
+        'CtDangerTextButton (no heavy nine-patch chrome on slot actions)', (
+      WidgetTester tester,
+    ) async {
+      final techId = techCatalog.keys.first;
+      final player = basePlayer.copyWith(researchSlots: 3);
+      await pumpPlayer(tester, orders: mediumOrder(player, techId));
 
-        expect(find.byType(CtActionTextButton), findsWidgets);
-        expect(find.byType(CtDangerTextButton), findsOneWidget);
-        expect(find.byType(CtNinePatchButton), findsNothing);
-        expect(find.text('Choose tech'), findsWidgets);
-        expect(find.text('Cancel'), findsOneWidget);
-      },
-    );
+      expect(find.byType(CtActionTextButton), findsWidgets);
+      expect(find.byType(CtDangerTextButton), findsOneWidget);
+      expect(find.byType(CtNinePatchButton), findsNothing);
+      expect(find.text('Choose tech'), findsWidgets);
+      expect(find.text('Cancel'), findsOneWidget);
+    });
 
     testWidgets(
       'mobile (360 dp): each slot action control reports a >= 44 dp tap target',
@@ -372,8 +357,9 @@ void main() {
           viewSize: const Size(1000, 1200),
         );
 
-        final Size chooseSize =
-            tester.getSize(find.byType(CtActionTextButton).first);
+        final Size chooseSize = tester.getSize(
+          find.byType(CtActionTextButton).first,
+        );
         expect(chooseSize.height, lessThan(kMinTouchTargetSize));
       },
     );
