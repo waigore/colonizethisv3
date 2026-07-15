@@ -4,47 +4,29 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Repo-relative paths that must not construct `Game(` inline (Refs #3825).
-const _mandatedFixtureTestPaths = <String>{
-  'packages/colonizethis_diplomacy/test/diplomacy/gp_tribe_first_contact_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/ai_gp_tribe_first_contact_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_ftp_resolver_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_faction_membership_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/known_diplomatic_targets_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_intra_turn_event_tally_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_dialogue_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_history_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_dossier_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_phase_test_part1_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_phase_types_split_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_phase_result_value_types_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_trade_and_labels_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_survival_peace_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_intervention_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_call_to_arms_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_resolver_phase_test_part2_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_subsidies_relations_resolver_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/alliance_break_cooldown_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/boycott_resolver_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/boycott_blocked_trade_pair_keys_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/favoured_trading_partner_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_trade_deal_relation_boost_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/diplomacy_relation_lookup_scores_test.dart',
-  'packages/colonizethis_diplomacy/test/diplomacy/alliance_resolver_process_alliances_test.dart',
-};
+/// Repo-relative paths under `packages/colonizethis_diplomacy/test/**` that may
+/// still construct `Game(` inline (exceptions-only allowlist; Refs #4028).
+///
+/// Empty after absorption/dedup/shared-helpers migration — keep empty unless a
+/// suite must test construction itself.
+const _allowlistedRelativePaths = <String>{};
 
 /// Matches an inline `Game(` constructor call (standalone identifier, not
 /// `gpGpEmbassyGame(` etc.).
 final RegExp _inlineGameConstructor = RegExp(r'(?<![A-Za-z0-9_])Game\(');
 
-/// True when [slashPath] is a mandated no-inline-`Game(` test file.
+/// True when [slashPath] is a diplomacy package test file subject to the ban.
 bool diplomacyTestInlineGameCtorPathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
-  return _mandatedFixtureTestPaths.contains(normalized);
+  if (!normalized.startsWith('packages/colonizethis_diplomacy/test/') ||
+      !normalized.endsWith('.dart')) {
+    return false;
+  }
+  return !_allowlistedRelativePaths.contains(normalized);
 }
 
 /// Returns a violation reason when [content] constructs `Game(` inline instead
-/// of importing shared fixtures from `test/support/diplomacy_game_fixtures.dart`.
+/// of importing shared fixtures from `colonizethis_diplomacy_test_support`.
 String? diplomacyTestInlineGameCtorViolationReason(String slashPath, String content) {
   if (!diplomacyTestInlineGameCtorPathInScope(slashPath)) {
     return null;
@@ -55,7 +37,7 @@ String? diplomacyTestInlineGameCtorViolationReason(String slashPath, String cont
   }
   return "constructs Game(...) inline; import shared builders from "
       "'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart' "
-      "(Refs #3825, #3837)";
+      "(Refs #3825, #3837, #4028)";
 }
 
 String _stripLineComments(String content) {

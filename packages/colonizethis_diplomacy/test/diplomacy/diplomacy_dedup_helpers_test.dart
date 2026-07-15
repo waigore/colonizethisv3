@@ -1,6 +1,5 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
@@ -184,28 +183,28 @@ void main() {
 
   group('isAiControlledForEvidence relocation (AC6)', () {
     test('positive: non-human player is treated as AI-controlled', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       );
       expect(isAiControlledForEvidence(game, 'gp1'), isTrue);
     });
 
     test('negative: human player is not AI-controlled', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'h1', displayName: 'H', isHuman: true)],
       );
       expect(isAiControlledForEvidence(game, 'h1'), isFalse);
     });
 
     test('positive: explicit aiControlByGpId override wins over isHuman', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'h1', displayName: 'H', isHuman: true)],
       ).copyWith(aiControlByGpId: const {'h1': true});
       expect(isAiControlledForEvidence(game, 'h1'), isTrue);
     });
 
     test('negative: unknown faction id is not AI-controlled', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       );
       expect(isAiControlledForEvidence(game, 'minor1'), isFalse);
@@ -228,7 +227,7 @@ void main() {
     });
 
     test('positive: appends the diplomatic event and emits the log line', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
@@ -265,7 +264,7 @@ void main() {
     });
 
     test('positive: forwards optional event fields to the appended event', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       );
 
