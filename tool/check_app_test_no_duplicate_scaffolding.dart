@@ -379,14 +379,20 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// ShellScreen colonial frames in `shell_game_screen_specs` (via
 /// `buildAppShell(theme:)`), light-theme debug log viewer hosts
 /// (`debug_log_viewer` via `buildAppShell(theme:)`), and Flame region-map
-/// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_widget_part2`
-/// / `part3`, `region_map_zoom_fit`, plains plantation / extraction-disc /
-/// transport-resource goldens).
+/// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_test_support`
+/// via `buildAppShellMaterialApp(applyEditorialTheme: false)`, plus
+/// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
+/// plantation / extraction-disc / transport-resource goldens).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
   }
   final name = p.basename(relativePath);
+  // Shared Flame region-map host (not a `*_test.dart`): must route MaterialApp
+  // through `buildAppShellMaterialApp(applyEditorialTheme: false)`.
+  if (name == 'ct_region_map_test_support.dart') {
+    return true;
+  }
   if (!name.endsWith('_test.dart')) {
     return false;
   }
@@ -425,7 +431,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'move_fleet_dialog_test.dart' ||
       name == 'transfer_to_home_fleet_dialog_spec_test.dart' ||
       name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
-      name == 'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
+      name ==
+          'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
       name.startsWith('move_dialogs_specs_part') ||
       name == 'game_map_options_dialog_test.dart' ||
       name == 'next_turn_confirmation_dialog_test.dart' ||
@@ -449,9 +456,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'province_overlay_test.dart' ||
       name == 'province_overlay_header_l10n_test.dart' ||
       name == 'province_overlay_consulate_gate_tooltip_test.dart' ||
-      name == 'province_overlay_fully_unrevealed_sea_zone_structure_test.dart' ||
+      name ==
+          'province_overlay_fully_unrevealed_sea_zone_structure_test.dart' ||
       name == 'province_overlay_tile_inline_action_non_clickable_test.dart' ||
-      name == 'province_overlay_section_label_material_fallback_guard_test.dart' ||
+      name ==
+          'province_overlay_section_label_material_fallback_guard_test.dart' ||
       name == 'province_overlay_tile_designation_test.dart' ||
       name == 'province_overlay_sea_zone_political_dark_tokens_test.dart' ||
       name == 'province_overlay_obfuscated_body_dark_tokens_test.dart' ||
@@ -459,9 +468,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'province_overlay_economic_hover_test.dart' ||
       name == 'province_overlay_road_rail_transport_test.dart' ||
       name == 'province_overlay_narrow_side_rail_height_pin_test.dart' ||
-      name == 'province_overlay_tile_resource_row_label_inline_dark_token_test.dart' ||
+      name ==
+          'province_overlay_tile_resource_row_label_inline_dark_token_test.dart' ||
       name == 'province_sea_zone_overlay_detail_paths_test.dart' ||
-      name == 'province_sea_zone_overlay_naval_port_pending_omission_test.dart' ||
+      name ==
+          'province_sea_zone_overlay_naval_port_pending_omission_test.dart' ||
       name == 'province_sea_zone_resource_labels_test.dart' ||
       name == 'base_units_panel_test.dart' ||
       name == 'units_combine_header_actions_test.dart' ||
@@ -823,8 +834,9 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
         offset,
         'inline MaterialApp( host; use buildProductionPanel / '
         'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
-        'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer '
-        'from app/test/support/',
+        'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer / '
+        'buildAppShellMaterialApp / ctRegionMapTestHarness '
+        'from app/test/support/ (or app/test/ct_region_map_test_support.dart)',
       );
     }
   }

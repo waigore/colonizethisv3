@@ -22,6 +22,7 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
+import 'support/app_shell_harness.dart';
 import 'support/map_view_fixture.dart';
 
 /// Shared by `ct_region_map_widget_part*_test.dart` (Refs #4013 / #4021).
@@ -100,14 +101,18 @@ Widget ctRegionMapTestHarness({
   VoidCallback? onWorkTargetSelectionCancelled,
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   double? zoomMultiplier,
+
   /// When non-null, replaces the default `Center > SizedBox > CtRegionMap` body
   /// (Refs #4035 — Flame-map suites that need [StatefulBuilder] / custom layout).
   Widget? scaffoldBody,
+
   /// When set (and [scaffoldBody] is null), wraps the default map host in a
   /// [RepaintBoundary] for `matchesGoldenFile` capture (Refs #4035).
   Key? repaintBoundaryKey,
-  /// When false, omit [Scaffold] so golden hosts keep bare `MaterialApp(home:)`
-  /// composition and stay pixel-stable (Refs #4035).
+
+  /// When false, omit [Scaffold] so golden hosts keep bare
+  /// `buildAppShellMaterialApp(home:)` composition (no editorial theme) and
+  /// stay pixel-stable (Refs #4035).
   bool useScaffold = true,
 }) {
   final Widget mapHost = SizedBox(
@@ -150,7 +155,8 @@ Widget ctRegionMapTestHarness({
             ? mapHost
             : RepaintBoundary(key: repaintBoundaryKey, child: mapHost),
       );
-  return MaterialApp(
+  return buildAppShellMaterialApp(
+    applyEditorialTheme: false,
     home: useScaffold ? Scaffold(body: body) : body,
   );
 }

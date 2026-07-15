@@ -773,37 +773,32 @@ void main() {
     expect(code, 0);
   });
 
-  test(
-    'fails when production icons suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_icons_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'production_panel_icons_test.dart', '''
+  test('fails when production icons suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_icons_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'production_panel_icons_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'passes when production icons suite uses buildAppShell only',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_icons_ok_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'production_panel_icons_test.dart', '''
+  test('passes when production icons suite uses buildAppShell only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_icons_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'production_panel_icons_test.dart', '''
 import 'support/app_shell_harness.dart';
 
 void main() {
@@ -815,10 +810,9 @@ void main() {
 }
 ''');
 
-      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
-      expect(code, 0);
-    },
-  );
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
 
   test(
     'fails when catalog widget unit host suites reintroduce MaterialApp host',
@@ -936,6 +930,7 @@ void main() {
         'game_screen_intervention_flow_test.dart',
         'shell_game_screen_specs_test.dart',
         'debug_log_viewer_test.dart',
+        'ct_region_map_test_support.dart',
         'ct_region_map_widget_part2_test.dart',
         'ct_region_map_widget_part3_test.dart',
         'region_map_zoom_fit_test.dart',
@@ -1076,6 +1071,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         'game_screen_intervention_flow_test.dart',
         'shell_game_screen_specs_test.dart',
         'debug_log_viewer_test.dart',
+        'ct_region_map_test_support.dart',
         'ct_region_map_widget_part2_test.dart',
         'ct_region_map_widget_part3_test.dart',
         'region_map_zoom_fit_test.dart',
@@ -1083,10 +1079,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         'region_map_extraction_disc_indicators_test.dart',
         'region_map_resource_transport_readability_test.dart',
       ]) {
-        _writeGovernedFile(
-          temp,
-          name,
-          '''
+        _writeGovernedFile(temp, name, '''
 import 'support/app_shell_harness.dart';
 
 void main() {
@@ -1096,8 +1089,7 @@ void main() {
     );
   });
 }
-''',
-        );
+''');
       }
 
       final code = runCheckAppTestNoDuplicateScaffolding(temp.path);

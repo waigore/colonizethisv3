@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 /// Canonical [ProviderScope] + themed [MaterialApp] host (Refs #4035).
-///
 /// Defaults to [AppThemes.editorialMonocle]. [viewport] forces MediaQuery size
 /// (binding surface still via [pumpAppShell]). [initialRoute] skips `home`.
 /// [shellWrapper] wraps the [MaterialApp] under the scope.
@@ -82,10 +81,11 @@ Widget buildAppShellWithContainer({
   );
 }
 
-/// Single MaterialApp chrome for shell / golden hosts (Refs #4035).
+/// Single MaterialApp chrome for shell/golden hosts; optional bare theme (#4035).
 MaterialApp buildAppShellMaterialApp({
   Widget? home,
   ThemeData? theme,
+  bool applyEditorialTheme = true,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -98,7 +98,7 @@ MaterialApp buildAppShellMaterialApp({
   return MaterialApp(
     navigatorKey: navigatorKey,
     debugShowCheckedModeBanner: debugShowCheckedModeBanner,
-    theme: theme ?? AppThemes.editorialMonocle,
+    theme: theme ?? (applyEditorialTheme ? AppThemes.editorialMonocle : null),
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
@@ -112,7 +112,10 @@ MaterialApp buildAppShellMaterialApp({
 Widget _wrapViewport(Widget child, Size? viewport) {
   return viewport == null
       ? child
-      : MediaQuery(data: MediaQueryData(size: viewport), child: child);
+      : MediaQuery(
+          data: MediaQueryData(size: viewport),
+          child: child,
+        );
 }
 
 /// Pumps [child] inside [buildAppShell].
