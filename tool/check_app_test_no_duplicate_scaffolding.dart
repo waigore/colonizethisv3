@@ -286,8 +286,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
 /// production specialty hosts (cotton-weaving lock, available grid, labour
 /// section / step-surface / expected-lines mirror, allocation row chrome /
-/// buttons, icons), military panel suites, and technology panel suites that
-/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`.
+/// buttons, icons), military panel suites, technology panel suites that
+/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, and train
+/// dialog suites migrated onto `buildAppShell`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -318,7 +319,14 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'technology_panel_funding_toggles_test.dart' ||
       name == 'technology_panel_choose_tech_dialog_test.dart' ||
       name == 'technology_panel_slot_occupancy_test.dart' ||
-      name == 'technology_panel_dark_chrome_test.dart';
+      name == 'technology_panel_dark_chrome_test.dart' ||
+      name == 'train_dialog_chrome_test.dart' ||
+      name == 'train_dialog_base_test.dart' ||
+      name == 'train_dialog_inline_cost_tooltip_test.dart' ||
+      name == 'train_commodity_cost_dialog_base_test.dart' ||
+      name == 'train_naval_dialog_test.dart' ||
+      name == 'train_military_dialog_test.dart' ||
+      name == 'train_civilians_dialog_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

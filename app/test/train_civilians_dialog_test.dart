@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -109,8 +110,8 @@ void main() {
     AppEventBus? bus,
   }) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: TrainCiviliansDialog(
             game: game,
             humanPlayerId: humanPlayerId,
@@ -136,7 +137,7 @@ void main() {
 
   /// AppEventHandlerScope host so Train opens [TrainCiviliansDialog] via bus.
   Widget civilianPanelWithAppHandler(Game panelGame) {
-    return ProviderScope(
+    return buildAppShell(
       overrides: [
         currentGameProvider.overrideWith(() => CurrentGameNotifier(panelGame)),
         currentOrdersProvider.overrideWith(
@@ -151,20 +152,17 @@ void main() {
           (ref, _) => const <String>[],
         ),
       ],
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          home: Scaffold(
-            body: Consumer(
-              builder: (context, ref, _) {
-                return CivilianUnitsPanel(
-                  game: panelGame,
-                  humanPlayerId: humanPlayerId,
-                  bus: ref.watch(appEventBusProvider),
-                );
-              },
-            ),
-          ),
+      navigatorKey: appNavigatorKey,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Scaffold(
+        body: Consumer(
+          builder: (context, ref, _) {
+            return CivilianUnitsPanel(
+              game: panelGame,
+              humanPlayerId: humanPlayerId,
+              bus: ref.watch(appEventBusProvider),
+            );
+          },
         ),
       ),
     );
@@ -344,8 +342,8 @@ void main() {
         final richGame = gameWithResources(treasury: 10000, paper: 100);
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
+          buildAppShell(
+            child: Scaffold(
               body: Builder(
                 builder: (ctx) => ElevatedButton(
                   onPressed: () {

@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -74,8 +75,8 @@ void main() {
     Orders currentOrders = const Orders(),
     AppEventBus? bus,
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: TrainNavalDialog(
           game: game,
           humanPlayerId: humanPlayerId,
@@ -103,7 +104,7 @@ void main() {
     Orders orders = const Orders(),
     required Widget body,
   }) {
-    return ProviderScope(
+    return buildAppShell(
       overrides: [
         currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(orders)),
@@ -113,9 +114,9 @@ void main() {
           return bus;
         }),
       ],
-      child: AppEventHandlerScope(
-        child: MaterialApp(navigatorKey: appNavigatorKey, home: Scaffold(body: body)),
-      ),
+      navigatorKey: appNavigatorKey,
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: Scaffold(body: body),
     );
   }
 
@@ -188,8 +189,8 @@ void main() {
       addTearDown(sub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Builder(
               builder: (ctx) => ElevatedButton(
                 onPressed: () {

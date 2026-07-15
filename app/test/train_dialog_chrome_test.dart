@@ -7,6 +7,12 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
+Widget _host(Widget child) => buildAppShell(
+  child: Scaffold(body: child),
+);
+
 void main() {
   suppressLogsForTests();
 
@@ -16,11 +22,7 @@ void main() {
       '(#3568 chrome parity)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: TrainDialogHeader(title: 'Train Civilians'),
-            ),
-          ),
+          _host(const TrainDialogHeader(title: 'Train Civilians')),
         );
 
         // No dismiss control of any kind — dialog closes via scrim / back.
@@ -41,12 +43,10 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: TrainDialogUnitNameLine(
-              name: kUnitTypeMerchant,
-              isLocked: true,
-            ),
+        _host(
+          const TrainDialogUnitNameLine(
+            name: kUnitTypeMerchant,
+            isLocked: true,
           ),
         ),
       );
@@ -62,12 +62,10 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: TrainDialogUnitNameLine(
-              name: kUnitTypeBuilder,
-              isLocked: false,
-            ),
+        _host(
+          const TrainDialogUnitNameLine(
+            name: kUnitTypeBuilder,
+            isLocked: false,
           ),
         ),
       );
@@ -80,9 +78,7 @@ void main() {
   group('TrainDialogSectionDivider', () {
     testWidgets('renders CtBrassDivider', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: TrainDialogSectionDivider()),
-        ),
+        _host(const TrainDialogSectionDivider()),
       );
       expect(find.byType(CtBrassDivider), findsOneWidget);
       expect(find.byType(Divider), findsNothing);
@@ -95,14 +91,12 @@ void main() {
       'deficitHint is null',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: TrainDialogResourceBar(
-                entries: [
-                  TrainDialogResourceEntry(label: 'Treasury:', value: '£5,000'),
-                  TrainDialogResourceEntry(label: 'Paper:', value: '12'),
-                ],
-              ),
+          _host(
+            const TrainDialogResourceBar(
+              entries: [
+                TrainDialogResourceEntry(label: 'Treasury:', value: '£5,000'),
+                TrainDialogResourceEntry(label: 'Paper:', value: '12'),
+              ],
             ),
           ),
         );
@@ -120,14 +114,12 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: TrainDialogResourceBar(
-              entries: [
-                TrainDialogResourceEntry(label: 'Treasury:', value: '£0'),
-              ],
-              deficitHint: 'Treasury low',
-            ),
+        _host(
+          const TrainDialogResourceBar(
+            entries: [
+              TrainDialogResourceEntry(label: 'Treasury:', value: '£0'),
+            ],
+            deficitHint: 'Treasury low',
           ),
         ),
       );
