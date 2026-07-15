@@ -351,8 +351,14 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
 /// `app_event_handler_scope_civilian_work`,
 /// `turn_resolution_event_blocking`, `app_event_handler`,
-/// `game_session_clear_ui_path`, `new_game_setup_flow`, and
-/// `app_wave5_shared_helpers`.
+/// `game_session_clear_ui_path`, `new_game_setup_flow`,
+/// `app_wave5_shared_helpers`, `screen_spec_acceptance_part2`,
+/// `widgetbook_dlg60001_shel30001_stories`,
+/// `widgetbook_main_menu_stories_editorial_monocle`,
+/// `widgetbook_diplomacy_standing_chips_stories`,
+/// `widgetbook_diplomacy_detail_screen_stories`,
+/// `widgetbook_diplomacy_panel_empty_state`, and
+/// `widgetbook_technology_slots_variants`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -510,7 +516,14 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'app_event_handler_test.dart' ||
       name == 'game_session_clear_ui_path_test.dart' ||
       name == 'new_game_setup_flow_test.dart' ||
-      name == 'app_wave5_shared_helpers_test.dart';
+      name == 'app_wave5_shared_helpers_test.dart' ||
+      name == 'screen_spec_acceptance_part2_test.dart' ||
+      name == 'widgetbook_dlg60001_shel30001_stories_test.dart' ||
+      name == 'widgetbook_main_menu_stories_editorial_monocle_test.dart' ||
+      name == 'widgetbook_diplomacy_standing_chips_stories_test.dart' ||
+      name == 'widgetbook_diplomacy_detail_screen_stories_test.dart' ||
+      name == 'widgetbook_diplomacy_panel_empty_state_test.dart' ||
+      name == 'widgetbook_technology_slots_variants_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

@@ -905,6 +905,13 @@ void main() {
         'game_session_clear_ui_path_test.dart',
         'new_game_setup_flow_test.dart',
         'app_wave5_shared_helpers_test.dart',
+        'screen_spec_acceptance_part2_test.dart',
+        'widgetbook_dlg60001_shel30001_stories_test.dart',
+        'widgetbook_main_menu_stories_editorial_monocle_test.dart',
+        'widgetbook_diplomacy_standing_chips_stories_test.dart',
+        'widgetbook_diplomacy_detail_screen_stories_test.dart',
+        'widgetbook_diplomacy_panel_empty_state_test.dart',
+        'widgetbook_technology_slots_variants_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1008,6 +1015,13 @@ Widget host() => MaterialApp(home: const Placeholder());
         'game_session_clear_ui_path_test.dart',
         'new_game_setup_flow_test.dart',
         'app_wave5_shared_helpers_test.dart',
+        'screen_spec_acceptance_part2_test.dart',
+        'widgetbook_dlg60001_shel30001_stories_test.dart',
+        'widgetbook_main_menu_stories_editorial_monocle_test.dart',
+        'widgetbook_diplomacy_standing_chips_stories_test.dart',
+        'widgetbook_diplomacy_detail_screen_stories_test.dart',
+        'widgetbook_diplomacy_panel_empty_state_test.dart',
+        'widgetbook_technology_slots_variants_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

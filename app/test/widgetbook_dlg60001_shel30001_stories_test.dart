@@ -12,7 +12,6 @@
 // border, no Material chrome) — fails CI immediately.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -24,6 +23,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
 
 /// Normative inventory of the new DLG60001 stories that issue #2867 S13
@@ -236,11 +236,10 @@ void main() {
   });
 
   group('NewGameSetupProgressView phase label contract (Refs #2867 R33)', () {
-    Widget host(int stepIndex) => MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    Widget host(int stepIndex) => buildAppShell(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
+      child: Scaffold(
         body: Center(child: NewGameSetupProgressView(stepIndex: stepIndex)),
       ),
     );
@@ -296,11 +295,10 @@ void main() {
       VoidCallback? onRetry,
     }) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
+        buildAppShell(
           localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
+          child: Scaffold(
             body: Center(
               child: Builder(
                 builder: (ctx) {
