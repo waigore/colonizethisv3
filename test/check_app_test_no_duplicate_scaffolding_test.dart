@@ -930,6 +930,9 @@ void main() {
         'ct_region_map_widget_part2_test.dart',
         'ct_region_map_widget_part3_test.dart',
         'region_map_zoom_fit_test.dart',
+        'plains_plantation_terrain_goldens_test.dart',
+        'region_map_extraction_disc_indicators_test.dart',
+        'region_map_resource_transport_readability_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1058,6 +1061,9 @@ Widget host() => MaterialApp(home: const Placeholder());
         'ct_region_map_widget_part2_test.dart',
         'ct_region_map_widget_part3_test.dart',
         'region_map_zoom_fit_test.dart',
+        'plains_plantation_terrain_goldens_test.dart',
+        'region_map_extraction_disc_indicators_test.dart',
+        'region_map_resource_transport_readability_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

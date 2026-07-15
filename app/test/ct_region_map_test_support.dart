@@ -103,45 +103,56 @@ Widget ctRegionMapTestHarness({
   /// When non-null, replaces the default `Center > SizedBox > CtRegionMap` body
   /// (Refs #4035 — Flame-map suites that need [StatefulBuilder] / custom layout).
   Widget? scaffoldBody,
+  /// When set (and [scaffoldBody] is null), wraps the default map host in a
+  /// [RepaintBoundary] for `matchesGoldenFile` capture (Refs #4035).
+  Key? repaintBoundaryKey,
+  /// When false, omit [Scaffold] so golden hosts keep bare `MaterialApp(home:)`
+  /// composition and stay pixel-stable (Refs #4035).
+  bool useScaffold = true,
 }) {
+  final Widget mapHost = SizedBox(
+    width: width,
+    height: height,
+    child: CtRegionMap(
+      region: region,
+      cellSizePx: cellSizePx,
+      showPoliticalOverlay: showPoliticalOverlay,
+      showProvinceOverlay: showProvinceOverlay,
+      showProvinceOwnershipTint: showProvinceOwnershipTint,
+      showProvinceNamesLayer: showProvinceNamesLayer,
+      visibilityMode: visibilityMode,
+      playerViewForResources: playerViewForResources,
+      baseLayerDisplayMode: baseLayerDisplayMode,
+      centerOnTileKey: centerOnTileKey,
+      onProvinceSelected: onProvinceSelected,
+      onProvinceHovered: onProvinceHovered,
+      onTileHovered: onTileHovered,
+      onMapTileTappedForDetail: onMapTileTappedForDetail,
+      onCivilianTileStateChanged: onCivilianTileStateChanged,
+      onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+      selectedTileKey: selectedTileKey,
+      selectedCivilianTileKey: selectedCivilianTileKey,
+      secondaryHighlightTileKey: secondaryHighlightTileKey,
+      secondaryHighlightTileKeys: secondaryHighlightTileKeys,
+      onRegionViewChanged: onRegionViewChanged,
+      bus: bus,
+      validTileKeys: validTileKeys,
+      onTileSelected: onTileSelected,
+      onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+      onViewportSnapshotChanged: onViewportSnapshotChanged,
+      zoomMultiplier: zoomMultiplier,
+    ),
+  );
   final Widget body =
       scaffoldBody ??
       Center(
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: CtRegionMap(
-            region: region,
-            cellSizePx: cellSizePx,
-            showPoliticalOverlay: showPoliticalOverlay,
-            showProvinceOverlay: showProvinceOverlay,
-            showProvinceOwnershipTint: showProvinceOwnershipTint,
-            showProvinceNamesLayer: showProvinceNamesLayer,
-            visibilityMode: visibilityMode,
-            playerViewForResources: playerViewForResources,
-            baseLayerDisplayMode: baseLayerDisplayMode,
-            centerOnTileKey: centerOnTileKey,
-            onProvinceSelected: onProvinceSelected,
-            onProvinceHovered: onProvinceHovered,
-            onTileHovered: onTileHovered,
-            onMapTileTappedForDetail: onMapTileTappedForDetail,
-            onCivilianTileStateChanged: onCivilianTileStateChanged,
-            onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
-            selectedTileKey: selectedTileKey,
-            selectedCivilianTileKey: selectedCivilianTileKey,
-            secondaryHighlightTileKey: secondaryHighlightTileKey,
-            secondaryHighlightTileKeys: secondaryHighlightTileKeys,
-            onRegionViewChanged: onRegionViewChanged,
-            bus: bus,
-            validTileKeys: validTileKeys,
-            onTileSelected: onTileSelected,
-            onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
-            onViewportSnapshotChanged: onViewportSnapshotChanged,
-            zoomMultiplier: zoomMultiplier,
-          ),
-        ),
+        child: repaintBoundaryKey == null
+            ? mapHost
+            : RepaintBoundary(key: repaintBoundaryKey, child: mapHost),
       );
-  return MaterialApp(home: Scaffold(body: body));
+  return MaterialApp(
+    home: useScaffold ? Scaffold(body: body) : body,
+  );
 }
 
 /// Assert each asset path loads and is non-empty.

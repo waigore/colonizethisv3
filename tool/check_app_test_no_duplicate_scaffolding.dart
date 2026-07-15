@@ -378,7 +378,8 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `shell_game_screen_specs` (via `buildAppShell(theme:)`), light-theme
 /// debug log viewer hosts (`debug_log_viewer` via `buildAppShell(theme:)`),
 /// and Flame region-map suites densified onto `ctRegionMapTestHarness`
-/// (`ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`).
+/// (`ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`,
+/// plains plantation / extraction-disc / transport-resource goldens).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -566,7 +567,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'debug_log_viewer_test.dart' ||
       name == 'ct_region_map_widget_part2_test.dart' ||
       name == 'ct_region_map_widget_part3_test.dart' ||
-      name == 'region_map_zoom_fit_test.dart';
+      name == 'region_map_zoom_fit_test.dart' ||
+      name == 'plains_plantation_terrain_goldens_test.dart' ||
+      name == 'region_map_extraction_disc_indicators_test.dart' ||
+      name == 'region_map_resource_transport_readability_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
