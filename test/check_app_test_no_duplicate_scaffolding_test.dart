@@ -483,6 +483,61 @@ void main() {
     expect(code, 0);
   });
 
+  test('fails when civilian part suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_civ_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'civilian_units_panel_part2_test.dart',
+      '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline MaterialApp( host'),
+    );
+  });
+
+  test('passes when civilian part suite uses buildCivilianPanel only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_civ_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'civilian_units_panel_part1_test.dart',
+      '''
+import 'support/civilian_units_panel_test_support.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildCivilianPanel(
+        game: buildCivilianPanelTestGame(),
+        humanPlayerId: 'h1',
+      ),
+    );
+  });
+}
+''',
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
+
   test('fails when narrow-detail overlay suite reintroduces MaterialApp host',
       () {
     final temp = Directory.systemTemp.createTempSync(

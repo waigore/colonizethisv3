@@ -22,9 +22,9 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/civilian_units_panel_test_support.dart';
 
 int _argb(Color c) {
@@ -57,14 +57,15 @@ Game _miniGame({int civilianCount = 1}) {
   );
 }
 
+/// Editorial [buildAppShell] host for row-card chrome (Refs #4035).
 Widget _wrap(Widget child) {
-  return ProviderScope(
+  return buildAppShell(
     overrides: [
       availableWorkTargetIdsForUnitProvider.overrideWith(
         (ref, _) => const <String>[],
       ),
     ],
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: Scaffold(body: child),
   );
 }
 

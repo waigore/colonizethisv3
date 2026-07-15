@@ -140,8 +140,9 @@ int runCheckAppTestNoDuplicateScaffolding(
     'naval_units_panel_test_support.dart / units_panel_test_shared.dart. '
     'Naval part pumps: use pumpNavalPanel from '
     'naval_units_panel_test_support.dart. '
-    'Production/naval/narrow-overlay hosts: use buildProductionPanel / '
-    'buildNavalPanel / buildAppShell (no inline MaterialApp).',
+    'Production/naval/civilian/narrow-overlay hosts: use '
+    'buildProductionPanel / buildNavalPanel / buildCivilianPanel / '
+    'buildAppShell (no inline MaterialApp).',
   );
   return 1;
 }
@@ -233,6 +234,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   }
   return name.startsWith('production_panel_part') ||
       name.startsWith('naval_units_panel_part') ||
+      name.startsWith('civilian_units_panel_part') ||
+      name == 'civilian_units_panel_row_card_r30_test.dart' ||
       name == 'naval_units_panel_mockup_fidelity_test.dart' ||
       name == 'game_map_narrow_detail_overlay_test.dart';
 }
@@ -480,8 +483,8 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
       _report(
         offset,
         'inline MaterialApp( host; use buildProductionPanel / '
-        'buildNavalPanel / buildAppShell / buildAppShellWithContainer '
-        'from app/test/support/',
+        'buildNavalPanel / buildCivilianPanel / buildAppShell / '
+        'buildAppShellWithContainer from app/test/support/',
       );
     }
   }

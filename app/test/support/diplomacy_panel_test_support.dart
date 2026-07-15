@@ -272,7 +272,9 @@ Widget wrapDiplomacyPanelAtViewport({
 }
 
 /// Canonical [CivilianUnitsPanel] host used across the three
-/// `civilian_units_panel_part*_test.dart` files (Refs #4013).
+/// `civilian_units_panel_part*_test.dart` files and row-card chrome suites
+/// (Refs #4013, #4035). Composes [buildAppShell] — callers must not redeclare
+/// an inline `MaterialApp` for this panel.
 Widget buildCivilianPanel({
   required Game game,
   required String humanPlayerId,
@@ -281,6 +283,8 @@ Widget buildCivilianPanel({
   AppEventBus? bus,
   bool explorerOnly = false,
   bool builderOnly = false,
+  String? tileScopeTileKey,
+  String? initialSelectedUnitId,
   String? prospectShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
   String? buildImprovementShortcutTargetTileKey,
@@ -303,6 +307,8 @@ Widget buildCivilianPanel({
           humanPlayerId: humanPlayerId,
           currentOrders: currentOrders,
           bus: resolvedBus,
+          tileScopeTileKey: tileScopeTileKey,
+          initialSelectedUnitId: initialSelectedUnitId,
           explorerOnly: explorerOnly,
           builderOnly: builderOnly,
           prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
