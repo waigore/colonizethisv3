@@ -926,6 +926,7 @@ void main() {
         'widgetbook_turn_news_mobile_viewport_test.dart',
         'tech_gp_pennant_goldens_test.dart',
         'themes_and_widgetbook_test.dart',
+        'debug_log_viewer_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1050,6 +1051,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         'widgetbook_turn_news_mobile_viewport_test.dart',
         'tech_gp_pennant_goldens_test.dart',
         'themes_and_widgetbook_test.dart',
+        'debug_log_viewer_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

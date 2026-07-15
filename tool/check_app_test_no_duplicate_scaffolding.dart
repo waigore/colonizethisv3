@@ -374,8 +374,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `themes_and_widgetbook`, colonial GameScreen hosts migrated onto
 /// `buildGameScreenHost` (`game_screen_narrow_part2`,
 /// `game_screen_overture_pending`, `game_screen_turn_resolution_branches`,
-/// `game_screen_intervention_flow`), and ShellScreen colonial frames in
-/// `shell_game_screen_specs` (via `buildAppShell(theme:)`).
+/// `game_screen_intervention_flow`), ShellScreen colonial frames in
+/// `shell_game_screen_specs` (via `buildAppShell(theme:)`), and light-theme
+/// debug log viewer hosts (`debug_log_viewer` via `buildAppShell(theme:)`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -559,7 +560,8 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_screen_overture_pending_test.dart' ||
       name == 'game_screen_turn_resolution_branches_test.dart' ||
       name == 'game_screen_intervention_flow_test.dart' ||
-      name == 'shell_game_screen_specs_test.dart';
+      name == 'shell_game_screen_specs_test.dart' ||
+      name == 'debug_log_viewer_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

@@ -13,10 +13,10 @@ import 'package:path/path.dart' as p;
 const String appTestSupportRelativeDir = 'app/test/support';
 
 /// Post-#4035 densify support-tree ceiling (physical LOC).
-/// Measured after colonial theme specialization via buildAppShell ≈8805;
+/// Measured after combat light-frame densify via buildAppShell ≈8803;
 /// ceiling set to measured total. Ratchet downward as later densify shrinks
 /// the tree.
-const int appTestSupportLocCeiling = 8805;
+const int appTestSupportLocCeiling = 8803;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countAppTestSupportPhysicalLoc(Directory dir) {
