@@ -370,8 +370,12 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_diplomacy_panel_mobile_viewport`,
 /// `widgetbook_player_turn_event_feed_mobile_viewport`,
 /// `widgetbook_technology_screen_mobile_viewport`,
-/// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`, and
-/// `themes_and_widgetbook`.
+/// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`,
+/// `themes_and_widgetbook`, and colonial GameScreen hosts migrated onto
+/// `buildGameScreenHost` (`game_screen_narrow_part2`,
+/// `game_screen_overture_pending`, `game_screen_turn_resolution_branches`,
+/// `game_screen_intervention_flow`). ShellScreen colonial frames in
+/// `shell_game_screen_specs` remain intentional (not banned).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -550,7 +554,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_technology_screen_mobile_viewport_test.dart' ||
       name == 'widgetbook_turn_news_mobile_viewport_test.dart' ||
       name == 'tech_gp_pennant_goldens_test.dart' ||
-      name == 'themes_and_widgetbook_test.dart';
+      name == 'themes_and_widgetbook_test.dart' ||
+      name == 'game_screen_narrow_part2_test.dart' ||
+      name == 'game_screen_overture_pending_test.dart' ||
+      name == 'game_screen_turn_resolution_branches_test.dart' ||
+      name == 'game_screen_intervention_flow_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

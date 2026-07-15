@@ -26,6 +26,10 @@ import 'package:hive/hive.dart';
 
 /// Canonical Riverpod overrides for mounting [GameScreen] with a Hive games
 /// box, current game, orders, map view, and optional chrome summaries.
+///
+/// Optional [gameService], [initialOrders], and [eventBus] replace the default
+/// shell pins so callers do not redeclare the same providers in a second
+/// override list (Riverpod forbids duplicate provider overrides).
 List<Override> buildGameScreenShellOverrides({
   required Box<dynamic> gamesBox,
   required Game game,
@@ -39,16 +43,19 @@ List<Override> buildGameScreenShellOverrides({
   bool includeAppEventBus = true,
   bool includeHomeFleetCargo = true,
   bool includeTreasury = true,
+  GameService? gameService,
+  Orders initialOrders = const Orders(),
+  AppEventBus? eventBus,
 }) {
   final Set<String> shownIds = introShownIds ?? {game.id};
   final List<Override> overrides = <Override>[
     gamesBoxProvider.overrideWith((ref) => gamesBox),
     gameServiceProvider.overrideWith(
-      (ref) => GameService(gamesBox, GameSaveAdapter()),
+      (ref) => gameService ?? GameService(gamesBox, GameSaveAdapter()),
     ),
     currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
     currentOrdersProvider.overrideWith(
-      () => CurrentOrdersNotifier(const Orders()),
+      () => CurrentOrdersNotifier(initialOrders),
     ),
     mapViewDataProvider.overrideWith((ref) => mapViewData),
     gameIdsWithIntroShownProvider.overrideWith(
@@ -58,6 +65,9 @@ List<Override> buildGameScreenShellOverrides({
   if (includeAppEventBus) {
     overrides.add(
       appEventBusProvider.overrideWith((ref) {
+        if (eventBus != null) {
+          return eventBus;
+        }
         final bus = AppEventBus.create();
         ref.onDispose(bus.dispose);
         return bus;
@@ -79,6 +89,11 @@ List<Override> buildGameScreenShellOverrides({
 
 /// Hosts [GameScreen] under [ProviderScope] + optional [AppEventHandlerScope]
 /// at an explicit logical [width]×[height] (caller sets binding surface size).
+///
+/// [extraOverrides] are appended after the canonical shell overrides and MUST
+/// not redeclare providers already in [buildGameScreenShellOverrides]
+/// (Riverpod rejects duplicate overrides). Prefer [gameService],
+/// [initialOrders], and [eventBus] for those pins (Refs #4035).
 Widget buildGameScreenHost({
   required Box<dynamic> gamesBox,
   required Game game,
@@ -94,30 +109,50 @@ Widget buildGameScreenHost({
   bool includeHomeFleetCargo = true,
   bool includeTreasury = true,
   bool wrapAppEventHandler = true,
+  GameService? gameService,
+  Orders initialOrders = const Orders(),
+  AppEventBus? eventBus,
+  List<Override> extraOverrides = const <Override>[],
+  Map<String, WidgetBuilder>? routes,
+  Widget home = const GameScreen(),
 }) {
   final ThemeData resolved = theme ?? AppThemes.colonial;
   final ThemeData appTheme = platform == null
       ? resolved
       : resolved.copyWith(platform: platform);
-  final Widget materialApp = MaterialApp(
-    navigatorKey: navigatorKey,
-    theme: appTheme,
-    home: MediaQuery(
-      data: MediaQueryData(size: Size(width, height)),
-      child: const GameScreen(),
-    ),
+  final Widget sizedHome = MediaQuery(
+    data: MediaQueryData(size: Size(width, height)),
+    child: home,
   );
+  final Widget materialApp = routes == null
+      ? MaterialApp(
+          navigatorKey: navigatorKey,
+          theme: appTheme,
+          home: sizedHome,
+        )
+      : MaterialApp(
+          navigatorKey: navigatorKey,
+          theme: appTheme,
+          routes: routes,
+          home: sizedHome,
+        );
   return ProviderScope(
-    overrides: buildGameScreenShellOverrides(
-      gamesBox: gamesBox,
-      game: game,
-      mapViewData: mapViewData,
-      treasurySummary: treasurySummary,
-      introShownIds: introShownIds,
-      includeAppEventBus: includeAppEventBus,
-      includeHomeFleetCargo: includeHomeFleetCargo,
-      includeTreasury: includeTreasury,
-    ),
+    overrides: <Override>[
+      ...buildGameScreenShellOverrides(
+        gamesBox: gamesBox,
+        game: game,
+        mapViewData: mapViewData,
+        treasurySummary: treasurySummary,
+        introShownIds: introShownIds,
+        includeAppEventBus: includeAppEventBus,
+        includeHomeFleetCargo: includeHomeFleetCargo,
+        includeTreasury: includeTreasury,
+        gameService: gameService,
+        initialOrders: initialOrders,
+        eventBus: eventBus,
+      ),
+      ...extraOverrides,
+    ],
     child: wrapAppEventHandler
         ? AppEventHandlerScope(child: materialApp)
         : materialApp,
