@@ -299,7 +299,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// turn-resolution-processing dialog suites, `diplomacy_dialogs_test`, and
 /// dialogue-overlay suites (`tribe_first_contact_overlay`,
 /// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
-/// `overture_dialogue_intro`).
+/// `overture_dialogue_intro`, `intervention_dialogue_overlay`,
+/// `dialogue_overlays_specs_part*`), victory overlay suites, and
+/// `debug_console_overlay_panel_test`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -358,7 +360,12 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'tribe_first_contact_overlay_test.dart' ||
       name == 'call_to_arms_dialogue_overlay_dark_chrome_test.dart' ||
       name == 'overture_dialogue_overlay_test.dart' ||
-      name == 'overture_dialogue_intro_test.dart';
+      name == 'overture_dialogue_intro_test.dart' ||
+      name == 'intervention_dialogue_overlay_test.dart' ||
+      name.startsWith('dialogue_overlays_specs_part') ||
+      name == 'victory_overlay_test.dart' ||
+      name == 'victory_overlay_narrow_test.dart' ||
+      name == 'debug_console_overlay_panel_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

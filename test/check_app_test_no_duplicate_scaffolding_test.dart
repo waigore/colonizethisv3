@@ -1577,6 +1577,121 @@ Widget host() => MaterialApp(home: const Placeholder());
   );
 
   test(
+    'fails when intervention_dialogue_overlay suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_intervention_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'intervention_dialogue_overlay_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when dialogue_overlays_specs part suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_dlg_specs_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'dialogue_overlays_specs_part2_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when victory_overlay suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_victory_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'victory_overlay_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when victory_overlay_narrow suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_victory_narrow_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'victory_overlay_narrow_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when debug_console_overlay_panel suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_debug_console_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'debug_console_overlay_panel_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
     'fails when overture_dialogue_intro suite reintroduces MaterialApp host',
     () {
       final temp = Directory.systemTemp.createTempSync(
@@ -1758,6 +1873,61 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'overture_dialogue_intro_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'intervention_dialogue_overlay_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'dialogue_overlays_specs_part2_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'victory_overlay_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'victory_overlay_narrow_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'debug_console_overlay_panel_test.dart', '''
 import 'support/app_shell_harness.dart';
 
 void main() {
