@@ -357,8 +357,13 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_main_menu_stories_editorial_monocle`,
 /// `widgetbook_diplomacy_standing_chips_stories`,
 /// `widgetbook_diplomacy_detail_screen_stories`,
-/// `widgetbook_diplomacy_panel_empty_state`, and
-/// `widgetbook_technology_slots_variants`.
+/// `widgetbook_diplomacy_panel_empty_state`,
+/// `widgetbook_technology_slots_variants`,
+/// `widgetbook_technology_funding_preview_story`,
+/// `widgetbook_production_panel_mobile_viewport`,
+/// `widgetbook_leader_selection_dialog_mobile_viewport`,
+/// `widgetbook_map_widget_mobile_viewport`, and
+/// `widgetbook_province_overlay_mobile_viewport`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -523,7 +528,12 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_diplomacy_standing_chips_stories_test.dart' ||
       name == 'widgetbook_diplomacy_detail_screen_stories_test.dart' ||
       name == 'widgetbook_diplomacy_panel_empty_state_test.dart' ||
-      name == 'widgetbook_technology_slots_variants_test.dart';
+      name == 'widgetbook_technology_slots_variants_test.dart' ||
+      name == 'widgetbook_technology_funding_preview_story_test.dart' ||
+      name == 'widgetbook_production_panel_mobile_viewport_test.dart' ||
+      name == 'widgetbook_leader_selection_dialog_mobile_viewport_test.dart' ||
+      name == 'widgetbook_map_widget_mobile_viewport_test.dart' ||
+      name == 'widgetbook_province_overlay_mobile_viewport_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

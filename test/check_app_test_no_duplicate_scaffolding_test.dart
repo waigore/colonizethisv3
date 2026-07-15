@@ -912,6 +912,11 @@ void main() {
         'widgetbook_diplomacy_detail_screen_stories_test.dart',
         'widgetbook_diplomacy_panel_empty_state_test.dart',
         'widgetbook_technology_slots_variants_test.dart',
+        'widgetbook_technology_funding_preview_story_test.dart',
+        'widgetbook_production_panel_mobile_viewport_test.dart',
+        'widgetbook_leader_selection_dialog_mobile_viewport_test.dart',
+        'widgetbook_map_widget_mobile_viewport_test.dart',
+        'widgetbook_province_overlay_mobile_viewport_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1022,6 +1027,11 @@ Widget host() => MaterialApp(home: const Placeholder());
         'widgetbook_diplomacy_detail_screen_stories_test.dart',
         'widgetbook_diplomacy_panel_empty_state_test.dart',
         'widgetbook_technology_slots_variants_test.dart',
+        'widgetbook_technology_funding_preview_story_test.dart',
+        'widgetbook_production_panel_mobile_viewport_test.dart',
+        'widgetbook_leader_selection_dialog_mobile_viewport_test.dart',
+        'widgetbook_map_widget_mobile_viewport_test.dart',
+        'widgetbook_province_overlay_mobile_viewport_test.dart',
       ]) {
         _writeGovernedFile(
           temp,
