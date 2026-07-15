@@ -74,6 +74,43 @@ void main() {
       expect(kUnitsPanelNarrowHeightFactor, 0.50);
       expect(kUnitsPanelWideWidthFactor, 0.70);
       expect(kUnitsPanelWideHeightFactor, 0.55);
+      expect(kUnitsPanelCivilianE2eHeightFactor, 0.92);
+    });
+  });
+
+  group('unitsPanelHostSheetConstraints (Refs #4035 AC1)', () {
+    test('positive: civilian E2E override widens maxHeight to 92%', () {
+      const Size viewport = Size(1280, 720);
+      final BoxConstraints c = unitsPanelHostSheetConstraints(
+        viewport: viewport,
+        applyCivilianE2eHeightOverride: true,
+        e2eEnabled: true,
+      );
+      expect(c.maxHeight, closeTo(720 * 0.92, 0.01));
+      expect(c.maxWidth, closeTo(1280 * 0.70, 0.01));
+    });
+
+    test('negative: military/naval never apply E2E height override', () {
+      const Size viewport = Size(1280, 720);
+      final BoxConstraints base = unitsPanelSheetConstraints(viewport);
+      final BoxConstraints c = unitsPanelHostSheetConstraints(
+        viewport: viewport,
+        applyCivilianE2eHeightOverride: false,
+        e2eEnabled: true,
+      );
+      expect(c.maxHeight, base.maxHeight);
+      expect(c.maxHeight, isNot(closeTo(720 * 0.92, 0.01)));
+    });
+
+    test('negative: civilian override ignored when E2E is disabled', () {
+      const Size viewport = Size(1280, 720);
+      final BoxConstraints base = unitsPanelSheetConstraints(viewport);
+      final BoxConstraints c = unitsPanelHostSheetConstraints(
+        viewport: viewport,
+        applyCivilianE2eHeightOverride: true,
+        e2eEnabled: false,
+      );
+      expect(c.maxHeight, base.maxHeight);
     });
   });
 

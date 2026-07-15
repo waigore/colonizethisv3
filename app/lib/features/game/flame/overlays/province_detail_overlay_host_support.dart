@@ -24,9 +24,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart'
-    show displayProvinceOrSeaIdFromTileKey;
+    show displayProvinceOrSeaIdFromTileKey, mapProvincePanelProvider;
 import '../../../../core/services/game_service/game_service.dart' show GameMapData;
 import '../map_state/map_state.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
@@ -36,6 +39,7 @@ part 'province_detail_overlay_host_support_display.dart';
 part 'province_detail_overlay_host_support_shortcuts.dart';
 part 'province_detail_overlay_host_support_bonus.dart';
 part 'province_detail_overlay_host_support_factory.dart';
+part 'province_detail_overlay_host_support_map_data.dart';
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous
@@ -44,4 +48,14 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onExploreWithExplorerTap,
   VoidCallback? onProspectWithExplorerTap,
   VoidCallback? onBuildImprovementTap,
+});
+
+/// Shared map-data + secondary-highlight / close wiring for wide and narrow
+/// province-detail overlay hosts (Refs #4035 AC3).
+typedef ProvinceDetailHostOverlayArgs = ({
+  GameMapData? mapData,
+  void Function(String?) onHighlightTile,
+  void Function(Iterable<String>?) onHighlightTiles,
+  VoidCallback onClose,
+  ct_models.AppEventBus bus,
 });
