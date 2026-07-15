@@ -287,8 +287,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// production specialty hosts (cotton-weaving lock, available grid, labour
 /// section / step-surface / expected-lines mirror, allocation row chrome /
 /// buttons, icons), military panel suites, technology panel suites that
-/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, and train
-/// dialog suites migrated onto `buildAppShell`.
+/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, train
+/// dialog suites migrated onto `buildAppShell`, and unit-order dialog suites
+/// (`split_army` / `split_fleet` / `move_fleet`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -326,7 +327,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'train_commodity_cost_dialog_base_test.dart' ||
       name == 'train_naval_dialog_test.dart' ||
       name == 'train_military_dialog_test.dart' ||
-      name == 'train_civilians_dialog_test.dart';
+      name == 'train_civilians_dialog_test.dart' ||
+      name == 'split_army_dialog_test.dart' ||
+      name == 'split_fleet_dialog_test.dart' ||
+      name == 'move_fleet_dialog_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
