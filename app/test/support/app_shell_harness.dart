@@ -1,19 +1,6 @@
 // Shared app-shell pump harness for `app/test/**` widget/screen tests.
-//
-// Dozens of widget tests re-declare a private `_pump<Thing>(...)` helper that
-// repeats the same wrapper sequence: optionally force a surface size, then
-// pump a `ProviderScope` > `MaterialApp(theme: AppThemes.editorialMonocle)`
-// shell hosting a single screen/widget, then pump one frame (or settle). The
-// only per-file variation is the provider override list, the hosted widget,
-// the (optional) forced viewport, and the pump strategy.
-//
-// This is the generic counterpart to `min_viewport_harness.dart`: that file's
-// `buildMinViewportApp` / `pumpAtMinViewport` are the always-forced-viewport
-// specialization used by the `*_320dp_min_viewport_test.dart` family, and they
-// delegate here so there is a single shell definition.
-//
-// Refs #3730 (consolidate app test scaffolding).
-// SPEC: SPEC/program/repo-lint.md (test static-analysis scope).
+// Generic counterpart to `min_viewport_harness.dart` (Refs #3730, #4035).
+// SPEC: SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:flutter/material.dart';
@@ -21,15 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-/// Builds the canonical app shell: [ProviderScope] + themed [MaterialApp]
-/// hosting [child]. Defaults to [AppThemes.editorialMonocle]; pass [theme]
-/// for colonial / other specializations (Refs #4035 — no private MaterialApp).
+/// Canonical [ProviderScope] + themed [MaterialApp] host (Refs #4035).
 ///
-/// When [viewport] is non-null, [child] is wrapped in a [MediaQuery] forcing
-/// that size; callers must still force the binding surface size separately
-/// (see [pumpAppShell]). Localization and [onGenerateRoute] forward to the
-/// [MaterialApp]. [shellWrapper], if supplied, wraps the [MaterialApp] before
-/// the [ProviderScope] child (e.g. `AppEventHandlerScope`).
+/// Defaults to [AppThemes.editorialMonocle]. [viewport] forces MediaQuery size
+/// (binding surface still via [pumpAppShell]). [initialRoute] skips `home`.
+/// [shellWrapper] wraps the [MaterialApp] under the scope.
 Widget buildAppShell({
   required Widget child,
   Size? viewport,
@@ -40,16 +23,22 @@ Widget buildAppShell({
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
   RouteFactory? onGenerateRoute,
+  Map<String, WidgetBuilder>? routes,
+  String? initialRoute,
+  bool debugShowCheckedModeBanner = true,
   Widget Function(Widget app)? shellWrapper,
 }) {
-  final MaterialApp app = _appShellMaterialApp(
-    home: _wrapViewport(child, viewport),
+  final MaterialApp app = buildAppShellMaterialApp(
+    home: initialRoute == null ? _wrapViewport(child, viewport) : null,
     theme: theme,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
     navigatorKey: navigatorKey,
     onGenerateRoute: onGenerateRoute,
+    routes: routes,
+    initialRoute: initialRoute,
+    debugShowCheckedModeBanner: debugShowCheckedModeBanner,
   );
   return ProviderScope(
     overrides: overrides,
@@ -57,16 +46,9 @@ Widget buildAppShell({
   );
 }
 
-/// Builds the canonical app shell bound to an externally-owned [container]
-/// via an [UncontrolledProviderScope] (instead of an [overrides]-scoped
-/// [ProviderScope]). The caller creates and disposes [container]; this is the
-/// specialization used by tests that must read provider state back from the
-/// **same** container after pumping — the [ProviderScope]-owning
-/// [buildAppShell] does not expose its container.
-///
-/// Theme, viewport [MediaQuery] wrapping, localization forwarding, and the
-/// hosted-[child] contract are identical to [buildAppShell]; only the scope
-/// ownership differs, so there remains a single [MaterialApp] shell definition.
+/// Like [buildAppShell] but binds an externally-owned [container] via
+/// [UncontrolledProviderScope] so callers can read the same container after
+/// pumping. MaterialApp chrome stays [buildAppShellMaterialApp].
 Widget buildAppShellWithContainer({
   required ProviderContainer container,
   required Widget child,
@@ -77,16 +59,22 @@ Widget buildAppShellWithContainer({
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
   RouteFactory? onGenerateRoute,
+  Map<String, WidgetBuilder>? routes,
+  String? initialRoute,
+  bool debugShowCheckedModeBanner = true,
   Widget Function(Widget app)? shellWrapper,
 }) {
-  final MaterialApp app = _appShellMaterialApp(
-    home: _wrapViewport(child, viewport),
+  final MaterialApp app = buildAppShellMaterialApp(
+    home: initialRoute == null ? _wrapViewport(child, viewport) : null,
     theme: theme,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
     navigatorKey: navigatorKey,
     onGenerateRoute: onGenerateRoute,
+    routes: routes,
+    initialRoute: initialRoute,
+    debugShowCheckedModeBanner: debugShowCheckedModeBanner,
   );
   return UncontrolledProviderScope(
     container: container,
@@ -94,33 +82,33 @@ Widget buildAppShellWithContainer({
   );
 }
 
-/// The single [MaterialApp] definition shared by every shell builder in this
-/// harness; only the provider-scope wrapper differs between the
-/// [ProviderScope] and [UncontrolledProviderScope] variants. Defaults to
-/// editorial-monocle when [theme] is omitted.
-MaterialApp _appShellMaterialApp({
-  required Widget home,
+/// Single MaterialApp chrome for shell / golden hosts (Refs #4035).
+MaterialApp buildAppShellMaterialApp({
+  Widget? home,
   ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
   GlobalKey<NavigatorState>? navigatorKey,
   RouteFactory? onGenerateRoute,
+  Map<String, WidgetBuilder>? routes,
+  String? initialRoute,
+  bool debugShowCheckedModeBanner = true,
 }) {
   return MaterialApp(
     navigatorKey: navigatorKey,
+    debugShowCheckedModeBanner: debugShowCheckedModeBanner,
     theme: theme ?? AppThemes.editorialMonocle,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
     onGenerateRoute: onGenerateRoute,
+    routes: routes ?? const <String, WidgetBuilder>{},
+    initialRoute: initialRoute,
     home: home,
   );
 }
 
-/// Wraps [child] in a forced-size [MediaQuery] when [viewport] is non-null so
-/// widget code reading `MediaQuery.sizeOf(context)` resolves to it; otherwise
-/// returns [child] unchanged so the ambient surface size is used.
 Widget _wrapViewport(Widget child, Size? viewport) {
   return viewport == null
       ? child
@@ -130,17 +118,8 @@ Widget _wrapViewport(Widget child, Size? viewport) {
 /// Pumps [child] inside [buildAppShell].
 ///
 /// When [viewport] is non-null, registers a tear-down that restores the
-/// surface size and forces the binding surface to [viewport] (so the
-/// framework's `RenderFlex` math sees it) before pumping. Pumps a single frame
-/// by default; when [settle] is `true` the helper drives
-/// [WidgetTester.pumpAndSettle] to completion instead — use it for screens
-/// whose first-frame chrome must settle before an assertion runs, and keep the
-/// single-pump default for screens with continuous animations that would never
-/// settle.
-///
-/// For screens that need extra framed pumps with explicit durations, call this
-/// helper (which leaves the tree on its first pumped frame) and then issue the
-/// additional `tester.pump(...)` calls from the test body.
+/// surface size and forces the binding surface to [viewport] before pumping.
+/// Single frame by default; [settle] drains animations.
 Future<void> pumpAppShell(
   WidgetTester tester, {
   required Widget child,
@@ -180,14 +159,7 @@ Future<void> pumpAppShell(
   }
 }
 
-/// Pumps [child] inside [buildAppShellWithContainer], bound to the
-/// externally-owned [container] (the caller is responsible for creating and
-/// disposing it — typically via `addTearDown(container.dispose)`).
-///
-/// Use this for tests that read provider state back from the same container
-/// after pumping (for example asserting on a notifier's value once the UI has
-/// mutated it). Viewport forcing, tear-down restore, and the single-pump /
-/// [settle] behaviour match [pumpAppShell].
+/// Pumps [child] inside [buildAppShellWithContainer] (caller owns [container]).
 Future<void> pumpAppShellWithContainer(
   WidgetTester tester, {
   required ProviderContainer container,

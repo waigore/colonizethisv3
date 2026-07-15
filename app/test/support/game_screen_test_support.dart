@@ -24,6 +24,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:hive/hive.dart';
 
+import 'app_shell_harness.dart';
+
 /// Canonical Riverpod overrides for mounting [GameScreen] with a Hive games
 /// box, current game, orders, map view, and optional chrome summaries.
 ///
@@ -125,14 +127,12 @@ Widget buildGameScreenHost({
     data: MediaQueryData(size: Size(width, height)),
     child: home,
   );
-  final MaterialApp materialApp = MaterialApp(
-    navigatorKey: navigatorKey,
+  return buildAppShell(
+    child: sizedHome,
     theme: appTheme,
-    routes: routes ?? const <String, WidgetBuilder>{},
+    navigatorKey: navigatorKey,
+    routes: routes,
     initialRoute: initialRoute,
-    home: initialRoute == null ? sizedHome : null,
-  );
-  return ProviderScope(
     overrides: <Override>[
       ...buildGameScreenShellOverrides(
         gamesBox: gamesBox,
@@ -149,9 +149,9 @@ Widget buildGameScreenHost({
       ),
       ...extraOverrides,
     ],
-    child: wrapAppEventHandler
-        ? AppEventHandlerScope(child: materialApp)
-        : materialApp,
+    shellWrapper: wrapAppEventHandler
+        ? (Widget app) => AppEventHandlerScope(child: app)
+        : null,
   );
 }
 
