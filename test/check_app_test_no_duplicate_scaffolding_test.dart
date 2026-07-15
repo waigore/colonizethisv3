@@ -833,6 +833,13 @@ void main() {
         'units_panel_shared_widgets_test.dart',
         'unit_panels_viewport_sizing_test.dart',
         'unit_panels_widgetbook_dark_chrome_test.dart',
+        'units_panel_sheet_surface_test.dart',
+        'units_entity_card_test.dart',
+        'ct_action_text_button_test.dart',
+        'relation_meter_test.dart',
+        'game_top_bar_test.dart',
+        'game_tab_bar_test.dart',
+        'player_turn_event_feed_chrome_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -864,6 +871,13 @@ Widget host() => MaterialApp(home: const Placeholder());
         'units_panel_shared_widgets_test.dart',
         'unit_panels_viewport_sizing_test.dart',
         'unit_panels_widgetbook_dark_chrome_test.dart',
+        'units_panel_sheet_surface_test.dart',
+        'units_entity_card_test.dart',
+        'ct_action_text_button_test.dart',
+        'relation_meter_test.dart',
+        'game_top_bar_test.dart',
+        'game_tab_bar_test.dart',
+        'player_turn_event_feed_chrome_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

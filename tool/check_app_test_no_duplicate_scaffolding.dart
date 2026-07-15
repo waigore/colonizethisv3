@@ -312,7 +312,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `province_sea_zone_resource_labels`), and catalog widget unit hosts
 /// (`base_units_panel`, `units_combine_header_actions`,
 /// `units_panel_shared_widgets`, `unit_panels_viewport_sizing`,
-/// `unit_panels_widgetbook_dark_chrome`).
+/// `unit_panels_widgetbook_dark_chrome`), units sheet/entity card hosts
+/// (`units_panel_sheet_surface`, `units_entity_card`), catalog chrome
+/// (`ct_action_text_button`, `relation_meter`), and in-game shell chrome
+/// (`game_top_bar`, `game_tab_bar`, `player_turn_event_feed_chrome`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -398,7 +401,14 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'units_combine_header_actions_test.dart' ||
       name == 'units_panel_shared_widgets_test.dart' ||
       name == 'unit_panels_viewport_sizing_test.dart' ||
-      name == 'unit_panels_widgetbook_dark_chrome_test.dart';
+      name == 'unit_panels_widgetbook_dark_chrome_test.dart' ||
+      name == 'units_panel_sheet_surface_test.dart' ||
+      name == 'units_entity_card_test.dart' ||
+      name == 'ct_action_text_button_test.dart' ||
+      name == 'relation_meter_test.dart' ||
+      name == 'game_top_bar_test.dart' ||
+      name == 'game_tab_bar_test.dart' ||
+      name == 'player_turn_event_feed_chrome_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
