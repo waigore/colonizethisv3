@@ -868,6 +868,12 @@ void main() {
         'game_map_area_selection_mode_test.dart',
         'game_map_area_selection_mode_lightweight_test.dart',
         'game_map_area_shell_entry_center_test.dart',
+        'ct_choice_chip_test.dart',
+        'ct_transfer_list_test.dart',
+        'gp_default_map_color_swatch_test.dart',
+        'diplomacy_standing_chips_test.dart',
+        'diplomacy_relative_power_line_test.dart',
+        'tech_gp_pennant_widget_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -934,6 +940,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'game_map_area_selection_mode_test.dart',
         'game_map_area_selection_mode_lightweight_test.dart',
         'game_map_area_shell_entry_center_test.dart',
+        'ct_choice_chip_test.dart',
+        'ct_transfer_list_test.dart',
+        'gp_default_map_color_swatch_test.dart',
+        'diplomacy_standing_chips_test.dart',
+        'diplomacy_relative_power_line_test.dart',
+        'tech_gp_pennant_widget_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

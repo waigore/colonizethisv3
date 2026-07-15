@@ -329,7 +329,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// area hosts (`game_map_area_background`, `game_map_area_event_feed`,
 /// `game_map_area_region_minimap`, `game_map_area_selection_mode`,
 /// `game_map_area_selection_mode_lightweight`,
-/// `game_map_area_shell_entry_center`).
+/// `game_map_area_shell_entry_center`), catalog/diplomacy widget hosts
+/// (`ct_choice_chip`, `ct_transfer_list`, `gp_default_map_color_swatch`,
+/// `diplomacy_standing_chips`, `diplomacy_relative_power_line`,
+/// `tech_gp_pennant_widget`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -450,7 +453,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_map_area_region_minimap_test.dart' ||
       name == 'game_map_area_selection_mode_test.dart' ||
       name == 'game_map_area_selection_mode_lightweight_test.dart' ||
-      name == 'game_map_area_shell_entry_center_test.dart';
+      name == 'game_map_area_shell_entry_center_test.dart' ||
+      name == 'ct_choice_chip_test.dart' ||
+      name == 'ct_transfer_list_test.dart' ||
+      name == 'gp_default_map_color_swatch_test.dart' ||
+      name == 'diplomacy_standing_chips_test.dart' ||
+      name == 'diplomacy_relative_power_line_test.dart' ||
+      name == 'tech_gp_pennant_widget_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

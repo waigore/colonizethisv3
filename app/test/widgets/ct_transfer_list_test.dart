@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import '../support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -16,8 +18,8 @@ void main() {
     Map<String, int> initialLeftCounts = const {'carrack': 2, 'fluyte': 1},
   }) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CtTransferList(
             leftTitle: 'Original',
             rightTitle: 'New',
