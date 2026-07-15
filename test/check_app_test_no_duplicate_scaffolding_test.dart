@@ -883,6 +883,12 @@ void main() {
         'player_turn_event_feed_narrow_width_test.dart',
         'player_turn_event_feed_narrow_inset_test.dart',
         'game_map_selection_prompt_dark_tokens_test.dart',
+        'diplomacy_panel_mockup_fidelity_test.dart',
+        'ct_radius_adoption_test.dart',
+        'grant_or_subsidy_listener_test.dart',
+        'province_detail_panel_slide_transition_test.dart',
+        'dialogue_acceptance_test.dart',
+        'production_screen_integration_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -964,6 +970,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'player_turn_event_feed_narrow_width_test.dart',
         'player_turn_event_feed_narrow_inset_test.dart',
         'game_map_selection_prompt_dark_tokens_test.dart',
+        'diplomacy_panel_mockup_fidelity_test.dart',
+        'ct_radius_adoption_test.dart',
+        'grant_or_subsidy_listener_test.dart',
+        'province_detail_panel_slide_transition_test.dart',
+        'dialogue_acceptance_test.dart',
+        'production_screen_integration_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

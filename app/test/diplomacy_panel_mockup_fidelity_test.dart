@@ -23,12 +23,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/diplomacy_panel_test_support.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
@@ -135,10 +135,8 @@ Game _subsidyGame() {
 }
 
 Widget _panelHost(Game game) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: SizedBox(
         width: 460,
         height: 1000,

@@ -339,7 +339,11 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `tech_tree_widget_description_batches`), player-turn-event-feed narrow hosts
 /// (`player_turn_event_feed_narrow_width`,
 /// `player_turn_event_feed_narrow_inset`), and
-/// `game_map_selection_prompt_dark_tokens`.
+/// `game_map_selection_prompt_dark_tokens`, diplomacy mockup / grant-subsidy /
+/// dialogue acceptance / production-screen integration hosts
+/// (`diplomacy_panel_mockup_fidelity`, `grant_or_subsidy_listener`,
+/// `dialogue_acceptance`, `production_screen_integration`),
+/// `ct_radius_adoption`, and `province_detail_panel_slide_transition`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -475,7 +479,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'tech_tree_widget_description_batches_test.dart' ||
       name == 'player_turn_event_feed_narrow_width_test.dart' ||
       name == 'player_turn_event_feed_narrow_inset_test.dart' ||
-      name == 'game_map_selection_prompt_dark_tokens_test.dart';
+      name == 'game_map_selection_prompt_dark_tokens_test.dart' ||
+      name == 'diplomacy_panel_mockup_fidelity_test.dart' ||
+      name == 'ct_radius_adoption_test.dart' ||
+      name == 'grant_or_subsidy_listener_test.dart' ||
+      name == 'province_detail_panel_slide_transition_test.dart' ||
+      name == 'dialogue_acceptance_test.dart' ||
+      name == 'production_screen_integration_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
