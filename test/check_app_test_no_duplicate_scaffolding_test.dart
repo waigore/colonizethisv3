@@ -901,6 +901,10 @@ void main() {
         'app_event_handler_scope_diplomacy_test.dart',
         'app_event_handler_scope_civilian_work_test.dart',
         'turn_resolution_event_blocking_test.dart',
+        'app_event_handler_test.dart',
+        'game_session_clear_ui_path_test.dart',
+        'new_game_setup_flow_test.dart',
+        'app_wave5_shared_helpers_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1000,6 +1004,10 @@ Widget host() => MaterialApp(home: const Placeholder());
         'app_event_handler_scope_diplomacy_test.dart',
         'app_event_handler_scope_civilian_work_test.dart',
         'turn_resolution_event_blocking_test.dart',
+        'app_event_handler_test.dart',
+        'game_session_clear_ui_path_test.dart',
+        'new_game_setup_flow_test.dart',
+        'app_wave5_shared_helpers_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

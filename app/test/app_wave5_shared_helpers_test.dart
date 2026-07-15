@@ -14,6 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -117,9 +119,10 @@ void main() {
 
   testWidgets('DialogueTristateDecisionRow wires dual toggles', (tester) async {
     bool? decision;
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: DialogueTristateDecisionRow(
             positiveToggleKey: const ValueKey('pos'),
             negativeToggleKey: const ValueKey('neg'),
@@ -139,9 +142,10 @@ void main() {
 
   testWidgets('buildTitledDialogueChrome mounts title and brass frame body',
       (tester) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: buildTitledDialogueChrome(
+      buildAppShell(
+        child: buildTitledDialogueChrome(
           backdrop: const SizedBox.shrink(),
           title: 'Intro',
           body: const Text('body-line'),

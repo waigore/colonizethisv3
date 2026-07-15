@@ -349,8 +349,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`, combat
 /// UI specs parts (`combat_ui_specs_part1` / `combat_ui_specs_part2`),
 /// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
-/// `app_event_handler_scope_civilian_work`, and
-/// `turn_resolution_event_blocking`.
+/// `app_event_handler_scope_civilian_work`,
+/// `turn_resolution_event_blocking`, `app_event_handler`,
+/// `game_session_clear_ui_path`, `new_game_setup_flow`, and
+/// `app_wave5_shared_helpers`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -504,7 +506,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_to_ui_bus_listener_test.dart' ||
       name == 'app_event_handler_scope_diplomacy_test.dart' ||
       name == 'app_event_handler_scope_civilian_work_test.dart' ||
-      name == 'turn_resolution_event_blocking_test.dart';
+      name == 'turn_resolution_event_blocking_test.dart' ||
+      name == 'app_event_handler_test.dart' ||
+      name == 'game_session_clear_ui_path_test.dart' ||
+      name == 'new_game_setup_flow_test.dart' ||
+      name == 'app_wave5_shared_helpers_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
