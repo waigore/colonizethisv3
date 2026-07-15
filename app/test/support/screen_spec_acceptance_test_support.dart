@@ -2,7 +2,7 @@
 // (Refs #4013). Pins SPEC/ui/main-menu.md under colonial / editorial themes.
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:flutter/material.dart';

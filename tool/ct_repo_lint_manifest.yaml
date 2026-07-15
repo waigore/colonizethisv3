@@ -757,6 +757,14 @@ rules:
     script: tool/check_chrome_button_base.dart
     pr_incremental: true
 
+  - rule_id: repo.app_no_feature_chrome_imports
+    group: structure
+    title: ban imports of deleted features/game/widgets/chrome shims; shared Ct-* chrome lives under app/lib/widgets (Refs #4035)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_feature_chrome_imports.dart
+    pr_incremental: false
+
   - rule_id: repo.split_dialog_base
     group: structure
     title: in-game `Split*Dialog` widgets must extend the shared SplitEntityDialog base (Refs #3594)

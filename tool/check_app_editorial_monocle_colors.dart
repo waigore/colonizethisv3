@@ -43,13 +43,7 @@ import 'package:path/path.dart' as p;
 ///    suite for these operator-only surfaces (banned Material widgets
 ///    other than colour tokens) remains low-value per #2914 Risks /
 ///    edge cases and is not required for the colour gate.
-/// 4. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
-///    implementations. These widgets implement the design-system primitives
-///    consumed by the rest of the feature tree and may declare `const`
-///    fallbacks where palette tokens are non-`const`. Consumer code in
-///    `features/**` must still use the catalog widget, not raw Material
-///    colors.
-/// 5. **`app/lib/widgets/` CustomPainter / canvas compositing files** —
+/// 4. **`app/lib/widgets/` CustomPainter / canvas compositing files** —
 ///    `ColorFilter.mode` darken/lighten composites (e.g. the main-menu
 ///    button hover filter in `main_menu.dart` and its split-out part file
 ///    `main_menu_buttons.dart`) treat the color value as a
@@ -59,7 +53,9 @@ import 'package:path/path.dart' as p;
 ///    palette tokens would tint the rendered output. Analogous to the
 ///    Flame renderer allowlist for the same reason. Decorative collage /
 ///    ornament painters live in `colonizethis_app_ui_chrome` (Refs #3942)
-///    and are outside this scan root.
+///    and are outside this scan root. Shared Ct-* chrome formerly under
+///    `features/game/widgets/chrome/` now lives in `app/lib/widgets/` and
+///    must pass this gate (Refs #4035).
 ///
 /// Per-line skips:
 /// - Lines starting with `//` (line comments) and `///` (dartdoc) so this
@@ -249,10 +245,9 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
 };
 
 const Set<String> _appEditorialMonocleColorsAllowedDirPrefixes = <String>{
-  // Ct-* catalog widgets implementing design-system primitives. Consumers
-  // in features/** still resolve colors through these widgets, not raw
-  // Material colors.
-  'app/lib/features/game/widgets/chrome/',
+  // Intentionally empty after Refs #4035: shared Ct-* chrome moved out of
+  // `features/game/widgets/chrome/` into `app/lib/widgets/` and must pass the
+  // palette gate (or use per-file allowlist entries below when compositing).
 };
 
 void main() {

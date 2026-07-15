@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';

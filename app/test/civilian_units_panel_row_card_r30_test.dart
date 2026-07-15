@@ -14,8 +14,8 @@
 //     rows in tile-scope mode where Assign / Cancel are hidden.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';

@@ -18,7 +18,7 @@ void main() {
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 class Clean extends StatelessWidget {
   const Clean({super.key});
@@ -189,7 +189,7 @@ class FakeTextButtonProbe {
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 
 Widget disband() => CtDangerTextButton(
   label: 'Disband',
