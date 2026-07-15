@@ -54,8 +54,8 @@ void main() {
           useCaseName: 'Mobile viewport',
         );
 
-        // The story builds its own MaterialApp (with localizations
-        // delegates) inside `mobileViewport`, so we wrap only the
+        // The story builds `widgetbookEditorialMonocleApp` (with
+        // localizations) inside `mobileViewport`, so we wrap only the
         // outer MediaQuery here to avoid a double app shell.
         await tester.pumpWidget(
           MediaQuery(

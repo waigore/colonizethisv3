@@ -368,8 +368,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_shell_mobile_viewport`,
 /// `widgetbook_main_menu_mobile_viewport`,
 /// `widgetbook_diplomacy_panel_mobile_viewport`,
-/// `widgetbook_player_turn_event_feed_mobile_viewport`, and
-/// `widgetbook_technology_screen_mobile_viewport`.
+/// `widgetbook_player_turn_event_feed_mobile_viewport`,
+/// `widgetbook_technology_screen_mobile_viewport`,
+/// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`, and
+/// `themes_and_widgetbook`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -545,7 +547,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_main_menu_mobile_viewport_test.dart' ||
       name == 'widgetbook_diplomacy_panel_mobile_viewport_test.dart' ||
       name == 'widgetbook_player_turn_event_feed_mobile_viewport_test.dart' ||
-      name == 'widgetbook_technology_screen_mobile_viewport_test.dart';
+      name == 'widgetbook_technology_screen_mobile_viewport_test.dart' ||
+      name == 'widgetbook_turn_news_mobile_viewport_test.dart' ||
+      name == 'tech_gp_pennant_goldens_test.dart' ||
+      name == 'themes_and_widgetbook_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

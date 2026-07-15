@@ -923,6 +923,9 @@ void main() {
         'widgetbook_diplomacy_panel_mobile_viewport_test.dart',
         'widgetbook_player_turn_event_feed_mobile_viewport_test.dart',
         'widgetbook_technology_screen_mobile_viewport_test.dart',
+        'widgetbook_turn_news_mobile_viewport_test.dart',
+        'tech_gp_pennant_goldens_test.dart',
+        'themes_and_widgetbook_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1044,6 +1047,9 @@ Widget host() => MaterialApp(home: const Placeholder());
         'widgetbook_diplomacy_panel_mobile_viewport_test.dart',
         'widgetbook_player_turn_event_feed_mobile_viewport_test.dart',
         'widgetbook_technology_screen_mobile_viewport_test.dart',
+        'widgetbook_turn_news_mobile_viewport_test.dart',
+        'tech_gp_pennant_goldens_test.dart',
+        'themes_and_widgetbook_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

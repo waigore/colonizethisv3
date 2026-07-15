@@ -40,9 +40,8 @@ List<WidgetbookNode> get ctDialogueViewDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Lines and choice trace',
-        builder: (context) => MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: const Scaffold(body: _CtDialogueViewStoryHarness()),
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const _CtDialogueViewStoryHarness(),
         ),
       ),
     ],
@@ -149,19 +148,16 @@ List<WidgetbookNode> get gameStartIntroOverlayDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Default — single-line intro',
-        builder: (context) => MaterialApp(
-          theme: AppThemes.editorialMonocle,
+        builder: (context) => widgetbookEditorialMonocleApp(
           localizationsDelegates:
               AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: GameStartIntroOverlay(
-              onDismissed: () {},
-              assetBundle: _InlineYarnAssetBundle(
-                _kGameStartIntroOverlayStorySource,
-              ),
-              child: const Placeholder(),
+          child: GameStartIntroOverlay(
+            onDismissed: () {},
+            assetBundle: _InlineYarnAssetBundle(
+              _kGameStartIntroOverlayStorySource,
             ),
+            child: const Placeholder(),
           ),
         ),
       ),
@@ -202,30 +198,27 @@ List<WidgetbookNode> get overtureDialogueOverlayDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Default — two pending overtures',
-        builder: (context) => MaterialApp(
-          theme: AppThemes.editorialMonocle,
+        builder: (context) => widgetbookEditorialMonocleApp(
           localizationsDelegates:
               AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: OvertureDialogueOverlay(
-              game: _overtureStoryGame(),
-              pendingOvertures: const [
-                OvertureOffer(
-                  offererGpId: 'gp_spain',
-                  targetFactionId: 'gp_player',
-                  stage: OvertureStage.tradeConsulate,
-                ),
-                OvertureOffer(
-                  offererGpId: 'gp_portugal',
-                  targetFactionId: 'gp_player',
-                  stage: OvertureStage.embassy,
-                ),
-              ],
-              skipIntroForTest: true,
-              onDecisions: (_) {},
-              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
-            ),
+          child: OvertureDialogueOverlay(
+            game: _overtureStoryGame(),
+            pendingOvertures: const [
+              OvertureOffer(
+                offererGpId: 'gp_spain',
+                targetFactionId: 'gp_player',
+                stage: OvertureStage.tradeConsulate,
+              ),
+              OvertureOffer(
+                offererGpId: 'gp_portugal',
+                targetFactionId: 'gp_player',
+                stage: OvertureStage.embassy,
+              ),
+            ],
+            skipIntroForTest: true,
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
           ),
         ),
       ),
@@ -278,29 +271,26 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
     children: [
       WidgetbookUseCase(
         name: 'Default — two pending calls',
-        builder: (context) => MaterialApp(
-          theme: AppThemes.editorialMonocle,
+        builder: (context) => widgetbookEditorialMonocleApp(
           localizationsDelegates:
               AppLocalizationsBinding.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: CallToArmsDialogueOverlay(
-              game: _callToArmsStoryGame(),
-              pending: const [
-                CallToArmsPending(
-                  allyGpId: 'gp_player',
-                  defenderGpId: 'gp_portugal',
-                  aggressorGpId: 'gp_spain',
-                ),
-                CallToArmsPending(
-                  allyGpId: 'gp_player',
-                  defenderGpId: 'gp_france',
-                  aggressorGpId: 'gp_england',
-                ),
-              ],
-              onDecisions: (_) {},
-              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
-            ),
+          child: CallToArmsDialogueOverlay(
+            game: _callToArmsStoryGame(),
+            pending: const [
+              CallToArmsPending(
+                allyGpId: 'gp_player',
+                defenderGpId: 'gp_portugal',
+                aggressorGpId: 'gp_spain',
+              ),
+              CallToArmsPending(
+                allyGpId: 'gp_player',
+                defenderGpId: 'gp_france',
+                aggressorGpId: 'gp_england',
+              ),
+            ],
+            onDecisions: (_) {},
+            child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
           ),
         ),
       ),
@@ -308,16 +298,13 @@ List<WidgetbookNode> get callToArmsDialogueOverlayDirectories => [
   ),
 ];
 
-MaterialApp _moveDialogStoryFrame({
+Widget _moveDialogStoryFrame({
   required Widget Function(BuildContext) open,
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      body: Center(child: Builder(builder: open)),
-    ),
+    child: Center(child: Builder(builder: open)),
   );
 }
 
@@ -859,12 +846,12 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
           }
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
+            widgetbookEditorialMonocleApp(
+              useScaffold: false,
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Center(
+              child: Center(
                 child: NewGameLeaderSelectionDialog(
                   baseConfig: base,
                   naming: naming,

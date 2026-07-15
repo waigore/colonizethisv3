@@ -141,20 +141,16 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
 /// News feed card frame: float the card against a representative dark map
 /// background scrim and keep the wide-shell width so the chrome reads the
 /// same way it does pinned to the in-game map stack.
-MaterialApp _playerTurnEventFeedCardStoryFrame({required Widget child}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+Widget _playerTurnEventFeedCardStoryFrame({required Widget child}) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bgDeep,
-      body: Align(
-        alignment: Alignment.topRight,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: child,
-        ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: child,
       ),
     ),
   );
@@ -166,28 +162,24 @@ MaterialApp _playerTurnEventFeedCardStoryFrame({required Widget child}) {
 /// narrow), and forwards the editorial-monocle theme so the chrome
 /// reads identically to the wide story (issue #2870 S3 / Req 11; SPEC
 /// `SPEC/ui/player-turn-event-feed.md` § Card chrome — narrow layout).
-MaterialApp _playerTurnEventFeedCardNarrowStoryFrame({
+Widget _playerTurnEventFeedCardNarrowStoryFrame({
   required double viewportWidth,
   required Widget child,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: MediaQuery(
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: MediaQuery(
       data: MediaQueryData(size: Size(viewportWidth, 640)),
-      child: Scaffold(
-        backgroundColor: EditorialMonoclePalette.bgDeep,
-        body: SizedBox(
-          width: viewportWidth,
-          height: 640,
-          child: Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: child,
-            ),
+      child: SizedBox(
+        width: viewportWidth,
+        height: 640,
+        child: Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: child,
           ),
         ),
       ),

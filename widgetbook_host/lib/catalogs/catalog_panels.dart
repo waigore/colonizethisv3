@@ -772,18 +772,15 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
               const TurnNewsProvinceDiscoveredLine(provinceId: 'oldWorld|P1'),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
+          return widgetbookEditorialMonocleApp(
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: TurnNewsDialog(
-                  game: game,
-                  digest: digest,
-                  newTurnNumber: 3,
-                ),
+            child: Center(
+              child: TurnNewsDialog(
+                game: game,
+                digest: digest,
+                newTurnNumber: 3,
               ),
             ),
           );
@@ -808,21 +805,18 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
               ),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
+          return widgetbookEditorialMonocleApp(
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: TurnNewsDialog(
-                  game: game,
-                  digest: const TurnNewsDigest(
-                    resolvedTurnNumber: 1,
-                    lines: [],
-                  ),
-                  newTurnNumber: 2,
+            child: Center(
+              child: TurnNewsDialog(
+                game: game,
+                digest: const TurnNewsDigest(
+                  resolvedTurnNumber: 1,
+                  lines: [],
                 ),
+                newTurnNumber: 2,
               ),
             ),
           );
@@ -849,21 +843,18 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
+            widgetbookEditorialMonocleApp(
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: Center(
-                  child: TurnNewsDialog(
-                    game: game,
-                    digest: const TurnNewsDigest(
-                      resolvedTurnNumber: 1,
-                      lines: [],
-                    ),
-                    newTurnNumber: 2,
+              child: Center(
+                child: TurnNewsDialog(
+                  game: game,
+                  digest: const TurnNewsDigest(
+                    resolvedTurnNumber: 1,
+                    lines: [],
                   ),
+                  newTurnNumber: 2,
                 ),
               ),
             ),
