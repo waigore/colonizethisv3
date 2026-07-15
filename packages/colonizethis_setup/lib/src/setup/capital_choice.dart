@@ -6,6 +6,7 @@ import 'package:colonizethis_world/src/world/capital_reassignment.dart';
 import 'setup_exceptions.dart';
 import 'setup_road_wiring.dart';
 import 'setup_topology_adjacency.dart';
+import 'tile_cell_scan.dart';
 
 export 'package:colonizethis_world/src/world/capital_reassignment.dart'
     show

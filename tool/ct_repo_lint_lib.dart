@@ -53,6 +53,8 @@ import 'check_setup_dedup_grid_bfs_coord_keys.dart';
 import 'check_setup_dedup_raise_road_at_least.dart';
 import 'check_setup_dedup_road_tile_key_maps.dart';
 import 'check_setup_dedup_seaboard_nearest_tile.dart';
+import 'check_setup_dedup_full_grid_tile_scans.dart';
+import 'check_setup_dedup_advanced_start_flood_fill.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
 import 'check_setup_test_default_init_options.dart';
@@ -1025,6 +1027,10 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupRoadTileKeyMaps(repoRoot);
     case 'repo.setup_dedup_seaboard_nearest_tile':
       return runCheckSetupDedupSeaboardNearestTile(repoRoot);
+    case 'repo.setup_dedup_full_grid_tile_scans':
+      return runCheckSetupDedupFullGridTileScans(repoRoot);
+    case 'repo.setup_dedup_advanced_start_flood_fill':
+      return runCheckSetupDedupAdvancedStartFloodFill(repoRoot);
     case 'repo.setup_test_default_init_options':
       return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':
