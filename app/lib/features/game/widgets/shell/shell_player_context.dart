@@ -7,6 +7,7 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../../../core/services/game_service/game_service.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
 part 'shell_player_context_provider.dart';
@@ -61,12 +62,8 @@ String resolveShellPanelPlayerId(ShellPlayerContext shell, Game game) =>
 bool shellPanelsNotDefined(ShellPlayerContext shell) => !shell.showPlayerChrome;
 
 MapTopology _topologyForGame(GameService service, Game game) {
-  try {
-    final mapData = service.getMapData(game.id);
-    return mapData?.combinedTopology ?? const MapTopology();
-  } catch (_) {
-    return const MapTopology();
-  }
+  final mapData = tryGetGameMapData(() => service.getMapData(game.id));
+  return mapData?.combinedTopology ?? const MapTopology();
 }
 
 /// Faction ids whose map civilians and panel rows are visible for the current shell.

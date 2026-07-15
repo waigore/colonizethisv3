@@ -29,9 +29,14 @@ import '../../../../providers/map_province_panel_provider.dart'
     show displayProvinceOrSeaIdFromTileKey, MapProvincePanelNotifier;
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
+import '../../../../core/services/game_service/try_get_game_map_data.dart'
+    show tryGetGameMapData;
 import '../map_state/map_state.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+
+export '../../../../core/services/game_service/try_get_game_map_data.dart'
+    show tryGetGameMapData;
 
 part 'province_detail_overlay_host_support_display.dart';
 part 'province_detail_overlay_host_support_shortcuts.dart';

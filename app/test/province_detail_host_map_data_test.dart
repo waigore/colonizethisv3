@@ -1,7 +1,12 @@
 // tryGetGameMapData / resolveProvinceDetailHostOverlayArgs (Refs #4035 AC3).
+//
+// tryGetGameMapData lives under game_service so diplomacy/production topology
+// loads share the same Hive-free swallow contract as province-detail hosts.
 
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'
     show GameMapData;
+import 'package:colonizethis_app/core/services/game_service/try_get_game_map_data.dart'
+    show tryGetGameMapData;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
