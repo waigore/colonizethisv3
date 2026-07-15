@@ -1,7 +1,10 @@
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   test(
@@ -22,32 +25,27 @@ void main() {
         y: 0,
       );
 
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'z_unrelated_fleet_first',
-              ownerId: 'gp1',
-              regionId: kRegionOldWorld,
-              seaZoneId: 'oldWorld|sea1',
-              ships: const [],
-            ),
-            Fleet(
-              id: 'fleet_gp1',
-              ownerId: 'gp1',
-              regionId: kRegionOldWorld,
-              inPortAtProvinceId: 'oldWorld|p1',
-              ships: [
-                ShipInstance(id: 'ship_1', typeId: shipTypeId),
-              ],
-            ),
-          ],
-          nextShipInstanceSeq: 1,
-        ),
+        turnNumber: 1,
+        fleets: [
+          Fleet(
+            id: 'z_unrelated_fleet_first',
+            ownerId: 'gp1',
+            regionId: kRegionOldWorld,
+            seaZoneId: 'oldWorld|sea1',
+            ships: const [],
+          ),
+          Fleet(
+            id: 'fleet_gp1',
+            ownerId: 'gp1',
+            regionId: kRegionOldWorld,
+            inPortAtProvinceId: 'oldWorld|p1',
+            ships: [
+              ShipInstance(id: 'ship_1', typeId: shipTypeId),
+            ],
+          ),
+        ],
         players: [
           Player(
             id: 'gp1',
@@ -66,8 +64,8 @@ void main() {
         ],
       );
 
-      final config = GameSetupConfig(
-        selectedGreatPowerIds: ['england'],
+      final config = configWithOverrides(
+        selectedGreatPowerIds: const ['england'],
         startingResources: const StartingResourcesConfig(
           initialMilitaryRegiments: 0,
           initialNavalShips: 2,
