@@ -17,24 +17,6 @@ import 'support/widget_test_assets.dart';
 
 const String _mergePort = 'oldWorld|mergeport';
 
-Future<void> _pumpNaval(
-  WidgetTester tester, {
-  required Game game,
-  required String humanPlayerId,
-  AppEventBus? bus,
-  MapTopology topology = const MapTopology(),
-}) async {
-  await tester.pumpWidget(
-    buildNavalPanel(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      topology: topology,
-      bus: bus,
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
 Future<void> _tapFleetCheckboxes(
   WidgetTester tester,
   Iterable<String> fleetLabels, {
@@ -46,7 +28,10 @@ Future<void> _tapFleetCheckboxes(
       final title = find.text(label);
       await tester.scrollUntilVisible(title, 120);
       await tester.pumpAndSettle();
-      final tile = find.ancestor(of: title, matching: find.byType(ExpansionTile));
+      final tile = find.ancestor(
+        of: title,
+        matching: find.byType(ExpansionTile),
+      );
       cb = find.descendant(of: tile, matching: find.byType(Checkbox));
       await tester.scrollUntilVisible(cb, 120);
       await tester.pumpAndSettle();
@@ -83,7 +68,9 @@ void _expectCombineEnabled(WidgetTester tester, {required bool enabled}) {
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) _wireFleetsUpdated() {
   NavalFleetsUpdatedEvent? updated;
   final bus = AppEventBus.create();
-  addTearDown(bus.on<NavalFleetsUpdatedEvent>().listen((e) => updated = e).cancel);
+  addTearDown(
+    bus.on<NavalFleetsUpdatedEvent>().listen((e) => updated = e).cancel,
+  );
   return (bus, () => updated);
 }
 
@@ -178,7 +165,7 @@ Future<NavalFleetsUpdatedEvent?> _pumpCheckCombine(
   bool? expectCombineEnabled,
 }) async {
   final (bus, latest) = _wireFleetsUpdated();
-  await _pumpNaval(tester, game: game, humanPlayerId: humanId, bus: bus);
+  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId, bus: bus);
   await _tapFleetCheckboxes(tester, labels, scroll: scroll);
   if (expectCombineEnabled != null) {
     _expectCombineEnabled(tester, enabled: expectCombineEnabled);
@@ -231,7 +218,7 @@ void main() {
         addTearDown(subTransfer.cancel);
         addTearDown(subUpdated.cancel);
 
-        await _pumpNaval(
+        await pumpNavalPanel(
           tester,
           game: gameState,
           humanPlayerId: humanId,
@@ -239,10 +226,7 @@ void main() {
           bus: bus,
         );
 
-        await _tapFleetCheckboxes(tester, [
-          'Home Fleet',
-          'Fleet sea_source',
-        ]);
+        await _tapFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
         await _tapCombine(tester);
 
         final moveOneFluyte = find.byKey(
@@ -299,7 +283,7 @@ void main() {
           ],
         );
 
-        await _pumpNaval(
+        await pumpNavalPanel(
           tester,
           game: gameNonAdjacent,
           humanPlayerId: humanId,
@@ -309,10 +293,7 @@ void main() {
           ),
         );
 
-        await _tapFleetCheckboxes(tester, [
-          'Home Fleet',
-          'Fleet sea_far',
-        ]);
+        await _tapFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_far']);
         _expectCombineEnabled(tester, enabled: false);
       },
     );
@@ -331,10 +312,10 @@ void main() {
       expect(sameSea, isNotNull);
       final sameSeaSurvivor = sameSea!.game.worldState.fleets.single;
       expect(sameSeaSurvivor.id, 'sea_1');
-      expect(
-        (sameSeaSurvivor.ships.map((s) => s.id).toList()..sort()),
-        ['ss1', 'ss2'],
-      );
+      expect((sameSeaSurvivor.ships.map((s) => s.id).toList()..sort()), [
+        'ss1',
+        'ss2',
+      ]);
       expect(sameSeaSurvivor.mission, FleetMission.none);
 
       const missionId = 'gp_mission_clear';
@@ -345,7 +326,13 @@ void main() {
           gameId: 'g_mission_clear',
           displayName: 'Mission clear tester',
           fleets: [
-            _pf('m1', missionId, 'ms1', 'carrack', mission: FleetMission.patrol),
+            _pf(
+              'm1',
+              missionId,
+              'ms1',
+              'carrack',
+              mission: FleetMission.patrol,
+            ),
             _pf(
               'm2',
               missionId,
@@ -384,7 +371,7 @@ void main() {
           ],
         );
 
-        await _pumpNaval(tester, game: partialGame, humanPlayerId: humanId);
+        await pumpNavalPanel(tester, game: partialGame, humanPlayerId: humanId);
 
         final headerCheckboxFinder = find.descendant(
           of: find.byType(NavalUnitsPanel),
@@ -472,17 +459,20 @@ void main() {
           ),
         );
 
-        await _pumpNaval(tester, game: gameTwo, humanPlayerId: humanId);
+        await pumpNavalPanel(tester, game: gameTwo, humanPlayerId: humanId);
         await _tapFleetCheckboxes(tester, ['Fleet stays', 'Fleet removed']);
 
-        await _pumpNaval(tester, game: gameOne, humanPlayerId: humanId);
+        await pumpNavalPanel(tester, game: gameOne, humanPlayerId: humanId);
 
         final tileStays = find.widgetWithText(ExpansionTile, 'Fleet stays');
         final staysCb = find.descendant(
           of: tileStays,
           matching: find.byType(Checkbox),
         );
-        expect(find.widgetWithText(ExpansionTile, 'Fleet removed'), findsNothing);
+        expect(
+          find.widgetWithText(ExpansionTile, 'Fleet removed'),
+          findsNothing,
+        );
         expect(tester.widget<Checkbox>(staysCb).value, isTrue);
         _expectCombineEnabled(tester, enabled: false);
       },
@@ -503,7 +493,7 @@ void main() {
         );
 
         final (bus, latest) = _wireFleetsUpdated();
-        await _pumpNaval(
+        await pumpNavalPanel(
           tester,
           game: collapsedGame,
           humanPlayerId: humanId,

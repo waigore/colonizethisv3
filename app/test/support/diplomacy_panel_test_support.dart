@@ -13,12 +13,13 @@ import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+
+import 'app_shell_harness.dart';
 
 /// `pumpAndSettle` hangs here: Flame nine-patch widgets can keep the ticker
 /// busy. Bounded pumps flush layout, bus handlers, and dialog routes.
@@ -203,9 +204,9 @@ Widget buildDiplomacyPanel({
 }) {
   final panelBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
-  return MaterialApp(
+  return buildAppShell(
     navigatorKey: navigatorKey,
-    home: Scaffold(
+    child: Scaffold(
       body: DiplomacyPanelBusDialogHost(
         bus: panelBus,
         navigatorKey: navigatorKey,
@@ -233,8 +234,8 @@ Widget buildDiplomacyPanelShell({
   Orders currentOrders = const Orders(),
   required AppEventBus bus,
 }) {
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: DiplomacyPanel(
         game: game,
         humanPlayerId: humanPlayerId,
@@ -256,17 +257,15 @@ Widget wrapDiplomacyPanelAtViewport({
   AppEventBus? bus,
 }) {
   final panelBus = bus ?? AppEventBus.create();
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: viewportSize),
-      child: Scaffold(
-        body: DiplomacyPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          topology: topology,
-          currentOrders: currentOrders,
-          bus: panelBus,
-        ),
+  return buildAppShell(
+    viewport: viewportSize,
+    child: Scaffold(
+      body: DiplomacyPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        topology: topology,
+        currentOrders: currentOrders,
+        bus: panelBus,
       ),
     ),
   );
@@ -288,30 +287,28 @@ Widget buildCivilianPanel({
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
-  return ProviderScope(
+  return buildAppShell(
+    navigatorKey: navigatorKey,
     overrides: [
       availableWorkTargetIdsForUnitProvider.overrideWith(
         (ref, unitId) => availableWorkTargets[unitId] ?? const [],
       ),
     ],
-    child: MaterialApp(
-      navigatorKey: navigatorKey,
-      home: Scaffold(
-        body: CivilianPanelBusDialogHost(
+    child: Scaffold(
+      body: CivilianPanelBusDialogHost(
+        bus: resolvedBus,
+        navigatorKey: navigatorKey,
+        child: CivilianUnitsPanel(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
           bus: resolvedBus,
-          navigatorKey: navigatorKey,
-          child: CivilianUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: currentOrders,
-            bus: resolvedBus,
-            explorerOnly: explorerOnly,
-            builderOnly: builderOnly,
-            prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
-            exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
-            buildImprovementShortcutTargetTileKey:
-                buildImprovementShortcutTargetTileKey,
-          ),
+          explorerOnly: explorerOnly,
+          builderOnly: builderOnly,
+          prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
+          exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
+          buildImprovementShortcutTargetTileKey:
+              buildImprovementShortcutTargetTileKey,
         ),
       ),
     ),

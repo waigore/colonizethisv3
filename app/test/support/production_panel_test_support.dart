@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 
+import 'app_shell_harness.dart';
+
 /// Players and games for production panel widget tests without debug game init.
 Player productionPanelTestFullPlayer() {
   return Player(
@@ -96,7 +98,8 @@ class _ProductionPanelTestWrapperState
   }
 }
 
-/// Canonical [ProductionPanel] host for widget tests (Refs #4013).
+/// Canonical [ProductionPanel] host for widget tests via [buildAppShell]
+/// (Refs #4013, #4035).
 Widget buildProductionPanel({
   required Player player,
   Game? gameOverride,
@@ -120,22 +123,20 @@ Widget buildProductionPanel({
         (netDeltasByCommodity[recipe.outputCommodityId] ?? 0) +
         (recipe.outputQuantity * entry.value);
   }
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: Size(width, height)),
-      child: Scaffold(
-        body: SizedBox(
-          width: width,
-          height: height,
-          child: ProductionPanelTestWrapper(
-            displayGame: displayGame,
-            player: player,
-            initialDesiredOutput: desiredOutputByRecipe,
-            netDeltasByCommodity: netDeltasByCommodity,
-            onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
-            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
-            currentOrders: currentOrders,
-          ),
+  return buildAppShell(
+    viewport: Size(width, height),
+    child: Scaffold(
+      body: SizedBox(
+        width: width,
+        height: height,
+        child: ProductionPanelTestWrapper(
+          displayGame: displayGame,
+          player: player,
+          initialDesiredOutput: desiredOutputByRecipe,
+          netDeltasByCommodity: netDeltasByCommodity,
+          onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+          onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+          currentOrders: currentOrders,
         ),
       ),
     ),
