@@ -21,6 +21,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'app_shell_harness.dart';
@@ -123,12 +124,25 @@ Widget buildProvinceOverlayDarkThemeShell({
       ? SizedBox(width: shellWidth, child: overlay)
       : overlay;
   final scaffold = Scaffold(body: body);
+  // Province overlay strings resolve via AppLocalizations (Refs #4035).
   if (shellTheme != null) {
     return ProviderScope(
-      child: MaterialApp(theme: shellTheme, home: scaffold),
+      child: MaterialApp(
+        theme: shellTheme,
+        localizationsDelegates:
+            AppLocalizationsBinding.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: scaffold,
+      ),
     );
   }
-  return buildAppShell(child: scaffold);
+  return buildAppShell(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
+    child: scaffold,
+  );
 }
 
 /// Pumps [buildProvinceOverlayDarkThemeShell] and flushes the first layout pass.

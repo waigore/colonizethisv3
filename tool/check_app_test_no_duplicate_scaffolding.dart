@@ -306,7 +306,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `province_overlay_consulate_gate_tooltip_test`,
 /// `province_overlay_fully_unrevealed_sea_zone_structure_test`,
 /// `province_overlay_tile_inline_action_non_clickable_test`,
-/// `province_overlay_section_label_material_fallback_guard_test`).
+/// `province_overlay_section_label_material_fallback_guard_test`). Also
+/// province-sea-zone overlay suites (`province_sea_zone_overlay_detail_paths`,
+/// `province_sea_zone_overlay_naval_port_pending_omission`,
+/// `province_sea_zone_resource_labels`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -384,7 +387,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'province_overlay_economic_hover_test.dart' ||
       name == 'province_overlay_road_rail_transport_test.dart' ||
       name == 'province_overlay_narrow_side_rail_height_pin_test.dart' ||
-      name == 'province_overlay_tile_resource_row_label_inline_dark_token_test.dart';
+      name == 'province_overlay_tile_resource_row_label_inline_dark_token_test.dart' ||
+      name == 'province_sea_zone_overlay_detail_paths_test.dart' ||
+      name == 'province_sea_zone_overlay_naval_port_pending_omission_test.dart' ||
+      name == 'province_sea_zone_resource_labels_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

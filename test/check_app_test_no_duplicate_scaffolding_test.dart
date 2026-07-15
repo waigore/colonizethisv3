@@ -2059,6 +2059,86 @@ Widget host() => MaterialApp(home: const Placeholder());
   );
 
   test(
+    'fails when province_sea_zone_overlay_detail_paths suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_sea_zone_paths_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'province_sea_zone_overlay_detail_paths_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when province_sea_zone_overlay_naval_port_pending_omission suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_sea_zone_naval_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'province_sea_zone_overlay_naval_port_pending_omission_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when province_sea_zone_resource_labels suite '
+    'reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_sea_zone_res_labels_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'province_sea_zone_resource_labels_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
     'fails when overture_dialogue_intro suite reintroduces MaterialApp host',
     () {
       final temp = Directory.systemTemp.createTempSync(
@@ -2511,6 +2591,56 @@ void main() {
 }
 ''',
       );
+      _writeGovernedFile(
+        temp,
+        'province_sea_zone_overlay_detail_paths_test.dart',
+        '''
+import 'support/province_overlay_test_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildProvinceOverlayDarkThemeShell(
+        game: null as dynamic,
+        displayId: 'x',
+      ),
+    );
+  });
+}
+''',
+      );
+      _writeGovernedFile(
+        temp,
+        'province_sea_zone_overlay_naval_port_pending_omission_test.dart',
+        '''
+import 'support/province_overlay_test_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildProvinceOverlayDarkThemeShell(
+        game: null as dynamic,
+        displayId: 'x',
+      ),
+    );
+  });
+}
+''',
+      );
+      _writeGovernedFile(temp, 'province_sea_zone_resource_labels_test.dart', '''
+import 'support/province_overlay_test_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildProvinceOverlayDarkThemeShell(
+        game: null as dynamic,
+        displayId: 'x',
+      ),
+    );
+  });
+}
+''');
 
       final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
       expect(code, 0);

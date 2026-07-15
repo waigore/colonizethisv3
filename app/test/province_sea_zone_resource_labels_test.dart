@@ -6,12 +6,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
+
+import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pResTest';
@@ -119,20 +119,14 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                width: 800,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  displayId: _fullProvinceId,
-                  selectedTileKey: tk,
-                  humanPlayerId: 'gp1',
-                  playerView: _omniscientViewForTiles([tk]),
-                ),
-              ),
-            ),
+          buildProvinceOverlayDarkThemeShell(
+            game: game,
+            region: region,
+            displayId: _fullProvinceId,
+            selectedTileKey: tk,
+            humanPlayerId: 'gp1',
+            playerView: _omniscientViewForTiles([tk]),
+            shellWidth: 800,
           ),
         );
         await tester.pumpAndSettle();
@@ -174,20 +168,14 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                width: 800,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  displayId: _fullProvinceId,
-                  selectedTileKey: tk,
-                  humanPlayerId: 'gp1',
-                  playerView: _omniscientViewForTiles([tk]),
-                ),
-              ),
-            ),
+          buildProvinceOverlayDarkThemeShell(
+            game: game,
+            region: region,
+            displayId: _fullProvinceId,
+            selectedTileKey: tk,
+            humanPlayerId: 'gp1',
+            playerView: _omniscientViewForTiles([tk]),
+            shellWidth: 800,
           ),
         );
         await tester.pumpAndSettle();
@@ -229,20 +217,14 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                width: 800,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  displayId: _fullProvinceId,
-                  selectedTileKey: tk,
-                  humanPlayerId: 'gp1',
-                  playerView: _omniscientViewForTiles([tk]),
-                ),
-              ),
-            ),
+          buildProvinceOverlayDarkThemeShell(
+            game: game,
+            region: region,
+            displayId: _fullProvinceId,
+            selectedTileKey: tk,
+            humanPlayerId: 'gp1',
+            playerView: _omniscientViewForTiles([tk]),
+            shellWidth: 800,
           ),
         );
         await tester.pumpAndSettle();
@@ -281,20 +263,14 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 800,
-              child: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                displayId: _fullProvinceId,
-                selectedTileKey: tk,
-                humanPlayerId: 'gp1',
-                playerView: _omniscientViewForTiles([tk]),
-              ),
-            ),
-          ),
+        buildProvinceOverlayDarkThemeShell(
+          game: game,
+          region: region,
+          displayId: _fullProvinceId,
+          selectedTileKey: tk,
+          humanPlayerId: 'gp1',
+          playerView: _omniscientViewForTiles([tk]),
+          shellWidth: 800,
         ),
       );
       await tester.pumpAndSettle();
@@ -333,20 +309,14 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SizedBox(
-                width: 800,
-                child: ProvinceSeaZoneDetailOverlay(
-                  game: game,
-                  region: region,
-                  displayId: _fullProvinceId,
-                  selectedTileKey: tk,
-                  humanPlayerId: 'gp1',
-                  playerView: _omniscientViewForTiles([tk]),
-                ),
-              ),
-            ),
+          buildProvinceOverlayDarkThemeShell(
+            game: game,
+            region: region,
+            displayId: _fullProvinceId,
+            selectedTileKey: tk,
+            humanPlayerId: 'gp1',
+            playerView: _omniscientViewForTiles([tk]),
+            shellWidth: 800,
           ),
         );
         await tester.pumpAndSettle();
@@ -399,20 +369,14 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 800,
-              child: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                displayId: _fullProvinceId,
-                selectedTileKey: tk0,
-                humanPlayerId: 'gp1',
-                playerView: _omniscientViewForTiles([tk0, tk1]),
-              ),
-            ),
-          ),
+        buildProvinceOverlayDarkThemeShell(
+          game: game,
+          region: region,
+          displayId: _fullProvinceId,
+          selectedTileKey: tk0,
+          humanPlayerId: 'gp1',
+          playerView: _omniscientViewForTiles([tk0, tk1]),
+          shellWidth: 800,
         ),
       );
       await tester.pumpAndSettle();
