@@ -376,7 +376,15 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'province_overlay_consulate_gate_tooltip_test.dart' ||
       name == 'province_overlay_fully_unrevealed_sea_zone_structure_test.dart' ||
       name == 'province_overlay_tile_inline_action_non_clickable_test.dart' ||
-      name == 'province_overlay_section_label_material_fallback_guard_test.dart';
+      name == 'province_overlay_section_label_material_fallback_guard_test.dart' ||
+      name == 'province_overlay_tile_designation_test.dart' ||
+      name == 'province_overlay_sea_zone_political_dark_tokens_test.dart' ||
+      name == 'province_overlay_obfuscated_body_dark_tokens_test.dart' ||
+      name == 'province_overlay_economic_row_order_coords_test.dart' ||
+      name == 'province_overlay_economic_hover_test.dart' ||
+      name == 'province_overlay_road_rail_transport_test.dart' ||
+      name == 'province_overlay_narrow_side_rail_height_pin_test.dart' ||
+      name == 'province_overlay_tile_resource_row_label_inline_dark_token_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

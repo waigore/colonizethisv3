@@ -10,11 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/province_overlay_dark_token_scenarios.dart';
+import 'support/app_shell_harness.dart';
 import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
@@ -122,9 +122,8 @@ void main() {
         'unmigrated consumer behaviour',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              home: const Scaffold(
+            buildAppShell(
+              child: const Scaffold(
                 body: ResourceLabelInline(commodityId: 'grain'),
               ),
             ),

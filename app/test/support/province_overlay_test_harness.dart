@@ -11,6 +11,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
@@ -91,6 +92,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ThemeData? shellTheme,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -120,7 +122,13 @@ Widget buildProvinceOverlayDarkThemeShell({
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
       : overlay;
-  return buildAppShell(child: Scaffold(body: body));
+  final scaffold = Scaffold(body: body);
+  if (shellTheme != null) {
+    return ProviderScope(
+      child: MaterialApp(theme: shellTheme, home: scaffold),
+    );
+  }
+  return buildAppShell(child: scaffold);
 }
 
 /// Pumps [buildProvinceOverlayDarkThemeShell] and flushes the first layout pass.
@@ -150,6 +158,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ThemeData? shellTheme,
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -177,6 +186,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      shellTheme: shellTheme,
     ),
   );
   await tester.pump();
