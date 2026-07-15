@@ -13,7 +13,7 @@ import 'package:path/path.dart' as p;
 const String appTestSupportRelativeDir = 'app/test/support';
 
 /// Post-#4035 host/pump densify support-tree ceiling (physical LOC).
-/// Measured after labourCallbacks on buildProductionPanel ≈8538;
+/// Measured after naval wide/fleet hosts → buildAppShell ≈8542;
 /// ceiling set just above. Ratchet downward as later densify shrinks the tree.
 const int appTestSupportLocCeiling = 8545;
 
