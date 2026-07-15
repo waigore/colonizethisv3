@@ -7,17 +7,20 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   testWidgets('TurnResolutionProcessingDialog shows title and phase text', (
     WidgetTester tester,
   ) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
+      buildAppShell(
         localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const Scaffold(
+        child: const Scaffold(
           body: TurnResolutionProcessingDialog(
             phaseText: 'Validating orders...',
           ),
@@ -36,7 +39,7 @@ void main() {
     'awaitTurnResolutionProcessingDialogFirstPaint completes after a frame',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox.shrink())),
+        buildAppShell(child: const Scaffold(body: SizedBox.shrink())),
       );
       final done = awaitTurnResolutionProcessingDialogFirstPaint();
       await tester.pump();
