@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Minimal GP game with optional OW units, fleets, and minors.
@@ -13,14 +14,12 @@ Game advancedStartGpGame({
   List<Tribe> tribes = const [],
   int turnNumber = 0,
 }) {
-  return Game(
+  return TestFixtures.minimalGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(provinces: [], units: oldWorldUnits),
-      newWorld: const RegionData(provinces: []),
-      fleets: fleets,
-    ),
+    turnNumber: turnNumber,
+    oldWorld: RegionData(provinces: [], units: oldWorldUnits),
+    newWorld: const RegionData(provinces: []),
+    fleets: fleets,
     players: [player],
     minorNations: minorNations,
     tribes: tribes,
@@ -42,21 +41,19 @@ Game advancedStartWorldGame({
   Map<String, Set<String>>? playerProspectedTiles,
   Map<String, String>? purchasedTilesByTileKey,
 }) {
-  return Game(
+  return TestFixtures.minimalGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: RegionData(provinces: newWorldProvinces),
-      tileKeysByRegionAndProvince: {
-        if (owTiles != null) kRegionOldWorld: owTiles,
-        if (nwTiles != null) kRegionNewWorld: nwTiles,
-      },
-      resourceByTileKey: resourceByTileKey,
-      playerVisibilityByTile: playerVisibilityByTile ?? const {},
-      playerProspectedTiles: playerProspectedTiles ?? const {'gp1': {}},
-      purchasedTilesByTileKey: purchasedTilesByTileKey ?? const {},
-    ),
+    turnNumber: turnNumber,
+    oldWorld: RegionData(provinces: oldWorldProvinces),
+    newWorld: RegionData(provinces: newWorldProvinces),
+    tileKeysByRegionAndProvince: {
+      if (owTiles != null) kRegionOldWorld: owTiles,
+      if (nwTiles != null) kRegionNewWorld: nwTiles,
+    },
+    resourceByTileKey: resourceByTileKey,
+    playerVisibilityByTile: playerVisibilityByTile,
+    playerProspectedTiles: playerProspectedTiles ?? const {'gp1': {}},
+    purchasedTilesByTileKey: purchasedTilesByTileKey,
     players: [player],
     minorNations: minorNations,
     tribes: tribes,
@@ -235,23 +232,21 @@ Game advancedStartDevelopmentFixture({
 }
 
 Game advancedStartColonizationFixture({List<Province> nwProvinces = const []}) {
-  return Game(
+  return TestFixtures.minimalGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 100),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: RegionData(provinces: nwProvinces),
-      tileKeysByRegionAndProvince: {
-        kRegionNewWorld: {
-          for (final p in nwProvinces)
-            (ProvinceId.isPrefixed(p.id)
-                ? p.id
-                : ProvinceId.full(p.regionId, p.id)): [
-              '${ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id)}|0|0',
-            ],
-        },
+    turnNumber: 100,
+    oldWorld: const RegionData(provinces: []),
+    newWorld: RegionData(provinces: nwProvinces),
+    tileKeysByRegionAndProvince: {
+      kRegionNewWorld: {
+        for (final p in nwProvinces)
+          (ProvinceId.isPrefixed(p.id)
+              ? p.id
+              : ProvinceId.full(p.regionId, p.id)): [
+            '${ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id)}|0|0',
+          ],
       },
-    ),
+    },
     players: const [advancedStartDefaultPlayer],
     tribes: const [
       Tribe(id: 'tribe1', displayName: 'Tribe 1'),

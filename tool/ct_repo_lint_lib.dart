@@ -61,6 +61,7 @@ import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
 import 'check_setup_test_default_init_options.dart';
 import 'check_setup_test_no_duplicate_scaffolding.dart';
+import 'check_setup_test_use_shared_fixtures.dart';
 import 'check_setup_dedup_init_pipeline_retry.dart';
 import 'check_logic_diplomatic_sub_validator_size.dart';
 import 'check_logic_work_target_switch.dart';
@@ -1041,6 +1042,8 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':
       return runCheckSetupTestNoDuplicateScaffolding(repoRoot);
+    case 'repo.setup_test_use_shared_fixtures':
+      return runCheckSetupTestUseSharedFixtures(repoRoot);
     default:
       return null;
   }
