@@ -324,8 +324,12 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `players_bar_toggle`, `game_map_corner_controls_dark_chrome`,
 /// `game_map_corner_controls_narrow`, `game_map_players_bar`), empire left-rail
 /// hosts (`game_map_empire_left_rail`, `game_map_empire_left_rail_chrome`,
-/// `game_map_empire_left_rail_narrow`), and region minimap hosts
-/// (`game_region_minimap_widget`, `game_region_minimap_narrow`).
+/// `game_map_empire_left_rail_narrow`), region minimap hosts
+/// (`game_region_minimap_widget`, `game_region_minimap_narrow`), and game-map
+/// area hosts (`game_map_area_background`, `game_map_area_event_feed`,
+/// `game_map_area_region_minimap`, `game_map_area_selection_mode`,
+/// `game_map_area_selection_mode_lightweight`,
+/// `game_map_area_shell_entry_center`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -440,7 +444,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_map_empire_left_rail_chrome_test.dart' ||
       name == 'game_map_empire_left_rail_narrow_test.dart' ||
       name == 'game_region_minimap_widget_test.dart' ||
-      name == 'game_region_minimap_narrow_test.dart';
+      name == 'game_region_minimap_narrow_test.dart' ||
+      name == 'game_map_area_background_test.dart' ||
+      name == 'game_map_area_event_feed_test.dart' ||
+      name == 'game_map_area_region_minimap_test.dart' ||
+      name == 'game_map_area_selection_mode_test.dart' ||
+      name == 'game_map_area_selection_mode_lightweight_test.dart' ||
+      name == 'game_map_area_shell_entry_center_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
