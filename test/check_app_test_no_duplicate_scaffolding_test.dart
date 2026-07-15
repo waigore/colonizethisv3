@@ -846,6 +846,12 @@ void main() {
         'ct_dialog_shell_test.dart',
         'ct_full_screen_dialogue_shell_test.dart',
         'ct_game_feature_screen_shell_test.dart',
+        'ct_back_button_test.dart',
+        'ct_slider_test.dart',
+        'ct_tab_strip_test.dart',
+        'ct_confirm_dialog_test.dart',
+        'ct_nine_patch_button_test.dart',
+        'ct_resource_cell_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -890,6 +896,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'ct_dialog_shell_test.dart',
         'ct_full_screen_dialogue_shell_test.dart',
         'ct_game_feature_screen_shell_test.dart',
+        'ct_back_button_test.dart',
+        'ct_slider_test.dart',
+        'ct_tab_strip_test.dart',
+        'ct_confirm_dialog_test.dart',
+        'ct_nine_patch_button_test.dart',
+        'ct_resource_cell_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

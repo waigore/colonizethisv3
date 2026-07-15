@@ -1,9 +1,14 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
+
+Widget _host(Widget child) => buildAppShell(
+  child: Scaffold(body: Center(child: child)),
+);
 
 void main() {
   suppressLogsForTests();
@@ -15,22 +20,17 @@ void main() {
     var dragEnds = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: 200,
-              child: CtSlider(
-                value: 0.5,
-                min: 0,
-                max: 1,
-                divisions: 0,
-                onChanged: (_) {},
-                onDragStart: () => dragStarts++,
-                onDragEnd: () => dragEnds++,
-              ),
-            ),
+      _host(
+        SizedBox(
+          width: 200,
+          child: CtSlider(
+            value: 0.5,
+            min: 0,
+            max: 1,
+            divisions: 0,
+            onChanged: (_) {},
+            onDragStart: () => dragStarts++,
+            onDragEnd: () => dragEnds++,
           ),
         ),
       ),
@@ -52,20 +52,15 @@ void main() {
     'AC CtSlider (Refs #2859 S7): dark surface track + round accent thumb',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 200,
-                child: CtSlider(
-                  value: 0.5,
-                  min: 0,
-                  max: 1,
-                  divisions: 0,
-                  onChanged: (_) {},
-                ),
-              ),
+        _host(
+          SizedBox(
+            width: 200,
+            child: CtSlider(
+              value: 0.5,
+              min: 0,
+              max: 1,
+              divisions: 0,
+              onChanged: (_) {},
             ),
           ),
         ),
