@@ -56,6 +56,7 @@ import 'check_setup_dedup_seaboard_nearest_tile.dart';
 import 'check_setup_dedup_full_grid_tile_scans.dart';
 import 'check_setup_dedup_advanced_start_flood_fill.dart';
 import 'check_setup_dedup_ownership_paint.dart';
+import 'check_setup_helpers_first_class_libraries.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
 import 'check_setup_test_default_init_options.dart';
@@ -1034,6 +1035,8 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupAdvancedStartFloodFill(repoRoot);
     case 'repo.setup_dedup_ownership_paint':
       return runCheckSetupDedupOwnershipPaint(repoRoot);
+    case 'repo.setup_helpers_first_class_libraries':
+      return runCheckSetupHelpersFirstClassLibraries(repoRoot);
     case 'repo.setup_test_default_init_options':
       return runCheckSetupTestDefaultInitOptions(repoRoot);
     case 'repo.setup_test_no_duplicate_scaffolding':

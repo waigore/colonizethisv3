@@ -1,4 +1,10 @@
-part of 'game_setup_helpers.dart';
+// SPEC/program/game-setup-pipeline.md §7e — starting units / military-naval bootstrap + locked diagnostics (importable library).
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'faction_setup_helpers.dart';
+
 
 void _spawnCivilianUnitsOfType({
   required Map<String, List<Unit>> unitsByRegion,
