@@ -102,82 +102,14 @@ void main() {
     );
   }
 
-  Game militaryGameWithResources() {
+  Game gameWithUnlockedTech({
+    required Iterable<String> techIds,
+    required int treasury,
+    required Map<String, int> stockpile,
+  }) {
     final player = getPlayer(humanPlayerId);
     final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-    for (final techId in unlockingTechByRegimentId.values) {
-      techUnlocked[techId] = true;
-    }
-    return game.copyWith(
-      players: [
-        player.copyWith(
-          treasury: 10000,
-          workerPool: player.workerPool.copyWith(peasants: 20),
-          techUnlocked: techUnlocked,
-          stockpile: player.stockpile.merge(
-            const Stockpile(
-              quantities: {
-                'fabric': 100,
-                'castIron': 100,
-                'lumber': 100,
-                'horses': 100,
-                'steel': 100,
-                'bronze': 100,
-              },
-            ),
-          ),
-          capitalProvinceId:
-              player.capitalProvinceId ?? player.capitalTile?.provinceId,
-        ),
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
-  }
-
-  /// Zero-treasury military fixture (tech unlocked, abundant peasants and
-  /// commodities) so every regiment's treasury cost is insufficient: each row
-  /// renders its treasury cost in `danger` and its `[+]` in the danger variant
-  /// (#3601 AC5/AC6 deficit pixels — verification gaps G3/G4).
-  Game militaryDeficitGame() {
-    final player = getPlayer(humanPlayerId);
-    final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-    for (final techId in unlockingTechByRegimentId.values) {
-      techUnlocked[techId] = true;
-    }
-    return game.copyWith(
-      players: [
-        player.copyWith(
-          treasury: 0,
-          workerPool: player.workerPool.copyWith(peasants: 20),
-          techUnlocked: techUnlocked,
-          stockpile: player.stockpile.merge(
-            const Stockpile(
-              quantities: {
-                'fabric': 100,
-                'castIron': 100,
-                'lumber': 100,
-                'horses': 100,
-                'steel': 100,
-                'bronze': 100,
-              },
-            ),
-          ),
-          capitalProvinceId:
-              player.capitalProvinceId ?? player.capitalTile?.provinceId,
-        ),
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
-  }
-
-  /// Naval fixture with every ship tech unlocked and abundant resources so the
-  /// full 12-ship roster renders affordably with `remaining / total` chips
-  /// (#3601 AC8/AC9 — verification gap G1). [treasury] lets callers drop to a
-  /// deficit scenario.
-  Game navalGameWithResources({int treasury = 50000}) {
-    final player = getPlayer(humanPlayerId);
-    final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-    for (final techId in unlockingTechByShipId.values) {
+    for (final techId in techIds) {
       techUnlocked[techId] = true;
     }
     return game.copyWith(
@@ -186,16 +118,7 @@ void main() {
           treasury: treasury,
           workerPool: player.workerPool.copyWith(peasants: 20),
           techUnlocked: techUnlocked,
-          stockpile: player.stockpile.merge(
-            const Stockpile(
-              quantities: {
-                'lumber': 100,
-                'fabric': 100,
-                'castIron': 100,
-                'coal': 100,
-              },
-            ),
-          ),
+          stockpile: player.stockpile.merge(Stockpile(quantities: stockpile)),
           capitalProvinceId:
               player.capitalProvinceId ?? player.capitalTile?.provinceId,
         ),
@@ -204,10 +127,45 @@ void main() {
     );
   }
 
+  Game militaryGameWithResources({int treasury = 10000}) =>
+      gameWithUnlockedTech(
+        techIds: unlockingTechByRegimentId.values,
+        treasury: treasury,
+        stockpile: const {
+          'fabric': 100,
+          'castIron': 100,
+          'lumber': 100,
+          'horses': 100,
+          'steel': 100,
+          'bronze': 100,
+        },
+      );
+
+  /// Naval fixture with every ship tech unlocked and abundant resources so the
+  /// full 12-ship roster renders affordably with `remaining / total` chips
+  /// (#3601 AC8/AC9 — verification gap G1). [treasury] lets callers drop to a
+  /// deficit scenario.
+  Game navalGameWithResources({int treasury = 50000}) => gameWithUnlockedTech(
+    techIds: unlockingTechByShipId.values,
+    treasury: treasury,
+    stockpile: const {
+      'lumber': 100,
+      'fabric': 100,
+      'castIron': 100,
+      'coal': 100,
+    },
+  );
+
   Future<void> pumpHost(WidgetTester tester, Widget child, Key key) async {
     await configureGoldenSurface(tester, size: _hostViewport);
     await tester.pumpWidget(_host(boundaryKey: key, child: child));
     await pumpForGolden(tester);
+  }
+
+  void expectTrainChromeParity(WidgetTester tester) {
+    expect(find.text('×'), findsNothing);
+    expect(find.byType(TrainDialogSectionDivider), findsNothing);
+    expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
   }
 
   testWidgets(
@@ -233,11 +191,7 @@ void main() {
       // AC1: £ + comma grouping, no `k` abbreviation.
       expect(find.textContaining('£5,000'), findsOneWidget);
       expect(find.textContaining('5k'), findsNothing);
-      // AC4: boxed inset resource bar present.
-      expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
-      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
-      expect(find.text('×'), findsNothing);
-      expect(find.byType(TrainDialogSectionDivider), findsNothing);
+      expectTrainChromeParity(tester);
 
       await expectLater(
         find.byKey(key),
@@ -376,132 +330,93 @@ void main() {
   );
 
   testWidgets(
-    'golden: UNIT50001 Train Military dialog — £+comma treasury + shared '
-    'restyled resource bar (Refs #3568 AC6)',
+    'golden: UNIT50001/UNIT60001 default + deficit train dialogs '
+    '(Refs #3568 AC6, #3601 AC5/AC6/AC8/AC9)',
     (WidgetTester tester) async {
-      const key = ValueKey<String>('train_military_dialog_golden');
-      final richGame = militaryGameWithResources();
-      await pumpHost(
-        tester,
-        TrainMilitaryDialog(
-          game: richGame,
-          humanPlayerId: humanPlayerId,
-          currentOrders: const Orders(),
-          bus: AppEventBus.create(),
+      for (final case_ in <
+        ({
+          Key key,
+          Widget Function(Game) dialog,
+          Game Function() game,
+          void Function(WidgetTester) assertUi,
+          String golden,
+        })
+      >[
+        (
+          key: const ValueKey<String>('train_military_dialog_golden'),
+          dialog: (g) => TrainMilitaryDialog(
+            game: g,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+          game: militaryGameWithResources,
+          assertUi: (t) {
+            expect(find.byType(TrainMilitaryDialog), findsOneWidget);
+            expect(find.textContaining('£10,000'), findsOneWidget);
+            expectTrainChromeParity(t);
+          },
+          golden: 'goldens/train_military_dialog_default.png',
         ),
-        key,
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-      expectEditorialMonocleDarkChrome(tester);
-      // AC6: shared £+comma treasury and the boxed inset resource bar.
-      expect(find.textContaining('£10,000'), findsOneWidget);
-      expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
-      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
-      expect(find.text('×'), findsNothing);
-      expect(find.byType(TrainDialogSectionDivider), findsNothing);
-
-      await expectLater(
-        find.byKey(key),
-        matchesGoldenFile('goldens/train_military_dialog_default.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: UNIT50001 Train Military dialog — zero-treasury deficit: red '
-    'treasury cost items + danger [+] variant (Refs #3601 AC5/AC6, gap G3/G4)',
-    (WidgetTester tester) async {
-      const key = ValueKey<String>('train_military_dialog_deficit_golden');
-      await pumpHost(
-        tester,
-        TrainMilitaryDialog(
-          game: militaryDeficitGame(),
-          humanPlayerId: humanPlayerId,
-          currentOrders: const Orders(),
-          bus: AppEventBus.create(),
+        (
+          key: const ValueKey<String>('train_military_dialog_deficit_golden'),
+          dialog: (g) => TrainMilitaryDialog(
+            game: g,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+          game: () => militaryGameWithResources(treasury: 0),
+          assertUi: (t) {
+            expect(find.byType(TrainMilitaryDialog), findsOneWidget);
+            expect(_dangerColoredTextCount(t), greaterThan(0));
+            expect(_hasDangerPlusButton(t), isTrue);
+          },
+          golden: 'goldens/train_military_dialog_deficit.png',
         ),
-        key,
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-      expectEditorialMonocleDarkChrome(tester);
-      // AC5/AC6: at least one regiment treasury cost cannot be afforded, so a
-      // danger-colored cost label and a danger-variant `[+]` are present.
-      expect(_dangerColoredTextCount(tester), greaterThan(0));
-      expect(_hasDangerPlusButton(tester), isTrue);
-
-      await expectLater(
-        find.byKey(key),
-        matchesGoldenFile('goldens/train_military_dialog_deficit.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: UNIT60001 Train Naval dialog — full roster + remaining/total '
-    'resource bar (lumber/fabric/castIron/coal) (Refs #3601 AC8/AC9, gap G1)',
-    (WidgetTester tester) async {
-      const key = ValueKey<String>('train_naval_dialog_golden');
-      await pumpHost(
-        tester,
-        TrainNavalDialog(
-          game: navalGameWithResources(),
-          humanPlayerId: humanPlayerId,
-          currentOrders: const Orders(),
-          bus: AppEventBus.create(),
+        (
+          key: const ValueKey<String>('train_naval_dialog_golden'),
+          dialog: (g) => TrainNavalDialog(
+            game: g,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+          game: navalGameWithResources,
+          assertUi: (t) {
+            expect(find.byType(TrainNavalDialog), findsOneWidget);
+            expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
+            expectTrainChromeParity(t);
+          },
+          golden: 'goldens/train_naval_dialog_default.png',
         ),
-        key,
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.byType(TrainNavalDialog), findsOneWidget);
-      expectEditorialMonocleDarkChrome(tester);
-      // AC9: treasury chip renders `remaining / total` with £+comma grouping
-      // and the boxed inset resource bar is present.
-      expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
-      expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
-      // #3568 chrome parity: centered title, no × dismiss, no brass dividers.
-      expect(find.text('×'), findsNothing);
-      expect(find.byType(TrainDialogSectionDivider), findsNothing);
-
-      await expectLater(
-        find.byKey(key),
-        matchesGoldenFile('goldens/train_naval_dialog_default.png'),
-      );
-    },
-  );
-
-  testWidgets(
-    'golden: UNIT60001 Train Naval dialog — zero-treasury deficit: red cost '
-    'items + danger [+] variant (Refs #3601 AC6, gap G1/G4)',
-    (WidgetTester tester) async {
-      const key = ValueKey<String>('train_naval_dialog_deficit_golden');
-      await pumpHost(
-        tester,
-        TrainNavalDialog(
-          game: navalGameWithResources(treasury: 0),
-          humanPlayerId: humanPlayerId,
-          currentOrders: const Orders(),
-          bus: AppEventBus.create(),
+        (
+          key: const ValueKey<String>('train_naval_dialog_deficit_golden'),
+          dialog: (g) => TrainNavalDialog(
+            game: g,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: AppEventBus.create(),
+          ),
+          game: () => navalGameWithResources(treasury: 0),
+          assertUi: (t) {
+            expect(find.byType(TrainNavalDialog), findsOneWidget);
+            expect(_dangerColoredTextCount(t), greaterThan(0));
+            expect(_hasDangerPlusButton(t), isTrue);
+          },
+          golden: 'goldens/train_naval_dialog_deficit.png',
         ),
-        key,
-      );
-
-      expect(tester.takeException(), isNull);
-      expect(find.byType(TrainNavalDialog), findsOneWidget);
-      expectEditorialMonocleDarkChrome(tester);
-      // AC6: every ship's treasury cost is unaffordable → danger cost labels and
-      // a danger-variant `[+]` button are visible.
-      expect(_dangerColoredTextCount(tester), greaterThan(0));
-      expect(_hasDangerPlusButton(tester), isTrue);
-
-      await expectLater(
-        find.byKey(key),
-        matchesGoldenFile('goldens/train_naval_dialog_deficit.png'),
-      );
+      ]) {
+        final g = case_.game();
+        await pumpHost(tester, case_.dialog(g), case_.key);
+        expect(tester.takeException(), isNull);
+        expectEditorialMonocleDarkChrome(tester);
+        case_.assertUi(tester);
+        await expectLater(
+          find.byKey(case_.key),
+          matchesGoldenFile(case_.golden),
+        );
+      }
     },
   );
 }

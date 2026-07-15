@@ -11,487 +11,228 @@ void main() {
   suppressLogsForTests();
 
   group('TerrainLayer', () {
-    test('plains is layer1LandBase', () {
-      expect(terrainLayer(TerrainType.plains), TerrainLayer.layer1LandBase);
-    });
-
-    test('desert is layer1LandBase (desert is L1, not L2)', () {
-      expect(terrainLayer(TerrainType.desert), TerrainLayer.layer1LandBase);
-    });
-
-    test('hardwood forest is layer2Features', () {
-      expect(
-        terrainLayer(TerrainType.hardwoodForest),
-        TerrainLayer.layer2Features,
-      );
-    });
-
-    test('scrub forest is layer2Features', () {
-      expect(
-        terrainLayer(TerrainType.scrubForest),
-        TerrainLayer.layer2Features,
-      );
-    });
-
-    test('hills is layer2Features', () {
-      expect(terrainLayer(TerrainType.hills), TerrainLayer.layer2Features);
-    });
-
-    test('mountain is layer2Features', () {
-      expect(terrainLayer(TerrainType.mountain), TerrainLayer.layer2Features);
-    });
-
-    test('swamp is layer2Features', () {
-      expect(terrainLayer(TerrainType.swamp), TerrainLayer.layer2Features);
-    });
+    final cases = <TerrainType, TerrainLayer>{
+      TerrainType.plains: TerrainLayer.layer1LandBase,
+      TerrainType.desert: TerrainLayer.layer1LandBase,
+      TerrainType.hardwoodForest: TerrainLayer.layer2Features,
+      TerrainType.scrubForest: TerrainLayer.layer2Features,
+      TerrainType.hills: TerrainLayer.layer2Features,
+      TerrainType.mountain: TerrainLayer.layer2Features,
+      TerrainType.swamp: TerrainLayer.layer2Features,
+    };
+    for (final entry in cases.entries) {
+      test('${entry.key.name} → ${entry.value.name}', () {
+        expect(terrainLayer(entry.key), entry.value);
+      });
+    }
   });
 
   group('featureOverlayTileKey', () {
-    test('hardwood forest uses timber variant only for timber resource', () {
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hardwoodForest,
-          resourceId: 'timber',
-        ),
-        'tile_hardwoodForestTimber',
-      );
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hardwoodForest,
-          resourceId: 'furs',
-        ),
-        'tile_hardwoodForest',
-      );
-      expect(
-        featureOverlayTileKey(terrain: TerrainType.hardwoodForest),
-        'tile_hardwoodForest',
-      );
-    });
+    final cases = <(TerrainType, String?, int?, String)>[
+      (TerrainType.hardwoodForest, 'timber', null, 'tile_hardwoodForestTimber'),
+      (TerrainType.hardwoodForest, 'furs', null, 'tile_hardwoodForest'),
+      (TerrainType.hardwoodForest, null, null, 'tile_hardwoodForest'),
+      (TerrainType.scrubForest, 'timber', null, 'tile_scrubForestTimber'),
+      (TerrainType.scrubForest, null, null, 'tile_scrubForest'),
+      (TerrainType.hills, 'iron', 1, 'tile_hills_mine'),
+      (TerrainType.hills, 'silver', 2, 'tile_hills_mine'),
+      (TerrainType.hills, 'iron', 0, 'tile_hills'),
+      (TerrainType.hills, 'wool', 2, 'tile_hills_wool'),
+      (TerrainType.hills, null, 0, 'tile_hills'),
+      (TerrainType.mountain, 'gold', null, 'tile_mountain'),
+      (TerrainType.swamp, 'tin', null, 'tile_swamp'),
+    ];
+    for (final (terrain, resourceId, improvementLevel, expected) in cases) {
+      test('$terrain/$resourceId/lvl=$improvementLevel → $expected', () {
+        expect(
+          featureOverlayTileKey(
+            terrain: terrain,
+            resourceId: resourceId,
+            improvementLevel: improvementLevel,
+          ),
+          expected,
+        );
+      });
+    }
 
-    test('scrub forest uses timber variant only for timber resource', () {
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.scrubForest,
-          resourceId: 'timber',
-        ),
-        'tile_scrubForestTimber',
-      );
-      expect(
-        featureOverlayTileKey(terrain: TerrainType.scrubForest),
-        'tile_scrubForest',
-      );
-    });
-
-    test('hills uses mine variant only for improved mineral resources', () {
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hills,
-          resourceId: 'iron',
-          improvementLevel: 1,
-        ),
-        'tile_hills_mine',
-      );
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hills,
-          resourceId: 'silver',
-          improvementLevel: 2,
-        ),
-        'tile_hills_mine',
-      );
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hills,
-          resourceId: 'iron',
-          improvementLevel: 0,
-        ),
-        'tile_hills',
-      );
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hills,
-          resourceId: 'wool',
-          improvementLevel: 2,
-        ),
-        'tile_hills_wool',
-      );
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.hills,
-          resourceId: null,
-          improvementLevel: 0,
-        ),
-        'tile_hills',
-      );
-    });
-
-    test('mountain and swamp always use canonical defaults', () {
-      expect(
-        featureOverlayTileKey(
-          terrain: TerrainType.mountain,
-          resourceId: 'gold',
-        ),
-        'tile_mountain',
-      );
-      expect(
-        featureOverlayTileKey(terrain: TerrainType.swamp, resourceId: 'tin'),
-        'tile_swamp',
-      );
-    });
-
-    test('throws for non-feature terrains', () {
-      expect(
-        () => featureOverlayTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'grain',
-        ),
-        throwsArgumentError,
-      );
-      expect(
-        () => featureOverlayTileKey(
-          terrain: TerrainType.desert,
-          resourceId: 'diamonds',
-        ),
-        throwsArgumentError,
-      );
-    });
+    for (final terrain in [TerrainType.plains, TerrainType.desert]) {
+      test('throws for non-feature $terrain', () {
+        expect(
+          () => featureOverlayTileKey(terrain: terrain, resourceId: 'grain'),
+          throwsArgumentError,
+        );
+      });
+    }
   });
 
   group('terrainVariantTileKey', () {
-    test('plains selects resource variants for grain, meat, horses', () {
-      expect(
-        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'grain'),
-        'tile_plains_grain',
-      );
-      expect(
-        terrainVariantTileKey(terrain: TerrainType.plains, resourceId: 'meat'),
-        'tile_plains_meat',
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'horses',
-        ),
-        'tile_plains_horses',
-      );
-    });
-
-    test('plains selects plantation variants for NW resources', () {
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'sugarCane',
-        ),
-        'tile_plains_sugar_cane',
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'tobacco',
-        ),
-        'tile_plains_tobacco',
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'cotton',
-        ),
-        'tile_plains_cotton',
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'spices',
-        ),
-        'tile_plains_spices',
-      );
-    });
-
-    test('plains returns null for other resources and no resource', () {
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'furs',
-        ),
-        isNull,
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.plains,
-          resourceId: 'diamonds',
-        ),
-        isNull,
-      );
-      expect(terrainVariantTileKey(terrain: TerrainType.plains), isNull);
-    });
-
-    test('desert never selects plains variants', () {
-      expect(
-        terrainVariantTileKey(terrain: TerrainType.desert, resourceId: 'grain'),
-        isNull,
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.desert,
-          resourceId: 'sugarCane',
-        ),
-        isNull,
-      );
-      expect(
-        terrainVariantTileKey(
-          terrain: TerrainType.desert,
-          resourceId: 'diamonds',
-        ),
-        isNull,
-      );
-    });
+    final cases = <(TerrainType, String?, String?)>[
+      (TerrainType.plains, 'grain', 'tile_plains_grain'),
+      (TerrainType.plains, 'meat', 'tile_plains_meat'),
+      (TerrainType.plains, 'horses', 'tile_plains_horses'),
+      (TerrainType.plains, 'sugarCane', 'tile_plains_sugar_cane'),
+      (TerrainType.plains, 'tobacco', 'tile_plains_tobacco'),
+      (TerrainType.plains, 'cotton', 'tile_plains_cotton'),
+      (TerrainType.plains, 'spices', 'tile_plains_spices'),
+      (TerrainType.plains, 'furs', null),
+      (TerrainType.plains, 'diamonds', null),
+      (TerrainType.plains, null, null),
+      (TerrainType.desert, 'grain', null),
+      (TerrainType.desert, 'sugarCane', null),
+      (TerrainType.desert, 'diamonds', null),
+    ];
+    for (final (terrain, resourceId, expected) in cases) {
+      test('$terrain/$resourceId → $expected', () {
+        expect(
+          terrainVariantTileKey(terrain: terrain, resourceId: resourceId),
+          expected,
+        );
+      });
+    }
   });
 
   group('landInteriorPlainsVariantTileKey', () {
-    CellViewData landPlains({
-      String? resourceId,
-      TerrainType? terrainType,
-    }) =>
+    CellViewData cell({String? resourceId, TerrainType? terrain}) =>
         CellViewData(
           x: 0,
           y: 0,
           regionCellId: 'p0',
           isSea: false,
-          terrainType: terrainType ?? TerrainType.plains,
+          terrainType: terrain ?? TerrainType.plains,
           resourceId: resourceId,
         );
 
-    test('returns variant keys only for plains with grain, meat, horses', () {
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'grain')),
-        'tile_plains_grain',
-      );
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'meat')),
-        'tile_plains_meat',
-      );
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'horses')),
-        'tile_plains_horses',
-      );
-    });
-
-    test('returns plantation variant keys for NW plains resources', () {
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'sugarCane')),
-        'tile_plains_sugar_cane',
-      );
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'tobacco')),
-        'tile_plains_tobacco',
-      );
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'cotton')),
-        'tile_plains_cotton',
-      );
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'spices')),
-        'tile_plains_spices',
-      );
-    });
-
-    test('returns null for plains without mapped resource', () {
-      expect(
-        landInteriorPlainsVariantTileKey(landPlains(resourceId: 'furs')),
-        isNull,
-      );
-      expect(landInteriorPlainsVariantTileKey(landPlains()), isNull);
-    });
-
-    test('returns null for desert even if resource would map on plains', () {
-      expect(
-        landInteriorPlainsVariantTileKey(
-          landPlains(
-            terrainType: TerrainType.desert,
-            resourceId: 'grain',
+    final cases = <(String?, TerrainType?, String?)>[
+      ('grain', null, 'tile_plains_grain'),
+      ('meat', null, 'tile_plains_meat'),
+      ('horses', null, 'tile_plains_horses'),
+      ('sugarCane', null, 'tile_plains_sugar_cane'),
+      ('tobacco', null, 'tile_plains_tobacco'),
+      ('cotton', null, 'tile_plains_cotton'),
+      ('spices', null, 'tile_plains_spices'),
+      ('furs', null, null),
+      (null, null, null),
+      ('grain', TerrainType.desert, null),
+      ('grain', TerrainType.hardwoodForest, null),
+    ];
+    for (final (resourceId, terrain, expected) in cases) {
+      test('resource=$resourceId terrain=$terrain → $expected', () {
+        expect(
+          landInteriorPlainsVariantTileKey(
+            cell(resourceId: resourceId, terrain: terrain),
           ),
-        ),
-        isNull,
-      );
-    });
-
-    test('returns null for feature terrain with grain (not L1 plains)', () {
-      expect(
-        landInteriorPlainsVariantTileKey(
-          landPlains(terrainType: TerrainType.hardwoodForest, resourceId: 'grain'),
-        ),
-        isNull,
-      );
-    });
+          expected,
+        );
+      });
+    }
   });
 
   group('WangTile', () {
-    test('parses from JSON correctly', () {
-      final json = {
-        'id': 'tile_0',
-        'corners': {'NW': 'upper', 'NE': 'lower', 'SW': 'lower', 'SE': 'lower'},
-        'bounding_box': {'x': 0, 'y': 0, 'width': 32, 'height': 32},
-      };
-
-      final tile = WangTile.fromJson(json);
-
-      expect(tile.id, 'tile_0');
-      expect(tile.corners['NW'], 'upper');
-      expect(tile.corners['NE'], 'lower');
-      expect(tile.corners['SW'], 'lower');
-      expect(tile.corners['SE'], 'lower');
-      expect(tile.boundingBox.left, 0);
-      expect(tile.boundingBox.top, 0);
-      expect(tile.boundingBox.width, 32);
-      expect(tile.boundingBox.height, 32);
-    });
-
-    test('parses tile with non-zero bounding box', () {
-      final json = {
-        'id': 'tile_5',
-        'corners': {'NW': 'lower', 'NE': 'upper', 'SW': 'upper', 'SE': 'lower'},
-        'bounding_box': {'x': 64, 'y': 32, 'width': 32, 'height': 32},
-      };
-
-      final tile = WangTile.fromJson(json);
-
-      expect(tile.id, 'tile_5');
-      expect(tile.boundingBox.left, 64);
-      expect(tile.boundingBox.top, 32);
-    });
+    final cases = <(String, Map<String, String>, int, int)>[
+      (
+        'tile_0',
+        {'NW': 'upper', 'NE': 'lower', 'SW': 'lower', 'SE': 'lower'},
+        0,
+        0,
+      ),
+      (
+        'tile_5',
+        {'NW': 'lower', 'NE': 'upper', 'SW': 'upper', 'SE': 'lower'},
+        64,
+        32,
+      ),
+    ];
+    for (final (id, corners, x, y) in cases) {
+      test('parses $id at ($x,$y)', () {
+        final tile = WangTile.fromJson({
+          'id': id,
+          'corners': corners,
+          'bounding_box': {'x': x, 'y': y, 'width': 32, 'height': 32},
+        });
+        expect(tile.id, id);
+        expect(tile.corners, corners);
+        expect(
+          tile.boundingBox,
+          Rect.fromLTWH(x.toDouble(), y.toDouble(), 32, 32),
+        );
+      });
+    }
   });
 
   group('WangTileset', () {
-    test('findTile returns correct tile for all lower corners', () {
-      final tiles = [
-        WangTile(
-          id: 'tile_all_lower',
-          corners: {'NW': 'lower', 'NE': 'lower', 'SW': 'lower', 'SE': 'lower'},
-          boundingBox: Rect.fromLTWH(0, 0, 32, 32),
-        ),
-      ];
+    WangTile wang(
+      String id,
+      Map<String, String> corners, {
+      double x = 0,
+      double y = 0,
+    }) => WangTile(
+      id: id,
+      corners: corners,
+      boundingBox: Rect.fromLTWH(x, y, 32, 32),
+    );
+
+    test('findTile matches corner configurations (pos + null miss)', () {
       final tileset = _MockWangTileset(
-        name: 'test',
-        lowerTerrainId: 'sea',
-        upperTerrainId: 'plains',
-        tiles: tiles,
+        tiles: [
+          wang('tile_all_lower', {
+            'NW': 'lower',
+            'NE': 'lower',
+            'SW': 'lower',
+            'SE': 'lower',
+          }),
+          wang('tile_all_upper', {
+            'NW': 'upper',
+            'NE': 'upper',
+            'SW': 'upper',
+            'SE': 'upper',
+          }, x: 32),
+          wang('tile_nw_upper', {
+            'NW': 'upper',
+            'NE': 'lower',
+            'SW': 'lower',
+            'SE': 'lower',
+          }, y: 32),
+          wang(
+            'tile_ne_sw_upper',
+            {'NW': 'lower', 'NE': 'upper', 'SW': 'upper', 'SE': 'lower'},
+            x: 32,
+            y: 32,
+          ),
+        ],
       );
 
-      final tile = tileset.findTile(nw: false, ne: false, sw: false, se: false);
-      expect(tile, isNotNull);
-      expect(tile!.id, 'tile_all_lower');
-    });
-
-    test('findTile returns correct tile for all upper corners', () {
-      final tiles = [
-        WangTile(
-          id: 'tile_all_upper',
-          corners: {'NW': 'upper', 'NE': 'upper', 'SW': 'upper', 'SE': 'upper'},
-          boundingBox: Rect.fromLTWH(32, 0, 32, 32),
-        ),
+      final probes = <(bool, bool, bool, bool, String?)>[
+        (false, false, false, false, 'tile_all_lower'),
+        (true, true, true, true, 'tile_all_upper'),
+        (true, false, false, false, 'tile_nw_upper'),
+        (false, true, true, false, 'tile_ne_sw_upper'),
+        (true, true, false, false, null),
       ];
-      final tileset = _MockWangTileset(
-        name: 'test',
-        lowerTerrainId: 'sea',
-        upperTerrainId: 'plains',
-        tiles: tiles,
-      );
-
-      final tile = tileset.findTile(nw: true, ne: true, sw: true, se: true);
-      expect(tile, isNotNull);
-      expect(tile!.id, 'tile_all_upper');
-    });
-
-    test('findTile returns correct tile for mixed corners', () {
-      final tiles = [
-        WangTile(
-          id: 'tile_nw_upper',
-          corners: {'NW': 'upper', 'NE': 'lower', 'SW': 'lower', 'SE': 'lower'},
-          boundingBox: Rect.fromLTWH(0, 32, 32, 32),
-        ),
-        WangTile(
-          id: 'tile_ne_sw_upper',
-          corners: {'NW': 'lower', 'NE': 'upper', 'SW': 'upper', 'SE': 'lower'},
-          boundingBox: Rect.fromLTWH(32, 32, 32, 32),
-        ),
-      ];
-      final tileset = _MockWangTileset(
-        name: 'test',
-        lowerTerrainId: 'sea',
-        upperTerrainId: 'plains',
-        tiles: tiles,
-      );
-
-      expect(
-        tileset.findTile(nw: true, ne: false, sw: false, se: false)!.id,
-        'tile_nw_upper',
-      );
-      expect(
-        tileset.findTile(nw: false, ne: true, sw: true, se: false)!.id,
-        'tile_ne_sw_upper',
-      );
-    });
-
-    test('findTile returns null for unmatching corner configuration', () {
-      final tiles = [
-        WangTile(
-          id: 'tile_all_lower',
-          corners: {'NW': 'lower', 'NE': 'lower', 'SW': 'lower', 'SE': 'lower'},
-          boundingBox: Rect.fromLTWH(0, 0, 32, 32),
-        ),
-      ];
-      final tileset = _MockWangTileset(
-        name: 'test',
-        lowerTerrainId: 'sea',
-        upperTerrainId: 'plains',
-        tiles: tiles,
-      );
-
-      final tile = tileset.findTile(nw: true, ne: true, sw: false, se: false);
-      expect(tile, isNull);
+      for (final (nw, ne, sw, se, id) in probes) {
+        final tile = tileset.findTile(nw: nw, ne: ne, sw: sw, se: se);
+        expect(tile?.id, id);
+      }
     });
   });
 
   group('TerrainTilesetCache', () {
-    test('isLoaded starts as false', () {
+    test('unloaded cache getters return null / isLoaded false', () {
       final cache = TerrainTilesetCache();
       expect(cache.isLoaded, false);
-    });
-
-    test('getSeaPlainsTileset returns null before loading', () {
-      final cache = TerrainTilesetCache();
       expect(cache.getSeaPlainsTileset(), isNull);
-    });
-
-    test('getSeaDesertTileset returns null before loading', () {
-      final cache = TerrainTilesetCache();
       expect(cache.getSeaDesertTileset(), isNull);
-    });
-
-    test('getPlainsDesertTileset returns null before loading', () {
-      final cache = TerrainTilesetCache();
       expect(cache.getPlainsDesertTileset(), isNull);
-    });
-
-    test('getSeaBeachTileset returns null before loading (legacy)', () {
-      final cache = TerrainTilesetCache();
       expect(cache.getSeaBeachTileset(), isNull);
-    });
-
-    test('getStandaloneTile returns null before loading for features', () {
-      final cache = TerrainTilesetCache();
-      expect(cache.getStandaloneTile(TerrainType.hardwoodForest), isNull);
-      expect(cache.getStandaloneTile(TerrainType.scrubForest), isNull);
-      expect(cache.getStandaloneTile(TerrainType.hills), isNull);
-      expect(cache.getStandaloneTile(TerrainType.mountain), isNull);
-      expect(cache.getStandaloneTile(TerrainType.swamp), isNull);
-    });
-
-    test('desert is not a standalone tile (desert is L1)', () {
-      // Desert is now L1 (land base), not L2 (feature)
-      // So getStandaloneTile for desert returns null
-      final cache = TerrainTilesetCache();
-      expect(cache.getStandaloneTile(TerrainType.desert), isNull);
+      for (final terrain in [
+        TerrainType.hardwoodForest,
+        TerrainType.scrubForest,
+        TerrainType.hills,
+        TerrainType.mountain,
+        TerrainType.swamp,
+        TerrainType.desert, // desert is L1, not a standalone feature tile
+      ]) {
+        expect(cache.getStandaloneTile(terrain), isNull);
+      }
     });
 
     test(
@@ -500,33 +241,27 @@ void main() {
         final cache = TerrainTilesetCache();
         await cache.load();
         expect(cache.isLoaded, isTrue);
-        expect(cache.getStandaloneTileByKey('tile_plains_grain'), isNotNull);
-        expect(cache.getStandaloneTileByKey('tile_plains_meat'), isNotNull);
-        expect(cache.getStandaloneTileByKey('tile_plains_horses'), isNotNull);
-        expect(
-          cache.getStandaloneTileByKey('tile_plains_sugar_cane'),
-          isNotNull,
-        );
-        expect(cache.getStandaloneTileByKey('tile_plains_tobacco'), isNotNull);
-        expect(cache.getStandaloneTileByKey('tile_plains_cotton'), isNotNull);
-        expect(cache.getStandaloneTileByKey('tile_plains_spices'), isNotNull);
+        for (final key in [
+          'tile_plains_grain',
+          'tile_plains_meat',
+          'tile_plains_horses',
+          'tile_plains_sugar_cane',
+          'tile_plains_tobacco',
+          'tile_plains_cotton',
+          'tile_plains_spices',
+        ]) {
+          expect(cache.getStandaloneTileByKey(key), isNotNull, reason: key);
+        }
       },
     );
   });
 }
 
+/// Image-free stand-in for [WangTileset.findTile] corner matching (Refs #4021).
 class _MockWangTileset {
-  final String name;
-  final String lowerTerrainId;
-  final String upperTerrainId;
-  final List<WangTile> tiles;
+  _MockWangTileset({required this.tiles});
 
-  _MockWangTileset({
-    required this.name,
-    required this.lowerTerrainId,
-    required this.upperTerrainId,
-    required this.tiles,
-  });
+  final List<WangTile> tiles;
 
   WangTile? findTile({
     required bool nw,
@@ -538,7 +273,6 @@ class _MockWangTileset {
     final neCorner = ne ? 'upper' : 'lower';
     final swCorner = sw ? 'upper' : 'lower';
     final seCorner = se ? 'upper' : 'lower';
-
     for (final tile in tiles) {
       if (tile.corners['NW'] == nwCorner &&
           tile.corners['NE'] == neCorner &&

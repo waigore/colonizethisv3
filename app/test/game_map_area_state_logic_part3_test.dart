@@ -31,94 +31,105 @@ void main() {
         );
       }
 
+      final capitalPortOwMap = TileMapResult(
+        width: 2,
+        height: 2,
+        grid: [
+          ['p1', 's1'],
+          ['p1', 'p1'],
+        ],
+      );
+      final stubNwMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: [
+          ['p1'],
+        ],
+      );
+      const capitalPortOwTopology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 's1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 's1')],
+      );
+      const stubNwTopology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [],
+      );
+
+      Map<String, TileMapResult> capitalPortTiles() => {
+        'oldWorld': capitalPortOwMap,
+        'newWorld': stubNwMap,
+      };
+      Map<String, MapTopology> capitalPortTopologies() => {
+        'oldWorld': capitalPortOwTopology,
+        'newWorld': stubNwTopology,
+      };
+
+      ct_models.Game capitalPortGame({required List<ct_models.Fleet> fleets}) {
+        return ct_models.Game(
+          id: 'g',
+          worldState: ct_models.WorldState(
+            turnState: const ct_models.TurnState(
+              phase: ct_models.TurnPhase.orders,
+              turnNumber: 0,
+            ),
+            oldWorld: ct_models.RegionData(
+              provinces: [
+                ct_models.Province(
+                  id: 'oldWorld|p1',
+                  regionId: 'oldWorld',
+                  ownerId: humanId,
+                  townTileKey: 'oldWorld|p1|1|1',
+                ),
+              ],
+              units: const [],
+            ),
+            newWorld: const ct_models.RegionData(provinces: [], units: []),
+            portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
+            fleets: fleets,
+          ),
+          players: const [
+            ct_models.Player(id: humanId, displayName: 'Human', isHuman: true),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+      }
+
       test(
         'in-port fleet marker matches port icon after projection (capital port)',
         () {
-          final owMap = TileMapResult(
-            width: 2,
-            height: 2,
-            grid: [
-              ['p1', 's1'],
-              ['p1', 'p1'],
-            ],
-          );
-          final nwMap = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['p1'],
-            ],
-          );
-          final owTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
+          final game = capitalPortGame(
+            fleets: [
+              ct_models.Fleet(
+                id: 'f1',
+                ownerId: humanId,
                 regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 's1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
-          );
-          final nwTopology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'p1',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [],
-          );
-          final game = ct_models.Game(
-            id: 'g',
-            worldState: ct_models.WorldState(
-              turnState: const ct_models.TurnState(
-                phase: ct_models.TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: ct_models.RegionData(
-                provinces: [
-                  ct_models.Province(
-                    id: 'oldWorld|p1',
-                    regionId: 'oldWorld',
-                    ownerId: humanId,
-                    townTileKey: 'oldWorld|p1|1|1',
-                  ),
+                inPortAtProvinceId: 'oldWorld|p1',
+                ships: [
+                  ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
                 ],
-                units: const [],
-              ),
-              newWorld: const ct_models.RegionData(provinces: [], units: []),
-              portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-              fleets: [
-                ct_models.Fleet(
-                  id: 'f1',
-                  ownerId: humanId,
-                  regionId: 'oldWorld',
-                  inPortAtProvinceId: 'oldWorld|p1',
-                  ships: [
-                    ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
-                  ],
-                ),
-              ],
-            ),
-            players: const [
-              ct_models.Player(
-                id: humanId,
-                displayName: 'Human',
-                isHuman: true,
               ),
             ],
-            minorNations: const [],
-            tribes: const [],
           );
-
-          final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
-          final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
+          final tileByReg = capitalPortTiles();
+          final topoByReg = capitalPortTopologies();
           final view = buildInitGameMapViewData(
             game: game,
             tileMapByRegion: tileByReg,
@@ -140,86 +151,19 @@ void main() {
       );
 
       test('dock draft destination uses same harbor sea cell as port icon', () {
-        final owMap = TileMapResult(
-          width: 2,
-          height: 2,
-          grid: [
-            ['p1', 's1'],
-            ['p1', 'p1'],
-          ],
-        );
-        final nwMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['p1'],
-          ],
-        );
-        final owTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
+        final game = capitalPortGame(
+          fleets: [
+            ct_models.Fleet(
+              id: 'f_sea',
+              ownerId: humanId,
               regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 's1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
+              seaZoneId: 's1',
+              ships: [ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate')],
             ),
           ],
-          edges: const [TopologyEdge(id1: 'p1', id2: 's1')],
         );
-        final nwTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-        final game = ct_models.Game(
-          id: 'g',
-          worldState: ct_models.WorldState(
-            turnState: const ct_models.TurnState(
-              phase: ct_models.TurnPhase.orders,
-              turnNumber: 0,
-            ),
-            oldWorld: ct_models.RegionData(
-              provinces: [
-                ct_models.Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  ownerId: humanId,
-                  townTileKey: 'oldWorld|p1|1|1',
-                ),
-              ],
-              units: const [],
-            ),
-            newWorld: const ct_models.RegionData(provinces: [], units: []),
-            portsByProvinceSeaboard: {'oldWorld|p1|sb': 'oldWorld|p1|0|0'},
-            fleets: [
-              ct_models.Fleet(
-                id: 'f_sea',
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                seaZoneId: 's1',
-                ships: [
-                  ct_models.ShipInstance(id: 'ship_1', typeId: 'frigate'),
-                ],
-              ),
-            ],
-          ),
-          players: const [
-            ct_models.Player(id: humanId, displayName: 'Human', isHuman: true),
-          ],
-          minorNations: const [],
-          tribes: const [],
-        );
-        final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
-        final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
+        final tileByReg = capitalPortTiles();
+        final topoByReg = capitalPortTopologies();
         final view = buildInitGameMapViewData(
           game: game,
           tileMapByRegion: tileByReg,
@@ -259,13 +203,6 @@ void main() {
             ['p2', 'p2', 's1'],
           ],
         );
-        final nwMap = TileMapResult(
-          width: 1,
-          height: 1,
-          grid: [
-            ['p1'],
-          ],
-        );
         final owTopology = MapTopology(
           nodes: const [
             TopologyNode(
@@ -280,16 +217,6 @@ void main() {
             ),
           ],
           edges: const [TopologyEdge(id1: 'p2', id2: 's1')],
-        );
-        final nwTopology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'p1',
-              regionId: 'newWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
         );
         final game = ct_models.Game(
           id: 'g',
@@ -329,8 +256,8 @@ void main() {
           minorNations: const [],
           tribes: const [],
         );
-        final tileByReg = {'oldWorld': owMap, 'newWorld': nwMap};
-        final topoByReg = {'oldWorld': owTopology, 'newWorld': nwTopology};
+        final tileByReg = {'oldWorld': owMap, 'newWorld': stubNwMap};
+        final topoByReg = {'oldWorld': owTopology, 'newWorld': stubNwTopology};
         final view = buildInitGameMapViewData(
           game: game,
           tileMapByRegion: tileByReg,
@@ -415,7 +342,7 @@ void main() {
           ['s2', 'p1'],
         ],
       );
-      final oldWorldTopology = const MapTopology(
+      const oldWorldTopology = MapTopology(
         nodes: [
           TopologyNode(
             id: 's1',
@@ -430,7 +357,7 @@ void main() {
         ],
         edges: [TopologyEdge(id1: 's1', id2: 'p1')],
       );
-      final newWorldTopology = const MapTopology(
+      const newWorldTopology = MapTopology(
         nodes: [
           TopologyNode(
             id: 's2',
@@ -445,7 +372,7 @@ void main() {
         ],
         edges: [TopologyEdge(id1: 's2', id2: 'p1')],
       );
-      final combinedTopology = const MapTopology(
+      const combinedTopology = MapTopology(
         nodes: [
           TopologyNode(
             id: 'oldWorld|s1',
@@ -461,40 +388,70 @@ void main() {
         edges: [TopologyEdge(id1: 'oldWorld|s1', id2: 'newWorld|s2')],
       );
 
+      ({
+        ct_models.Game game,
+        Map<String, TileMapResult> tiles,
+        Map<String, MapTopology> topologies,
+        InitGameMapViewData mapView,
+      })
+      crossRegionDraftContext() {
+        final game = gameForCrossRegionDraft();
+        final tiles = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
+        final topologies = {
+          'oldWorld': oldWorldTopology,
+          'newWorld': newWorldTopology,
+        };
+        return (
+          game: game,
+          tiles: tiles,
+          topologies: topologies,
+          mapView: buildInitGameMapViewData(
+            game: game,
+            tileMapByRegion: tiles,
+            topologyByRegion: topologies,
+            cellSize: 8,
+          ),
+        );
+      }
+
+      RegionMapViewData projectCrossRegion({
+        required RegionMapViewData region,
+        required ct_models.Game game,
+        required ct_models.Orders orders,
+        required Map<String, TileMapResult> tiles,
+        required Map<String, MapTopology> topologies,
+      }) {
+        return GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
+          region: region,
+          game: game,
+          orders: orders,
+          humanPlayerId: humanId,
+          tileMapByRegion: tiles,
+          topologyByRegion: topologies,
+          combinedTopology: combinedTopology,
+        );
+      }
+
       test(
         'projects marker in destination region with halo + destination scope',
         () {
-          final game = gameForCrossRegionDraft();
-          final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
-          final topoByReg = {
-            'oldWorld': oldWorldTopology,
-            'newWorld': newWorldTopology,
-          };
-          final mapView = buildInitGameMapViewData(
-            game: game,
-            tileMapByRegion: tileByReg,
-            topologyByRegion: topoByReg,
-            cellSize: 8,
+          final ctx = crossRegionDraftContext();
+          final projected = projectCrossRegion(
+            region: ctx.mapView.newWorld,
+            game: ctx.game,
+            orders: const ct_models.Orders(
+              navalMoveOrdersByPlayerId: {
+                humanId: [
+                  ct_models.NavalMoveOrder(
+                    fleetId: 'f1',
+                    destinationSeaZoneId: 'newWorld|s2',
+                  ),
+                ],
+              },
+            ),
+            tiles: ctx.tiles,
+            topologies: ctx.topologies,
           );
-          final projected =
-              GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-                region: mapView.newWorld,
-                game: game,
-                orders: const ct_models.Orders(
-                  navalMoveOrdersByPlayerId: {
-                    humanId: [
-                      ct_models.NavalMoveOrder(
-                        fleetId: 'f1',
-                        destinationSeaZoneId: 'newWorld|s2',
-                      ),
-                    ],
-                  },
-                ),
-                humanPlayerId: humanId,
-                tileMapByRegion: tileByReg,
-                topologyByRegion: topoByReg,
-                combinedTopology: combinedTopology,
-              );
 
           expect(projected.fleetTileMarkers, hasLength(1));
           final marker = projected.fleetTileMarkers.single;
@@ -506,63 +463,35 @@ void main() {
       );
 
       test('does not render cross-region drafted fleet in source region', () {
-        final game = gameForCrossRegionDraft();
-        final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
-        final topoByReg = {
-          'oldWorld': oldWorldTopology,
-          'newWorld': newWorldTopology,
-        };
-        final mapView = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: tileByReg,
-          topologyByRegion: topoByReg,
-          cellSize: 8,
+        final ctx = crossRegionDraftContext();
+        final projected = projectCrossRegion(
+          region: ctx.mapView.oldWorld,
+          game: ctx.game,
+          orders: const ct_models.Orders(
+            navalMoveOrdersByPlayerId: {
+              humanId: [
+                ct_models.NavalMoveOrder(
+                  fleetId: 'f1',
+                  destinationSeaZoneId: 'newWorld|s2',
+                ),
+              ],
+            },
+          ),
+          tiles: ctx.tiles,
+          topologies: ctx.topologies,
         );
-        final projected =
-            GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-              region: mapView.oldWorld,
-              game: game,
-              orders: const ct_models.Orders(
-                navalMoveOrdersByPlayerId: {
-                  humanId: [
-                    ct_models.NavalMoveOrder(
-                      fleetId: 'f1',
-                      destinationSeaZoneId: 'newWorld|s2',
-                    ),
-                  ],
-                },
-              ),
-              humanPlayerId: humanId,
-              tileMapByRegion: tileByReg,
-              topologyByRegion: topoByReg,
-              combinedTopology: combinedTopology,
-            );
         expect(projected.fleetTileMarkers, isEmpty);
       });
 
       test('canceling draft restores source-region marker', () {
-        final game = gameForCrossRegionDraft();
-        final tileByReg = {'oldWorld': oldWorldMap, 'newWorld': newWorldMap};
-        final topoByReg = {
-          'oldWorld': oldWorldTopology,
-          'newWorld': newWorldTopology,
-        };
-        final mapView = buildInitGameMapViewData(
-          game: game,
-          tileMapByRegion: tileByReg,
-          topologyByRegion: topoByReg,
-          cellSize: 8,
+        final ctx = crossRegionDraftContext();
+        final projected = projectCrossRegion(
+          region: ctx.mapView.oldWorld,
+          game: ctx.game,
+          orders: const ct_models.Orders(),
+          tiles: ctx.tiles,
+          topologies: ctx.topologies,
         );
-        final projected =
-            GameMapAreaStateLogic.projectFleetMarkersForHumanDraft(
-              region: mapView.oldWorld,
-              game: game,
-              orders: const ct_models.Orders(),
-              humanPlayerId: humanId,
-              tileMapByRegion: tileByReg,
-              topologyByRegion: topoByReg,
-              combinedTopology: combinedTopology,
-            );
 
         expect(projected.fleetTileMarkers, hasLength(1));
         final marker = projected.fleetTileMarkers.single;

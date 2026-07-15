@@ -28,36 +28,40 @@ void main() {
         : game.players.first.id;
   });
 
-  Player getPlayer(String pid) {
-    return game.players.firstWhere((p) => p.id == pid);
-  }
+  Player getPlayer(String pid) => game.players.firstWhere((p) => p.id == pid);
 
-  Game gameWithNavalResources() {
+  Game gameWithPlayer(Player Function(Player base) update) {
     final player = getPlayer(humanPlayerId);
-    final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-    for (final techId in unlockingTechByShipId.values) {
-      techUnlocked[techId] = true;
-    }
     return game.copyWith(
       players: [
-        player.copyWith(
-          treasury: 50000,
-          workerPool: player.workerPool.copyWith(peasants: 20),
-          techUnlocked: techUnlocked,
-          stockpile: player.stockpile.merge(
-            const Stockpile(
-              quantities: {
-                'lumber': 100,
-                'fabric': 100,
-                'castIron': 100,
-                'coal': 100,
-              },
-            ),
-          ),
-        ),
+        update(player),
         ...game.players.where((p) => p.id != humanPlayerId),
       ],
     );
+  }
+
+  Game gameWithNavalResources() {
+    return gameWithPlayer((player) {
+      final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
+      for (final techId in unlockingTechByShipId.values) {
+        techUnlocked[techId] = true;
+      }
+      return player.copyWith(
+        treasury: 50000,
+        workerPool: player.workerPool.copyWith(peasants: 20),
+        techUnlocked: techUnlocked,
+        stockpile: player.stockpile.merge(
+          const Stockpile(
+            quantities: {
+              'lumber': 100,
+              'fabric': 100,
+              'castIron': 100,
+              'coal': 100,
+            },
+          ),
+        ),
+      );
+    });
   }
 
   String capitalOf(Game g) {
@@ -67,7 +71,6 @@ void main() {
 
   Widget buildDialog({
     required Game game,
-    required String humanPlayerId,
     Orders currentOrders = const Orders(),
     AppEventBus? bus,
   }) {
@@ -83,37 +86,76 @@ void main() {
     );
   }
 
+  Future<void> pumpDialog(
+    WidgetTester tester, {
+    required Game game,
+    Orders currentOrders = const Orders(),
+    AppEventBus? bus,
+  }) async {
+    await tester.pumpWidget(
+      buildDialog(game: game, currentOrders: currentOrders, bus: bus),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Widget handlerShell({
+    required Game game,
+    Orders orders = const Orders(),
+    required Widget body,
+  }) {
+    return ProviderScope(
+      overrides: [
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+        currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(orders)),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+      ],
+      child: AppEventHandlerScope(
+        child: MaterialApp(navigatorKey: appNavigatorKey, home: Scaffold(body: body)),
+      ),
+    );
+  }
+
+  Game richWithHuman(Player Function(Player p) update) {
+    final base = gameWithNavalResources();
+    final player = base.players.firstWhere((p) => p.id == humanPlayerId);
+    return base.copyWith(
+      players: [
+        update(player),
+        ...base.players.where((p) => p.id != humanPlayerId),
+      ],
+    );
+  }
+
   testWidgets('dialog shows existing naval orders in steppers on open', (
     WidgetTester tester,
   ) async {
     final richGame = gameWithNavalResources();
     final capital = capitalOf(richGame);
     final firstShip = ShipEconomyCatalog.all.first.shipTypeId;
-    final orders = Orders(
-      buildUnitOrdersByPlayerId: {
-        humanPlayerId: [
-          BuildUnitOrder(
-            unitType: firstShip,
-            isMilitary: false,
-            spawnProvinceId: capital,
-          ),
-          BuildUnitOrder(
-            unitType: firstShip,
-            isMilitary: false,
-            spawnProvinceId: capital,
-          ),
-        ],
-      },
-    );
-
-    await tester.pumpWidget(
-      buildDialog(
-        game: richGame,
-        humanPlayerId: humanPlayerId,
-        currentOrders: orders,
+    await pumpDialog(
+      tester,
+      game: richGame,
+      currentOrders: Orders(
+        buildUnitOrdersByPlayerId: {
+          humanPlayerId: [
+            BuildUnitOrder(
+              unitType: firstShip,
+              isMilitary: false,
+              spawnProvinceId: capital,
+            ),
+            BuildUnitOrder(
+              unitType: firstShip,
+              isMilitary: false,
+              spawnProvinceId: capital,
+            ),
+          ],
+        },
       ),
     );
-    await tester.pumpAndSettle();
 
     expect(find.text('2'), findsWidgets);
   });
@@ -121,22 +163,14 @@ void main() {
   testWidgets('AC: treasury renders with £ + comma grouping (£50,000)', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      buildDialog(game: gameWithNavalResources(), humanPlayerId: humanPlayerId),
-    );
-    await tester.pumpAndSettle();
-
+    await pumpDialog(tester, game: gameWithNavalResources());
     expect(find.textContaining('£50,000'), findsOneWidget);
   });
 
   testWidgets('AC: ship rows show roster display names not type ids', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      buildDialog(game: gameWithNavalResources(), humanPlayerId: humanPlayerId),
-    );
-    await tester.pumpAndSettle();
-
+    await pumpDialog(tester, game: gameWithNavalResources());
     expect(find.text('Carrack'), findsWidgets);
     expect(find.text(kTechIdShipOfTheLine), findsNothing);
     expect(find.text('Ship of the Line'), findsWidgets);
@@ -210,35 +244,18 @@ void main() {
   ) async {
     final richGame = gameWithNavalResources();
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(richGame)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          appEventBusProvider.overrideWith((ref) {
-            final bus = AppEventBus.create();
-            ref.onDispose(bus.dispose);
-            return bus;
-          }),
-        ],
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            home: Scaffold(
-              body: Consumer(
-                builder: (context, ref, _) {
-                  return NavalUnitsPanel(
-                    game: richGame,
-                    humanPlayerId: humanPlayerId,
-                    bus: ref.watch(appEventBusProvider),
-                    topology: const MapTopology(),
-                    draftOrders: ref.watch(currentOrdersProvider),
-                  );
-                },
-              ),
-            ),
-          ),
+      handlerShell(
+        game: richGame,
+        body: Consumer(
+          builder: (context, ref, _) {
+            return NavalUnitsPanel(
+              game: richGame,
+              humanPlayerId: humanPlayerId,
+              bus: ref.watch(appEventBusProvider),
+              topology: const MapTopology(),
+              draftOrders: ref.watch(currentOrdersProvider),
+            );
+          },
         ),
       ),
     );
@@ -272,33 +289,15 @@ void main() {
       late AppEventBus bus;
       late WidgetRef capturedRef;
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            currentGameProvider.overrideWith(
-              () => CurrentGameNotifier(richGame),
-            ),
-            currentOrdersProvider.overrideWith(
-              () => CurrentOrdersNotifier(initialOrders),
-            ),
-            appEventBusProvider.overrideWith((ref) {
-              final b = AppEventBus.create();
-              ref.onDispose(b.dispose);
-              return b;
-            }),
-          ],
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              home: Scaffold(
-                body: Consumer(
-                  builder: (context, ref, _) {
-                    capturedRef = ref;
-                    bus = ref.watch(appEventBusProvider);
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ),
+        handlerShell(
+          game: richGame,
+          orders: initialOrders,
+          body: Consumer(
+            builder: (context, ref, _) {
+              capturedRef = ref;
+              bus = ref.watch(appEventBusProvider);
+              return const SizedBox.shrink();
+            },
           ),
         ),
       );
@@ -350,7 +349,8 @@ void main() {
     Iterable<CtNinePatchButton> plusButtons(WidgetTester tester) {
       return tester.widgetList<CtNinePatchButton>(
         find.byWidgetPredicate(
-          (w) => w is CtNinePatchButton &&
+          (w) =>
+              w is CtNinePatchButton &&
               w.child is Text &&
               (w.child as Text).data == '+',
         ),
@@ -379,15 +379,7 @@ void main() {
       // Treasury 50000, peasants 20; carrack costs £8,000 + 1 peasant. Queue 1
       // → treasury 42,000 / 50,000 and peasants 19 / 20.
       final g = gameWithNavalResources();
-      await tester.pumpWidget(
-        buildDialog(
-          game: g,
-          humanPlayerId: humanPlayerId,
-          currentOrders: carrackOrders(g, 1),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      await pumpDialog(tester, game: g, currentOrders: carrackOrders(g, 1));
       expect(find.textContaining('£42,000 / £50,000'), findsOneWidget);
       expect(find.textContaining('19 / 20'), findsOneWidget);
     });
@@ -397,29 +389,20 @@ void main() {
       (WidgetTester tester) async {
         // Plenty of treasury/peasants/lumber/fabric/coal, but zero cast iron →
         // only ships consuming cast iron flag a red cost label.
-        final base = gameWithNavalResources();
-        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-        final game = base.copyWith(
-          players: [
-            player.copyWith(
-              treasury: 1000000,
-              stockpile: const Stockpile(
-                quantities: {
-                  'lumber': 100,
-                  'fabric': 100,
-                  'castIron': 0,
-                  'coal': 100,
-                },
-              ),
+        final game = richWithHuman(
+          (player) => player.copyWith(
+            treasury: 1000000,
+            stockpile: const Stockpile(
+              quantities: {
+                'lumber': 100,
+                'fabric': 100,
+                'castIron': 0,
+                'coal': 100,
+              },
             ),
-            ...base.players.where((p) => p.id != humanPlayerId),
-          ],
+          ),
         );
-        await tester.pumpWidget(
-          buildDialog(game: game, humanPlayerId: humanPlayerId),
-        );
-        await tester.pumpAndSettle();
-
+        await pumpDialog(tester, game: game);
         expect(redCostLabels(tester), greaterThan(0));
       },
     );
@@ -427,38 +410,20 @@ void main() {
     testWidgets('AC (negative): fully affordable rows colour no cost labels red', (
       WidgetTester tester,
     ) async {
-      final base = gameWithNavalResources();
-      final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-      final game = base.copyWith(
-        players: [
-          player.copyWith(treasury: 1000000),
-          ...base.players.where((p) => p.id != humanPlayerId),
-        ],
+      await pumpDialog(
+        tester,
+        game: richWithHuman((p) => p.copyWith(treasury: 1000000)),
       );
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
-      await tester.pumpAndSettle();
-
       expect(redCostLabels(tester), 0);
     });
 
     testWidgets('AC (positive): disabled [+] uses danger variant when unaffordable', (
       WidgetTester tester,
     ) async {
-      final base = gameWithNavalResources();
-      final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-      final game = base.copyWith(
-        players: [
-          player.copyWith(treasury: 0),
-          ...base.players.where((p) => p.id != humanPlayerId),
-        ],
+      await pumpDialog(
+        tester,
+        game: richWithHuman((p) => p.copyWith(treasury: 0)),
       );
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
-      await tester.pumpAndSettle();
-
       expect(plusButtons(tester).any((b) => b.dangerVariant), isTrue);
     });
 
@@ -468,29 +433,20 @@ void main() {
       // Abundant resources but no tech unlocked: every disabled `[+]` is
       // disabled by the lock, not by insufficiency, so none may be danger.
       // (Carrack has no unlocking tech, so it stays unlocked + affordable.)
-      final base = gameWithNavalResources();
-      final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-      final game = base.copyWith(
-        players: [
-          player.copyWith(
-            treasury: 1000000,
-            techUnlocked: const <String, bool>{},
-          ),
-          ...base.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-      // At least one ship type is tech-locked in the roster.
       expect(
         ShipEconomyCatalog.all
             .where((e) => unlockingTechByShipId[e.shipTypeId] != null),
         isNotEmpty,
       );
-
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
+      await pumpDialog(
+        tester,
+        game: richWithHuman(
+          (p) => p.copyWith(
+            treasury: 1000000,
+            techUnlocked: const <String, bool>{},
+          ),
+        ),
       );
-      await tester.pumpAndSettle();
-
       expect(plusButtons(tester).every((b) => !b.dangerVariant), isTrue);
     });
 
@@ -501,34 +457,24 @@ void main() {
         // treasury and zero lumber. One queued Carrack (£8,000 + 2 lumber +
         // 1 fabric + 1 peasant) makes treasury and lumber insufficient, so the
         // hint joins two `{Name} low` clauses with a comma (Refs #3568).
-        final base = gameWithNavalResources();
-        final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-        final game = base.copyWith(
-          players: [
-            player.copyWith(
-              treasury: 0,
-              stockpile: const Stockpile(
-                quantities: {
-                  'lumber': 0,
-                  'fabric': 100,
-                  'castIron': 100,
-                  'coal': 100,
-                },
-              ),
+        final game = richWithHuman(
+          (player) => player.copyWith(
+            treasury: 0,
+            stockpile: const Stockpile(
+              quantities: {
+                'lumber': 0,
+                'fabric': 100,
+                'castIron': 100,
+                'coal': 100,
+              },
             ),
-            ...base.players.where((p) => p.id != humanPlayerId),
-          ],
-        );
-
-        await tester.pumpWidget(
-          buildDialog(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: carrackOrders(game, 1),
           ),
         );
-        await tester.pumpAndSettle();
-
+        await pumpDialog(
+          tester,
+          game: game,
+          currentOrders: carrackOrders(game, 1),
+        );
         expect(find.text('Treasury low, Lumber low'), findsOneWidget);
         expect(find.textContaining(' and '), findsNothing);
       },

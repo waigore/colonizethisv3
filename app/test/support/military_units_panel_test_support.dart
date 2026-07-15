@@ -51,28 +51,23 @@ Game buildMilitaryProvinceTileLookupGame({
   String? ownerId,
 }) {
   final prefixedId = '$regionId|$provinceId';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: provinceId,
-            regionId: regionId,
-            ownerId: ownerId,
-            townTileKey: null,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {
-        regionId: {
-          prefixedId: [tileKey],
-        },
-      },
-    ),
     players: const [],
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+    oldWorldProvinces: [
+      Province(
+        id: provinceId,
+        regionId: regionId,
+        ownerId: ownerId,
+        townTileKey: null,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      regionId: {
+        prefixedId: [tileKey],
+      },
+    },
   );
 }
 
@@ -90,45 +85,38 @@ Game buildMilitarySeaFleetDisplayGame({
 }) {
   const provinceId = 'lisbon';
   const tileKey = 'oldWorld|lisbon|0|0';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        units: const [],
-        provinces: includeLisbonProvince
-            ? [
-                Province(
-                  id: provinceId,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                ),
-              ]
-            : const [],
-      ),
-      newWorld: const RegionData(),
-      fleets: [
-        Fleet(
-          id: fleetId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          seaZoneId: seaZoneId,
-          shipTypeIds: shipTypeIds,
-          mission: mission,
-        ),
-      ],
-      portsByProvinceSeaboard: const {
-        'oldWorld|lisbon|atlantic': tileKey,
-      },
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          'oldWorld|lisbon': [tileKey],
-        },
-      },
-    ),
     players: [
       Player(id: playerId, displayName: playerDisplayName, isHuman: true),
     ],
+    oldWorldProvinces: includeLisbonProvince
+        ? [
+            Province(
+              id: provinceId,
+              regionId: 'oldWorld',
+              ownerId: playerId,
+            ),
+          ]
+        : const [],
+    fleets: [
+      Fleet(
+        id: fleetId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        seaZoneId: seaZoneId,
+        shipTypeIds: shipTypeIds,
+        mission: mission,
+      ),
+    ],
+    portsByProvinceSeaboard: const {
+      'oldWorld|lisbon|atlantic': tileKey,
+    },
+    tileKeysByRegionAndProvince: const {
+      'oldWorld': {
+        'oldWorld|lisbon': [tileKey],
+      },
+    },
   );
 }
 
@@ -186,48 +174,9 @@ Game buildMilitaryHomeArmyAtCapitalGame({
   String playerDisplayName = 'Splitter',
   String regimentType = kPanelTestRegimentType,
 }) {
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: capitalProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: 'Capital',
-            townTileKey: townTileKey,
-          ),
-        ],
-        units: [
-          for (final regimentId in regimentIds)
-            Unit(
-              id: regimentId,
-              type: regimentType,
-              ownerId: playerId,
-              locationProvinceId: capitalProvinceId,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: armyId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: capitalProvinceId,
-          regimentUnitIds: List<String>.from(regimentIds),
-          isHomeArmy: true,
-        ),
-      ],
-      nextArmySeq: nextArmySeq,
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          capitalProvinceId: [townTileKey],
-        },
-      },
-    ),
+    nextArmySeq: nextArmySeq,
     players: [
       Player(
         id: playerId,
@@ -236,6 +185,39 @@ Game buildMilitaryHomeArmyAtCapitalGame({
         capitalProvinceId: capitalProvinceId,
       ),
     ],
+    oldWorldProvinces: [
+      Province(
+        id: capitalProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+        displayName: 'Capital',
+        townTileKey: townTileKey,
+      ),
+    ],
+    oldWorldUnits: [
+      for (final regimentId in regimentIds)
+        Unit(
+          id: regimentId,
+          type: regimentType,
+          ownerId: playerId,
+          locationProvinceId: capitalProvinceId,
+        ),
+    ],
+    armies: [
+      Army(
+        id: armyId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        stationedProvinceId: capitalProvinceId,
+        regimentUnitIds: List<String>.from(regimentIds),
+        isHomeArmy: true,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {
+        capitalProvinceId: [townTileKey],
+      },
+    },
   );
 }
 
@@ -441,64 +423,8 @@ Game buildMilitaryFieldArmyWithAdjacentOwnedGame({
 }) {
   final stationTile = '$stationProvinceId|0|0';
   final adjacentTile = '$adjacentProvinceId|0|0';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: stationProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: stationDisplayName,
-            townTileKey: stationTownTileKey,
-          ),
-          Province(
-            id: adjacentProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: adjacentDisplayName,
-          ),
-        ],
-        units: [
-          for (final regimentId in regimentUnitIds)
-            Unit(
-              id: regimentId,
-              type: regimentType,
-              ownerId: playerId,
-              locationProvinceId: stationProvinceId,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: armyId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: stationProvinceId,
-          regimentUnitIds: List<String>.from(regimentUnitIds),
-          isHomeArmy: false,
-        ),
-      ],
-      tileKeysByRegionAndProvince: includeTileKeysAndVisibility
-          ? {
-              'oldWorld': {
-                stationProvinceId: [stationTile],
-                adjacentProvinceId: [adjacentTile],
-              },
-            }
-          : const {},
-      playerVisibilityByTile: includeTileKeysAndVisibility
-          ? {
-              playerId: {
-                stationTile: 'fullyVisible',
-                adjacentTile: 'fullyVisible',
-              },
-            }
-          : const {},
-    ),
     players: [
       Player(
         id: playerId,
@@ -507,6 +433,56 @@ Game buildMilitaryFieldArmyWithAdjacentOwnedGame({
         capitalProvinceId: stationProvinceId,
       ),
     ],
+    oldWorldProvinces: [
+      Province(
+        id: stationProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+        displayName: stationDisplayName,
+        townTileKey: stationTownTileKey,
+      ),
+      Province(
+        id: adjacentProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+        displayName: adjacentDisplayName,
+      ),
+    ],
+    oldWorldUnits: [
+      for (final regimentId in regimentUnitIds)
+        Unit(
+          id: regimentId,
+          type: regimentType,
+          ownerId: playerId,
+          locationProvinceId: stationProvinceId,
+        ),
+    ],
+    armies: [
+      Army(
+        id: armyId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        stationedProvinceId: stationProvinceId,
+        regimentUnitIds: List<String>.from(regimentUnitIds),
+        isHomeArmy: false,
+      ),
+    ],
+    tileKeysByRegionAndProvince: includeTileKeysAndVisibility
+        ? {
+            'oldWorld': {
+              stationProvinceId: [stationTile],
+              adjacentProvinceId: [adjacentTile],
+            },
+          }
+        : const {},
+    playerVisibilityByTile: includeTileKeysAndVisibility
+        ? {
+            playerId: {
+              stationTile: 'fullyVisible',
+              adjacentTile: 'fullyVisible',
+            },
+          }
+        : const {},
   );
 }
 
@@ -529,72 +505,8 @@ Game buildMilitaryCrossRegionOwnedMoveGame({
   final fromTile = '$fromProvinceId|0|0';
   final oldDestTile = '$oldDestProvinceId|0|0';
   final newDestTile = '$newDestProvinceId|0|0';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: fromProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: fromDisplayName,
-            townTileKey: fromTownTileKey,
-          ),
-          Province(
-            id: oldDestProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-            displayName: oldDestDisplayName,
-          ),
-        ],
-        units: [
-          Unit(
-            id: regimentId,
-            type: regimentType,
-            ownerId: playerId,
-            locationProvinceId: fromProvinceId,
-          ),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: [
-          Province(
-            id: newDestProvinceId,
-            regionId: 'newWorld',
-            ownerId: playerId,
-            displayName: newDestDisplayName,
-          ),
-        ],
-      ),
-      armies: [
-        Army(
-          id: armyId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: fromProvinceId,
-          regimentUnitIds: [regimentId],
-          isHomeArmy: false,
-        ),
-      ],
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          fromProvinceId: [fromTile],
-          oldDestProvinceId: [oldDestTile],
-        },
-        'newWorld': {
-          newDestProvinceId: [newDestTile],
-        },
-      },
-      playerVisibilityByTile: {
-        playerId: {
-          fromTile: 'fullyVisible',
-          oldDestTile: 'fullyVisible',
-          newDestTile: 'fullyVisible',
-        },
-      },
-    ),
     players: [
       Player(
         id: playerId,
@@ -603,6 +515,63 @@ Game buildMilitaryCrossRegionOwnedMoveGame({
         capitalProvinceId: fromProvinceId,
       ),
     ],
+    oldWorldProvinces: [
+      Province(
+        id: fromProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+        displayName: fromDisplayName,
+        townTileKey: fromTownTileKey,
+      ),
+      Province(
+        id: oldDestProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+        displayName: oldDestDisplayName,
+      ),
+    ],
+    newWorldProvinces: [
+      Province(
+        id: newDestProvinceId,
+        regionId: 'newWorld',
+        ownerId: playerId,
+        displayName: newDestDisplayName,
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: regimentId,
+        type: regimentType,
+        ownerId: playerId,
+        locationProvinceId: fromProvinceId,
+      ),
+    ],
+    armies: [
+      Army(
+        id: armyId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        stationedProvinceId: fromProvinceId,
+        regimentUnitIds: [regimentId],
+        isHomeArmy: false,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {
+        fromProvinceId: [fromTile],
+        oldDestProvinceId: [oldDestTile],
+      },
+      'newWorld': {
+        newDestProvinceId: [newDestTile],
+      },
+    },
+    playerVisibilityByTile: {
+      playerId: {
+        fromTile: 'fullyVisible',
+        oldDestTile: 'fullyVisible',
+        newDestTile: 'fullyVisible',
+      },
+    },
   );
 }
 
@@ -622,57 +591,9 @@ Game buildMilitaryInvasionAdjacentHostileGame({
 }) {
   final stationTile = '$stationProvinceId|0|0';
   final hostileTile = '$hostileProvinceId|0|0';
-  return Game(
+  return buildPanelTestGame(
     id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: stationProvinceId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-          ),
-          Province(
-            id: hostileProvinceId,
-            regionId: 'oldWorld',
-            ownerId: enemyId,
-            displayName: hostileDisplayName,
-          ),
-        ],
-        units: [
-          Unit(
-            id: regimentId,
-            type: regimentType,
-            ownerId: playerId,
-            locationProvinceId: stationProvinceId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: armyId,
-          ownerId: playerId,
-          regionId: 'oldWorld',
-          stationedProvinceId: stationProvinceId,
-          regimentUnitIds: [regimentId],
-          isHomeArmy: false,
-        ),
-      ],
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          stationProvinceId: [stationTile],
-          hostileProvinceId: [hostileTile],
-        },
-      },
-      playerVisibilityByTile: {
-        playerId: {
-          stationTile: 'fullyVisible',
-          hostileTile: 'fullyVisible',
-        },
-      },
-    ),
+    diplomacyRelations: const [],
     players: [
       Player(
         id: playerId,
@@ -687,7 +608,49 @@ Game buildMilitaryInvasionAdjacentHostileGame({
         capitalProvinceId: hostileProvinceId,
       ),
     ],
-    diplomacyRelations: const [],
+    oldWorldProvinces: [
+      Province(
+        id: stationProvinceId,
+        regionId: 'oldWorld',
+        ownerId: playerId,
+      ),
+      Province(
+        id: hostileProvinceId,
+        regionId: 'oldWorld',
+        ownerId: enemyId,
+        displayName: hostileDisplayName,
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: regimentId,
+        type: regimentType,
+        ownerId: playerId,
+        locationProvinceId: stationProvinceId,
+      ),
+    ],
+    armies: [
+      Army(
+        id: armyId,
+        ownerId: playerId,
+        regionId: 'oldWorld',
+        stationedProvinceId: stationProvinceId,
+        regimentUnitIds: [regimentId],
+        isHomeArmy: false,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {
+        stationProvinceId: [stationTile],
+        hostileProvinceId: [hostileTile],
+      },
+    },
+    playerVisibilityByTile: {
+      playerId: {
+        stationTile: 'fullyVisible',
+        hostileTile: 'fullyVisible',
+      },
+    },
   );
 }
 

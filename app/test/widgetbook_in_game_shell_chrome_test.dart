@@ -11,7 +11,6 @@ import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
@@ -29,53 +28,95 @@ import 'support/widgetbook_test_harness.dart';
 void main() {
   suppressLogsForTests();
 
+  Future<void> pumpStory(
+    WidgetTester tester,
+    List<WidgetbookNode> directories, {
+    required String folder,
+    required String useCase,
+    Duration? extra,
+    bool resetTree = false,
+  }) async {
+    if (resetTree) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    }
+    final story = findWidgetbookUseCase(
+      directories,
+      folderName: folder,
+      useCaseName: useCase,
+    );
+    await tester.pumpWidget(
+      story.builder(tester.element(find.byType(View))),
+    );
+    await tester.pump();
+    if (extra != null) {
+      await tester.pump(extra);
+    }
+  }
+
+  Future<T> pumpStoryAs<T extends Widget>(
+    WidgetTester tester,
+    List<WidgetbookNode> directories, {
+    required String folder,
+    required String useCase,
+    Duration? extra,
+  }) async {
+    await pumpStory(
+      tester,
+      directories,
+      folder: folder,
+      useCase: useCase,
+      extra: extra,
+    );
+    return tester.widget<T>(find.byType(T));
+  }
+
+  Future<void> expectStoriesMount(
+    WidgetTester tester,
+    List<WidgetbookNode> directories, {
+    required String folder,
+    required List<String> useCases,
+    required Type widgetType,
+    Duration? extra,
+  }) async {
+    for (final name in useCases) {
+      await pumpStory(
+        tester,
+        directories,
+        folder: folder,
+        useCase: name,
+        extra: extra,
+      );
+      expect(find.byType(widgetType), findsOneWidget);
+    }
+  }
+
   group('In-game shell chrome Widgetbook stories (Refs #2861 S12)', () {
     testWidgets(
       'Game Top Bar folder exposes default + disabled + observe variants',
       (WidgetTester tester) async {
-        final defaultStory = findWidgetbookUseCase(
+        await expectStoriesMount(
+          tester,
           gameTopBarDirectories,
-          folderName: 'Game Top Bar',
-          useCaseName: 'Default — hamburger + Next turn enabled',
+          folder: 'Game Top Bar',
+          useCases: const [
+            'Default — hamburger + Next turn enabled',
+            'Next turn disabled — turn resolution in progress',
+            'Observe banner — observe-mode label',
+          ],
+          widgetType: GameTopBar,
         );
-        final disabledStory = findWidgetbookUseCase(
-          gameTopBarDirectories,
-          folderName: 'Game Top Bar',
-          useCaseName: 'Next turn disabled — turn resolution in progress',
-        );
-        final observeStory = findWidgetbookUseCase(
-          gameTopBarDirectories,
-          folderName: 'Game Top Bar',
-          useCaseName: 'Observe banner — observe-mode label',
-        );
-
-        for (final story in <WidgetbookUseCase>[
-          defaultStory,
-          disabledStory,
-          observeStory,
-        ]) {
-          await tester.pumpWidget(story.builder(tester.element(find.byType(View))));
-          await tester.pump();
-          expect(find.byType(GameTopBar), findsOneWidget);
-        }
       },
     );
 
     testWidgets(
       'Game Top Bar disabled variant renders the bar with the muted button',
       (WidgetTester tester) async {
-        final disabledStory = findWidgetbookUseCase(
+        final bar = await pumpStoryAs<GameTopBar>(
+          tester,
           gameTopBarDirectories,
-          folderName: 'Game Top Bar',
-          useCaseName: 'Next turn disabled — turn resolution in progress',
-        );
-        await tester.pumpWidget(
-          disabledStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-
-        final GameTopBar bar = tester.widget<GameTopBar>(
-          find.byType(GameTopBar),
+          folder: 'Game Top Bar',
+          useCase: 'Next turn disabled — turn resolution in progress',
         );
         expect(bar.nextTurnEnabled, isFalse);
       },
@@ -84,7 +125,7 @@ void main() {
     testWidgets(
       'Game Tab Bar folder exposes default, region + delta + news variants',
       (WidgetTester tester) async {
-        const useCaseNames = <String>[
+        for (final name in const [
           'Default — Old World active, no delta',
           'New World active',
           'Positive treasury delta (green)',
@@ -93,18 +134,13 @@ void main() {
           'News toggle — feed open (no badge)',
           'Players bar toggle — on (active accent)',
           'Players bar toggle — off (dim)',
-        ];
-
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
+        ]) {
+          await pumpStory(
+            tester,
             gameTabBarDirectories,
-            folderName: 'Game Tab Bar',
-            useCaseName: name,
+            folder: 'Game Tab Bar',
+            useCase: name,
           );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
           expect(find.byType(GameTabBar), findsOneWidget);
           expect(find.byType(PlayersBarToggleButton), findsOneWidget);
           expect(
@@ -118,57 +154,39 @@ void main() {
     testWidgets(
       'Players Bar Toggle folder exposes on and off chrome variants',
       (WidgetTester tester) async {
-        const useCaseNames = <String>['On — accent glyph + border', 'Off — dim glyph'];
-
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
-            playersBarToggleDirectories,
-            folderName: 'Players Bar Toggle',
-            useCaseName: name,
-          );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          expect(find.byType(PlayersBarToggleButton), findsOneWidget);
-        }
+        await expectStoriesMount(
+          tester,
+          playersBarToggleDirectories,
+          folder: 'Players Bar Toggle',
+          useCases: const [
+            'On — accent glyph + border',
+            'Off — dim glyph',
+          ],
+          widgetType: PlayersBarToggleButton,
+        );
       },
     );
 
     testWidgets(
       'Game Map Corner Controls folder exposes default + disabled variant',
       (WidgetTester tester) async {
-        final defaultStory = findWidgetbookUseCase(
+        final enabled = await pumpStoryAs<GameMapCornerControls>(
+          tester,
           gameMapCornerControlsDirectories,
-          folderName: 'Game Map Corner Controls',
-          useCaseName: 'Default — all three buttons enabled',
+          folder: 'Game Map Corner Controls',
+          useCase: 'Default — all three buttons enabled',
         );
-        final disabledStory = findWidgetbookUseCase(
+        expect(enabled.homeToCapitalEnabled, isTrue);
+        expect(enabled.narrow, isFalse);
+
+        final disabled = await pumpStoryAs<GameMapCornerControls>(
+          tester,
           gameMapCornerControlsDirectories,
-          folderName: 'Game Map Corner Controls',
-          useCaseName: 'Home-to-capital disabled (no human capital)',
+          folder: 'Game Map Corner Controls',
+          useCase: 'Home-to-capital disabled (no human capital)',
         );
-
-        await tester.pumpWidget(
-          defaultStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        expect(find.byType(GameMapCornerControls), findsOneWidget);
-        final defaultControls = tester.widget<GameMapCornerControls>(
-          find.byType(GameMapCornerControls),
-        );
-        expect(defaultControls.homeToCapitalEnabled, isTrue);
-        expect(defaultControls.narrow, isFalse);
-
-        await tester.pumpWidget(
-          disabledStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        final disabledControls = tester.widget<GameMapCornerControls>(
-          find.byType(GameMapCornerControls),
-        );
-        expect(disabledControls.homeToCapitalEnabled, isFalse);
-        expect(disabledControls.narrow, isFalse);
+        expect(disabled.homeToCapitalEnabled, isFalse);
+        expect(disabled.narrow, isFalse);
       },
     );
 
@@ -176,92 +194,55 @@ void main() {
       'Game Map Corner Controls folder exposes narrow variant '
       '(Refs #2870 S9)',
       (WidgetTester tester) async {
-        final narrowStory = findWidgetbookUseCase(
+        final narrow = await pumpStoryAs<GameMapCornerControls>(
+          tester,
           gameMapCornerControlsDirectories,
-          folderName: 'Game Map Corner Controls',
-          useCaseName: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
+          folder: 'Game Map Corner Controls',
+          useCase: 'Narrow (360 dp) — 24 × 24 dp buttons, 2 dp gap',
         );
-        await tester.pumpWidget(
-          narrowStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        final narrowControls = tester.widget<GameMapCornerControls>(
-          find.byType(GameMapCornerControls),
-        );
-        expect(
-          narrowControls.narrow,
-          isTrue,
-          reason:
-              'Narrow variant must construct GameMapCornerControls with '
-              'narrow: true so the 24 × 24 dp / 2 dp gap rule applies.',
-        );
-        expect(
-          narrowControls.homeToCapitalEnabled,
-          isTrue,
-          reason:
-              'Narrow story exercises the active state (all three buttons '
-              'enabled) at the narrow measurements.',
-        );
+        expect(narrow.narrow, isTrue);
+        expect(narrow.homeToCapitalEnabled, isTrue);
       },
     );
 
     testWidgets(
       'Game Map Options Dialog folder exposes defaults + all-on + all-off variants',
       (WidgetTester tester) async {
-        const useCaseNames = <String>[
-          'Defaults — overlay on, ownership off, names on',
-          'All toggles on',
-          'All toggles off',
-        ];
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
-            gameMapOptionsDialogDirectories,
-            folderName: 'Game Map Options Dialog',
-            useCaseName: name,
-          );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 200));
-          expect(find.byType(GameMapOptionsDialog), findsOneWidget);
-        }
+        await expectStoriesMount(
+          tester,
+          gameMapOptionsDialogDirectories,
+          folder: 'Game Map Options Dialog',
+          useCases: const [
+            'Defaults — overlay on, ownership off, names on',
+            'All toggles on',
+            'All toggles off',
+          ],
+          widgetType: GameMapOptionsDialog,
+          extra: const Duration(milliseconds: 200),
+        );
       },
     );
 
     testWidgets(
       'Player Turn Event Feed Card folder exposes populated + empty variants',
       (WidgetTester tester) async {
-        final populatedStory = findWidgetbookUseCase(
+        final populated = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
           playerTurnEventFeedCardDirectories,
-          folderName: 'Player Turn Event Feed Card',
-          useCaseName: 'Populated — three entries (top entry tappable)',
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Populated — three entries (top entry tappable)',
         );
-        final emptyStory = findWidgetbookUseCase(
+        expect(populated.entries.length, 3);
+        expect(populated.narrow, isFalse);
+
+        final empty = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
           playerTurnEventFeedCardDirectories,
-          folderName: 'Player Turn Event Feed Card',
-          useCaseName: 'Empty — no events this turn',
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Empty — no events this turn',
         );
-
-        await tester.pumpWidget(
-          populatedStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        final populatedCard = tester.widget<PlayerTurnEventFeedCard>(
-          find.byType(PlayerTurnEventFeedCard),
-        );
-        expect(populatedCard.entries.length, 3);
-        expect(populatedCard.narrow, isFalse);
-
-        await tester.pumpWidget(
-          emptyStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        final emptyCard = tester.widget<PlayerTurnEventFeedCard>(
-          find.byType(PlayerTurnEventFeedCard),
-        );
-        expect(emptyCard.entries, isEmpty);
-        expect(emptyCard.narrow, isFalse);
+        expect(empty.entries, isEmpty);
+        expect(empty.narrow, isFalse);
       },
     );
 
@@ -269,31 +250,18 @@ void main() {
       'Player Turn Event Feed Card folder exposes narrow variants '
       '(Refs #2870 S3)',
       (WidgetTester tester) async {
-        const narrowUseCaseNames = <String>[
+        for (final name in const [
           'Narrow (360 dp) — populated, clamp(180, 50vw, 260)',
           'Narrow (460 dp) — populated, 50vw mid-range',
           'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
-        ];
-        for (final name in narrowUseCaseNames) {
-          final story = findWidgetbookUseCase(
+        ]) {
+          final card = await pumpStoryAs<PlayerTurnEventFeedCard>(
+            tester,
             playerTurnEventFeedCardDirectories,
-            folderName: 'Player Turn Event Feed Card',
-            useCaseName: name,
+            folder: 'Player Turn Event Feed Card',
+            useCase: name,
           );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          final card = tester.widget<PlayerTurnEventFeedCard>(
-            find.byType(PlayerTurnEventFeedCard),
-          );
-          expect(
-            card.narrow,
-            isTrue,
-            reason:
-                'Narrow variant "$name" must construct the card with '
-                'narrow: true so the clamp(180, 50vw, 260) rule applies.',
-          );
+          expect(card.narrow, isTrue, reason: name);
         }
       },
     );
@@ -301,179 +269,107 @@ void main() {
     testWidgets(
       'Game Map Empire Left Rail folder exposes wide, debug-console, and narrow variants',
       (WidgetTester tester) async {
-        const wideUseCaseName = 'Wide — six core empire buttons with tooltips';
-        const debugConsoleUseCaseName =
-            'Wide — debug console enabled (7 icons)';
-        const narrowUseCaseName =
-            'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed';
-
-        final wideStory = findWidgetbookUseCase(
+        final wide = await pumpStoryAs<GameMapEmpireLeftRail>(
+          tester,
           gameMapEmpireLeftRailDirectories,
-          folderName: 'Game Map Empire Left Rail',
-          useCaseName: wideUseCaseName,
+          folder: 'Game Map Empire Left Rail',
+          useCase: 'Wide — six core empire buttons with tooltips',
         );
-        final debugConsoleStory = findWidgetbookUseCase(
-          gameMapEmpireLeftRailDirectories,
-          folderName: 'Game Map Empire Left Rail',
-          useCaseName: debugConsoleUseCaseName,
-        );
-        final narrowStory = findWidgetbookUseCase(
-          gameMapEmpireLeftRailDirectories,
-          folderName: 'Game Map Empire Left Rail',
-          useCaseName: narrowUseCaseName,
-        );
-
-        await tester.pumpWidget(
-          wideStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        final wideRail = tester.widget<GameMapEmpireLeftRail>(
-          find.byType(GameMapEmpireLeftRail),
-        );
-        expect(wideRail.narrow, isFalse);
+        expect(wide.narrow, isFalse);
         expect(find.byType(Tooltip), findsWidgets);
 
-        await tester.pumpWidget(
-          debugConsoleStory.builder(tester.element(find.byType(View))),
+        await pumpStory(
+          tester,
+          gameMapEmpireLeftRailDirectories,
+          folder: 'Game Map Empire Left Rail',
+          useCase: 'Wide — debug console enabled (7 icons)',
         );
-        await tester.pump();
         expect(find.byType(GameMapEmpireLeftRail), findsOneWidget);
 
-        await tester.pumpWidget(
-          narrowStory.builder(tester.element(find.byType(View))),
+        final narrow = await pumpStoryAs<GameMapEmpireLeftRail>(
+          tester,
+          gameMapEmpireLeftRailDirectories,
+          folder: 'Game Map Empire Left Rail',
+          useCase: 'Narrow (360 dp) — 26 × 26 dp buttons, tooltips suppressed',
         );
-        await tester.pump();
-        final narrowRail = tester.widget<GameMapEmpireLeftRail>(
-          find.byType(GameMapEmpireLeftRail),
-        );
-        expect(
-          narrowRail.narrow,
-          isTrue,
-          reason:
-              'Narrow story must construct the rail with narrow: true so '
-              'the 26 × 26 dp measurements and Tooltip suppression apply.',
-        );
+        expect(narrow.narrow, isTrue);
       },
     );
 
     testWidgets(
       'Region Minimap folder exposes visible, hidden, and narrow variants',
       (WidgetTester tester) async {
-        const visibleUseCaseName =
-            'Visible — wide chrome with viewport rectangle';
-        const hiddenUseCaseName = 'Hidden — toggle-only (zoom + show button)';
-        const narrowUseCaseName = 'Narrow — 90 × 70 dp grid (issue #2870 S3)';
-
-        final visibleStory = findWidgetbookUseCase(
+        final visible = await pumpStoryAs<GameRegionMinimap>(
+          tester,
           gameRegionMinimapDirectories,
-          folderName: 'Region Minimap',
-          useCaseName: visibleUseCaseName,
+          folder: 'Region Minimap',
+          useCase: 'Visible — wide chrome with viewport rectangle',
         );
-        final hiddenStory = findWidgetbookUseCase(
-          gameRegionMinimapDirectories,
-          folderName: 'Region Minimap',
-          useCaseName: hiddenUseCaseName,
-        );
-        final narrowStory = findWidgetbookUseCase(
-          gameRegionMinimapDirectories,
-          folderName: 'Region Minimap',
-          useCaseName: narrowUseCaseName,
-        );
+        expect(visible.narrow, isFalse);
+        expect(visible.viewportSnapshot, isNotNull);
 
-        await tester.pumpWidget(
-          visibleStory.builder(tester.element(find.byType(View))),
+        await pumpStory(
+          tester,
+          gameRegionMinimapDirectories,
+          folder: 'Region Minimap',
+          useCase: 'Hidden — toggle-only (zoom + show button)',
         );
-        await tester.pump();
-        final visibleMinimap = tester.widget<GameRegionMinimap>(
-          find.byType(GameRegionMinimap),
-        );
-        expect(visibleMinimap.narrow, isFalse);
-        expect(visibleMinimap.viewportSnapshot, isNotNull);
-
-        await tester.pumpWidget(
-          hiddenStory.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
         expect(find.byType(GameRegionMinimap), findsOneWidget);
 
-        await tester.pumpWidget(
-          narrowStory.builder(tester.element(find.byType(View))),
+        final narrow = await pumpStoryAs<GameRegionMinimap>(
+          tester,
+          gameRegionMinimapDirectories,
+          folder: 'Region Minimap',
+          useCase: 'Narrow — 90 × 70 dp grid (issue #2870 S3)',
         );
-        await tester.pump();
-        final narrowMinimap = tester.widget<GameRegionMinimap>(
-          find.byType(GameRegionMinimap),
-        );
-        expect(
-          narrowMinimap.narrow,
-          isTrue,
-          reason:
-              'Narrow story must construct the minimap with narrow: true so '
-              'the 90 × 70 dp bounding box from mobile-adaptation.md applies.',
-        );
+        expect(narrow.narrow, isTrue);
       },
     );
 
     testWidgets(
       'Game Map Province Side Panel folder exposes open + closed variants',
       (WidgetTester tester) async {
-        const useCaseNames = <String>[
-          'Open — wide layout panel visible',
-          'Closed — panel collapsed',
-        ];
-
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
-            gameMapProvinceDetailSidePanelDirectories,
-            folderName: 'Game Map Province Side Panel',
-            useCaseName: name,
-          );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 100));
-          expect(find.byType(GameMapProvinceDetailSidePanel), findsOneWidget);
-        }
+        await expectStoriesMount(
+          tester,
+          gameMapProvinceDetailSidePanelDirectories,
+          folder: 'Game Map Province Side Panel',
+          useCases: const [
+            'Open — wide layout panel visible',
+            'Closed — panel collapsed',
+          ],
+          widgetType: GameMapProvinceDetailSidePanel,
+          extra: const Duration(milliseconds: 100),
+        );
       },
     );
 
     testWidgets(
       'Players Bar folder exposes wide-layout chip column (S12 story 6)',
       (WidgetTester tester) async {
-        const useCaseNames = <String>[
-          'Default — debug game (wide)',
-          'Human GP highlighted — power scores',
-          'Narrow — embedded below feed anchor',
-        ];
-
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
-            playersBarDirectories,
-            folderName: 'Players Bar',
-            useCaseName: name,
-          );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          expect(find.byType(GameMapPlayersBar), findsOneWidget);
-        }
+        await expectStoriesMount(
+          tester,
+          playersBarDirectories,
+          folder: 'Players Bar',
+          useCases: const [
+            'Default — debug game (wide)',
+            'Human GP highlighted — power scores',
+            'Narrow — embedded below feed anchor',
+          ],
+          widgetType: GameMapPlayersBar,
+        );
       },
     );
 
     testWidgets(
       'Game Screen folder exposes wide integrated layout (S12 story 7)',
       (WidgetTester tester) async {
-        final story = findWidgetbookUseCase(
+        await pumpStory(
+          tester,
           gameScreenDirectories,
-          folderName: 'Game Screen',
-          useCaseName: 'Default — no victory',
+          folder: 'Game Screen',
+          useCase: 'Default — no victory',
+          extra: const Duration(milliseconds: 200),
         );
-        await tester.pumpWidget(
-          story.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 200));
         expect(find.byType(GameScreen), findsOneWidget);
       },
     );
@@ -481,36 +377,26 @@ void main() {
     testWidgets(
       'Game Side Menu folder exposes open + closed variants (S12 story 8)',
       (WidgetTester tester) async {
-        const useCaseNames = <String>['Default — open', 'Closed'];
-
-        for (final name in useCaseNames) {
-          final story = findWidgetbookUseCase(
-            gameSideMenuDirectories,
-            folderName: 'Game Side Menu',
-            useCaseName: name,
-          );
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
-          );
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 250));
-          expect(find.byType(GameSideMenu), findsOneWidget);
-        }
+        await expectStoriesMount(
+          tester,
+          gameSideMenuDirectories,
+          folder: 'Game Side Menu',
+          useCases: const ['Default — open', 'Closed'],
+          widgetType: GameSideMenu,
+          extra: const Duration(milliseconds: 250),
+        );
       },
     );
 
     testWidgets(
       'Victory folder exposes full scrim overlay (S12 story 12)',
       (WidgetTester tester) async {
-        final story = findWidgetbookUseCase(
+        await pumpStory(
+          tester,
           victoryUiDirectories,
-          folderName: 'Victory',
-          useCaseName: 'Victory overlay — full scrim',
+          folder: 'Victory',
+          useCase: 'Victory overlay — full scrim',
         );
-        await tester.pumpWidget(
-          story.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
         expect(find.byType(VictoryOverlay), findsOneWidget);
       },
     );
@@ -518,15 +404,12 @@ void main() {
     testWidgets(
       'Exit Confirm Dialog folder exposes default variant (S12 story 13)',
       (WidgetTester tester) async {
-        final story = findWidgetbookUseCase(
+        await pumpStory(
+          tester,
           exitConfirmDialogDirectories,
-          folderName: 'Exit Confirm Dialog',
-          useCaseName: 'Default — danger Exit + brass Cancel',
+          folder: 'Exit Confirm Dialog',
+          useCase: 'Default — danger Exit + brass Cancel',
         );
-        await tester.pumpWidget(
-          story.builder(tester.element(find.byType(View))),
-        );
-        await tester.pump();
         expect(find.byType(ExitConfirmDialog), findsOneWidget);
       },
     );
@@ -560,33 +443,29 @@ void main() {
             'Populated — three entries (top entry tappable)',
           ),
         ];
+        final allDirectories = <WidgetbookNode>[
+          ...gameTopBarDirectories,
+          ...gameTabBarDirectories,
+          ...gameMapCornerControlsDirectories,
+          ...gameMapEmpireLeftRailDirectories,
+          ...gameRegionMinimapDirectories,
+          ...gameMapProvinceDetailSidePanelDirectories,
+          ...playerTurnEventFeedCardDirectories,
+        ];
 
         for (final (folder, useCase) in folderUseCases) {
-          final allDirectories = <WidgetbookNode>[
-            ...gameTopBarDirectories,
-            ...gameTabBarDirectories,
-            ...gameMapCornerControlsDirectories,
-            ...gameMapEmpireLeftRailDirectories,
-            ...gameRegionMinimapDirectories,
-            ...gameMapProvinceDetailSidePanelDirectories,
-            ...playerTurnEventFeedCardDirectories,
-          ];
-          final story = findWidgetbookUseCase(
-            allDirectories,
-            folderName: folder,
-            useCaseName: useCase,
-          );
           // Reset to a barebones tree before each story so Riverpod
           // ProviderScopes used by different stories don't reuse the
           // same element (which would otherwise hit
           // `Tried to change the number of overrides` per Riverpod
           // `ProviderContainer.updateOverrides`).
-          await tester.pumpWidget(const SizedBox.shrink());
-          await tester.pump();
-          await tester.pumpWidget(
-            story.builder(tester.element(find.byType(View))),
+          await pumpStory(
+            tester,
+            allDirectories,
+            folder: folder,
+            useCase: useCase,
+            resetTree: true,
           );
-          await tester.pump();
           final Scaffold scaffold = tester.widget<Scaffold>(
             find.byType(Scaffold).first,
           );

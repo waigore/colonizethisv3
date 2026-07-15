@@ -14,6 +14,8 @@
 // priority), else the town line when the tile is the province town, else no
 // line at all. All strings resolve through AppLocalizations parameterized
 // keys and render in EditorialMonoclePalette.fg.
+//
+// Shared pumps / designation tables densify residual mid-500 cases (Refs #4021).
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -194,6 +196,26 @@ List<String> _tileTextDataInOrder(WidgetTester tester) {
       .toList(growable: false);
 }
 
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  required Game game,
+  required String provinceId,
+  required String tileKey,
+  RegionMapViewData? region,
+}) async {
+  await tester.pumpWidget(
+    buildProvinceOverlayDarkThemeShell(
+      game: game,
+      region: region ?? demoRegionForOverlay,
+      displayId: provinceId,
+      selectedTileKey: tileKey,
+      playerView: demoOverlayPlayerView(game),
+      draftOrders: const Orders(),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -202,84 +224,81 @@ void main() {
   final tileKey = sampleTileKeyForProvinceOverlay;
 
   group('provinceOverlayTileDesignationLine (Refs #3617 — logic)', () {
-    test('capital tile yields the localized capital line (AC capital)', () {
-      final game = _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey);
-      final provinceName = _provinceDisplayName(game, provinceId);
-      final factionName = game.players.first.displayName;
-
-      final line = provinceOverlayTileDesignationLine(
-        l10n: l10n,
-        game: game,
-        provinceId: provinceId,
-        selectedTileKey: tileKey,
-      );
-
-      expect(
-        line,
-        l10n.provinceOverlay_tileCapitalOf(provinceName, factionName),
-      );
-      expect(line, '$provinceName, the capital of $factionName');
-    });
-
-    test('capital takes priority when the tile is also the province town '
-        '(AC capital-only when both apply)', () {
-      var game = _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey);
-      game = _withProvinceTownTile(game, provinceId, tileKey);
-      final provinceName = _provinceDisplayName(game, provinceId);
-      final factionName = game.players.first.displayName;
-
-      final line = provinceOverlayTileDesignationLine(
-        l10n: l10n,
-        game: game,
-        provinceId: provinceId,
-        selectedTileKey: tileKey,
-      );
-
-      expect(
-        line,
-        l10n.provinceOverlay_tileCapitalOf(provinceName, factionName),
-      );
-      expect(line, isNot(contains('The town of')));
-    });
-
-    test(
-      'town tile (not a capital) yields the localized town line (AC town)',
-      () {
-        var game = _withoutMatchingCapitals(demoGameForOverlay);
-        game = _withProvinceTownTile(game, provinceId, tileKey);
-        final provinceName = _provinceDisplayName(game, provinceId);
-
+    for (final c
+        in <
+          ({
+            String name,
+            Game Function() game,
+            String? Function(Game) want,
+            Matcher? also,
+          })
+        >[
+          (
+            name: 'capital tile yields the localized capital line (AC capital)',
+            game: () =>
+                _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey),
+            want: (g) => l10n.provinceOverlay_tileCapitalOf(
+              _provinceDisplayName(g, provinceId),
+              g.players.first.displayName,
+            ),
+            also: null,
+          ),
+          (
+            name:
+                'capital takes priority when the tile is also the province town '
+                '(AC capital-only when both apply)',
+            game: () {
+              var g = _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey);
+              return _withProvinceTownTile(g, provinceId, tileKey);
+            },
+            want: (g) => l10n.provinceOverlay_tileCapitalOf(
+              _provinceDisplayName(g, provinceId),
+              g.players.first.displayName,
+            ),
+            also: isNot(contains('The town of')),
+          ),
+          (
+            name:
+                'town tile (not a capital) yields the localized town line (AC town)',
+            game: () {
+              var g = _withoutMatchingCapitals(demoGameForOverlay);
+              return _withProvinceTownTile(g, provinceId, tileKey);
+            },
+            want: (g) => l10n.provinceOverlay_tileTownOf(
+              _provinceDisplayName(g, provinceId),
+            ),
+            also: null,
+          ),
+          (
+            name:
+                'ordinary land tile (neither town nor capital) yields null '
+                '(AC no designation)',
+            game: () {
+              var g = _withoutMatchingCapitals(demoGameForOverlay);
+              return _withProvinceTownTile(
+                g,
+                provinceId,
+                'oldWorld|__sentinel_town__|8881|8882',
+              );
+            },
+            want: (_) => null,
+            also: null,
+          ),
+        ]) {
+      test(c.name, () {
+        final game = c.game();
         final line = provinceOverlayTileDesignationLine(
           l10n: l10n,
           game: game,
           provinceId: provinceId,
           selectedTileKey: tileKey,
         );
-
-        expect(line, l10n.provinceOverlay_tileTownOf(provinceName));
-        expect(line, 'The town of $provinceName');
-      },
-    );
-
-    test('ordinary land tile (neither town nor capital) yields null '
-        '(AC no designation)', () {
-      var game = _withoutMatchingCapitals(demoGameForOverlay);
-      // Point the province town somewhere other than the tile under test.
-      game = _withProvinceTownTile(
-        game,
-        provinceId,
-        'oldWorld|__sentinel_town__|8881|8882',
-      );
-
-      final line = provinceOverlayTileDesignationLine(
-        l10n: l10n,
-        game: game,
-        provinceId: provinceId,
-        selectedTileKey: tileKey,
-      );
-
-      expect(line, isNull);
-    });
+        expect(line, c.want(game));
+        if (c.also != null && line != null) {
+          expect(line, c.also);
+        }
+      });
+    }
 
     test('minor-nation capital tile resolves the minor display name', () {
       final base = demoGameForOverlay;
@@ -319,23 +338,17 @@ void main() {
       testWidgets('capital line renders between Terrain and Resource in fg '
           '(AC capital designation line)', (WidgetTester tester) async {
         final game = _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey);
-        final provinceName = _provinceDisplayName(game, provinceId);
         final expected = l10n.provinceOverlay_tileCapitalOf(
-          provinceName,
+          _provinceDisplayName(game, provinceId),
           game.players.first.displayName,
         );
 
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
-            game: game,
-            region: demoRegionForOverlay,
-            displayId: provinceId,
-            selectedTileKey: tileKey,
-            playerView: demoOverlayPlayerView(game),
-            draftOrders: const Orders(),
-          ),
+        await _pumpOverlay(
+          tester,
+          game: game,
+          provinceId: provinceId,
+          tileKey: tileKey,
         );
-        await tester.pumpAndSettle();
 
         final finder = find.text(expected);
         expect(finder, findsOneWidget);
@@ -359,55 +372,63 @@ void main() {
         expect(designationIdx, lessThan(resourceIdx));
       });
 
-      testWidgets('town line renders for the province town tile '
-          '(AC town designation line)', (WidgetTester tester) async {
-        var game = _withoutMatchingCapitals(demoGameForOverlay);
-        game = _withProvinceTownTile(game, provinceId, tileKey);
-        final provinceName = _provinceDisplayName(game, provinceId);
-        final expected = l10n.provinceOverlay_tileTownOf(provinceName);
-
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
+      for (final c
+          in <
+            ({
+              String name,
+              Game Function() game,
+              void Function(WidgetTester, Game) assertUi,
+            })
+          >[
+            (
+              name:
+                  'town line renders for the province town tile '
+                  '(AC town designation line)',
+              game: () {
+                var g = _withoutMatchingCapitals(demoGameForOverlay);
+                return _withProvinceTownTile(g, provinceId, tileKey);
+              },
+              assertUi: (tester, g) {
+                final expected = l10n.provinceOverlay_tileTownOf(
+                  _provinceDisplayName(g, provinceId),
+                );
+                final finder = find.text(expected);
+                expect(finder, findsOneWidget);
+                expect(
+                  tester.widget<Text>(finder).style?.color,
+                  EditorialMonoclePalette.fg,
+                );
+              },
+            ),
+            (
+              name:
+                  'ordinary land tile renders no designation line '
+                  '(AC no designation)',
+              game: () {
+                var g = _withoutMatchingCapitals(demoGameForOverlay);
+                return _withProvinceTownTile(
+                  g,
+                  provinceId,
+                  'oldWorld|__sentinel_town__|8881|8882',
+                );
+              },
+              assertUi: (tester, _) {
+                expect(find.textContaining('the capital of'), findsNothing);
+                expect(find.textContaining('The town of'), findsNothing);
+              },
+            ),
+          ]) {
+        testWidgets(c.name, (WidgetTester tester) async {
+          final game = c.game();
+          await _pumpOverlay(
+            tester,
             game: game,
-            region: demoRegionForOverlay,
-            displayId: provinceId,
-            selectedTileKey: tileKey,
-            playerView: demoOverlayPlayerView(game),
-            draftOrders: const Orders(),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final finder = find.text(expected);
-        expect(finder, findsOneWidget);
-        final Text row = tester.widget<Text>(finder);
-        expect(row.style?.color, EditorialMonoclePalette.fg);
-      });
-
-      testWidgets('ordinary land tile renders no designation line '
-          '(AC no designation)', (WidgetTester tester) async {
-        var game = _withoutMatchingCapitals(demoGameForOverlay);
-        game = _withProvinceTownTile(
-          game,
-          provinceId,
-          'oldWorld|__sentinel_town__|8881|8882',
-        );
-
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
-            game: game,
-            region: demoRegionForOverlay,
-            displayId: provinceId,
-            selectedTileKey: tileKey,
-            playerView: demoOverlayPlayerView(game),
-            draftOrders: const Orders(),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.textContaining('the capital of'), findsNothing);
-        expect(find.textContaining('The town of'), findsNothing);
-      });
+            provinceId: provinceId,
+            tileKey: tileKey,
+          );
+          c.assertUi(tester, game);
+        });
+      }
 
       testWidgets('unrevealed selected tile renders no designation line '
           '(AC suppressed for unrevealed)', (WidgetTester tester) async {
@@ -422,17 +443,13 @@ void main() {
               c.x == tx && c.y == ty ? TileVisibility.unrevealed : c.visibility,
         );
 
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
-            game: game,
-            region: region,
-            displayId: provinceId,
-            selectedTileKey: tileKey,
-            playerView: demoOverlayPlayerView(game),
-            draftOrders: const Orders(),
-          ),
+        await _pumpOverlay(
+          tester,
+          game: game,
+          provinceId: provinceId,
+          tileKey: tileKey,
+          region: region,
         );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('the capital of'), findsNothing);
         expect(find.text('Terrain: ???'), findsOneWidget);
@@ -440,60 +457,47 @@ void main() {
     },
   );
 
-  group(
-    'ProvinceSeaZoneDetailOverlay Tile designation goldens (Refs #3617)',
-    () {
-      testWidgets(
-        'capital designation line golden (AC capital designation line)',
-        (WidgetTester tester) async {
-          addTearDown(() => tester.binding.setSurfaceSize(null));
-          await tester.binding.setSurfaceSize(const Size(600, 1000));
-          const boundaryKey = ValueKey<String>(
-            'province_overlay_tile_capital_designation_golden',
-          );
-
-          final game = _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey);
-          final provinceName = _provinceDisplayName(game, provinceId);
-          final expected = l10n.provinceOverlay_tileCapitalOf(
-            provinceName,
-            game.players.first.displayName,
-          );
-
-          await tester.pumpWidget(
-            _goldenOverlay(
-              game: game,
-              region: demoRegionForOverlay,
-              displayId: provinceId,
-              selectedTileKey: tileKey,
-              boundaryKey: boundaryKey,
+  group('ProvinceSeaZoneDetailOverlay Tile designation goldens (Refs #3617)', () {
+    for (final c
+        in <
+          ({
+            String name,
+            String key,
+            String golden,
+            Game Function() game,
+            String Function(Game) expectedText,
+          })
+        >[
+          (
+            name:
+                'capital designation line golden (AC capital designation line)',
+            key: 'province_overlay_tile_capital_designation_golden',
+            golden: 'goldens/province_overlay_tile_capital_designation.png',
+            game: () =>
+                _withFirstPlayerCapitalTile(demoGameForOverlay, tileKey),
+            expectedText: (g) => l10n.provinceOverlay_tileCapitalOf(
+              _provinceDisplayName(g, provinceId),
+              g.players.first.displayName,
             ),
-          );
-          await tester.pumpAndSettle();
-
-          expect(find.text(expected), findsOneWidget);
-
-          await expectLater(
-            find.byKey(boundaryKey),
-            matchesGoldenFile(
-              'goldens/province_overlay_tile_capital_designation.png',
+          ),
+          (
+            name: 'town designation line golden (AC town designation line)',
+            key: 'province_overlay_tile_town_designation_golden',
+            golden: 'goldens/province_overlay_tile_town_designation.png',
+            game: () {
+              var g = _withoutMatchingCapitals(demoGameForOverlay);
+              return _withProvinceTownTile(g, provinceId, tileKey);
+            },
+            expectedText: (g) => l10n.provinceOverlay_tileTownOf(
+              _provinceDisplayName(g, provinceId),
             ),
-          );
-        },
-      );
-
-      testWidgets('town designation line golden (AC town designation line)', (
-        WidgetTester tester,
-      ) async {
+          ),
+        ]) {
+      testWidgets(c.name, (WidgetTester tester) async {
         addTearDown(() => tester.binding.setSurfaceSize(null));
         await tester.binding.setSurfaceSize(const Size(600, 1000));
-        const boundaryKey = ValueKey<String>(
-          'province_overlay_tile_town_designation_golden',
-        );
-
-        var game = _withoutMatchingCapitals(demoGameForOverlay);
-        game = _withProvinceTownTile(game, provinceId, tileKey);
-        final provinceName = _provinceDisplayName(game, provinceId);
-        final expected = l10n.provinceOverlay_tileTownOf(provinceName);
+        final boundaryKey = ValueKey<String>(c.key);
+        final game = c.game();
 
         await tester.pumpWidget(
           _goldenOverlay(
@@ -506,15 +510,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text(expected), findsOneWidget);
+        expect(find.text(c.expectedText(game)), findsOneWidget);
 
-        await expectLater(
-          find.byKey(boundaryKey),
-          matchesGoldenFile(
-            'goldens/province_overlay_tile_town_designation.png',
-          ),
-        );
+        await expectLater(find.byKey(boundaryKey), matchesGoldenFile(c.golden));
       });
-    },
-  );
+    }
+  });
 }
