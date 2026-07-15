@@ -36,11 +36,12 @@ import 'package:path/path.dart' as p;
 ///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
 ///    sibling `repo.app_no_material_*` rules so the Material-widget ban family
 ///    stays scope-uniform across rules.
-/// 2. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
-///    implementations. These widgets implement the design-system primitives
-///    consumed by the rest of the feature tree and may compose Material
-///    primitives internally. Consumer code in `features/**` must still resolve
-///    chip chrome through the catalog widget, not a raw `ChoiceChip`.
+/// 2. **Feature `chrome/` tree** — deleted after #4035 AC2; Ct-*
+///    catalog widgets live under `app/lib/widgets/` (outside this
+///    features-only scan). Resurrected `features/.../chrome/` paths
+///    are barred by `repo.app_no_feature_chrome_imports` and are
+///    **not** skipped by this Material ban.
+///
 ///
 /// Per-line skips:
 /// - Lines starting with `//` (line comments) and `///` (dartdoc) so this
@@ -112,8 +113,10 @@ int runCheckAppNoMaterialChoiceChip(
 }
 
 /// True when [relativePath] (POSIX, repo-rooted) is in scope for the checker
-/// but allowlisted as a whole-file scope exclusion (dev tooling screen or
-/// Ct-* catalog widget under `features/game/widgets/chrome/`).
+/// but allowlisted as a whole-file scope exclusion (dev-tooling screens
+/// only; Ct-* catalog widgets live under `app/lib/widgets/` outside
+/// this features-only scan).
+/// dev-tooling screens only; Ct-* are under `app/lib/widgets/`).
 ///
 /// Exposed for `test/check_app_no_material_choicechip_test.dart`.
 bool shouldSkipAppNoMaterialChoiceChipFile(String relativePath) {
@@ -169,10 +172,9 @@ const Set<String> _appNoMaterialChoiceChipAllowedFiles = <String>{
 };
 
 const Set<String> _appNoMaterialChoiceChipAllowedDirPrefixes = <String>{
-  // Ct-* catalog widgets implementing design-system primitives. Consumers
-  // in features/** still resolve chip chrome through these widgets, not
-  // raw Material ChoiceChip.
-  'app/lib/features/game/widgets/chrome/',
+  // Feature chrome tree deleted (Refs #4035 AC2). Ct-* catalog widgets live
+  // under app/lib/widgets/ and are outside this features-only scan scope.
+  // Resurrected features/.../chrome/ paths are not skipped here.
 };
 
 void main() {
