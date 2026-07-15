@@ -65,8 +65,7 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
       );
     }
     final hostArgs = resolveProvinceDetailHostOverlayArgs(
-      gameService: ref.watch(gameServiceProvider),
-      gameId: game.id,
+      loadMapData: () => ref.read(gameServiceProvider).getMapData(game.id),
       panelNotifier: ref.read(mapProvincePanelProvider.notifier),
       bus: ref.read(appEventBusProvider),
     );

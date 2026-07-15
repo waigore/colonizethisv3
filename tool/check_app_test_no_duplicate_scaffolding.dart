@@ -343,7 +343,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// dialogue acceptance / production-screen integration hosts
 /// (`diplomacy_panel_mockup_fidelity`, `grant_or_subsidy_listener`,
 /// `dialogue_acceptance`, `production_screen_integration`),
-/// `ct_radius_adoption`, and `province_detail_panel_slide_transition`.
+/// `ct_radius_adoption`, `province_detail_panel_slide_transition`, shell /
+/// main-menu hosts (`shell_screen`, `shell_screen_pixelart_chrome`,
+/// `main_menu_quit_chip_fidelity`, `new_game_leader_dialog_builder`,
+/// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -485,7 +488,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'grant_or_subsidy_listener_test.dart' ||
       name == 'province_detail_panel_slide_transition_test.dart' ||
       name == 'dialogue_acceptance_test.dart' ||
-      name == 'production_screen_integration_test.dart';
+      name == 'production_screen_integration_test.dart' ||
+      name == 'shell_screen_test.dart' ||
+      name == 'shell_screen_pixelart_chrome_test.dart' ||
+      name == 'main_menu_quit_chip_fidelity_test.dart' ||
+      name == 'new_game_leader_dialog_builder_test.dart' ||
+      name == 'shell_player_guarded_body_test.dart' ||
+      name == 'map_diplomacy_panel_specs_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

@@ -889,6 +889,12 @@ void main() {
         'province_detail_panel_slide_transition_test.dart',
         'dialogue_acceptance_test.dart',
         'production_screen_integration_test.dart',
+        'shell_screen_test.dart',
+        'shell_screen_pixelart_chrome_test.dart',
+        'main_menu_quit_chip_fidelity_test.dart',
+        'new_game_leader_dialog_builder_test.dart',
+        'shell_player_guarded_body_test.dart',
+        'map_diplomacy_panel_specs_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -976,6 +982,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'province_detail_panel_slide_transition_test.dart',
         'dialogue_acceptance_test.dart',
         'production_screen_integration_test.dart',
+        'shell_screen_test.dart',
+        'shell_screen_pixelart_chrome_test.dart',
+        'main_menu_quit_chip_fidelity_test.dart',
+        'new_game_leader_dialog_builder_test.dart',
+        'shell_player_guarded_body_test.dart',
+        'map_diplomacy_panel_specs_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

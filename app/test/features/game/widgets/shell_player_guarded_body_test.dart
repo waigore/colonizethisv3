@@ -19,6 +19,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../support/app_shell_harness.dart';
+
 ShellPlayerContext _shell({
   required bool showPlayerChrome,
   bool canMutateViaUi = true,
@@ -65,8 +67,9 @@ void main() {
         _shell(showPlayerChrome: false),
         'Military Units',
       );
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: sentinel)),
+        buildAppShell(child: Scaffold(body: sentinel)),
       );
 
       expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
