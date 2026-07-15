@@ -128,7 +128,7 @@ Widget buildGameScreenHost({
   final MaterialApp materialApp = MaterialApp(
     navigatorKey: navigatorKey,
     theme: appTheme,
-    routes: routes,
+    routes: routes ?? const <String, WidgetBuilder>{},
     initialRoute: initialRoute,
     home: initialRoute == null ? sizedHome : null,
   );
