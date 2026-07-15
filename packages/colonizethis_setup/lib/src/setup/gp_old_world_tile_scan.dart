@@ -12,6 +12,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'tile_cell_scan.dart';
+
 /// Canonical Old World tile key for the GP-owned grid cell at ([x], [y]) in
 /// province [localProvinceId]. Single source of truth for both redistribution
 /// concerns (previously duplicated as private `_owTileKey`).
@@ -73,15 +75,15 @@ void visitGpOwLandTiles({
   required Set<String> gpIds,
   required GpOwLandTileVisitor visit,
 }) {
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      final local = map.cell(x, y);
-      final owner = ownerByLocal[local];
-      if (owner == null || !isGpOwner(owner, gpIds)) continue;
-      if (map.terrainAt(x, y) == null) continue;
-      visit(x, y, local, owner, gpOwTileKey(local, x, y));
-    }
-  }
+  // Walk via forEachTileCell so the setup package has one nested full-grid
+  // double-loop (Refs #4029). Tile keys still use gpOwTileKey (full province
+  // id), not forEachTileCell's CapitalTile.tileKey(localId) shape.
+  forEachTileCell(map, kRegionOldWorld, (x, y, local, _) {
+    final owner = ownerByLocal[local];
+    if (owner == null || !isGpOwner(owner, gpIds)) return;
+    if (map.terrainAt(x, y) == null) return;
+    visit(x, y, local, owner, gpOwTileKey(local, x, y));
+  });
 }
 
 /// A GP-owned Old World land tile eligible for redistribution (town/capital

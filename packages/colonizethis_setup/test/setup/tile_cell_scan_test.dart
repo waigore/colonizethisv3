@@ -78,4 +78,25 @@ void main() {
       expect(calls, 0);
     });
   });
+
+  group('forEachProvinceCell', () {
+    test('visits only matching localProvinceId cells in row-major order', () {
+      final map = _map([
+        ['p1', 'p2', 'p1'],
+        ['p2', 'p1', 'sea'],
+      ]);
+      final visited = <(int, int)>[];
+      forEachProvinceCell(map, 'p1', (x, y) => visited.add((x, y)));
+      expect(visited, [(0, 0), (2, 0), (1, 1)]);
+    });
+
+    test('does not invoke the visitor when no cell matches', () {
+      final map = _map([
+        ['a', 'b'],
+      ]);
+      var calls = 0;
+      forEachProvinceCell(map, 'missing', (_, __) => calls++);
+      expect(calls, 0);
+    });
+  });
 }
