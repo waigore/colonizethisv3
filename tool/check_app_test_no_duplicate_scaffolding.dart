@@ -372,14 +372,16 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `widgetbook_technology_screen_mobile_viewport`,
 /// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`,
 /// `themes_and_widgetbook`, colonial GameScreen hosts migrated onto
-/// `buildGameScreenHost` (`game_screen_narrow_part2`,
-/// `game_screen_overture_pending`, `game_screen_turn_resolution_branches`,
-/// `game_screen_intervention_flow`), ShellScreen colonial frames in
-/// `shell_game_screen_specs` (via `buildAppShell(theme:)`), light-theme
-/// debug log viewer hosts (`debug_log_viewer` via `buildAppShell(theme:)`),
-/// and Flame region-map suites densified onto `ctRegionMapTestHarness`
-/// (`ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`,
-/// plains plantation / extraction-disc / transport-resource goldens).
+/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_part1`,
+/// `game_screen_narrow_part2`, `game_screen_s13_mockup_fidelity`,
+/// `game_screen_side_menu_toggle`, `game_screen_overture_pending`,
+/// `game_screen_turn_resolution_branches`, `game_screen_intervention_flow`),
+/// ShellScreen colonial frames in `shell_game_screen_specs` (via
+/// `buildAppShell(theme:)`), light-theme debug log viewer hosts
+/// (`debug_log_viewer` via `buildAppShell(theme:)`), and Flame region-map
+/// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_widget_part2`
+/// / `part3`, `region_map_zoom_fit`, plains plantation / extraction-disc /
+/// transport-resource goldens).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -559,7 +561,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'widgetbook_turn_news_mobile_viewport_test.dart' ||
       name == 'tech_gp_pennant_goldens_test.dart' ||
       name == 'themes_and_widgetbook_test.dart' ||
+      name == 'game_screen_branches_test.dart' ||
+      name == 'game_screen_narrow_part1_test.dart' ||
       name == 'game_screen_narrow_part2_test.dart' ||
+      name == 'game_screen_s13_mockup_fidelity_test.dart' ||
+      name == 'game_screen_side_menu_toggle_test.dart' ||
       name == 'game_screen_overture_pending_test.dart' ||
       name == 'game_screen_turn_resolution_branches_test.dart' ||
       name == 'game_screen_intervention_flow_test.dart' ||
