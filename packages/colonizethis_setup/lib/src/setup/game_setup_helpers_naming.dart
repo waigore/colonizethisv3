@@ -1,4 +1,12 @@
-part of 'game_setup_helpers.dart';
+// SPEC/program/game-setup-pipeline.md §7c — province/sea-zone naming (importable library).
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'faction_setup_helpers.dart';
+import 'game_setup_context.dart';
+import 'province_name_fallback.dart';
+
 
 const int _kNamingCapitalCollisionSalt = 919_393;
 const int _kNamingPoolExhaustedSalt = 271_828;
