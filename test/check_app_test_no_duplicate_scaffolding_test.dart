@@ -927,6 +927,9 @@ void main() {
         'tech_gp_pennant_goldens_test.dart',
         'themes_and_widgetbook_test.dart',
         'debug_log_viewer_test.dart',
+        'ct_region_map_widget_part2_test.dart',
+        'ct_region_map_widget_part3_test.dart',
+        'region_map_zoom_fit_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1052,6 +1055,9 @@ Widget host() => MaterialApp(home: const Placeholder());
         'tech_gp_pennant_goldens_test.dart',
         'themes_and_widgetbook_test.dart',
         'debug_log_viewer_test.dart',
+        'ct_region_map_widget_part2_test.dart',
+        'ct_region_map_widget_part3_test.dart',
+        'region_map_zoom_fit_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

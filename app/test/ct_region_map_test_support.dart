@@ -14,7 +14,11 @@ import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/ct_region_map_game.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show BaseLayerDisplayMode, CtMapVisibilityMode, CtRegionMapComponent;
+    show
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode,
+        CtRegionMapComponent,
+        RegionMapViewportSnapshot;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
@@ -91,10 +95,18 @@ Widget ctRegionMapTestHarness({
   VoidCallback? onRegionViewChanged,
   PlayerView? playerViewForResources,
   AppEventBus? bus,
+  Set<String>? validTileKeys,
+  void Function(String)? onTileSelected,
+  VoidCallback? onWorkTargetSelectionCancelled,
+  void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
+  double? zoomMultiplier,
+  /// When non-null, replaces the default `Center > SizedBox > CtRegionMap` body
+  /// (Refs #4035 — Flame-map suites that need [StatefulBuilder] / custom layout).
+  Widget? scaffoldBody,
 }) {
-  return MaterialApp(
-    home: Scaffold(
-      body: Center(
+  final Widget body =
+      scaffoldBody ??
+      Center(
         child: SizedBox(
           width: width,
           height: height,
@@ -121,11 +133,15 @@ Widget ctRegionMapTestHarness({
             secondaryHighlightTileKeys: secondaryHighlightTileKeys,
             onRegionViewChanged: onRegionViewChanged,
             bus: bus,
+            validTileKeys: validTileKeys,
+            onTileSelected: onTileSelected,
+            onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+            onViewportSnapshotChanged: onViewportSnapshotChanged,
+            zoomMultiplier: zoomMultiplier,
           ),
         ),
-      ),
-    ),
-  );
+      );
+  return MaterialApp(home: Scaffold(body: body));
 }
 
 /// Assert each asset path loads and is non-empty.

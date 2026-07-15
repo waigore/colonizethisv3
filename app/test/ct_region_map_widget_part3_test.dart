@@ -82,21 +82,13 @@ Future<void> _pumpPortMapDirect(
   required AppEventBus bus,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: SizedBox(
-            width: 64,
-            height: 64,
-            child: CtRegionMap(
-              region: _portDrawableRegion(),
-              cellSizePx: 32,
-              bus: bus,
-              baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-            ),
-          ),
-        ),
-      ),
+    ctRegionMapTestHarness(
+      region: _portDrawableRegion(),
+      width: 64,
+      height: 64,
+      cellSizePx: 32,
+      bus: bus,
+      baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
     ),
   );
   await tester.pump();

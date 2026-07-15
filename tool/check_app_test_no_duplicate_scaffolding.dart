@@ -375,8 +375,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `buildGameScreenHost` (`game_screen_narrow_part2`,
 /// `game_screen_overture_pending`, `game_screen_turn_resolution_branches`,
 /// `game_screen_intervention_flow`), ShellScreen colonial frames in
-/// `shell_game_screen_specs` (via `buildAppShell(theme:)`), and light-theme
-/// debug log viewer hosts (`debug_log_viewer` via `buildAppShell(theme:)`).
+/// `shell_game_screen_specs` (via `buildAppShell(theme:)`), light-theme
+/// debug log viewer hosts (`debug_log_viewer` via `buildAppShell(theme:)`),
+/// and Flame region-map suites densified onto `ctRegionMapTestHarness`
+/// (`ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -561,7 +563,10 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'game_screen_turn_resolution_branches_test.dart' ||
       name == 'game_screen_intervention_flow_test.dart' ||
       name == 'shell_game_screen_specs_test.dart' ||
-      name == 'debug_log_viewer_test.dart';
+      name == 'debug_log_viewer_test.dart' ||
+      name == 'ct_region_map_widget_part2_test.dart' ||
+      name == 'ct_region_map_widget_part3_test.dart' ||
+      name == 'region_map_zoom_fit_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
