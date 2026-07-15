@@ -32,28 +32,6 @@ void main() {
     techUnlocked: const <String, bool>{kTechIdCottonWeaving: true},
   );
 
-  Widget buildPanel(Player player) {
-    final game = productionPanelTestGameFor(player);
-    return MaterialApp(
-      home: MediaQuery(
-        data: const MediaQueryData(size: Size(800, 600)),
-        child: Scaffold(
-          body: SizedBox(
-            width: 800,
-            height: 600,
-            child: ProductionPanel(
-              game: game,
-              player: player,
-              desiredOutputByRecipe: const {},
-              netDeltasByCommodity: const {},
-              onDesiredOutputChanged: (_) {},
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Finder lockedOpacityIn(Key rowKey) => find.descendant(
     of: find.byKey(rowKey),
     matching: find.byWidgetPredicate(
@@ -66,7 +44,9 @@ void main() {
     testWidgets(
       'locked recipe stays visible and shows the localized (locked) marker',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(lockedPlayer()));
+        await tester.pumpWidget(
+          buildProductionPanel(player: lockedPlayer(), height: 600),
+        );
         await pumpSettleCapped(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
 
@@ -91,7 +71,9 @@ void main() {
     testWidgets(
       'locked recipe slider sub-row is wrapped in IgnorePointer + Opacity(0.4)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(lockedPlayer()));
+        await tester.pumpWidget(
+          buildProductionPanel(player: lockedPlayer(), height: 600),
+        );
         await pumpSettleCapped(tester);
 
         final opacity = lockedOpacityIn(cottonRowKey);
@@ -111,7 +93,9 @@ void main() {
     testWidgets(
       'unlocked recipe renders normally: no (locked) marker, no locked opacity',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(unlockedPlayer()));
+        await tester.pumpWidget(
+          buildProductionPanel(player: unlockedPlayer(), height: 600),
+        );
         await pumpSettleCapped(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
 
@@ -135,7 +119,9 @@ void main() {
     testWidgets(
       'negative: fabric_from_wool is never locked (no requiredTechId)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildPanel(lockedPlayer()));
+        await tester.pumpWidget(
+          buildProductionPanel(player: lockedPlayer(), height: 600),
+        );
         await pumpSettleCapped(tester);
         final l10n = lookupAppLocalizations(const Locale('en'));
 

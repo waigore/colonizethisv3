@@ -223,7 +223,9 @@ bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
 
 /// True for panel-host families that must compose `buildAppShell` /
 /// `buildProductionPanel` / `buildNavalPanel` instead of an inline
-/// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only.
+/// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
+/// production specialty hosts (cotton-weaving lock, available grid) and
+/// military panel suites that already compose `buildMilitaryPanel`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -233,11 +235,16 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
     return false;
   }
   return name.startsWith('production_panel_part') ||
+      name == 'production_panel_cotton_weaving_lock_test.dart' ||
+      name == 'production_panel_available_grid_test.dart' ||
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
       name == 'naval_units_panel_mockup_fidelity_test.dart' ||
-      name == 'game_map_narrow_detail_overlay_test.dart';
+      name == 'game_map_narrow_detail_overlay_test.dart' ||
+      name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
+      name == 'military_units_panel_army_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -483,8 +490,8 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
       _report(
         offset,
         'inline MaterialApp( host; use buildProductionPanel / '
-        'buildNavalPanel / buildCivilianPanel / buildAppShell / '
-        'buildAppShellWithContainer from app/test/support/',
+        'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
+        'buildAppShell / buildAppShellWithContainer from app/test/support/',
       );
     }
   }

@@ -588,4 +588,114 @@ Widget host(ProviderContainer c) => buildAppShellWithContainer(
     final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
     expect(code, 0);
   });
+
+  test(
+    'fails when production available-grid suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_grid_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_panel_available_grid_test.dart',
+        '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(
+        logs.join('\n'),
+        contains('inline MaterialApp( host'),
+      );
+    },
+  );
+
+  test(
+    'passes when production cotton-weaving suite uses buildProductionPanel only',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_cotton_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_panel_cotton_weaving_lock_test.dart',
+        '''
+import 'support/production_panel_test_support.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildProductionPanel(player: productionPanelTestFullPlayer()),
+    );
+  });
+}
+''',
+      );
+
+      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+      expect(code, 0);
+    },
+  );
+
+  test('fails when military panel suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_test.dart',
+      '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline MaterialApp( host'),
+    );
+  });
+
+  test('passes when military panel suite uses buildMilitaryPanel only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_display_test.dart',
+      '''
+import 'support/military_units_panel_test_support.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildMilitaryPanel(game: buildMilitaryPanelTestGame(), humanPlayerId: 'h1'),
+    );
+  });
+}
+''',
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
 }
