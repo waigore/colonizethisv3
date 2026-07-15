@@ -5,12 +5,12 @@
 // Pins the durable contract that every Market row carries:
 //
 //   * a 20 dp leading [ResourceIcon] keyed
-//     `TradeScreen.marketRowResourceIconKey(commodityId)` immediately
+//     `TradeScreenMarketKeys.marketRowResourceIconKey(commodityId)` immediately
 //     before the commodity display name on line 1, so each row reads
 //     the same commodity glyph as its Production-panel counterpart
 //     (`CtResourceCell.leadingIconSize == 20`);
 //   * a 14 dp trailing treasury-coin [StrictAssetIcon] keyed
-//     `TradeScreen.marketRowPriceCoinIconKey(commodityId)` immediately
+//     `TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId)` immediately
 //     before the integer price text on line 1, using the same
 //     `assets/icons/32/ui_icon_treasury_coin.png` asset family as the
 //     game tab bar treasury chip;
@@ -53,7 +53,7 @@ void main() {
         game: buildTradeTestGame(id: 'test_trade_screen_market_tab_row_icons'),
       );
 
-      final list = find.byKey(TradeScreen.marketCommodityListKey);
+      final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
       expect(list, findsOneWidget);
 
       final List<Commodity> tradeable = <Commodity>[
@@ -72,7 +72,7 @@ void main() {
       for (final Commodity c in tradeable) {
         final iconFinder = find.descendant(
           of: list,
-          matching: find.byKey(TradeScreen.marketRowResourceIconKey(c.id)),
+          matching: find.byKey(TradeScreenMarketKeys.marketRowResourceIconKey(c.id)),
         );
         expect(
           iconFinder,
@@ -97,10 +97,10 @@ void main() {
         );
         expect(
           icon.size,
-          TradeScreen.marketRowResourceIconSize,
+          TradeScreenMarketKeys.marketRowResourceIconSize,
           reason:
               'ResourceIcon on the Trade row must paint at 20 dp '
-              '(TradeScreen.marketRowResourceIconSize) — matches the '
+              '(TradeScreenMarketKeys.marketRowResourceIconSize) — matches the '
               'Production panel `CtResourceCell.leadingIconSize`.',
         );
       }
@@ -121,7 +121,7 @@ void main() {
           ),
         );
 
-        final list = find.byKey(TradeScreen.marketCommodityListKey);
+        final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
         expect(list, findsOneWidget);
 
         final List<Commodity> tradeable = <Commodity>[
@@ -132,7 +132,7 @@ void main() {
         for (final Commodity c in tradeable) {
           final coinFinder = find.descendant(
             of: list,
-            matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey(c.id)),
+            matching: find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey(c.id)),
           );
           expect(
             coinFinder,
@@ -156,8 +156,8 @@ void main() {
                 'ui_icon_treasury_coin.png asset (same family as the '
                 'game tab bar treasury chip).',
           );
-          expect(coin.width, TradeScreen.marketRowPriceCoinIconSize);
-          expect(coin.height, TradeScreen.marketRowPriceCoinIconSize);
+          expect(coin.width, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
+          expect(coin.height, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
         }
       },
     );
@@ -176,12 +176,12 @@ void main() {
         );
 
         final iconRect = tester.getRect(
-          find.byKey(TradeScreen.marketRowResourceIconKey('timber')),
+          find.byKey(TradeScreenMarketKeys.marketRowResourceIconKey('timber')),
         );
         // ignore: avoid_hardcoded_strings_in_widgets
         final nameRect = tester.getRect(find.text('Timber'));
         final coinRect = tester.getRect(
-          find.byKey(TradeScreen.marketRowPriceCoinIconKey('timber')),
+          find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey('timber')),
         );
         // ignore: avoid_hardcoded_strings_in_widgets
         final priceRect = tester.getRect(find.text('30'));
@@ -204,10 +204,10 @@ void main() {
         // The ResourceIcon's painted side length must equal the SPEC
         // constant (20 dp) so a future refactor that swaps the size
         // away from CtResourceCell.leadingIconSize trips this pin.
-        expect(iconRect.width, TradeScreen.marketRowResourceIconSize);
-        expect(iconRect.height, TradeScreen.marketRowResourceIconSize);
-        expect(coinRect.width, TradeScreen.marketRowPriceCoinIconSize);
-        expect(coinRect.height, TradeScreen.marketRowPriceCoinIconSize);
+        expect(iconRect.width, TradeScreenMarketKeys.marketRowResourceIconSize);
+        expect(iconRect.height, TradeScreenMarketKeys.marketRowResourceIconSize);
+        expect(coinRect.width, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
+        expect(coinRect.height, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
       },
     );
 
@@ -227,7 +227,7 @@ void main() {
         CommodityCatalog.spices.id,
       ]) {
         expect(
-          find.byKey(TradeScreen.marketRowResourceIconKey(excluded)),
+          find.byKey(TradeScreenMarketKeys.marketRowResourceIconKey(excluded)),
           findsNothing,
           reason:
               'SPEC/game/world-market.md §Tradeable commodities — '
@@ -235,7 +235,7 @@ void main() {
               'row ResourceIcon.',
         );
         expect(
-          find.byKey(TradeScreen.marketRowPriceCoinIconKey(excluded)),
+          find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey(excluded)),
           findsNothing,
           reason:
               'SPEC/game/world-market.md §Tradeable commodities — '

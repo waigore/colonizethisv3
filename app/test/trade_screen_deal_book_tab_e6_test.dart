@@ -75,17 +75,17 @@ MarketActivity _activity(String commodity, List<FilledDeal> deals) {
 void _expectTotals(WidgetTester tester, {int? bids, int? offers}) {
   if (bids != null) {
     final bidsTotals = tester.widget<Text>(
-      find.byKey(TradeScreen.dealBookBidsTotalsKey),
+      find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey),
     );
-    expect(bidsTotals.data, '${TradeScreen.dealBookTotalSpentLabel}: $bids');
+    expect(bidsTotals.data, '${TradeScreenDealBookKeys.dealBookTotalSpentLabel}: $bids');
   }
   if (offers != null) {
     final offersTotals = tester.widget<Text>(
-      find.byKey(TradeScreen.dealBookOffersTotalsKey),
+      find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey),
     );
     expect(
       offersTotals.data,
-      '${TradeScreen.dealBookTotalReceivedLabel}: $offers',
+      '${TradeScreenDealBookKeys.dealBookTotalReceivedLabel}: $offers',
     );
   }
 }
@@ -104,10 +104,10 @@ void main() {
           selectDealBookTab: true,
         );
 
-        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsOneWidget);
-        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
-        expect(find.text(TradeScreen.dealBookBidsEmptyText), findsOneWidget);
-        expect(find.text(TradeScreen.dealBookOffersEmptyText), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
+        expect(find.text(TradeScreenDealBookKeys.dealBookBidsEmptyText), findsOneWidget);
+        expect(find.text(TradeScreenDealBookKeys.dealBookOffersEmptyText), findsOneWidget);
         _expectTotals(tester, bids: 0, offers: 0);
       },
     );
@@ -169,22 +169,22 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 1),
           ),
           findsNothing,
         );
-        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
 
         // ignore: avoid_hardcoded_strings_in_widgets
         expect(find.text('timber — qty 5 × 30 = 150'), findsOneWidget);
         _expectTotals(tester, bids: 150, offers: 0);
-        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
       },
     );
 
@@ -220,19 +220,19 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 1),
           ),
           findsOneWidget,
         );
 
         _expectTotals(tester, offers: 390);
-        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsOneWidget);
       },
     );
 
@@ -257,7 +257,7 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
@@ -265,13 +265,13 @@ void main() {
         expect(find.text('timber — qty 8 (priority 2)'), findsOneWidget);
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
           ),
           findsNothing,
         );
         _expectTotals(tester, bids: 0);
-        expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
-        expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsOneWidget);
       },
     );
 
@@ -310,8 +310,8 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreen.dealBookUnfilledRowKey(
-              TradeScreen.dealBookSideOffers,
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
               0,
             ),
           ),
@@ -319,8 +319,8 @@ void main() {
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookUnfilledRowKey(
-              TradeScreen.dealBookSideOffers,
+            TradeScreenDealBookKeys.dealBookUnfilledRowKey(
+              TradeScreenDealBookKeys.dealBookSideOffers,
               1,
             ),
           ),
@@ -363,13 +363,13 @@ void main() {
 
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
           ),
           findsOneWidget,
         );
         expect(
           find.byKey(
-            TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 1),
+            TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 1),
           ),
           findsOneWidget,
         );
@@ -398,10 +398,10 @@ void main() {
       );
 
       final Offset bidsTopLeft = tester.getTopLeft(
-        find.byKey(TradeScreen.dealBookBidsPanelKey),
+        find.byKey(TradeScreenDealBookKeys.dealBookBidsPanelKey),
       );
       final Offset offersTopLeft = tester.getTopLeft(
-        find.byKey(TradeScreen.dealBookOffersPanelKey),
+        find.byKey(TradeScreenDealBookKeys.dealBookOffersPanelKey),
       );
 
       expect(
@@ -441,10 +441,10 @@ void main() {
         expect(tester.takeException(), isNull);
 
         final Offset bidsTopLeft = tester.getTopLeft(
-          find.byKey(TradeScreen.dealBookBidsPanelKey),
+          find.byKey(TradeScreenDealBookKeys.dealBookBidsPanelKey),
         );
         final Offset offersTopLeft = tester.getTopLeft(
-          find.byKey(TradeScreen.dealBookOffersPanelKey),
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersPanelKey),
         );
         expect(
           offersTopLeft.dy,

@@ -69,11 +69,11 @@ class _DealBookPanel extends StatelessWidget {
 
   List<Widget> _buildSections(_DealBookPanelStyles styles) {
     return <Widget>[
-      Text(TradeScreen.dealBookFilledHeading, style: styles.sectionHeading),
+      Text(TradeScreenDealBookKeys.dealBookFilledHeading, style: styles.sectionHeading),
       const SizedBox(height: 4),
       ..._buildFilledRows(styles),
       const SizedBox(height: 8),
-      Text(TradeScreen.dealBookUnfilledHeading, style: styles.sectionHeading),
+      Text(TradeScreenDealBookKeys.dealBookUnfilledHeading, style: styles.sectionHeading),
       const SizedBox(height: 4),
       ..._buildUnfilledRows(styles),
     ];
@@ -82,7 +82,7 @@ class _DealBookPanel extends StatelessWidget {
   List<Widget> _buildFilledRows(_DealBookPanelStyles styles) {
     if (filledRows.isEmpty) {
       return <Widget>[
-        Text(TradeScreen.dealBookFilledEmptyText, style: styles.muted),
+        Text(TradeScreenDealBookKeys.dealBookFilledEmptyText, style: styles.muted),
       ];
     }
     return <Widget>[
@@ -90,7 +90,7 @@ class _DealBookPanel extends StatelessWidget {
         Padding(
           padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
           child: _DealBookFilledRow(
-            rowKey: TradeScreen.dealBookFilledRowKey(side, i),
+            rowKey: TradeScreenDealBookKeys.dealBookFilledRowKey(side, i),
             deal: filledRows[i],
             rowStyle: styles.body,
             tagStyle: styles.muted,
@@ -102,7 +102,7 @@ class _DealBookPanel extends StatelessWidget {
   List<Widget> _buildUnfilledRows(_DealBookPanelStyles styles) {
     if (unfilledRows.isEmpty) {
       return <Widget>[
-        Text(TradeScreen.dealBookUnfilledEmptyText, style: styles.muted),
+        Text(TradeScreenDealBookKeys.dealBookUnfilledEmptyText, style: styles.muted),
       ];
     }
     return <Widget>[
@@ -110,7 +110,7 @@ class _DealBookPanel extends StatelessWidget {
         Padding(
           padding: EdgeInsets.only(top: i == 0 ? 0 : 2),
           child: _DealBookUnfilledRow(
-            rowKey: TradeScreen.dealBookUnfilledRowKey(side, i),
+            rowKey: TradeScreenDealBookKeys.dealBookUnfilledRowKey(side, i),
             order: unfilledRows[i],
             rowStyle: styles.body,
           ),

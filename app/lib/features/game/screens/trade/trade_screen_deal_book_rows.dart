@@ -28,7 +28,7 @@ class _DealBookFilledRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final int unitPrice = deal.pricePerUnit.floor();
     final int notional = deal.quantity * unitPrice;
-    final String priceText = TradeScreen.formatFilledDealUnitPrice(
+    final String priceText = TradeScreenDealBookKeys.formatFilledDealUnitPrice(
       deal.pricePerUnit,
     );
     final List<String> tags = <String>[
