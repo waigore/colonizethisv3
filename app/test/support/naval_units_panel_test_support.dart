@@ -550,7 +550,10 @@ String? navalProvinceLocateTileKey(Game game, Province province) {
   return null;
 }
 
-/// Wide MediaQuery shell so [UnitsPanelShell] can exceed the 400dp base width.
+/// Wide viewport shell so [UnitsPanelShell] can exceed the 400dp base width.
+///
+/// Composes [buildAppShell] (editorial-monocle) rather than a raw [MaterialApp]
+/// host (Refs #4035 AC4).
 Widget buildNavalPanelWideViewport({
   required Game game,
   required String humanPlayerId,
@@ -558,30 +561,31 @@ Widget buildNavalPanelWideViewport({
   AppEventBus? bus,
   MapTopology topology = const MapTopology(),
 }) {
-  return MediaQuery(
-    data: MediaQueryData(size: size),
-    child: MaterialApp(
-      home: Scaffold(
-        body: NavalUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: bus ?? AppEventBus.create(),
-          topology: topology,
-        ),
+  return buildAppShell(
+    viewport: size,
+    child: Scaffold(
+      body: NavalUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: bus ?? AppEventBus.create(),
+        topology: topology,
       ),
     ),
   );
 }
 
 /// Panel host plus an external fleet-count watcher for cross-panel event pins.
+///
+/// Composes [buildAppShell] (editorial-monocle) rather than a raw [MaterialApp]
+/// host (Refs #4035 AC4).
 Widget buildNavalPanelWithFleetCountWatcher({
   required Game game,
   required String humanPlayerId,
   required AppEventBus bus,
   required ValueNotifier<int> observedFleetCount,
 }) {
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: Column(
         children: [
           ValueListenableBuilder<int>(

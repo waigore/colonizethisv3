@@ -1,7 +1,6 @@
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/widgets/ct_panel.dart'
-    show CtPanel;
+import 'package:colonizethis_app/widgets/ct_panel.dart' show CtPanel;
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -10,10 +9,40 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_models/colonizethis_models.dart' show Game;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
+
+/// Canonical narrow-detail overlay host for this suite (Refs #4035 AC4).
+Widget _narrowDetailOverlayShell({
+  required ProviderContainer container,
+  required Widget body,
+  Size viewport = const Size(400, 600),
+}) {
+  return buildAppShellWithContainer(
+    container: container,
+    viewport: viewport,
+    child: Scaffold(body: body),
+  );
+}
+
+GameMapNarrowDetailOverlaySlot _narrowDetailSlot({
+  required Game game,
+  required RegionMapViewData region,
+}) {
+  return GameMapNarrowDetailOverlaySlot(
+    game: game,
+    region: region,
+    humanPlayerId: game.players.first.id,
+    playerView: demoHumanPlayerViewForOverlay,
+    workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
+  );
+}
 
 void main() {
   suppressLogsForTests();
@@ -23,30 +52,17 @@ void main() {
     (WidgetTester tester) async {
       final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
-
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(400, 600));
 
       await tester.pumpWidget(
-        ProviderScope(
-          child: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 600)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-                ),
-              ),
-            ),
-          ),
+        _narrowDetailOverlayShell(
+          container: container,
+          body: _narrowDetailSlot(game: game, region: region),
         ),
       );
-      final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-      final container = ProviderScope.containerOf(ctx);
       container
           .read(mapProvincePanelProvider.notifier)
           .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -71,30 +87,18 @@ void main() {
 
     const viewportHeight = 600.0;
     final expectedMaxHeight = viewportHeight * 0.33;
-
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(const Size(400, viewportHeight));
 
     await tester.pumpWidget(
-      ProviderScope(
-        child: MediaQuery(
-          data: const MediaQueryData(size: Size(400, viewportHeight)),
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapNarrowDetailOverlaySlot(
-                game: game,
-                region: region,
-                humanPlayerId: game.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-              ),
-            ),
-          ),
-        ),
+      _narrowDetailOverlayShell(
+        container: container,
+        viewport: const Size(400, viewportHeight),
+        body: _narrowDetailSlot(game: game, region: region),
       ),
     );
-    final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-    final container = ProviderScope.containerOf(ctx);
     container
         .read(mapProvincePanelProvider.notifier)
         .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -123,48 +127,33 @@ void main() {
       const viewportWidth = 400.0;
       const viewportHeight = 600.0;
       const expectedHeight = viewportHeight * 0.33;
-
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(
         const Size(viewportWidth, viewportHeight),
       );
 
       await tester.pumpWidget(
-        ProviderScope(
-          child: MediaQuery(
-            data: const MediaQueryData(
-              size: Size(viewportWidth, viewportHeight),
-            ),
-            child: MaterialApp(
-              home: Scaffold(
-                body: Stack(
+        _narrowDetailOverlayShell(
+          container: container,
+          viewport: const Size(viewportWidth, viewportHeight),
+          body: Stack(
+            children: [
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GameMapNarrowDetailOverlaySlot(
-                            game: game,
-                            region: region,
-                            humanPlayerId: game.players.first.id,
-                            playerView: demoHumanPlayerViewForOverlay,
-                            workTargetSelectionCache:
-                                PerPlayerWorkTargetSelectionCache(),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _narrowDetailSlot(game: game, region: region),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
         ),
       );
 
-      final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-      final container = ProviderScope.containerOf(ctx);
       container
           .read(mapProvincePanelProvider.notifier)
           .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -241,31 +230,18 @@ void main() {
     (WidgetTester tester) async {
       final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
-
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(400, 600));
 
       await tester.pumpWidget(
-        ProviderScope(
-          child: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 600)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-                ),
-              ),
-            ),
-          ),
+        _narrowDetailOverlayShell(
+          container: container,
+          body: _narrowDetailSlot(game: game, region: region),
         ),
       );
 
-      final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-      final container = ProviderScope.containerOf(ctx);
       container
           .read(mapProvincePanelProvider.notifier)
           .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -298,26 +274,15 @@ void main() {
     (WidgetTester tester) async {
       final game = demoGameForOverlay;
       final region = demoRegionForOverlay;
-
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(400, 600));
 
       await tester.pumpWidget(
-        ProviderScope(
-          child: MediaQuery(
-            data: const MediaQueryData(size: Size(400, 600)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-                ),
-              ),
-            ),
-          ),
+        _narrowDetailOverlayShell(
+          container: container,
+          body: _narrowDetailSlot(game: game, region: region),
         ),
       );
       // Do NOT open the overlay panel — keep overlayOpen == false.
