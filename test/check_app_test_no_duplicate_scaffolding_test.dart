@@ -91,7 +91,7 @@ void main() {
       logs.join('\n'),
       contains(
         'no duplicated min-viewport, widgetbook use-case, trade-screen host, '
-        'units-panel Game, naval pump, or panel MaterialApp scaffolding found',
+        'units-panel Game, naval/military pump, or panel MaterialApp scaffolding found',
       ),
     );
   });
@@ -431,6 +431,85 @@ Future<void> _pumpNaval(WidgetTester tester) async {}
         'naval_units_panel_test_support.dart',
       ),
     );
+  });
+
+  test('fails when military panel suite re-declares local _pumpMilitary', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_pump_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_test.dart',
+      '''
+Future<void> _pumpMilitary(WidgetTester tester) async {}
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains(
+        'function "_pumpMilitary" duplicates pumpMilitaryPanel in '
+        'military_units_panel_test_support.dart',
+      ),
+    );
+  });
+
+  test('passes when military panel suite calls pumpMilitaryPanel only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_mil_pump_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'military_units_panel_display_test.dart',
+      '''
+import 'support/military_units_panel_test_support.dart';
+
+Future<void> example(WidgetTester tester) async {
+  await pumpMilitaryPanel(
+    tester,
+    game: buildMilitaryPanelTestGame(),
+    humanPlayerId: 'gp1',
+  );
+}
+''',
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
+
+  test('fails when production labour suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_labour_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'production_labour_section_test.dart',
+      '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp'));
   });
 
   test('fails when production part suite reintroduces MaterialApp host', () {

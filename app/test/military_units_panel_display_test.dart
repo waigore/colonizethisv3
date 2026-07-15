@@ -100,10 +100,11 @@ void main() {
         includeLisbonProvince: true,
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithSeaFleet, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithSeaFleet,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('atlantic — Old World'), findsOneWidget);
       expect(find.textContaining('Galleon: 1'), findsAtLeastNWidgets(1));
@@ -122,10 +123,11 @@ void main() {
         mission: FleetMission.blockade,
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithMultipleShips, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithMultipleShips,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('Galleon: 3'), findsOneWidget);
       expect(find.textContaining('Status: Blockade'), findsOneWidget);
@@ -142,10 +144,11 @@ void main() {
         mission: FleetMission.defend,
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithDefendFleet, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithDefendFleet,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('Status: Defend'), findsOneWidget);
     });
@@ -188,10 +191,11 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithMixedMedals, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithMixedMedals,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Army army_mixed'));
       await tester.pumpAndSettle();
 
@@ -228,10 +232,11 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithWorkingUnit, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithWorkingUnit,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Army army_w'));
       await tester.pumpAndSettle();
 
@@ -258,10 +263,11 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: gameWithIdleUnit, humanPlayerId: playerId),
+      await pumpMilitaryPanel(
+        tester,
+        game: gameWithIdleUnit,
+        humanPlayerId: playerId,
       );
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Army army_d'));
       await tester.pumpAndSettle();
 

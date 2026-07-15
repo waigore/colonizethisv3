@@ -93,10 +93,24 @@ int runCheckAppTestNoDuplicateScaffolding(
       parsed.unit.accept(visitor);
     }
     if (_isGovernedNavalUnitsPanelPartFile(relativePath)) {
-      final visitor = _NavalPumpCloneVisitor(
+      final visitor = _PanelPumpCloneVisitor(
         relativePath: relativePath,
         lineInfo: parsed.unit.lineInfo,
         violations: violations,
+        forbiddenNames: const {'_pumpNaval', 'pumpNaval'},
+        canonicalHelper: 'pumpNavalPanel',
+        supportModule: 'naval_units_panel_test_support.dart',
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedMilitaryUnitsPanelFile(relativePath)) {
+      final visitor = _PanelPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+        forbiddenNames: const {'_pumpMilitary', 'pumpMilitary'},
+        canonicalHelper: 'pumpMilitaryPanel',
+        supportModule: 'military_units_panel_test_support.dart',
       );
       parsed.unit.accept(visitor);
     }
@@ -113,8 +127,8 @@ int runCheckAppTestNoDuplicateScaffolding(
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, trade-screen host, units-panel Game, naval pump, '
-      'or panel MaterialApp scaffolding found.',
+      'widgetbook use-case, trade-screen host, units-panel Game, naval/military '
+      'pump, or panel MaterialApp scaffolding found.',
     );
     return 0;
   }
@@ -140,6 +154,8 @@ int runCheckAppTestNoDuplicateScaffolding(
     'naval_units_panel_test_support.dart / units_panel_test_shared.dart. '
     'Naval part pumps: use pumpNavalPanel from '
     'naval_units_panel_test_support.dart. '
+    'Military panel pumps: use pumpMilitaryPanel from '
+    'military_units_panel_test_support.dart. '
     'Production/naval/civilian/narrow-overlay hosts: use '
     'buildProductionPanel / buildNavalPanel / buildCivilianPanel / '
     'buildAppShell (no inline MaterialApp).',
@@ -221,11 +237,24 @@ bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
       name.endsWith('_test.dart');
 }
 
+/// True for military panel suites that must call shared [pumpMilitaryPanel]
+/// (Refs #4035).
+bool _isGovernedMilitaryUnitsPanelFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
+      name == 'military_units_panel_army_test.dart';
+}
+
 /// True for panel-host families that must compose `buildAppShell` /
 /// `buildProductionPanel` / `buildNavalPanel` instead of an inline
 /// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
-/// production specialty hosts (cotton-weaving lock, available grid) and
-/// military panel suites that already compose `buildMilitaryPanel`.
+/// production specialty hosts (cotton-weaving lock, available grid, labour
+/// section) and military panel suites that already compose
+/// `buildMilitaryPanel` / `pumpMilitaryPanel`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -237,6 +266,7 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   return name.startsWith('production_panel_part') ||
       name == 'production_panel_cotton_weaving_lock_test.dart' ||
       name == 'production_panel_available_grid_test.dart' ||
+      name == 'production_labour_section_test.dart' ||
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
@@ -430,23 +460,24 @@ class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
   }
 }
 
-/// Flags local `_pumpNaval` / `pumpNaval` clones in naval part suites
-/// (Refs #4035). Call [pumpNavalPanel] from support instead.
-class _NavalPumpCloneVisitor extends RecursiveAstVisitor<void> {
-  _NavalPumpCloneVisitor({
+/// Flags local panel pump clones (`_pumpNaval` / `_pumpMilitary`, …)
+/// (Refs #4035). Call the named support helper instead.
+class _PanelPumpCloneVisitor extends RecursiveAstVisitor<void> {
+  _PanelPumpCloneVisitor({
     required this.relativePath,
     required this.lineInfo,
     required this.violations,
+    required this.forbiddenNames,
+    required this.canonicalHelper,
+    required this.supportModule,
   });
 
   final String relativePath;
   final LineInfo lineInfo;
   final List<String> violations;
-
-  static const Set<String> _forbiddenNames = {
-    '_pumpNaval',
-    'pumpNaval',
-  };
+  final Set<String> forbiddenNames;
+  final String canonicalHelper;
+  final String supportModule;
 
   void _report(int offset, String detail) {
     final line = lineInfo.getLocation(offset).lineNumber;
@@ -456,11 +487,10 @@ class _NavalPumpCloneVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitFunctionDeclaration(FunctionDeclaration node) {
     final name = node.name.lexeme;
-    if (_forbiddenNames.contains(name)) {
+    if (forbiddenNames.contains(name)) {
       _report(
         node.name.offset,
-        'function "$name" duplicates pumpNavalPanel in '
-        'naval_units_panel_test_support.dart',
+        'function "$name" duplicates $canonicalHelper in $supportModule',
       );
     }
     super.visitFunctionDeclaration(node);

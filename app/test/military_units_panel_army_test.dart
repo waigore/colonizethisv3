@@ -28,8 +28,7 @@ void main() {
         playerDisplayName: 'Home',
       );
 
-      await tester.pumpWidget(buildMilitaryPanel(game: game, humanPlayerId: playerId));
-      await tester.pumpAndSettle();
+      await pumpMilitaryPanel(tester, game: game, humanPlayerId: playerId);
 
       final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
       expect(homeTile, findsOneWidget);
@@ -62,10 +61,12 @@ void main() {
           playerId: playerId,
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: playerId, bus: bus),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final checks = find.byType(Checkbox);
         expect(checks, findsNWidgets(3));
@@ -98,15 +99,13 @@ void main() {
         regimentUnitIds: const ['um1'],
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(
-          game: game,
-          humanPlayerId: playerId,
-          bus: bus,
-          topology: topology,
-        ),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        bus: bus,
+        topology: topology,
       );
-      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Army amove'));
       await tester.pumpAndSettle();
@@ -145,15 +144,13 @@ void main() {
           regimentUnitIds: const ['um1', 'um2'],
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(
-            game: game,
-            humanPlayerId: playerId,
-            bus: bus,
-            topology: topology,
-          ),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
         );
-        await tester.pumpAndSettle();
 
         final armyTile = find.widgetWithText(ExpansionTile, 'Army acluster');
         expect(armyTile, findsOneWidget);
@@ -204,15 +201,13 @@ void main() {
           playerId: playerId,
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(
-            game: game,
-            humanPlayerId: playerId,
-            bus: bus,
-            topology: topology,
-          ),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
         );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.text('Army amove'));
         await tester.pumpAndSettle();
@@ -262,10 +257,12 @@ void main() {
           ],
         },
       );
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: playerId, draftOrders: draft),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        draftOrders: draft,
       );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('Moving to: There'), findsOneWidget);
     });
@@ -287,15 +284,13 @@ void main() {
         enemyId: enemyId,
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(
-          game: game,
-          humanPlayerId: playerId,
-          bus: bus,
-          topology: topology,
-        ),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        bus: bus,
+        topology: topology,
       );
-      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Army ainv'));
       await tester.pumpAndSettle();

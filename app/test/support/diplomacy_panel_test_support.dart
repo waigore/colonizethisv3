@@ -1,5 +1,5 @@
 // Shared widget-test scaffolding for diplomacy and civilian panel bus/dialog
-// hosts. Refs #3847, #4013.
+// hosts. Refs #3847, #4013, #4035.
 //
 // Diplomacy tests previously duplicated `_EventHandlingWrapper`,
 // `_pumpPanelBuilt`, and `_bindTallTestSurface` across multiple files.
@@ -7,6 +7,8 @@
 // [ClosePanelEvent] handling, plus an identical local `buildPanel` closure
 // across `civilian_units_panel_part*_test.dart` (consolidated as
 // [buildCivilianPanel]).
+// Confirm / open-dialog / close-panel bus leaves share [PanelBusDialogHost]
+// (Refs #4035 ConfirmDialog densify).
 
 import 'dart:async';
 
@@ -43,10 +45,124 @@ Future<void> bindDiplomacyStandardTestSurface(WidgetTester tester) async {
   await tester.binding.setSurfaceSize(const Size(900, 1600));
 }
 
-/// Listens for [ConfirmDialogEvent] and [OpenDialogEvent] on [bus] and routes
-/// them through [navigatorKey], deferring `showDialog` past the pointer +
-/// emit stack so tests do not hang the binding.
-class DiplomacyPanelBusDialogHost extends StatefulWidget {
+/// Shared panel bus dialog leaf (Refs #4035).
+///
+/// Listens for [ConfirmDialogEvent] (always) and optionally [OpenDialogEvent]
+/// / [ClosePanelEvent], routing them through [navigatorKey]. When
+/// [deferDialogsWithMicrotask] is true, `showDialog` is scheduled past the
+/// pointer + emit stack so tests do not hang the binding (diplomacy path).
+class PanelBusDialogHost extends StatefulWidget {
+  const PanelBusDialogHost({
+    super.key,
+    required this.bus,
+    required this.child,
+    required this.navigatorKey,
+    this.handleOpenDialog = false,
+    this.handleClosePanel = false,
+    this.deferDialogsWithMicrotask = false,
+  });
+
+  final AppEventBus bus;
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final bool handleOpenDialog;
+  final bool handleClosePanel;
+  final bool deferDialogsWithMicrotask;
+
+  @override
+  State<PanelBusDialogHost> createState() => _PanelBusDialogHostState();
+}
+
+class _PanelBusDialogHostState extends State<PanelBusDialogHost> {
+  StreamSubscription? _confirmSub;
+  StreamSubscription? _openDialogSub;
+  StreamSubscription? _closeSub;
+
+  Future<void> _showConfirm(ConfirmDialogEvent event) async {
+    if (!mounted) return;
+    final nav = widget.navigatorKey.currentState;
+    if (nav == null) return;
+    final result = await showDialog<bool>(
+      context: nav.context,
+      builder: (ctx) => AlertDialog(
+        title: Text(event.title),
+        content: Text(event.message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(event.cancelLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(event.confirmLabel),
+          ),
+        ],
+      ),
+    );
+    event.result(result ?? false);
+  }
+
+  Future<void> _showOpenDialog(OpenDialogEvent event) async {
+    if (!mounted) return;
+    final nav = widget.navigatorKey.currentState;
+    if (nav == null) return;
+    await showDialog<void>(
+      context: nav.context,
+      builder: (ctx) => AlertDialog(
+        title: Text('dialog:${event.dialogId}'),
+        content: const Text('opened-via-bus'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _runDialogWork(Future<void> Function() work) {
+    if (widget.deferDialogsWithMicrotask) {
+      scheduleMicrotask(() async {
+        await work();
+      });
+      return;
+    }
+    unawaited(work());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) {
+      _runDialogWork(() => _showConfirm(event));
+    });
+    if (widget.handleOpenDialog) {
+      _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) {
+        _runDialogWork(() => _showOpenDialog(event));
+      });
+    }
+    if (widget.handleClosePanel) {
+      _closeSub = widget.bus.on<ClosePanelEvent>().listen((_) {
+        widget.navigatorKey.currentState?.maybePop();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _confirmSub?.cancel();
+    _openDialogSub?.cancel();
+    _closeSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Diplomacy panel bus host: confirm + open-dialog leaves with microtask defer.
+class DiplomacyPanelBusDialogHost extends StatelessWidget {
   const DiplomacyPanelBusDialogHost({
     super.key,
     required this.bus,
@@ -59,79 +175,19 @@ class DiplomacyPanelBusDialogHost extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   @override
-  State<DiplomacyPanelBusDialogHost> createState() =>
-      _DiplomacyPanelBusDialogHostState();
+  Widget build(BuildContext context) {
+    return PanelBusDialogHost(
+      bus: bus,
+      navigatorKey: navigatorKey,
+      handleOpenDialog: true,
+      deferDialogsWithMicrotask: true,
+      child: child,
+    );
+  }
 }
 
-class _DiplomacyPanelBusDialogHostState
-    extends State<DiplomacyPanelBusDialogHost> {
-  StreamSubscription? _confirmSub;
-  StreamSubscription? _openDialogSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        final result = await showDialog<bool>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text(event.title),
-            content: Text(event.message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text(event.cancelLabel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text(event.confirmLabel),
-              ),
-            ],
-          ),
-        );
-        event.result(result ?? false);
-      });
-    });
-    _openDialogSub = widget.bus.on<OpenDialogEvent>().listen((event) {
-      scheduleMicrotask(() async {
-        if (!mounted) return;
-        final nav = widget.navigatorKey.currentState;
-        if (nav == null) return;
-        await showDialog<void>(
-          context: nav.context,
-          builder: (ctx) => AlertDialog(
-            title: Text('dialog:${event.dialogId}'),
-            content: const Text('opened-via-bus'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _confirmSub?.cancel();
-    _openDialogSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
-
-/// Civilian panel bus host: [ClosePanelEvent] pops the navigator and
-/// [ConfirmDialogEvent] opens a confirmation dialog.
-class CivilianPanelBusDialogHost extends StatefulWidget {
+/// Civilian panel bus host: confirm dialog + [ClosePanelEvent] pop.
+class CivilianPanelBusDialogHost extends StatelessWidget {
   const CivilianPanelBusDialogHost({
     super.key,
     required this.bus,
@@ -144,54 +200,14 @@ class CivilianPanelBusDialogHost extends StatefulWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   @override
-  State<CivilianPanelBusDialogHost> createState() =>
-      _CivilianPanelBusDialogHostState();
-}
-
-class _CivilianPanelBusDialogHostState
-    extends State<CivilianPanelBusDialogHost> {
-  StreamSubscription? _confirmSub;
-  StreamSubscription? _closeSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _closeSub = widget.bus.on<ClosePanelEvent>().listen((_) {
-      widget.navigatorKey.currentState?.maybePop();
-    });
-    _confirmSub = widget.bus.on<ConfirmDialogEvent>().listen((event) async {
-      final nav = widget.navigatorKey.currentState;
-      if (nav == null) return;
-      final result = await showDialog<bool>(
-        context: nav.context,
-        builder: (ctx) => AlertDialog(
-          title: Text(event.title),
-          content: Text(event.message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: Text(event.cancelLabel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(event.confirmLabel),
-            ),
-          ],
-        ),
-      );
-      event.result(result ?? false);
-    });
+  Widget build(BuildContext context) {
+    return PanelBusDialogHost(
+      bus: bus,
+      navigatorKey: navigatorKey,
+      handleClosePanel: true,
+      child: child,
+    );
   }
-
-  @override
-  void dispose() {
-    _confirmSub?.cancel();
-    _closeSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }
 
 /// Canonical [DiplomacyPanel] host for widget tests with bus-driven dialogs.
