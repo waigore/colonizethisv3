@@ -320,7 +320,9 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `ct_full_screen_dialogue_shell`, `ct_game_feature_screen_shell`),
 /// `game_side_menu_test`, and catalog controls (`ct_back_button`,
 /// `ct_slider`, `ct_tab_strip`, `ct_confirm_dialog`, `ct_nine_patch_button`,
-/// `ct_resource_cell`).
+/// `ct_resource_cell`), and game-map chrome hosts (`game_map_controls`,
+/// `players_bar_toggle`, `game_map_corner_controls_dark_chrome`,
+/// `game_map_corner_controls_narrow`, `game_map_players_bar`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -425,7 +427,12 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'ct_tab_strip_test.dart' ||
       name == 'ct_confirm_dialog_test.dart' ||
       name == 'ct_nine_patch_button_test.dart' ||
-      name == 'ct_resource_cell_test.dart';
+      name == 'ct_resource_cell_test.dart' ||
+      name == 'game_map_controls_test.dart' ||
+      name == 'players_bar_toggle_test.dart' ||
+      name == 'game_map_corner_controls_dark_chrome_test.dart' ||
+      name == 'game_map_corner_controls_narrow_test.dart' ||
+      name == 'game_map_players_bar_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

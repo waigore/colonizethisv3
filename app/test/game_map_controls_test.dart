@@ -6,6 +6,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -13,11 +15,11 @@ void main() {
     required bool nextTurnEnabled,
     required Future<void> Function() onNextTurn,
   }) {
-    return MaterialApp(
+    return buildAppShell(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: Scaffold(
+      child: Scaffold(
         body: GameMapControls(
           sideMenuOpen: false,
           onToggleSideMenu: () {},

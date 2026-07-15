@@ -852,6 +852,11 @@ void main() {
         'ct_confirm_dialog_test.dart',
         'ct_nine_patch_button_test.dart',
         'ct_resource_cell_test.dart',
+        'game_map_controls_test.dart',
+        'players_bar_toggle_test.dart',
+        'game_map_corner_controls_dark_chrome_test.dart',
+        'game_map_corner_controls_narrow_test.dart',
+        'game_map_players_bar_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -902,6 +907,11 @@ Widget host() => MaterialApp(home: const Placeholder());
         'ct_confirm_dialog_test.dart',
         'ct_nine_patch_button_test.dart',
         'ct_resource_cell_test.dart',
+        'game_map_controls_test.dart',
+        'players_bar_toggle_test.dart',
+        'game_map_corner_controls_dark_chrome_test.dart',
+        'game_map_corner_controls_narrow_test.dart',
+        'game_map_players_bar_test.dart',
       ]) {
         _writeGovernedFile(
           temp,
