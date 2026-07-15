@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
@@ -16,13 +17,9 @@ void main() {
 
   group('assignHiddenAgendasForGame', () {
     test('empty players returns game unchanged', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: const [],
       );
       final out = assignHiddenAgendasForGame(game);
@@ -30,29 +27,21 @@ void main() {
     });
 
     test('human-only players do not get agendas', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
-        aiControlByGpId: const {'gp1': false},
-      );
+      ).copyWith(aiControlByGpId: const {'gp1': false});
       final out = assignHiddenAgendasForGame(game);
       expect(out.hiddenAgendaByGpId, isEmpty);
     });
 
     test('AI players get agendas from kHiddenAgendaIds', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: const [Player(id: 'gp1', displayName: 'AI', isHuman: false)],
+      ).copyWith(
         globalGameSeed: 42,
         aiSeedByGpId: const {'gp1': 100},
       );
