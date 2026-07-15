@@ -1,5 +1,4 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
@@ -9,6 +8,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Dark editorial-monocle chrome tests for [CallToArmsDialogueOverlay] per
 /// `SPEC/ui/call-to-arms-dialogue-overlay.md` § Editorial-monocle chrome
@@ -35,10 +36,10 @@ void main() {
   }
 
   Future<void> pumpOverlay(WidgetTester tester) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CallToArmsDialogueOverlay(
             game: twoPlayerGame(),
             pending: const [

@@ -296,7 +296,10 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// specs part suites, `game_map_options_dialog_test`, next-turn / turn-news
 /// dialog suites, pause-menu / side-menu spec suites, save/load dialog
 /// suites (`save_game_name_dialog` / `load_game_list_dialog`), exit-confirm /
-/// turn-resolution-processing dialog suites, and `diplomacy_dialogs_test`.
+/// turn-resolution-processing dialog suites, `diplomacy_dialogs_test`, and
+/// dialogue-overlay suites (`tribe_first_contact_overlay`,
+/// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
+/// `overture_dialogue_intro`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -351,7 +354,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'load_game_list_dialog_test.dart' ||
       name == 'exit_confirm_dialog_test.dart' ||
       name == 'turn_resolution_processing_dialog_test.dart' ||
-      name == 'diplomacy_dialogs_test.dart';
+      name == 'diplomacy_dialogs_test.dart' ||
+      name == 'tribe_first_contact_overlay_test.dart' ||
+      name == 'call_to_arms_dialogue_overlay_dark_chrome_test.dart' ||
+      name == 'overture_dialogue_overlay_test.dart' ||
+      name == 'overture_dialogue_intro_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
