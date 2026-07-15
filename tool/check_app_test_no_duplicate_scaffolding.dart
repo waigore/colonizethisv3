@@ -314,8 +314,11 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `units_panel_shared_widgets`, `unit_panels_viewport_sizing`,
 /// `unit_panels_widgetbook_dark_chrome`), units sheet/entity card hosts
 /// (`units_panel_sheet_surface`, `units_entity_card`), catalog chrome
-/// (`ct_action_text_button`, `relation_meter`), and in-game shell chrome
-/// (`game_top_bar`, `game_tab_bar`, `player_turn_event_feed_chrome`).
+/// (`ct_action_text_button`, `relation_meter`), in-game shell chrome
+/// (`game_top_bar`, `game_tab_bar`, `player_turn_event_feed_chrome`),
+/// catalog / full-screen shells (`ct_dark_scaffold`, `ct_screen_shell`,
+/// `ct_dialog_shell`, `ct_full_screen_dialogue_shell`,
+/// `ct_game_feature_screen_shell`), and `game_side_menu_test`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -408,7 +411,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'relation_meter_test.dart' ||
       name == 'game_top_bar_test.dart' ||
       name == 'game_tab_bar_test.dart' ||
-      name == 'player_turn_event_feed_chrome_test.dart';
+      name == 'player_turn_event_feed_chrome_test.dart' ||
+      name == 'game_side_menu_test.dart' ||
+      name == 'ct_dark_scaffold_test.dart' ||
+      name == 'ct_screen_shell_test.dart' ||
+      name == 'ct_dialog_shell_test.dart' ||
+      name == 'ct_full_screen_dialogue_shell_test.dart' ||
+      name == 'ct_game_feature_screen_shell_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

@@ -840,6 +840,12 @@ void main() {
         'game_top_bar_test.dart',
         'game_tab_bar_test.dart',
         'player_turn_event_feed_chrome_test.dart',
+        'game_side_menu_test.dart',
+        'ct_dark_scaffold_test.dart',
+        'ct_screen_shell_test.dart',
+        'ct_dialog_shell_test.dart',
+        'ct_full_screen_dialogue_shell_test.dart',
+        'ct_game_feature_screen_shell_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -878,6 +884,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'game_top_bar_test.dart',
         'game_tab_bar_test.dart',
         'player_turn_event_feed_chrome_test.dart',
+        'game_side_menu_test.dart',
+        'ct_dark_scaffold_test.dart',
+        'ct_screen_shell_test.dart',
+        'ct_dialog_shell_test.dart',
+        'ct_full_screen_dialogue_shell_test.dart',
+        'ct_game_feature_screen_shell_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

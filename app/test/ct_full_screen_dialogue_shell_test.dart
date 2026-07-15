@@ -1,10 +1,11 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_full_screen_dialogue_shell.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Widget-level contract tests for [CtFullScreenDialogueShell] (issue #2914
 /// S2): pins the editorial-monocle scrim token, the centered [CtDialogShell]
@@ -22,15 +23,17 @@ void main() {
     double maxWidth = CtFullScreenDialogueShell.defaultMaxWidth,
     double maxHeight = CtFullScreenDialogueShell.defaultMaxHeight,
     EdgeInsetsGeometry padding = CtFullScreenDialogueShell.defaultPadding,
+    bool wrapBodyInDialogShell = true,
   }) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CtFullScreenDialogueShell(
             maxWidth: maxWidth,
             maxHeight: maxHeight,
             padding: padding,
+            wrapBodyInDialogShell: wrapBodyInDialogShell,
             backdrop: const SizedBox.expand(
               key: backdropKey,
               child: Text('backdrop'),
@@ -160,28 +163,11 @@ void main() {
     testWidgets(
       'wrapBodyInDialogShell false centers body without CtDialogShell',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: CtFullScreenDialogueShell(
-                wrapBodyInDialogShell: false,
-                padding: EdgeInsets.zero,
-                backdrop: const SizedBox.expand(
-                  key: backdropKey,
-                  child: Text('backdrop'),
-                ),
-                body: const SizedBox(
-                  key: bodyKey,
-                  width: 120,
-                  height: 80,
-                  child: Text('body'),
-                ),
-              ),
-            ),
-          ),
+        await pump(
+          tester,
+          wrapBodyInDialogShell: false,
+          padding: EdgeInsets.zero,
         );
-        await tester.pumpAndSettle();
 
         expect(find.byKey(bodyKey), findsOneWidget);
         expect(find.byType(CtDialogShell), findsNothing);
