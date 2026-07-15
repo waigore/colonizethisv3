@@ -300,8 +300,13 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// dialogue-overlay suites (`tribe_first_contact_overlay`,
 /// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
 /// `overture_dialogue_intro`, `intervention_dialogue_overlay`,
-/// `dialogue_overlays_specs_part*`), victory overlay suites, and
-/// `debug_console_overlay_panel_test`.
+/// `dialogue_overlays_specs_part*`), victory overlay suites,
+/// `debug_console_overlay_panel_test`, and province-overlay suites
+/// (`province_overlay_test`, `province_overlay_header_l10n_test`,
+/// `province_overlay_consulate_gate_tooltip_test`,
+/// `province_overlay_fully_unrevealed_sea_zone_structure_test`,
+/// `province_overlay_tile_inline_action_non_clickable_test`,
+/// `province_overlay_section_label_material_fallback_guard_test`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -365,7 +370,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name.startsWith('dialogue_overlays_specs_part') ||
       name == 'victory_overlay_test.dart' ||
       name == 'victory_overlay_narrow_test.dart' ||
-      name == 'debug_console_overlay_panel_test.dart';
+      name == 'debug_console_overlay_panel_test.dart' ||
+      name == 'province_overlay_test.dart' ||
+      name == 'province_overlay_header_l10n_test.dart' ||
+      name == 'province_overlay_consulate_gate_tooltip_test.dart' ||
+      name == 'province_overlay_fully_unrevealed_sea_zone_structure_test.dart' ||
+      name == 'province_overlay_tile_inline_action_non_clickable_test.dart' ||
+      name == 'province_overlay_section_label_material_fallback_guard_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

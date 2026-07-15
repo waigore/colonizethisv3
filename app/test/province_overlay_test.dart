@@ -17,6 +17,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
 
 CellViewData _copyCell(
@@ -98,37 +99,34 @@ Future<void> _pumpOverlay(
   bool settle = true,
 }) async {
   final g = game ?? demoGameForOverlay;
-  final r = region ?? demoRegionForOverlay;
-  Widget child = MaterialApp(
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: g,
-        region: r,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: g.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        onHighlightTile: onHighlightTile,
-        onClose: onClose,
-        showProspectActionIcon: showProspectActionIcon,
-        prospectActionEnabled: prospectActionEnabled,
-        onProspectWithExplorerTap: onProspectWithExplorerTap,
-        showExploreActionIcon: showExploreActionIcon,
-        exploreActionEnabled: exploreActionEnabled,
-        onExploreWithExplorerTap: onExploreWithExplorerTap,
-        showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-        buildImprovementActionEnabled: buildImprovementActionEnabled,
-        onBuildImprovementTap: onBuildImprovementTap,
+  // Editorial shell via [buildAppShell] (Refs #4035 — no inline MaterialApp).
+  // Optional [mediaQuerySize] maps to the shell viewport wrapper.
+  await tester.pumpWidget(
+    buildAppShell(
+      viewport: mediaQuerySize,
+      child: Scaffold(
+        body: ProvinceSeaZoneDetailOverlay(
+          game: g,
+          region: region ?? demoRegionForOverlay,
+          displayId: displayId,
+          selectedTileKey: selectedTileKey,
+          humanPlayerId: g.players.first.id,
+          playerView: demoHumanPlayerViewForOverlay,
+          onHighlightTile: onHighlightTile,
+          onClose: onClose,
+          showProspectActionIcon: showProspectActionIcon,
+          prospectActionEnabled: prospectActionEnabled,
+          onProspectWithExplorerTap: onProspectWithExplorerTap,
+          showExploreActionIcon: showExploreActionIcon,
+          exploreActionEnabled: exploreActionEnabled,
+          onExploreWithExplorerTap: onExploreWithExplorerTap,
+          showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+          buildImprovementActionEnabled: buildImprovementActionEnabled,
+          onBuildImprovementTap: onBuildImprovementTap,
+        ),
       ),
     ),
   );
-  if (mediaQuerySize != null) {
-    child = MediaQuery(
-      data: MediaQueryData(size: mediaQuerySize),
-      child: child,
-    );
-  }
-  await tester.pumpWidget(child);
   if (settle) {
     await tester.pumpAndSettle();
   } else {
@@ -195,6 +193,7 @@ void _expectMaxHeight(double maxHeight) {
 }
 
 /// Map + optional overlay side-by-side host (Refs #4021 densify).
+/// Editorial shell via [buildAppShell] (Refs #4035 — no inline MaterialApp).
 Widget _mapBesideOverlayHost({
   required Widget map,
   Widget? overlay,
@@ -202,8 +201,8 @@ Widget _mapBesideOverlayHost({
   double mapWidth = 400,
   double mapHeight = 320,
 }) {
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: Row(
         children: [
           if (expandMap)
