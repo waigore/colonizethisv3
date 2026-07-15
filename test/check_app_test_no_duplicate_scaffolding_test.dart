@@ -895,6 +895,12 @@ void main() {
         'new_game_leader_dialog_builder_test.dart',
         'shell_player_guarded_body_test.dart',
         'map_diplomacy_panel_specs_test.dart',
+        'combat_ui_specs_part1_test.dart',
+        'combat_ui_specs_part2_test.dart',
+        'game_to_ui_bus_listener_test.dart',
+        'app_event_handler_scope_diplomacy_test.dart',
+        'app_event_handler_scope_civilian_work_test.dart',
+        'turn_resolution_event_blocking_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -988,6 +994,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'new_game_leader_dialog_builder_test.dart',
         'shell_player_guarded_body_test.dart',
         'map_diplomacy_panel_specs_test.dart',
+        'combat_ui_specs_part1_test.dart',
+        'combat_ui_specs_part2_test.dart',
+        'game_to_ui_bus_listener_test.dart',
+        'app_event_handler_scope_diplomacy_test.dart',
+        'app_event_handler_scope_civilian_work_test.dart',
+        'turn_resolution_event_blocking_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 class _ScopeProbe extends ConsumerWidget {
   const _ScopeProbe();
 
@@ -29,17 +31,17 @@ void main() {
     (tester) async {
       final bus = AppEventBus.create();
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: [
             appEventBusProvider.overrideWith((ref) {
               ref.onDispose(bus.dispose);
               return bus;
             }),
           ],
-          child: const AppEventHandlerScope(
-            child: MaterialApp(home: Scaffold(body: _ScopeProbe())),
-          ),
+          shellWrapper: (app) => AppEventHandlerScope(child: app),
+          child: const Scaffold(body: _ScopeProbe()),
         ),
       );
       await tester.pumpAndSettle();

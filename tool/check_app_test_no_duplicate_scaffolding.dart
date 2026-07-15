@@ -346,7 +346,11 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `ct_radius_adoption`, `province_detail_panel_slide_transition`, shell /
 /// main-menu hosts (`shell_screen`, `shell_screen_pixelart_chrome`,
 /// `main_menu_quit_chip_fidelity`, `new_game_leader_dialog_builder`,
-/// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`.
+/// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`, combat
+/// UI specs parts (`combat_ui_specs_part1` / `combat_ui_specs_part2`),
+/// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
+/// `app_event_handler_scope_civilian_work`, and
+/// `turn_resolution_event_blocking`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -494,7 +498,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'main_menu_quit_chip_fidelity_test.dart' ||
       name == 'new_game_leader_dialog_builder_test.dart' ||
       name == 'shell_player_guarded_body_test.dart' ||
-      name == 'map_diplomacy_panel_specs_test.dart';
+      name == 'map_diplomacy_panel_specs_test.dart' ||
+      name == 'combat_ui_specs_part1_test.dart' ||
+      name == 'combat_ui_specs_part2_test.dart' ||
+      name == 'game_to_ui_bus_listener_test.dart' ||
+      name == 'app_event_handler_scope_diplomacy_test.dart' ||
+      name == 'app_event_handler_scope_civilian_work_test.dart' ||
+      name == 'turn_resolution_event_blocking_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
