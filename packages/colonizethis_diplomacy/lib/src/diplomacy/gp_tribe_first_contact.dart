@@ -85,7 +85,7 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 
   newlyContacted.sort();
   return GpTribeFirstContactResult(
-    game: game.copyWith(diplomacyRelations: relationsIndex.toList()),
+    game: withCommittedRelations(game, relationsIndex),
     newlyContactedTribeIds: newlyContacted,
   );
 }
