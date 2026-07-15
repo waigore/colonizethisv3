@@ -317,26 +317,19 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => MoveFleetDialog(
-                        game: game,
-                        topology: topology,
-                        humanPlayerId: lonelyPlayerId,
-                        fleet: fleet,
-                        bus: AppEventBus.create(),
-                      ),
-                    );
-                  },
-                  child: const Text('open'),
+          moveDialogsSpecsFrameWithOpener(
+            (context) => () {
+              showDialog<void>(
+                context: context,
+                builder: (_) => MoveFleetDialog(
+                  game: game,
+                  topology: topology,
+                  humanPlayerId: lonelyPlayerId,
+                  fleet: fleet,
+                  bus: AppEventBus.create(),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         );
         await tester.tap(find.text('open'));

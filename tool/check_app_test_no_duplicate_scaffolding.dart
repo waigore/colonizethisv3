@@ -289,9 +289,11 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// buttons, icons), military panel suites, technology panel suites that
 /// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, train
 /// dialog suites migrated onto `buildAppShell`, unit-order dialog suites
-/// (`split_army` / `split_fleet` / `move_fleet`), and commodity-breakdown
-/// dialog suites (`production_commodity_breakdown_dialog_spec` /
-/// `production_commodity_breakdown_dialog_wide_full_width`).
+/// (`split_army` / `split_fleet` / `move_fleet` / `transfer_to_home_fleet`),
+/// commodity-breakdown dialog suites
+/// (`production_commodity_breakdown_dialog_spec` /
+/// `production_commodity_breakdown_dialog_wide_full_width`), move-dialogs
+/// specs part suites, and `game_map_options_dialog_test`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -333,8 +335,11 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'split_army_dialog_test.dart' ||
       name == 'split_fleet_dialog_test.dart' ||
       name == 'move_fleet_dialog_test.dart' ||
+      name == 'transfer_to_home_fleet_dialog_spec_test.dart' ||
       name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
-      name == 'production_commodity_breakdown_dialog_wide_full_width_test.dart';
+      name == 'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
+      name.startsWith('move_dialogs_specs_part') ||
+      name == 'game_map_options_dialog_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

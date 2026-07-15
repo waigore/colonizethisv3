@@ -2,7 +2,6 @@
 // (dark editorial-monocle chrome — Refs #2861 S8 / R9, Refs #2867 R1).
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -12,13 +11,15 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _frame({
   required MapViewState initialState,
   required ValueChanged<MapViewState> onChanged,
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
+    child: Scaffold(
       body: Builder(
         builder: (context) => Center(
           child: TextButton(

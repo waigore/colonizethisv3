@@ -1226,4 +1226,123 @@ void main() {
       expect(code, 0);
     },
   );
+
+  test(
+    'fails when transfer-to-home-fleet dialog suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_transfer_home_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'transfer_to_home_fleet_dialog_spec_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when move_dialogs_specs part suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_move_dialogs_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'move_dialogs_specs_part1_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when game_map_options dialog suite reintroduces MaterialApp host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_map_options_mat_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(temp, 'game_map_options_dialog_test.dart', '''
+Widget host() => MaterialApp(home: const Placeholder());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'passes when transfer/move/map-options dialog suites use buildAppShell only',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_unit_order_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'transfer_to_home_fleet_dialog_spec_test.dart',
+        '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''',
+      );
+      _writeGovernedFile(temp, 'move_dialogs_specs_part2_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+      _writeGovernedFile(temp, 'game_map_options_dialog_test.dart', '''
+import 'support/app_shell_harness.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(
+      buildAppShell(child: const Scaffold(body: Placeholder())),
+    );
+  });
+}
+''');
+
+      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+      expect(code, 0);
+    },
+  );
 }
