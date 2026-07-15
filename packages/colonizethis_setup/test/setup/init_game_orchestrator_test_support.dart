@@ -55,8 +55,14 @@ const defaultInitOptions = InitGameOptions(cellSize: 8, renderPng: false);
 
 /// Builds a [GameSetupConfig] from [GameSetupConfig.defaultConfig], overriding
 /// only the provided fields. Removes the verbose full-config rebuild blocks
-/// tests used to vary a single field — the config has no `copyWith` (#3712).
+/// tests used to vary a single field — the config has no `copyWith` (#3712 /
+/// #4029).
+///
+/// Nullable [Set]/[Map] params: pass `null` to keep the default-config value;
+/// pass an empty collection to override with empty.
 GameSetupConfig configWithOverrides({
+  List<String>? selectedGreatPowerIds,
+  Map<String, String>? leaderVariantByGpId,
   int? seed,
   int? continentCount,
   int? minorNationCount,
@@ -64,11 +70,20 @@ GameSetupConfig configWithOverrides({
   int? numProvincesOldWorld,
   int? numProvincesNewWorld,
   int? minProvincesPerMinor,
+  bool? infiniteMode,
+  double? terrainVariation,
+  StartingResourcesConfig? startingResources,
+  double? preferredInitialMapZoomMultiplier,
+  Set<String>? initTownRoadWiringRegionIds,
+  Set<int>? humanGreatPowerSlotIndices,
+  Map<String, String?>? aiProfileByGpId,
+  AdvancedStartType? advancedStart,
 }) {
   final base = GameSetupConfig.defaultConfig;
   return GameSetupConfig(
-    selectedGreatPowerIds: base.selectedGreatPowerIds,
-    leaderVariantByGpId: base.leaderVariantByGpId,
+    selectedGreatPowerIds:
+        selectedGreatPowerIds ?? base.selectedGreatPowerIds,
+    leaderVariantByGpId: leaderVariantByGpId ?? base.leaderVariantByGpId,
     continentCount: continentCount ?? base.continentCount,
     minorNationCount: minorNationCount ?? base.minorNationCount,
     tribeCount: tribeCount ?? base.tribeCount,
@@ -76,22 +91,40 @@ GameSetupConfig configWithOverrides({
     numProvincesNewWorld: numProvincesNewWorld ?? base.numProvincesNewWorld,
     minProvincesPerMinor: minProvincesPerMinor ?? base.minProvincesPerMinor,
     seed: seed ?? base.seed,
-    startingResources: base.startingResources,
+    infiniteMode: infiniteMode ?? base.infiniteMode,
+    terrainVariation: terrainVariation ?? base.terrainVariation,
+    startingResources: startingResources ?? base.startingResources,
+    preferredInitialMapZoomMultiplier:
+        preferredInitialMapZoomMultiplier ??
+        base.preferredInitialMapZoomMultiplier,
+    initTownRoadWiringRegionIds:
+        initTownRoadWiringRegionIds ?? base.initTownRoadWiringRegionIds,
+    humanGreatPowerSlotIndices:
+        humanGreatPowerSlotIndices ?? base.humanGreatPowerSlotIndices,
+    aiProfileByGpId: aiProfileByGpId ?? base.aiProfileByGpId,
+    advancedStart: advancedStart ?? base.advancedStart,
   );
 }
 
 /// The locked full-init profile config (#1830 AC-10..AC-12): default GP ids and
 /// starting resources with the locked partition counts and the given [seed].
-GameSetupConfig lockedFullInitConfig({required int seed}) =>
-    configWithOverrides(
-      seed: seed,
-      continentCount: 4,
-      minorNationCount: 6,
-      tribeCount: 10,
-      numProvincesOldWorld: 60,
-      numProvincesNewWorld: 30,
-      minProvincesPerMinor: 3,
-    );
+GameSetupConfig lockedFullInitConfig({
+  required int seed,
+  Set<int>? humanGreatPowerSlotIndices,
+  AdvancedStartType? advancedStart,
+  bool? infiniteMode,
+}) => configWithOverrides(
+  seed: seed,
+  continentCount: 4,
+  minorNationCount: 6,
+  tribeCount: 10,
+  numProvincesOldWorld: 60,
+  numProvincesNewWorld: 30,
+  minProvincesPerMinor: 3,
+  humanGreatPowerSlotIndices: humanGreatPowerSlotIndices,
+  advancedStart: advancedStart,
+  infiniteMode: infiniteMode,
+);
 
 /// Wraps [defaultTileMapRegionGenerator] for tests, exposing the per-region
 /// [TileMapParams] via [onParams] and allowing a [continentProvinceSizes]

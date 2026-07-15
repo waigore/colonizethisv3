@@ -175,6 +175,10 @@ These criteria are implemented and covered by automated tests where noted.
   When those APIs are resolved  
   Then `assignProvinceTowns`, `applyNaming`, and `addStartingUnits` / `addStartingMilitaryAndNaval` come from first-class libraries under `packages/colonizethis_setup/lib/src/setup/game_setup_helpers_{towns,naming,bootstrap}.dart` re-exported by `game_setup_helpers.dart` (no `part` / `part of` fragments; enforced by `repo.setup_helpers_first_class_libraries`).
 
+- Given setup unit tests need empty/minimal `Game`/`WorldState` shells or locked/advanced `GameSetupConfig` variants  
+  When those fixtures are constructed under `packages/colonizethis_setup/test/**`  
+  Then empty shells use `TestFixtures` from `package:colonizethis_test/game_test_fixtures.dart` (or a thin support delegate such as `advancedStartGpGame`) and config variants use `configWithOverrides` / `lockedFullInitConfig` rather than inlined `Game(` / `WorldState(` / full `GameSetupConfig(` rebuilds (enforced by `repo.setup_test_use_shared_fixtures`; scenario topologies may remain in `advanced_start_test_support.dart`).
+
 - Given `InitGameOptions(renderPng: true)`  
   When `runInitGame` completes  
   Then `InitGameResult.mapPngBytes` is non-empty (`init_game_orchestrator_test.dart`).

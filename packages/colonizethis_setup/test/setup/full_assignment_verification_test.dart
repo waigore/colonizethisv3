@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'init_game_orchestrator_test_support.dart';
@@ -25,8 +26,8 @@ MapTopology _topology(String regionId, List<String> provinceIds) => MapTopology(
 WorldState _worldState({
   required List<Province> oldWorld,
   required List<Province> newWorld,
-}) => WorldState(
-  turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+}) => TestFixtures.worldStateAtOrdersPhase(
+  turnNumber: 0,
   oldWorld: RegionData(provinces: oldWorld),
   newWorld: RegionData(provinces: newWorld),
 );

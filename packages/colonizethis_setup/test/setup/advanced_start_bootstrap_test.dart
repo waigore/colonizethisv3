@@ -6,6 +6,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'advanced_start_test_support.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 int _countUnitsOfType(Game game, String ownerId, String type) {
   return allUnitsFromWorld(
@@ -96,7 +97,7 @@ void main() {
             ),
           ],
         );
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           advancedStart: AdvancedStartType.turns50,
         );
 
@@ -172,7 +173,7 @@ void main() {
             MinorNation(id: 'minor1', displayName: 'Minor 1'),
           ],
         );
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           advancedStart: AdvancedStartType.turns100,
         );
 
@@ -210,7 +211,7 @@ void main() {
         treasury: 500,
       );
       final game = advancedStartGpGame(player: player);
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         numProvincesOldWorld: 24,
         numProvincesNewWorld: 12,
         advancedStart: AdvancedStartType.turns50,
