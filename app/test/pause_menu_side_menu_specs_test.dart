@@ -20,10 +20,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -31,15 +31,14 @@ void main() {
 
   group('PauseMenuPanel (SPEC/ui/pause-menu-panel.md)', () {
     Widget pauseHost(AppEventBus bus, {bool blocking = false}) {
-      return ProviderScope(
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+      return buildAppShell(
         overrides: [
           turnResolutionBlockingProvider.overrideWith(
             () => StateToggleNotifier(blocking),
           ),
         ],
-        child: MaterialApp(
-          home: Scaffold(body: PauseMenuPanel(bus: bus)),
-        ),
+        child: Scaffold(body: PauseMenuPanel(bus: bus)),
       );
     }
 
@@ -217,7 +216,8 @@ void main() {
       required VoidCallback onClose,
       Map<String, Widget Function(BuildContext)> routes = const {},
     }) {
-      return ProviderScope(
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+      return buildAppShell(
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameServiceProvider.overrideWith(
@@ -231,20 +231,28 @@ void main() {
           ),
           appEventBusProvider.overrideWith((ref) => bus),
         ],
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            routes: routes,
-            home: Scaffold(
-              body: Stack(
-                children: [
-                  GameSideMenu(
-                    sideMenuOpen: sideMenuOpen,
-                    onClose: onClose,
-                  ),
-                ],
+        navigatorKey: appNavigatorKey,
+        onGenerateRoute: routes.isEmpty
+            ? null
+            : (settings) {
+                final builder = routes[settings.name];
+                if (builder == null) {
+                  return null;
+                }
+                return MaterialPageRoute<void>(
+                  settings: settings,
+                  builder: builder,
+                );
+              },
+        shellWrapper: (app) => AppEventHandlerScope(child: app),
+        child: Scaffold(
+          body: Stack(
+            children: [
+              GameSideMenu(
+                sideMenuOpen: sideMenuOpen,
+                onClose: onClose,
               ),
-            ),
+            ],
           ),
         ),
       );

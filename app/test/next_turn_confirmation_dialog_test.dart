@@ -10,20 +10,23 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
-  Widget hostApp() {
-    return MaterialApp(
+  Widget hostApp({
+    required Future<void> Function(BuildContext) onOpen,
+  }) {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
+      child: Scaffold(
         body: Builder(
           builder: (ctx) => Center(
             child: TextButton(
-              onPressed: () {
-                showNextTurnConfirmationDialog(ctx, currentTurn: 7);
-              },
+              onPressed: () => onOpen(ctx),
               child: const Text('open'),
             ),
           ),
@@ -33,7 +36,13 @@ void main() {
   }
 
   Future<void> openDialog(WidgetTester tester) async {
-    await tester.pumpWidget(hostApp());
+    await tester.pumpWidget(
+      hostApp(
+        onOpen: (ctx) async {
+          await showNextTurnConfirmationDialog(ctx, currentTurn: 7);
+        },
+      ),
+    );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
@@ -110,24 +119,13 @@ void main() {
     (WidgetTester tester) async {
       bool? result;
       await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: Builder(
-              builder: (ctx) => Center(
-                child: TextButton(
-                  onPressed: () async {
-                    result = await showNextTurnConfirmationDialog(
-                      ctx,
-                      currentTurn: 3,
-                    );
-                  },
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
+        hostApp(
+          onOpen: (ctx) async {
+            result = await showNextTurnConfirmationDialog(
+              ctx,
+              currentTurn: 3,
+            );
+          },
         ),
       );
       await tester.tap(find.text('open'));
@@ -144,24 +142,13 @@ void main() {
     (WidgetTester tester) async {
       bool? result;
       await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: Builder(
-              builder: (ctx) => Center(
-                child: TextButton(
-                  onPressed: () async {
-                    result = await showNextTurnConfirmationDialog(
-                      ctx,
-                      currentTurn: 3,
-                    );
-                  },
-                  child: const Text('open'),
-                ),
-              ),
-            ),
-          ),
+        hostApp(
+          onOpen: (ctx) async {
+            result = await showNextTurnConfirmationDialog(
+              ctx,
+              currentTurn: 3,
+            );
+          },
         ),
       );
       await tester.tap(find.text('open'));
