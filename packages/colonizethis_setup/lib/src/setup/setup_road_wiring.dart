@@ -9,6 +9,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'grid_bfs.dart';
 import 'setup_exceptions.dart';
 import 'setup_topology_adjacency.dart';
+import 'tile_cell_scan.dart';
 
 /// Raise [tileKey] road level to at least [level] (no-op when already higher).
 TileMapState raiseRoadAtLeast(
@@ -136,30 +137,27 @@ Set<String> pathTileKeysTowardHub({
   required int inlandX,
   required int inlandY,
 }) {
-  int? bestDist;
-  int? bestX;
-  int? bestY;
-  for (var y = 0; y < map.height; y++) {
-    for (var x = 0; x < map.width; x++) {
-      if (map.cell(x, y) != localProvinceId) continue;
-      if (!tileAdjacentToSeaZone(
-        x,
-        y,
-        map,
-        topology,
-        seaZoneId,
-        provinceIds: provinceIds,
-      )) {
-        continue;
-      }
-      final dist = (x - inlandX).abs() + (y - inlandY).abs();
-      if (bestDist != null && dist >= bestDist) continue;
-      bestDist = dist;
-      bestX = x;
-      bestY = y;
+  var bestDist = -1;
+  var bestX = -1;
+  var bestY = -1;
+  forEachProvinceCell(map, localProvinceId, (x, y) {
+    if (!tileAdjacentToSeaZone(
+      x,
+      y,
+      map,
+      topology,
+      seaZoneId,
+      provinceIds: provinceIds,
+    )) {
+      return;
     }
-  }
-  if (bestX == null || bestY == null) return null;
+    final dist = (x - inlandX).abs() + (y - inlandY).abs();
+    if (bestDist >= 0 && dist >= bestDist) return;
+    bestDist = dist;
+    bestX = x;
+    bestY = y;
+  });
+  if (bestDist < 0) return null;
   return (bestX, bestY);
 }
 

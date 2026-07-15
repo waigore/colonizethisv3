@@ -77,20 +77,17 @@ _scanCapitalTileCandidates({
   required Set<String> provinceIds,
 }) {
   final acc = _CapitalTileCandidateScan();
-  for (var y = 0; y < tileMap.height; y++) {
-    for (var x = 0; x < tileMap.width; x++) {
-      if (tileMap.cell(x, y) != localProvinceId) continue;
-      final tileClass = classifyCapitalTile(
-        x: x,
-        y: y,
-        tileMap: tileMap,
-        topology: topology,
-        localProvinceId: localProvinceId,
-        provinceIds: provinceIds,
-      );
-      acc.accept(tileClass, x, y, tileMap, topology, provinceIds);
-    }
-  }
+  forEachProvinceCell(tileMap, localProvinceId, (x, y) {
+    final tileClass = classifyCapitalTile(
+      x: x,
+      y: y,
+      tileMap: tileMap,
+      topology: topology,
+      localProvinceId: localProvinceId,
+      provinceIds: provinceIds,
+    );
+    acc.accept(tileClass, x, y, tileMap, topology, provinceIds);
+  });
   return (
     classAx: acc.classAx,
     classAy: acc.classAy,

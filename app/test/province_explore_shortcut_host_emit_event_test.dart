@@ -35,7 +35,7 @@ import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, buildPlayerView, kWorkTargetExplore;
+    show buildPlayerView, kWorkTargetExplore;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -245,6 +245,7 @@ RegionMapViewData _partiallyRevealedRegion() {
 }
 
 PerPlayerWorkTargetSelectionCache _exploreCache() {
+  final game = _buildGame(withExplorer: true);
   return PerPlayerWorkTargetSelectionCache(
     strategies: <String, WorkTargetSelectionPopulationStrategy>{
       kWorkTargetExplore: (_) => const <String>{
@@ -254,19 +255,49 @@ PerPlayerWorkTargetSelectionCache _exploreCache() {
     },
   )..refresh(
       WorkTargetSelectionSnapshot(
-        game: _buildGame(withExplorer: true),
+        game: game,
         playerId: _kHumanPlayerId,
-        playerView: buildPlayerView(
-          _buildGame(withExplorer: true),
-          _combinedTopology,
-          _kHumanPlayerId,
-        ),
+        playerView: buildPlayerView(game, _combinedTopology, _kHumanPlayerId),
         topology: _combinedTopology,
         currentOrders: const Orders(),
         tileMapByRegion: _tileMapByRegion,
       ),
     );
 }
+
+Finder _exploreAction({required bool enabled}) {
+  return find.byWidgetPredicate(
+    (Widget w) =>
+        w is CtIconAction &&
+        w.icon == Icons.explore &&
+        (enabled ? w.onPressed != null : true),
+  );
+}
+
+typedef _HostCase = ({
+  String label,
+  Type hostType,
+  Size surfaceSize,
+  bool selectTileTab,
+  bool wide,
+});
+
+const List<_HostCase> _hostCases = <_HostCase>[
+  (
+    label: 'The wide side panel',
+    hostType: GameMapProvinceDetailSidePanel,
+    surfaceSize: Size(720, 720),
+    selectTileTab: false,
+    wide: true,
+  ),
+  (
+    label: 'The narrow bottom-slot host',
+    hostType: GameMapNarrowDetailOverlaySlot,
+    surfaceSize: Size(400, 600),
+    selectTileTab: true,
+    wide: false,
+  ),
+];
 
 void main() {
   suppressLogsForTests();
@@ -278,42 +309,47 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  Future<void> _selectTileOnHost(WidgetTester tester, Type hostType) async {
-    final ctx = tester.element(find.byType(hostType));
-    ProviderScope.containerOf(ctx)
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(_kTileKey);
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> _tapTileTabIfNarrow(WidgetTester tester, Type hostType) async {
-    if (hostType != GameMapNarrowDetailOverlaySlot) {
-      return;
-    }
-    final tileTab = find.text('Tile');
-    expect(tileTab, findsOneWidget);
-    await tester.tap(tileTab);
-    await tester.pumpAndSettle();
-  }
-
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
     WidgetTester tester, {
     required Game game,
-    required Type hostType,
-    required Size surfaceSize,
-    required Widget host,
-    bool selectTileTab = false,
+    required _HostCase host,
+    required PerPlayerWorkTargetSelectionCache cache,
   }) async {
+    final region = _partiallyRevealedRegion();
+    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
+    final Widget body = host.wide
+        ? Center(
+            child: SizedBox(
+              width: 320,
+              child: GameMapProvinceDetailSidePanel(
+                game: game,
+                region: region,
+                humanPlayerId: _kHumanPlayerId,
+                playerView: playerView,
+                workTargetSelectionCache: cache,
+              ),
+            ),
+          )
+        : Align(
+            alignment: Alignment.bottomCenter,
+            child: GameMapNarrowDetailOverlaySlot(
+              game: game,
+              region: region,
+              humanPlayerId: _kHumanPlayerId,
+              playerView: playerView,
+              workTargetSelectionCache: cache,
+            ),
+          );
+
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
-
     final opened = <OpenCivilianUnitsPanelEvent>[];
     final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
     addTearDown(sub.cancel);
 
     await pumpAppShell(
       tester,
-      viewport: surfaceSize,
+      viewport: host.surfaceSize,
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith(
@@ -325,65 +361,29 @@ void main() {
           () => CurrentOrdersNotifier(const Orders()),
         ),
       ],
-      child: Scaffold(body: host),
+      child: Scaffold(body: body),
     );
 
-    await _selectTileOnHost(tester, hostType);
-    if (selectTileTab) {
-      await _tapTileTabIfNarrow(tester, hostType);
+    final ctx = tester.element(find.byType(host.hostType));
+    ProviderScope.containerOf(ctx)
+        .read(mapProvincePanelProvider.notifier)
+        .reportMapTileTapped(_kTileKey);
+    await tester.pumpAndSettle();
+    if (host.selectTileTab) {
+      final tileTab = find.text('Tile');
+      expect(tileTab, findsOneWidget);
+      await tester.tap(tileTab);
+      await tester.pumpAndSettle();
     }
     return opened;
   }
 
-  Widget _wideHost({
-    required Game game,
-    required PerPlayerWorkTargetSelectionCache cache,
-  }) {
-    final region = _partiallyRevealedRegion();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    return Center(
-      child: SizedBox(
-        width: 320,
-        child: GameMapProvinceDetailSidePanel(
-          game: game,
-          region: region,
-          humanPlayerId: _kHumanPlayerId,
-          playerView: playerView,
-          workTargetSelectionCache: cache,
-        ),
-      ),
-    );
-  }
-
-  Widget _narrowHost({
-    required Game game,
-    required PerPlayerWorkTargetSelectionCache cache,
-  }) {
-    final region = _partiallyRevealedRegion();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: GameMapNarrowDetailOverlaySlot(
-        game: game,
-        region: region,
-        humanPlayerId: _kHumanPlayerId,
-        playerView: playerView,
-        workTargetSelectionCache: cache,
-      ),
-    );
-  }
-
-  Future<void> _expectExploreShortcutEmitsBusEvent(
+  Future<void> expectExploreShortcutEmits(
     WidgetTester tester, {
     required List<OpenCivilianUnitsPanelEvent> opened,
     required String hostLabel,
   }) async {
-    final shortcut = find.byWidgetPredicate(
-      (Widget w) =>
-          w is CtIconAction &&
-          w.icon == Icons.explore &&
-          w.onPressed != null,
-    );
+    final shortcut = _exploreAction(enabled: true);
     expect(
       shortcut,
       findsOneWidget,
@@ -392,11 +392,9 @@ void main() {
           'partially revealed province with an explorer and a cached '
           'explore-eligible target.',
     );
-
     await tester.ensureVisible(shortcut);
     await tester.tap(shortcut);
     await tester.pump();
-
     expect(opened, hasLength(1));
     final event = opened.single;
     expect(event.explorerOnly, isTrue);
@@ -406,107 +404,51 @@ void main() {
     expect(event.prospectShortcutTargetTileKey, isNull);
   }
 
-  testWidgets(
-    'wide host: tapping the enabled Explore shortcut emits an explorer-only '
-    'OpenCivilianUnitsPanelEvent targeting the exact selected tile key '
-    '(SPEC § Tile inline actions — Explore shortcut assignment)',
-    (WidgetTester tester) async {
-      final game = _buildGame(withExplorer: true);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapProvinceDetailSidePanel,
-        surfaceSize: const Size(720, 720),
-        host: _wideHost(game: game, cache: _exploreCache()),
-      );
-      await _expectExploreShortcutEmitsBusEvent(
-        tester,
-        opened: opened,
-        hostLabel: 'The wide side panel',
-      );
-    },
-  );
+  for (final host in _hostCases) {
+    testWidgets(
+      '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Explore '
+      'shortcut emits an explorer-only OpenCivilianUnitsPanelEvent targeting '
+      'the exact selected tile key '
+      '(SPEC § Tile inline actions — Explore shortcut assignment)',
+      (WidgetTester tester) async {
+        final opened = await pumpHostAndSelect(
+          tester,
+          game: _buildGame(withExplorer: true),
+          host: host,
+          cache: _exploreCache(),
+        );
+        await expectExploreShortcutEmits(
+          tester,
+          opened: opened,
+          hostLabel: host.label,
+        );
+      },
+    );
 
-  testWidgets(
-    'narrow host: tapping the enabled Explore shortcut emits an explorer-only '
-    'OpenCivilianUnitsPanelEvent targeting the exact selected tile key '
-    '(SPEC § Tile inline actions — Explore shortcut assignment)',
-    (WidgetTester tester) async {
-      final game = _buildGame(withExplorer: true);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapNarrowDetailOverlaySlot,
-        surfaceSize: const Size(400, 600),
-        selectTileTab: true,
-        host: _narrowHost(game: game, cache: _exploreCache()),
-      );
-      await _expectExploreShortcutEmitsBusEvent(
-        tester,
-        opened: opened,
-        hostLabel: 'The narrow bottom-slot host',
-      );
-    },
-  );
-
-  testWidgets(
-    'negative — wide host with no Explorer unit does not enable Explore '
-    'and tapping emits no OpenCivilianUnitsPanelEvent',
-    (WidgetTester tester) async {
-      final game = _buildGame(withExplorer: false);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapProvinceDetailSidePanel,
-        surfaceSize: const Size(720, 720),
-        host: _wideHost(game: game, cache: _exploreCache()),
-      );
-
-      final enabledShortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.icon == Icons.explore &&
-            w.onPressed != null,
-      );
-      expect(enabledShortcut, findsNothing);
-
-      final anyShortcut = find.byWidgetPredicate(
-        (Widget w) => w is CtIconAction && w.icon == Icons.explore,
-      );
-      if (anyShortcut.evaluate().isNotEmpty) {
-        await tester.tap(anyShortcut.first, warnIfMissed: false);
-        await tester.pump();
-      }
-
-      expect(opened, isEmpty);
-    },
-  );
-
-  testWidgets(
-    'negative — narrow host with no Explorer unit does not enable Explore '
-    'and emits no OpenCivilianUnitsPanelEvent',
-    (WidgetTester tester) async {
-      final game = _buildGame(withExplorer: false);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapNarrowDetailOverlaySlot,
-        surfaceSize: const Size(400, 600),
-        selectTileTab: true,
-        host: _narrowHost(game: game, cache: _exploreCache()),
-      );
-
-      final enabledShortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.icon == Icons.explore &&
-            w.onPressed != null,
-      );
-      expect(enabledShortcut, findsNothing);
-
-      expect(opened, isEmpty);
-    },
-  );
+    testWidgets(
+      'negative — ${host.wide ? 'wide' : 'narrow'} host with no Explorer unit '
+      'does not enable Explore and emits no OpenCivilianUnitsPanelEvent',
+      (WidgetTester tester) async {
+        final opened = await pumpHostAndSelect(
+          tester,
+          game: _buildGame(withExplorer: false),
+          host: host,
+          cache: _exploreCache(),
+        );
+        expect(_exploreAction(enabled: true), findsNothing);
+        if (host.wide) {
+          final anyShortcut = find.byWidgetPredicate(
+            (Widget w) => w is CtIconAction && w.icon == Icons.explore,
+          );
+          if (anyShortcut.evaluate().isNotEmpty) {
+            await tester.tap(anyShortcut.first, warnIfMissed: false);
+            await tester.pump();
+          }
+        }
+        expect(opened, isEmpty);
+      },
+    );
+  }
 
   testWidgets(
     'negative — click-time drift invalidates explore assignment and the tap '
@@ -528,25 +470,16 @@ void main() {
       final opened = await pumpHostAndSelect(
         tester,
         game: game,
-        hostType: GameMapProvinceDetailSidePanel,
-        surfaceSize: const Size(720, 720),
-        host: _wideHost(game: game, cache: driftCache),
+        host: _hostCases.first,
+        cache: driftCache,
       );
 
-      final shortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.icon == Icons.explore &&
-            w.onPressed != null,
-      );
+      final shortcut = _exploreAction(enabled: true);
       expect(shortcut, findsOneWidget);
-
       driftCache.armExploreDriftOnNextRead();
-
       await tester.ensureVisible(shortcut);
       await tester.tap(shortcut);
       await tester.pump();
-
       expect(
         opened,
         isEmpty,

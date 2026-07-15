@@ -36,10 +36,13 @@ Game buildPanelTestGame({
   Map<String, String> portsByProvinceSeaboard = const {},
   Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
       const {},
+  Map<String, Map<String, String>> playerVisibilityByTile = const {},
   Map<String, String> seaZoneDisplayNameById = const {},
   Map<String, String> resourceByTileKey = const {},
   List<Tribe> tribes = const [],
   List<MinorNation> minorNations = const [],
+  List<DiplomacyRelation> diplomacyRelations = const [],
+  int nextArmySeq = 1,
   String id = 'panel-widget-test',
   TurnState turnState = const TurnState(
     phase: TurnPhase.orders,
@@ -62,11 +65,14 @@ Game buildPanelTestGame({
       armies: armies,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      playerVisibilityByTile: playerVisibilityByTile,
       seaZoneDisplayNameById: seaZoneDisplayNameById,
       resourceByTileKey: resourceByTileKey,
+      nextArmySeq: nextArmySeq,
     ),
     players: players ?? [panelTestHumanPlayer()],
     tribes: tribes,
     minorNations: minorNations,
+    diplomacyRelations: diplomacyRelations,
   );
 }

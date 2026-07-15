@@ -2,6 +2,8 @@
 // - SPEC/ui/move-army-dialog.md
 // Split under repo.app_test_file_size (Refs #4013).
 
+import 'dart:async';
+
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart'
     show editorialMonocleDisplayFontFamily;
@@ -9,6 +11,7 @@ import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_butt
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -161,6 +164,48 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    (
+      AppEventBus bus,
+      ArmyMoveRequestedEvent? Function() getCaptured,
+      StreamSubscription<ArmyMoveRequestedEvent> sub,
+    )
+    subscribeArmyMoveRequested() {
+      ArmyMoveRequestedEvent? captured;
+      final bus = AppEventBus.create();
+      final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
+        captured = e;
+      });
+      return (bus, () => captured, sub);
+    }
+
+    Future<void> openInvasionWarConfirm(
+      WidgetTester tester,
+      AppEventBus bus,
+    ) async {
+      await pumpDialog(tester, bus: bus);
+      await tester.tap(find.text('Invade Dest'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
+      await tester.pumpAndSettle();
+      expect(find.text('Declare war?'), findsOneWidget);
+    }
+
+    Future<TextStyle?> invasionDeclareWarTriggerStyle(
+      WidgetTester tester,
+    ) async {
+      await pumpDialog(tester, bus: AppEventBus.create());
+      final triggerFinder = find.text('declare war on Specs Rival');
+      expect(triggerFinder, findsOneWidget);
+      return tester.widget<Text>(triggerFinder).style;
+    }
+
+    Finder warConfirmSubShell() {
+      return find.ancestor(
+        of: find.text('Declare war?'),
+        matching: find.byType(CtDialogShell),
+      );
+    }
+
     testWidgets(
       'renders CtDialogShell with section labels and no Material dropdown (Refs #2867 S1)',
       (WidgetTester tester) async {
@@ -185,79 +230,34 @@ void main() {
     testWidgets(
       'confirm on owned destination emits ArmyMoveRequestedEvent without declareWar',
       (WidgetTester tester) async {
-        ArmyMoveRequestedEvent? captured;
-        final bus = AppEventBus.create();
-        final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
-          captured = e;
-        });
+        final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
         await tester.pumpAndSettle();
 
+        final captured = getCaptured();
         expect(captured, isNotNull);
         expect(captured!.humanPlayerId, playerId);
-        expect(captured!.moveOrder.armyId, 'aspecs');
-        expect(captured!.declareWarTargetFactionId, isNull);
+        expect(captured.moveOrder.armyId, 'aspecs');
+        expect(captured.declareWarTargetFactionId, isNull);
         expect(find.byType(MoveArmyDialog), findsNothing);
       },
     );
 
     testWidgets(
-      'invasion row shows declare-war trigger in danger italic (Refs #2867 R8)',
+      'invasion row shows declare-war trigger in danger italic, not display font '
+      '(Refs #2867 R8)',
       (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
-        final triggerFinder = find.text('declare war on Specs Rival');
-        expect(triggerFinder, findsOneWidget);
-        final TextStyle? style = tester.widget<Text>(triggerFinder).style;
-        expect(
-          style?.color,
-          equals(EditorialMonoclePalette.danger),
-          reason:
-              'R8 requires the trigger label color to resolve to '
-              '--danger (EditorialMonoclePalette.danger).',
-        );
-        expect(
-          style?.fontStyle,
-          equals(FontStyle.italic),
-          reason:
-              'R8 requires the trigger label to render in italic body '
-              'style so a serif italic glyph fires.',
-        );
-        expect(
-          style?.fontWeight,
-          equals(FontWeight.w600),
-          reason:
-              'R8 requires the trigger label to render at semi-bold '
-              'weight (w600) so the danger emphasis reads against a busy row.',
-        );
-      },
-    );
-
-    testWidgets(
-      'invasion row trigger label does NOT pin the editorial-monocle display font (Refs #2867 R8 negative)',
-      (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
-        final triggerFinder = find.text('declare war on Specs Rival');
-        expect(triggerFinder, findsOneWidget);
-        final TextStyle? style = tester.widget<Text>(triggerFinder).style;
-        // R8 is explicit: Cinzel (the editorial-monocle display family) is
-        // display-only and has no italic variant. If the trigger label is
-        // pinned to `editorialMonocleDisplayFontFamily` the italic style
-        // silently falls back to regular weight, regressing the danger
-        // emphasis. Pin the negative invariant so any future regression
-        // (e.g. an accidental `fontFamily: editorialMonocleDisplayFontFamily`
-        // copy from the title style) trips this test before reviewers see
-        // the visual regression.
+        final style = await invasionDeclareWarTriggerStyle(tester);
+        expect(style?.color, EditorialMonoclePalette.danger);
+        expect(style?.fontStyle, FontStyle.italic);
+        expect(style?.fontWeight, FontWeight.w600);
+        // R8: Cinzel has no italic variant; pinning display font regresses emphasis.
         expect(
           style?.fontFamily,
           isNot(equals(editorialMonocleDisplayFontFamily)),
-          reason:
-              'R8 forbids the trigger label from being pinned to the '
-              'editorial-monocle display font ($editorialMonocleDisplayFontFamily) '
-              'because that family has no italic variant; the label must '
-              'inherit the body font stack so italic glyphs render.',
         );
       },
     );
@@ -265,120 +265,80 @@ void main() {
     testWidgets(
       'confirm on invasion destination then declare-war confirm carries declareWarTargetFactionId',
       (WidgetTester tester) async {
-        ArmyMoveRequestedEvent? captured;
-        final bus = AppEventBus.create();
-        final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
-          captured = e;
-        });
+        final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
-        await pumpDialog(tester, bus: bus);
-        await tester.tap(find.text('Invade Dest'));
-        await tester.pump();
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Declare war?'), findsOneWidget);
+        await openInvasionWarConfirm(tester, bus);
         await tester.tap(find.text('Declare war and move'));
         await tester.pumpAndSettle();
 
+        final captured = getCaptured();
         expect(captured, isNotNull);
         expect(captured!.declareWarTargetFactionId, otherFactionId);
-        expect(captured!.moveOrder.destinationProvinceId, invasionDest);
+        expect(captured.moveOrder.destinationProvinceId, invasionDest);
       },
     );
 
     testWidgets(
       'cancel on invasion confirmation aborts emit and keeps dialog mounted',
       (WidgetTester tester) async {
-        ArmyMoveRequestedEvent? captured;
-        final bus = AppEventBus.create();
-        final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
-          captured = e;
-        });
+        final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
-        await pumpDialog(tester, bus: bus);
-        await tester.tap(find.text('Invade Dest'));
-        await tester.pump();
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Declare war?'), findsOneWidget);
-        final subShell = find.ancestor(
-          of: find.text('Declare war?'),
-          matching: find.byType(CtDialogShell),
-        );
+        await openInvasionWarConfirm(tester, bus);
         await tester.tap(
           find.descendant(
-            of: subShell,
+            of: warConfirmSubShell(),
             matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
           ),
         );
         await tester.pumpAndSettle();
 
-        expect(captured, isNull);
+        expect(getCaptured(), isNull);
         expect(find.byType(MoveArmyDialog), findsOneWidget);
       },
     );
 
     testWidgets(
-      'war-confirmation sub-dialog renders inside CtDialogShell with --danger 1px border (Refs #2867 R9)',
+      'war-confirmation sub-dialog uses danger CtDialogShell + nine-patch actions '
+      '(Refs #2867 R9)',
       (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
-        await tester.tap(find.text('Invade Dest'));
-        await tester.pump();
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
-        await tester.pumpAndSettle();
+        await openInvasionWarConfirm(tester, AppEventBus.create());
 
         expect(find.byType(CtDialogShell), findsWidgets);
-        expect(find.text('Declare war?'), findsOneWidget);
-
         final CtDialogShell shell = tester.widget<CtDialogShell>(
           find.byType(CtDialogShell).last,
         );
         expect(shell.borderColor, EditorialMonoclePalette.danger);
         expect(shell.borderWidth, CtDialogShell.dangerBorderWidth);
         expect(shell.borderWidth, 1);
-      },
-    );
 
-    testWidgets(
-      'war-confirmation actions are CtNinePatchButton with danger primary (Refs #2867 R9)',
-      (WidgetTester tester) async {
-        await pumpDialog(tester, bus: AppEventBus.create());
-        await tester.tap(find.text('Invade Dest'));
-        await tester.pump();
-        await tester.tap(find.widgetWithText(CtNinePatchButton, 'Confirm'));
-        await tester.pumpAndSettle();
-
-        final subShell = find.ancestor(
-          of: find.text('Declare war?'),
-          matching: find.byType(CtDialogShell),
+        final subShell = warConfirmSubShell();
+        expect(
+          tester
+              .widget<CtNinePatchButton>(
+                find.descendant(
+                  of: subShell,
+                  matching: find.widgetWithText(
+                    CtNinePatchButton,
+                    'Declare war and move',
+                  ),
+                ),
+              )
+              .dangerVariant,
+          isTrue,
         );
-
-        final CtNinePatchButton primary = tester.widget<CtNinePatchButton>(
-          find.descendant(
-            of: subShell,
-            matching: find.widgetWithText(
-              CtNinePatchButton,
-              'Declare war and move',
-            ),
-          ),
+        expect(
+          tester
+              .widget<CtNinePatchButton>(
+                find.descendant(
+                  of: subShell,
+                  matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
+                ),
+              )
+              .dangerVariant,
+          isFalse,
         );
-        expect(primary.dangerVariant, isTrue);
-
-        final CtNinePatchButton cancel = tester.widget<CtNinePatchButton>(
-          find.descendant(
-            of: subShell,
-            matching: find.widgetWithText(CtNinePatchButton, 'Cancel'),
-          ),
-        );
-        expect(cancel.dangerVariant, isFalse);
-
-        // No Material AlertDialog/TextButton chrome paints the war-confirm
-        // sub-dialog (per SPEC/ui/pixel-art-ui-catalog.md § Material design ban
-        // and SPEC/ui/move-army-dialog.md § Invade-confirm sub-dialog).
         expect(
           find.descendant(of: subShell, matching: find.byType(AlertDialog)),
           findsNothing,
@@ -393,18 +353,14 @@ void main() {
     testWidgets(
       'outer Cancel emits no ArmyMoveRequestedEvent and dismisses dialog',
       (WidgetTester tester) async {
-        ArmyMoveRequestedEvent? captured;
-        final bus = AppEventBus.create();
-        final sub = bus.on<ArmyMoveRequestedEvent>().listen((e) {
-          captured = e;
-        });
+        final (bus, getCaptured, sub) = subscribeArmyMoveRequested();
         addTearDown(sub.cancel);
 
         await pumpDialog(tester, bus: bus);
         await tester.tap(find.widgetWithText(CtNinePatchButton, 'Cancel'));
         await tester.pumpAndSettle();
 
-        expect(captured, isNull);
+        expect(getCaptured(), isNull);
         expect(find.byType(MoveArmyDialog), findsNothing);
       },
     );

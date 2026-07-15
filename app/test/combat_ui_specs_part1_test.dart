@@ -16,9 +16,110 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deplo
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+
 import 'support/combat_ui_specs_test_support.dart';
 
+QuickBattleGroup _centerFront({
+  required List<String> unitIds,
+  int cohesion = 3,
+}) =>
+    QuickBattleGroup(
+      lane: QuickBattleLane.center,
+      line: QuickBattleLine.front,
+      unitIds: unitIds,
+      cohesion: cohesion,
+    );
+
+QuickBattleDeploymentView _deploymentView({
+  List<QuickBattleGroup> attackerGroups = const [],
+  List<QuickBattleGroup> defenderGroups = const [],
+  String attackerName = 'Attacker',
+  String defenderName = 'Defender',
+}) =>
+    QuickBattleDeploymentView(
+      attackerDeployment: QuickBattleDeployment(groups: attackerGroups),
+      defenderDeployment: QuickBattleDeployment(groups: defenderGroups),
+      attackerName: attackerName,
+      defenderName: defenderName,
+    );
+
+Future<void> _pumpSelector(
+  WidgetTester tester, {
+  required int cpRemaining,
+  required void Function(QuickBattleAction) onActionSelected,
+  bool dark = false,
+}) {
+  final child = QuickBattleActionSelector(
+    cpRemaining: cpRemaining,
+    onActionSelected: onActionSelected,
+  );
+  return tester.pumpWidget(
+    dark ? combatUiSpecsDarkFrame(child) : combatUiSpecsFrame(child),
+  );
+}
+
+(AppEventBus, List<CombatMode>) _listenCombatModes() {
+  final bus = AppEventBus.create();
+  final received = <CombatMode>[];
+  final sub = bus.on<CombatModeChosenEvent>().listen((e) {
+    received.add(e.mode);
+  });
+  addTearDown(() async {
+    await sub.cancel();
+  });
+  return (bus, received);
+}
+
+Future<void> _openCombatModeChoice(
+  WidgetTester tester, {
+  required AppEventBus bus,
+  required String provinceName,
+  required bool isCapitalSiege,
+}) async {
+  await tester.pumpWidget(
+    combatUiSpecsFrame(
+      Builder(
+        builder: (ctx) {
+          return TextButton(
+            child: const Text('open'),
+            onPressed: () {
+              showDialog<void>(
+                context: ctx,
+                builder: (_) => CombatModeChoiceDialog(
+                  bus: bus,
+                  provinceName: provinceName,
+                  isCapitalSiege: isCapitalSiege,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    ),
+  );
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpDarkCombatModeChoice(
+  WidgetTester tester, {
+  required String provinceName,
+  required bool isCapitalSiege,
+}) {
+  final bus = AppEventBus.create();
+  return tester.pumpWidget(
+    combatUiSpecsDarkFrame(
+      CombatModeChoiceDialog(
+        bus: bus,
+        provinceName: provinceName,
+        isCapitalSiege: isCapitalSiege,
+      ),
+    ),
+  );
+}
+
 void main() {
+
   suppressLogsForTests();
 
   group(
@@ -29,27 +130,9 @@ void main() {
       ) async {
         await tester.pumpWidget(
           combatUiSpecsFrame(
-            const QuickBattleDeploymentView(
-              attackerDeployment: QuickBattleDeployment(
-                groups: [
-                  QuickBattleGroup(
-                    lane: QuickBattleLane.center,
-                    line: QuickBattleLine.front,
-                    unitIds: ['a1', 'a2', 'a3'],
-                    cohesion: 3,
-                  ),
-                ],
-              ),
-              defenderDeployment: QuickBattleDeployment(
-                groups: [
-                  QuickBattleGroup(
-                    lane: QuickBattleLane.center,
-                    line: QuickBattleLine.front,
-                    unitIds: ['d1', 'd2'],
-                    cohesion: 3,
-                  ),
-                ],
-              ),
+            _deploymentView(
+              attackerGroups: [_centerFront(unitIds: const ['a1', 'a2', 'a3'])],
+              defenderGroups: [_centerFront(unitIds: const ['d1', 'd2'])],
               attackerName: 'Castile',
               defenderName: 'England',
             ),
@@ -67,27 +150,13 @@ void main() {
       ) async {
         await tester.pumpWidget(
           combatUiSpecsFrame(
-            const QuickBattleDeploymentView(
-              attackerDeployment: QuickBattleDeployment(
-                groups: [
-                  QuickBattleGroup(
-                    lane: QuickBattleLane.center,
-                    line: QuickBattleLine.front,
-                    unitIds: ['a1'],
-                    cohesion: 0,
-                  ),
-                ],
-              ),
-              defenderDeployment: QuickBattleDeployment(
-                groups: [
-                  QuickBattleGroup(
-                    lane: QuickBattleLane.center,
-                    line: QuickBattleLine.front,
-                    unitIds: ['d1'],
-                    cohesion: 1,
-                  ),
-                ],
-              ),
+            _deploymentView(
+              attackerGroups: [
+                _centerFront(unitIds: const ['a1'], cohesion: 0),
+              ],
+              defenderGroups: [
+                _centerFront(unitIds: const ['d1'], cohesion: 1),
+              ],
             ),
           ),
         );
@@ -100,12 +169,7 @@ void main() {
         'uses default Attacker / Defender headers when names are omitted',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            combatUiSpecsFrame(
-              const QuickBattleDeploymentView(
-                attackerDeployment: QuickBattleDeployment(),
-                defenderDeployment: QuickBattleDeployment(),
-              ),
-            ),
+            combatUiSpecsFrame(_deploymentView()),
           );
 
           expect(find.text('Attacker'), findsOneWidget);
@@ -114,74 +178,49 @@ void main() {
       );
 
       // Refs #2869 R14 + SPEC/ui/quick-battle-deployment-view.md § Layout.
-      // Pins that group-row text resolves to the canonical `--muted` token
-      // explicitly rather than relying on theme inheritance.
       testWidgets(
-        'group-row text resolves to --muted under dark editorial-monocle theme',
+        'group-row text resolves to --muted under dark and fallback themes',
         (WidgetTester tester) async {
           await tester.pumpWidget(
             combatUiSpecsDarkFrame(
-              const QuickBattleDeploymentView(
-                attackerDeployment: QuickBattleDeployment(
-                  groups: [
-                    QuickBattleGroup(
-                      lane: QuickBattleLane.center,
-                      line: QuickBattleLine.front,
-                      unitIds: ['a1', 'a2', 'a3'],
-                      cohesion: 3,
-                    ),
-                  ],
-                ),
-                defenderDeployment: QuickBattleDeployment(
-                  groups: [
-                    QuickBattleGroup(
-                      lane: QuickBattleLane.center,
-                      line: QuickBattleLine.front,
-                      unitIds: ['d1'],
-                      cohesion: 0,
-                    ),
-                  ],
-                ),
+              _deploymentView(
+                attackerGroups: [
+                  _centerFront(unitIds: const ['a1', 'a2', 'a3']),
+                ],
+                defenderGroups: [
+                  _centerFront(unitIds: const ['d1'], cohesion: 0),
+                ],
               ),
             ),
           );
-
-          final Text attackerRow = tester.widget<Text>(
-            find.text('Center Front: 3 units (Cohesion 3)'),
+          expect(
+            tester
+                .widget<Text>(find.text('Center Front: 3 units (Cohesion 3)'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          final Text defenderRow = tester.widget<Text>(
-            find.text('Center Front: 1 units'),
+          expect(
+            tester.widget<Text>(find.text('Center Front: 1 units')).style?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(attackerRow.style?.color, EditorialMonoclePalette.muted);
-          expect(defenderRow.style?.color, EditorialMonoclePalette.muted);
-        },
-      );
 
-      testWidgets(
-        'group-row text resolves to --muted under fallback Material theme',
-        (WidgetTester tester) async {
           await tester.pumpWidget(
             combatUiSpecsFrame(
-              const QuickBattleDeploymentView(
-                attackerDeployment: QuickBattleDeployment(
-                  groups: [
-                    QuickBattleGroup(
-                      lane: QuickBattleLane.center,
-                      line: QuickBattleLine.front,
-                      unitIds: ['a1'],
-                      cohesion: 2,
-                    ),
-                  ],
-                ),
-                defenderDeployment: QuickBattleDeployment(),
+              _deploymentView(
+                attackerGroups: [
+                  _centerFront(unitIds: const ['a1'], cohesion: 2),
+                ],
               ),
             ),
           );
-
-          final Text row = tester.widget<Text>(
-            find.text('Center Front: 1 units (Cohesion 2)'),
+          expect(
+            tester
+                .widget<Text>(find.text('Center Front: 1 units (Cohesion 2)'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(row.style?.color, EditorialMonoclePalette.muted);
         },
       );
     },
@@ -194,13 +233,10 @@ void main() {
         WidgetTester tester,
       ) async {
         QuickBattleAction? picked;
-        await tester.pumpWidget(
-          combatUiSpecsFrame(
-            QuickBattleActionSelector(
-              cpRemaining: 3,
-              onActionSelected: (a) => picked = a,
-            ),
-          ),
+        await _pumpSelector(
+          tester,
+          cpRemaining: 3,
+          onActionSelected: (a) => picked = a,
         );
 
         // No Material buttons in the selector — pixel-art only.
@@ -217,13 +253,10 @@ void main() {
         WidgetTester tester,
       ) async {
         var taps = 0;
-        await tester.pumpWidget(
-          combatUiSpecsFrame(
-            QuickBattleActionSelector(
-              cpRemaining: 1,
-              onActionSelected: (_) => taps++,
-            ),
-          ),
+        await _pumpSelector(
+          tester,
+          cpRemaining: 1,
+          onActionSelected: (_) => taps++,
         );
 
         // 1-CP action remains tappable.
@@ -245,13 +278,10 @@ void main() {
         WidgetTester tester,
       ) async {
         var taps = 0;
-        await tester.pumpWidget(
-          combatUiSpecsFrame(
-            QuickBattleActionSelector(
-              cpRemaining: 0,
-              onActionSelected: (_) => taps++,
-            ),
-          ),
+        await _pumpSelector(
+          tester,
+          cpRemaining: 0,
+          onActionSelected: (_) => taps++,
         );
 
         for (final label in const [
@@ -268,43 +298,31 @@ void main() {
       });
 
       // Refs #2869 R17 + SPEC/ui/quick-battle-action-selector.md § Layout.
-      // Pins that the CP indicator text resolves to the `--muted` token
-      // explicitly under both the dark theme and the fallback theme.
       testWidgets(
-        'CP indicator resolves to --muted under dark editorial-monocle theme',
+        'CP indicator resolves to --muted under dark and fallback themes',
         (WidgetTester tester) async {
-          await tester.pumpWidget(
-            combatUiSpecsDarkFrame(
-              QuickBattleActionSelector(
-                cpRemaining: 3,
-                onActionSelected: (_) {},
-              ),
-            ),
+          await _pumpSelector(
+            tester,
+            cpRemaining: 3,
+            onActionSelected: (_) {},
+            dark: true,
+          );
+          expect(
+            tester
+                .widget<Text>(find.textContaining('Command Points: 3'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
 
-          final Text label = tester.widget<Text>(
-            find.textContaining('Command Points: 3'),
+          await _pumpSelector(tester, cpRemaining: 0, onActionSelected: (_) {});
+          expect(
+            tester
+                .widget<Text>(find.textContaining('Command Points: 0'))
+                .style
+                ?.color,
+            EditorialMonoclePalette.muted,
           );
-          expect(label.style?.color, EditorialMonoclePalette.muted);
-        },
-      );
-
-      testWidgets(
-        'CP indicator resolves to --muted under fallback Material theme',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(
-            combatUiSpecsFrame(
-              QuickBattleActionSelector(
-                cpRemaining: 0,
-                onActionSelected: (_) {},
-              ),
-            ),
-          );
-
-          final Text label = tester.widget<Text>(
-            find.textContaining('Command Points: 0'),
-          );
-          expect(label.style?.color, EditorialMonoclePalette.muted);
         },
       );
     },
@@ -312,134 +330,44 @@ void main() {
 
   group('CombatModeChoiceDialog (SPEC/ui/combat-mode-choice-dialog.md)', () {
     testWidgets(
-      'regular province emits autoResolve on Auto-Resolve and pops the route',
+      'regular province emits autoResolve / quickBattle and pops on Auto-Resolve',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        final received = <CombatMode>[];
-        final sub = bus.on<CombatModeChosenEvent>().listen((e) {
-          received.add(e.mode);
-        });
-        addTearDown(() async {
-          await sub.cancel();
-        });
+        for (final case_ in <(String, CombatMode)>[
+          ('Auto-Resolve', CombatMode.autoResolve),
+          ('Quick Battle', CombatMode.quickBattle),
+        ]) {
+          final (bus, received) = _listenCombatModes();
+          await _openCombatModeChoice(
+            tester,
+            bus: bus,
+            provinceName: 'Lisbon',
+            isCapitalSiege: false,
+          );
+          expect(find.textContaining('Lisbon'), findsOneWidget);
+          expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+          expect(find.textContaining('Quick Battle'), findsOneWidget);
 
-        await tester.pumpWidget(
-          combatUiSpecsFrame(
-            Builder(
-              builder: (ctx) {
-                return TextButton(
-                  child: const Text('open'),
-                  onPressed: () {
-                    showDialog<void>(
-                      context: ctx,
-                      builder: (_) => CombatModeChoiceDialog(
-                        bus: bus,
-                        provinceName: 'Lisbon',
-                        isCapitalSiege: false,
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        );
-
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-
-        expect(find.textContaining('Lisbon'), findsOneWidget);
-        expect(find.textContaining('Auto-Resolve'), findsOneWidget);
-        expect(find.textContaining('Quick Battle'), findsOneWidget);
-
-        await tester.tap(find.textContaining('Auto-Resolve'));
-        await tester.pumpAndSettle();
-
-        expect(received, [CombatMode.autoResolve]);
-        // Dialog popped — the underlying open button is visible again.
-        expect(find.text('open'), findsOneWidget);
+          await tester.tap(find.textContaining(case_.$1));
+          await tester.pumpAndSettle();
+          expect(received, [case_.$2]);
+          if (case_.$2 == CombatMode.autoResolve) {
+            // Dialog popped — the underlying open button is visible again.
+            expect(find.text('open'), findsOneWidget);
+          }
+        }
       },
     );
-
-    testWidgets('regular province emits quickBattle on Quick Battle', (
-      WidgetTester tester,
-    ) async {
-      final bus = AppEventBus.create();
-      final received = <CombatMode>[];
-      final sub = bus.on<CombatModeChosenEvent>().listen((e) {
-        received.add(e.mode);
-      });
-      addTearDown(() async {
-        await sub.cancel();
-      });
-
-      await tester.pumpWidget(
-        combatUiSpecsFrame(
-          Builder(
-            builder: (ctx) {
-              return TextButton(
-                child: const Text('open'),
-                onPressed: () {
-                  showDialog<void>(
-                    context: ctx,
-                    builder: (_) => CombatModeChoiceDialog(
-                      bus: bus,
-                      provinceName: 'Lisbon',
-                      isCapitalSiege: false,
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.textContaining('Quick Battle'));
-      await tester.pumpAndSettle();
-
-      expect(received, [CombatMode.quickBattle]);
-    });
 
     testWidgets('capital siege variant only renders Quick Battle button', (
       WidgetTester tester,
     ) async {
-      final bus = AppEventBus.create();
-      final received = <CombatMode>[];
-      final sub = bus.on<CombatModeChosenEvent>().listen((e) {
-        received.add(e.mode);
-      });
-      addTearDown(() async {
-        await sub.cancel();
-      });
-
-      await tester.pumpWidget(
-        combatUiSpecsFrame(
-          Builder(
-            builder: (ctx) {
-              return TextButton(
-                child: const Text('open'),
-                onPressed: () {
-                  showDialog<void>(
-                    context: ctx,
-                    builder: (_) => CombatModeChoiceDialog(
-                      bus: bus,
-                      provinceName: 'Madrid',
-                      isCapitalSiege: true,
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
+      final (bus, received) = _listenCombatModes();
+      await _openCombatModeChoice(
+        tester,
+        bus: bus,
+        provinceName: 'Madrid',
+        isCapitalSiege: true,
       );
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('Auto-Resolve'), findsNothing);
       // Exactly one pixel-art button is rendered (the Quick Battle button);
@@ -454,107 +382,47 @@ void main() {
     });
 
     testWidgets(
-      'dark editorial-monocle chrome: title resolves to --accent + 0.05 letter-spacing',
+      'dark editorial-monocle chrome: Lisbon regular + Madrid capital siege',
       (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          combatUiSpecsDarkFrame(
-            CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: 'Lisbon',
-              isCapitalSiege: false,
-            ),
-          ),
+        await _pumpDarkCombatModeChoice(
+          tester,
+          provinceName: 'Lisbon',
+          isCapitalSiege: false,
         );
 
         final Text title = tester.widget<Text>(find.textContaining('Lisbon'));
         expect(title.style?.color, EditorialMonoclePalette.accent);
         expect(title.style?.letterSpacing, 0.05);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: regular body text resolves to --muted',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          combatUiSpecsDarkFrame(
-            CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: 'Lisbon',
-              isCapitalSiege: false,
-            ),
-          ),
-        );
 
         final Text body = tester.widget<Text>(find.text('Choose combat mode:'));
         expect(body.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
 
-    testWidgets(
-      'dark editorial-monocle chrome: capital-siege body text resolves to --muted',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          combatUiSpecsDarkFrame(
-            CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: 'Madrid',
-              isCapitalSiege: true,
-            ),
-          ),
+        expect(
+          tester.widget<Text>(find.text('Auto-Resolve')).style?.color,
+          EditorialMonoclePalette.muted,
         );
-
-        final Finder bodyFinder = find.text(
-          'Capital siege — Quick Battle only (no auto-resolve).',
+        expect(
+          tester.widget<Text>(find.text('Quick Battle')).style?.color,
+          EditorialMonoclePalette.accent,
         );
-        expect(bodyFinder, findsOneWidget);
-        final Text body = tester.widget<Text>(bodyFinder);
-        expect(body.style?.color, EditorialMonoclePalette.muted);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: Quick Battle label resolves to --accent, Auto-Resolve label resolves to --muted',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          combatUiSpecsDarkFrame(
-            CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: 'Lisbon',
-              isCapitalSiege: false,
-            ),
-          ),
-        );
-
-        final Text autoLabel = tester.widget<Text>(find.text('Auto-Resolve'));
-        expect(autoLabel.style?.color, EditorialMonoclePalette.muted);
-
-        final Text qbLabel = tester.widget<Text>(find.text('Quick Battle'));
-        expect(qbLabel.style?.color, EditorialMonoclePalette.accent);
-      },
-    );
-
-    testWidgets(
-      'dark editorial-monocle chrome: regular variant has exactly one CtDialogShell and zero Material action buttons',
-      (WidgetTester tester) async {
-        final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          combatUiSpecsDarkFrame(
-            CombatModeChoiceDialog(
-              bus: bus,
-              provinceName: 'Lisbon',
-              isCapitalSiege: false,
-            ),
-          ),
-        );
-
         expect(find.byType(CtDialogShell), findsOneWidget);
         expect(find.byType(ElevatedButton), findsNothing);
         expect(find.byType(OutlinedButton), findsNothing);
         expect(find.byType(FilledButton), findsNothing);
+
+        await _pumpDarkCombatModeChoice(
+          tester,
+          provinceName: 'Madrid',
+          isCapitalSiege: true,
+        );
+        final Finder siegeBody = find.text(
+          'Capital siege — Quick Battle only (no auto-resolve).',
+        );
+        expect(siegeBody, findsOneWidget);
+        expect(
+          tester.widget<Text>(siegeBody).style?.color,
+          EditorialMonoclePalette.muted,
+        );
       },
     );
   });

@@ -1,4 +1,5 @@
 // Tests for TechTreeWidget and TechnologyScreen. SPEC/ui/tech-tree-widget.md.
+// Shared local pumps densify residual mid-500 MaterialApp scaffolds (Refs #4021).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -15,6 +16,9 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 
 import 'support/panel_test_fixtures.dart';
+
+Player _dummyPlayer() =>
+    Player(id: 'dummy', displayName: 'Dummy', isHuman: true);
 
 void main() {
   suppressLogsForTests();
@@ -44,17 +48,83 @@ void main() {
     );
   }
 
-  testWidgets('TechTreeWidget builds and shows scrollable content', (
-    WidgetTester tester,
-  ) async {
+  Future<void> pumpTree(
+    WidgetTester tester, {
+    required Game g,
+    required Player p,
+    Size? size,
+  }) async {
+    final tree = TechTreeWidget(game: g, player: p);
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: TechTreeWidget(game: game, player: player),
+          body: size == null
+              ? tree
+              : SizedBox(width: size.width, height: size.height, child: tree),
         ),
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  Future<void> pumpScreen(WidgetTester tester, Game g, Player p) async {
+    await tester.pumpWidget(
+      scopedTechnology(
+        g,
+        MaterialApp(
+          home: Scaffold(
+            body: TechnologyScreen(game: g, player: p),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  (Game, Player) withUnlocked(
+    Map<String, bool> techUnlocked, {
+    String? inProgressId,
+  }) {
+    final p = player.copyWith(
+      techUnlocked: techUnlocked,
+      researchProgressByTechId: inProgressId == null
+          ? null
+          : {inProgressId: 50},
+    );
+    return (game.copyWith(players: [p, ...game.players.skip(1)]), p);
+  }
+
+  (Game, Player) emptyPlayerGame() => withUnlocked(<String, bool>{});
+
+  (Game, Player) midGame() {
+    final ids = techCatalog.keys.toList()..sort();
+    final mid = (ids.length / 2).floor();
+    return withUnlocked(
+      Map<String, bool>.fromEntries(
+        ids.take(mid).map((id) => MapEntry(id, true)),
+      ),
+      inProgressId: ids[mid],
+    );
+  }
+
+  Future<void> openTechDialog(
+    WidgetTester tester, {
+    required String techName,
+    (Game, Player)? fixture,
+  }) async {
+    final (g, p) = fixture ?? emptyPlayerGame();
+    await pumpTree(tester, g: g, p: p);
+    expect(find.byType(CtDialogShell), findsNothing);
+    await tester.ensureVisible(find.text(techName).first);
+    await tester.tap(find.text(techName).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(CtDialogShell), findsOneWidget);
+  }
+
+  testWidgets('TechTreeWidget builds and shows scrollable content', (
+    WidgetTester tester,
+  ) async {
+    await pumpTree(tester, g: game, p: player);
     expect(find.byType(SingleChildScrollView), findsWidgets);
     expect(find.byType(TechTreeWidget), findsOneWidget);
   });
@@ -64,21 +134,12 @@ void main() {
     (WidgetTester tester) async {
       final half = (techCatalog.keys.length / 2).floor();
       final unlockedIds = techCatalog.keys.toList()..sort();
-      final techUnlocked = Map<String, bool>.fromEntries(
-        unlockedIds.take(half).map((id) => MapEntry(id, true)),
-      );
-      final midGamePlayer = player.copyWith(techUnlocked: techUnlocked);
-      final midGame = game.copyWith(
-        players: [midGamePlayer, ...game.players.skip(1)],
-      );
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TechTreeWidget(game: midGame, player: midGamePlayer),
-          ),
+      final (midGameGame, midGamePlayer) = withUnlocked(
+        Map<String, bool>.fromEntries(
+          unlockedIds.take(half).map((id) => MapEntry(id, true)),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpTree(tester, g: midGameGame, p: midGamePlayer);
       expect(find.text('Road Construction'), findsOneWidget);
     },
   );
@@ -86,17 +147,7 @@ void main() {
   testWidgets('TechnologyScreen has Slots and Tree tabs', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      scopedTechnology(
-        game,
-        MaterialApp(
-          home: Scaffold(
-            body: TechnologyScreen(game: game, player: player),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpScreen(tester, game, player);
     expect(find.text('Slots'), findsOneWidget);
     expect(find.text('Tree'), findsOneWidget);
     expect(find.text('Technology'), findsOneWidget);
@@ -144,17 +195,7 @@ void main() {
   testWidgets('TechnologyScreen Tree tab shows tech tree content', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      scopedTechnology(
-        game,
-        MaterialApp(
-          home: Scaffold(
-            body: TechnologyScreen(game: game, player: player),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpScreen(tester, game, player);
     await tester.tap(find.text('Tree'));
     await tester.pumpAndSettle();
     expect(find.byType(TechTreeWidget), findsOneWidget);
@@ -164,51 +205,15 @@ void main() {
   testWidgets('Tapping available tech node opens description dialog', (
     WidgetTester tester,
   ) async {
-    // Player with no techs: root techs (e.g. Saw Mill) are available and tappable.
-    // Use a root tech that has an effect summary (extraction cap) for dialog content.
-    final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
-    final gameWithEmptyPlayer = game.copyWith(
-      players: [emptyPlayer, ...game.players.skip(1)],
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechTreeWidget(game: gameWithEmptyPlayer, player: emptyPlayer),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byType(CtDialogShell), findsNothing);
-    await tester.ensureVisible(find.text('Saw Mill').first);
-    await tester.tap(find.text('Saw Mill').first);
-    await tester.pumpAndSettle();
-    expect(find.byType(CtDialogShell), findsOneWidget);
+    await openTechDialog(tester, techName: 'Saw Mill');
     expect(find.text('Saw Mill'), findsWidgets); // title and node
   });
 
   testWidgets(
     'Tech description dialog shows era, category, RP cost and effect summary',
     (WidgetTester tester) async {
-      final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
-      final gameWithEmptyPlayer = game.copyWith(
-        players: [emptyPlayer, ...game.players.skip(1)],
-      );
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TechTreeWidget(
-              game: gameWithEmptyPlayer,
-              player: emptyPlayer,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Saw Mill').first);
-      await tester.tap(find.text('Saw Mill').first);
-      await tester.pumpAndSettle();
+      await openTechDialog(tester, techName: 'Saw Mill');
       // SPEC: display name, era, category, RP cost, prerequisites list (when any), effect summary.
-      expect(find.byType(CtDialogShell), findsOneWidget);
       expect(find.text('Saw Mill'), findsWidgets);
       expect(find.textContaining('Era'), findsOneWidget);
       expect(find.textContaining('Gathering'), findsWidgets);
@@ -221,22 +226,7 @@ void main() {
   testWidgets('Closing tech dialog dismisses it and tree remains', (
     WidgetTester tester,
   ) async {
-    final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
-    final gameWithEmptyPlayer = game.copyWith(
-      players: [emptyPlayer, ...game.players.skip(1)],
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechTreeWidget(game: gameWithEmptyPlayer, player: emptyPlayer),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Saw Mill').first);
-    await tester.tap(find.text('Saw Mill').first);
-    await tester.pumpAndSettle();
-    expect(find.byType(CtDialogShell), findsOneWidget);
+    await openTechDialog(tester, techName: 'Saw Mill');
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
     expect(find.byType(CtDialogShell), findsNothing);
@@ -246,27 +236,8 @@ void main() {
   testWidgets('TechTreeWidget builds with in-progress tech', (
     WidgetTester tester,
   ) async {
-    final half = (techCatalog.keys.length / 2).floor();
-    final unlockedIds = techCatalog.keys.toList()..sort();
-    final techUnlocked = Map<String, bool>.fromEntries(
-      unlockedIds.take(half).map((id) => MapEntry(id, true)),
-    );
-    final inProgressId = unlockedIds[half];
-    final midGamePlayer = player.copyWith(
-      techUnlocked: techUnlocked,
-      researchProgressByTechId: {inProgressId: 50},
-    );
-    final midGame = game.copyWith(
-      players: [midGamePlayer, ...game.players.skip(1)],
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechTreeWidget(game: midGame, player: midGamePlayer),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    final (midGameGame, midGamePlayer) = midGame();
+    await pumpTree(tester, g: midGameGame, p: midGamePlayer);
     expect(find.byType(TechTreeWidget), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsWidgets);
   });
@@ -274,78 +245,47 @@ void main() {
   testWidgets('TechTreeWidget shows legend with category and state labels', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechTreeWidget(game: game, player: player),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpTree(tester, g: game, p: player);
     expect(find.text('Technology tree legend'), findsOneWidget);
     expect(find.text('Gathering'), findsAtLeastNWidgets(1));
-    expect(find.text('Researched'), findsOneWidget);
-    expect(find.text('In progress'), findsOneWidget);
-    expect(find.text('Available'), findsOneWidget);
-    expect(find.text('Locked'), findsOneWidget);
+    for (final label in <String>[
+      'Researched',
+      'In progress',
+      'Available',
+      'Locked',
+    ]) {
+      expect(find.text(label), findsOneWidget);
+    }
   });
 
   testWidgets(
     'TechTreeWidget shows all four node states in legend for a mid-game player (AC3)',
     (WidgetTester tester) async {
-      final allIds = techCatalog.keys.toList()..sort();
-      final mid = (allIds.length / 2).floor();
-      final techUnlocked = Map<String, bool>.fromEntries(
-        allIds.take(mid).map((id) => MapEntry(id, true)),
+      final (midGameGame, midPlayer) = midGame();
+      await pumpTree(
+        tester,
+        g: midGameGame,
+        p: midPlayer,
+        size: const Size(400, 600),
       );
-      final inProgressId = allIds[mid];
-      final midPlayer = player.copyWith(
-        techUnlocked: techUnlocked,
-        researchProgressByTechId: {inProgressId: 50},
-      );
-      final midGame = game.copyWith(
-        players: [midPlayer, ...game.players.skip(1)],
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 400,
-              height: 600,
-              child: TechTreeWidget(game: midGame, player: midPlayer),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Researched'), findsOneWidget);
-      expect(find.text('In progress'), findsOneWidget);
-      expect(find.text('Available'), findsOneWidget);
-      expect(find.text('Locked'), findsOneWidget);
+      for (final label in <String>[
+        'Researched',
+        'In progress',
+        'Available',
+        'Locked',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
     },
   );
 
   testWidgets(
     'TechTreeWidget renders nodes with category-specific colours (AC5)',
     (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SizedBox(
-              width: 800,
-              height: 600,
-              child: TechTreeWidget(game: game, player: player),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpTree(tester, g: game, p: player, size: const Size(800, 600));
 
-      final customPainters = find.byType(CustomPaint);
       expect(
-        customPainters,
+        find.byType(CustomPaint),
         findsWidgets,
         reason:
             'CustomPaint widgets should be rendered for category-colored node backgrounds',
@@ -366,18 +306,7 @@ void main() {
   testWidgets('TechTreeWidget scroll view is scrollable in both axes (AC2)', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 800,
-            height: 600,
-            child: TechTreeWidget(game: game, player: player),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpTree(tester, g: game, p: player, size: const Size(800, 600));
 
     final scrollers = find.byType(SingleChildScrollView);
     expect(
@@ -396,25 +325,8 @@ void main() {
   testWidgets('Tapping locked tech node opens dialog with benefits and effects', (
     WidgetTester tester,
   ) async {
-    final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
-    final gameWithEmptyPlayer = game.copyWith(
-      players: [emptyPlayer, ...game.players.skip(1)],
-    );
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechTreeWidget(game: gameWithEmptyPlayer, player: emptyPlayer),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byType(CtDialogShell), findsNothing);
     // Wind Saw Mill has prerequisite Saw Mill; with no techs unlocked it is locked.
-    final lockedTechFind = find.text('Wind Saw Mill');
-    await tester.ensureVisible(lockedTechFind.first);
-    await tester.tap(lockedTechFind.first);
-    await tester.pumpAndSettle();
-    expect(find.byType(CtDialogShell), findsOneWidget);
+    await openTechDialog(tester, techName: 'Wind Saw Mill');
     expect(find.text('Prerequisites'), findsOneWidget);
     expect(find.text('Effects'), findsOneWidget);
   });
@@ -424,34 +336,20 @@ void main() {
     () {
       // SPEC/ui/tech-tree-widget.md: when there is both a chain (A→B→C) and a direct edge (A→C),
       // there must be a gap between A and C because B occupies the column in between.
-      const a = TechDefinition(
-        id: 'a',
+      TechDefinition def(String id, List<String> prereqs) => TechDefinition(
+        id: id,
         era: 1,
         category: 'gathering',
         cost: 1,
-        prerequisiteIds: [],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
+        prerequisiteIds: prereqs,
+        regimentUnlockIds: const [],
+        shipUnlockIds: const [],
       );
-      const b = TechDefinition(
-        id: 'b',
-        era: 1,
-        category: 'gathering',
-        cost: 1,
-        prerequisiteIds: ['a'],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
-      );
-      const c = TechDefinition(
-        id: 'c',
-        era: 1,
-        category: 'gathering',
-        cost: 1,
-        prerequisiteIds: ['a', 'b'],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
-      );
-      final catalog = <String, TechDefinition>{'a': a, 'b': b, 'c': c};
+      final catalog = <String, TechDefinition>{
+        'a': def('a', const []),
+        'b': def('b', const ['a']),
+        'c': def('c', const ['a', 'b']),
+      };
       final positions = TechTreeWidget.computeLayout(catalog);
       expect(positions.length, 3);
       final posA = positions.firstWhere((p) => p.techId == 'a');
@@ -471,34 +369,20 @@ void main() {
     () {
       // SPEC: when an edge spans columns (A→C), the layout reserves that row in intermediate
       // columns so the connector does not pass through other nodes (e.g. B).
-      const a = TechDefinition(
-        id: 'a',
+      TechDefinition def(String id, List<String> prereqs) => TechDefinition(
+        id: id,
         era: 1,
         category: 'gathering',
         cost: 1,
-        prerequisiteIds: [],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
+        prerequisiteIds: prereqs,
+        regimentUnlockIds: const [],
+        shipUnlockIds: const [],
       );
-      const b = TechDefinition(
-        id: 'b',
-        era: 1,
-        category: 'gathering',
-        cost: 1,
-        prerequisiteIds: ['a'],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
-      );
-      const c = TechDefinition(
-        id: 'c',
-        era: 1,
-        category: 'gathering',
-        cost: 1,
-        prerequisiteIds: ['a'],
-        regimentUnlockIds: [],
-        shipUnlockIds: [],
-      );
-      final catalog = <String, TechDefinition>{'a': a, 'b': b, 'c': c};
+      final catalog = <String, TechDefinition>{
+        'a': def('a', const []),
+        'b': def('b', const ['a']),
+        'c': def('c', const ['a']),
+      };
       final positions = TechTreeWidget.computeLayout(catalog);
       expect(positions.length, 3);
       final posB = positions.firstWhere((p) => p.techId == 'b');
@@ -515,8 +399,4 @@ void main() {
       );
     },
   );
-}
-
-Player _dummyPlayer() {
-  return Player(id: 'dummy', displayName: 'Dummy', isHuman: true);
 }

@@ -14,7 +14,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -107,6 +106,24 @@ Future<void> _pumpDetail(
   );
 }
 
+Future<void> _pumpOtherGp(
+  WidgetTester tester, {
+  required Game game,
+  DiplomacyRelation? relation,
+  FactionKind kind = FactionKind.greatPower,
+  List<Override> overrides = const <Override>[],
+}) {
+  return _pumpDetail(
+    tester,
+    game: game,
+    factionId: _otherId,
+    factionDisplayName: 'Other GP',
+    kind: kind,
+    relation: relation,
+    overrides: overrides,
+  );
+}
+
 String _displayNameFor(Game game, String id) {
   final p = game.playerById(id);
   if (p != null) return p.displayName;
@@ -131,29 +148,13 @@ List<String> _otherFactionIds(Game game) => <String>[
   ...game.tribes.map((t) => t.id),
 ].where((id) => id != _humanId).toList();
 
+typedef _Pin = (Finder finder, Matcher matcher);
+
 void main() {
   suppressLogsForTests();
 
   setUpAll(() async {
     await preloadNinePatchImage();
-  });
-
-  testWidgets('DiplomacyDetailScreen shows dossier header for great powers', (
-    WidgetTester tester,
-  ) async {
-    final game = _minimalGame();
-    final relation = getRelation(game, _humanId, _otherId);
-    await _pumpDetail(
-      tester,
-      game: game,
-      factionId: _otherId,
-      factionDisplayName: 'Other GP',
-      kind: FactionKind.greatPower,
-      relation: relation,
-    );
-    expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-    expect(find.text('DOSSIER'), findsOneWidget);
-    expect(find.textContaining('No dossier evidence yet.'), findsOneWidget);
   });
 
   testWidgets(
@@ -222,128 +223,115 @@ void main() {
     },
   );
 
-  testWidgets(
-    'DiplomacyDetailScreen renders non-empty history and dossier entries',
-    (WidgetTester tester) async {
-      final game = _minimalGame(
-        eventType: DiplomaticEventType.declareWar,
-        includeHistory: true,
-        includeDossier: true,
-        atWar: true,
-      );
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
+  group('history / dossier matrix (GAME30002)', () {
+    for (final c in <({
+      String name,
+      Game Function() game,
+      FactionKind kind,
+      bool useRelation,
+      List<_Pin> pins,
+    })>[
+      (
+        name: 'GP shows dossier header and empty evidence',
+        game: _minimalGame,
         kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-      expect(find.text('DOSSIER'), findsOneWidget);
-      expect(find.textContaining('Turn 3:'), findsOneWidget);
-      expect(find.textContaining('evidence-1'), findsOneWidget);
-      expect(find.textContaining('declared war'), findsOneWidget);
-      expect(find.textContaining('War'), findsOneWidget);
-    },
-  );
-
-  testWidgets('DiplomacyDetailScreen renders empty history (minimal game)', (
-    WidgetTester tester,
-  ) async {
-    final game = _minimalGame();
-    await _pumpDetail(
-      tester,
-      game: game,
-      factionId: _otherId,
-      factionDisplayName: 'Other GP',
-      kind: FactionKind.greatPower,
-      relation: null,
-    );
-    expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-    expect(find.text('DOSSIER'), findsOneWidget);
-    expect(find.text('No dossier evidence yet.'), findsOneWidget);
-    expect(find.text('No recorded events with this faction.'), findsOneWidget);
-  });
-
-  testWidgets(
-    'DiplomacyDetailScreen shows Peace (relation present) and hides Dossier for non-GP kind',
-    (WidgetTester tester) async {
-      final game = _minimalGame();
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      expect(relation!.atWar, isFalse);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
+        useRelation: true,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsOneWidget),
+          (find.textContaining('No dossier evidence yet.'), findsOneWidget),
+        ],
+      ),
+      (
+        name: 'GP empty history when relation is null',
+        game: _minimalGame,
+        kind: FactionKind.greatPower,
+        useRelation: false,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsOneWidget),
+          (find.text('No dossier evidence yet.'), findsOneWidget),
+          (find.text('No recorded events with this faction.'), findsOneWidget),
+        ],
+      ),
+      (
+        name: 'non-GP with relation shows Peace and hides Dossier',
+        game: _minimalGame,
         kind: FactionKind.minor,
-        relation: relation,
-      );
-      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-      expect(find.text('DOSSIER'), findsNothing);
-      expect(
-        find.text('No recorded events with this faction.'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('Peace'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'DiplomacyDetailScreen shows Great Power Dossier empty-state when no evidence exists',
-    (WidgetTester tester) async {
-      final game = _minimalGame(eventType: DiplomaticEventType.declareWar);
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
+        useRelation: true,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsNothing),
+          (find.text('No recorded events with this faction.'), findsOneWidget),
+          (find.textContaining('Peace'), findsOneWidget),
+        ],
+      ),
+      (
+        name: 'GP empty-state dossier when no evidence exists',
+        game: () => _minimalGame(eventType: DiplomaticEventType.declareWar),
         kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-      expect(find.text('DOSSIER'), findsOneWidget);
-      expect(
-        find.text('No recorded events with this faction.'),
-        findsOneWidget,
-      );
-      expect(find.text('No dossier evidence yet.'), findsOneWidget);
-      expect(find.textContaining('Peace'), findsOneWidget);
-    },
-  );
-
-  testWidgets(
-    'DiplomacyDetailScreen renders non-empty history with empty Dossier (great power)',
-    (WidgetTester tester) async {
-      final game = _minimalGame(
-        eventType: DiplomaticEventType.declareWar,
-        includeHistory: true,
-        atWar: true,
-      );
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      expect(relation!.atWar, isTrue);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
+        useRelation: true,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsOneWidget),
+          (find.text('No recorded events with this faction.'), findsOneWidget),
+          (find.text('No dossier evidence yet.'), findsOneWidget),
+          (find.textContaining('Peace'), findsOneWidget),
+        ],
+      ),
+      (
+        name: 'GP non-empty history + dossier at war',
+        game: () => _minimalGame(
+          eventType: DiplomaticEventType.declareWar,
+          includeHistory: true,
+          includeDossier: true,
+          atWar: true,
+        ),
         kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('DIPLOMATIC HISTORY'), findsOneWidget);
-      expect(find.text('DOSSIER'), findsOneWidget);
-      expect(find.textContaining('declared war'), findsOneWidget);
-      expect(find.textContaining('War'), findsOneWidget);
-      expect(find.text('No dossier evidence yet.'), findsOneWidget);
-    },
-  );
+        useRelation: true,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsOneWidget),
+          (find.textContaining('Turn 3:'), findsOneWidget),
+          (find.textContaining('evidence-1'), findsOneWidget),
+          (find.textContaining('declared war'), findsOneWidget),
+          (find.textContaining('War'), findsOneWidget),
+        ],
+      ),
+      (
+        name: 'GP non-empty history with empty Dossier at war',
+        game: () => _minimalGame(
+          eventType: DiplomaticEventType.declareWar,
+          includeHistory: true,
+          atWar: true,
+        ),
+        kind: FactionKind.greatPower,
+        useRelation: true,
+        pins: [
+          (find.text('DIPLOMATIC HISTORY'), findsOneWidget),
+          (find.text('DOSSIER'), findsOneWidget),
+          (find.textContaining('declared war'), findsOneWidget),
+          (find.textContaining('War'), findsOneWidget),
+          (find.text('No dossier evidence yet.'), findsOneWidget),
+        ],
+      ),
+    ]) {
+      testWidgets(c.name, (WidgetTester tester) async {
+        final game = c.game();
+        final relation =
+            c.useRelation ? getRelation(game, _humanId, _otherId) : null;
+        await _pumpOtherGp(
+          tester,
+          game: game,
+          kind: c.kind,
+          relation: relation,
+        );
+        for (final (finder, matcher) in c.pins) {
+          expect(finder, matcher);
+        }
+      });
+    }
+  });
 
   testWidgets(
     'DiplomacyDetailScreen falls back to "Unknown faction" for events with unknown relation pairs',
@@ -397,12 +385,9 @@ void main() {
     '(CtTopBar + scaffold bg) per Refs #2863 S5',
     (WidgetTester tester) async {
       final game = _minimalGame();
-      await _pumpDetail(
+      await _pumpOtherGp(
         tester,
         game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
         relation: getRelation(game, _humanId, _otherId),
       );
       expect(find.byType(CtTopBar), findsOneWidget);
@@ -429,13 +414,10 @@ void main() {
       final List<PopNavigationEvent> popEvents = <PopNavigationEvent>[];
       final sub = bus.on<PopNavigationEvent>().listen(popEvents.add);
       addTearDown(sub.cancel);
-      await _pumpDetail(
+      await _pumpOtherGp(
         tester,
         overrides: [appEventBusProvider.overrideWith((ref) => bus)],
         game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
         relation: getRelation(game, _humanId, _otherId),
       );
       expect(popEvents, isEmpty);
@@ -445,100 +427,67 @@ void main() {
     },
   );
 
-  testWidgets(
-    'DiplomacyDetailScreen Current relation card shows War label '
-    'in --danger colour per mockup GAME30002 .relation-row .war',
-    (WidgetTester tester) async {
-      final game = _minimalGame(
-        eventType: DiplomaticEventType.declareWar,
-        atWar: true,
-      );
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      expect(relation!.atWar, isTrue);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('CURRENT RELATION'), findsOneWidget);
-      final Text war = tester.widget(find.text('War'));
-      expect(war.style?.color, EditorialMonoclePalette.danger);
-    },
-  );
-
-  testWidgets(
-    'DiplomacyDetailScreen Current relation card shows Peace label '
-    'in --success colour per mockup GAME30002 .relation-row .state',
-    (WidgetTester tester) async {
-      final game = _minimalGame();
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('CURRENT RELATION'), findsOneWidget);
-      final Text peace = tester.widget(find.text('Peace'));
-      expect(peace.style?.color, EditorialMonoclePalette.success);
-    },
-  );
-
-  testWidgets(
-    'DiplomacyDetailScreen Current relation card shows the ALLIANCE badge '
-    'in --accent for a formal alliance (Refs #3625 AC4)',
-    (WidgetTester tester) async {
-      final game = _minimalGame(
-        eventType: DiplomaticEventType.allianceFormed,
-        score: 90,
-        formalAlliance: true,
-      );
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      expect(relation!.formalAlliance, isTrue);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('CURRENT RELATION'), findsOneWidget);
-      final Finder badge = find.text(kDiplomacyAllianceBadgeLabel);
-      expect(badge, findsOneWidget);
-      final Text badgeText = tester.widget<Text>(badge);
-      expect(badgeText.style?.color, EditorialMonoclePalette.accent);
-      expect(kDiplomacyAllianceBadgeLabel, isNot('Friendly'));
-    },
-  );
-
-  testWidgets(
-    'DiplomacyDetailScreen Current relation card omits the ALLIANCE badge '
-    'for the informal Allied band without a treaty (Refs #3625 AC4 negative)',
-    (WidgetTester tester) async {
-      final game = _minimalGame(score: 90);
-      final relation = getRelation(game, _humanId, _otherId);
-      expect(relation, isNotNull);
-      expect(relation!.formalAlliance, isFalse);
-      await _pumpDetail(
-        tester,
-        game: game,
-        factionId: _otherId,
-        factionDisplayName: 'Other GP',
-        kind: FactionKind.greatPower,
-        relation: relation,
-      );
-      expect(find.text('CURRENT RELATION'), findsOneWidget);
-      expect(find.text(kDiplomacyAllianceBadgeLabel), findsNothing);
-      expect(find.textContaining('Devoted'), findsOneWidget);
-    },
-  );
+  group('current relation card chrome', () {
+    for (final c in <({
+      String name,
+      Game Function() game,
+      void Function(WidgetTester tester) assertUi,
+    })>[
+      (
+        name: 'War label in --danger colour',
+        game: () => _minimalGame(
+          eventType: DiplomaticEventType.declareWar,
+          atWar: true,
+        ),
+        assertUi: (tester) {
+          expect(find.text('CURRENT RELATION'), findsOneWidget);
+          final Text war = tester.widget(find.text('War'));
+          expect(war.style?.color, EditorialMonoclePalette.danger);
+        },
+      ),
+      (
+        name: 'Peace label in --success colour',
+        game: _minimalGame,
+        assertUi: (tester) {
+          expect(find.text('CURRENT RELATION'), findsOneWidget);
+          final Text peace = tester.widget(find.text('Peace'));
+          expect(peace.style?.color, EditorialMonoclePalette.success);
+        },
+      ),
+      (
+        name: 'ALLIANCE badge in --accent for formal alliance (Refs #3625 AC4)',
+        game: () => _minimalGame(
+          eventType: DiplomaticEventType.allianceFormed,
+          score: 90,
+          formalAlliance: true,
+        ),
+        assertUi: (tester) {
+          expect(find.text('CURRENT RELATION'), findsOneWidget);
+          final Finder badge = find.text(kDiplomacyAllianceBadgeLabel);
+          expect(badge, findsOneWidget);
+          final Text badgeText = tester.widget<Text>(badge);
+          expect(badgeText.style?.color, EditorialMonoclePalette.accent);
+          expect(kDiplomacyAllianceBadgeLabel, isNot('Friendly'));
+        },
+      ),
+      (
+        name:
+            'omits ALLIANCE badge for informal Allied band (Refs #3625 AC4 negative)',
+        game: () => _minimalGame(score: 90),
+        assertUi: (tester) {
+          expect(find.text('CURRENT RELATION'), findsOneWidget);
+          expect(find.text(kDiplomacyAllianceBadgeLabel), findsNothing);
+          expect(find.textContaining('Devoted'), findsOneWidget);
+        },
+      ),
+    ]) {
+      testWidgets(c.name, (WidgetTester tester) async {
+        final game = c.game();
+        final relation = getRelation(game, _humanId, _otherId);
+        expect(relation, isNotNull);
+        await _pumpOtherGp(tester, game: game, relation: relation);
+        c.assertUi(tester);
+      });
+    }
+  });
 }

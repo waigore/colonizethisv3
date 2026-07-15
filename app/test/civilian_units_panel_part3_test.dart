@@ -27,6 +27,81 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 
 import 'support/civilian_units_panel_test_support.dart';
 
+const _human = 'h1';
+const _tileKey = 'oldWorld|p1|0|0';
+
+Finder _resourceIcon(String commodityId) => find.byWidgetPredicate(
+  (w) => w is ResourceIcon && w.commodityId == commodityId,
+);
+
+Future<void> _pumpPendingUnit(
+  WidgetTester tester, {
+  required String gameId,
+  required String unitId,
+  required String unitType,
+  required String workTarget,
+  Map<String, String> resourceByTileKey = const {},
+}) async {
+  await tester.pumpWidget(
+    buildCivilianPanel(
+      game: buildCivilianSingleUnitOwGame(
+        id: gameId,
+        humanId: _human,
+        unitId: unitId,
+        unitType: unitType,
+        tileKey: _tileKey,
+        resourceByTileKey: resourceByTileKey,
+      ),
+      humanPlayerId: _human,
+      currentOrders: civilianSinglePendingWorkOrder(
+        humanId: _human,
+        unitId: unitId,
+        target: workTarget,
+        targetTileKey: _tileKey,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _pumpTileScopedPanel(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  required AppEventBus bus,
+  String? tileScopeTileKey,
+  String? initialSelectedUnitId,
+  bool settle = true,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        availableWorkTargetIdsForUnitProvider.overrideWith(
+          (ref, _) => const <String>[],
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: CivilianUnitsPanel(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: const Orders(),
+            bus: bus,
+            tileScopeTileKey: tileScopeTileKey,
+            initialSelectedUnitId: initialSelectedUnitId,
+          ),
+        ),
+      ),
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -42,83 +117,31 @@ void main() {
     testWidgets(
       'AC: pending build_improvement shows ResourceIcons and omits (pending)',
       (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianSingleUnitOwGame(
-          id: 'g_civ_pending_build',
-          humanId: human,
+        await _pumpPendingUnit(
+          tester,
+          gameId: 'g_civ_pending_build',
           unitId: 'b1',
           unitType: kUnitTypeBuilder,
-          tileKey: tileKey,
+          workTarget: kWorkTargetBuildImprovement,
         );
-        final orders = Orders(
-          workOrdersByPlayerId: {
-            human: [
-              WorkOrder(
-                unitId: 'b1',
-                target: kWorkTargetBuildImprovement,
-                targetTileKey: tileKey,
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            game: miniGame,
-            humanPlayerId: human,
-            currentOrders: orders,
-          ),
-        );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('Assigned to:'), findsOneWidget);
         expect(find.textContaining('(pending)'), findsNothing);
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is ResourceIcon && w.commodityId == 'lumber',
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is ResourceIcon && w.commodityId == 'castIron',
-          ),
-          findsOneWidget,
-        );
+        expect(_resourceIcon('lumber'), findsOneWidget);
+        expect(_resourceIcon('castIron'), findsOneWidget);
       },
     );
 
     testWidgets(
       'AC: pending explore shows inline turns and no ResourceIcon strip',
       (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianSingleUnitOwGame(
-          id: 'g_civ_pending_explore',
-          humanId: human,
+        await _pumpPendingUnit(
+          tester,
+          gameId: 'g_civ_pending_explore',
           unitId: 'e1',
           unitType: kUnitTypeExplorer,
-          tileKey: tileKey,
+          workTarget: kWorkTargetExplore,
         );
-        final orders = Orders(
-          workOrdersByPlayerId: {
-            human: [
-              WorkOrder(
-                unitId: 'e1',
-                target: kWorkTargetExplore,
-                targetTileKey: 'oldWorld|p1|0|0',
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            game: miniGame,
-            humanPlayerId: human,
-            currentOrders: orders,
-          ),
-        );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('(pending)'), findsNothing);
         expect(find.textContaining('Assigned to: Explore'), findsOneWidget);
@@ -130,35 +153,14 @@ void main() {
     testWidgets(
       'AC: pending purchase_land shows treasury chip not ResourceIcon',
       (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianSingleUnitOwGame(
-          id: 'g_civ_pending_land',
-          humanId: human,
+        await _pumpPendingUnit(
+          tester,
+          gameId: 'g_civ_pending_land',
           unitId: 'm1',
           unitType: kUnitTypeMerchant,
-          tileKey: tileKey,
-          resourceByTileKey: {tileKey: 'grain'},
+          workTarget: kWorkTargetPurchaseLand,
+          resourceByTileKey: {_tileKey: 'grain'},
         );
-        final orders = Orders(
-          workOrdersByPlayerId: {
-            human: [
-              WorkOrder(
-                unitId: 'm1',
-                target: kWorkTargetPurchaseLand,
-                targetTileKey: tileKey,
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            game: miniGame,
-            humanPlayerId: human,
-            currentOrders: orders,
-          ),
-        );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('Treasury:'), findsOneWidget);
         expect(find.textContaining('(pending)'), findsNothing);
@@ -169,34 +171,13 @@ void main() {
     testWidgets(
       'AC: pending purchase_land without tile resource still shows inline turns',
       (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
-        final miniGame = buildCivilianSingleUnitOwGame(
-          id: 'g_civ_pending_land_nores',
-          humanId: human,
+        await _pumpPendingUnit(
+          tester,
+          gameId: 'g_civ_pending_land_nores',
           unitId: 'm1',
           unitType: kUnitTypeMerchant,
-          tileKey: tileKey,
+          workTarget: kWorkTargetPurchaseLand,
         );
-        final orders = Orders(
-          workOrdersByPlayerId: {
-            human: [
-              WorkOrder(
-                unitId: 'm1',
-                target: kWorkTargetPurchaseLand,
-                targetTileKey: tileKey,
-              ),
-            ],
-          },
-        );
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            game: miniGame,
-            humanPlayerId: human,
-            currentOrders: orders,
-          ),
-        );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('(pending)'), findsNothing);
         expect(
@@ -211,8 +192,6 @@ void main() {
     testWidgets(
       'AC: pending rows show faithful remaining-turn number for each work target',
       (WidgetTester tester) async {
-        const human = 'h1';
-        const tileKey = 'oldWorld|p1|0|0';
         const targetTileKey = 'oldWorld|p1|1|0';
         final cases = <({String unitType, String target, int turns})>[
           (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
@@ -246,42 +225,35 @@ void main() {
         for (var i = 0; i < cases.length; i++) {
           final c = cases[i];
           final unitId = 'u_$i';
-          final miniGame = buildCivilianOwUnitsGame(
-            id: 'g_civ_pending_turns_${c.target}_$i',
-            humanId: human,
-            fortLevel: 2,
-            resourceByTileKey: const {targetTileKey: 'grain'},
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|p1': [tileKey, targetTileKey],
-              },
-            },
-            units: [
-              civilianIdleUnit(
-                id: unitId,
-                type: c.unitType,
-                ownerId: human,
-                provinceId: 'oldWorld|p1',
-                tileKey: tileKey,
-              ),
-            ],
-          );
-          final orders = Orders(
-            workOrdersByPlayerId: {
-              human: [
-                WorkOrder(
-                  unitId: unitId,
-                  target: c.target,
-                  targetTileKey: targetTileKey,
-                ),
-              ],
-            },
-          );
           await tester.pumpWidget(
             buildCivilianPanel(
-              game: miniGame,
-              humanPlayerId: human,
-              currentOrders: orders,
+              game: buildCivilianOwUnitsGame(
+                id: 'g_civ_pending_turns_${c.target}_$i',
+                humanId: _human,
+                fortLevel: 2,
+                resourceByTileKey: const {targetTileKey: 'grain'},
+                tileKeysByRegionAndProvince: const {
+                  'oldWorld': {
+                    'oldWorld|p1': [_tileKey, targetTileKey],
+                  },
+                },
+                units: [
+                  civilianIdleUnit(
+                    id: unitId,
+                    type: c.unitType,
+                    ownerId: _human,
+                    provinceId: 'oldWorld|p1',
+                    tileKey: _tileKey,
+                  ),
+                ],
+              ),
+              humanPlayerId: _human,
+              currentOrders: civilianSinglePendingWorkOrder(
+                humanId: _human,
+                unitId: unitId,
+                target: c.target,
+                targetTileKey: targetTileKey,
+              ),
             ),
           );
           await tester.pumpAndSettle();
@@ -313,61 +285,30 @@ void main() {
     testWidgets('AC: pending build_rail shows steel and lumber icons', (
       WidgetTester tester,
     ) async {
-      const human = 'h1';
-      const tileKey = 'oldWorld|p1|0|0';
-      final miniGame = buildCivilianSingleUnitOwGame(
-        id: 'g_civ_pending_rail',
-        humanId: human,
+      await _pumpPendingUnit(
+        tester,
+        gameId: 'g_civ_pending_rail',
         unitId: 'r1',
         unitType: kUnitTypeRailBuilder,
-        tileKey: tileKey,
+        workTarget: kWorkTargetBuildRail,
       );
-      final orders = Orders(
-        workOrdersByPlayerId: {
-          human: [
-            WorkOrder(
-              unitId: 'r1',
-              target: kWorkTargetBuildRail,
-              targetTileKey: tileKey,
-            ),
-          ],
-        },
-      );
-      await tester.pumpWidget(
-        buildCivilianPanel(
-          game: miniGame,
-          humanPlayerId: human,
-          currentOrders: orders,
-        ),
-      );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('(pending)'), findsNothing);
-      expect(
-        find.byWidgetPredicate(
-          (w) => w is ResourceIcon && w.commodityId == 'lumber',
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.byWidgetPredicate(
-          (w) => w is ResourceIcon && w.commodityId == 'steel',
-        ),
-        findsOneWidget,
-      );
+      expect(_resourceIcon('lumber'), findsOneWidget);
+      expect(_resourceIcon('steel'), findsOneWidget);
     });
 
     testWidgets('AC: in-progress work row has no pending cost ResourceIcons', (
       WidgetTester tester,
     ) async {
-      const human = 'h1';
-      const tileKey = 'oldWorld|p1|0|0';
-      final miniGame = buildCivilianWorkingBuilderGame(
-        humanId: human,
-        tileKey: tileKey,
-      );
       await tester.pumpWidget(
-        buildCivilianPanel(game: miniGame, humanPlayerId: human),
+        buildCivilianPanel(
+          game: buildCivilianWorkingBuilderGame(
+            humanId: _human,
+            tileKey: _tileKey,
+          ),
+          humanPlayerId: _human,
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -393,28 +334,14 @@ void main() {
         final scopedUnitId = civilianWithTile.first.id;
         final bus = AppEventBus.create();
 
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              availableWorkTargetIdsForUnitProvider.overrideWith(
-                (ref, _) => const <String>[],
-              ),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: CivilianUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerIdWithUnits,
-                  currentOrders: const Orders(),
-                  bus: bus,
-                  tileScopeTileKey: scopedTileKey,
-                  initialSelectedUnitId: scopedUnitId,
-                ),
-              ),
-            ),
-          ),
+        await _pumpTileScopedPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          bus: bus,
+          tileScopeTileKey: scopedTileKey,
+          initialSelectedUnitId: scopedUnitId,
         );
-        await tester.pumpAndSettle();
 
         expect(find.text('Civilian Units (Tile)'), findsOneWidget);
         expect(find.text('Tile'), findsOneWidget);
@@ -448,27 +375,13 @@ void main() {
       WidgetTester tester,
     ) async {
       final bus = AppEventBus.create();
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            availableWorkTargetIdsForUnitProvider.overrideWith(
-              (ref, _) => const <String>[],
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: CivilianUnitsPanel(
-                game: game,
-                humanPlayerId: humanPlayerIdWithUnits,
-                bus: bus,
-                tileScopeTileKey:
-                    'oldWorld|no_civilian_units_on_this_province|0|0',
-              ),
-            ),
-          ),
-        ),
+      await _pumpTileScopedPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        bus: bus,
+        tileScopeTileKey: 'oldWorld|no_civilian_units_on_this_province|0|0',
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('Civilian Units (Tile)'), findsOneWidget);
       expect(find.text('No civilian units'), findsOneWidget);
@@ -484,26 +397,13 @@ void main() {
       '(no CtNinePatchButton header chrome) — #3514 owner decision #5',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              availableWorkTargetIdsForUnitProvider.overrideWith(
-                (ref, _) => const <String>[],
-              ),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: CivilianUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerIdWithUnits,
-                  bus: bus,
-                ),
-              ),
-            ),
-          ),
+        await _pumpTileScopedPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          bus: bus,
+          settle: false,
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
 
         // Scope to the header Train pill by label: row-action Assign pills are
         // now also CtActionTextButton (#3514 row-action migration), so the
@@ -553,29 +453,15 @@ void main() {
         });
         addTearDown(sub.cancel);
 
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              availableWorkTargetIdsForUnitProvider.overrideWith(
-                (ref, _) => const <String>[],
-              ),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: CivilianUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerIdWithUnits,
-                  bus: bus,
-                  tileScopeTileKey: rendered,
-                  initialSelectedUnitId: u.id,
-                ),
-              ),
-            ),
-          ),
+        await _pumpTileScopedPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          bus: bus,
+          tileScopeTileKey: rendered,
+          initialSelectedUnitId: u.id,
+          settle: false,
         );
-        // Avoid pumpAndSettle: nine-patch buttons may not settle in widget tests.
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
 
         captured = null;
         await tester.tap(find.text('Tile'));

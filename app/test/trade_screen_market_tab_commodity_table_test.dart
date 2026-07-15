@@ -248,87 +248,55 @@ void main() {
       );
     });
 
-    testWidgets('CtSectionLabel headers render their localized labels '
-        '(Food / Raw Materials / Manufactured)', (tester) async {
-      await pumpTradeScreen(tester, game: buildTradeTestGame());
+    testWidgets(
+      'section headers show Food/Raw Materials/Manufactured labels inside '
+      'Market tab body only (not Deal Book)',
+      (tester) async {
+        await pumpTradeScreen(tester, game: buildTradeTestGame());
 
-      // Section labels rendered as upper-case small-caps by
-      // CtSectionLabel; pin the visible (upper-cased) literal.
-      expect(
-        find.descendant(
-          of: find.byKey(TradeScreen.marketSectionFoodKey),
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.text('FOOD'),
-        ),
-        findsOneWidget,
-        reason:
-            'CtSectionLabel renders its text in upper-case so the '
-            'Food header should read `FOOD` (l10n English fallback '
-            'when the host MaterialApp has no l10n delegates).',
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(TradeScreen.marketSectionRawMaterialsKey),
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.text('RAW MATERIALS'),
-        ),
-        findsOneWidget,
-        reason:
-            'CtSectionLabel renders its text in upper-case so the '
-            'Raw Materials header should read `RAW MATERIALS`.',
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(TradeScreen.marketSectionManufacturedKey),
-          // ignore: avoid_hardcoded_strings_in_widgets
-          matching: find.text('MANUFACTURED'),
-        ),
-        findsOneWidget,
-        reason:
-            'CtSectionLabel renders its text in upper-case so the '
-            'Manufactured header should read `MANUFACTURED`.',
-      );
-    });
-
-    testWidgets('every section header is mounted inside the Market tab body '
-        '(not under the off-stage Deal Book tab body)', (tester) async {
-      await pumpTradeScreen(tester, game: buildTradeTestGame());
-
-      for (final Key sectionKey in <Key>[
-        TradeScreen.marketSectionFoodKey,
-        TradeScreen.marketSectionRawMaterialsKey,
-        TradeScreen.marketSectionManufacturedKey,
-      ]) {
-        expect(
-          find.descendant(
-            of: find.byKey(TradeScreen.marketTabBodyKey),
-            matching: find.byKey(sectionKey),
+        for (final case_ in <({Key key, String label})>[
+          (key: TradeScreen.marketSectionFoodKey, label: 'FOOD'),
+          (
+            key: TradeScreen.marketSectionRawMaterialsKey,
+            label: 'RAW MATERIALS',
           ),
-          findsOneWidget,
-          reason:
-              'Section header `$sectionKey` must be mounted inside '
-              'the Market tab body keyed `marketTabBodyKey`.',
-        );
-        expect(
-          find.descendant(
-            of: find.byKey(TradeScreen.dealBookTabBodyKey, skipOffstage: false),
-            matching: find.byKey(sectionKey),
+          (
+            key: TradeScreen.marketSectionManufacturedKey,
+            label: 'MANUFACTURED',
           ),
-          findsNothing,
-          reason:
-              'Section header `$sectionKey` must NOT leak into the '
-              'off-stage Deal Book tab body subtree.',
-        );
-      }
-    });
+        ]) {
+          expect(
+            find.descendant(
+              of: find.byKey(case_.key),
+              // ignore: avoid_hardcoded_strings_in_widgets
+              matching: find.text(case_.label),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(
+              of: find.byKey(TradeScreen.marketTabBodyKey),
+              matching: find.byKey(case_.key),
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.descendant(
+              of: find.byKey(
+                TradeScreen.dealBookTabBodyKey,
+                skipOffstage: false,
+              ),
+              matching: find.byKey(case_.key),
+            ),
+            findsNothing,
+          );
+        }
+      },
+    );
 
     testWidgets(
-      'renders the live `WorldMarketState.prices` integer price for a '
-      'seeded commodity (timber=30 → `30`) and falls back to the resource '
-      'catalog default for both unseeded raw resources (iron → `80`) and '
-      'manufactured commodities (lumber → `60`, castIron → `160`) — '
-      '`SPEC/game/commodity-catalog.md` § Manufactured base prices, '
-      'Refs #3093',
+      'Market prices: seeded timber=30; catalog fallbacks iron=80, '
+      'lumber=60, castIron=160; idle quantity em-dash only (Refs #3093)',
       (tester) async {
         await pumpTradeScreen(
           tester,
@@ -338,131 +306,40 @@ void main() {
           ),
         );
 
-        // Seeded commodity row shows the integer price text (Refs #3093 —
-        // `Map<CommodityId, int>` post-floor at persistence boundary).
-        final timberRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.timber.id),
-        );
-        expect(timberRow, findsOneWidget);
-        expect(
-          find.descendant(of: timberRow, matching: find.text('30')),
-          findsOneWidget,
-          reason:
-              'SPEC/ui/trade-screen.md § Body — Market tab (Refs #3093): '
-              'the price cell reads `Game.worldMarketState.prices[id]` '
-              'as a whole integer (price storage is now '
-              '`Map<CommodityId, int>` per #3093 issue body § Price '
-              'presentation & data model).',
-        );
+        for (final case_ in <({CommodityId id, String price})>[
+          (id: CommodityCatalog.timber.id, price: '30'),
+          (id: CommodityCatalog.iron.id, price: '80'),
+          (id: CommodityCatalog.lumber.id, price: '60'),
+          (id: CommodityCatalog.castIron.id, price: '160'),
+        ]) {
+          final row = find.byKey(TradeScreen.marketCommodityRowKey(case_.id));
+          expect(row, findsOneWidget);
+          expect(
+            find.descendant(of: row, matching: find.text(case_.price)),
+            findsOneWidget,
+          );
+        }
 
-        // Unseeded raw-resource commodity row falls back to the resource
-        // catalog default integer price (#3093 — iron defaults to 80 via
-        // `ResourceRules.defaultRules.defaultMarketPriceForCommodityId`).
-        final ironRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.iron.id),
-        );
-        expect(ironRow, findsOneWidget);
-        expect(
-          find.descendant(of: ironRow, matching: find.text('80')),
-          findsOneWidget,
-          reason:
-              'SPEC/ui/trade-screen.md § Body — Market tab (Refs #3093): '
-              'rows fall back to the resource catalog '
-              '`defaultMarketPrice` integer when '
-              '`WorldMarketState.prices` lacks an entry. Iron is a raw '
-              'resource with catalog default 80.',
-        );
-        // Negative pin: iron must NOT render the em-dash price glyph.
-        // The price-slot em-dash is now reserved as a defensive
-        // fallback for tradeable commodities that ship without a
-        // catalog default — none exist under the current ruleset
-        // (Refs #3093 manufactured-default-prices slice). Only the
-        // quantity-idle em-dash remains in an iron row when no trade
-        // order is staged.
-        expect(
-          find.descendant(
-            of: ironRow,
-            matching: find.text(
+        // Negative pin: catalog-backed rows keep only the quantity-idle
+        // em-dash (price-slot em-dash must not appear).
+        for (final id in <CommodityId>[
+          CommodityCatalog.iron.id,
+          CommodityCatalog.lumber.id,
+        ]) {
+          expect(
+            find.descendant(
+              of: find.byKey(TradeScreen.marketCommodityRowKey(id)),
               // ignore: avoid_hardcoded_strings_in_widgets
-              '—',
+              matching: find.text('—'),
             ),
-          ),
-          findsOneWidget,
-          reason:
-              'Refs #3093 — only the quantity-idle em-dash remains in '
-              'an iron row when no trade order is staged. The price-'
-              'slot em-dash must NOT appear for raw-resource commodities '
-              'with a catalog default (regression guard against losing '
-              'the catalog fallback).',
-        );
-
-        // The quantity-idle em-dash specifically lives under the
-        // quantity readout key — keep this scoped pin so a future
-        // regression that swaps the quantity glyph still surfaces a
-        // readable failure.
+            findsOneWidget,
+          );
+        }
         expect(
           find.byKey(
             TradeScreen.marketRowQuantityTextKey(CommodityCatalog.iron.id),
           ),
           findsOneWidget,
-          reason:
-              'Refs #2993 E5b — every commodity row exposes its '
-              'quantity readout via the marketRowQuantityTextKey, '
-              'including rows whose staged TradeOrder is empty (the '
-              'idle em-dash glyph).',
-        );
-
-        // Manufactured commodity row (now seeded by the catalog): the
-        // price slot reads the input-cost-derived base price from
-        // SPEC/game/commodity-catalog.md § Manufactured base prices.
-        // Lumber's canonical recipe (`timber x 2` at 30 each) yields
-        // 60; castIron's (`iron x 2`) yields 160.
-        final lumberRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.lumber.id),
-        );
-        expect(lumberRow, findsOneWidget);
-        expect(
-          find.descendant(of: lumberRow, matching: find.text('60')),
-          findsOneWidget,
-          reason:
-              'Refs #3093 (manufactured-default-prices slice) — the '
-              'lumber price cell falls back to `ResourceRules.defaultRules'
-              '.defaultMarketPriceForCommodityId("lumber") = 60` '
-              '(SPEC/game/commodity-catalog.md § Manufactured base prices: '
-              '`timber x 2` at `30` each).',
-        );
-        // Negative pin: the lumber price slot must NOT render the
-        // em-dash glyph now that the catalog publishes a manufactured
-        // base price for it. Only the quantity-idle em-dash remains.
-        expect(
-          find.descendant(
-            of: lumberRow,
-            matching: find.text(
-              // ignore: avoid_hardcoded_strings_in_widgets
-              '—',
-            ),
-          ),
-          findsOneWidget,
-          reason:
-              'Refs #3093 (manufactured-default-prices slice) — the '
-              'price-slot em-dash MUST NOT appear for manufactured '
-              'commodities now that SPEC/game/commodity-catalog.md § '
-              'Manufactured base prices supplies a published catalog '
-              'default. Only the quantity-idle em-dash should remain '
-              'when no TradeOrder is staged.',
-        );
-
-        final castIronRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.castIron.id),
-        );
-        expect(castIronRow, findsOneWidget);
-        expect(
-          find.descendant(of: castIronRow, matching: find.text('160')),
-          findsOneWidget,
-          reason:
-              'Refs #3093 — castIron base price `160` per '
-              'SPEC/game/commodity-catalog.md § Manufactured base prices '
-              '(`timber x 2 + iron x 2` = `60 + 160`).',
         );
       },
     );

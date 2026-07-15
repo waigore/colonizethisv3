@@ -42,3 +42,20 @@ void forEachTileCell(
     }
   }
 }
+
+/// Visits every cell of [map] whose generated region id equals
+/// [localProvinceId], in the same deterministic row-major order as
+/// [forEachTileCell]. Thin filter over the shared walk so province-scoped
+/// consumers (capital candidates, nearest seaboard) do not re-inline
+/// independent double-loops (Refs #4029).
+void forEachProvinceCell(
+  TileMapResult map,
+  String localProvinceId,
+  void Function(int x, int y) visit, {
+  String regionId = '',
+}) {
+  forEachTileCell(map, regionId, (x, y, localId, _) {
+    if (localId != localProvinceId) return;
+    visit(x, y);
+  });
+}

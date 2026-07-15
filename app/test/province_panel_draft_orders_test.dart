@@ -13,14 +13,125 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pDraft';
 const _localDestProvinceId = 'pDest';
+const _humanId = 'gp1';
 String get _fullProvinceId => '$_regionId|$_localProvinceId';
 String get _fullDestProvinceId => '$_regionId|$_localDestProvinceId';
 String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
+
+const _humanPlayer = Player(
+  id: _humanId,
+  displayName: 'Human',
+  isHuman: true,
+  treasury: 0,
+);
 
 /// Bounded pumps only — avoid [pumpAndSettle] (animations / unbounded work).
 Future<void> _pumpOverlayLayout(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 16));
+}
+
+Province _province({
+  required String id,
+  required String displayName,
+}) => Province(id: id, regionId: id.split('|').first, displayName: displayName);
+
+RegionMapViewData _region({
+  Set<String> greatPowerFactionIds = const {_humanId},
+}) {
+  return RegionMapViewData(
+    regionId: _regionId,
+    width: 1,
+    height: 1,
+    cellSize: 32,
+    cells: const [
+      CellViewData(
+        x: 0,
+        y: 0,
+        regionCellId: _localProvinceId,
+        isSea: false,
+        terrainTypeId: 'plains',
+        visibility: TileVisibility.visible,
+      ),
+    ],
+    capitalMarkers: const [],
+    portMarkers: const [],
+    factionColors: const {},
+    greatPowerFactionIds: greatPowerFactionIds,
+    terrainColors: const {},
+  );
+}
+
+PlayerView _view({required String tileKey}) {
+  return PlayerView(
+    playerId: _humanId,
+    player: _humanPlayer,
+    ownUnitsById: const {},
+    provincesById: const {},
+    visibilityByTile: {tileKey: VisibilityLevel.fullyVisible},
+    prospectedTiles: const {},
+    diplomacyByOtherId: const {},
+  );
+}
+
+Game _game({
+  required String id,
+  required String tileKey,
+  required List<Unit> units,
+  List<Province>? oldWorldProvinces,
+  RegionData? newWorld,
+  List<Player> players = const [_humanPlayer],
+}) {
+  final provinces =
+      oldWorldProvinces ??
+      [
+        _province(id: _fullProvinceId, displayName: 'DraftProv'),
+      ];
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: provinces,
+        units: units,
+      ),
+      newWorld: newWorld ?? const RegionData(),
+      tileKeysByRegionAndProvince: {
+        _regionId: {
+          _fullProvinceId: [tileKey],
+        },
+      },
+    ),
+    players: players,
+  );
+}
+
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  required Game game,
+  required String tileKey,
+  Orders draftOrders = const Orders(),
+  Set<String> greatPowerFactionIds = const {_humanId},
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
+      home: Scaffold(
+        body: ProvinceSeaZoneDetailOverlay(
+          game: game,
+          region: _region(greatPowerFactionIds: greatPowerFactionIds),
+          displayId: _fullProvinceId,
+          selectedTileKey: tileKey,
+          humanPlayerId: _humanId,
+          playerView: _view(tileKey: tileKey),
+          draftOrders: draftOrders,
+        ),
+      ),
+    ),
+  );
+  await _pumpOverlayLayout(tester);
 }
 
 void main() {
@@ -31,106 +142,36 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = Game(
+      final game = _game(
         id: 'draft_order_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: _fullProvinceId,
-                regionId: _regionId,
-                displayName: 'DraftProv',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'u_builder',
-                type: kUnitTypeBuilder,
-                ownerId: 'gp1',
-                locationProvinceId: _fullProvinceId,
-                tileKey: tk,
-                status: UnitStatus.idle,
-              ),
-            ],
+        tileKey: tk,
+        units: [
+          Unit(
+            id: 'u_builder',
+            type: kUnitTypeBuilder,
+            ownerId: _humanId,
+            locationProvinceId: _fullProvinceId,
+            tileKey: tk,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            _regionId: {
-              _fullProvinceId: [tk],
-            },
+        ],
+      );
+      await _pumpOverlay(
+        tester,
+        game: game,
+        tileKey: tk,
+        draftOrders: Orders(
+          workOrdersByPlayerId: {
+            _humanId: [
+              WorkOrder(
+                unitId: 'u_builder',
+                target: kWorkTargetBuildImprovement,
+                targetTileKey: tk,
+              ),
+            ],
           },
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
       );
-      final region = RegionMapViewData(
-        regionId: _regionId,
-        width: 1,
-        height: 1,
-        cellSize: 32,
-        cells: const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: _localProvinceId,
-            isSea: false,
-            terrainTypeId: 'plains',
-            visibility: TileVisibility.visible,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
-        greatPowerFactionIds: const {'gp1'},
-        terrainColors: const {},
-      );
-      final view = PlayerView(
-        playerId: 'gp1',
-        player: const Player(
-          id: 'gp1',
-          displayName: 'Human',
-          isHuman: true,
-          treasury: 0,
-        ),
-        ownUnitsById: const {},
-        provincesById: const {},
-        visibilityByTile: {tk: VisibilityLevel.fullyVisible},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
-      final orders = Orders(
-        workOrdersByPlayerId: {
-          'gp1': [
-            WorkOrder(
-              unitId: 'u_builder',
-              target: kWorkTargetBuildImprovement,
-              targetTileKey: tk,
-            ),
-          ],
-        },
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: ProvinceSeaZoneDetailOverlay(
-              game: game,
-              region: region,
-              displayId: _fullProvinceId,
-              selectedTileKey: tk,
-              humanPlayerId: 'gp1',
-              playerView: view,
-              draftOrders: orders,
-            ),
-          ),
-        ),
-      );
-      await _pumpOverlayLayout(tester);
 
       expect(find.textContaining('build improvement'), findsOneWidget);
       expect(find.textContaining(': idle'), findsNothing);
@@ -142,103 +183,38 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = Game(
+      final game = _game(
         id: 'civilian_id_hidden_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: _fullProvinceId,
-                regionId: _regionId,
-                displayName: 'DraftProv',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'gp1_explorer_1',
-                type: kUnitTypeExplorer,
-                ownerId: 'gp1',
-                locationProvinceId: _fullProvinceId,
-                tileKey: tk,
-                status: UnitStatus.idle,
-              ),
-              Unit(
-                id: 'gp2_explorer_9',
-                type: kUnitTypeExplorer,
-                ownerId: 'gp2',
-                locationProvinceId: _fullProvinceId,
-                tileKey: tk,
-                status: UnitStatus.idle,
-              ),
-            ],
+        tileKey: tk,
+        units: [
+          Unit(
+            id: 'gp1_explorer_1',
+            type: kUnitTypeExplorer,
+            ownerId: _humanId,
+            locationProvinceId: _fullProvinceId,
+            tileKey: tk,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            _regionId: {
-              _fullProvinceId: [tk],
-            },
-          },
-        ),
+          Unit(
+            id: 'gp2_explorer_9',
+            type: kUnitTypeExplorer,
+            ownerId: 'gp2',
+            locationProvinceId: _fullProvinceId,
+            tileKey: tk,
+            status: UnitStatus.idle,
+          ),
+        ],
         players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          _humanPlayer,
           Player(id: 'gp2', displayName: 'France', isHuman: false, treasury: 0),
         ],
       );
-      final region = RegionMapViewData(
-        regionId: _regionId,
-        width: 1,
-        height: 1,
-        cellSize: 32,
-        cells: const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: _localProvinceId,
-            isSea: false,
-            terrainTypeId: 'plains',
-            visibility: TileVisibility.visible,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
-        greatPowerFactionIds: const {'gp1', 'gp2'},
-        terrainColors: const {},
+      await _pumpOverlay(
+        tester,
+        game: game,
+        tileKey: tk,
+        greatPowerFactionIds: const {_humanId, 'gp2'},
       );
-      final view = PlayerView(
-        playerId: 'gp1',
-        player: const Player(
-          id: 'gp1',
-          displayName: 'Human',
-          isHuman: true,
-          treasury: 0,
-        ),
-        ownUnitsById: const {},
-        provincesById: const {},
-        visibilityByTile: {tk: VisibilityLevel.fullyVisible},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: ProvinceSeaZoneDetailOverlay(
-              game: game,
-              region: region,
-              displayId: _fullProvinceId,
-              selectedTileKey: tk,
-              humanPlayerId: 'gp1',
-              playerView: view,
-            ),
-          ),
-        ),
-      );
-      await _pumpOverlayLayout(tester);
 
       expect(find.text('Explorer: idle'), findsOneWidget);
       expect(find.text('France — Explorer: idle'), findsOneWidget);
@@ -250,93 +226,23 @@ void main() {
       WidgetTester tester,
     ) async {
       final tk = _tileKey(0, 0);
-      final game = Game(
+      final game = _game(
         id: 'mil_label_test',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: _fullProvinceId,
-                regionId: _regionId,
-                displayName: 'MilProv',
-              ),
-            ],
-            units: [
-              Unit(
-                id: 'r1',
-                type: 'peasant_levies',
-                ownerId: 'gp1',
-                locationProvinceId: _fullProvinceId,
-                status: UnitStatus.idle,
-              ),
-            ],
+        tileKey: tk,
+        oldWorldProvinces: [
+          _province(id: _fullProvinceId, displayName: 'MilProv'),
+        ],
+        units: [
+          Unit(
+            id: 'r1',
+            type: 'peasant_levies',
+            ownerId: _humanId,
+            locationProvinceId: _fullProvinceId,
+            status: UnitStatus.idle,
           ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            _regionId: {
-              _fullProvinceId: [tk],
-            },
-          },
-        ),
-        players: const [
-          Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
         ],
       );
-      final region = RegionMapViewData(
-        regionId: _regionId,
-        width: 1,
-        height: 1,
-        cellSize: 32,
-        cells: const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: _localProvinceId,
-            isSea: false,
-            terrainTypeId: 'plains',
-            visibility: TileVisibility.visible,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
-        greatPowerFactionIds: const {'gp1'},
-        terrainColors: const {},
-      );
-      final view = PlayerView(
-        playerId: 'gp1',
-        player: const Player(
-          id: 'gp1',
-          displayName: 'Human',
-          isHuman: true,
-          treasury: 0,
-        ),
-        ownUnitsById: const {},
-        provincesById: const {},
-        visibilityByTile: {tk: VisibilityLevel.fullyVisible},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: ProvinceSeaZoneDetailOverlay(
-              game: game,
-              region: region,
-              displayId: _fullProvinceId,
-              selectedTileKey: tk,
-              humanPlayerId: 'gp1',
-              playerView: view,
-            ),
-          ),
-        ),
-      );
-      await _pumpOverlayLayout(tester);
+      await _pumpOverlay(tester, game: game, tileKey: tk);
 
       expect(find.textContaining('Peasant levies'), findsOneWidget);
       expect(find.textContaining('peasant_levies:'), findsNothing);
@@ -346,110 +252,39 @@ void main() {
       'Military section shows pending regiment move line from draftOrders',
       (WidgetTester tester) async {
         final tk = _tileKey(0, 0);
-        final game = Game(
+        final game = _game(
           id: 'mil_pending_test',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: _fullProvinceId,
-                  regionId: _regionId,
-                  displayName: 'FromProv',
-                ),
-                Province(
-                  id: _fullDestProvinceId,
-                  regionId: _regionId,
-                  displayName: 'DestProv',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r_move',
-                  type: 'peasant_levies',
-                  ownerId: 'gp1',
-                  locationProvinceId: _fullProvinceId,
-                  tileKey: tk,
-                  status: UnitStatus.idle,
-                ),
-              ],
+          tileKey: tk,
+          oldWorldProvinces: [
+            _province(id: _fullProvinceId, displayName: 'FromProv'),
+            _province(id: _fullDestProvinceId, displayName: 'DestProv'),
+          ],
+          units: [
+            Unit(
+              id: 'r_move',
+              type: 'peasant_levies',
+              ownerId: _humanId,
+              locationProvinceId: _fullProvinceId,
+              tileKey: tk,
+              status: UnitStatus.idle,
             ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              _regionId: {
-                _fullProvinceId: [tk],
-              },
+          ],
+        );
+        await _pumpOverlay(
+          tester,
+          game: game,
+          tileKey: tk,
+          draftOrders: Orders(
+            moveOrdersByPlayerId: {
+              _humanId: [
+                MoveOrder(
+                  unitId: 'r_move',
+                  destinationTileKey: '$_fullDestProvinceId|0|0',
+                ),
+              ],
             },
           ),
-          players: const [
-            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
-          ],
         );
-        final region = RegionMapViewData(
-          regionId: _regionId,
-          width: 1,
-          height: 1,
-          cellSize: 32,
-          cells: const [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: _localProvinceId,
-              isSea: false,
-              terrainTypeId: 'plains',
-              visibility: TileVisibility.visible,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: const {},
-          greatPowerFactionIds: const {'gp1'},
-          terrainColors: const {},
-        );
-        final view = PlayerView(
-          playerId: 'gp1',
-          player: const Player(
-            id: 'gp1',
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 0,
-          ),
-          ownUnitsById: const {},
-          provincesById: const {},
-          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
-        );
-        final orders = Orders(
-          moveOrdersByPlayerId: {
-            'gp1': [
-              MoveOrder(
-                unitId: 'r_move',
-                destinationTileKey: '$_fullDestProvinceId|0|0',
-              ),
-            ],
-          },
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                displayId: _fullProvinceId,
-                selectedTileKey: tk,
-                humanPlayerId: 'gp1',
-                playerView: view,
-                draftOrders: orders,
-              ),
-            ),
-          ),
-        );
-        await _pumpOverlayLayout(tester);
 
         expect(
           find.textContaining('Ordered: move regiment to'),
@@ -469,113 +304,47 @@ void main() {
       (WidgetTester tester) async {
         const newWorldDestId = 'newWorld|pDestNW';
         final tk = _tileKey(0, 0);
-        final game = Game(
+        final game = _game(
           id: 'mil_pending_cross_region_test',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: _fullProvinceId,
-                  regionId: _regionId,
-                  displayName: 'FromProv',
-                ),
-              ],
-              units: [
-                Unit(
-                  id: 'r_move',
-                  type: 'peasant_levies',
-                  ownerId: 'gp1',
-                  locationProvinceId: _fullProvinceId,
-                  tileKey: tk,
-                  status: UnitStatus.idle,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'newWorld|pDestNW',
-                  regionId: 'newWorld',
-                  displayName: 'NewWorldDest',
-                ),
-              ],
-            ),
-            tileKeysByRegionAndProvince: {
-              _regionId: {
-                _fullProvinceId: [tk],
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
+          tileKey: tk,
+          oldWorldProvinces: [
+            _province(id: _fullProvinceId, displayName: 'FromProv'),
           ],
-        );
-        final region = RegionMapViewData(
-          regionId: _regionId,
-          width: 1,
-          height: 1,
-          cellSize: 32,
-          cells: const [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: _localProvinceId,
-              isSea: false,
-              terrainTypeId: 'plains',
-              visibility: TileVisibility.visible,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: const {},
-          greatPowerFactionIds: const {'gp1'},
-          terrainColors: const {},
-        );
-        final view = PlayerView(
-          playerId: 'gp1',
-          player: const Player(
-            id: 'gp1',
-            displayName: 'Human',
-            isHuman: true,
-            treasury: 0,
-          ),
-          ownUnitsById: const {},
-          provincesById: const {},
-          visibilityByTile: {tk: VisibilityLevel.fullyVisible},
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
-        );
-        final orders = Orders(
-          moveOrdersByPlayerId: {
-            'gp1': [
-              const MoveOrder(
-                unitId: 'r_move',
-                destinationTileKey: '$newWorldDestId|0|0',
+          newWorld: const RegionData(
+            provinces: [
+              Province(
+                id: 'newWorld|pDestNW',
+                regionId: 'newWorld',
+                displayName: 'NewWorldDest',
               ),
             ],
-          },
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                displayId: _fullProvinceId,
-                selectedTileKey: tk,
-                humanPlayerId: 'gp1',
-                playerView: view,
-                draftOrders: orders,
-              ),
+          ),
+          units: [
+            Unit(
+              id: 'r_move',
+              type: 'peasant_levies',
+              ownerId: _humanId,
+              locationProvinceId: _fullProvinceId,
+              tileKey: tk,
+              status: UnitStatus.idle,
             ),
+          ],
+        );
+        await _pumpOverlay(
+          tester,
+          game: game,
+          tileKey: tk,
+          draftOrders: Orders(
+            moveOrdersByPlayerId: {
+              _humanId: [
+                const MoveOrder(
+                  unitId: 'r_move',
+                  destinationTileKey: '$newWorldDestId|0|0',
+                ),
+              ],
+            },
           ),
         );
-        await _pumpOverlayLayout(tester);
 
         expect(
           find.textContaining('Ordered: move regiment to'),

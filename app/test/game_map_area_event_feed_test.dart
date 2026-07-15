@@ -162,6 +162,22 @@ Future<void> _commitTurnEvents(
   }
 }
 
+List<LocateMapTileEvent> _listenLocateEvents(_EventFeedHarness harness) {
+  final locateEvents = <LocateMapTileEvent>[];
+  final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
+  addTearDown(() async {
+    await sub.cancel();
+    harness.bus.dispose();
+  });
+  return locateEvents;
+}
+
+Future<void> _openFeedToggle(WidgetTester tester) async {
+  await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 16));
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -260,12 +276,7 @@ void main() {
       final seaKey = harness.game.worldState.portsByProvinceSeaboard.keys.first;
       final seaParts = seaKey.split('|');
       final seaZoneId = '${seaParts.first}|${seaParts.last}';
-      final locateEvents = <LocateMapTileEvent>[];
-      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
-      addTearDown(() async {
-        await sub.cancel();
-        harness.bus.dispose();
-      });
+      final locateEvents = _listenLocateEvents(harness);
 
       await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
       await _commitTurnEvents(tester, harness, [
@@ -293,12 +304,7 @@ void main() {
     'Player turn event feed unresolved naval anchor is non-tappable',
     (WidgetTester tester) async {
       final harness = _newHarness(disposeBus: false);
-      final locateEvents = <LocateMapTileEvent>[];
-      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
-      addTearDown(() async {
-        await sub.cancel();
-        harness.bus.dispose();
-      });
+      final locateEvents = _listenLocateEvents(harness);
 
       await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
       await _commitTurnEvents(tester, harness, [
@@ -320,39 +326,11 @@ void main() {
     },
   );
 
-  testWidgets('Player turn event feed uses specific diplomacy war copy', (
-    WidgetTester tester,
-  ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await _commitTurnEvents(tester, harness, [
-      AppDiplomacyChangeEvent(
-        actorId: harness.humanId,
-        targetId: harness.opponentId,
-        changeType: 'declare_war',
-        turnNumber: 1,
-      ),
-    ], turnNumber: 2);
-
-    expect(
-      find.textContaining(
-        '${harness.playerDisplayName} declared war on '
-        '${harness.opponentDisplayName}!',
-      ),
-      findsOneWidget,
-    );
-  });
-
   testWidgets(
     'Player turn event feed renders work completion and taps map tile',
     (WidgetTester tester) async {
       final harness = _newHarness(disposeBus: false);
-      final locateEvents = <LocateMapTileEvent>[];
-      final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
-      addTearDown(() async {
-        await sub.cancel();
-        harness.bus.dispose();
-      });
+      final locateEvents = _listenLocateEvents(harness);
 
       await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
       await _commitTurnEvents(tester, harness, [
@@ -377,12 +355,18 @@ void main() {
     },
   );
 
-  testWidgets('Player turn event feed includes discovery and overture lines', (
+  testWidgets('Player turn event feed renders diplomacy/discovery/overture copy', (
     WidgetTester tester,
   ) async {
     final harness = _newHarness();
     await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
     await _commitTurnEvents(tester, harness, [
+      AppDiplomacyChangeEvent(
+        actorId: harness.humanId,
+        targetId: harness.opponentId,
+        changeType: 'declare_war',
+        turnNumber: 1,
+      ),
       AppPlayerProvinceDiscoveredEvent(
         playerId: harness.humanId,
         provinceId: 'oldWorld|1',
@@ -396,15 +380,34 @@ void main() {
       ),
     ], turnNumber: 2);
 
+    expect(
+      find.textContaining(
+        '${harness.playerDisplayName} declared war on '
+        '${harness.opponentDisplayName}!',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('discovered!'), findsOneWidget);
     expect(find.textContaining('Overture advanced!'), findsOneWidget);
   });
 
   testWidgets(
-    'Player turn event feed is hidden by default and toggles from news button',
+    'Player turn event feed toggles visibility and replaces prior turn batch',
     (WidgetTester tester) async {
-      final harness = _newHarness();
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      final harness = _newHarness(disposeBus: false);
+      addTearDown(() async {
+        await tester.binding.setSurfaceSize(null);
+        harness.bus.dispose();
+      });
+      await _pumpMapArea(
+        tester,
+        gamesBox: gamesBox,
+        harness: harness,
+        mediaQuerySize: const Size(500, 900),
+      );
+      const researchLine = 'Research complete! agri_1 unlocked!';
+      final researchFinder = find.textContaining(researchLine);
+
       await _commitTurnEvents(
         tester,
         harness,
@@ -421,73 +424,15 @@ void main() {
 
       expect(find.byKey(kPlayerTurnFeedToggleButtonKey), findsOneWidget);
       expect(find.text('1'), findsOneWidget);
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsNothing,
-      );
+      expect(researchFinder, findsNothing);
       expect(find.text('Events'), findsNothing);
 
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
-
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsOneWidget,
-      );
+      await _openFeedToggle(tester);
+      expect(researchFinder, findsOneWidget);
       expect(find.text('Events'), findsNothing);
 
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
-
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsNothing,
-      );
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed replaces previous turn entries on next commit',
-    (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      addTearDown(() async {
-        await tester.binding.setSurfaceSize(null);
-        harness.bus.dispose();
-      });
-      await _pumpMapArea(
-        tester,
-        gamesBox: gamesBox,
-        harness: harness,
-        mediaQuerySize: const Size(500, 900),
-      );
-
-      await _commitTurnEvents(
-        tester,
-        harness,
-        [
-          AppResearchCompleteEvent(
-            playerId: harness.humanId,
-            techId: 'agri_1',
-            turnNumber: 1,
-          ),
-        ],
-        turnNumber: 2,
-        openFeed: false,
-      );
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsNothing,
-      );
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
+      await _openFeedToggle(tester);
+      expect(researchFinder, findsNothing);
 
       await _commitTurnEvents(
         tester,
@@ -502,60 +447,12 @@ void main() {
         turnNumber: 3,
         openFeed: false,
       );
-      expect(
-        find.textContaining('Research complete! agri_1 unlocked!'),
-        findsNothing,
-      );
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
+      expect(researchFinder, findsNothing);
+      await _openFeedToggle(tester);
       expect(
         find.textContaining('Order rejected! Reason: insufficient_treasury!'),
         findsOneWidget,
       );
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed shows entries in narrow layout when toggled',
-    (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      addTearDown(() async {
-        await tester.binding.setSurfaceSize(null);
-        harness.bus.dispose();
-      });
-      await _pumpMapArea(
-        tester,
-        gamesBox: gamesBox,
-        harness: harness,
-        mediaQuerySize: const Size(500, 900),
-      );
-      await _commitTurnEvents(
-        tester,
-        harness,
-        [
-          AppResearchCompleteEvent(
-            playerId: harness.humanId,
-            techId: 'agri_1',
-            turnNumber: 1,
-          ),
-        ],
-        turnNumber: 2,
-        openFeed: false,
-      );
-
-      final eventsButton = find.byKey(kPlayerTurnFeedToggleButtonKey);
-      expect(eventsButton, findsOneWidget);
-      final lineFinder = find.textContaining(
-        'Research complete! agri_1 unlocked!',
-      );
-      expect(lineFinder, findsNothing);
-
-      await tester.tap(eventsButton);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 16));
-
-      expect(lineFinder, findsOneWidget);
     },
   );
 }

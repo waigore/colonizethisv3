@@ -36,6 +36,23 @@ void main() {
       expect(game.worldState.oldWorld.provinces, hasLength(1));
       expect(game.worldState.oldWorld.units.single.id, 'u1');
     });
+
+    test('threads nextArmySeq, visibility, and empty diplomacyRelations', () {
+      const tile = 'oldWorld|p1|0|0';
+      final game = buildPanelTestGame(
+        nextArmySeq: 7,
+        diplomacyRelations: const [],
+        playerVisibilityByTile: {
+          kPanelTestHumanPlayerId: {tile: 'fullyVisible'},
+        },
+      );
+      expect(game.worldState.nextArmySeq, 7);
+      expect(
+        game.worldState.playerVisibilityByTile[kPanelTestHumanPlayerId]![tile],
+        'fullyVisible',
+      );
+      expect(game.diplomacyRelations, isEmpty);
+    });
   });
 
   group('buildCivilianPanelTestGame', () {
