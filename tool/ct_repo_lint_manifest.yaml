@@ -1513,6 +1513,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_advanced_start_flood_fill.dart
 
+  - rule_id: repo.setup_dedup_ownership_paint
+    group: architecture
+    title: setup ownership paint scaffolding must use _paintLandmass facade (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_ownership_paint.dart
+
   - rule_id: repo.orders_file_size
     group: structure
     title: Orders hot files orders_application.dart / orders_application_completed_work.dart stay at or below 1000 non-comment lines (Refs #3404)

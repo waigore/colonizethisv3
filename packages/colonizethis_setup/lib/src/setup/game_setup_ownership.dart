@@ -13,6 +13,7 @@ import 'setup_exceptions.dart';
 
 part 'game_setup_ownership_comparators.dart';
 part 'game_setup_ownership_gp_packing.dart';
+part 'game_setup_ownership_paint.dart';
 part 'game_setup_ownership_remainder_factions.dart';
 
 Game assignCapitalsForFactions({
@@ -108,21 +109,17 @@ Map<String, String> _assignOldWorldSingleLandmass({
     mandatoryGpSeedProvinceByFaction[g] = sp;
   }
 
-  final growthOrder = _lockedGrowthOrder([...gpHere, ...minorHere], targets);
+  final factionIds = [...gpHere, ...minorHere];
 
-  if (growthOrder.isEmpty) {
-    return {};
-  }
   if (lockedSixMinorsOnFourContinents) {
-    return assignTerritoriesLockedOnLandmass(
+    return _paintLandmass(
+      mode: _LandmassPaintMode.locked,
       landmassProvinceIds: provs,
       neighbours: neighbours,
-      growthOrder: growthOrder,
+      factionIds: factionIds,
       targetPerFaction: targets,
       mandatorySeedProvinceByFaction: mandatoryGpSeedProvinceByFaction,
-      seedPickerRandom: assignmentRandom,
-      backtrackLimitPerFaction: kDefaultBacktrackLimitPerFaction,
-      observation: null,
+      assignmentRandom: assignmentRandom,
     );
   }
 
@@ -137,7 +134,6 @@ Map<String, String> _assignOldWorldSingleLandmass({
     if (assignmentRandom != null) candidates.shuffle(assignmentRandom);
     seeds[candidates.first] = m;
   }
-  final avail = Set<String>.from(provs);
   final factionLandmassIds = {
     for (final g in gpHere) g: lmId,
     for (final m in minorHere) m: lmId,
@@ -145,16 +141,17 @@ Map<String, String> _assignOldWorldSingleLandmass({
   // Cap total assignments so greedy leftovers cannot consume provinces reserved
   // for minors assigned later on the OW remainder (non-locked painting path).
   final maxTotalAssignment = targets.values.fold<int>(0, (a, b) => a + b);
-  return assignTerritoriesByBfsGrowth(
+  return _paintLandmass(
+    mode: _LandmassPaintMode.bfs,
+    landmassProvinceIds: Set<String>.from(provs),
     neighbours: neighbours,
+    factionIds: factionIds,
+    targetPerFaction: targets,
+    bfsSeeds: seeds,
     landmassIds: landmassIds,
     factionLandmassIds: factionLandmassIds,
-    factionIds: growthOrder,
-    seeds: seeds,
-    targetPerFaction: targets,
-    available: avail,
     maxTotal: maxTotalAssignment,
-    neighborShuffleRandom: assignmentRandom,
+    assignmentRandom: assignmentRandom,
   );
 }
 
@@ -319,21 +316,15 @@ Map<String, String> assignOldWorldOwnershipContiguous({
       !lockedSixMinorsOnFourContinents) {
     final minorUniverse = Set<String>.from(gpAvailable);
     final minorTargets = computeFairTargets(minorIds, minorUniverse.length);
-    final minorOrder = _lockedGrowthOrder(minorIds, minorTargets);
-    final minorCand = minorUniverse.toList()..sort();
-    final minorSeeds = pickSimpleSeeds(
-      factionIds: minorOrder,
-      candidateIds: minorCand,
-      available: Set<String>.from(minorUniverse),
-    );
     owners.addAll(
-      assignTerritoriesByBfsGrowth(
+      _paintLandmass(
+        mode: _LandmassPaintMode.bfs,
+        landmassProvinceIds: minorUniverse,
         neighbours: neighbours,
-        factionIds: minorOrder,
-        seeds: minorSeeds,
+        factionIds: minorIds,
         targetPerFaction: minorTargets,
-        available: minorUniverse,
-        neighborShuffleRandom: assignmentRandom,
+        bfsSeedMode: _BfsSeedMode.pickSimple,
+        assignmentRandom: assignmentRandom,
       ),
     );
   }
