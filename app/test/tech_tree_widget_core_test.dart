@@ -1,11 +1,12 @@
 // Tests for TechTreeWidget and TechnologyScreen. SPEC/ui/tech-tree-widget.md.
-// Shared local pumps densify residual mid-500 MaterialApp scaffolds (Refs #4021).
+// Hosts compose buildAppShell (Refs #4035 tech-tree densify).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
@@ -15,10 +16,23 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 Player _dummyPlayer() =>
     Player(id: 'dummy', displayName: 'Dummy', isHuman: true);
+
+List<Override> _technologyOverrides(Game g) => [
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(g)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+    ];
 
 void main() {
   suppressLogsForTests();
@@ -31,23 +45,6 @@ void main() {
     player = game.players.isNotEmpty ? game.players.first : _dummyPlayer();
   });
 
-  Widget scopedTechnology(Game g, Widget child) {
-    return ProviderScope(
-      overrides: [
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(g)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        appEventBusProvider.overrideWith((ref) {
-          final bus = AppEventBus.create();
-          ref.onDispose(bus.dispose);
-          return bus;
-        }),
-      ],
-      child: child,
-    );
-  }
-
   Future<void> pumpTree(
     WidgetTester tester, {
     required Game g,
@@ -56,8 +53,8 @@ void main() {
   }) async {
     final tree = TechTreeWidget(game: g, player: p);
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: size == null
               ? tree
               : SizedBox(width: size.width, height: size.height, child: tree),
@@ -69,12 +66,10 @@ void main() {
 
   Future<void> pumpScreen(WidgetTester tester, Game g, Player p) async {
     await tester.pumpWidget(
-      scopedTechnology(
-        g,
-        MaterialApp(
-          home: Scaffold(
-            body: TechnologyScreen(game: g, player: p),
-          ),
+      buildAppShell(
+        overrides: _technologyOverrides(g),
+        child: Scaffold(
+          body: TechnologyScreen(game: g, player: p),
         ),
       ),
     );
@@ -164,20 +159,17 @@ void main() {
   testWidgets('TechnologyScreen back button pops navigator', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(MaterialApp(home: const Text('Home')));
     await tester.pumpWidget(
-      scopedTechnology(
-        game,
-        MaterialApp(
-          home: Navigator(
-            pages: [
-              const MaterialPage(child: Text('Home')),
-              MaterialPage(
-                child: TechnologyScreen(game: game, player: player),
-              ),
-            ],
-            onDidRemovePage: (_) {},
-          ),
+      buildAppShell(
+        overrides: _technologyOverrides(game),
+        child: Navigator(
+          pages: [
+            const MaterialPage(child: Text('Home')),
+            MaterialPage(
+              child: TechnologyScreen(game: game, player: player),
+            ),
+          ],
+          onDidRemovePage: (_) {},
         ),
       ),
     );

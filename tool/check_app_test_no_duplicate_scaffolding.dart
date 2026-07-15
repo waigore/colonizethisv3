@@ -332,9 +332,14 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `game_map_area_shell_entry_center`), catalog/diplomacy widget hosts
 /// (`ct_choice_chip`, `ct_transfer_list`, `gp_default_map_color_swatch`,
 /// `diplomacy_standing_chips`, `diplomacy_relative_power_line`,
-/// `tech_gp_pennant_widget`), and quick-battle hosts (`quick_battle_screen`,
+/// `tech_gp_pennant_widget`), quick-battle hosts (`quick_battle_screen`,
 /// `quick_battle_deployment_view_dark_tokens`,
-/// `quick_battle_action_selector_dark_tokens`).
+/// `quick_battle_action_selector_dark_tokens`), tech-tree widget hosts
+/// (`tech_tree_widget_core`, `tech_tree_widget_palette`,
+/// `tech_tree_widget_description_batches`), player-turn-event-feed narrow hosts
+/// (`player_turn_event_feed_narrow_width`,
+/// `player_turn_event_feed_narrow_inset`), and
+/// `game_map_selection_prompt_dark_tokens`.
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -464,7 +469,13 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'tech_gp_pennant_widget_test.dart' ||
       name == 'quick_battle_screen_test.dart' ||
       name == 'quick_battle_deployment_view_dark_tokens_test.dart' ||
-      name == 'quick_battle_action_selector_dark_tokens_test.dart';
+      name == 'quick_battle_action_selector_dark_tokens_test.dart' ||
+      name == 'tech_tree_widget_core_test.dart' ||
+      name == 'tech_tree_widget_palette_test.dart' ||
+      name == 'tech_tree_widget_description_batches_test.dart' ||
+      name == 'player_turn_event_feed_narrow_width_test.dart' ||
+      name == 'player_turn_event_feed_narrow_inset_test.dart' ||
+      name == 'game_map_selection_prompt_dark_tokens_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {

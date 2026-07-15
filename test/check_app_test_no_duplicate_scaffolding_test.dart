@@ -877,6 +877,12 @@ void main() {
         'quick_battle_screen_test.dart',
         'quick_battle_deployment_view_dark_tokens_test.dart',
         'quick_battle_action_selector_dark_tokens_test.dart',
+        'tech_tree_widget_core_test.dart',
+        'tech_tree_widget_palette_test.dart',
+        'tech_tree_widget_description_batches_test.dart',
+        'player_turn_event_feed_narrow_width_test.dart',
+        'player_turn_event_feed_narrow_inset_test.dart',
+        'game_map_selection_prompt_dark_tokens_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -952,6 +958,12 @@ Widget host() => MaterialApp(home: const Placeholder());
         'quick_battle_screen_test.dart',
         'quick_battle_deployment_view_dark_tokens_test.dart',
         'quick_battle_action_selector_dark_tokens_test.dart',
+        'tech_tree_widget_core_test.dart',
+        'tech_tree_widget_palette_test.dart',
+        'tech_tree_widget_description_batches_test.dart',
+        'player_turn_event_feed_narrow_width_test.dart',
+        'player_turn_event_feed_narrow_inset_test.dart',
+        'game_map_selection_prompt_dark_tokens_test.dart',
       ]) {
         _writeGovernedFile(
           temp,

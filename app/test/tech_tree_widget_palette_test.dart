@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -54,8 +55,8 @@ void main() {
     (WidgetTester tester) async {
       final emptyPlayer = player.copyWith(techUnlocked: <String, bool>{});
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: TechTreeWidget(game: game, player: emptyPlayer),
           ),
         ),
@@ -95,8 +96,8 @@ void main() {
     'nodes (#2914 S3 — painter chrome resolves through palette tokens)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: TechTreeWidget(game: game, player: player),
           ),
         ),

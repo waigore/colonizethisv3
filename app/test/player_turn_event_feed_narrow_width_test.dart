@@ -24,18 +24,18 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _hostNarrowCard({required Size viewportSize}) {
-  return MediaQuery(
-    data: MediaQueryData(size: viewportSize),
-    child: const MaterialApp(
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topRight,
-          child: PlayerTurnEventFeedCard(
-            entries: <PlayerTurnEventFeedEntry>[],
-            emptyLabel: 'No events.',
-            narrow: true,
-          ),
+  return buildAppShell(
+    viewport: viewportSize,
+    child: const Scaffold(
+      body: Align(
+        alignment: Alignment.topRight,
+        child: PlayerTurnEventFeedCard(
+          entries: <PlayerTurnEventFeedEntry>[],
+          emptyLabel: 'No events.',
+          narrow: true,
         ),
       ),
     ),
@@ -43,16 +43,14 @@ Widget _hostNarrowCard({required Size viewportSize}) {
 }
 
 Widget _hostWideCard({required Size viewportSize}) {
-  return MediaQuery(
-    data: MediaQueryData(size: viewportSize),
-    child: const MaterialApp(
-      home: Scaffold(
-        body: Align(
-          alignment: Alignment.topRight,
-          child: PlayerTurnEventFeedCard(
-            entries: <PlayerTurnEventFeedEntry>[],
-            emptyLabel: 'No events.',
-          ),
+  return buildAppShell(
+    viewport: viewportSize,
+    child: const Scaffold(
+      body: Align(
+        alignment: Alignment.topRight,
+        child: PlayerTurnEventFeedCard(
+          entries: <PlayerTurnEventFeedEntry>[],
+          emptyLabel: 'No events.',
         ),
       ),
     ),

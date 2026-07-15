@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 const _fbGather = 'Improves gathering capabilities';
@@ -38,8 +39,8 @@ Future<void> _pumpEmptyTechTree(
     players: [emptyPlayer, ...game.players.skip(1)],
   );
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
+    buildAppShell(
+      child: Scaffold(
         body: TechTreeWidget(game: gameWithEmptyPlayer, player: emptyPlayer),
       ),
     ),
