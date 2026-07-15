@@ -20,10 +20,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/game_screen_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -39,20 +39,18 @@ Widget _wrapShellScreen({
   required AppEventBus bus,
   required bool autoSaveAvailable,
 }) {
-  return ProviderScope(
+  // Colonial ShellScreen specialization via buildAppShell (Refs #4035).
+  return buildAppShell(
+    theme: AppThemes.colonial,
+    navigatorKey: appNavigatorKey,
     overrides: [
       appEventBusProvider.overrideWith((ref) => bus),
       mainMenuAutoSaveAvailableProvider.overrideWith(
         (ref) => autoSaveAvailable,
       ),
     ],
-    child: AppEventHandlerScope(
-      child: MaterialApp(
-        navigatorKey: appNavigatorKey,
-        theme: AppThemes.colonial,
-        home: const ShellScreen(),
-      ),
-    ),
+    shellWrapper: (Widget app) => AppEventHandlerScope(child: app),
+    child: const ShellScreen(),
   );
 }
 

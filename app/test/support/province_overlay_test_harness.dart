@@ -11,7 +11,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
@@ -125,19 +124,10 @@ Widget buildProvinceOverlayDarkThemeShell({
       : overlay;
   final scaffold = Scaffold(body: body);
   // Province overlay strings resolve via AppLocalizations (Refs #4035).
-  if (shellTheme != null) {
-    return ProviderScope(
-      child: MaterialApp(
-        theme: shellTheme,
-        localizationsDelegates:
-            AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: scaffold,
-      ),
-    );
-  }
+  // Optional [shellTheme] is a documented buildAppShell specialization
+  // (same l10n wiring; no inline MaterialApp).
   return buildAppShell(
+    theme: shellTheme,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en'),

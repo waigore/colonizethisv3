@@ -114,6 +114,7 @@ Widget buildGameScreenHost({
   AppEventBus? eventBus,
   List<Override> extraOverrides = const <Override>[],
   Map<String, WidgetBuilder>? routes,
+  String? initialRoute,
   Widget home = const GameScreen(),
 }) {
   final ThemeData resolved = theme ?? AppThemes.colonial;
@@ -124,18 +125,13 @@ Widget buildGameScreenHost({
     data: MediaQueryData(size: Size(width, height)),
     child: home,
   );
-  final Widget materialApp = routes == null
-      ? MaterialApp(
-          navigatorKey: navigatorKey,
-          theme: appTheme,
-          home: sizedHome,
-        )
-      : MaterialApp(
-          navigatorKey: navigatorKey,
-          theme: appTheme,
-          routes: routes,
-          home: sizedHome,
-        );
+  final MaterialApp materialApp = MaterialApp(
+    navigatorKey: navigatorKey,
+    theme: appTheme,
+    routes: routes,
+    initialRoute: initialRoute,
+    home: initialRoute == null ? sizedHome : null,
+  );
   return ProviderScope(
     overrides: <Override>[
       ...buildGameScreenShellOverrides(
@@ -170,30 +166,24 @@ Widget buildGameScreenShellToGameFlow({
   ThemeData? theme,
   TreasurySummary treasurySummary = const TreasurySummary(treasury: 12345),
 }) {
-  final ThemeData resolved = (theme ?? AppThemes.colonial).copyWith(
+  return buildGameScreenHost(
+    gamesBox: gamesBox,
+    game: game,
+    mapViewData: mapViewData,
+    width: width,
+    height: height,
+    theme: theme,
     platform: platform,
-  );
-  return ProviderScope(
-    overrides: buildGameScreenShellOverrides(
-      gamesBox: gamesBox,
-      game: game,
-      mapViewData: mapViewData,
-      treasurySummary: treasurySummary,
-    ),
-    child: AppEventHandlerScope(
-      child: MaterialApp(
-        navigatorKey: appNavigatorKey,
-        theme: resolved,
-        routes: {
-          Routes.shell: (_) =>
-              const Scaffold(body: Center(child: Text('Main Menu'))),
-          Routes.game: (_) => MediaQuery(
-            data: MediaQueryData(size: Size(width, height)),
-            child: const GameScreen(),
-          ),
-        },
-        initialRoute: Routes.game,
+    navigatorKey: appNavigatorKey,
+    treasurySummary: treasurySummary,
+    routes: {
+      Routes.shell: (_) =>
+          const Scaffold(body: Center(child: Text('Main Menu'))),
+      Routes.game: (_) => MediaQuery(
+        data: MediaQueryData(size: Size(width, height)),
+        child: const GameScreen(),
       ),
-    ),
+    },
+    initialRoute: Routes.game,
   );
 }

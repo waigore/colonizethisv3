@@ -21,33 +21,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-/// Builds the canonical app shell used by widget/screen tests: a
-/// [ProviderScope] (scoped by [overrides]) wrapping an editorial-monocle
-/// [MaterialApp] whose [MaterialApp.home] hosts [child].
+/// Builds the canonical app shell: [ProviderScope] + themed [MaterialApp]
+/// hosting [child]. Defaults to [AppThemes.editorialMonocle]; pass [theme]
+/// for colonial / other specializations (Refs #4035 — no private MaterialApp).
 ///
 /// When [viewport] is non-null, [child] is wrapped in a [MediaQuery] forcing
-/// that size so widget code reading `MediaQuery.sizeOf(context)` resolves to
-/// it; callers must still force the binding surface size separately (see
-/// [pumpAppShell], which does both). When [viewport] is null, [child] is the
-/// [MaterialApp.home] directly and the ambient surface size is used.
-///
-/// [localizationsDelegates], [supportedLocales], and [locale] are forwarded to
-/// the [MaterialApp]; their defaults match `MaterialApp`'s own so non-localized
-/// callers are unaffected. Any extra structural wrappers a screen needs (a
-/// [Scaffold] host, a [Stack], an event-handler scope, …) belong in [child].
-///
-/// [onGenerateRoute] is forwarded to the [MaterialApp] so route-host tests that
-/// drive `Navigator.pushNamed` (for example through `Routes.generate`) can use
-/// the shared shell while keeping [child] as the `'/'` home; pass
-/// [navigatorKey] when the host pushes via an app-owned key. [shellWrapper], if
-/// supplied, wraps the [MaterialApp] before it becomes the [ProviderScope]
-/// child — the composition seam for an app-level wrapper that must sit
-/// **outside** the [MaterialApp] (for example `AppEventHandlerScope`), which a
-/// `home`-hosted [child] cannot express. When null the shell is unwrapped.
+/// that size; callers must still force the binding surface size separately
+/// (see [pumpAppShell]). Localization and [onGenerateRoute] forward to the
+/// [MaterialApp]. [shellWrapper], if supplied, wraps the [MaterialApp] before
+/// the [ProviderScope] child (e.g. `AppEventHandlerScope`).
 Widget buildAppShell({
   required Widget child,
   Size? viewport,
   List<Override> overrides = const <Override>[],
+  ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -57,6 +44,7 @@ Widget buildAppShell({
 }) {
   final MaterialApp app = _appShellMaterialApp(
     home: _wrapViewport(child, viewport),
+    theme: theme,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
@@ -78,12 +66,12 @@ Widget buildAppShell({
 ///
 /// Theme, viewport [MediaQuery] wrapping, localization forwarding, and the
 /// hosted-[child] contract are identical to [buildAppShell]; only the scope
-/// ownership differs, so there remains a single [MaterialApp]
-/// (editorial-monocle) shell definition.
+/// ownership differs, so there remains a single [MaterialApp] shell definition.
 Widget buildAppShellWithContainer({
   required ProviderContainer container,
   required Widget child,
   Size? viewport,
+  ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -93,6 +81,7 @@ Widget buildAppShellWithContainer({
 }) {
   final MaterialApp app = _appShellMaterialApp(
     home: _wrapViewport(child, viewport),
+    theme: theme,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
@@ -105,11 +94,13 @@ Widget buildAppShellWithContainer({
   );
 }
 
-/// The single editorial-monocle [MaterialApp] definition shared by every
-/// shell builder in this harness; only the provider-scope wrapper differs
-/// between the [ProviderScope] and [UncontrolledProviderScope] variants.
+/// The single [MaterialApp] definition shared by every shell builder in this
+/// harness; only the provider-scope wrapper differs between the
+/// [ProviderScope] and [UncontrolledProviderScope] variants. Defaults to
+/// editorial-monocle when [theme] is omitted.
 MaterialApp _appShellMaterialApp({
   required Widget home,
+  ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -118,7 +109,7 @@ MaterialApp _appShellMaterialApp({
 }) {
   return MaterialApp(
     navigatorKey: navigatorKey,
-    theme: AppThemes.editorialMonocle,
+    theme: theme ?? AppThemes.editorialMonocle,
     localizationsDelegates: localizationsDelegates,
     supportedLocales: supportedLocales,
     locale: locale,
@@ -155,6 +146,7 @@ Future<void> pumpAppShell(
   required Widget child,
   Size? viewport,
   List<Override> overrides = const <Override>[],
+  ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -172,6 +164,7 @@ Future<void> pumpAppShell(
       child: child,
       viewport: viewport,
       overrides: overrides,
+      theme: theme,
       localizationsDelegates: localizationsDelegates,
       supportedLocales: supportedLocales,
       locale: locale,
@@ -200,6 +193,7 @@ Future<void> pumpAppShellWithContainer(
   required ProviderContainer container,
   required Widget child,
   Size? viewport,
+  ThemeData? theme,
   Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
   Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
   Locale? locale,
@@ -217,6 +211,7 @@ Future<void> pumpAppShellWithContainer(
       container: container,
       child: child,
       viewport: viewport,
+      theme: theme,
       localizationsDelegates: localizationsDelegates,
       supportedLocales: supportedLocales,
       locale: locale,
