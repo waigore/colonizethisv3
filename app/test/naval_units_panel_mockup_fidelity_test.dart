@@ -10,7 +10,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/fleet_expansion_tile.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
@@ -19,6 +18,7 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/naval_units_panel_test_support.dart';
 
 const _humanId = 'gp_naval_fidelity';
@@ -95,10 +95,8 @@ Game _buildFidelityGame() {
 }
 
 Widget _hostPanel(Game game) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480, maxHeight: 720),
         child: NavalUnitsPanel(

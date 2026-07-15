@@ -92,13 +92,29 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedNavalUnitsPanelPartFile(relativePath)) {
+      final visitor = _NavalPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedAppShellHostFamilyFile(relativePath)) {
+      final visitor = _InlineMaterialAppVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, trade-screen host, or units-panel Game scaffolding '
-      'found.',
+      'widgetbook use-case, trade-screen host, units-panel Game, naval pump, '
+      'or panel MaterialApp scaffolding found.',
     );
     return 0;
   }
@@ -121,7 +137,11 @@ int runCheckAppTestNoDuplicateScaffolding(
     'Units-panel: use shared factories in '
     'civilian_units_panel_test_support.dart / '
     'military_units_panel_test_support.dart / '
-    'naval_units_panel_test_support.dart / units_panel_test_shared.dart.',
+    'naval_units_panel_test_support.dart / units_panel_test_shared.dart. '
+    'Naval part pumps: use pumpNavalPanel from '
+    'naval_units_panel_test_support.dart. '
+    'Production/naval panel hosts: use buildProductionPanel / '
+    'buildNavalPanel / buildAppShell (no inline MaterialApp).',
   );
   return 1;
 }
@@ -187,6 +207,33 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
     return true;
   }
   return false;
+}
+
+/// True for `naval_units_panel_part*_test.dart` — must call shared
+/// [pumpNavalPanel] (Refs #4035).
+bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name.startsWith('naval_units_panel_part') &&
+      name.endsWith('_test.dart');
+}
+
+/// True for panel-host families that must compose `buildAppShell` /
+/// `buildProductionPanel` / `buildNavalPanel` instead of an inline
+/// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only.
+bool _isGovernedAppShellHostFamilyFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  if (!name.endsWith('_test.dart')) {
+    return false;
+  }
+  return name.startsWith('production_panel_part') ||
+      name.startsWith('naval_units_panel_part') ||
+      name == 'naval_units_panel_mockup_fidelity_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -367,6 +414,87 @@ class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
   void visitMethodInvocation(MethodInvocation node) {
     if (node.target == null) {
       _flagIfGame(node.methodName.name, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+/// Flags local `_pumpNaval` / `pumpNaval` clones in naval part suites
+/// (Refs #4035). Call [pumpNavalPanel] from support instead.
+class _NavalPumpCloneVisitor extends RecursiveAstVisitor<void> {
+  _NavalPumpCloneVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  static const Set<String> _forbiddenNames = {
+    '_pumpNaval',
+    'pumpNaval',
+  };
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (_forbiddenNames.contains(name)) {
+      _report(
+        node.name.offset,
+        'function "$name" duplicates pumpNavalPanel in '
+        'naval_units_panel_test_support.dart',
+      );
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+/// Flags inline `MaterialApp(` hosts in families that already have canonical
+/// `buildAppShell` / panel host helpers (Refs #4035).
+class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
+  _InlineMaterialAppVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  void _flagIfMaterialApp(String typeName, int offset) {
+    if (typeName == 'MaterialApp') {
+      _report(
+        offset,
+        'inline MaterialApp( host; use buildProductionPanel / '
+        'buildNavalPanel / buildAppShell from app/test/support/',
+      );
+    }
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    _flagIfMaterialApp(node.constructorName.type.name.lexeme, node.offset);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null) {
+      _flagIfMaterialApp(node.methodName.name, node.methodName.offset);
     }
     super.visitMethodInvocation(node);
   }

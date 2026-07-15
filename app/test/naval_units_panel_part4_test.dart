@@ -15,6 +15,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
@@ -564,8 +565,8 @@ class _ScopedNavalPanelHarnessState extends State<_ScopedNavalPanelHarness> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: NavalUnitsPanel(
           game: _game,
           humanPlayerId: widget.humanPlayerId,

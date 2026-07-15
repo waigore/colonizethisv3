@@ -91,7 +91,7 @@ void main() {
       logs.join('\n'),
       contains(
         'no duplicated min-viewport, widgetbook use-case, trade-screen host, '
-        'or units-panel Game scaffolding found',
+        'units-panel Game, naval pump, or panel MaterialApp scaffolding found',
       ),
     );
   });
@@ -396,6 +396,86 @@ Game g() => buildNavalPanelOwFleetsGame(
   oldWorldProvinces: const [],
   fleets: const [],
 );
+''',
+    );
+
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
+
+  test('fails when naval part suite re-declares local _pumpNaval', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_naval_pump_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'naval_units_panel_part1_test.dart',
+      '''
+Future<void> _pumpNaval(WidgetTester tester) async {}
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains(
+        'function "_pumpNaval" duplicates pumpNavalPanel in '
+        'naval_units_panel_test_support.dart',
+      ),
+    );
+  });
+
+  test('fails when production part suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'production_panel_part2_test.dart',
+      '''
+Widget host() => MaterialApp(home: const Placeholder());
+''',
+    );
+
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+
+    expect(code, 1);
+    expect(
+      logs.join('\n'),
+      contains('inline MaterialApp( host'),
+    );
+  });
+
+  test('passes when production part suite uses buildProductionPanel only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'production_panel_part1_test.dart',
+      '''
+import 'support/production_panel_test_support.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await tester.pumpWidget(buildProductionPanel(player: productionPanelTestFullPlayer()));
+  });
+}
 ''',
     );
 
