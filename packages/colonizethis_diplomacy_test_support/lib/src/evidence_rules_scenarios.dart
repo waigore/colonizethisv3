@@ -4,7 +4,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'diplomacy_game_fixtures_scenarios.dart';
+import 'diplomacy_game_fixtures_base.dart';
 
 /// One evidence-rule test row with preserved [label] for duplicate-description lint.
 class EvidenceRulesScenario {
@@ -54,7 +54,7 @@ EvidenceRulesScenario _emptyBattle({
   required List<Player> players,
   required List<DossierEvidenceEntry> Function(Game) fn,
 }) =>
-    _row(label, () => expect(fn(evidenceGame(players: players)), isEmpty));
+    _row(label, () => expect(fn(diplomacyGame(turnNumber: 2, players: players)), isEmpty));
 
 void _expectEntry(
   DossierEvidenceEntry e, {
@@ -92,7 +92,7 @@ EvidenceRulesScenario _emptyMirror({
     });
 
 Game _baseMirrorGame({required int refTurn, required int currentTurn}) =>
-    evidenceGame(
+    diplomacyGame(
       turnNumber: currentTurn,
       players: const [_pHumanNamed, _pAiNamed],
       aiControlByGpId: const {'ai': true},
@@ -101,7 +101,7 @@ Game _baseMirrorGame({required int refTurn, required int currentTurn}) =>
     );
 
 Game _ctaRefuseGame({required bool allyIsAi, required bool atPeaceWithDefender}) =>
-    evidenceGame(
+    diplomacyGame(
       turnNumber: 3,
       players: [
         const Player(id: 'observer', displayName: 'Human', isHuman: true),
@@ -139,7 +139,8 @@ EvidenceRulesScenario _emptyIsolationist({
 List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
   _row('AI victor vs defender appends warmonger evidence for human observer', () {
     final entries = evidenceForLandBattleVictory(
-      evidenceGame(
+      diplomacyGame(
+        turnNumber: 2,
         players: [
           _pHuman,
           _p('gp2', 'AI', mil: 4),
@@ -162,7 +163,8 @@ List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
   }),
   _row('AI victor vs non-weaker defender gives scoreDelta 1', () {
     final entries = evidenceForLandBattleVictory(
-      evidenceGame(
+      diplomacyGame(
+        turnNumber: 2,
         players: [
           _pHuman,
           _p('gp2', 'AI', mil: 2),
@@ -194,7 +196,7 @@ List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
 List<EvidenceRulesScenario> evidenceRulesNavalBattleVictoryScenarios() => [
   _row('AI victor appends warmonger evidence for human observer', () {
     final entries = evidenceForNavalBattleVictory(
-      evidenceGame(players: const [_pHuman, _pAi, _pOther]),
+      diplomacyGame(turnNumber: 2, players: const [_pHuman, _pAi, _pOther]),
       'gp2',
       'gp3',
       2,
@@ -273,7 +275,8 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
     'AI declaring war on weaker allied GP adds backstabber and warmonger evidence',
     () {
       final entries = evidenceForDeclareWar(
-        evidenceGame(
+        diplomacyGame(
+          turnNumber: 2,
           players: [
             _p('human', 'Human', human: true, mil: 3),
             _p('ai', 'AI', mil: 5),
@@ -310,7 +313,8 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   ),
   _row('AI declaring war on weaker non-allied GP only adds warmonger evidence', () {
     final entries = evidenceForDeclareWar(
-      evidenceGame(
+      diplomacyGame(
+        turnNumber: 2,
         players: [
           _p('human', 'Human', human: true, mil: 3),
           _p('ai', 'AI', mil: 5),
@@ -333,7 +337,8 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   }),
   _row('AI declaring war on allied non-weaker GP only adds backstabber evidence', () {
     final entries = evidenceForDeclareWar(
-      evidenceGame(
+      diplomacyGame(
+        turnNumber: 2,
         players: [
           _p('human', 'Human', human: true, mil: 3),
           _p('ai', 'AI', mil: 2),
@@ -374,7 +379,7 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
 List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   _row('AI offering peace adds peacemaker evidence for human observer', () {
     final entries = evidenceForOfferPeace(
-      evidenceGame(players: const [_pHumanNamed, _pAiNamed]),
+      diplomacyGame(turnNumber: 2, players: const [_pHumanNamed, _pAiNamed]),
       'ai',
       'human',
       2,
@@ -405,7 +410,7 @@ List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
 List<EvidenceRulesScenario> evidenceRulesTreatyBreakWindowScenarios() => [
   _row('adds backstabber when war follows callToArmsRefused within 3 turns', () {
     final entries = evidenceForDeclareWar(
-      evidenceGame(
+      diplomacyGame(
         turnNumber: 6,
         players: [
           _p('human', 'Human', human: true, mil: 5),
@@ -467,7 +472,7 @@ List<EvidenceRulesScenario> evidenceRulesIsolationistScenarios() => [
   ),
   _emptyIsolationist(
     label: 'isolationist call to arms: no human observer returns no evidence',
-    game: evidenceGame(
+    game: diplomacyGame(
       turnNumber: 3,
       players: [_p('ai1', 'AI1'), _p('ai2', 'AI2'), _p('defender', 'Defender')],
       diplomacyRelations: [_peace('ai1', 'defender')],
@@ -476,7 +481,7 @@ List<EvidenceRulesScenario> evidenceRulesIsolationistScenarios() => [
   ),
   _emptyIsolationist(
     label: 'empty when no relation exists between ally and defender',
-    game: evidenceGame(
+    game: diplomacyGame(
       turnNumber: 3,
       players: [
         const Player(id: 'observer', displayName: 'Human', isHuman: true),

@@ -4,7 +4,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'event_dialogue_test_support.dart';
+import 'diplomacy_game_fixtures_base.dart';
 
 /// One event-dialogue test row with preserved [label].
 class EventDialogueScenario {
@@ -67,7 +67,7 @@ List<EventDialogueScenario> eventDialogueCoreLandBattleScenarios() => [
       const mapping = TurnTimeMapping.gdd01;
       final expectedEra = eraFromYear(mapping.yearAtTurn(2));
       final events = _landBattle(
-        dialogueGame(turnNumber: 2, players: _humanAiVictorLoser),
+        diplomacyGame(turnNumber: 2, players: _humanAiVictorLoser),
         'gp2',
         'gp3',
         prov: 'ow|prov1',
@@ -86,13 +86,13 @@ List<EventDialogueScenario> eventDialogueCoreLandBattleScenarios() => [
     },
   ),
   _row('human victor returns no dialogue for victor', () {
-    final events = _landBattle(dialogueGame(turnNumber: 2, players: _humanAi), 'gp1', 'gp2');
+    final events = _landBattle(diplomacyGame(turnNumber: 2, players: _humanAi), 'gp1', 'gp2');
     expect(events.length, 1);
     expect(events.first.situation, 'battle_lost');
     expect(events.first.leaderId, 'gp2');
   }),
   _row('human loser returns only battle_won for AI victor', () {
-    final events = _landBattle(dialogueGame(turnNumber: 2, players: _humanAi), 'gp2', 'gp1');
+    final events = _landBattle(diplomacyGame(turnNumber: 2, players: _humanAi), 'gp2', 'gp1');
     expect(events.length, 1);
     expect(events.first.situation, 'battle_won');
     expect(events.first.leaderId, 'gp2');
@@ -103,7 +103,7 @@ List<EventDialogueScenario> eventDialogueCoreLandBattleScenarios() => [
 List<EventDialogueScenario> eventDialogueCoreNavalBattleScenarios() => [
   _row('AI victor and AI loser both emit event', () {
     final events = _navalBattle(
-      dialogueGame(turnNumber: 3, players: _humanAiVictorLoser),
+      diplomacyGame(turnNumber: 3, players: _humanAiVictorLoser),
       'gp2',
       'gp3',
       turn: 3,
@@ -113,7 +113,7 @@ List<EventDialogueScenario> eventDialogueCoreNavalBattleScenarios() => [
     expect(events.first.variables['otherNation'], isNotNull);
   }),
   _row('human victor returns only battle_lost for AI loser', () {
-    final events = _navalBattle(dialogueGame(players: _humanAi), 'gp1', 'gp2');
+    final events = _navalBattle(diplomacyGame(players: _humanAi), 'gp1', 'gp2');
     expect(events.length, 1);
     expect(events.first.situation, 'battle_lost');
     expect(events.first.leaderId, 'gp2');
@@ -136,7 +136,7 @@ List<EventDialogueScenario> eventDialogueCoreEraFromYearScenarios() => [
 List<EventDialogueScenario> eventDialogueCoreEraChangeScenarios() => [
   _row('emits one event per AI leader with era_change situation', () {
     final events = dialogueEventsForEraChange(
-      dialogueGame(turnNumber: 100, players: [_human, ..._twoAis]),
+      diplomacyGame(turnNumber: 100, players: [_human, ..._twoAis]),
       'earlyModern',
       'imperial',
       42,
@@ -153,7 +153,7 @@ List<EventDialogueScenario> eventDialogueCoreEraChangeScenarios() => [
   _row('emits no events when all players are human', () {
     expect(
       dialogueEventsForEraChange(
-        dialogueGame(turnNumber: 100, players: _twoHumans),
+        diplomacyGame(turnNumber: 100, players: _twoHumans),
         'earlyModern',
         'imperial',
         0,

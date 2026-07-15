@@ -15,5 +15,4 @@ export 'src/diplomacy_resolver_phase_scenarios.dart';
 export 'src/diplomacy_resolver_phase_test_support.dart';
 export 'src/event_dialogue_reactive_scenarios.dart';
 export 'src/event_dialogue_scenarios.dart';
-export 'src/event_dialogue_test_support.dart';
 export 'src/evidence_rules_scenarios.dart';

@@ -5,7 +5,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'event_dialogue_test_support.dart';
+import 'diplomacy_game_fixtures_base.dart';
 
 /// One reactive dialogue test row with preserved [label].
 class EventDialogueReactiveScenario {
@@ -47,18 +47,20 @@ final _oldWorldBorderTopology = MapTopology(
   edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
 );
 
-Game _borderOwGame() => dialogueGame(
-      oldWorldProvinces: const [
-        Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp2'),
-        Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp1'),
-      ],
+Game _borderOwGame() => diplomacyGame(
+      oldWorld: const RegionData(
+        provinces: [
+          Province(id: 'oldWorld|P1', regionId: 'oldWorld', ownerId: 'gp2'),
+          Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'gp1'),
+        ],
+      ),
       players: _humanAi,
     );
 
 Game _humanAttackGame({
   required List<DiplomacyRelation> diplomacyRelations,
 }) =>
-    dialogueGame(
+    diplomacyGame(
       turnNumber: 5,
       players: const [
         Player(id: 'human', displayName: 'Human', isHuman: true),
@@ -109,11 +111,13 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveFortsOnBorderScenarios(
   _row('resolves owner from newWorld when fort built in newWorld', () {
     const nw = 'newWorld';
     final events = dialogueEventsForReactiveFortsOnBorder(
-      dialogueGame(
-        newWorldProvinces: const [
-          Province(id: 'newWorld|N1', regionId: nw, ownerId: 'gp1'),
-          Province(id: 'newWorld|N2', regionId: nw, ownerId: 'gp2'),
-        ],
+      diplomacyGame(
+        newWorld: const RegionData(
+          provinces: [
+            Province(id: 'newWorld|N1', regionId: nw, ownerId: 'gp1'),
+            Province(id: 'newWorld|N2', regionId: nw, ownerId: 'gp2'),
+          ],
+        ),
         players: _humanAi,
       ),
       MapTopology(
@@ -175,7 +179,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveHumanAttackScenarios() 
     },
   ),
   _row('emits attack_on_minor and attack_on_tribe for AI with embassy', () {
-    final game = dialogueGame(
+    final game = diplomacyGame(
       turnNumber: 5,
       players: const [
         Player(id: 'human', displayName: 'Human', isHuman: true),
@@ -224,7 +228,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveHumanAttackScenarios() 
 /// Tech, capital, colony, and spy reactive scenarios.
 List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenarios() => [
   _row('tech_discovered emits for AI discoverer only', () {
-    final game = dialogueGame(turnNumber: 8, players: _h1a1);
+    final game = diplomacyGame(turnNumber: 8, players: _h1a1);
     expect(
       dialogueEventsForTechDiscovered(
         game,
@@ -248,7 +252,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
   }),
   _row('capital_threatened emits when human attacker targets AI capital', () {
     final events = dialogueEventsForCapitalThreatened(
-      dialogueGame(
+      diplomacyGame(
         turnNumber: 3,
         players: const [
           Player(id: 'h1', displayName: 'Human', isHuman: true),
@@ -269,7 +273,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
     expect(events.single.situation, 'capital_threatened');
   }),
   _row('colony_founded emits only for null->AI owner in New World', () {
-    final game = dialogueGame(
+    final game = diplomacyGame(
       turnNumber: 10,
       players: const [Player(id: 'a1', displayName: 'AI', isHuman: false)],
     );
@@ -299,7 +303,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
   _row('spies_caught emits only for AI speaker and human spy owner', () {
     expect(
       dialogueEventsForReactiveSpiesCaught(
-        dialogueGame(turnNumber: 7, players: _h1a1),
+        diplomacyGame(turnNumber: 7, players: _h1a1),
         speakerId: 'a1',
         caughtSpyOwnerId: 'h1',
         provinceId: 'oldWorld|P4',
@@ -311,7 +315,7 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
   }),
   _row('spies_defected emits only for AI defector and human previous owner', () {
     final events = dialogueEventsForReactiveSpiesDefected(
-      dialogueGame(turnNumber: 8, players: _h1a1),
+      diplomacyGame(turnNumber: 8, players: _h1a1),
       newOwnerId: 'a1',
       previousOwnerId: 'h1',
       provinceId: 'oldWorld|P4',

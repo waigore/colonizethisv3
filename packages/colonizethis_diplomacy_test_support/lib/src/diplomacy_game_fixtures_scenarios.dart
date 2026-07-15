@@ -1,5 +1,4 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_game_fixtures_base.dart';
@@ -205,27 +204,4 @@ Game gpTwoMinorsEmbassySubsidyGame({
         gpMinorNeutralRelation(minorId: 'minor2'),
       ],
       overtureStates: const [gpMinorEmbassyOverture, _minor2Embassy],
-    );
-
-/// Shared `Game` fixture for dossier evidence rule tests (`test/dossier/`).
-Game evidenceGame({
-  String id = 'g1',
-  int turnNumber = 2,
-  required List<Player> players,
-  List<DiplomacyRelation> diplomacyRelations = const [],
-  List<DiplomaticEvent> diplomaticHistoryEvents = const [],
-  Map<String, bool> aiControlByGpId = const {},
-  String? lastHumanCompletedResearchCategory,
-  int? lastHumanResearchCategoryCompletionTurn,
-}) =>
-    diplomacyGame(
-      id: id,
-      turnNumber: turnNumber,
-      players: players,
-      diplomacyRelations: diplomacyRelations,
-      diplomaticHistoryEvents: diplomaticHistoryEvents,
-      aiControlByGpId: aiControlByGpId,
-      lastHumanCompletedResearchCategory: lastHumanCompletedResearchCategory,
-      lastHumanResearchCategoryCompletionTurn:
-          lastHumanResearchCategoryCompletionTurn,
     );
