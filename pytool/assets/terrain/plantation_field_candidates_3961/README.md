@@ -19,9 +19,8 @@ After PO lock (does **not** touch tobacco):
 
 ```bash
 uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
-  --picks sugar_cane=A,cotton=B,spices=C
-cd app && flutter test test/plains_plantation_terrain_goldens_test.dart --update-goldens
+  --picks sugar_cane=A,cotton=B,spices=C --update-goldens
 ```
 
-(`--dry-run` previews means without writing. Legacy promote-only path:
+(`--dry-run` / `--validate-only` preview without writing. Legacy promote-only path:
 `paint_plains_plantation_field_gradients.py --promote …` then manual SPEC/test pins.)
