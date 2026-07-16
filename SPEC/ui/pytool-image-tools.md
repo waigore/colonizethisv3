@@ -81,18 +81,28 @@ uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
 
 ### render_plantation_po_review_strip_3961.py
 
-**Purpose:** Rebuild PO sample strips at map tile scale (4× nearest-neighbor) for [#3961](https://github.com/waigore/colonizethisv3/issues/3961): per-crop rows of `grain` / `meat` / `horses` / `tobacco` / candidate A / B / C / CURRENT shipped overlay, plus `strip_all_crops_x4.png` and `CANDIDATE_NOTES.md`. Does not modify app terrain.
+**Purpose:** Rebuild PO sample strips at map tile scale (4× nearest-neighbor) for [#3961](https://github.com/waigore/colonizethisv3/issues/3961): per-crop rows of `grain` / `meat` / `horses` / `tobacco` / candidate A / B / C / CURRENT shipped overlay, plus `strip_all_crops_x4.png` and `CANDIDATE_NOTES.md`. Optionally render a **composition strip** for an explicit or harmony-recommended pick set so PO can judge the three retuned crops together beside OW refs. Does not modify app terrain.
 
-**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py`.
+**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py` and (for `--recommend`) `plantation_field_harmony_3961.py`.
 
 **Usage:**
 
 ```bash
 uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py \
+  --recommend
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=A
 uv run --project pytool python pytool/test_render_plantation_po_review_strip_3961.py
 ```
 
-**Behaviour:** Writes to `tmp/plantation_po_review_strips_3961/` by default (override with `--out-dir`). Requires candidate PNGs under `plantation_field_candidates_3961/`.
+**Behaviour:** Writes to `tmp/plantation_po_review_strips_3961/` by default (override with `--out-dir`). Requires candidate PNGs under `plantation_field_candidates_3961/`. `--picks` and `--recommend` are mutually exclusive; either writes `strip_composition_<picks>_xN.png` (two rows: proposed picks vs CURRENT shipped, each preceded by the four OW/tobacco refs) and `COMPOSITION_NOTES.md` without replacing the full A/B/C candidate strips unless those are also requested via default mode (composition flags only emit the composition outputs).
+
+**Acceptance criteria:**
+
+- Given committed candidate PNGs and shipped OW plains tiles, when the System runs `render_plantation_po_review_strip_3961.py` with no composition flags, then the System writes per-crop A/B/C review strips and `strip_all_crops_xN.png`.
+- Given valid `--picks sugar_cane=A,cotton=B,spices=A` (or `--recommend` resolving to those letters), when the System renders the composition strip, then the System writes a two-row PNG whose top row uses the picked candidate tiles and bottom row uses CURRENT shipped overlays, each row starting with grain / meat / horses / tobacco, and does not modify `app/assets/images/terrain/`.
+- Given both `--picks` and `--recommend` on one invocation, when the System parses arguments, then the System exits non-zero without writing files.
 
 ---
 
