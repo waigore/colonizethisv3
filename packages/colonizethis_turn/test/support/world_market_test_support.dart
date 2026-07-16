@@ -18,12 +18,16 @@ const frrCreditTestMinorProvinceId = '$frrCreditTestOw|M1';
 const frrCreditTestTileKey = '$frrCreditTestOw|M1|0|0';
 
 /// Shared two-GP world-market fixture for phase-handler integration tests.
+///
+/// Defaults match phase-handler suites (`worldMarket` / turn 3). Full-pipeline
+/// resolve suites pass [phase] `orders` and [turnNumber] `0`.
 Game gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
   required Map<CommodityId, int> marketPrices,
   int turnNumber = 3,
+  TurnPhase phase = TurnPhase.worldMarket,
 }) {
   return Game(
     id: 'g1',
@@ -45,7 +49,7 @@ Game gameWithTwoGps({
     ],
     worldState: WorldState(
       turnState: TurnState(
-        phase: TurnPhase.worldMarket,
+        phase: phase,
         turnNumber: turnNumber,
       ),
       oldWorld: const RegionData(),
@@ -54,6 +58,34 @@ Game gameWithTwoGps({
     worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
   );
 }
+
+/// GP↔GP timber offer+bid orders for [gameWithTwoGps] seller/buyer ids.
+Orders gpGpTimberTradeOrders({
+  required int offerQuantity,
+  required int bidQuantity,
+  int offerPriority = 1,
+  int bidPriority = 1,
+}) =>
+    Orders(
+      tradeOrdersByPlayerId: {
+        'gpSeller': [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.offer,
+            quantity: offerQuantity,
+            priority: offerPriority,
+          ),
+        ],
+        'gpBuyer': [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.bid,
+            quantity: bidQuantity,
+            priority: bidPriority,
+          ),
+        ],
+      },
+    );
 
 TurnResolverConfig worldMarketPhaseConfig({
   required Orders orders,

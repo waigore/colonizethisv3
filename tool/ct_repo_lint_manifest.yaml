@@ -658,7 +658,7 @@ rules:
 
   - rule_id: repo.turn_world_market_test_support
     group: testing
-    title: colonizethis_turn world-market tests must import world_market_test_support when invoking worldMarketTurnPhaseHandler (Refs #3876)
+    title: colonizethis_turn world-market phase tests must use shared runners (not local handler+pipeline wiring) (Refs #3876 / #4039)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_world_market_test_support.dart

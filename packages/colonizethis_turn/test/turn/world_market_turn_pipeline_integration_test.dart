@@ -1,19 +1,33 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
-import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
+import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
 
-import '../support/turn_phase_test_harness.dart';
 import '../support/turn_resolver_test_harness.dart';
+import '../support/world_market_test_support.dart';
 
 /// Full-turn pipeline integration for World Market phase 13 (Refs #2990 B5).
 ///
 /// Handler-level behavior is covered in `world_market_phase_b3_test.dart`;
 /// these tests assert the same contracts through [resolveTurnForGame] so
 /// phase ordering and persisted [WorldMarketState] survive the full resolver.
+Game _ordersPhaseTwoGpTradeGame({
+  required Stockpile sellerStockpile,
+  required int sellerTreasury,
+  required int buyerTreasury,
+  Map<CommodityId, int> marketPrices = const {'timber': 30},
+}) =>
+    gameWithTwoGps(
+      sellerStockpile: sellerStockpile,
+      sellerTreasury: sellerTreasury,
+      buyerTreasury: buyerTreasury,
+      marketPrices: marketPrices,
+      turnNumber: 0,
+      phase: TurnPhase.orders,
+    );
+
 void main() {
   const topology = MapTopology(nodes: [], edges: []);
 
@@ -23,7 +37,7 @@ void main() {
       test('worldMarket runs after buildWork and before endOfTurn', () {
         final phases = <TurnPhase>[];
         resolveTurnForGameWithConfig(
-          game: _twoGpTradeGame(
+          game: _ordersPhaseTwoGpTradeGame(
             sellerStockpile: const Stockpile(),
             sellerTreasury: 0,
             buyerTreasury: 0,
@@ -52,37 +66,16 @@ void main() {
 
   group('resolveTurnForGame — GP trade fills (Refs #2990 B5)', () {
     test('trade orders apply treasury, stockpile, and market activity', () {
-      
-
       final next = resolveTurnComplete(
-        game: _twoGpTradeGame(
+        game: _ordersPhaseTwoGpTradeGame(
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
         ),
         topology: topology,
-        orders: Orders(
-          tradeOrdersByPlayerId: {
-            'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.offer,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
-          },
-        ),
-      );;
+        orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
+      );
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.treasury, 1000 - 5 * 30);
@@ -96,34 +89,15 @@ void main() {
 
     test('carry-forward bid from turn 1 fills on turn 2 via full pipeline', () {
       final turn1 = resolveTurnComplete(
-          game: _twoGpTradeGame(
-            sellerStockpile: const Stockpile().applyDelta('timber', 3),
-            sellerTreasury: 0,
-            buyerTreasury: 1000,
-            marketPrices: const {'timber': 30},
-          ),
-          topology: topology,
-          orders: Orders(
-            tradeOrdersByPlayerId: {
-              'gpSeller': [
-                TradeOrder(
-                  commodityId: 'timber',
-                  type: TradeOrderType.offer,
-                  quantity: 3,
-                  priority: 1,
-                ),
-              ],
-              'gpBuyer': [
-                TradeOrder(
-                  commodityId: 'timber',
-                  type: TradeOrderType.bid,
-                  quantity: 10,
-                  priority: 1,
-                ),
-              ],
-            },
-          ),
-        );
+        game: _ordersPhaseTwoGpTradeGame(
+          sellerStockpile: const Stockpile().applyDelta('timber', 3),
+          sellerTreasury: 0,
+          buyerTreasury: 1000,
+          marketPrices: const {'timber': 30},
+        ),
+        topology: topology,
+        orders: gpGpTimberTradeOrders(offerQuantity: 3, bidQuantity: 10),
+      );
 
       expect(
         turn1
@@ -135,21 +109,21 @@ void main() {
       );
 
       final turn2 = resolveTurnComplete(
-          game: turn1,
-          topology: topology,
-          orders: Orders(
-            tradeOrdersByPlayerId: {
-              'gpSeller': [
-                TradeOrder(
-                  commodityId: 'timber',
-                  type: TradeOrderType.offer,
-                  quantity: 7,
-                  priority: 1,
-                ),
-              ],
-            },
-          ),
-        );
+        game: turn1,
+        topology: topology,
+        orders: Orders(
+          tradeOrdersByPlayerId: {
+            'gpSeller': [
+              TradeOrder(
+                commodityId: 'timber',
+                type: TradeOrderType.offer,
+                quantity: 7,
+                priority: 1,
+              ),
+            ],
+          },
+        ),
+      );
 
       final buyer = turn2.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.stockpile.quantityOf('timber'), 10);
@@ -168,7 +142,7 @@ void main() {
 
       expect(
         () => _runPipelineWithHandlers(
-          game: _twoGpTradeGame(
+          game: _ordersPhaseTwoGpTradeGame(
             sellerStockpile: const Stockpile(),
             sellerTreasury: 0,
             buyerTreasury: 0,
@@ -215,37 +189,4 @@ TurnResolutionResult _runPipelineWithHandlers({
     }
   }
   return TurnResolutionComplete(acc.game);
-}
-
-Game _twoGpTradeGame({
-  required Stockpile sellerStockpile,
-  required int sellerTreasury,
-  required int buyerTreasury,
-  Map<CommodityId, int> marketPrices = const {'timber': 30},
-}) {
-  return Game(
-    id: 'g1',
-    players: [
-      Player(
-        id: 'gpSeller',
-        displayName: 'Seller',
-        isHuman: false,
-        stockpile: sellerStockpile,
-        treasury: sellerTreasury,
-      ),
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    worldState: const WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(),
-      newWorld: RegionData(),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
-  );
 }
