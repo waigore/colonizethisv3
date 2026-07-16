@@ -216,8 +216,16 @@ def field_mask_mean_rgb(
     return (rs // n, gs // n, bs // n)
 
 
+def _rgba_pixels(im: Image.Image):
+    """Pixel sequence compatible with apt Pillow 10.x and Pillow 12+."""
+    rgba = im.convert("RGBA")
+    # Pillow 12+: get_flattened_data; older: getdata (deprecated in 12).
+    flat = getattr(rgba, "get_flattened_data", None)
+    return flat() if flat is not None else rgba.getdata()
+
+
 def _alpha_bytes(im: Image.Image) -> list[int]:
-    return [p[3] for p in im.convert("RGBA").get_flattened_data()]
+    return [p[3] for p in _rgba_pixels(im)]
 
 
 def write_candidates(

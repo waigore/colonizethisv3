@@ -46,16 +46,14 @@ class PaintPlainsPlantationFieldGradientsTest(unittest.TestCase):
         src = Image.open(BASE).convert("RGBA")
         stops = self.mod.CANDIDATES["sugar_cane"]["A_sage_olive"]
         out = self.mod.paint_field_gradient(src, stops)
+        src_px = self.mod._rgba_pixels(src)
+        out_px = self.mod._rgba_pixels(out)
         self.assertEqual(
-            [p[3] for p in out.get_flattened_data()],
-            [p[3] for p in src.get_flattened_data()],
+            [p[3] for p in out_px],
+            [p[3] for p in src_px],
         )
         changed = 0
-        for a, b in zip(
-            src.get_flattened_data(),
-            out.get_flattened_data(),
-            strict=True,
-        ):
+        for a, b in zip(src_px, out_px, strict=True):
             if self.mod.is_field_highlight(*a) and a[:3] != b[:3]:
                 changed += 1
         self.assertGreater(changed, 50)
@@ -65,8 +63,8 @@ class PaintPlainsPlantationFieldGradientsTest(unittest.TestCase):
         stops = self.mod.CANDIDATES["cotton"]["B_grey_fibre"]
         out = self.mod.paint_field_gradient(src, stops)
         for a, b in zip(
-            src.get_flattened_data(),
-            out.get_flattened_data(),
+            self.mod._rgba_pixels(src),
+            self.mod._rgba_pixels(out),
             strict=True,
         ):
             if not self.mod.is_field_highlight(*a):
