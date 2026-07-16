@@ -44,28 +44,6 @@ DiplomacyRelation gpMinorNeutralRelation({
       level: RelationLevel.neutral,
     );
 
-/// Shared entry for subsidy resolver tests (alias for [gpMinorEmbassySubsidyGame]).
-Game subsidyResolverGame({
-  String id = 'g1',
-  int turnNumber = 2,
-  int gp1Treasury = 10_000,
-  RelationState relationState = RelationState.atPeace,
-  List<OvertureState> overtureStates = const [gpMinorEmbassyOverture],
-  List<SubsidyState> subsidyStates = _defaultSubsidy,
-  bool includeSubsidy = true,
-  bool includeDiplomaticExpertiseTech = false,
-}) =>
-    gpMinorEmbassySubsidyGame(
-      id: id,
-      turnNumber: turnNumber,
-      gp1Treasury: gp1Treasury,
-      relationState: relationState,
-      overtureStates: overtureStates,
-      subsidyStates: subsidyStates,
-      includeSubsidy: includeSubsidy,
-      includeDiplomaticExpertiseTech: includeDiplomaticExpertiseTech,
-    );
-
 /// GP + Minor with embassy overture for subsidy and grant-aid tests.
 Game gpMinorEmbassySubsidyGame({
   String id = 'g1',

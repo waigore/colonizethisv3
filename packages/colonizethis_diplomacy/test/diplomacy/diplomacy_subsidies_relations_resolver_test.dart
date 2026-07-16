@@ -9,7 +9,7 @@ void main() {
   group('applyRelationModifiersAndUpdateScores', () {
     test('GrantAid deducts payer treasury using stable player row index', () {
       const startTreasury = 5000;
-      final game = subsidyResolverGame(
+      final game = gpMinorEmbassySubsidyGame(
         turnNumber: 1,
         gp1Treasury: startTreasury,
         includeSubsidy: false,
@@ -34,7 +34,7 @@ void main() {
     test(
       'grantAid deduction uses stable player index map across orders (Refs #2394)',
       () {
-        final game = subsidyResolverGame(
+        final game = gpMinorEmbassySubsidyGame(
           turnNumber: 1,
           gp1Treasury: 2000,
           includeSubsidy: false,
@@ -65,7 +65,7 @@ void main() {
     test(
       'two SetSubsidy toward same target in one pass keeps one state with final percent',
       () {
-        final game = subsidyResolverGame(
+        final game = gpMinorEmbassySubsidyGame(
           turnNumber: 1,
           includeSubsidy: false,
           includeDiplomaticExpertiseTech: true,
@@ -127,7 +127,7 @@ void main() {
     test(
       'pre-existing subsidy row is updated by later SetSubsidy in same pass',
       () {
-        final game = subsidyResolverGame(
+        final game = gpMinorEmbassySubsidyGame(
           turnNumber: 1,
           includeSubsidy: true,
           subsidyStates: const [
@@ -162,7 +162,7 @@ void main() {
 
     test('subsidy is retained at peace with an Embassy and charges no treasury',
         () {
-      final game = subsidyResolverGame(
+      final game = gpMinorEmbassySubsidyGame(
         relationState: RelationState.atPeace,
         overtureStates: const [embassy],
       );
@@ -175,7 +175,7 @@ void main() {
     });
 
     test('subsidy is cleared when the payer loses the Embassy (R3.5)', () {
-      final game = subsidyResolverGame(
+      final game = gpMinorEmbassySubsidyGame(
         relationState: RelationState.atPeace,
         overtureStates: const [],
       );
@@ -186,7 +186,7 @@ void main() {
     });
 
     test('subsidy is cleared when the pair is at war', () {
-      final game = subsidyResolverGame(
+      final game = gpMinorEmbassySubsidyGame(
         relationState: RelationState.atWar,
         overtureStates: const [embassy],
       );
@@ -199,7 +199,7 @@ void main() {
     test(
       'a low-treasury payer keeps a valid Minor subsidy (no per-turn payment)',
       () {
-        final game = subsidyResolverGame(
+        final game = gpMinorEmbassySubsidyGame(
           gp1Treasury: 0,
           subsidyStates: const [
             SubsidyState(payerId: 'gp1', targetId: 'minor1', percent: 20),
