@@ -201,19 +201,11 @@ void main() {
           final provinceId =
               '${region.regionId}|${region.cells.first.regionCellId}';
           await tester.pumpWidget(
-            MaterialApp(
-              theme: ThemeData(brightness: Brightness.dark),
-              home: Scaffold(
-                body: ProvinceSeaZoneDetailOverlay(
-                  game: demoGameForOverlay,
-                  region: region,
-                  displayId: provinceId,
-                  selectedTileKey: null,
-                  humanPlayerId: demoGameForOverlay.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  draftOrders: const Orders(),
-                ),
-              ),
+            buildProvinceOverlayDarkThemeShell(
+              game: demoGameForOverlay,
+              region: region,
+              displayId: provinceId,
+              shellTheme: ThemeData(brightness: Brightness.dark),
             ),
           );
           await tester.pumpAndSettle();

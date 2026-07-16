@@ -18,8 +18,8 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
-
 
 void main() {
   suppressLogsForTests();
@@ -53,12 +53,10 @@ void main() {
           );
 
           await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(size: Size(360, 640)),
-              child: MaterialApp(
-                home: Builder(
-                  builder: (BuildContext ctx) => useCase.builder(ctx),
-                ),
+            buildAppShell(
+              viewport: const Size(360, 640),
+              child: Builder(
+                builder: (BuildContext ctx) => useCase.builder(ctx),
               ),
             ),
           );

@@ -93,7 +93,7 @@ int _stagedRowCountForPlayer(ProviderContainer container) {
 
 String _cargoIndicatorText(WidgetTester tester) {
   final Text widget = tester.widget<Text>(
-    find.byKey(TradeScreen.marketCargoIndicatorKey),
+    find.byKey(TradeScreenMarketKeys.marketCargoIndicatorKey),
   );
   return widget.data ?? '';
 }
@@ -101,7 +101,7 @@ String _cargoIndicatorText(WidgetTester tester) {
 Future<void> _switchToDealBook(WidgetTester tester) async {
   final dealBookLabel = find.descendant(
     of: find.byType(CtTabStrip),
-    matching: find.text(TradeScreen.dealBookTabLabel),
+    matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
   );
   expect(dealBookLabel, findsOneWidget);
   await tester.tap(dealBookLabel);
@@ -137,48 +137,48 @@ Future<void> _incrementCommodity(
 ) async {
   for (int i = 0; i < taps; i++) {
     await tester.tap(
-      find.byKey(TradeScreen.marketRowIncrementKey(commodityId)),
+      find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(commodityId)),
     );
     await tester.pump();
   }
 }
 
 Future<void> _tapBid(WidgetTester tester, CommodityId commodityId) async {
-  await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(commodityId)));
+  await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(commodityId)));
   await tester.pump();
 }
 
 Future<void> _tapOffer(WidgetTester tester, CommodityId commodityId) async {
-  await tester.tap(find.byKey(TradeScreen.marketRowOfferChipKey(commodityId)));
+  await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(commodityId)));
   await tester.pump();
 }
 
 void _expectCargoSaturated(WidgetTester tester) {
   expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-  expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
-  expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
+  expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
+  expect(find.text(TradeScreenMarketKeys.cargoLimitWarningText), findsOneWidget);
 }
 
 void _expectTradeChrome(WidgetTester tester) {
   final CtTopBar topBar = tester.widget<CtTopBar>(
-    find.byKey(TradeScreen.topBarKey),
+    find.byKey(TradeScreenMarketKeys.topBarKey),
   );
-  expect(topBar.title, TradeScreen.topBarTitle);
-  expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
-  expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+  expect(topBar.title, TradeScreenMarketKeys.topBarTitle);
+  expect(topBar.backButtonLabel, TradeScreenMarketKeys.topBarBackLabel);
+  expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
   final CtTabStrip strip = tester.widget<CtTabStrip>(
     find.descendant(
-      of: find.byKey(TradeScreen.tabsBodyKey),
+      of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
       matching: find.byType(CtTabStrip),
     ),
   );
   expect(strip.tabLabels, <String>[
-    TradeScreen.marketTabLabel,
-    TradeScreen.dealBookTabLabel,
+    TradeScreenMarketKeys.marketTabLabel,
+    TradeScreenDealBookKeys.dealBookTabLabel,
   ]);
   expect(
     find.descendant(
-      of: find.byKey(TradeScreen.tabsBodyKey),
+      of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
       matching: find.byType(CtPanel),
     ),
     findsOneWidget,
@@ -191,18 +191,18 @@ void _expectDealBookTotals(
   required String offersTotal,
 }) {
   expect(
-    tester.widget<Text>(find.byKey(TradeScreen.dealBookBidsTotalsKey)).data,
+    tester.widget<Text>(find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey)).data,
     bidsTotal,
   );
   expect(
-    tester.widget<Text>(find.byKey(TradeScreen.dealBookOffersTotalsKey)).data,
+    tester.widget<Text>(find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey)).data,
     offersTotal,
   );
 }
 
 void _expectObserveModeBlocksMarket(WidgetTester tester) {
   expect(find.byType(TradeScreen), findsOneWidget);
-  expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+  expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
   final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
   expect(observePanelFinder, findsOneWidget);
   // ignore: avoid_hardcoded_strings_in_widgets
@@ -211,13 +211,13 @@ void _expectObserveModeBlocksMarket(WidgetTester tester) {
     'Trade',
   );
   for (final finder in <Finder>[
-    find.byKey(TradeScreen.tabsBodyKey),
-    find.byKey(TradeScreen.marketTabBodyKey),
-    find.byKey(TradeScreen.dealBookTabBodyKey),
+    find.byKey(TradeScreenMarketKeys.tabsBodyKey),
+    find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
+    find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
     find.byType(CtTabStrip),
-    find.byKey(TradeScreen.marketRowBidChipKey(_timber)),
-    find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-    find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+    find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
+    find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(_timber)),
+    find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
   ]) {
     expect(finder, findsNothing);
   }
@@ -421,14 +421,14 @@ void main() {
       expect(bid!.commodityId, _timber);
       expect(bid.type, TradeOrderType.bid);
       expect(bid.quantity, 5);
-      expect(bid.priority, TradeScreen.marketRowDefaultPriority);
+      expect(bid.priority, TradeScreenMarketKeys.marketRowDefaultPriority);
       expect(_stagedRowCountForPlayer(container), 1);
 
       await _tapOffer(tester, _fabric);
       final TradeOrder? offer = _stagedOrder(container, _fabric);
       expect(offer?.type, TradeOrderType.offer);
-      expect(offer?.quantity, TradeScreen.marketRowQuantityDefault);
-      expect(offer?.priority, TradeScreen.marketRowDefaultPriority);
+      expect(offer?.quantity, TradeScreenMarketKeys.marketRowQuantityDefault);
+      expect(offer?.priority, TradeScreenMarketKeys.marketRowDefaultPriority);
     });
 
     testWidgets('per-commodity mutual exclusion + cross-commodity coexistence', (
@@ -478,17 +478,17 @@ void main() {
       await _switchToDealBook(tester);
       for (final finder in <Finder>[
         find.byKey(
-          TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideBids, 0),
+          TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
         ),
         // ignore: avoid_hardcoded_strings_in_widgets
         find.text('timber — qty 5 × 8 = 40'),
         find.byKey(
-          TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideBids, 0),
+          TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideBids, 0),
         ),
         // ignore: avoid_hardcoded_strings_in_widgets
         find.text('timber — qty 5 (priority 1)'),
         find.byKey(
-          TradeScreen.dealBookUnfilledRowKey(TradeScreen.dealBookSideOffers, 0),
+          TradeScreenDealBookKeys.dealBookUnfilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
         ),
         // ignore: avoid_hardcoded_strings_in_widgets
         find.text('fabric — qty 3 (priority 1)'),
@@ -497,17 +497,17 @@ void main() {
       }
       _expectDealBookTotals(
         tester,
-        bidsTotal: '${TradeScreen.dealBookTotalSpentLabel}: 40',
-        offersTotal: '${TradeScreen.dealBookTotalReceivedLabel}: 0',
+        bidsTotal: '${TradeScreenDealBookKeys.dealBookTotalSpentLabel}: 40',
+        offersTotal: '${TradeScreenDealBookKeys.dealBookTotalReceivedLabel}: 0',
       );
       expect(
         find.byKey(
-          TradeScreen.dealBookFilledRowKey(TradeScreen.dealBookSideOffers, 0),
+          TradeScreenDealBookKeys.dealBookFilledRowKey(TradeScreenDealBookKeys.dealBookSideOffers, 0),
         ),
         findsNothing,
       );
-      expect(find.byKey(TradeScreen.dealBookBidsEmptyKey), findsNothing);
-      expect(find.byKey(TradeScreen.dealBookOffersEmptyKey), findsNothing);
+      expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsEmptyKey), findsNothing);
+      expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersEmptyKey), findsNothing);
     });
   });
 
@@ -533,7 +533,7 @@ void main() {
 
       _expectCargoSaturated(tester);
 
-      await tester.tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
       await tester.pump();
       expect(
         _stagedOrder(container, _timber)?.quantity,
@@ -606,15 +606,15 @@ void main() {
         canMutateViaUi: false,
       );
 
-      expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsOneWidget);
 
       await tester.tap(
-        find.byKey(TradeScreen.marketRowBidChipKey(_timber)),
+        find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)),
         warnIfMissed: false,
       );
       await tester.pump();
       await tester.tap(
-        find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+        find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
         warnIfMissed: false,
       );
       await tester.pump();

@@ -26,9 +26,9 @@ extension _MarketTabContentDirectionHandlers on _MarketTabContent {
       commodityId,
     );
     final int desiredQuantity =
-        prior?.quantity ?? TradeScreen.marketRowQuantityDefault;
+        prior?.quantity ?? TradeScreenMarketKeys.marketRowQuantityDefault;
     final int priority =
-        prior?.priority ?? TradeScreen.marketRowDefaultPriority;
+        prior?.priority ?? TradeScreenMarketKeys.marketRowDefaultPriority;
 
     int quantity = desiredQuantity;
     if (next == TradeOrderType.bid) {

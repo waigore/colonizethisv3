@@ -17,7 +17,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         BaseLayerDisplayMode,
         CtMapVisibilityMode,
         shouldRenderTransportOverlay;
-import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
+
+import 'ct_region_map_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -87,25 +88,20 @@ void main() {
       (WidgetTester tester) async {
         final region = oneCellRoadResourceRegion();
         await tester.pumpWidget(
-          MaterialApp(
-            home: Center(
-              child: RepaintBoundary(
-                key: const ValueKey('region_map_transport_resource_golden'),
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: 64,
-                    visibilityMode: CtMapVisibilityMode.full,
-                    showPoliticalOverlay: false,
-                    showProvinceOverlay: false,
-                    showProvinceNamesLayer: false,
-                    baseLayerDisplayMode: BaseLayerDisplayMode
-                        .terrainAndResourcesImprovementsRoads,
-                  ),
-                ),
-              ),
+          ctRegionMapTestHarness(
+            region: region,
+            width: 64,
+            height: 64,
+            cellSizePx: 64,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'region_map_transport_resource_golden',
             ),
           ),
         );
@@ -158,27 +154,20 @@ void main() {
       (WidgetTester tester) async {
         final region = oneCellRoadHorsesRegion();
         await tester.pumpWidget(
-          MaterialApp(
-            home: Center(
-              child: RepaintBoundary(
-                key: const ValueKey(
-                  'region_map_transport_resource_horses_golden',
-                ),
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: 64,
-                    visibilityMode: CtMapVisibilityMode.full,
-                    showPoliticalOverlay: false,
-                    showProvinceOverlay: false,
-                    showProvinceNamesLayer: false,
-                    baseLayerDisplayMode: BaseLayerDisplayMode
-                        .terrainAndResourcesImprovementsRoads,
-                  ),
-                ),
-              ),
+          ctRegionMapTestHarness(
+            region: region,
+            width: 64,
+            height: 64,
+            cellSizePx: 64,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            baseLayerDisplayMode:
+                BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'region_map_transport_resource_horses_golden',
             ),
           ),
         );

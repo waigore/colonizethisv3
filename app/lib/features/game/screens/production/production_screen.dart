@@ -11,6 +11,7 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';

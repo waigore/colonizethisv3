@@ -72,7 +72,6 @@ class CtDropdownSelectedRowStoryState
   }
 }
 
-
 Game _tradeScreenStoryGame({
   int treasury = 500,
   Map<CommodityId, int>? stockpile,
@@ -94,10 +93,10 @@ Game _tradeScreenStoryGame({
   };
   const Map<CommodityId, MarketActivity> activity =
       <CommodityId, MarketActivity>{
-    'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
-    'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
-    'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
-  };
+        'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
+        'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
+        'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
+      };
   return Game(
     id: 'wb_trade_screen',
     worldState: WorldState(
@@ -113,7 +112,9 @@ Game _tradeScreenStoryGame({
         displayName: 'England',
         isHuman: true,
         treasury: treasury,
-        stockpile: Stockpile(quantities: stockpile ?? const <CommodityId, int>{}),
+        stockpile: Stockpile(
+          quantities: stockpile ?? const <CommodityId, int>{},
+        ),
       ),
     ],
     diplomacyRelations: const [],
@@ -138,14 +139,15 @@ ProviderScope _tradeScreenProviderScope({
         return bus;
       }),
       if (initialOrders != null)
-        currentOrdersProvider
-            .overrideWith(() => CurrentOrdersNotifier(initialOrders)),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(initialOrders),
+        ),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: child,
+      useScaffold: false,
+      child: child,
     ),
   );
 }
@@ -229,11 +231,7 @@ Orders _tradeScreenStorySellableClampOrders() {
 }
 
 Map<CommodityId, int> _tradeScreenStorySellableClampStockpile() {
-  return const <CommodityId, int>{
-    'timber': 10,
-    'grain': 0,
-    'iron': 5,
-  };
+  return const <CommodityId, int>{'timber': 10, 'grain': 0, 'iron': 5};
 }
 
 /// Pre-staged Orders for the "Market tab — treasury bid cap (Refs #3093)"
@@ -359,59 +357,59 @@ WorldMarketState _tradeScreenDealBookMixedState() {
   const String foreign = 'gp_aragon';
   const Map<CommodityId, MarketActivity> activity =
       <CommodityId, MarketActivity>{
-    'timber': MarketActivity(
-      totalBidQuantity: 6,
-      totalOfferQuantity: 0,
-      filledQuantity: 6,
-      deals: <FilledDeal>[
-        FilledDeal(
-          sellerFactionId: foreign,
-          buyerFactionId: human,
-          commodityId: 'timber',
-          quantity: 3,
-          pricePerUnit: 30.0,
-          isFirstRightOfRefusalMatch: true,
+        'timber': MarketActivity(
+          totalBidQuantity: 6,
+          totalOfferQuantity: 0,
+          filledQuantity: 6,
+          deals: <FilledDeal>[
+            FilledDeal(
+              sellerFactionId: foreign,
+              buyerFactionId: human,
+              commodityId: 'timber',
+              quantity: 3,
+              pricePerUnit: 30.0,
+              isFirstRightOfRefusalMatch: true,
+            ),
+            FilledDeal(
+              sellerFactionId: foreign,
+              buyerFactionId: human,
+              commodityId: 'timber',
+              quantity: 3,
+              pricePerUnit: 30.0,
+              isFtpMatch: true,
+            ),
+          ],
         ),
-        FilledDeal(
-          sellerFactionId: foreign,
-          buyerFactionId: human,
-          commodityId: 'timber',
-          quantity: 3,
-          pricePerUnit: 30.0,
-          isFtpMatch: true,
+        'iron': MarketActivity(
+          totalBidQuantity: 4,
+          totalOfferQuantity: 4,
+          filledQuantity: 4,
+          deals: <FilledDeal>[
+            FilledDeal(
+              sellerFactionId: human,
+              buyerFactionId: foreign,
+              commodityId: 'iron',
+              quantity: 4,
+              pricePerUnit: 80.0,
+            ),
+          ],
         ),
-      ],
-    ),
-    'iron': MarketActivity(
-      totalBidQuantity: 4,
-      totalOfferQuantity: 4,
-      filledQuantity: 4,
-      deals: <FilledDeal>[
-        FilledDeal(
-          sellerFactionId: human,
-          buyerFactionId: foreign,
-          commodityId: 'iron',
-          quantity: 4,
-          pricePerUnit: 80.0,
+        'fabric': MarketActivity(
+          totalBidQuantity: 0,
+          totalOfferQuantity: 7,
+          filledQuantity: 7,
+          deals: <FilledDeal>[
+            FilledDeal(
+              sellerFactionId: human,
+              buyerFactionId: foreign,
+              commodityId: 'fabric',
+              quantity: 7,
+              pricePerUnit: 120.0,
+              isFtpMatch: true,
+            ),
+          ],
         ),
-      ],
-    ),
-    'fabric': MarketActivity(
-      totalBidQuantity: 0,
-      totalOfferQuantity: 7,
-      filledQuantity: 7,
-      deals: <FilledDeal>[
-        FilledDeal(
-          sellerFactionId: human,
-          buyerFactionId: foreign,
-          commodityId: 'fabric',
-          quantity: 7,
-          pricePerUnit: 120.0,
-          isFtpMatch: true,
-        ),
-      ],
-    ),
-  };
+      };
   // `TradeOrder` runs runtime validation in its constructor so its
   // instances are not `const`. The carry-forward maps therefore must
   // be plain (non-const) literals; `lastTurnActivity` stays `const`
@@ -456,8 +454,9 @@ WorldMarketState _tradeScreenDealBookMixedState() {
 ProviderScope _tradeScreenDealBookProviderScope({
   required WorldMarketState worldMarketState,
 }) {
-  final Game game =
-      _tradeScreenDealBookStoryGame(worldMarketState: worldMarketState);
+  final Game game = _tradeScreenDealBookStoryGame(
+    worldMarketState: worldMarketState,
+  );
   final Player player = game.players.firstWhere(
     (p) => p.isHuman,
     orElse: () => game.players.first,
@@ -470,15 +469,15 @@ ProviderScope _tradeScreenDealBookProviderScope({
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      useScaffold: false,
       // initialTabIndex: 1 → Deal Book tab is foregrounded on first
       // mount. Backed by `CtTabStrip.initialTabIndex` (Refs #2993 E7);
       // the production route still uses the default `0` so the
       // existing Market-default contract (E4 ACs) is preserved.
-      home: TradeScreen(game: game, player: player, initialTabIndex: 1),
+      child: TradeScreen(game: game, player: player, initialTabIndex: 1),
     ),
   );
 }

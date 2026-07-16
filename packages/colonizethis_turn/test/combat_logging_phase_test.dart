@@ -4,7 +4,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
-import 'combat_logging_test_support.dart';
+import 'support/combat_logging_test_support.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('land combat logging (resolveTurnForGame phase)', () {
@@ -77,15 +78,13 @@ void main() {
           },
         );
 
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
+        resolveTurnComplete(
             game: game,
             topology: topology,
             orders: orders,
             extractedByPlayerId: const {},
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         final combat = capture.combat;
         expect(
@@ -211,15 +210,13 @@ void main() {
           },
         );
 
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
+        resolveTurnComplete(
             game: game,
             topology: topology,
             orders: orders,
             extractedByPlayerId: const {},
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         final combat = capture.combat;
         expect(
@@ -285,15 +282,13 @@ void main() {
           ],
         );
 
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
+        resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             extractedByPlayerId: const {},
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         final combat = capture.combat;
         expect(

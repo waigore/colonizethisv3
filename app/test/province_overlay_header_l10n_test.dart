@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -19,13 +18,16 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleSeaZoneIdForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
+import 'support/app_shell_harness.dart';
+
+/// Editorial shell via [buildAppShell] with app l10n delegates (Refs #4035 —
+/// no inline MaterialApp).
 Widget _overlay({required String displayId}) {
   final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: const [Locale('en')],
-    home: Scaffold(
+    child: Scaffold(
       body: ProvinceSeaZoneDetailOverlay(
         game: game,
         region: demoRegionForOverlay,

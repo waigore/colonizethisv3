@@ -6,10 +6,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/technology_panel_test_support.dart';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 
@@ -58,28 +59,6 @@ void main() {
     );
   }
 
-  Future<void> pumpPanel(
-    WidgetTester tester, {
-    required Game game,
-    required Player player,
-    required Orders orders,
-    void Function(Orders)? onOrdersChanged,
-  }) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechnologyPanel(
-            game: game,
-            player: player,
-            currentOrders: orders,
-            onOrdersChanged: onOrdersChanged,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-  }
-
   group('Slot occupancy from persisted assignments (Refs #3512)', () {
     testWidgets(
       'persisted assignment renders in its slot with no fresh order',
@@ -95,11 +74,11 @@ void main() {
         );
         final game = buildGame(player);
 
-        await pumpPanel(
+        await pumpTechnologyPanel(
           tester,
           game: game,
           player: player,
-          orders: const Orders(),
+          currentOrders: const Orders(),
           onOrdersChanged: (_) {},
         );
 
@@ -114,8 +93,9 @@ void main() {
       },
     );
 
-    testWidgets('fresh non-empty order overrides the persisted assignment',
-        (tester) async {
+    testWidgets('fresh non-empty order overrides the persisted assignment', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -137,11 +117,11 @@ void main() {
         },
       );
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: orders,
+        currentOrders: orders,
         onOrdersChanged: (_) {},
       );
 
@@ -151,8 +131,9 @@ void main() {
       }
     });
 
-    testWidgets('empty-techId order frees a persisted slot in the UI',
-        (tester) async {
+    testWidgets('empty-techId order frees a persisted slot in the UI', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -175,11 +156,11 @@ void main() {
         },
       );
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: orders,
+        currentOrders: orders,
         onOrdersChanged: (_) {},
       );
 
@@ -188,8 +169,9 @@ void main() {
       expect(find.text('No tech assigned'), findsWidgets);
     });
 
-    testWidgets('no standalone In-Progress block when progress is non-empty',
-        (tester) async {
+    testWidgets('no standalone In-Progress block when progress is non-empty', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -201,11 +183,11 @@ void main() {
       );
       final game = buildGame(player);
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: const Orders(),
+        currentOrders: const Orders(),
         onOrdersChanged: (_) {},
       );
 
@@ -214,8 +196,9 @@ void main() {
   });
 
   group('Cancel with forfeiture warning (Refs #3512)', () {
-    testWidgets('cancel with progress warns and only frees slot on confirm',
-        (tester) async {
+    testWidgets('cancel with progress warns and only frees slot on confirm', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -228,11 +211,11 @@ void main() {
       final game = buildGame(player);
       Orders? dispatched;
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: const Orders(),
+        currentOrders: const Orders(),
         onOrdersChanged: (o) => dispatched = o,
       );
 
@@ -246,13 +229,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(dispatched, isNotNull);
-      final orders = dispatched!.researchOrdersByPlayerId[player.id] ?? const [];
+      final orders =
+          dispatched!.researchOrdersByPlayerId[player.id] ?? const [];
       final slot0 = orders.firstWhere((o) => o.slotIndex == 0);
       expect(slot0.techId, isEmpty);
     });
 
-    testWidgets('cancel with progress aborts when player keeps researching',
-        (tester) async {
+    testWidgets('cancel with progress aborts when player keeps researching', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -265,11 +250,11 @@ void main() {
       final game = buildGame(player);
       Orders? dispatched;
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: const Orders(),
+        currentOrders: const Orders(),
         onOrdersChanged: (o) => dispatched = o,
       );
 
@@ -284,8 +269,9 @@ void main() {
       expect(find.text(techDisplayName(techA)), findsWidgets);
     });
 
-    testWidgets('cancel with zero progress frees slot without a warning',
-        (tester) async {
+    testWidgets('cancel with zero progress frees slot without a warning', (
+      tester,
+    ) async {
       final player = buildPlayer(
         assignments: {
           0: ResearchSlotAssignment(
@@ -297,11 +283,11 @@ void main() {
       final game = buildGame(player);
       Orders? dispatched;
 
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
         game: game,
         player: player,
-        orders: const Orders(),
+        currentOrders: const Orders(),
         onOrdersChanged: (o) => dispatched = o,
       );
 
@@ -310,7 +296,8 @@ void main() {
 
       expect(find.text('Forfeit research progress?'), findsNothing);
       expect(dispatched, isNotNull);
-      final orders = dispatched!.researchOrdersByPlayerId[player.id] ?? const [];
+      final orders =
+          dispatched!.researchOrdersByPlayerId[player.id] ?? const [];
       final slot0 = orders.firstWhere((o) => o.slotIndex == 0);
       expect(slot0.techId, isEmpty);
     });

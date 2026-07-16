@@ -90,20 +90,14 @@ Future<void> _pumpWorkTarget(
   void Function(String)? onTileSelected,
   VoidCallback? onWorkTargetSelectionCancelled,
 }) async {
+  // cellSizePx matches CtRegionMap default (32); harness default is 24.
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 400,
-          height: 320,
-          child: CtRegionMap(
-            region: region,
-            validTileKeys: validTileKeys,
-            onTileSelected: onTileSelected,
-            onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
-          ),
-        ),
-      ),
+    ctRegionMapTestHarness(
+      region: region,
+      cellSizePx: 32,
+      validTileKeys: validTileKeys,
+      onTileSelected: onTileSelected,
+      onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
     ),
   );
   await tester.pump();

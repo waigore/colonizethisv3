@@ -10,12 +10,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_dialog_shell.dart';
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -29,17 +29,12 @@ void main() {
   });
 
   Widget host(Game g, Player p, {Orders orders = const Orders()}) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: TechnologyPanel(
-            game: g,
-            player: p,
-            currentOrders: orders,
-            onOrdersChanged: (_) {},
-          ),
-        ),
-      ),
+    return buildTechnologyPanel(
+      game: g,
+      player: p,
+      currentOrders: orders,
+      onOrdersChanged: (_) {},
+      wrapInScrollView: true,
     );
   }
 
@@ -159,21 +154,14 @@ void main() {
       'positive: tapping Close pops the dialog without mutating orders',
       (WidgetTester tester) async {
         Orders? captured;
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: TechnologyPanel(
-                  game: game,
-                  player: basePlayer,
-                  currentOrders: const Orders(),
-                  onOrdersChanged: (next) => captured = next,
-                ),
-              ),
-            ),
-          ),
+        await pumpTechnologyPanel(
+          tester,
+          game: game,
+          player: basePlayer,
+          currentOrders: const Orders(),
+          onOrdersChanged: (next) => captured = next,
+          wrapInScrollView: true,
         );
-        await tester.pumpAndSettle();
         await openChooseTechDialog(tester);
 
         expect(find.byType(ChooseTechDialog), findsOneWidget);
@@ -181,11 +169,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(ChooseTechDialog), findsNothing);
-        expect(
-          captured,
-          isNull,
-          reason: 'Close must not call onOrdersChanged',
-        );
+        expect(captured, isNull, reason: 'Close must not call onOrdersChanged');
       },
     );
 
@@ -199,21 +183,14 @@ void main() {
         final localGame = game.copyWith(
           players: [fullyUnlocked, ...game.players.skip(1)],
         );
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: TechnologyPanel(
-                  game: localGame,
-                  player: fullyUnlocked,
-                  currentOrders: const Orders(),
-                  onOrdersChanged: (next) => captured = next,
-                ),
-              ),
-            ),
-          ),
+        await pumpTechnologyPanel(
+          tester,
+          game: localGame,
+          player: fullyUnlocked,
+          currentOrders: const Orders(),
+          onOrdersChanged: (next) => captured = next,
+          wrapInScrollView: true,
         );
-        await tester.pumpAndSettle();
         await openChooseTechDialog(tester);
 
         expect(find.text('No techs available to research'), findsOneWidget);

@@ -27,7 +27,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
@@ -37,6 +36,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/province_overlay_test_harness.dart';
 
 /// Sentinel capital tile that never coincides with a real demo tile, used to
@@ -111,7 +111,7 @@ String _provinceDisplayName(Game g, String provinceId) {
 /// Golden harness host: wraps the overlay in a keyed `RepaintBoundary` at a
 /// fixed size so the Tile-section designation line is pinned as a pixel
 /// baseline (mirrors `diplomacy_panel_goldens_test.dart`). Uses
-/// `AppThemes.editorialMonocle` for the dark-theme chrome.
+/// [buildAppShell] for the dark-theme chrome (Refs #4035).
 Widget _goldenOverlay({
   required Game game,
   required RegionMapViewData region,
@@ -124,10 +124,8 @@ Widget _goldenOverlay({
   // const MapTopology() replaces the ~11s getDebugInitGameResult() map
   // generation with identical PlayerView output for these demo-data overlays.
   final playerView = buildPlayerView(game, const MapTopology(), humanPlayerId);
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: Center(
         child: RepaintBoundary(
           key: boundaryKey,

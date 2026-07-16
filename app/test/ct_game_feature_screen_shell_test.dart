@@ -5,9 +5,9 @@ import 'package:colonizethis_app/widgets/game_to_ui_bus_listener.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
@@ -51,7 +51,8 @@ void main() {
     required Game? currentGame,
     required bool attachGameToUiListener,
   }) {
-    return ProviderScope(
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: [
         currentGameProvider.overrideWith(
           () => CurrentGameNotifier(currentGame),
@@ -62,15 +63,13 @@ void main() {
           return bus;
         }),
       ],
-      child: MaterialApp(
-        home: CtGameFeatureScreenShell(
-          game: game,
-          title: 'Test Title',
-          attachGameToUiListener: attachGameToUiListener,
-          bodyBuilder: (context, ref, displayGame) {
-            return Text(displayGame.players.first.displayName);
-          },
-        ),
+      child: CtGameFeatureScreenShell(
+        game: game,
+        title: 'Test Title',
+        attachGameToUiListener: attachGameToUiListener,
+        bodyBuilder: (context, ref, displayGame) {
+          return Text(displayGame.players.first.displayName);
+        },
       ),
     );
   }

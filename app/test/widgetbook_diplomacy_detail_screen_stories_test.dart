@@ -9,7 +9,6 @@
 //     the colony story shows standing chips + a RelationMeter; the subsidized
 //     Minor story shows the overseas chip + RelationMeter and no dossier.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
@@ -19,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
 import 'support/widgetbook_test_harness.dart';
 
@@ -26,11 +26,10 @@ const String _kFolder = 'Diplomacy Detail Screen';
 
 Future<void> _pumpUseCase(WidgetTester tester, WidgetbookUseCase useCase) async {
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    buildAppShell(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
+      child: Scaffold(
         body: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
       ),
     ),

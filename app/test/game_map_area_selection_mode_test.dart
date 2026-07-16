@@ -13,10 +13,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/game_fixture.dart';
 import 'support/map_view_fixture.dart';
 import 'support/tile_map_fixture.dart';
@@ -93,8 +93,9 @@ void main() {
             'build_improvement target tile',
       );
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: [
             appEventBusProvider.overrideWith((ref) => bus),
             currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -107,10 +108,8 @@ void main() {
             ),
             mapViewDataProvider.overrideWith((ref) => mapViewData),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+          child: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
           ),
         ),
       );
@@ -204,8 +203,9 @@ void main() {
             'debug init fixture must include one selection with valid tiles only in Old World',
       );
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: [
             appEventBusProvider.overrideWith((ref) => bus),
             currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -218,10 +218,8 @@ void main() {
             ),
             mapViewDataProvider.overrideWith((ref) => mapViewData),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: mapViewData),
-            ),
+          child: Scaffold(
+            body: GameMapArea(game: game, mapViewData: mapViewData),
           ),
         ),
       );

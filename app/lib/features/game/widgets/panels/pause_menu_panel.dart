@@ -11,7 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 /// Pause menu modal for [OpenPauseMenuPanelEvent]. Emits bus events only.
 ///

@@ -8,8 +8,9 @@ import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dar
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 class _ForcedTurnResolutionBlocking extends StateToggleNotifier {
   _ForcedTurnResolutionBlocking() : super(false);
@@ -44,31 +45,30 @@ void main() {
         handler.bind();
         final pushed = <RouteSettings?>[];
 
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          ProviderScope(
+          buildAppShell(
             overrides: [
               turnResolutionBlockingProvider.overrideWith(
                 _ForcedTurnResolutionBlocking.new,
               ),
             ],
-            child: MaterialApp(
-              navigatorKey: navKey,
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              onGenerateRoute: (settings) {
-                pushed.add(settings);
-                return MaterialPageRoute(
-                  settings: settings,
-                  builder: (_) => const Text('target'),
-                );
-              },
-              home: Builder(
-                builder: (ctx) => TextButton(
-                  onPressed: () =>
-                      bus.emit(const NavigateToRouteEvent('/target', {'x': 1})),
-                  child: const Text('navigate'),
-                ),
+            navigatorKey: navKey,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            onGenerateRoute: (settings) {
+              pushed.add(settings);
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (_) => const Text('target'),
+              );
+            },
+            child: Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () =>
+                    bus.emit(const NavigateToRouteEvent('/target', {'x': 1})),
+                child: const Text('navigate'),
               ),
             ),
           ),
@@ -88,19 +88,17 @@ void main() {
         handler.bind();
 
         await tester.pumpWidget(
-          ProviderScope(
+          buildAppShell(
             overrides: [
               turnResolutionBlockingProvider.overrideWith(
                 _ForcedTurnResolutionBlocking.new,
               ),
             ],
-            child: MaterialApp(
-              navigatorKey: navKey,
-              localizationsDelegates:
-                  AppLocalizationsBinding.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: const Scaffold(body: SizedBox.shrink()),
-            ),
+            navigatorKey: navKey,
+            localizationsDelegates:
+                AppLocalizationsBinding.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            child: const Scaffold(body: SizedBox.shrink()),
           ),
         );
         await tester.pumpAndSettle();
@@ -119,22 +117,20 @@ void main() {
       handler.bind();
 
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: [
             turnResolutionBlockingProvider.overrideWith(
               _ForcedTurnResolutionBlocking.new,
             ),
           ],
-          child: MaterialApp(
-            navigatorKey: navKey,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () => bus.emit(const OpenCivilianUnitsPanelEvent()),
-                child: const Text('open_civilian'),
-              ),
+          navigatorKey: navKey,
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: Builder(
+            builder: (ctx) => TextButton(
+              onPressed: () => bus.emit(const OpenCivilianUnitsPanelEvent()),
+              child: const Text('open_civilian'),
             ),
           ),
         ),

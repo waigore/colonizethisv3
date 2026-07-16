@@ -5,8 +5,10 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_combine_header_actions.dart';
+
+import 'support/app_shell_harness.dart';
 
 Future<void> _pumpActions(
   WidgetTester tester, {
@@ -16,8 +18,8 @@ Future<void> _pumpActions(
   VoidCallback? onCombine,
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
+    buildAppShell(
+      child: Scaffold(
         body: Row(
           mainAxisSize: MainAxisSize.min,
           children: unitsCombineHeaderActions(

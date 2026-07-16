@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/yarn_test_fixtures.dart';
 
 void main() {
@@ -17,9 +18,10 @@ void main() {
     testWidgets(
       'AC-4: blocking herald names tribe and capital in dialogue shell',
       (tester) async {
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          MaterialApp(
-            home: TribeFirstContactOverlay(
+          buildAppShell(
+            child: TribeFirstContactOverlay(
               tribeName: 'Maya',
               capitalName: 'Chichen',
               assetBundle: YarnStringAssetBundle({
@@ -48,8 +50,8 @@ void main() {
       (tester) async {
         var dismissed = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            home: TribeFirstContactOverlay(
+          buildAppShell(
+            child: TribeFirstContactOverlay(
               tribeName: 'Maya',
               capitalName: 'Chichen',
               assetBundle: YarnStringAssetBundle({
@@ -86,8 +88,8 @@ void main() {
     testWidgets('error path invokes onDismissed via Continue', (tester) async {
       var dismissed = false;
       await tester.pumpWidget(
-        MaterialApp(
-          home: TribeFirstContactOverlay(
+        buildAppShell(
+          child: TribeFirstContactOverlay(
             tribeName: 'Maya',
             capitalName: 'Chichen',
             assetBundle: YarnThrowingAssetBundle(),

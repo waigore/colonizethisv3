@@ -9,10 +9,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -37,34 +37,10 @@ void main() {
     return Orders(
       researchOrdersByPlayerId: {
         player.id: [
-          ResearchOrder(
-            slotIndex: 0,
-            techId: rootTechId,
-            funding: funding,
-          ),
+          ResearchOrder(slotIndex: 0, techId: rootTechId, funding: funding),
         ],
       },
     );
-  }
-
-  Future<void> pumpPanel(
-    WidgetTester tester, {
-    required Orders orders,
-    required void Function(Orders)? onOrdersChanged,
-  }) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: TechnologyPanel(
-            game: game,
-            player: player,
-            currentOrders: orders,
-            onOrdersChanged: onOrdersChanged,
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
   }
 
   Color borderColorOf(WidgetTester tester, ResearchFundingLevel level) {
@@ -83,9 +59,11 @@ void main() {
   testWidgets(
     'positive: assigned editable slot renders five keyed funding toggles (AC funding toggles present)',
     (WidgetTester tester) async {
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
-        orders: seededOrders(ResearchFundingLevel.medium),
+        game: game,
+        player: player,
+        currentOrders: seededOrders(ResearchFundingLevel.medium),
         onOrdersChanged: (_) {},
       );
 
@@ -103,9 +81,11 @@ void main() {
   testWidgets(
     'positive: Medium is selected by default and the others are unselected',
     (WidgetTester tester) async {
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
-        orders: seededOrders(ResearchFundingLevel.medium),
+        game: game,
+        player: player,
+        currentOrders: seededOrders(ResearchFundingLevel.medium),
         onOrdersChanged: (_) {},
       );
 
@@ -132,9 +112,11 @@ void main() {
     'positive: tapping a funding toggle dispatches updated orders for that slot',
     (WidgetTester tester) async {
       Orders? last;
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
-        orders: seededOrders(ResearchFundingLevel.medium),
+        game: game,
+        player: player,
+        currentOrders: seededOrders(ResearchFundingLevel.medium),
         onOrdersChanged: (o) => last = o,
       );
 
@@ -157,9 +139,11 @@ void main() {
   testWidgets(
     'negative: read-only panel (onOrdersChanged == null) renders no funding toggles',
     (WidgetTester tester) async {
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
-        orders: seededOrders(ResearchFundingLevel.medium),
+        game: game,
+        player: player,
+        currentOrders: seededOrders(ResearchFundingLevel.medium),
         onOrdersChanged: null,
       );
 
@@ -170,9 +154,11 @@ void main() {
   testWidgets(
     'negative: empty slot (no assigned tech) renders no funding toggles',
     (WidgetTester tester) async {
-      await pumpPanel(
+      await pumpTechnologyPanel(
         tester,
-        orders: const Orders(),
+        game: game,
+        player: player,
+        currentOrders: const Orders(),
         onOrdersChanged: (_) {},
       );
 

@@ -15,8 +15,8 @@ import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_progress_bar.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import '../chrome/ct_action_text_button.dart';
-import '../chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'research_slot_turn_preview_view.dart';
 import 'technology_slot_funding_toggles.dart';
 

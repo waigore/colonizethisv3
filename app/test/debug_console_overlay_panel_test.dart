@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 const _debugConsoleInputKey = ValueKey<String>('debug-console-input');
 
 AppEventBus _debugConsoleBus() {
@@ -29,9 +31,10 @@ Future<void> _pumpDebugConsolePanel(
   VoidCallback? onClose,
   DebugConsoleReadOnlyContext Function()? readOnlyContextProvider,
 }) async {
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
+    buildAppShell(
+      child: Scaffold(
         body: DebugConsoleOverlayPanel(
           bus: bus,
           humanPlayerId: 'human_1',

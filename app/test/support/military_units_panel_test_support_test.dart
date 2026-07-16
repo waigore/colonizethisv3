@@ -44,6 +44,17 @@ void main() {
     },
   );
 
+  testWidgets('pumpMilitaryPanel hosts and settles MilitaryUnitsPanel', (
+    WidgetTester tester,
+  ) async {
+    await pumpMilitaryPanel(
+      tester,
+      game: buildMilitaryPanelTestGame(),
+      humanPlayerId: kPanelTestHumanPlayerId,
+    );
+    expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
+  });
+
   testWidgets(
     'expandAllArmyExpansions expands every ExpansionTile without throwing',
     (WidgetTester tester) async {

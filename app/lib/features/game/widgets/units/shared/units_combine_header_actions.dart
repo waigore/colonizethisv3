@@ -10,7 +10,7 @@
 
 import 'package:flutter/material.dart';
 
-import '../../chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 
 /// Builds the shared select-all + Combine header action cluster.
 ///

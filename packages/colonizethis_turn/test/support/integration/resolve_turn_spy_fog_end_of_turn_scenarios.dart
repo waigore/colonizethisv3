@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerSpyFogEndOfTurnTests() {
   group('spy fog end-of-turn', () {
-    group('spy_fog_part4_segment1_test', () {
+    group('spy fog end of turn', () {
 test(
           'endOfTurn fog decay does not apply when Explorer is in other-faction province',
           () {
@@ -51,14 +51,12 @@ test(
                 Player(id: 'p2', displayName: 'P2', isHuman: false),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
                 startFromPhase: TurnPhase.endOfTurn,
-              ),
-            );
+              );
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
               VisibilityLevel.fullyVisible.name,
@@ -121,8 +119,7 @@ test(
                 Player(id: 'p2', displayName: 'P2', isHuman: false),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: MapTopology(
                   nodes: const [
@@ -146,8 +143,7 @@ test(
                 ),
                 orders: const Orders(),
                 startFromPhase: TurnPhase.endOfTurn,
-              ),
-            );
+              );
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyOwP1],
               VisibilityLevel.fullyVisible.name,
@@ -198,14 +194,12 @@ test(
               ],
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
                 startFromPhase: TurnPhase.endOfTurn,
-              ),
-            );
+              );
 
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
@@ -258,14 +252,12 @@ test(
               ],
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: twoAdjacentOldWorldProvinceTopology(),
                 orders: const Orders(),
                 startFromPhase: TurnPhase.endOfTurn,
-              ),
-            );
+              );
 
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],

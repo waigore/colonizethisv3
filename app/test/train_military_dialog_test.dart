@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -68,8 +69,8 @@ void main() {
     Orders currentOrders = const Orders(),
     AppEventBus? bus,
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: TrainMilitaryDialog(
           game: game,
           humanPlayerId: humanPlayerId,
@@ -155,8 +156,8 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: Builder(
             builder: (ctx) => ElevatedButton(
               onPressed: () {
@@ -204,7 +205,7 @@ void main() {
   ) async {
     final richGame = gameWithMilitaryResources();
     await tester.pumpWidget(
-      ProviderScope(
+      buildAppShell(
         overrides: [
           currentGameProvider.overrideWith(() => CurrentGameNotifier(richGame)),
           currentOrdersProvider.overrideWith(
@@ -216,22 +217,19 @@ void main() {
             return bus;
           }),
         ],
-        child: AppEventHandlerScope(
-          child: MaterialApp(
-            navigatorKey: appNavigatorKey,
-            home: Scaffold(
-              body: Consumer(
-                builder: (context, ref, _) {
-                  return MilitaryUnitsPanel(
-                    game: richGame,
-                    humanPlayerId: humanPlayerId,
-                    bus: ref.watch(appEventBusProvider),
-                    topology: const MapTopology(),
-                    draftOrders: ref.watch(currentOrdersProvider),
-                  );
-                },
-              ),
-            ),
+        navigatorKey: appNavigatorKey,
+        shellWrapper: (app) => AppEventHandlerScope(child: app),
+        child: Scaffold(
+          body: Consumer(
+            builder: (context, ref, _) {
+              return MilitaryUnitsPanel(
+                game: richGame,
+                humanPlayerId: humanPlayerId,
+                bus: ref.watch(appEventBusProvider),
+                topology: const MapTopology(),
+                draftOrders: ref.watch(currentOrdersProvider),
+              );
+            },
           ),
         ),
       ),

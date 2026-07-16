@@ -3,17 +3,20 @@
 // SPEC/ui/mockups/GAME20001-production-panel.html (Refs #2862 S10 / C11).
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/config/themes.dart'
+    show editorialMonocleDisplayFontFamily;
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _host(Widget child) => MaterialApp(
-  home: Scaffold(body: Center(child: child)),
+import 'support/app_shell_harness.dart';
+
+Widget _host(Widget child) => buildAppShell(
+  child: Scaffold(body: Center(child: child)),
 );
 
 DecoratedBox _surfaceOf(WidgetTester tester) {

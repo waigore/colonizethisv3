@@ -13,57 +13,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
-class _ProductionPanelGridTestWrapper extends StatefulWidget {
-  const _ProductionPanelGridTestWrapper({
-    required this.displayGame,
-    required this.player,
-    this.viewportWidth = 800,
-    this.viewportHeight = 720,
-  });
-
-  final Game displayGame;
-  final Player player;
-  final double viewportWidth;
-  final double viewportHeight;
-
-  @override
-  State<_ProductionPanelGridTestWrapper> createState() =>
-      _ProductionPanelGridTestWrapperState();
-}
-
-class _ProductionPanelGridTestWrapperState
-    extends State<_ProductionPanelGridTestWrapper> {
-  Map<String, int> _desired = const <String, int>{};
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(
-          size: Size(widget.viewportWidth, widget.viewportHeight),
-        ),
-        child: Scaffold(
-          body: SizedBox(
-            width: widget.viewportWidth,
-            height: widget.viewportHeight,
-            child: ProductionPanel(
-              game: widget.displayGame,
-              player: widget.player,
-              desiredOutputByRecipe: _desired,
-              netDeltasByCommodity: const <String, int>{},
-              onDesiredOutputChanged: (next) {
-                setState(() {
-                  _desired = Map<String, int>.from(next);
-                });
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Returns the Wrap children whose first descendant `SizedBox` has the largest
 /// non-zero width and contains a [CtResourceCell] with `cellKey`. The Wrap is
 /// used by `AvailableCellGrid` to lay out commodity / worker cells in a
@@ -104,11 +53,10 @@ void main() {
       'Workers section is laid out in 2 columns on wide viewports (Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 800,
-            viewportHeight: 720,
+            width: 800,
+            height: 720,
           ),
         );
         await pumpSettleCapped(tester);
@@ -179,11 +127,10 @@ void main() {
       'Food commodity section is laid out in 3 columns on wide viewports (Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 800,
-            viewportHeight: 720,
+            width: 800,
+            height: 720,
           ),
         );
         await pumpSettleCapped(tester);
@@ -213,11 +160,10 @@ void main() {
       '(Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 360,
-            viewportHeight: 1200,
+            width: 360,
+            height: 1200,
           ),
         );
         await pumpSettleCapped(tester);
@@ -250,11 +196,10 @@ void main() {
       '(Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 800,
-            viewportHeight: 720,
+            width: 800,
+            height: 720,
           ),
         );
         await pumpSettleCapped(tester);
@@ -290,11 +235,10 @@ void main() {
       '(Refs #2862 S8b)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 1000,
-            viewportHeight: 900,
+            width: 1000,
+            height: 900,
           ),
         );
         await pumpSettleCapped(tester);
@@ -321,11 +265,10 @@ void main() {
       'with a same-column Raw Materials peer (Refs #3999)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          _ProductionPanelGridTestWrapper(
-            displayGame: productionPanelTestGameFor(fullPlayer),
+          buildProductionPanel(
             player: fullPlayer,
-            viewportWidth: 800,
-            viewportHeight: 720,
+            width: 800,
+            height: 720,
           ),
         );
         await pumpSettleCapped(tester);

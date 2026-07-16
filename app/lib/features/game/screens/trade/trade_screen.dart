@@ -86,7 +86,6 @@ import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'trade_section_handlers.dart';
 
-part 'trade_screen_contract.dart';
 part 'trade_screen_contract_market.dart';
 part 'trade_screen_contract_market_rows.dart';
 part 'trade_screen_contract_deal_book.dart';

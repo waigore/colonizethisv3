@@ -22,9 +22,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -44,11 +44,9 @@ void _expectNoMaterialChromeBans(WidgetTester tester) {
   expect(find.byType(Slider), findsNothing, reason: 'Slider is banned chrome');
 }
 
-Widget _editorialMonocleHost({required Widget child}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+Widget _catalogUnitsHost({required Widget child}) {
+  return buildAppShell(
+    child: Scaffold(
       backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
       body: child,
     ),
@@ -76,15 +74,13 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: _editorialMonocleHost(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-              child: CivilianUnitsPanel(
-                game: game,
-                humanPlayerId: humanPlayerId,
-                bus: AppEventBus.create(),
-              ),
+        _catalogUnitsHost(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+            child: CivilianUnitsPanel(
+              game: game,
+              humanPlayerId: humanPlayerId,
+              bus: AppEventBus.create(),
             ),
           ),
         ),
@@ -100,7 +96,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _editorialMonocleHost(
+        _catalogUnitsHost(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
             child: MilitaryUnitsPanel(
@@ -124,7 +120,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        _editorialMonocleHost(
+        _catalogUnitsHost(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
             child: NavalUnitsPanel(
@@ -161,7 +157,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _editorialMonocleHost(
+        _catalogUnitsHost(
           child: Center(
             child: TrainCiviliansDialog(
               game: richGame,
@@ -207,7 +203,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _editorialMonocleHost(
+        _catalogUnitsHost(
           child: Center(
             child: TrainMilitaryDialog(
               game: richGame,

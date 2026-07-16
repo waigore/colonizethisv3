@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerDiplomacyVictoryCoreTests() {
   group('diplomacy victory', () {
-    group('diplomacy_part3_segment1_test', () {
+    group('diplomacy victory', () {
 test(
           'join_home_fleet mission moves ships into home fleet and removes fleet',
           () {
@@ -73,15 +73,13 @@ test(
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
 
             expect(next.worldState.turnState.turnNumber, 1);
             expect(next.worldState.fleets.length, 1);
@@ -147,15 +145,13 @@ test(
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
           expect(fleet.mission, FleetMission.none);
         });
@@ -207,15 +203,13 @@ test(
               ),
             ],
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           final fleet = next.worldState.fleets.singleWhere((f) => f.id == 'f1');
           expect(fleet.mission, FleetMission.none);
         });
@@ -268,15 +262,13 @@ test(
                 ),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
             expect(next.worldState.turnState.turnNumber, 1);
             expect(next.worldState.fleets, isNotEmpty);
           },
@@ -338,16 +330,14 @@ test(
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               tileMapByRegion: tileMapByRegion,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.turnState.turnNumber, 1);
           expect(next.worldState.playerProspectedTiles['p1'], contains(tileKey));
         });

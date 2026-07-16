@@ -20,15 +20,12 @@ class _ProductionScreenBody extends ConsumerWidget {
     final currentOrders = shellRef.watch(currentOrdersProvider);
     var topology = MapTopology();
     Map<String, TileMapResult> tileMapByRegion = const {};
-    try {
-      final gameService = shellRef.watch(gameServiceProvider);
-      final loaded = gameService.getMapData(displayGame.id);
-      if (loaded != null) {
-        topology = loaded.combinedTopology;
-        tileMapByRegion = loaded.tileMapByRegion;
-      }
-    } on Object {
-      // Widget tests may not initialize Hive-backed game service providers.
+    final loaded = tryGetGameMapData(
+      () => shellRef.watch(gameServiceProvider).getMapData(displayGame.id),
+    );
+    if (loaded != null) {
+      topology = loaded.combinedTopology;
+      tileMapByRegion = loaded.tileMapByRegion;
     }
     final displayPlayer = displayGame.playerById(screen.player.id)!;
     final MapTopology panelTopology;

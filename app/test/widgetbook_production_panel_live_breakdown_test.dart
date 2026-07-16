@@ -30,7 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'support/widgetbook_test_harness.dart';

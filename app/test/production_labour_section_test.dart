@@ -9,12 +9,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_section.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'support/app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 const _playerId = 'gp_labour_widget_test';
@@ -107,10 +108,11 @@ Widget _mount({
   bool canEdit = true,
   ProductionLabourCallbacks? callbacks,
 }) {
-  return MaterialApp(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: const [Locale('en')],
-    home: Scaffold(
+    child: Scaffold(
       body: SizedBox(
         width: 800,
         height: 600,

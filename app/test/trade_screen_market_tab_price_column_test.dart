@@ -32,7 +32,7 @@ double _priceTextRight(
 
 Finder _trailingPriceRowFinder(CommodityId commodityId) {
   final Finder coinFinder = find.byKey(
-    TradeScreen.marketRowPriceCoinIconKey(commodityId),
+    TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
   );
   return find.ancestor(
     of: coinFinder,
@@ -57,7 +57,7 @@ void main() {
   suppressLogsForTests();
 
   tearDown(() {
-    TradeScreen.marketPriceResourceRulesOverride = null;
+    TradeScreenMarketKeys.marketPriceResourceRulesOverride = null;
   });
 
   group('TradeScreen Market tab price column alignment (#3487)', () {
@@ -100,7 +100,7 @@ void main() {
         final double priceRight = _priceTextRight(tester, 'timber', '30');
         final double rowRight = tester
             .getTopRight(
-              find.byKey(TradeScreen.marketCommodityRowKey('timber')),
+              find.byKey(TradeScreenMarketKeys.marketCommodityRowKey('timber')),
             )
             .dx;
 
@@ -124,11 +124,11 @@ void main() {
       );
 
       final coinFinder = find.descendant(
-        of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
-        matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey('timber')),
+        of: find.byKey(TradeScreenMarketKeys.marketCommodityRowKey('timber')),
+        matching: find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey('timber')),
       );
       final priceFinder = find.descendant(
-        of: find.byKey(TradeScreen.marketCommodityRowKey('timber')),
+        of: find.byKey(TradeScreenMarketKeys.marketCommodityRowKey('timber')),
         matching: find.text('30'),
       );
 
@@ -174,7 +174,7 @@ void main() {
       'em-dash price fallback shares the trailing column with integer '
       'prices',
       (tester) async {
-        TradeScreen.marketPriceResourceRulesOverride = _emptyMarketPriceRules();
+        TradeScreenMarketKeys.marketPriceResourceRulesOverride = _emptyMarketPriceRules();
 
         await pumpTradeScreen(
           tester,
@@ -201,8 +201,8 @@ void main() {
         );
 
         final coinFinder = find.descendant(
-          of: find.byKey(TradeScreen.marketCommodityRowKey('iron')),
-          matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey('iron')),
+          of: find.byKey(TradeScreenMarketKeys.marketCommodityRowKey('iron')),
+          matching: find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey('iron')),
         );
         expect(
           coinFinder,

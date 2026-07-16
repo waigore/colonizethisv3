@@ -56,6 +56,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -217,7 +218,10 @@ void main() {
             tapMoveOnFirstNonHomeFleet;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(await ref(tester), isFalse);
       },
@@ -252,7 +256,10 @@ void main() {
           ctE2eCivilianPanelSnapshot = null;
         });
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(await ref(tester, maxPanelSweepSteps: 0), isFalse);
       },
@@ -275,7 +282,10 @@ void main() {
       expect(kE2eDefaultNavalMoveSegmentUiWait, const Duration(seconds: 5));
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        buildAppShellMaterialApp(
+          applyEditorialTheme: false,
+          home: Scaffold(body: SizedBox()),
+        ),
       );
       await ref(tester, l10n, navalPanelAlreadyOpen: true);
     });
@@ -300,7 +310,10 @@ void main() {
         // dialog and silently returned would pass the tear-off pin
         // without exercising the helper at all.
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         final l10n = lookupAppLocalizations(const Locale('en'));
         Object? caught;
@@ -333,7 +346,10 @@ void main() {
             e2eNavalPanelShowsNonHomeFleetInNewWorld;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(ref(tester), isFalse);
       },
@@ -364,7 +380,10 @@ void main() {
             e2eHarnessDetectsNonHomeFleetInNewWorld;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(ref(tester, null), isFalse);
       },
@@ -424,7 +443,10 @@ void main() {
         final Finder Function() ref = e2eRadioListTilesInAlertDialogs;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(ref(), findsNothing);
       },
@@ -437,7 +459,10 @@ void main() {
             e2eTapNewWorldRegionTabIfPresent;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         // Sanity smoke through the barrel: an empty scaffold has no
         // keyed New World subtree, so the helper must complete without

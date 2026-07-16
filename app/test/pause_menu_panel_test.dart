@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -7,22 +7,22 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
   Widget host(AppEventBus bus, {bool blocking = false}) {
-    return ProviderScope(
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: [
         turnResolutionBlockingProvider.overrideWith(
           () => StateToggleNotifier(blocking),
         ),
       ],
-      child: MaterialApp(
-        home: Scaffold(body: PauseMenuPanel(bus: bus)),
-      ),
+      child: Scaffold(body: PauseMenuPanel(bus: bus)),
     );
   }
 

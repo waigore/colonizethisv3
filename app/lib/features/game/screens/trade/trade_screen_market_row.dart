@@ -60,12 +60,12 @@ class _MarketCommodityRow extends StatelessWidget {
   bool get _hasStagedOrder => stagedOrder != null;
 
   String get _quantityText => stagedOrder == null
-      ? TradeScreen.marketRowQuantityIdleGlyph
+      ? TradeScreenMarketKeys.marketRowQuantityIdleGlyph
       : stagedOrder!.quantity.toString();
 
   bool get _canDecrement =>
       stagedOrder != null &&
-      stagedOrder!.quantity > TradeScreen.marketRowQuantityMin;
+      stagedOrder!.quantity > TradeScreenMarketKeys.marketRowQuantityMin;
 
   /// True when the row's `+` button can grow the staged order quantity.
   /// For bids the cross-commodity cargo cap (Refs #2993 E5c) gates this

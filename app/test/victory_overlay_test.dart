@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -45,6 +46,26 @@ void main() {
     );
   }
 
+  /// Editorial shell via [buildAppShell] (Refs #4035 — no inline MaterialApp).
+  Widget buildVictoryHost({
+    required ct_models.VictoryState victory,
+    ct_models.AppEventBus? bus,
+  }) {
+    return buildAppShell(child: buildVictoryRoute(victory: victory, bus: bus));
+  }
+
+  Widget buildVictoryPanelHost(ct_models.VictoryState victory) {
+    return buildAppShell(
+      child: Scaffold(
+        body: VictoryPanel(
+          game: game,
+          victory: victory,
+          bus: victoryTestBus,
+        ),
+      ),
+    );
+  }
+
   testWidgets('VictoryOverlay renders victory label and winner sentence', (
     WidgetTester tester,
   ) async {
@@ -54,9 +75,7 @@ void main() {
       turnNumber: 12,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(home: buildVictoryRoute(victory: victory)),
-    );
+    await tester.pumpWidget(buildVictoryHost(victory: victory));
     await tester.pumpAndSettle();
 
     expect(find.text('MILITARY VICTORY'), findsOneWidget);
@@ -72,9 +91,7 @@ void main() {
       turnNumber: 1,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(home: buildVictoryRoute(victory: victory)),
-    );
+    await tester.pumpWidget(buildVictoryHost(victory: victory));
     await tester.pumpAndSettle();
 
     expect(find.text('MILITARY VICTORY'), findsOneWidget);
@@ -99,7 +116,7 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(home: buildVictoryRoute(victory: victory, bus: victoryTestBus)),
+      buildVictoryHost(victory: victory, bus: victoryTestBus),
     );
     await tester.pumpAndSettle();
 
@@ -119,17 +136,7 @@ void main() {
     );
     final fallbackName = game.players.first.displayName;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: VictoryPanel(
-            game: game,
-            victory: victory,
-            bus: victoryTestBus,
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(buildVictoryPanelHost(victory));
     await tester.pumpAndSettle();
 
     expect(find.textContaining(fallbackName), findsOneWidget);
@@ -146,9 +153,7 @@ void main() {
         turnNumber: 7,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(home: buildVictoryRoute(victory: victory)),
-      );
+      await tester.pumpWidget(buildVictoryHost(victory: victory));
       await tester.pumpAndSettle();
 
       // The overlay's scrim Material must resolve to the canonical
@@ -179,17 +184,7 @@ void main() {
         turnNumber: 50,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: VictoryPanel(
-              game: game,
-              victory: victory,
-              bus: victoryTestBus,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildVictoryPanelHost(victory));
       await tester.pumpAndSettle();
 
       final Iterable<DecoratedBox> decoratedBoxes = tester
@@ -225,17 +220,7 @@ void main() {
       turnNumber: 30,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: VictoryPanel(
-            game: game,
-            victory: victory,
-            bus: victoryTestBus,
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(buildVictoryPanelHost(victory));
     await tester.pumpAndSettle();
 
     expect(find.byType(CtBrassDivider), findsOneWidget);
@@ -249,17 +234,7 @@ void main() {
       turnNumber: 4,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: VictoryPanel(
-            game: game,
-            victory: victory,
-            bus: victoryTestBus,
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(buildVictoryPanelHost(victory));
     await tester.pumpAndSettle();
 
     expect(find.byType(ElevatedButton), findsNothing);

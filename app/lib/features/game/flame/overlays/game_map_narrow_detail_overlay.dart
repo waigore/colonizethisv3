@@ -9,7 +9,6 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
@@ -65,13 +64,11 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         child: const SizedBox.shrink(),
       );
     }
-    GameMapData? mapData;
-    try {
-      mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-    } catch (_) {
-      // Some widget tests render this panel without initializing persistence-backed providers.
-      mapData = null;
-    }
+    final hostArgs = resolveProvinceDetailHostOverlayArgs(
+      loadMapData: () => ref.read(gameServiceProvider).getMapData(game.id),
+      panelNotifier: ref.read(mapProvincePanelProvider.notifier),
+      bus: ref.read(appEventBusProvider),
+    );
     final overlay = SizedBox(
       width: double.infinity,
       height: MediaQuery.sizeOf(context).height * 0.33,
@@ -83,18 +80,13 @@ class GameMapNarrowDetailOverlaySlot extends ConsumerWidget {
         workTargetSelectionCache: workTargetSelectionCache,
         selectedTileKey: panel.selectedTileKey,
         draftOrders: draftOrders,
-        mapData: mapData,
+        mapData: hostArgs.mapData,
         canMutateViaUi: canMutateViaUi,
         omniscientDetail: omniscientDetail,
-        onHighlightTile: (k) => ref
-            .read(mapProvincePanelProvider.notifier)
-            .setSecondaryHighlight(k),
-        onHighlightTiles: (keys) => ref
-            .read(mapProvincePanelProvider.notifier)
-            .setSecondaryHighlights(keys),
-        onClose: () =>
-            ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-        bus: ref.read(appEventBusProvider),
+        onHighlightTile: hostArgs.onHighlightTile,
+        onHighlightTiles: hostArgs.onHighlightTiles,
+        onClose: hostArgs.onClose,
+        bus: hostArgs.bus,
       ),
     );
     return ProvinceDetailPanelSlideTransition(

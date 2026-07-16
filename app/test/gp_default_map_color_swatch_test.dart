@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -16,8 +18,8 @@ void main() {
     ) async {
       final rgb = greatPowerDefaultColorRgb['portugal']!;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: GpDefaultMapColorSwatch(greatPowerId: 'portugal'),
           ),
         ),
@@ -41,8 +43,8 @@ void main() {
       'falls back to EditorialMonoclePalette.muted for unknown id (Refs #2914 S4)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
+          buildAppShell(
+            child: const Scaffold(
               body: GpDefaultMapColorSwatch(greatPowerId: 'not_a_gp'),
             ),
           ),

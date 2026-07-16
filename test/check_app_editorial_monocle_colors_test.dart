@@ -180,7 +180,7 @@ Widget hitTarget() => Container(color: Colors.transparent);
     });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'flags Colors.white under former feature chrome path (no longer allowlisted)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_editorial_monocle_colors_chrome_',
@@ -203,7 +203,7 @@ const fallback = TextStyle(color: Colors.white);
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
@@ -612,12 +612,12 @@ class Clean extends StatelessWidget {
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
+    test('does not skip former feature chrome catalog path', () {
       expect(
         shouldSkipAppEditorialMonocleColorsFile(
           'app/lib/features/game/widgets/chrome/ct_thing.dart',
         ),
-        isTrue,
+        isFalse,
       );
     });
 

@@ -35,7 +35,6 @@ class CtPanel extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(CtSpacing.ml),
-    this.destTileSize = 16,
   });
 
   /// Panel body content.
@@ -43,16 +42,6 @@ class CtPanel extends StatelessWidget {
 
   /// Inner padding between the [accentEdgeWidth] border strips and [child].
   final EdgeInsetsGeometry padding;
-
-  /// Retained for backward compatibility with the legacy nine-patch
-  /// rendering. The dark editorial-monocle visual contract no longer
-  /// rasterises a nine-patch image, so this argument has **no effect** on
-  /// rendering; it remains in the constructor signature so existing call
-  /// sites continue to compile without churn. Removal is deferred to a
-  /// follow-up cleanup slice once all `destTileSize:` arguments are
-  /// dropped (mirrors the equivalent deprecation in
-  /// [`CtNinePatchButton`](../chrome/ct_nine_patch_button.dart)).
-  final double destTileSize;
 
   /// Stroke width of the top and bottom `--accent-dim` edge strips per
   /// #2859 R2 / S3.

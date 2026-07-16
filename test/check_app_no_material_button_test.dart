@@ -192,29 +192,31 @@ class C {}
       expect(logs.join('\n'), contains('no violations found'));
     });
 
-    test('allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
-        () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_button_chrome_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_button_chrome_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget fallback() => ElevatedButton(onPressed: () {}, child: const Text('x'));
 ''');
 
-      final code = runCheckAppNoMaterialButton(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialButton(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+      },
+    );
 
     test('allowlists the dev-tooling screens (SYS10001 + SYS20001)', () {
       final temp = Directory.systemTemp.createTempSync(
@@ -246,29 +248,31 @@ Widget bypass() => OutlinedButton(onPressed: () {}, child: const Text('x'));
       expect(code, 0);
     });
 
-    test('does not scan test files inside features/ (production surface only)',
-        () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_button_test_skip_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'does not scan test files inside features/ (production surface only)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_button_test_skip_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
+        File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget probe() => ElevatedButton(onPressed: () {}, child: const Text('x'));
 ''');
 
-      final code = runCheckAppNoMaterialButton(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialButton(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 0);
+      },
+    );
 
     test('returns exit 1 when app/lib/features does not exist', () {
       final temp = Directory.systemTemp.createTempSync(
@@ -348,14 +352,17 @@ Widget probe() => ElevatedButton(onPressed: () {}, child: const Text('x'));
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialButtonFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialButtonFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips the dev-tooling screens (SYS10001 + SYS20001)', () {
       const skipped = <String>[

@@ -19,8 +19,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Same path as [StrictAssetIcon] in [GameRegionMinimap] toggle.
 const _kRegionMinimapIconAssetPath =
@@ -50,13 +51,13 @@ final class _MinimapTestAssetBundle extends CachingAssetBundle {
 }
 
 Widget _minimapTestShell(Widget child) {
-  return ProviderScope(
-    child: DefaultAssetBundle(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
+    shellWrapper: (app) => DefaultAssetBundle(
       bundle: _MinimapTestAssetBundle(rootBundle),
-      child: MaterialApp(
-        home: Scaffold(body: Center(child: child)),
-      ),
+      child: app,
     ),
+    child: Scaffold(body: Center(child: child)),
   );
 }
 

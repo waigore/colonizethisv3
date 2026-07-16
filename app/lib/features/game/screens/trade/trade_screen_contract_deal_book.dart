@@ -1,9 +1,9 @@
 part of 'trade_screen.dart';
 
-/// Deal Book tab widget keys, copy literals, and formatting helpers for
-/// [TradeScreen]. Library part of the trade screen contract split (Refs #3878).
-abstract final class _TradeScreenDealBookContract {
-  _TradeScreenDealBookContract._();
+/// Public Deal Book keys/literals for the trade screen.
+/// Tests and Deal Book UI parts use this type directly (Refs #4035 trade API collapse).
+abstract final class TradeScreenDealBookKeys {
+  TradeScreenDealBookKeys._();
 
   /// Stable widget key for the Deal Book tab body. Pin point for widget
   /// tests asserting the Deal Book tab body is present in the tab

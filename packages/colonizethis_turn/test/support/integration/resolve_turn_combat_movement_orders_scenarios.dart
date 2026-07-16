@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerCombatMovementOrdersTests() {
   group('combat movement', () {
-    group('combat_part2_part2_segment2_test', () {
+    group('combat movement orders', () {
 test('naval move order targeting home fleet does not move it', () {
           final topology = MapTopology(
             nodes: const [
@@ -52,15 +52,13 @@ test('naval move order targeting home fleet does not move it', () {
             },
           );
 
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.fleets.single.seaZoneId, 'sea1');
           expect(next.worldState.turnState.turnNumber, 1);
         });
@@ -138,15 +136,13 @@ test('naval move order targeting home fleet does not move it', () {
                 ],
               },
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
             expect(next.worldState.fleets.length, 1);
             final home = next.worldState.fleets.single;
             expect(home.id, 'fleet_p1');
@@ -201,15 +197,13 @@ test('naval move order targeting home fleet does not move it', () {
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.fleets.single.mission, FleetMission.none);
         });
 
@@ -258,15 +252,13 @@ test('naval move order targeting home fleet does not move it', () {
               'p1': [NavalMissionOrder(fleetId: 'f1', mission: 'patrol')],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.fleets.single.seaZoneId, 'sea2');
           expect(next.worldState.fleets.single.mission, FleetMission.none);
         });

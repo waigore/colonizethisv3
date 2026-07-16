@@ -31,15 +31,15 @@ class _MarketTabCargoHeader extends StatelessWidget {
       children: <Widget>[
         Text(
           // ignore: avoid_hardcoded_strings_in_widgets
-          '${TradeScreen.cargoIndicatorPrefix} $clampedRemaining',
-          key: TradeScreen.marketCargoIndicatorKey,
+          '${TradeScreenMarketKeys.cargoIndicatorPrefix} $clampedRemaining',
+          key: TradeScreenMarketKeys.marketCargoIndicatorKey,
           style: cargoIndicatorStyle,
         ),
         if (warningVisible) ...<Widget>[
           const SizedBox(height: 4),
           Text(
-            TradeScreen.cargoLimitWarningText,
-            key: TradeScreen.marketCargoWarningKey,
+            TradeScreenMarketKeys.cargoLimitWarningText,
+            key: TradeScreenMarketKeys.marketCargoWarningKey,
             style: cargoWarningStyle,
           ),
         ],

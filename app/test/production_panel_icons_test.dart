@@ -2,6 +2,7 @@
 // production panel. Split from production_panel_test.dart to keep each file
 // within the repo non-comment line-size gate (SPEC/program/repo-lint.md).
 // SPEC/ui/production-panel.md.
+// Hosts compose buildAppShell (Refs #4035) — no inline MaterialApp.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
+import 'support/app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
@@ -19,8 +21,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Column(
               children: [
                 ResourceIcon(commodityId: 'grain', size: 16),
@@ -40,8 +42,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: ResourceIcon(commodityId: 'unknown_commodity', size: 16),
           ),
         ),
@@ -55,8 +57,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: const Scaffold(
             body: ResourceLabelInline(commodityId: 'grain', label: 'grain'),
           ),
         ),
@@ -71,8 +73,8 @@ void main() {
       'ResourceLabelInline reserves space when commodity has no icon asset',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
+          buildAppShell(
+            child: const Scaffold(
               body: ResourceLabelInline(commodityId: 'no_ui_icon_commodity'),
             ),
           ),
@@ -91,8 +93,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Column(
               children: [
                 WorkerIcon(workerType: 'peasant', size: 16),
@@ -113,8 +115,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: WorkerIcon(workerType: 'unknown', size: 16)),
+        buildAppShell(
+          child: Scaffold(body: WorkerIcon(workerType: 'unknown', size: 16)),
         ),
       );
       await pumpSettleCapped(tester);

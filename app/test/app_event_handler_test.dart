@@ -3,7 +3,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/route_paths.dart';
@@ -13,6 +13,8 @@ import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
+
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -51,20 +53,23 @@ void main() {
       required VoidCallback onPressed,
       RouteFactory? onGenerateRoute,
       Widget? home,
-      Widget Function(Widget child)? wrap,
+      List<Override> overrides = const <Override>[],
     }) async {
-      final app = MaterialApp(
-        navigatorKey: navKey,
-        onGenerateRoute: onGenerateRoute,
-        home: home ??
-            Builder(
-              builder: (ctx) => TextButton(
-                onPressed: onPressed,
-                child: Text(label),
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+      await tester.pumpWidget(
+        buildAppShell(
+          navigatorKey: navKey,
+          onGenerateRoute: onGenerateRoute,
+          overrides: overrides,
+          child: home ??
+              Builder(
+                builder: (ctx) => TextButton(
+                  onPressed: onPressed,
+                  child: Text(label),
+                ),
               ),
-            ),
+        ),
       );
-      await tester.pumpWidget(wrap?.call(app) ?? app);
       await tester.pumpAndSettle();
     }
 
@@ -123,11 +128,10 @@ void main() {
     testWidgets('PopNavigationEvent calls nav.pop', (tester) async {
       handler.bind();
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShell(
           navigatorKey: navKey,
-          navigatorObservers: [],
-          initialRoute: '/base',
           onGenerateRoute: (settings) {
             if (settings.name == '/overlay') {
               return MaterialPageRoute(
@@ -140,6 +144,7 @@ void main() {
               builder: (ctx) => const Text('base_route'),
             );
           },
+          child: const Text('base_route'),
         ),
       );
       await tester.pumpAndSettle();
@@ -166,14 +171,11 @@ void main() {
         await pumpEmitButton(
           tester,
           label: 'open',
-          wrap: (child) => ProviderScope(
-            overrides: [
-              turnResolutionBlockingProvider.overrideWith(
-                () => StateToggleNotifier(false),
-              ),
-            ],
-            child: child,
-          ),
+          overrides: [
+            turnResolutionBlockingProvider.overrideWith(
+              () => StateToggleNotifier(false),
+            ),
+          ],
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
@@ -329,10 +331,11 @@ void main() {
     testWidgets('NavigateToShellEvent pops until shell route', (tester) async {
       handler.bind();
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+      // RoutePaths.shell is '/' — MaterialApp.home is the shell route name.
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShell(
           navigatorKey: navKey,
-          initialRoute: RoutePaths.shell,
           onGenerateRoute: (settings) {
             if (settings.name == RoutePaths.game) {
               return MaterialPageRoute<void>(
@@ -348,6 +351,7 @@ void main() {
             }
             return null;
           },
+          child: const Text('shell_layer'),
         ),
       );
       await tester.pumpAndSettle();

@@ -11,6 +11,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -117,17 +119,13 @@ void main() {
         final provinceId = '${parts[0]}|${parts[1]}';
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: game,
-                region: region,
-                displayId: provinceId,
-                selectedTileKey: tileKey,
-                humanPlayerId: humanPlayerId,
-                playerView: playerView,
-              ),
-            ),
+          buildProvinceOverlayDarkThemeShell(
+            game: game,
+            region: region,
+            displayId: provinceId,
+            selectedTileKey: tileKey,
+            humanPlayerId: humanPlayerId,
+            playerView: playerView,
           ),
         );
         await tester.pumpAndSettle();

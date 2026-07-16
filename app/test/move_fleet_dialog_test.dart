@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _openDialogButton(VoidCallback onOpen) {
   return TextButton(onPressed: onOpen, child: const Text('open'));
 }
@@ -107,9 +109,10 @@ void main() {
     final resolvedGame = game ?? buildGame();
     final resolvedTopology = topology ?? buildTopology();
     final resolvedFleet = fleet ?? buildFleet();
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: Builder(
             builder: (context) {
               return _openDialogButton(() {

@@ -46,7 +46,7 @@ void main() {
       (tester) async {
         await pumpTradeScreen(tester, game: buildTradeTestGame());
 
-        final list = find.byKey(TradeScreen.marketCommodityListKey);
+        final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
         expect(list, findsOneWidget);
 
         final List<Commodity> tradeable = <Commodity>[
@@ -69,7 +69,7 @@ void main() {
         for (final Commodity c in tradeable) {
           final rowFinder = find.descendant(
             of: list,
-            matching: find.byKey(TradeScreen.marketCommodityRowKey(c.id)),
+            matching: find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(c.id)),
           );
           expect(
             rowFinder,
@@ -88,7 +88,7 @@ void main() {
       (tester) async {
         await pumpTradeScreen(tester, game: buildTradeTestGame());
 
-        final list = find.byKey(TradeScreen.marketCommodityListKey);
+        final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
         expect(list, findsOneWidget);
 
         for (final CommodityId excluded in <CommodityId>[
@@ -99,7 +99,7 @@ void main() {
           CommodityCatalog.spices.id,
         ]) {
           expect(
-            find.byKey(TradeScreen.marketCommodityRowKey(excluded)),
+            find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(excluded)),
             findsNothing,
             reason:
                 'SPEC/game/world-market.md §Tradeable commodities — '
@@ -119,13 +119,13 @@ void main() {
       // positions in the parent column, which guarantees the
       // expected reading order.
       final Offset foodHeaderOffset = tester.getTopLeft(
-        find.byKey(TradeScreen.marketSectionFoodKey),
+        find.byKey(TradeScreenMarketKeys.marketSectionFoodKey),
       );
       final Offset rawMaterialsHeaderOffset = tester.getTopLeft(
-        find.byKey(TradeScreen.marketSectionRawMaterialsKey),
+        find.byKey(TradeScreenMarketKeys.marketSectionRawMaterialsKey),
       );
       final Offset manufacturedHeaderOffset = tester.getTopLeft(
-        find.byKey(TradeScreen.marketSectionManufacturedKey),
+        find.byKey(TradeScreenMarketKeys.marketSectionManufacturedKey),
       );
 
       expect(
@@ -174,11 +174,11 @@ void main() {
         for (int i = 1; i < sectionRows.length; i++) {
           final Offset prior = tester.getTopLeft(
             find.byKey(
-              TradeScreen.marketCommodityRowKey(sectionRows[i - 1].id),
+              TradeScreenMarketKeys.marketCommodityRowKey(sectionRows[i - 1].id),
             ),
           );
           final Offset current = tester.getTopLeft(
-            find.byKey(TradeScreen.marketCommodityRowKey(sectionRows[i].id)),
+            find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(sectionRows[i].id)),
           );
           expect(
             current.dy,
@@ -197,11 +197,11 @@ void main() {
       // regressions where a single commodity slips out of its
       // section into the wrong bucket.
       final Offset lastFoodRow = tester.getTopLeft(
-        find.byKey(TradeScreen.marketCommodityRowKey(foodCommodities.last.id)),
+        find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(foodCommodities.last.id)),
       );
       final Offset firstRawMaterialRow = tester.getTopLeft(
         find.byKey(
-          TradeScreen.marketCommodityRowKey(rawMaterialCommodities.first.id),
+          TradeScreenMarketKeys.marketCommodityRowKey(rawMaterialCommodities.first.id),
         ),
       );
       expect(
@@ -222,12 +222,12 @@ void main() {
 
       final Offset lastRawMaterialRow = tester.getTopLeft(
         find.byKey(
-          TradeScreen.marketCommodityRowKey(rawMaterialCommodities.last.id),
+          TradeScreenMarketKeys.marketCommodityRowKey(rawMaterialCommodities.last.id),
         ),
       );
       final Offset firstManufacturedRow = tester.getTopLeft(
         find.byKey(
-          TradeScreen.marketCommodityRowKey(manufacturedCommodities.first.id),
+          TradeScreenMarketKeys.marketCommodityRowKey(manufacturedCommodities.first.id),
         ),
       );
       expect(
@@ -255,13 +255,13 @@ void main() {
         await pumpTradeScreen(tester, game: buildTradeTestGame());
 
         for (final case_ in <({Key key, String label})>[
-          (key: TradeScreen.marketSectionFoodKey, label: 'FOOD'),
+          (key: TradeScreenMarketKeys.marketSectionFoodKey, label: 'FOOD'),
           (
-            key: TradeScreen.marketSectionRawMaterialsKey,
+            key: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
             label: 'RAW MATERIALS',
           ),
           (
-            key: TradeScreen.marketSectionManufacturedKey,
+            key: TradeScreenMarketKeys.marketSectionManufacturedKey,
             label: 'MANUFACTURED',
           ),
         ]) {
@@ -275,7 +275,7 @@ void main() {
           );
           expect(
             find.descendant(
-              of: find.byKey(TradeScreen.marketTabBodyKey),
+              of: find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
               matching: find.byKey(case_.key),
             ),
             findsOneWidget,
@@ -283,7 +283,7 @@ void main() {
           expect(
             find.descendant(
               of: find.byKey(
-                TradeScreen.dealBookTabBodyKey,
+                TradeScreenDealBookKeys.dealBookTabBodyKey,
                 skipOffstage: false,
               ),
               matching: find.byKey(case_.key),
@@ -312,7 +312,7 @@ void main() {
           (id: CommodityCatalog.lumber.id, price: '60'),
           (id: CommodityCatalog.castIron.id, price: '160'),
         ]) {
-          final row = find.byKey(TradeScreen.marketCommodityRowKey(case_.id));
+          final row = find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(case_.id));
           expect(row, findsOneWidget);
           expect(
             find.descendant(of: row, matching: find.text(case_.price)),
@@ -328,7 +328,7 @@ void main() {
         ]) {
           expect(
             find.descendant(
-              of: find.byKey(TradeScreen.marketCommodityRowKey(id)),
+              of: find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(id)),
               // ignore: avoid_hardcoded_strings_in_widgets
               matching: find.text('—'),
             ),
@@ -337,7 +337,7 @@ void main() {
         }
         expect(
           find.byKey(
-            TradeScreen.marketRowQuantityTextKey(CommodityCatalog.iron.id),
+            TradeScreenMarketKeys.marketRowQuantityTextKey(CommodityCatalog.iron.id),
           ),
           findsOneWidget,
         );
@@ -363,7 +363,7 @@ void main() {
         );
 
         final timberRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.timber.id),
+          TradeScreenMarketKeys.marketCommodityRowKey(CommodityCatalog.timber.id),
         );
         expect(timberRow, findsOneWidget);
         expect(
@@ -381,7 +381,7 @@ void main() {
 
         // Commodity not present in the activity map falls back to 0/0.
         final fabricRow = find.byKey(
-          TradeScreen.marketCommodityRowKey(CommodityCatalog.fabric.id),
+          TradeScreenMarketKeys.marketCommodityRowKey(CommodityCatalog.fabric.id),
         );
         expect(fabricRow, findsOneWidget);
         expect(
@@ -409,8 +409,8 @@ void main() {
         // Sanity: Market tab body hosts the list and rows.
         expect(
           find.descendant(
-            of: find.byKey(TradeScreen.marketTabBodyKey),
-            matching: find.byKey(TradeScreen.marketCommodityListKey),
+            of: find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
+            matching: find.byKey(TradeScreenMarketKeys.marketCommodityListKey),
           ),
           findsOneWidget,
         );
@@ -419,8 +419,8 @@ void main() {
         // — both off-stage and on-stage scopes.
         expect(
           find.descendant(
-            of: find.byKey(TradeScreen.dealBookTabBodyKey, skipOffstage: false),
-            matching: find.byKey(TradeScreen.marketCommodityListKey),
+            of: find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey, skipOffstage: false),
+            matching: find.byKey(TradeScreenMarketKeys.marketCommodityListKey),
           ),
           findsNothing,
         );

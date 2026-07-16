@@ -23,7 +23,6 @@ library;
 // Split under repo.app_test_file_size (Refs #4013) — part 2:
 // OvertureDialogueOverlay + CallToArmsDialogueOverlay.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
@@ -33,6 +32,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/dialogue_overlays_specs_test_support.dart';
 
 const Game _gpTrioGame = Game(
@@ -81,11 +81,11 @@ const List<CallToArmsPending> _twoCtaPending = [
 ];
 
 Widget _shell(Widget body) {
-  return MaterialApp(
-    theme: AppThemes.colonial,
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
     locale: const Locale('en'),
     supportedLocales: const [Locale('en')],
-    home: Scaffold(body: body),
+    child: Scaffold(body: body),
   );
 }
 

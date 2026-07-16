@@ -30,6 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/game_fixture.dart';
 import 'support/map_view_fixture.dart';
 
@@ -96,8 +97,9 @@ _pumpMapAreaWithMinimap(
   final resolvedGame = game ?? init.game;
   final bus = AppEventBus.create();
   addTearDown(bus.dispose);
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
   await tester.pumpWidget(
-    ProviderScope(
+    buildAppShell(
       overrides: [
         appEventBusProvider.overrideWith((ref) => bus),
         currentGameProvider.overrideWith(
@@ -112,15 +114,13 @@ _pumpMapAreaWithMinimap(
         ),
         mapViewDataProvider.overrideWith((ref) => init.mapViewData),
       ],
-      child: MaterialApp(
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: Scaffold(
-          body: GameMapArea(
-            game: resolvedGame,
-            mapViewData: init.mapViewData,
-          ),
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
+      child: Scaffold(
+        body: GameMapArea(
+          game: resolvedGame,
+          mapViewData: init.mapViewData,
         ),
       ),
     ),

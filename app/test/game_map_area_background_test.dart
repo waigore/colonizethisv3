@@ -4,6 +4,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Widget tests for [GameMapAreaBackground] (issue #2861 R3).
 void main() {
   suppressLogsForTests();
@@ -11,9 +13,10 @@ void main() {
   testWidgets('paints bg-deep surface and grid custom paint layer', (
     WidgetTester tester,
   ) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: const Scaffold(
           body: SizedBox(
             width: 240,
             height: 192,
@@ -48,8 +51,8 @@ void main() {
 
   testWidgets('grid painter uses 48 dp cell size', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: const Scaffold(
           body: SizedBox(
             width: GameMapAreaBackground.gridCellSize * 2,
             height: GameMapAreaBackground.gridCellSize * 2,

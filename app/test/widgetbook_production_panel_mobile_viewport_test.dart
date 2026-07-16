@@ -32,6 +32,7 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
 
 void main() {
@@ -91,16 +92,13 @@ void main() {
 
           // `mobileViewport` inside the story calls `MediaQuery.of(context)`,
           // which requires a MediaQuery ancestor — Widgetbook itself
-          // provides one at runtime via the addon chain. In tests we
-          // supply one explicitly (sized to the test surface) so the
-          // inner copyWith resolves cleanly to 360 × 640.
+          // provides one at runtime via the addon chain. In tests
+          // `buildAppShell(viewport:)` supplies the 360 × 640 frame.
           await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(size: Size(360, 640)),
-              child: MaterialApp(
-                home: Builder(
-                  builder: (BuildContext ctx) => useCase.builder(ctx),
-                ),
+            buildAppShell(
+              viewport: const Size(360, 640),
+              child: Builder(
+                builder: (BuildContext ctx) => useCase.builder(ctx),
               ),
             ),
           );

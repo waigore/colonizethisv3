@@ -41,6 +41,33 @@ Widget buildMilitaryPanel({
   );
 }
 
+/// Pumps [buildMilitaryPanel] (or an optional prebuilt [widget]) and settles.
+///
+/// Canonical military panel pump for panel suites — do not re-declare a local
+/// `_pumpMilitary` / `pumpMilitary` clone (Refs #4035; twin of
+/// [pumpNavalPanel]).
+Future<void> pumpMilitaryPanel(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  AppEventBus? bus,
+  MapTopology? topology,
+  Orders draftOrders = const Orders(),
+  Widget? widget,
+}) async {
+  await tester.pumpWidget(
+    widget ??
+        buildMilitaryPanel(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          bus: bus,
+          topology: topology,
+          draftOrders: draftOrders,
+        ),
+  );
+  await tester.pumpAndSettle();
+}
+
 /// Minimal province + tile-key lookup game for
 /// `tileKeyForProvinceLocation` edge cases (Refs #4013).
 Game buildMilitaryProvinceTileLookupGame({

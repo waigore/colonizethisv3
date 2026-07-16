@@ -22,16 +22,15 @@
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show demoGameForOverlay, demoHumanPlayerViewForOverlay, demoRegionForOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay, demoRegionForOverlay;
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+
+import 'support/province_overlay_test_harness.dart';
 
 /// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
 /// with every sea cell forced to [TileVisibility.unrevealed] so the
@@ -74,24 +73,17 @@ RegionMapViewData _regionWithAllSeaUnrevealed() {
   );
 }
 
+/// Editorial shell via [buildProvinceOverlayDarkThemeShell] (Refs #4035 —
+/// no inline MaterialApp).
 Widget _overlay({
   required RegionMapViewData region,
   required String seaZoneId,
 }) {
-  final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: region,
-        displayId: seaZoneId,
-        selectedTileKey: null,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: const Orders(),
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: demoGameForOverlay,
+    region: region,
+    displayId: seaZoneId,
+    selectedTileKey: null,
   );
 }
 

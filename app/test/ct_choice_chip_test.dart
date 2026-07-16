@@ -6,13 +6,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   testWidgets('CtChoiceChip builds and shows label', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CtChoiceChip(
             label: const Text('Option A'),
             selected: false,
@@ -27,8 +29,8 @@ void main() {
   testWidgets('CtChoiceChip tap calls onSelected with toggled value', (WidgetTester tester) async {
     bool? lastValue;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CtChoiceChip(
             label: const Text('Option'),
             selected: false,
@@ -45,8 +47,8 @@ void main() {
   testWidgets('CtChoiceChip when selected tap calls onSelected false', (WidgetTester tester) async {
     bool? lastValue;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: CtChoiceChip(
             label: const Text('Option'),
             selected: true,

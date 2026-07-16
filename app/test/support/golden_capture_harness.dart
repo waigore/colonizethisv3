@@ -11,12 +11,13 @@
 // [pumpDiplomacyPanelBuilt] for diplomacy panels) when the hosted tree needs
 // ProviderScope overrides or a custom outer shell.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+
+import 'app_shell_harness.dart';
 
 /// Configures the test view for a golden capture via [TestFlutterView].
 ///
@@ -83,9 +84,9 @@ Widget wrapGoldenBoundary({
           body: boundary,
         )
       : boundary;
-  final MaterialApp app = MaterialApp(
+  // Shared MaterialApp chrome (Refs #4035).
+  final MaterialApp app = buildAppShellMaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
     localizationsDelegates: includeLocalizations
         ? AppLocalizationsBinding.localizationsDelegates
         : null,

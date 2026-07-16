@@ -129,6 +129,12 @@ Game-bound feature screens under `app/lib/features/game/widgets/` should use a s
 
 Feature-specific behavior (tabs, panel listeners, orders callbacks, local dialogs) remains in each feature screen.
 
+**Technology orders callback (intentional local):** `TechnologyScreen` / `TechnologyPanel` may keep a same-screen `onOrdersChanged` callback that writes `currentOrdersProvider` when the player mutates research draft orders. That callback is **not** a cross-panel or cross-screen orchestration smell and does **not** require a bus commit event (unlike at-capital train dialogs). Moving funding/assign/cancel onto the bus is optional consistency only; absence of a bus path is SPEC-acceptable.
+
+- Given the Player is on `TechnologyScreen` with editing enabled  
+  When the Player changes a research slot funding level (or assign/cancel)  
+  Then the UI layer updates `currentOrdersProvider` via the screen’s `onOrdersChanged` callback (or an equivalent same-screen provider write) without emitting a dedicated technology-orders bus event
+
 ---
 
 ## Stream subscriptions (`SubscriptionTracker`)
