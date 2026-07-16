@@ -101,6 +101,11 @@ void main() {
     // #3543 slice; the `ai_api.dart` deep export was re-routed through the world
     // barrel `show` list in the same slice so it is not a barrel bypass.
     expect(closure, contains('src/world/sea_reachable_provinces.dart'));
+    // Capital cascade + setup reassignment stay show-restricted / omitted
+    // (Refs #4038) so deep imports remain sanctioned.
+    expect(closure, isNot(contains('src/world/capital_and_gp_fall.dart')));
+    expect(closure, isNot(contains('src/world/capital_reassignment.dart')));
+    expect(closure, isNot(contains('src/world/fog_resolution.dart')));
   });
 
   test('no orders lib file deep-imports the promoted world files', () {
@@ -346,17 +351,30 @@ void main() {
       "export 'src/world/movement.dart';\n"
       "export 'src/world/fog_resolution.dart'\n"
       "    show\n"
-      "        applyCoastalSeaZoneFullVisibility;\n",
+      "        applyCoastalSeaZoneFullVisibility;\n"
+      "export 'src/world/capital_and_gp_fall.dart'\n"
+      "    show\n"
+      "        applyGreatPowerFall;\n",
     );
     _writeFile(p.join(lib, 'src', 'world', 'movement.dart'), '// published\n');
     _writeFile(
       p.join(lib, 'src', 'world', 'fog_resolution.dart'),
       '// partially published\n',
     );
+    _writeFile(
+      p.join(lib, 'src', 'world', 'capital_and_gp_fall.dart'),
+      '// partially published\n',
+    );
+    _writeFile(
+      p.join(lib, 'src', 'world', 'capital_reassignment.dart'),
+      '// omitted from barrel\n',
+    );
 
     final closure = barrelPublishedSrcFiles(temp.path, 'world');
     expect(closure, contains('src/world/movement.dart'));
     expect(closure, isNot(contains('src/world/fog_resolution.dart')));
+    expect(closure, isNot(contains('src/world/capital_and_gp_fall.dart')));
+    expect(closure, isNot(contains('src/world/capital_reassignment.dart')));
   });
 
   test('allows a deep import of a show-restricted re-exported file', () {
@@ -366,11 +384,20 @@ void main() {
     _writeFile(
       p.join(worldLib, 'colonizethis_world.dart'),
       "library colonizethis_world;\n"
-      "export 'src/world/fog_resolution.dart' show applyCoastalSeaZoneFullVisibility;\n",
+      "export 'src/world/fog_resolution.dart' show applyCoastalSeaZoneFullVisibility;\n"
+      "export 'src/world/capital_and_gp_fall.dart' show applyGreatPowerFall;\n",
     );
     _writeFile(
       p.join(worldLib, 'src', 'world', 'fog_resolution.dart'),
       '// partially published\n',
+    );
+    _writeFile(
+      p.join(worldLib, 'src', 'world', 'capital_and_gp_fall.dart'),
+      '// partially published\n',
+    );
+    _writeFile(
+      p.join(worldLib, 'src', 'world', 'capital_reassignment.dart'),
+      '// omitted from barrel\n',
     );
     for (final sibling in const ['economy', 'diplomacy']) {
       Directory(
@@ -383,6 +410,13 @@ void main() {
     // Deep import of the only-partially-published file is allowed.
     File(p.join(turnLib.path, 'end_of_turn.dart')).writeAsStringSync(
       "import 'package:colonizethis_world/src/world/fog_resolution.dart';\n",
+    );
+    final setupLib = Directory(
+      p.join(temp.path, 'packages', 'colonizethis_setup', 'lib'),
+    )..createSync(recursive: true);
+    // Setup deep import of an omitted capital helper remains allowed (Refs #4038).
+    File(p.join(setupLib.path, 'capital_choice.dart')).writeAsStringSync(
+      "import 'package:colonizethis_world/src/world/capital_reassignment.dart';\n",
     );
     _ensureEnforcedConsumerDirs(temp.path);
 
