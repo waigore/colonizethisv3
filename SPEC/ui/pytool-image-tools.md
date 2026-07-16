@@ -51,6 +51,29 @@ uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py
 
 ---
 
+### finalize_plantation_field_retune_3961.py
+
+**Purpose:** After PO locks A/B/C per crop on [#3961](https://github.com/waigore/colonizethisv3/issues/3961), promote candidates, patch SPEC mid-tone pins in [layered-terrain-rendering.md](layered-terrain-rendering.md), and patch `app/test/plains_plantation_terrain_goldens_test.dart` mean-RGB constants from `CANDIDATE_MEANS.json`. Tobacco stays unchanged. Does not auto-run golden refresh.
+
+**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py`.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/test_finalize_plantation_field_retune_3961.py
+# Preview:
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --dry-run
+# Apply (after PO lock):
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C
+cd app && flutter test test/plains_plantation_terrain_goldens_test.dart --update-goldens
+```
+
+**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. Apply mode copies PNGs then patches SPEC + dart pins; operator must refresh goldens manually.
+
+---
+
 ### button_contrast_wood_pil.py
 
 **Purpose:** Apply higher border/center contrast and randomised wood grain to a button PNG. Reads an image file and writes a new PNG. Tuned for the main-menu colonial wood palette (reddish-brown frame, warm inner wood, gold accents).
