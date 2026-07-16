@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
@@ -14,29 +13,78 @@ void main() {
       expect(topology.edges.single.id2, 'P2');
     });
 
+    test('adjacentOwP1P2Game builds split-ownership OW stack', () {
+      const ow = turnTestOldWorldRegionId;
+      final game = adjacentOwP1P2Game(
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'Regiment',
+            ownerId: 'p1',
+            locationProvinceId: '$ow|P1',
+          ),
+        ],
+      );
+      expect(game.worldState.oldWorld.provinces.length, 2);
+      expect(game.worldState.oldWorld.provinces[0].ownerId, 'p1');
+      expect(game.worldState.oldWorld.provinces[1].ownerId, 'p2');
+      expect(game.worldState.newWorld.provinces, isEmpty);
+      expect(game.worldState.oldWorld.units.single.id, 'u1');
+      expect(game.players.length, 2);
+    });
+
+    test('adjacentOwP1P2Game can own both provinces and wrap armies', () {
+      const ow = turnTestOldWorldRegionId;
+      final withoutArmies = adjacentOwP1P2Game(
+        province1OwnerId: 'p1',
+        province2OwnerId: 'p1',
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'grenadiers',
+            ownerId: 'p1',
+            locationProvinceId: '$ow|P1',
+          ),
+        ],
+        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+      );
+      final game = adjacentOwP1P2Game(
+        province1OwnerId: 'p1',
+        province2OwnerId: 'p1',
+        ensureMilitaryArmies: true,
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'grenadiers',
+            ownerId: 'p1',
+            locationProvinceId: '$ow|P1',
+          ),
+        ],
+        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
+      );
+      expect(
+        game.worldState.oldWorld.provinces.every((p) => p.ownerId == 'p1'),
+        isTrue,
+      );
+      expect(game.players.single.id, 'p1');
+      expect(withoutArmies.worldState.armies, isEmpty);
+      expect(game.worldState.armies, isNotEmpty);
+    });
+
     test('resolveTurnComplete advances turn with minimal move order', () {
       const ow = turnTestOldWorldRegionId;
       final topology = twoAdjacentOldWorldProvinceTopology();
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              Province(id: '$ow|P2', regionId: ow, ownerId: 'p1'),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'Regiment',
-                ownerId: 'p1',
-                locationProvinceId: '$ow|P1',
-              ),
-            ],
+      final game = adjacentOwP1P2Game(
+        province1OwnerId: 'p1',
+        province2OwnerId: 'p1',
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'Regiment',
+            ownerId: 'p1',
+            locationProvinceId: '$ow|P1',
           ),
-          newWorld: const RegionData(),
-        ),
+        ],
         players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
       );
       final orders = Orders(
