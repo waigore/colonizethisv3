@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/turn_game_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 int _generalCountFor(Game game, String playerId) =>
     game.generals.where((g) => g.ownerId == playerId).length;
@@ -29,13 +30,11 @@ void main() {
           },
         );
 
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
         final player = next.players.single;
         expect(player.techUnlocked![kTechIdOrganisedRegiments], isTrue);
         expect(player.generalCap, 2);
@@ -64,13 +63,11 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       final player = next.players.single;
       expect(player.generalCap, 1);
       expect(_generalCountFor(next, 'p1'), 1);

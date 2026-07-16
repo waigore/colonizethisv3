@@ -6,7 +6,7 @@ import 'package:colonizethis_test/test.dart';
 
 import '../support/turn_phase_test_harness.dart';
 
-import '../extraction_auto_transport_test_fixtures.dart';
+import '../support/extraction_auto_transport_test_fixtures.dart';
 
 /// Producer side of the cargo-released-by-extraction signal (Refs #2990
 /// B2). Asserts that:

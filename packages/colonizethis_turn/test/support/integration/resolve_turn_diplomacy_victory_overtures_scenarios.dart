@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerDiplomacyVictoryOverturesTests() {
   group('diplomacy victory', () {
-    group('diplomacy_part3_segment2_test', () {
+    group('diplomacy victory overtures', () {
 test(
           'endOfTurn sets military victory when one GP controls 31+ provinces',
           () {
@@ -38,13 +38,11 @@ test(
               ],
               edges: const [],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
-              ),
-            );
+              );
             expect(next.victory, isNotNull);
             expect(next.victory!.winnerPlayerId, 'p1');
             expect(next.victory!.type, VictoryType.military);
@@ -82,13 +80,11 @@ test(
               ],
               edges: const [],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
-              ),
-            );
+              );
             expect(next.victory, isNotNull);
             expect(next.victory!.winnerPlayerId, 'p1');
             expect(next.victory!.type, VictoryType.military);
@@ -142,13 +138,11 @@ test(
               ],
               edges: const [],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
-              ),
-            );
+              );
             expect(next.victory, isNotNull);
             expect(next.victory!.winnerPlayerId, 'p1');
           },
@@ -183,13 +177,11 @@ test(
             ],
             edges: const [],
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
-            ),
-          );
+            );
           expect(next.victory, isNull);
         });
 
@@ -238,13 +230,11 @@ test(
             ],
             edges: const [],
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
-            ),
-          );
+            );
           expect(next.victory, isNull);
         });
 
@@ -266,8 +256,7 @@ test(
               turnNumber: 10,
             ),
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: MapTopology(
                 nodes: const [
@@ -280,8 +269,7 @@ test(
                 edges: const [],
               ),
               orders: const Orders(),
-            ),
-          );
+            );
           expect(next.victory, isNotNull);
           expect(next.victory!.winnerPlayerId, 'p1');
           expect(next.worldState.turnState.turnNumber, 10);
@@ -323,8 +311,7 @@ test(
                 Player(id: 'p2', displayName: 'P2', isHuman: false),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: MapTopology(
                   nodes: const [
@@ -342,8 +329,7 @@ test(
                   edges: const [],
                 ),
                 orders: const Orders(),
-              ),
-            );
+              );
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyP2],
               VisibilityLevel.fogged.name,

@@ -4,7 +4,9 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../tool/check_turn_integration_no_part_fragments.dart';
+import '../tool/check_turn_test_fixture_location.dart';
 import '../tool/check_turn_test_phase_harness.dart';
+import '../tool/check_turn_test_resolve_complete.dart';
 import '../tool/check_turn_world_market_test_support.dart';
 
 void main() {
@@ -13,7 +15,13 @@ void main() {
       final temp = Directory.systemTemp.createTempSync('turn-int-part-');
       try {
         final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_turn',
+            'test',
+            'integration',
+          ),
         )..createSync(recursive: true);
         _writeDartFile(
           p.join(dir.path, 'resolve_turn_economy_test.dart'),
@@ -37,7 +45,13 @@ void main() {
       final temp = Directory.systemTemp.createTempSync('turn-int-legacy-');
       try {
         final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_turn',
+            'test',
+            'integration',
+          ),
         )..createSync(recursive: true);
         _writeDartFile(
           p.join(dir.path, 'resolve_turn_economy_part1_segment1_part.dart'),
@@ -59,7 +73,13 @@ void main() {
       final temp = Directory.systemTemp.createTempSync('turn-int-legacy-test-');
       try {
         final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_turn',
+            'test',
+            'integration',
+          ),
         )..createSync(recursive: true);
         _writeDartFile(
           p.join(dir.path, 'resolve_turn_economy_part1_segment1_test.dart'),
@@ -81,7 +101,13 @@ void main() {
       final temp = Directory.systemTemp.createTempSync('turn-int-ok-');
       try {
         final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_turn',
+            'test',
+            'integration',
+          ),
         )..createSync(recursive: true);
         _writeDartFile(
           p.join(dir.path, 'resolve_turn_economy_test.dart'),
@@ -103,7 +129,13 @@ void main() {
       final temp = Directory.systemTemp.createTempSync('turn-int-extra-');
       try {
         final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'integration'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_turn',
+            'test',
+            'integration',
+          ),
         )..createSync(recursive: true);
         _writeDartFile(
           p.join(dir.path, 'resolve_turn_economy_test.dart'),
@@ -121,7 +153,10 @@ void main() {
           err: errors.add,
         );
         expect(exitCode, 1);
-        expect(errors.join('\n'), contains('unexpected integration entrypoint'));
+        expect(
+          errors.join('\n'),
+          contains('unexpected integration entrypoint'),
+        );
       } finally {
         temp.deleteSync(recursive: true);
       }
@@ -175,27 +210,30 @@ void main() {
   });
 
   group('runCheckTurnWorldMarketTestSupport', () {
-    test('fails when world-market test calls handler without support import', () {
-      final temp = Directory.systemTemp.createTempSync('turn-wm-violation-');
-      try {
-        final dir = Directory(
-          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
-        )..createSync(recursive: true);
-        _writeDartFile(
-          p.join(dir.path, 'world_market_phase_sample_test.dart'),
-          'final next = worldMarketTurnPhaseHandler(acc, config, 3);\n',
-        );
+    test(
+      'fails when world-market test calls handler without support import',
+      () {
+        final temp = Directory.systemTemp.createTempSync('turn-wm-violation-');
+        try {
+          final dir = Directory(
+            p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+          )..createSync(recursive: true);
+          _writeDartFile(
+            p.join(dir.path, 'world_market_phase_sample_test.dart'),
+            'final next = worldMarketTurnPhaseHandler(acc, config, 3);\n',
+          );
 
-        final exitCode = runCheckTurnWorldMarketTestSupport(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
-        expect(exitCode, 1);
-      } finally {
-        temp.deleteSync(recursive: true);
-      }
-    });
+          final exitCode = runCheckTurnWorldMarketTestSupport(
+            temp.path,
+            info: (_) {},
+            err: (_) {},
+          );
+          expect(exitCode, 1);
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
 
     test('passes when support import is present', () {
       final temp = Directory.systemTemp.createTempSync('turn-wm-ok-');
@@ -210,6 +248,129 @@ void main() {
         );
 
         final exitCode = runCheckTurnWorldMarketTestSupport(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+  });
+
+  group('runCheckTurnTestResolveComplete', () {
+    test(
+      'fails for nested requireTurnResolutionComplete(resolveTurnForGame)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'turn-resolve-nested-',
+        );
+        try {
+          final dir = Directory(
+            p.join(temp.path, 'packages', 'colonizethis_turn', 'test'),
+          )..createSync(recursive: true);
+          _writeDartFile(
+            p.join(dir.path, 'sample_test.dart'),
+            'final next = requireTurnResolutionComplete(\n'
+            '  resolveTurnForGame(game: g, topology: t),\n'
+            ');\n',
+          );
+
+          final errors = <String>[];
+          final exitCode = runCheckTurnTestResolveComplete(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          );
+          expect(exitCode, 1);
+          expect(errors.join('\n'), contains('resolveTurnComplete'));
+        } finally {
+          temp.deleteSync(recursive: true);
+        }
+      },
+    );
+
+    test('fails for direct resolveTurnForGame outside allowlist', () {
+      final temp = Directory.systemTemp.createTempSync('turn-resolve-direct-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'sample_test.dart'),
+          'final result = resolveTurnForGame(game: g, topology: t);\n',
+        );
+
+        final exitCode = runCheckTurnTestResolveComplete(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 1);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes for resolveTurnComplete adopter', () {
+      final temp = Directory.systemTemp.createTempSync('turn-resolve-ok-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'sample_test.dart'),
+          'final next = resolveTurnComplete(game: g, topology: t);\n',
+        );
+
+        final exitCode = runCheckTurnTestResolveComplete(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+  });
+
+  group('runCheckTurnTestFixtureLocation', () {
+    test('fails for fixture module outside test/support', () {
+      final temp = Directory.systemTemp.createTempSync('turn-fixture-loc-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'orphan_fixtures.dart'),
+          'void helper() {}\n',
+        );
+
+        final exitCode = runCheckTurnTestFixtureLocation(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 1);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes when fixtures live under test/support', () {
+      final temp = Directory.systemTemp.createTempSync('turn-fixture-ok-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'support'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'orphan_fixtures.dart'),
+          'void helper() {}\n',
+        );
+
+        final exitCode = runCheckTurnTestFixtureLocation(
           temp.path,
           info: (_) {},
           err: (_) {},

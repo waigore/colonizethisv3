@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerEconomyCoreTests() {
   group('economy phases', () {
-    group('economy_part1_segment1_test', () {
+    group('economy phases', () {
 test('runs extraction, consumption, production, and movement phases', () {
           final topology = twoAdjacentOldWorldProvinceTopology();
 
@@ -46,15 +46,13 @@ test('runs extraction, consumption, production, and movement phases', () {
 
           final defaultAssignments = const <AssignedRecipe>[];
 
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: extractedByPlayerId,
               defaultAssignments: defaultAssignments,
-            ),
-          );
+            );
 
           // Turn number advanced.
           expect(next.worldState.turnState.turnNumber, 1);
@@ -128,9 +126,7 @@ test('runs extraction, consumption, production, and movement phases', () {
             },
           );
 
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(game: game, topology: topology, orders: orders),
-          );
+          final next = resolveTurnComplete(game: game, topology: topology, orders: orders);
 
           // Turn number advanced.
           expect(next.worldState.turnState.turnNumber, 1);
@@ -211,9 +207,7 @@ test('runs extraction, consumption, production, and movement phases', () {
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(game: game, topology: topology, orders: orders),
-            );
+            final next = resolveTurnComplete(game: game, topology: topology, orders: orders);
 
             expect(next.worldState.turnState.turnNumber, 1);
             expect(next.worldState.oldWorld.units, isEmpty);
@@ -254,13 +248,11 @@ test('runs extraction, consumption, production, and movement phases', () {
               ),
             ],
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
-            ),
-          );
+            );
           expect(next.worldState.turnState.turnNumber, 1);
           expect(next.players.single.treasury, greaterThan(0));
           expect(next.players.single.stockpile.quantityOf('gold'), lessThan(2));
@@ -338,9 +330,7 @@ test('runs extraction, consumption, production, and movement phases', () {
                 ],
               },
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(game: game, topology: topology, orders: orders),
-            );
+            final next = resolveTurnComplete(game: game, topology: topology, orders: orders);
             expect(next.worldState.turnState.turnNumber, 1);
             expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));
           },

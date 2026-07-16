@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerEconomyContinuedTests() {
   group('economy phases', () {
-    group('economy_part1_segment2_test', () {
+    group('economy phases continued', () {
 test(
           'full turn with tileMapByRegion: extraction pipeline, turn advanced',
           () {
@@ -64,15 +64,13 @@ test(
                 ),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
                 tileMapByRegion: {'oldWorld': tileMap},
                 defaultAssignments: const [],
-              ),
-            );
+              );
             expect(next.worldState.turnState.turnNumber, 1);
             expect(next.players.single.stockpile.quantityOf('grain'), 1);
           },
@@ -146,15 +144,13 @@ test(
                 ),
               ],
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
                 tileMapByRegion: {'oldWorld': tileMapOw, 'newWorld': tileMapNw},
                 defaultAssignments: const [],
-              ),
-            );
+              );
             expect(next.worldState.turnState.turnNumber, 1);
             expect(
               next.players.single.stockpile.quantityOf('grain'),
@@ -208,15 +204,13 @@ test(
               ),
             ],
           };
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
               defaultAssignments: const [],
               defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
-            ),
-          );
+            );
           final player1 = next.playerById('p1')!;
           final player2 = next.playerById('p2')!;
           expect(player1.stockpile.quantityOf(CommodityCatalog.lumber.id), 5);

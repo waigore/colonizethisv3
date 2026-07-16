@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/turn_game_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Research phase tech effects', () {
@@ -32,13 +33,11 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       final player = next.players.single;
       expect(player.techUnlocked![kTechIdUniversity], isTrue);
       expect(player.researchSlots, 4);
@@ -68,13 +67,11 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       final player = next.players.single;
 
       // With Money Lending, treasury may go as low as -500; maximum funding
@@ -112,13 +109,11 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       final player = next.players.single;
       expect(player.treasury, greaterThanOrEqualTo(-1000));
       expect(player.treasury, -1000);
@@ -145,13 +140,11 @@ void main() {
             ],
           },
         );
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
         final player = next.players.single;
         // Last wins => maximum only: 1000 spent, 2500 RP => crop_rotation
         // (tier-1 cost 1800) unlocks since 2500 >= 1800.

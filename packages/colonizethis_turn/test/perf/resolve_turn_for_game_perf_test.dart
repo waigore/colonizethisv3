@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/turn_resolver_test_harness.dart';
 
 /// Same minimal two-AI GP fixture shape as
 /// [generate_orders_for_game_perf_test.dart] — land units at war so
@@ -90,25 +91,21 @@ void main() {
       const warmup = 1;
       const samples = 3;
       for (var i = 0; i < warmup; i++) {
-        final g = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final g = resolveTurnComplete(
             game: _twoAiGpGame(),
             topology: _topology,
             orders: orders,
-          ),
-        );
+          );
         expect(g.worldState.turnState.turnNumber, greaterThan(1));
       }
       final timings = <int>[];
       for (var i = 0; i < samples; i++) {
         final sw = Stopwatch()..start();
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: _twoAiGpGame(),
             topology: _topology,
             orders: orders,
-          ),
-        );
+          );
         sw.stop();
         timings.add(sw.elapsedMicroseconds);
         expect(next.worldState.turnState.turnNumber, greaterThan(1));

@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerSpyFogEndOfTurnVisibilityTests() {
   group('spy fog end-of-turn', () {
-    group('spy_fog_part4_segment2_test', () {
+    group('spy fog end of turn visibility', () {
 test(
           'Spy leaving other-faction province fogs immediately at end-of-turn',
           () {
@@ -73,15 +73,13 @@ test(
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: moveOrders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
 
             expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
             expect(
@@ -154,15 +152,13 @@ test(
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: moveOrders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
 
             expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
             expect(
@@ -207,8 +203,7 @@ test(
               players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: MapTopology(
                   nodes: const [
@@ -222,8 +217,7 @@ test(
                 ),
                 orders: const Orders(),
                 startFromPhase: TurnPhase.endOfTurn,
-              ),
-            );
+              );
 
             // Legacy timer entry may persist; own province visibility unchanged.
             expect(
@@ -306,15 +300,13 @@ test(
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: moveOrders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
 
             expect(
               next.worldState.playerVisibilityByTile['p1']?[tileKeyP1],

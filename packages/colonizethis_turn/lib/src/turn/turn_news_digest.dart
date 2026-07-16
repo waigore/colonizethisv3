@@ -107,8 +107,7 @@ String? _ownerForProvince(Game g, String fullProvinceId) {
   return g.worldState.tryGetProvince(fullProvinceId)?.ownerId;
 }
 
-String _fullProvinceId(Province p) =>
-    p.id.contains('|') ? p.id : ProvinceId.full(p.regionId, p.id);
+String _fullProvinceId(Province p) => toFullProvinceId(p.regionId, p.id);
 
 Map<String, RelationState> _pairToState(Game g) {
   final m = <String, RelationState>{};
