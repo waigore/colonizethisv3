@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "pytool/finalize_plantation_field_retune_3961.py"
@@ -102,6 +103,52 @@ class FinalizePlantationFieldRetune3961Test(unittest.TestCase):
             letter_by_id=self.paint.LETTER_BY_ID,
         )
         self.assertEqual(self.mod.validate_plantation_picks(locked), [])
+
+    def test_update_goldens_rejected_with_validate_only(self) -> None:
+        argv = [
+            "finalize",
+            "--picks",
+            "sugar_cane=A,cotton=B,spices=C",
+            "--validate-only",
+            "--update-goldens",
+        ]
+        with patch.object(sys, "argv", argv):
+            with self.assertRaises(SystemExit) as ctx:
+                self.mod.main()
+            self.assertIn("--update-goldens", str(ctx.exception))
+
+    def test_update_goldens_rejected_with_dry_run(self) -> None:
+        argv = [
+            "finalize",
+            "--picks",
+            "sugar_cane=A,cotton=B,spices=C",
+            "--dry-run",
+            "--update-goldens",
+        ]
+        with patch.object(sys, "argv", argv):
+            with self.assertRaises(SystemExit) as ctx:
+                self.mod.main()
+            self.assertIn("--update-goldens", str(ctx.exception))
+
+    def test_refresh_plantation_goldens_invokes_flutter(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "app").mkdir()
+            with patch.object(self.mod.subprocess, "run") as run:
+                self.mod.refresh_plantation_goldens(repo_root=repo)
+            run.assert_called_once()
+            args, kwargs = run.call_args
+            self.assertEqual(
+                args[0],
+                [
+                    "flutter",
+                    "test",
+                    "test/plains_plantation_terrain_goldens_test.dart",
+                    "--update-goldens",
+                ],
+            )
+            self.assertEqual(kwargs["cwd"], repo / "app")
+            self.assertTrue(kwargs["check"])
 
     def test_end_to_end_finalize_in_temp_dir(self) -> None:
         means = self.mod.load_candidate_means(CANDIDATES)
