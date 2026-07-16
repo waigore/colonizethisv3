@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -18,10 +19,14 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShellMaterialApp(
+          applyEditorialTheme: false,
           home: Scaffold(
             body: Center(
-              child: TextButton(onPressed: () {}, child: const Text('New Game')),
+              child: TextButton(
+                onPressed: () {},
+                child: const Text('New Game'),
+              ),
             ),
           ),
         ),

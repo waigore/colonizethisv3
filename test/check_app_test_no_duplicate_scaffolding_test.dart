@@ -937,6 +937,11 @@ void main() {
         'plains_plantation_terrain_goldens_test.dart',
         'region_map_extraction_disc_indicators_test.dart',
         'region_map_resource_transport_readability_test.dart',
+        'e2e_helpers_barrel_part1_test.dart',
+        'e2e_helpers_barrel_part2_test.dart',
+        'e2e_helpers_barrel_pr2731_lifted_test.dart',
+        'e2e_test_shared_smoke_test.dart',
+        'e2e_low_risk_mirror_barrel_smoke_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 Widget host() => MaterialApp(home: const Placeholder());
@@ -1078,6 +1083,11 @@ Widget host() => MaterialApp(home: const Placeholder());
         'plains_plantation_terrain_goldens_test.dart',
         'region_map_extraction_disc_indicators_test.dart',
         'region_map_resource_transport_readability_test.dart',
+        'e2e_helpers_barrel_part1_test.dart',
+        'e2e_helpers_barrel_part2_test.dart',
+        'e2e_helpers_barrel_pr2731_lifted_test.dart',
+        'e2e_test_shared_smoke_test.dart',
+        'e2e_low_risk_mirror_barrel_smoke_test.dart',
       ]) {
         _writeGovernedFile(temp, name, '''
 import 'support/app_shell_harness.dart';

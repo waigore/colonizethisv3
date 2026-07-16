@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -45,7 +46,10 @@ void main() {
         );
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         expect(await ref(tester, l10n), isFalse);
       },
@@ -78,33 +82,35 @@ void main() {
         );
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
-        expect(
-          await ref(tester, l10n),
-          E2eFirstFleetMoveOutcome.noMoveButton,
-        );
+        expect(await ref(tester, l10n), E2eFirstFleetMoveOutcome.noMoveButton);
       },
     );
 
-    test('awaitExploreEnabledFromCivilianPanel is re-exported through the barrel',
-        () {
-      final Future<bool> Function(
-        WidgetTester,
-        AppLocalizations, {
-        E2ePerfLog? perf,
-        Duration maxUiResponseWait,
-        int maxBoundedTurnRetries,
-        String retryIterationCounter,
-      })
-      ref = awaitExploreEnabledFromCivilianPanel;
-      expect(ref, isNotNull);
-      expect(kE2eDefaultBundledExploreMaxTurnRetries, 8);
-      expect(
-        kE2eDefaultBundledExploreRetryIterationCounter,
-        'bundled_explore_retry_iterations',
-      );
-    });
+    test(
+      'awaitExploreEnabledFromCivilianPanel is re-exported through the barrel',
+      () {
+        final Future<bool> Function(
+          WidgetTester,
+          AppLocalizations, {
+          E2ePerfLog? perf,
+          Duration maxUiResponseWait,
+          int maxBoundedTurnRetries,
+          String retryIterationCounter,
+        })
+        ref = awaitExploreEnabledFromCivilianPanel;
+        expect(ref, isNotNull);
+        expect(kE2eDefaultBundledExploreMaxTurnRetries, 8);
+        expect(
+          kE2eDefaultBundledExploreRetryIterationCounter,
+          'bundled_explore_retry_iterations',
+        );
+      },
+    );
 
     testWidgets(
       'handleBundledExploreFailure is re-exported through the barrel',
@@ -119,7 +125,10 @@ void main() {
         ref = handleBundledExploreFailure;
         expect(ref, isNotNull);
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         // Build a snapshot that reports at least one fogged-or-better NW
         // tile so the topology skip arm does NOT fire — exercising the
@@ -137,9 +146,7 @@ void main() {
               ),
               oldWorld: const RegionData(),
               newWorld: const RegionData(
-                provinces: [
-                  Province(id: 'newWorld|nwA', regionId: 'newWorld'),
-                ],
+                provinces: [Province(id: 'newWorld|nwA', regionId: 'newWorld')],
               ),
               playerVisibilityByTile: const {
                 human: {'newWorld|nwA|0|0': 'fogged'},
@@ -206,10 +213,7 @@ void main() {
           game: Game(
             id: 'barrel-smoke-nw-reach',
             worldState: WorldState(
-              turnState: TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 1,
-              ),
+              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
               oldWorld: RegionData(),
               newWorld: RegionData(),
               fleets: [
@@ -240,7 +244,10 @@ void main() {
         });
         final perf = E2ePerfLog('e2e_helpers_barrel_pr2731_lifted_test');
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: Scaffold(body: SizedBox()),
+          ),
         );
         final result = await ref(
           tester,

@@ -378,11 +378,14 @@ bool _isGovernedTechnologyPanelFile(String relativePath) {
 /// `game_screen_turn_resolution_branches`, `game_screen_intervention_flow`),
 /// ShellScreen colonial frames in `shell_game_screen_specs` (via
 /// `buildAppShell(theme:)`), light-theme debug log viewer hosts
-/// (`debug_log_viewer` via `buildAppShell(theme:)`), and Flame region-map
+/// (`debug_log_viewer` via `buildAppShell(theme:)`), Flame region-map
 /// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_test_support`
 /// via `buildAppShellMaterialApp(applyEditorialTheme: false)`, plus
 /// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
-/// plantation / extraction-disc / transport-resource goldens).
+/// plantation / extraction-disc / transport-resource goldens), and e2e
+/// helper/smoke suites that pump bare MaterialApp chrome via the same
+/// helper (`e2e_helpers_barrel_part1` / `part2` / `pr2731_lifted`,
+/// `e2e_test_shared_smoke`, `e2e_low_risk_mirror_barrel_smoke`).
 bool _isGovernedAppShellHostFamilyFile(String relativePath) {
   if (relativePath.startsWith('app/test/support/')) {
     return false;
@@ -587,7 +590,12 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'region_map_zoom_fit_test.dart' ||
       name == 'plains_plantation_terrain_goldens_test.dart' ||
       name == 'region_map_extraction_disc_indicators_test.dart' ||
-      name == 'region_map_resource_transport_readability_test.dart';
+      name == 'region_map_resource_transport_readability_test.dart' ||
+      name == 'e2e_helpers_barrel_part1_test.dart' ||
+      name == 'e2e_helpers_barrel_part2_test.dart' ||
+      name == 'e2e_helpers_barrel_pr2731_lifted_test.dart' ||
+      name == 'e2e_test_shared_smoke_test.dart' ||
+      name == 'e2e_low_risk_mirror_barrel_smoke_test.dart';
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
