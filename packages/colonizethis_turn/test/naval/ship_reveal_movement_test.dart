@@ -1,8 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_turn/src/turn/naval_resolution.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/src/turn/naval_resolution.dart';
+
+import '../support/ship_reveal_test_support.dart';
 
 void main() {
   group('Naval ship reveal (movement)', () {
@@ -175,95 +177,26 @@ void main() {
     test(
       'combined-topology ship reveal uses canonical sea bucket and coastal ring only',
       () {
-        const nw = 'newWorld';
-        const fullProv = '$nw|provA';
-        const localSeaDest = 'seaDest';
-        const localSeaOrigin = 'seaOrigin';
-        const prefixedDest = '$nw|$localSeaDest';
-        const prefixedOrigin = '$nw|$localSeaOrigin';
-        const coastalLand = '$nw|provA|1|0';
-        const inlandLand = '$nw|provA|0|0';
-        const seaDestWater = '$nw|$localSeaDest|2|0';
-        const seaDestWaterB = '$nw|$localSeaDest|2|1';
-
-        final combinedTopology = MapTopology(
-          nodes: [
-            TopologyNode(
-              id: fullProv,
-              regionId: nw,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: prefixedDest,
-              regionId: nw,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: prefixedOrigin,
-              regionId: nw,
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: '$nw|seaFar',
-              regionId: nw,
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: [
-            TopologyEdge(id1: fullProv, id2: prefixedDest),
-            TopologyEdge(id1: prefixedOrigin, id2: prefixedDest),
-          ],
+        final combinedTopology = nwShipRevealCoastalTopology(
+          includeSeaFar: true,
         );
-
-        final visStart = <String, String>{
-          for (final k in [
-            coastalLand,
-            inlandLand,
-            seaDestWater,
-            seaDestWaterB,
-            '$nw|$localSeaOrigin|0|2',
-          ])
-            k: VisibilityLevel.unknown.name,
-        };
-
-        final game = Game(
+        final game = nwShipRevealCoastalGame(
           id: 'gCombined',
-          worldState: WorldState(
-            turnState: const TurnState(
-              phase: TurnPhase.movement,
-              turnNumber: 0,
-            ),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'fNw',
-                ownerId: 'gp1',
-                seaZoneId: prefixedOrigin,
-                regionId: nw,
-                shipTypeIds: ['carrack'],
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              nw: {
-                fullProv: [
-                  coastalLand,
-                  inlandLand,
-                  '$nw|provA|0|1',
-                  '$nw|provA|1|1',
-                ],
-                prefixedDest: [seaDestWater, seaDestWaterB],
-                prefixedOrigin: ['$nw|$localSeaOrigin|0|2'],
-              },
-            },
-            playerVisibilityByTile: {'gp1': visStart},
-          ),
-          players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
+          landProvinceBucketKey: NwShipRevealCoastalIds.fullProvinceId,
+          landTiles: const [
+            NwShipRevealCoastalIds.coastalLand,
+            NwShipRevealCoastalIds.inlandLand,
+            NwShipRevealCoastalIds.extraLandA,
+            NwShipRevealCoastalIds.extraLandB,
+          ],
         );
 
         final ordersOk = {
           'gp1': [
-            NavalMoveOrder(fleetId: 'fNw', destinationSeaZoneId: prefixedDest),
+            const NavalMoveOrder(
+              fleetId: 'fNw',
+              destinationSeaZoneId: NwShipRevealCoastalIds.prefixedDest,
+            ),
           ],
         };
         final afterOk = applyNavalMovesAndShipReveal(
@@ -272,14 +205,29 @@ void main() {
           ordersOk,
         );
         final visOk = afterOk.worldState.playerVisibilityByTile['gp1']!;
-        expect(visOk[coastalLand], VisibilityLevel.fullyVisible.name);
-        expect(visOk[inlandLand], VisibilityLevel.unknown.name);
-        expect(visOk[seaDestWater], VisibilityLevel.fullyVisible.name);
-        expect(visOk[seaDestWaterB], VisibilityLevel.fullyVisible.name);
+        expect(
+          visOk[NwShipRevealCoastalIds.coastalLand],
+          VisibilityLevel.fullyVisible.name,
+        );
+        expect(
+          visOk[NwShipRevealCoastalIds.inlandLand],
+          VisibilityLevel.unknown.name,
+        );
+        expect(
+          visOk[NwShipRevealCoastalIds.seaDestWater],
+          VisibilityLevel.fullyVisible.name,
+        );
+        expect(
+          visOk[NwShipRevealCoastalIds.seaDestWaterB],
+          VisibilityLevel.fullyVisible.name,
+        );
 
         final ordersBad = {
           'gp1': [
-            NavalMoveOrder(fleetId: 'fNw', destinationSeaZoneId: '$nw|seaFar'),
+            const NavalMoveOrder(
+              fleetId: 'fNw',
+              destinationSeaZoneId: NwShipRevealCoastalIds.seaFar,
+            ),
           ],
         };
         final afterBad = applyNavalMovesAndShipReveal(
@@ -288,8 +236,14 @@ void main() {
           ordersBad,
         );
         final visBad = afterBad.worldState.playerVisibilityByTile['gp1']!;
-        expect(visBad[coastalLand], VisibilityLevel.unknown.name);
-        expect(visBad[seaDestWater], VisibilityLevel.unknown.name);
+        expect(
+          visBad[NwShipRevealCoastalIds.coastalLand],
+          VisibilityLevel.unknown.name,
+        );
+        expect(
+          visBad[NwShipRevealCoastalIds.seaDestWater],
+          VisibilityLevel.unknown.name,
+        );
       },
     );
 
