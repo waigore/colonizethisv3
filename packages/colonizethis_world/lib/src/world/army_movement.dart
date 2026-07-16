@@ -1,34 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import 'army_migration.dart';
 import 'military_list_helpers.dart';
+import 'move_order_apply_logging.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
 export 'military_list_helpers.dart' show armiesByIdForWorld;
-
-void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
-  if (Level.debug.value >= Logger.level.value) {
-    worldLog.d('army_move ignored reason=home_army_locked armyId=$armyId');
-  }
-}
-
-void _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
-  String armyId,
-  String fromLocal,
-  String toLocal,
-) {
-  if (Level.debug.value >= Logger.level.value) {
-    worldLog.d(
-      'army_move ignored reason=invalid_adjacency armyId=$armyId '
-      'from=$fromLocal to=$toLocal',
-    );
-  }
-}
 
 /// Applies army moves in [regionId] (same-region leg). See [applyMoveOrdersToRegion].
 ///
@@ -70,7 +50,9 @@ WorldState applyArmyMoveOrdersToRegion(
       }
       if (army.isHomeArmy) {
         ignored++;
-        _logArmyMoveIgnoredHomeArmyIfDebug(order.armyId);
+        logMoveOrderIgnoredIfDebug(
+          'army_move ignored reason=home_army_locked armyId=${order.armyId}',
+        );
         continue;
       }
       if (ProvinceId.regionIdFrom(army.stationedProvinceId) != regionId) {
@@ -104,10 +86,9 @@ WorldState applyArmyMoveOrdersToRegion(
           isValidLandMoveInRegion(topology, regionId, fromLocal, toLocal);
       if (!valid) {
         ignored++;
-        _logArmyMoveIgnoredInvalidAdjacencyIfDebug(
-          order.armyId,
-          fromLocal,
-          toLocal,
+        logMoveOrderIgnoredIfDebug(
+          'army_move ignored reason=invalid_adjacency armyId=${order.armyId} '
+          'from=$fromLocal to=$toLocal',
         );
         onArmyMoveOrderTrace?.call(
           playerId: playerId,
@@ -132,11 +113,12 @@ WorldState applyArmyMoveOrdersToRegion(
     }
   }
 
-  if (applied + ignored > 0) {
-    worldLog.i(
-      'army_move apply regionId=$regionId applied=$applied ignored=$ignored',
-    );
-  }
+  logMoveOrderApplySummary(
+    message:
+        'army_move apply regionId=$regionId applied=$applied ignored=$ignored',
+    applied: applied,
+    ignored: ignored,
+  );
   return ws;
 }
 
