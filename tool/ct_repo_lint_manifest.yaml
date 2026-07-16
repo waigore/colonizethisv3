@@ -656,6 +656,20 @@ rules:
     runner: dart
     script: tool/check_turn_world_market_test_support.dart
 
+  - rule_id: repo.turn_test_resolve_complete
+    group: testing
+    title: colonizethis_turn success-path tests must use resolveTurnComplete (not nested requireTurnResolutionComplete(resolveTurnForGame)) (Refs #4039)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_resolve_complete.dart
+
+  - rule_id: repo.turn_test_fixture_location
+    group: testing
+    title: colonizethis_turn fixture/test_support modules must live under test/support/ (Refs #4039)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_fixture_location.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)

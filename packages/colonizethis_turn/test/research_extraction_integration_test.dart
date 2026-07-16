@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Research to extraction cap integration', () {
@@ -21,15 +22,13 @@ void main() {
           );
 
           // Turn A: baseline extraction with pre-research cap.
-          final afterBaseline = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final afterBaseline = resolveTurnComplete(
               game: baseGame,
               topology: _topology,
               orders: const Orders(),
               tileMapByRegion: _tileMapByRegion,
               defaultAssignments: const [],
-            ),
-          );
+            );
           final baselineDelta = _grainDelta(baseGame, afterBaseline);
           expect(
             baselineDelta,
@@ -57,8 +56,7 @@ void main() {
           );
 
           // Turn B: research resolves this turn; extraction still uses previous cap.
-          final withResearch = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final withResearch = resolveTurnComplete(
               game: researchInput,
               topology: _topology,
               orders: Orders(
@@ -74,8 +72,7 @@ void main() {
               ),
               tileMapByRegion: _tileMapByRegion,
               defaultAssignments: const [],
-            ),
-          );
+            );
 
           final researchedPlayer = withResearch.playerById(_playerId)!;
           expect(
@@ -86,15 +83,13 @@ void main() {
           );
 
           // Turn C: extraction must now use the updated cap.
-          final afterUpgradeExtraction = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final afterUpgradeExtraction = resolveTurnComplete(
               game: withResearch,
               topology: _topology,
               orders: const Orders(),
               tileMapByRegion: _tileMapByRegion,
               defaultAssignments: const [],
-            ),
-          );
+            );
           final postUpgradeDelta = _grainDelta(
             withResearch,
             afterUpgradeExtraction,

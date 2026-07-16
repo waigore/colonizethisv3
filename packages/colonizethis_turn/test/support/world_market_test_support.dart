@@ -6,7 +6,7 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import '../turn/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
 import 'turn_phase_test_harness.dart';
 
 export 'world_market_trade_scenario_fixtures.dart';

@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Great Power fall', () {
@@ -66,11 +67,11 @@ void main() {
 
       // No battles needed; state already reflects lost capital. Run resolveTurnForGame
       // to drive combat phase (which will run capital reassignment + GP fall).
-      final next = requireTurnResolutionComplete(resolveTurnForGame(
+      final next = resolveTurnComplete(
         game: game,
         topology: topology,
         orders: const Orders(),
-      ));
+      );
 
       // All former p1 provinces should now belong to p2.
       for (final p in next.worldState.oldWorld.provinces) {

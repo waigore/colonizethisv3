@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/turn_phase_test_harness.dart';
+import '../support/turn_resolver_test_harness.dart';
 
 /// Full-turn pipeline integration for World Market phase 13 (Refs #2990 B5).
 ///
@@ -51,7 +52,9 @@ void main() {
 
   group('resolveTurnForGame — GP trade fills (Refs #2990 B5)', () {
     test('trade orders apply treasury, stockpile, and market activity', () {
-      final result = resolveTurnForGame(
+      
+
+      final next = resolveTurnComplete(
         game: _twoGpTradeGame(
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
@@ -79,9 +82,7 @@ void main() {
             ],
           },
         ),
-      );
-
-      final next = requireTurnResolutionComplete(result);
+      );;
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.treasury, 1000 - 5 * 30);
@@ -94,8 +95,7 @@ void main() {
     });
 
     test('carry-forward bid from turn 1 fills on turn 2 via full pipeline', () {
-      final turn1 = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final turn1 = resolveTurnComplete(
           game: _twoGpTradeGame(
             sellerStockpile: const Stockpile().applyDelta('timber', 3),
             sellerTreasury: 0,
@@ -123,8 +123,7 @@ void main() {
               ],
             },
           ),
-        ),
-      );
+        );
 
       expect(
         turn1
@@ -135,8 +134,7 @@ void main() {
         7,
       );
 
-      final turn2 = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final turn2 = resolveTurnComplete(
           game: turn1,
           topology: topology,
           orders: Orders(
@@ -151,8 +149,7 @@ void main() {
               ],
             },
           ),
-        ),
-      );
+        );
 
       final buyer = turn2.players.firstWhere((p) => p.id == 'gpBuyer');
       expect(buyer.stockpile.quantityOf('timber'), 10);

@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerCombatResolutionContinuedTests() {
   group('combat resolution', () {
-    group('combat_part2_part2_segment1_test', () {
+    group('combat resolution continued', () {
 test(
           'validateOrdersAndResolveTurn filters invalid order and applies only valid move',
           () {
@@ -103,15 +103,13 @@ test(
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.fleets.single.mission, FleetMission.patrol);
           expect(next.worldState.turnState.turnNumber, 1);
         });
@@ -155,15 +153,13 @@ test(
               'p1': [NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2')],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           expect(next.worldState.fleets.single.seaZoneId, 'sea2');
           expect(next.worldState.turnState.turnNumber, 1);
         });
@@ -209,15 +205,13 @@ test(
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           final fleet = next.worldState.fleets.single;
           expect(fleet.isInPort, isTrue);
           expect(fleet.inPortAtProvinceId, '$ow|P1');
@@ -265,15 +259,13 @@ test(
               ],
             },
           );
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: orders,
               extractedByPlayerId: const {},
               defaultAssignments: const [],
-            ),
-          );
+            );
           final fleet = next.worldState.fleets.single;
           expect(fleet.isAtSea, isTrue);
           expect(fleet.seaZoneId, 'sea1');

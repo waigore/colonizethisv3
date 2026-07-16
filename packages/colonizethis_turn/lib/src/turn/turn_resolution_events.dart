@@ -178,9 +178,8 @@ void emitVictorySetEvent(Game state, int turn, TurnEventSink sink) {
   }
 }
 
-String _prefixedProvinceId(Province province) => province.id.contains('|')
-    ? province.id
-    : ProvinceId.full(province.regionId, province.id);
+String _prefixedProvinceId(Province province) =>
+    toFullProvinceId(province.regionId, province.id);
 
 Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
   final zones = <String>{};

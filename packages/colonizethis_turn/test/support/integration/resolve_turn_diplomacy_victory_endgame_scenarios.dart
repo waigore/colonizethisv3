@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerDiplomacyVictoryEndgameTests() {
   group('diplomacy victory', () {
-    group('diplomacy_part4_segment2_test', () {
+    group('diplomacy victory endgame', () {
 // Regression test for issue #233: Diplomatic orders must flow through
         // OrderEngine and turn resolver to the Diplomacy phase.
         test(

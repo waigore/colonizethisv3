@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/turn_game_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Research pacing at Medium funding (cost rebalance, Refs #3512)', () {
@@ -28,13 +29,11 @@ void main() {
             ],
           },
         );
-        game = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        game = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
       }
       return game;
     }
