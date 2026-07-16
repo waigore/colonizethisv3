@@ -20,7 +20,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
-import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import '../support/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import '../support/turn_resolver_test_harness.dart';
 
 void main() {
   group(
@@ -31,14 +32,14 @@ void main() {
         '(extraction connectivity → auto-offer → deal match → treasury sink)',
         () {
           const timberPrice = 30.0;
-          final result = resolveTurnForGame(
+          
+
+          final next = resolveTurnComplete(
             game: minorTimberAutoOfferPipelineGame(buyerTreasury: 1000),
             topology: kEmptyTopology,
             orders: timberBidOrdersForGp(gpId: 'gpBuyer'),
             tileMapByRegion: minorTimberTileMapByRegion(),
-          );
-
-          final next = requireTurnResolutionComplete(result);
+          );;
           final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
 
           expect(buyer.treasury, equals(1000 - timberPrice));
@@ -66,7 +67,9 @@ void main() {
             gpATreasury: 100,
             gpAStockpileGold: 0,
           );
-          final result = resolveTurnForGame(
+          
+
+          final next = resolveTurnComplete(
             game: base.copyWith(
               worldState: base.worldState.copyWith(
                 turnState: const TurnState(
@@ -78,9 +81,7 @@ void main() {
             topology: kEmptyTopology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegionForResource(Resource.gold),
-          );
-
-          final next = requireTurnResolutionComplete(result);
+          );;
           final gpA = next.players.firstWhere((p) => p.id == 'gpA');
 
           expect(gpA.stockpile.quantityOf('gold'), equals(0));
@@ -109,14 +110,14 @@ void main() {
         () {
           const timberPrice = 25.0;
           final game = purchasedTimberBidPipelineGame(gpATreasury: 500);
-          final result = resolveTurnForGame(
+          
+
+          final next = resolveTurnComplete(
             game: game,
             topology: kEmptyTopology,
             orders: timberBidOrdersForGp(gpId: 'gpA'),
             tileMapByRegion: tileMapByRegionForResource(Resource.timber),
-          );
-
-          final next = requireTurnResolutionComplete(result);
+          );;
           final gpA = next.players.firstWhere((p) => p.id == 'gpA');
 
           expect(gpA.treasury, equals(500 - timberPrice));
@@ -137,13 +138,13 @@ void main() {
         'world market phase is dormant for minor auto-offers when '
         '`tileMapByRegion` is absent on the full pipeline config',
         () {
-          final result = resolveTurnForGame(
+          
+
+          final next = resolveTurnComplete(
             game: minorTimberAutoOfferPipelineGame(buyerTreasury: 1000),
             topology: kEmptyTopology,
             orders: timberBidOrdersForGp(gpId: 'gpBuyer'),
-          );
-
-          final next = requireTurnResolutionComplete(result);
+          );;
           final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
 
           expect(buyer.treasury, equals(1000));

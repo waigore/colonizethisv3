@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerCombatMovementDialogueTests() {
   group('combat movement', () {
-    group('combat_part2_dialogue_order_engine_test', () {
+    group('combat movement dialogue', () {
 test('endOfTurn era transition invokes onDialogue with event era_change', () {
           // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
           final topology = MapTopology(
@@ -33,14 +33,12 @@ test('endOfTurn era transition invokes onDialogue with event era_change', () {
             turnTimeMapping: TurnTimeMapping.gdd01,
           );
           final dialogueEvents = <DialogueEvent>[];
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(
+          final next = resolveTurnComplete(
               game: game,
               topology: topology,
               orders: const Orders(),
               eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-            ),
-          );
+            );
           expect(next.worldState.turnState.turnNumber, 101);
           final eraChange = dialogueEvents
               .where((e) => e.category == 'event' && e.situation == 'era_change')
@@ -109,8 +107,7 @@ test('endOfTurn era transition invokes onDialogue with event era_change', () {
             ),
           );
           final dialogueEvents = <DialogueEvent>[];
-          requireTurnResolutionComplete(
-            resolveTurnForGame(
+          resolveTurnComplete(
               game: game,
               topology: topology,
               orders: Orders(
@@ -124,8 +121,7 @@ test('endOfTurn era transition invokes onDialogue with event era_change', () {
                 },
               ),
               eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-            ),
-          );
+            );
           expect(
             dialogueEvents.any(
               (e) => e.category == 'event' && e.situation == 'capital_threatened',
@@ -235,8 +231,7 @@ test('endOfTurn era transition invokes onDialogue with event era_change', () {
               ),
             );
             final dialogueEvents = <DialogueEvent>[];
-            requireTurnResolutionComplete(
-              resolveTurnForGame(
+            resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: Orders(
@@ -254,8 +249,7 @@ test('endOfTurn era transition invokes onDialogue with event era_change', () {
                   },
                 ),
                 eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-              ),
-            );
+              );
             expect(
               dialogueEvents.any((e) => e.situation == 'attack_on_minor'),
               isTrue,

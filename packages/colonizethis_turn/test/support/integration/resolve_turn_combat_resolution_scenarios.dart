@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerCombatResolutionTests() {
   group('combat resolution', () {
-    group('combat_part2_part1_combat_test', () {
+    group('combat resolution', () {
 test('quick battle mode runs without error and can flip province', () {
           final topology = twoAdjacentOldWorldProvinceTopology();
 
@@ -57,9 +57,7 @@ test('quick battle mode runs without error and can flip province', () {
             },
           );
 
-          final next = requireTurnResolutionComplete(
-            resolveTurnForGame(game: game, topology: topology, orders: orders),
-          );
+          final next = resolveTurnComplete(game: game, topology: topology, orders: orders);
 
           expect(next.worldState.turnState.turnNumber, 1);
           final p2 = next.worldState.oldWorld.provinces
@@ -135,14 +133,12 @@ test('quick battle mode runs without error and can flip province', () {
             );
 
             final dialogueEvents = <DialogueEvent>[];
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-              ),
-            );
+              );
 
             expect(next.worldState.turnState.turnNumber, 1);
             final eventDialogue = dialogueEvents
@@ -223,14 +219,12 @@ test('quick battle mode runs without error and can flip province', () {
             );
 
             final dialogueEvents = <DialogueEvent>[];
-            requireTurnResolutionComplete(
-              resolveTurnForGame(
+            resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-              ),
-            );
+              );
 
             final eventDialogue = dialogueEvents
                 .where(
@@ -293,14 +287,12 @@ test('quick battle mode runs without error and can flip province', () {
               ],
             );
             final dialogueEvents = <DialogueEvent>[];
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: const Orders(),
                 eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-              ),
-            );
+              );
             expect(next.worldState.turnState.turnNumber, 1);
             // Naval battle may or may not eliminate one side; when it does, event dialogue is emitted.
             final eventDialogue = dialogueEvents

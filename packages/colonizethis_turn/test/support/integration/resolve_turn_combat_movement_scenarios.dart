@@ -6,7 +6,7 @@ import '../turn_resolver_test_harness.dart';
 
 void registerCombatMovementTests() {
   group('combat movement', () {
-    group('combat_part1_segment3_test', () {
+    group('combat movement', () {
 test(
           'one full turn with combat: MoveOrder into enemy province, casualties and province flip',
           () {
@@ -59,15 +59,13 @@ test(
               },
             );
 
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 extractedByPlayerId: const {},
                 defaultAssignments: const [],
-              ),
-            );
+              );
 
             expect(next.worldState.turnState.turnNumber, 1);
 
@@ -169,14 +167,12 @@ test(
                 ],
               },
             );
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 tileMapByRegion: {'oldWorld': tileMap},
-              ),
-            );
+              );
             expect(next.worldState.turnState.turnNumber, 1);
             final p2Province = next.worldState.oldWorld.provinces
                 .where((p) => p.id == '$ow|P2')
@@ -252,14 +248,12 @@ test(
             );
 
             final dialogueEvents = <DialogueEvent>[];
-            final next = requireTurnResolutionComplete(
-              resolveTurnForGame(
+            final next = resolveTurnComplete(
                 game: game,
                 topology: topology,
                 orders: orders,
                 eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
-              ),
-            );
+              );
 
             expect(next.worldState.turnState.turnNumber, 1);
             final eventDialogue = dialogueEvents

@@ -4,7 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
-import 'extraction_auto_transport_test_fixtures.dart';
+import 'support/extraction_auto_transport_test_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 List<String> _autoTransportMessages(List<LogEvent> events) => [
   for (final e in events)
@@ -54,15 +55,13 @@ void main() {
         );
         final topology = crossRegionSeaTopologyForExtractionTests();
 
-        requireTurnResolutionComplete(
-          resolveTurnForGame(
+        resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         final lines = _autoTransportMessages(capturedEvents);
         expect(

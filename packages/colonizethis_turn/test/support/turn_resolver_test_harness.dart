@@ -44,6 +44,7 @@ Game resolveTurnComplete({
   List<AssignedRecipe> defaultAssignments = const [],
   Map<String, List<AssignedRecipe>>? defaultAssignmentsByPlayerId,
   TurnEventSink? eventSink,
+  TurnPhase? startFromPhase,
 }) {
   return requireTurnResolutionComplete(
     resolveTurnForGame(
@@ -56,6 +57,7 @@ Game resolveTurnComplete({
       defaultAssignments: defaultAssignments,
       defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
       eventSink: eventSink,
+      startFromPhase: startFromPhase,
     ),
   );
 }
