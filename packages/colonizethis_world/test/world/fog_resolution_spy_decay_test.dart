@@ -12,64 +12,26 @@ void main() {
 
 void _fog_resolution_spy_decay_testTests() {
   group('applySpyRevealTimerDecay', () {
-    test(
-      'decrements timers for other-faction provinces when timer expires',
-      () {
-        const tileKeyP2 = 'oldWorld|P2|0|0';
-
+    for (final case_ in _spyRevealTimerDecayCases) {
+      test(case_.description, () {
         final game = spyRevealFogGame(
-          spyPlayerId: 'p1',
-          targetOwnerId: 'p2',
-          provinceLocalId: 'P2',
-          tileKey: tileKeyP2,
-          visibilityLevel: 'fullyVisible',
+          spyPlayerId: case_.spyPlayerId,
+          targetOwnerId: case_.targetOwnerId,
+          provinceLocalId: case_.provinceLocalId,
+          tileKey: case_.tileKey,
+          visibilityLevel: case_.visibilityBefore,
           spyRevealTurns: 1,
         );
 
         final (visibility, timers) = applySpyRevealTimerDecay(game);
 
-        // Timer should be removed after reaching zero.
         expect(timers['p1'], isNull);
-        expect(visibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
-      },
-    );
-
-    test('never applies timers to own provinces', () {
-      const tileKeyP1 = 'oldWorld|P1|0|0';
-
-      final game = spyRevealFogGame(
-        spyPlayerId: 'p1',
-        targetOwnerId: 'p1',
-        provinceLocalId: 'P1',
-        tileKey: tileKeyP1,
-        visibilityLevel: 'fullyVisible',
-        spyRevealTurns: 1,
-      );
-
-      final (visibility, timers) = applySpyRevealTimerDecay(game);
-
-      // Own-province timer should be dropped without affecting visibility.
-      expect(timers['p1'], isNull);
-      expect(visibility['p1']?[tileKeyP1], VisibilityLevel.fullyVisible.name);
-    });
-
-    test('leaves unknown tiles unchanged when timer expires', () {
-      const tileKeyP2 = 'oldWorld|P2|0|0';
-
-      final game = spyRevealFogGame(
-        spyPlayerId: 'p1',
-        targetOwnerId: 'p2',
-        provinceLocalId: 'P2',
-        tileKey: tileKeyP2,
-        visibilityLevel: 'unknown',
-        spyRevealTurns: 1,
-      );
-
-      final (visibility, timers) = applySpyRevealTimerDecay(game);
-
-      expect(timers['p1'], isNull);
-      expect(visibility['p1']?[tileKeyP2], VisibilityLevel.unknown.name);
-    });
+        expect(
+          visibility['p1']?[case_.tileKey],
+          case_.visibilityAfter,
+        );
+      });
+    }
   });
 
   group('applyFogDecay', () {
@@ -78,117 +40,24 @@ void _fog_resolution_spy_decay_testTests() {
       Player(id: 'p2', displayName: 'P2', isHuman: false),
     ];
 
-    test(
-      'fogs tiles in other-faction provinces when no Explorer or Spy timer',
-      () {
-        const ow = 'oldWorld';
-        const tileKeyP2 = 'oldWorld|P2|0|0';
-
+    for (final case_ in _fogDecayCases) {
+      test(case_.description, () {
         final game = fogDecayVisibilityGame(
-          oldWorldProvinces: const [
-            Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-          ],
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'fullyVisible'},
-          },
-          players: fogDecayPlayers,
-        );
-
-        final nextVisibility = applyFogDecay(game);
-
-        expect(nextVisibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
-      },
-    );
-
-    test(
-      'preserves visibility when Explorer is present in other-faction province',
-      () {
-        const ow = 'oldWorld';
-        const tileKeyP2 = 'oldWorld|P2|0|0';
-
-        final game = fogDecayVisibilityGame(
-          oldWorldProvinces: const [
-            Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-          ],
-          oldWorldUnits: [
-            Unit(
-              id: 'explorer1',
-              type: kUnitTypeExplorer,
-              ownerId: 'p1',
-              locationProvinceId: '$ow|P2',
-            ),
-          ],
-          playerVisibilityByTile: const {
-            'p1': {tileKeyP2: 'fullyVisible'},
-          },
+          oldWorldProvinces: case_.oldWorldProvinces,
+          newWorldProvinces: case_.newWorldProvinces,
+          oldWorldUnits: case_.oldWorldUnits,
+          playerVisibilityByTile: case_.playerVisibilityByTile,
           players: fogDecayPlayers,
         );
 
         final nextVisibility = applyFogDecay(game);
 
         expect(
-          nextVisibility['p1']?[tileKeyP2],
-          VisibilityLevel.fullyVisible.name,
+          nextVisibility['p1']?[case_.tileKey],
+          case_.expectedVisibility,
         );
-      },
-    );
-
-    test('fogs other-faction province when no Explorer/Spy remains', () {
-      const ow = 'oldWorld';
-      const tileKeyP2 = 'oldWorld|P2|0|0';
-
-      final game = fogDecayVisibilityGame(
-        oldWorldProvinces: const [
-          Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-        ],
-        playerVisibilityByTile: const {
-          'p1': {tileKeyP2: 'fullyVisible'},
-        },
-        players: fogDecayPlayers,
-      );
-
-      final nextVisibility = applyFogDecay(game);
-
-      expect(nextVisibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
-    });
-
-    test('does not promote unknown tiles in other-faction province', () {
-      const nw = 'newWorld';
-      const tileKeyNw = 'newWorld|P2|0|0';
-
-      final game = fogDecayVisibilityGame(
-        newWorldProvinces: const [
-          Province(id: '$nw|P2', regionId: nw, ownerId: 'p2'),
-        ],
-        playerVisibilityByTile: const {
-          'p1': {tileKeyNw: 'unknown'},
-        },
-        players: fogDecayPlayers,
-      );
-
-      final nextVisibility = applyFogDecay(game);
-
-      expect(nextVisibility['p1']?[tileKeyNw], VisibilityLevel.unknown.name);
-    });
-
-    test('does not change fogged tiles in other-faction province', () {
-      const ow = 'oldWorld';
-      const tileKeyP2 = 'oldWorld|P2|0|0';
-
-      final game = fogDecayVisibilityGame(
-        oldWorldProvinces: const [
-          Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-        ],
-        playerVisibilityByTile: const {
-          'p1': {tileKeyP2: 'fogged'},
-        },
-        players: fogDecayPlayers,
-      );
-
-      final nextVisibility = applyFogDecay(game);
-
-      expect(nextVisibility['p1']?[tileKeyP2], VisibilityLevel.fogged.name);
-    });
+      });
+    }
   });
 
   group('downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry', () {
@@ -269,3 +138,114 @@ void _fog_resolution_spy_decay_testTests() {
     });
   });
 }
+
+typedef _SpyRevealTimerDecayCase = ({
+  String description,
+  String spyPlayerId,
+  String targetOwnerId,
+  String provinceLocalId,
+  String tileKey,
+  String visibilityBefore,
+  String visibilityAfter,
+});
+
+final List<_SpyRevealTimerDecayCase> _spyRevealTimerDecayCases = [
+
+  (
+    description:
+        'decrements timers for other-faction provinces when timer expires',
+    spyPlayerId: 'p1',
+    targetOwnerId: 'p2',
+    provinceLocalId: 'P2',
+    tileKey: 'oldWorld|P2|0|0',
+    visibilityBefore: 'fullyVisible',
+    visibilityAfter: VisibilityLevel.fogged.name,
+  ),
+  (
+    description: 'never applies timers to own provinces',
+    spyPlayerId: 'p1',
+    targetOwnerId: 'p1',
+    provinceLocalId: 'P1',
+    tileKey: 'oldWorld|P1|0|0',
+    visibilityBefore: 'fullyVisible',
+    visibilityAfter: VisibilityLevel.fullyVisible.name,
+  ),
+  (
+    description: 'leaves unknown tiles unchanged when timer expires',
+    spyPlayerId: 'p1',
+    targetOwnerId: 'p2',
+    provinceLocalId: 'P2',
+    tileKey: 'oldWorld|P2|0|0',
+    visibilityBefore: 'unknown',
+    visibilityAfter: VisibilityLevel.unknown.name,
+  ),
+];
+
+typedef _FogDecayCase = ({
+  String description,
+  List<Province> oldWorldProvinces,
+  List<Province> newWorldProvinces,
+  List<Unit> oldWorldUnits,
+  Map<String, Map<String, String>> playerVisibilityByTile,
+  String tileKey,
+  String expectedVisibility,
+});
+
+const _owP2 = Province(id: 'oldWorld|P2', regionId: 'oldWorld', ownerId: 'p2');
+const _nwP2 = Province(id: 'newWorld|P2', regionId: 'newWorld', ownerId: 'p2');
+
+final List<_FogDecayCase> _fogDecayCases = [
+  (
+    description:
+        'fogs tiles in other-faction provinces when no Explorer or Spy timer',
+    oldWorldProvinces: const [_owP2],
+    newWorldProvinces: const [],
+    oldWorldUnits: const [],
+    playerVisibilityByTile: const {
+      'p1': {'oldWorld|P2|0|0': 'fullyVisible'},
+    },
+    tileKey: 'oldWorld|P2|0|0',
+    expectedVisibility: VisibilityLevel.fogged.name,
+  ),
+  (
+    description:
+        'preserves visibility when Explorer is present in other-faction province',
+    oldWorldProvinces: const [_owP2],
+    newWorldProvinces: const [],
+    oldWorldUnits: [
+      Unit(
+        id: 'explorer1',
+        type: kUnitTypeExplorer,
+        ownerId: 'p1',
+        locationProvinceId: 'oldWorld|P2',
+      ),
+    ],
+    playerVisibilityByTile: const {
+      'p1': {'oldWorld|P2|0|0': 'fullyVisible'},
+    },
+    tileKey: 'oldWorld|P2|0|0',
+    expectedVisibility: VisibilityLevel.fullyVisible.name,
+  ),
+  (
+    description: 'does not promote unknown tiles in other-faction province',
+    oldWorldProvinces: const [],
+    newWorldProvinces: const [_nwP2],
+    oldWorldUnits: const [],
+    playerVisibilityByTile: const {
+      'p1': {'newWorld|P2|0|0': 'unknown'},
+    },
+    tileKey: 'newWorld|P2|0|0',
+    expectedVisibility: VisibilityLevel.unknown.name,
+  ),
+  (
+    description: 'does not change fogged tiles in other-faction province',
+    oldWorldProvinces: const [_owP2],
+    newWorldProvinces: const [],
+    oldWorldUnits: const [],
+    playerVisibilityByTile: const {
+      'p1': {'oldWorld|P2|0|0': 'fogged'},
+    },
+    tileKey: 'oldWorld|P2|0|0',
+    expectedVisibility: VisibilityLevel.fogged.name,
+  ),
+];

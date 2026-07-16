@@ -115,163 +115,27 @@ void _capital_and_gp_fall_reassignment_testTests() {
   });
 
   group('applyFactionCapitalReassignmentAfterCombat (Minor/Tribe)', () {
-    test('reassigns minor nation capital after loss', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-minor',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
-          Province(
-            id: 'oldWorld|malt',
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-            townTileKey: 'oldWorld|malt|5|6',
+    for (final case_ in _minorTribeReassignOrClearCases) {
+      test(case_.description, () {
+        final result = applyFactionCapitalReassignmentAfterCombat(
+          case_.game,
+          kEmptyMapTopology,
+        );
+        case_.verify(result);
+      });
+    }
+
+    for (final case_ in _minorTribeThrowCases) {
+      test(case_.description, () {
+        expect(
+          () => applyFactionCapitalReassignmentAfterCombat(
+            case_.game,
+            kEmptyMapTopology,
           ),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: [
-          MinorNation(
-            id: 'm1',
-            capitalProvinceId: 'oldWorld|mcap',
-            capitalTile: capitalTileFor('oldWorld|mcap'),
-          ),
-        ],
-      );
-
-      final result = applyFactionCapitalReassignmentAfterCombat(
-        game,
-        kEmptyMapTopology,
-      );
-
-      final m1 = result.minorNations.single;
-      expect(m1.capitalProvinceId, 'oldWorld|malt');
-      expect(m1.capitalTile?.x, 5);
-    });
-
-    test('clears minor nation capital when none remain in region', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-minor-clear',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: [
-          MinorNation(
-            id: 'm1',
-            capitalProvinceId: 'oldWorld|mcap',
-            capitalTile: capitalTileFor('oldWorld|mcap'),
-          ),
-        ],
-      );
-
-      final result = applyFactionCapitalReassignmentAfterCombat(
-        game,
-        kEmptyMapTopology,
-      );
-
-      expect(result.minorNations.single.capitalProvinceId, isNull);
-    });
-
-    test('reassigns tribe capital after loss', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-tribe',
-        newWorldProvinces: const [
-          Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
-          Province(
-            id: 'newWorld|talt',
-            regionId: 'newWorld',
-            ownerId: 't1',
-            townTileKey: 'newWorld|talt|7|8',
-          ),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        tribes: [
-          Tribe(
-            id: 't1',
-            capitalProvinceId: 'newWorld|tcap',
-            capitalTile: capitalTileFor('newWorld|tcap'),
-          ),
-        ],
-      );
-
-      final result = applyFactionCapitalReassignmentAfterCombat(
-        game,
-        kEmptyMapTopology,
-      );
-
-      expect(result.tribes.single.capitalProvinceId, 'newWorld|talt');
-    });
-
-    test('clears tribe capital when none remain in region', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-tribe-clear',
-        newWorldProvinces: const [
-          Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        tribes: [
-          Tribe(
-            id: 't1',
-            capitalProvinceId: 'newWorld|tcap',
-            capitalTile: capitalTileFor('newWorld|tcap'),
-          ),
-        ],
-      );
-
-      final result = applyFactionCapitalReassignmentAfterCombat(
-        game,
-        kEmptyMapTopology,
-      );
-
-      expect(result.tribes.single.capitalProvinceId, isNull);
-    });
-
-    test('throws fatal error when minor candidate lacks townTileKey', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-minor-throw',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
-          Province(id: 'oldWorld|malt', regionId: 'oldWorld', ownerId: 'm1'),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: [
-          MinorNation(
-            id: 'm1',
-            capitalProvinceId: 'oldWorld|mcap',
-            capitalTile: capitalTileFor('oldWorld|mcap'),
-          ),
-        ],
-      );
-
-      expect(
-        () =>
-            applyFactionCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
-        throwsA(isA<CapitalReassignmentFatalError>()),
-      );
-    });
-
-    test('throws fatal error when tribe candidate lacks townTileKey', () {
-      final game = factionCapitalReassignmentGame(
-        id: 'g-tribe-throw',
-        newWorldProvinces: const [
-          Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
-          Province(id: 'newWorld|talt', regionId: 'newWorld', ownerId: 't1'),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        tribes: [
-          Tribe(
-            id: 't1',
-            capitalProvinceId: 'newWorld|tcap',
-            capitalTile: capitalTileFor('newWorld|tcap'),
-          ),
-        ],
-      );
-
-      expect(
-        () =>
-            applyFactionCapitalReassignmentAfterCombat(game, kEmptyMapTopology),
-        throwsA(isA<CapitalReassignmentFatalError>()),
-      );
-    });
+          throwsA(isA<CapitalReassignmentFatalError>()),
+        );
+      });
+    }
 
     test('leaves minor capital untouched when minor still owns it', () {
       final game = factionCapitalReassignmentGame(
@@ -345,3 +209,151 @@ void _capital_and_gp_fall_reassignment_testTests() {
     });
   });
 }
+
+typedef _FactionCapitalOutcomeCase = ({
+  String description,
+  Game game,
+  void Function(Game result) verify,
+});
+
+typedef _FactionCapitalThrowCase = ({
+  String description,
+  Game game,
+});
+
+final List<_FactionCapitalOutcomeCase> _minorTribeReassignOrClearCases = [
+  (
+    description: 'reassigns minor nation capital after loss',
+    game: factionCapitalReassignmentGame(
+      id: 'g-minor',
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+        Province(
+          id: 'oldWorld|malt',
+          regionId: 'oldWorld',
+          ownerId: 'm1',
+          townTileKey: 'oldWorld|malt|5|6',
+        ),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      minorNations: [
+        MinorNation(
+          id: 'm1',
+          capitalProvinceId: 'oldWorld|mcap',
+          capitalTile: capitalTileFor('oldWorld|mcap'),
+        ),
+      ],
+    ),
+    verify: (result) {
+      final m1 = result.minorNations.single;
+      expect(m1.capitalProvinceId, 'oldWorld|malt');
+      expect(m1.capitalTile?.x, 5);
+    },
+  ),
+  (
+    description: 'clears minor nation capital when none remain in region',
+    game: factionCapitalReassignmentGame(
+      id: 'g-minor-clear',
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      minorNations: [
+        MinorNation(
+          id: 'm1',
+          capitalProvinceId: 'oldWorld|mcap',
+          capitalTile: capitalTileFor('oldWorld|mcap'),
+        ),
+      ],
+    ),
+    verify: (result) {
+      expect(result.minorNations.single.capitalProvinceId, isNull);
+    },
+  ),
+  (
+    description: 'reassigns tribe capital after loss',
+    game: factionCapitalReassignmentGame(
+      id: 'g-tribe',
+      newWorldProvinces: const [
+        Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
+        Province(
+          id: 'newWorld|talt',
+          regionId: 'newWorld',
+          ownerId: 't1',
+          townTileKey: 'newWorld|talt|7|8',
+        ),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      tribes: [
+        Tribe(
+          id: 't1',
+          capitalProvinceId: 'newWorld|tcap',
+          capitalTile: capitalTileFor('newWorld|tcap'),
+        ),
+      ],
+    ),
+    verify: (result) {
+      expect(result.tribes.single.capitalProvinceId, 'newWorld|talt');
+    },
+  ),
+  (
+    description: 'clears tribe capital when none remain in region',
+    game: factionCapitalReassignmentGame(
+      id: 'g-tribe-clear',
+      newWorldProvinces: const [
+        Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      tribes: [
+        Tribe(
+          id: 't1',
+          capitalProvinceId: 'newWorld|tcap',
+          capitalTile: capitalTileFor('newWorld|tcap'),
+        ),
+      ],
+    ),
+    verify: (result) {
+      expect(result.tribes.single.capitalProvinceId, isNull);
+    },
+  ),
+];
+
+final List<_FactionCapitalThrowCase> _minorTribeThrowCases = [
+  (
+    description: 'throws fatal error when minor candidate lacks townTileKey',
+    game: factionCapitalReassignmentGame(
+      id: 'g-minor-throw',
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+        Province(id: 'oldWorld|malt', regionId: 'oldWorld', ownerId: 'm1'),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      minorNations: [
+        MinorNation(
+          id: 'm1',
+          capitalProvinceId: 'oldWorld|mcap',
+          capitalTile: capitalTileFor('oldWorld|mcap'),
+        ),
+      ],
+    ),
+  ),
+  (
+    description: 'throws fatal error when tribe candidate lacks townTileKey',
+    game: factionCapitalReassignmentGame(
+      id: 'g-tribe-throw',
+      newWorldProvinces: const [
+        Province(id: 'newWorld|tcap', regionId: 'newWorld', ownerId: 'p2'),
+        Province(id: 'newWorld|talt', regionId: 'newWorld', ownerId: 't1'),
+      ],
+      players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
+      tribes: [
+        Tribe(
+          id: 't1',
+          capitalProvinceId: 'newWorld|tcap',
+          capitalTile: capitalTileFor('newWorld|tcap'),
+        ),
+      ],
+    ),
+  ),
+];
+
