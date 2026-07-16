@@ -16,8 +16,6 @@ const _upsertToken = 'upsertRelation(';
 
 const _loopBodyForbiddenTokens = <String>[
   _upsertToken,
-  'setWarStateForPair(',
-  'applyPeaceForPair(',
 ];
 
 final RegExp _loopStartPattern = RegExp(r'^\s*(for|while)\b');

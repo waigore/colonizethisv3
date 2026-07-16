@@ -116,7 +116,11 @@ Game withCommittedRelations(Game game, RelationUpsertIndex index) =>
 
 /// Builds a [RelationUpsertIndex] from [game], runs [mutate], then commits.
 ///
-/// Use when the pass owns the index locally and only relations are updated.
+/// Use for **relations-only single-pass** commits (e.g. trade-deal boosts,
+/// GP–Tribe first contact). Do **not** wrap mid-order loops that also mutate
+/// players, dossier, subsidy state, or other Game fields between upserts —
+/// those keep an explicit [RelationUpsertIndex] and [committedRelations] /
+/// multi-field `copyWith` (Refs #4028 / #4037).
 Game withRelationUpserts(
   Game game,
   void Function(RelationUpsertIndex index) mutate,
