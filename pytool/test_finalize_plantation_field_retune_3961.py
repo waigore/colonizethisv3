@@ -117,6 +117,19 @@ class FinalizePlantationFieldRetune3961Test(unittest.TestCase):
                 self.mod.main()
             self.assertIn("--update-goldens", str(ctx.exception))
 
+    def test_update_goldens_rejected_with_dry_run(self) -> None:
+        argv = [
+            "finalize",
+            "--picks",
+            "sugar_cane=A,cotton=B,spices=C",
+            "--dry-run",
+            "--update-goldens",
+        ]
+        with patch.object(sys, "argv", argv):
+            with self.assertRaises(SystemExit) as ctx:
+                self.mod.main()
+            self.assertIn("--update-goldens", str(ctx.exception))
+
     def test_refresh_plantation_goldens_invokes_flutter(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
