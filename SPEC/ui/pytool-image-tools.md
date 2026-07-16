@@ -70,10 +70,12 @@ uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
 # Apply (after PO lock):
 uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
   --picks sugar_cane=A,cotton=B,spices=C
-cd app && flutter test test/plains_plantation_terrain_goldens_test.dart --update-goldens
+# Or apply + refresh goldens in one step:
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --update-goldens
 ```
 
-**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. `--validate-only` checks pairwise field-mean RGB distance (≥ 26) against golden-test distinctness pins without writing files. Apply mode copies PNGs then patches SPEC + dart pins; operator must refresh goldens manually.
+**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. `--validate-only` checks pairwise field-mean RGB distance (≥ 26) against golden-test distinctness pins without writing files. Apply mode copies PNGs then patches SPEC + dart pins; operator may pass `--update-goldens` to run `flutter test … --update-goldens` instead of doing so manually.
 
 ---
 

@@ -18,6 +18,7 @@ import importlib.util
 import json
 import math
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -155,6 +156,17 @@ def validate_plantation_picks(
     return errors
 
 
+def refresh_plantation_goldens(*, repo_root: Path = REPO) -> None:
+    """Run flutter golden refresh for plantation terrain strip."""
+    app_dir = repo_root / "app"
+    test_path = "test/plains_plantation_terrain_goldens_test.dart"
+    subprocess.run(
+        ["flutter", "test", test_path, "--update-goldens"],
+        cwd=app_dir,
+        check=True,
+    )
+
+
 def patch_golden_test_midtones(
     test_path: Path,
     means: dict[str, tuple[int, int, int]],
@@ -208,7 +220,14 @@ def main() -> None:
         action="store_true",
         help="Check pairwise field-mean distinctness; no file writes",
     )
+    parser.add_argument(
+        "--update-goldens",
+        action="store_true",
+        help="After apply, run flutter test --update-goldens for plantation strip",
+    )
     args = parser.parse_args()
+    if args.update_goldens and (args.dry_run or args.validate_only):
+        raise SystemExit("--update-goldens requires apply mode (no --dry-run/--validate-only)")
     picks = paint._parse_promote(args.picks)
     candidate_means = load_candidate_means(args.candidate_dir)
     locked_means = resolve_locked_means(
@@ -236,11 +255,17 @@ def main() -> None:
     paint.promote(args.candidate_dir, args.app_terrain_dir, picks)
     patch_spec_midtones(SPEC_LAYERED, locked_means)
     patch_golden_test_midtones(GOLDEN_TEST, locked_means)
-    print(
-        "\nNext: refresh plantation golden from app/:\n"
-        "  cd app && flutter test test/plains_plantation_terrain_goldens_test.dart "
-        "--update-goldens"
-    )
+    if args.update_goldens:
+        print("refreshing plantation goldens...")
+        refresh_plantation_goldens()
+        print("goldens updated")
+    else:
+        print(
+            "\nNext: refresh plantation golden from app/:\n"
+            "  cd app && flutter test test/plains_plantation_terrain_goldens_test.dart "
+            "--update-goldens\n"
+            "Or re-run with --update-goldens after PO lock."
+        )
 
 
 if __name__ == "__main__":
