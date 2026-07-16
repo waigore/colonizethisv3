@@ -18,7 +18,7 @@ final RegExp _inlineGameConstructor = RegExp(r'\bGame\s*\(');
 final RegExp _inlineWorldStateConstructor = RegExp(r'\bWorldState\s*\(');
 
 /// True when [slashPath] is an in-scope world test outside `world_test_support/`
-/// (fog/capital/connectivity/ownership/player_view; Refs #3978, #4038).
+/// (fog/capital/connectivity/ownership/player_view/travers; Refs #3978, #4038).
 bool worldTestNoRawGameWorldStatePathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
   if (!normalized.startsWith(_worldTestPathPrefix)) {
@@ -32,7 +32,8 @@ bool worldTestNoRawGameWorldStatePathInScope(String slashPath) {
       base.contains('capital') ||
       base.contains('connectivity') ||
       base.contains('ownership') ||
-      base.contains('player_view');
+      base.contains('player_view') ||
+      base.contains('travers');
 }
 
 /// Violation reason when [content] inlines `Game(` / `WorldState(` outside the
@@ -96,7 +97,8 @@ int runCheckWorldTestNoRawGameWorldState(
   if (violations.isEmpty) {
     logI(
       'check_world_test_no_raw_game_worldstate: no raw Game/WorldState '
-      'constructors in fog/capital/connectivity/ownership/player_view tests.',
+      'constructors in fog/capital/connectivity/ownership/player_view/'
+      'travers tests.',
     );
     return 0;
   }

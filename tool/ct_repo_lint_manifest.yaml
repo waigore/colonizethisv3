@@ -721,7 +721,7 @@ rules:
 
   - rule_id: repo.world_test_no_raw_game_worldstate
     group: architecture
-    title: fog/capital/connectivity/ownership/player_view world tests must not inline Game/WorldState outside world_test_support (Refs #3978, #4038)
+    title: fog/capital/connectivity/ownership/player_view/travers world tests must not inline Game/WorldState outside world_test_support (Refs #3978, #4038)
     spec: SPEC/program/world-test-no-raw-game-worldstate.md
     runner: dart
     script: tool/check_world_test_no_raw_game_worldstate.dart
