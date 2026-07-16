@@ -10,9 +10,9 @@ import 'package:path/path.dart' as p;
 const String diplomacyTestSupportRelativeDir =
     'packages/colonizethis_diplomacy_test_support/lib';
 
-/// Ratchet ceiling for support physical LOC. Wave-3 AC target ≤2800; start at
-/// post-slice measured total and lower as densify lands (Refs #4028).
-const int diplomacyTestSupportLocCeiling = 2700;
+/// Ratchet ceiling for support physical LOC. Wave-4 densify (Refs #4037)
+/// measured post-slice total; further densify toward ≤2500 remains on the issue.
+const int diplomacyTestSupportLocCeiling = 2593;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countDiplomacyTestSupportPhysicalLoc(Directory dir) {
@@ -54,13 +54,13 @@ int runCheckDiplomacyTestSupportLoc(
   if (loc > ceiling) {
     logE(
       'check_diplomacy_test_support_loc: support LOC $loc exceeds ceiling '
-      '$ceiling (wave-3 target ≤2800; Refs #4028).',
+      '$ceiling (wave-4 target ≤2500; Refs #4037).',
     );
     return 1;
   }
   logI(
     'check_diplomacy_test_support_loc: support LOC $loc ≤ ceiling $ceiling '
-    '(wave-3 target ≤2800; Refs #4028).',
+    '(wave-4 target ≤2500; Refs #4037).',
   );
   return 0;
 }

@@ -141,11 +141,7 @@ List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
     final entries = evidenceForLandBattleVictory(
       diplomacyGame(
         turnNumber: 2,
-        players: [
-          _pHuman,
-          _p('gp2', 'AI', mil: 4),
-          _p('gp3', 'Other', mil: 2),
-        ],
+        players: [_pHuman, _p('gp2', 'AI', mil: 4), _p('gp3', 'Other', mil: 2)],
       ),
       'gp2',
       'gp3',
@@ -165,11 +161,7 @@ List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
     final entries = evidenceForLandBattleVictory(
       diplomacyGame(
         turnNumber: 2,
-        players: [
-          _pHuman,
-          _p('gp2', 'AI', mil: 2),
-          _p('gp3', 'Other', mil: 4),
-        ],
+        players: [_pHuman, _p('gp2', 'AI', mil: 2), _p('gp3', 'Other', mil: 4)],
       ),
       'gp2',
       'gp3',
@@ -270,27 +262,47 @@ List<EvidenceRulesScenario> evidenceRulesEnvyResearchMirrorScenarios() => [
 ];
 
 /// Declare-war scenarios from `evidence_rules_war_peace_test.dart`.
-List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
-  _row(
-    'AI declaring war on weaker allied GP adds backstabber and warmonger evidence',
-    () {
-      final entries = evidenceForDeclareWar(
-        diplomacyGame(
-          turnNumber: 2,
-          players: [
-            _p('human', 'Human', human: true, mil: 3),
-            _p('ai', 'AI', mil: 5),
-            _p('ally', 'Ally', mil: 2),
-          ],
-          diplomacyRelations: [_allied('ai', 'ally')],
+EvidenceRulesScenario _declareWarRow({
+  required String label,
+  required int aiMil,
+  required int targetMil,
+  required String targetId,
+  List<DiplomacyRelation> relations = const [],
+  required void Function(List<DossierEvidenceEntry> entries) expectEntries,
+}) =>
+    _row(label, () {
+      expectEntries(
+        evidenceForDeclareWar(
+          diplomacyGame(
+            turnNumber: 2,
+            players: [
+              _p('human', 'Human', human: true, mil: 3),
+              _p('ai', 'AI', mil: aiMil),
+              _p(targetId, targetId == 'ally' ? 'Ally' : 'Target', mil: targetMil),
+            ],
+            diplomacyRelations: relations,
+          ),
+          'ai',
+          targetId,
+          2,
         ),
-        'ai',
-        'ally',
-        2,
       );
+    });
+
+List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
+  _declareWarRow(
+    label:
+        'AI declaring war on weaker allied GP adds backstabber and warmonger evidence',
+    aiMil: 5,
+    targetMil: 2,
+    targetId: 'ally',
+    relations: [_allied('ai', 'ally')],
+    expectEntries: (entries) {
       expect(entries.length, 2);
-      final backstabber = entries.where((e) => e.agendaType == 'backstabber').toList();
-      final warmonger = entries.where((e) => e.agendaType == 'warmonger').toList();
+      final backstabber =
+          entries.where((e) => e.agendaType == 'backstabber').toList();
+      final warmonger =
+          entries.where((e) => e.agendaType == 'warmonger').toList();
       expect(backstabber.length, 1);
       _expectEntry(
         backstabber.first,
@@ -311,55 +323,42 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
       );
     },
   ),
-  _row('AI declaring war on weaker non-allied GP only adds warmonger evidence', () {
-    final entries = evidenceForDeclareWar(
-      diplomacyGame(
-        turnNumber: 2,
-        players: [
-          _p('human', 'Human', human: true, mil: 3),
-          _p('ai', 'AI', mil: 5),
-          _p('target', 'Target', mil: 2),
-        ],
-      ),
-      'ai',
-      'target',
-      2,
-    );
-    expect(entries.length, 1);
-    _expectEntry(
-      entries.first,
-      agenda: 'warmonger',
-      observer: 'human',
-      subject: 'ai',
-      delta: 2,
-      desc: contains('weaker'),
-    );
-  }),
-  _row('AI declaring war on allied non-weaker GP only adds backstabber evidence', () {
-    final entries = evidenceForDeclareWar(
-      diplomacyGame(
-        turnNumber: 2,
-        players: [
-          _p('human', 'Human', human: true, mil: 3),
-          _p('ai', 'AI', mil: 2),
-          _p('ally', 'Ally', mil: 5),
-        ],
-        diplomacyRelations: [_allied('ai', 'ally')],
-      ),
-      'ai',
-      'ally',
-      2,
-    );
-    expect(entries.length, 1);
-    _expectEntry(
-      entries.first,
-      agenda: 'backstabber',
-      observer: 'human',
-      subject: 'ai',
-      delta: 3,
-      desc: contains('ally'),
-    );
-  }),
+  _declareWarRow(
+    label: 'AI declaring war on weaker non-allied GP only adds warmonger evidence',
+    aiMil: 5,
+    targetMil: 2,
+    targetId: 'target',
+    expectEntries: (entries) {
+      expect(entries.length, 1);
+      _expectEntry(
+        entries.first,
+        agenda: 'warmonger',
+        observer: 'human',
+        subject: 'ai',
+        delta: 2,
+        desc: contains('weaker'),
+      );
+    },
+  ),
+  _declareWarRow(
+    label:
+        'AI declaring war on allied non-weaker GP only adds backstabber evidence',
+    aiMil: 2,
+    targetMil: 5,
+    targetId: 'ally',
+    relations: [_allied('ai', 'ally')],
+    expectEntries: (entries) {
+      expect(entries.length, 1);
+      _expectEntry(
+        entries.first,
+        agenda: 'backstabber',
+        observer: 'human',
+        subject: 'ai',
+        delta: 3,
+        desc: contains('ally'),
+      );
+    },
+  ),
   _emptyBattle(
     label: 'human actor returns no evidence',
     players: const [_pHumanNamed, _pAiNamed],

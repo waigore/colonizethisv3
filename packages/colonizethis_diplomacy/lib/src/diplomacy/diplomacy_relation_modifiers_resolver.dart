@@ -75,71 +75,13 @@ Game applyRelationModifiersAndUpdateScores(
     }
   }
 
-  // SetSubsidy: create or update an ongoing **percentage** subsidy from a GP to
-  // a Minor/Tribe (Refs #3753 R3). Requires an Embassy (R2). The percent model
-  // charges **no** per-turn treasury payment; its effect is the world-market
-  // price discount/surcharge plus the scaled trade-deal relation boost (R10).
-  // GP→GP subsidies are not allowed and are ignored here.
-  // `DiplomaticOrder.amount` carries the subsidy percentage for setSubsidy.
-  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
-  var subsidyIndexByPair = indexByKey(
-    subsidyStates,
-    (s) => subsidyPairKey(s.payerId, s.targetId),
+  // SetSubsidy order processing lives in the subsidies module (Refs #4037).
+  return applySetSubsidyOrders(
+    game,
+    diploByPlayer,
+    turn,
+    eventTally: eventTally,
   );
-  for (final entry in diploByPlayer.entries) {
-    final gpId = entry.key;
-
-    for (final order in entry.value) {
-      if (order.type != DiplomaticOrderType.setSubsidy) continue;
-      final percent = order.amount ?? 0;
-      final player = game.playerById(gpId);
-      if (player == null) continue;
-      if (!isValidSubsidyPercent(percent)) continue;
-
-      final targetId = order.targetFactionId;
-      // Subsidies are GP → Minor/Tribe only; never GP → GP.
-      if (game.playerById(targetId) != null) continue;
-      final overture = getOverture(game, gpId, targetId);
-      if (overture == null || !overture.hasEmbassy) continue;
-
-      // Store/update ongoing percentage subsidy state (no treasury debit).
-      final pairKey = subsidyPairKey(gpId, targetId);
-      final existingSubsidyIdx = subsidyIndexByPair[pairKey] ?? -1;
-      final isUpdate = existingSubsidyIdx >= 0;
-      if (isUpdate) {
-        subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
-            .copyWith(percent: percent);
-      } else {
-        subsidyStates.add(
-          SubsidyState(
-            payerId: gpId,
-            targetId: targetId,
-            percent: percent,
-          ),
-        );
-        subsidyIndexByPair[pairKey] = subsidyStates.length - 1;
-      }
-
-      game = game.copyWith(subsidyStates: subsidyStates);
-      game = logDiplomaticEvent(
-        game,
-        turn,
-        isUpdate
-            ? DiplomaticEventType.subsidyUpdated
-            : DiplomaticEventType.subsidySet,
-        {gpId, targetId},
-        fromFactionId: gpId,
-        toFactionId: targetId,
-        amount: percent,
-        wasAiInitiator: isAiControlledForEvidence(game, gpId),
-        eventTally: eventTally,
-        logMessage:
-            'diplomacy SetSubsidy $gpId -> $targetId percent $percent%',
-      );
-    }
-  }
-
-  return game;
 }
 
 /// Snapshot each relation pair's score at the start of the Diplomacy phase,
@@ -209,35 +151,38 @@ Game applyTradeDealRelationBoosts(Game game, int turn) {
   final pairKeys = game.worldMarketState.completedTradePairKeys;
   if (pairKeys.isEmpty) return game;
 
-  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   var changed = false;
+  final next = withRelationUpserts(game, (relationsIndex) {
+    for (final key in pairKeys) {
+      final parts = key.split('|');
+      if (parts.length != 2) continue;
+      final id1 = parts[0];
+      final id2 = parts[1];
+      if (id1.isEmpty || id2.isEmpty || id1 == id2) continue;
 
-  for (final key in pairKeys) {
-    final parts = key.split('|');
-    if (parts.length != 2) continue;
-    final id1 = parts[0];
-    final id2 = parts[1];
-    if (id1.isEmpty || id2.isEmpty || id1 == id2) continue;
+      // War scores are frozen and never receive the trade boost.
+      if (getRelation(game, id1, id2)?.atWar == true) continue;
 
-    // War scores are frozen and never receive the trade boost.
-    if (getRelation(game, id1, id2)?.atWar == true) continue;
+      final hasEmbassy =
+          hasEmbassyOverture(game, id1, id2) ||
+          hasEmbassyOverture(game, id2, id1);
+      // Subsidy modifier (Refs #3753 R10): +0.2 per subsidy percentage point in
+      // effect between the parties (subsidies are GP→Minor/Tribe, counted once).
+      final subsidyPercent = subsidyPercentBetween(game, id1, id2);
+      final boost = tradeDealRelationBoostBase +
+          (hasEmbassy ? tradeDealRelationBoostEmbassyBonus : 0.0) +
+          (tradeDealRelationBoostPerSubsidyPercent * subsidyPercent);
 
-    final hasEmbassy =
-        hasEmbassyOverture(game, id1, id2) ||
-        hasEmbassyOverture(game, id2, id1);
-    // Subsidy modifier (Refs #3753 R10): +0.2 per subsidy percentage point in
-    // effect between the parties (subsidies are GP→Minor/Tribe, counted once).
-    final subsidyPercent = subsidyPercentBetween(game, id1, id2);
-    final boost = tradeDealRelationBoostBase +
-        (hasEmbassy ? tradeDealRelationBoostEmbassyBonus : 0.0) +
-        (tradeDealRelationBoostPerSubsidyPercent * subsidyPercent);
+      relationsIndex.upsert(
+        id1,
+        id2,
+        _tradeDealBoostUpdater(id1, id2, boost, turn),
+      );
+      changed = true;
+    }
+  });
 
-    relationsIndex.upsert(id1, id2, _tradeDealBoostUpdater(id1, id2, boost, turn));
-    changed = true;
-  }
-
-  if (!changed) return game;
-  return withCommittedRelations(game, relationsIndex);
+  return changed ? next : game;
 }
 
 DiplomacyRelation Function(DiplomacyRelation?) _tradeDealBoostUpdater(

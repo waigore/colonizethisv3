@@ -33,16 +33,8 @@ const _h1a1 = [
 
 final _oldWorldBorderTopology = MapTopology(
   nodes: const [
-    TopologyNode(
-      id: 'P1',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'P2',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
+    TopologyNode(id: 'P1', regionId: 'oldWorld', type: TopologyNodeType.province),
+    TopologyNode(id: 'P2', regionId: 'oldWorld', type: TopologyNodeType.province),
   ],
   edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
 );

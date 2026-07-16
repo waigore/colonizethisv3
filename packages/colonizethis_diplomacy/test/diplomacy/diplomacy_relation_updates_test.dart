@@ -5,38 +5,57 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 void main() {
-  group('applyGrantAidModifier', () {
+  group('grantAidRelationUpdater via RelationUpsertIndex', () {
     test('updates existing relation when pair already present', () {
-      final relations = [
+      final index = RelationUpsertIndex([
         peaceRelation('gp1', 'gp2', 50, level: RelationLevel.neutral),
-      ];
-      final result = applyGrantAidModifier(
-        relations: relations,
-        gpId: 'gp1',
-        targetId: 'gp2',
-        turn: 2,
-      );
+      ])..upsert('gp1', 'gp2', grantAidRelationUpdater('gp1', 'gp2', 2));
+      final result = index.toList();
       expect(result.length, 1);
       expect(result[0].score, 55);
       expect(result[0].lastInteractionTurn, 2);
     });
+
+    test('creates a new relation seeded from neutral + 5', () {
+      final index = RelationUpsertIndex(const [])
+        ..upsert('gp1', 'minor1', grantAidRelationUpdater('gp1', 'minor1', 4));
+      final relations = index.toList();
+      expect(relations, hasLength(1));
+      final rel = relations.single;
+      expect(rel.score, relationScoreNeutral + 5);
+      expect(rel.level, scoreToLevel(relationScoreNeutral + 5));
+      expect(rel.lastInteractionTurn, 4);
+    });
   });
 
-  group('applySubsidyBoost', () {
+  group('subsidyBoostRelationUpdater via RelationUpsertIndex', () {
     test('updates existing relation when pair already present', () {
-      final relations = [
+      final index = RelationUpsertIndex([
         peaceRelation('gp1', 'gp2', 60, level: RelationLevel.friendly),
-      ];
-      final result = applySubsidyBoost(
-        relations: relations,
-        payerId: 'gp1',
-        targetId: 'gp2',
-        boost: 10,
-        turn: 3,
+      ])..upsert(
+        'gp1',
+        'gp2',
+        subsidyBoostRelationUpdater('gp1', 'gp2', 10, 3),
       );
+      final result = index.toList();
       expect(result.length, 1);
       expect(result[0].score, 70);
       expect(result[0].lastInteractionTurn, 3);
+    });
+
+    test('creates a new relation seeded from neutral + boost', () {
+      final index = RelationUpsertIndex(const [])
+        ..upsert(
+          'gp1',
+          'tribe1',
+          subsidyBoostRelationUpdater('gp1', 'tribe1', 6, 8),
+        );
+      final relations = index.toList();
+      expect(relations, hasLength(1));
+      final rel = relations.single;
+      expect(rel.score, relationScoreNeutral + 6);
+      expect(rel.level, scoreToLevel(relationScoreNeutral + 6));
+      expect(rel.lastInteractionTurn, 8);
     });
   });
 
@@ -48,47 +67,11 @@ void main() {
     });
   });
 
-  group('applyGrantAidModifier with no existing relation', () {
-    test('creates a new relation seeded from neutral + 5', () {
-      final relations = applyGrantAidModifier(
-        relations: const [],
-        gpId: 'gp1',
-        targetId: 'minor1',
-        turn: 4,
-      );
-      expect(relations, hasLength(1));
-      final rel = relations.single;
-      expect(rel.score, relationScoreNeutral + 5);
-      expect(rel.level, scoreToLevel(relationScoreNeutral + 5));
-      expect(rel.lastInteractionTurn, 4);
-    });
-  });
-
-  group('applySubsidyBoost with no existing relation', () {
-    test('creates a new relation seeded from neutral + boost', () {
-      final relations = applySubsidyBoost(
-        relations: const [],
-        payerId: 'gp1',
-        targetId: 'tribe1',
-        boost: 6,
-        turn: 8,
-      );
-      expect(relations, hasLength(1));
-      final rel = relations.single;
-      expect(rel.score, relationScoreNeutral + 6);
-      expect(rel.level, scoreToLevel(relationScoreNeutral + 6));
-      expect(rel.lastInteractionTurn, 8);
-    });
-  });
-
-  group('setWarStateForPair with no existing relation', () {
-    test('creates a hostile at-war relation', () {
-      final relations = setWarStateForPair(
-        relations: const [],
-        gpId: 'gp1',
-        targetId: 'gp2',
-        turn: 2,
-      );
+  group('warStateRelationUpdater via RelationUpsertIndex', () {
+    test('positive: creates a hostile at-war relation for a new pair', () {
+      final index = RelationUpsertIndex(const [])
+        ..upsert('gp1', 'gp2', warStateRelationUpdater('gp1', 'gp2', 2));
+      final relations = index.toList();
       expect(relations, hasLength(1));
       final rel = relations.single;
       expect(rel.state, RelationState.atWar);
@@ -96,10 +79,8 @@ void main() {
       expect(rel.sinceTurn, 2);
       expect(rel.formalAlliance, isFalse);
     });
-  });
 
-  group('setWarStateForPair clears a formal alliance (war invariant)', () {
-    test('transitioning an allied pair to war drops formalAlliance', () {
+    test('positive: transitioning an allied pair to war drops formalAlliance', () {
       const allied = DiplomacyRelation(
         factionId1: 'gp1',
         factionId2: 'gp2',
@@ -107,40 +88,11 @@ void main() {
         level: RelationLevel.allied,
         formalAlliance: true,
       );
-      final relations = setWarStateForPair(
-        relations: const [allied],
-        gpId: 'gp1',
-        targetId: 'gp2',
-        turn: 5,
-      );
-      final rel = relations.single;
+      final index = RelationUpsertIndex(const [allied])
+        ..upsert('gp1', 'gp2', warStateRelationUpdater('gp1', 'gp2', 5));
+      final rel = index.toList().single;
       expect(rel.state, RelationState.atWar);
       expect(rel.formalAlliance, isFalse);
-    });
-  });
-
-  group('warStateRelationUpdater via RelationUpsertIndex', () {
-    test('positive: matches setWarStateForPair for a new pair', () {
-      final viaList = setWarStateForPair(
-        relations: const [],
-        gpId: 'gp1',
-        targetId: 'gp2',
-        turn: 3,
-      );
-      final index = RelationUpsertIndex(const []);
-      index.upsert(
-        'gp1',
-        'gp2',
-        warStateRelationUpdater('gp1', 'gp2', 3),
-      );
-      final viaIndex = index.toList();
-      expect(viaIndex, hasLength(1));
-      final rel = viaIndex.single;
-      expect(rel.state, viaList.single.state);
-      expect(rel.level, viaList.single.level);
-      expect(rel.score, viaList.single.score);
-      expect(rel.sinceTurn, viaList.single.sinceTurn);
-      expect(rel.formalAlliance, viaList.single.formalAlliance);
     });
 
     test('negative: peace updater requires an existing relation', () {
