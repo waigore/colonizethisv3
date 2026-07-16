@@ -53,7 +53,7 @@ uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py
 
 ### finalize_plantation_field_retune_3961.py
 
-**Purpose:** After PO locks A/B/C per crop on [#3961](https://github.com/waigore/colonizethisv3/issues/3961), promote candidates, patch SPEC mid-tone pins in [layered-terrain-rendering.md](layered-terrain-rendering.md), and patch `app/test/plains_plantation_terrain_goldens_test.dart` mean-RGB constants from `CANDIDATE_MEANS.json`. Tobacco stays unchanged. Does not auto-run golden refresh.
+**Purpose:** After PO locks A/B/C per crop on [#3961](https://github.com/waigore/colonizethisv3/issues/3961), promote candidates, patch SPEC mid-tone pins in [layered-terrain-rendering.md](layered-terrain-rendering.md), and patch `app/test/plains_plantation_terrain_goldens_test.dart` mean-RGB constants from `CANDIDATE_MEANS.json`. Tobacco stays unchanged. Golden refresh is opt-in via `--update-goldens` (default prints the manual command).
 
 **Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py`.
 

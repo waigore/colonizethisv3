@@ -4,7 +4,8 @@
 After PO picks A/B/C per crop on the issue, this script:
 1. Promotes candidate PNGs into shipped app terrain (tobacco unchanged).
 2. Patches SPEC + golden-test mid-tone pins from measured field-mask means.
-3. Prints the golden refresh command (not run automatically).
+3. Optionally refreshes plantation goldens when `--update-goldens` is passed; otherwise
+   prints the manual `flutter test --update-goldens` command.
 
 Does **not** run without explicit `--picks`. Use `--dry-run` to preview patches.
 
