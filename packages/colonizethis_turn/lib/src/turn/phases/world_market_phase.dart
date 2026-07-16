@@ -1,4 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
@@ -90,22 +89,11 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final game = acc.game;
   final priorMarket = game.worldMarketState;
 
-  final newOffersByFactionId = <String, List<TradeOrder>>{};
-  final newBidsByFactionId = <String, List<TradeOrder>>{};
-  for (final entry in config.orders.tradeOrdersByPlayerId.entries) {
-    final offers = <TradeOrder>[];
-    final bids = <TradeOrder>[];
-    for (final order in entry.value) {
-      if (order.quantity <= 0) continue;
-      if (order.type == TradeOrderType.offer) {
-        offers.add(order);
-      } else {
-        bids.add(order);
-      }
-    }
-    if (offers.isNotEmpty) newOffersByFactionId[entry.key] = offers;
-    if (bids.isNotEmpty) newBidsByFactionId[entry.key] = bids;
-  }
+  final splitOrders = splitTradeOrdersByType(
+    config.orders.tradeOrdersByPlayerId,
+  );
+  final newOffersByFactionId = splitOrders.offersByFactionId;
+  final newBidsByFactionId = splitOrders.bidsByFactionId;
 
   // Minor/tribe auto-offers (Refs #2991 C4) — `SPEC/program/world-market-resolution.md`
   // § Step A Gather (Step A.2) and `SPEC/game/world-market.md` § Minor and
@@ -132,11 +120,6 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     worldMarketState: priorMarket,
   );
 
-  final regimentBuildThreshold = cheapestRegimentBuildTreasuryCost();
-  final lockRecoverySellerPriorityIds = <String>{
-    for (final player in game.players)
-      if (player.treasury < regimentBuildThreshold) player.id,
-  };
   // F15 (Refs #2924; SPEC/program/world-market-resolution.md § Step A 3.1):
   // build a phase-13-only view where any broke GP (negative treasury and
   // below the regiment-build band) is treated as having `treasury = 0`.
@@ -149,16 +132,10 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   // their original negative balance unchanged). Not an affordability
   // bypass — regiment builds still require
   // `treasury >= cheapestRegimentBuildTreasuryCost()` after phase 13.
-  final gameForMarket = lockRecoverySellerPriorityIds.isEmpty
-      ? game
-      : game.copyWith(
-          players: [
-            for (final p in game.players)
-              lockRecoverySellerPriorityIds.contains(p.id) && p.treasury < 0
-                  ? p.copyWith(treasury: 0)
-                  : p,
-          ],
-        );
+  final lockRecoveryView = applyLockRecoveryTreasuryViewForMarket(game);
+  final gameForMarket = lockRecoveryView.gameForMarket;
+  final lockRecoverySellerPriorityIds =
+      lockRecoveryView.lockRecoverySellerPriorityIds;
 
   // Compute start-of-phase trade cargo capacity, stockpile, raw treasury, and
   // per-buyer treasury budget per GP in a single player pass (Refs #3565).

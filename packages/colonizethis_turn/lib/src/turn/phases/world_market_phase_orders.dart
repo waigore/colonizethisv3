@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -175,5 +176,67 @@ Map<String, List<TradeOrder>> computeMinorTribeTownManufacturingAutoOffers({
   return townManufacturingBonusToAutoOffers(
     game: game,
     bonusByFactionId: bonus.bonusByFactionId,
+  );
+}
+
+/// Splits submitted trade orders into offer vs bid maps, dropping non-positive
+/// quantities (Refs #4039). Shared Step A gather logic for the phase handler.
+({
+  Map<String, List<TradeOrder>> offersByFactionId,
+  Map<String, List<TradeOrder>> bidsByFactionId,
+}) splitTradeOrdersByType(
+  Map<String, List<TradeOrder>> tradeOrdersByPlayerId,
+) {
+  final offersByFactionId = <String, List<TradeOrder>>{};
+  final bidsByFactionId = <String, List<TradeOrder>>{};
+  for (final entry in tradeOrdersByPlayerId.entries) {
+    final offers = <TradeOrder>[];
+    final bids = <TradeOrder>[];
+    for (final order in entry.value) {
+      if (order.quantity <= 0) continue;
+      if (order.type == TradeOrderType.offer) {
+        offers.add(order);
+      } else {
+        bids.add(order);
+      }
+    }
+    if (offers.isNotEmpty) offersByFactionId[entry.key] = offers;
+    if (bids.isNotEmpty) bidsByFactionId[entry.key] = bids;
+  }
+  return (
+    offersByFactionId: offersByFactionId,
+    bidsByFactionId: bidsByFactionId,
+  );
+}
+
+/// Phase-13-only view that floors broke lock-recovery sellers' treasury to `0`
+/// for matcher sort/budget (Refs #2924 F15 / #4039). Does not mutate persisted
+/// [Player.treasury] on the original [game].
+///
+/// Returns the clamped view plus the seller-priority id set used by the matcher
+/// and deal settlement.
+({Game gameForMarket, Set<String> lockRecoverySellerPriorityIds})
+applyLockRecoveryTreasuryViewForMarket(Game game) {
+  final regimentBuildThreshold = cheapestRegimentBuildTreasuryCost();
+  final lockRecoverySellerPriorityIds = <String>{
+    for (final player in game.players)
+      if (player.treasury < regimentBuildThreshold) player.id,
+  };
+  if (lockRecoverySellerPriorityIds.isEmpty) {
+    return (
+      gameForMarket: game,
+      lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
+    );
+  }
+  return (
+    gameForMarket: game.copyWith(
+      players: [
+        for (final p in game.players)
+          lockRecoverySellerPriorityIds.contains(p.id) && p.treasury < 0
+              ? p.copyWith(treasury: 0)
+              : p,
+      ],
+    ),
+    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
   );
 }
