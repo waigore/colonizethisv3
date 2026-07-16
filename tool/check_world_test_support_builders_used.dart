@@ -13,6 +13,8 @@ const List<String> worldRequiredSupportBuilderNames = [
   'distantSeaVisibilityGame',
   'fogDecayVisibilityGame',
   'capitalLossGame',
+  'gpCapitalLossGame',
+  'minorCapitalLossGame',
   'gpCapitalReassignmentGame',
   'factionCapitalReassignmentGame',
   'ordersPhaseGame',
