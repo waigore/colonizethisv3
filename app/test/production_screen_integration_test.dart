@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'widget_test_pumps.dart';
+import 'support/app_shell_harness.dart';
 import 'support/production_panel_test_support.dart';
 
 class _SeededProductionDesiredOutputNotifier
@@ -52,7 +53,8 @@ void main() {
     double width = 800,
     double height = 500,
   }) {
-    return ProviderScope(
+    return buildAppShell(
+      viewport: Size(width, height),
       overrides: [
         currentGameProvider.overrideWith(
           () => CurrentGameNotifier(isolatedGame),
@@ -70,17 +72,12 @@ void main() {
             () => _SeededProductionDesiredOutputNotifier(initialDesiredOutput),
           ),
       ],
-      child: MaterialApp(
-        home: MediaQuery(
-          data: MediaQueryData(size: Size(width, height)),
-          child: ProductionScreen(
-            game: isolatedGame,
-            player: fullPlayer,
-            attachGameToUiListener: false,
-            panelTopologyOverride: const MapTopology(),
-            panelTileMapByRegionOverride: null,
-          ),
-        ),
+      child: ProductionScreen(
+        game: isolatedGame,
+        player: fullPlayer,
+        attachGameToUiListener: false,
+        panelTopologyOverride: const MapTopology(),
+        panelTileMapByRegionOverride: null,
       ),
     );
   }

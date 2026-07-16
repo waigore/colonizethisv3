@@ -254,7 +254,7 @@ Future<void> pumpTradeScreen(
   if (selectDealBookTab) {
     final Finder dealBookLabel = find.descendant(
       of: find.byType(CtTabStrip),
-      matching: find.text(TradeScreen.dealBookTabLabel),
+      matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
     );
     expect(dealBookLabel, findsOneWidget);
     await tester.tap(dealBookLabel);

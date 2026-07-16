@@ -98,7 +98,7 @@ int _totalStagedBid(ProviderContainer container) {
 
 String _cargoIndicatorText(WidgetTester tester) {
   final Text widget = tester.widget<Text>(
-    find.byKey(TradeScreen.marketCargoIndicatorKey),
+    find.byKey(TradeScreenMarketKeys.marketCargoIndicatorKey),
   );
   return widget.data ?? '';
 }
@@ -116,9 +116,9 @@ void main() {
         game: buildTradeTestGame(id: 'test_trade_screen_e5c', treasury: 100000),
       );
 
-      expect(find.byKey(TradeScreen.marketCargoIndicatorKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoIndicatorKey), findsOneWidget);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
 
     testWidgets('staged offers do not consume cargo → indicator stays at the '
@@ -133,7 +133,7 @@ void main() {
       );
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 24');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
 
     testWidgets(
@@ -153,7 +153,7 @@ void main() {
         );
 
         expect(_cargoIndicatorText(tester), 'Cargo remaining: 17');
-        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+        expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
       },
     );
 
@@ -171,8 +171,8 @@ void main() {
       );
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
-      expect(find.text(TradeScreen.cargoLimitWarningText), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
+      expect(find.text(TradeScreenMarketKeys.cargoLimitWarningText), findsOneWidget);
     });
 
     testWidgets(
@@ -192,22 +192,22 @@ void main() {
         );
 
         expect(_cargoIndicatorText(tester), 'Cargo remaining: 4');
-        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+        expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
 
         for (int i = 0; i < 4; i++) {
           await tester.tap(
-            find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+            find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
           );
           await tester.pump();
         }
         expect(_stagedOrder(container, _timber)?.quantity, 10);
         expect(_totalStagedBid(container), 10);
         expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-        expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+        expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
 
         // 5th increment is blocked by the cross-commodity cap.
         await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
         );
         await tester.pump();
         expect(
@@ -237,7 +237,7 @@ void main() {
 
       expect(_stagedOrder(container, _grain), isNull);
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_grain)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_grain)));
       await tester.pump();
 
       expect(
@@ -249,7 +249,7 @@ void main() {
       );
       expect(_totalStagedBid(container), 10);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
     });
 
     testWidgets('capacity 10 with cargo saturated and a staged offer: tapping '
@@ -269,7 +269,7 @@ void main() {
         ]),
       );
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_fabric)));
       await tester.pump();
 
       final TradeOrder? fabric = _stagedOrder(container, _fabric);
@@ -299,7 +299,7 @@ void main() {
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_fabric)));
       await tester.pump();
 
       final TradeOrder? fabric = _stagedOrder(container, _fabric);
@@ -307,7 +307,7 @@ void main() {
       expect(fabric?.quantity, 8);
       expect(_totalStagedBid(container), 8);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 2');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
 
     testWidgets('capacity 10 with bid timber 9 (cargo remaining 1) AND offer '
@@ -328,7 +328,7 @@ void main() {
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_fabric)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_fabric)));
       await tester.pump();
 
       final TradeOrder? fabric = _stagedOrder(container, _fabric);
@@ -342,7 +342,7 @@ void main() {
       );
       expect(_totalStagedBid(container), 10);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
     });
 
     testWidgets('capacity 10 saturated with bid timber 10: tapping `−` on '
@@ -359,14 +359,14 @@ void main() {
       );
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
 
-      await tester.tap(find.byKey(TradeScreen.marketRowDecrementKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
       await tester.pump();
 
       expect(_stagedOrder(container, _timber)?.quantity, 9);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 1');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
 
     testWidgets('capacity 10 saturated with bid timber 10: tapping `None` on '
@@ -382,13 +382,13 @@ void main() {
         initialOrders: _orders(<TradeOrder>[_bid(_timber, 10)]),
       );
 
-      await tester.tap(find.byKey(TradeScreen.marketRowNoneChipKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)));
       await tester.pump();
 
       expect(_stagedOrder(container, _timber), isNull);
       expect(_totalStagedBid(container), 0);
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 10');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsNothing);
     });
 
     testWidgets('observe mode (canMutateViaUi == false): the cargo indicator '
@@ -407,14 +407,14 @@ void main() {
       );
 
       expect(_cargoIndicatorText(tester), 'Cargo remaining: 0');
-      expect(find.byKey(TradeScreen.marketCargoWarningKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.marketCargoWarningKey), findsOneWidget);
 
       // Attempting to tap the increment / None chip is swallowed by
       // IgnorePointer (`warnIfMissed: false` silences the expected
       // hit-test warning that surfaces when the wrapper absorbs
       // the pointer event).
       await tester.tap(
-        find.byKey(TradeScreen.marketRowNoneChipKey(_timber)),
+        find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)),
         warnIfMissed: false,
       );
       await tester.pump();

@@ -4,17 +4,16 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;
 
+import 'support/app_shell_harness.dart';
 import 'support/civilian_units_panel_test_support.dart';
 
 Unit? _firstIdleCivilian(Game game, String humanId) {
@@ -66,6 +65,8 @@ Future<void> _invokePendingCancel(
   await tester.pumpAndSettle();
 }
 
+/// Cross-panel style watcher host: editorial [buildAppShell] + confirm-dialog
+/// bus leaf + a counter strip (Refs #4035 — no inline `MaterialApp`).
 Widget _watcherHost({
   required AppEventBus bus,
   required GlobalKey<NavigatorState> navigatorKey,
@@ -75,35 +76,28 @@ Widget _watcherHost({
   required String humanId,
   required Orders orders,
 }) {
-  return ProviderScope(
-    overrides: [
-      availableWorkTargetIdsForUnitProvider.overrideWith(
-        (ref, _) => const <String>[],
-      ),
-    ],
-    child: MaterialApp(
-      navigatorKey: navigatorKey,
-      home: Scaffold(
-        body: Column(
-          children: [
-            ValueListenableBuilder<int>(
-              valueListenable: counter,
-              builder: (_, count, _) => Text('$labelPrefix:$count'),
-            ),
-            Expanded(
-              child: CivilianPanelBusDialogHost(
+  return buildAppShell(
+    navigatorKey: navigatorKey,
+    child: Scaffold(
+      body: Column(
+        children: [
+          ValueListenableBuilder<int>(
+            valueListenable: counter,
+            builder: (_, count, _) => Text('$labelPrefix:$count'),
+          ),
+          Expanded(
+            child: CivilianPanelBusDialogHost(
+              bus: bus,
+              navigatorKey: navigatorKey,
+              child: CivilianUnitsPanel(
+                game: game,
+                humanPlayerId: humanId,
+                currentOrders: orders,
                 bus: bus,
-                navigatorKey: navigatorKey,
-                child: CivilianUnitsPanel(
-                  game: game,
-                  humanPlayerId: humanId,
-                  currentOrders: orders,
-                  bus: bus,
-                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     ),
   );
@@ -172,43 +166,31 @@ void main() {
 
         // Tile-scoped: every visible row exposes Locate, including non-selected.
         await runLocateCase(
-          host: (bus) => ProviderScope(
-            overrides: [
-              availableWorkTargetIdsForUnitProvider.overrideWith(
-                (ref, _) => const <String>[],
-              ),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: CivilianUnitsPanel(
-                  game: buildCivilianOwUnitsGame(
-                    id: 'g_civ_locate_tile_scope',
-                    humanId: human,
-                    units: [
-                      civilianIdleUnit(
-                        id: 'civ_a',
-                        type: kUnitTypeBuilder,
-                        ownerId: human,
-                        provinceId: 'oldWorld|p1',
-                        tileKey: tileKey,
-                      ),
-                      civilianIdleUnit(
-                        id: 'civ_b',
-                        type: kUnitTypeEngineer,
-                        ownerId: human,
-                        provinceId: 'oldWorld|p1',
-                        tileKey: tileKey,
-                      ),
-                    ],
-                  ),
-                  humanPlayerId: human,
-                  currentOrders: const Orders(),
-                  bus: bus,
-                  tileScopeTileKey: tileKey,
-                  initialSelectedUnitId: 'civ_a',
+          host: (bus) => buildCivilianPanel(
+            game: buildCivilianOwUnitsGame(
+              id: 'g_civ_locate_tile_scope',
+              humanId: human,
+              units: [
+                civilianIdleUnit(
+                  id: 'civ_a',
+                  type: kUnitTypeBuilder,
+                  ownerId: human,
+                  provinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
                 ),
-              ),
+                civilianIdleUnit(
+                  id: 'civ_b',
+                  type: kUnitTypeEngineer,
+                  ownerId: human,
+                  provinceId: 'oldWorld|p1',
+                  tileKey: tileKey,
+                ),
+              ],
             ),
+            humanPlayerId: human,
+            bus: bus,
+            tileScopeTileKey: tileKey,
+            initialSelectedUnitId: 'civ_a',
           ),
           locateMatcher: findsNWidgets(2),
           locateIndex: 1,

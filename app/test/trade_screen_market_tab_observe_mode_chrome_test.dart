@@ -23,7 +23,7 @@
 // negative AC for the em-dash glyph):
 //
 //   * Sectioned grouping (Food / Raw Materials / Manufactured)
-//     remains mounted — `TradeScreen.marketSectionFoodKey`,
+//     remains mounted — `TradeScreenMarketKeys.marketSectionFoodKey`,
 //     `marketSectionRawMaterialsKey`,
 //     `marketSectionManufacturedKey` each resolve to exactly one
 //     widget when `canMutateViaUi == false`.
@@ -81,7 +81,7 @@ void main() {
         canMutateViaUi: false,
       );
 
-      final marketTab = find.byKey(TradeScreen.marketTabBodyKey);
+      final marketTab = find.byKey(TradeScreenMarketKeys.marketTabBodyKey);
       expect(
         marketTab,
         findsOneWidget,
@@ -93,9 +93,9 @@ void main() {
       );
 
       for (final Key sectionKey in <Key>[
-        TradeScreen.marketSectionFoodKey,
-        TradeScreen.marketSectionRawMaterialsKey,
-        TradeScreen.marketSectionManufacturedKey,
+        TradeScreenMarketKeys.marketSectionFoodKey,
+        TradeScreenMarketKeys.marketSectionRawMaterialsKey,
+        TradeScreenMarketKeys.marketSectionManufacturedKey,
       ]) {
         expect(
           find.descendant(of: marketTab, matching: find.byKey(sectionKey)),
@@ -122,7 +122,7 @@ void main() {
         canMutateViaUi: false,
       );
 
-      final list = find.byKey(TradeScreen.marketCommodityListKey);
+      final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
       expect(list, findsOneWidget);
 
       for (final Commodity c in CommodityCatalog.all) {
@@ -131,7 +131,7 @@ void main() {
         }
         final iconFinder = find.descendant(
           of: list,
-          matching: find.byKey(TradeScreen.marketRowResourceIconKey(c.id)),
+          matching: find.byKey(TradeScreenMarketKeys.marketRowResourceIconKey(c.id)),
         );
         expect(
           iconFinder,
@@ -146,7 +146,7 @@ void main() {
         final ResourceIcon icon = tester.widget<ResourceIcon>(iconFinder);
         expect(
           icon.size,
-          TradeScreen.marketRowResourceIconSize,
+          TradeScreenMarketKeys.marketRowResourceIconSize,
           reason:
               'Refs #3093 observe-mode chrome parity: leading '
               'ResourceIcon on row `${c.id}` must paint at 20 dp '
@@ -155,7 +155,7 @@ void main() {
 
         final coinFinder = find.descendant(
           of: list,
-          matching: find.byKey(TradeScreen.marketRowPriceCoinIconKey(c.id)),
+          matching: find.byKey(TradeScreenMarketKeys.marketRowPriceCoinIconKey(c.id)),
         );
         expect(
           coinFinder,
@@ -174,8 +174,8 @@ void main() {
               'coin glyph on row `${c.id}` must still reuse the '
               'canonical treasury-coin asset under observe mode.',
         );
-        expect(coin.width, TradeScreen.marketRowPriceCoinIconSize);
-        expect(coin.height, TradeScreen.marketRowPriceCoinIconSize);
+        expect(coin.width, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
+        expect(coin.height, TradeScreenMarketKeys.marketRowPriceCoinIconSize);
       }
     });
 
@@ -191,7 +191,7 @@ void main() {
         canMutateViaUi: false,
       );
 
-      final list = find.byKey(TradeScreen.marketCommodityListKey);
+      final list = find.byKey(TradeScreenMarketKeys.marketCommodityListKey);
       expect(list, findsOneWidget);
 
       for (final Commodity c in CommodityCatalog.all) {
@@ -200,7 +200,7 @@ void main() {
         }
         final sellableFinder = find.descendant(
           of: list,
-          matching: find.byKey(TradeScreen.marketRowSellableReadoutKey(c.id)),
+          matching: find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(c.id)),
         );
         expect(
           sellableFinder,
@@ -240,7 +240,7 @@ void main() {
         canMutateViaUi: false,
       );
 
-      final timberRow = find.byKey(TradeScreen.marketCommodityRowKey(_timber));
+      final timberRow = find.byKey(TradeScreenMarketKeys.marketCommodityRowKey(_timber));
       expect(timberRow, findsOneWidget);
       expect(
         find.descendant(
@@ -280,7 +280,7 @@ void main() {
       );
 
       final ironRow = find.byKey(
-        TradeScreen.marketCommodityRowKey(CommodityCatalog.iron.id),
+        TradeScreenMarketKeys.marketCommodityRowKey(CommodityCatalog.iron.id),
       );
       expect(ironRow, findsOneWidget);
 
@@ -307,7 +307,7 @@ void main() {
       // the integer price specifically on the observed surface.
       final coinRect = tester.getRect(
         find.byKey(
-          TradeScreen.marketRowPriceCoinIconKey(CommodityCatalog.iron.id),
+          TradeScreenMarketKeys.marketRowPriceCoinIconKey(CommodityCatalog.iron.id),
         ),
       );
       final priceRect = tester.getRect(

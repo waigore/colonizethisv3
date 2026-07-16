@@ -22,8 +22,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pEconRowOrder';
@@ -128,24 +127,14 @@ Widget _overlay({
   required String selectedTileKey,
   required PlayerView playerView,
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: SizedBox(
-        // Wide shell (>= shell breakpoint): the overlay renders a single
-        // scrollable section column (no tab strip), so vertical position
-        // reflects in-bucket row order.
-        width: 800,
-        child: ProvinceSeaZoneDetailOverlay(
-          game: game,
-          region: region,
-          displayId: _fullProvinceId,
-          selectedTileKey: selectedTileKey,
-          humanPlayerId: _humanPlayerId,
-          playerView: playerView,
-        ),
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: game,
+    region: region,
+    displayId: _fullProvinceId,
+    selectedTileKey: selectedTileKey,
+    humanPlayerId: _humanPlayerId,
+    playerView: playerView,
+    shellWidth: 800,
   );
 }
 

@@ -1,13 +1,24 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
+
+  Widget _host(Widget child, {ThemeData? themeOverride}) {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    // Theme overrides for bare ThemeData / light-theme guards wrap [child]
+    // so MaterialApp stays canonical.
+    final Widget body = themeOverride == null
+        ? child
+        : Theme(data: themeOverride, child: child);
+    return buildAppShell(child: body);
+  }
 
   group('CtDialogShell layout/scroll', () {
     testWidgets('short content: scroll viewport shorter than maxHeight', (
@@ -15,8 +26,8 @@ void main() {
     ) async {
       const maxH = 500.0;
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
+        _host(
+          const Scaffold(
             body: Center(
               child: CtDialogShell(
                 maxHeight: maxH,
@@ -48,8 +59,8 @@ void main() {
     ) async {
       const maxH = 200.0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        _host(
+          Scaffold(
             body: Center(
               child: CtDialogShell(
                 maxHeight: maxH,
@@ -98,9 +109,8 @@ void main() {
   group('CtDialogShell dark frame contract (#2859 R3 / S4)', () {
     Future<void> pumpShell(WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: const Scaffold(
+        _host(
+          const Scaffold(
             body: Center(
               child: CtDialogShell(
                 child: Text('Body'),
@@ -166,11 +176,11 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light(),
-          home: const Scaffold(
+        _host(
+          const Scaffold(
             body: Center(child: CtDialogShell(child: Text('Body'))),
           ),
+          themeOverride: ThemeData.light(),
         ),
       );
       await tester.pumpAndSettle();
@@ -253,9 +263,8 @@ void main() {
 
         late TextStyle resolvedStyle;
         await tester.pumpWidget(
-          MaterialApp(
-            theme: themeWithBodyMedium,
-            home: Scaffold(
+          _host(
+            Scaffold(
               body: Center(
                 child: CtDialogShell(
                   child: Builder(
@@ -267,6 +276,7 @@ void main() {
                 ),
               ),
             ),
+            themeOverride: themeWithBodyMedium,
           ),
         );
         await tester.pumpAndSettle();

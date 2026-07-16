@@ -67,7 +67,7 @@ void _expectSellable(
   expect(
     tester
         .widget<Text>(
-          find.byKey(TradeScreen.marketRowSellableReadoutKey(commodityId)),
+          find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId)),
         )
         .data,
     // ignore: avoid_hardcoded_strings_in_widgets
@@ -101,7 +101,7 @@ void main() {
       // the raw stockpile. The new industry-allocation reservation
       // path is exercised by the canonical AC test below.
       expect(
-        find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
+        find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(_timber)),
         findsOneWidget,
       );
       _expectSellable(tester, _timber, '(10)');
@@ -137,7 +137,7 @@ void main() {
       // at most +6 units before saturating, which lands the staged
       // quantity at 8 (matching the cap).
       for (int i = 0; i < 6; i++) {
-        await _tapKey(tester, TradeScreen.marketRowIncrementKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       }
       expect(
         _stagedOrder(container, _timber)?.quantity,
@@ -154,7 +154,7 @@ void main() {
       );
 
       // Next + tap is a silent no-op; quantity stays at 8.
-      await _tapKey(tester, TradeScreen.marketRowIncrementKey(_timber));
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       expect(
         _stagedOrder(container, _timber)?.quantity,
         8,
@@ -178,7 +178,7 @@ void main() {
       );
 
       _expectSellable(tester, _timber, '(0)');
-      await _tapKey(tester, TradeScreen.marketRowOfferChipKey(_timber));
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
       expect(
         _stagedOrder(container, _timber),
         isNull,
@@ -246,7 +246,7 @@ void main() {
         _expectSellable(tester, _timber, '(0)');
 
         // Offer chip tap → silent no-op.
-        await _tapKey(tester, TradeScreen.marketRowOfferChipKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
         expect(
           _stagedOrder(container, _timber),
           isNull,
@@ -273,7 +273,7 @@ void main() {
       _expectSellable(tester, _timber, '(0)');
 
       // Decrement the saturated offer down by 1 → headroom updates to 1.
-      await _tapKey(tester, TradeScreen.marketRowDecrementKey(_timber));
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowDecrementKey(_timber));
       _expectSellable(tester, _timber, '(1)');
       expect(_stagedOrder(container, _timber)?.quantity, 2);
     });
@@ -289,14 +289,14 @@ void main() {
           ),
         );
 
-        await _tapKey(tester, TradeScreen.marketRowOfferChipKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         final TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged, isNotNull);
         expect(staged!.type, TradeOrderType.offer);
         expect(
           staged.quantity,
-          TradeScreen.marketRowQuantityDefault,
+          TradeScreenMarketKeys.marketRowQuantityDefault,
           reason:
               'Default quantity (1) fits inside the offer cap of 5 — no '
               'clamping needed.',
@@ -313,7 +313,7 @@ void main() {
           game: buildTradeTestGame(stockpile: const <CommodityId, int>{}),
         );
 
-        await _tapKey(tester, TradeScreen.marketRowOfferChipKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         expect(_stagedOrder(container, _timber), isNull);
       },
@@ -333,7 +333,7 @@ void main() {
           ),
         );
 
-        await _tapKey(tester, TradeScreen.marketRowOfferChipKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         final TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged, isNotNull);
@@ -360,7 +360,7 @@ void main() {
           initialOrders: _tradeOrders(_timberTrade(quantity: 5)),
         );
 
-        await _tapKey(tester, TradeScreen.marketRowIncrementKey(_timber));
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
 
         expect(_stagedOrder(container, _timber)?.quantity, 5);
         _expectSellable(tester, _timber, '(0)');
@@ -382,7 +382,7 @@ void main() {
       // Initial headroom 5 (= 7 - 2).
       _expectSellable(tester, _timber, '(5)');
 
-      await _tapKey(tester, TradeScreen.marketRowIncrementKey(_timber));
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       expect(_stagedOrder(container, _timber)?.quantity, 3);
       _expectSellable(tester, _timber, '(4)');
     });

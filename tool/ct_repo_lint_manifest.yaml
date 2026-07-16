@@ -757,6 +757,14 @@ rules:
     script: tool/check_chrome_button_base.dart
     pr_incremental: true
 
+  - rule_id: repo.app_no_feature_chrome_imports
+    group: structure
+    title: ban imports of deleted features/game/widgets/chrome shims; shared Ct-* chrome lives under app/lib/widgets (Refs #4035)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_feature_chrome_imports.dart
+    pr_incremental: false
+
   - rule_id: repo.split_dialog_base
     group: structure
     title: in-game `Split*Dialog` widgets must extend the shared SplitEntityDialog base (Refs #3594)
@@ -1753,6 +1761,41 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_no_duplicate_dark_token_asserts.dart
+
+  - rule_id: repo.app_test_no_duplicate_scaffolding
+    group: testing
+    title: "app/test must not reintroduce duplicated min-viewport / widgetbook / trade / units-panel scaffolding (Refs #3730, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.app_test_no_duplicate_golden_host
+    group: testing
+    title: "app/test must not reintroduce duplicated golden-host scaffolding (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_golden_host.dart
+
+  - rule_id: repo.app_test_no_duplicate_diplomacy_host
+    group: testing
+    title: "app/test must not reintroduce duplicated diplomacy/civilian bus-dialog hosts (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_diplomacy_host.dart
+
+  - rule_id: repo.app_test_no_duplicate_yarn_bundle
+    group: testing
+    title: "app/test must not reintroduce duplicated Yarn AssetBundle fakes (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_yarn_bundle.dart
+
+  - rule_id: repo.app_test_no_partn_double_suffix
+    group: testing
+    title: "app/test split families must use <family>_partN_test.dart (no _test_partN_test.dart) (Refs #3730, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_partn_double_suffix.dart
 
   - rule_id: repo.app_region_string_literals
     group: architecture

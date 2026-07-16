@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/location_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_section_header.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
@@ -17,8 +17,12 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
+import 'support/app_shell_harness.dart';
+
 Future<void> _pumpBody(WidgetTester tester, Widget body) async {
-  await tester.pumpWidget(MaterialApp(home: Scaffold(body: body)));
+  await tester.pumpWidget(
+    buildAppShell(child: Scaffold(body: body)),
+  );
 }
 
 Border _headerBorder(WidgetTester tester, Type headerType) {

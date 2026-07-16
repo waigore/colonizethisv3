@@ -15,6 +15,7 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
 import 'support/game_fixture.dart';
 import 'support/map_view_fixture.dart';
+import 'support/province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -36,18 +37,15 @@ void main() {
   }) {
     final playerView =
         buildPlayerView(game, seed42CombinedTopology, humanPlayerId);
-    return MaterialApp(
-      home: Scaffold(
-        body: ProvinceSeaZoneDetailOverlay(
-          game: game,
-          region: region,
-          displayId: displayId,
-          selectedTileKey: selectedTileKey,
-          humanPlayerId: humanPlayerId,
-          playerView: playerView,
-          onClose: onClose,
-        ),
-      ),
+    // Editorial shell via province overlay harness (Refs #4035).
+    return buildProvinceOverlayDarkThemeShell(
+      game: game,
+      region: region,
+      displayId: displayId,
+      selectedTileKey: selectedTileKey,
+      humanPlayerId: humanPlayerId,
+      playerView: playerView,
+      onClose: onClose,
     );
   }
 

@@ -9,13 +9,15 @@ import 'package:colonizethis_app/features/game/widgets/production/production_all
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_buttons.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 
+import 'support/app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
   suppressLogsForTests();
 
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
   Widget harness(Widget child) =>
-      MaterialApp(home: Scaffold(body: Center(child: child)));
+      buildAppShell(child: Scaffold(body: Center(child: child)));
 
   ({SizedBox box, DecoratedBox surface, Opacity opacity}) resolveSurface(
     WidgetTester tester,

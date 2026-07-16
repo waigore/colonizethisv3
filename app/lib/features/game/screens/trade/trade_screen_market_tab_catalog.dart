@@ -42,7 +42,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
       const SizedBox(height: 6),
       for (int index = 0; index < commodities.length; index++)
         Padding(
-          key: TradeScreen.marketCommodityRowKey(commodities[index].id),
+          key: TradeScreenMarketKeys.marketCommodityRowKey(commodities[index].id),
           padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
           child: _MarketCommodityRow(
             commodityId: commodities[index].id,
@@ -154,7 +154,7 @@ _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
 /// commodity additions that ship without a catalog default.
 String _formatPrice(int? price, {required CommodityId commodityId}) {
   final ResourceRules rules =
-      TradeScreen.marketPriceResourceRulesOverride ??
+      TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
       ResourceRules.defaultRules;
   final int? effective =
       price ?? rules.defaultMarketPriceForCommodityId(commodityId);

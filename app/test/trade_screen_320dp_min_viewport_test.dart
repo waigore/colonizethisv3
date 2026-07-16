@@ -110,14 +110,14 @@ void main() {
             'placeholder bodies) must lay out within the 320 dp column.',
       );
 
-      final topBarFinder = find.byKey(TradeScreen.topBarKey);
+      final topBarFinder = find.byKey(TradeScreenMarketKeys.topBarKey);
       expect(topBarFinder, findsOneWidget);
       final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-      expect(topBar.title, TradeScreen.topBarTitle);
-      expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
+      expect(topBar.title, TradeScreenMarketKeys.topBarTitle);
+      expect(topBar.backButtonLabel, TradeScreenMarketKeys.topBarBackLabel);
 
       expect(
-        find.byKey(TradeScreen.tabsBodyKey),
+        find.byKey(TradeScreenMarketKeys.tabsBodyKey),
         findsOneWidget,
         reason:
             'Default (non-observe) path must mount the two-tab body '
@@ -147,8 +147,8 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
-      expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
     });
   });
 
@@ -179,7 +179,7 @@ void main() {
       );
 
       expect(
-        find.byKey(TradeScreen.topBarKey),
+        find.byKey(TradeScreenMarketKeys.topBarKey),
         findsOneWidget,
         reason:
             'Observe override only swaps the body (see SPEC/ui/'
@@ -198,7 +198,7 @@ void main() {
       expect(observePanel.title, 'Trade');
 
       expect(
-        find.byKey(TradeScreen.tabsBodyKey),
+        find.byKey(TradeScreenMarketKeys.tabsBodyKey),
         findsNothing,
         reason:
             'Global-observe path MUST NOT mount the tabs body — '
@@ -219,7 +219,7 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
       expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
     });
   });

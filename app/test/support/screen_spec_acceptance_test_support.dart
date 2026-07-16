@@ -2,11 +2,13 @@
 // (Refs #4013). Pins SPEC/ui/main-menu.md under colonial / editorial themes.
 
 import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'app_shell_harness.dart';
 
 /// Colonial-theme Material frame hosting [CtMainMenu] for SPEC AC pins.
 Widget buildScreenSpecMainMenu({
@@ -19,9 +21,10 @@ Widget buildScreenSpecMainMenu({
   required VoidCallback onSettings,
   required VoidCallback onQuit,
 }) {
-  return MaterialApp(
+  // Colonial specialization via buildAppShell theme (Refs #4035).
+  return buildAppShell(
     theme: AppThemes.colonial,
-    home: CtMainMenu(
+    child: CtMainMenu(
       variant: variant,
       state: state,
       version: formatDebugAwareVersion('v1.0.0'),

@@ -13,6 +13,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 Widget _wrapPanel({
@@ -21,19 +22,17 @@ Widget _wrapPanel({
   required ct_models.AppEventBus bus,
   required Size viewportSize,
 }) {
-  // Explicit MediaQuery override pins the viewport width that
+  // [buildAppShell] viewport pins the width that
   // `MediaQuery.sizeOf(context).width < kNarrowBreakpoint` reads in
-  // `VictoryPanel.build`, mirroring `diplomacy_panel_narrow_layout_test.dart`.
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: viewportSize),
-      child: Scaffold(
-        body: Center(
-          child: VictoryPanel(
-            game: game,
-            victory: victory,
-            bus: bus,
-          ),
+  // `VictoryPanel.build` (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
+    viewport: viewportSize,
+    child: Scaffold(
+      body: Center(
+        child: VictoryPanel(
+          game: game,
+          victory: victory,
+          bus: bus,
         ),
       ),
     ),
@@ -144,19 +143,17 @@ void main() {
       (WidgetTester tester) async {
         await _bindStandardSurface(tester);
         await tester.pumpWidget(
-          MaterialApp(
-            home: MediaQuery(
-              data: const MediaQueryData(size: Size(320, 800)),
-              child: Scaffold(
-                body: Stack(
-                  children: <Widget>[
-                    VictoryOverlay(
-                      game: game,
-                      victory: buildVictory(turnNumber: 7),
-                      bus: victoryTestBus,
-                    ),
-                  ],
-                ),
+          buildAppShell(
+            viewport: const Size(320, 800),
+            child: Scaffold(
+              body: Stack(
+                children: <Widget>[
+                  VictoryOverlay(
+                    game: game,
+                    victory: buildVictory(turnNumber: 7),
+                    bus: victoryTestBus,
+                  ),
+                ],
               ),
             ),
           ),

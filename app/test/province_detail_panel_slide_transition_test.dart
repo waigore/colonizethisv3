@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_panel_slide_transition.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -18,8 +20,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: ProvinceDetailPanelSlideTransition(
+        buildAppShell(
+          child: const ProvinceDetailPanelSlideTransition(
             visible: true,
             axis: ProvinceDetailPanelSlideAxis.bottom,
             child: Text('panel'),
@@ -45,19 +47,19 @@ void main() {
       'visible false keeps outgoing child mounted through first exit frame',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: ProvinceDetailPanelSlideTransition(
+          buildAppShell(
+            child: const ProvinceDetailPanelSlideTransition(
               visible: true,
               axis: ProvinceDetailPanelSlideAxis.bottom,
-              child: const Text('panel-body'),
+              child: Text('panel-body'),
             ),
           ),
         );
         expect(find.text('panel-body'), findsOneWidget);
 
         await tester.pumpWidget(
-          const MaterialApp(
-            home: ProvinceDetailPanelSlideTransition(
+          buildAppShell(
+            child: const ProvinceDetailPanelSlideTransition(
               visible: false,
               axis: ProvinceDetailPanelSlideAxis.bottom,
               child: Text('panel-body'),
@@ -75,8 +77,8 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: ProvinceDetailPanelSlideTransition(
+        buildAppShell(
+          child: const ProvinceDetailPanelSlideTransition(
             visible: true,
             axis: ProvinceDetailPanelSlideAxis.end,
             child: SizedBox(width: 40, height: 40),

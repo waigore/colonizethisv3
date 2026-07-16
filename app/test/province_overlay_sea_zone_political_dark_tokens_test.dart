@@ -15,11 +15,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show demoGameForOverlay, demoHumanPlayerViewForOverlay;
+    show demoGameForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'support/province_overlay_dark_token_scenarios.dart';
+import 'support/province_overlay_test_harness.dart';
 
 Widget _overlay({
   required ThemeData theme,
@@ -27,19 +28,11 @@ Widget _overlay({
   required String displayId,
 }) {
   final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: theme,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: region,
-        displayId: displayId,
-        selectedTileKey: null,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        draftOrders: const Orders(),
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: game,
+    region: region,
+    displayId: displayId,
+    shellTheme: theme == AppThemes.editorialMonocle ? null : theme,
   );
 }
 

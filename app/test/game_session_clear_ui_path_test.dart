@@ -27,6 +27,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
+
 class _UiPathGameService extends GameService {
   _UiPathGameService(super.box, super.adapter);
 
@@ -212,15 +214,13 @@ void main() {
       addTearDown(sub.cancel);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(
-              body: LoadGameListDialog(fromPause: false),
-            ),
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const Scaffold(
+            body: LoadGameListDialog(fromPause: false),
           ),
         ),
       );
@@ -264,15 +264,13 @@ void main() {
       addTearDown(sub.cancel);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(
-              body: LoadGameListDialog(fromPause: true),
-            ),
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const Scaffold(
+            body: LoadGameListDialog(fromPause: true),
           ),
         ),
       );
@@ -291,7 +289,7 @@ void main() {
         desired: const {'coal': 3},
       );
       expect(events.whereType<ClosePanelEvent>(), isNotEmpty);
-      // Dialog is mounted as MaterialApp home (not a pushed route), so pop may
+      // Dialog is mounted as shell home (not a pushed route), so pop may
       // leave the widget mounted — ClosePanel + provider isolation is the AC.
     },
   );
@@ -312,14 +310,12 @@ void main() {
       addTearDown(sub.cancel);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const ShellScreen(),
-          ),
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const ShellScreen(),
         ),
       );
       await pumpFrames(tester, count: 24);

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
@@ -66,14 +67,11 @@ class DiplomacyScreen extends ConsumerWidget {
         if (sentinel != null) return sentinel;
         final orders = shellRef.watch(currentOrdersProvider);
         MapTopology topology = const MapTopology();
-        try {
-          final gameService = shellRef.watch(gameServiceProvider);
-          final loaded = gameService.getMapData(displayGame.id);
-          if (loaded != null) {
-            topology = loaded.combinedTopology;
-          }
-        } on Object {
-          // Widget tests may not initialize Hive-backed game service providers.
+        final loaded = tryGetGameMapData(
+          () => shellRef.watch(gameServiceProvider).getMapData(displayGame.id),
+        );
+        if (loaded != null) {
+          topology = loaded.combinedTopology;
         }
         final readOnly = !shell.canMutateViaUi;
         return GrantOrSubsidyListener(

@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -16,8 +18,8 @@ void main() {
     bool initiallyExpanded = false,
   }) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: SizedBox(
             width: 420,
             child: UnitsEntityCard(

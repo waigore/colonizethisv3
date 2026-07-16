@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Widget tests for the generic dark editorial-monocle confirm dialog
 /// (`CtConfirmDialog` + `showCtConfirmDialog`). Pins #2914 S8 — the
 /// replacement of Material `AlertDialog` + `TextButton` actions in the
@@ -20,6 +22,23 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
+  Widget dialogOpenHost({
+    required Future<void> Function(BuildContext context) onOpen,
+  }) =>
+      buildAppShell(
+        child: Scaffold(
+          body: Builder(
+            builder: (BuildContext context) => Center(
+              child: ElevatedButton(
+                key: const Key('open-dialog'),
+                onPressed: () => onOpen(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
   Future<bool?> showFromHost(
     WidgetTester tester, {
     String title = 'Confirm',
@@ -29,26 +48,16 @@ void main() {
   }) async {
     bool? result;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showCtConfirmDialog(
-                    context,
-                    title: title,
-                    message: message,
-                    confirmLabel: confirmLabel,
-                    cancelLabel: cancelLabel,
-                  );
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+      dialogOpenHost(
+        onOpen: (BuildContext context) async {
+          result = await showCtConfirmDialog(
+            context,
+            title: title,
+            message: message,
+            confirmLabel: confirmLabel,
+            cancelLabel: cancelLabel,
+          );
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -179,24 +188,14 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showCtConfirmDialog(
-                    context,
-                    title: 'Confirm',
-                    message: 'Proceed?',
-                  );
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+      dialogOpenHost(
+        onOpen: (BuildContext context) async {
+          result = await showCtConfirmDialog(
+            context,
+            title: 'Confirm',
+            message: 'Proceed?',
+          );
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -211,24 +210,14 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showCtConfirmDialog(
-                    context,
-                    title: 'Confirm',
-                    message: 'Proceed?',
-                  );
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+      dialogOpenHost(
+        onOpen: (BuildContext context) async {
+          result = await showCtConfirmDialog(
+            context,
+            title: 'Confirm',
+            message: 'Proceed?',
+          );
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -243,24 +232,14 @@ void main() {
   ) async {
     bool? result;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showCtConfirmDialog(
-                    context,
-                    title: 'Confirm',
-                    message: 'Proceed?',
-                  );
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+      dialogOpenHost(
+        onOpen: (BuildContext context) async {
+          result = await showCtConfirmDialog(
+            context,
+            title: 'Confirm',
+            message: 'Proceed?',
+          );
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));

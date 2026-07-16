@@ -9,13 +9,15 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_chrome.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 
+import 'support/app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Widget wrap(Widget child) => MaterialApp(
-        home: Scaffold(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  Widget wrap(Widget child) => buildAppShell(
+        child: Scaffold(
           body: Center(
             child: SizedBox(width: 400, child: child),
           ),

@@ -3,10 +3,11 @@
 
 import 'dart:io' show File;
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'app_shell_harness.dart';
 
 /// Short settle loop used by blocking-overlay widget pins.
 Future<void> pumpDialogueOverlaysUntilSettled(WidgetTester tester) async {
@@ -29,20 +30,17 @@ String dialogueOverlaysLibraryUnitSource(String libraryRelPath) {
   return '$librarySource\n$partSources';
 }
 
-/// Wraps [GameStartIntroOverlay] under colonial theme for SPEC pins.
+/// Wraps [GameStartIntroOverlay] under editorial [buildAppShell] for SPEC pins
+/// (Refs #4035 — no inline MaterialApp).
 Widget wrapGameStartIntroOverlay({
   required AssetBundle bundle,
   required VoidCallback onDismissed,
   Key? childKey,
 }) {
-  return MaterialApp(
-    theme: AppThemes.colonial,
+  return buildAppShell(
     locale: const Locale('en'),
     supportedLocales: const [Locale('en')],
-    localizationsDelegates: const [
-      // Reuse Material delegates so appL10n resolves english strings.
-    ],
-    home: Scaffold(
+    child: Scaffold(
       body: GameStartIntroOverlay(
         onDismissed: onDismissed,
         assetBundle: bundle,

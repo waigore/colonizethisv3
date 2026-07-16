@@ -36,7 +36,12 @@ import 'package:path/path.dart' as p;
 ///    low-value (see #2914 Risks / edge cases). The allowlist mirrors the
 ///    sibling `repo.app_no_material_*` rules so the Material-widget ban family
 ///    stays scope-uniform across rules.
-/// 2. **`app/lib/features/game/widgets/chrome/**`** — Ct-* catalog widget
+/// 2. **Feature `chrome/` tree** — deleted after #4035 AC2; Ct-*
+///    catalog widgets live under `app/lib/widgets/` (outside this
+///    features-only scan). Resurrected `features/.../chrome/` paths
+///    are barred by `repo.app_no_feature_chrome_imports` and are
+///    **not** skipped by this Material ban.
+///
 ///    implementations (e.g. `CtDialogShell` itself, which composes the Material
 ///    `Dialog` internally). Consumer code in `features/**` must still resolve
 ///    dialog chrome through the catalog widgets, not a raw `Dialog`.
@@ -111,8 +116,10 @@ int runCheckAppNoMaterialDialog(
 }
 
 /// True when [relativePath] (POSIX, repo-rooted) is in scope for the checker
-/// but allowlisted as a whole-file scope exclusion (dev tooling screen or
-/// Ct-* catalog widget under `features/game/widgets/chrome/`).
+/// but allowlisted as a whole-file scope exclusion (dev-tooling screens
+/// only; Ct-* catalog widgets live under `app/lib/widgets/` outside
+/// this features-only scan).
+/// dev-tooling screens only; Ct-* are under `app/lib/widgets/`).
 ///
 /// Exposed for `test/check_app_no_material_dialog_test.dart`.
 bool shouldSkipAppNoMaterialDialogFile(String relativePath) {
@@ -170,11 +177,9 @@ const Set<String> _appNoMaterialDialogAllowedFiles = <String>{
 };
 
 const Set<String> _appNoMaterialDialogAllowedDirPrefixes = <String>{
-  // Ct-* catalog widgets implementing design-system primitives (notably
-  // CtDialogShell, which composes the Material Dialog internally). Consumers
-  // in features/** still resolve dialog chrome through these widgets, not
-  // raw Material Dialog.
-  'app/lib/features/game/widgets/chrome/',
+  // Feature chrome tree deleted (Refs #4035 AC2). Ct-* catalog widgets live
+  // under app/lib/widgets/ and are outside this features-only scan scope.
+  // Resurrected features/.../chrome/ paths are not skipped here.
 };
 
 void main() {

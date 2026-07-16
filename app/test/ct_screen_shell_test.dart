@@ -6,7 +6,6 @@
 
 import 'dart:async';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
@@ -14,16 +13,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pumpShell(WidgetTester tester, Widget child) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: child,
-      ),
-    );
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    await tester.pumpWidget(buildAppShell(child: child));
     await tester.pumpAndSettle();
   }
 
@@ -126,10 +123,9 @@ void main() {
       (WidgetTester tester) async {
         final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
+          buildAppShell(
             navigatorKey: navKey,
-            home: const Text('Home'),
+            child: const Text('Home'),
           ),
         );
         await tester.pumpAndSettle();

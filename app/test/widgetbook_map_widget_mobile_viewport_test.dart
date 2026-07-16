@@ -19,8 +19,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
-
 
 void main() {
   suppressLogsForTests();
@@ -58,19 +58,17 @@ void main() {
           );
 
           // The story's `DebugMapVisibilityStory` reads `appL10n(context)`,
-          // so we host it inside a localized `MaterialApp`. Widgetbook
+          // so we host it inside a localized `buildAppShell`. Widgetbook
           // itself wires localizations at runtime via the addon chain.
           await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(size: Size(360, 640)),
-              child: MaterialApp(
-                localizationsDelegates:
-                    AppLocalizationsBinding.localizationsDelegates,
-                supportedLocales: AppLocalizations.supportedLocales,
-                home: Scaffold(
-                  body: Builder(
-                    builder: (BuildContext ctx) => useCase.builder(ctx),
-                  ),
+            buildAppShell(
+              viewport: const Size(360, 640),
+              localizationsDelegates:
+                  AppLocalizationsBinding.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              child: Scaffold(
+                body: Builder(
+                  builder: (BuildContext ctx) => useCase.builder(ctx),
                 ),
               ),
             ),

@@ -263,27 +263,22 @@ List<WidgetbookNode> get gameMapOptionsDialogDirectories => [
   ),
 ];
 
-/// Mounts an in-game shell chrome widget inside a `MaterialApp` configured
-/// for the editorial-monocle theme + localizations. The bar stretches to
-/// the full viewport width so the 36 dp chrome reads the same way it does
-/// on the production shell (which mounts `GameTopBar` inside a `Column`
-/// under `Scaffold.body`).
-MaterialApp _gameTopBarStoryFrame({required Widget child}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+/// Mounts an in-game shell chrome widget inside
+/// [widgetbookEditorialMonocleApp] so the bar stretches to the full
+/// viewport width the same way production mounts `GameTopBar` under
+/// `Scaffold.body` (Refs #4035 catalog densify).
+Widget _gameTopBarStoryFrame({required Widget child}) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bgDeep,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[child],
-          ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[child],
         ),
       ),
     ),
@@ -302,30 +297,26 @@ Widget _gameTabBarStoryFrame({
   bool showFeed = false,
   bool showPlayersBar = true,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bgDeep,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              _GameTabBarStoryShell(
-                regionIndex: regionIndex,
-                treasury: treasury,
-                treasuryDelta: treasuryDelta,
-                unreadBadgeCount: unreadBadgeCount,
-                showFeed: showFeed,
-                showPlayersBar: showPlayersBar,
-              ),
-            ],
-          ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            _GameTabBarStoryShell(
+              regionIndex: regionIndex,
+              treasury: treasury,
+              treasuryDelta: treasuryDelta,
+              unreadBadgeCount: unreadBadgeCount,
+              showFeed: showFeed,
+              showPlayersBar: showPlayersBar,
+            ),
+          ],
         ),
       ),
     ),
@@ -401,19 +392,15 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
 }
 
 Widget _playersBarToggleStoryFrame({required bool showPlayersBar}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bgDeep,
-      body: SafeArea(
-        child: Center(
-          child: PlayersBarToggleButton(
-            // ignore: avoid_hardcoded_strings_in_widgets
-            tooltip: 'Players bar',
-            showPlayersBar: showPlayersBar,
-            onPressed: () {},
-          ),
+  return widgetbookEditorialMonocleApp(
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SafeArea(
+      child: Center(
+        child: PlayersBarToggleButton(
+          // ignore: avoid_hardcoded_strings_in_widgets
+          tooltip: 'Players bar',
+          showPlayersBar: showPlayersBar,
+          onPressed: () {},
         ),
       ),
     ),
@@ -422,26 +409,22 @@ Widget _playersBarToggleStoryFrame({required bool showPlayersBar}) {
 
 /// Corner controls frame: dark scaffold with the row anchored bottom-left,
 /// matching the in-game map stack position.
-MaterialApp _gameMapCornerControlsStoryFrame({required Widget child}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+Widget _gameMapCornerControlsStoryFrame({required Widget child}) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bgDeep,
-      body: SizedBox(
-        width: 320,
-        height: 220,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 8,
-              bottom: 8,
-              child: child,
-            ),
-          ],
-        ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+    child: SizedBox(
+      width: 320,
+      height: 220,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 8,
+            bottom: 8,
+            child: child,
+          ),
+        ],
       ),
     ),
   );
@@ -454,16 +437,15 @@ MaterialApp _gameMapCornerControlsStoryFrame({required Widget child}) {
 /// so the chrome reads identically to the wide story (issue #2870 S9;
 /// SPEC `SPEC/ui/empire-overview.md` § Narrow corner-control measurements;
 /// `SPEC/ui/mobile-adaptation.md` § In-game shell).
-MaterialApp _gameMapCornerControlsNarrowStoryFrame({
+Widget _gameMapCornerControlsNarrowStoryFrame({
   required double viewportWidth,
   required Widget child,
 }) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
+    useScaffold: false,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: MediaQuery(
+    child: MediaQuery(
       data: MediaQueryData(size: Size(viewportWidth, 640)),
       child: Scaffold(
         backgroundColor: EditorialMonoclePalette.bgDeep,
@@ -490,12 +472,11 @@ MaterialApp _gameMapCornerControlsNarrowStoryFrame({
 /// localizations, and the canonical [EditorialMonoclePalette.dialogScrim]
 /// barrier colour shared by every other modal on the dark theme.
 Widget _gameMapOptionsDialogStoryFrame({required MapViewState initialState}) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
+    useScaffold: false,
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: _GameMapOptionsDialogStoryHost(initialState: initialState),
+    child: _GameMapOptionsDialogStoryHost(initialState: initialState),
   );
 }
 
@@ -650,23 +631,19 @@ Widget _gameMapEmpireLeftRailStoryFrame({
       gameServiceProvider.overrideWith((ref) => StoryStubGameService()),
       debugConsoleEnabledProvider.overrideWithValue(debugConsoleEnabled),
     ],
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
+    child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.bgDeep,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: GameMapEmpireLeftRail(
-                game: game,
-                humanPlayerId: humanId,
-                narrow: narrow,
-              ),
+      scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: GameMapEmpireLeftRail(
+              game: game,
+              humanPlayerId: humanId,
+              narrow: narrow,
             ),
           ),
         ),
@@ -694,27 +671,23 @@ Widget _gameRegionMinimapStoryFrame({
       ),
       _storyMinimapInitialVisibleProvider.overrideWithValue(visible),
     ],
-    child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
+    child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.bgDeep,
-        body: MediaQuery(
-          data: MediaQueryData(size: Size(narrow ? 360 : 1500, 640)),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: GameRegionMinimap(
-                  region: region,
-                  viewportSnapshot: viewport,
-                  bus: AppEventBus.create(),
-                  cellSizePx: region.cellSize.toDouble(),
-                  narrow: narrow,
-                ),
+      scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+      child: MediaQuery(
+        data: MediaQueryData(size: Size(narrow ? 360 : 1500, 640)),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: GameRegionMinimap(
+                region: region,
+                viewportSnapshot: viewport,
+                bus: AppEventBus.create(),
+                cellSizePx: region.cellSize.toDouble(),
+                narrow: narrow,
               ),
             ),
           ),
@@ -809,11 +782,11 @@ class _GameMapProvinceDetailSidePanelStoryHostState
   Widget build(BuildContext context) {
     final game = demoGameForOverlay;
     final region = demoRegionForOverlay;
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
+      useScaffold: false,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
+      child: MediaQuery(
         data: const MediaQueryData(size: Size(900, 640)),
         child: Scaffold(
           backgroundColor: EditorialMonoclePalette.bgDeep,

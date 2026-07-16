@@ -1,172 +1,28 @@
 // Province overlay: draft work orders and localized military labels.
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, VisibilityLevel;
+    show VisibilityLevel;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-const _regionId = 'oldWorld';
-const _localProvinceId = 'pDraft';
-const _localDestProvinceId = 'pDest';
-const _humanId = 'gp1';
-String get _fullProvinceId => '$_regionId|$_localProvinceId';
-String get _fullDestProvinceId => '$_regionId|$_localDestProvinceId';
-String _tileKey(int x, int y) => '$_fullProvinceId|$x|$y';
-
-const _humanPlayer = Player(
-  id: _humanId,
-  displayName: 'Human',
-  isHuman: true,
-  treasury: 0,
-);
-
-/// Bounded pumps only — avoid [pumpAndSettle] (animations / unbounded work).
-Future<void> _pumpOverlayLayout(WidgetTester tester) async {
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-Province _province({
-  required String id,
-  required String displayName,
-  String? ownerId,
-}) => Province(
-  id: id,
-  regionId: id.split('|').first,
-  displayName: displayName,
-  ownerId: ownerId,
-);
-
-RegionMapViewData _region({
-  TileVisibility visibility = TileVisibility.visible,
-  Set<String> greatPowerFactionIds = const {_humanId},
-}) {
-  return RegionMapViewData(
-    regionId: _regionId,
-    width: 1,
-    height: 1,
-    cellSize: 32,
-    cells: [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: _localProvinceId,
-        isSea: false,
-        terrainTypeId: 'plains',
-        visibility: visibility,
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: const {},
-    greatPowerFactionIds: greatPowerFactionIds,
-    terrainColors: const {},
-  );
-}
-
-PlayerView _view({
-  required String tileKey,
-  VisibilityLevel visibility = VisibilityLevel.fullyVisible,
-  Map<String, Province> provincesById = const {},
-}) {
-  return PlayerView(
-    playerId: _humanId,
-    player: _humanPlayer,
-    ownUnitsById: const {},
-    provincesById: provincesById,
-    visibilityByTile: {tileKey: visibility},
-    prospectedTiles: const {},
-    diplomacyByOtherId: const {},
-  );
-}
-
-Game _game({
-  required String id,
-  required String tileKey,
-  List<Unit> units = const [],
-  List<Fleet> fleets = const [],
-  List<Province>? oldWorldProvinces,
-  Map<String, Map<String, int>>? spyRevealTurnsByPlayer,
-  List<Player> players = const [_humanPlayer],
-}) {
-  return Game(
-    id: id,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces:
-            oldWorldProvinces ??
-            [
-              _province(id: _fullProvinceId, displayName: 'FromProv'),
-            ],
-        units: units,
-      ),
-      newWorld: const RegionData(),
-      fleets: fleets,
-      tileKeysByRegionAndProvince: {
-        _regionId: {
-          _fullProvinceId: [tileKey],
-        },
-      },
-      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer ?? const {},
-    ),
-    players: players,
-  );
-}
-
-Future<void> _pumpOverlay(
-  WidgetTester tester, {
-  required Game game,
-  required String tileKey,
-  required PlayerView playerView,
-  Orders draftOrders = const Orders(),
-  TileVisibility regionVisibility = TileVisibility.visible,
-  Set<String> greatPowerFactionIds = const {_humanId},
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
-      home: Scaffold(
-        body: ProvinceSeaZoneDetailOverlay(
-          game: game,
-          region: _region(
-            visibility: regionVisibility,
-            greatPowerFactionIds: greatPowerFactionIds,
-          ),
-          displayId: _fullProvinceId,
-          selectedTileKey: tileKey,
-          humanPlayerId: _humanId,
-          playerView: playerView,
-          draftOrders: draftOrders,
-        ),
-      ),
-    ),
-  );
-  await _pumpOverlayLayout(tester);
-}
+import 'support/province_draft_orders_test_support.dart';
 
 Unit _regimentOnTile(String tileKey) => Unit(
   id: 'r_move',
   type: 'peasant_levies',
-  ownerId: _humanId,
-  locationProvinceId: _fullProvinceId,
+  ownerId: kProvinceDraftOrdersHumanId,
+  locationProvinceId: kProvinceDraftOrdersFullProvinceId,
   tileKey: tileKey,
   status: UnitStatus.idle,
 );
 
 Orders _pendingRegimentMove() => Orders(
   moveOrdersByPlayerId: {
-    _humanId: [
+    kProvinceDraftOrdersHumanId: [
       MoveOrder(
         unitId: 'r_move',
-        destinationTileKey: '$_fullDestProvinceId|0|0',
+        destinationTileKey: '$kProvinceDraftOrdersFullDestProvinceId|0|0',
       ),
     ],
   },
@@ -179,19 +35,19 @@ void main() {
     testWidgets(
       'Military pending move falls back to raw id for unknown destination',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        await _pumpOverlay(
+        final tk = provinceDraftOrdersTileKey(0, 0);
+        await pumpProvinceDraftOrdersOverlay(
           tester,
-          game: _game(
+          game: provinceDraftOrdersGame(
             id: 'mil_pending_unknown_dest_test',
             tileKey: tk,
             units: [_regimentOnTile(tk)],
           ),
           tileKey: tk,
-          playerView: _view(tileKey: tk),
+          playerView: provinceDraftOrdersPlayerView(tileKey: tk),
           draftOrders: Orders(
             moveOrdersByPlayerId: {
-              _humanId: [
+              kProvinceDraftOrdersHumanId: [
                 const MoveOrder(
                   unitId: 'r_move',
                   destinationTileKey: 'newWorld|ghostNW|0|0',
@@ -212,39 +68,46 @@ void main() {
     testWidgets(
       'Naval section shows pending dock move and mission from draftOrders',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        await _pumpOverlay(
+        final tk = provinceDraftOrdersTileKey(0, 0);
+        await pumpProvinceDraftOrdersOverlay(
           tester,
-          game: _game(
+          game: provinceDraftOrdersGame(
             id: 'naval_pending_test',
             tileKey: tk,
             oldWorldProvinces: [
-              _province(id: _fullProvinceId, displayName: 'PortProv'),
-              _province(id: _fullDestProvinceId, displayName: 'OtherPort'),
+              provinceDraftOrdersProvince(
+                id: kProvinceDraftOrdersFullProvinceId,
+                displayName: 'PortProv',
+              ),
+              provinceDraftOrdersProvince(
+                id: kProvinceDraftOrdersFullDestProvinceId,
+                displayName: 'OtherPort',
+              ),
             ],
             fleets: [
               Fleet(
                 id: 'fleet_in_port',
-                ownerId: _humanId,
-                regionId: _regionId,
-                inPortAtProvinceId: _fullProvinceId,
+                ownerId: kProvinceDraftOrdersHumanId,
+                regionId: kProvinceDraftOrdersRegionId,
+                inPortAtProvinceId: kProvinceDraftOrdersFullProvinceId,
                 shipTypeIds: const ['sloop'],
               ),
             ],
           ),
           tileKey: tk,
-          playerView: _view(tileKey: tk),
+          playerView: provinceDraftOrdersPlayerView(tileKey: tk),
           draftOrders: Orders(
             navalMoveOrdersByPlayerId: {
-              _humanId: [
+              kProvinceDraftOrdersHumanId: [
                 NavalMoveOrder(
                   fleetId: 'fleet_in_port',
-                  destinationPortProvinceId: _fullDestProvinceId,
+                  destinationPortProvinceId:
+                      kProvinceDraftOrdersFullDestProvinceId,
                 ),
               ],
             },
             navalMissionOrdersByPlayerId: {
-              _humanId: [
+              kProvinceDraftOrdersHumanId: [
                 const NavalMissionOrder(
                   fleetId: 'fleet_in_port',
                   mission: 'patrol',
@@ -266,24 +129,27 @@ void main() {
     testWidgets(
       'Foreign province with partial intel obfuscates sections and hides pending lines',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        final foreignProvince = _province(
-          id: _fullProvinceId,
+        final tk = provinceDraftOrdersTileKey(0, 0);
+        final foreignProvince = provinceDraftOrdersProvince(
+          id: kProvinceDraftOrdersFullProvinceId,
           displayName: 'ForeignProv',
           ownerId: 'gp2',
         );
-        await _pumpOverlay(
+        await pumpProvinceDraftOrdersOverlay(
           tester,
-          game: _game(
+          game: provinceDraftOrdersGame(
             id: 'intel_gate_hidden_test',
             tileKey: tk,
             oldWorldProvinces: [
               foreignProvince,
-              _province(id: _fullDestProvinceId, displayName: 'DestProv'),
+              provinceDraftOrdersProvince(
+                id: kProvinceDraftOrdersFullDestProvinceId,
+                displayName: 'DestProv',
+              ),
             ],
             units: [_regimentOnTile(tk)],
             players: const [
-              _humanPlayer,
+              kProvinceDraftOrdersHumanPlayer,
               Player(
                 id: 'gp2',
                 displayName: 'Foreign',
@@ -294,11 +160,13 @@ void main() {
           ),
           tileKey: tk,
           regionVisibility: TileVisibility.fogged,
-          greatPowerFactionIds: const {_humanId, 'gp2'},
-          playerView: _view(
+          greatPowerFactionIds: const {kProvinceDraftOrdersHumanId, 'gp2'},
+          playerView: provinceDraftOrdersPlayerView(
             tileKey: tk,
             visibility: VisibilityLevel.fogged,
-            provincesById: {_fullProvinceId: foreignProvince},
+            provincesById: {
+              kProvinceDraftOrdersFullProvinceId: foreignProvince,
+            },
           ),
           draftOrders: _pendingRegimentMove(),
         );
@@ -317,27 +185,32 @@ void main() {
     testWidgets(
       'Spy timer bypass shows pending military lines for foreign province',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        final foreignProvince = _province(
-          id: _fullProvinceId,
+        final tk = provinceDraftOrdersTileKey(0, 0);
+        final foreignProvince = provinceDraftOrdersProvince(
+          id: kProvinceDraftOrdersFullProvinceId,
           displayName: 'ForeignProv',
           ownerId: 'gp2',
         );
-        await _pumpOverlay(
+        await pumpProvinceDraftOrdersOverlay(
           tester,
-          game: _game(
+          game: provinceDraftOrdersGame(
             id: 'intel_gate_timer_test',
             tileKey: tk,
             oldWorldProvinces: [
               foreignProvince,
-              _province(id: _fullDestProvinceId, displayName: 'DestProv'),
+              provinceDraftOrdersProvince(
+                id: kProvinceDraftOrdersFullDestProvinceId,
+                displayName: 'DestProv',
+              ),
             ],
             units: [_regimentOnTile(tk)],
             spyRevealTurnsByPlayer: {
-              _humanId: {_fullProvinceId: 3},
+              kProvinceDraftOrdersHumanId: {
+                kProvinceDraftOrdersFullProvinceId: 3,
+              },
             },
             players: const [
-              _humanPlayer,
+              kProvinceDraftOrdersHumanPlayer,
               Player(
                 id: 'gp2',
                 displayName: 'Foreign',
@@ -348,11 +221,13 @@ void main() {
           ),
           tileKey: tk,
           regionVisibility: TileVisibility.fogged,
-          greatPowerFactionIds: const {_humanId, 'gp2'},
-          playerView: _view(
+          greatPowerFactionIds: const {kProvinceDraftOrdersHumanId, 'gp2'},
+          playerView: provinceDraftOrdersPlayerView(
             tileKey: tk,
             visibility: VisibilityLevel.fogged,
-            provincesById: {_fullProvinceId: foreignProvince},
+            provincesById: {
+              kProvinceDraftOrdersFullProvinceId: foreignProvince,
+            },
           ),
           draftOrders: _pendingRegimentMove(),
         );

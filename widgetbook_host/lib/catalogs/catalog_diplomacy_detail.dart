@@ -60,11 +60,8 @@ ProviderScope _diplomacyDetailScreenProviderScope() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: rivalId,
@@ -73,6 +70,17 @@ ProviderScope _diplomacyDetailScreenProviderScope() {
         relation: game.diplomacyRelations.first,
       ),
     ),
+  );
+}
+
+/// Editorial-monocle `MaterialApp` leaf for Diplomacy Detail stories
+/// (Refs #4035 catalog densify). [DiplomacyDetailScreen] owns its scaffold.
+Widget _diplomacyDetailEditorialApp(Widget child) {
+  return widgetbookEditorialMonocleApp(
+    useScaffold: false,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: child,
   );
 }
 
@@ -127,11 +135,8 @@ ProviderScope _diplomacyDetailScreenProviderScopeWar() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: rivalId,
@@ -177,11 +182,8 @@ ProviderScope _diplomacyDetailScreenProviderScopeMinor() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: minorId,
@@ -239,11 +241,8 @@ ProviderScope _diplomacyDetailScreenProviderScopeAlliance() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: rivalId,
@@ -325,11 +324,8 @@ ProviderScope _diplomacyDetailScreenProviderScopeColonyTribe() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: tribeId,
@@ -413,11 +409,8 @@ ProviderScope _diplomacyDetailScreenProviderScopeSubsidizedMinor() {
         return bus;
       }),
     ],
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: DiplomacyDetailScreen(
+    child: _diplomacyDetailEditorialApp(
+      DiplomacyDetailScreen(
         game: game,
         humanPlayerId: humanId,
         factionId: minorId,

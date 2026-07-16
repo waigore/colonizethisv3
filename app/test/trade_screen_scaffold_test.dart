@@ -172,20 +172,20 @@ void main() {
         await tester.tap(find.text('open trade'));
         await pumpSettleCapped(tester);
 
-        final topBarFinder = find.byKey(TradeScreen.topBarKey);
+        final topBarFinder = find.byKey(TradeScreenMarketKeys.topBarKey);
         expect(topBarFinder, findsOneWidget);
 
         final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-        expect(topBar.title, TradeScreen.topBarTitle);
-        expect(topBar.backButtonLabel, TradeScreen.topBarBackLabel);
+        expect(topBar.title, TradeScreenMarketKeys.topBarTitle);
+        expect(topBar.backButtonLabel, TradeScreenMarketKeys.topBarBackLabel);
         expect(topBar.icon, isA<StrictAssetIcon>());
         final StrictAssetIcon icon = topBar.icon! as StrictAssetIcon;
-        expect(icon.assetPath, TradeScreen.topBarIconAsset);
+        expect(icon.assetPath, TradeScreenMarketKeys.topBarIconAsset);
         expect(icon.width, 18);
         expect(icon.height, 18);
 
         // Two-tab body renders for non-observe sessions.
-        expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
         expect(find.byType(ObserveModeNotDefinedPanel), findsNothing);
 
         // Negative regression guard: no legacy light Material AppBar chrome.
@@ -205,7 +205,7 @@ void main() {
 
         expect(find.byType(TradeScreen), findsOneWidget);
         // Top bar still paints — the observe override only swaps the body.
-        expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+        expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
 
         final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
         expect(observePanelFinder, findsOneWidget);
@@ -215,9 +215,9 @@ void main() {
         expect(observePanel.title, 'Trade');
 
         // Negative AC: none of the tab body keys must appear in observe mode.
-        expect(find.byKey(TradeScreen.tabsBodyKey), findsNothing);
-        expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
-        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+        expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsNothing);
+        expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsNothing);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsNothing);
         expect(find.byType(CtTabStrip), findsNothing);
       },
     );
@@ -255,18 +255,18 @@ void main() {
         await tester.tap(find.text('open trade'));
         await pumpSettleCapped(tester);
 
-        expect(find.byKey(TradeScreen.tabsBodyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
 
         final stripFinder = find.descendant(
-          of: find.byKey(TradeScreen.tabsBodyKey),
+          of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
           matching: find.byType(CtTabStrip),
         );
         expect(stripFinder, findsOneWidget);
 
         final CtTabStrip strip = tester.widget<CtTabStrip>(stripFinder);
         expect(strip.tabLabels, <String>[
-          TradeScreen.marketTabLabel,
-          TradeScreen.dealBookTabLabel,
+          TradeScreenMarketKeys.marketTabLabel,
+          TradeScreenDealBookKeys.dealBookTabLabel,
         ]);
         expect(strip.tabViews.length, 2);
       },
@@ -284,7 +284,7 @@ void main() {
 
         // Default selection foregrounds the Market tab; that body is on
         // stage and resolves under default `skipOffstage: true`.
-        expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsOneWidget);
 
         // Non-selected Deal Book tab is wrapped in Visibility(visible:
         // false) by IndexedStack and reads as off-stage to default
@@ -293,7 +293,7 @@ void main() {
         // lets E5/E6 swap each tab body in place without remounting the
         // tab strip.
         expect(
-          find.byKey(TradeScreen.dealBookTabBodyKey, skipOffstage: false),
+          find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey, skipOffstage: false),
           findsOneWidget,
           reason:
               'IndexedStack mounts both tab bodies; the non-selected '
@@ -303,7 +303,7 @@ void main() {
         // Conversely the off-stage Deal Book body must not be reachable
         // from default (skipOffstage: true) finders — that is the
         // visible/foregrounded contract for the default Market tab.
-        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsNothing);
       },
     );
 
@@ -320,7 +320,7 @@ void main() {
         // Locate the IndexedStack created by CtTabStrip; verify default
         // selection is index 0 (Market).
         final stackFinder = find.descendant(
-          of: find.byKey(TradeScreen.tabsBodyKey),
+          of: find.byKey(TradeScreenMarketKeys.tabsBodyKey),
           matching: find.byType(IndexedStack),
         );
         expect(stackFinder, findsOneWidget);
@@ -337,7 +337,7 @@ void main() {
         // Tap the `Deal Book` label inside the tab strip.
         final dealBookLabel = find.descendant(
           of: find.byType(CtTabStrip),
-          matching: find.text(TradeScreen.dealBookTabLabel),
+          matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
         );
         expect(dealBookLabel, findsOneWidget);
         await tester.tap(dealBookLabel);
@@ -370,7 +370,7 @@ void main() {
         // Tap the Deal Book tab label to swap the on-stage child.
         final dealBookLabel = find.descendant(
           of: find.byType(CtTabStrip),
-          matching: find.text(TradeScreen.dealBookTabLabel),
+          matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
         );
         expect(dealBookLabel, findsOneWidget);
         await tester.tap(dealBookLabel);
@@ -381,21 +381,21 @@ void main() {
         // (Refs #2993 E6) under the same `tradeScreenDealBookTabBody`
         // body root — the tab-body key remained stable so existing
         // tab-switch tests continue to pin the same affordance.
-        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsOneWidget);
         expect(
           find.descendant(
-            of: find.byKey(TradeScreen.dealBookTabBodyKey),
-            matching: find.byKey(TradeScreen.dealBookContentKey),
+            of: find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
+            matching: find.byKey(TradeScreenDealBookKeys.dealBookContentKey),
           ),
           findsOneWidget,
         );
         // Both bids and offers panel containers are always present in
         // the live content; their per-row contents are exercised by the
         // dedicated E6 panel tests in trade_screen_deal_book_tab_e6_test.dart.
-        expect(find.byKey(TradeScreen.dealBookBidsPanelKey), findsOneWidget);
-        expect(find.byKey(TradeScreen.dealBookOffersPanelKey), findsOneWidget);
-        expect(find.byKey(TradeScreen.dealBookBidsTotalsKey), findsOneWidget);
-        expect(find.byKey(TradeScreen.dealBookOffersTotalsKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsPanelKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersPanelKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey), findsOneWidget);
       },
     );
   });
@@ -440,7 +440,7 @@ void main() {
       await pumpSettleCapped(tester);
 
       expect(find.byType(TradeScreen), findsOneWidget);
-      expect(find.byKey(TradeScreen.topBarKey), findsOneWidget);
+      expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
     });
   });
 }

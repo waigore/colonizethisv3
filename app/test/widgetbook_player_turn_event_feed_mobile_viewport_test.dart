@@ -46,23 +46,13 @@ void main() {
         'Mobile viewport builder pumps at 360 × 640 dp without exceptions '
         'and mounts narrow card surface',
         (WidgetTester tester) async {
-          addTearDown(() => tester.binding.setSurfaceSize(null));
-          await tester.binding.setSurfaceSize(const Size(360, 640));
-
           final useCase = findWidgetbookUseCase(
             playerTurnEventFeedCardDirectories,
             folderName: 'Player Turn Event Feed Card',
             useCaseName: 'Mobile viewport',
           );
 
-          await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(size: Size(360, 640)),
-              child: Builder(
-                builder: (BuildContext ctx) => useCase.builder(ctx),
-              ),
-            ),
-          );
+          await pumpWidgetbookUseCaseAtSize(tester, useCase);
           await tester.pumpAndSettle(const Duration(milliseconds: 200));
 
           expect(

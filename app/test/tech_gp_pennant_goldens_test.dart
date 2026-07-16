@@ -342,33 +342,22 @@ void main() {
     final sampleColor = gpMapColorForPlayer(game, 'gp1');
 
     await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppThemes.editorialMonocle,
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-          body: Center(
-            child: RepaintBoundary(
-              key: boundaryKey,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    GpNationColorPennant(color: sampleColor, highlighted: true),
-                    GpNationColorPennant(color: sampleColor),
-                    Text(
-                      AppLocalizationsEn().techTree_legendGpPennants,
-                      style: AppThemes.editorialMonocle.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+      _goldenHost(
+        boundaryKey: boundaryKey,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              GpNationColorPennant(color: sampleColor, highlighted: true),
+              GpNationColorPennant(color: sampleColor),
+              Text(
+                AppLocalizationsEn().techTree_legendGpPennants,
+                style: AppThemes.editorialMonocle.textTheme.bodySmall,
               ),
-            ),
+            ],
           ),
         ),
       ),

@@ -24,6 +24,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
+
 class _StubGameService extends GameService {
   _StubGameService(super.box, super.adapter);
 
@@ -92,7 +94,7 @@ void main() {
     'runNewGameSetupAfterLeaderPick returns early when navigator key has no '
     'attached context (negative path)',
     (WidgetTester tester) async {
-      // Detached key: no MaterialApp wires it in, so currentContext == null.
+      // Detached key: no shell wires it in, so currentContext == null.
       final detachedKey = GlobalKey<NavigatorState>();
       final container = ProviderContainer(
         overrides: [
@@ -123,7 +125,7 @@ void main() {
     'runNewGameSetupAfterLeaderPick uses the injected navigator key to show '
     'the progress dialog (positive path) and creates a new game',
     (WidgetTester tester) async {
-      // Attached key: wired into MaterialApp so currentContext is non-null
+      // Attached key: wired into buildAppShell so currentContext is non-null
       // once the widget is pumped. The flow must use this injected key, not a
       // global reference, to drive the progress dialog.
       final injectedKey = GlobalKey<NavigatorState>();
@@ -136,15 +138,13 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            navigatorKey: injectedKey,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(body: Text('shell')),
-          ),
+          navigatorKey: injectedKey,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const Scaffold(body: Text('shell')),
         ),
       );
       await tester.pumpAndSettle();
@@ -187,15 +187,13 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            navigatorKey: injectedKey,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(body: Text('shell')),
-          ),
+          navigatorKey: injectedKey,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const Scaffold(body: Text('shell')),
         ),
       );
       await tester.pumpAndSettle();
@@ -251,15 +249,13 @@ void main() {
       addTearDown(container.dispose);
 
       await tester.pumpWidget(
-        UncontrolledProviderScope(
+        // Editorial shell via buildAppShellWithContainer (Refs #4035).
+        buildAppShellWithContainer(
           container: container,
-          child: MaterialApp(
-            navigatorKey: injectedKey,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const Scaffold(body: Text('shell')),
-          ),
+          navigatorKey: injectedKey,
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: const Scaffold(body: Text('shell')),
         ),
       );
       await tester.pumpAndSettle();

@@ -17,6 +17,8 @@ import 'package:hive/hive.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 
+import 'support/app_shell_harness.dart';
+
 TurnNewsDigest _emptyDigestForTurn(int resolvedTurn) =>
     TurnNewsDigest(resolvedTurnNumber: resolvedTurn, lines: const []);
 
@@ -79,8 +81,9 @@ void main() {
     required AppEventBus bus,
     Widget child = const SizedBox.shrink(),
   }) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      ProviderScope(
+      buildAppShell(
         overrides: [
           gamesBoxProvider.overrideWith((ref) => gamesBox),
           gameSaveAdapterProvider.overrideWith((ref) => adapter),
@@ -92,9 +95,7 @@ void main() {
           appEventBusProvider.overrideWith((ref) => bus),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
         ],
-        child: MaterialApp(
-          home: GameToUIBusListener(gameId: game.id, child: child),
-        ),
+        child: GameToUIBusListener(gameId: game.id, child: child),
       ),
     );
     await tester.pumpAndSettle();

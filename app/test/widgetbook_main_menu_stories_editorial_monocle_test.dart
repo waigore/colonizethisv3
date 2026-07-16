@@ -11,7 +11,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
@@ -19,6 +18,7 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
 import 'support/widgetbook_test_harness.dart';
 
@@ -63,10 +63,7 @@ Future<void> _pumpEditorialMonocleStory(
   WidgetbookUseCase useCase,
 ) async {
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Builder(builder: useCase.builder),
-    ),
+    buildAppShell(child: Builder(builder: useCase.builder)),
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 16));

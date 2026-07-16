@@ -28,6 +28,8 @@ void main() {
     await tester.pump();
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(CivilianUnitsPanel), findsOneWidget);
+    expect(find.byType(CivilianPanelBusDialogHost), findsOneWidget);
+    expect(find.byType(PanelBusDialogHost), findsOneWidget);
   });
 
   testWidgets('buildDiplomacyPanel hosts DiplomacyPanel', (
@@ -43,6 +45,8 @@ void main() {
     );
     await pumpDiplomacyPanelBuilt(tester);
     expect(find.byType(DiplomacyPanel), findsOneWidget);
+    expect(find.byType(DiplomacyPanelBusDialogHost), findsOneWidget);
+    expect(find.byType(PanelBusDialogHost), findsOneWidget);
   });
 
   testWidgets('buildDiplomacyPanelShell hosts DiplomacyPanel without dialog host', (

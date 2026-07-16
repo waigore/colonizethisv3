@@ -45,14 +45,14 @@ void main() {
         );
 
         // Foregrounded (visible) on first frame: Deal Book body.
-        expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsOneWidget);
-        expect(find.byKey(TradeScreen.dealBookContentKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsOneWidget);
+        expect(find.byKey(TradeScreenDealBookKeys.dealBookContentKey), findsOneWidget);
 
         // Off-stage (still in the IndexedStack): Market body. Found
         // only when `skipOffstage: false` is explicitly passed.
-        expect(find.byKey(TradeScreen.marketTabBodyKey), findsNothing);
+        expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsNothing);
         expect(
-          find.byKey(TradeScreen.marketTabBodyKey, skipOffstage: false),
+          find.byKey(TradeScreenMarketKeys.marketTabBodyKey, skipOffstage: false),
           findsOneWidget,
         );
       },
@@ -65,10 +65,10 @@ void main() {
         game: buildTradeTestGame(id: 'test_trade_screen_e7'),
       );
 
-      expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
-      expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsOneWidget);
+      expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsNothing);
       expect(
-        find.byKey(TradeScreen.dealBookTabBodyKey, skipOffstage: false),
+        find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey, skipOffstage: false),
         findsOneWidget,
       );
     });
@@ -81,8 +81,8 @@ void main() {
         initialTabIndex: 0,
       );
 
-      expect(find.byKey(TradeScreen.marketTabBodyKey), findsOneWidget);
-      expect(find.byKey(TradeScreen.dealBookTabBodyKey), findsNothing);
+      expect(find.byKey(TradeScreenMarketKeys.marketTabBodyKey), findsOneWidget);
+      expect(find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey), findsNothing);
     });
   });
 

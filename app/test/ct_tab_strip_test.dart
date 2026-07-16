@@ -7,6 +7,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
+import 'support/app_shell_harness.dart';
+
+Widget _host(Widget child, {ThemeData? themeOverride}) {
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  // Theme overrides for bare/light ThemeData guards wrap [child] so
+  // MaterialApp stays canonical (same pattern as ct_dialog_shell_test).
+  final Widget body = themeOverride == null
+      ? child
+      : Theme(data: themeOverride, child: child);
+  return buildAppShell(child: Scaffold(body: body));
+}
+
 /// Locates the inner [Container] widget that paints the tab chrome for
 /// the tab labelled [label]. Each tab in the strip is `Padding > Container`
 /// — `find.text(label)` returns the inner [Text]; we walk back up to the
@@ -46,18 +58,16 @@ void main() {
 
   testWidgets('CtTabStrip builds and shows first tab label and content', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: CtTabStrip(
-              tabLabels: const ['A', 'B', 'C'],
-              tabViews: const [
-                Text('Content A'),
-                Text('Content B'),
-                Text('Content C'),
-              ],
-            ),
+      _host(
+        SizedBox(
+          height: 200,
+          child: CtTabStrip(
+            tabLabels: const ['A', 'B', 'C'],
+            tabViews: const [
+              Text('Content A'),
+              Text('Content B'),
+              Text('Content C'),
+            ],
           ),
         ),
       ),
@@ -70,17 +80,15 @@ void main() {
 
   testWidgets('CtTabStrip tap switches to second tab content', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: CtTabStrip(
-              tabLabels: const ['First', 'Second'],
-              tabViews: const [
-                Text('View 1'),
-                Text('View 2'),
-              ],
-            ),
+      _host(
+        SizedBox(
+          height: 200,
+          child: CtTabStrip(
+            tabLabels: const ['First', 'Second'],
+            tabViews: const [
+              Text('View 1'),
+              Text('View 2'),
+            ],
           ),
         ),
       ),
@@ -95,15 +103,13 @@ void main() {
 
   testWidgets('CtTabStrip applies contentPadding', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: CtTabStrip(
-              tabLabels: const ['X'],
-              tabViews: const [Text('Padded')],
-              contentPadding: const EdgeInsets.all(16),
-            ),
+      _host(
+        SizedBox(
+          height: 200,
+          child: CtTabStrip(
+            tabLabels: const ['X'],
+            tabViews: const [Text('Padded')],
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ),
@@ -112,17 +118,19 @@ void main() {
   });
 
   group('CtTabStrip dark editorial-monocle palette (Refs #2865 S3)', () {
-    Widget harness({required List<String> labels}) {
+    Widget harness({
+      required List<String> labels,
+      ThemeData? themeOverride,
+    }) {
       final List<Widget> views = labels
           .map((String l) => Text('Body $l', key: ValueKey<String>('body-$l')))
           .toList(growable: false);
-      return MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            height: 200,
-            child: CtTabStrip(tabLabels: labels, tabViews: views),
-          ),
+      return _host(
+        SizedBox(
+          height: 200,
+          child: CtTabStrip(tabLabels: labels, tabViews: views),
         ),
+        themeOverride: themeOverride,
       );
     }
 
@@ -198,7 +206,15 @@ void main() {
     testWidgets(
       'negative: tabs avoid Material colorScheme primary/outline/surface defaults',
       (WidgetTester tester) async {
-        await tester.pumpWidget(harness(labels: const ['First', 'Second']));
+        // Use a light ThemeData override so Theme.of colorScheme is the
+        // Material default (not editorialMonocle ColorScheme aliases of the
+        // same OKLCH tokens), while CtTabStrip still paints palette tokens.
+        await tester.pumpWidget(
+          harness(
+            labels: const ['First', 'Second'],
+            themeOverride: ThemeData.light(),
+          ),
+        );
 
         final BoxDecoration selected = _tabDecoration(tester, 'First');
         final BoxDecoration unselected = _tabDecoration(tester, 'Second');

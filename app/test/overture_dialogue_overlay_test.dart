@@ -7,10 +7,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
+
+import 'support/app_shell_harness.dart';
 
 const OvertureOffer _gp2TradeConsulate = OvertureOffer(
   offererGpId: 'gp2',
@@ -57,9 +59,10 @@ void main() {
     addTearDown(tester.view.reset);
     tester.view.physicalSize = surfaceSize;
     tester.view.devicePixelRatio = 1.0;
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: OvertureDialogueOverlay(
+      buildAppShell(
+        child: OvertureDialogueOverlay(
           game: game(),
           pendingOvertures: offers,
           skipIntroForTest: true,

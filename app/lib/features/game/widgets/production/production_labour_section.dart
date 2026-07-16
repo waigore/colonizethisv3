@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
 

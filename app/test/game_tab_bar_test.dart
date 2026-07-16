@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Widget tests for the in-game shell tab bar (issue #2861 S2).
 void main() {
   suppressLogsForTests();
@@ -19,8 +21,8 @@ void main() {
     String cargoHoldLabel = '3/12',
     Widget? trailing,
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: SizedBox(
           width: 600,
           height: 120,
@@ -28,19 +30,19 @@ void main() {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               GameTabBar(
-            regionIndex: regionIndex,
-            onRegionIndexChanged: onRegionIndexChanged ?? (_) {},
-            oldWorldLabel: 'Old World',
-            newWorldLabel: 'New World',
-            treasury: treasury,
-            treasuryDelta: treasuryDelta,
-            treasuryNotDefined: treasuryNotDefined,
-            cargoUsed: 3,
-            cargoCapacity: 12,
-            cargoNotDefined: false,
-            isCargoUsedReliable: true,
-            cargoHoldLabel: cargoHoldLabel,
-            trailing: trailing ?? const SizedBox(width: 32, height: 32),
+                regionIndex: regionIndex,
+                onRegionIndexChanged: onRegionIndexChanged ?? (_) {},
+                oldWorldLabel: 'Old World',
+                newWorldLabel: 'New World',
+                treasury: treasury,
+                treasuryDelta: treasuryDelta,
+                treasuryNotDefined: treasuryNotDefined,
+                cargoUsed: 3,
+                cargoCapacity: 12,
+                cargoNotDefined: false,
+                isCargoUsedReliable: true,
+                cargoHoldLabel: cargoHoldLabel,
+                trailing: trailing ?? const SizedBox(width: 32, height: 32),
               ),
             ],
           ),

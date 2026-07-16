@@ -77,7 +77,7 @@ void main() {
           game: buildTradeTestGame(treasury: 100, prices: const {_timber: 30}),
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
         await tester.pump();
 
         final TradeOrder? staged = _stagedOrder(container, _timber);
@@ -85,7 +85,7 @@ void main() {
         expect(staged!.type, TradeOrderType.bid);
         expect(
           staged.quantity,
-          TradeScreen.marketRowQuantityDefault,
+          TradeScreenMarketKeys.marketRowQuantityDefault,
           reason:
               'Treasury 100 / price 30 = 3 units of headroom; default '
               'staged qty 1 fits inside the budget.',
@@ -114,7 +114,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)));
       await tester.pump();
 
       final TradeOrder? staged = _stagedOrder(container, _timber);
@@ -152,7 +152,7 @@ void main() {
           ),
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_iron)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_iron)));
         await tester.pump();
 
         expect(
@@ -190,7 +190,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
       await tester.pump();
 
       final TradeOrder? staged = _stagedOrder(container, _timber);
@@ -218,7 +218,7 @@ void main() {
           ),
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_lumber)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_lumber)));
         await tester.pump();
 
         final TradeOrder? staged = _stagedOrder(container, _lumber);
@@ -233,7 +233,7 @@ void main() {
               'for unpriced commodities.',
         );
         expect(staged!.type, TradeOrderType.bid);
-        expect(staged.quantity, TradeScreen.marketRowQuantityDefault);
+        expect(staged.quantity, TradeScreenMarketKeys.marketRowQuantityDefault);
       },
     );
 
@@ -257,7 +257,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(TradeScreen.marketRowDecrementKey(_timber)));
+      await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowDecrementKey(_timber)));
       await tester.pump();
 
       expect(_stagedOrder(container, _timber)?.quantity, 1);
@@ -285,7 +285,7 @@ void main() {
           extraOverrides: <Override>[_treasurySummaryOverride(game, -40)],
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
         await tester.pump();
 
         TradeOrder? staged = _stagedOrder(container, _timber);
@@ -297,7 +297,7 @@ void main() {
         );
 
         await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
         );
         await tester.pump();
         staged = _stagedOrder(container, _timber);
@@ -308,7 +308,7 @@ void main() {
         );
 
         await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
         );
         await tester.pump();
         staged = _stagedOrder(container, _timber);
@@ -339,7 +339,7 @@ void main() {
           extraOverrides: <Override>[_treasurySummaryOverride(game, -60)],
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_timber)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_timber)));
         await tester.pump();
 
         expect(
@@ -370,7 +370,7 @@ void main() {
           extraOverrides: <Override>[_treasurySummaryOverride(game, 25)],
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_iron)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_iron)));
         await tester.pump();
 
         final TradeOrder? staged = _stagedOrder(container, _iron);
@@ -418,7 +418,7 @@ void main() {
         );
 
         await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
+          find.byKey(TradeScreenMarketKeys.marketRowIncrementKey(_timber)),
         );
         await tester.pump();
         expect(
@@ -462,7 +462,7 @@ void main() {
           extraOverrides: <Override>[_treasurySummaryOverride(game, -40)],
         );
 
-        await tester.tap(find.byKey(TradeScreen.marketRowBidChipKey(_iron)));
+        await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(_iron)));
         await tester.pump();
 
         expect(

@@ -16,10 +16,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/map_view_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -98,8 +98,9 @@ Future<void> _pumpMapArea(
   bool debugConsoleEnabled = false,
   Size? mediaQuerySize,
 }) async {
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
   await tester.pumpWidget(
-    ProviderScope(
+    buildAppShell(
       overrides: [
         appEventBusProvider.overrideWith((ref) => harness.bus),
         currentGameProvider.overrideWith(
@@ -116,22 +117,15 @@ Future<void> _pumpMapArea(
         if (debugConsoleEnabled)
           debugConsoleEnabledProvider.overrideWithValue(true),
       ],
-      child: MaterialApp(
-        builder: mediaQuerySize == null
-            ? null
-            : (context, child) => MediaQuery(
-                data: MediaQueryData(size: mediaQuerySize),
-                child: child!,
-              ),
-        home:
-            home ??
-            Scaffold(
-              body: GameMapArea(
-                game: harness.game,
-                mapViewData: harness.mapViewData,
-              ),
+      viewport: mediaQuerySize,
+      child:
+          home ??
+          Scaffold(
+            body: GameMapArea(
+              game: harness.game,
+              mapViewData: harness.mapViewData,
             ),
-      ),
+          ),
     ),
   );
   await tester.pump();

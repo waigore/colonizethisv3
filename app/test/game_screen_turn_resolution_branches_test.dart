@@ -3,24 +3,21 @@ import 'dart:async';
 
 import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/core/services/turn_resolution/turn_resolution_runner.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_app/providers/turn_resolution_runner_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/game_screen_test_support.dart';
 
 class _FakeOvertureRunner extends TurnResolutionRunner {
   @override
@@ -145,21 +142,21 @@ void main() {
       final service = GameService(box, adapter);
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => box),
-            gameServiceProvider.overrideWith((ref) => service),
-            turnResolutionRunnerProvider.overrideWith((ref) => _FakeOvertureRunner()),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            mapViewDataProvider.overrideWith((ref) => null),
-            gameIdsWithIntroShownProvider.overrideWith(
-              () => GameIdsWithIntroShownNotifier({game.id}),
+        buildGameScreenHost(
+          gamesBox: box,
+          game: game,
+          mapViewData: null,
+          width: 900,
+          height: 700,
+          wrapAppEventHandler: false,
+          includeHomeFleetCargo: false,
+          includeTreasury: false,
+          gameService: service,
+          extraOverrides: [
+            turnResolutionRunnerProvider.overrideWith(
+              (ref) => _FakeOvertureRunner(),
             ),
           ],
-          child: MaterialApp(
-            theme: AppThemes.colonial,
-            home: const GameScreen(),
-          ),
         ),
       );
       await tester.pump();
@@ -213,23 +210,21 @@ void main() {
       final service = GameService(box, adapter);
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => box),
-            gameServiceProvider.overrideWith((ref) => service),
+        buildGameScreenHost(
+          gamesBox: box,
+          game: game,
+          mapViewData: null,
+          width: 900,
+          height: 700,
+          wrapAppEventHandler: false,
+          includeHomeFleetCargo: false,
+          includeTreasury: false,
+          gameService: service,
+          extraOverrides: [
             turnResolutionRunnerProvider.overrideWith(
               (ref) => _FakeInterventionRunner(),
             ),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            mapViewDataProvider.overrideWith((ref) => null),
-            gameIdsWithIntroShownProvider.overrideWith(
-              () => GameIdsWithIntroShownNotifier({game.id}),
-            ),
           ],
-          child: MaterialApp(
-            theme: AppThemes.colonial,
-            home: const GameScreen(),
-          ),
         ),
       );
       await tester.pump();

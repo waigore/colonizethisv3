@@ -9,6 +9,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Tests for the dark editorial-monocle restyle of the news feed card and
 /// newspaper toggle button (issue #2861 S7).
 ///
@@ -36,8 +38,8 @@ void main() {
     required List<PlayerTurnEventFeedEntry> entries,
     String emptyLabel = 'No major events last turn.',
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: Stack(
           children: <Widget>[
             Positioned(
@@ -58,8 +60,8 @@ void main() {
     required int eventCount,
     required bool showFeed,
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: Center(
           child: PlayerTurnEventsFeedToggleButton(
             eventCount: eventCount,
@@ -405,8 +407,8 @@ void main() {
     testWidgets('button fires onPressed on tap', (WidgetTester tester) async {
       int taps = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Center(
               child: PlayerTurnEventsFeedToggleButton(
                 eventCount: 0,

@@ -23,6 +23,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 
@@ -99,6 +100,34 @@ Widget buildNavalPanel({
       ),
     ),
   );
+}
+
+/// Pumps [buildNavalPanel] (or an optional prebuilt [widget]) and settles.
+///
+/// Canonical naval panel pump for `naval_units_panel_part*_test.dart` — do not
+/// re-declare a local `_pumpNaval` / `pumpNaval` in part suites (Refs #4035).
+Future<void> pumpNavalPanel(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  AppEventBus? bus,
+  MapTopology topology = const MapTopology(),
+  Orders draftOrders = const Orders(),
+  String? locationScopeKey,
+  Widget? widget,
+}) async {
+  await tester.pumpWidget(
+    widget ??
+        buildNavalPanel(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          bus: bus,
+          topology: topology,
+          draftOrders: draftOrders,
+          locationScopeKey: locationScopeKey,
+        ),
+  );
+  await tester.pumpAndSettle();
 }
 
 /// Home-fleet-only game for part1 default assertions (single Split tooltip).
@@ -226,9 +255,7 @@ Game buildNavalPanelOwFleetsGame({
       fleets: fleets,
       portsByProvinceSeaboard: portsByProvinceSeaboard,
       seaZoneDisplayNameById: seaZoneDisplayNameById,
-      tileKeysByRegionAndProvince: {
-        'oldWorld': tileKeysByProvince,
-      },
+      tileKeysByRegionAndProvince: {'oldWorld': tileKeysByProvince},
       nextShipInstanceSeq: nextShipInstanceSeq ?? 1,
     ),
     players: [player],
@@ -482,9 +509,7 @@ Game withoutNavalPanelCapitalHomeFleets(Game base, String humanId) {
         (inPortId == capitalProvinceLocalId ||
             inPortId == '$capitalRegionId|$capitalProvinceLocalId'));
   }).toList();
-  return base.copyWith(
-    worldState: base.worldState.copyWith(fleets: filtered),
-  );
+  return base.copyWith(worldState: base.worldState.copyWith(fleets: filtered));
 }
 
 /// First non-capital province with a resolvable locate tile key, if any.
@@ -525,7 +550,10 @@ String? navalProvinceLocateTileKey(Game game, Province province) {
   return null;
 }
 
-/// Wide MediaQuery shell so [UnitsPanelShell] can exceed the 400dp base width.
+/// Wide viewport shell so [UnitsPanelShell] can exceed the 400dp base width.
+///
+/// Composes [buildAppShell] (editorial-monocle) rather than a raw [MaterialApp]
+/// host (Refs #4035 AC4).
 Widget buildNavalPanelWideViewport({
   required Game game,
   required String humanPlayerId,
@@ -533,36 +561,36 @@ Widget buildNavalPanelWideViewport({
   AppEventBus? bus,
   MapTopology topology = const MapTopology(),
 }) {
-  return MediaQuery(
-    data: MediaQueryData(size: size),
-    child: MaterialApp(
-      home: Scaffold(
-        body: NavalUnitsPanel(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          bus: bus ?? AppEventBus.create(),
-          topology: topology,
-        ),
+  return buildAppShell(
+    viewport: size,
+    child: Scaffold(
+      body: NavalUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: bus ?? AppEventBus.create(),
+        topology: topology,
       ),
     ),
   );
 }
 
 /// Panel host plus an external fleet-count watcher for cross-panel event pins.
+///
+/// Composes [buildAppShell] (editorial-monocle) rather than a raw [MaterialApp]
+/// host (Refs #4035 AC4).
 Widget buildNavalPanelWithFleetCountWatcher({
   required Game game,
   required String humanPlayerId,
   required AppEventBus bus,
   required ValueNotifier<int> observedFleetCount,
 }) {
-  return MaterialApp(
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: Column(
         children: [
           ValueListenableBuilder<int>(
             valueListenable: observedFleetCount,
-            builder: (context, count, _) =>
-                Text('observed-fleet-count:$count'),
+            builder: (context, count, _) => Text('observed-fleet-count:$count'),
           ),
           Expanded(
             child: NavalUnitsPanel(

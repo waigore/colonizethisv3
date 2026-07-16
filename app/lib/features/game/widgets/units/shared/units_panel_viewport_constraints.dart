@@ -54,3 +54,24 @@ BoxConstraints unitsPanelSheetConstraints(Size viewport) {
     maxHeight: viewport.height * kUnitsPanelWideHeightFactor,
   );
 }
+
+/// E2E height factor applied only to the civilian units sheet when
+/// [applyCivilianE2eHeightOverride] and [e2eEnabled] are both true
+/// (`0.92 × height`, Refs #2336 / SPEC/ui/components/units-panel-shell.md).
+const double kUnitsPanelCivilianE2eHeightFactor = 0.92;
+
+/// Host [BoxConstraints] for a unit-panel bottom sheet, including the optional
+/// civilian-only E2E height override. Military and naval hosts pass
+/// [applyCivilianE2eHeightOverride] as `false` so they keep the adaptive
+/// contract from [unitsPanelSheetConstraints] even under E2E.
+BoxConstraints unitsPanelHostSheetConstraints({
+  required Size viewport,
+  required bool applyCivilianE2eHeightOverride,
+  required bool e2eEnabled,
+}) {
+  final base = unitsPanelSheetConstraints(viewport);
+  if (applyCivilianE2eHeightOverride && e2eEnabled) {
+    return base.copyWith(maxHeight: viewport.height * kUnitsPanelCivilianE2eHeightFactor);
+  }
+  return base;
+}

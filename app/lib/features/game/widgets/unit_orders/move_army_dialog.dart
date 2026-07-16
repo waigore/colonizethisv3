@@ -11,7 +11,7 @@ import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'move_units_dialog_base.dart';
 
 part 'move_army_dialog_declare_war.dart';

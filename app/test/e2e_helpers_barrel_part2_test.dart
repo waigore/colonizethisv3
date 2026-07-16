@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -14,14 +15,18 @@ void main() {
     testWidgets('pumpFor returns without throwing for Duration.zero', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
       await pumpFor(tester, Duration.zero);
     });
 
     testWidgets('pumpFor advances the test clock for a positive duration', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
       // Smoke: forwarding to e2ePumpFor (which loops 50ms pumps) must
       // complete without exception for a short, bounded duration. A
       // wrapper that dropped the Duration arg would either no-op
@@ -35,7 +40,8 @@ void main() {
       'collectTextPreorder matches e2eCollectTextPreorder for a mixed subtree',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
             home: Scaffold(
               body: KeyedSubtree(
                 key: Key('root'),
@@ -63,7 +69,8 @@ void main() {
       'waitUntilFound short-circuits when finder is already non-empty',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          const MaterialApp(
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
             home: Scaffold(
               body: Center(child: Text('here', key: Key('here'))),
             ),
@@ -91,7 +98,12 @@ void main() {
     testWidgets(
       'dismissTransientUi returns without throwing when no overlay is mounted',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await tester.pumpWidget(
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: SizedBox(),
+          ),
+        );
         await dismissTransientUi(tester);
       },
     );
@@ -99,7 +111,12 @@ void main() {
     testWidgets(
       'expandEachExpansionTileOnce returns early when no ExpansionTile exists',
       (WidgetTester tester) async {
-        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        await tester.pumpWidget(
+          buildAppShellMaterialApp(
+            applyEditorialTheme: false,
+            home: SizedBox(),
+          ),
+        );
         final sw = Stopwatch()..start();
         await expandEachExpansionTileOnce(tester);
         expect(

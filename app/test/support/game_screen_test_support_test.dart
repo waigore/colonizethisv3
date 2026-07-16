@@ -6,6 +6,7 @@ import 'package:colonizethis_map/colonizethis_map.dart'
     show InitGameMapViewData;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
@@ -58,6 +59,28 @@ void main() {
       );
       await tester.pump();
       expect(find.byType(GameScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'buildGameScreenHost accepts custom home without GameScreen',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildGameScreenHost(
+          gamesBox: gamesBox,
+          game: game,
+          mapViewData: null,
+          width: 400,
+          height: 300,
+          wrapAppEventHandler: false,
+          includeHomeFleetCargo: false,
+          includeTreasury: false,
+          home: const SizedBox(key: Key('extra-home')),
+        ),
+      );
+      await tester.pump();
+      expect(find.byKey(const Key('extra-home')), findsOneWidget);
+      expect(find.byType(GameScreen), findsNothing);
     },
   );
 }

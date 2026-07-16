@@ -11,35 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
-
-Future<void> _pumpNaval(
-  WidgetTester tester, {
-  required Game game,
-  required String humanPlayerId,
-  AppEventBus? bus,
-  MapTopology topology = const MapTopology(),
-  Orders draftOrders = const Orders(),
-  String? locationScopeKey,
-}) async {
-  await tester.pumpWidget(
-    buildNavalPanel(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      bus: bus,
-      topology: topology,
-      draftOrders: draftOrders,
-      locationScopeKey: locationScopeKey,
-    ),
-  );
-  await tester.pumpAndSettle();
-}
 
 (AppEventBus bus, List<ClosePanelEvent> events) _wireCloseCapture() {
   final events = <ClosePanelEvent>[];
@@ -196,14 +175,14 @@ void main() {
     testWidgets('AC: Beachhead status and empty-naval empty-state pins', (
       WidgetTester tester,
     ) async {
-      await _pumpNaval(
+      await pumpNavalPanel(
         tester,
         game: buildNavalPanelBeachheadMissionGame(humanId: 'p_beach'),
         humanPlayerId: 'p_beach',
       );
       expect(find.textContaining('Beachhead'), findsWidgets);
 
-      await _pumpNaval(
+      await pumpNavalPanel(
         tester,
         game: buildNavalPanelEmptyHumanGame(humanId: 'p_empty'),
         humanPlayerId: 'p_empty',
@@ -216,7 +195,7 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_marker_scope';
         const capital = 'oldWorld|p1';
-        await _pumpNaval(
+        await pumpNavalPanel(
           tester,
           game: buildNavalPanelOwFleetsGame(
             gameId: 'g_marker_scope',
@@ -261,7 +240,7 @@ void main() {
       'AC: Cross-region projected marker scope shows destination region rows',
       (WidgetTester tester) async {
         const humanId = 'gp_cross_region_scope';
-        await _pumpNaval(
+        await pumpNavalPanel(
           tester,
           game: buildNavalPanelSingleSeaFleetGame(
             humanId: humanId,
@@ -347,68 +326,72 @@ void main() {
       );
     });
 
-    testWidgets('AC: Move/narrow actions — Home no Move; non-home opens dialog', (
-      WidgetTester tester,
-    ) async {
-      const homeId = 'gp_move_home';
-      await _pumpNaval(
-        tester,
-        game: _capPeers(
-          humanId: homeId,
-          gameId: 'g_move_home',
-          displayName: 'Move Home Test',
-          peerFleets: const [],
-          homeShips: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
-        ),
-        humanPlayerId: homeId,
-      );
-      expect(
-        find.descendant(
-          of: find.widgetWithText(ExpansionTile, 'Home Fleet'),
+    testWidgets(
+      'AC: Move/narrow actions — Home no Move; non-home opens dialog',
+      (WidgetTester tester) async {
+        const homeId = 'gp_move_home';
+        await pumpNavalPanel(
+          tester,
+          game: _capPeers(
+            humanId: homeId,
+            gameId: 'g_move_home',
+            displayName: 'Move Home Test',
+            peerFleets: const [],
+            homeShips: const [ShipInstance(id: 'home_ship', typeId: 'carrack')],
+          ),
+          humanPlayerId: homeId,
+        );
+        expect(
+          find.descendant(
+            of: find.widgetWithText(ExpansionTile, 'Home Fleet'),
+            matching: find.byTooltip('Move'),
+          ),
+          findsNothing,
+        );
+
+        final humanId = humanPlayerIdWithFleets;
+        final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
+        if (nonHomeFleets.isEmpty) return;
+        final fleetTile = find.widgetWithText(
+          ExpansionTile,
+          'Fleet ${nonHomeFleets.first.id}',
+        );
+
+        await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
+        expect(fleetTile, findsOneWidget);
+        await tester.ensureVisible(fleetTile);
+        final moveButton = find.descendant(
+          of: fleetTile,
           matching: find.byTooltip('Move'),
-        ),
-        findsNothing,
-      );
+        );
+        expect(moveButton, findsOneWidget);
+        await tester.ensureVisible(moveButton);
+        await tester.tap(moveButton);
+        await tester.pumpAndSettle();
+        expect(find.byType(MoveFleetDialog), findsOneWidget);
+        expect(tester.takeException(), isNull);
 
-      final humanId = humanPlayerIdWithFleets;
-      final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
-      if (nonHomeFleets.isEmpty) return;
-      final fleetTile = find.widgetWithText(
-        ExpansionTile,
-        'Fleet ${nonHomeFleets.first.id}',
-      );
-
-      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
-      expect(fleetTile, findsOneWidget);
-      await tester.ensureVisible(fleetTile);
-      final moveButton = find.descendant(
-        of: fleetTile,
-        matching: find.byTooltip('Move'),
-      );
-      expect(moveButton, findsOneWidget);
-      await tester.ensureVisible(moveButton);
-      await tester.tap(moveButton);
-      await tester.pumpAndSettle();
-      expect(find.byType(MoveFleetDialog), findsOneWidget);
-      expect(tester.takeException(), isNull);
-
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(320, 800));
-      await _pumpNaval(tester, game: game, humanPlayerId: humanId);
-      expect(fleetTile, findsOneWidget);
-      expect(
-        find.descendant(of: fleetTile, matching: find.byIcon(Icons.route)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: fleetTile, matching: find.byIcon(Icons.call_split)),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: fleetTile, matching: find.text('Move')),
-        findsNothing,
-      );
-    });
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.binding.setSurfaceSize(const Size(320, 800));
+        await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
+        expect(fleetTile, findsOneWidget);
+        expect(
+          find.descendant(of: fleetTile, matching: find.byIcon(Icons.route)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: fleetTile,
+            matching: find.byIcon(Icons.call_split),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: fleetTile, matching: find.text('Move')),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
@@ -432,7 +415,7 @@ void main() {
           wire: (b) =>
               wireNavalTransferForWidgetTest(bus: b, gameSnapshot: () => g),
         );
-        await _pumpNaval(tester, game: g, humanPlayerId: humanId, bus: bus);
+        await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
         await _tapCbs(tester, [
           find.widgetWithText(ExpansionTile, 'Home Fleet'),
           find.widgetWithText(ExpansionTile, 'Fleet donor'),
@@ -480,7 +463,7 @@ void main() {
           wire: (b) =>
               wireNavalSplitForWidgetTest(bus: b, gameSnapshot: () => g),
         );
-        await _pumpNaval(tester, game: g, humanPlayerId: humanId, bus: bus);
+        await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
         final fleetTile = find.widgetWithText(ExpansionTile, 'Fleet split_me');
         await tester.ensureVisible(fleetTile);
         await tester.tap(fleetTile);
@@ -582,8 +565,8 @@ class _ScopedNavalPanelHarnessState extends State<_ScopedNavalPanelHarness> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: NavalUnitsPanel(
           game: _game,
           humanPlayerId: widget.humanPlayerId,

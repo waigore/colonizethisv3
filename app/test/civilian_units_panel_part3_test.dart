@@ -3,11 +3,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
@@ -74,24 +72,12 @@ Future<void> _pumpTileScopedPanel(
   bool settle = true,
 }) async {
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        availableWorkTargetIdsForUnitProvider.overrideWith(
-          (ref, _) => const <String>[],
-        ),
-      ],
-      child: MaterialApp(
-        home: Scaffold(
-          body: CivilianUnitsPanel(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: const Orders(),
-            bus: bus,
-            tileScopeTileKey: tileScopeTileKey,
-            initialSelectedUnitId: initialSelectedUnitId,
-          ),
-        ),
-      ),
+    buildCivilianPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      tileScopeTileKey: tileScopeTileKey,
+      initialSelectedUnitId: initialSelectedUnitId,
     ),
   );
   if (settle) {

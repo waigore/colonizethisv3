@@ -28,6 +28,7 @@ import 'package:widgetbook/widgetbook.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
 
 /// The three research slots seeded as assigned + editable by
@@ -40,8 +41,8 @@ const String _kMobileUseCaseName = 'Slots — funding & turn preview (mobile)';
 
 Future<void> _pumpUseCase(WidgetTester tester, WidgetbookUseCase useCase) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
+    buildAppShell(
+      child: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
     ),
   );
   await tester.pump();

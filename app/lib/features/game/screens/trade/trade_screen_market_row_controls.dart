@@ -46,19 +46,19 @@ class _MarketCommodityRowControls extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
         CtChoiceChip(
-          key: TradeScreen.marketRowNoneChipKey(commodityId),
+          key: TradeScreenMarketKeys.marketRowNoneChipKey(commodityId),
           selected: stagedType == null,
           onSelected: (_) => onDirectionChanged(null),
           label: const Text(_MarketTabContent.noneChipLabel),
         ),
         CtChoiceChip(
-          key: TradeScreen.marketRowBidChipKey(commodityId),
+          key: TradeScreenMarketKeys.marketRowBidChipKey(commodityId),
           selected: stagedType == TradeOrderType.bid,
           onSelected: (_) => onDirectionChanged(TradeOrderType.bid),
           label: const Text(_MarketTabContent.bidChipLabel),
         ),
         CtChoiceChip(
-          key: TradeScreen.marketRowOfferChipKey(commodityId),
+          key: TradeScreenMarketKeys.marketRowOfferChipKey(commodityId),
           selected: stagedType == TradeOrderType.offer,
           onSelected: canSelectOffer
               ? (_) => onDirectionChanged(TradeOrderType.offer)
@@ -66,7 +66,7 @@ class _MarketCommodityRowControls extends StatelessWidget {
           label: const Text(_MarketTabContent.offerChipLabel),
         ),
         _StepperButton(
-          buttonKey: TradeScreen.marketRowDecrementKey(commodityId),
+          buttonKey: TradeScreenMarketKeys.marketRowDecrementKey(commodityId),
           // ignore: avoid_hardcoded_strings_in_widgets
           glyph: '−',
           semanticLabel: _MarketTabContent.decrementSemanticLabel,
@@ -76,13 +76,13 @@ class _MarketCommodityRowControls extends StatelessWidget {
           width: 28,
           child: Text(
             quantityText,
-            key: TradeScreen.marketRowQuantityTextKey(commodityId),
+            key: TradeScreenMarketKeys.marketRowQuantityTextKey(commodityId),
             style: quantityStyle,
             textAlign: TextAlign.center,
           ),
         ),
         _StepperButton(
-          buttonKey: TradeScreen.marketRowIncrementKey(commodityId),
+          buttonKey: TradeScreenMarketKeys.marketRowIncrementKey(commodityId),
           // ignore: avoid_hardcoded_strings_in_widgets
           glyph: '+',
           semanticLabel: _MarketTabContent.incrementSemanticLabel,

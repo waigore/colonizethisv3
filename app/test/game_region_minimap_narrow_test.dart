@@ -28,8 +28,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
 
 const _kRegionMinimapIconAssetPath =
     'assets/icons/32/ui_icon_region_minimap.png';
@@ -56,13 +57,13 @@ final class _MinimapTestAssetBundle extends CachingAssetBundle {
 }
 
 Widget _minimapTestShell(Widget child) {
-  return ProviderScope(
-    child: DefaultAssetBundle(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
+    shellWrapper: (app) => DefaultAssetBundle(
       bundle: _MinimapTestAssetBundle(rootBundle),
-      child: MaterialApp(
-        home: Scaffold(body: Center(child: child)),
-      ),
+      child: app,
     ),
+    child: Scaffold(body: Center(child: child)),
   );
 }
 

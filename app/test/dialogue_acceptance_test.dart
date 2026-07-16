@@ -5,6 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/yarn_test_fixtures.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -24,8 +25,8 @@ void main() {
         'GameStartIntroLoadingIndicator uses 48 px --accent spinner (Refs #2867 R28)',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            const MaterialApp(
-              home: Scaffold(body: GameStartIntroLoadingIndicator()),
+            buildAppShell(
+              child: const Scaffold(body: GameStartIntroLoadingIndicator()),
             ),
           );
           final indicator = tester.widget<CircularProgressIndicator>(
@@ -49,8 +50,8 @@ void main() {
         (WidgetTester tester) async {
           var dismissed = false;
           await tester.pumpWidget(
-            MaterialApp(
-              home: GameStartIntroOverlay(
+            buildAppShell(
+              child: GameStartIntroOverlay(
                 assetBundle: YarnThrowingAssetBundle(),
                 onDismissed: () => dismissed = true,
                 child: const SizedBox(),
@@ -74,8 +75,8 @@ void main() {
         (WidgetTester tester) async {
           var dismissed = false;
           await tester.pumpWidget(
-            MaterialApp(
-              home: GameStartIntroOverlay(
+            buildAppShell(
+              child: GameStartIntroOverlay(
                 onDismissed: () => dismissed = true,
                 child: const SizedBox(),
               ),
@@ -120,8 +121,8 @@ void main() {
           ),
         ];
         await tester.pumpWidget(
-          MaterialApp(
-            home: OvertureDialogueOverlay(
+          buildAppShell(
+            child: OvertureDialogueOverlay(
               game: game,
               pendingOvertures: offers,
               skipIntroForTest: true,
@@ -161,8 +162,8 @@ void main() {
         ),
       ];
       await tester.pumpWidget(
-        MaterialApp(
-          home: OvertureDialogueOverlay(
+        buildAppShell(
+          child: OvertureDialogueOverlay(
             game: game,
             pendingOvertures: offers,
             skipIntroForTest: true,

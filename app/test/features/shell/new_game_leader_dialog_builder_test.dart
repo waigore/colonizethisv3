@@ -6,7 +6,8 @@ import 'dart:io';
 import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -17,16 +18,15 @@ void main() {
       (tester) async {
         late BuildContext captured;
         final navigatorKey = GlobalKey<NavigatorState>();
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          ProviderScope(
-            child: MaterialApp(
-              navigatorKey: navigatorKey,
-              home: Builder(
-                builder: (ctx) {
-                  captured = ctx;
-                  return const SizedBox.shrink();
-                },
-              ),
+          buildAppShell(
+            navigatorKey: navigatorKey,
+            child: Builder(
+              builder: (ctx) {
+                captured = ctx;
+                return const SizedBox.shrink();
+              },
             ),
           ),
         );
