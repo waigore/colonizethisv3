@@ -3,7 +3,9 @@
 
 Builds 4× nearest-neighbor strips at map tile scale: OW reference tiles
 (grain / meat / horses / tobacco), three hand-painted candidates (A/B/C), and
-the current shipped overlay per retune crop. Does not modify app terrain.
+the current shipped overlay per retune crop. Optional composition mode
+(``--picks`` / ``--recommend``) shows the three retuned crops together beside
+OW refs vs CURRENT shipped. Does not modify app terrain.
 
 See SPEC/ui/pytool-image-tools.md § render_plantation_po_review_strip_3961.py.
 """
@@ -17,6 +19,15 @@ import sys
 from pathlib import Path
 
 from PIL import Image
+
+_PYTOOL = Path(__file__).resolve().parent
+if str(_PYTOOL) not in sys.path:
+    sys.path.insert(0, str(_PYTOOL))
+
+from plantation_field_harmony_3961 import (  # noqa: E402
+    format_picks,
+    recommend_picks,
+)
 
 REPO = Path(__file__).resolve().parents[1]
 PAINT_SCRIPT = REPO / "pytool/paint_plains_plantation_field_gradients.py"
@@ -41,7 +52,6 @@ def _load_paint_module():
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
-
 
 def upscale_nearest(im: Image.Image, scale: int) -> Image.Image:
     w, h = im.size
@@ -105,6 +115,107 @@ def crop_strip_row(
         upscale_nearest(load_rgba(terrain_dir / f"tile_plains_{crop}.png"), scale),
     )
     return concat_horizontal(tiles)
+
+
+def composition_filename_slug(picks: dict[str, str]) -> str:
+    """Filesystem-safe slug from ordered picks (e.g. sugar_caneA_cottonB_spicesA)."""
+    return "_".join(f"{crop}{picks[crop]}" for crop in RETUNE_CROPS)
+
+
+def composition_row(
+    terrain_dir: Path,
+    candidate_dir: Path,
+    picks: dict[str, str] | None,
+    *,
+    letter_by_id: dict[str, dict[str, str]],
+    scale: int,
+) -> Image.Image:
+    """One composition row: OW refs + either picked candidates or CURRENT shipped."""
+    tiles: list[Image.Image] = []
+    for stem in REFERENCE_STEMS:
+        tiles.append(upscale_nearest(load_rgba(terrain_dir / f"tile_plains_{stem}.png"), scale))
+    for crop in RETUNE_CROPS:
+        if picks is None:
+            path = terrain_dir / f"tile_plains_{crop}.png"
+        else:
+            letter = picks[crop]
+            variant = letter_by_id[crop][letter]
+            path = candidate_dir / f"tile_plains_{crop}_{variant}.png"
+        tiles.append(upscale_nearest(load_rgba(path), scale))
+    return concat_horizontal(tiles)
+
+
+def write_composition_notes(
+    out_dir: Path,
+    picks: dict[str, str],
+    *,
+    paint_mod,
+) -> Path:
+    lines = [
+        "# Plantation composition strip (Refs #3961)",
+        "",
+        f"**Picks:** `{format_picks(picks)}`",
+        "",
+        "Row order:",
+        "1. **Proposed:** grain | meat | horses | tobacco | sugar_cane(pick) | cotton(pick) | spices(pick)",
+        "2. **CURRENT:** grain | meat | horses | tobacco | sugar_cane(shipped) | cotton(shipped) | spices(shipped)",
+        "",
+        "| Crop | Letter | Variant |",
+        "|------|--------|---------|",
+    ]
+    for crop in RETUNE_CROPS:
+        letter = picks[crop]
+        variant = paint_mod.LETTER_BY_ID[crop][letter]
+        lines.append(f"| `{crop}` | **{letter}** | `{variant}` |")
+    lines.append("")
+    path = out_dir / "COMPOSITION_NOTES.md"
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def render_composition_strip(
+    terrain_dir: Path,
+    candidate_dir: Path,
+    out_dir: Path,
+    picks: dict[str, str],
+    *,
+    scale: int = SCALE,
+) -> list[Path]:
+    paint = _load_paint_module()
+    if set(picks) != set(RETUNE_CROPS):
+        missing = set(RETUNE_CROPS) - set(picks)
+        extra = set(picks) - set(RETUNE_CROPS)
+        if missing:
+            raise SystemExit(f"composition picks missing crops: {sorted(missing)}")
+        if extra:
+            raise SystemExit(f"composition picks has unknown crops: {sorted(extra)}")
+    for crop, letter in picks.items():
+        if letter not in LETTERS:
+            raise SystemExit(f"{crop}: letter must be A, B, or C (got {letter})")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    proposed = composition_row(
+        terrain_dir,
+        candidate_dir,
+        picks,
+        letter_by_id=paint.LETTER_BY_ID,
+        scale=scale,
+    )
+    current = composition_row(
+        terrain_dir,
+        candidate_dir,
+        None,
+        letter_by_id=paint.LETTER_BY_ID,
+        scale=scale,
+    )
+    overview = concat_vertical([proposed, current], gap=ROW_GAP_PX * scale // SCALE)
+    slug = composition_filename_slug(picks)
+    path = out_dir / f"strip_composition_{slug}_x{scale}.png"
+    overview.save(path, optimize=True)
+    notes = write_composition_notes(out_dir, picks, paint_mod=paint)
+    print(f"wrote {path}")
+    print(f"wrote {notes}")
+    print(f"composition picks: {format_picks(picks)}")
+    return [path, notes]
 
 
 def write_candidate_notes(
@@ -211,9 +322,39 @@ def main() -> None:
         default=SCALE,
         help="Nearest-neighbor upscale factor (default 4)",
     )
+    parser.add_argument(
+        "--picks",
+        type=str,
+        default="",
+        help="Composition mode: sugar_cane=A,cotton=B,spices=A (mutually exclusive with --recommend)",
+    )
+    parser.add_argument(
+        "--recommend",
+        action="store_true",
+        help="Composition mode using harmony scorer picks (mutually exclusive with --picks)",
+    )
     args = parser.parse_args()
     if args.scale < 1:
         raise SystemExit("--scale must be >= 1")
+    if args.picks.strip() and args.recommend:
+        raise SystemExit("--picks and --recommend are mutually exclusive")
+    if args.picks.strip() or args.recommend:
+        paint = _load_paint_module()
+        if args.recommend:
+            picks = recommend_picks(
+                candidate_dir=args.candidate_dir,
+                terrain_dir=args.terrain_dir,
+            )
+        else:
+            picks = paint._parse_promote(args.picks)
+        render_composition_strip(
+            args.terrain_dir,
+            args.candidate_dir,
+            args.out_dir,
+            picks,
+            scale=args.scale,
+        )
+        return
     render_strips(
         args.terrain_dir,
         args.candidate_dir,
