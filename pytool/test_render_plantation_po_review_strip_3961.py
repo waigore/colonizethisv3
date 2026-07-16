@@ -54,10 +54,15 @@ class RenderPlantationPoReviewStrip3961Test(unittest.TestCase):
             names = {p.name for p in written}
             self.assertIn("strip_all_crops_x2.png", names)
             self.assertIn("strip_sugar_cane_x2.png", names)
+            # Variant ids already include the letter; do not double it.
+            self.assertIn("sugar_cane_A_sage_olive_x2.png", names)
+            self.assertIn("cotton_B_grey_fibre_x2.png", names)
+            self.assertIn("spices_C_ochre_turmeric_x2.png", names)
+            self.assertNotIn("sugar_cane_A_A_sage_olive_x2.png", names)
             self.assertTrue((out / "CANDIDATE_NOTES.md").is_file())
-            overview = Image.open(out / "strip_all_crops_x2.png")
-            self.assertGreater(overview.width, 0)
-            self.assertGreater(overview.height, 64 * 2)
+            with Image.open(out / "strip_all_crops_x2.png") as overview:
+                self.assertGreater(overview.width, 0)
+                self.assertGreater(overview.height, 64 * 2)
 
 
 if __name__ == "__main__":

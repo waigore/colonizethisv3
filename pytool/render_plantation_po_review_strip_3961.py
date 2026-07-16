@@ -51,7 +51,8 @@ def upscale_nearest(im: Image.Image, scale: int) -> Image.Image:
 def load_rgba(path: Path) -> Image.Image:
     if not path.is_file():
         raise SystemExit(f"missing tile PNG: {path}")
-    im = Image.open(path).convert("RGBA")
+    with Image.open(path) as opened:
+        im = opened.convert("RGBA")
     if im.size != (TILE_PX, TILE_PX):
         raise SystemExit(f"expected 64×64, got {im.size} for {path}")
     return im
@@ -165,12 +166,13 @@ def render_strips(
         written.append(path)
         print(f"wrote {path}")
         for letter in LETTERS:
+            # Variant ids already include the letter (e.g. A_sage_olive).
             variant = paint.LETTER_BY_ID[crop][letter]
             single = upscale_nearest(
                 load_rgba(candidate_dir / f"tile_plains_{crop}_{variant}.png"),
                 scale,
             )
-            single_path = out_dir / f"{crop}_{letter}_{variant}_x{scale}.png"
+            single_path = out_dir / f"{crop}_{variant}_x{scale}.png"
             single.save(single_path, optimize=True)
             written.append(single_path)
     overview = concat_vertical(rows, gap=ROW_GAP_PX * scale // SCALE)
