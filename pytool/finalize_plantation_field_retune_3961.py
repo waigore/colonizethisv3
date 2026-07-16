@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -29,6 +30,9 @@ SPEC_LAYERED = REPO / "SPEC/ui/layered-terrain-rendering.md"
 GOLDEN_TEST = REPO / "app/test/plains_plantation_terrain_goldens_test.dart"
 TOBACCO_MEAN = (128, 108, 42)
 REQUIRED_CROPS = ("sugar_cane", "cotton", "spices")
+PLANTATION_KEYS = ("sugar_cane", "tobacco", "cotton", "spices")
+# Matches app/test/plains_plantation_terrain_goldens_test.dart pairwise check.
+MIN_PAIRWISE_RGB_DISTANCE = 26.0
 
 
 def _load_paint_module():
@@ -128,6 +132,29 @@ def patch_spec_midtones(spec_path: Path, means: dict[str, tuple[int, int, int]])
     return new_line
 
 
+def rgb_distance(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
+    return math.sqrt(
+        (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2,
+    )
+
+
+def validate_plantation_picks(
+    means: dict[str, tuple[int, int, int]],
+    *,
+    min_pairwise: float = MIN_PAIRWISE_RGB_DISTANCE,
+) -> list[str]:
+    """Return human-readable validation errors; empty when picks pass golden pins."""
+    errors: list[str] = []
+    for i, a in enumerate(PLANTATION_KEYS):
+        for b in PLANTATION_KEYS[i + 1 :]:
+            dist = rgb_distance(means[a], means[b])
+            if dist < min_pairwise:
+                errors.append(
+                    f"{a} vs {b}: RGB distance {dist:.1f} < {min_pairwise}",
+                )
+    return errors
+
+
 def patch_golden_test_midtones(
     test_path: Path,
     means: dict[str, tuple[int, int, int]],
@@ -176,6 +203,11 @@ def main() -> None:
         action="store_true",
         help="Print actions without writing files",
     )
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="Check pairwise field-mean distinctness; no file writes",
+    )
     args = parser.parse_args()
     picks = paint._parse_promote(args.picks)
     candidate_means = load_candidate_means(args.candidate_dir)
@@ -185,10 +217,19 @@ def main() -> None:
         letter_by_id=paint.LETTER_BY_ID,
     )
     print("PO-locked field mask means:")
-    for crop in ("sugar_cane", "tobacco", "cotton", "spices"):
+    for crop in PLANTATION_KEYS:
         rgb = locked_means[crop]
         print(f"  {crop}: {rgb}")
     print(f"SPEC line: {format_midtone_clause(locked_means)}")
+    validation_errors = validate_plantation_picks(locked_means)
+    if validation_errors:
+        print("validation FAILED:")
+        for err in validation_errors:
+            print(f"  - {err}")
+        raise SystemExit(1)
+    print("validation OK: plantation field means are pairwise distinct")
+    if args.validate_only:
+        return
     if args.dry_run:
         print("dry-run: no files written")
         return
