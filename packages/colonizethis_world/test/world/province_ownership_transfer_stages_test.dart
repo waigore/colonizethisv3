@@ -13,15 +13,14 @@ void main() {
 
   group('clearPurchasedTilesForProvinceOwnershipTransfer', () {
     test('positive: removes only tiles in the conquered province', () {
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: const RegionData(
           provinces: [
             Province(id: pid, regionId: ow, ownerId: 'a'),
             Province(id: otherPid, regionId: ow, ownerId: 'a'),
           ],
         ),
-        newWorld: const RegionData(),
+      ).copyWith(
         purchasedTilesByTileKey: const {
           tileInP1: 'buyer1',
           tileInP2: 'buyer2',
@@ -40,12 +39,10 @@ void main() {
     });
 
     test('negative: empty purchases returns same map and zero removed', () {
-      final world = WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      final world = TestFixtures.worldStateAtOrdersPhase(
         oldWorld: const RegionData(
           provinces: [Province(id: pid, regionId: ow, ownerId: 'a')],
         ),
-        newWorld: const RegionData(),
       );
 
       var removed = -1;
