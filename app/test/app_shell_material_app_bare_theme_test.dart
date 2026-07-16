@@ -1,6 +1,7 @@
 // Pins `buildAppShellMaterialApp(applyEditorialTheme: false)` bare chrome
 // used by `ctRegionMapTestHarness` golden hosts (Refs #4035).
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
