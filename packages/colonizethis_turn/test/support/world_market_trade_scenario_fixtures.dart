@@ -110,6 +110,80 @@ Game boycottColonyTradeGame({required bool boycottActive}) {
   );
 }
 
+/// #3753 R3.4b subsidy surcharge: GP [gpA] subsidises minor M1.
+Game subsidySurchargeGame({required int subsidyPercent}) {
+  return TestFixtures.minimalGame(
+    players: const [
+      Player(
+        id: 'gpA',
+        displayName: 'GP A',
+        isHuman: true,
+        treasury: 1000,
+        stockpile: Stockpile.empty,
+      ),
+    ],
+    oldWorld: const RegionData(
+      provinces: [
+        Province(
+          id: frrCreditTestMinorProvinceId,
+          regionId: frrCreditTestOw,
+          ownerId: 'M1',
+        ),
+      ],
+    ),
+    tileKeysByRegionAndProvince: const {
+      frrCreditTestOw: {
+        frrCreditTestMinorProvinceId: [frrCreditTestTileKey],
+      },
+    },
+    minorNations: const [MinorNation(id: 'M1', displayName: 'Minor 1')],
+  ).copyWith(
+    worldMarketState: WorldMarketState.empty.copyWith(
+      prices: const {'timber': 20},
+    ),
+    subsidyStates: [
+      SubsidyState(payerId: 'gpA', targetId: 'M1', percent: subsidyPercent),
+    ],
+  );
+}
+
+/// #3753 R7.4 GP seller unaffected by sell-priority tiebreaker.
+Game sellPriorityGpSellerUnaffectedGame() {
+  return TestFixtures.minimalGame(
+    players: const [
+      Player(
+        id: 'gpA',
+        displayName: 'GP A',
+        isHuman: false,
+        treasury: 1000,
+        stockpile: Stockpile.empty,
+      ),
+      Player(
+        id: 'gpSell',
+        displayName: 'GP Seller',
+        isHuman: false,
+        treasury: 0,
+        stockpile: Stockpile(quantities: {'timber': 5}),
+      ),
+      Player(
+        id: 'gpZ',
+        displayName: 'GP Z',
+        isHuman: false,
+        treasury: 1000,
+        stockpile: Stockpile.empty,
+      ),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(factionId1: 'gpA', factionId2: 'gpSell', score: 10),
+      DiplomacyRelation(factionId1: 'gpZ', factionId2: 'gpSell', score: 90),
+    ],
+  ).copyWith(
+    worldMarketState: WorldMarketState.empty.copyWith(
+      prices: const {'timber': 10},
+    ),
+  );
+}
+
 /// Tribe timber offer for boycott colony-trade scenarios.
 List<TradeOrder> tribeTimberOffer(int quantity) => [
       TradeOrder(

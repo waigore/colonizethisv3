@@ -3,6 +3,16 @@
 /// safe to call on hot paths. SPEC/program/turn-resolution-phases.md.
 library;
 
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+/// Canonical prefixed province id for [province] (`regionId|localId`).
+///
+/// Shared by capture-event emission and turn-news digest so both paths key
+/// provinces the same way (Refs #4039). Delegates to [toFullProvinceId].
+String prefixedProvinceId(Province province) =>
+    toFullProvinceId(province.regionId, province.id);
+
 /// True when a province changed hands between two non-empty faction owners.
 ///
 /// Both [before] and [after] must be non-null, non-empty faction ids and must

@@ -19,34 +19,33 @@ int _timberOf(Game game, String playerId) =>
 
 void main() {
   group('worldMarketTurnPhaseHandler — #3753 R6 boycott exclusion', () {
-    test('boycotted GP is blocked; supply flows to the non-boycotted GP', () {
-      final next = runWorldMarketTradePhase(
-        game: boycottColonyTradeGame(boycottActive: true),
-        tradeOrdersByPlayerId: {
-          // gpB sorts first by faction id but is boycotted; only 5 units exist.
-          boycottColonyTradeTribeId: tribeTimberOffer(5),
-          'gpB': gpTimberBid(quantity: 5),
-          'gpD': gpTimberBid(quantity: 5),
-        },
-      );
+    for (final row in const [
+      (
+        boycottActive: true,
+        label: 'boycotted GP blocked; supply flows to gpD',
+        gpBTimber: 0,
+        gpDTimber: 5,
+      ),
+      (
+        boycottActive: false,
+        label: 'without boycott gpB wins by ascending faction id',
+        gpBTimber: 5,
+        gpDTimber: 0,
+      ),
+    ]) {
+      test(row.label, () {
+        final next = runWorldMarketTradePhase(
+          game: boycottColonyTradeGame(boycottActive: row.boycottActive),
+          tradeOrdersByPlayerId: {
+            boycottColonyTradeTribeId: tribeTimberOffer(5),
+            'gpB': gpTimberBid(quantity: 5),
+            'gpD': gpTimberBid(quantity: 5),
+          },
+        );
 
-      expect(_timberOf(next, 'gpB'), 0);
-      expect(_timberOf(next, 'gpD'), 5);
-    });
-
-    test('without a boycott the same orders fill for the (now) target GP', () {
-      final next = runWorldMarketTradePhase(
-        game: boycottColonyTradeGame(boycottActive: false),
-        tradeOrdersByPlayerId: {
-          boycottColonyTradeTribeId: tribeTimberOffer(5),
-          'gpB': gpTimberBid(quantity: 5),
-          'gpD': gpTimberBid(quantity: 5),
-        },
-      );
-
-      // No boycott: default ascending-faction-id ordering serves gpB first.
-      expect(_timberOf(next, 'gpB'), 5);
-      expect(_timberOf(next, 'gpD'), 0);
-    });
+        expect(_timberOf(next, 'gpB'), row.gpBTimber);
+        expect(_timberOf(next, 'gpD'), row.gpDTimber);
+      });
+    }
   });
 }

@@ -3,39 +3,53 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/turn_resolver_test_harness.dart';
+import 'support/turn_trace_order_events_test_support.dart';
+
+const _ow = turnTestOldWorldRegionId;
+const _p1 = '$_ow|P1';
+const _p2 = '$_ow|P2';
+
+MapTopology _twoProvinceTopology() =>
+    twoAdjacentOldWorldProvinceTopology(id1: _p1, id2: _p2);
+
+Game _civilianTwoProvinceGame({
+  required List<Unit> units,
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
+}) => Game(
+  id: 'g',
+  worldState: WorldState(
+    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+    oldWorld: RegionData(
+      provinces: const [
+        Province(id: _p1, regionId: _ow, ownerId: 'p1'),
+        Province(id: _p2, regionId: _ow, ownerId: 'p1'),
+      ],
+      units: units,
+    ),
+    newWorld: const RegionData(),
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+  ),
+  players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+);
+
 void main() {
   group('turn trace movement order events', () {
     test(
       'applyCivilianTileMoveOrdersToWorldRegions invokes trace for applied move',
       () {
-        const ow = 'oldWorld';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: kUnitTypeMerchant,
-                  ownerId: 'p1',
-                  locationProvinceId: 'oldWorld|P1',
-                  tileKey: 'oldWorld|P1|0|0',
-                ),
-              ],
+        final game = _civilianTwoProvinceGame(
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: _p1,
+              tileKey: '$_p1|0|0',
             ),
-            newWorld: const RegionData(),
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          ],
         );
-        const order = MoveOrder(
-          unitId: 'u1',
-          destinationTileKey: 'oldWorld|P2|3|3',
-        );
+        const order = MoveOrder(unitId: 'u1', destinationTileKey: '$_p2|3|3');
         final runtime = TurnTraceRuntime();
         applyCivilianTileMoveOrdersToWorldRegions(game, const {
           'p1': [order],
@@ -52,69 +66,30 @@ void main() {
     test(
       'full pipeline movement phase includes civilian move order events',
       () {
-        const ow = 'oldWorld';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'oldWorld|P1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-            TopologyNode(
-              id: 'oldWorld|P2',
-              regionId: ow,
-              type: TopologyNodeType.province,
+        final topology = _twoProvinceTopology();
+        final game = _civilianTwoProvinceGame(
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: _p1,
+              tileKey: '$_p1|0|0',
             ),
           ],
-          edges: const [TopologyEdge(id1: 'oldWorld|P1', id2: 'oldWorld|P2')],
-        );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: kUnitTypeMerchant,
-                  ownerId: 'p1',
-                  locationProvinceId: 'oldWorld|P1',
-                  tileKey: 'oldWorld|P1|0|0',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
         );
         final orders = Orders(
           moveOrdersByPlayerId: {
             'p1': [
-              const MoveOrder(
-                unitId: 'u1',
-                destinationTileKey: 'oldWorld|P2|0|0',
-              ),
+              const MoveOrder(unitId: 'u1', destinationTileKey: '$_p2|0|0'),
             ],
           },
         );
-        final traces = <TurnTracePhaseTrace>[];
-        final runtime = TurnTraceRuntime();
-        resolveTurnForGameWithConfig(
+        final movementTrace = runMovementTraceForOrders(
           game: game,
-          config: TurnResolverConfig(
-            topology: topology,
-            orders: orders,
-            onTurnTracePhase: traces.add,
-            turnTraceRuntime: runtime,
-          ),
-        );
-
-        final movementTrace = traces.firstWhere(
-          (t) => t.phaseId == TurnPhase.movement.name,
+          topology: topology,
+          orders: orders,
+          runtime: TurnTraceRuntime(),
         );
         expect(movementTrace.orderEvents, isNotEmpty);
         expect(
@@ -127,56 +102,29 @@ void main() {
     test(
       'bundled work move trace records skipped attempts in movement phase',
       () {
-        const ow = 'oldWorld';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'oldWorld|P1',
-              regionId: ow,
-              type: TopologyNodeType.province,
+        final topology = _twoProvinceTopology();
+        final game = _civilianTwoProvinceGame(
+          units: [
+            Unit(
+              id: 'u1',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: _p1,
+              tileKey: '$_p1|0|0',
             ),
-            TopologyNode(
-              id: 'oldWorld|P2',
-              regionId: ow,
-              type: TopologyNodeType.province,
+            Unit(
+              id: 'u2',
+              type: kUnitTypeMerchant,
+              ownerId: 'p1',
+              locationProvinceId: _p1,
+              tileKey: '$_p1|1|1',
             ),
           ],
-          edges: const [TopologyEdge(id1: 'oldWorld|P1', id2: 'oldWorld|P2')],
-        );
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-                Province(id: 'oldWorld|P2', regionId: ow, ownerId: 'p1'),
-              ],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: kUnitTypeMerchant,
-                  ownerId: 'p1',
-                  locationProvinceId: 'oldWorld|P1',
-                  tileKey: 'oldWorld|P1|0|0',
-                ),
-                Unit(
-                  id: 'u2',
-                  type: kUnitTypeMerchant,
-                  ownerId: 'p1',
-                  locationProvinceId: 'oldWorld|P1',
-                  tileKey: 'oldWorld|P1|1|1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                'oldWorld|P2': ['oldWorld|P2|2|2'],
-              },
+          tileKeysByRegionAndProvince: const {
+            _ow: {
+              _p2: ['$_p2|2|2'],
             },
-          ),
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          },
         );
         final orders = Orders(
           workOrdersByPlayerId: {
@@ -184,30 +132,21 @@ void main() {
               const WorkOrder(
                 unitId: 'u1',
                 target: 'build_farm',
-                targetTileKey: 'oldWorld|P2|2|2',
+                targetTileKey: '$_p2|2|2',
               ),
               const WorkOrder(
                 unitId: 'u2',
                 target: kWorkTargetExplore,
-                targetTileKey: 'oldWorld|P1|1|1',
+                targetTileKey: '$_p1|1|1',
               ),
             ],
           },
         );
-        final traces = <TurnTracePhaseTrace>[];
-        final runtime = TurnTraceRuntime();
-        resolveTurnForGameWithConfig(
+        final movementTrace = runMovementTraceForOrders(
           game: game,
-          config: TurnResolverConfig(
-            topology: topology,
-            orders: orders,
-            onTurnTracePhase: traces.add,
-            turnTraceRuntime: runtime,
-          ),
-        );
-
-        final movementTrace = traces.firstWhere(
-          (t) => t.phaseId == TurnPhase.movement.name,
+          topology: topology,
+          orders: orders,
+          runtime: TurnTraceRuntime(),
         );
         expect(
           movementTrace.orderEvents.map((event) => event.eventType),
@@ -223,29 +162,24 @@ void main() {
         order: const WorkOrder(
           unitId: 'u1',
           target: 'build_farm',
-          targetTileKey: 'oldWorld|P2|2|2',
+          targetTileKey: '$_p2|2|2',
         ),
         applied: true,
-        destinationProvinceId: 'oldWorld|P2',
-        destinationTileKey: 'oldWorld|P2|2|2',
+        destinationProvinceId: _p2,
+        destinationTileKey: '$_p2|2|2',
       );
 
       final event = runtime.snapshotPhaseOrderEvents().single;
       expect(event.eventType, 'bundled_work_move_applied');
       expect(event.orderId, 'work:p1:u1:build_farm');
-      expect(event.payload?['destinationProvinceId'], 'oldWorld|P2');
-      expect(event.payload?['destinationTileKey'], 'oldWorld|P2|2|2');
+      expect(event.payload?['destinationProvinceId'], _p2);
+      expect(event.payload?['destinationTileKey'], '$_p2|2|2');
     });
 
     test('full pipeline build_work phase includes work order trace events', () {
-      const ow = 'oldWorld';
       final topology = MapTopology(
         nodes: const [
-          TopologyNode(
-            id: 'oldWorld|P1',
-            regionId: ow,
-            type: TopologyNodeType.province,
-          ),
+          TopologyNode(id: _p1, regionId: _ow, type: TopologyNodeType.province),
         ],
         edges: const [],
       );
@@ -254,23 +188,21 @@ void main() {
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
           oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'oldWorld|P1', regionId: ow, ownerId: 'p1'),
-            ],
+            provinces: const [Province(id: _p1, regionId: _ow, ownerId: 'p1')],
             units: [
               Unit(
                 id: 'u1',
                 type: kUnitTypeEngineer,
                 ownerId: 'p1',
-                locationProvinceId: 'oldWorld|P1',
-                tileKey: 'oldWorld|P1|0|0',
+                locationProvinceId: _p1,
+                tileKey: '$_p1|0|0',
               ),
             ],
           ),
           newWorld: const RegionData(),
           tileKeysByRegionAndProvince: const {
-            ow: {
-              'oldWorld|P1': ['oldWorld|P1|0|0'],
+            _ow: {
+              _p1: ['$_p1|0|0'],
             },
           },
         ),
@@ -289,25 +221,17 @@ void main() {
             WorkOrder(
               unitId: 'u1',
               target: kWorkTargetBuildRoad,
-              targetTileKey: 'oldWorld|P1|0|0',
+              targetTileKey: '$_p1|0|0',
             ),
           ],
         },
       );
-      final traces = <TurnTracePhaseTrace>[];
-      final runtime = TurnTraceRuntime();
-      resolveTurnForGameWithConfig(
+      final buildWorkTrace = runTurnTracePhaseForOrders(
         game: game,
-        config: TurnResolverConfig(
-          topology: topology,
-          orders: orders,
-          onTurnTracePhase: traces.add,
-          turnTraceRuntime: runtime,
-        ),
-      );
-
-      final buildWorkTrace = traces.firstWhere(
-        (t) => t.phaseId == TurnPhase.buildWork.name,
+        topology: topology,
+        orders: orders,
+        phaseId: TurnPhase.buildWork.name,
+        runtime: TurnTraceRuntime(),
       );
       expect(
         buildWorkTrace.orderEvents.map((event) => event.eventType),

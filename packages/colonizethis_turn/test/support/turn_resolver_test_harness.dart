@@ -10,11 +10,12 @@ const turnTestOldWorldRegionId = 'oldWorld';
 /// [spyPhaseRandom]).
 const turnTestSpyFogGameSeed = 42;
 
-/// Two adjacent Old World provinces connected by a topology edge.
+/// Two Old World provinces; when [adjacent] is true they share a topology edge.
 MapTopology twoAdjacentOldWorldProvinceTopology({
   String id1 = 'P1',
   String id2 = 'P2',
   String regionId = turnTestOldWorldRegionId,
+  bool adjacent = true,
 }) {
   return MapTopology(
     nodes: [
@@ -29,8 +30,62 @@ MapTopology twoAdjacentOldWorldProvinceTopology({
         type: TopologyNodeType.province,
       ),
     ],
-    edges: [TopologyEdge(id1: id1, id2: id2)],
+    edges: adjacent
+        ? [TopologyEdge(id1: id1, id2: id2)]
+        : const <TopologyEdge>[],
   );
+}
+
+/// Prefixed Old World province id for [adjacentOwP1P2Game] setups (`oldWorld|P1`).
+String turnTestOwProvinceId(String localId) =>
+    '$turnTestOldWorldRegionId|$localId';
+
+/// Adjacent OW `P1`/`P2` game with empty New World.
+///
+/// Pair with [twoAdjacentOldWorldProvinceTopology] (topology stays separate).
+/// Cross-region, sea/fleet, and mass-province maps stay hand-rolled.
+Game adjacentOwP1P2Game({
+  String id = 'g1',
+  TurnPhase phase = TurnPhase.orders,
+  int turnNumber = 0,
+  String province1OwnerId = 'p1',
+  String province2OwnerId = 'p2',
+  List<Unit> units = const [],
+  List<Player>? players,
+  int? globalGameSeed,
+  CombatMode? defaultCombatMode,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+  Map<String, Map<String, List<String>>>? tileKeysByRegionAndProvince,
+  TileMapState? tileState,
+  bool ensureMilitaryArmies = false,
+}) {
+  const ow = turnTestOldWorldRegionId;
+  final game = Game(
+    id: id,
+    globalGameSeed: globalGameSeed,
+    defaultCombatMode: defaultCombatMode,
+    worldState: WorldState(
+      turnState: TurnState(phase: phase, turnNumber: turnNumber),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: '$ow|P1', regionId: ow, ownerId: province1OwnerId),
+          Province(id: '$ow|P2', regionId: ow, ownerId: province2OwnerId),
+        ],
+        units: units,
+      ),
+      newWorld: const RegionData(),
+      playerVisibilityByTile: playerVisibilityByTile ?? const {},
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
+      tileState: tileState ?? const TileMapState(),
+    ),
+    players:
+        players ??
+        const [
+          Player(id: 'p1', displayName: 'A', isHuman: true),
+          Player(id: 'p2', displayName: 'B', isHuman: true),
+        ],
+  );
+  return ensureMilitaryArmies ? ensureMilitaryArmiesForGame(game) : game;
 }
 
 /// Runs [resolveTurnForGame] and returns the resolved [Game], failing on pending.

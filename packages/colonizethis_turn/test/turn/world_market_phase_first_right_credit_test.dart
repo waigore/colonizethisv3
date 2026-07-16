@@ -15,64 +15,42 @@ import '../support/world_market_test_support.dart';
 void main() {
   group('worldMarketTurnPhaseHandler applies First Right of Refusal '
       'overseas-profit credit to owning GP (Refs #2992 D4 integration)', () {
-    test('GP B buys minor M1\'s timber from gpA\'s purchased tile: gpA '
-        'receives `quantity * price * 0.75` full share at relation 75', () {
-      final next = runWorldMarketFrrCreditPhase(
-        game: frrIntegrationGame(
-          initialOwningGpTreasury: 100,
-          initialBuyerGpTreasury: 1000,
-          relationScore: 75,
-          marketPrices: const {'timber': 20},
-        ),
-        tradeOrdersByPlayerId: {
-          'M1': minorTimberOffer(
-            quantity: 10,
-            originTileKey: frrCreditTestTileKey,
-          ),
-          'gpB': gpTimberBid(quantity: 10),
-        },
-      );
-
-      final gpA = next.players.firstWhere((p) => p.id == 'gpA');
-      final gpB = next.players.firstWhere((p) => p.id == 'gpB');
-      expect(gpA.treasury, 250, reason: '10 * 20 * 0.75 full-share credit');
-      expect(gpB.treasury, 800);
-      expect(gpB.stockpile.quantityOf('timber'), 10);
-    });
-
-    test('GP B buys at relation 0: owning gpA receives no credit', () {
-      final next = runWorldMarketFrrCreditPhase(
-        game: frrIntegrationGame(
-          initialOwningGpTreasury: 100,
-          initialBuyerGpTreasury: 1000,
-          relationScore: 0,
-          marketPrices: const {'timber': 20},
-        ),
-        tradeOrdersByPlayerId: {
-          'M1': minorTimberOffer(
-            quantity: 10,
-            originTileKey: frrCreditTestTileKey,
-          ),
-          'gpB': gpTimberBid(quantity: 10),
-        },
-      );
-
-      expect(
-        next.players.firstWhere((p) => p.id == 'gpA').treasury,
-        100,
+    for (final c in <({
+      String name,
+      int relationScore,
+      int marketPrice,
+      int expectedOwningTreasury,
+      String reason,
+    })>[
+      (
+        name: 'relation 75: owning GP receives 75% full share',
+        relationScore: 75,
+        marketPrice: 20,
+        expectedOwningTreasury: 250,
+        reason: '10 * 20 * 0.75 full-share credit',
+      ),
+      (
+        name: 'relation 0: owning GP receives no credit',
+        relationScore: 0,
+        marketPrice: 20,
+        expectedOwningTreasury: 100,
         reason: 'relation 0 → profitRate 0 → treasury sink only',
-      );
-    });
-
-    test(
-      'GP B buys at relation 100: owning gpA receives full 100% share',
-      () {
+      ),
+      (
+        name: 'relation 100: owning GP receives full 100% share',
+        relationScore: 100,
+        marketPrice: 10,
+        expectedOwningTreasury: 200,
+        reason: '10 * 10 * 1.0 full-share credit (no 40% cap, #3753 R8.2)',
+      ),
+    ]) {
+      test(c.name, () {
         final next = runWorldMarketFrrCreditPhase(
           game: frrIntegrationGame(
             initialOwningGpTreasury: 100,
             initialBuyerGpTreasury: 1000,
-            relationScore: 100,
-            marketPrices: const {'timber': 10},
+            relationScore: c.relationScore,
+            marketPrices: {'timber': c.marketPrice},
           ),
           tradeOrdersByPlayerId: {
             'M1': minorTimberOffer(
@@ -83,10 +61,18 @@ void main() {
           },
         );
 
-        // 10 * 10 * 1.0 = 100 full-share credit (no 40% cap, #3753 R8.2).
-        expect(next.players.firstWhere((p) => p.id == 'gpA').treasury, 200);
-      },
-    );
+        expect(
+          next.players.firstWhere((p) => p.id == 'gpA').treasury,
+          c.expectedOwningTreasury,
+          reason: c.reason,
+        );
+        if (c.relationScore == 75) {
+          final gpB = next.players.firstWhere((p) => p.id == 'gpB');
+          expect(gpB.treasury, 800);
+          expect(gpB.stockpile.quantityOf('timber'), 10);
+        }
+      });
+    }
 
     test('owning GP wins FRR pre-pass: no D4 credit double-applied', () {
       final next = runWorldMarketFrrCreditPhase(

@@ -235,7 +235,32 @@ void main() {
       },
     );
 
-    test('passes when support import is present', () {
+    test('fails when support import is present but no shared runner', () {
+      final temp = Directory.systemTemp.createTempSync('turn-wm-no-runner-');
+      try {
+        final dir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_turn', 'test', 'turn'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(dir.path, 'world_market_phase_sample_test.dart'),
+          "import '../support/world_market_test_support.dart';\n"
+          'final next = worldMarketTurnPhaseHandler(acc, config, 3);\n',
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckTurnWorldMarketTestSupport(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('runWorldMarketPhase'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes when support import and shared runner are present', () {
       final temp = Directory.systemTemp.createTempSync('turn-wm-ok-');
       try {
         final dir = Directory(
