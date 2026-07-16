@@ -122,3 +122,73 @@ int subsidyPercentBetween(Game game, String id1, String id2) {
   }
   return 0;
 }
+
+/// Process SetSubsidy orders: create or update an ongoing **percentage** subsidy
+/// from a GP to a Minor/Tribe (Refs #3753 R3 / #4037). Requires an Embassy (R2).
+/// The percent model charges **no** per-turn treasury payment. GP→GP subsidies
+/// are ignored. `DiplomaticOrder.amount` carries the subsidy percentage.
+/// SPEC/game/diplomacy.md § Diplomatic Order Types.
+Game applySetSubsidyOrders(
+  Game game,
+  Map<String, List<DiplomaticOrder>> diploByPlayer,
+  int turn, {
+  IntraTurnEventTally? eventTally,
+}) {
+  var subsidyStates = List<SubsidyState>.from(game.subsidyStates);
+  var subsidyIndexByPair = indexByKey(
+    subsidyStates,
+    (s) => subsidyPairKey(s.payerId, s.targetId),
+  );
+  for (final entry in diploByPlayer.entries) {
+    final gpId = entry.key;
+
+    for (final order in entry.value) {
+      if (order.type != DiplomaticOrderType.setSubsidy) continue;
+      final percent = order.amount ?? 0;
+      final player = game.playerById(gpId);
+      if (player == null) continue;
+      if (!isValidSubsidyPercent(percent)) continue;
+
+      final targetId = order.targetFactionId;
+      // Subsidies are GP → Minor/Tribe only; never GP → GP.
+      if (game.playerById(targetId) != null) continue;
+      final overture = getOverture(game, gpId, targetId);
+      if (overture == null || !overture.hasEmbassy) continue;
+
+      final pairKey = subsidyPairKey(gpId, targetId);
+      final existingSubsidyIdx = subsidyIndexByPair[pairKey] ?? -1;
+      final isUpdate = existingSubsidyIdx >= 0;
+      if (isUpdate) {
+        subsidyStates[existingSubsidyIdx] = subsidyStates[existingSubsidyIdx]
+            .copyWith(percent: percent);
+      } else {
+        subsidyStates.add(
+          SubsidyState(
+            payerId: gpId,
+            targetId: targetId,
+            percent: percent,
+          ),
+        );
+        subsidyIndexByPair[pairKey] = subsidyStates.length - 1;
+      }
+
+      game = game.copyWith(subsidyStates: subsidyStates);
+      game = logDiplomaticEvent(
+        game,
+        turn,
+        isUpdate
+            ? DiplomaticEventType.subsidyUpdated
+            : DiplomaticEventType.subsidySet,
+        {gpId, targetId},
+        fromFactionId: gpId,
+        toFactionId: targetId,
+        amount: percent,
+        wasAiInitiator: isAiControlledForEvidence(game, gpId),
+        eventTally: eventTally,
+        logMessage:
+            'diplomacy SetSubsidy $gpId -> $targetId percent $percent%',
+      );
+    }
+  }
+  return game;
+}
