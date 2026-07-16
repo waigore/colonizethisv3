@@ -8,6 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/app_shell_harness.dart';
 
 void main() {
+  suppressLogsForTests();
+
   testWidgets(
     'positive: buildAppShellMaterialApp defaults to editorial theme',
     (WidgetTester tester) async {
