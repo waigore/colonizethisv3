@@ -61,16 +61,36 @@ uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py
 
 ```bash
 uv run --project pytool python pytool/test_finalize_plantation_field_retune_3961.py
-# Preview:
+# Preview means (no writes):
 uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
   --picks sugar_cane=A,cotton=B,spices=C --dry-run
+# Validate golden distinctness pins (no writes):
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --validate-only
 # Apply (after PO lock):
 uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
   --picks sugar_cane=A,cotton=B,spices=C
 cd app && flutter test test/plains_plantation_terrain_goldens_test.dart --update-goldens
 ```
 
-**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. Apply mode copies PNGs then patches SPEC + dart pins; operator must refresh goldens manually.
+**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. `--validate-only` checks pairwise field-mean RGB distance (≥ 26) against golden-test distinctness pins without writing files. Apply mode copies PNGs then patches SPEC + dart pins; operator must refresh goldens manually.
+
+---
+
+### render_plantation_po_review_strip_3961.py
+
+**Purpose:** Rebuild PO sample strips at map tile scale (4× nearest-neighbor) for [#3961](https://github.com/waigore/colonizethisv3/issues/3961): per-crop rows of `grain` / `meat` / `horses` / `tobacco` / candidate A / B / C / CURRENT shipped overlay, plus `strip_all_crops_x4.png` and `CANDIDATE_NOTES.md`. Does not modify app terrain.
+
+**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py`.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py
+uv run --project pytool python pytool/test_render_plantation_po_review_strip_3961.py
+```
+
+**Behaviour:** Writes to `tmp/plantation_po_review_strips_3961/` by default (override with `--out-dir`). Requires candidate PNGs under `plantation_field_candidates_3961/`.
 
 ---
 
