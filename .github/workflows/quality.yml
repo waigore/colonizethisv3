@@ -835,6 +835,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
 
+      - name: Plantation field retune gate (Python, Refs #3961)
+        run: cd pytool && python3 test_plantation_field_retune_3961_gate.py
+
       - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'
         env:
