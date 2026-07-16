@@ -1,4 +1,4 @@
-// Table-driven dossier evidence rule scenarios (Refs #3837 / #4028).
+// Table-driven dossier evidence rule scenarios (Refs #3837 / #4028 / #4037).
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -23,26 +23,19 @@ const _pAi1 = Player(id: 'gp1', displayName: 'AI1', isHuman: false);
 const _pAi2 = Player(id: 'gp2', displayName: 'AI2', isHuman: false);
 const _pHumanNamed = Player(id: 'human', displayName: 'Human', isHuman: true);
 const _pAiNamed = Player(id: 'ai', displayName: 'AI', isHuman: false);
+const _humanAiNamed = [_pHumanNamed, _pAiNamed];
 
-Player _p(String id, String name, {bool human = false, int? mil}) => Player(
-      id: id,
-      displayName: name,
-      isHuman: human,
-      militaryLevel: mil,
-    );
+Player _p(String id, String name, {bool human = false, int? mil}) =>
+    Player(id: id, displayName: name, isHuman: human, militaryLevel: mil);
 
-DiplomacyRelation _allied(String a, String b) => DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      level: RelationLevel.allied,
-    );
+DiplomacyRelation _allied(String a, String b) =>
+    DiplomacyRelation(factionId1: a, factionId2: b, level: RelationLevel.allied);
 
-DiplomacyRelation _peace(String a, String b, {RelationLevel level = RelationLevel.friendly}) =>
-    DiplomacyRelation(
+DiplomacyRelation _peace(String a, String b) => DiplomacyRelation(
       factionId1: a,
       factionId2: b,
       score: 50,
-      level: level,
+      level: RelationLevel.friendly,
       state: RelationState.atPeace,
     );
 
@@ -71,6 +64,12 @@ void _expectEntry(
   expect(e.description, desc);
 }
 
+DossierEvidenceEntry _onlyAgenda(List<DossierEvidenceEntry> entries, String agenda) {
+  final matched = entries.where((e) => e.agendaType == agenda).toList();
+  expect(matched.length, 1);
+  return matched.single;
+}
+
 EvidenceRulesScenario _emptyMirror({
   required String label,
   required int refTurn,
@@ -78,8 +77,9 @@ EvidenceRulesScenario _emptyMirror({
   required String category,
   List<DossierEvidenceEntry> pending = const [],
 }) =>
-    _row(label, () {
-      expect(
+    _row(
+      label,
+      () => expect(
         evidenceForEnvyResearchMirror(
           _baseMirrorGame(refTurn: refTurn, currentTurn: currentTurn),
           'ai',
@@ -88,13 +88,13 @@ EvidenceRulesScenario _emptyMirror({
           pending,
         ),
         isEmpty,
-      );
-    });
+      ),
+    );
 
 Game _baseMirrorGame({required int refTurn, required int currentTurn}) =>
     diplomacyGame(
       turnNumber: currentTurn,
-      players: const [_pHumanNamed, _pAiNamed],
+      players: _humanAiNamed,
       aiControlByGpId: const {'ai': true},
       lastHumanCompletedResearchCategory: 'gathering',
       lastHumanResearchCategoryCompletionTurn: refTurn,
@@ -114,9 +114,7 @@ Game _ctaRefuseGame({required bool allyIsAi, required bool atPeaceWithDefender})
           factionId2: 'defender',
           score: 50,
           level: RelationLevel.friendly,
-          state: atPeaceWithDefender
-              ? RelationState.atPeace
-              : RelationState.atWar,
+          state: atPeaceWithDefender ? RelationState.atPeace : RelationState.atWar,
         ),
       ],
     );
@@ -135,18 +133,15 @@ EvidenceRulesScenario _emptyIsolationist({
       ),
     );
 
+Game _landPlayers(int aiMil, int otherMil) => diplomacyGame(
+      turnNumber: 2,
+      players: [_pHuman, _p('gp2', 'AI', mil: aiMil), _p('gp3', 'Other', mil: otherMil)],
+    );
+
 /// Land-battle victory scenarios from `evidence_rules_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
   _row('AI victor vs defender appends warmonger evidence for human observer', () {
-    final entries = evidenceForLandBattleVictory(
-      diplomacyGame(
-        turnNumber: 2,
-        players: [_pHuman, _p('gp2', 'AI', mil: 4), _p('gp3', 'Other', mil: 2)],
-      ),
-      'gp2',
-      'gp3',
-      2,
-    );
+    final entries = evidenceForLandBattleVictory(_landPlayers(4, 2), 'gp2', 'gp3', 2);
     expect(entries.length, 1);
     _expectEntry(
       entries.first,
@@ -158,19 +153,10 @@ List<EvidenceRulesScenario> evidenceRulesLandBattleVictoryScenarios() => [
     );
   }),
   _row('AI victor vs non-weaker defender gives scoreDelta 1', () {
-    final entries = evidenceForLandBattleVictory(
-      diplomacyGame(
-        turnNumber: 2,
-        players: [_pHuman, _p('gp2', 'AI', mil: 2), _p('gp3', 'Other', mil: 4)],
-      ),
-      'gp2',
-      'gp3',
-      2,
-    );
-    expect(entries.length, 1);
-    expect(entries.first.agendaType, 'warmonger');
-    expect(entries.first.scoreDelta, 1);
-    expect(entries.first.description, contains('attacker'));
+    final e = evidenceForLandBattleVictory(_landPlayers(2, 4), 'gp2', 'gp3', 2).single;
+    expect(e.agendaType, 'warmonger');
+    expect(e.scoreDelta, 1);
+    expect(e.description, contains('attacker'));
   }),
   _emptyBattle(
     label: 'human victor returns no evidence',
@@ -213,23 +199,17 @@ List<EvidenceRulesScenario> evidenceRulesNavalBattleVictoryScenarios() => [
 /// Research-mirror envy scenarios from `evidence_rules_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesEnvyResearchMirrorScenarios() => [
   _row('adds envy when category matches within window', () {
-    final entries = evidenceForEnvyResearchMirror(
+    final e = evidenceForEnvyResearchMirror(
       _baseMirrorGame(refTurn: 1, currentTurn: 2),
       'ai',
       'gathering',
       2,
       const [],
-    );
-    expect(entries.length, 1);
-    expect(entries.single.agendaType, 'envy');
-    expect(entries.single.scoreDelta, 1);
+    ).single;
+    expect(e.agendaType, 'envy');
+    expect(e.scoreDelta, 1);
   }),
-  _emptyMirror(
-    label: 'empty when category differs',
-    refTurn: 1,
-    currentTurn: 2,
-    category: 'military',
-  ),
+  _emptyMirror(label: 'empty when category differs', refTurn: 1, currentTurn: 2, category: 'military'),
   _emptyMirror(
     label: 'empty when outside 2-turn window',
     refTurn: 1,
@@ -261,7 +241,6 @@ List<EvidenceRulesScenario> evidenceRulesEnvyResearchMirrorScenarios() => [
   }),
 ];
 
-/// Declare-war scenarios from `evidence_rules_war_peace_test.dart`.
 EvidenceRulesScenario _declareWarRow({
   required String label,
   required int aiMil,
@@ -289,6 +268,7 @@ EvidenceRulesScenario _declareWarRow({
       );
     });
 
+/// Declare-war scenarios from `evidence_rules_war_peace_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   _declareWarRow(
     label:
@@ -299,22 +279,16 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
     relations: [_allied('ai', 'ally')],
     expectEntries: (entries) {
       expect(entries.length, 2);
-      final backstabber =
-          entries.where((e) => e.agendaType == 'backstabber').toList();
-      final warmonger =
-          entries.where((e) => e.agendaType == 'warmonger').toList();
-      expect(backstabber.length, 1);
       _expectEntry(
-        backstabber.first,
+        _onlyAgenda(entries, 'backstabber'),
         agenda: 'backstabber',
         observer: 'human',
         subject: 'ai',
         delta: 3,
         desc: contains('ally'),
       );
-      expect(warmonger.length, 1);
       _expectEntry(
-        warmonger.first,
+        _onlyAgenda(entries, 'warmonger'),
         agenda: 'warmonger',
         observer: 'human',
         subject: 'ai',
@@ -341,8 +315,7 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
     },
   ),
   _declareWarRow(
-    label:
-        'AI declaring war on allied non-weaker GP only adds backstabber evidence',
+    label: 'AI declaring war on allied non-weaker GP only adds backstabber evidence',
     aiMil: 2,
     targetMil: 5,
     targetId: 'ally',
@@ -361,15 +334,12 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
   ),
   _emptyBattle(
     label: 'human actor returns no evidence',
-    players: const [_pHumanNamed, _pAiNamed],
+    players: _humanAiNamed,
     fn: (g) => evidenceForDeclareWar(g, 'human', 'ai', 2),
   ),
   _emptyBattle(
     label: 'declare war: no human observer returns no evidence',
-    players: [
-      _p('ai', 'AI'),
-      _p('other', 'Other'),
-    ],
+    players: [_p('ai', 'AI'), _p('other', 'Other')],
     fn: (g) => evidenceForDeclareWar(g, 'ai', 'other', 2),
   ),
 ];
@@ -378,7 +348,7 @@ List<EvidenceRulesScenario> evidenceRulesDeclareWarScenarios() => [
 List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   _row('AI offering peace adds peacemaker evidence for human observer', () {
     final entries = evidenceForOfferPeace(
-      diplomacyGame(turnNumber: 2, players: const [_pHumanNamed, _pAiNamed]),
+      diplomacyGame(turnNumber: 2, players: _humanAiNamed),
       'ai',
       'human',
       2,
@@ -395,7 +365,7 @@ List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
   }),
   _emptyBattle(
     label: 'human offering peace returns no evidence',
-    players: const [_pHumanNamed, _pAiNamed],
+    players: _humanAiNamed,
     fn: (g) => evidenceForOfferPeace(g, 'human', 'ai', 2),
   ),
   _emptyBattle(
@@ -408,7 +378,7 @@ List<EvidenceRulesScenario> evidenceRulesOfferPeaceScenarios() => [
 /// Treaty-break / call-to-arms follow-on war scenarios from `evidence_rules_war_peace_test.dart`.
 List<EvidenceRulesScenario> evidenceRulesTreatyBreakWindowScenarios() => [
   _row('adds backstabber when war follows callToArmsRefused within 3 turns', () {
-    final entries = evidenceForDeclareWar(
+    final e = evidenceForDeclareWar(
       diplomacyGame(
         turnNumber: 6,
         players: [
@@ -431,10 +401,9 @@ List<EvidenceRulesScenario> evidenceRulesTreatyBreakWindowScenarios() => [
       'ai',
       'target',
       6,
-    );
-    expect(entries.length, 1);
-    expect(entries.single.agendaType, 'backstabber');
-    expect(entries.single.scoreDelta, 3);
+    ).single;
+    expect(e.agendaType, 'backstabber');
+    expect(e.scoreDelta, 3);
   }),
 ];
 
@@ -443,16 +412,15 @@ List<EvidenceRulesScenario> evidenceRulesIsolationistScenarios() => [
   _row(
     'AI refusing call to arms while at peace with defender adds isolationist +2',
     () {
-      final entries = evidenceForIsolationistCallToArmsRefuse(
+      final e = evidenceForIsolationistCallToArmsRefuse(
         _ctaRefuseGame(allyIsAi: true, atPeaceWithDefender: true),
         'ally',
         'defender',
         3,
-      );
-      expect(entries.length, 1);
-      expect(entries.single.turnNumber, 3);
+      ).single;
+      expect(e.turnNumber, 3);
       _expectEntry(
-        entries.single,
+        e,
         agenda: 'isolationist',
         observer: 'observer',
         subject: 'ally',

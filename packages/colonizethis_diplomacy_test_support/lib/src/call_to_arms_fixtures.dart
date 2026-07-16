@@ -99,28 +99,15 @@ Game fourGpCallToArmsCascadeGame() => diplomacyGame(
         Player(id: 'gp3', displayName: 'GP3', isHuman: false),
         Player(id: 'gp4', displayName: 'GP4', isHuman: false),
       ],
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
+      diplomacyRelations: [
+        _ctaRel(
+          'gp1',
+          'gp2',
           score: 80,
           level: RelationLevel.allied,
-          state: RelationState.atPeace,
           formalAlliance: true,
         ),
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp3',
-          score: 60,
-          level: RelationLevel.friendly,
-          state: RelationState.atPeace,
-        ),
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp4',
-          score: 60,
-          level: RelationLevel.friendly,
-          state: RelationState.atPeace,
-        ),
+        _ctaRel('gp1', 'gp3', score: 60, level: RelationLevel.friendly),
+        _ctaRel('gp1', 'gp4', score: 60, level: RelationLevel.friendly),
       ],
     );

@@ -180,40 +180,21 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveHumanAttackScenarios() 
       minorNations: const [MinorNation(id: 'mn1')],
       tribes: const [Tribe(id: 'tr1')],
       overtureStates: const [
-        OvertureState(
-          gpId: 'ai1',
-          targetId: 'mn1',
-          stage: OvertureStage.embassy,
-        ),
-        OvertureState(
-          gpId: 'ai1',
-          targetId: 'tr1',
-          stage: OvertureStage.embassy,
-        ),
+        OvertureState(gpId: 'ai1', targetId: 'mn1', stage: OvertureStage.embassy),
+        OvertureState(gpId: 'ai1', targetId: 'tr1', stage: OvertureStage.embassy),
       ],
     );
-    expect(
-      dialogueEventsForReactiveHumanAttack(
-        game,
-        attackerFactionId: 'human',
-        defenderFactionId: 'mn1',
-        provinceId: 'oldWorld|P9',
-        turnNumber: 5,
-        seed: 1,
-      ).single.situation,
-      'attack_on_minor',
-    );
-    expect(
-      dialogueEventsForReactiveHumanAttack(
-        game,
-        attackerFactionId: 'human',
-        defenderFactionId: 'tr1',
-        provinceId: 'newWorld|N2',
-        turnNumber: 5,
-        seed: 1,
-      ).single.situation,
-      'attack_on_tribe',
-    );
+    DialogueEvent attack(String defender, String province) =>
+        dialogueEventsForReactiveHumanAttack(
+          game,
+          attackerFactionId: 'human',
+          defenderFactionId: defender,
+          provinceId: province,
+          turnNumber: 5,
+          seed: 1,
+        ).single;
+    expect(attack('mn1', 'oldWorld|P9').situation, 'attack_on_minor');
+    expect(attack('tr1', 'newWorld|N2').situation, 'attack_on_tribe');
   }),
 ];
 
@@ -221,76 +202,55 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveHumanAttackScenarios() 
 List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenarios() => [
   _row('tech_discovered emits for AI discoverer only', () {
     final game = diplomacyGame(turnNumber: 8, players: _h1a1);
-    expect(
-      dialogueEventsForTechDiscovered(
-        game,
-        discovererId: 'a1',
-        techId: 'rifling',
-        turnNumber: 8,
-        seed: 0,
-      ).single.situation,
-      'tech_discovered',
-    );
-    expect(
-      dialogueEventsForTechDiscovered(
-        game,
-        discovererId: 'h1',
-        techId: 'rifling',
-        turnNumber: 8,
-        seed: 0,
-      ),
-      isEmpty,
-    );
+    List<DialogueEvent> tech(String id) => dialogueEventsForTechDiscovered(
+          game,
+          discovererId: id,
+          techId: 'rifling',
+          turnNumber: 8,
+          seed: 0,
+        );
+    expect(tech('a1').single.situation, 'tech_discovered');
+    expect(tech('h1'), isEmpty);
   }),
   _row('capital_threatened emits when human attacker targets AI capital', () {
-    final events = dialogueEventsForCapitalThreatened(
-      diplomacyGame(
+    expect(
+      dialogueEventsForCapitalThreatened(
+        diplomacyGame(
+          turnNumber: 3,
+          players: const [
+            Player(id: 'h1', displayName: 'Human', isHuman: true),
+            Player(
+              id: 'a1',
+              displayName: 'AI',
+              isHuman: false,
+              capitalProvinceId: 'oldWorld|P2',
+            ),
+          ],
+        ),
+        capitalOwnerId: 'a1',
+        provinceId: 'oldWorld|P2',
+        attackerFactionIds: const ['h1'],
         turnNumber: 3,
-        players: const [
-          Player(id: 'h1', displayName: 'Human', isHuman: true),
-          Player(
-            id: 'a1',
-            displayName: 'AI',
-            isHuman: false,
-            capitalProvinceId: 'oldWorld|P2',
-          ),
-        ],
-      ),
-      capitalOwnerId: 'a1',
-      provinceId: 'oldWorld|P2',
-      attackerFactionIds: const ['h1'],
-      turnNumber: 3,
-      seed: 0,
+        seed: 0,
+      ).single.situation,
+      'capital_threatened',
     );
-    expect(events.single.situation, 'capital_threatened');
   }),
   _row('colony_founded emits only for null->AI owner in New World', () {
     final game = diplomacyGame(
       turnNumber: 10,
       players: const [Player(id: 'a1', displayName: 'AI', isHuman: false)],
     );
-    expect(
-      dialogueEventsForColonyFounded(
-        game,
-        provinceId: 'newWorld|N1',
-        previousOwnerId: null,
-        newOwnerId: 'a1',
-        turnNumber: 10,
-        seed: 0,
-      ).single.situation,
-      'colony_founded',
-    );
-    expect(
-      dialogueEventsForColonyFounded(
-        game,
-        provinceId: 'oldWorld|P1',
-        previousOwnerId: null,
-        newOwnerId: 'a1',
-        turnNumber: 10,
-        seed: 0,
-      ),
-      isEmpty,
-    );
+    List<DialogueEvent> colony(String province) => dialogueEventsForColonyFounded(
+          game,
+          provinceId: province,
+          previousOwnerId: null,
+          newOwnerId: 'a1',
+          turnNumber: 10,
+          seed: 0,
+        );
+    expect(colony('newWorld|N1').single.situation, 'colony_founded');
+    expect(colony('oldWorld|P1'), isEmpty);
   }),
   _row('spies_caught emits only for AI speaker and human spy owner', () {
     expect(
@@ -306,15 +266,15 @@ List<EventDialogueReactiveScenario> eventDialogueReactiveDiscoveryAndSpyScenario
     );
   }),
   _row('spies_defected emits only for AI defector and human previous owner', () {
-    final events = dialogueEventsForReactiveSpiesDefected(
+    final e = dialogueEventsForReactiveSpiesDefected(
       diplomacyGame(turnNumber: 8, players: _h1a1),
       newOwnerId: 'a1',
       previousOwnerId: 'h1',
       provinceId: 'oldWorld|P4',
       turnNumber: 8,
       seed: 0,
-    );
-    expect(events.single.situation, 'spies_defected');
-    expect(events.single.leaderId, 'a1');
+    ).single;
+    expect(e.situation, 'spies_defected');
+    expect(e.leaderId, 'a1');
   }),
 ];

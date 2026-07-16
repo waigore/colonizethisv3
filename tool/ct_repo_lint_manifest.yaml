@@ -302,7 +302,7 @@ rules:
 
   - rule_id: repo.diplomacy_test_support_loc
     group: testing
-    title: colonizethis_diplomacy_test_support/lib physical LOC must stay at or below 2593 (Refs #4028, #4037)
+    title: colonizethis_diplomacy_test_support/lib physical LOC must stay at or below 2488 (Refs #4028, #4037)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_test_support_loc.dart

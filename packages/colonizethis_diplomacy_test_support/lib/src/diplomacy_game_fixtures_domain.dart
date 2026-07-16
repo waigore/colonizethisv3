@@ -31,13 +31,9 @@ Game tradeBoostGame({
     diplomacyGame(
       id: 'trade-boost-test',
       turnNumber: 7,
-      diplomacyRelations: [
-        peaceRelation('gp1', 'gp2', score, state: state),
-      ],
+      diplomacyRelations: [peaceRelation('gp1', 'gp2', score, state: state)],
       overtureStates: overtureStates,
-      worldMarketState: WorldMarketState(
-        completedTradePairKeys: completedTradePairKeys,
-      ),
+      worldMarketState: WorldMarketState(completedTradePairKeys: completedTradePairKeys),
     );
 
 /// Relation lookup score/helper tests (Refs #3290, #3825).
@@ -59,11 +55,8 @@ Game relationLookupGame({
       diplomaticHistoryEvents: history,
     );
 
-Province oldWorldOwnedProvince(String localId, String ownerId) => Province(
-      id: 'oldWorld|$localId',
-      regionId: 'oldWorld',
-      ownerId: ownerId,
-    );
+Province oldWorldOwnedProvince(String localId, String ownerId) =>
+    Province(id: 'oldWorld|$localId', regionId: 'oldWorld', ownerId: ownerId);
 
 Fleet diplomacyTestFleet(String id, String ownerId, int ships) => Fleet(
       id: id,
@@ -90,12 +83,5 @@ Game allianceResolverGame({
     );
 
 /// Minimal game for intra-turn diplomatic history tests (#3825).
-Game diplomacyHistoryGame({
-  int turn = 1,
-  List<DiplomaticEvent> history = const [],
-}) =>
-    diplomacyGame(
-      id: 'g1',
-      turnNumber: turn,
-      diplomaticHistoryEvents: history,
-    );
+Game diplomacyHistoryGame({int turn = 1, List<DiplomaticEvent> history = const []}) =>
+    diplomacyGame(id: 'g1', turnNumber: turn, diplomaticHistoryEvents: history);
