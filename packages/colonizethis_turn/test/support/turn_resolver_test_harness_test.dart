@@ -13,6 +13,12 @@ void main() {
       expect(topology.edges.single.id2, 'P2');
     });
 
+    test('twoAdjacentOldWorldProvinceTopology can omit the edge', () {
+      final topology = twoAdjacentOldWorldProvinceTopology(adjacent: false);
+      expect(topology.nodes.length, 2);
+      expect(topology.edges, isEmpty);
+    });
+
     test('adjacentOwP1P2Game builds split-ownership OW stack', () {
       const ow = turnTestOldWorldRegionId;
       final game = adjacentOwP1P2Game(

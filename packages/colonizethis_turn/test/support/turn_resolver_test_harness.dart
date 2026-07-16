@@ -10,11 +10,12 @@ const turnTestOldWorldRegionId = 'oldWorld';
 /// [spyPhaseRandom]).
 const turnTestSpyFogGameSeed = 42;
 
-/// Two adjacent Old World provinces connected by a topology edge.
+/// Two Old World provinces; when [adjacent] is true they share a topology edge.
 MapTopology twoAdjacentOldWorldProvinceTopology({
   String id1 = 'P1',
   String id2 = 'P2',
   String regionId = turnTestOldWorldRegionId,
+  bool adjacent = true,
 }) {
   return MapTopology(
     nodes: [
@@ -29,7 +30,9 @@ MapTopology twoAdjacentOldWorldProvinceTopology({
         type: TopologyNodeType.province,
       ),
     ],
-    edges: [TopologyEdge(id1: id1, id2: id2)],
+    edges: adjacent
+        ? [TopologyEdge(id1: id1, id2: id2)]
+        : const <TopologyEdge>[],
   );
 }
 

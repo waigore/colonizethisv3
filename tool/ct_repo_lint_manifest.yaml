@@ -670,6 +670,13 @@ rules:
     runner: dart
     script: tool/check_turn_test_fixture_location.dart
 
+  - rule_id: repo.turn_test_support_loc
+    group: testing
+    title: "colonizethis_turn test/support physical LOC must stay at or below ratchet ceiling (Refs #4039)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_support_loc.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)
