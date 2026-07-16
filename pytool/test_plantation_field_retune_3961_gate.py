@@ -17,6 +17,7 @@ TESTS = (
     "test_paint_plains_plantation_field_gradients.py",
     "test_finalize_plantation_field_retune_3961.py",
     "test_render_plantation_po_review_strip_3961.py",
+    "test_plantation_field_harmony_3961.py",
 )
 
 

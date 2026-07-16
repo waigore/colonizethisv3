@@ -96,6 +96,26 @@ uv run --project pytool python pytool/test_render_plantation_po_review_strip_396
 
 ---
 
+### recommend_plantation_field_picks_3961.py
+
+**Purpose:** Score committed field-gradient candidates for map harmony against shipped OW `grain` / `meat` / `horses` field-mask means plus locked tobacco `(128,108,42)`. Emits a recommended `sugar_cane=A,cotton=B,spices=A` style pick line (or markdown for issue comments) to aid PO letter lock on [#3961](https://github.com/waigore/colonizethisv3/issues/3961). Does **not** ship app terrain.
+
+**Dependencies:** Pillow; imports `plantation_field_harmony_3961.py` and `paint_plains_plantation_field_gradients.py` field-mask helpers.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/test_plantation_field_harmony_3961.py
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py --markdown
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py \
+  --parse-text 'PO LOCK #3961\nsugar_cane: A\ncotton: B\nspices: A'
+```
+
+**Behaviour:** Lower harmony score = subtler / closer to OW peers. `--parse-text` accepts `PO LOCK #3961` blocks or inline `crop=A` tuples for finalize handoff. Pinned by `pytool/test_plantation_field_harmony_3961.py`.
+
+---
+
 ### button_contrast_wood_pil.py
 
 **Purpose:** Apply higher border/center contrast and randomised wood grain to a button PNG. Reads an image file and writes a new PNG. Tuned for the main-menu colonial wood palette (reddish-brown frame, warm inner wood, gold accents).
