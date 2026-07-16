@@ -2,8 +2,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_test/game_test_fixtures.dart';
-
 import '../support/world_market_test_support.dart';
 
 /// Phase-handler integration for the #3753 R7.3 sell-priority relation
@@ -137,57 +135,8 @@ void main() {
     });
 
     test('GP seller is unaffected by the tiebreaker (R7.4)', () {
-      // gpSell is a Great Power offering timber (not a minor/tribe), so the
-      // builder excludes it from the relation map and default ordering applies.
-      // Default order is ascending faction id → gpA wins even though the
-      // relation that WOULD apply favours gpZ.
-      final game =
-          TestFixtures.minimalGame(
-            players: const [
-              Player(
-                id: 'gpA',
-                displayName: 'GP A',
-                isHuman: false,
-                treasury: 1000,
-                stockpile: Stockpile.empty,
-              ),
-              Player(
-                id: 'gpSell',
-                displayName: 'GP Seller',
-                isHuman: false,
-                treasury: 0,
-                // Seller stock so the GP-seller credit path is realistic.
-                stockpile: Stockpile(quantities: {'timber': 5}),
-              ),
-              Player(
-                id: 'gpZ',
-                displayName: 'GP Z',
-                isHuman: false,
-                treasury: 1000,
-                stockpile: Stockpile.empty,
-              ),
-            ],
-            // No minor/tribe sellers participate here.
-            diplomacyRelations: const [
-              DiplomacyRelation(
-                factionId1: 'gpA',
-                factionId2: 'gpSell',
-                score: 10,
-              ),
-              DiplomacyRelation(
-                factionId1: 'gpZ',
-                factionId2: 'gpSell',
-                score: 90,
-              ),
-            ],
-          ).copyWith(
-            worldMarketState: WorldMarketState.empty.copyWith(
-              prices: const {'timber': 10},
-            ),
-          );
-
       final next = runWorldMarketTradePhase(
-        game: game,
+        game: sellPriorityGpSellerUnaffectedGame(),
         tradeOrdersByPlayerId: {
           'gpSell': [
             TradeOrder(
