@@ -7,8 +7,8 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Repo-relative path prefix for world package tests (Refs #3978).
 const String _worldTestPathPrefix = 'packages/colonizethis_world/test/';
 
-/// Shared builders may construct [Game] / [WorldState]; other fog/capital/
-/// connectivity tests must call those builders (or TestFixtures) instead.
+/// Shared builders may construct [Game] / [WorldState]; other in-scope concern
+/// tests must call those builders (or TestFixtures) instead.
 const String _worldTestSupportPathInfix = '/world_test_support/';
 
 /// Files still inlining constructors before migration completes.
@@ -17,8 +17,8 @@ const Set<String> _grandfatheredRawGameWorldStateTestPaths = {};
 final RegExp _inlineGameConstructor = RegExp(r'\bGame\s*\(');
 final RegExp _inlineWorldStateConstructor = RegExp(r'\bWorldState\s*\(');
 
-/// True when [slashPath] is a fog/capital/connectivity world test outside
-/// `world_test_support/`.
+/// True when [slashPath] is an in-scope world test outside `world_test_support/`
+/// (fog/capital/connectivity/ownership/player_view/travers; Refs #3978, #4038).
 bool worldTestNoRawGameWorldStatePathInScope(String slashPath) {
   final normalized = slashPath.replaceAll('\\', '/');
   if (!normalized.startsWith(_worldTestPathPrefix)) {
@@ -30,7 +30,10 @@ bool worldTestNoRawGameWorldStatePathInScope(String slashPath) {
   final base = p.basename(normalized).toLowerCase();
   return base.contains('fog') ||
       base.contains('capital') ||
-      base.contains('connectivity');
+      base.contains('connectivity') ||
+      base.contains('ownership') ||
+      base.contains('player_view') ||
+      base.contains('travers');
 }
 
 /// Violation reason when [content] inlines `Game(` / `WorldState(` outside the
@@ -94,7 +97,8 @@ int runCheckWorldTestNoRawGameWorldState(
   if (violations.isEmpty) {
     logI(
       'check_world_test_no_raw_game_worldstate: no raw Game/WorldState '
-      'constructors in fog/capital/connectivity tests.',
+      'constructors in fog/capital/connectivity/ownership/player_view/'
+      'travers tests.',
     );
     return 0;
   }

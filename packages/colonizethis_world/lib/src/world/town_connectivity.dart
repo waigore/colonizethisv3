@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'connectivity_tile_helpers.dart';
-import '../game_player_lookup.dart';
+import 'faction_capital.dart';
 import 'province_lookup.dart';
 
 /// Town-tile connectivity for town manufacturing bonus (Refs #3872).
@@ -146,8 +146,8 @@ Map<String, Set<String>> resolveTownConnectedTileKeysByProvince({
     if (townKey == null || townKey.isEmpty) continue;
     final ownerId = province.ownerId;
     if (ownerId == null || ownerId.isEmpty) continue;
-    final capitalProvinceId = _capitalProvinceIdForOwner(game, ownerId);
-    final capitalTile = _capitalTileForOwner(game, ownerId);
+    final capitalProvinceId = capitalProvinceIdForFaction(game, ownerId);
+    final capitalTile = capitalTileForFaction(game, ownerId);
     final effectiveTown = effectiveTownTileKeyForProvince(
       province: province,
       capitalProvinceId: capitalProvinceId,
@@ -165,28 +165,4 @@ Map<String, Set<String>> resolveTownConnectedTileKeysByProvince({
     }
   }
   return out;
-}
-
-String? _capitalProvinceIdForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalProvinceId;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalProvinceId;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalProvinceId;
-  }
-  return null;
-}
-
-CapitalTile? _capitalTileForOwner(Game game, String ownerId) {
-  final player = game.playerById(ownerId);
-  if (player != null) return player.capitalTile;
-  for (final minor in game.minorNations) {
-    if (minor.id == ownerId) return minor.capitalTile;
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == ownerId) return tribe.capitalTile;
-  }
-  return null;
 }

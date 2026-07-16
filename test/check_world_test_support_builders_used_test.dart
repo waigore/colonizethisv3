@@ -62,6 +62,8 @@ void main() {
           '  distantSeaVisibilityGame();\n'
           '  fogDecayVisibilityGame();\n'
           '  capitalLossGame();\n'
+          '  gpCapitalLossGame();\n'
+          '  minorCapitalLossGame();\n'
           '  gpCapitalReassignmentGame();\n'
           '  factionCapitalReassignmentGame();\n'
           '  ordersPhaseGame();\n'

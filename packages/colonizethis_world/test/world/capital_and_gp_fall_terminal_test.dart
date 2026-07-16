@@ -11,18 +11,16 @@ void main() {
 void _capital_and_gp_fall_terminal_testTests() {
   group('applyFactionTerminalFall (Minor)', () {
     test('transfers provinces and assets to conqueror and removes faction', () {
-      final game = capitalLossGame(
+      final game = minorCapitalLossGame(
         id: 'g-minor-fall',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
-        ],
+        minorId: 'm1',
+        capitalProvinceId: 'oldWorld|mcap',
+        capitalOwnerId: 'p2',
         newWorldProvinces: const [
           Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'm1'),
         ],
         units: [capitalTestUnit('u-m', 'm1', 'oldWorld|mcap')],
         fleets: [capitalTestFleet('f-m', 'm1')],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: const [MinorNation(id: 'm1')],
       );
 
       final result = applyFactionTerminalFall(
@@ -41,13 +39,11 @@ void _capital_and_gp_fall_terminal_testTests() {
     });
 
     test('does not fall when faction still owns capital province', () {
-      final game = capitalLossGame(
+      final game = minorCapitalLossGame(
         id: 'g-minor-hold',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'm1'),
-        ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: const [MinorNation(id: 'm1')],
+        minorId: 'm1',
+        capitalProvinceId: 'oldWorld|mcap',
+        capitalOwnerId: 'm1',
       );
 
       final result = applyFactionTerminalFall(
@@ -60,14 +56,14 @@ void _capital_and_gp_fall_terminal_testTests() {
     });
 
     test('does not fall when faction still owns a province in the region', () {
-      final game = capitalLossGame(
+      final game = minorCapitalLossGame(
         id: 'g-minor-region',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+        minorId: 'm1',
+        capitalProvinceId: 'oldWorld|mcap',
+        capitalOwnerId: 'p2',
+        extraOldWorldProvinces: const [
           Province(id: 'oldWorld|m2', regionId: 'oldWorld', ownerId: 'm1'),
         ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: const [MinorNation(id: 'm1')],
       );
 
       final result = applyFactionTerminalFall(
@@ -138,20 +134,17 @@ void _capital_and_gp_fall_terminal_testTests() {
 
   group('applyGreatPowerFall', () {
     test('transfers GP provinces to conqueror when no port province held', () {
-      final game = capitalLossGame(
+      final game = gpCapitalLossGame(
         id: 'g-gp-fall',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|cap', regionId: 'oldWorld', ownerId: 'p2'),
-        ],
+        fallenId: 'p1',
+        conquerorId: 'p2',
+        capitalProvinceId: 'oldWorld|cap',
+        capitalOwnerId: 'p2',
         newWorldProvinces: const [
           Province(id: 'newWorld|n1', regionId: 'newWorld', ownerId: 'p1'),
         ],
         units: [capitalTestUnit('u-p1', 'p1', 'oldWorld|cap')],
         fleets: [capitalTestFleet('f-p1', 'p1')],
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
-        ],
       );
 
       final result = applyGreatPowerFall(game, const {'p1': 'oldWorld|cap'});
@@ -165,19 +158,18 @@ void _capital_and_gp_fall_terminal_testTests() {
     });
 
     test('does not fall when GP still owns a port province', () {
-      final game = capitalLossGame(
+      final game = gpCapitalLossGame(
         id: 'g-gp-port',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|cap', regionId: 'oldWorld', ownerId: 'p2'),
+        fallenId: 'p1',
+        conquerorId: 'p2',
+        capitalProvinceId: 'oldWorld|cap',
+        capitalOwnerId: 'p2',
+        extraOldWorldProvinces: const [
           Province(id: 'oldWorld|port', regionId: 'oldWorld', ownerId: 'p1'),
         ],
         portsByProvinceSeaboard: const {
           'oldWorld|port|north': 'oldWorld|port|0|0',
         },
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
-        ],
       );
 
       final result = applyGreatPowerFall(game, const {'p1': 'oldWorld|cap'});
@@ -186,12 +178,12 @@ void _capital_and_gp_fall_terminal_testTests() {
     });
 
     test('skips when capital still owned by the player', () {
-      final game = capitalLossGame(
+      final game = gpCapitalLossGame(
         id: 'g-gp-hold',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|cap', regionId: 'oldWorld', ownerId: 'p1'),
-        ],
-        players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+        fallenId: 'p1',
+        conquerorId: 'p2',
+        capitalProvinceId: 'oldWorld|cap',
+        capitalOwnerId: 'p1',
       );
 
       final result = applyGreatPowerFall(game, const {'p1': 'oldWorld|cap'});
@@ -216,14 +208,14 @@ void _capital_and_gp_fall_terminal_testTests() {
 
   group('capital fall ProvinceOwnerCache migration (slice 11)', () {
     test('faction terminal region check matches ownsAnyInRegion', () {
-      final game = capitalLossGame(
+      final game = minorCapitalLossGame(
         id: 'g-slice11-minor',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|mcap', regionId: 'oldWorld', ownerId: 'p2'),
+        minorId: 'm1',
+        capitalProvinceId: 'oldWorld|mcap',
+        capitalOwnerId: 'p2',
+        extraOldWorldProvinces: const [
           Province(id: 'oldWorld|m2', regionId: 'oldWorld', ownerId: 'm1'),
         ],
-        players: const [Player(id: 'p2', displayName: 'P2', isHuman: true)],
-        minorNations: const [MinorNation(id: 'm1')],
       );
 
       final cache = ProvinceOwnerCache.of(game.worldState);
@@ -242,19 +234,18 @@ void _capital_and_gp_fall_terminal_testTests() {
     });
 
     test('GP fall port check matches provincesOwnedBy port intersection', () {
-      final game = capitalLossGame(
+      final game = gpCapitalLossGame(
         id: 'g-slice11-gp-port',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|cap', regionId: 'oldWorld', ownerId: 'p2'),
+        fallenId: 'p1',
+        conquerorId: 'p2',
+        capitalProvinceId: 'oldWorld|cap',
+        capitalOwnerId: 'p2',
+        extraOldWorldProvinces: const [
           Province(id: 'oldWorld|port', regionId: 'oldWorld', ownerId: 'p1'),
         ],
         portsByProvinceSeaboard: const {
           'oldWorld|port|north': 'oldWorld|port|0|0',
         },
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-          Player(id: 'p2', displayName: 'P2', isHuman: false),
-        ],
       );
 
       const playerId = 'p1';

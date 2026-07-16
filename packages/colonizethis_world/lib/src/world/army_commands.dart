@@ -13,12 +13,12 @@ Game applyArmyCombine({
   if (armyIds.length < 2) return game;
 
   final idSet = armyIds.toSet();
-  final selected = <Army>[];
-  for (final a in game.worldState.armies) {
-    if (a.ownerId == playerId && idSet.contains(a.id)) {
-      selected.add(a);
-    }
-  }
+  final partitioned = partitionBySelectedIds(
+    items: game.worldState.armies.where((a) => a.ownerId == playerId),
+    selectedIds: idSet,
+    idOf: (a) => a.id,
+  );
+  final selected = partitioned.selected;
   if (selected.length < 2) return game;
 
   final province = selected.first.stationedProvinceId;
@@ -66,15 +66,8 @@ Game applyArmySplit({
 }) {
   if (unitIdsToMove.isEmpty) return game;
 
-  Army? found;
-  for (final a in game.worldState.armies) {
-    if (a.id == sourceArmyId) {
-      found = a;
-      break;
-    }
-  }
-  if (found == null || found.ownerId != playerId) return game;
-  final source = found;
+  final source = armiesByIdForWorld(game.worldState)[sourceArmyId];
+  if (source == null || source.ownerId != playerId) return game;
   if (source.isHomeArmy) {
     // Home army may split per SPEC (naval parity).
   }
