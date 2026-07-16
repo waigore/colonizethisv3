@@ -5,20 +5,11 @@ import 'package:logger/logger.dart';
 
 import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 import 'army_migration.dart';
+import 'military_list_helpers.dart';
 import 'movement.dart';
 import 'province_lookup.dart';
 
-/// Single-pass index of [WorldState.armies] by army id for O(1) lookups (Refs
-/// #2394, SPEC/program/order-suggestions.md — incremental validation throughput
-/// bounds).
-///
-/// Callers that iterate over many build/recruit orders against a stable
-/// [WorldState] snapshot should build once and reuse the resulting map instead
-/// of issuing a per-order `indexWhere`/`firstWhereOrNull` scan over
-/// [WorldState.armies].
-Map<String, Army> armiesByIdForWorld(WorldState world) {
-  return {for (final a in world.armies) a.id: a};
-}
+export 'military_list_helpers.dart' show armiesByIdForWorld;
 
 void _logArmyMoveIgnoredHomeArmyIfDebug(String armyId) {
   if (Level.debug.value >= Logger.level.value) {
