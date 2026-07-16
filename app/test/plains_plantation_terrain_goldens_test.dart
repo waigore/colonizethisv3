@@ -25,10 +25,10 @@ import 'ct_region_map_test_support.dart';
 
 /// PIL field mid-tones from SPEC/ui/layered-terrain-rendering.md.
 const _plantationFieldMidTones = <String, (int, int, int)>{
-  'tile_plains_sugar_cane': (124, 179, 66),
+  'tile_plains_sugar_cane': (109, 137, 77),
   'tile_plains_tobacco': (128, 108, 42),
-  'tile_plains_cotton': (214, 208, 178),
-  'tile_plains_spices': (196, 98, 42),
+  'tile_plains_cotton': (181, 179, 173),
+  'tile_plains_spices': (149, 102, 59),
 };
 
 const _owPlainsKeys = <String>[
