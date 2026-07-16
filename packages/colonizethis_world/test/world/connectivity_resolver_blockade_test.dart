@@ -11,9 +11,8 @@ void main() {
 void _connectivity_resolver_blockade_testTests() {
   group('ConnectivityResolver', () {
     group('blockade', () {
-      test(
-        'blockadedProvinceOwnerIdForFleet returns owner for valid at-war blockade',
-        () {
+      for (final case_ in _blockadedOwnerCases) {
+        test(case_.description, () {
           const ow = 'oldWorld';
           final topology = provinceSeaZoneTopology(
             regionId: ow,
@@ -22,60 +21,39 @@ void _connectivity_resolver_blockade_testTests() {
           );
           final worldState = ordersPhaseWorldState(
             oldWorld: RegionData(
-              provinces: [Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1')],
+              provinces: [
+                Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+              ],
             ),
           );
-          final fleet = blockadeFleet(
-            fleetId: 'fleet_attacker',
-            ownerId: 'p2',
-            regionId: ow,
-            seaZoneId: 'sea1',
-            targetProvinceId: '$ow|p2',
-          );
+          final fleet = case_.useBlockadeFleetHelper
+              ? blockadeFleet(
+                  fleetId: 'fleet_attacker',
+                  ownerId: 'p2',
+                  regionId: ow,
+                  seaZoneId: 'sea1',
+                  targetProvinceId: '$ow|p2',
+                )
+              : Fleet(
+                  id: 'fleet_attacker',
+                  ownerId: 'p2',
+                  seaZoneId: 'sea1',
+                  inPortAtProvinceId: null,
+                  regionId: ow,
+                  mission: FleetMission.blockade,
+                  targetProvinceId: '$ow|p2',
+                );
 
           final ownerId = blockadedProvinceOwnerIdForFleet(
             fleet: fleet,
             worldState: worldState,
             topology: topology,
-            areFactionsAtWar: (attacker, defender) =>
-                attacker == 'p2' && defender == 'pl1',
+            areFactionsAtWar: case_.areFactionsAtWar,
           );
 
-          expect(ownerId, 'pl1');
-        },
-      );
-
-      test('blockadedProvinceOwnerIdForFleet returns null when not at war', () {
-        const ow = 'oldWorld';
-        final topology = provinceSeaZoneTopology(
-          regionId: ow,
-          provinceLocalId: 'p2',
-          seaZoneId: 'sea1',
-        );
-        final worldState = ordersPhaseWorldState(
-          oldWorld: RegionData(
-            provinces: [Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1')],
-          ),
-        );
-        final fleet = Fleet(
-          id: 'fleet_attacker',
-          ownerId: 'p2',
-          seaZoneId: 'sea1',
-          inPortAtProvinceId: null,
-          regionId: ow,
-          mission: FleetMission.blockade,
-          targetProvinceId: '$ow|p2',
-        );
-
-        final ownerId = blockadedProvinceOwnerIdForFleet(
-          fleet: fleet,
-          worldState: worldState,
-          topology: topology,
-          areFactionsAtWar: (_, __) => false,
-        );
-
-        expect(ownerId, isNull);
-      });
+          expect(ownerId, case_.expectedOwnerId);
+        });
+      }
 
       test('blockaded port province excluded from connectivity', () {
         final scenario = dualRegionPortConnectivityScenario();
@@ -149,3 +127,27 @@ void _connectivity_resolver_blockade_testTests() {
     });
   });
 }
+
+typedef _BlockadedOwnerCase = ({
+  String description,
+  bool useBlockadeFleetHelper,
+  bool Function(String attacker, String defender) areFactionsAtWar,
+  String? expectedOwnerId,
+});
+
+final List<_BlockadedOwnerCase> _blockadedOwnerCases = [
+  (
+    description:
+        'blockadedProvinceOwnerIdForFleet returns owner for valid at-war blockade',
+    useBlockadeFleetHelper: true,
+    areFactionsAtWar: (attacker, defender) =>
+        attacker == 'p2' && defender == 'pl1',
+    expectedOwnerId: 'pl1',
+  ),
+  (
+    description: 'blockadedProvinceOwnerIdForFleet returns null when not at war',
+    useBlockadeFleetHelper: false,
+    areFactionsAtWar: (_, __) => false,
+    expectedOwnerId: null,
+  ),
+];

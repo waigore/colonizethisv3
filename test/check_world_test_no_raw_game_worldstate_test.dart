@@ -77,11 +77,31 @@ void main() {
   });
 
   group('worldTestNoRawGameWorldStatePathInScope', () {
-    test('includes fog/capital/connectivity basenames only', () {
+    test('includes fog/capital/connectivity/ownership/player_view/travers basenames', () {
       expect(
         worldTestNoRawGameWorldStatePathInScope(
           'packages/colonizethis_world/test/world/'
           'connectivity_resolver_non_gp_test.dart',
+        ),
+        isTrue,
+      );
+      expect(
+        worldTestNoRawGameWorldStatePathInScope(
+          'packages/colonizethis_world/test/world/'
+          'province_ownership_transfer_test.dart',
+        ),
+        isTrue,
+      );
+      expect(
+        worldTestNoRawGameWorldStatePathInScope(
+          'packages/colonizethis_world/test/world/player_view_build_test.dart',
+        ),
+        isTrue,
+      );
+      expect(
+        worldTestNoRawGameWorldStatePathInScope(
+          'packages/colonizethis_world/test/world/'
+          'province_traversal_region_access_test.dart',
         ),
         isTrue,
       );
@@ -97,6 +117,66 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('fails when an in-scope travers test inlines WorldState(', () {
+      final temp = Directory.systemTemp.createTempSync('world-raw-trav-');
+      try {
+        final testDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_world', 'test', 'world'),
+        )..createSync(recursive: true);
+        File(
+          p.join(testDir.path, 'province_traversal_region_access_test.dart'),
+        ).writeAsStringSync(
+          "void main() {\n"
+          "  final w = WorldState();\n"
+          "}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckWorldTestNoRawGameWorldState(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(
+          errors.join('\n'),
+          contains('province_traversal_region_access_test.dart'),
+        );
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails when an in-scope ownership test inlines Game(', () {
+      final temp = Directory.systemTemp.createTempSync('world-raw-own-');
+      try {
+        final testDir = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_world', 'test', 'world'),
+        )..createSync(recursive: true);
+        File(
+          p.join(testDir.path, 'province_ownership_transfer_test.dart'),
+        ).writeAsStringSync(
+          "void main() {\n"
+          "  final g = Game(id: 'g');\n"
+          "}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckWorldTestNoRawGameWorldState(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(
+          errors.join('\n'),
+          contains('province_ownership_transfer_test.dart'),
+        );
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
     });
   });
 }
