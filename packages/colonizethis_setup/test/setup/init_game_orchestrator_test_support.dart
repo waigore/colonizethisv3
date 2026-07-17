@@ -5,11 +5,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 // Reuse the production province–province adjacency + connected-components
 // helpers instead of byte-identical test reimplementations (Refs #3740):
-// `provinceNeighboursFromTopology` (re-exported via the colonizethis_logic
-// barrel from colonizethis_setup) and `connectedComponentsInSubset`
-// (colonizethis_world, the same `src/` path production setup imports).
-import 'package:colonizethis_world/src/utils/graph_traversal.dart'
-    show connectedComponentsInSubset;
+// `provinceNeighboursFromTopology` and `connectedComponentsInSubset` both
+// arrive through the colonizethis_logic barrel (the latter published from the
+// colonizethis_world barrel, Refs #4054), so no world src/ deep import.
 
 /// AC-11 regression seeds for locked full-init profile (#1830 / #1861).
 const lockedFullInitAc11Seeds = <int>[
@@ -81,8 +79,7 @@ GameSetupConfig configWithOverrides({
 }) {
   final base = GameSetupConfig.defaultConfig;
   return GameSetupConfig(
-    selectedGreatPowerIds:
-        selectedGreatPowerIds ?? base.selectedGreatPowerIds,
+    selectedGreatPowerIds: selectedGreatPowerIds ?? base.selectedGreatPowerIds,
     leaderVariantByGpId: leaderVariantByGpId ?? base.leaderVariantByGpId,
     continentCount: continentCount ?? base.continentCount,
     minorNationCount: minorNationCount ?? base.minorNationCount,

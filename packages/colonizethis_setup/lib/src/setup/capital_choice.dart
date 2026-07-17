@@ -2,13 +2,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/capital_reassignment.dart';
 import 'setup_exceptions.dart';
 import 'setup_road_wiring.dart';
 import 'setup_topology_adjacency.dart';
 import 'tile_cell_scan.dart';
 
-export 'package:colonizethis_world/src/world/capital_reassignment.dart'
+export 'package:colonizethis_world/colonizethis_world.dart'
     show
         applyGreatPowerCapitalProvinceTownDevelopment,
         pickCapitalProvinceIdForReassignment,

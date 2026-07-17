@@ -1528,6 +1528,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_unit_spawn.dart
 
+  - rule_id: repo.setup_no_world_src_imports
+    group: architecture
+    title: colonizethis_setup must consume colonizethis_world via its barrel, not src/ deep imports (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_no_world_src_imports.dart
+
   - rule_id: repo.setup_naming_lookup
     group: architecture
     title: minor/tribe naming lookup must use setup_naming_lookup.dart helpers (Refs #4054)

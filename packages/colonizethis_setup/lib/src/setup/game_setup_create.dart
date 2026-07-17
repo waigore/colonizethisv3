@@ -17,7 +17,6 @@ import 'minor_tribe_starting_development.dart';
 import 'init_town_roads.dart';
 import 'initial_visibility.dart';
 import 'setup_exceptions.dart';
-import 'town_capital_occupancy.dart';
 
 part 'game_setup_create_ownership.dart';
 part 'game_setup_create_initial_game.dart';

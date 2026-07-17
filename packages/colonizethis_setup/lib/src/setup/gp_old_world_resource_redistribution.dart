@@ -10,7 +10,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'gp_old_world_tile_scan.dart';
 import 'seed_perturbation.dart';
 import 'setup_exceptions.dart';
-import 'town_capital_occupancy.dart';
 
 // GP Old World resource-redistribution concern fragments (Refs #3290 Phase 0
 // file-split). Each `part of` fragment shares this library's imports and
