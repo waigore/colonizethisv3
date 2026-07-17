@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'advanced_start_bootstrap_roads.dart';
+import 'advanced_start_nw_owner_lookup.dart';
 import 'advanced_start_nw_topology.dart';
 import 'game_setup_helpers_towns.dart';
 import 'game_setup_topology.dart';
@@ -12,19 +13,6 @@ import 'setup_logging.dart';
 
 String _fullNwProvinceId(String localId) =>
     ProvinceId.full(kRegionNewWorld, localId);
-
-String? _tribeOwnerForLocalProvince(Game game, String localProvinceId) {
-  final fullId = _fullNwProvinceId(localProvinceId);
-  for (final province in game.worldState.newWorld.provinces) {
-    final id = ProvinceId.prefixedFrom(province.regionId, province.id);
-    if (id != fullId) continue;
-    final ownerId = province.ownerId;
-    if (ownerId != null && game.tribes.any((t) => t.id == ownerId)) {
-      return ownerId;
-    }
-  }
-  return null;
-}
 
 Map<String, int> _tribeProvinceCounts(Game game) {
   final counts = <String, int>{for (final t in game.tribes) t.id: 0};
@@ -44,13 +32,13 @@ Map<String, int> _tribeProvinceCounts(Game game) {
 bool _tryAssignNwProvince({
   required String current,
   required String playerId,
-  required Game game,
+  required Map<String, String> tribeOwnerByLocalId,
   required Map<String, String> assignedToGp,
   required Map<String, int> tribeCounts,
 }) {
   if (assignedToGp.containsKey(current)) return false;
 
-  final tribeOwner = _tribeOwnerForLocalProvince(game, current);
+  final tribeOwner = tribeOwnerByLocalId[current];
   if (tribeOwner == null) return false;
   if ((tribeCounts[tribeOwner] ?? 0) <= 1) return false;
 
@@ -83,6 +71,8 @@ Game applyAdvancedStartNwColonization({
   final provinceNeighbours = provinceNeighboursFromTopology(nwTopology);
   final assignedToGp = <String, String>{};
   var tribeCounts = _tribeProvinceCounts(game);
+  // Pre-pass ownership only (scan [game], not mutated assignment state).
+  final tribeOwnerByLocalId = nwTribeOwnerByLocalProvinceId(game);
 
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
@@ -109,7 +99,7 @@ Game applyAdvancedStartNwColonization({
       accept: (current) => _tryAssignNwProvince(
         current: current,
         playerId: player.id,
-        game: game,
+        tribeOwnerByLocalId: tribeOwnerByLocalId,
         assignedToGp: assignedToGp,
         tribeCounts: tribeCounts,
       ),

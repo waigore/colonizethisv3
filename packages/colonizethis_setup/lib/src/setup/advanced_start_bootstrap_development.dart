@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'advanced_start_bootstrap_roads.dart';
+import 'advanced_start_selection.dart';
 import 'setup_logging.dart';
 
 bool _isDevelopableTile({
@@ -84,8 +85,7 @@ Game _applyPlayerProvinceDevelopment({
   );
   if (candidates.isEmpty) return game;
 
-  final target = (candidates.length * fraction).ceil();
-  final selected = candidates.take(target).toList();
+  final selected = selectByFractionCeil(candidates, fraction);
   var tileState = game.worldState.tileState;
   for (final key in selected) {
     tileState = tileState.setImprovement(key, 1);
@@ -210,7 +210,7 @@ Game applyAdvancedStartMinorDevelopment({
 
   for (var i = 0; i < game.minorNations.length; i++) {
     final minor = game.minorNations[i];
-    final buyerId = game.players[i % game.players.length].id;
+    final buyerId = minorBuyerIdRoundRobin(game, i);
     final buyerProspected =
         updated.worldState.playerProspectedTiles[buyerId] ?? const <String>{};
     final tileKeysByProvince =
@@ -230,8 +230,7 @@ Game applyAdvancedStartMinorDevelopment({
     }
     if (developable.isEmpty) continue;
 
-    final target = (developable.length * fraction).ceil();
-    final selected = developable.take(target).toList();
+    final selected = selectByFractionCeil(developable, fraction);
     for (final key in selected) {
       purchased[key] = buyerId;
       tileState = tileState.setImprovement(key, 1);
