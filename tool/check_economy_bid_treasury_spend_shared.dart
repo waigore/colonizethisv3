@@ -5,10 +5,11 @@ import 'package:path/path.dart' as p;
 /// SPEC: SPEC/program/repo-lint.md (Refs #3823).
 ///
 /// Guards the shared bid-treasury-spend helper in the economy package.
-/// `treasury_bid_budget.dart` owns `bidTreasurySpendForOrder`; the validator
-/// must delegate to it instead of re-inlining price × quantity math.
+/// `treasury_bid_spend.dart` (re-exported via the `treasury_bid_budget.dart`
+/// barrel; phase-7 split Refs #4049) owns `bidTreasurySpendForOrder`; the
+/// validator must delegate to it instead of re-inlining price × quantity math.
 const _helperRelativePath =
-    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart';
+    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_spend.dart';
 
 const _consumerRelativePath =
     'packages/colonizethis_economy/lib/src/economy/world_market/trade_order_validator.dart';
