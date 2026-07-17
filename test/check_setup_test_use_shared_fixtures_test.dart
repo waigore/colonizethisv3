@@ -7,8 +7,7 @@ void main() {
     const supportPath =
         'packages/colonizethis_setup/test/setup/'
         'init_game_orchestrator_test_support.dart';
-    const testPath =
-        'packages/colonizethis_setup/test/setup/example_test.dart';
+    const testPath = 'packages/colonizethis_setup/test/setup/example_test.dart';
 
     test('passes when test uses TestFixtures and configWithOverrides', () {
       expect(
@@ -82,6 +81,129 @@ void main() {}
         ),
         isNull,
       );
+    });
+  });
+
+  group('findSetupTestDuplicateInitRunViolations', () {
+    const supportPath =
+        'packages/colonizethis_setup/test/setup/'
+        'init_game_orchestrator_test_support.dart';
+    const testPath = 'packages/colonizethis_setup/test/setup/example_test.dart';
+
+    test('flags identical inline config expressions across test bodies', () {
+      final violations = findSetupTestDuplicateInitRunViolations(testPath, '''
+void main() {
+  test('a', () {
+    final result = runInitGame(
+      config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
+      options: defaultInitOptions,
+    );
+  });
+  test('b', () {
+    final result = runInitGame(
+      config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
+      options: defaultInitOptions,
+    );
+  });
+}
+''');
+      expect(violations, hasLength(1));
+      expect(violations.single.message, contains('sharedInitGameResult'));
+      expect(violations.single.message, contains('2 test bodies'));
+    });
+
+    test('resolves a once-declared config identifier across bodies', () {
+      final violations = findSetupTestDuplicateInitRunViolations(testPath, '''
+void main() {
+  test('a', () {
+    final configA = lockedFullInitConfig(seed: 42);
+    final result = runInitGame(config: configA, options: defaultInitOptions);
+  });
+  test('b', () {
+    final result = runInitGame(
+      config: lockedFullInitConfig(seed: 42),
+      options: defaultInitOptions,
+    );
+  });
+}
+''');
+      expect(violations, hasLength(1));
+    });
+
+    test('does not flag a determinism double run in one test body', () {
+      final violations = findSetupTestDuplicateInitRunViolations(testPath, '''
+void main() {
+  test('deterministic', () {
+    final config = configWithOverrides(seed: 900_002);
+    final first = runInitGame(config: config, options: defaultInitOptions);
+    final second = runInitGame(config: config, options: defaultInitOptions);
+  });
+}
+''');
+      expect(violations, isEmpty);
+    });
+
+    test('does not group unrelated locals sharing the `config` name', () {
+      final violations = findSetupTestDuplicateInitRunViolations(testPath, '''
+void main() {
+  test('a', () {
+    final config = configWithOverrides(seed: 1);
+    final result = runInitGame(config: config, options: defaultInitOptions);
+  });
+  test('b', () {
+    final config = configWithOverrides(seed: 2);
+    final result = runInitGame(config: config, options: defaultInitOptions);
+  });
+}
+''');
+      expect(violations, isEmpty);
+    });
+
+    test('skips calls with custom options or extra arguments', () {
+      final violations = findSetupTestDuplicateInitRunViolations(testPath, '''
+void main() {
+  test('a', () {
+    final result = runInitGame(
+      config: GameSetupConfig.defaultConfig,
+      options: const InitGameOptions(cellSize: 8, renderPng: true),
+    );
+  });
+  test('b', () {
+    final result = runInitGame(
+      config: GameSetupConfig.defaultConfig,
+      options: const InitGameOptions(cellSize: 8, renderPng: true),
+    );
+  });
+  test('c', () {
+    final result = runInitGame(
+      config: GameSetupConfig.defaultConfig,
+      options: defaultInitOptions,
+      generateRegion: myGenerator,
+    );
+  });
+  test('d', () {
+    final result = runInitGame(
+      config: GameSetupConfig.defaultConfig,
+      options: defaultInitOptions,
+      generateRegion: myGenerator,
+    );
+  });
+}
+''');
+      expect(violations, isEmpty);
+    });
+
+    test('the orchestrator support file is exempt', () {
+      final violations = findSetupTestDuplicateInitRunViolations(
+        supportPath,
+        '''
+InitGameResult a() =>
+    runInitGame(config: GameSetupConfig.defaultConfig, options: defaultInitOptions);
+InitGameResult b() =>
+    runInitGame(config: GameSetupConfig.defaultConfig, options: defaultInitOptions);
+''',
+      );
+      expect(violations, isEmpty);
     });
   });
 }

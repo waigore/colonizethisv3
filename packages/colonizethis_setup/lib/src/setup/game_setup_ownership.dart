@@ -3,7 +3,8 @@ import 'dart:math';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_world/src/utils/graph_traversal.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show connectedComponentsInSubset, landmassIdsFromProvinceAdjacency;
 import 'capital_choice.dart';
 import 'faction_setup_helpers.dart';
 import 'game_setup_topology.dart';

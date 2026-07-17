@@ -13,12 +13,7 @@ void main() {
     test(
       'renderPng=false skips PNG bytes but still returns game and view data',
       () {
-        final config = GameSetupConfig.defaultConfig;
-
-        final result = runInitGame(
-          config: config,
-          options: defaultInitOptions,
-        );
+        final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
         expect(result.game, isNotNull);
         expect(result.mapViewData, isNotNull);
@@ -73,11 +68,7 @@ void main() {
     );
 
     test('markdown contains Faction Setup and Starting State tables', () {
-      final config = GameSetupConfig.defaultConfig;
-      final result = runInitGame(
-        config: config,
-        options: defaultInitOptions,
-      );
+      final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
       expect(result.markdown, contains('## Faction Setup'));
       expect(result.markdown, contains('## Faction Starting State'));
       expect(
@@ -107,11 +98,7 @@ void main() {
     test(
       'result includes warpLinks and combinedTopology has prefixed node ids',
       () {
-        final config = GameSetupConfig.defaultConfig;
-        final result = runInitGame(
-          config: config,
-          options: defaultInitOptions,
-        );
+        final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
         expect(result.warpLinks, isA<List<WarpLink>>());
         final combined = result.combinedTopology;
         expect(combined.nodes, isNotEmpty);
@@ -138,10 +125,7 @@ void main() {
 
     test('seed=0 uses time-based effective seed', () {
       final config = configWithOverrides(seed: 0);
-      final result = runInitGame(
-        config: config,
-        options: defaultInitOptions,
-      );
+      final result = runInitGame(config: config, options: defaultInitOptions);
       expect(result.game, isNotNull);
       expect(result.game.globalGameSeed, isNonZero);
     });
@@ -149,10 +133,7 @@ void main() {
     test('non-zero seed: globalGameSeed matches config.seed', () {
       const k = 900_001;
       final config = configWithOverrides(seed: k);
-      final result = runInitGame(
-        config: config,
-        options: defaultInitOptions,
-      );
+      final result = runInitGame(config: config, options: defaultInitOptions);
       expect(result.game.globalGameSeed, k);
     });
 
@@ -198,10 +179,7 @@ void main() {
     });
 
     test('after runInitGame worldState.turnState is orders at turn 0', () {
-      final result = runInitGame(
-        config: GameSetupConfig.defaultConfig,
-        options: defaultInitOptions,
-      );
+      final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
       expect(result.game.worldState.turnState.phase, TurnPhase.orders);
       expect(result.game.worldState.turnState.turnNumber, 0);
     });

@@ -8,7 +8,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'province_tile_ranking.dart';
 import 'setup_exceptions.dart';
-import 'town_capital_occupancy.dart';
 
 /// Default per-capital developed tile count for Minor Nations and Tribes at
 /// game setup. SPEC/game/factions.md § Starting developed resources.

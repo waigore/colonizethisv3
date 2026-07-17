@@ -88,9 +88,8 @@ void main() {
     test(
       'turns50 locked profile applies tier civilians regiments and galleon',
       () {
-        final result = runInitGame(
-          config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
-          options: defaultInitOptions,
+        final result = sharedInitGameResult(
+          configWithOverrides(advancedStart: AdvancedStartType.turns50),
         );
         final game = result.game;
         expect(game.advancedStartType, AdvancedStartType.turns50);
@@ -122,9 +121,8 @@ void main() {
     );
 
     test('turns50 locked profile reveals NW tiles for each GP', () {
-      final result = runInitGame(
-        config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
-        options: defaultInitOptions,
+      final result = sharedInitGameResult(
+        configWithOverrides(advancedStart: AdvancedStartType.turns50),
       );
       final game = result.game;
       final totalNwProvinces = game.worldState.newWorld.provinces.length;

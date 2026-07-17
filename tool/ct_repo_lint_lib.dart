@@ -59,6 +59,7 @@ import 'check_setup_dedup_ownership_paint.dart';
 import 'check_setup_dedup_advanced_start_selection.dart';
 import 'check_setup_dedup_unit_spawn.dart';
 import 'check_setup_naming_lookup.dart';
+import 'check_setup_no_world_src_imports.dart';
 import 'check_setup_per_pass_nw_owner_map.dart';
 import 'check_setup_prefixed_province_id_normalizer.dart';
 import 'check_setup_helpers_first_class_libraries.dart';
@@ -1051,6 +1052,8 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupUnitSpawn(repoRoot);
     case 'repo.setup_naming_lookup':
       return runCheckSetupNamingLookup(repoRoot);
+    case 'repo.setup_no_world_src_imports':
+      return runCheckSetupNoWorldSrcImports(repoRoot);
     case 'repo.setup_helpers_first_class_libraries':
       return runCheckSetupHelpersFirstClassLibraries(repoRoot);
     case 'repo.setup_test_default_init_options':
