@@ -80,28 +80,8 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// surfaced by `shellPlayerContextProvider`. Mirrors the helper used by
 /// `trade_screen_320dp_min_viewport_test.dart` so the observe pin
 /// exercises the same path the in-app observe session takes.
-ShellPlayerContext _globalObserveShellContext() {
-  return const ShellPlayerContext(
-    effectiveHumanPlayerId: null,
-    viewingPlayerId: null,
-    mapVisibilityMode: CtMapVisibilityMode.full,
-    playerView: null,
-    omniscientDetail: true,
-    // `showPlayerChrome: false` flips `shellPanelsNotDefined(ref)` to
-    // true so `DiplomacyScreen.bodyBuilder` short-circuits to the
-    // `ObserveModeNotDefinedPanel` sentinel per
-    // SPEC/ui/observe-mode.md and SPEC/ui/diplomacy-panel.md
-    // § States and variants.
-    showPlayerChrome: false,
-    canMutateViaUi: false,
-    debugCommandTargetPlayerId: null,
-    inObservePhase: true,
-    // ignore: avoid_hardcoded_strings_in_widgets
-    observeBannerLabel: 'Observing: global',
-    treasuryNotDefined: true,
-    cargoNotDefined: true,
-  );
-}
+ShellPlayerContext _globalObserveShellContext() =>
+    ShellPlayerContext.globalObserve();
 
 /// Pumps the [DiplomacyScreen] at [size] via the shared min-viewport
 /// harness ([pumpAtMinViewport]). Overrides `currentGameProvider` (and
@@ -144,197 +124,183 @@ void main() {
   setUpAll(() {
     game = buildDiplomacyScreenTestGame();
     humanPlayerId = game.players
-        .firstWhere(
-          (p) => p.isHuman,
-          orElse: () => game.players.first,
-        )
+        .firstWhere((p) => p.isHuman, orElse: () => game.players.first)
         .id;
   });
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — DiplomacyScreen (default) @ '
-    '320 dp (Refs #2870 S10)',
-    () {
-      testWidgets(
-        'AC (positive) DiplomacyScreen default @ 320×640: no RenderFlex '
-        'overflow exception, dark CtTopBar (title `Diplomacy`, back '
-        'label `Map`) + DiplomacyPanel body (`Great Powers` heading) '
-        'both render',
-        (WidgetTester tester) async {
-          await _pumpDiplomacyScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            humanPlayerId: humanPlayerId,
-          );
+  group('SPEC/ui/mobile-adaptation.md § 7 — DiplomacyScreen (default) @ '
+      '320 dp (Refs #2870 S10)', () {
+    testWidgets(
+      'AC (positive) DiplomacyScreen default @ 320×640: no RenderFlex '
+      'overflow exception, dark CtTopBar (title `Diplomacy`, back '
+      'label `Map`) + DiplomacyPanel body (`Great Powers` heading) '
+      'both render',
+      (WidgetTester tester) async {
+        await _pumpDiplomacyScreen(
+          tester,
+          size: _kMinViewport,
+          game: game,
+          humanPlayerId: humanPlayerId,
+        );
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: DiplomacyScreen must '
-                'not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The dark CtTopBar (36 dp '
-                'tall — back chevron + `Map` label + 18 × 18 px '
-                'diplomacy icon + `Diplomacy` title) above the '
-                'DiplomacyPanel body must lay out within the 320 dp '
-                'column per SPEC/ui/diplomacy-panel.md § Top bar and '
-                '§ Layout / wireframe.',
-          );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: DiplomacyScreen must '
+              'not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The dark CtTopBar (36 dp '
+              'tall — back chevron + `Map` label + 18 × 18 px '
+              'diplomacy icon + `Diplomacy` title) above the '
+              'DiplomacyPanel body must lay out within the 320 dp '
+              'column per SPEC/ui/diplomacy-panel.md § Top bar and '
+              '§ Layout / wireframe.',
+        );
 
-          final topBarFinder = find.byKey(DiplomacyScreen.topBarKey);
-          expect(topBarFinder, findsOneWidget);
-          final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-          expect(topBar.title, DiplomacyScreen.topBarTitle);
-          expect(topBar.backButtonLabel, DiplomacyScreen.topBarBackLabel);
+        final topBarFinder = find.byKey(DiplomacyScreen.topBarKey);
+        expect(topBarFinder, findsOneWidget);
+        final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
+        expect(topBar.title, DiplomacyScreen.topBarTitle);
+        expect(topBar.backButtonLabel, DiplomacyScreen.topBarBackLabel);
 
-          expect(
-            find.descendant(
-              of: topBarFinder,
-              matching: find.byType(CtBackButton),
-            ),
-            findsOneWidget,
-            reason:
-                'The CtTopBar back chevron must remain reachable at '
-                '320 dp so the user can navigate back to the map '
-                '(SPEC/ui/diplomacy-panel.md § Top bar — back affordance '
-                'reads "← Map").',
-          );
+        expect(
+          find.descendant(
+            of: topBarFinder,
+            matching: find.byType(CtBackButton),
+          ),
+          findsOneWidget,
+          reason:
+              'The CtTopBar back chevron must remain reachable at '
+              '320 dp so the user can navigate back to the map '
+              '(SPEC/ui/diplomacy-panel.md § Top bar — back affordance '
+              'reads "← Map").',
+        );
 
-          expect(
-            find.byType(DiplomacyPanel),
-            findsOneWidget,
-            reason:
-                'Default (non-observe) path must mount the '
-                '`DiplomacyPanel` body at 320 dp. '
-                'SPEC/ui/diplomacy-panel.md § Layout / wireframe.',
-          );
-          // The DiplomacyPanel renders a `Great Powers` faction-section
-          // heading when at least one GP exists in the game (the
-          // debug-init fixture seeds six GPs). Pinning the heading
-          // proves the panel actually laid out a non-empty body inside
-          // the 320 dp column rather than rendering a placeholder.
-          expect(
-            find.text('Great Powers'),
-            findsOneWidget,
-            reason:
-                'Default path must render the `Great Powers` faction-'
-                'section heading inside the DiplomacyPanel body at '
-                '320 dp (SPEC/ui/diplomacy-panel.md § Layout / '
-                'wireframe — Faction sections).',
-          );
-          expect(
-            find.byType(ObserveModeNotDefinedPanel),
-            findsNothing,
-            reason:
-                'Default path must NOT render the observe sentinel — '
-                'that is the global-observe variant covered by the '
-                'second group below.',
-          );
-        },
-      );
+        expect(
+          find.byType(DiplomacyPanel),
+          findsOneWidget,
+          reason:
+              'Default (non-observe) path must mount the '
+              '`DiplomacyPanel` body at 320 dp. '
+              'SPEC/ui/diplomacy-panel.md § Layout / wireframe.',
+        );
+        // The DiplomacyPanel renders a `Great Powers` faction-section
+        // heading when at least one GP exists in the game (the
+        // debug-init fixture seeds six GPs). Pinning the heading
+        // proves the panel actually laid out a non-empty body inside
+        // the 320 dp column rather than rendering a placeholder.
+        expect(
+          find.text('Great Powers'),
+          findsOneWidget,
+          reason:
+              'Default path must render the `Great Powers` faction-'
+              'section heading inside the DiplomacyPanel body at '
+              '320 dp (SPEC/ui/diplomacy-panel.md § Layout / '
+              'wireframe — Faction sections).',
+        );
+        expect(
+          find.byType(ObserveModeNotDefinedPanel),
+          findsNothing,
+          reason:
+              'Default path must NOT render the observe sentinel — '
+              'that is the global-observe variant covered by the '
+              'second group below.',
+        );
+      },
+    );
 
-      testWidgets(
-        'Negative control: DiplomacyScreen default @ 1024×768 also '
+    testWidgets('Negative control: DiplomacyScreen default @ 1024×768 also '
         'pumps without exception (regression sentinel for the overflow '
-        'contract — keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpDiplomacyScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            humanPlayerId: humanPlayerId,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(DiplomacyScreen.topBarKey), findsOneWidget);
-          expect(find.byType(DiplomacyPanel), findsOneWidget);
-          expect(find.text('Great Powers'), findsOneWidget);
-        },
+        'contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDiplomacyScreen(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        humanPlayerId: humanPlayerId,
       );
-    },
-  );
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — DiplomacyScreen (global '
-    'observe) @ 320 dp (Refs #2870 S10)',
-    () {
-      testWidgets(
-        'AC (positive) DiplomacyScreen global-observe @ 320×640: no '
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(DiplomacyScreen.topBarKey), findsOneWidget);
+      expect(find.byType(DiplomacyPanel), findsOneWidget);
+      expect(find.text('Great Powers'), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — DiplomacyScreen (global '
+      'observe) @ 320 dp (Refs #2870 S10)', () {
+    testWidgets('AC (positive) DiplomacyScreen global-observe @ 320×640: no '
         'RenderFlex overflow exception, dark CtTopBar still paints, '
         'ObserveModeNotDefinedPanel sentinel renders, DiplomacyPanel '
-        'body is absent',
-        (WidgetTester tester) async {
-          await _pumpDiplomacyScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            globalObserve: true,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: DiplomacyScreen '
-                'global-observe body must not emit a RenderFlex '
-                'overflow exception at kMinViewportWidth (320 dp). '
-                'The dark CtTopBar plus the '
-                "`ObserveModeNotDefinedPanel(title: 'Diplomacy')` "
-                'sentinel must lay out within the 320 dp column.',
-          );
-
-          expect(
-            find.byKey(DiplomacyScreen.topBarKey),
-            findsOneWidget,
-            reason:
-                'Observe override only swaps the body (see SPEC/ui/'
-                'diplomacy-panel.md § States and variants); the dark '
-                'CtTopBar must still paint so the AC for the chrome is '
-                'exercised at 320 dp under both variants.',
-          );
-
-          final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
-          expect(observePanelFinder, findsOneWidget);
-          final ObserveModeNotDefinedPanel observePanel = tester
-              .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
-          // SPEC/ui/diplomacy-panel.md § States and variants requires
-          // the literal `Diplomacy` title under the observe sentinel.
-          // ignore: avoid_hardcoded_strings_in_widgets
-          expect(observePanel.title, 'Diplomacy');
-
-          expect(
-            find.byType(DiplomacyPanel),
-            findsNothing,
-            reason:
-                'Global-observe path MUST NOT mount the DiplomacyPanel '
-                'body — SPEC/ui/diplomacy-panel.md § States and '
-                'variants reserves the observe sentinel for that '
-                'branch.',
-          );
-        },
+        'body is absent', (WidgetTester tester) async {
+      await _pumpDiplomacyScreen(
+        tester,
+        size: _kMinViewport,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        globalObserve: true,
       );
 
-      testWidgets(
-        'Negative control: DiplomacyScreen global-observe @ 1024×768 '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: DiplomacyScreen '
+            'global-observe body must not emit a RenderFlex '
+            'overflow exception at kMinViewportWidth (320 dp). '
+            'The dark CtTopBar plus the '
+            "`ObserveModeNotDefinedPanel(title: 'Diplomacy')` "
+            'sentinel must lay out within the 320 dp column.',
+      );
+
+      expect(
+        find.byKey(DiplomacyScreen.topBarKey),
+        findsOneWidget,
+        reason:
+            'Observe override only swaps the body (see SPEC/ui/'
+            'diplomacy-panel.md § States and variants); the dark '
+            'CtTopBar must still paint so the AC for the chrome is '
+            'exercised at 320 dp under both variants.',
+      );
+
+      final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
+      expect(observePanelFinder, findsOneWidget);
+      final ObserveModeNotDefinedPanel observePanel = tester
+          .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
+      // SPEC/ui/diplomacy-panel.md § States and variants requires
+      // the literal `Diplomacy` title under the observe sentinel.
+      // ignore: avoid_hardcoded_strings_in_widgets
+      expect(observePanel.title, 'Diplomacy');
+
+      expect(
+        find.byType(DiplomacyPanel),
+        findsNothing,
+        reason:
+            'Global-observe path MUST NOT mount the DiplomacyPanel '
+            'body — SPEC/ui/diplomacy-panel.md § States and '
+            'variants reserves the observe sentinel for that '
+            'branch.',
+      );
+    });
+
+    testWidgets('Negative control: DiplomacyScreen global-observe @ 1024×768 '
         'also pumps without exception (regression sentinel for the '
-        'overflow contract under the observe variant)',
-        (WidgetTester tester) async {
-          await _pumpDiplomacyScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            humanPlayerId: humanPlayerId,
-            globalObserve: true,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(DiplomacyScreen.topBarKey), findsOneWidget);
-          expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
-          expect(find.byType(DiplomacyPanel), findsNothing);
-        },
+        'overflow contract under the observe variant)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpDiplomacyScreen(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        humanPlayerId: humanPlayerId,
+        globalObserve: true,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(DiplomacyScreen.topBarKey), findsOneWidget);
+      expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
+      expect(find.byType(DiplomacyPanel), findsNothing);
+    });
+  });
 }

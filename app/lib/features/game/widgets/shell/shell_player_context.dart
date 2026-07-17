@@ -29,6 +29,26 @@ class ShellPlayerContext {
     required this.cargoNotDefined,
   });
 
+  /// Global-observe sentinel (`ObserveMode.global`): no viewing GP, full map,
+  /// chrome suppressed, mutations disabled. Optional [debugCommandTargetPlayerId]
+  /// mirrors `observe.lastControlledPlayerId` in the provider.
+  factory ShellPlayerContext.globalObserve({
+    String? debugCommandTargetPlayerId,
+  }) => ShellPlayerContext(
+    effectiveHumanPlayerId: null,
+    viewingPlayerId: null,
+    mapVisibilityMode: CtMapVisibilityMode.full,
+    playerView: null,
+    omniscientDetail: true,
+    showPlayerChrome: false,
+    canMutateViaUi: false,
+    debugCommandTargetPlayerId: debugCommandTargetPlayerId,
+    inObservePhase: true,
+    observeBannerLabel: 'Observing: global',
+    treasuryNotDefined: true,
+    cargoNotDefined: true,
+  );
+
   final String? effectiveHumanPlayerId;
   final String? viewingPlayerId;
   final CtMapVisibilityMode mapVisibilityMode;
@@ -44,9 +64,7 @@ class ShellPlayerContext {
 
   /// Non-null player id for widgets that require a GP id string.
   String mapPlayerIdFor(Game game) =>
-      viewingPlayerId ??
-      effectiveHumanPlayerId ??
-      game.players.first.id;
+      viewingPlayerId ?? effectiveHumanPlayerId ?? game.players.first.id;
 
   /// GP id for P4–P17 panels; null in global observe (show [kObserveNotDefinedLabel]).
   String? get panelPlayerId => viewingPlayerId ?? effectiveHumanPlayerId;

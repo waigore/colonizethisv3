@@ -50,44 +50,18 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'support/dialogs_320dp_min_viewport_support.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing screen-, panel-, and dialog-level pin files.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same dialog renders its default layout. Mirrors
 /// the contract used by `dialogs_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
-
-/// Pumps [dialog] at [size] under the running editorial-monocle theme.
-///
-/// Delegates to the shared `pumpAtMinViewport` harness
-/// — which sets the surface size (so the binding's render flex math sees the
-/// minimum viewport) and overrides MediaQuery so dialog code that reads
-/// `MediaQuery.sizeOf(context).width` resolves to the same value.
-///
-/// Embeds [dialog] directly in the Scaffold body rather than driving the
-/// real `showDialog` flow because the contract under test is the
-/// dialog's own [CtDialogShell] layout at the narrow viewport, not the
-/// barrier / overlay route plumbing.
-Future<void> _pumpDialog(
-  WidgetTester tester,
-  Widget dialog, {
-  required Size size,
-}) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: dialog)),
-    settle: true,
-  );
-}
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 /// Resolves the human player id from the lightweight train fixture.
 String _humanPlayerId(Game game) {
@@ -99,43 +73,42 @@ void main() {
 
   group('SPEC/ui/mobile-adaptation.md § 7 — TrainCiviliansDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
-    testWidgets(
-      'AC (positive) TrainCiviliansDialog @ 320×640: no RenderFlex '
-      'overflow exception, "Train Civilians" title + Reset action render',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialog(
-          tester,
-          TrainCiviliansDialog(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-          size: _kMinViewport,
-        );
+    testWidgets('AC (positive) TrainCiviliansDialog @ 320×640: no RenderFlex '
+        'overflow exception, "Train Civilians" title + Reset action render', (
+      WidgetTester tester,
+    ) async {
+      final game = buildTrainPanelTestGame();
+      final humanPlayerId = _humanPlayerId(game);
+      await pumpDialogs320At(
+        tester,
+        TrainCiviliansDialog(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: const Orders(),
+          bus: AppEventBus.create(),
+        ),
+        size: _kMinViewport,
+      );
 
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'SPEC/ui/mobile-adaptation.md § 7: TrainCiviliansDialog must '
-              'not emit a RenderFlex overflow exception at '
-              'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
-              'TrainDialogHeader (Cinzel accent title + 32 dp close ×), '
-              'the Wrap-based TrainDialogResourceBar (Treasury + Paper '
-              'lines), the per-civilian-unit rows '
-              '(`builder`, `farmer`, `craftsman`, `paperMaker`, '
-              '`bookbinder`, `clerk`) with name + cost header + +/- '
-              'stepper, and the trailing right-aligned Reset action — '
-              'must all fit within the ~288 dp CtDialogShell content '
-              'column at 320 dp.',
-        );
-        expect(find.text('Train Civilians'), findsOneWidget);
-        expect(find.text('Reset'), findsOneWidget);
-      },
-    );
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TrainCiviliansDialog must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
+            'TrainDialogHeader (Cinzel accent title + 32 dp close ×), '
+            'the Wrap-based TrainDialogResourceBar (Treasury + Paper '
+            'lines), the per-civilian-unit rows '
+            '(`builder`, `farmer`, `craftsman`, `paperMaker`, '
+            '`bookbinder`, `clerk`) with name + cost header + +/- '
+            'stepper, and the trailing right-aligned Reset action — '
+            'must all fit within the ~288 dp CtDialogShell content '
+            'column at 320 dp.',
+      );
+      expect(find.text('Train Civilians'), findsOneWidget);
+      expect(find.text('Reset'), findsOneWidget);
+    });
 
     testWidgets('Negative control: TrainCiviliansDialog @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
@@ -144,7 +117,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialog(
+      await pumpDialogs320At(
         tester,
         TrainCiviliansDialog(
           game: game,
@@ -163,44 +136,43 @@ void main() {
 
   group('SPEC/ui/mobile-adaptation.md § 7 — TrainMilitaryDialog @ 320 dp '
       '(Refs #2870 S8/S10)', () {
-    testWidgets(
-      'AC (positive) TrainMilitaryDialog @ 320×640: no RenderFlex '
-      'overflow exception, "Train Military" title + Reset action render',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialog(
-          tester,
-          TrainMilitaryDialog(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-          size: _kMinViewport,
-        );
+    testWidgets('AC (positive) TrainMilitaryDialog @ 320×640: no RenderFlex '
+        'overflow exception, "Train Military" title + Reset action render', (
+      WidgetTester tester,
+    ) async {
+      final game = buildTrainPanelTestGame();
+      final humanPlayerId = _humanPlayerId(game);
+      await pumpDialogs320At(
+        tester,
+        TrainMilitaryDialog(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: const Orders(),
+          bus: AppEventBus.create(),
+        ),
+        size: _kMinViewport,
+      );
 
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'SPEC/ui/mobile-adaptation.md § 7: TrainMilitaryDialog must '
-              'not emit a RenderFlex overflow exception at '
-              'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
-              'TrainDialogHeader, the Wrap-based military resource bar '
-              '(Treasury + Peasants + six commodity chips: fabric, '
-              'castIron, lumber, horses, steel, bronze), the per-regiment '
-              'rows with name + cost header + +/- stepper, and the '
-              'trailing right-aligned Reset action — must all wrap '
-              'within the ~288 dp CtDialogShell content column at '
-              '320 dp. The military resource Wrap (more chips than the '
-              'civilian dialog) must flow onto extra runs without '
-              'overflowing horizontally.',
-        );
-        expect(find.text('Train Military'), findsOneWidget);
-        expect(find.text('Reset'), findsOneWidget);
-      },
-    );
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TrainMilitaryDialog must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
+            'TrainDialogHeader, the Wrap-based military resource bar '
+            '(Treasury + Peasants + six commodity chips: fabric, '
+            'castIron, lumber, horses, steel, bronze), the per-regiment '
+            'rows with name + cost header + +/- stepper, and the '
+            'trailing right-aligned Reset action — must all wrap '
+            'within the ~288 dp CtDialogShell content column at '
+            '320 dp. The military resource Wrap (more chips than the '
+            'civilian dialog) must flow onto extra runs without '
+            'overflowing horizontally.',
+      );
+      expect(find.text('Train Military'), findsOneWidget);
+      expect(find.text('Reset'), findsOneWidget);
+    });
 
     testWidgets('Negative control: TrainMilitaryDialog @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
@@ -209,7 +181,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialog(
+      await pumpDialogs320At(
         tester,
         TrainMilitaryDialog(
           game: game,
@@ -228,41 +200,40 @@ void main() {
 
   group('SPEC/ui/mobile-adaptation.md § 7 — TrainNavalDialog @ 320 dp '
       '(Refs #3601 S15 / #2870 S8/S10)', () {
-    testWidgets(
-      'AC (positive) TrainNavalDialog @ 320×640: no RenderFlex '
-      'overflow exception, "Train Naval" title + Reset action render',
-      (WidgetTester tester) async {
-        final game = buildTrainPanelTestGame();
-        final humanPlayerId = _humanPlayerId(game);
-        await _pumpDialog(
-          tester,
-          TrainNavalDialog(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            currentOrders: const Orders(),
-            bus: AppEventBus.create(),
-          ),
-          size: _kMinViewport,
-        );
+    testWidgets('AC (positive) TrainNavalDialog @ 320×640: no RenderFlex '
+        'overflow exception, "Train Naval" title + Reset action render', (
+      WidgetTester tester,
+    ) async {
+      final game = buildTrainPanelTestGame();
+      final humanPlayerId = _humanPlayerId(game);
+      await pumpDialogs320At(
+        tester,
+        TrainNavalDialog(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: const Orders(),
+          bus: AppEventBus.create(),
+        ),
+        size: _kMinViewport,
+      );
 
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'SPEC/ui/mobile-adaptation.md § 7: TrainNavalDialog must '
-              'not emit a RenderFlex overflow exception at '
-              'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
-              'TrainDialogHeader, the Wrap-based naval resource bar '
-              '(Treasury + Peasants + four commodity chips: lumber, '
-              'fabric, castIron, coal), the per-ship rows with name + '
-              'cost header + +/- stepper, and the trailing right-aligned '
-              'Reset action — must all wrap within the ~288 dp '
-              'CtDialogShell content column at 320 dp.',
-        );
-        expect(find.text('Train Naval'), findsOneWidget);
-        expect(find.text('Reset'), findsOneWidget);
-      },
-    );
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TrainNavalDialog must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The CtDialogShell chrome — '
+            'TrainDialogHeader, the Wrap-based naval resource bar '
+            '(Treasury + Peasants + four commodity chips: lumber, '
+            'fabric, castIron, coal), the per-ship rows with name + '
+            'cost header + +/- stepper, and the trailing right-aligned '
+            'Reset action — must all wrap within the ~288 dp '
+            'CtDialogShell content column at 320 dp.',
+      );
+      expect(find.text('Train Naval'), findsOneWidget);
+      expect(find.text('Reset'), findsOneWidget);
+    });
 
     testWidgets('Negative control: TrainNavalDialog @ 1024×768 also pumps '
         'without exception (regression sentinel for the overflow '
@@ -271,7 +242,7 @@ void main() {
     ) async {
       final game = buildTrainPanelTestGame();
       final humanPlayerId = _humanPlayerId(game);
-      await _pumpDialog(
+      await pumpDialogs320At(
         tester,
         TrainNavalDialog(
           game: game,

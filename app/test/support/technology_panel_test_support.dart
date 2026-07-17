@@ -1,4 +1,4 @@
-// Shared TechnologyPanel widget-test scaffolding (Refs #4035).
+// Shared TechnologyPanel widget-test scaffolding (Refs #4035 / #4058).
 // Canonical buildAppShell host + pump for technology_panel_* suites.
 // SPEC: SPEC/ui/technology-panel.md; SPEC/program/repo-lint.md.
 
@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 
 import 'app_shell_harness.dart';
+import 'golden_capture_harness.dart';
 
 /// Builds the canonical [TechnologyPanel] host used across the panel's widget
 /// tests: editorial-monocle [buildAppShell] > [Scaffold] wrapping the panel.
@@ -66,4 +67,42 @@ Future<void> pumpTechnologyPanel(
         ),
   );
   await tester.pumpAndSettle();
+}
+
+/// Golden host for TechnologyPanel (or an injectable [child]) via [pumpGoldenHost].
+///
+/// When [child] is null, wraps [TechnologyPanel] in a viewport-sized
+/// [SingleChildScrollView] (parity / occupancy goldens). Prefer this over local
+/// `_pumpPanel` / `_pumpBoundary` clones (Refs #4058).
+Future<void> pumpTechnologyPanelGolden(
+  WidgetTester tester, {
+  required Key boundaryKey,
+  required Size viewport,
+  Widget? child,
+  Game? game,
+  Player? player,
+  Orders currentOrders = const Orders(),
+  void Function(Orders orders)? onOrdersChanged,
+}) {
+  final hosted =
+      child ??
+      SizedBox(
+        width: viewport.width,
+        height: viewport.height,
+        child: SingleChildScrollView(
+          child: TechnologyPanel(
+            game: game!,
+            player: player!,
+            currentOrders: currentOrders,
+            onOrdersChanged: onOrdersChanged ?? (_) {},
+          ),
+        ),
+      );
+  return pumpGoldenHost(
+    tester,
+    boundaryKey: boundaryKey,
+    physicalSize: viewport,
+    includeLocalizations: true,
+    child: hosted,
+  );
 }
