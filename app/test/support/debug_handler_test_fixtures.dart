@@ -1,6 +1,5 @@
 // Shared Game factories for `app_event_handler_debug_*` pure suites (Refs #4048).
 // SPEC: SPEC/program/repo-lint.md (approved app/test/support harness list).
-
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Empty regions + one human (treasury / stockpile / workers).
@@ -55,11 +54,7 @@ Game buildDebugHandlerCapitalGame({
       turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
       oldWorld: RegionData(
         provinces: [
-          Province(
-            id: capitalLocalId,
-            regionId: 'oldWorld',
-            ownerId: playerId,
-          ),
+          Province(id: capitalLocalId, regionId: 'oldWorld', ownerId: playerId),
         ],
       ),
       newWorld: const RegionData(),
@@ -114,42 +109,43 @@ Game buildDebugHandlerDiplomacyGame({
   );
 }
 
-/// Tile key for a prefixed province id at integer coords.
+/// Prefixed province tile key.
 String debugHandlerTileKey(String provinceFullId, [int x = 0, int y = 0]) =>
     '$provinceFullId|$x|$y';
 
-/// Capital tile keyed by prefixed province id (flip / reveal suites).
-CapitalTile debugHandlerCapitalTile(String provinceFullId, [int x = 0, int y = 0]) =>
-    CapitalTile(
-      regionId: provinceFullId.split('|').first,
-      provinceId: provinceFullId,
-      x: x,
-      y: y,
-    );
+/// Capital tile for flip/reveal suites.
+CapitalTile debugHandlerCapitalTile(
+  String provinceFullId, [
+  int x = 0,
+  int y = 0,
+]) => CapitalTile(
+  regionId: provinceFullId.split('|').first,
+  provinceId: provinceFullId,
+  x: x,
+  y: y,
+);
 
-/// Province with matching town tile key (flip capital suites).
+/// Province with matching town tile key.
 Province debugHandlerTownProvince(
   String provinceFullId,
   String ownerId,
   String displayName, [
   int x = 0,
   int y = 0,
-]) =>
-    Province(
-      id: provinceFullId,
-      regionId: provinceFullId.split('|').first,
-      ownerId: ownerId,
-      displayName: displayName,
-      townTileKey: debugHandlerTileKey(provinceFullId, x, y),
-    );
+]) => Province(
+  id: provinceFullId,
+  regionId: provinceFullId.split('|').first,
+  ownerId: ownerId,
+  displayName: displayName,
+  townTileKey: debugHandlerTileKey(provinceFullId, x, y),
+);
 
 /// Visibility + tile-key Game used by flip/reveal province debug suites.
 Game buildDebugHandlerVisibilityGame({
   required String id,
   List<Province> oldWorldProvinces = const [],
   List<Province> newWorldProvinces = const [],
-  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
-      const {},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {},
   Map<String, Map<String, String>> playerVisibilityByTile = const {},
   Map<String, String> portsByProvinceSeaboard = const {},
   List<Player> players = const [
@@ -201,7 +197,8 @@ Game buildDebugHandlerRevealProvinceGame({
         'oldWorld|s1': ['oldWorld|s1|0|0'],
       },
     },
-    playerVisibilityByTile: playerVisibilityByTile ??
+    playerVisibilityByTile:
+        playerVisibilityByTile ??
         const {
           'human_1': {
             'oldWorld|P1|0|0': 'unknown',

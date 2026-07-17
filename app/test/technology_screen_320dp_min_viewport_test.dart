@@ -82,26 +82,8 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 /// surfaced by `shellPlayerContextProvider`. Mirrors the helper used by
 /// `trade_screen_320dp_min_viewport_test.dart` so the observe pin
 /// exercises the same path the in-app observe session takes.
-ShellPlayerContext _globalObserveShellContext() {
-  return const ShellPlayerContext(
-    effectiveHumanPlayerId: null,
-    viewingPlayerId: null,
-    mapVisibilityMode: CtMapVisibilityMode.full,
-    playerView: null,
-    omniscientDetail: true,
-    // `showPlayerChrome: false` flips `shellPanelsNotDefined(ref)` to
-    // true so `TechnologyScreen.bodyBuilder` short-circuits to the
-    // `ObserveModeNotDefinedPanel` sentinel per SPEC/ui/observe-mode.md.
-    showPlayerChrome: false,
-    canMutateViaUi: false,
-    debugCommandTargetPlayerId: null,
-    inObservePhase: true,
-    // ignore: avoid_hardcoded_strings_in_widgets
-    observeBannerLabel: 'Observing: global',
-    treasuryNotDefined: true,
-    cargoNotDefined: true,
-  );
-}
+ShellPlayerContext _globalObserveShellContext() =>
+    ShellPlayerContext.globalObserve();
 
 /// Pumps the [TechnologyScreen] at [size] via the shared min-viewport
 /// harness ([pumpAtMinViewport]). Overrides `currentGameProvider` and
@@ -160,196 +142,184 @@ void main() {
     );
   });
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — TechnologyScreen (default Slots) '
-    '@ 320 dp (Refs #2870 S10 + Req 15)',
-    () {
-      testWidgets(
-        'AC (positive) TechnologyScreen default Slots @ 320×640: no '
+  group('SPEC/ui/mobile-adaptation.md § 7 — TechnologyScreen (default Slots) '
+      '@ 320 dp (Refs #2870 S10 + Req 15)', () {
+    testWidgets('AC (positive) TechnologyScreen default Slots @ 320×640: no '
         'RenderFlex overflow exception, dark CtTopBar (title `Technology`, '
         'back label `Map`) + Slots/Tree trailing toggles + Slots body '
-        '(TechnologyPanel) all render',
-        (WidgetTester tester) async {
-          await _pumpTechnologyScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            player: humanPlayer,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: TechnologyScreen must '
-                'not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The dark CtTopBar '
-                '(36 dp tall — back chevron + `Map` label + 18 × 18 px '
-                'technology icon + `Technology` title + Slots/Tree '
-                'toggle pair in the trailing slot) above the '
-                '`SingleChildScrollView` > `TechnologyPanel` body must '
-                'lay out within the 320 dp column.',
-          );
-
-          final topBarFinder = find.byKey(TechnologyScreen.topBarKey);
-          expect(topBarFinder, findsOneWidget);
-          final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
-          expect(topBar.title, TechnologyScreen.topBarTitle);
-          expect(topBar.backButtonLabel, TechnologyScreen.topBarBackLabel);
-          expect(
-            topBar.trailing,
-            isNotNull,
-            reason:
-                'SPEC/ui/technology-panel.md § Top bar: the Slots/Tree '
-                'toggle pair must live in the CtTopBar trailing slot '
-                'even at 320 dp (Refs #2864 S1 + #2870 S10).',
-          );
-
-          expect(
-            find.descendant(
-              of: topBarFinder,
-              matching: find.byKey(TechnologyScreen.slotsToggleKey),
-            ),
-            findsOneWidget,
-            reason:
-                'Slots toggle must remain mounted inside the top bar '
-                'trailing slot at the minimum viewport so the Slots '
-                'tab is still reachable on a 320 dp phone.',
-          );
-          expect(
-            find.descendant(
-              of: topBarFinder,
-              matching: find.byKey(TechnologyScreen.treeToggleKey),
-            ),
-            findsOneWidget,
-            reason:
-                'Tree toggle must remain mounted inside the top bar '
-                'trailing slot at the minimum viewport so the Tree '
-                'tab is still reachable on a 320 dp phone.',
-          );
-
-          expect(
-            find.byType(TechnologyPanel),
-            findsOneWidget,
-            reason:
-                'Default Slots tab path must mount the live '
-                '`TechnologyPanel` at 320 dp (Req 15 — slot cards and '
-                'researched grid scroll vertically inside the parent '
-                '`SingleChildScrollView`). SPEC/ui/technology-panel.md '
-                '§ Slot behaviour.',
-          );
-          expect(
-            find.byType(ObserveModeNotDefinedPanel),
-            findsNothing,
-            reason:
-                'Default path must NOT render the observe sentinel — '
-                'that is the global-observe variant covered by the '
-                'observe group below.',
-          );
-        },
+        '(TechnologyPanel) all render', (WidgetTester tester) async {
+      await _pumpTechnologyScreen(
+        tester,
+        size: _kMinViewport,
+        game: game,
+        player: humanPlayer,
       );
 
-      testWidgets(
-        'Negative control: TechnologyScreen default Slots @ 1024×768 '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TechnologyScreen must '
+            'not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The dark CtTopBar '
+            '(36 dp tall — back chevron + `Map` label + 18 × 18 px '
+            'technology icon + `Technology` title + Slots/Tree '
+            'toggle pair in the trailing slot) above the '
+            '`SingleChildScrollView` > `TechnologyPanel` body must '
+            'lay out within the 320 dp column.',
+      );
+
+      final topBarFinder = find.byKey(TechnologyScreen.topBarKey);
+      expect(topBarFinder, findsOneWidget);
+      final CtTopBar topBar = tester.widget<CtTopBar>(topBarFinder);
+      expect(topBar.title, TechnologyScreen.topBarTitle);
+      expect(topBar.backButtonLabel, TechnologyScreen.topBarBackLabel);
+      expect(
+        topBar.trailing,
+        isNotNull,
+        reason:
+            'SPEC/ui/technology-panel.md § Top bar: the Slots/Tree '
+            'toggle pair must live in the CtTopBar trailing slot '
+            'even at 320 dp (Refs #2864 S1 + #2870 S10).',
+      );
+
+      expect(
+        find.descendant(
+          of: topBarFinder,
+          matching: find.byKey(TechnologyScreen.slotsToggleKey),
+        ),
+        findsOneWidget,
+        reason:
+            'Slots toggle must remain mounted inside the top bar '
+            'trailing slot at the minimum viewport so the Slots '
+            'tab is still reachable on a 320 dp phone.',
+      );
+      expect(
+        find.descendant(
+          of: topBarFinder,
+          matching: find.byKey(TechnologyScreen.treeToggleKey),
+        ),
+        findsOneWidget,
+        reason:
+            'Tree toggle must remain mounted inside the top bar '
+            'trailing slot at the minimum viewport so the Tree '
+            'tab is still reachable on a 320 dp phone.',
+      );
+
+      expect(
+        find.byType(TechnologyPanel),
+        findsOneWidget,
+        reason:
+            'Default Slots tab path must mount the live '
+            '`TechnologyPanel` at 320 dp (Req 15 — slot cards and '
+            'researched grid scroll vertically inside the parent '
+            '`SingleChildScrollView`). SPEC/ui/technology-panel.md '
+            '§ Slot behaviour.',
+      );
+      expect(
+        find.byType(ObserveModeNotDefinedPanel),
+        findsNothing,
+        reason:
+            'Default path must NOT render the observe sentinel — '
+            'that is the global-observe variant covered by the '
+            'observe group below.',
+      );
+    });
+
+    testWidgets('Negative control: TechnologyScreen default Slots @ 1024×768 '
         'also pumps without exception (regression sentinel for the '
-        'overflow contract — keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpTechnologyScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            player: humanPlayer,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(TechnologyScreen.topBarKey), findsOneWidget);
-          expect(find.byType(TechnologyPanel), findsOneWidget);
-        },
+        'overflow contract — keeps the 320 dp positive pin meaningful)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpTechnologyScreen(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        player: humanPlayer,
       );
-    },
-  );
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — TechnologyScreen (global observe) '
-    '@ 320 dp (Refs #2870 S10)',
-    () {
-      testWidgets(
-        'AC (positive) TechnologyScreen global-observe @ 320×640: no '
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(TechnologyScreen.topBarKey), findsOneWidget);
+      expect(find.byType(TechnologyPanel), findsOneWidget);
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — TechnologyScreen (global observe) '
+      '@ 320 dp (Refs #2870 S10)', () {
+    testWidgets('AC (positive) TechnologyScreen global-observe @ 320×640: no '
         'RenderFlex overflow exception, dark CtTopBar still paints, '
         '`ObserveModeNotDefinedPanel(title: "Technology")` sentinel '
-        'renders, the live TechnologyPanel body is absent',
-        (WidgetTester tester) async {
-          await _pumpTechnologyScreen(
-            tester,
-            size: _kMinViewport,
-            game: game,
-            player: humanPlayer,
-            globalObserve: true,
-          );
-
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: TechnologyScreen '
-                'global-observe body must not emit a RenderFlex '
-                'overflow exception at kMinViewportWidth (320 dp). The '
-                'dark CtTopBar plus the `ObserveModeNotDefinedPanel('
-                "title: 'Technology')` sentinel must lay out within "
-                'the 320 dp column.',
-          );
-
-          expect(
-            find.byKey(TechnologyScreen.topBarKey),
-            findsOneWidget,
-            reason:
-                'Observe override only swaps the body (see SPEC/ui/'
-                'technology-panel.md § States and variants); the dark '
-                'CtTopBar must still paint so the AC for the chrome '
-                'is exercised at 320 dp under both variants.',
-          );
-
-          final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
-          expect(observePanelFinder, findsOneWidget);
-          final ObserveModeNotDefinedPanel observePanel = tester
-              .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
-          // TechnologyScreen.bodyBuilder hard-codes the title literal
-          // `Technology` for the observe sentinel (see screen source);
-          // SPEC/ui/technology-panel.md § States and variants pins
-          // that literal.
-          // ignore: avoid_hardcoded_strings_in_widgets
-          expect(observePanel.title, 'Technology');
-
-          expect(
-            find.byType(TechnologyPanel),
-            findsNothing,
-            reason:
-                'Global-observe path MUST NOT mount the live '
-                'TechnologyPanel — SPEC/ui/technology-panel.md § States '
-                'and variants reserves the observe sentinel for that '
-                'branch.',
-          );
-        },
+        'renders, the live TechnologyPanel body is absent', (
+      WidgetTester tester,
+    ) async {
+      await _pumpTechnologyScreen(
+        tester,
+        size: _kMinViewport,
+        game: game,
+        player: humanPlayer,
+        globalObserve: true,
       );
 
-      testWidgets(
-        'Negative control: TechnologyScreen global-observe @ 1024×768 '
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: TechnologyScreen '
+            'global-observe body must not emit a RenderFlex '
+            'overflow exception at kMinViewportWidth (320 dp). The '
+            'dark CtTopBar plus the `ObserveModeNotDefinedPanel('
+            "title: 'Technology')` sentinel must lay out within "
+            'the 320 dp column.',
+      );
+
+      expect(
+        find.byKey(TechnologyScreen.topBarKey),
+        findsOneWidget,
+        reason:
+            'Observe override only swaps the body (see SPEC/ui/'
+            'technology-panel.md § States and variants); the dark '
+            'CtTopBar must still paint so the AC for the chrome '
+            'is exercised at 320 dp under both variants.',
+      );
+
+      final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
+      expect(observePanelFinder, findsOneWidget);
+      final ObserveModeNotDefinedPanel observePanel = tester
+          .widget<ObserveModeNotDefinedPanel>(observePanelFinder);
+      // TechnologyScreen.bodyBuilder hard-codes the title literal
+      // `Technology` for the observe sentinel (see screen source);
+      // SPEC/ui/technology-panel.md § States and variants pins
+      // that literal.
+      // ignore: avoid_hardcoded_strings_in_widgets
+      expect(observePanel.title, 'Technology');
+
+      expect(
+        find.byType(TechnologyPanel),
+        findsNothing,
+        reason:
+            'Global-observe path MUST NOT mount the live '
+            'TechnologyPanel — SPEC/ui/technology-panel.md § States '
+            'and variants reserves the observe sentinel for that '
+            'branch.',
+      );
+    });
+
+    testWidgets('Negative control: TechnologyScreen global-observe @ 1024×768 '
         'also pumps without exception (regression sentinel for the '
-        'overflow contract under the observe variant)',
-        (WidgetTester tester) async {
-          await _pumpTechnologyScreen(
-            tester,
-            size: _kWideRegressionViewport,
-            game: game,
-            player: humanPlayer,
-            globalObserve: true,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byKey(TechnologyScreen.topBarKey), findsOneWidget);
-          expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
-        },
+        'overflow contract under the observe variant)', (
+      WidgetTester tester,
+    ) async {
+      await _pumpTechnologyScreen(
+        tester,
+        size: _kWideRegressionViewport,
+        game: game,
+        player: humanPlayer,
+        globalObserve: true,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(TechnologyScreen.topBarKey), findsOneWidget);
+      expect(find.byType(ObserveModeNotDefinedPanel), findsOneWidget);
+    });
+  });
 }

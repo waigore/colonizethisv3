@@ -70,6 +70,12 @@ int runCheckAppTestNoDuplicateScaffolding(
         violations: violations,
       );
       parsed.unit.accept(visitor);
+      final centerHostVisitor = _Dialogs320CenterHostVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(centerHostVisitor);
     }
     if (_isGovernedWidgetbookUseCaseFile(relativePath)) {
       final visitor = _WidgetbookUseCaseVisitor(
@@ -149,9 +155,9 @@ int runCheckAppTestNoDuplicateScaffolding(
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, trade-screen host, units-panel Game, naval/military/'
-      'technology pump, panel MaterialApp, or debug-handler Game scaffolding '
-      'found.',
+      '320 dp Center-host dialog, widgetbook use-case, trade-screen host, '
+      'units-panel Game, naval/military/technology pump, panel MaterialApp, or '
+      'debug-handler Game scaffolding found.',
     );
     return 0;
   }
@@ -167,6 +173,9 @@ int runCheckAppTestNoDuplicateScaffolding(
   logE(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
     'app/test/support/min_viewport_harness.dart. '
+    '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
+    'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
+    'Scaffold(body: Center(child: …))). '
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/support/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
@@ -618,6 +627,77 @@ bool _isGovernedDebugHandlerFile(String relativePath) {
   final name = p.basename(relativePath);
   return name.startsWith('app_event_handler_debug_') &&
       name.endsWith('_test.dart');
+}
+
+/// Flags `Scaffold(body: Center(...))` dialog-host clones in governed 320 dp
+/// suites (Refs #4058). Canonical host is [pumpDialogs320At]. ShowDialog-launcher
+/// suites (e.g. production commodity breakdown) use `Scaffold(body: Builder)` and
+/// are not matched.
+class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
+  _Dialogs320CenterHostVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  bool _isCenterExpr(Expression expr) {
+    if (expr is InstanceCreationExpression) {
+      // ignore: deprecated_member_use
+      return expr.constructorName.type.name.lexeme == 'Center';
+    }
+    if (expr is MethodInvocation && expr.target == null) {
+      return expr.methodName.name == 'Center';
+    }
+    return false;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    if (node.constructorName.type.name.lexeme == 'Scaffold') {
+      for (final arg in node.argumentList.arguments) {
+        if (arg is! NamedExpression || arg.name.label.name != 'body') {
+          continue;
+        }
+        if (_isCenterExpr(arg.expression)) {
+          _report(
+            node.offset,
+            'Scaffold(body: Center(...)) dialog-host clone; use '
+            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+          );
+        }
+      }
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null && node.methodName.name == 'Scaffold') {
+      for (final arg in node.argumentList.arguments) {
+        if (arg is! NamedExpression || arg.name.label.name != 'body') {
+          continue;
+        }
+        if (_isCenterExpr(arg.expression)) {
+          _report(
+            node.methodName.offset,
+            'Scaffold(body: Center(...)) dialog-host clone; use '
+            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+          );
+        }
+      }
+    }
+    super.visitMethodInvocation(node);
+  }
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
