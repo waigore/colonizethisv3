@@ -214,7 +214,8 @@ void main() {
       logs.join('\n'),
       contains(
         'no duplicated min-viewport, widgetbook use-case, trade-screen host, '
-        'units-panel Game, naval/military/technology pump, or panel MaterialApp scaffolding found',
+        'units-panel Game, naval/military/technology pump, panel MaterialApp, '
+        'or debug-handler Game scaffolding found',
       ),
     );
   });
