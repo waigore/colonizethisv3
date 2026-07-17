@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_set_diplomacy.dart';
+import 'package:colonizethis_app/core/services/debug/debug_command_helpers.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -20,20 +21,35 @@ SetDebugDiplomacyRelationEvent _event({
   );
 }
 
+DebugCommandResult _apply({
+  Game? currentGame,
+  required SetDebugDiplomacyRelationEvent event,
+}) {
+  return applyDebugSetDiplomacyRelation(
+    currentGame: currentGame ?? buildDebugHandlerDiplomacyGame(),
+    event: event,
+  );
+}
+
+void _expectRejected(DebugCommandResult result, Object messageMatcher) {
+  expect(result.game, isNull);
+  expect(result.message, messageMatcher);
+}
+
+Game _expectApplied(DebugCommandResult result) {
+  expect(result.game, isNotNull);
+  return result.game!;
+}
+
 void main() {
   suppressLogsForTests();
 
   group('applyDebugSetDiplomacyRelation', () {
     test('AC1: 1-faction war sets atWar + declareWar history event', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+      final game = _expectApplied(
+        _apply(event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war)),
       );
-
-      final game = result.game;
-      expect(game, isNotNull);
-      expect(getRelation(game!, 'england', 'ireland')?.state,
-          RelationState.atWar);
+      expect(getRelation(game, 'england', 'ireland')?.state, RelationState.atWar);
       expect(
         game.diplomaticHistoryEvents
             .where((e) => e.type == DiplomaticEventType.declareWar)
@@ -43,159 +59,139 @@ void main() {
     });
 
     test('AC2: 2-faction alliance sets formalAlliance true', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(
-          factionA: 'england',
-          factionB: 'france',
-          action: DebugDiplomacyAction.alliance,
+      final game = _expectApplied(
+        _apply(
+          event: _event(
+            factionA: 'england',
+            factionB: 'france',
+            action: DebugDiplomacyAction.alliance,
+          ),
         ),
       );
-
-      final game = result.game;
-      expect(game, isNotNull);
-      expect(getRelation(game!, 'england', 'france')?.formalAlliance, isTrue);
+      expect(getRelation(game, 'england', 'france')?.formalAlliance, isTrue);
     });
 
     test('AC3: war rejected when a formal alliance exists', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        relations: const [
-          DiplomacyRelation(
-            factionId1: 'england',
-            factionId2: 'france',
-            formalAlliance: true,
+      _expectRejected(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            relations: const [
+              DiplomacyRelation(
+                factionId1: 'england',
+                factionId2: 'france',
+                formalAlliance: true,
+              ),
+            ],
           ),
-        ],
-      );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(
-          factionA: 'england',
-          factionB: 'france',
-          action: DebugDiplomacyAction.war,
+          event: _event(
+            factionA: 'england',
+            factionB: 'france',
+            action: DebugDiplomacyAction.war,
+          ),
         ),
+        contains('formal alliance'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('formal alliance'));
     });
 
     test('AC4: per-turn quota rejects a second mutation for the same pair', () {
-      final first = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+      final first = _expectApplied(
+        _apply(event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war)),
       );
-      expect(first.game, isNotNull);
-
-      final second = applyDebugSetDiplomacyRelation(
-        currentGame: first.game,
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
+      _expectRejected(
+        _apply(
+          currentGame: first,
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
+        ),
+        contains('already used debug diplomacy for this pair this turn'),
       );
-
-      expect(second.game, isNull);
-      expect(second.message,
-          contains('already used debug diplomacy for this pair this turn'));
     });
 
     test('AC5: quota survives a save/load round trip', () {
-      final first = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+      final first = _expectApplied(
+        _apply(event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war)),
       );
-      expect(first.game, isNotNull);
-
-      final reloaded = Game.fromJson(first.game!.toJson());
+      final reloaded = Game.fromJson(first.toJson());
       expect(
         reloaded.debugDiplomacyUsedPairKeys.contains(pairKey('england', 'ireland')),
         isTrue,
       );
-
-      final third = applyDebugSetDiplomacyRelation(
-        currentGame: reloaded,
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
+      _expectRejected(
+        _apply(
+          currentGame: reloaded,
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
+        ),
+        contains('already used debug diplomacy'),
       );
-      expect(third.game, isNull);
-      expect(third.message, contains('already used debug diplomacy'));
     });
 
     test('AC6: command rejected outside the Orders phase', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(phase: TurnPhase.diplomacy),
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+      _expectRejected(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(phase: TurnPhase.diplomacy),
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+        ),
+        contains('Orders phase'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('Orders phase'));
     });
 
     test('AC7: consulate overture is created from initiator toward target', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event:
-            _event(factionB: 'ireland', action: DebugDiplomacyAction.consulate),
+      final game = _expectApplied(
+        _apply(
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.consulate),
+        ),
       );
-
-      final game = result.game;
-      expect(game, isNotNull);
-      final overture = getOverture(game!, 'england', 'ireland');
+      final overture = getOverture(game, 'england', 'ireland');
       expect(overture, isNotNull);
       expect(overture!.stage, OvertureStage.tradeConsulate);
     });
 
     test('AC8: ftp set with mutual embassy overtures', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        overtures: const [
-          OvertureState(
-            gpId: 'england',
-            targetId: 'france',
-            stage: OvertureStage.embassy,
+      final next = _expectApplied(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            overtures: const [
+              OvertureState(
+                gpId: 'england',
+                targetId: 'france',
+                stage: OvertureStage.embassy,
+              ),
+              OvertureState(
+                gpId: 'france',
+                targetId: 'england',
+                stage: OvertureStage.embassy,
+              ),
+            ],
           ),
-          OvertureState(
-            gpId: 'france',
-            targetId: 'england',
-            stage: OvertureStage.embassy,
-          ),
-        ],
+          event: _event(factionB: 'france', action: DebugDiplomacyAction.ftp),
+        ),
       );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(factionB: 'france', action: DebugDiplomacyAction.ftp),
-      );
-
-      final next = result.game;
-      expect(next, isNotNull);
-      expect(hasFtpPartnership(next!, 'england', 'france'), isTrue);
+      expect(hasFtpPartnership(next, 'england', 'france'), isTrue);
     });
 
     test('AC9: ftp rejected when there is no embassy overture', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'france', action: DebugDiplomacyAction.ftp),
+      _expectRejected(
+        _apply(event: _event(factionB: 'france', action: DebugDiplomacyAction.ftp)),
+        contains('embassy'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('embassy'));
     });
 
     test('AC10: war clears overtures + FTP and logs side-effect events', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        overtures: const [
-          OvertureState(
-            gpId: 'england',
-            targetId: 'ireland',
-            stage: OvertureStage.tradeConsulate,
+      final next = _expectApplied(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            overtures: const [
+              OvertureState(
+                gpId: 'england',
+                targetId: 'ireland',
+                stage: OvertureStage.tradeConsulate,
+              ),
+            ],
+            ftpKeys: {pairKey('england', 'ireland')},
           ),
-        ],
-        ftpKeys: {pairKey('england', 'ireland')},
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+        ),
       );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
-      );
-
-      final next = result.game;
-      expect(next, isNotNull);
-      expect(getOverture(next!, 'england', 'ireland'), isNull);
+      expect(getOverture(next, 'england', 'ireland'), isNull);
       expect(hasFtpPartnership(next, 'england', 'ireland'), isFalse);
       final types = next.diplomaticHistoryEvents.map((e) => e.type).toSet();
       expect(types, contains(DiplomaticEventType.declareWar));
@@ -204,119 +200,103 @@ void main() {
     });
 
     test('AC11: unknown faction produces a not-found error', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'Atlantis', action: DebugDiplomacyAction.war),
+      _expectRejected(
+        _apply(event: _event(factionB: 'Atlantis', action: DebugDiplomacyAction.war)),
+        'Faction not found: Atlantis',
       );
-
-      expect(result.game, isNull);
-      expect(result.message, 'Faction not found: Atlantis');
     });
 
     test('AC12: self-target is rejected', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(
-          factionA: 'england',
-          factionB: 'england',
-          action: DebugDiplomacyAction.war,
+      _expectRejected(
+        _apply(
+          event: _event(
+            factionA: 'england',
+            factionB: 'england',
+            action: DebugDiplomacyAction.war,
+          ),
         ),
+        contains('cannot set a relation with itself'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('cannot set a relation with itself'));
     });
 
     test('AC14: display name resolution (case-insensitive)', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(
-          factionB: 'zulu kingdom',
-          action: DebugDiplomacyAction.war,
+      final game = _expectApplied(
+        _apply(
+          event: _event(
+            factionB: 'zulu kingdom',
+            action: DebugDiplomacyAction.war,
+          ),
         ),
       );
-
-      final game = result.game;
-      expect(game, isNotNull);
-      expect(getRelation(game!, 'england', 'zulu')?.state, RelationState.atWar);
+      expect(getRelation(game, 'england', 'zulu')?.state, RelationState.atWar);
     });
 
     test('AC15: war rejected when already at war (no re-triggered effects)', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        relations: const [
-          DiplomacyRelation(
-            factionId1: 'england',
-            factionId2: 'ireland',
-            state: RelationState.atWar,
+      _expectRejected(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            relations: const [
+              DiplomacyRelation(
+                factionId1: 'england',
+                factionId2: 'ireland',
+                state: RelationState.atWar,
+              ),
+            ],
           ),
-        ],
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
+        ),
+        contains('already at war'),
       );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
-      );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('already at war'));
     });
 
     test('alliance rejected when a participant is not a Great Power', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event:
-            _event(factionB: 'ireland', action: DebugDiplomacyAction.alliance),
+      _expectRejected(
+        _apply(
+          event: _event(factionB: 'ireland', action: DebugDiplomacyAction.alliance),
+        ),
+        contains('Great Power'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('Great Power'));
     });
 
     test('peace rejected when already at peace', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
-        event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
+      _expectRejected(
+        _apply(event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace)),
+        contains('already at peace'),
       );
-
-      expect(result.game, isNull);
-      expect(result.message, contains('already at peace'));
     });
 
     test('no_alliance succeeds as a no-op when no alliance exists', () {
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: buildDebugHandlerDiplomacyGame(),
+      final result = _apply(
         event: _event(
           factionA: 'england',
           factionB: 'france',
           action: DebugDiplomacyAction.noAlliance,
         ),
       );
-
       expect(result.game, isNotNull);
       expect(result.message, contains('no change'));
     });
 
     test('no_alliance breaks an existing alliance with a history event', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        relations: const [
-          DiplomacyRelation(
-            factionId1: 'england',
-            factionId2: 'france',
-            formalAlliance: true,
+      final next = _expectApplied(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            relations: const [
+              DiplomacyRelation(
+                factionId1: 'england',
+                factionId2: 'france',
+                formalAlliance: true,
+              ),
+            ],
           ),
-        ],
-      );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(
-          factionA: 'england',
-          factionB: 'france',
-          action: DebugDiplomacyAction.noAlliance,
+          event: _event(
+            factionA: 'england',
+            factionB: 'france',
+            action: DebugDiplomacyAction.noAlliance,
+          ),
         ),
       );
-
-      final next = result.game;
-      expect(next, isNotNull);
-      expect(getRelation(next!, 'england', 'france')?.formalAlliance, isFalse);
+      expect(getRelation(next, 'england', 'france')?.formalAlliance, isFalse);
       expect(
         next.diplomaticHistoryEvents
             .any((e) => e.type == DiplomaticEventType.allianceBroken),
@@ -325,26 +305,24 @@ void main() {
     });
 
     test('clear_overture removes an existing overture', () {
-      final game = buildDebugHandlerDiplomacyGame(
-        overtures: const [
-          OvertureState(
-            gpId: 'england',
-            targetId: 'ireland',
-            stage: OvertureStage.embassy,
+      final next = _expectApplied(
+        _apply(
+          currentGame: buildDebugHandlerDiplomacyGame(
+            overtures: const [
+              OvertureState(
+                gpId: 'england',
+                targetId: 'ireland',
+                stage: OvertureStage.embassy,
+              ),
+            ],
           ),
-        ],
-      );
-      final result = applyDebugSetDiplomacyRelation(
-        currentGame: game,
-        event: _event(
-          factionB: 'ireland',
-          action: DebugDiplomacyAction.clearOverture,
+          event: _event(
+            factionB: 'ireland',
+            action: DebugDiplomacyAction.clearOverture,
+          ),
         ),
       );
-
-      final next = result.game;
-      expect(next, isNotNull);
-      expect(getOverture(next!, 'england', 'ireland'), isNull);
+      expect(getOverture(next, 'england', 'ireland'), isNull);
     });
   });
 }
