@@ -6,6 +6,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'faction_setup_helpers.dart';
 import 'game_setup_context.dart';
 import 'province_name_fallback.dart';
+import 'setup_naming_lookup.dart';
 
 
 const int _kNamingCapitalCollisionSalt = 919_393;
@@ -166,10 +167,7 @@ List<_MinorOrTribeNamingEntry> _minorNationNamingEntries(
   return [
     for (final minor in game.minorNations)
       () {
-        final namingMinor = naming.minorNations.firstWhere(
-          (n) => n.id == minor.id,
-          orElse: () => const MinorNationNaming(id: '', displayName: ''),
-        );
+        final namingMinor = resolvedMinorNaming(naming, minor.id);
         return (
           factionId: minor.id,
           capitalProvinceId: minor.capitalProvinceId,
@@ -191,11 +189,7 @@ List<_MinorOrTribeNamingEntry> _tribeNamingEntries(
   return [
     for (final tribe in game.tribes)
       () {
-        final namingTribe = naming.tribes.firstWhere(
-          (n) => n.id == tribe.id,
-          orElse: () =>
-              const TribeNaming(id: '', displayName: '', provinceNamePool: []),
-        );
+        final namingTribe = resolvedTribeNaming(naming, tribe.id);
         return (
           factionId: tribe.id,
           capitalProvinceId: tribe.capitalProvinceId,
@@ -389,19 +383,12 @@ Game applyNaming({
   );
 
   final updatedMinors = game.minorNations.map((m) {
-    final namingMinor = naming.minorNations.firstWhere(
-      (n) => n.id == m.id,
-      orElse: () => const MinorNationNaming(id: '', displayName: ''),
-    );
+    final namingMinor = resolvedMinorNaming(naming, m.id);
     if (namingMinor.id.isEmpty) return m;
     return m.copyWith(displayName: namingMinor.displayName);
   }).toList();
   final updatedTribes = game.tribes.map((t) {
-    final namingTribe = naming.tribes.firstWhere(
-      (n) => n.id == t.id,
-      orElse: () =>
-          const TribeNaming(id: '', displayName: '', provinceNamePool: []),
-    );
+    final namingTribe = resolvedTribeNaming(naming, t.id);
     if (namingTribe.id.isEmpty) return t;
     return t.copyWith(displayName: namingTribe.displayName);
   }).toList();
