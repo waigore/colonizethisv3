@@ -23,25 +23,22 @@ void main() {
       expect(ProvinceId.full('newWorld', 'n3'), 'newWorld|n3');
     });
 
+    test('prefixedFrom preserves prefixed ids and prefixes bare ids', () {
+      expect(ProvinceId.prefixedFrom('oldWorld', 'oldWorld|p1'), 'oldWorld|p1');
+      expect(ProvinceId.prefixedFrom('oldWorld', 'p1'), 'oldWorld|p1');
+    });
+
     test('isPrefixed identifies full IDs', () {
       expect(ProvinceId.isPrefixed('oldWorld|p1'), isTrue);
       expect(ProvinceId.isPrefixed('p1'), isFalse);
     });
 
-    test('prefixed IDs can be normalized by explicit handling', () {
-      expect(
-        ProvinceId.isPrefixed('oldWorld|p1')
-            ? ProvinceId.localIdFrom('oldWorld|p1')
-            : 'oldWorld|p1',
-        'p1',
-      );
-      const storedLocalId = 'p1';
-      expect(
-        ProvinceId.isPrefixed(storedLocalId)
-            ? ProvinceId.localIdFrom('oldWorld|p1')
-            : storedLocalId,
-        'p1',
-      );
-    });
+    test(
+      'localFromMaybePrefixed returns local segment for either id shape',
+      () {
+        expect(ProvinceId.localFromMaybePrefixed('oldWorld|p1'), 'p1');
+        expect(ProvinceId.localFromMaybePrefixed('p1'), 'p1');
+      },
+    );
   });
 }

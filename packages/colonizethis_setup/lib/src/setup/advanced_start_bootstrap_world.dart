@@ -4,6 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'advanced_start_nw_owner_lookup.dart';
 import 'advanced_start_nw_topology.dart';
 import 'game_setup_topology.dart';
 import 'setup_logging.dart';
@@ -19,24 +20,16 @@ class AdvancedStartWorldKnowledgeResult {
   final Set<String> encounteredTribeIds;
 }
 
-String? _ownerIdForLocalProvince(Game game, String localProvinceId) {
-  final fullId = ProvinceId.full(kRegionNewWorld, localProvinceId);
-  for (final province in game.worldState.newWorld.provinces) {
-    final id = ProvinceId.isPrefixed(province.id)
-        ? province.id
-        : ProvinceId.full(province.regionId, province.id);
-    if (id == fullId) return province.ownerId;
-  }
-  return null;
-}
-
 void _setNwSeaZoneTilesFogged({
   required Map<String, String> playerVisibility,
   required Map<String, List<String>> nwTileKeysByProvince,
   required Iterable<String> seaZoneLocalIds,
 }) {
   for (final seaLocalId in seaZoneLocalIds) {
-    final bucketKey = canonicalSeaZoneTileBucketKey(kRegionNewWorld, seaLocalId);
+    final bucketKey = canonicalSeaZoneTileBucketKey(
+      kRegionNewWorld,
+      seaLocalId,
+    );
     final tileKeys = nwTileKeysByProvince[bucketKey] ?? const [];
     for (final tileKey in tileKeys) {
       final current = playerVisibility[tileKey];
@@ -69,6 +62,8 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       game.worldState.tileKeysByRegionAndProvince[kRegionNewWorld] ??
       const <String, List<String>>{};
 
+  final ownerByLocalId = nwOwnerByLocalProvinceId(game);
+  final tribeIds = {for (final tribe in game.tribes) tribe.id};
   final encounteredTribes = <String>{};
 
   for (final player in game.players) {
@@ -113,12 +108,14 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       revealedProvinceLocalIds: revealedLocalIds.toSet(),
     );
 
-    final playerVisibility =
-        visibilityByPlayer.putIfAbsent(player.id, () => <String, String>{});
+    final playerVisibility = visibilityByPlayer.putIfAbsent(
+      player.id,
+      () => <String, String>{},
+    );
 
     for (final localId in revealedLocalIds) {
-      final ownerId = _ownerIdForLocalProvince(game, localId);
-      if (ownerId != null && game.tribes.any((t) => t.id == ownerId)) {
+      final ownerId = ownerByLocalId[localId];
+      if (ownerId != null && tribeIds.contains(ownerId)) {
         encounteredTribes.add(ownerId);
       }
       final provinceKey = ProvinceId.full(kRegionNewWorld, localId);
