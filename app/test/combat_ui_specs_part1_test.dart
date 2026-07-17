@@ -105,18 +105,16 @@ Future<void> _pumpDarkCombatModeChoice(
   WidgetTester tester, {
   required String provinceName,
   required bool isCapitalSiege,
-}) {
-  final bus = AppEventBus.create();
-  return tester.pumpWidget(
-    combatUiSpecsDarkFrame(
-      CombatModeChoiceDialog(
-        bus: bus,
-        provinceName: provinceName,
-        isCapitalSiege: isCapitalSiege,
+}) =>
+    tester.pumpWidget(
+      combatUiSpecsDarkFrame(
+        CombatModeChoiceDialog(
+          bus: AppEventBus.create(),
+          provinceName: provinceName,
+          isCapitalSiege: isCapitalSiege,
+        ),
       ),
-    ),
-  );
-}
+    );
 
 void main() {
 

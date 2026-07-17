@@ -16,7 +16,7 @@ const String appTestSupportRelativeDir = 'app/test/support';
 /// Measured after bare-theme MaterialApp flag for region-map hosts ≈8806;
 /// ceiling set to measured total. Ratchet downward as later densify shrinks
 /// the tree.
-const int appTestSupportLocCeiling = 8806;
+const int appTestSupportLocCeiling = 8777;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countAppTestSupportPhysicalLoc(Directory dir) {

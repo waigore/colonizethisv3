@@ -91,7 +91,7 @@ void main() {
 
       const playerId = 'gp_move';
       const p3 = 'oldWorld|p3';
-      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final topology = buildUnitsPanelAdjacentOwProvincesTopology();
       final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
         id: 'gm',
         playerId: playerId,
@@ -136,7 +136,7 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locate = e);
 
         const playerId = 'gp_locate_cluster';
-        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final topology = buildUnitsPanelAdjacentOwProvincesTopology();
         final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
           id: 'g_locate_cluster',
           playerId: playerId,
@@ -195,7 +195,7 @@ void main() {
 
         const playerId = 'gp_move_grouped';
         const newDest = 'newWorld|n2';
-        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final topology = buildUnitsPanelAdjacentOwProvincesTopology();
         final game = buildMilitaryCrossRegionOwnedMoveGame(
           id: 'g_move_grouped',
           playerId: playerId,
@@ -277,7 +277,7 @@ void main() {
       const playerId = 'gp_inv';
       const enemyId = 'gp_enemy';
       const loc2 = 'oldWorld|p3';
-      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final topology = buildUnitsPanelAdjacentOwProvincesTopology();
       final game = buildMilitaryInvasionAdjacentHostileGame(
         id: 'g_inv',
         playerId: playerId,

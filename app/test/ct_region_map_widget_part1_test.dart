@@ -59,32 +59,6 @@ Future<void> _pumpBlank(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
 }
 
-Future<void> _pumpOwMap(
-  WidgetTester tester, {
-  RegionMapViewData? region,
-  bool showPoliticalOverlay = true,
-  bool showProvinceOverlay = true,
-  bool showProvinceOwnershipTint = false,
-  CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
-  BaseLayerDisplayMode? baseLayerDisplayMode,
-  bool playerConstrained = false,
-}) async {
-  await tester.pumpWidget(
-    ctRegionMapTestHarness(
-      region: region ?? ctRegionMapTestOldWorldRegion(),
-      showPoliticalOverlay: showPoliticalOverlay,
-      showProvinceOverlay: showProvinceOverlay,
-      showProvinceOwnershipTint: showProvinceOwnershipTint,
-      visibilityMode: visibilityMode,
-      baseLayerDisplayMode: baseLayerDisplayMode,
-      playerViewForResources: playerConstrained
-          ? ctRegionMapTestPlayerView
-          : null,
-    ),
-  );
-  await tester.pump();
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -416,7 +390,7 @@ void main() {
         expect(terrainTilesetCache.getSeaDesertTileset(), isNotNull);
         expect(terrainTilesetCache.getPlainsDesertTileset(), isNotNull);
 
-        await _pumpOwMap(tester);
+        await pumpCtRegionMapTest(tester);
         expect(find.byType(CtRegionMap), findsOneWidget);
 
         for (final t in [
@@ -472,10 +446,10 @@ void main() {
         final region = ctRegionMapTestOldWorldRegion();
         void expectMap() => expect(find.byType(CtRegionMap), findsOneWidget);
 
-        await _pumpOwMap(tester);
+        await pumpCtRegionMapTest(tester);
         expectMap();
 
-        await _pumpOwMap(
+        await pumpCtRegionMapTest(
           tester,
           showPoliticalOverlay: false,
           showProvinceOverlay: false,
@@ -489,7 +463,7 @@ void main() {
           (overlay: false, tint: false),
           (overlay: true, tint: true),
         ]) {
-          await _pumpOwMap(
+          await pumpCtRegionMapTest(
             tester,
             region: region,
             showProvinceOverlay: cfg.overlay,
@@ -499,10 +473,10 @@ void main() {
         }
 
         for (final mode in BaseLayerDisplayMode.values) {
-          await _pumpOwMap(tester, baseLayerDisplayMode: mode);
+          await pumpCtRegionMapTest(tester, baseLayerDisplayMode: mode);
           expectMap();
         }
-        await _pumpOwMap(tester);
+        await pumpCtRegionMapTest(tester);
         expectMap();
       },
       timeout: const Timeout(Duration(seconds: 15)),
@@ -551,7 +525,7 @@ void main() {
     testWidgets(
       'responds to +/- keyboard shortcuts for zoom',
       (WidgetTester tester) async {
-        await _pumpOwMap(tester);
+        await pumpCtRegionMapTest(tester);
         final mapFinder = find.byType(CtRegionMap);
         expect(mapFinder, findsOneWidget);
         await tester.tap(mapFinder);

@@ -1785,10 +1785,17 @@ rules:
 
   - rule_id: repo.app_test_support_loc
     group: testing
-    title: "app/test/support physical LOC must stay at or below ratchet ceiling (Refs #4021)"
+    title: "app/test/support physical LOC must stay at or below ratchet ceiling (Refs #4021, #4048)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_support_loc.dart
+
+  - rule_id: repo.app_test_support_file_size
+    group: testing
+    title: "app/test/support files must stay at or below 600 physical lines (shrink-only allowlist; Refs #4048)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_support_file_size.dart
 
   - rule_id: repo.app_test_no_duplicate_dark_token_asserts
     group: testing

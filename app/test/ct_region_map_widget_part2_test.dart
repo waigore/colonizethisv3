@@ -19,48 +19,6 @@ import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
-Future<void> _pumpOw(
-  WidgetTester tester, {
-  RegionMapViewData? region,
-  double width = 400,
-  double height = 320,
-  double cellSizePx = 24,
-  void Function()? onRegionViewChanged,
-  BaseLayerDisplayMode? baseLayerDisplayMode,
-  AppEventBus? bus,
-  void Function(String)? onProvinceSelected,
-  void Function(String?)? onTileHovered,
-  void Function(String)? onMapTileTappedForDetail,
-  void Function(String)? onCivilianTileStateChanged,
-  VoidCallback? onCivilianTileSelectionCleared,
-  String? selectedCivilianTileKey,
-  CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
-  bool playerConstrained = false,
-}) async {
-  await tester.pumpWidget(
-    ctRegionMapTestHarness(
-      region: region ?? ctRegionMapTestOldWorldRegion(),
-      width: width,
-      height: height,
-      cellSizePx: cellSizePx,
-      onRegionViewChanged: onRegionViewChanged,
-      baseLayerDisplayMode: baseLayerDisplayMode,
-      bus: bus,
-      onProvinceSelected: onProvinceSelected,
-      onTileHovered: onTileHovered,
-      onMapTileTappedForDetail: onMapTileTappedForDetail,
-      onCivilianTileStateChanged: onCivilianTileStateChanged,
-      onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
-      selectedCivilianTileKey: selectedCivilianTileKey,
-      visibilityMode: visibilityMode,
-      playerViewForResources: playerConstrained
-          ? ctRegionMapTestPlayerView
-          : null,
-    ),
-  );
-  await tester.pump();
-}
-
 Finder get _map => find.byType(CtRegionMap);
 
 Future<void> _tapMap(WidgetTester tester) async {
@@ -78,26 +36,6 @@ Future<void> _scrollAtMap(WidgetTester tester, double dy) async {
     PointerScrollEvent(
       position: _mapCenter(tester),
       scrollDelta: Offset(0, dy),
-    ),
-  );
-  await tester.pump();
-}
-
-Future<void> _pumpWorkTarget(
-  WidgetTester tester, {
-  required RegionMapViewData region,
-  Set<String>? validTileKeys,
-  void Function(String)? onTileSelected,
-  VoidCallback? onWorkTargetSelectionCancelled,
-}) async {
-  // cellSizePx matches CtRegionMap default (32); harness default is 24.
-  await tester.pumpWidget(
-    ctRegionMapTestHarness(
-      region: region,
-      cellSizePx: 32,
-      validTileKeys: validTileKeys,
-      onTileSelected: onTileSelected,
-      onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
     ),
   );
   await tester.pump();
@@ -148,7 +86,7 @@ void main() {
           (600, 600, 24),
           (600, 600, 4),
         ]) {
-          await _pumpOw(
+          await pumpCtRegionMapTest(
             tester,
             width: size.$1,
             height: size.$2,
@@ -164,7 +102,7 @@ void main() {
       'onRegionViewChanged fires when camera moves',
       (WidgetTester tester) async {
         var callbackCount = 0;
-        await _pumpOw(tester, onRegionViewChanged: () => callbackCount++);
+        await pumpCtRegionMapTest(tester, onRegionViewChanged: () => callbackCount++);
         expect(_map, findsOneWidget);
         await tester.drag(_map, const Offset(20, 10));
         await tester.pump();
@@ -181,7 +119,7 @@ void main() {
     testWidgets(
       'hover and exit events are forwarded into the game',
       (WidgetTester tester) async {
-        await _pumpOw(tester);
+        await pumpCtRegionMapTest(tester);
         expect(_map, findsOneWidget);
         final inside = _mapCenter(tester);
         await tester.sendEventToBinding(PointerHoverEvent(position: inside));
@@ -198,7 +136,7 @@ void main() {
     testWidgets(
       'scroll wheel events are forwarded to zoom handler',
       (WidgetTester tester) async {
-        await _pumpOw(tester);
+        await pumpCtRegionMapTest(tester);
         expect(_map, findsOneWidget);
         await _scrollAtMap(tester, -20);
         await _scrollAtMap(tester, 20);
@@ -213,7 +151,7 @@ void main() {
         final region = ctRegionMapTestOldWorldRegion();
         String? selectedId;
         String? detailTileKey;
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           onProvinceSelected: (id) => selectedId = id,
@@ -241,7 +179,7 @@ void main() {
         const validTileKey = 'oldWorld|p1|0|0';
         var selectedCallCount = 0;
         var cancelCallCount = 0;
-        await _pumpWorkTarget(
+        await pumpCtRegionMapTest(
           tester,
           region: ctRegionMapMiniLandStrip(
             base: ctRegionMapTestOldWorldRegion(),
@@ -250,6 +188,7 @@ void main() {
             cellSize: 32,
             regionCellId: 'p1',
           ),
+          cellSizePx: 32,
           validTileKeys: {validTileKey},
           onTileSelected: (_) => selectedCallCount++,
           onWorkTargetSelectionCancelled: () => cancelCallCount++,
@@ -260,7 +199,7 @@ void main() {
         expect(cancelCallCount, 0);
 
         String? selectedTileKey;
-        await _pumpWorkTarget(
+        await pumpCtRegionMapTest(
           tester,
           region: ctRegionMapMiniLandStrip(
             base: ctRegionMapTestOldWorldRegion(),
@@ -269,6 +208,7 @@ void main() {
             cellSize: 32,
             regionCellId: 'p1',
           ),
+          cellSizePx: 32,
           validTileKeys: {validTileKey},
           onTileSelected: (tileKey) => selectedTileKey = tileKey,
         );
@@ -302,7 +242,7 @@ void main() {
         String? detailTileKey;
         String? selectedProvinceId;
         final (bus, openedPanels) = _busCapture<OpenCivilianUnitsPanelEvent>();
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           width: 64,
@@ -347,7 +287,7 @@ void main() {
           ],
         );
         final (bus, openedPanels) = _busCapture<OpenNavalUnitsPanelEvent>();
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           width: 64,
@@ -390,7 +330,7 @@ void main() {
         );
         var clearCount = 0;
         String? detailTileKey;
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           width: 96,
@@ -436,7 +376,7 @@ void main() {
         );
         String? selectedId;
         String? detailTileKey;
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           onProvinceSelected: (id) => selectedId = id,
@@ -456,7 +396,7 @@ void main() {
       'tap does not invoke onTileHovered without pointer hover',
       (WidgetTester tester) async {
         String? hoveredTileKey;
-        await _pumpOw(tester, onTileHovered: (key) => hoveredTileKey = key);
+        await pumpCtRegionMapTest(tester, onTileHovered: (key) => hoveredTileKey = key);
         expect(_map, findsOneWidget);
         await _tapMap(tester);
         expect(hoveredTileKey, isNull);
@@ -472,7 +412,7 @@ void main() {
           visibility: TileVisibility.unrevealed,
         );
         String? selectedId;
-        await _pumpOw(
+        await pumpCtRegionMapTest(
           tester,
           region: region,
           visibilityMode: CtMapVisibilityMode.playerConstrained,
@@ -489,7 +429,7 @@ void main() {
     testWidgets(
       'map throws StateError when terrain tileset fails to load (no silent fallback)',
       (WidgetTester tester) async {
-        await _pumpOw(tester);
+        await pumpCtRegionMapTest(tester);
         expect(_map, findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 10)),
@@ -534,7 +474,7 @@ void main() {
           BaseLayerDisplayMode.terrainAndResourcesImprovementLabels,
           BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
         ]) {
-          await _pumpOw(tester, region: region, baseLayerDisplayMode: mode);
+          await pumpCtRegionMapTest(tester, region: region, baseLayerDisplayMode: mode);
           expect(_map, findsOneWidget);
         }
       },
@@ -547,7 +487,7 @@ void main() {
         await tester.runAsync(_preloadRoadAssets);
         final region = ctRegionMapTestOldWorldRegion();
         for (final cellSize in [16.0, 32.0, 96.0]) {
-          await _pumpOw(
+          await pumpCtRegionMapTest(
             tester,
             region: region,
             cellSizePx: cellSize,

@@ -161,6 +161,86 @@ Widget ctRegionMapTestHarness({
   );
 }
 
+/// Pumps [ctRegionMapTestHarness] for one frame. Defaults [region] to the OW
+/// seed-42 fixture. When [playerConstrained] is true and
+/// [playerViewForResources] is null, uses [ctRegionMapTestPlayerView]
+/// (Refs #4048 optional near-cap densify).
+Future<void> pumpCtRegionMapTest(
+  WidgetTester tester, {
+  RegionMapViewData? region,
+  double width = 400,
+  double height = 320,
+  double cellSizePx = 24,
+  bool showPoliticalOverlay = true,
+  bool showProvinceOverlay = true,
+  bool showProvinceOwnershipTint = false,
+  bool showProvinceNamesLayer = true,
+  CtMapVisibilityMode visibilityMode = CtMapVisibilityMode.full,
+  BaseLayerDisplayMode? baseLayerDisplayMode,
+  String? centerOnTileKey,
+  void Function(String)? onProvinceSelected,
+  void Function(String?)? onProvinceHovered,
+  void Function(String?)? onTileHovered,
+  void Function(String)? onMapTileTappedForDetail,
+  void Function(String)? onCivilianTileStateChanged,
+  VoidCallback? onCivilianTileSelectionCleared,
+  String? selectedTileKey,
+  String? selectedCivilianTileKey,
+  String? secondaryHighlightTileKey,
+  Set<String>? secondaryHighlightTileKeys,
+  VoidCallback? onRegionViewChanged,
+  PlayerView? playerViewForResources,
+  bool playerConstrained = false,
+  AppEventBus? bus,
+  Set<String>? validTileKeys,
+  void Function(String)? onTileSelected,
+  VoidCallback? onWorkTargetSelectionCancelled,
+  void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
+  double? zoomMultiplier,
+  Widget? scaffoldBody,
+  Key? repaintBoundaryKey,
+  bool useScaffold = true,
+}) async {
+  await tester.pumpWidget(
+    ctRegionMapTestHarness(
+      region: region ?? ctRegionMapTestOldWorldRegion(),
+      width: width,
+      height: height,
+      cellSizePx: cellSizePx,
+      showPoliticalOverlay: showPoliticalOverlay,
+      showProvinceOverlay: showProvinceOverlay,
+      showProvinceOwnershipTint: showProvinceOwnershipTint,
+      showProvinceNamesLayer: showProvinceNamesLayer,
+      visibilityMode: visibilityMode,
+      baseLayerDisplayMode: baseLayerDisplayMode,
+      centerOnTileKey: centerOnTileKey,
+      onProvinceSelected: onProvinceSelected,
+      onProvinceHovered: onProvinceHovered,
+      onTileHovered: onTileHovered,
+      onMapTileTappedForDetail: onMapTileTappedForDetail,
+      onCivilianTileStateChanged: onCivilianTileStateChanged,
+      onCivilianTileSelectionCleared: onCivilianTileSelectionCleared,
+      selectedTileKey: selectedTileKey,
+      selectedCivilianTileKey: selectedCivilianTileKey,
+      secondaryHighlightTileKey: secondaryHighlightTileKey,
+      secondaryHighlightTileKeys: secondaryHighlightTileKeys,
+      onRegionViewChanged: onRegionViewChanged,
+      playerViewForResources: playerViewForResources ??
+          (playerConstrained ? ctRegionMapTestPlayerView : null),
+      bus: bus,
+      validTileKeys: validTileKeys,
+      onTileSelected: onTileSelected,
+      onWorkTargetSelectionCancelled: onWorkTargetSelectionCancelled,
+      onViewportSnapshotChanged: onViewportSnapshotChanged,
+      zoomMultiplier: zoomMultiplier,
+      scaffoldBody: scaffoldBody,
+      repaintBoundaryKey: repaintBoundaryKey,
+      useScaffold: useScaffold,
+    ),
+  );
+  await tester.pump();
+}
+
 /// Assert each asset path loads and is non-empty.
 Future<void> expectCtRegionMapAssetsNonEmpty(Iterable<String> paths) async {
   for (final path in paths) {

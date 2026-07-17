@@ -4,33 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-Game _buildGame({
-  TurnPhase phase = TurnPhase.orders,
-  int turnNumber = 1,
-  List<DiplomacyRelation> relations = const [],
-  List<OvertureState> overtures = const [],
-  Set<String> ftpKeys = const {},
-  Set<String> usedPairKeys = const {},
-}) {
-  return Game(
-    id: 'g-set-diplomacy',
-    worldState: WorldState(
-      turnState: TurnState(phase: phase, turnNumber: turnNumber),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'england', displayName: 'England', isHuman: true),
-      Player(id: 'france', displayName: 'France', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: 'ireland', displayName: 'Ireland')],
-    tribes: const [Tribe(id: 'zulu', displayName: 'Zulu Kingdom')],
-    diplomacyRelations: relations,
-    overtureStates: overtures,
-    ftpPartnershipKeys: ftpKeys,
-    debugDiplomacyUsedPairKeys: usedPairKeys,
-  );
-}
+import 'support/debug_handler_test_fixtures.dart';
 
 SetDebugDiplomacyRelationEvent _event({
   String? factionA,
@@ -52,7 +26,7 @@ void main() {
   group('applyDebugSetDiplomacyRelation', () {
     test('AC1: 1-faction war sets atWar + declareWar history event', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
       );
 
@@ -70,7 +44,7 @@ void main() {
 
     test('AC2: 2-faction alliance sets formalAlliance true', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(
           factionA: 'england',
           factionB: 'france',
@@ -84,7 +58,7 @@ void main() {
     });
 
     test('AC3: war rejected when a formal alliance exists', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         relations: const [
           DiplomacyRelation(
             factionId1: 'england',
@@ -108,7 +82,7 @@ void main() {
 
     test('AC4: per-turn quota rejects a second mutation for the same pair', () {
       final first = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
       );
       expect(first.game, isNotNull);
@@ -125,7 +99,7 @@ void main() {
 
     test('AC5: quota survives a save/load round trip', () {
       final first = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
       );
       expect(first.game, isNotNull);
@@ -146,7 +120,7 @@ void main() {
 
     test('AC6: command rejected outside the Orders phase', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(phase: TurnPhase.diplomacy),
+        currentGame: buildDebugHandlerDiplomacyGame(phase: TurnPhase.diplomacy),
         event: _event(factionB: 'ireland', action: DebugDiplomacyAction.war),
       );
 
@@ -156,7 +130,7 @@ void main() {
 
     test('AC7: consulate overture is created from initiator toward target', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event:
             _event(factionB: 'ireland', action: DebugDiplomacyAction.consulate),
       );
@@ -169,7 +143,7 @@ void main() {
     });
 
     test('AC8: ftp set with mutual embassy overtures', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         overtures: const [
           OvertureState(
             gpId: 'england',
@@ -195,7 +169,7 @@ void main() {
 
     test('AC9: ftp rejected when there is no embassy overture', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'france', action: DebugDiplomacyAction.ftp),
       );
 
@@ -204,7 +178,7 @@ void main() {
     });
 
     test('AC10: war clears overtures + FTP and logs side-effect events', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         overtures: const [
           OvertureState(
             gpId: 'england',
@@ -231,7 +205,7 @@ void main() {
 
     test('AC11: unknown faction produces a not-found error', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'Atlantis', action: DebugDiplomacyAction.war),
       );
 
@@ -241,7 +215,7 @@ void main() {
 
     test('AC12: self-target is rejected', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(
           factionA: 'england',
           factionB: 'england',
@@ -255,7 +229,7 @@ void main() {
 
     test('AC14: display name resolution (case-insensitive)', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(
           factionB: 'zulu kingdom',
           action: DebugDiplomacyAction.war,
@@ -268,7 +242,7 @@ void main() {
     });
 
     test('AC15: war rejected when already at war (no re-triggered effects)', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         relations: const [
           DiplomacyRelation(
             factionId1: 'england',
@@ -288,7 +262,7 @@ void main() {
 
     test('alliance rejected when a participant is not a Great Power', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event:
             _event(factionB: 'ireland', action: DebugDiplomacyAction.alliance),
       );
@@ -299,7 +273,7 @@ void main() {
 
     test('peace rejected when already at peace', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(factionB: 'ireland', action: DebugDiplomacyAction.peace),
       );
 
@@ -309,7 +283,7 @@ void main() {
 
     test('no_alliance succeeds as a no-op when no alliance exists', () {
       final result = applyDebugSetDiplomacyRelation(
-        currentGame: _buildGame(),
+        currentGame: buildDebugHandlerDiplomacyGame(),
         event: _event(
           factionA: 'england',
           factionB: 'france',
@@ -322,7 +296,7 @@ void main() {
     });
 
     test('no_alliance breaks an existing alliance with a history event', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         relations: const [
           DiplomacyRelation(
             factionId1: 'england',
@@ -351,7 +325,7 @@ void main() {
     });
 
     test('clear_overture removes an existing overture', () {
-      final game = _buildGame(
+      final game = buildDebugHandlerDiplomacyGame(
         overtures: const [
           OvertureState(
             gpId: 'england',

@@ -50,35 +50,27 @@ CommodityId get _iron => CommodityCatalog.iron.id;
 CommodityId get _fabric => CommodityCatalog.fabric.id;
 CommodityId get _grain => CommodityCatalog.grain.id;
 
-Orders _ordersWith(List<TradeOrder> tradeOrders) {
-  return Orders(
-    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
-      _humanPlayerId: tradeOrders,
-    },
-  );
-}
+Orders _ordersWith(List<TradeOrder> tradeOrders) => Orders(
+      tradeOrdersByPlayerId: <String, List<TradeOrder>>{_humanPlayerId: tradeOrders},
+    );
 
-TradeOrder _bid(CommodityId commodityId, int quantity, {int priority = 1}) {
-  return TradeOrder(
-    commodityId: commodityId,
-    type: TradeOrderType.bid,
-    quantity: quantity,
-    priority: priority,
-  );
-}
+TradeOrder _bid(CommodityId id, int qty, {int priority = 1}) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.bid,
+      quantity: qty,
+      priority: priority,
+    );
 
-TradeOrder _offer(CommodityId commodityId, int quantity, {int priority = 1}) {
-  return TradeOrder(
-    commodityId: commodityId,
-    type: TradeOrderType.offer,
-    quantity: quantity,
-    priority: priority,
-  );
-}
+TradeOrder _offer(CommodityId id, int qty, {int priority = 1}) => TradeOrder(
+      commodityId: id,
+      type: TradeOrderType.offer,
+      quantity: qty,
+      priority: priority,
+    );
 
 TradeOrder? _stagedOrder(ProviderContainer container, CommodityId commodityId) {
-  final Orders orders = container.read(currentOrdersProvider);
-  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[_humanPlayerId];
+  final List<TradeOrder>? list =
+      container.read(currentOrdersProvider).tradeOrdersByPlayerId[_humanPlayerId];
   if (list == null) return null;
   for (final TradeOrder o in list) {
     if (o.commodityId == commodityId) return o;
@@ -86,20 +78,19 @@ TradeOrder? _stagedOrder(ProviderContainer container, CommodityId commodityId) {
   return null;
 }
 
-int _stagedRowCountForPlayer(ProviderContainer container) {
-  final Orders orders = container.read(currentOrdersProvider);
-  return orders.tradeOrdersByPlayerId[_humanPlayerId]?.length ?? 0;
-}
+int _stagedRowCountForPlayer(ProviderContainer container) =>
+    container.read(currentOrdersProvider).tradeOrdersByPlayerId[_humanPlayerId]
+        ?.length ??
+    0;
 
-String _cargoIndicatorText(WidgetTester tester) {
-  final Text widget = tester.widget<Text>(
-    find.byKey(TradeScreenMarketKeys.marketCargoIndicatorKey),
-  );
-  return widget.data ?? '';
-}
+String _cargoIndicatorText(WidgetTester tester) =>
+    tester
+        .widget<Text>(find.byKey(TradeScreenMarketKeys.marketCargoIndicatorKey))
+        .data ??
+    '';
 
 Future<void> _switchToDealBook(WidgetTester tester) async {
-  final dealBookLabel = find.descendant(
+  final Finder dealBookLabel = find.descendant(
     of: find.byType(CtTabStrip),
     matching: find.text(TradeScreenDealBookKeys.dealBookTabLabel),
   );
@@ -115,20 +106,19 @@ Future<ProviderContainer> _pumpMarket(
   Orders initialOrders = const Orders(),
   bool canMutateViaUi = true,
   int treasury = 500,
-}) {
-  return pumpTradeScreenWithContainer(
-    tester,
-    game: buildTradeTestGame(
-      id: 'test_trade_screen_e8',
-      treasury: treasury,
-      stockpile: tradeableStockpileFilled(99),
-      worldMarketState: worldMarketState,
-      tradeCargoCapacityOverride: tradeCargoCapacityOverride,
-    ),
-    initialOrders: initialOrders,
-    canMutateViaUi: canMutateViaUi,
-  );
-}
+}) =>
+    pumpTradeScreenWithContainer(
+      tester,
+      game: buildTradeTestGame(
+        id: 'test_trade_screen_e8',
+        treasury: treasury,
+        stockpile: tradeableStockpileFilled(99),
+        worldMarketState: worldMarketState,
+        tradeCargoCapacityOverride: tradeCargoCapacityOverride,
+      ),
+      initialOrders: initialOrders,
+      canMutateViaUi: canMutateViaUi,
+    );
 
 Future<void> _incrementCommodity(
   WidgetTester tester,
@@ -144,12 +134,16 @@ Future<void> _incrementCommodity(
 }
 
 Future<void> _tapBid(WidgetTester tester, CommodityId commodityId) async {
-  await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(commodityId)));
+  await tester.tap(
+    find.byKey(TradeScreenMarketKeys.marketRowBidChipKey(commodityId)),
+  );
   await tester.pump();
 }
 
 Future<void> _tapOffer(WidgetTester tester, CommodityId commodityId) async {
-  await tester.tap(find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(commodityId)));
+  await tester.tap(
+    find.byKey(TradeScreenMarketKeys.marketRowOfferChipKey(commodityId)),
+  );
   await tester.pump();
 }
 
@@ -160,9 +154,8 @@ void _expectCargoSaturated(WidgetTester tester) {
 }
 
 void _expectTradeChrome(WidgetTester tester) {
-  final CtTopBar topBar = tester.widget<CtTopBar>(
-    find.byKey(TradeScreenMarketKeys.topBarKey),
-  );
+  final CtTopBar topBar =
+      tester.widget<CtTopBar>(find.byKey(TradeScreenMarketKeys.topBarKey));
   expect(topBar.title, TradeScreenMarketKeys.topBarTitle);
   expect(topBar.backButtonLabel, TradeScreenMarketKeys.topBarBackLabel);
   expect(find.byKey(TradeScreenMarketKeys.tabsBodyKey), findsOneWidget);
@@ -191,11 +184,17 @@ void _expectDealBookTotals(
   required String offersTotal,
 }) {
   expect(
-    tester.widget<Text>(find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey)).data,
+    tester
+        .widget<Text>(find.byKey(TradeScreenDealBookKeys.dealBookBidsTotalsKey))
+        .data,
     bidsTotal,
   );
   expect(
-    tester.widget<Text>(find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey)).data,
+    tester
+        .widget<Text>(
+          find.byKey(TradeScreenDealBookKeys.dealBookOffersTotalsKey),
+        )
+        .data,
     offersTotal,
   );
 }
@@ -203,14 +202,14 @@ void _expectDealBookTotals(
 void _expectObserveModeBlocksMarket(WidgetTester tester) {
   expect(find.byType(TradeScreen), findsOneWidget);
   expect(find.byKey(TradeScreenMarketKeys.topBarKey), findsOneWidget);
-  final observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
+  final Finder observePanelFinder = find.byType(ObserveModeNotDefinedPanel);
   expect(observePanelFinder, findsOneWidget);
   // ignore: avoid_hardcoded_strings_in_widgets
   expect(
     tester.widget<ObserveModeNotDefinedPanel>(observePanelFinder).title,
     'Trade',
   );
-  for (final finder in <Finder>[
+  for (final Finder finder in <Finder>[
     find.byKey(TradeScreenMarketKeys.tabsBodyKey),
     find.byKey(TradeScreenMarketKeys.marketTabBodyKey),
     find.byKey(TradeScreenDealBookKeys.dealBookTabBodyKey),
@@ -223,33 +222,31 @@ void _expectObserveModeBlocksMarket(WidgetTester tester) {
   }
 }
 
-WorldMarketState _partialTimberDealBookMarket() {
-  return WorldMarketState(
-    prices: const <CommodityId, int>{},
-    lastTurnActivity: const <CommodityId, MarketActivity>{
-      'timber': MarketActivity(
-        totalBidQuantity: 10,
-        totalOfferQuantity: 5,
-        filledQuantity: 5,
-        deals: <FilledDeal>[
-          FilledDeal(
-            sellerFactionId: 'gp_a',
-            buyerFactionId: _humanPlayerId,
-            commodityId: 'timber',
-            quantity: 5,
-            pricePerUnit: 8.4,
-          ),
-        ],
-      ),
-    },
-    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
-      _humanPlayerId: <TradeOrder>[_bid('timber', 5)],
-    },
-    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
-      _humanPlayerId: <TradeOrder>[_offer('fabric', 3)],
-    },
-  );
-}
+WorldMarketState _partialTimberDealBookMarket() => WorldMarketState(
+      prices: const <CommodityId, int>{},
+      lastTurnActivity: const <CommodityId, MarketActivity>{
+        'timber': MarketActivity(
+          totalBidQuantity: 10,
+          totalOfferQuantity: 5,
+          filledQuantity: 5,
+          deals: <FilledDeal>[
+            FilledDeal(
+              sellerFactionId: 'gp_a',
+              buyerFactionId: _humanPlayerId,
+              commodityId: 'timber',
+              quantity: 5,
+              pricePerUnit: 8.4,
+            ),
+          ],
+        ),
+      },
+      carryForwardBidsByFactionId: <String, List<TradeOrder>>{
+        _humanPlayerId: <TradeOrder>[_bid('timber', 5)],
+      },
+      carryForwardOffersByFactionId: <String, List<TradeOrder>>{
+        _humanPlayerId: <TradeOrder>[_offer('fabric', 3)],
+      },
+    );
 
 void main() {
   suppressLogsForTests();
@@ -271,79 +268,76 @@ void main() {
   });
 
   routeHostOverrides({bool globalObserve = false}) => [
-    gamesBoxProvider.overrideWith((ref) => gamesBox),
-    gameServiceProvider.overrideWith(
-      (ref) => GameService(gamesBox, GameSaveAdapter()),
-    ),
-    currentGameProvider.overrideWith(() => CurrentGameNotifier(routeHostGame)),
-    currentOrdersProvider.overrideWith(
-      () => CurrentOrdersNotifier(const Orders()),
-    ),
-    appEventBusProvider.overrideWith((ref) {
-      final bus = AppEventBus.create();
-      ref.onDispose(bus.dispose);
-      return bus;
-    }),
-    if (globalObserve)
-      shellPlayerContextProvider.overrideWithValue(
-        tradeTestGlobalObserveShellContext(),
-      ),
-  ];
-
-  Widget routeHostShell({required Widget child, bool globalObserve = false}) {
-    return buildAppShell(
-      overrides: routeHostOverrides(globalObserve: globalObserve),
-      navigatorKey: appNavigatorKey,
-      onGenerateRoute: Routes.generate,
-      shellWrapper: (app) => AppEventHandlerScope(child: app),
-      child: child,
-    );
-  }
-
-  Widget buildLeftRailHost({bool globalObserve = false}) {
-    return routeHostShell(
-      globalObserve: globalObserve,
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned(
-              left: 20,
-              top: 0,
-              child: GameMapEmpireLeftRail(
-                game: routeHostGame,
-                humanPlayerId: routeHostPlayer.id,
-              ),
-            ),
-          ],
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
         ),
-      ),
-    );
-  }
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(routeHostGame),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        appEventBusProvider.overrideWith((ref) {
+          final bus = AppEventBus.create();
+          ref.onDispose(bus.dispose);
+          return bus;
+        }),
+        if (globalObserve)
+          shellPlayerContextProvider.overrideWithValue(
+            tradeTestGlobalObserveShellContext(),
+          ),
+      ];
 
-  Widget buildTradeRouteHost({bool globalObserve = false}) {
-    return routeHostShell(
-      globalObserve: globalObserve,
-      child: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed(
-                  RoutePaths.trade,
-                  arguments: <String, Object?>{
-                    'game': routeHostGame,
-                    'humanPlayerId': routeHostPlayer.id,
-                  },
-                );
-              },
-              // ignore: avoid_hardcoded_strings_in_widgets
-              child: const Text('open trade'),
+  Widget routeHostShell({required Widget child, bool globalObserve = false}) =>
+      buildAppShell(
+        overrides: routeHostOverrides(globalObserve: globalObserve),
+        navigatorKey: appNavigatorKey,
+        onGenerateRoute: Routes.generate,
+        shellWrapper: (app) => AppEventHandlerScope(child: app),
+        child: child,
+      );
+
+  Widget buildLeftRailHost({bool globalObserve = false}) => routeHostShell(
+        globalObserve: globalObserve,
+        child: Scaffold(
+          body: Stack(
+            children: [
+              Positioned(
+                left: 20,
+                top: 0,
+                child: GameMapEmpireLeftRail(
+                  game: routeHostGame,
+                  humanPlayerId: routeHostPlayer.id,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget buildTradeRouteHost({bool globalObserve = false}) => routeHostShell(
+        globalObserve: globalObserve,
+        child: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(
+                    RoutePaths.trade,
+                    arguments: <String, Object?>{
+                      'game': routeHostGame,
+                      'humanPlayerId': routeHostPlayer.id,
+                    },
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('open trade'),
+              ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
 
   Future<void> openTradeFromRouteHost(
     WidgetTester tester, {

@@ -206,7 +206,7 @@ void main() {
             ),
           ],
         );
-        final topology = buildNavalCapitalAdjacentSeaTopology();
+        final topology = buildUnitsPanelCapitalAdjacentSeaTopology();
         final bus = AppEventBus.create();
         final subTransfer = wireNavalTransferForWidgetTest(
           bus: bus,
@@ -287,7 +287,7 @@ void main() {
           tester,
           game: gameNonAdjacent,
           humanPlayerId: humanId,
-          topology: buildNavalCapitalAdjacentSeaTopology(
+          topology: buildUnitsPanelCapitalAdjacentSeaTopology(
             seaZoneId: 'zone_far',
             includeEdge: false,
           ),

@@ -1,14 +1,4 @@
-// Shared widget-test scaffolding for diplomacy and civilian panel bus/dialog
-// hosts. Refs #3847, #4013, #4035.
-//
-// Diplomacy tests previously duplicated `_EventHandlingWrapper`,
-// `_pumpPanelBuilt`, and `_bindTallTestSurface` across multiple files.
-// Civilian panel tests duplicated a related bus host with
-// [ClosePanelEvent] handling, plus an identical local `buildPanel` closure
-// across `civilian_units_panel_part*_test.dart` (consolidated as
-// [buildCivilianPanel]).
-// Confirm / open-dialog / close-panel bus leaves share [PanelBusDialogHost]
-// (Refs #4035 ConfirmDialog densify).
+// Shared diplomacy/civilian panel bus/dialog hosts (Refs #3847, #4013, #4035).
 
 import 'dart:async';
 
