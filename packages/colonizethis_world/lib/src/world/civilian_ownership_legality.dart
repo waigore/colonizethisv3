@@ -2,28 +2,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../game_player_lookup.dart';
+import 'faction_capital.dart';
 import 'faction_membership.dart';
 import 'civilian_tile_occupancy.dart';
 import 'province_lookup.dart';
 
-CapitalTile? capitalTileForFaction(Game game, String factionId) {
-  final player = game.playerById(factionId);
-  if (player?.capitalTile != null) {
-    return player!.capitalTile;
-  }
-  for (final minor in game.minorNations) {
-    if (minor.id == factionId) {
-      return minor.capitalTile;
-    }
-  }
-  for (final tribe in game.tribes) {
-    if (tribe.id == factionId) {
-      return tribe.capitalTile;
-    }
-  }
-  return null;
-}
+export 'faction_capital.dart' show capitalTileForFaction;
 
 /// Runs ownership-change civilian legality normalization for [changedProvinceIds].
 ///

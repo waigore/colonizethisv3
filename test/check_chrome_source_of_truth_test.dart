@@ -2,25 +2,36 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// Structural gate for issue #3594 item 5: the shared chrome widgets
-/// `CtDialogShell`, `CtPanel`, and `CtNinePatchButton` have their
-/// implementation (source of truth) in `app/lib/widgets/`, and the
-/// `features/game/widgets/chrome/` counterparts are thin re-export shims that
-/// point back up to `widgets/`. This pins the dependency direction
-/// (features -> widgets), preventing regression to the previously inverted
-/// chain where shared widgets re-exported feature-level implementations.
+/// Structural gate for issue #3594 item 5 + #4035 AC2: shared chrome widgets
+/// live under `app/lib/widgets/` (source of truth). The former
+/// `features/game/widgets/chrome/` shims / leftover implementations are
+/// deleted so call sites cannot reintroduce the feature-layer chrome home.
 void main() {
   const chromeWidgets = <String, String>{
     'ct_dialog_shell': 'CtDialogShell',
     'ct_panel': 'CtPanel',
     'ct_nine_patch_button': 'CtNinePatchButton',
+    'ct_action_text_button': 'CtActionTextButton',
+    'ct_danger_text_button': 'CtDangerTextButton',
+    'ct_circular_locate_button': 'CtCircularLocateButton',
+    'ct_hover_button': 'CtHoverButtonStateMixin',
   };
+
+  test('features/game/widgets/chrome/ directory is removed', () {
+    final chromeDir = Directory('app/lib/features/game/widgets/chrome');
+    expect(
+      chromeDir.existsSync(),
+      isFalse,
+      reason: 'Feature chrome shims must be deleted; import '
+          'package:colonizethis_app/widgets/... instead (Refs #4035 AC2).',
+    );
+  });
 
   for (final entry in chromeWidgets.entries) {
     final fileName = entry.key;
-    final className = entry.value;
+    final symbolName = entry.value;
 
-    test('$className implementation lives in app/lib/widgets/$fileName.dart',
+    test('$symbolName implementation lives in app/lib/widgets/$fileName.dart',
         () {
       final impl = File('app/lib/widgets/$fileName.dart');
       expect(
@@ -29,35 +40,14 @@ void main() {
         reason: 'Expected source-of-truth at ${impl.path}',
       );
       final source = impl.readAsStringSync();
+      final declaration = fileName == 'ct_hover_button'
+          ? 'mixin $symbolName'
+          : 'class $symbolName';
       expect(
         source,
-        contains('class $className'),
-        reason: '$fileName.dart in widgets/ must declare $className '
+        contains(declaration),
+        reason: '$fileName.dart in widgets/ must declare $symbolName '
             '(real implementation, not just a re-export).',
-      );
-    });
-
-    test('chrome/$fileName.dart is a re-export shim pointing to widgets/', () {
-      final shim = File(
-        'app/lib/features/game/widgets/chrome/$fileName.dart',
-      );
-      expect(
-        shim.existsSync(),
-        isTrue,
-        reason: 'Expected chrome re-export shim at ${shim.path}',
-      );
-      final source = shim.readAsStringSync();
-      expect(
-        source,
-        contains("export '../../../../widgets/$fileName.dart';"),
-        reason: 'chrome/$fileName.dart must re-export the widgets/ source of '
-            'truth (features -> widgets direction).',
-      );
-      expect(
-        source.contains('class $className'),
-        isFalse,
-        reason: 'chrome/$fileName.dart must not contain a $className '
-            'implementation; it is a re-export shim only.',
       );
     });
   }

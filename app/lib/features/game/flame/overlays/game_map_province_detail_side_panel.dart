@@ -10,13 +10,10 @@ import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
 import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSidePanelWidth;
 import '../caches/per_player_work_target_selection_cache.dart';
-import '../map_state/province_action_state_calculator.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
-import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 /// Wide-layout province / sea zone panel; reads [mapProvincePanelProvider] only.
 class GameMapProvinceDetailSidePanel extends ConsumerWidget {
@@ -41,7 +38,9 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final panel = ref.watch(mapProvincePanelProvider);
+    final panel = ref.watch(
+      mapProvincePanelProvider.select(mapProvinceDetailHostSlice),
+    );
     final draftOrders = ref.watch(currentOrdersProvider);
     final displayId = resolveProvinceDetailDisplayId(
       region: region,
@@ -71,83 +70,26 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
         ),
       );
     }
-    GameMapData? mapData;
-    try {
-      mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-    } catch (_) {
-      // Some widget tests render this panel without initializing persistence-backed providers.
-      mapData = null;
-    }
-    final actionStates = ProvinceActionStateCalculator.compute(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      selectedTileKey: panel.selectedTileKey,
-      region: region,
-      playerView: playerView,
-      currentOrders: draftOrders,
-      workTargetSelectionCache: workTargetSelectionCache,
-      mapData: mapData,
-    );
-    final exploreState = actionStates.explore;
-    final prospectState = actionStates.prospect;
-    final buildImprovementState = actionStates.buildImprovement;
-    final shortcuts = buildProvinceDetailShortcutCallbacks(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      region: region,
-      playerView: playerView,
-      workTargetSelectionCache: workTargetSelectionCache,
-      draftOrders: draftOrders,
-      mapData: mapData,
-      selectedTileKey: panel.selectedTileKey,
-      exploreEnabled: exploreState.enabled,
-      prospectEnabled: prospectState.enabled,
-      buildImprovementEnabled: buildImprovementState.enabled,
+    final hostArgs = resolveProvinceDetailHostOverlayArgs(
+      loadMapData: () => ref.read(gameServiceProvider).getMapData(game.id),
+      panelNotifier: ref.read(mapProvincePanelProvider.notifier),
       bus: ref.read(appEventBusProvider),
     );
-    final townProductionBonus = provinceTownProductionBonusPreview(
-      game: game,
-      provinceId: displayId,
-      mapData: mapData,
-    );
-    final extractionSnapshot = provinceExtractionSnapshotPreview(
-      game: game,
-      provinceId: displayId,
-    );
-    final availableByCommodity = provinceAvailableResourceCountsPreview(
-      game: game,
-      provinceId: displayId,
-      mapData: mapData,
-    );
-    Widget overlay = ProvinceSeaZoneDetailOverlay(
+    Widget overlay = buildProvinceSeaZoneDetailOverlayForPanel(
       game: game,
       region: region,
-      displayId: displayId,
-      selectedTileKey: panel.selectedTileKey,
       humanPlayerId: humanPlayerId,
       playerView: playerView,
+      workTargetSelectionCache: workTargetSelectionCache,
+      selectedTileKey: panel.selectedTileKey,
       draftOrders: draftOrders,
-      townProductionBonusByCommodity: townProductionBonus,
-      extractionSnapshot: extractionSnapshot,
-      availableByCommodity: availableByCommodity,
-      onHighlightTile: (k) =>
-          ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(k),
-      onHighlightTiles: (keys) => ref
-          .read(mapProvincePanelProvider.notifier)
-          .setSecondaryHighlights(keys),
-      onClose: () => ref.read(mapProvincePanelProvider.notifier).closeOverlay(),
-      showProspectActionIcon: canMutateViaUi && prospectState.showIcon,
-      prospectActionEnabled: canMutateViaUi && prospectState.enabled,
-      showExploreActionIcon: canMutateViaUi && exploreState.showIcon,
-      exploreActionEnabled: canMutateViaUi && exploreState.enabled,
-      showBuildImprovementActionIcon:
-          canMutateViaUi && buildImprovementState.showIcon,
-      buildImprovementActionEnabled:
-          canMutateViaUi && buildImprovementState.enabled,
+      mapData: hostArgs.mapData,
+      canMutateViaUi: canMutateViaUi,
       omniscientDetail: omniscientDetail,
-      onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
-      onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
-      onBuildImprovementTap: shortcuts.onBuildImprovementTap,
+      onHighlightTile: hostArgs.onHighlightTile,
+      onHighlightTiles: hostArgs.onHighlightTiles,
+      onClose: hostArgs.onClose,
+      bus: hostArgs.bus,
     );
     if (kCtE2EEnabled) {
       overlay = KeyedSubtree(key: kCtE2EProvincePanelRootKey, child: overlay);

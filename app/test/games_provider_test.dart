@@ -15,6 +15,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:hive/hive.dart';
 
 Duration _medianDuration(List<Duration> values) {
@@ -22,13 +23,42 @@ Duration _medianDuration(List<Duration> values) {
   return sorted[sorted.length ~/ 2];
 }
 
-String _fixtureTileVisibility({required int provinceIndex, required int tileIndex}) {
-  if (provinceIndex == 0 && tileIndex == 0) {
-    return 'fullyVisible';
+ProviderContainer _container({
+  List<Override>? overrides,
+}) {
+  final container = ProviderContainer(overrides: overrides ?? const []);
+  addTearDown(container.dispose);
+  return container;
+}
+
+GameSetupConfig get _standardSetup => GameSetupConfig(
+  selectedGreatPowerIds: const ['england', 'france'],
+  continentCount: 1,
+  minorNationCount: 0,
+  tribeCount: 1,
+  numProvincesOldWorld: 4,
+  numProvincesNewWorld: 2,
+);
+
+Game _createStandardGame(GameService gameService, String id) =>
+    gameService.createNewGame(id: id, config: _standardSetup);
+
+String? _firstHumanUnitId(Game game, String humanId) {
+  for (final unit in [
+    ...game.worldState.oldWorld.units,
+    ...game.worldState.newWorld.units,
+  ]) {
+    if (unit.ownerId == humanId) return unit.id;
   }
-  if (tileIndex == 0) {
-    return 'fogged';
-  }
+  return null;
+}
+
+String _fixtureTileVisibility({
+  required int provinceIndex,
+  required int tileIndex,
+}) {
+  if (provinceIndex == 0 && tileIndex == 0) return 'fullyVisible';
+  if (tileIndex == 0) return 'fogged';
   return 'unknown';
 }
 
@@ -104,79 +134,39 @@ void main() {
     }
   });
 
-  test('gameListIdsProvider returns empty list when no games saved', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final ids = await container.read(gameListIdsProvider.future);
-    expect(ids, isEmpty);
+  test('empty-state provider reads when no games / no current game', () async {
+    final container = _container();
+    expect(await container.read(gameListIdsProvider.future), isEmpty);
+    expect(container.read(availableWorkTargetIdsForUnitProvider('u1')), isEmpty);
+    expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
   });
 
-  test(
-    'availableWorkTargetIdsForUnitProvider returns empty when no current game',
-    () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(
-        container.read(availableWorkTargetIdsForUnitProvider('u1')),
-        isEmpty,
-      );
-    },
-  );
-
-  test(
-    'devExclusiveReservedWorkTileKeysProvider empty when no current game',
-    () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
-    },
-  );
-
   test('derived providers compute with a real current game', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
+    final container = _container();
     final gameService = container.read(gameServiceProvider);
     expect(gameService, isA<GameService>());
 
-    final game = gameService.createNewGame(
-      id: 'games_provider_derived',
-      config: GameSetupConfig(
-        selectedGreatPowerIds: const ['england', 'france'],
-        continentCount: 1,
-        minorNationCount: 0,
-        tribeCount: 1,
-        numProvincesOldWorld: 4,
-        numProvincesNewWorld: 2,
-      ),
-    );
+    final game = _createStandardGame(gameService, 'games_provider_derived');
     container.read(currentGameProvider.notifier).setGame(game);
 
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
-    var anyUnitId = '';
-    for (final u in game.worldState.oldWorld.units) {
-      if (u.ownerId == humanId) {
-        anyUnitId = u.id;
-        break;
-      }
-    }
-    if (anyUnitId.isNotEmpty) {
+    final anyUnitId = _firstHumanUnitId(game, humanId);
+    if (anyUnitId != null) {
       expect(
         container.read(availableWorkTargetIdsForUnitProvider(anyUnitId)),
         isA<List<String>>(),
       );
     }
-    final reserved = container.read(devExclusiveReservedWorkTileKeysProvider);
-    expect(reserved, isA<Set<String>>());
+    expect(
+      container.read(devExclusiveReservedWorkTileKeysProvider),
+      isA<Set<String>>(),
+    );
   });
 
   test(
     'availableWorkTargetIdsForUnitProvider matches getAvailableWorkTargetsForUnit',
     () {
-      final container = ProviderContainer(
+      final container = _container(
         overrides: [
           appEventBusProvider.overrideWith((ref) {
             final bus = AppEventBus.create();
@@ -185,38 +175,16 @@ void main() {
           }),
         ],
       );
-      addTearDown(container.dispose);
 
       final gameService = container.read(gameServiceProvider);
-      final game = gameService.createNewGame(
-        id: 'games_provider_work_targets',
-        config: GameSetupConfig(
-          selectedGreatPowerIds: const ['england', 'france'],
-          continentCount: 1,
-          minorNationCount: 0,
-          tribeCount: 1,
-          numProvincesOldWorld: 4,
-          numProvincesNewWorld: 2,
-        ),
+      final game = _createStandardGame(
+        gameService,
+        'games_provider_work_targets',
       );
       container.read(currentGameProvider.notifier).setGame(game);
 
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      String? unitId;
-      for (final u in game.worldState.oldWorld.units) {
-        if (u.ownerId == humanId) {
-          unitId = u.id;
-          break;
-        }
-      }
-      if (unitId == null) {
-        for (final u in game.worldState.newWorld.units) {
-          if (u.ownerId == humanId) {
-            unitId = u.id;
-            break;
-          }
-        }
-      }
+      final unitId = _firstHumanUnitId(game, humanId);
       expect(unitId, isNotNull);
 
       final mapData = gameService.getMapData(game.id);
@@ -250,30 +218,16 @@ void main() {
     final logMessages = <String>[];
     void onLog(LogEvent e) {
       final m = e.message;
-      if (m is String) {
-        logMessages.add(m);
-      }
+      if (m is String) logMessages.add(m);
     }
-
     Logger.addLogListener(onLog);
     addTearDown(() => Logger.removeLogListener(onLog));
 
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final gameService = container.read(gameServiceProvider);
-    final game = gameService.createNewGame(
-      id: 'games_provider_pending_work_log',
-      config: GameSetupConfig(
-        selectedGreatPowerIds: const ['england', 'france'],
-        continentCount: 1,
-        minorNationCount: 0,
-        tribeCount: 1,
-        numProvincesOldWorld: 4,
-        numProvincesNewWorld: 2,
-      ),
+    final container = _container();
+    final game = _createStandardGame(
+      container.read(gameServiceProvider),
+      'games_provider_pending_work_log',
     );
-
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
     Unit? explorer;
     for (final u in [
@@ -321,53 +275,22 @@ void main() {
     expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
   });
 
-  test('gameIdsWithIntroShownProvider defaults empty and can be updated', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+  test('session providers: intro shown, game/orders, pending diplomacy', () {
+    final container = _container();
 
-    final initial = container.read(gameIdsWithIntroShownProvider);
-    expect(initial, isEmpty);
-
+    expect(container.read(gameIdsWithIntroShownProvider), isEmpty);
     container.read(gameIdsWithIntroShownProvider.notifier).markShown('game_1');
+    expect(container.read(gameIdsWithIntroShownProvider), contains('game_1'));
 
-    final updated = container.read(gameIdsWithIntroShownProvider);
-    expect(updated, contains('game_1'));
-  });
-
-  test('pendingDiplomacyProvider defaults null and can set overtures', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    expect(container.read(pendingDiplomacyProvider), isNull);
-
-    container.read(pendingDiplomacyProvider.notifier).setOvertures(const []);
-
-    final updated = container.read(pendingDiplomacyProvider);
-    expect(updated, isA<PendingDiplomacyOvertures>());
-    expect((updated! as PendingDiplomacyOvertures).offers, isEmpty);
-  });
-
-  test('currentGameProvider setGame and clear update the state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(currentGameProvider.notifier);
+    final gameNotifier = container.read(currentGameProvider.notifier);
     expect(container.read(currentGameProvider), isNull);
-
-    notifier.setGame(demoGameForOverlay);
+    gameNotifier.setGame(demoGameForOverlay);
     expect(container.read(currentGameProvider)?.id, demoGameForOverlay.id);
-
-    notifier.clear();
+    gameNotifier.clear();
     expect(container.read(currentGameProvider), isNull);
-  });
 
-  test('currentOrdersProvider replaceAll and clear update the state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(currentOrdersProvider.notifier);
+    final ordersNotifier = container.read(currentOrdersProvider.notifier);
     expect(container.read(currentOrdersProvider), const Orders());
-
     const next = Orders(
       buildUnitOrdersByPlayerId: {
         'p1': [
@@ -379,40 +302,32 @@ void main() {
         ],
       },
     );
-    notifier.replaceAll(next);
+    ordersNotifier.replaceAll(next);
     expect(container.read(currentOrdersProvider), next);
-
-    notifier.clear();
+    ordersNotifier.clear();
     expect(container.read(currentOrdersProvider), const Orders());
-  });
 
-  test('pendingDiplomacyProvider clear resets to null', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    final notifier = container.read(pendingDiplomacyProvider.notifier);
-    notifier.setOvertures(const []);
-    expect(container.read(pendingDiplomacyProvider), isNotNull);
-
-    notifier.clear();
+    final diplomacy = container.read(pendingDiplomacyProvider.notifier);
     expect(container.read(pendingDiplomacyProvider), isNull);
-  });
-
-  test('setIntervention replaces overtures state', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
-
-    container.read(pendingDiplomacyProvider.notifier).setOvertures(const []);
-    container.read(pendingDiplomacyProvider.notifier).setIntervention(const [
+    diplomacy.setOvertures(const []);
+    final overtures = container.read(pendingDiplomacyProvider);
+    expect(overtures, isA<PendingDiplomacyOvertures>());
+    expect((overtures! as PendingDiplomacyOvertures).offers, isEmpty);
+    diplomacy.setIntervention(const [
       InterventionPrompt(
         aggressorGpId: 'a',
         defenderMinorOrTribeId: 'm',
         interveningGpId: 'b',
       ),
     ]);
-    final s = container.read(pendingDiplomacyProvider);
-    expect(s, isA<PendingDiplomacyIntervention>());
-    expect((s! as PendingDiplomacyIntervention).prompts, hasLength(1));
+    final intervention = container.read(pendingDiplomacyProvider);
+    expect(intervention, isA<PendingDiplomacyIntervention>());
+    expect(
+      (intervention! as PendingDiplomacyIntervention).prompts,
+      hasLength(1),
+    );
+    diplomacy.clear();
+    expect(container.read(pendingDiplomacyProvider), isNull);
   });
 
   test(

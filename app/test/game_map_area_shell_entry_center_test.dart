@@ -4,7 +4,6 @@
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
@@ -28,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/map_view_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -224,19 +224,14 @@ void main() {
       final dpr = tester.view.devicePixelRatio;
       tester.view.physicalSize = Size(1500 * dpr, 700 * dpr);
       addTearDown(tester.view.reset);
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: overrides(game, mapViewData),
-          child: AppEventHandlerScope(
-            child: MaterialApp(
-              navigatorKey: appNavigatorKey,
-              theme: AppThemes.editorialMonocle,
-              home: const MediaQuery(
-                data: MediaQueryData(size: Size(1500, 700)),
-                child: GameScreen(),
-              ),
-            ),
-          ),
+          navigatorKey: appNavigatorKey,
+          viewport: const Size(1500, 700),
+          shellWrapper: (app) => AppEventHandlerScope(child: app),
+          child: const GameScreen(),
         ),
       );
       await tester.pump();

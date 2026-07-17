@@ -19,12 +19,12 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'support/widgetbook_test_harness.dart';
 
@@ -85,8 +85,12 @@ void main() {
             useCaseName: 'Mid-game slots (mobile)',
           );
 
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          await tester.binding.setSurfaceSize(const Size(360, 640));
+
           await tester.pumpWidget(
-            ProviderScope(
+            buildAppShell(
+              viewport: const Size(360, 640),
               overrides: [
                 currentGameProvider.overrideWith(
                   () => CurrentGameNotifier(baseGame),
@@ -100,11 +104,8 @@ void main() {
                   return bus;
                 }),
               ],
-              child: MediaQuery(
-                data: const MediaQueryData(size: Size(360, 640)),
-                child: Builder(
-                  builder: (BuildContext ctx) => useCase.builder(ctx),
-                ),
+              child: Builder(
+                builder: (BuildContext ctx) => useCase.builder(ctx),
               ),
             ),
           );

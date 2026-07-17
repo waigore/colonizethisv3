@@ -1,5 +1,4 @@
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -7,6 +6,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/yarn_test_fixtures.dart';
 
 // Mirrors the production `{$var}` interpolation syntax (issue #3463): the
@@ -75,14 +75,16 @@ void main() {
       ];
 
       List<InterventionDecision>? captured;
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          home: InterventionDialogueOverlay(
+        buildAppShell(
+          child: InterventionDialogueOverlay(
             game: game,
             prompts: prompts,
             skipIntroForTest: true,
-            assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
+            assetBundle: YarnThrowingAssetBundle(
+              error: StateError('missing intervention yarn'),
+            ),
             onDecisions: (d) => captured = d,
             child: const SizedBox.expand(),
           ),
@@ -137,9 +139,8 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.colonial,
-          home: InterventionDialogueOverlay(
+        buildAppShell(
+          child: InterventionDialogueOverlay(
             game: game,
             prompts: prompts,
             skipIntroForTest: true,

@@ -6,6 +6,8 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 
+import 'support/app_shell_harness.dart';
+
 int _argb(Color c) {
   final int a = (c.a * 255.0).round() & 0xFF;
   final int r = (c.r * 255.0).round() & 0xFF;
@@ -134,14 +136,10 @@ void main() {
   group('App default theme', () {
     testWidgets('mounts with AppThemes.editorialMonocle as the active theme',
         (WidgetTester tester) async {
-      // Build only the App's MaterialApp.theme indirectly by reading the
-      // exported [AppThemes.editorialMonocle] used in `app/lib/app.dart` so
-      // the test does not need to spin up the full ProviderScope shell.
-      final ThemeData appTheme = AppThemes.editorialMonocle;
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(
-          theme: appTheme,
-          home: Builder(
+        buildAppShell(
+          child: Builder(
             builder: (BuildContext context) {
               final ThemeData ctx = Theme.of(context);
               return Scaffold(

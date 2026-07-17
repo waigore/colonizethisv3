@@ -162,7 +162,7 @@ class FakeFilterChipProbe {
     });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_filterchip_chrome_',
@@ -187,7 +187,7 @@ Widget fallback() => FilterChip(
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
@@ -221,21 +221,19 @@ Widget bypass() => FilterChip(
       expect(code, 0);
     });
 
-    test(
-      'flags SYS10001 (Debug Log Viewer) — promoted out of the allowlist by '
-      'the Refs #2914 S8 CtChoiceChip adoption slice',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_filterchip_viewer_inscope_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('flags SYS10001 (Debug Log Viewer) — promoted out of the allowlist by '
+        'the Refs #2914 S8 CtChoiceChip adoption slice', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_filterchip_viewer_inscope_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        const debugViewer =
-            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+      const debugViewer =
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-        File('${temp.path}/$debugViewer')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/$debugViewer')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => FilterChip(
@@ -245,20 +243,19 @@ Widget bypass() => FilterChip(
 );
 ''');
 
-        final logs = <String>[];
-        final code = runCheckAppNoMaterialFilterChip(
-          temp.path,
-          info: logs.add,
-          err: logs.add,
-        );
+      final logs = <String>[];
+      final code = runCheckAppNoMaterialFilterChip(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
 
-        expect(code, 1);
-        expect(
-          logs.join('\n'),
-          contains('debug_log_viewer_screen.dart:3: FilterChip('),
-        );
-      },
-    );
+      expect(code, 1);
+      expect(
+        logs.join('\n'),
+        contains('debug_log_viewer_screen.dart:3: FilterChip('),
+      );
+    });
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -372,14 +369,17 @@ Widget probe() => FilterChip(
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialFilterChipFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialFilterChipFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips canonical dev-tooling screen SYS20001', () {
       expect(

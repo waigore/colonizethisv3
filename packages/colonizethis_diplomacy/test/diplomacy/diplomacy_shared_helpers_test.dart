@@ -1,6 +1,6 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Coverage for the shared diplomacy resolution helpers consolidated from the
@@ -11,7 +11,7 @@ import 'package:colonizethis_test/test.dart';
 void main() {
   group('isTargetHumanGp', () {
     test('positive: human-controlled player is reported human', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [
           Player(id: 'h1', displayName: 'Human', isHuman: true),
           Player(id: 'gp2', displayName: 'AI', isHuman: false),
@@ -21,14 +21,14 @@ void main() {
     });
 
     test('negative: AI-controlled player is not human', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp2', displayName: 'AI', isHuman: false)],
       );
       expect(isTargetHumanGp(game, 'gp2'), isFalse);
     });
 
     test('negative: unknown faction id is not human', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp2', displayName: 'AI', isHuman: false)],
       );
       expect(isTargetHumanGp(game, 'minor1'), isFalse);
@@ -37,7 +37,7 @@ void main() {
 
   group('atWarGreatPowerCount', () {
     test('positive: counts only Great Powers at war with the subject', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),
@@ -64,7 +64,7 @@ void main() {
     });
 
     test('negative: subject with no war relations counts zero', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [
           Player(id: 'gp1', displayName: 'A', isHuman: false),
           Player(id: 'gp2', displayName: 'B', isHuman: false),

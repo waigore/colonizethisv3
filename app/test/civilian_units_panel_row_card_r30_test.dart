@@ -14,17 +14,18 @@
 //     rows in tile-scope mode where Assign / Cancel are hidden.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/app_shell_harness.dart';
+import 'support/civilian_units_panel_test_support.dart';
 
 int _argb(Color c) {
   final int a = (c.a * 255.0).round() & 0xFF;
@@ -36,45 +37,35 @@ int _argb(Color c) {
 
 const _human = 'h1';
 const _tileKey = 'oldWorld|p1|0|0';
+const _provinceId = 'oldWorld|p1';
 
+/// Row-card chrome fixture: builder (+ optional engineer) on OW Alpha.
 Game _miniGame({int civilianCount = 1}) {
-  return Game(
+  return buildCivilianOwUnitsGame(
     id: 'g_civ_row_card_r30',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            displayName: 'Alpha',
-          ),
-        ],
-        units: [
-          for (int i = 0; i < civilianCount; i++)
-            Unit(
-              id: 'civ_$i',
-              type: i == 0 ? kUnitTypeBuilder : kUnitTypeEngineer,
-              ownerId: _human,
-              locationProvinceId: 'oldWorld|p1',
-              tileKey: _tileKey,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [Player(id: _human, displayName: 'Human', isHuman: true)],
+    humanId: _human,
+    units: [
+      for (int i = 0; i < civilianCount; i++)
+        civilianIdleUnit(
+          id: 'civ_$i',
+          type: i == 0 ? kUnitTypeBuilder : kUnitTypeEngineer,
+          ownerId: _human,
+          provinceId: _provinceId,
+          tileKey: _tileKey,
+        ),
+    ],
   );
 }
 
+/// Editorial [buildAppShell] host for row-card chrome (Refs #4035).
 Widget _wrap(Widget child) {
-  return ProviderScope(
+  return buildAppShell(
     overrides: [
       availableWorkTargetIdsForUnitProvider.overrideWith(
         (ref, _) => const <String>[],
       ),
     ],
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: Scaffold(body: child),
   );
 }
 

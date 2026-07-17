@@ -11,7 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' show Army;
 /// per-file scan closures that previously lived in `army_migration.dart` and
 /// `army_migration_relocation.dart` (Refs #3544 C6). For repeated lookups over
 /// a stable [WorldState] snapshot prefer the map-based `armiesByIdForWorld`
-/// index in `army_movement.dart` (O(1) per lookup) instead.
+/// index in `military_list_helpers.dart` (O(1) per lookup) instead.
 Army? firstArmyById(List<Army> armies, String armyId) {
   for (final a in armies) {
     if (a.id == armyId) return a;

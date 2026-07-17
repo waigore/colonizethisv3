@@ -9,16 +9,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pump(WidgetTester tester, Widget child) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: child,
-      ),
-    );
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    await tester.pumpWidget(buildAppShell(child: child));
     await tester.pumpAndSettle();
   }
 

@@ -7,6 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import '../diplomacy/diplomacy_relation_lookup.dart';
+import '../diplomacy/diplomacy_shared_helpers.dart' show isTargetHumanGp;
 import 'evidence_rules.dart';
 
 /// Era names for dialogue (SPEC/ai/dialogue-and-mood.md: discovery | earlyModern | imperial | industrial).
@@ -50,6 +52,46 @@ List<DialogueEvent> dialogueEventsForEraChange(
   return events;
 }
 
+List<DialogueEvent> _dialogueEventsForBattleResult(
+  Game game, {
+  required String victorId,
+  required String loserId,
+  required int turnNumber,
+  String? provinceId,
+}) {
+  final events = <DialogueEvent>[];
+  final era = _eraForTurn(game, turnNumber);
+  Map<String, String> vars(String otherNation) {
+    final m = <String, String>{'otherNation': otherNation};
+    if (provinceId != null) m['province'] = provinceId;
+    return m;
+  }
+
+  if (isAiControlledForEvidence(game, victorId)) {
+    events.add(
+      DialogueEvent(
+        leaderId: victorId,
+        category: 'event',
+        situation: 'battle_won',
+        era: era,
+        variables: vars(loserId),
+      ),
+    );
+  }
+  if (isAiControlledForEvidence(game, loserId)) {
+    events.add(
+      DialogueEvent(
+        leaderId: loserId,
+        category: 'event',
+        situation: 'battle_lost',
+        era: era,
+        variables: vars(victorId),
+      ),
+    );
+  }
+  return events;
+}
+
 /// Dialogue events for land battle result. Victor/loser are GP ids.
 /// Emits battle_won for AI victor, battle_lost for AI loser. Deterministic.
 List<DialogueEvent> dialogueEventsForLandBattleResult(
@@ -59,33 +101,14 @@ List<DialogueEvent> dialogueEventsForLandBattleResult(
   String provinceId,
   int turnNumber,
   int seed,
-) {
-  final events = <DialogueEvent>[];
-  final era = _eraForTurn(game, turnNumber);
-  if (isAiControlledForEvidence(game, victorId)) {
-    events.add(
-      DialogueEvent(
-        leaderId: victorId,
-        category: 'event',
-        situation: 'battle_won',
-        era: era,
-        variables: {'otherNation': loserId, 'province': provinceId},
-      ),
+) =>
+    _dialogueEventsForBattleResult(
+      game,
+      victorId: victorId,
+      loserId: loserId,
+      turnNumber: turnNumber,
+      provinceId: provinceId,
     );
-  }
-  if (isAiControlledForEvidence(game, loserId)) {
-    events.add(
-      DialogueEvent(
-        leaderId: loserId,
-        category: 'event',
-        situation: 'battle_lost',
-        era: era,
-        variables: {'otherNation': victorId, 'province': provinceId},
-      ),
-    );
-  }
-  return events;
-}
 
 /// Dialogue events for naval battle result (one side eliminated).
 /// Emits battle_won for AI victor, battle_lost for AI loser. Deterministic.
@@ -95,33 +118,13 @@ List<DialogueEvent> dialogueEventsForNavalBattleResult(
   String loserId,
   int turnNumber,
   int seed,
-) {
-  final events = <DialogueEvent>[];
-  final era = _eraForTurn(game, turnNumber);
-  if (isAiControlledForEvidence(game, victorId)) {
-    events.add(
-      DialogueEvent(
-        leaderId: victorId,
-        category: 'event',
-        situation: 'battle_won',
-        era: era,
-        variables: {'otherNation': loserId},
-      ),
+) =>
+    _dialogueEventsForBattleResult(
+      game,
+      victorId: victorId,
+      loserId: loserId,
+      turnNumber: turnNumber,
     );
-  }
-  if (isAiControlledForEvidence(game, loserId)) {
-    events.add(
-      DialogueEvent(
-        leaderId: loserId,
-        category: 'event',
-        situation: 'battle_lost',
-        era: era,
-        variables: {'otherNation': victorId},
-      ),
-    );
-  }
-  return events;
-}
 
 /// Neighbor province local ids in [regionId] that share an edge with [localId]. Province nodes only.
 List<String> neighborProvinceLocalIds(
@@ -194,14 +197,30 @@ DialogueEvent dialogueEventForNegotiation({
   );
 }
 
-bool _isHumanGp(Game game, String factionId) {
-  final player = game.playerById(factionId);
-  return player?.isHuman == true;
-}
-
 bool _isAiGp(Game game, String factionId) {
   return isAiControlledForEvidence(game, factionId);
 }
+
+/// Sorted AI Great Power speaker ids for reactive dialogue enumeration.
+List<String> _sortedAiSpeakerIds(Game game) =>
+    game.players.where((p) => _isAiGp(game, p.id)).map((p) => p.id).toList()
+      ..sort();
+
+/// Single AI-subject dialogue event (event / reactive categories share shape).
+DialogueEvent _aiSubjectDialogueEvent({
+  required String leaderId,
+  required String category,
+  required String situation,
+  required String era,
+  required Map<String, String> variables,
+}) =>
+    DialogueEvent(
+      leaderId: leaderId,
+      category: category,
+      situation: situation,
+      era: era,
+      variables: variables,
+    );
 
 bool _isMinorFaction(Game game, String factionId) {
   return game.minorNations.any((m) => m.id == factionId);
@@ -211,17 +230,8 @@ bool _isTribeFaction(Game game, String factionId) {
   return game.tribes.any((t) => t.id == factionId);
 }
 
-DiplomacyRelation? _relationBetween(Game game, String a, String b) {
-  for (final rel in game.diplomacyRelations) {
-    final direct = rel.factionId1 == a && rel.factionId2 == b;
-    final reverse = rel.factionId1 == b && rel.factionId2 == a;
-    if (direct || reverse) return rel;
-  }
-  return null;
-}
-
 bool _isAllied(Game game, String a, String b) {
-  final rel = _relationBetween(game, a, b);
+  final rel = getRelation(game, a, b);
   if (rel == null) return false;
   return rel.level == RelationLevel.allied &&
       rel.state == RelationState.atPeace;
@@ -232,10 +242,14 @@ bool _isAllied(Game game, String a, String b) {
 /// informal [RelationLevel.allied] band. SPEC/game/diplomacy.md § Alliances,
 /// SPEC/ai/dialogue-and-mood.md (reactive: attack_on_ally).
 bool _hasFormalAlliance(Game game, String a, String b) {
-  final rel = _relationBetween(game, a, b);
+  final rel = getRelation(game, a, b);
   if (rel == null) return false;
   return rel.formalAlliance && rel.state == RelationState.atPeace;
 }
+
+bool _hasEmbassyOrAlliance(Game game, String speakerId, String targetId) =>
+    _hasEmbassyWithTarget(game, speakerId, targetId) ||
+    _isAllied(game, speakerId, targetId);
 
 bool _hasEmbassyWithTarget(Game game, String gpId, String targetId) {
   return game.overtureStates.any(
@@ -257,16 +271,14 @@ String? _reactiveHumanAttackSituationForSpeaker(
   required bool isTribe,
 }) {
   if (isMinor) {
-    final tiedToMinor =
-        _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
-        _isAllied(game, speakerId, defenderFactionId);
-    return tiedToMinor ? 'attack_on_minor' : null;
+    return _hasEmbassyOrAlliance(game, speakerId, defenderFactionId)
+        ? 'attack_on_minor'
+        : null;
   }
   if (isTribe) {
-    final tiedToTribe =
-        _hasEmbassyWithTarget(game, speakerId, defenderFactionId) ||
-        _isAllied(game, speakerId, defenderFactionId);
-    return tiedToTribe ? 'attack_on_tribe' : null;
+    return _hasEmbassyOrAlliance(game, speakerId, defenderFactionId)
+        ? 'attack_on_tribe'
+        : null;
   }
   if (_hasFormalAlliance(game, speakerId, defenderFactionId)) {
     return 'attack_on_ally';
@@ -284,11 +296,9 @@ List<DialogueEvent> dialogueEventsForReactiveHumanAttack(
   required int turnNumber,
   required int seed,
 }) {
-  if (!_isHumanGp(game, attackerFactionId)) return const [];
+  if (!isTargetHumanGp(game, attackerFactionId)) return const [];
   final era = _eraForTurn(game, turnNumber);
-  final aiSpeakers =
-      game.players.where((p) => _isAiGp(game, p.id)).map((p) => p.id).toList()
-        ..sort();
+  final aiSpeakers = _sortedAiSpeakerIds(game);
   final events = <DialogueEvent>[];
   final seenKeys = <String>{};
   final isMinor = _isMinorFaction(game, defenderFactionId);
@@ -350,14 +360,11 @@ List<DialogueEvent> dialogueEventsForReactiveTechFirst(
   required int turnNumber,
   required int seed,
 }) {
-  if (!_isHumanGp(game, discovererId)) return const [];
+  if (!isTargetHumanGp(game, discovererId)) return const [];
   final era = _eraForTurn(game, turnNumber);
-  final aiSpeakers =
-      game.players.where((p) => _isAiGp(game, p.id)).map((p) => p.id).toList()
-        ..sort();
-  return aiSpeakers
+  return _sortedAiSpeakerIds(game)
       .map(
-        (speakerId) => DialogueEvent(
+        (speakerId) => _aiSubjectDialogueEvent(
           leaderId: speakerId,
           category: 'reactive',
           situation: 'tech_first',
@@ -378,11 +385,12 @@ List<DialogueEvent> dialogueEventsForCapitalThreatened(
   required int seed,
 }) {
   if (!_isAiGp(game, capitalOwnerId)) return const [];
-  final humanAttackers = attackerFactionIds.where((id) => _isHumanGp(game, id));
+  final humanAttackers =
+      attackerFactionIds.where((id) => isTargetHumanGp(game, id));
   final primaryAttacker = humanAttackers.toList()..sort();
   if (primaryAttacker.isEmpty) return const [];
   return [
-    DialogueEvent(
+    _aiSubjectDialogueEvent(
       leaderId: capitalOwnerId,
       category: 'event',
       situation: 'capital_threatened',
@@ -405,7 +413,7 @@ List<DialogueEvent> dialogueEventsForColonyFounded(
   if (ProvinceId.regionIdFrom(provinceId) != kRegionNewWorld) return const [];
   if (!_isAiGp(game, newOwnerId)) return const [];
   return [
-    DialogueEvent(
+    _aiSubjectDialogueEvent(
       leaderId: newOwnerId,
       category: 'event',
       situation: 'colony_founded',
@@ -425,9 +433,9 @@ List<DialogueEvent> dialogueEventsForReactiveSpiesCaught(
   required int seed,
 }) {
   if (!_isAiGp(game, speakerId)) return const [];
-  if (!_isHumanGp(game, caughtSpyOwnerId)) return const [];
+  if (!isTargetHumanGp(game, caughtSpyOwnerId)) return const [];
   return [
-    DialogueEvent(
+    _aiSubjectDialogueEvent(
       leaderId: speakerId,
       category: 'reactive',
       situation: 'spies_caught',
@@ -447,9 +455,9 @@ List<DialogueEvent> dialogueEventsForReactiveSpiesDefected(
   required int seed,
 }) {
   if (!_isAiGp(game, newOwnerId)) return const [];
-  if (!_isHumanGp(game, previousOwnerId)) return const [];
+  if (!isTargetHumanGp(game, previousOwnerId)) return const [];
   return [
-    DialogueEvent(
+    _aiSubjectDialogueEvent(
       leaderId: newOwnerId,
       category: 'reactive',
       situation: 'spies_defected',

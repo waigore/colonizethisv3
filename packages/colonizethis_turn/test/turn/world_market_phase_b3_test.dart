@@ -1,5 +1,3 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -20,39 +18,14 @@ void main() {
   group('worldMarketTurnPhaseHandler — GP↔GP fills (Refs #2990 B3)', () {
     test('seller treasury credited, buyer debited, stockpile transferred at '
         'old price', () {
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 10),
           sellerTreasury: 100,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        );
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
-        orders: Orders(
-          tradeOrdersByPlayerId: {
-            'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.offer,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
-          },
         ),
-      );
-
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
+        orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
       );
 
       final seller = next.players.firstWhere((p) => p.id == 'gpSeller');
@@ -77,39 +50,14 @@ void main() {
 
     test('balanced volumes leave price unchanged this turn (price discovery '
         'rule: Δ=0 when bid==offer)', () {
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 20),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        );
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
-        orders: Orders(
-          tradeOrdersByPlayerId: {
-            'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.offer,
-                quantity: 10,
-                priority: 1,
-              ),
-            ],
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 10,
-                priority: 1,
-              ),
-            ],
-          },
         ),
-      );
-
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
+        orders: gpGpTimberTradeOrders(offerQuantity: 10, bidQuantity: 10),
       );
 
       expect(next.worldMarketState.prices['timber'], 30);
@@ -120,39 +68,14 @@ void main() {
     });
 
     test('partial fill carries unfilled bid forward into WorldMarketState', () {
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 3),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        );
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
-        orders: Orders(
-          tradeOrdersByPlayerId: {
-            'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.offer,
-                quantity: 3,
-                priority: 1,
-              ),
-            ],
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 10,
-                priority: 1,
-              ),
-            ],
-          },
         ),
-      );
-
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
+        orders: gpGpTimberTradeOrders(offerQuantity: 3, bidQuantity: 10),
       );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
@@ -184,14 +107,13 @@ void main() {
           ],
         },
       );
-      final game = gameWithTwoGps(
+      final next = runWorldMarketPhase(
+        game: gameWithTwoGps(
           sellerStockpile: const Stockpile().applyDelta('timber', 4),
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
+        ).copyWith(worldMarketState: priorMarket),
         orders: Orders(
           tradeOrdersByPlayerId: {
             'gpSeller': [
@@ -204,11 +126,6 @@ void main() {
             ],
           },
         ),
-      );
-
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
       );
 
       final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
@@ -238,52 +155,18 @@ void main() {
 
     test('absent buyer cargo capacity blocks fills (per-buyer cumulative '
         'cargo guard)', () {
-      final priorMarket = WorldMarketState.empty.copyWith(
-        prices: const {'timber': 30},
-      );
-      // Build a game where the buyer has no home fleet (cargo capacity = 0
-      // when no ships and no defaultCargoHoldsStub fallback applies). The
-      // existing helper falls back to the default stub for missing fleets,
-      // so we instead constrain the buyer via empty stockpile / no fleet
-      // and use a low-priority bid the seller can't satisfy.
-      // Simpler: use insufficient seller stockpile so no fill happens.
-      final game = gameWithTwoGps(
+      // Quantity-zero offers are filtered upstream of matching by the
+      // handler; bid carries forward intact since no compatible offer exists.
+      final next = runWorldMarketPhase(
+        game: gameWithTwoGps(
           sellerStockpile: Stockpile.empty,
           sellerTreasury: 0,
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
-        ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
-        orders: Orders(
-          tradeOrdersByPlayerId: {
-            'gpSeller': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.offer,
-                quantity: 0,
-                priority: 1,
-              ),
-            ],
-            'gpBuyer': [
-              TradeOrder(
-                commodityId: 'timber',
-                type: TradeOrderType.bid,
-                quantity: 5,
-                priority: 1,
-              ),
-            ],
-          },
         ),
+        orders: gpGpTimberTradeOrders(offerQuantity: 0, bidQuantity: 5),
       );
 
-      final next = runWorldMarketPhase(
-        game: game,
-        orders: config.orders,
-      );
-
-      // Quantity-zero offers are filtered upstream of matching by the
-      // handler; bid carries forward intact since no compatible offer exists.
       final carryBids =
           next.worldMarketState.carryForwardBidsByFactionId['gpBuyer'];
       expect(carryBids, isNotNull);
@@ -303,14 +186,10 @@ void main() {
         buyerTreasury: 0,
         marketPrices: const {'timber': 30, 'iron': 80},
       ).copyWith(worldMarketState: priorMarket);
-      final config = TurnResolverConfig(
-        topology: const MapTopology(nodes: [], edges: []),
-        orders: const Orders(),
-      );
 
       final next = runWorldMarketPhase(
         game: game,
-        orders: config.orders,
+        orders: const Orders(),
       );
 
       expect(next.worldMarketState.prices, equals(priorMarket.prices));

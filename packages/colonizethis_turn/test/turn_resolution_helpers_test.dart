@@ -6,10 +6,9 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolution_helpers.dart';
 import 'package:colonizethis_turn/src/turn/turn_resolution_seeds.dart';
 
-/// Unit coverage for the shared turn-resolution helpers extracted in Refs #3565:
-/// the province-capture predicate, the `[0, 1]` clamp, and the deterministic
-/// turn sub-seed mix. These dedup previously inlined logic, so the tests pin the
-/// exact boundary/branch behavior the call sites relied on.
+/// Unit coverage for the shared turn-resolution helpers (Refs #3565 / #4039):
+/// province full-id projection, the province-capture predicate, the `[0, 1]`
+/// clamp, and the deterministic turn sub-seed mix.
 void main() {
   Game gameWithSeed(int? seed) => Game(
     id: 'g',
@@ -21,6 +20,32 @@ void main() {
     players: const [Player(id: 'h1', displayName: 'Human', isHuman: true)],
     globalGameSeed: seed,
   );
+
+  group('prefixedProvinceId', () {
+    test('positive: builds regionId|localId when province id is local', () {
+      const province = Province(id: 'P1', regionId: 'oldWorld', ownerId: 'gp1');
+      expect(prefixedProvinceId(province), 'oldWorld|P1');
+    });
+
+    test('positive: leaves an already-prefixed province id unchanged', () {
+      const province = Province(
+        id: 'oldWorld|P1',
+        regionId: 'oldWorld',
+        ownerId: 'gp1',
+      );
+      expect(prefixedProvinceId(province), 'oldWorld|P1');
+    });
+
+    test('negative: does not invent a default region when regionId differs', () {
+      const province = Province(
+        id: 'newWorld|P1',
+        regionId: 'newWorld',
+        ownerId: 'gp1',
+      );
+      expect(prefixedProvinceId(province), isNot('oldWorld|P1'));
+      expect(prefixedProvinceId(province), 'newWorld|P1');
+    });
+  });
 
   group('isProvinceOwnershipCaptured', () {
     test('true when ownership changes between two non-empty factions', () {

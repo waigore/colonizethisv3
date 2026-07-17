@@ -16,8 +16,9 @@ import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+
+import 'support/app_shell_harness.dart';
 
 class _NoSavesGameService extends GameService {
   _NoSavesGameService(super.box, super.adapter);
@@ -47,22 +48,25 @@ void main() {
   });
 
   Widget buildApp() {
-    return ProviderScope(
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith((ref) => dummyService),
         appEventBusProvider.overrideWith((ref) => AppEventBus.create()),
       ],
-      child: AppEventHandlerScope(
-        child: MaterialApp(
-          navigatorKey: appNavigatorKey,
-          initialRoute: Routes.shell,
-          routes: {
-            Routes.shell: (_) => const ShellScreen(),
-            Routes.game: (_) => const Scaffold(body: Text('In game')),
-          },
-        ),
-      ),
+      navigatorKey: appNavigatorKey,
+      onGenerateRoute: (settings) {
+        if (settings.name == Routes.game) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const Scaffold(body: Text('In game')),
+          );
+        }
+        return null;
+      },
+      shellWrapper: (app) => AppEventHandlerScope(child: app),
+      child: const ShellScreen(),
     );
   }
 

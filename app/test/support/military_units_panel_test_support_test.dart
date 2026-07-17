@@ -1,11 +1,4 @@
-// Smoke tests for the shared `MilitaryUnitsPanel` widget-test scaffolding.
-//
-// Verifies the consolidated helpers in `military_units_panel_test_support.dart`
-// (extracted from the `military_units_panel_*_test.dart` family, Refs #3730)
-// build the canonical panel host, drive the `ExpansionTile` tree helpers, and
-// bridge `ArmySplitRequestedEvent` the same way the running shell does, so the
-// family's test files keep their behavior.
-//
+// Smoke tests for military units-panel scaffolding (Refs #3730, #4048).
 // SPEC: SPEC/ui/military-units-panel.md, SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -43,6 +36,17 @@ void main() {
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
     },
   );
+
+  testWidgets('pumpMilitaryPanel hosts and settles MilitaryUnitsPanel', (
+    WidgetTester tester,
+  ) async {
+    await pumpMilitaryPanel(
+      tester,
+      game: buildMilitaryPanelTestGame(),
+      humanPlayerId: kPanelTestHumanPlayerId,
+    );
+    expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
+  });
 
   testWidgets(
     'expandAllArmyExpansions expands every ExpansionTile without throwing',
@@ -125,8 +129,8 @@ void main() {
     );
   });
 
-  test('buildMilitaryAdjacentOwProvincesTopology links the default OW pair', () {
-    final topology = buildMilitaryAdjacentOwProvincesTopology();
+  test('buildUnitsPanelAdjacentOwProvincesTopology links the default OW pair', () {
+    final topology = buildUnitsPanelAdjacentOwProvincesTopology();
     expect(topology.nodes, hasLength(2));
     expect(topology.edges.single.id1, 'oldWorld|p2');
     expect(topology.edges.single.id2, 'oldWorld|p3');

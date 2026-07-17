@@ -1,5 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/src/setup/faction_setup_helpers.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 /// Shared faction ownership/markdown helpers (Refs #3449): collapse the
@@ -143,13 +144,9 @@ void main() {
 
   group('collectCapitalMapsByOwner', () {
     test('positive: collects capitals for players, minors, and tribes', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 0, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: [
           Player(
             id: 'gp1',
@@ -202,13 +199,9 @@ void main() {
     });
 
     test('negative: factions without both capital fields are omitted', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 0, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: [
           const Player(
             id: 'gp1',
@@ -225,13 +218,9 @@ void main() {
 
   group('forEachSetupFaction', () {
     test('positive: visits players, minors, then tribes in slot order', () {
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(turnNumber: 0, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
+        turnNumber: 0,
         players: [
           const Player(id: 'gp1', displayName: 'A', isHuman: true),
           const Player(id: 'gp2', displayName: 'B', isHuman: false),

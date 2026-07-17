@@ -14,6 +14,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 const _capital = 'oldWorld|cap';
@@ -113,8 +114,8 @@ Future<_TestCommodityCostDialogState> _pump(
   Orders currentOrders = const Orders(),
 }) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(
+    buildAppShell(
+      child: Scaffold(
         body: _TestCommodityCostDialog(
           game: game,
           humanPlayerId: kPanelTestHumanPlayerId,

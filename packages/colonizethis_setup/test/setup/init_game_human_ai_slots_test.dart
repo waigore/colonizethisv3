@@ -9,22 +9,10 @@ import 'init_game_orchestrator_test_support.dart';
 ///
 /// SPEC: SPEC/program/game-setup-pipeline.md § Human/AI slot assignment.
 void main() {
-  GameSetupConfig lockedConfig({Set<int>? humanSlots}) {
-    final base = GameSetupConfig.defaultConfig;
-    return GameSetupConfig(
-      selectedGreatPowerIds: base.selectedGreatPowerIds,
-      leaderVariantByGpId: base.leaderVariantByGpId,
-      continentCount: 4,
-      minorNationCount: 6,
-      tribeCount: 10,
-      numProvincesOldWorld: 60,
-      numProvincesNewWorld: 30,
-      minProvincesPerMinor: 3,
-      seed: base.seed,
-      startingResources: base.startingResources,
-      humanGreatPowerSlotIndices: humanSlots,
-    );
-  }
+  GameSetupConfig lockedConfig({Set<int>? humanSlots}) => lockedFullInitConfig(
+    seed: GameSetupConfig.defaultConfig.seed,
+    humanGreatPowerSlotIndices: humanSlots,
+  );
 
   group('GameSetupConfig.humanGreatPowerSlotIndices default', () {
     test('defaults to {0} when omitted', () {

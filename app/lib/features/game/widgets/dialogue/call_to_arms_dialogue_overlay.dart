@@ -9,7 +9,7 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../../widgets/ct_spacing.dart';
-import '../../../../../widgets/ct_toggle_switch.dart';
+import 'dialogue_tristate_decision_row.dart';
 
 part 'call_to_arms_call_row.dart';
 
@@ -51,12 +51,7 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
   /// Submit `CtNinePatchButton` per #2867 R25
   /// (`SPEC/ui/call-to-arms-dialogue-overlay.md` § Acceptance Criteria —
   /// non-null decision required).
-  bool get _allDecided {
-    for (final bool? value in _join) {
-      if (value == null) return false;
-    }
-    return true;
-  }
+  bool get _allDecided => dialogueTristateAllDecided(_join);
 
   String _gpName(String gpId) {
     final p = widget.game.playerById(gpId);

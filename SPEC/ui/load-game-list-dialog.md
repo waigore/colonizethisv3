@@ -1,7 +1,7 @@
 # Load Game List Dialog
 
 **Screen ID:** `DLG80001` — stable; do not reassign.
-**SPEC/ui** — Shared load picker (main menu + pause). Implementation: `app/lib/features/shell/save_load/load_game_list_dialog.dart`.
+**SPEC/ui** — Shared load picker (main menu + pause). Implementation: `app/lib/features/shell/save_load/load_game_list_dialog.dart` (parts: row, confirm, list+pager body).
 **Widgetbook:** `Load Game List Dialog` → `widgetbook_host/lib/catalogs/catalog_primitives.dart` (Empty; Populated ≤10; Multi-page; Auto-save pinned; Delete confirm).
 **Mockup:** [mockups/DLG80001-load-game-list-dialog.html](mockups/DLG80001-load-game-list-dialog.html).
 **List API:** [save-load-list-metadata.md](../program/save-load-list-metadata.md).

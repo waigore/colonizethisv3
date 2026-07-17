@@ -29,6 +29,8 @@ void main() {
       expect(ids, contains('repo.turn_no_part_directives'));
       expect(ids, contains('repo.map_gen_no_new_partfiles'));
       expect(ids, contains('repo.map_lib_file_size'));
+      expect(ids, contains('repo.map_test_run_generation_harness'));
+      expect(ids, contains('repo.map_test_minimal_game_shared'));
       expect(
         rules
             .firstWhere((r) => r.ruleId == 'repo.map_lib_file_size')

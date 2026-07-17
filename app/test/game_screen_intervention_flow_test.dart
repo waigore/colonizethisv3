@@ -3,10 +3,8 @@
 // and is brittle under widget tests (Jenny steps + Flame nine-patch hit targets).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -16,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/game_screen_test_support.dart';
 
 class _CaptureInterventionResumeGameService extends GameService {
   _CaptureInterventionResumeGameService(super.box, super.adapter);
@@ -117,17 +117,19 @@ void main() {
       final service = _CaptureInterventionResumeGameService(box, GameSaveAdapter());
 
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => box),
-            gameServiceProvider.overrideWith((ref) => service),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-            currentOrdersProvider.overrideWith(() => CurrentOrdersNotifier(seedOrders)),
-          ],
-          child: MaterialApp(
-            theme: AppThemes.colonial,
-            home: const _ResumeHarness(),
-          ),
+        buildGameScreenHost(
+          gamesBox: box,
+          game: game,
+          mapViewData: null,
+          width: 400,
+          height: 300,
+          wrapAppEventHandler: false,
+          includeAppEventBus: false,
+          includeHomeFleetCargo: false,
+          includeTreasury: false,
+          home: const _ResumeHarness(),
+          gameService: service,
+          initialOrders: seedOrders,
         ),
       );
 

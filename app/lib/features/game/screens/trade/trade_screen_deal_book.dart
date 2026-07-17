@@ -15,7 +15,7 @@ part of 'trade_screen.dart';
 /// `carryForward{Bids,Offers}ByFactionId[playerId]`.
 ///
 /// Layout collapses to a single stacked column below
-/// `TradeScreen.dealBookTwoPanelMinWidth` so the 320 dp minimum viewport
+/// `TradeScreenDealBookKeys.dealBookTwoPanelMinWidth` so the 320 dp minimum viewport
 /// stays overflow-safe (`SPEC/ui/mobile-adaptation.md` § 7). On wider
 /// viewports the bids panel sits left of the offers panel inside a
 /// `Row`.
@@ -36,12 +36,12 @@ class _DealBookTabContent extends StatelessWidget {
       playerId: playerId,
     );
     return Container(
-      key: TradeScreen.dealBookContentKey,
+      key: TradeScreenDealBookKeys.dealBookContentKey,
       alignment: Alignment.topLeft,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bool wide =
-              constraints.maxWidth >= TradeScreen.dealBookTwoPanelMinWidth;
+              constraints.maxWidth >= TradeScreenDealBookKeys.dealBookTwoPanelMinWidth;
           return _layoutPanels(
             bidsPanel: _buildBidsPanel(data),
             offersPanel: _buildOffersPanel(data),
@@ -54,31 +54,31 @@ class _DealBookTabContent extends StatelessWidget {
 
   _DealBookPanel _buildBidsPanel(_DealBookViewData data) {
     return _DealBookPanel(
-      key: TradeScreen.dealBookBidsPanelKey,
-      panelTitle: TradeScreen.dealBookBidsPanelTitle,
-      side: TradeScreen.dealBookSideBids,
+      key: TradeScreenDealBookKeys.dealBookBidsPanelKey,
+      panelTitle: TradeScreenDealBookKeys.dealBookBidsPanelTitle,
+      side: TradeScreenDealBookKeys.dealBookSideBids,
       filledRows: data.filledBids,
       unfilledRows: data.unfilledBids,
-      totalsKey: TradeScreen.dealBookBidsTotalsKey,
-      emptyKey: TradeScreen.dealBookBidsEmptyKey,
-      totalsLabel: TradeScreen.dealBookTotalSpentLabel,
+      totalsKey: TradeScreenDealBookKeys.dealBookBidsTotalsKey,
+      emptyKey: TradeScreenDealBookKeys.dealBookBidsEmptyKey,
+      totalsLabel: TradeScreenDealBookKeys.dealBookTotalSpentLabel,
       totalsAmount: data.totalSpent,
-      emptyText: TradeScreen.dealBookBidsEmptyText,
+      emptyText: TradeScreenDealBookKeys.dealBookBidsEmptyText,
     );
   }
 
   _DealBookPanel _buildOffersPanel(_DealBookViewData data) {
     return _DealBookPanel(
-      key: TradeScreen.dealBookOffersPanelKey,
-      panelTitle: TradeScreen.dealBookOffersPanelTitle,
-      side: TradeScreen.dealBookSideOffers,
+      key: TradeScreenDealBookKeys.dealBookOffersPanelKey,
+      panelTitle: TradeScreenDealBookKeys.dealBookOffersPanelTitle,
+      side: TradeScreenDealBookKeys.dealBookSideOffers,
       filledRows: data.filledOffers,
       unfilledRows: data.unfilledOffers,
-      totalsKey: TradeScreen.dealBookOffersTotalsKey,
-      emptyKey: TradeScreen.dealBookOffersEmptyKey,
-      totalsLabel: TradeScreen.dealBookTotalReceivedLabel,
+      totalsKey: TradeScreenDealBookKeys.dealBookOffersTotalsKey,
+      emptyKey: TradeScreenDealBookKeys.dealBookOffersEmptyKey,
+      totalsLabel: TradeScreenDealBookKeys.dealBookTotalReceivedLabel,
       totalsAmount: data.totalReceived,
-      emptyText: TradeScreen.dealBookOffersEmptyText,
+      emptyText: TradeScreenDealBookKeys.dealBookOffersEmptyText,
     );
   }
 

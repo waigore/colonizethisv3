@@ -39,27 +39,16 @@ Map<String, int> _tribeProvinceCounts(Game game) {
   return counts;
 }
 
-void _enqueueUnvisitedNeighbors({
-  required String current,
-  required Map<String, Set<String>> provinceNeighbours,
-  required Set<String> visited,
-  required List<String> queue,
-}) {
-  final nextIds = provinceNeighbours[current]?.toList() ?? const [];
-  nextIds.sort();
-  for (final next in nextIds) {
-    if (!visited.add(next)) continue;
-    queue.add(next);
-  }
-}
-
+/// Attempts to assign [current] to [playerId]. Returns true only when the
+/// province is tribe-owned, not yet assigned to a GP, and the owning tribe
+/// would retain at least one province afterward (expand-on-accept contract
+/// consumed by [advancedStartFloodFillProvinces]).
 bool _tryAssignNwProvince({
   required String current,
   required String playerId,
   required Game game,
   required Map<String, String> assignedToGp,
   required Map<String, int> tribeCounts,
-  required List<String> collected,
 }) {
   if (assignedToGp.containsKey(current)) return false;
 
@@ -68,7 +57,6 @@ bool _tryAssignNwProvince({
   if ((tribeCounts[tribeOwner] ?? 0) <= 1) return false;
 
   assignedToGp[current] = playerId;
-  collected.add(current);
   tribeCounts[tribeOwner] = tribeCounts[tribeOwner]! - 1;
   return true;
 }
@@ -114,30 +102,18 @@ Game applyAdvancedStartNwColonization({
       continue;
     }
 
-    final collected = <String>[];
-    final visited = <String>{...seeds};
-    final queue = List<String>.from(seeds)..sort();
-    var head = 0;
-
-    while (head < queue.length && collected.length < targetCount) {
-      final current = queue[head++];
-      final assigned = _tryAssignNwProvince(
+    final collected = advancedStartFloodFillProvinces(
+      provinceNeighbours: provinceNeighbours,
+      seedLocalIds: seeds,
+      targetCount: targetCount,
+      accept: (current) => _tryAssignNwProvince(
         current: current,
         playerId: player.id,
         game: game,
         assignedToGp: assignedToGp,
         tribeCounts: tribeCounts,
-        collected: collected,
-      );
-      if (!assigned) continue;
-
-      _enqueueUnvisitedNeighbors(
-        current: current,
-        provinceNeighbours: provinceNeighbours,
-        visited: visited,
-        queue: queue,
-      );
-    }
+      ),
+    );
 
     if (collected.length < targetCount) {
       setupLog.w(

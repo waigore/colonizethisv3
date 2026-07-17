@@ -17,8 +17,7 @@ TileMapResult _runGpPlacementPass({
   required Set<String> used,
   required Resource r,
   required ResourceRules resourceRules,
-  required Map<String, String> ownerByLocal,
-  required Set<String> gpIds,
+  required List<_GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
 }) {
   var map = mapIn;
@@ -26,12 +25,10 @@ TileMapResult _runGpPlacementPass({
     while (true) {
       if ((targets[gp] ?? 0) <= (placed[gp] ?? 0)) break;
       final key = _firstLexEligibleEmptyTileForGp(
-        map: map,
+        inventory: inventory,
         r: r,
         rules: resourceRules,
         gp: gp,
-        ownerByLocal: ownerByLocal,
-        gpIds: gpIds,
         forbidden: forbidden,
         used: used,
       );
@@ -50,11 +47,9 @@ int _accumulateSpilloverPool({
   required List<String> shuffled,
   required Map<String, int> targets,
   required Map<String, int> placed,
-  required TileMapResult map,
   required Resource r,
   required ResourceRules resourceRules,
-  required Map<String, String> ownerByLocal,
-  required Set<String> gpIds,
+  required List<_GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
 }) {
@@ -65,12 +60,10 @@ int _accumulateSpilloverPool({
     final deficit = tgt - pl;
     if (deficit <= 0) continue;
     final eg = _eligibleEmptyCountForGp(
-      map: map,
+      inventory: inventory,
       r: r,
       rules: resourceRules,
       gp: gp,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
       forbidden: forbidden,
       used: used,
     );
@@ -87,11 +80,9 @@ int _accumulateSpilloverPool({
   required List<String> shuffled,
   required Map<String, int> targets,
   required Map<String, int> placed,
-  required TileMapResult map,
   required Resource r,
   required ResourceRules resourceRules,
-  required Map<String, String> ownerByLocal,
-  required Set<String> gpIds,
+  required List<_GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
 }) {
@@ -102,12 +93,10 @@ int _accumulateSpilloverPool({
     final pl = placed[h] ?? 0;
     final tgt = targets[h] ?? 0;
     final eg = _eligibleEmptyCountForGp(
-      map: map,
+      inventory: inventory,
       r: r,
       rules: resourceRules,
       gp: h,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
       forbidden: forbidden,
       used: used,
     );
@@ -125,11 +114,9 @@ void _distributeQuotaPool({
   required List<String> shuffled,
   required Map<String, int> targets,
   required Map<String, int> placed,
-  required TileMapResult map,
   required Resource r,
   required ResourceRules resourceRules,
-  required Map<String, String> ownerByLocal,
-  required Set<String> gpIds,
+  required List<_GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
   required int sumPlaced,
@@ -142,11 +129,9 @@ void _distributeQuotaPool({
       shuffled: shuffled,
       targets: targets,
       placed: placed,
-      map: map,
       r: r,
       resourceRules: resourceRules,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
+      inventory: inventory,
       forbidden: forbidden,
       used: used,
     );
@@ -195,15 +180,21 @@ void _distributeQuotaPool({
   final placed = <String, int>{for (final id in gpIdsSorted) id: 0};
   final used = <String>{};
 
+  // One inventory for this resource pass (Refs #4029); `used` covers placements
+  // within the pass so snapshot resource fields stay valid for emptiness checks.
+  final inventory = _buildGpOwTileInventory(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+  );
+
   var totalCapacity = 0;
   for (final gp in gpIdsSorted) {
     totalCapacity += _eligibleEmptyCountForGp(
-      map: map,
+      inventory: inventory,
       r: r,
       rules: resourceRules,
       gp: gp,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
       forbidden: forbidden,
       used: const {},
     );
@@ -226,8 +217,7 @@ void _distributeQuotaPool({
       used: used,
       r: r,
       resourceRules: resourceRules,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
+      inventory: inventory,
       forbidden: forbidden,
     );
 
@@ -240,11 +230,9 @@ void _distributeQuotaPool({
       shuffled: shuffled,
       targets: targets,
       placed: placed,
-      map: map,
       r: r,
       resourceRules: resourceRules,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
+      inventory: inventory,
       forbidden: forbidden,
       used: used,
     );
@@ -262,11 +250,9 @@ void _distributeQuotaPool({
       shuffled: shuffled,
       targets: targets,
       placed: placed,
-      map: map,
       r: r,
       resourceRules: resourceRules,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
+      inventory: inventory,
       forbidden: forbidden,
       used: used,
       sumPlaced: sumPlaced,

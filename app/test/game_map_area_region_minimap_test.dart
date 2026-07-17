@@ -30,6 +30,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/game_fixture.dart';
 import 'support/map_view_fixture.dart';
 
@@ -81,6 +82,53 @@ double? _feedCardPositionedRight(WidgetTester tester) {
   return ctx.findAncestorWidgetOfExactType<Positioned>()?.right;
 }
 
+Future<({Game game, InitGameMapViewData mapViewData, AppEventBus bus})>
+_pumpMapAreaWithMinimap(
+  WidgetTester tester, {
+  required Box<dynamic> gamesBox,
+  Game? game,
+  Size? surfaceSize,
+}) async {
+  if (surfaceSize != null) {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(surfaceSize);
+  }
+  final init = _loadMapAreaFixture();
+  final resolvedGame = game ?? init.game;
+  final bus = AppEventBus.create();
+  addTearDown(bus.dispose);
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  await tester.pumpWidget(
+    buildAppShell(
+      overrides: [
+        appEventBusProvider.overrideWith((ref) => bus),
+        currentGameProvider.overrideWith(
+          () => CurrentGameNotifier(resolvedGame),
+        ),
+        gamesBoxProvider.overrideWith((ref) => gamesBox),
+        gameServiceProvider.overrideWith(
+          (ref) => GameService(gamesBox, GameSaveAdapter()),
+        ),
+        currentOrdersProvider.overrideWith(
+          () => CurrentOrdersNotifier(const Orders()),
+        ),
+        mapViewDataProvider.overrideWith((ref) => init.mapViewData),
+      ],
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en'),
+      child: Scaffold(
+        body: GameMapArea(
+          game: resolvedGame,
+          mapViewData: init.mapViewData,
+        ),
+      ),
+    ),
+  );
+  await _pumpUntilMinimapPaintVisible(tester);
+  return (game: resolvedGame, mapViewData: init.mapViewData, bus: bus);
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -91,74 +139,32 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  mapAreaProviderOverrides({
-    required AppEventBus bus,
-    required Game game,
-    required InitGameMapViewData mapViewData,
-  }) => [
-    appEventBusProvider.overrideWith((ref) => bus),
-    currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-    gamesBoxProvider.overrideWith((ref) => gamesBox),
-    gameServiceProvider.overrideWith(
-      (ref) => GameService(gamesBox, GameSaveAdapter()),
-    ),
-    currentOrdersProvider.overrideWith(
-      () => CurrentOrdersNotifier(const Orders()),
-    ),
-    mapViewDataProvider.overrideWith((ref) => mapViewData),
-  ];
-
   testWidgets('region minimap: toggle visibility and minimap bus pan', (
     WidgetTester tester,
   ) async {
-    final init = _loadMapAreaFixture();
-    final game = init.game;
-    final bus = AppEventBus.create();
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: mapAreaProviderOverrides(
-          bus: bus,
-          game: game,
-          mapViewData: init.mapViewData,
-        ),
-        child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: init.mapViewData),
-          ),
-        ),
-      ),
-    );
-    await _pumpUntilMinimapPaintVisible(tester);
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
 
     expect(find.byKey(kRegionMinimapCustomPaintKey), findsOneWidget);
-
     final minimap = tester.widget<GameRegionMinimap>(
       find.byType(GameRegionMinimap),
     );
     expect(
       minimap.cellSizePx,
-      init.mapViewData.oldWorld.cellSize.toDouble(),
+      pumped.mapViewData.oldWorld.cellSize.toDouble(),
       reason:
           'minimap world scale must match CtRegionMap / RegionMapViewportSnapshot',
     );
 
     await tester.tap(find.byKey(kRegionMinimapToggleKey));
     await tester.pump();
-
     expect(find.byKey(kRegionMinimapCustomPaintKey), findsNothing);
 
     await tester.tap(find.byKey(kRegionMinimapToggleKey));
     await tester.pump();
-
     expect(find.byKey(kRegionMinimapCustomPaintKey), findsOneWidget);
 
     expect(tester.takeException(), isNull);
-    bus.emit(
+    pumped.bus.emit(
       const RequestRegionMapCameraPanWorldDeltaEvent(
         regionId: 'oldWorld',
         worldDx: 24,
@@ -171,43 +177,17 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byKey(kRegionMinimapGestureKey), findsOneWidget);
     expect(find.byKey(kRegionMinimapZoomSliderKey), findsOneWidget);
-
-    bus.dispose();
   });
 
   testWidgets('region minimap: tap emits camera center event for old world', (
     WidgetTester tester,
   ) async {
-    final init = _loadMapAreaFixture();
-    final bus = AppEventBus.create();
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
     final centers = <RequestRegionMapCameraCenterWorldEvent>[];
-    final sub = bus.on<RequestRegionMapCameraCenterWorldEvent>().listen(
-      centers.add,
-    );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: mapAreaProviderOverrides(
-          bus: bus,
-          game: init.game,
-          mapViewData: init.mapViewData,
-        ),
-        child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: GameMapArea(game: init.game, mapViewData: init.mapViewData),
-          ),
-        ),
-      ),
-    );
-    await _pumpUntilMinimapPaintVisible(tester);
+    final sub = pumped.bus
+        .on<RequestRegionMapCameraCenterWorldEvent>()
+        .listen(centers.add);
+    addTearDown(sub.cancel);
 
     await tester.tap(find.byKey(kRegionMinimapGestureKey));
     await tester.pump();
@@ -231,36 +211,12 @@ void main() {
   testWidgets('region minimap: drag pan deltas sum to world mapping', (
     WidgetTester tester,
   ) async {
-    final init = _loadMapAreaFixture();
-    final bus = AppEventBus.create();
+    final pumped = await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
     final pans = <RequestRegionMapCameraPanWorldDeltaEvent>[];
-    final sub = bus.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen(
-      pans.add,
-    );
-    addTearDown(() async {
-      await sub.cancel();
-      bus.dispose();
-    });
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: mapAreaProviderOverrides(
-          bus: bus,
-          game: init.game,
-          mapViewData: init.mapViewData,
-        ),
-        child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: GameMapArea(game: init.game, mapViewData: init.mapViewData),
-          ),
-        ),
-      ),
-    );
-    await _pumpUntilMinimapPaintVisible(tester);
+    final sub = pumped.bus
+        .on<RequestRegionMapCameraPanWorldDeltaEvent>()
+        .listen(pans.add);
+    addTearDown(sub.cancel);
 
     final minimap = tester.widget<GameRegionMinimap>(
       find.byType(GameRegionMinimap),
@@ -299,101 +255,47 @@ void main() {
   testWidgets('region minimap: New World chip switches minimap region', (
     WidgetTester tester,
   ) async {
-    final init = _loadMapAreaFixture();
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
+    await _pumpMapAreaWithMinimap(tester, gamesBox: gamesBox);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: mapAreaProviderOverrides(
-          bus: bus,
-          game: init.game,
-          mapViewData: init.mapViewData,
-        ),
-        child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizationsBinding.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en'),
-          home: Scaffold(
-            body: GameMapArea(game: init.game, mapViewData: init.mapViewData),
-          ),
-        ),
-      ),
-    );
-    await _pumpUntilMinimapPaintVisible(tester);
+    String regionId() => tester
+        .widget<GameRegionMinimap>(find.byType(GameRegionMinimap))
+        .region
+        .regionId;
 
-    expect(
-      tester
-          .widget<GameRegionMinimap>(find.byType(GameRegionMinimap))
-          .region
-          .regionId,
-      'oldWorld',
-    );
-
+    expect(regionId(), 'oldWorld');
     await tester.tap(find.text('New World'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-
-    expect(
-      tester
-          .widget<GameRegionMinimap>(find.byType(GameRegionMinimap))
-          .region
-          .regionId,
-      'newWorld',
-    );
-
+    expect(regionId(), 'newWorld');
     await tester.tap(find.text('Old World'));
     await tester.pump();
-
-    expect(
-      tester
-          .widget<GameRegionMinimap>(find.byType(GameRegionMinimap))
-          .region
-          .regionId,
-      'oldWorld',
-    );
+    expect(regionId(), 'oldWorld');
   });
 
   testWidgets(
-    'wide layout: minimap Positioned right inset clears province panel width when panel open',
+    'wide layout: minimap inset clears panel; feed toggle in GameMapControls',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(900, 800));
-
-      final init = _loadMapAreaFixture();
-      final game = init.game;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: mapAreaProviderOverrides(
-            bus: bus,
-            game: game,
-            mapViewData: init.mapViewData,
-          ),
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: init.mapViewData),
-            ),
-          ),
-        ),
+      final pumped = await _pumpMapAreaWithMinimap(
+        tester,
+        gamesBox: gamesBox,
+        surfaceSize: const Size(900, 800),
       );
-      await _pumpUntilMinimapPaintVisible(tester);
 
       expect(_minimapPositionedRight(tester), kGameMapWideStackRightGutter);
+      expect(
+        find.descendant(
+          of: find.byType(GameMapControls),
+          matching: find.byKey(kPlayerTurnFeedToggleButtonKey),
+        ),
+        findsOneWidget,
+      );
 
       final container = ProviderScope.containerOf(
         tester.element(find.byType(GameMapArea)),
       );
       container
           .read(mapProvincePanelProvider.notifier)
-          .reportMapTileTapped(_firstOldWorldTileKey(game));
+          .reportMapTileTapped(_firstOldWorldTileKey(pumped.game));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
@@ -405,80 +307,20 @@ void main() {
   );
 
   testWidgets(
-    'wide layout: player turn feed toggle lives in GameMapControls row',
+    'wide layout: feed card Positioned.right clears province panel when open',
     (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(900, 800));
-
       final init = _loadMapAreaFixture();
-      final game = init.game;
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: mapAreaProviderOverrides(
-            bus: bus,
-            game: game,
-            mapViewData: init.mapViewData,
-          ),
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: init.mapViewData),
-            ),
-          ),
-        ),
-      );
-      await _pumpUntilMinimapPaintVisible(tester);
-
-      expect(
-        find.descendant(
-          of: find.byType(GameMapControls),
-          matching: find.byKey(kPlayerTurnFeedToggleButtonKey),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets(
-    'wide layout: feed card Positioned.right clears province panel when feed and panel open',
-    (WidgetTester tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.binding.setSurfaceSize(const Size(900, 800));
-
-      final init = _loadMapAreaFixture();
-      final game = init.game.copyWith(
+      final feedGame = init.game.copyWith(
         mapViewState: init.game.mapViewState.copyWith(
           showPlayerTurnEventsFeed: true,
         ),
       );
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: mapAreaProviderOverrides(
-            bus: bus,
-            game: game,
-            mapViewData: init.mapViewData,
-          ),
-          child: MaterialApp(
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('en'),
-            home: Scaffold(
-              body: GameMapArea(game: game, mapViewData: init.mapViewData),
-            ),
-          ),
-        ),
+      await _pumpMapAreaWithMinimap(
+        tester,
+        gamesBox: gamesBox,
+        game: feedGame,
+        surfaceSize: const Size(900, 800),
       );
-      await _pumpUntilMinimapPaintVisible(tester);
 
       expect(
         _feedCardPositionedRight(tester),
@@ -490,18 +332,13 @@ void main() {
       );
       container
           .read(mapProvincePanelProvider.notifier)
-          .reportMapTileTapped(_firstOldWorldTileKey(game));
+          .reportMapTileTapped(_firstOldWorldTileKey(feedGame));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 16));
 
-      expect(
-        _feedCardPositionedRight(tester),
-        gameMapWideOverlayRightInset(provincePanelOpen: true),
-      );
-      expect(
-        _minimapPositionedRight(tester),
-        gameMapWideOverlayRightInset(provincePanelOpen: true),
-      );
+      final openInset = gameMapWideOverlayRightInset(provincePanelOpen: true);
+      expect(_feedCardPositionedRight(tester), openInset);
+      expect(_minimapPositionedRight(tester), openInset);
     },
   );
 }

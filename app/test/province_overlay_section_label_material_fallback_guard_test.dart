@@ -27,31 +27,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
-        sampleProvinceIdForOverlay,
-        sampleTileKeyForProvinceOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
+/// Editorial shell via [buildProvinceOverlayDarkThemeShell] (Refs #4035 —
+/// no inline MaterialApp).
 Widget _darkProvinceOverlay() {
-  final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: sampleProvinceIdForOverlay,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: demoGameForOverlay,
+    displayId: sampleProvinceIdForOverlay,
+    selectedTileKey: sampleTileKeyForProvinceOverlay,
   );
 }
 

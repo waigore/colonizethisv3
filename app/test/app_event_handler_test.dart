@@ -3,7 +3,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/route_paths.dart';
@@ -13,6 +13,8 @@ import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
+
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -45,26 +47,46 @@ void main() {
       AppEventBus.reset();
     });
 
-    testWidgets('OpenDialogEvent opens registered dialog', (tester) async {
-      handler.bind();
-
+    Future<void> pumpEmitButton(
+      WidgetTester tester, {
+      required String label,
+      required VoidCallback onPressed,
+      RouteFactory? onGenerateRoute,
+      Widget? home,
+      List<Override> overrides = const <Override>[],
+    }) async {
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShell(
           navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () =>
-                  bus.emit(const OpenDialogEvent('test_dialog', {'id': '42'})),
-              child: const Text('open'),
-            ),
-          ),
+          onGenerateRoute: onGenerateRoute,
+          overrides: overrides,
+          child: home ??
+              Builder(
+                builder: (ctx) => TextButton(
+                  onPressed: onPressed,
+                  child: Text(label),
+                ),
+              ),
         ),
       );
       await tester.pumpAndSettle();
+    }
 
-      await tester.tap(find.text('open'));
+    Future<void> tapLabel(WidgetTester tester, String label) async {
+      await tester.tap(find.text(label));
       await tester.pumpAndSettle();
+    }
 
+    testWidgets('OpenDialogEvent opens registered dialog', (tester) async {
+      handler.bind();
+      await pumpEmitButton(
+        tester,
+        label: 'open',
+        onPressed: () =>
+            bus.emit(const OpenDialogEvent('test_dialog', {'id': '42'})),
+      );
+      await tapLabel(tester, 'open');
       expect(find.text('dialog:42'), findsOneWidget);
     });
 
@@ -72,55 +94,32 @@ void main() {
       tester,
     ) async {
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () =>
-                  bus.emit(const OpenDialogEvent('unknown_dialog')),
-              child: const Text('open'),
-            ),
-          ),
-        ),
+      await pumpEmitButton(
+        tester,
+        label: 'open',
+        onPressed: () => bus.emit(const OpenDialogEvent('unknown_dialog')),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'open');
       expect(find.byType(AlertDialog), findsNothing);
     });
 
     testWidgets('NavigateToRouteEvent calls pushNamed', (tester) async {
       handler.bind();
       final pushed = <RouteSettings?>[];
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          onGenerateRoute: (settings) {
-            pushed.add(settings);
-            return MaterialPageRoute(
-              settings: settings,
-              builder: (_) => const Text('target'),
-            );
-          },
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () =>
-                  bus.emit(const NavigateToRouteEvent('/target', {'x': 1})),
-              child: const Text('navigate'),
-            ),
-          ),
-        ),
+      await pumpEmitButton(
+        tester,
+        label: 'navigate',
+        onGenerateRoute: (settings) {
+          pushed.add(settings);
+          return MaterialPageRoute(
+            settings: settings,
+            builder: (_) => const Text('target'),
+          );
+        },
+        onPressed: () =>
+            bus.emit(const NavigateToRouteEvent('/target', {'x': 1})),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('navigate'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'navigate');
       expect(pushed, hasLength(1));
       expect(pushed[0]?.name, '/target');
       expect(pushed[0]?.arguments, {'x': 1});
@@ -129,11 +128,10 @@ void main() {
     testWidgets('PopNavigationEvent calls nav.pop', (tester) async {
       handler.bind();
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShell(
           navigatorKey: navKey,
-          navigatorObservers: [],
-          initialRoute: '/base',
           onGenerateRoute: (settings) {
             if (settings.name == '/overlay') {
               return MaterialPageRoute(
@@ -146,6 +144,7 @@ void main() {
               builder: (ctx) => const Text('base_route'),
             );
           },
+          child: const Text('base_route'),
         ),
       );
       await tester.pumpAndSettle();
@@ -169,33 +168,25 @@ void main() {
       'with five action buttons',
       (tester) async {
         handler.bind();
-
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              turnResolutionBlockingProvider.overrideWith(
-                () => StateToggleNotifier(false),
-              ),
-            ],
-            child: MaterialApp(
-              navigatorKey: navKey,
-              home: Scaffold(
-                body: Builder(
-                  builder: (context) => TextButton(
-                    onPressed: () =>
-                        bus.emit(const OpenPauseMenuPanelEvent()),
-                    child: const Text('open'),
-                  ),
-                ),
+        await pumpEmitButton(
+          tester,
+          label: 'open',
+          overrides: [
+            turnResolutionBlockingProvider.overrideWith(
+              () => StateToggleNotifier(false),
+            ),
+          ],
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => bus.emit(const OpenPauseMenuPanelEvent()),
+                child: const Text('open'),
               ),
             ),
           ),
+          onPressed: () {},
         );
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-
+        await tapLabel(tester, 'open');
         expect(find.byType(PauseMenuPanel), findsOneWidget);
         expect(find.text('Resume'), findsOneWidget);
         expect(find.text('Save Game'), findsOneWidget);
@@ -211,47 +202,25 @@ void main() {
       tester,
     ) async {
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () => bus.emit(
-                const OpenPanelEvent('test_panel', {'id': 'panel42'}),
-              ),
-              child: const Text('open panel'),
-            ),
-          ),
+      await pumpEmitButton(
+        tester,
+        label: 'open panel',
+        onPressed: () => bus.emit(
+          const OpenPanelEvent('test_panel', {'id': 'panel42'}),
         ),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('open panel'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'open panel');
       expect(find.text('panel:panel42'), findsOneWidget);
     });
 
     testWidgets('OpenPanelEvent with unknown id shows nothing', (tester) async {
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () => bus.emit(const OpenPanelEvent('unknown_panel')),
-              child: const Text('open'),
-            ),
-          ),
-        ),
+      await pumpEmitButton(
+        tester,
+        label: 'open',
+        onPressed: () => bus.emit(const OpenPanelEvent('unknown_panel')),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'open');
       expect(find.text('open'), findsOneWidget);
     });
 
@@ -259,25 +228,14 @@ void main() {
       tester,
     ) async {
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () => bus.emit(
-                const ConfirmDialogEvent(title: 'Confirm', message: 'Proceed?'),
-              ),
-              child: const Text('trigger'),
-            ),
-          ),
+      await pumpEmitButton(
+        tester,
+        label: 'trigger',
+        onPressed: () => bus.emit(
+          const ConfirmDialogEvent(title: 'Confirm', message: 'Proceed?'),
         ),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('trigger'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'trigger');
       expect(find.text('Confirm'), findsOneWidget);
       expect(find.text('Proceed?'), findsOneWidget);
       expect(find.text('OK'), findsOneWidget);
@@ -289,48 +247,38 @@ void main() {
       (tester) async {
         handler.bind();
         bool? dialogResult;
-
-        await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navKey,
-            home: Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: ctx,
-                    builder: (sheetCtx) => TextButton(
-                      onPressed: () {
-                        bus.emit(
-                          ConfirmDialogEvent(
-                            title: 'Sheet confirm',
-                            message: 'From bottom sheet',
-                            onResult: (b) => dialogResult = b,
-                          ),
-                        );
-                      },
-                      child: const Text('emit from sheet'),
-                    ),
-                  );
-                },
-                child: const Text('open sheet'),
-              ),
+        await pumpEmitButton(
+          tester,
+          label: 'open sheet',
+          onPressed: () {},
+          home: Builder(
+            builder: (ctx) => TextButton(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: ctx,
+                  builder: (sheetCtx) => TextButton(
+                    onPressed: () {
+                      bus.emit(
+                        ConfirmDialogEvent(
+                          title: 'Sheet confirm',
+                          message: 'From bottom sheet',
+                          onResult: (b) => dialogResult = b,
+                        ),
+                      );
+                    },
+                    child: const Text('emit from sheet'),
+                  ),
+                );
+              },
+              child: const Text('open sheet'),
             ),
           ),
         );
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('open sheet'));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('emit from sheet'));
-        await tester.pumpAndSettle();
-
+        await tapLabel(tester, 'open sheet');
+        await tapLabel(tester, 'emit from sheet');
         expect(find.text('Sheet confirm'), findsOneWidget);
         expect(find.text('From bottom sheet'), findsOneWidget);
-
-        await tester.tap(find.text('OK'));
-        await tester.pumpAndSettle();
-
+        await tapLabel(tester, 'OK');
         expect(dialogResult, isTrue);
       },
     );
@@ -345,17 +293,16 @@ void main() {
         onShowSnackBar: (e) => received = e,
       );
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(navigatorKey: navKey, home: const Text('home')),
+      await pumpEmitButton(
+        tester,
+        label: 'home',
+        home: const Text('home'),
+        onPressed: () {},
       );
-      await tester.pumpAndSettle();
-
       bus.emit(
         const ShowSnackBarEvent(message: 'hello snack', actionLabel: 'undo'),
       );
       await tester.pumpAndSettle();
-
       expect(received?.message, 'hello snack');
       expect(received?.actionLabel, 'undo');
     });
@@ -370,25 +317,25 @@ void main() {
         onDismissOverlay: (e) => received = e,
       );
       handler.bind();
-
-      await tester.pumpWidget(
-        MaterialApp(navigatorKey: navKey, home: const Text('home')),
+      await pumpEmitButton(
+        tester,
+        label: 'home',
+        home: const Text('home'),
+        onPressed: () {},
       );
-      await tester.pumpAndSettle();
-
       bus.emit(const DismissOverlayEvent('loading_spinner'));
       await tester.pumpAndSettle();
-
       expect(received?.overlayId, 'loading_spinner');
     });
 
     testWidgets('NavigateToShellEvent pops until shell route', (tester) async {
       handler.bind();
 
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+      // RoutePaths.shell is '/' — MaterialApp.home is the shell route name.
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShell(
           navigatorKey: navKey,
-          initialRoute: RoutePaths.shell,
           onGenerateRoute: (settings) {
             if (settings.name == RoutePaths.game) {
               return MaterialPageRoute<void>(
@@ -404,6 +351,7 @@ void main() {
             }
             return null;
           },
+          child: const Text('shell_layer'),
         ),
       );
       await tester.pumpAndSettle();
@@ -424,19 +372,15 @@ void main() {
       'ClosePanelEvent then OpenDialogEvent opens dialog (handler ordering)',
       (tester) async {
         handler.bind();
-
-        await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navKey,
-            home: const Scaffold(body: Text('home')),
-          ),
+        await pumpEmitButton(
+          tester,
+          label: 'home',
+          home: const Scaffold(body: Text('home')),
+          onPressed: () {},
         );
-        await tester.pumpAndSettle();
-
         bus.emit(const ClosePanelEvent());
         bus.emit(const OpenDialogEvent('test_dialog', {'id': 'after_close'}));
         await tester.pumpAndSettle();
-
         expect(find.text('dialog:after_close'), findsOneWidget);
       },
     );
@@ -456,34 +400,20 @@ void main() {
           },
         );
         handler.bind();
-
         CombatModeChosenEvent? chosen;
         bus.on<CombatModeChosenEvent>().listen((e) => chosen = e);
-
-        await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: navKey,
-            home: Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () => bus.emit(
-                  const OpenDialogEvent('combat_mode_choice', {
-                    'provinceName': 'TestProv',
-                    'isCapitalSiege': false,
-                  }),
-                ),
-                child: const Text('open'),
-              ),
-            ),
+        await pumpEmitButton(
+          tester,
+          label: 'open',
+          onPressed: () => bus.emit(
+            const OpenDialogEvent('combat_mode_choice', {
+              'provinceName': 'TestProv',
+              'isCapitalSiege': false,
+            }),
           ),
         );
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('open'));
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.text('Quick Battle'));
-        await tester.pumpAndSettle();
-
+        await tapLabel(tester, 'open');
+        await tapLabel(tester, 'Quick Battle');
         expect(chosen?.mode, CombatMode.quickBattle);
         expect(find.text('Combat at TestProv'), findsNothing);
       },
@@ -504,32 +434,20 @@ void main() {
         },
       );
       handler.bind();
-
       final qb = QuickBattleResult(
         winner: QuickBattleWinner.attacker,
         attackerCasualties: const [],
         defenderCasualties: const [],
         provinceFlips: false,
       );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navKey,
-          home: Builder(
-            builder: (ctx) => TextButton(
-              onPressed: () => bus.emit(
-                OpenDialogEvent('quick_battle_result', {'result': qb}),
-              ),
-              child: const Text('open'),
-            ),
-          ),
+      await pumpEmitButton(
+        tester,
+        label: 'open',
+        onPressed: () => bus.emit(
+          OpenDialogEvent('quick_battle_result', {'result': qb}),
         ),
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('open'));
-      await tester.pumpAndSettle();
-
+      await tapLabel(tester, 'open');
       expect(find.textContaining('Battle Result'), findsOneWidget);
       expect(find.textContaining('A wins'), findsOneWidget);
     });

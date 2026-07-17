@@ -180,7 +180,7 @@ Game _applyDeclareWarOrder({
     warStateRelationUpdater(gpId, targetId, turn),
   );
   var nextGame = game.copyWith(
-    diplomacyRelations: relationsIndex.toList(),
+    diplomacyRelations: committedRelations(relationsIndex),
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
   nextGame = cancelSubsidiesBetweenGps(
@@ -294,7 +294,7 @@ Game _applyOfferPeaceOrder({
     peaceRelationUpdater(gpId, targetId, turn),
   );
   var nextGame = game.copyWith(
-    diplomacyRelations: relationsIndex.toList(),
+    diplomacyRelations: committedRelations(relationsIndex),
     dossierEvidenceEntries: [...game.dossierEvidenceEntries, ...evidence],
   );
   nextGame = logDiplomaticEvent(

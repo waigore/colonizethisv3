@@ -5,6 +5,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Tests for the in-game shell exit-to-main-menu confirmation dialog.
 ///
 /// SPEC: `SPEC/ui/in-game-shell-narrow.md` § Android back confirm. The
@@ -16,22 +18,33 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
-  Future<void> showDialogUnderTest(WidgetTester tester) async {
-    final navigatorKey = GlobalKey<NavigatorState>();
-    await tester.pumpWidget(
-      MaterialApp(
-        navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () => showExitToMainMenuConfirmDialog(context),
-                child: const Text('open'),
-              ),
+  Widget hostApp({
+    required GlobalKey<NavigatorState> navigatorKey,
+    required Future<void> Function(BuildContext) onOpen,
+  }) {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
+      navigatorKey: navigatorKey,
+      child: Scaffold(
+        body: Builder(
+          builder: (BuildContext context) => Center(
+            child: ElevatedButton(
+              key: const Key('open-dialog'),
+              onPressed: () => onOpen(context),
+              child: const Text('open'),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> showDialogUnderTest(WidgetTester tester) async {
+    final navigatorKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      hostApp(
+        navigatorKey: navigatorKey,
+        onOpen: (context) => showExitToMainMenuConfirmDialog(context),
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -144,21 +157,11 @@ void main() {
     bool? result;
     final navigatorKey = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
-      MaterialApp(
+      hostApp(
         navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showExitToMainMenuConfirmDialog(context);
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+        onOpen: (context) async {
+          result = await showExitToMainMenuConfirmDialog(context);
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -172,21 +175,11 @@ void main() {
     bool? result;
     final navigatorKey = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
-      MaterialApp(
+      hostApp(
         navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showExitToMainMenuConfirmDialog(context);
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+        onOpen: (context) async {
+          result = await showExitToMainMenuConfirmDialog(context);
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));
@@ -202,21 +195,11 @@ void main() {
     bool? result;
     final navigatorKey = GlobalKey<NavigatorState>();
     await tester.pumpWidget(
-      MaterialApp(
+      hostApp(
         navigatorKey: navigatorKey,
-        home: Scaffold(
-          body: Builder(
-            builder: (BuildContext context) => Center(
-              child: ElevatedButton(
-                key: const Key('open-dialog'),
-                onPressed: () async {
-                  result = await showExitToMainMenuConfirmDialog(context);
-                },
-                child: const Text('open'),
-              ),
-            ),
-          ),
-        ),
+        onOpen: (context) async {
+          result = await showExitToMainMenuConfirmDialog(context);
+        },
       ),
     );
     await tester.tap(find.byKey(const Key('open-dialog')));

@@ -17,8 +17,33 @@ import 'package:hive/hive.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 
+import 'support/app_shell_harness.dart';
+
 TurnNewsDigest _emptyDigestForTurn(int resolvedTurn) =>
     TurnNewsDigest(resolvedTurnNumber: resolvedTurn, lines: const []);
+
+Game _ordersGame({required String id, int turnNumber = 1}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: const RegionData(),
+      newWorld: const RegionData(),
+    ),
+    players: const [
+      Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
+    ],
+  );
+}
+
+Game _advanceTurn(Game game, int turnNumber, {VictoryState? victory}) {
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+    ),
+    victory: victory,
+  );
+}
 
 void main() {
   suppressLogsForTests();
@@ -44,6 +69,43 @@ void main() {
     );
   }
 
+  AppEventBus createBus() {
+    final bus = AppEventBus.create();
+    addTearDown(bus.dispose);
+    return bus;
+  }
+
+  Future<void> pumpListener(
+    WidgetTester tester, {
+    required Game game,
+    required AppEventBus bus,
+    Widget child = const SizedBox.shrink(),
+  }) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    await tester.pumpWidget(
+      buildAppShell(
+        overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameSaveAdapterProvider.overrideWith((ref) => adapter),
+          gameServiceProvider.overrideWith((ref) {
+            final svc = GameService(gamesBox, adapter);
+            svc.eventBus = bus;
+            return svc;
+          }),
+          appEventBusProvider.overrideWith((ref) => bus),
+          currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+        ],
+        child: GameToUIBusListener(gameId: game.id, child: child),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pumpTwice(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump();
+  }
+
   setUpAll(() async {
     Hive.init('./.dart_tool/test_hive_game_to_ui');
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
@@ -54,60 +116,28 @@ void main() {
     'Given GameToUIBusListener for current game When TurnResolutionCompleteEvent '
     'Then currentGameProvider reloads from GameService',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_bus_1',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
-      final updated = game.copyWith(
-        worldState: game.worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        ),
-      );
+      final game = _ordersGame(id: 'g_bus_1');
+      final updated = _advanceTurn(game, 2);
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
 
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: MaterialApp(
-            home: GameToUIBusListener(
-              gameId: game.id,
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final g = ref.watch(currentGameProvider);
-                  return Scaffold(
-                    body: Text(
-                      'turn:${g?.worldState.turnState.turnNumber ?? -1}',
-                    ),
-                  );
-                },
+      final bus = createBus();
+      await pumpListener(
+        tester,
+        game: game,
+        bus: bus,
+        child: Consumer(
+          builder: (context, ref, _) {
+            final g = ref.watch(currentGameProvider);
+            return Scaffold(
+              body: Text(
+                'turn:${g?.worldState.turnState.turnNumber ?? -1}',
               ),
-            ),
-          ),
+            );
+          },
         ),
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('turn:1'), findsOneWidget);
 
@@ -115,8 +145,7 @@ void main() {
       bus.emit(
         const TurnResolutionCompleteEvent(gameId: 'g_bus_1', turnNumber: 2),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(find.text('turn:2'), findsOneWidget);
     },
@@ -125,55 +154,18 @@ void main() {
   testWidgets(
     'Given turn complete with digest When victory null Then emits OpenDialogEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_news_1',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
-      final updated = game.copyWith(
-        worldState: game.worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        ),
-      );
+      final game = _ordersGame(id: 'g_news_1');
+      final updated = _advanceTurn(game, 2);
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
 
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
+      final bus = createBus();
       final opens = <OpenDialogEvent>[];
       final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
       addTearDown(openSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: MaterialApp(
-            home: GameToUIBusListener(
-              gameId: game.id,
-              child: const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       adapter.save(gamesBox, updated);
       bus.emit(
@@ -183,8 +175,7 @@ void main() {
           turnNewsDigest: _emptyDigestForTurn(1),
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(opens, hasLength(1));
       expect(opens.single.dialogId, 'turn_news');
@@ -194,55 +185,18 @@ void main() {
   testWidgets(
     'Given turn complete at turn 0 with digest When processed Then does not emit OpenDialogEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_news_turn0',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
-      final updated = game.copyWith(
-        worldState: game.worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        ),
-      );
+      final game = _ordersGame(id: 'g_news_turn0', turnNumber: 0);
+      final updated = _advanceTurn(game, 1);
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
 
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
+      final bus = createBus();
       final opens = <OpenDialogEvent>[];
       final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
       addTearDown(openSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: MaterialApp(
-            home: GameToUIBusListener(
-              gameId: game.id,
-              child: const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       adapter.save(gamesBox, updated);
       bus.emit(
@@ -252,8 +206,7 @@ void main() {
           turnNewsDigest: _emptyDigestForTurn(0),
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(opens, isEmpty);
     },
@@ -262,21 +215,10 @@ void main() {
   testWidgets(
     'Given reloaded game has victory When turn complete with digest Then does not emit OpenDialogEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_news_victory',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
-      final updated = game.copyWith(
-        worldState: game.worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        ),
+      final game = _ordersGame(id: 'g_news_victory');
+      final updated = _advanceTurn(
+        game,
+        2,
         victory: const VictoryState(
           winnerPlayerId: 'p1',
           type: VictoryType.military,
@@ -287,35 +229,12 @@ void main() {
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
 
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
+      final bus = createBus();
       final opens = <OpenDialogEvent>[];
       final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
       addTearDown(openSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: MaterialApp(
-            home: GameToUIBusListener(
-              gameId: game.id,
-              child: const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       adapter.save(gamesBox, updated);
       bus.emit(
@@ -325,8 +244,7 @@ void main() {
           turnNewsDigest: _emptyDigestForTurn(1),
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(opens, isEmpty);
     },
@@ -335,55 +253,18 @@ void main() {
   testWidgets(
     'Given turn complete without digest When victory null Then does not emit OpenDialogEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_news_no_digest',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
-      final updated = game.copyWith(
-        worldState: game.worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-        ),
-      );
+      final game = _ordersGame(id: 'g_news_no_digest');
+      final updated = _advanceTurn(game, 2);
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
 
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
-
+      final bus = createBus();
       final opens = <OpenDialogEvent>[];
       final openSub = bus.on<OpenDialogEvent>().listen(opens.add);
       addTearDown(openSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: MaterialApp(
-            home: GameToUIBusListener(
-              gameId: game.id,
-              child: const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       adapter.save(gamesBox, updated);
       bus.emit(
@@ -392,8 +273,7 @@ void main() {
           turnNumber: 2,
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(opens, isEmpty);
     },
@@ -402,49 +282,17 @@ void main() {
   testWidgets(
     'Given negotiation mood input When mood changes Then emits PortraitMoodEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_bus_mood_1',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
+      final game = _ordersGame(id: 'g_bus_mood_1');
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+      final bus = createBus();
 
       final moodEvents = <PortraitMoodEvent>[];
       final moodSub = bus.portraitMoodEvents.listen(moodEvents.add);
       addTearDown(moodSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: const MaterialApp(
-            home: GameToUIBusListener(
-              gameId: 'g_bus_mood_1',
-              child: SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       bus.emit(
         const NegotiationMoodUpdateEvent(
@@ -456,8 +304,7 @@ void main() {
           durationMs: 900,
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(moodEvents, hasLength(1));
       expect(moodEvents.single.leaderId, 'ai1');
@@ -470,49 +317,17 @@ void main() {
   testWidgets(
     'Given negotiation mood input When mood does not change Then emits no PortraitMoodEvent',
     (WidgetTester tester) async {
-      final game = Game(
-        id: 'g_bus_mood_2',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'Human', isHuman: true, treasury: 0),
-        ],
-      );
+      final game = _ordersGame(id: 'g_bus_mood_2');
 
       adapter.save(gamesBox, game);
       saveRequiredMapDataForGame(game.id);
-      final bus = AppEventBus.create();
-      addTearDown(bus.dispose);
+      final bus = createBus();
 
       final moodEvents = <PortraitMoodEvent>[];
       final moodSub = bus.portraitMoodEvents.listen(moodEvents.add);
       addTearDown(moodSub.cancel);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            gamesBoxProvider.overrideWith((ref) => gamesBox),
-            gameSaveAdapterProvider.overrideWith((ref) => adapter),
-            gameServiceProvider.overrideWith((ref) {
-              final svc = GameService(gamesBox, adapter);
-              svc.eventBus = bus;
-              return svc;
-            }),
-            appEventBusProvider.overrideWith((ref) => bus),
-            currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-          ],
-          child: const MaterialApp(
-            home: GameToUIBusListener(
-              gameId: 'g_bus_mood_2',
-              child: SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpListener(tester, game: game, bus: bus);
 
       bus.emit(
         const NegotiationMoodUpdateEvent(
@@ -524,8 +339,7 @@ void main() {
           durationMs: 900,
         ),
       );
-      await tester.pump();
-      await tester.pump();
+      await pumpTwice(tester);
 
       expect(moodEvents, isEmpty);
     },

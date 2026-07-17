@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 /// Tests for the in-game shell floating players bar.
@@ -62,8 +63,8 @@ void main() {
     ct_models.Game game, {
     String? highlightPlayerId,
   }) {
-    return MaterialApp(
-      home: Scaffold(
+    return buildAppShell(
+      child: Scaffold(
         body: SizedBox(
           width: 600,
           height: 400,

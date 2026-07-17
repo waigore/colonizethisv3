@@ -93,9 +93,7 @@ void main() {
   group('runInitGame advanced start units slice', () {
     test('turns50 locked profile applies tier civilians regiments and galleon', () {
       final result = runInitGame(
-        config: GameSetupConfig(
-          advancedStart: AdvancedStartType.turns50,
-        ),
+        config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
         options: defaultInitOptions,
       );
       final game = result.game;
@@ -126,9 +124,7 @@ void main() {
 
     test('turns50 locked profile reveals NW tiles for each GP', () {
       final result = runInitGame(
-        config: GameSetupConfig(
-          advancedStart: AdvancedStartType.turns50,
-        ),
+        config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
         options: defaultInitOptions,
       );
       final game = result.game;
@@ -143,9 +139,7 @@ void main() {
 
     test('turns100 locked profile applies rail builder and six galleons', () {
       final result = runInitGame(
-        config: GameSetupConfig(
-          advancedStart: AdvancedStartType.turns100,
-        ),
+        config: configWithOverrides(advancedStart: AdvancedStartType.turns100),
         options: defaultInitOptions,
       );
       final game = result.game;
@@ -169,7 +163,7 @@ void main() {
   group('runInitGame advanced start acceptance criteria', () {
     test('turns50 locked profile satisfies tier economy and world state', () {
       final game = runInitGame(
-        config: GameSetupConfig(
+        config: configWithOverrides(
           seed: 42,
           advancedStart: AdvancedStartType.turns50,
         ),
@@ -201,7 +195,7 @@ void main() {
 
     test('turns100 locked profile satisfies colonization and tier economy', () {
       final game = runInitGame(
-        config: GameSetupConfig(
+        config: configWithOverrides(
           seed: 42,
           advancedStart: AdvancedStartType.turns100,
         ),

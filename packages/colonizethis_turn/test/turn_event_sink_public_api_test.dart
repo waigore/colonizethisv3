@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 /// Public-API coverage for the Theme B sink migration (Refs #3701): the four
 /// public resolver entry points and [TurnResolverConfig] thread a single
@@ -79,14 +80,12 @@ void main() {
   group('public resolver entry points thread a TurnEventSink', () {
     test('resolveTurnForGame forwards dialogue through the sink', () {
       final dialogue = <DialogueEvent>[];
-      final result = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final result = resolveTurnComplete(
           game: buildGame(),
           topology: buildTopology(),
           orders: const Orders(),
           eventSink: TurnEventSink(onDialogue: dialogue.add),
-        ),
-      );
+        );
 
       // Behaviour-preserving: the turn still resolves to completion. Dialogue
       // delivery is exercised here via the sink (vs. the removed trio param);
@@ -112,21 +111,17 @@ void main() {
     );
 
     test('omitting eventSink resolves identically (no events misrouted)', () {
-      final withoutSink = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final withoutSink = resolveTurnComplete(
           game: buildGame(),
           topology: buildTopology(),
           orders: const Orders(),
-        ),
-      );
-      final withNoOpSink = requireTurnResolutionComplete(
-        resolveTurnForGame(
+        );
+      final withNoOpSink = resolveTurnComplete(
           game: buildGame(),
           topology: buildTopology(),
           orders: const Orders(),
           eventSink: const TurnEventSink(),
-        ),
-      );
+        );
 
       expect(
         withNoOpSink.worldState.turnState.turnNumber,

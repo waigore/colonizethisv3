@@ -1,19 +1,17 @@
 import 'player_view.dart';
+import 'visibility_map_helpers.dart';
 
 /// For tiles in a province whose spy-reveal timer just reached 0: if stored
 /// visibility is [VisibilityLevel.fullyVisible], set it to [VisibilityLevel.fogged];
 /// leave `unknown` and `fogged` unchanged. SPEC/program/fog-and-exploration-resolution.md
 /// (Spy fog decay).
+///
+/// Thin wrapper over [downgradeFullyVisibleToFogged] (Refs #4038).
 void downgradeFullyVisibleTilesToFoggedAfterSpyTimerExpiry(
   Map<String, String> vis,
   List<String> tileKeys,
 ) {
-  for (final tk in tileKeys) {
-    final cur = vis[tk];
-    if (cur == VisibilityLevel.fullyVisible.name) {
-      vis[tk] = VisibilityLevel.fogged.name;
-    }
-  }
+  downgradeFullyVisibleToFogged(vis, tileKeys);
 }
 
 /// One end-of-turn decay step for a single player's spy-reveal timers.

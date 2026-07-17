@@ -49,32 +49,31 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 
   final discovered = discoveredTribeIdsForFirstContact(view: view, game: game);
   final turn = game.worldState.turnState.turnNumber;
-  // Batched per-phase relation index (amortized O(1) per upsert) so repeated
-  // first-contact inserts across discovered tribes don't rebuild the whole
-  // pair-key index each iteration (Refs #3562 AC5).
-  final relationsIndex = RelationUpsertIndex(game.diplomacyRelations);
   final newlyContacted = <String>[];
 
-  for (final factionId in discovered) {
-    if (!tribeIds.contains(factionId)) continue;
-    if (getRelation(game, gpId, factionId) != null) continue;
+  // Relations-only single-pass commit via withRelationUpserts (Refs #4037).
+  final next = withRelationUpserts(game, (relationsIndex) {
+    for (final factionId in discovered) {
+      if (!tribeIds.contains(factionId)) continue;
+      if (getRelation(game, gpId, factionId) != null) continue;
 
-    final ids = canonicalPairIds(gpId, factionId);
-    relationsIndex.upsert(
-      gpId,
-      factionId,
-      (_) => DiplomacyRelation(
-        factionId1: ids.id1,
-        factionId2: ids.id2,
-        score: relationScoreNeutral,
-        level: RelationLevel.neutral,
-        state: RelationState.atPeace,
-        sinceTurn: turn,
-        lastInteractionTurn: turn,
-      ),
-    );
-    newlyContacted.add(factionId);
-  }
+      final ids = canonicalPairIds(gpId, factionId);
+      relationsIndex.upsert(
+        gpId,
+        factionId,
+        (_) => DiplomacyRelation(
+          factionId1: ids.id1,
+          factionId2: ids.id2,
+          score: relationScoreNeutral,
+          level: RelationLevel.neutral,
+          state: RelationState.atPeace,
+          sinceTurn: turn,
+          lastInteractionTurn: turn,
+        ),
+      );
+      newlyContacted.add(factionId);
+    }
+  });
 
   if (newlyContacted.isEmpty) {
     return GpTribeFirstContactResult(
@@ -85,7 +84,7 @@ GpTribeFirstContactResult applyGpTribeFirstContactRelations({
 
   newlyContacted.sort();
   return GpTribeFirstContactResult(
-    game: game.copyWith(diplomacyRelations: relationsIndex.toList()),
+    game: next,
     newlyContactedTribeIds: newlyContacted,
   );
 }

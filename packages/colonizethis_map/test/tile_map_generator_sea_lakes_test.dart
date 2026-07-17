@@ -1,6 +1,5 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_map/src/tile_map_directions.dart';
 import 'package:colonizethis_map/src/tile_map_topology_helpers.dart';
 
@@ -11,13 +10,16 @@ void main() {
     test(
       'no enclosed sea after fill-lakes: all sea connected to grid edge',
       () {
-        final (result, _) = TileMapGenerator(
+        final (result, _) = runTileMapGeneration(
           params: genParams(
             width: 30,
             height: 30,
             seed: 11,
           ),
-        ).generate(numProvinces: 1, numContinents: 1, regionId: 'r1');
+          numProvinces: 1,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         final seaCells = <(int, int)>{};
         for (var y = 0; y < result.height; y++) {
           for (var x = 0; x < result.width; x++) {
@@ -64,13 +66,16 @@ void main() {
       'generated map has at least one sea zone on grid boundary (warp zone placement)',
       () {
         // SPEC/game/map-topology.md § Warp zones: placement uses sea zones on the map edge.
-        final (result, topology) = TileMapGenerator(
+        final (result, topology) = runTileMapGeneration(
           params: genParams(
             width: 24,
             height: 24,
             seed: 7,
           ),
-        ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+          numProvinces: 2,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         final seaZoneIds = seaZoneIdsFromTopology(topology);
         if (seaZoneIds.isEmpty) return;
         final boundaryIds = <String>{};
@@ -95,9 +100,12 @@ void main() {
     );
 
     test('Pass 11 subdivides sea: result has sea zone ids s1, s2, ...', () {
-      final (result, topology) = TileMapGenerator(
+      final (result, topology) = runTileMapGeneration(
         params: genParams(width: 24, height: 24, seed: 7),
-      ).generate(numProvinces: 2, numContinents: 1, regionId: 'r1');
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+      );
       final seaNodes = seaZoneIdsFromTopology(topology);
       expect(seaNodes, isNotEmpty);
       for (final id in seaNodes) {
@@ -116,7 +124,7 @@ void main() {
     test(
       'Pass 11 sea zone size cap: subdivision produces many zones when sea is large',
       () {
-        final (result, topology) = TileMapGenerator(
+        final (result, topology) = runTileMapGeneration(
           params: genParams(
             width: 40,
             height: 40,
@@ -124,7 +132,10 @@ void main() {
             seaFraction: 0.65,
             maxSeaZoneFraction: 0.05,
           ),
-        ).generate(numProvinces: 4, numContinents: 1, regionId: 'r1');
+          numProvinces: 4,
+          numContinents: 1,
+          regionId: 'r1',
+        );
         var totalSea = 0;
         for (var y = 0; y < result.height; y++) {
           for (var x = 0; x < result.width; x++) {
@@ -145,9 +156,8 @@ void main() {
 
     test('Pass 11 log mentions sea zones and cap', () {
       final logLines = <String>[];
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(width: 24, height: 24, seed: 7),
-      ).generate(
         numProvinces: 2,
         numContinents: 1,
         regionId: 'r1',
@@ -161,13 +171,13 @@ void main() {
 
     test('Pass 4 log mentions lakes and moats', () {
       final logLines = <String>[];
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(width: 10, height: 10, seed: 1),
-      ).generate(
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
         onLog: (msg) => logLines.add(msg),
+        omitResourceRules: true,
       );
       expect(logLines.any((s) => s.contains('Pass 4')), isTrue);
       expect(
@@ -183,18 +193,18 @@ void main() {
 
     test('skipFillLakes true logs Fill lakes skipped', () {
       final logLines = <String>[];
-      TileMapGenerator(
+      runTileMapGeneration(
         params: genParams(
           width: 10,
           height: 10,
           seed: 1,
           skipFillLakes: true,
         ),
-      ).generate(
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
         onLog: (msg) => logLines.add(msg),
+        omitResourceRules: true,
       );
       expect(
         logLines.any((s) => s.contains('Fill lakes') && s.contains('skipped')),
@@ -204,21 +214,19 @@ void main() {
 
     test('borderNoise greater than zero applies border noise', () {
       final logLines = <String>[];
-      final (result, _) =
-          TileMapGenerator(
-            params: genParams(
-              width: 20,
-              height: 20,
-              seed: 2,
-              borderNoise: 0.5,
-            ),
-          ).generate(
-            numProvinces: 2,
-            numContinents: 1,
-            regionId: 'r1',
-            resourceRules: ResourceRules.defaultRules,
-            onLog: (msg) => logLines.add(msg),
-          );
+      final (result, _) = runTileMapGeneration(
+        params: genParams(
+          width: 20,
+          height: 20,
+          seed: 2,
+          borderNoise: 0.5,
+        ),
+        numProvinces: 2,
+        numContinents: 1,
+        regionId: 'r1',
+        resourceRules: ResourceRules.defaultRules,
+        onLog: (msg) => logLines.add(msg),
+      );
       expect(result.terrainGrid, isNotNull);
       expect(
         logLines.any((s) => s.contains('Border noise') || s.contains('Pass 5')),

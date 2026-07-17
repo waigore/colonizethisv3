@@ -318,13 +318,14 @@ void main() {
       );
       expect(
         source.contains('EditorialMonoclePalette.dialogScrim') ||
-            source.contains('CtFullScreenDialogueShell'),
+            source.contains('CtFullScreenDialogueShell') ||
+            source.contains('buildTitledDialogueChrome'),
         isTrue,
         reason:
-            'Refs #2867 S10 / #2914 S2: intro overlay scrim must resolve to '
-            'the canonical EditorialMonoclePalette.dialogScrim token, either '
-            'directly or via the shared CtFullScreenDialogueShell wrapper '
-            '(which paints that token).',
+            'Refs #2867 S10 / #2914 S2 / #4018: intro overlay scrim must resolve '
+            'to the canonical EditorialMonoclePalette.dialogScrim token, either '
+            'directly, via CtFullScreenDialogueShell, or via '
+            'buildTitledDialogueChrome (which wraps that shell).',
       );
       final shellSource = File(
         'lib/widgets/ct_full_screen_dialogue_shell.dart',

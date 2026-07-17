@@ -86,7 +86,7 @@ import 'turn_resolution_helpers.dart';
 List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
   final out = <TurnNewsProvinceCapturedLine>[];
   for (final prov in allProvinces(end.worldState)) {
-    final pid = _fullProvinceId(prov);
+    final pid = prefixedProvinceId(prov);
     final before = _ownerForProvince(start, pid);
     final after = _ownerForProvince(end, pid);
     if (isProvinceOwnershipCaptured(before, after)) {
@@ -106,9 +106,6 @@ List<TurnNewsProvinceCapturedLine> _provinceCaptureLines(Game start, Game end) {
 String? _ownerForProvince(Game g, String fullProvinceId) {
   return g.worldState.tryGetProvince(fullProvinceId)?.ownerId;
 }
-
-String _fullProvinceId(Province p) =>
-    p.id.contains('|') ? p.id : ProvinceId.full(p.regionId, p.id);
 
 Map<String, RelationState> _pairToState(Game g) {
   final m = <String, RelationState>{};
@@ -199,7 +196,7 @@ List<TurnNewsProvinceDiscoveredLine> _provinceDiscoveryLines({
   final out = <TurnNewsProvinceDiscoveredLine>[];
   final seen = <String>{};
   for (final p in allProvinces(end.worldState)) {
-    final pid = _fullProvinceId(p);
+    final pid = prefixedProvinceId(p);
     if (seen.contains(pid)) continue;
     seen.add(pid);
     if (readDone.contains(pid)) continue;

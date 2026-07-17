@@ -51,7 +51,10 @@ int runCheckAppTestNoDuplicateScaffolding(
 
   final violations = <String>[];
 
-  for (final entity in appTestDir.listSync(recursive: true, followLinks: false)) {
+  for (final entity in appTestDir.listSync(
+    recursive: true,
+    followLinks: false,
+  )) {
     if (entity is! File || !entity.path.endsWith('.dart')) {
       continue;
     }
@@ -84,12 +87,71 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedUnitsPanelPartFile(relativePath)) {
+      final visitor = _UnitsPanelInlineGameVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedNavalUnitsPanelPartFile(relativePath)) {
+      final visitor = _PanelPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+        forbiddenNames: const {'_pumpNaval', 'pumpNaval'},
+        canonicalHelper: 'pumpNavalPanel',
+        supportModule: 'naval_units_panel_test_support.dart',
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedMilitaryUnitsPanelFile(relativePath)) {
+      final visitor = _PanelPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+        forbiddenNames: const {'_pumpMilitary', 'pumpMilitary'},
+        canonicalHelper: 'pumpMilitaryPanel',
+        supportModule: 'military_units_panel_test_support.dart',
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedTechnologyPanelFile(relativePath)) {
+      final visitor = _PanelPumpCloneVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+        forbiddenNames: const {'_pumpPanel', 'pumpPanel'},
+        canonicalHelper: 'pumpTechnologyPanel',
+        supportModule: 'technology_panel_test_support.dart',
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedAppShellHostFamilyFile(relativePath)) {
+      final visitor = _InlineMaterialAppVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
+    if (_isGovernedDebugHandlerFile(relativePath)) {
+      final visitor = _DebugHandlerLocalGameFactoryVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, or trade-screen host scaffolding found.',
+      'widgetbook use-case, trade-screen host, units-panel Game, naval/military/'
+      'technology pump, panel MaterialApp, or debug-handler Game scaffolding '
+      'found.',
     );
     return 0;
   }
@@ -108,7 +170,24 @@ int runCheckAppTestNoDuplicateScaffolding(
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/support/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
-    'app/test/support/trade_screen_test_support.dart.',
+    'app/test/support/trade_screen_test_support.dart. '
+    'Units-panel: use shared factories in '
+    'civilian_units_panel_test_support.dart / '
+    'military_units_panel_test_support.dart / '
+    'naval_units_panel_test_support.dart / units_panel_test_shared.dart. '
+    'Naval part pumps: use pumpNavalPanel from '
+    'naval_units_panel_test_support.dart. '
+    'Military panel pumps: use pumpMilitaryPanel from '
+    'military_units_panel_test_support.dart. '
+    'Technology panel pumps: use pumpTechnologyPanel from '
+    'technology_panel_test_support.dart. '
+    'Production/naval/civilian/narrow-overlay/technology hosts: use '
+    'buildProductionPanel / buildNavalPanel / buildCivilianPanel / '
+    'buildMilitaryPanel / buildTechnologyPanel / '
+    'buildAppShell (no inline MaterialApp). '
+    'Debug handler suites: use buildDebugHandler* from '
+    'app/test/support/debug_handler_test_fixtures.dart '
+    '(no private _gameWithCapital / _gameWithPlayer / _gameWith / _buildGame).',
   );
   return 1;
 }
@@ -151,6 +230,394 @@ bool _isGovernedTradeScreenFile(String relativePath) {
     return false;
   }
   return true;
+}
+
+/// True for units-panel suites that must call shared Game factories
+/// (Refs #4021). Covers civilian/military/naval part + specialty suites that
+/// previously re-declared private `Game(` builders.
+bool _isGovernedUnitsPanelPartFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  if (!name.endsWith('_test.dart')) {
+    return false;
+  }
+  if (name.startsWith('civilian_units_panel_part') ||
+      name.startsWith('naval_units_panel_part') ||
+      name.startsWith('military_units_panel_army') ||
+      name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
+      name == 'civilian_units_panel_row_card_r30_test.dart' ||
+      name == 'naval_units_panel_mockup_fidelity_test.dart') {
+    return true;
+  }
+  return false;
+}
+
+/// True for `naval_units_panel_part*_test.dart` — must call shared
+/// [pumpNavalPanel] (Refs #4035).
+bool _isGovernedNavalUnitsPanelPartFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name.startsWith('naval_units_panel_part') &&
+      name.endsWith('_test.dart');
+}
+
+/// True for military panel suites that must call shared [pumpMilitaryPanel]
+/// (Refs #4035).
+bool _isGovernedMilitaryUnitsPanelFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
+      name == 'military_units_panel_army_test.dart';
+}
+
+/// True for technology panel suites that must call shared
+/// [pumpTechnologyPanel] (Refs #4035).
+bool _isGovernedTechnologyPanelFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name == 'technology_panel_test.dart' ||
+      name == 'technology_panel_interaction_test.dart' ||
+      name == 'technology_panel_funding_toggles_test.dart' ||
+      name == 'technology_panel_choose_tech_dialog_test.dart' ||
+      name == 'technology_panel_slot_occupancy_test.dart' ||
+      name == 'technology_panel_dark_chrome_test.dart';
+}
+
+/// True for panel-host families that must compose `buildAppShell` /
+/// `buildProductionPanel` / `buildNavalPanel` instead of an inline
+/// `MaterialApp` (Refs #4035). Filename-scoped; shrink-only. Includes
+/// production specialty hosts (cotton-weaving lock, available grid, labour
+/// section / step-surface / expected-lines mirror, allocation row chrome /
+/// buttons, icons), military panel suites, technology panel suites that
+/// already compose `buildTechnologyPanel` / `pumpTechnologyPanel`, train
+/// dialog suites migrated onto `buildAppShell`, unit-order dialog suites
+/// (`split_army` / `split_fleet` / `move_fleet` / `transfer_to_home_fleet`),
+/// commodity-breakdown dialog suites
+/// (`production_commodity_breakdown_dialog_spec` /
+/// `production_commodity_breakdown_dialog_wide_full_width`), move-dialogs
+/// specs part suites, `game_map_options_dialog_test`, next-turn / turn-news
+/// dialog suites, pause-menu / side-menu spec suites, save/load dialog
+/// suites (`save_game_name_dialog` / `load_game_list_dialog`), exit-confirm /
+/// turn-resolution-processing dialog suites, `diplomacy_dialogs_test`, and
+/// dialogue-overlay suites (`tribe_first_contact_overlay`,
+/// `call_to_arms_dialogue_overlay_dark_chrome`, `overture_dialogue_overlay`,
+/// `overture_dialogue_intro`, `intervention_dialogue_overlay`,
+/// `dialogue_overlays_specs_part*`), victory overlay suites,
+/// `debug_console_overlay_panel_test`, and province-overlay suites
+/// (`province_overlay_test`, `province_overlay_header_l10n_test`,
+/// `province_overlay_consulate_gate_tooltip_test`,
+/// `province_overlay_fully_unrevealed_sea_zone_structure_test`,
+/// `province_overlay_tile_inline_action_non_clickable_test`,
+/// `province_overlay_section_label_material_fallback_guard_test`). Also
+/// province-sea-zone overlay suites (`province_sea_zone_overlay_detail_paths`,
+/// `province_sea_zone_overlay_naval_port_pending_omission`,
+/// `province_sea_zone_resource_labels`), and catalog widget unit hosts
+/// (`base_units_panel`, `units_combine_header_actions`,
+/// `units_panel_shared_widgets`, `unit_panels_viewport_sizing`,
+/// `unit_panels_widgetbook_dark_chrome`), units sheet/entity card hosts
+/// (`units_panel_sheet_surface`, `units_entity_card`), catalog chrome
+/// (`ct_action_text_button`, `relation_meter`), in-game shell chrome
+/// (`game_top_bar`, `game_tab_bar`, `player_turn_event_feed_chrome`),
+/// `ct_dark_scaffold`, `ct_screen_shell`, `ct_dialog_shell`,
+/// `ct_full_screen_dialogue_shell`, `ct_game_feature_screen_shell`),
+/// `game_side_menu_test`, and catalog controls (`ct_back_button`,
+/// `ct_slider`, `ct_tab_strip`, `ct_confirm_dialog`, `ct_nine_patch_button`,
+/// `ct_resource_cell`), game-map chrome hosts (`game_map_controls`,
+/// `players_bar_toggle`, `game_map_corner_controls_dark_chrome`,
+/// `game_map_corner_controls_narrow`, `game_map_players_bar`), empire left-rail
+/// hosts (`game_map_empire_left_rail`, `game_map_empire_left_rail_chrome`,
+/// `game_map_empire_left_rail_narrow`), region minimap hosts
+/// (`game_region_minimap_widget`, `game_region_minimap_narrow`), and game-map
+/// area hosts (`game_map_area_background`, `game_map_area_event_feed`,
+/// `game_map_area_region_minimap`, `game_map_area_selection_mode`,
+/// `game_map_area_selection_mode_lightweight`,
+/// `game_map_area_shell_entry_center`), catalog/diplomacy widget hosts
+/// (`ct_choice_chip`, `ct_transfer_list`, `gp_default_map_color_swatch`,
+/// `diplomacy_standing_chips`, `diplomacy_relative_power_line`,
+/// `tech_gp_pennant_widget`), quick-battle hosts (`quick_battle_screen`,
+/// `quick_battle_deployment_view_dark_tokens`,
+/// `quick_battle_action_selector_dark_tokens`), tech-tree widget hosts
+/// (`tech_tree_widget_core`, `tech_tree_widget_palette`,
+/// `tech_tree_widget_description_batches`), player-turn-event-feed narrow hosts
+/// (`player_turn_event_feed_narrow_width`,
+/// `player_turn_event_feed_narrow_inset`), and
+/// `game_map_selection_prompt_dark_tokens`, diplomacy mockup / grant-subsidy /
+/// dialogue acceptance / production-screen integration hosts
+/// (`diplomacy_panel_mockup_fidelity`, `grant_or_subsidy_listener`,
+/// `dialogue_acceptance`, `production_screen_integration`),
+/// `ct_radius_adoption`, `province_detail_panel_slide_transition`, shell /
+/// main-menu hosts (`shell_screen`, `shell_screen_pixelart_chrome`,
+/// `main_menu_quit_chip_fidelity`, `new_game_leader_dialog_builder`,
+/// `shell_player_guarded_body`), and `map_diplomacy_panel_specs`, combat
+/// UI specs parts (`combat_ui_specs_part1` / `combat_ui_specs_part2`),
+/// `game_to_ui_bus_listener`, `app_event_handler_scope_diplomacy`,
+/// `app_event_handler_scope_civilian_work`,
+/// `turn_resolution_event_blocking`, `app_event_handler`,
+/// `game_session_clear_ui_path`, `new_game_setup_flow`,
+/// `app_wave5_shared_helpers`, `screen_spec_acceptance_part2`,
+/// `widgetbook_dlg60001_shel30001_stories`,
+/// `widgetbook_main_menu_stories_editorial_monocle`,
+/// `widgetbook_diplomacy_standing_chips_stories`,
+/// `widgetbook_diplomacy_detail_screen_stories`,
+/// `widgetbook_diplomacy_panel_empty_state`,
+/// `widgetbook_technology_slots_variants`,
+/// `widgetbook_technology_funding_preview_story`,
+/// `widgetbook_production_panel_mobile_viewport`,
+/// `widgetbook_leader_selection_dialog_mobile_viewport`,
+/// `widgetbook_map_widget_mobile_viewport`,
+/// `widgetbook_province_overlay_mobile_viewport`,
+/// `widgetbook_game_top_bar_mobile_viewport`,
+/// `widgetbook_shell_mobile_viewport`,
+/// `widgetbook_main_menu_mobile_viewport`,
+/// `widgetbook_diplomacy_panel_mobile_viewport`,
+/// `widgetbook_player_turn_event_feed_mobile_viewport`,
+/// `widgetbook_technology_screen_mobile_viewport`,
+/// `widgetbook_turn_news_mobile_viewport`, `tech_gp_pennant_goldens`,
+/// `themes_and_widgetbook`, colonial GameScreen hosts migrated onto
+/// `buildGameScreenHost` (`game_screen_branches`, `game_screen_narrow_part1`,
+/// `game_screen_narrow_part2`, `game_screen_s13_mockup_fidelity`,
+/// `game_screen_side_menu_toggle`, `game_screen_overture_pending`,
+/// `game_screen_turn_resolution_branches`, `game_screen_intervention_flow`),
+/// ShellScreen colonial frames in `shell_game_screen_specs` (via
+/// `buildAppShell(theme:)`), light-theme debug log viewer hosts
+/// (`debug_log_viewer` via `buildAppShell(theme:)`), Flame region-map
+/// suites densified onto `ctRegionMapTestHarness` (`ct_region_map_test_support`
+/// via `buildAppShellMaterialApp(applyEditorialTheme: false)`, plus
+/// `ct_region_map_widget_part2` / `part3`, `region_map_zoom_fit`, plains
+/// plantation / extraction-disc / transport-resource goldens), and e2e
+/// helper/smoke suites that pump bare MaterialApp chrome via the same
+/// helper (`e2e_helpers_barrel_part1` / `part2` / `pr2731_lifted`,
+/// `e2e_test_shared_smoke`, `e2e_low_risk_mirror_barrel_smoke`).
+bool _isGovernedAppShellHostFamilyFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  // Shared Flame region-map host (not a `*_test.dart`): must route MaterialApp
+  // through `buildAppShellMaterialApp(applyEditorialTheme: false)`.
+  if (name == 'ct_region_map_test_support.dart') {
+    return true;
+  }
+  if (!name.endsWith('_test.dart')) {
+    return false;
+  }
+  return name.startsWith('production_panel_part') ||
+      name == 'production_panel_cotton_weaving_lock_test.dart' ||
+      name == 'production_panel_available_grid_test.dart' ||
+      name == 'production_labour_section_test.dart' ||
+      name == 'production_labour_section_step_surface_test.dart' ||
+      name == 'production_labour_controls_expected_lines_test.dart' ||
+      name == 'production_allocation_row_buttons_test.dart' ||
+      name == 'production_allocation_row_chrome_test.dart' ||
+      name == 'production_panel_icons_test.dart' ||
+      name.startsWith('naval_units_panel_part') ||
+      name.startsWith('civilian_units_panel_part') ||
+      name == 'civilian_units_panel_row_card_r30_test.dart' ||
+      name == 'naval_units_panel_mockup_fidelity_test.dart' ||
+      name == 'game_map_narrow_detail_overlay_test.dart' ||
+      name == 'military_units_panel_test.dart' ||
+      name == 'military_units_panel_display_test.dart' ||
+      name == 'military_units_panel_army_test.dart' ||
+      name == 'technology_panel_test.dart' ||
+      name == 'technology_panel_interaction_test.dart' ||
+      name == 'technology_panel_funding_toggles_test.dart' ||
+      name == 'technology_panel_choose_tech_dialog_test.dart' ||
+      name == 'technology_panel_slot_occupancy_test.dart' ||
+      name == 'technology_panel_dark_chrome_test.dart' ||
+      name == 'train_dialog_chrome_test.dart' ||
+      name == 'train_dialog_base_test.dart' ||
+      name == 'train_dialog_inline_cost_tooltip_test.dart' ||
+      name == 'train_commodity_cost_dialog_base_test.dart' ||
+      name == 'train_naval_dialog_test.dart' ||
+      name == 'train_military_dialog_test.dart' ||
+      name == 'train_civilians_dialog_test.dart' ||
+      name == 'split_army_dialog_test.dart' ||
+      name == 'split_fleet_dialog_test.dart' ||
+      name == 'move_fleet_dialog_test.dart' ||
+      name == 'transfer_to_home_fleet_dialog_spec_test.dart' ||
+      name == 'production_commodity_breakdown_dialog_spec_test.dart' ||
+      name ==
+          'production_commodity_breakdown_dialog_wide_full_width_test.dart' ||
+      name.startsWith('move_dialogs_specs_part') ||
+      name == 'game_map_options_dialog_test.dart' ||
+      name == 'next_turn_confirmation_dialog_test.dart' ||
+      name == 'turn_news_dialog_test.dart' ||
+      name == 'pause_menu_panel_test.dart' ||
+      name == 'pause_menu_side_menu_specs_test.dart' ||
+      name == 'save_game_name_dialog_test.dart' ||
+      name == 'load_game_list_dialog_test.dart' ||
+      name == 'exit_confirm_dialog_test.dart' ||
+      name == 'turn_resolution_processing_dialog_test.dart' ||
+      name == 'diplomacy_dialogs_test.dart' ||
+      name == 'tribe_first_contact_overlay_test.dart' ||
+      name == 'call_to_arms_dialogue_overlay_dark_chrome_test.dart' ||
+      name == 'overture_dialogue_overlay_test.dart' ||
+      name == 'overture_dialogue_intro_test.dart' ||
+      name == 'intervention_dialogue_overlay_test.dart' ||
+      name.startsWith('dialogue_overlays_specs_part') ||
+      name == 'victory_overlay_test.dart' ||
+      name == 'victory_overlay_narrow_test.dart' ||
+      name == 'debug_console_overlay_panel_test.dart' ||
+      name == 'province_overlay_test.dart' ||
+      name == 'province_overlay_header_l10n_test.dart' ||
+      name == 'province_overlay_consulate_gate_tooltip_test.dart' ||
+      name ==
+          'province_overlay_fully_unrevealed_sea_zone_structure_test.dart' ||
+      name == 'province_overlay_tile_inline_action_non_clickable_test.dart' ||
+      name ==
+          'province_overlay_section_label_material_fallback_guard_test.dart' ||
+      name == 'province_overlay_tile_designation_test.dart' ||
+      name == 'province_overlay_sea_zone_political_dark_tokens_test.dart' ||
+      name == 'province_overlay_obfuscated_body_dark_tokens_test.dart' ||
+      name == 'province_overlay_economic_row_order_coords_test.dart' ||
+      name == 'province_overlay_economic_hover_test.dart' ||
+      name == 'province_overlay_road_rail_transport_test.dart' ||
+      name == 'province_overlay_narrow_side_rail_height_pin_test.dart' ||
+      name ==
+          'province_overlay_tile_resource_row_label_inline_dark_token_test.dart' ||
+      name == 'province_sea_zone_overlay_detail_paths_test.dart' ||
+      name ==
+          'province_sea_zone_overlay_naval_port_pending_omission_test.dart' ||
+      name == 'province_sea_zone_resource_labels_test.dart' ||
+      name == 'base_units_panel_test.dart' ||
+      name == 'units_combine_header_actions_test.dart' ||
+      name == 'units_panel_shared_widgets_test.dart' ||
+      name == 'unit_panels_viewport_sizing_test.dart' ||
+      name == 'unit_panels_widgetbook_dark_chrome_test.dart' ||
+      name == 'units_panel_sheet_surface_test.dart' ||
+      name == 'units_entity_card_test.dart' ||
+      name == 'ct_action_text_button_test.dart' ||
+      name == 'relation_meter_test.dart' ||
+      name == 'game_top_bar_test.dart' ||
+      name == 'game_tab_bar_test.dart' ||
+      name == 'player_turn_event_feed_chrome_test.dart' ||
+      name == 'game_side_menu_test.dart' ||
+      name == 'ct_dark_scaffold_test.dart' ||
+      name == 'ct_screen_shell_test.dart' ||
+      name == 'ct_dialog_shell_test.dart' ||
+      name == 'ct_full_screen_dialogue_shell_test.dart' ||
+      name == 'ct_game_feature_screen_shell_test.dart' ||
+      name == 'ct_back_button_test.dart' ||
+      name == 'ct_slider_test.dart' ||
+      name == 'ct_tab_strip_test.dart' ||
+      name == 'ct_confirm_dialog_test.dart' ||
+      name == 'ct_nine_patch_button_test.dart' ||
+      name == 'ct_resource_cell_test.dart' ||
+      name == 'game_map_controls_test.dart' ||
+      name == 'players_bar_toggle_test.dart' ||
+      name == 'game_map_corner_controls_dark_chrome_test.dart' ||
+      name == 'game_map_corner_controls_narrow_test.dart' ||
+      name == 'game_map_players_bar_test.dart' ||
+      name == 'game_map_empire_left_rail_test.dart' ||
+      name == 'game_map_empire_left_rail_chrome_test.dart' ||
+      name == 'game_map_empire_left_rail_narrow_test.dart' ||
+      name == 'game_region_minimap_widget_test.dart' ||
+      name == 'game_region_minimap_narrow_test.dart' ||
+      name == 'game_map_area_background_test.dart' ||
+      name == 'game_map_area_event_feed_test.dart' ||
+      name == 'game_map_area_region_minimap_test.dart' ||
+      name == 'game_map_area_selection_mode_test.dart' ||
+      name == 'game_map_area_selection_mode_lightweight_test.dart' ||
+      name == 'game_map_area_shell_entry_center_test.dart' ||
+      name == 'ct_choice_chip_test.dart' ||
+      name == 'ct_transfer_list_test.dart' ||
+      name == 'gp_default_map_color_swatch_test.dart' ||
+      name == 'diplomacy_standing_chips_test.dart' ||
+      name == 'diplomacy_relative_power_line_test.dart' ||
+      name == 'tech_gp_pennant_widget_test.dart' ||
+      name == 'quick_battle_screen_test.dart' ||
+      name == 'quick_battle_deployment_view_dark_tokens_test.dart' ||
+      name == 'quick_battle_action_selector_dark_tokens_test.dart' ||
+      name == 'tech_tree_widget_core_test.dart' ||
+      name == 'tech_tree_widget_palette_test.dart' ||
+      name == 'tech_tree_widget_description_batches_test.dart' ||
+      name == 'player_turn_event_feed_narrow_width_test.dart' ||
+      name == 'player_turn_event_feed_narrow_inset_test.dart' ||
+      name == 'game_map_selection_prompt_dark_tokens_test.dart' ||
+      name == 'diplomacy_panel_mockup_fidelity_test.dart' ||
+      name == 'ct_radius_adoption_test.dart' ||
+      name == 'grant_or_subsidy_listener_test.dart' ||
+      name == 'province_detail_panel_slide_transition_test.dart' ||
+      name == 'dialogue_acceptance_test.dart' ||
+      name == 'production_screen_integration_test.dart' ||
+      name == 'shell_screen_test.dart' ||
+      name == 'shell_screen_pixelart_chrome_test.dart' ||
+      name == 'main_menu_quit_chip_fidelity_test.dart' ||
+      name == 'new_game_leader_dialog_builder_test.dart' ||
+      name == 'shell_player_guarded_body_test.dart' ||
+      name == 'map_diplomacy_panel_specs_test.dart' ||
+      name == 'combat_ui_specs_part1_test.dart' ||
+      name == 'combat_ui_specs_part2_test.dart' ||
+      name == 'game_to_ui_bus_listener_test.dart' ||
+      name == 'app_event_handler_scope_diplomacy_test.dart' ||
+      name == 'app_event_handler_scope_civilian_work_test.dart' ||
+      name == 'turn_resolution_event_blocking_test.dart' ||
+      name == 'app_event_handler_test.dart' ||
+      name == 'game_session_clear_ui_path_test.dart' ||
+      name == 'new_game_setup_flow_test.dart' ||
+      name == 'app_wave5_shared_helpers_test.dart' ||
+      name == 'screen_spec_acceptance_part2_test.dart' ||
+      name == 'widgetbook_dlg60001_shel30001_stories_test.dart' ||
+      name == 'widgetbook_main_menu_stories_editorial_monocle_test.dart' ||
+      name == 'widgetbook_diplomacy_standing_chips_stories_test.dart' ||
+      name == 'widgetbook_diplomacy_detail_screen_stories_test.dart' ||
+      name == 'widgetbook_diplomacy_panel_empty_state_test.dart' ||
+      name == 'widgetbook_technology_slots_variants_test.dart' ||
+      name == 'widgetbook_technology_funding_preview_story_test.dart' ||
+      name == 'widgetbook_production_panel_mobile_viewport_test.dart' ||
+      name == 'widgetbook_leader_selection_dialog_mobile_viewport_test.dart' ||
+      name == 'widgetbook_map_widget_mobile_viewport_test.dart' ||
+      name == 'widgetbook_province_overlay_mobile_viewport_test.dart' ||
+      name == 'widgetbook_game_top_bar_mobile_viewport_test.dart' ||
+      name == 'widgetbook_shell_mobile_viewport_test.dart' ||
+      name == 'widgetbook_main_menu_mobile_viewport_test.dart' ||
+      name == 'widgetbook_diplomacy_panel_mobile_viewport_test.dart' ||
+      name == 'widgetbook_player_turn_event_feed_mobile_viewport_test.dart' ||
+      name == 'widgetbook_technology_screen_mobile_viewport_test.dart' ||
+      name == 'widgetbook_turn_news_mobile_viewport_test.dart' ||
+      name == 'tech_gp_pennant_goldens_test.dart' ||
+      name == 'themes_and_widgetbook_test.dart' ||
+      name == 'game_screen_branches_test.dart' ||
+      name == 'game_screen_narrow_part1_test.dart' ||
+      name == 'game_screen_narrow_part2_test.dart' ||
+      name == 'game_screen_s13_mockup_fidelity_test.dart' ||
+      name == 'game_screen_side_menu_toggle_test.dart' ||
+      name == 'game_screen_overture_pending_test.dart' ||
+      name == 'game_screen_turn_resolution_branches_test.dart' ||
+      name == 'game_screen_intervention_flow_test.dart' ||
+      name == 'shell_game_screen_specs_test.dart' ||
+      name == 'debug_log_viewer_test.dart' ||
+      name == 'ct_region_map_widget_part2_test.dart' ||
+      name == 'ct_region_map_widget_part3_test.dart' ||
+      name == 'region_map_zoom_fit_test.dart' ||
+      name == 'plains_plantation_terrain_goldens_test.dart' ||
+      name == 'region_map_extraction_disc_indicators_test.dart' ||
+      name == 'region_map_resource_transport_readability_test.dart' ||
+      name == 'e2e_helpers_barrel_part1_test.dart' ||
+      name == 'e2e_helpers_barrel_part2_test.dart' ||
+      name == 'e2e_helpers_barrel_pr2731_lifted_test.dart' ||
+      name == 'e2e_test_shared_smoke_test.dart' ||
+      name == 'e2e_low_risk_mirror_barrel_smoke_test.dart';
+}
+
+/// True for `app/test/app_event_handler_debug_*_test.dart` (Refs #4048).
+bool _isGovernedDebugHandlerFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name.startsWith('app_event_handler_debug_') &&
+      name.endsWith('_test.dart');
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -283,6 +750,179 @@ class _TradeScreenHostVisitor extends RecursiveAstVisitor<void> {
       _report(
         node.name.offset,
         'function "$name" duplicates trade_screen_test_support.dart',
+      );
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+/// Flags inline `Game(` construction in units-panel part suites (Refs #4021).
+///
+/// Unresolved `Game(...)` is a [MethodInvocation] under `parseString` without
+/// package resolution; `const Game(...)` / `new Game(...)` remain
+/// [InstanceCreationExpression]. Catch both.
+class _UnitsPanelInlineGameVisitor extends RecursiveAstVisitor<void> {
+  _UnitsPanelInlineGameVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  void _flagIfGame(String typeName, int offset) {
+    if (typeName == 'Game') {
+      _report(
+        offset,
+        'inline Game( construction; use civilian/military/naval units-panel '
+        'test support factories',
+      );
+    }
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    _flagIfGame(node.constructorName.type.name.lexeme, node.offset);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null) {
+      _flagIfGame(node.methodName.name, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+/// Flags local panel pump clones (`_pumpNaval` / `_pumpMilitary`, …)
+/// (Refs #4035). Call the named support helper instead.
+class _PanelPumpCloneVisitor extends RecursiveAstVisitor<void> {
+  _PanelPumpCloneVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+    required this.forbiddenNames,
+    required this.canonicalHelper,
+    required this.supportModule,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+  final Set<String> forbiddenNames;
+  final String canonicalHelper;
+  final String supportModule;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (forbiddenNames.contains(name)) {
+      _report(
+        node.name.offset,
+        'function "$name" duplicates $canonicalHelper in $supportModule',
+      );
+    }
+    super.visitFunctionDeclaration(node);
+  }
+}
+
+/// Flags inline `MaterialApp(` hosts in families that already have canonical
+/// `buildAppShell` / panel host helpers (Refs #4035).
+class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
+  _InlineMaterialAppVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  void _flagIfMaterialApp(String typeName, int offset) {
+    if (typeName == 'MaterialApp') {
+      _report(
+        offset,
+        'inline MaterialApp( host; use buildProductionPanel / '
+        'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
+        'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer / '
+        'buildAppShellMaterialApp / ctRegionMapTestHarness '
+        'from app/test/support/ (or app/test/ct_region_map_test_support.dart)',
+      );
+    }
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    _flagIfMaterialApp(node.constructorName.type.name.lexeme, node.offset);
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null) {
+      _flagIfMaterialApp(node.methodName.name, node.methodName.offset);
+    }
+    super.visitMethodInvocation(node);
+  }
+}
+
+/// Flags private capital/empty Game factory reintroductions in debug-handler
+/// suites (Refs #4048). Canonical APIs live in
+/// `app/test/support/debug_handler_test_fixtures.dart`.
+class _DebugHandlerLocalGameFactoryVisitor extends RecursiveAstVisitor<void> {
+  _DebugHandlerLocalGameFactoryVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  static const _banned = {
+    '_gameWithCapital',
+    '_gameWithPlayer',
+    '_gameWith',
+    '_buildGame',
+  };
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (_banned.contains(name)) {
+      _report(
+        node.name.offset,
+        'function "$name" reintroduces a local debug Game factory; use '
+        'buildDebugHandlerPlayerGame / buildDebugHandlerCapitalGame / '
+        'buildDebugHandlerDiplomacyGame from '
+        'debug_handler_test_fixtures.dart',
       );
     }
     super.visitFunctionDeclaration(node);

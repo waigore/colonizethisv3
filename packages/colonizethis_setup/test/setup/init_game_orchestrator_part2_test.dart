@@ -80,9 +80,7 @@ void main() {
       () {
         // Config with 6 GPs but only 2 OW provinces: createGameFromGeneratedMaps throws
         // (either "provinces" or "sea-bound provinces" check). Accept either message.
-        final config = GameSetupConfig(
-          selectedGreatPowerIds:
-              GameSetupConfig.defaultConfig.selectedGreatPowerIds,
+        final config = configWithOverrides(
           numProvincesOldWorld: 2,
           numProvincesNewWorld: 5,
         );
@@ -127,9 +125,9 @@ void main() {
     test(
       'freeform sim_scenarios diplomacy_initial_relations config completes',
       () {
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           seed: 12345,
-          selectedGreatPowerIds: ['england', 'france', 'spain'],
+          selectedGreatPowerIds: const ['england', 'france', 'spain'],
           continentCount: 4,
           minorNationCount: 4,
           tribeCount: 6,

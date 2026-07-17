@@ -20,6 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 part 'load_game_list_dialog_row.dart';
+part 'load_game_list_dialog_confirm.dart';
+part 'load_game_list_dialog_body.dart';
 
 /// Manual saves shown per page in [LoadGameListDialog] (auto-save excluded).
 const int kLoadGameManualPageSize = 10;
@@ -246,6 +248,8 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
               .take(kLoadGameManualPageSize)
               .toList();
 
+    final showConfirm = pendingDelete != null || pendingLoad != null;
+
     return CtDialogShell(
       maxWidth: 420,
       maxHeight: 480,
@@ -256,162 +260,25 @@ class _LoadGameListDialogState extends ConsumerState<LoadGameListDialog> {
         children: [
           Text(l10n.loadGameList_title, style: titleStyle),
           CtGap.ml,
-          if (pendingDelete != null) ...[
-            Text(
-              l10n.loadGameList_deleteConfirm,
-              key: LoadGameListDialog.deleteConfirmKey,
-              style: bodyStyle,
+          if (showConfirm)
+            ..._confirmBodyChildren(
+              l10n: l10n,
+              bodyStyle: bodyStyle,
+              pendingDelete: pendingDelete,
+              pendingLoad: pendingLoad,
+            )
+          else
+            ..._listAndPagerChildren(
+              l10n: l10n,
+              bodyStyle: bodyStyle,
+              mutedStyle: mutedStyle,
+              entries: entries,
+              autoSave: autoSave,
+              pageManuals: pageManuals,
+              showPager: showPager,
+              pageIndex: pageIndex,
+              pageCount: pageCount,
             ),
-            CtGap.l,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  key: LoadGameListDialog.deleteCancelButtonKey,
-                  onPressed: _onDeleteCancel,
-                  child: Text(l10n.common_cancel),
-                ),
-                const SizedBox(width: CtSpacing.m),
-                CtNinePatchButton(
-                  key: LoadGameListDialog.deleteConfirmButtonKey,
-                  onPressed: _onDeleteConfirm,
-                  child: Text(l10n.loadGameList_delete),
-                ),
-              ],
-            ),
-          ] else if (pendingLoad != null) ...[
-            Text(
-              l10n.loadGameList_discardConfirm,
-              key: LoadGameListDialog.discardConfirmKey,
-              style: bodyStyle,
-            ),
-            CtGap.l,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CtNinePatchButton(
-                  key: LoadGameListDialog.discardCancelButtonKey,
-                  onPressed: _onDiscardCancel,
-                  child: Text(l10n.common_cancel),
-                ),
-                const SizedBox(width: CtSpacing.m),
-                CtNinePatchButton(
-                  key: LoadGameListDialog.discardConfirmButtonKey,
-                  onPressed: _onDiscardConfirm,
-                  child: Text(l10n.loadGameList_load),
-                ),
-              ],
-            ),
-          ] else ...[
-            if (entries.isEmpty)
-              Text(
-                l10n.loadGameList_empty,
-                key: LoadGameListDialog.emptyStateKey,
-                style: mutedStyle,
-              )
-            else
-              ConstrainedBox(
-                key: LoadGameListDialog.listKey,
-                constraints: const BoxConstraints(maxHeight: 320),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    if (autoSave != null) ...[
-                      Container(
-                        key: LoadGameListDialog.autoSaveSectionKey,
-                        padding: const EdgeInsets.all(CtSpacing.s),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: EditorialMonoclePalette.accent,
-                            width: 2,
-                          ),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              EditorialMonoclePalette.surfaceLite,
-                              EditorialMonoclePalette.surface,
-                            ],
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n.loadGameList_autoSaveBadge,
-                              style: mutedStyle.copyWith(
-                                color: EditorialMonoclePalette.accent,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: CtSpacing.s),
-                            _rowContent(
-                              l10n: l10n,
-                              bodyStyle: bodyStyle,
-                              mutedStyle: mutedStyle,
-                              entry: autoSave,
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (pageManuals.isNotEmpty) ...[
-                        CtGap.m,
-                        const CtBrassDivider(),
-                        CtGap.m,
-                      ],
-                    ],
-                    for (var i = 0; i < pageManuals.length; i++) ...[
-                      if (i > 0) CtGap.m,
-                      _rowContent(
-                        l10n: l10n,
-                        bodyStyle: bodyStyle,
-                        mutedStyle: mutedStyle,
-                        entry: pageManuals[i],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            if (showPager) ...[
-              CtGap.m,
-              Row(
-                key: LoadGameListDialog.pagerKey,
-                children: [
-                  CtNinePatchButton(
-                    key: LoadGameListDialog.previousButtonKey,
-                    onPressed: pageIndex <= 0
-                        ? null
-                        : () => setState(() => _manualPageIndex = pageIndex - 1),
-                    child: Text(l10n.loadGameList_previous),
-                  ),
-                  Expanded(
-                    child: Text(
-                      l10n.loadGameList_pageOf(pageIndex + 1, pageCount),
-                      key: LoadGameListDialog.pageLabelKey,
-                      textAlign: TextAlign.center,
-                      style: mutedStyle,
-                    ),
-                  ),
-                  CtNinePatchButton(
-                    key: LoadGameListDialog.nextButtonKey,
-                    onPressed: pageIndex >= pageCount - 1
-                        ? null
-                        : () => setState(() => _manualPageIndex = pageIndex + 1),
-                    child: Text(l10n.loadGameList_next),
-                  ),
-                ],
-              ),
-            ],
-            CtGap.l,
-            Align(
-              alignment: Alignment.centerRight,
-              child: CtNinePatchButton(
-                key: LoadGameListDialog.closeButtonKey,
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.common_close),
-              ),
-            ),
-          ],
         ],
       ),
     );

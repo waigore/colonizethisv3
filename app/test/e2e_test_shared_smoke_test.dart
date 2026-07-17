@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
+import 'support/app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -20,7 +21,9 @@ void main() {
   testWidgets('e2ePumpUntil succeeds when condition is already true', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpWidget(
+      buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+    );
     var calls = 0;
     await e2ePumpUntil(
       tester,
@@ -37,7 +40,9 @@ void main() {
   testWidgets('e2ePumpUntilConditionOrIdle succeeds before first pump', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpWidget(
+      buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+    );
     final met = await e2ePumpUntilConditionOrIdle(
       tester,
       () => true,
@@ -47,25 +52,29 @@ void main() {
     expect(met, isTrue);
   });
 
-  testWidgets('e2ePumpUntilConditionOrIdle returns false when timeout elapses', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-    final met = await e2ePumpUntilConditionOrIdle(
-      tester,
-      () => false,
-      timeout: const Duration(milliseconds: 60),
-      phaseName: 'smoke_condition_idle_timeout',
-    );
-    expect(met, isFalse);
-  });
+  testWidgets(
+    'e2ePumpUntilConditionOrIdle returns false when timeout elapses',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
+      final met = await e2ePumpUntilConditionOrIdle(
+        tester,
+        () => false,
+        timeout: const Duration(milliseconds: 60),
+        phaseName: 'smoke_condition_idle_timeout',
+      );
+      expect(met, isFalse);
+    },
+  );
 
   testWidgets('e2eOldWorldRegionChipAppearsSelected reads CtChoiceChip', (
     WidgetTester tester,
   ) async {
     final l10n = lookupAppLocalizations(const Locale('en'));
     await tester.pumpWidget(
-      MaterialApp(
+      buildAppShellMaterialApp(
+        applyEditorialTheme: false,
         home: Scaffold(
           body: CtChoiceChip(
             label: Text(l10n.region_oldWorld),
@@ -82,7 +91,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      buildAppShellMaterialApp(
+        applyEditorialTheme: false,
         home: Scaffold(
           body: KeyedSubtree(
             key: kCtE2ERegionTabNewWorldKey,
@@ -101,14 +111,18 @@ void main() {
   testWidgets('e2eCloseBottomSheet no-ops when no bottom sheet', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpWidget(
+      buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+    );
     await e2eCloseBottomSheet(tester);
   });
 
   testWidgets('e2eDismissTransientUi no-ops on empty scaffold', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpWidget(
+      buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+    );
     await e2eDismissTransientUi(tester);
   });
 
@@ -117,12 +131,10 @@ void main() {
   ) async {
     const panelKey = Key('e2e_smoke_panel_root');
     await tester.pumpWidget(
-      const MaterialApp(
+      buildAppShellMaterialApp(
+        applyEditorialTheme: false,
         home: Scaffold(
-          body: KeyedSubtree(
-            key: panelKey,
-            child: SizedBox(),
-          ),
+          body: KeyedSubtree(key: panelKey, child: SizedBox()),
         ),
       ),
     );
@@ -142,7 +154,9 @@ void main() {
   testWidgets(
     'e2ePumpUntilFinderEmpty short-circuits when finder already empty',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
       final sw = Stopwatch()..start();
       await e2ePumpUntilFinderEmpty(
         tester,
@@ -162,7 +176,9 @@ void main() {
   testWidgets(
     'e2ePumpUntilConditionOrIdle returns true immediately when condition is already true',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
       final sw = Stopwatch()..start();
       final result = await e2ePumpUntilConditionOrIdle(
         tester,
@@ -183,7 +199,9 @@ void main() {
   testWidgets(
     'e2ePumpUntilConditionOrIdle returns false on timeout without throwing',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
+      );
       final result = await e2ePumpUntilConditionOrIdle(
         tester,
         () => false,
@@ -202,16 +220,14 @@ void main() {
   testWidgets(
     'e2ePumpUntilConditionOrIdle returns true once condition flips during pump',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
-      var pumps = 0;
-      final result = await e2ePumpUntilConditionOrIdle(
-        tester,
-        () {
-          pumps++;
-          return pumps >= 3;
-        },
-        timeout: const Duration(seconds: 2),
+      await tester.pumpWidget(
+        buildAppShellMaterialApp(applyEditorialTheme: false, home: SizedBox()),
       );
+      var pumps = 0;
+      final result = await e2ePumpUntilConditionOrIdle(tester, () {
+        pumps++;
+        return pumps >= 3;
+      }, timeout: const Duration(seconds: 2));
       expect(result, isTrue);
       expect(
         pumps >= 3,
@@ -227,7 +243,8 @@ void main() {
     'e2eGameStartIntroBlocksUi is true on first frame while intro Yarn loads',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        buildAppShellMaterialApp(
+          applyEditorialTheme: false,
           home: GameStartIntroOverlay(
             onDismissed: () {},
             child: const SizedBox(key: Key('map_child')),
@@ -242,7 +259,10 @@ void main() {
     'e2eGameStartIntroBlocksUi is true while intro spinner is visible',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: GameStartIntroLoadingIndicator()),
+        buildAppShellMaterialApp(
+          applyEditorialTheme: false,
+          home: GameStartIntroLoadingIndicator(),
+        ),
       );
       expect(e2eGameStartIntroBlocksUi(tester), isTrue);
     },
@@ -252,7 +272,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
+      buildAppShellMaterialApp(
+        applyEditorialTheme: false,
         home: Scaffold(
           body: Center(
             child: TextButton(
@@ -264,9 +285,6 @@ void main() {
         ),
       ),
     );
-    expect(
-      e2eReadNextTurnButtonLabel(tester),
-      'Next turn (1 / 1492)',
-    );
+    expect(e2eReadNextTurnButtonLabel(tester), 'Next turn (1 / 1492)');
   });
 }

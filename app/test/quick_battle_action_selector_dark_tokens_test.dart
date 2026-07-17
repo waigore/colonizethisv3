@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_action_selector.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Pins SPEC/ui/quick-battle-action-selector.md § Layout / wireframe and the
 /// dark-theme `--muted` AC added under Refs #2869 S4 R17.
@@ -19,9 +20,8 @@ void main() {
     // appL10n() falls back to English when no localization delegate is wired
     // (see app/lib/l10n/l10n.dart); no delegates needed for these widget
     // tests.
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(body: Center(child: child)),
+    return buildAppShell(
+      child: Scaffold(body: Center(child: child)),
     );
   }
 

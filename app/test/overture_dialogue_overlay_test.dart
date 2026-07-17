@@ -7,10 +7,30 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
+
+import 'support/app_shell_harness.dart';
+
+const OvertureOffer _gp2TradeConsulate = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'gp1',
+  stage: OvertureStage.tradeConsulate,
+);
+
+const OvertureOffer _gp2Embassy = OvertureOffer(
+  offererGpId: 'gp2',
+  targetFactionId: 'gp1',
+  stage: OvertureStage.embassy,
+);
+
+const List<OvertureOffer> _singleGp2Offer = [_gp2TradeConsulate];
+const List<OvertureOffer> _twoStageGp2Offers = [
+  _gp2TradeConsulate,
+  _gp2Embassy,
+];
 
 void main() {
   suppressLogsForTests();
@@ -32,16 +52,17 @@ void main() {
 
   Future<void> pumpOverlay(
     WidgetTester tester, {
-    required List<OvertureOffer> offers,
-    required void Function(List<OvertureDecision>)? onDecisions,
+    List<OvertureOffer> offers = _singleGp2Offer,
+    void Function(List<OvertureDecision>)? onDecisions,
     Size surfaceSize = const Size(900, 900),
   }) async {
     addTearDown(tester.view.reset);
     tester.view.physicalSize = surfaceSize;
     tester.view.devicePixelRatio = 1.0;
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: OvertureDialogueOverlay(
+      buildAppShell(
+        child: OvertureDialogueOverlay(
           game: game(),
           pendingOvertures: offers,
           skipIntroForTest: true,
@@ -57,23 +78,11 @@ void main() {
     testWidgets(
       'skipIntroForTest: Accept first + Reject second + Submit yields decisions in order (#2867 R23 / AC4)',
       (WidgetTester tester) async {
-        final offers = <OvertureOffer>[
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.tradeConsulate,
-          ),
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.embassy,
-          ),
-        ];
         List<OvertureDecision>? submitted;
 
         await pumpOverlay(
           tester,
-          offers: offers,
+          offers: _twoStageGp2Offers,
           onDecisions: (d) => submitted = List.of(d),
         );
 
@@ -114,20 +123,7 @@ void main() {
       'phase 2 Submit is disabled until every row has a non-null decision '
       '(#2867 R23 / AC4 — positive enable transition)',
       (WidgetTester tester) async {
-        final offers = <OvertureOffer>[
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.tradeConsulate,
-          ),
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.embassy,
-          ),
-        ];
-
-        await pumpOverlay(tester, offers: offers, onDecisions: null);
+        await pumpOverlay(tester, offers: _twoStageGp2Offers);
 
         final Finder submitFinder = find.byKey(
           const ValueKey<String>('overtureSubmitButton'),
@@ -171,23 +167,11 @@ void main() {
       'phase 2 Submit disabled while only the second row is decided '
       '(#2867 R23 / AC4 — negative case)',
       (WidgetTester tester) async {
-        final offers = <OvertureOffer>[
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.tradeConsulate,
-          ),
-          const OvertureOffer(
-            offererGpId: 'gp2',
-            targetFactionId: 'gp1',
-            stage: OvertureStage.embassy,
-          ),
-        ];
         List<OvertureDecision>? submitted;
 
         await pumpOverlay(
           tester,
-          offers: offers,
+          offers: _twoStageGp2Offers,
           onDecisions: (d) => submitted = List.of(d),
         );
 
@@ -218,17 +202,7 @@ void main() {
     testWidgets(
       'phase 2 title uses --accent color and 0.05em letter-spacing (#2867 R2/R21)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder titleFinder = find.byKey(
           const ValueKey<String>('overtureTitle'),
@@ -249,17 +223,7 @@ void main() {
     testWidgets(
       'phase 2 renders CtBrassDivider between title and intro (#2867 R21)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder dividerFinder = find.byKey(
           const ValueKey<String>('overtureBrassDivider'),
@@ -275,17 +239,7 @@ void main() {
     testWidgets(
       'phase 2 intro is rendered in --muted italic body style (#2867 R5/R21)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder introFinder = find.byKey(
           const ValueKey<String>('overtureIntro'),
@@ -300,17 +254,7 @@ void main() {
     testWidgets(
       'offer row paints offerer in --accent and stage in --muted (#2867 R22)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder offererFinder = find.byKey(
           const ValueKey<String>('overtureOfferOfferer'),
@@ -341,17 +285,7 @@ void main() {
     testWidgets(
       'phase 2 chrome contains no Material AlertDialog/ListTile/Card chrome (#2867 R1)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder overlay = find.byType(OvertureDialogueOverlay);
         expect(
@@ -373,17 +307,7 @@ void main() {
       'phase 2 scrim resolves to EditorialMonoclePalette.dialogScrim '
       '(#2867 R1; mirrors intervention overlay S9)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder shellFinder = find.byType(
           CtDialogShell,
@@ -403,17 +327,7 @@ void main() {
       'no Material descendant uses the legacy Colors.black54 scrim '
       '(#2867 R1 negative regression guard)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder overlay = find.byType(OvertureDialogueOverlay);
         for (final Element element in find
@@ -443,25 +357,9 @@ void main() {
     );
 
     testWidgets(
-      'phase 2 renders Accept + Reject CtToggleSwitch widgets per row with '
-      'the canonical --success / --danger glow tokens',
+      'phase 2: Accept/Reject CtToggleSwitch glow tokens; only Submit is nine-patch',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.embassy,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester, offers: _twoStageGp2Offers);
 
         for (var i = 0; i < 2; i++) {
           expect(acceptToggleAt(i), findsOneWidget);
@@ -479,90 +377,33 @@ void main() {
           expect(reject.value, isFalse);
           expect(reject.onGlowColor, EditorialMonoclePalette.danger);
         }
-      },
-    );
 
-    testWidgets(
-      'no CtNinePatchButton descendants paint the Accept / Reject affordances '
-      'inside the per-offer row (negative regression guard for R22)',
-      (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
-
-        // Submit is the only CtNinePatchButton expected in phase 2 (Accept /
-        // Reject are now CtToggleSwitch per #2867 R22).
+        // Submit is the only CtNinePatchButton in phase 2 (Accept/Reject are
+        // CtToggleSwitch per #2867 R22).
         final Iterable<CtNinePatchButton> buttons = tester
             .widgetList<CtNinePatchButton>(find.byType(CtNinePatchButton));
         expect(buttons, hasLength(1));
-        final CtNinePatchButton only = buttons.single;
-        expect(only.key, const ValueKey<String>('overtureSubmitButton'));
+        expect(
+          buttons.single.key,
+          const ValueKey<String>('overtureSubmitButton'),
+        );
       },
     );
 
     testWidgets(
-      'tapping the Accept toggle commits decision=true and turns Reject off',
+      'Accept/Reject toggles are mutually exclusive (on turns the other off)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         await tester.tap(acceptToggleAt(0));
         await tester.pump();
-
-        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
-          acceptToggleAt(0),
-        );
-        expect(accept.value, isTrue);
-        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
-          rejectToggleAt(0),
-        );
-        expect(reject.value, isFalse);
-      },
-    );
-
-    testWidgets(
-      'tapping the Reject toggle commits decision=false and turns Accept off',
-      (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        expect(tester.widget<CtToggleSwitch>(acceptToggleAt(0)).value, isTrue);
+        expect(tester.widget<CtToggleSwitch>(rejectToggleAt(0)).value, isFalse);
 
         await tester.tap(rejectToggleAt(0));
         await tester.pump();
-
-        final CtToggleSwitch reject = tester.widget<CtToggleSwitch>(
-          rejectToggleAt(0),
-        );
-        expect(reject.value, isTrue);
-        final CtToggleSwitch accept = tester.widget<CtToggleSwitch>(
-          acceptToggleAt(0),
-        );
-        expect(accept.value, isFalse);
+        expect(tester.widget<CtToggleSwitch>(rejectToggleAt(0)).value, isTrue);
+        expect(tester.widget<CtToggleSwitch>(acceptToggleAt(0)).value, isFalse);
       },
     );
 
@@ -572,13 +413,7 @@ void main() {
         List<OvertureDecision>? submitted;
         await pumpOverlay(
           tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
+          offers: _singleGp2Offer,
           onDecisions: (d) => submitted = List.of(d),
         );
 
@@ -599,17 +434,7 @@ void main() {
       'tapping a currently-on toggle reverts the row to undecided and '
       're-engages the #2867 R23 Submit gate (positive R22 + R23 interaction)',
       (WidgetTester tester) async {
-        await pumpOverlay(
-          tester,
-          offers: const [
-            OvertureOffer(
-              offererGpId: 'gp2',
-              targetFactionId: 'gp1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-          onDecisions: null,
-        );
+        await pumpOverlay(tester);
 
         final Finder submitFinder = find.byKey(
           const ValueKey<String>('overtureSubmitButton'),

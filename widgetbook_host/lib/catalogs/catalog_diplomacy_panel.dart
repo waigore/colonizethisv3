@@ -67,19 +67,16 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
               : 'gp1';
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
+            widgetbookEditorialMonocleApp(
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: DiplomacyPanel(
-                  game: game,
-                  humanPlayerId: humanPlayerId,
-                  topology: result.combinedTopology,
-                  currentOrders: const Orders(),
-                  bus: AppEventBus(),
-                ),
+              child: DiplomacyPanel(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                topology: result.combinedTopology,
+                currentOrders: const Orders(),
+                bus: AppEventBus(),
               ),
             ),
           );
@@ -179,17 +176,14 @@ List<WidgetbookNode> get diplomacyPanelDirectories => [
 /// chrome and run-wrapping. SPEC/ui/diplomacy-panel.md § Diplomatic standing
 /// chip cluster (Refs #3753 R12).
 Widget _standingChipsStory(DiplomaticStandingChips chips) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bg,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: DiplomacyStandingChipCluster(chips: chips),
-        ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bg,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: DiplomacyStandingChipCluster(chips: chips),
       ),
     ),
   );
@@ -200,41 +194,38 @@ Widget _standingChipsStory(DiplomaticStandingChips chips) {
 /// ladder label so reviewers can confirm the gradient + indicator alignment.
 /// SPEC/ui/components/relation-meter.md § Widgetbook.
 Widget _relationMeterStory(List<num> scores) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bg,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 360),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final score in scores)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RelationMeter(score: score),
-                      const SizedBox(width: 12),
-                      Text(
-                        relationScoreToDisplayLabel(score),
-                        style: TextStyle(
-                          color: relationMeterStepColor(
-                            relationScoreToMeterStep(score),
-                          ),
-                          fontStyle: FontStyle.italic,
+    scaffoldBackgroundColor: EditorialMonoclePalette.bg,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final score in scores)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RelationMeter(score: score),
+                    const SizedBox(width: 12),
+                    Text(
+                      relationScoreToDisplayLabel(score),
+                      style: TextStyle(
+                        color: relationMeterStepColor(
+                          relationScoreToMeterStep(score),
                         ),
+                        fontStyle: FontStyle.italic,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     ),
@@ -246,26 +237,23 @@ Widget _relationMeterStory(List<num> scores) {
 /// delegates so the muted prefix and tier words resolve. SPEC/ui/diplomacy-
 /// panel.md § Relative power line Widgetbook.
 Widget _relativePowerLineStory(List<int> percents, {double? maxWidth}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: EditorialMonoclePalette.bg,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth ?? 480),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final pct in percents)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: RelativePowerLine(pct: pct),
-                ),
-            ],
-          ),
+    scaffoldBackgroundColor: EditorialMonoclePalette.bg,
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth ?? 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final pct in percents)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: RelativePowerLine(pct: pct),
+              ),
+          ],
         ),
       ),
     ),

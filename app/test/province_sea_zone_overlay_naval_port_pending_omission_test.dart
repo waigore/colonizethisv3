@@ -33,11 +33,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView, Vis
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localPortProvinceId = 'pPort';
@@ -180,21 +179,14 @@ Widget _wrapOverlay({
   required PlayerView view,
   required Orders orders,
 }) {
-  return MaterialApp(
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    locale: const Locale('en'),
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: region,
-        displayId: displayId,
-        selectedTileKey: selectedTileKey,
-        humanPlayerId: 'gp1',
-        playerView: view,
-        draftOrders: orders,
-      ),
-    ),
+  // Editorial shell via province overlay harness (Refs #4035).
+  return buildProvinceOverlayDarkThemeShell(
+    game: game,
+    region: region,
+    displayId: displayId,
+    selectedTileKey: selectedTileKey,
+    playerView: view,
+    draftOrders: orders,
   );
 }
 

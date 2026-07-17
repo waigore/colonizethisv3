@@ -1,6 +1,5 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
 
@@ -16,7 +15,8 @@ void main() {
           height: h,
           seed: 10,
         );
-        final (result, _) = TileMapGenerator(params: params).generate(
+        final (result, _) = runTileMapGeneration(
+          params: params,
           numProvinces: 4,
           numContinents: 1,
           regionId: 'oldWorld',
@@ -110,7 +110,8 @@ void main() {
         height: h,
         seed: 20,
       );
-      final (result, _) = TileMapGenerator(params: params).generate(
+      final (result, _) = runTileMapGeneration(
+        params: params,
         numProvinces: 4,
         numContinents: 1,
         regionId: 'oldWorld',

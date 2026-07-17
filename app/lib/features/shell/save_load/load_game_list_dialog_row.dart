@@ -1,6 +1,6 @@
 part of 'load_game_list_dialog.dart';
 
-extension on _LoadGameListDialogState {
+extension _LoadGameListDialogRow on _LoadGameListDialogState {
   String? _secondaryMetaLine(AppLocalizations l10n, LoadableSaveEntry entry) {
     final turn = entry.turnNumber;
     final year = entry.calendarYear;

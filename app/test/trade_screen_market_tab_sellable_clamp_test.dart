@@ -41,6 +41,46 @@ TradeOrder? _stagedOrder(ProviderContainer container, CommodityId commodityId) {
   return null;
 }
 
+Orders _tradeOrders(TradeOrder order) => Orders(
+      tradeOrdersByPlayerId: {
+        _humanPlayerId: [order],
+      },
+    );
+
+TradeOrder _timberTrade({
+  TradeOrderType type = TradeOrderType.offer,
+  required int quantity,
+}) =>
+    TradeOrder(
+      commodityId: _timber,
+      type: type,
+      quantity: quantity,
+      priority: 1,
+    );
+
+void _expectSellable(
+  WidgetTester tester,
+  CommodityId commodityId,
+  String expected, {
+  String? reason,
+}) {
+  expect(
+    tester
+        .widget<Text>(
+          find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId)),
+        )
+        .data,
+    // ignore: avoid_hardcoded_strings_in_widgets
+    expected,
+    reason: reason,
+  );
+}
+
+Future<void> _tapKey(WidgetTester tester, Key key) async {
+  await tester.tap(find.byKey(key));
+  await tester.pump();
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -60,24 +100,12 @@ void main() {
       // industry-allocation projection contributes 0, headroom equals
       // the raw stockpile. The new industry-allocation reservation
       // path is exercised by the canonical AC test below.
-      final Finder timberSellable = find.byKey(
-        TradeScreen.marketRowSellableReadoutKey(_timber),
-      );
-      expect(timberSellable, findsOneWidget);
       expect(
-        tester.widget<Text>(timberSellable).data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(10)',
+        find.byKey(TradeScreenMarketKeys.marketRowSellableReadoutKey(_timber)),
+        findsOneWidget,
       );
-
-      final Finder ironSellable = find.byKey(
-        TradeScreen.marketRowSellableReadoutKey(_iron),
-      );
-      expect(
-        tester.widget<Text>(ironSellable).data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(7)',
-      );
+      _expectSellable(tester, _timber, '(10)');
+      _expectSellable(tester, _iron, '(7)');
     });
 
     testWidgets('canonical AC (Refs #3093): stockpile=10 timber, production '
@@ -91,18 +119,7 @@ void main() {
         game: buildTradeTestGame(
           stockpile: const <CommodityId, int>{'timber': 10},
         ),
-        initialOrders: Orders(
-          tradeOrdersByPlayerId: {
-            _humanPlayerId: [
-              TradeOrder(
-                commodityId: _timber,
-                type: TradeOrderType.offer,
-                quantity: 2,
-                priority: 1,
-              ),
-            ],
-          },
-        ),
+        initialOrders: _tradeOrders(_timberTrade(quantity: 2)),
         // paper_from_timber consumes 2 timber per run, 2 labour per
         // output; desired output 1 → assigned labour 2 → runs 1 →
         // 2 timber reserved.
@@ -112,15 +129,7 @@ void main() {
       );
 
       // Sellable headroom = max(0, 10 - 2) - 2 = 6.
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(6)',
-      );
+      _expectSellable(tester, _timber, '(6)');
 
       // The offer cap (stockpile − reservation) is 8, so 6 +-taps
       // grow the staged offer from 2 to 8 (= cap). Per the issue AC:
@@ -128,10 +137,7 @@ void main() {
       // at most +6 units before saturating, which lands the staged
       // quantity at 8 (matching the cap).
       for (int i = 0; i < 6; i++) {
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       }
       expect(
         _stagedOrder(container, _timber)?.quantity,
@@ -140,20 +146,15 @@ void main() {
             'Six +-taps grow the staged offer from 2 to 8 '
             '(= 10 stockpile − 2 industry allocation).',
       );
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
+      _expectSellable(
+        tester,
+        _timber,
         '(0)',
         reason: 'At cap, sellable readout drops to (0).',
       );
 
       // Next + tap is a silent no-op; quantity stays at 8.
-      await tester.tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
-      await tester.pump();
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       expect(
         _stagedOrder(container, _timber)?.quantity,
         8,
@@ -176,17 +177,8 @@ void main() {
         },
       );
 
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(0)',
-      );
-      await tester.tap(find.byKey(TradeScreen.marketRowOfferChipKey(_timber)));
-      await tester.pump();
+      _expectSellable(tester, _timber, '(0)');
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
       expect(
         _stagedOrder(container, _timber),
         isNull,
@@ -209,23 +201,15 @@ void main() {
         },
       );
 
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
+      _expectSellable(
+        tester,
+        _timber,
         '(8)',
         reason: 'Timber sellable = 10 - 2 (paper reservation) = 8.',
       );
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_iron)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
+      _expectSellable(
+        tester,
+        _iron,
         '(7)',
         reason:
             'Iron has no production allocation; headroom equals raw '
@@ -242,28 +226,10 @@ void main() {
           game: buildTradeTestGame(
             stockpile: const <CommodityId, int>{'timber': 10},
           ),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.offer,
-                  quantity: 2,
-                  priority: 1,
-                ),
-              ],
-            },
-          ),
+          initialOrders: _tradeOrders(_timberTrade(quantity: 2)),
         );
 
-        final Finder sellable = find.byKey(
-          TradeScreen.marketRowSellableReadoutKey(_timber),
-        );
-        expect(
-          tester.widget<Text>(sellable).data,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          '(8)',
-        );
+        _expectSellable(tester, _timber, '(8)');
       },
     );
 
@@ -277,20 +243,10 @@ void main() {
         );
 
         // (0) display for an empty-stockpile commodity.
-        final Finder timberSellable = find.byKey(
-          TradeScreen.marketRowSellableReadoutKey(_timber),
-        );
-        expect(
-          tester.widget<Text>(timberSellable).data,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          '(0)',
-        );
+        _expectSellable(tester, _timber, '(0)');
 
         // Offer chip tap → silent no-op.
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
         expect(
           _stagedOrder(container, _timber),
           isNull,
@@ -310,43 +266,15 @@ void main() {
         game: buildTradeTestGame(
           stockpile: const <CommodityId, int>{'timber': 3},
         ),
-        initialOrders: Orders(
-          tradeOrdersByPlayerId: {
-            _humanPlayerId: [
-              TradeOrder(
-                commodityId: _timber,
-                type: TradeOrderType.offer,
-                quantity: 3,
-                priority: 1,
-              ),
-            ],
-          },
-        ),
+        initialOrders: _tradeOrders(_timberTrade(quantity: 3)),
       );
 
       // Headroom is 0 with the saturated offer.
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(0)',
-      );
+      _expectSellable(tester, _timber, '(0)');
 
       // Decrement the saturated offer down by 1 → headroom updates to 1.
-      await tester.tap(find.byKey(TradeScreen.marketRowDecrementKey(_timber)));
-      await tester.pump();
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(1)',
-      );
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowDecrementKey(_timber));
+      _expectSellable(tester, _timber, '(1)');
       expect(_stagedOrder(container, _timber)?.quantity, 2);
     });
 
@@ -361,17 +289,14 @@ void main() {
           ),
         );
 
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         final TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged, isNotNull);
         expect(staged!.type, TradeOrderType.offer);
         expect(
           staged.quantity,
-          TradeScreen.marketRowQuantityDefault,
+          TradeScreenMarketKeys.marketRowQuantityDefault,
           reason:
               'Default quantity (1) fits inside the offer cap of 5 — no '
               'clamping needed.',
@@ -388,10 +313,7 @@ void main() {
           game: buildTradeTestGame(stockpile: const <CommodityId, int>{}),
         );
 
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         expect(_stagedOrder(container, _timber), isNull);
       },
@@ -406,24 +328,12 @@ void main() {
           game: buildTradeTestGame(
             stockpile: const <CommodityId, int>{'timber': 4},
           ),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.bid,
-                  quantity: 9,
-                  priority: 1,
-                ),
-              ],
-            },
+          initialOrders: _tradeOrders(
+            _timberTrade(type: TradeOrderType.bid, quantity: 9),
           ),
         );
 
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowOfferChipKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowOfferChipKey(_timber));
 
         final TradeOrder? staged = _stagedOrder(container, _timber);
         expect(staged, isNotNull);
@@ -447,35 +357,13 @@ void main() {
           game: buildTradeTestGame(
             stockpile: const <CommodityId, int>{'timber': 5},
           ),
-          initialOrders: Orders(
-            tradeOrdersByPlayerId: {
-              _humanPlayerId: [
-                TradeOrder(
-                  commodityId: _timber,
-                  type: TradeOrderType.offer,
-                  quantity: 5,
-                  priority: 1,
-                ),
-              ],
-            },
-          ),
+          initialOrders: _tradeOrders(_timberTrade(quantity: 5)),
         );
 
-        await tester.tap(
-          find.byKey(TradeScreen.marketRowIncrementKey(_timber)),
-        );
-        await tester.pump();
+        await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
 
         expect(_stagedOrder(container, _timber)?.quantity, 5);
-        expect(
-          tester
-              .widget<Text>(
-                find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-              )
-              .data,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          '(0)',
-        );
+        _expectSellable(tester, _timber, '(0)');
       },
     );
 
@@ -488,43 +376,15 @@ void main() {
         game: buildTradeTestGame(
           stockpile: const <CommodityId, int>{'timber': 7},
         ),
-        initialOrders: Orders(
-          tradeOrdersByPlayerId: {
-            _humanPlayerId: [
-              TradeOrder(
-                commodityId: _timber,
-                type: TradeOrderType.offer,
-                quantity: 2,
-                priority: 1,
-              ),
-            ],
-          },
-        ),
+        initialOrders: _tradeOrders(_timberTrade(quantity: 2)),
       );
 
       // Initial headroom 5 (= 7 - 2).
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(5)',
-      );
+      _expectSellable(tester, _timber, '(5)');
 
-      await tester.tap(find.byKey(TradeScreen.marketRowIncrementKey(_timber)));
-      await tester.pump();
+      await _tapKey(tester, TradeScreenMarketKeys.marketRowIncrementKey(_timber));
       expect(_stagedOrder(container, _timber)?.quantity, 3);
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
-        '(4)',
-      );
+      _expectSellable(tester, _timber, '(4)');
     });
 
     testWidgets('bids do not consume the offer headroom (bid row\'s `(N)` is '
@@ -534,27 +394,14 @@ void main() {
         game: buildTradeTestGame(
           stockpile: const <CommodityId, int>{'timber': 10},
         ),
-        initialOrders: Orders(
-          tradeOrdersByPlayerId: {
-            _humanPlayerId: [
-              TradeOrder(
-                commodityId: _timber,
-                type: TradeOrderType.bid,
-                quantity: 4,
-                priority: 1,
-              ),
-            ],
-          },
+        initialOrders: _tradeOrders(
+          _timberTrade(type: TradeOrderType.bid, quantity: 4),
         ),
       );
 
-      expect(
-        tester
-            .widget<Text>(
-              find.byKey(TradeScreen.marketRowSellableReadoutKey(_timber)),
-            )
-            .data,
-        // ignore: avoid_hardcoded_strings_in_widgets
+      _expectSellable(
+        tester,
+        _timber,
         '(10)',
         reason:
             'Refs #3093 — bids do not reserve stockpile (per '

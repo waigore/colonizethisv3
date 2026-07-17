@@ -88,7 +88,11 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final panel = ref.watch(mapProvincePanelProvider);
+    // Narrow to map highlight fields so overlayOpen-only Chrome updates do not
+    // rebuild the Flame host (Refs #4018).
+    final highlights = ref.watch(
+      mapProvincePanelProvider.select(mapCanvasHighlightSlice),
+    );
     final inWorkTargetSelectionMode = validTileKeysForSelection != null;
     return Positioned.fill(
       child: Stack(
@@ -122,10 +126,12 @@ class GameMapCanvasStack extends ConsumerWidget {
                   onCivilianTileSelectionCleared: inWorkTargetSelectionMode
                       ? null
                       : onCivilianTileSelectionCleared,
-                  selectedTileKey: panel.selectedTileKey,
+                  selectedTileKey: highlights.selectedTileKey,
                   selectedCivilianTileKey: selectedCivilianTileKey,
-                  secondaryHighlightTileKey: panel.secondaryHighlightTileKey,
-                  secondaryHighlightTileKeys: panel.secondaryHighlightTileKeys,
+                  secondaryHighlightTileKey:
+                      highlights.secondaryHighlightTileKey,
+                  secondaryHighlightTileKeys:
+                      highlights.secondaryHighlightTileKeys,
                   centerOnTileKey: centerOnTileKey,
                   validTileKeys: validTileKeysForSelection,
                   onTileSelected: onTileSelectedForWork,
@@ -149,10 +155,17 @@ class GameMapCanvasStack extends ConsumerWidget {
             ],
           ),
           if (inWorkTargetSelectionMode)
-            GameMapCanvasStackSelectionPrompt(
-              isNarrow: isNarrow,
-              overlayOpen: panel.overlayOpen,
-              onCancel: onWorkTargetSelectionCancelled,
+            Consumer(
+              builder: (context, ref, _) {
+                final overlayOpen = ref.watch(
+                  mapProvincePanelProvider.select((s) => s.overlayOpen),
+                );
+                return GameMapCanvasStackSelectionPrompt(
+                  isNarrow: isNarrow,
+                  overlayOpen: overlayOpen,
+                  onCancel: onWorkTargetSelectionCancelled,
+                );
+              },
             ),
         ],
       ),

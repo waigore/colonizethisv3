@@ -17,6 +17,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -66,8 +67,9 @@ void main() {
     );
   }
 
-  Widget host(Widget child) =>
-      MaterialApp(home: Scaffold(body: child));
+  Widget host(Widget child) => buildAppShell(
+        child: Scaffold(body: child),
+      );
 
   group('TrainDialogBase shared abstraction (#3594)', () {
     testWidgets('TrainCiviliansDialog extends the shared base', (tester) async {

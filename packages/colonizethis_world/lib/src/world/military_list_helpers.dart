@@ -1,13 +1,19 @@
-import 'package:colonizethis_models/colonizethis_models.dart' show Fleet, WorldState;
+import 'package:colonizethis_models/colonizethis_models.dart' show Army, Fleet, WorldState;
 
 /// Shared mechanical list/id partition helpers for army and fleet commands
 /// (Refs #3968). Policy (home-container retain-when-empty, ownership checks)
 /// stays in the command entrypoints; these helpers only split collections.
 
 /// Single-pass index of [WorldState.fleets] by fleet id for O(1) lookups
-/// (Refs #3978). Peer of `armiesByIdForWorld` in army_movement.dart.
+/// (Refs #3978).
 Map<String, Fleet> fleetsByIdForWorld(WorldState world) {
   return {for (final f in world.fleets) f.id: f};
+}
+
+/// Single-pass index of [WorldState.armies] by army id for O(1) lookups
+/// (Refs #2394, #4038). Prefer building once per stable [WorldState] snapshot.
+Map<String, Army> armiesByIdForWorld(WorldState world) {
+  return {for (final a in world.armies) a.id: a};
 }
 
 /// Partitions [items] into selected vs remaining by [selectedIds] using [idOf].

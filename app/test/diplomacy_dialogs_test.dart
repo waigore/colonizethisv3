@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -33,8 +34,9 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+        child: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
@@ -94,8 +96,9 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+        child: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
@@ -148,8 +151,9 @@ void main() {
     addTearDown(sub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+        child: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
@@ -210,8 +214,9 @@ void main() {
     final bus = AppEventBus.create();
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+        child: Scaffold(
           body: Builder(
             builder: (context) => ElevatedButton(
               child: const Text('Open'),
@@ -424,8 +429,9 @@ void main() {
       addTearDown(sub.cancel);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+          child: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
                 child: const Text('Open'),

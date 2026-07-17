@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/debug_handler_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -11,58 +13,31 @@ void main() {
     test(
       'flips minor capital and reassigns to deterministic seaboard owned province in same region',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-minor-flip-reassign',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Capital',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Inland',
-                  townTileKey: 'oldWorld|P2|1|1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-                'oldWorld|P2': ['oldWorld|P2|1|1'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'oldWorld|P1|0|0': 'fogged',
-                'oldWorld|P2|1|1': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(
-              id: 'minor_1',
-              displayName: 'Minor',
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'minor_1', 'Minor Capital'),
+            debugHandlerTownProvince(
+              'oldWorld|P2',
+              'minor_1',
+              'Minor Inland',
+              1,
+              1,
             ),
           ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+              'oldWorld|P2': [debugHandlerTileKey('oldWorld|P2', 1, 1)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              debugHandlerTileKey('oldWorld|P1'): 'fogged',
+              debugHandlerTileKey('oldWorld|P2', 1, 1): 'fogged',
+            },
+          },
+          minorCapitalProvinceId: 'oldWorld|P1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -99,58 +74,31 @@ void main() {
     test(
       'flips tribe capital and reassigns deterministically without port/road changes',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-tribe-flip-reassign',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'newWorld|N1',
-                  regionId: 'newWorld',
-                  ownerId: 'tribe_1',
-                  displayName: 'Tribe Capital',
-                  townTileKey: 'newWorld|N1|0|0',
-                ),
-                Province(
-                  id: 'newWorld|N2',
-                  regionId: 'newWorld',
-                  ownerId: 'tribe_1',
-                  displayName: 'Tribe Hold',
-                  townTileKey: 'newWorld|N2|2|2',
-                ),
-              ],
-            ),
-            tileKeysByRegionAndProvince: const {
-              'newWorld': {
-                'newWorld|N1': ['newWorld|N1|0|0'],
-                'newWorld|N2': ['newWorld|N2|2|2'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'newWorld|N1|0|0': 'fogged',
-                'newWorld|N2|2|2': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          ],
-          tribes: const [
-            Tribe(
-              id: 'tribe_1',
-              displayName: 'Tribe',
-              capitalProvinceId: 'newWorld|N1',
-              capitalTile: CapitalTile(
-                regionId: 'newWorld',
-                provinceId: 'newWorld|N1',
-                x: 0,
-                y: 0,
-              ),
+          newWorldProvinces: [
+            debugHandlerTownProvince('newWorld|N1', 'tribe_1', 'Tribe Capital'),
+            debugHandlerTownProvince(
+              'newWorld|N2',
+              'tribe_1',
+              'Tribe Hold',
+              2,
+              2,
             ),
           ],
+          tileKeysByRegionAndProvince: {
+            'newWorld': {
+              'newWorld|N1': [debugHandlerTileKey('newWorld|N1')],
+              'newWorld|N2': [debugHandlerTileKey('newWorld|N2', 2, 2)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              debugHandlerTileKey('newWorld|N1'): 'fogged',
+              debugHandlerTileKey('newWorld|N2', 2, 2): 'fogged',
+            },
+          },
+          tribeCapitalProvinceId: 'newWorld|N1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -185,62 +133,32 @@ void main() {
     test(
       'flips minor sole-province capital and applies terminal fall with deterministic feedback',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-minor-flip-fall',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Capital',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'newWorld|N1',
-                  regionId: 'newWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Outpost',
-                  townTileKey: 'newWorld|N1|3|3',
-                ),
-              ],
-            ),
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-              },
-              'newWorld': {
-                'newWorld|N1': ['newWorld|N1|3|3'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'oldWorld|P1|0|0': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'minor_1', 'Minor Capital'),
           ],
-          minorNations: const [
-            MinorNation(
-              id: 'minor_1',
-              displayName: 'Minor',
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
+          newWorldProvinces: [
+            debugHandlerTownProvince(
+              'newWorld|N1',
+              'minor_1',
+              'Minor Outpost',
+              3,
+              3,
             ),
           ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+            },
+            'newWorld': {
+              'newWorld|N1': [debugHandlerTileKey('newWorld|N1', 3, 3)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {debugHandlerTileKey('oldWorld|P1'): 'fogged'},
+          },
+          minorCapitalProvinceId: 'oldWorld|P1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -269,49 +187,20 @@ void main() {
     test(
       'flips tribe sole-region capital and applies terminal fall',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-tribe-flip-fall',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'newWorld|N1',
-                  regionId: 'newWorld',
-                  ownerId: 'tribe_1',
-                  displayName: 'Tribe Capital',
-                  townTileKey: 'newWorld|N1|0|0',
-                ),
-              ],
-            ),
-            tileKeysByRegionAndProvince: const {
-              'newWorld': {
-                'newWorld|N1': ['newWorld|N1|0|0'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'newWorld|N1|0|0': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
+          newWorldProvinces: [
+            debugHandlerTownProvince('newWorld|N1', 'tribe_1', 'Tribe Capital'),
           ],
-          tribes: const [
-            Tribe(
-              id: 'tribe_1',
-              displayName: 'Tribe',
-              capitalProvinceId: 'newWorld|N1',
-              capitalTile: CapitalTile(
-                regionId: 'newWorld',
-                provinceId: 'newWorld|N1',
-                x: 0,
-                y: 0,
-              ),
-            ),
-          ],
+          tileKeysByRegionAndProvince: {
+            'newWorld': {
+              'newWorld|N1': [debugHandlerTileKey('newWorld|N1')],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {debugHandlerTileKey('newWorld|N1'): 'fogged'},
+          },
+          tribeCapitalProvinceId: 'newWorld|N1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -338,57 +227,28 @@ void main() {
     test(
       'flipping a non-capital province does not modify minor/tribe capital fields',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-minor-flip-non-capital',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Capital',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Inland',
-                  townTileKey: 'oldWorld|P2|1|1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-                'oldWorld|P2': ['oldWorld|P2|1|1'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'oldWorld|P2|1|1': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(
-              id: 'minor_1',
-              displayName: 'Minor',
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'minor_1', 'Minor Capital'),
+            debugHandlerTownProvince(
+              'oldWorld|P2',
+              'minor_1',
+              'Minor Inland',
+              1,
+              1,
             ),
           ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+              'oldWorld|P2': [debugHandlerTileKey('oldWorld|P2', 1, 1)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {debugHandlerTileKey('oldWorld|P2', 1, 1): 'fogged'},
+          },
+          minorCapitalProvinceId: 'oldWorld|P1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -413,58 +273,31 @@ void main() {
     test(
       'reassigned minor capital round-trips through Game.toJson/fromJson',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-minor-flip-json',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Capital',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'minor_1',
-                  displayName: 'Minor Inland',
-                  townTileKey: 'oldWorld|P2|1|1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-                'oldWorld|P2': ['oldWorld|P2|1|1'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'oldWorld|P1|0|0': 'fogged',
-                'oldWorld|P2|1|1': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(
-              id: 'minor_1',
-              displayName: 'Minor',
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'minor_1', 'Minor Capital'),
+            debugHandlerTownProvince(
+              'oldWorld|P2',
+              'minor_1',
+              'Minor Inland',
+              1,
+              1,
             ),
           ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+              'oldWorld|P2': [debugHandlerTileKey('oldWorld|P2', 1, 1)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              debugHandlerTileKey('oldWorld|P1'): 'fogged',
+              debugHandlerTileKey('oldWorld|P2', 1, 1): 'fogged',
+            },
+          },
+          minorCapitalProvinceId: 'oldWorld|P1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',

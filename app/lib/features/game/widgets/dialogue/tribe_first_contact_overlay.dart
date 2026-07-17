@@ -7,14 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:jenny/jenny.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../../widgets/ct_spacing.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'game_start_intro_overlay.dart';
 import 'ct_dialogue_view.dart';
 import 'yarn_dialogue_bootstrap.dart';
+import 'titled_dialogue_chrome.dart';
 
 part 'tribe_first_contact_overlay_flow.dart';
 part 'tribe_first_contact_overlay_build.dart';

@@ -1,18 +1,15 @@
-// Shared MaterialApp frames for combat_ui_specs_part*_test (Refs #4013).
-// Pins SPEC/ui combat dialog and sub-view contracts under editorial monocle.
+// Shared combat_ui_specs_part* frames (Refs #4013, #4035).
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:flutter/material.dart';
 
-/// Light/default Material frame used for layout/content pins.
-Widget combatUiSpecsFrame(Widget child) {
-  return MaterialApp(home: Scaffold(body: child));
-}
+import 'app_shell_harness.dart';
 
-/// Editorial-monocle dark frame used for palette/token pins.
-Widget combatUiSpecsDarkFrame(Widget child) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(body: child),
-  );
-}
+/// Light Material frame for layout/content pins.
+Widget combatUiSpecsFrame(Widget child) => buildAppShell(
+      theme: ThemeData.light(),
+      child: Scaffold(body: child),
+    );
+
+/// Editorial-monocle dark frame for palette/token pins.
+Widget combatUiSpecsDarkFrame(Widget child) =>
+    buildAppShell(child: Scaffold(body: child));

@@ -3,29 +3,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-Game _gameWithPlayer({
-  TurnPhase phase = TurnPhase.orders,
-  int treasury = 100,
-}) {
-  return Game(
-    id: 'g-treasury',
-    worldState: WorldState(
-      turnState: TurnState(phase: phase, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(id: 'p1', displayName: 'P1', isHuman: true, treasury: treasury),
-    ],
-  );
-}
+import 'support/debug_handler_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('applyDebugTreasuryCredit', () {
     test('credits treasury and reports new balance (equal amounts)', () {
-      final game = _gameWithPlayer(treasury: 100);
+      final game = buildDebugHandlerPlayerGame(treasury: 100);
       const event = CreditDebugTreasuryEvent(
         humanPlayerId: 'p1',
         requestedAmount: 50,
@@ -37,7 +22,7 @@ void main() {
     });
 
     test('clamped credit includes requested and credited amounts', () {
-      final game = _gameWithPlayer(treasury: 0);
+      final game = buildDebugHandlerPlayerGame(treasury: 0);
       const event = CreditDebugTreasuryEvent(
         humanPlayerId: 'p1',
         requestedAmount: 12000,
@@ -63,7 +48,7 @@ void main() {
     });
 
     test('rejects outside human Orders phase under add_money label', () {
-      final game = _gameWithPlayer(phase: TurnPhase.movement);
+      final game = buildDebugHandlerPlayerGame(phase: TurnPhase.movement);
       const event = CreditDebugTreasuryEvent(
         humanPlayerId: 'p1',
         requestedAmount: 10,
@@ -79,7 +64,7 @@ void main() {
     });
 
     test('short-circuits when credited amount below minimum', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(treasury: 100);
       const event = CreditDebugTreasuryEvent(
         humanPlayerId: 'p1',
         requestedAmount: 0,
@@ -94,7 +79,7 @@ void main() {
     });
 
     test('short-circuits on unknown player', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(treasury: 100);
       const event = CreditDebugTreasuryEvent(
         humanPlayerId: 'ghost',
         requestedAmount: 10,

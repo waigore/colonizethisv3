@@ -5,10 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 
 import 'support/panel_test_fixtures.dart';
+import 'support/technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -26,19 +26,13 @@ void main() {
       'Choosing tech closes the Choose-tech dialog (AC3, Refs #2864 S4)',
       (WidgetTester tester) async {
         Orders last = const Orders();
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TechnologyPanel(
-                game: game,
-                player: player,
-                currentOrders: const Orders(),
-                onOrdersChanged: (o) => last = o,
-              ),
-            ),
-          ),
+        await pumpTechnologyPanel(
+          tester,
+          game: game,
+          player: player,
+          currentOrders: const Orders(),
+          onOrdersChanged: (o) => last = o,
         );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.text('Choose tech').first);
         await tester.pumpAndSettle();
@@ -72,66 +66,59 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Tech assigned to slot 1 does not appear in slot 2 list (AC4)',
-      (WidgetTester tester) async {
-        final rootIds =
-            techCatalog.entries
-                .where((e) => e.value.prerequisiteIds.isEmpty)
-                .map((e) => e.key)
-                .toList()
-              ..sort();
-        final techA = rootIds.isNotEmpty ? rootIds[0] : techCatalog.keys.first;
-        final seeded = Orders(
-          researchOrdersByPlayerId: {
-            player.id: [
-              ResearchOrder(
-                slotIndex: 0,
-                techId: techA,
-                funding: ResearchFundingLevel.medium,
-              ),
-            ],
-          },
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TechnologyPanel(
-                game: game,
-                player: player,
-                currentOrders: seeded,
-                onOrdersChanged: (_) {},
-              ),
+    testWidgets('Tech assigned to slot 1 does not appear in slot 2 list (AC4)', (
+      WidgetTester tester,
+    ) async {
+      final rootIds =
+          techCatalog.entries
+              .where((e) => e.value.prerequisiteIds.isEmpty)
+              .map((e) => e.key)
+              .toList()
+            ..sort();
+      final techA = rootIds.isNotEmpty ? rootIds[0] : techCatalog.keys.first;
+      final seeded = Orders(
+        researchOrdersByPlayerId: {
+          player.id: [
+            ResearchOrder(
+              slotIndex: 0,
+              techId: techA,
+              funding: ResearchFundingLevel.medium,
             ),
-          ),
-        );
-        await tester.pumpAndSettle();
+          ],
+        },
+      );
 
-        await tester.tap(find.text('Choose tech').last);
-        await tester.pumpAndSettle();
+      await pumpTechnologyPanel(
+        tester,
+        game: game,
+        player: player,
+        currentOrders: seeded,
+        onOrdersChanged: (_) {},
+      );
 
-        if (find.text('No techs available to research').evaluate().isNotEmpty) {
-          expect(find.text('No techs available to research'), findsOneWidget);
-          return;
-        }
+      await tester.tap(find.text('Choose tech').last);
+      await tester.pumpAndSettle();
 
-        // The assigned slot card now visibly renders the tech name (Refs
-        // #2864 S3 — slot card assigned-tech body), so the assertion is
-        // scoped to the Choose-tech dialog body only (AC4: the selection
-        // list must not offer the already-assigned tech).
-        final dialogMatches = find.descendant(
-          of: find.byType(ChooseTechDialog),
-          matching: find.text(techDisplayName(techA)),
-        );
-        expect(
-          dialogMatches,
-          findsNothing,
-          reason:
-              'Tech already assigned to slot 1 should not appear in slot 2 list',
-        );
-      },
-    );
+      if (find.text('No techs available to research').evaluate().isNotEmpty) {
+        expect(find.text('No techs available to research'), findsOneWidget);
+        return;
+      }
+
+      // The assigned slot card now visibly renders the tech name (Refs
+      // #2864 S3 — slot card assigned-tech body), so the assertion is
+      // scoped to the Choose-tech dialog body only (AC4: the selection
+      // list must not offer the already-assigned tech).
+      final dialogMatches = find.descendant(
+        of: find.byType(ChooseTechDialog),
+        matching: find.text(techDisplayName(techA)),
+      );
+      expect(
+        dialogMatches,
+        findsNothing,
+        reason:
+            'Tech already assigned to slot 1 should not appear in slot 2 list',
+      );
+    });
 
     testWidgets(
       'Discovery tech does NOT appear when player has not revealed the resource (AC5)',
@@ -166,19 +153,13 @@ void main() {
           players: [playerWithNoVis],
         );
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TechnologyPanel(
-                game: noVisGame,
-                player: playerWithNoVis,
-                currentOrders: const Orders(),
-                onOrdersChanged: (_) {},
-              ),
-            ),
-          ),
+        await pumpTechnologyPanel(
+          tester,
+          game: noVisGame,
+          player: playerWithNoVis,
+          currentOrders: const Orders(),
+          onOrdersChanged: (_) {},
         );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.text('Choose tech').first);
         await tester.pumpAndSettle();
@@ -209,19 +190,13 @@ void main() {
           players: [emptyPlayer, ...game.players.skip(1)],
         );
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TechnologyPanel(
-                game: emptyGame,
-                player: emptyPlayer,
-                currentOrders: const Orders(),
-                onOrdersChanged: (_) {},
-              ),
-            ),
-          ),
+        await pumpTechnologyPanel(
+          tester,
+          game: emptyGame,
+          player: emptyPlayer,
+          currentOrders: const Orders(),
+          onOrdersChanged: (_) {},
         );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.text('Choose tech').first);
         await tester.pumpAndSettle();

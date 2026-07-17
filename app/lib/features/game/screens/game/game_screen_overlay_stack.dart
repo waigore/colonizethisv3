@@ -99,15 +99,17 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             game: game!,
             pendingOvertures: offers,
             onDecisions: (decisions) {
-              final service = ref.read(gameServiceProvider);
-              final orders = ref.read(currentOrdersProvider);
-              final result = service.resumeOvertureDecisions(
-                game!,
-                offers,
-                decisions,
-                orders,
+              applyDiplomacyResumeDecisions(
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
+                resume: (service, orders) => service.resumeOvertureDecisions(
+                  game!,
+                  offers,
+                  decisions,
+                  orders,
+                ),
               );
-              ref.read(turnResolutionResultApplierProvider).apply(result);
             },
             child: content,
           );
@@ -117,14 +119,17 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             game: game!,
             prompts: prompts,
             onDecisions: (decisions) {
-              final service = ref.read(gameServiceProvider);
-              final orders = ref.read(currentOrdersProvider);
-              final result = service.resumeInterventionDecisions(
-                game!,
-                decisions,
-                orders,
+              applyDiplomacyResumeDecisions(
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
+                resume: (service, orders) =>
+                    service.resumeInterventionDecisions(
+                  game!,
+                  decisions,
+                  orders,
+                ),
               );
-              ref.read(turnResolutionResultApplierProvider).apply(result);
             },
             child: content,
           );
@@ -133,14 +138,17 @@ class _GameScreenOverlayStack extends ConsumerWidget {
             game: game!,
             pending: pending,
             onDecisions: (decisions) {
-              final service = ref.read(gameServiceProvider);
-              final orders = ref.read(currentOrdersProvider);
-              final result = service.resumeCallToArmsDecisions(
-                game!,
-                decisions,
-                orders,
+              applyDiplomacyResumeDecisions(
+                service: ref.read(gameServiceProvider),
+                orders: ref.read(currentOrdersProvider),
+                applier: ref.read(turnResolutionResultApplierProvider),
+                resume: (service, orders) =>
+                    service.resumeCallToArmsDecisions(
+                  game!,
+                  decisions,
+                  orders,
+                ),
               );
-              ref.read(turnResolutionResultApplierProvider).apply(result);
             },
             child: content,
           );

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/game_map_area_state_logic_test_support.dart';
 
+/// Densified in-file helpers for part2 action-state suites (Refs #4021).
 void main() {
   suppressLogsForTests();
   group('GameMapAreaStateLogic', () {
@@ -16,24 +17,19 @@ void main() {
       const humanPlayerId = 'gp1';
       const selectedTileKey = 'oldWorld|p1|0|0';
       const selectedProvinceId = 'oldWorld|p1';
+      const tribe = ct_models.Tribe(id: 'tribe1', displayName: 'Tribe');
 
       ct_models.Game makeGame({
         bool includeExplorer = true,
         bool includeProspectedTile = false,
-        bool includeMineralResource = true,
         String? resourceOverride,
         String? provinceOwnerId,
         List<ct_models.Tribe> tribes = const [],
         List<ct_models.OvertureState> overtureStates = const [],
       }) {
-        final Map<String, String> resourceByTileKey;
-        if (resourceOverride != null) {
-          resourceByTileKey = {selectedTileKey: resourceOverride};
-        } else if (includeMineralResource) {
-          resourceByTileKey = const {selectedTileKey: 'iron'};
-        } else {
-          resourceByTileKey = const {};
-        }
+        final resourceByTileKey = resourceOverride != null
+            ? {selectedTileKey: resourceOverride}
+            : const {selectedTileKey: 'iron'};
         return ct_models.Game(
           id: 'g',
           worldState: ct_models.WorldState(
@@ -83,168 +79,137 @@ void main() {
         );
       }
 
-      PlayerView makePlayerView({required VisibilityLevel tileVisibility}) {
-        return PlayerView(
-          playerId: humanPlayerId,
-          player: const ct_models.Player(
-            id: humanPlayerId,
-            displayName: 'Human',
-            isHuman: true,
+      ({bool showIcon, bool enabled, bool hasExplorerUnits}) prospectState({
+        required ct_models.Game game,
+        required VisibilityLevel visibility,
+        Map<String, TileMapResult>? tileMapByRegion,
+      }) {
+        return GameMapAreaStateLogic.provinceProspectActionState(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: PlayerView(
+            playerId: humanPlayerId,
+            player: const ct_models.Player(
+              id: humanPlayerId,
+              displayName: 'Human',
+              isHuman: true,
+            ),
+            ownUnitsById: {},
+            provincesById: {},
+            visibilityByTile: {selectedTileKey: visibility},
+            prospectedTiles: {},
+            diplomacyByOtherId: {},
           ),
-          ownUnitsById: {},
-          provincesById: {},
-          visibilityByTile: {selectedTileKey: tileVisibility},
-          prospectedTiles: {},
-          diplomacyByOtherId: {},
+          topology: null,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: tileMapByRegion,
         );
       }
 
-      test('shows enabled icon for visible, unprospected mineral tile', () {
-        final state = GameMapAreaStateLogic.provinceProspectActionState(
-          game: makeGame(),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(
-            tileVisibility: VisibilityLevel.fullyVisible,
-          ),
-          topology: null,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: null,
-        );
-        expect(state.showIcon, isTrue);
-        expect(state.enabled, isTrue);
-        expect(state.hasExplorerUnits, isTrue);
-      });
-
-      test('hides icon when selected tile already prospected', () {
-        final state = GameMapAreaStateLogic.provinceProspectActionState(
-          game: makeGame(includeProspectedTile: true),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
-          topology: null,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: null,
-        );
-        expect(state.showIcon, isFalse);
-        expect(state.enabled, isFalse);
-        expect(state.hasExplorerUnits, isFalse);
-      });
-
-      test('shows disabled icon when human has zero explorer units', () {
-        final state = GameMapAreaStateLogic.provinceProspectActionState(
-          game: makeGame(includeExplorer: false),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(
-            tileVisibility: VisibilityLevel.fullyVisible,
-          ),
-          topology: null,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: null,
-        );
-        expect(state.showIcon, isTrue);
-        expect(state.enabled, isFalse);
-        expect(state.hasExplorerUnits, isFalse);
-      });
-
-      // Refs #3753 R4/R4b: prospect inside a Minor/Tribe province requires a
-      // Consulate (or higher). Without it the inline action must be shown
-      // disabled (so the overlay can surface the rejection tooltip) rather than
-      // enabled-then-rejected at submission.
-      test(
-        'shows disabled icon for Minor/Tribe province without a Consulate',
-        () {
-          final state = GameMapAreaStateLogic.provinceProspectActionState(
-            game: makeGame(
-              provinceOwnerId: 'tribe1',
-              tribes: const [
-                ct_models.Tribe(id: 'tribe1', displayName: 'Tribe'),
-              ],
-            ),
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
-            topology: null,
-            currentOrders: const ct_models.Orders(),
-            tileMapByRegion: null,
-          );
-          expect(state.showIcon, isTrue);
-          expect(state.enabled, isFalse);
-        },
-      );
-
-      test('shows enabled icon for Minor/Tribe province with a Consulate', () {
-        final state = GameMapAreaStateLogic.provinceProspectActionState(
-          game: makeGame(
-            provinceOwnerId: 'tribe1',
-            tribes: const [ct_models.Tribe(id: 'tribe1', displayName: 'Tribe')],
-            overtureStates: const [
-              ct_models.OvertureState(
-                gpId: humanPlayerId,
-                targetId: 'tribe1',
-                stage: ct_models.OvertureStage.tradeConsulate,
-              ),
-            ],
-          ),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(tileVisibility: VisibilityLevel.fogged),
-          topology: null,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: null,
-        );
-        expect(state.showIcon, isTrue);
-        expect(state.enabled, isTrue);
-      });
-
-      test('hides icon for unknown-visibility tiles', () {
-        final state = GameMapAreaStateLogic.provinceProspectActionState(
-          game: makeGame(),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(tileVisibility: VisibilityLevel.unknown),
-          topology: null,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: null,
-        );
-        expect(state.showIcon, isFalse);
-        expect(state.enabled, isFalse);
-        expect(state.hasExplorerUnits, isFalse);
-      });
-
-      test(
-        'hides prospect shortcut for wool on hills when tile map marks hills',
-        () {
-          final tileMapByRegion = <String, TileMapResult>{
-            'oldWorld': TileMapResult(
-              width: 1,
-              height: 1,
-              grid: const [
-                ['p1'],
-              ],
-              terrainGrid: const [
-                [TerrainType.hills],
-              ],
-              resourceGrid: const [
-                [Resource.wool],
-              ],
-            ),
-          };
-          final state = GameMapAreaStateLogic.provinceProspectActionState(
-            game: makeGame(resourceOverride: 'wool'),
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            playerView: makePlayerView(
-              tileVisibility: VisibilityLevel.fullyVisible,
-            ),
-            topology: null,
-            currentOrders: const ct_models.Orders(),
+      void expectProspect({
+        required String name,
+        required ct_models.Game game,
+        required VisibilityLevel visibility,
+        required bool showIcon,
+        required bool enabled,
+        bool? hasExplorerUnits,
+        Map<String, TileMapResult>? tileMapByRegion,
+      }) {
+        test(name, () {
+          final state = prospectState(
+            game: game,
+            visibility: visibility,
             tileMapByRegion: tileMapByRegion,
           );
-          expect(state.showIcon, isFalse);
-          expect(state.enabled, isFalse);
-          expect(state.hasExplorerUnits, isFalse);
+          expect(state.showIcon, showIcon);
+          expect(state.enabled, enabled);
+          if (hasExplorerUnits != null) {
+            expect(state.hasExplorerUnits, hasExplorerUnits);
+          }
+        });
+      }
+
+      expectProspect(
+        name: 'shows enabled icon for visible, unprospected mineral tile',
+        game: makeGame(),
+        visibility: VisibilityLevel.fullyVisible,
+        showIcon: true,
+        enabled: true,
+        hasExplorerUnits: true,
+      );
+      expectProspect(
+        name: 'hides icon when selected tile already prospected',
+        game: makeGame(includeProspectedTile: true),
+        visibility: VisibilityLevel.fogged,
+        showIcon: false,
+        enabled: false,
+        hasExplorerUnits: false,
+      );
+      expectProspect(
+        name: 'shows disabled icon when human has zero explorer units',
+        game: makeGame(includeExplorer: false),
+        visibility: VisibilityLevel.fullyVisible,
+        showIcon: true,
+        enabled: false,
+        hasExplorerUnits: false,
+      );
+      // Refs #3753 R4/R4b: Minor/Tribe prospect needs Consulate+.
+      expectProspect(
+        name:
+            'shows disabled icon for Minor/Tribe province without a Consulate',
+        game: makeGame(provinceOwnerId: 'tribe1', tribes: const [tribe]),
+        visibility: VisibilityLevel.fogged,
+        showIcon: true,
+        enabled: false,
+      );
+      expectProspect(
+        name: 'shows enabled icon for Minor/Tribe province with a Consulate',
+        game: makeGame(
+          provinceOwnerId: 'tribe1',
+          tribes: const [tribe],
+          overtureStates: const [
+            ct_models.OvertureState(
+              gpId: humanPlayerId,
+              targetId: 'tribe1',
+              stage: ct_models.OvertureStage.tradeConsulate,
+            ),
+          ],
+        ),
+        visibility: VisibilityLevel.fogged,
+        showIcon: true,
+        enabled: true,
+      );
+      expectProspect(
+        name: 'hides icon for unknown-visibility tiles',
+        game: makeGame(),
+        visibility: VisibilityLevel.unknown,
+        showIcon: false,
+        enabled: false,
+        hasExplorerUnits: false,
+      );
+      expectProspect(
+        name:
+            'hides prospect shortcut for wool on hills when tile map marks hills',
+        game: makeGame(resourceOverride: 'wool'),
+        visibility: VisibilityLevel.fullyVisible,
+        showIcon: false,
+        enabled: false,
+        hasExplorerUnits: false,
+        tileMapByRegion: {
+          'oldWorld': TileMapResult(
+            width: 1,
+            height: 1,
+            grid: const [
+              ['p1'],
+            ],
+            terrainGrid: const [
+              [TerrainType.hills],
+            ],
+            resourceGrid: const [
+              [Resource.wool],
+            ],
+          ),
         },
       );
     });
@@ -253,79 +218,7 @@ void main() {
       const humanPlayerId = 'gp1';
       const selectedTileKey = 'oldWorld|p1|0|0';
       const selectedProvinceId = 'oldWorld|p1';
-
-      ct_models.Game makeGame({
-        bool includeBuilder = true,
-        bool includeResource = true,
-        Map<String, bool>? techUnlocked,
-      }) {
-        return ct_models.Game(
-          id: 'g',
-          worldState: ct_models.WorldState(
-            turnState: const ct_models.TurnState(
-              phase: ct_models.TurnPhase.orders,
-              turnNumber: 1,
-            ),
-            oldWorld: ct_models.RegionData(
-              provinces: const [
-                ct_models.Province(
-                  id: selectedProvinceId,
-                  regionId: 'oldWorld',
-                ),
-              ],
-              units: includeBuilder
-                  ? [
-                      ct_models.Unit(
-                        id: 'u_builder',
-                        type: ct_models.kUnitTypeBuilder,
-                        ownerId: humanPlayerId,
-                        locationProvinceId: selectedProvinceId,
-                        tileKey: selectedTileKey,
-                        status: ct_models.UnitStatus.idle,
-                      ),
-                    ]
-                  : const [],
-            ),
-            newWorld: const ct_models.RegionData(provinces: [], units: []),
-            resourceByTileKey: includeResource
-                ? const {selectedTileKey: 'grain'}
-                : const {},
-          ),
-          players: [
-            ct_models.Player(
-              id: humanPlayerId,
-              displayName: 'Human',
-              isHuman: true,
-              stockpile: const ct_models.Stockpile(
-                quantities: {'lumber': 999, 'castIron': 999},
-              ),
-              techUnlocked: techUnlocked,
-            ),
-          ],
-          minorNations: const [],
-          tribes: const [],
-        );
-      }
-
-      PlayerView makePlayerView() {
-        return PlayerView(
-          playerId: humanPlayerId,
-          player: const ct_models.Player(
-            id: humanPlayerId,
-            displayName: 'Human',
-            isHuman: true,
-          ),
-          ownUnitsById: {},
-          provincesById: {},
-          visibilityByTile: const {
-            selectedTileKey: VisibilityLevel.fullyVisible,
-          },
-          prospectedTiles: {},
-          diplomacyByOtherId: {},
-        );
-      }
-
-      final topology = const MapTopology(
+      const topology = MapTopology(
         nodes: [
           TopologyNode(
             id: 'p1',
@@ -351,44 +244,162 @@ void main() {
         ),
       };
 
-      test('shows icon for improvable tile with builder units', () {
-        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
-          game: makeGame(),
+      PlayerView makePlayerView() => PlayerView(
+        playerId: humanPlayerId,
+        player: const ct_models.Player(
+          id: humanPlayerId,
+          displayName: 'Human',
+          isHuman: true,
+        ),
+        ownUnitsById: {},
+        provincesById: {},
+        visibilityByTile: const {
+          selectedTileKey: VisibilityLevel.fullyVisible,
+        },
+        prospectedTiles: {},
+        diplomacyByOtherId: {},
+      );
+
+      ct_models.Game makeGame({
+        bool includeBuilder = true,
+        bool includeResource = true,
+        Map<String, bool>? techUnlocked,
+        String? ownerId,
+        Map<String, int>? stockpileQuantities,
+        bool circularSaw = false,
+      }) {
+        final stockpile = ct_models.Stockpile(
+          quantities:
+              stockpileQuantities ??
+              const {'lumber': 999, 'castIron': 999},
+        );
+        return ct_models.Game(
+          id: 'g',
+          worldState: ct_models.WorldState(
+            turnState: const ct_models.TurnState(
+              phase: ct_models.TurnPhase.orders,
+              turnNumber: 1,
+            ),
+            oldWorld: ct_models.RegionData(
+              provinces: [
+                ct_models.Province(
+                  id: selectedProvinceId,
+                  regionId: 'oldWorld',
+                  ownerId: ownerId,
+                ),
+              ],
+              units: includeBuilder
+                  ? [
+                      ct_models.Unit(
+                        id: 'u_builder',
+                        type: ct_models.kUnitTypeBuilder,
+                        ownerId: humanPlayerId,
+                        locationProvinceId: selectedProvinceId,
+                        tileKey: selectedTileKey,
+                        status: ct_models.UnitStatus.idle,
+                      ),
+                    ]
+                  : const [],
+            ),
+            newWorld: const ct_models.RegionData(provinces: [], units: []),
+            resourceByTileKey: includeResource
+                ? const {selectedTileKey: 'grain'}
+                : const {},
+            tileKeysByRegionAndProvince: ownerId == null
+                ? const {}
+                : {
+                    'oldWorld': {
+                      selectedProvinceId: [selectedTileKey],
+                    },
+                  },
+            tileState: ownerId == null
+                ? const ct_models.TileMapState()
+                : ct_models.TileMapState(
+                    improvementByTile: {selectedTileKey: 0},
+                  ),
+            playerVisibilityByTile: ownerId == null
+                ? const {}
+                : {
+                    humanPlayerId: {selectedTileKey: 'fullyVisible'},
+                  },
+          ),
+          players: [
+            ct_models.Player(
+              id: humanPlayerId,
+              displayName: 'Human',
+              isHuman: true,
+              capitalProvinceId: ownerId == null ? null : selectedProvinceId,
+              stockpile: stockpile,
+              techUnlocked: circularSaw
+                  ? const {kTechIdCircularSaw: true}
+                  : techUnlocked,
+            ),
+          ],
+          minorNations: const [],
+          tribes: const [],
+        );
+      }
+
+      ({bool showIcon, bool enabled, bool hasBuilderUnits}) buildState({
+        required ct_models.Game game,
+        MapTopology? topology,
+        PlayerView? playerView,
+      }) {
+        return GameMapAreaStateLogic.provinceBuildImprovementActionState(
+          game: game,
           humanPlayerId: humanPlayerId,
           selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(),
-          topology: null,
+          playerView: playerView ?? makePlayerView(),
+          topology: topology,
           currentOrders: const ct_models.Orders(),
           tileMapByRegion: tileMapByRegion,
         );
+      }
+
+      void expectMatchesPipeline({
+        required ct_models.Game game,
+        required MapTopology? topologyArg,
+        required PlayerView view,
+        required bool expectEnabled,
+      }) {
+        final expected = expectedBuildImprovementEnabledFromPipeline(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: selectedTileKey,
+          playerView: view,
+          topology: topologyArg,
+          currentOrders: const ct_models.Orders(),
+          tileMapByRegion: tileMapByRegion,
+        );
+        final state = buildState(
+          game: game,
+          topology: topologyArg,
+          playerView: view,
+        );
+        expect(state.enabled, expected);
+        expect(expected, expectEnabled);
+      }
+
+      test('shows icon for improvable tile with builder units', () {
+        final state = buildState(game: makeGame());
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
         expect(state.hasBuilderUnits, isTrue);
       });
 
       test('hides icon when tile has no resource', () {
-        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
+        final state = buildState(
           game: makeGame(includeResource: false, techUnlocked: const {}),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(),
           topology: topology,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: tileMapByRegion,
         );
         expect(state.showIcon, isFalse);
         expect(state.enabled, isFalse);
       });
 
       test('shows disabled icon when no builder units exist', () {
-        final state = GameMapAreaStateLogic.provinceBuildImprovementActionState(
+        final state = buildState(
           game: makeGame(includeBuilder: false),
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          playerView: makePlayerView(),
           topology: topology,
-          currentOrders: const ct_models.Orders(),
-          tileMapByRegion: tileMapByRegion,
         );
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);
@@ -400,196 +411,46 @@ void main() {
       test(
         'enabled matches getValidWorkOrderTileKeysWithVisibility pipeline when topology null',
         () {
-          final game = makeGame();
-          final state =
-              GameMapAreaStateLogic.provinceBuildImprovementActionState(
-                game: game,
-                humanPlayerId: humanPlayerId,
-                selectedTileKey: selectedTileKey,
-                playerView: makePlayerView(),
-                topology: null,
-                currentOrders: const ct_models.Orders(),
-                tileMapByRegion: tileMapByRegion,
-              );
-          final expected = expectedBuildImprovementEnabledFromPipeline(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            playerView: makePlayerView(),
-            topology: null,
-            currentOrders: const ct_models.Orders(),
-            tileMapByRegion: tileMapByRegion,
+          expectMatchesPipeline(
+            game: makeGame(),
+            topologyArg: null,
+            view: makePlayerView(),
+            expectEnabled: false,
           );
-          expect(state.enabled, expected);
-          expect(state.enabled, isFalse);
         },
       );
 
       test(
         'enabled matches pipeline for assignable grain tile with topology and materials',
         () {
-          const provinceId = selectedProvinceId;
-          final richGame = ct_models.Game(
-            id: 'g',
-            worldState: ct_models.WorldState(
-              turnState: const ct_models.TurnState(
-                phase: ct_models.TurnPhase.orders,
-                turnNumber: 1,
-              ),
-              oldWorld: ct_models.RegionData(
-                provinces: [
-                  ct_models.Province(
-                    id: provinceId,
-                    regionId: 'oldWorld',
-                    ownerId: humanPlayerId,
-                  ),
-                ],
-                units: [
-                  ct_models.Unit(
-                    id: 'u_builder',
-                    type: ct_models.kUnitTypeBuilder,
-                    ownerId: humanPlayerId,
-                    locationProvinceId: provinceId,
-                    tileKey: selectedTileKey,
-                    status: ct_models.UnitStatus.idle,
-                  ),
-                ],
-              ),
-              newWorld: const ct_models.RegionData(provinces: [], units: []),
-              resourceByTileKey: const {selectedTileKey: 'grain'},
-              tileKeysByRegionAndProvince: {
-                'oldWorld': {
-                  provinceId: [selectedTileKey],
-                },
-              },
-              tileState: ct_models.TileMapState(
-                improvementByTile: {selectedTileKey: 0},
-              ),
-              playerVisibilityByTile: {
-                humanPlayerId: {selectedTileKey: 'fullyVisible'},
-              },
-            ),
-            players: [
-              ct_models.Player(
-                id: humanPlayerId,
-                displayName: 'Human',
-                isHuman: true,
-                capitalProvinceId: provinceId,
-                stockpile: const ct_models.Stockpile(
-                  quantities: {'lumber': 10, 'castIron': 10},
-                ),
-                techUnlocked: const {kTechIdCircularSaw: true},
-              ),
-            ],
-            minorNations: const [],
-            tribes: const [],
+          final richGame = makeGame(
+            ownerId: humanPlayerId,
+            stockpileQuantities: const {'lumber': 10, 'castIron': 10},
+            circularSaw: true,
           );
-          final richView = buildPlayerView(richGame, topology, humanPlayerId);
-          const orders = ct_models.Orders();
-          final expected = expectedBuildImprovementEnabledFromPipeline(
+          expectMatchesPipeline(
             game: richGame,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            playerView: richView,
-            topology: topology,
-            currentOrders: orders,
-            tileMapByRegion: tileMapByRegion,
+            topologyArg: topology,
+            view: buildPlayerView(richGame, topology, humanPlayerId),
+            expectEnabled: true,
           );
-          final state =
-              GameMapAreaStateLogic.provinceBuildImprovementActionState(
-                game: richGame,
-                humanPlayerId: humanPlayerId,
-                selectedTileKey: selectedTileKey,
-                playerView: richView,
-                topology: topology,
-                currentOrders: orders,
-                tileMapByRegion: tileMapByRegion,
-              );
-          expect(state.enabled, expected);
-          expect(expected, isTrue);
         },
       );
 
       test(
         'enabled matches pipeline when materials are insufficient for build_improvement',
         () {
-          const provinceId = selectedProvinceId;
-          final brokeGame = ct_models.Game(
-            id: 'g',
-            worldState: ct_models.WorldState(
-              turnState: const ct_models.TurnState(
-                phase: ct_models.TurnPhase.orders,
-                turnNumber: 1,
-              ),
-              oldWorld: ct_models.RegionData(
-                provinces: [
-                  ct_models.Province(
-                    id: provinceId,
-                    regionId: 'oldWorld',
-                    ownerId: humanPlayerId,
-                  ),
-                ],
-                units: [
-                  ct_models.Unit(
-                    id: 'u_builder',
-                    type: ct_models.kUnitTypeBuilder,
-                    ownerId: humanPlayerId,
-                    locationProvinceId: provinceId,
-                    tileKey: selectedTileKey,
-                    status: ct_models.UnitStatus.idle,
-                  ),
-                ],
-              ),
-              newWorld: const ct_models.RegionData(provinces: [], units: []),
-              resourceByTileKey: const {selectedTileKey: 'grain'},
-              tileKeysByRegionAndProvince: {
-                'oldWorld': {
-                  provinceId: [selectedTileKey],
-                },
-              },
-              tileState: ct_models.TileMapState(
-                improvementByTile: {selectedTileKey: 0},
-              ),
-              playerVisibilityByTile: {
-                humanPlayerId: {selectedTileKey: 'fullyVisible'},
-              },
-            ),
-            players: [
-              ct_models.Player(
-                id: humanPlayerId,
-                displayName: 'Human',
-                isHuman: true,
-                capitalProvinceId: provinceId,
-                stockpile: const ct_models.Stockpile(quantities: {}),
-                techUnlocked: const {kTechIdCircularSaw: true},
-              ),
-            ],
-            minorNations: const [],
-            tribes: const [],
+          final brokeGame = makeGame(
+            ownerId: humanPlayerId,
+            stockpileQuantities: const {},
+            circularSaw: true,
           );
-          final brokeView = buildPlayerView(brokeGame, topology, humanPlayerId);
-          const orders = ct_models.Orders();
-          final expected = expectedBuildImprovementEnabledFromPipeline(
+          expectMatchesPipeline(
             game: brokeGame,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            playerView: brokeView,
-            topology: topology,
-            currentOrders: orders,
-            tileMapByRegion: tileMapByRegion,
+            topologyArg: topology,
+            view: buildPlayerView(brokeGame, topology, humanPlayerId),
+            expectEnabled: false,
           );
-          final state =
-              GameMapAreaStateLogic.provinceBuildImprovementActionState(
-                game: brokeGame,
-                humanPlayerId: humanPlayerId,
-                selectedTileKey: selectedTileKey,
-                playerView: brokeView,
-                topology: topology,
-                currentOrders: orders,
-                tileMapByRegion: tileMapByRegion,
-              );
-          expect(state.enabled, expected);
-          expect(expected, isFalse);
         },
       );
     });
@@ -629,104 +490,79 @@ void main() {
         ],
       );
 
-      final partiallyRevealedRegion = RegionMapViewData(
-        regionId: 'oldWorld',
-        width: 2,
-        height: 1,
-        cellSize: 16,
-        cells: const [
-          CellViewData(
-            x: 0,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            visibility: TileVisibility.fogged,
-          ),
-          CellViewData(
-            x: 1,
-            y: 0,
-            regionCellId: 'p1',
-            isSea: false,
-            visibility: TileVisibility.unrevealed,
-          ),
-        ],
-        capitalMarkers: const [],
-        portMarkers: const [],
-        factionColors: const {},
-        greatPowerFactionIds: const {},
-        terrainColors: const {},
-        unitMarkers: const [],
+      RegionMapViewData regionWithCells(List<TileVisibility> vis) =>
+          RegionMapViewData(
+            regionId: 'oldWorld',
+            width: 2,
+            height: 1,
+            cellSize: 16,
+            cells: [
+              for (var i = 0; i < vis.length; i++)
+                CellViewData(
+                  x: i,
+                  y: 0,
+                  regionCellId: 'p1',
+                  isSea: false,
+                  visibility: vis[i],
+                ),
+            ],
+            capitalMarkers: const [],
+            portMarkers: const [],
+            factionColors: const {},
+            greatPowerFactionIds: const {},
+            terrainColors: const {},
+            unitMarkers: const [],
+          );
+
+      final partial = regionWithCells(const [
+        TileVisibility.fogged,
+        TileVisibility.unrevealed,
+      ]);
+
+      ({bool showIcon, bool enabled, bool hasExplorerUnits}) explore(
+        ct_models.Game g,
+        RegionMapViewData region,
+      ) => GameMapAreaStateLogic.provinceExploreActionState(
+        game: g,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        selectedRegion: region,
+        cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
       );
 
       test(
         'shows enabled icon in partially revealed province with cached target',
         () {
-          final state = GameMapAreaStateLogic.provinceExploreActionState(
-            game: game,
-            humanPlayerId: humanPlayerId,
-            selectedTileKey: selectedTileKey,
-            selectedRegion: partiallyRevealedRegion,
-            cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
-          );
+          final state = explore(game, partial);
           expect(state.showIcon, isTrue);
           expect(state.enabled, isTrue);
         },
       );
 
       test('hides icon when province is fully revealed', () {
-        final fullyRevealedRegion = RegionMapViewData(
-          regionId: 'oldWorld',
-          width: 2,
-          height: 1,
-          cellSize: 16,
-          cells: const [
-            CellViewData(
-              x: 0,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              visibility: TileVisibility.fogged,
-            ),
-            CellViewData(
-              x: 1,
-              y: 0,
-              regionCellId: 'p1',
-              isSea: false,
-              visibility: TileVisibility.fogged,
-            ),
-          ],
-          capitalMarkers: const [],
-          portMarkers: const [],
-          factionColors: const {},
-          greatPowerFactionIds: const {},
-          terrainColors: const {},
-          unitMarkers: const [],
+        expect(
+          explore(
+            game,
+            regionWithCells(const [
+              TileVisibility.fogged,
+              TileVisibility.fogged,
+            ]),
+          ).showIcon,
+          isFalse,
         );
-        final state = GameMapAreaStateLogic.provinceExploreActionState(
-          game: game,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          selectedRegion: fullyRevealedRegion,
-          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
-        );
-        expect(state.showIcon, isFalse);
       });
 
       test('shows disabled icon when no explorers exist', () {
-        final noExplorerGame = game.copyWith(
-          worldState: game.worldState.copyWith(
-            oldWorld: ct_models.RegionData(
-              provinces: game.worldState.oldWorld.provinces,
-              units: const [],
+        final state = explore(
+          game.copyWith(
+            worldState: game.worldState.copyWith(
+              oldWorld: ct_models.RegionData(
+                provinces: game.worldState.oldWorld.provinces,
+                units: const [],
+              ),
             ),
           ),
-        );
-        final state = GameMapAreaStateLogic.provinceExploreActionState(
-          game: noExplorerGame,
-          humanPlayerId: humanPlayerId,
-          selectedTileKey: selectedTileKey,
-          selectedRegion: partiallyRevealedRegion,
-          cachedExploreEligibleTileKeys: const {'oldWorld|p1|1|0'},
+          partial,
         );
         expect(state.showIcon, isTrue);
         expect(state.enabled, isFalse);

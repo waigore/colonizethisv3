@@ -6,18 +6,16 @@ import '../tool/check_app_no_material_scaffold.dart';
 
 void main() {
   group('runCheckAppNoMaterialScaffold', () {
-    test(
-      'passes when every features file uses CtGameFeatureScreenShell '
-      '(no direct Scaffold)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_scaffold_pass_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('passes when every features file uses CtGameFeatureScreenShell '
+        '(no direct Scaffold)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_scaffold_pass_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/screens/clean.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/screens/clean.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/widgets/ct_game_feature_screen_shell.dart';
 
@@ -31,17 +29,16 @@ class Clean extends StatelessWidget {
 }
 ''');
 
-        final logs = <String>[];
-        final code = runCheckAppNoMaterialScaffold(
-          temp.path,
-          info: logs.add,
-          err: logs.add,
-        );
+      final logs = <String>[];
+      final code = runCheckAppNoMaterialScaffold(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
 
-        expect(code, 0);
-        expect(logs.join('\n'), contains('no violations found'));
-      },
-    );
+      expect(code, 0);
+      expect(logs.join('\n'), contains('no violations found'));
+    });
 
     test('fails when a feature file constructs Scaffold(', () {
       final temp = Directory.systemTemp.createTempSync(
@@ -68,14 +65,8 @@ Widget screen() => Scaffold(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('bad_screen.dart:3: Scaffold('),
-      );
-      expect(
-        logs.join('\n'),
-        contains('CtGameFeatureScreenShell'),
-      );
+      expect(logs.join('\n'), contains('bad_screen.dart:3: Scaffold('));
+      expect(logs.join('\n'), contains('CtGameFeatureScreenShell'));
     });
 
     test('passes when Scaffold appears inside a // comment or /// dartdoc', () {
@@ -105,18 +96,16 @@ class C {}
       expect(logs.join('\n'), contains('no violations found'));
     });
 
-    test(
-      'does not flag identifiers that contain "Scaffold" without '
-      'an opening paren (false-positive guard)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_scaffold_identifier_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag identifiers that contain "Scaffold" without '
+        'an opening paren (false-positive guard)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_scaffold_identifier_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/screens/identifier.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/screens/identifier.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 class FakeScaffoldProbe {
@@ -124,15 +113,14 @@ class FakeScaffoldProbe {
 }
 ''');
 
-        final code = runCheckAppNoMaterialScaffold(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialScaffold(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
       'does not flag ScaffoldMessenger or ScaffoldState (distinct identifiers)',
@@ -168,17 +156,15 @@ ScaffoldState? readState(BuildContext context) {
       },
     );
 
-    test(
-      'does not flag Scaffold.of(context) static member access',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_scaffold_static_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag Scaffold.of(context) static member access', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_scaffold_static_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/screens/static_access.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/screens/static_access.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 void open(BuildContext context) {
@@ -186,27 +172,24 @@ void open(BuildContext context) {
 }
 ''');
 
-        final code = runCheckAppNoMaterialScaffold(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialScaffold(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_scaffold_chrome_',
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -220,49 +203,22 @@ Widget fallback() => Scaffold(body: const SizedBox.shrink());
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
-    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_scaffold_devtools_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-
-      const debugConsole =
-          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
-
-      File('${temp.path}/$debugConsole')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
-import 'package:flutter/material.dart';
-
-Widget bypass() => Scaffold(body: const SizedBox.shrink());
-''');
-
-      final code = runCheckAppNoMaterialScaffold(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
-
-      expect(code, 0);
-    });
-
     test(
-      'no longer allowlists the Debug Log Viewer (SYS10001) after the '
-      'Refs #2914 S8 CtScreenShell migration',
+      'allowlists the Debug Console Overlay dev-tooling screen (SYS20001)',
       () {
         final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_scaffold_debug_log_promoted_',
+          'check_app_no_material_scaffold_devtools_',
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        const debugViewer =
-            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+        const debugConsole =
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
-        File('${temp.path}/$debugViewer')
+        File('${temp.path}/$debugConsole')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -270,20 +226,47 @@ import 'package:flutter/material.dart';
 Widget bypass() => Scaffold(body: const SizedBox.shrink());
 ''');
 
-        final logs = <String>[];
         final code = runCheckAppNoMaterialScaffold(
           temp.path,
-          info: logs.add,
-          err: logs.add,
+          info: (_) {},
+          err: (_) {},
         );
 
-        expect(code, 1);
-        expect(
-          logs.join('\n'),
-          contains('debug_log_viewer_screen.dart:3: Scaffold('),
-        );
+        expect(code, 0);
       },
     );
+
+    test('no longer allowlists the Debug Log Viewer (SYS10001) after the '
+        'Refs #2914 S8 CtScreenShell migration', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_scaffold_debug_log_promoted_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      const debugViewer =
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+
+      File('${temp.path}/$debugViewer')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
+import 'package:flutter/material.dart';
+
+Widget bypass() => Scaffold(body: const SizedBox.shrink());
+''');
+
+      final logs = <String>[];
+      final code = runCheckAppNoMaterialScaffold(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(
+        logs.join('\n'),
+        contains('debug_log_viewer_screen.dart:3: Scaffold('),
+      );
+    });
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -293,9 +276,7 @@ Widget bypass() => Scaffold(body: const SizedBox.shrink());
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/some_widget_test.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -363,9 +344,7 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
   group('shouldSkipAppNoMaterialScaffoldFile (scope predicate)', () {
     test('skips generated suffixes', () {
       expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/x/y.g.dart',
-        ),
+        shouldSkipAppNoMaterialScaffoldFile('app/lib/features/x/y.g.dart'),
         isTrue,
       );
       expect(
@@ -375,42 +354,37 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/x/y.mocks.dart',
-        ),
+        shouldSkipAppNoMaterialScaffoldFile('app/lib/features/x/y.mocks.dart'),
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/x/y.gen.dart',
-        ),
+        shouldSkipAppNoMaterialScaffoldFile('app/lib/features/x/y.gen.dart'),
         isTrue,
       );
     });
 
     test('skips test files inside features/', () {
       expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/x/y_test.dart',
-        ),
+        shouldSkipAppNoMaterialScaffoldFile('app/lib/features/x/y_test.dart'),
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/x/test/y.dart',
-        ),
+        shouldSkipAppNoMaterialScaffoldFile('app/lib/features/x/test/y.dart'),
         isTrue,
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialScaffoldFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialScaffoldFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       expect(
@@ -421,50 +395,41 @@ Widget probe() => Scaffold(body: const SizedBox.shrink());
       );
     });
 
-    test(
-      'does not skip debug_log_viewer_screen.dart (in scope for the '
-      'check after Refs #2914 S8 CtScreenShell migration)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip debug_log_viewer_screen.dart (in scope for the '
+        'check after Refs #2914 S8 CtScreenShell migration)', () {
+      expect(
+        shouldSkipAppNoMaterialScaffoldFile(
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+        ),
+        isFalse,
+      );
+    });
 
-    test(
-      'does not skip ordinary feature screens (in scope for the check)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialScaffoldFile(
-            'app/lib/features/game/screens/game/game_screen.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip ordinary feature screens (in scope for the check)', () {
+      expect(
+        shouldSkipAppNoMaterialScaffoldFile(
+          'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialScaffoldFile(
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialScaffoldFile(
+          'app/lib/features/game/screens/game/game_screen.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('bannedScaffoldConstructionPattern (regex shape)', () {
     test('matches Scaffold( with optional whitespace', () {
-      const samples = <String>[
-        'Scaffold(',
-        'Scaffold (',
-      ];
+      const samples = <String>['Scaffold(', 'Scaffold ('];
       for (final s in samples) {
         expect(
           bannedScaffoldConstructionPattern.hasMatch('foo $s bar'),

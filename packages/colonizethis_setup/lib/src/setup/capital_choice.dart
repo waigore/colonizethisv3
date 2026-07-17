@@ -3,9 +3,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_world/src/world/capital_reassignment.dart';
-import 'grid_bfs.dart';
 import 'setup_exceptions.dart';
+import 'setup_road_wiring.dart';
 import 'setup_topology_adjacency.dart';
+import 'tile_cell_scan.dart';
 
 export 'package:colonizethis_world/src/world/capital_reassignment.dart'
     show
@@ -113,95 +114,24 @@ WorldState applyCapitalPortAndRoad(
       details: 'No tile map for region $regionId',
     );
   }
-  final localProvinceId = ProvinceId.localIdFrom(provinceId);
-
-  var tileState = worldState.tileState;
-  var ports = Map<String, String>.from(worldState.portsByProvinceSeaboard);
 
   final capitalKey = tile.toTileKey();
-  final provinceIds = provinceNodeIds(topology);
-  final seaZoneIds = seaZonesAdjacentToProvince(
-    topology,
-    localProvinceId,
-  ).toList()..sort();
-  if (seaZoneIds.isEmpty) {
-    throw SetupTopologyDataException(
-      code: 'province_has_no_sea_zone',
-      details: 'Province $provinceId has no sea zone in topology',
-    );
-  }
-
-  for (final seaZoneId in seaZoneIds) {
-    final portKeyProvSea = '$provinceId|$seaZoneId';
-    final capitalTouchesSeaZone = tileAdjacentToSeaZone(
-      tile.x,
-      tile.y,
-      map,
-      topology,
-      seaZoneId,
-      provinceIds: provinceIds,
-    );
-    if (capitalTouchesSeaZone) {
-      tileState = _setRoadLevelMax(tileState, capitalKey, 4);
-      ports[portKeyProvSea] = capitalKey;
-      continue;
-    }
-
-    final coastal = _nearestCoastalTileInProvinceForSeaZone(
-      map,
-      localProvinceId,
-      tile.x,
-      tile.y,
-      topology,
-      seaZoneId,
-      provinceIds: provinceIds,
-    );
-    if (coastal == null) {
-      throw SetupTopologyDataException(
-        code: 'seaboard_port_tile_not_found',
-        details:
-            'No coastal tile in province $provinceId for sea zone $seaZoneId',
-      );
-    }
-    final portKey = CapitalTile.tileKey(
-      regionId,
-      provinceId,
-      coastal.$1,
-      coastal.$2,
-    );
-    tileState = _setRoadLevelMax(tileState, capitalKey, 1);
-    tileState = _setRoadLevelMax(tileState, portKey, 4);
-    ports[portKeyProvSea] = portKey;
-    // Shortest path from seaboard-specific port to capital on province tiles.
-    final path = _shortestPathOnProvinceTiles(
-      map,
-      localProvinceId,
-      coastal.$1,
-      coastal.$2,
-      tile.x,
-      tile.y,
-    );
-    for (final p in path) {
-      final key = CapitalTile.tileKey(regionId, provinceId, p.$1, p.$2);
-      if (key == portKey) continue;
-      tileState = _setRoadLevelMax(tileState, key, 1);
-    }
-  }
-
-  return worldState.copyWith(
-    tileState: tileState,
-    portsByProvinceSeaboard: ports,
+  return applySeaboardPortAndRoadWiring(
+    worldState: worldState,
+    provinceId: provinceId,
+    inlandTileKey: capitalKey,
+    inlandX: tile.x,
+    inlandY: tile.y,
+    regionId: regionId,
+    topology: topology,
+    map: map,
+    pathRoadLevel: 1,
+    missingCoastalPolicy: SeaboardMissingCoastalPolicy.throwException,
+    existingPortPolicy: SeaboardExistingPortPolicy.overwrite,
+    pathMissingPolicy: SeaboardPathMissingPolicy.useStartOnly,
+    requireSeaBoundProvince: false,
+    throwIfNoSeaZones: true,
   );
-}
-
-TileMapState _setRoadLevelMax(
-  TileMapState tileState,
-  String tileKey,
-  int level,
-) {
-  final current = tileState.roadLevel(tileKey);
-  if (current >= level) return tileState;
-  return tileState.setRoadLevel(tileKey, level);
 }
 
 /// Sets [playerId]'s capital to [provinceId] at [tile]. Validates province is sea-bound;

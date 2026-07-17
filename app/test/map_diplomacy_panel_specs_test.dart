@@ -22,6 +22,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
+/// Canonical narrow-detail overlay host for this suite (Refs #4035).
+Widget _narrowDetailOverlayShell({
+  required ProviderContainer container,
+  required Widget body,
+  Size viewport = const Size(400, 600),
+}) {
+  return buildAppShellWithContainer(
+    container: container,
+    viewport: viewport,
+    child: Scaffold(body: body),
+  );
+}
+
+GameMapNarrowDetailOverlaySlot _narrowDetailSlot() {
+  return GameMapNarrowDetailOverlaySlot(
+    game: demoGameForOverlay,
+    region: demoRegionForOverlay,
+    humanPlayerId: demoGameForOverlay.players.first.id,
+    playerView: demoHumanPlayerViewForOverlay,
+    workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -29,26 +54,15 @@ void main() {
     testWidgets(
       'AC: overlay closed renders SizedBox.shrink without Province header',
       (WidgetTester tester) async {
-        await tester.binding.setSurfaceSize(const Size(400, 600));
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
         addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.binding.setSurfaceSize(const Size(400, 600));
 
         await tester.pumpWidget(
-          ProviderScope(
-            child: MediaQuery(
-              data: const MediaQueryData(size: Size(400, 600)),
-              child: MaterialApp(
-                home: Scaffold(
-                  body: GameMapNarrowDetailOverlaySlot(
-                    game: demoGameForOverlay,
-                    region: demoRegionForOverlay,
-                    humanPlayerId: demoGameForOverlay.players.first.id,
-                    playerView: demoHumanPlayerViewForOverlay,
-                    workTargetSelectionCache:
-                        PerPlayerWorkTargetSelectionCache(),
-                  ),
-                ),
-              ),
-            ),
+          _narrowDetailOverlayShell(
+            container: container,
+            body: _narrowDetailSlot(),
           ),
         );
         await tester.pumpAndSettle();
@@ -64,30 +78,18 @@ void main() {
         const viewportHeight = 600.0;
         final expectedMaxHeight = viewportHeight * 0.33;
 
-        await tester.binding.setSurfaceSize(const Size(400, viewportHeight));
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
         addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.binding.setSurfaceSize(const Size(400, viewportHeight));
 
         await tester.pumpWidget(
-          ProviderScope(
-            child: MediaQuery(
-              data: const MediaQueryData(size: Size(400, viewportHeight)),
-              child: MaterialApp(
-                home: Scaffold(
-                  body: GameMapNarrowDetailOverlaySlot(
-                    game: demoGameForOverlay,
-                    region: demoRegionForOverlay,
-                    humanPlayerId: demoGameForOverlay.players.first.id,
-                    playerView: demoHumanPlayerViewForOverlay,
-                    workTargetSelectionCache:
-                        PerPlayerWorkTargetSelectionCache(),
-                  ),
-                ),
-              ),
-            ),
+          _narrowDetailOverlayShell(
+            container: container,
+            viewport: const Size(400, viewportHeight),
+            body: _narrowDetailSlot(),
           ),
         );
-        final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-        final container = ProviderScope.containerOf(ctx);
         container
             .read(mapProvincePanelProvider.notifier)
             .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -104,30 +106,17 @@ void main() {
     testWidgets(
       'AC: close control sets overlayOpen false on provider',
       (WidgetTester tester) async {
-        await tester.binding.setSurfaceSize(const Size(400, 600));
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
         addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.binding.setSurfaceSize(const Size(400, 600));
 
         await tester.pumpWidget(
-          ProviderScope(
-            child: MediaQuery(
-              data: const MediaQueryData(size: Size(400, 600)),
-              child: MaterialApp(
-                home: Scaffold(
-                  body: GameMapNarrowDetailOverlaySlot(
-                    game: demoGameForOverlay,
-                    region: demoRegionForOverlay,
-                    humanPlayerId: demoGameForOverlay.players.first.id,
-                    playerView: demoHumanPlayerViewForOverlay,
-                    workTargetSelectionCache:
-                        PerPlayerWorkTargetSelectionCache(),
-                  ),
-                ),
-              ),
-            ),
+          _narrowDetailOverlayShell(
+            container: container,
+            body: _narrowDetailSlot(),
           ),
         );
-        final ctx = tester.element(find.byType(GameMapNarrowDetailOverlaySlot));
-        final container = ProviderScope.containerOf(ctx);
         container
             .read(mapProvincePanelProvider.notifier)
             .reportMapTileTapped(sampleTileKeyForProvinceOverlay);
@@ -214,20 +203,19 @@ void main() {
     }) async {
       const humanId = 'gp_human';
       const rivalId = 'gp_rival';
+      // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
       await tester.pumpWidget(
-        ProviderScope(
+        buildAppShell(
           overrides: [
             appEventBusProvider.overrideWith((ref) => bus),
           ],
-          child: MaterialApp(
-            home: DiplomacyDetailScreen(
-              game: game,
-              humanPlayerId: humanId,
-              factionId: rivalId,
-              factionDisplayName: 'Spain',
-              kind: kind,
-              relation: relation,
-            ),
+          child: DiplomacyDetailScreen(
+            game: game,
+            humanPlayerId: humanId,
+            factionId: rivalId,
+            factionDisplayName: 'Spain',
+            kind: kind,
+            relation: relation,
           ),
         ),
       );

@@ -22,6 +22,10 @@ fi
 (cd pytool && python3 test_wang_incremental_assets_and_preview.py)
 
 echo ""
+echo "=== Plantation field retune gate (Python, Refs #3961) ==="
+(cd pytool && python3 test_plantation_field_retune_3961_gate.py)
+
+echo ""
 echo "=== Package tests (colonizethis; CI: package_tests job) ==="
 # Match CI: packages sequential (MAX_JOBS=1), intra-package -j 4.
 PACKAGE_TEST_MAX_JOBS=1 PACKAGE_TEST_CONCURRENCY=4 tool/run_package_tests.sh

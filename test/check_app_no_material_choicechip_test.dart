@@ -61,10 +61,7 @@ Widget chip() => ChoiceChip(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('bad_choicechip.dart:3: ChoiceChip('),
-      );
+      expect(logs.join('\n'), contains('bad_choicechip.dart:3: ChoiceChip('));
       expect(logs.join('\n'), contains('CtChoiceChip'));
     });
 
@@ -93,15 +90,17 @@ Widget a() => ChoiceChip.elevated(label: const Text('a'), selected: false);
       expect(logs.join('\n'), contains('ChoiceChip.elevated('));
     });
 
-    test('does not flag CtChoiceChip or user identifiers ending in ChoiceChip', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_choicechip_suffix_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'does not flag CtChoiceChip or user identifiers ending in ChoiceChip',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_choicechip_suffix_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      File('${temp.path}/app/lib/features/game/widgets/suffix.dart')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
+        File('${temp.path}/app/lib/features/game/widgets/suffix.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 
@@ -109,44 +108,48 @@ Widget a() => CtChoiceChip(label: const Text('a'), selected: false, onSelected: 
 Widget b() => MyChoiceChip(label: const Text('b'));
 ''');
 
-      final code = runCheckAppNoMaterialChoiceChip(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialChoiceChip(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 0);
+      },
+    );
 
-    test('allowlists Ct-* chrome widgets and dev-tooling screens', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_choicechip_allow_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'flags resurrected feature chrome and promoted debug screens (Refs #4035 AC2)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_choicechip_allow_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const allowed = <String>[
-        'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
-      ];
-      for (final rel in allowed) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+        const fixtures = <String>[
+          'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
+        ];
+        for (final rel in fixtures) {
+          File('${temp.path}/$rel')
+            ..createSync(recursive: true)
+            ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => ChoiceChip(label: const Text('x'), selected: false);
 ''');
-      }
+        }
 
-      final code = runCheckAppNoMaterialChoiceChip(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialChoiceChip(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+      },
+    );
 
     test('returns exit 1 when app/lib/features does not exist', () {
       final temp = Directory.systemTemp.createTempSync(

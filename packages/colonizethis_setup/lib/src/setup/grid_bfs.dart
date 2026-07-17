@@ -2,15 +2,8 @@
 // SPEC/program/game-setup-pipeline.md.
 //
 // Package-internal source of truth for 4-neighbor grid BFS over setup tile
-// grids. Both road-geometry sites previously carried near-identical breadth
-// first searches with inline `'$x|$y'` coord-key strings, bounds checks, and
-// parent-map path reconstruction:
-//   - init_town_roads.dart `_bfsParentsFromCapital` / `_addPathTilesToSet`
-//   - capital_choice_port_road_geometry.dart `_shortestPathOnProvinceTiles`
-// init_town_roads.dart even documented that its neighbor ordering was kept
-// aligned with `_shortestPathOnProvinceTiles`. Centralising the skeleton here
-// keeps the deterministic [kGridNeighborsCardinal4] visit order and parent-map
-// shape byte-identical across both consumers.
+// grids. Road path raise / coord→tile / owned-tile helpers live in
+// setup_road_wiring.dart; this module owns the BFS skeleton and gridCoordKey.
 
 import 'dart:collection';
 

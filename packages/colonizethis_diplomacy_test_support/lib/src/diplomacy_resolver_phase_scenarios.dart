@@ -1,4 +1,4 @@
-// Table-driven resolveDiplomacyPhase scenarios (Refs #3837).
+// Table-driven resolveDiplomacyPhase scenarios (Refs #3837 / #4028).
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -19,343 +19,206 @@ class DiplomacyPhaseScenario {
 
 void runDiplomacyPhaseScenario(DiplomacyPhaseScenario scenario) => scenario.run();
 
+DiplomacyPhaseScenario _row(String label, void Function() run) =>
+    DiplomacyPhaseScenario(label: label, run: run);
+
+const _gp1 = Player(id: 'gp1', displayName: 'GP1', isHuman: true);
+const _gp1Rich = Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000);
+const _gp2 = Player(id: 'gp2', displayName: 'GP2', isHuman: true);
+const _ow = 'oldWorld';
+
+const _minorNapOverture = OvertureState(
+  gpId: 'gp1',
+  targetId: 'minor1',
+  stage: OvertureStage.nap,
+  sinceTurn: 0,
+);
+
+const _overtureConsulateEmbassy = [
+  DiplomaticOrder(
+    type: DiplomaticOrderType.establishOverture,
+    targetFactionId: 'minor1',
+    overtureStage: OvertureStage.tradeConsulate,
+  ),
+  DiplomaticOrder(
+    type: DiplomaticOrderType.establishOverture,
+    targetFactionId: 'minor1',
+    overtureStage: OvertureStage.embassy,
+  ),
+];
+
+const _declareWarMinor1 = [
+  DiplomaticOrder(type: DiplomaticOrderType.declareWar, targetFactionId: 'minor1'),
+];
+
+const _peaceMinor1 = [
+  DiplomaticOrder(type: DiplomaticOrderType.offerPeace, targetFactionId: 'minor1'),
+];
+
+const _joinEmpireMinor1 = [
+  DiplomaticOrder(
+    type: DiplomaticOrderType.establishOverture,
+    targetFactionId: 'minor1',
+    overtureStage: OvertureStage.joinEmpire,
+  ),
+];
+
+Orders _dip(String gp, List<DiplomaticOrder> orders) =>
+    Orders(diplomaticOrdersByPlayerId: {gp: orders});
+
+Game _resolve(Game g, Orders o) => resolveDiplomacyPhase(g, o).game;
+
+Province _owProv(String localId) =>
+    Province(id: '$_ow|$localId', regionId: _ow, ownerId: 'minor1');
+
+Game _grantAidGame() => diplomacyResolverPhaseTestBaseGame().copyWith(
+      overtureStates: const [gpMinorEmbassyOverture],
+      diplomacyRelations: [gpMinorNeutralRelation()],
+    );
+
+Game _joinEmpireGame(WorldState worldState) =>
+    diplomacyResolverPhaseTestBaseGame().copyWith(
+      players: const [_gp1Rich],
+      worldState: worldState,
+      overtureStates: const [_minorNapOverture],
+      diplomacyRelations: [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'minor1',
+          score: 60,
+          level: RelationLevel.friendly,
+        ),
+      ],
+    );
+
+String? _owOwner(Game g, String localId) =>
+    g.worldState.oldWorld.provinces.where((p) => p.id == '$_ow|$localId').firstOrNull?.ownerId;
+
 /// Overture, alliance, and war/peace scenarios from part 1 integration tests.
 List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1WarPeaceScenarios() => [
-  DiplomacyPhaseScenario(
-    label: 'overture payments create consulate and embassy when treasury allows',
-    run: () {
-      final game = diplomacyResolverPhaseTestBaseGame();
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'minor1',
-              overtureStage: OvertureStage.tradeConsulate,
-            ),
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'minor1',
-              overtureStage: OvertureStage.embassy,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      final overture = getOverture(after, 'gp1', 'minor1');
-      expect(overture, isNotNull);
-      expect(overture!.hasEmbassy, isTrue);
-      final player = after.playerById('gp1')!;
-      expect(player.treasury, lessThan(2000));
-    },
-  ),
-  DiplomacyPhaseScenario(
-    label: 'alliance order sets relation to allied',
-    run: () {
-      final game = diplomacyGame(
-        id: 'g1',
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: true),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.alliance,
-              targetFactionId: 'gp2',
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      final rel = getRelation(after, 'gp1', 'gp2');
-      expect(rel, isNotNull);
-      expect(rel!.level, RelationLevel.allied);
-      expect(rel.score, 76);
-    },
-  ),
-  DiplomacyPhaseScenario(
-    label: 'declare war and offer peace update relation state',
-    run: () {
-      final game = diplomacyResolverPhaseTestBaseGame();
-      final declareOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-        },
-      );
-      final afterWar = resolveDiplomacyPhase(game, declareOrders).game;
-      final relWar = getRelation(afterWar, 'gp1', 'minor1')!;
-      expect(relWar.atWar, isTrue);
-      final peaceOrders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.offerPeace,
-              targetFactionId: 'minor1',
-            ),
-          ],
-        },
-      );
-      final afterPeace = resolveDiplomacyPhase(afterWar, peaceOrders).game;
-      final relPeace = getRelation(afterPeace, 'gp1', 'minor1')!;
-      expect(relPeace.atPeace, isTrue);
-    },
-  ),
-  DiplomacyPhaseScenario(
-    label: 'declare war when already at peace updates existing relation',
-    run: () {
-      final game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 60,
-            level: RelationLevel.friendly,
-            state: RelationState.atPeace,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.declareWar,
-              targetFactionId: 'minor1',
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      final rel = getRelation(after, 'gp1', 'minor1')!;
-      expect(rel.atWar, isTrue);
-      expect(rel.score, lessThan(60));
-    },
-  ),
+  _row('overture payments create consulate and embassy when treasury allows', () {
+    final after = _resolve(diplomacyResolverPhaseTestBaseGame(), _dip('gp1', _overtureConsulateEmbassy));
+    final overture = getOverture(after, 'gp1', 'minor1');
+    expect(overture, isNotNull);
+    expect(overture!.hasEmbassy, isTrue);
+    expect(after.playerById('gp1')!.treasury, lessThan(2000));
+  }),
+  _row('alliance order sets relation to allied', () {
+    final after = _resolve(
+      diplomacyGame(id: 'g1', players: const [_gp1, _gp2]),
+      _dip('gp1', const [
+        DiplomaticOrder(type: DiplomaticOrderType.alliance, targetFactionId: 'gp2'),
+      ]),
+    );
+    final rel = getRelation(after, 'gp1', 'gp2');
+    expect(rel, isNotNull);
+    expect(rel!.level, RelationLevel.allied);
+    expect(rel.score, 76);
+  }),
+  _row('declare war and offer peace update relation state', () {
+    final game = diplomacyResolverPhaseTestBaseGame();
+    final afterWar = _resolve(game, _dip('gp1', _declareWarMinor1));
+    expect(getRelation(afterWar, 'gp1', 'minor1')!.atWar, isTrue);
+    final afterPeace = _resolve(afterWar, _dip('gp1', _peaceMinor1));
+    expect(getRelation(afterPeace, 'gp1', 'minor1')!.atPeace, isTrue);
+  }),
+  _row('declare war when already at peace updates existing relation', () {
+    final after = _resolve(
+      diplomacyResolverPhaseTestBaseGame().copyWith(diplomacyRelations: [
+        DiplomacyRelation(
+          factionId1: 'gp1',
+          factionId2: 'minor1',
+          score: 60,
+          level: RelationLevel.friendly,
+          state: RelationState.atPeace,
+        ),
+      ]),
+      _dip('gp1', _declareWarMinor1),
+    );
+    final rel = getRelation(after, 'gp1', 'minor1')!;
+    expect(rel.atWar, isTrue);
+    expect(rel.score, lessThan(60));
+  }),
 ];
 
 /// Grant-aid scenarios from part 1 integration tests.
 List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1GrantAidScenarios() => [
-  DiplomacyPhaseScenario(
-    label: 'grantAid requires embassy and improves relations',
-    run: () {
-      var game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
+  _row('grantAid requires embassy and improves relations', () {
+    final initialRel = gpMinorNeutralRelation();
+    final after = _resolve(
+      _grantAidGame(),
+      _dip('gp1', const [
+        DiplomaticOrder(
+          type: DiplomaticOrderType.grantAid,
+          targetFactionId: 'minor1',
+          amount: 1000,
+        ),
+      ]),
+    );
+    final rel = getRelation(after, 'gp1', 'minor1')!;
+    expect(rel.score, greaterThan(initialRel.score));
+    expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 3);
+    expect(after.playerById('gp1')!.treasury, 2000 - 1000);
+  }),
+  _row('grantAid at resolution with wrong multiple throws StateError', () {
+    expect(
+      () => _resolve(
+        _grantAidGame(),
+        _dip('gp1', const [
+          DiplomaticOrder(
+            type: DiplomaticOrderType.grantAid,
+            targetFactionId: 'minor1',
+            amount: 500,
           ),
-        ],
-      );
-      final initialRel = DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'minor1',
-        score: 50,
-        level: RelationLevel.neutral,
-      );
-      game = game.copyWith(diplomacyRelations: [initialRel]);
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.grantAid,
-              targetFactionId: 'minor1',
-              amount: 1000,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      final rel = getRelation(after, 'gp1', 'minor1')!;
-      expect(rel.score, greaterThan(initialRel.score));
-      expect(tradeSlotsForGp(after, 'gp1', 'minor1'), 3);
-      expect(after.playerById('gp1')!.treasury, 2000 - 1000);
-    },
-  ),
-  DiplomacyPhaseScenario(
-    label: 'grantAid at resolution with wrong multiple throws StateError',
-    run: () {
-      var game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      game = game.copyWith(
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 50,
-            level: RelationLevel.neutral,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.grantAid,
-              targetFactionId: 'minor1',
-              amount: 500,
-            ),
-          ],
-        },
-      );
-      expect(() => resolveDiplomacyPhase(game, orders), throwsStateError);
-    },
-  ),
+        ]),
+      ),
+      throwsStateError,
+    );
+  }),
 ];
 
 /// Join-empire scenarios from part 1 integration tests.
 List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1JoinEmpireScenarios() => [
-  DiplomacyPhaseScenario(
-    label:
-        'join empire absorbs minor: provinces transfer, minor removed, cost deducted',
-    run: () {
-      const ow = 'oldWorld';
-      final game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
-        ],
-        worldState: WorldState(
+  _row(
+    'join empire absorbs minor: provinces transfer, minor removed, cost deducted',
+    () {
+      final after = _resolve(
+        _joinEmpireGame(WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
-              Province(id: '$ow|m2', regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [],
-          ),
+          oldWorld: RegionData(provinces: [_owProv('m1'), _owProv('m2')], units: []),
           newWorld: const RegionData(),
-        ),
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.nap,
-            sinceTurn: 0,
-          ),
-        ],
-        diplomacyRelations: [
-          DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 60,
-            level: RelationLevel.friendly,
-          ),
-        ],
+        )),
+        _dip('gp1', _joinEmpireMinor1),
       );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'minor1',
-              overtureStage: OvertureStage.joinEmpire,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
       expect(after.minorNations.any((m) => m.id == 'minor1'), isFalse);
       expect(getOverture(after, 'gp1', 'minor1'), isNull);
-      final p1 = after.worldState.oldWorld.provinces
-          .where((p) => p.id == '$ow|m1')
-          .firstOrNull;
-      final p2 = after.worldState.oldWorld.provinces
-          .where((p) => p.id == '$ow|m2')
-          .firstOrNull;
-      expect(p1?.ownerId, 'gp1');
-      expect(p2?.ownerId, 'gp1');
+      expect(_owOwner(after, 'm1'), 'gp1');
+      expect(_owOwner(after, 'm2'), 'gp1');
       expect(after.playerById('gp1')!.treasury, 15000 - 9000);
     },
   ),
-  DiplomacyPhaseScenario(
-    label: 'join empire clears Spy timers for provinces that become owned by GP',
-    run: () {
-      const ow = 'oldWorld';
-      final game = diplomacyResolverPhaseTestBaseGame().copyWith(
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true, treasury: 15000),
-        ],
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: '$ow|m1', regionId: ow, ownerId: 'minor1'),
-            ],
-            units: [],
-          ),
-          newWorld: const RegionData(),
-          playerVisibilityByTile: const {
-            'gp1': {
-              'oldWorld|m1|0|0': 'fullyVisible',
-            },
-          },
-          spyRevealTurnsByPlayer: const {
-            'gp1': {
-              '$ow|m1': 3,
-            },
-          },
-          tileKeysByRegionAndProvince: const {
-            ow: {
-              '$ow|m1': ['oldWorld|m1|0|0'],
-            },
-          },
+  _row('join empire clears Spy timers for provinces that become owned by GP', () {
+    final after = _resolve(
+      _joinEmpireGame(const WorldState(
+        turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: RegionData(
+          provinces: [Province(id: '$_ow|m1', regionId: _ow, ownerId: 'minor1')],
+          units: [],
         ),
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.nap,
-            sinceTurn: 0,
-          ),
-        ],
-        diplomacyRelations: [
-          const DiplomacyRelation(
-            factionId1: 'gp1',
-            factionId2: 'minor1',
-            score: 60,
-            level: RelationLevel.friendly,
-          ),
-        ],
-      );
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.establishOverture,
-              targetFactionId: 'minor1',
-              overtureStage: OvertureStage.joinEmpire,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      final p1 = after.worldState.oldWorld.provinces
-          .where((p) => p.id == '$ow|m1')
-          .firstOrNull;
-      expect(p1?.ownerId, 'gp1');
-      expect(after.worldState.spyRevealTurnsByPlayer['gp1'], isNull);
-      expect(
-        after.worldState.playerVisibilityByTile['gp1']?['oldWorld|m1|0|0'],
-        'fullyVisible',
-      );
-    },
-  ),
+        newWorld: RegionData(),
+        playerVisibilityByTile: {'gp1': {'oldWorld|m1|0|0': 'fullyVisible'}},
+        spyRevealTurnsByPlayer: {'gp1': {'$_ow|m1': 3}},
+        tileKeysByRegionAndProvince: {_ow: {'$_ow|m1': ['oldWorld|m1|0|0']}},
+      )),
+      _dip('gp1', _joinEmpireMinor1),
+    );
+    expect(_owOwner(after, 'm1'), 'gp1');
+    expect(after.worldState.spyRevealTurnsByPlayer['gp1'], isNull);
+    expect(
+      after.worldState.playerVisibilityByTile['gp1']?['oldWorld|m1|0|0'],
+      'fullyVisible',
+    );
+  }),
 ];
 
 /// Part 1 scenarios from `diplomacy_resolver_phase_test_part1_test.dart`.
@@ -365,58 +228,40 @@ List<DiplomacyPhaseScenario> diplomacyResolverPhasePart1Scenarios() => [
   ...diplomacyResolverPhasePart1JoinEmpireScenarios(),
 ];
 
+void _expectSubsidyResolution(int amount, {required bool valid}) {
+  final after = _resolve(
+    gpMinorEmbassyNeutralPhaseGame(),
+    _dip('gp1', [
+      DiplomaticOrder(
+        type: DiplomaticOrderType.setSubsidy,
+        targetFactionId: 'minor1',
+        amount: amount,
+      ),
+    ]),
+  );
+  if (valid) {
+    expect(after.subsidyStates, hasLength(1));
+    expect(after.subsidyStates.single.percent, amount);
+    expect(after.subsidyStates.single.targetId, 'minor1');
+  } else {
+    expect(after.subsidyStates, isEmpty);
+  }
+}
+
 /// Part 2 scenarios from `diplomacy_resolver_phase_test_part2_test.dart`.
 List<DiplomacyPhaseScenario> diplomacyResolverPhasePart2Scenarios() => [
-  DiplomacyPhaseScenario(
-    label: 'returns game when there are no diplomatic orders',
-    run: () {
-      final game = diplomacyResolverPhaseTestBaseGame();
-      final result = resolveDiplomacyPhase(game, const Orders());
-      expect(result.game.id, game.id);
-    },
+  _row('returns game when there are no diplomatic orders', () {
+    final game = diplomacyResolverPhaseTestBaseGame();
+    expect(_resolve(game, const Orders()).id, game.id);
+  }),
+  _row(
+    'setSubsidy at resolution with invalid percent is skipped, not thrown '
+    '(Refs #3753 R3)',
+    () => _expectSubsidyResolution(7, valid: false),
   ),
-  DiplomacyPhaseScenario(
-    label:
-        'setSubsidy at resolution with invalid percent is skipped, not thrown '
-        '(Refs #3753 R3)',
-    run: () {
-      final game = gpMinorEmbassyNeutralPhaseGame();
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.setSubsidy,
-              targetFactionId: 'minor1',
-              amount: 7,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      expect(after.subsidyStates, isEmpty);
-    },
-  ),
-  DiplomacyPhaseScenario(
-    label:
-        'setSubsidy at resolution with valid percent records SubsidyState '
-        '(Refs #3753 R3)',
-    run: () {
-      final game = gpMinorEmbassyNeutralPhaseGame();
-      final orders = Orders(
-        diplomaticOrdersByPlayerId: {
-          'gp1': const [
-            DiplomaticOrder(
-              type: DiplomaticOrderType.setSubsidy,
-              targetFactionId: 'minor1',
-              amount: 10,
-            ),
-          ],
-        },
-      );
-      final after = resolveDiplomacyPhase(game, orders).game;
-      expect(after.subsidyStates, hasLength(1));
-      expect(after.subsidyStates.single.percent, 10);
-      expect(after.subsidyStates.single.targetId, 'minor1');
-    },
+  _row(
+    'setSubsidy at resolution with valid percent records SubsidyState '
+    '(Refs #3753 R3)',
+    () => _expectSubsidyResolution(10, valid: true),
   ),
 ];

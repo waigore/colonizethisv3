@@ -4,15 +4,9 @@ part of 'call_to_arms_dialogue_overlay.dart';
 ///
 /// Mirrors the overture overlay's offer row (`SPEC/ui/overture-dialogue-overlay.md`
 /// R22): the calling faction name renders in `--accent`, the war prompt in
-/// `--muted`, and the Join / Refuse affordances are two mutually exclusive
-/// `CtToggleSwitch` controls (issue #2867 R24). The Join toggle uses the
-/// `--success` glow when active; the Refuse toggle uses the `--danger` glow.
-///
-/// The toggles are tristate-aware: tapping a currently-off toggle commits the
-/// row to that decision and turns the other side off; tapping a currently-on
-/// toggle reverts the row to the undecided (`null`) state, preserving the
-/// #2867 R25 contract that Submit stays disabled until every row has a
-/// non-null decision.
+/// `--muted`, and Join / Refuse use [DialogueTristateDecisionRow] (issue #2867
+/// R24 / #4018). Submit stays disabled until every row has a non-null decision
+/// (R25).
 class _CallToArmsCallRow extends StatelessWidget {
   const _CallToArmsCallRow({
     required this.rowIndex,
@@ -66,7 +60,14 @@ class _CallToArmsCallRow extends StatelessWidget {
         children: <Widget>[
           _buildPrompt(theme),
           const SizedBox(height: CtSpacing.m),
-          _buildDecisionRow(theme),
+          DialogueTristateDecisionRow(
+            positiveToggleKey: ValueKey<String>(joinToggleKeyFor(rowIndex)),
+            negativeToggleKey: ValueKey<String>(refuseToggleKeyFor(rowIndex)),
+            positiveLabel: joinLabel,
+            negativeLabel: refuseLabel,
+            decision: decision,
+            onDecisionChanged: onDecisionChanged,
+          ),
         ],
       ),
     );
@@ -106,86 +107,6 @@ class _CallToArmsCallRow extends StatelessWidget {
         ],
       ),
       key: promptKey,
-    );
-  }
-
-  Widget _buildDecisionRow(ThemeData theme) {
-    final TextStyle base =
-        theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return Wrap(
-      alignment: WrapAlignment.end,
-      spacing: 12,
-      runSpacing: 8,
-      children: <Widget>[
-        _LabeledToggle(
-          toggleKey: ValueKey<String>(joinToggleKeyFor(rowIndex)),
-          label: joinLabel,
-          labelStyle: base.copyWith(color: EditorialMonoclePalette.success),
-          value: decision == true,
-          onGlowColor: EditorialMonoclePalette.success,
-          onChanged: (bool turnedOn) {
-            // Tap on Join: commit to true; tapping while already on reverts to
-            // undecided (null) so R25 gating can re-engage.
-            onDecisionChanged(turnedOn ? true : null);
-          },
-        ),
-        _LabeledToggle(
-          toggleKey: ValueKey<String>(refuseToggleKeyFor(rowIndex)),
-          label: refuseLabel,
-          labelStyle: base.copyWith(color: EditorialMonoclePalette.danger),
-          value: decision == false,
-          onGlowColor: EditorialMonoclePalette.danger,
-          onChanged: (bool turnedOn) {
-            onDecisionChanged(turnedOn ? false : null);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-/// Small composite: `CtToggleSwitch` paired with a colored body label so the
-/// Join / Refuse affordance is self-describing without an extra parent Row.
-/// Tapping anywhere in the row (toggle or label) invokes [onChanged] with the
-/// negated [value] so the affordance behaves like a single composite control.
-/// Mirrors the overture overlay's `_LabeledToggle` (issue #2867 R22 / R24);
-/// kept file-local to avoid a cross-overlay refactor.
-class _LabeledToggle extends StatelessWidget {
-  const _LabeledToggle({
-    required this.toggleKey,
-    required this.label,
-    required this.labelStyle,
-    required this.value,
-    required this.onGlowColor,
-    required this.onChanged,
-  });
-
-  final Key toggleKey;
-  final String label;
-  final TextStyle labelStyle;
-  final bool value;
-  final Color onGlowColor;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onChanged(!value),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          CtToggleSwitch(
-            key: toggleKey,
-            value: value,
-            onGlowColor: onGlowColor,
-            onChanged: onChanged,
-          ),
-          const SizedBox(width: CtSpacing.s),
-          Text(label, style: labelStyle),
-        ],
-      ),
     );
   }
 }

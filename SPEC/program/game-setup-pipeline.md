@@ -70,7 +70,7 @@ Entry point: `runInitGame(config, options)` in colonizethis_logic. CLI tool: [in
 - **Phase:** Pre-game (before turn 0).
 - **Upstream:** colonizethis_data (config, ruleset merge), colonizethis_map (map generation).
 - **Downstream:** App (`GameService.createNewGame`, `GameService.createNewGameAsync` with coarse progress per SPEC/ui/game-initializing.md), init_game CLI tool, ctdev debug views.
-- **Town helpers (importable):** `assignProvinceTowns` lives in `packages/colonizethis_logic/lib/src/setup/game_setup_helpers_towns.dart`; centroid/BFS ranking helpers live in `game_setup_town_tile_ranking.dart`. `game_setup_helpers.dart` re-exports town APIs for existing `import 'game_setup_helpers.dart'` barrels while retaining `part` fragments for naming/bootstrap until those are split the same way.
+- **Town / naming / bootstrap helpers (importable):** `assignProvinceTowns` lives in `packages/colonizethis_setup/lib/src/setup/game_setup_helpers_towns.dart`; centroid/BFS ranking helpers live in `game_setup_town_tile_ranking.dart`. Province/sea-zone naming (`applyNaming`) lives in `game_setup_helpers_naming.dart`; starting civilians/military-naval bootstrap and locked OW/NW assign failure diagnostics live in `game_setup_helpers_bootstrap.dart`. `game_setup_helpers.dart` re-exports town, naming, and bootstrap APIs for existing `import 'game_setup_helpers.dart'` barrels (same first-class library pattern; no `part` fragments).
 
 ## Constraints
 
@@ -169,7 +169,15 @@ These criteria are implemented and covered by automated tests where noted.
 
 - Given program code computes a **sea-zone centroid tile** for fleet markers and **province town** placement needs the same mean-and-round grid centroid  
   When both features are built  
-  Then they call the shared centroid helpers exported from `colonizethis_data` (e.g. `roundedCentroidIntCoords` for cell lists and the same rounding semantics for tile-key aggregates) so mean-and-round math is not duplicated between `colonizethis_map` sea-zone selection and `colonizethis_logic` setup.
+  Then they call the shared centroid helpers exported from `colonizethis_data` (e.g. `roundedCentroidIntCoords` for cell lists and the same rounding semantics for tile-key aggregates) so mean-and-round math is not duplicated between `colonizethis_map` sea-zone selection and `colonizethis_setup` town ranking.
+
+- Given consumers import `game_setup_helpers.dart` (or the `colonizethis_setup` barrel) for town assignment, province/sea-zone naming, or starting-unit bootstrap  
+  When those APIs are resolved  
+  Then `assignProvinceTowns`, `applyNaming`, and `addStartingUnits` / `addStartingMilitaryAndNaval` come from first-class libraries under `packages/colonizethis_setup/lib/src/setup/game_setup_helpers_{towns,naming,bootstrap}.dart` re-exported by `game_setup_helpers.dart` (no `part` / `part of` fragments; enforced by `repo.setup_helpers_first_class_libraries`).
+
+- Given setup unit tests need empty/minimal `Game`/`WorldState` shells or locked/advanced `GameSetupConfig` variants  
+  When those fixtures are constructed under `packages/colonizethis_setup/test/**`  
+  Then empty shells use `TestFixtures` from `package:colonizethis_test/game_test_fixtures.dart` (or a thin support delegate such as `advancedStartGpGame`) and config variants use `configWithOverrides` / `lockedFullInitConfig` rather than inlined `Game(` / `WorldState(` / full `GameSetupConfig(` rebuilds (enforced by `repo.setup_test_use_shared_fixtures`; scenario topologies may remain in `advanced_start_test_support.dart`).
 
 - Given `InitGameOptions(renderPng: true)`  
   When `runInitGame` completes  

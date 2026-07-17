@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('resolveTurnForGameWithConfig', () {
@@ -55,15 +56,13 @@ void main() {
         'p1': {'grain': 3},
       };
 
-      final named = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final named = resolveTurnComplete(
           game: game,
           topology: topology,
           orders: orders,
           extractedByPlayerId: extractedByPlayerId,
           defaultAssignments: const [],
-        ),
-      );
+        );
 
       final withConfig = requireTurnResolutionComplete(
         resolveTurnForGameWithConfig(

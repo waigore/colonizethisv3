@@ -31,6 +31,101 @@ python pytool/recolour_plains_plantation_tiles.py --base pytool/assets/terrain/t
 
 ---
 
+### paint_plains_plantation_field_gradients.py
+
+**Purpose:** Generate **hand-painted field-gradient candidates** for sugar cane / cotton / spices (Refs #3961 PO sample gate). Keeps plantation base buildings/soil/path/alpha; paints only field-highlight pixels with multi-stop banding, dither, and luminance shade. Writes 1× 64×64 PNGs under `pytool/assets/terrain/plantation_field_candidates_3961/` (not shipped app terrain). Tobacco is never generated. After PO locks letters, `--promote sugar_cane=A,cotton=B,spices=C` copies picks into `app/assets/images/terrain/`. Authority: [layered-terrain-rendering.md](layered-terrain-rendering.md) § Plains plantation variants.
+
+**Dependencies:** Pillow (see `pytool/requirements.txt`).
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py
+uv run --project pytool python pytool/test_paint_plains_plantation_field_gradients.py
+# After PO lock only:
+uv run --project pytool python pytool/paint_plains_plantation_field_gradients.py \
+  --promote sugar_cane=A,cotton=B,spices=C
+```
+
+**Behaviour:** Exactly three candidates per retune crop (A/B/C). Asserts alpha silhouette unchanged vs base. Promote rejects tobacco and invalid letters.
+
+---
+
+### finalize_plantation_field_retune_3961.py
+
+**Purpose:** After PO locks A/B/C per crop on [#3961](https://github.com/waigore/colonizethisv3/issues/3961), promote candidates, patch SPEC mid-tone pins in [layered-terrain-rendering.md](layered-terrain-rendering.md), and patch `app/test/plains_plantation_terrain_goldens_test.dart` mean-RGB constants from `CANDIDATE_MEANS.json`. Tobacco stays unchanged. Golden refresh is optional via `--update-goldens`.
+
+**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py`.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/test_finalize_plantation_field_retune_3961.py
+# Preview means (no writes):
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --dry-run
+# Validate golden distinctness pins (no writes):
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --validate-only
+# Apply (after PO lock):
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C
+# Or apply + refresh goldens in one step:
+uv run --project pytool python pytool/finalize_plantation_field_retune_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=C --update-goldens
+```
+
+**Behaviour:** Requires all three retune crops in `--picks`. `--dry-run` prints resolved means without writing. `--validate-only` checks pairwise field-mean RGB distance (≥ 26) against golden-test distinctness pins without writing files. Apply mode copies PNGs then patches SPEC + dart pins; operator may pass `--update-goldens` to run `flutter test … --update-goldens` instead of doing so manually.
+
+---
+
+### render_plantation_po_review_strip_3961.py
+
+**Purpose:** Rebuild PO sample strips at map tile scale (4× nearest-neighbor) for [#3961](https://github.com/waigore/colonizethisv3/issues/3961): per-crop rows of `grain` / `meat` / `horses` / `tobacco` / candidate A / B / C / CURRENT shipped overlay, plus `strip_all_crops_x4.png` and `CANDIDATE_NOTES.md`. Optionally render a **composition strip** for an explicit or harmony-recommended pick set so PO can judge the three retuned crops together beside OW refs. Does not modify app terrain.
+
+**Dependencies:** Pillow; imports `paint_plains_plantation_field_gradients.py` and (for `--recommend`) `plantation_field_harmony_3961.py`.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py \
+  --recommend
+uv run --project pytool python pytool/render_plantation_po_review_strip_3961.py \
+  --picks sugar_cane=A,cotton=B,spices=A
+uv run --project pytool python pytool/test_render_plantation_po_review_strip_3961.py
+```
+
+**Behaviour:** Writes to `tmp/plantation_po_review_strips_3961/` by default (override with `--out-dir`). Requires candidate PNGs under `plantation_field_candidates_3961/`. `--picks` and `--recommend` are mutually exclusive; either writes `strip_composition_<picks>_xN.png` (two rows: proposed picks vs CURRENT shipped, each preceded by the four OW/tobacco refs) and `COMPOSITION_NOTES.md` without replacing the full A/B/C candidate strips unless those are also requested via default mode (composition flags only emit the composition outputs).
+
+**Acceptance criteria:**
+
+- Given committed candidate PNGs and shipped OW plains tiles, when the System runs `render_plantation_po_review_strip_3961.py` with no composition flags, then the System writes per-crop A/B/C review strips and `strip_all_crops_xN.png`.
+- Given valid `--picks sugar_cane=A,cotton=B,spices=A` (or `--recommend` resolving to those letters), when the System renders the composition strip, then the System writes a two-row PNG whose top row uses the picked candidate tiles and bottom row uses CURRENT shipped overlays, each row starting with grain / meat / horses / tobacco, and does not modify `app/assets/images/terrain/`.
+- Given both `--picks` and `--recommend` on one invocation, when the System parses arguments, then the System exits non-zero without writing files.
+
+---
+
+### recommend_plantation_field_picks_3961.py
+
+**Purpose:** Score committed field-gradient candidates for map harmony against shipped OW `grain` / `meat` / `horses` field-mask means plus locked tobacco `(128,108,42)`. Emits a recommended `sugar_cane=A,cotton=B,spices=A` style pick line (or markdown for issue comments) to aid PO letter lock on [#3961](https://github.com/waigore/colonizethisv3/issues/3961). Does **not** ship app terrain.
+
+**Dependencies:** Pillow; imports `plantation_field_harmony_3961.py` and `paint_plains_plantation_field_gradients.py` field-mask helpers.
+
+**Usage:**
+
+```bash
+uv run --project pytool python pytool/test_plantation_field_harmony_3961.py
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py --markdown
+uv run --project pytool python pytool/recommend_plantation_field_picks_3961.py \
+  --parse-text 'PO LOCK #3961\nsugar_cane: A\ncotton: B\nspices: A'
+```
+
+**Behaviour:** Lower harmony score = subtler / closer to OW peers. `--parse-text` accepts `PO LOCK #3961` blocks or inline `crop=A` tuples for finalize handoff. Pinned by `pytool/test_plantation_field_harmony_3961.py`.
+
+---
+
 ### button_contrast_wood_pil.py
 
 **Purpose:** Apply higher border/center contrast and randomised wood grain to a button PNG. Reads an image file and writes a new PNG. Tuned for the main-menu colonial wood palette (reddish-brown frame, warm inner wood, gold accents).

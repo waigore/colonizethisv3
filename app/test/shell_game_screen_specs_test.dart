@@ -11,21 +11,20 @@ import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.da
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
+import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
+import 'support/game_screen_test_support.dart';
 import 'support/panel_test_fixtures.dart';
 
 class _StubBox implements Box<dynamic> {
@@ -40,20 +39,18 @@ Widget _wrapShellScreen({
   required AppEventBus bus,
   required bool autoSaveAvailable,
 }) {
-  return ProviderScope(
+  // Colonial ShellScreen specialization via buildAppShell (Refs #4035).
+  return buildAppShell(
+    theme: AppThemes.colonial,
+    navigatorKey: appNavigatorKey,
     overrides: [
       appEventBusProvider.overrideWith((ref) => bus),
       mainMenuAutoSaveAvailableProvider.overrideWith(
         (ref) => autoSaveAvailable,
       ),
     ],
-    child: AppEventHandlerScope(
-      child: MaterialApp(
-        navigatorKey: appNavigatorKey,
-        theme: AppThemes.colonial,
-        home: const ShellScreen(),
-      ),
-    ),
+    shellWrapper: (Widget app) => AppEventHandlerScope(child: app),
+    child: const ShellScreen(),
   );
 }
 
@@ -73,31 +70,23 @@ Widget _wrapGameScreen({
           ),
         )
       : game;
-  return ProviderScope(
-    overrides: [
-      appEventBusProvider.overrideWith((ref) => bus),
-      gameServiceProvider.overrideWith((ref) => _gameScreenStubService),
-      currentGameProvider.overrideWith(() => CurrentGameNotifier(activeGame)),
-      currentOrdersProvider.overrideWith(
-        () => CurrentOrdersNotifier(const Orders()),
-      ),
-      mapViewDataProvider.overrideWith((ref) => null),
-      gameIdsWithIntroShownProvider.overrideWith(
-        () => GameIdsWithIntroShownNotifier(
-          introShown ? {activeGame.id} : <String>{},
-        ),
-      ),
+  return buildGameScreenHost(
+    gamesBox: _StubBox(),
+    game: activeGame,
+    mapViewData: null,
+    width: 900,
+    height: 700,
+    navigatorKey: appNavigatorKey,
+    introShownIds: introShown ? {activeGame.id} : <String>{},
+    includeHomeFleetCargo: false,
+    includeTreasury: false,
+    gameService: _gameScreenStubService,
+    eventBus: bus,
+    extraOverrides: [
       turnResolutionBlockingProvider.overrideWith(
         () => _StaticBlockingNotifier(blocking),
       ),
     ],
-    child: AppEventHandlerScope(
-      child: MaterialApp(
-        navigatorKey: appNavigatorKey,
-        theme: AppThemes.colonial,
-        home: const GameScreen(),
-      ),
-    ),
   );
 }
 

@@ -61,36 +61,16 @@ void main() {
         'builder pumps at 360 × 640 dp without exceptions and selects the '
         'narrow Column body for at least one faction row',
         (WidgetTester tester) async {
-          // Match the surface bound by the production `mobileViewport`
-          // helper (`SizedBox(width: 360, height: 640)`) so the explicit
-          // MediaQuery the helper overlays maps to the surface bounds.
-          addTearDown(() => tester.binding.setSurfaceSize(null));
-          await tester.binding.setSurfaceSize(const Size(360, 640));
-
           final useCase = findWidgetbookUseCase(
             diplomacyPanelDirectories,
             folderName: 'Diplomacy Panel',
             useCaseName: 'Mobile viewport — narrow rows (≤ 500 dp)',
           );
 
-          // `mobileViewport` inside the story calls `MediaQuery.of(context)`,
-          // which requires a MediaQuery ancestor — Widgetbook itself
-          // provides one at runtime via the addon chain. In tests we
-          // supply one explicitly (sized to the test surface) so the
-          // inner copyWith resolves cleanly to 360 × 640.
-          await tester.pumpWidget(
-            MediaQuery(
-              data: const MediaQueryData(size: Size(360, 640)),
-              child: Builder(
-                builder: (BuildContext ctx) => useCase.builder(ctx),
-              ),
-            ),
-          );
-          // Drive past the post-mount frame so async font / image
-          // dependencies inside the panel settle before we sample the
-          // widget tree.
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 16));
+          // Editorial shell + 360 × 640 viewport via shared harness
+          // (Refs #4035); `mobileViewport` inside the story then copyWiths
+          // MediaQuery from that ancestor.
+          await pumpWidgetbookUseCaseAtSize(tester, useCase);
 
           expect(
             tester.takeException(),

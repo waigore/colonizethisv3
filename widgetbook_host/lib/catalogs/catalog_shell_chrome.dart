@@ -19,57 +19,52 @@ part of 'catalog.dart';
 /// `showBackButton: true` modes so reviewers can confirm the 36 px
 /// [CtTopBar] chrome + framed body composition under the
 /// `editorialMonocle` theme (Refs #2859 R4 / S5). The host inflates the
-/// shells inside a `MaterialApp` so [Navigator.maybePop] is valid when the
-/// chevron is tapped.
+/// shells inside [widgetbookEditorialMonocleApp] so [Navigator.maybePop]
+/// is valid when the chevron is tapped.
 class _CtScreenShellStory extends StatelessWidget {
   const _CtScreenShellStory();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(
-        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        body: Row(
-          children: <Widget>[
-            Expanded(
-              child: CtScreenShell(
-                // ignore: avoid_hardcoded_strings_in_widgets
-                title: 'Default (no back button)',
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      // ignore: avoid_hardcoded_strings_in_widgets
-                      'CtTopBar omits the leading CtBackButton when '
-                      'showBackButton is false.',
-                      textAlign: TextAlign.center,
-                    ),
+    return widgetbookEditorialMonocleApp(
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: CtScreenShell(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              title: 'Default (no back button)',
+              child: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    'CtTopBar omits the leading CtBackButton when '
+                    'showBackButton is false.',
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-            Expanded(
-              child: CtScreenShell(
-                // ignore: avoid_hardcoded_strings_in_widgets
-                title: 'With back button',
-                showBackButton: true,
-                child: const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      // ignore: avoid_hardcoded_strings_in_widgets
-                      'CtTopBar renders the leading CtBackButton chevron '
-                      'and wires it through to Navigator.maybePop().',
-                      textAlign: TextAlign.center,
-                    ),
+          ),
+          Expanded(
+            child: CtScreenShell(
+              // ignore: avoid_hardcoded_strings_in_widgets
+              title: 'With back button',
+              showBackButton: true,
+              child: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    'CtTopBar renders the leading CtBackButton chevron '
+                    'and wires it through to Navigator.maybePop().',
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -137,10 +132,9 @@ class _CtDarkScaffoldStory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
-      home: const CtDarkScaffold(
+    return widgetbookEditorialMonocleApp(
+      useScaffold: false,
+      child: const CtDarkScaffold(
         // ignore: avoid_hardcoded_strings_in_widgets
         topBar: CtTopBar(title: 'CtDarkScaffold', showBackButton: false),
         body: Center(
@@ -277,9 +271,9 @@ class _CtIconActionStoryState extends State<_CtIconActionStory> {
   }
 }
 
-/// Renders [NextTurnConfirmationDialog] (DLG60001) inside a `MaterialApp`
-/// using the editorial-monocle dark theme so the catalog can preview the
-/// dialog without driving the `showNextTurnConfirmationDialog` flow.
+/// Renders [NextTurnConfirmationDialog] (DLG60001) via
+/// [widgetbookEditorialMonocleApp] so the catalog can preview the dialog
+/// without driving the `showNextTurnConfirmationDialog` flow.
 ///
 /// SPEC: `SPEC/ui/next-turn-confirmation.md` § Dark-theme styling — DLG60001
 /// must use `CtDialogShell`, `--accent` title text, `--fg` body text, and
@@ -293,16 +287,12 @@ class _NextTurnConfirmationDialogStoryHost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.dialogScrim,
-        body: Center(
-          child: NextTurnConfirmationDialog(currentTurn: currentTurn),
-        ),
+      scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+      child: Center(
+        child: NextTurnConfirmationDialog(currentTurn: currentTurn),
       ),
     );
   }
@@ -328,9 +318,9 @@ List<WidgetbookNode> get nextTurnConfirmationDialogDirectories => [
   ),
 ];
 
-/// Renders the [NewGameSetupProgressView] (SHEL30001) inside a `MaterialApp`
-/// using the editorial-monocle dark theme so the catalog can preview every
-/// phase label and the 48 px `--accent` spinner without running the
+/// Renders the [NewGameSetupProgressView] (SHEL30001) via
+/// [widgetbookEditorialMonocleApp] so the catalog can preview every phase
+/// label and the 48 px `--accent` spinner without running the
 /// `GameService` setup pipeline.
 ///
 /// SPEC: `SPEC/ui/game-initializing.md` § Dark-theme visual contract — the
@@ -345,16 +335,12 @@ class _GameInitializingProgressStoryHost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.dialogScrim,
-        body: Center(
-          child: NewGameSetupProgressView(stepIndex: stepIndex),
-        ),
+      scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+      child: Center(
+        child: NewGameSetupProgressView(stepIndex: stepIndex),
       ),
     );
   }
@@ -374,31 +360,27 @@ class _GameInitializingErrorStoryHost extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: EditorialMonoclePalette.dialogScrim,
-        body: Builder(
-          builder: (ctx) {
-            final l10n = appL10n(ctx);
-            return Center(
-              child: CtDialogShell(
-                child: NewGameErrorCard(
-                  title: l10n.shell_newGameError_title,
-                  message:
-                      // ignore: avoid_hardcoded_strings_in_widgets
-                      'StateError: provincial assigner failed to '
-                      'lock the requested coastal seed (Widgetbook preview)',
-                  closeLabel: l10n.common_close,
-                  retryLabel: l10n.shell_newGameError_retry,
-                ),
+      scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+      child: Builder(
+        builder: (ctx) {
+          final l10n = appL10n(ctx);
+          return Center(
+            child: CtDialogShell(
+              child: NewGameErrorCard(
+                title: l10n.shell_newGameError_title,
+                message:
+                    // ignore: avoid_hardcoded_strings_in_widgets
+                    'StateError: provincial assigner failed to '
+                    'lock the requested coastal seed (Widgetbook preview)',
+                closeLabel: l10n.common_close,
+                retryLabel: l10n.shell_newGameError_retry,
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

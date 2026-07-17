@@ -13,8 +13,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+
+import 'support/app_shell_harness.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 
@@ -68,10 +69,8 @@ Game _colonyTribeGame() {
 }
 
 Widget _clusterHost(DiplomaticStandingChips chips) {
-  return MaterialApp(
-    debugShowCheckedModeBanner: false,
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
+  return buildAppShell(
+    child: Scaffold(
       body: Center(child: DiplomacyStandingChipCluster(chips: chips)),
     ),
   );
@@ -370,10 +369,8 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.binding.setSurfaceSize(const Size(600, 1100));
       await tester.pumpWidget(
-        MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: SizedBox(
               width: 460,
               height: 1000,

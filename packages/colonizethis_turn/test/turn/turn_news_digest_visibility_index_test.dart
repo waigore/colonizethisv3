@@ -5,7 +5,7 @@ import 'package:colonizethis_test/test.dart';
 // package barrel, so the turn package's own tests reach it through src/.
 import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
 
-import 'turn_news_digest_test_support.dart';
+import '../support/turn_news_digest_test_support.dart';
 
 // Memoized visibility index plumbing (Refs #3416 AC4): the turn-resolution
 // pipeline builds each per-state ProvinceVisibilityIndex once and forwards it

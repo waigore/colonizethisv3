@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 import '../tool/check_economy_bid_quantity_cap_shared.dart';
 
 const _helperRelative =
-    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart';
+    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_caps.dart';
 const _consumerRelative =
     'packages/colonizethis_economy/lib/src/economy/world_market/trade_order_suggester.dart';
 

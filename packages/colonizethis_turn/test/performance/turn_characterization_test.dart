@@ -2,6 +2,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import '../support/turn_resolver_test_harness.dart';
 
 /// Large synthetic game for Refs #2268 AC-10 (connectivity hot-path bounds under load).
 Game _largeScaleGame() {
@@ -143,14 +144,12 @@ void main() {
         );
         expect(totalTiles, 100);
 
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
-          ),
-        );
+          );
 
         expect(next.worldState.turnState.turnNumber, 1);
 

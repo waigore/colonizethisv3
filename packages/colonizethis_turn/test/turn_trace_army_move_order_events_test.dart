@@ -3,19 +3,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _ow = 'oldWorld';
-const _p1 = 'oldWorld|a';
-const _p2 = 'oldWorld|b';
+import 'support/turn_resolver_test_harness.dart';
+import 'support/turn_trace_order_events_test_support.dart';
 
-MapTopology _twoProvinceTopology({bool adjacent = true}) => MapTopology(
-  nodes: const [
-    TopologyNode(id: _p1, regionId: _ow, type: TopologyNodeType.province),
-    TopologyNode(id: _p2, regionId: _ow, type: TopologyNodeType.province),
-  ],
-  edges: adjacent
-      ? const [TopologyEdge(id1: _p1, id2: _p2)]
-      : const <TopologyEdge>[],
-);
+const _ow = turnTestOldWorldRegionId;
+const _p1 = '$_ow|a';
+const _p2 = '$_ow|b';
+
+MapTopology _twoProvinceTopology({bool adjacent = true}) =>
+    twoAdjacentOldWorldProvinceTopology(id1: _p1, id2: _p2, adjacent: adjacent);
 
 Game _gameWithSingleArmy({
   String playerId = 'gp1',
@@ -62,30 +58,6 @@ Game _gameWithSingleArmy({
     ),
   ],
 );
-
-TurnTracePhaseTrace _runMovementForOrders({
-  required Game game,
-  required MapTopology topology,
-  required Orders orders,
-  TurnTraceRuntime? runtime,
-}) {
-  final traces = <TurnTracePhaseTrace>[];
-  resolveTurnForGameWithConfig(
-    game: game,
-    config: TurnResolverConfig(
-      topology: topology,
-      orders: orders,
-      onTurnTracePhase: traces.add,
-      turnTraceRuntime: runtime,
-    ),
-  );
-  return traces.firstWhere((t) => t.phaseId == TurnPhase.movement.name);
-}
-
-List<TurnTraceOrderEvent> _armyEventsFor(
-  TurnTracePhaseTrace trace,
-  String orderId,
-) => trace.orderEvents.where((e) => e.orderId == orderId).toList();
 
 void main() {
   suppressLogsForTests();
@@ -135,7 +107,7 @@ void main() {
 
   group('runMovementPhase army move trace events', () {
     test('emits army_move_applied for adjacent same-region move', () {
-      final movementTrace = _runMovementForOrders(
+      final movementTrace = runMovementTraceForOrders(
         game: _gameWithSingleArmy(),
         topology: _twoProvinceTopology(),
         orders: const Orders(
@@ -148,7 +120,7 @@ void main() {
         runtime: TurnTraceRuntime(),
       );
 
-      final events = _armyEventsFor(movementTrace, 'army_move:gp1:afield');
+      final events = orderEventsFor(movementTrace, 'army_move:gp1:afield');
       expect(events, hasLength(1));
       expect(events.single.eventType, 'army_move_applied');
       expect(events.single.payload?['regionId'], _ow);
@@ -171,7 +143,7 @@ void main() {
         players: const [Player(id: 'gp1', displayName: 'P', isHuman: true)],
       );
 
-      final movementTrace = _runMovementForOrders(
+      final movementTrace = runMovementTraceForOrders(
         game: game,
         topology: _twoProvinceTopology(),
         orders: const Orders(
@@ -184,7 +156,7 @@ void main() {
         runtime: TurnTraceRuntime(),
       );
 
-      final events = _armyEventsFor(movementTrace, 'army_move:gp1:ghost_army');
+      final events = orderEventsFor(movementTrace, 'army_move:gp1:ghost_army');
       expect(events, hasLength(1));
       expect(events.single.eventType, 'army_move_ignored');
       expect(events.single.payload?['ignoreReason'], 'army_not_found');
@@ -192,7 +164,7 @@ void main() {
 
     test('emits army_move_ignored with home_army_locked reason once', () {
       final hid = homeArmyIdFor('gp1');
-      final movementTrace = _runMovementForOrders(
+      final movementTrace = runMovementTraceForOrders(
         game: _gameWithSingleArmy(armyId: hid, isHomeArmy: true),
         topology: _twoProvinceTopology(),
         orders: Orders(
@@ -203,7 +175,7 @@ void main() {
         runtime: TurnTraceRuntime(),
       );
 
-      final events = _armyEventsFor(movementTrace, 'army_move:gp1:$hid');
+      final events = orderEventsFor(movementTrace, 'army_move:gp1:$hid');
       expect(events, hasLength(1));
       expect(events.single.eventType, 'army_move_ignored');
       expect(events.single.payload?['ignoreReason'], 'home_army_locked');
@@ -246,7 +218,7 @@ void main() {
         ],
       );
 
-      final movementTrace = _runMovementForOrders(
+      final movementTrace = runMovementTraceForOrders(
         game: game,
         topology: _twoProvinceTopology(adjacent: false),
         orders: const Orders(
@@ -259,7 +231,7 @@ void main() {
         runtime: TurnTraceRuntime(),
       );
 
-      final events = _armyEventsFor(movementTrace, 'army_move:gp1:afield');
+      final events = orderEventsFor(movementTrace, 'army_move:gp1:afield');
       expect(events, hasLength(1));
       expect(events.single.eventType, 'army_move_ignored');
       expect(events.single.payload?['ignoreReason'], 'invalid_adjacency');
@@ -267,7 +239,7 @@ void main() {
     });
 
     test('does not emit army move events when runtime is not provided', () {
-      final movementTrace = _runMovementForOrders(
+      final movementTrace = runMovementTraceForOrders(
         game: _gameWithSingleArmy(),
         topology: _twoProvinceTopology(),
         orders: const Orders(

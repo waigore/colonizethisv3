@@ -15,10 +15,7 @@ void runProductionEffectiveLabourScenario(ProductionEffectiveLabourScenario scen
   runProductionEffectiveLabourExpectation(scenario.pins);
 }
 /// Canonical scenarios for [resolveProduction].
-List<ResolveProductionScenario> resolveProductionScenarios() => [..._resolveProductionRecipeScenarios(), ..._resolveProductionEdgeScenarios()];
-/// Canonical scenarios for [effectiveLabourForWorkers].
-List<ProductionEffectiveLabourScenario> effectiveLabourForWorkersScenarios() => [..._effectiveLabourForWorkersScenarios()];
-List<ResolveProductionScenario> _resolveProductionRecipeScenarios() => [
+List<ResolveProductionScenario> resolveProductionScenarios() => [
   resolveProductionScenario(
     label: 'consumes inputs and produces output per recipe',
     pins: (stockpileDeltas: {'timber': 10, 'iron': 10, 'coal': 5}, workers: coreWorkerPool(peasants: 20), idleLabour: WorkerIdleCounts(peasants: 20), assignments: const [AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 20)], expectedQuantities: {'castIron': 5, 'timber': 10, 'iron': 0, 'coal': 5}, expectedWorkers: null),
@@ -54,8 +51,6 @@ List<ResolveProductionScenario> _resolveProductionRecipeScenarios() => [
       expectedWorkers: null,
     ),
   ),
-];
-List<ResolveProductionScenario> _resolveProductionEdgeScenarios() => [
   resolveProductionScenario(
     label: 'unknown recipe id is ignored',
     pins: (stockpileDeltas: {'grain': 10}, workers: const WorkerPool(peasants: 5), idleLabour: WorkerIdleCounts(peasants: 5), assignments: const [AssignedRecipe(recipeId: 'unknown_recipe', assignedLabour: 100)], expectedQuantities: {'grain': 10}, expectedWorkers: null),
@@ -66,7 +61,8 @@ List<ResolveProductionScenario> _resolveProductionEdgeScenarios() => [
   ),
   resolveProductionScenario(label: 'empty assignments leave stockpile unchanged', pins: (stockpileDeltas: {'grain': 5}, workers: const WorkerPool(peasants: 5), idleLabour: WorkerIdleCounts(peasants: 5), assignments: const [], expectedQuantities: {'grain': 5}, expectedWorkers: null)),
 ];
-List<ProductionEffectiveLabourScenario> _effectiveLabourForWorkersScenarios() => [
+/// Canonical scenarios for [effectiveLabourForWorkers].
+List<ProductionEffectiveLabourScenario> effectiveLabourForWorkersScenarios() => [
   productionEffectiveLabourScenario(label: 'peasants contribute 1 labour each when fed', pins: (workers: const WorkerPool(peasants: 10), stockpileDeltas: {'grain': 10}, expectedLabour: 10)),
   productionEffectiveLabourScenario(label: 'trained workers capped by luxury after food', pins: (workers: const WorkerPool(peasants: 2, apprentices: 3, journeymen: 0, masters: 0), stockpileDeltas: {'grain': 8, 'refinedSugar': 1}, expectedLabour: 6)),
   productionEffectiveLabourScenario(label: 'full luxury gives full trained labour when food sufficient', pins: (workers: const WorkerPool(peasants: 1, apprentices: 2, journeymen: 1, masters: 0), stockpileDeltas: {'grain': 7, 'refinedSugar': 5, 'cigars': 5}, expectedLabour: 15)),

@@ -1,6 +1,5 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
@@ -111,7 +110,7 @@ void main() {
     });
 
     test('GP–Minor war still clears all overtures', () {
-      final game = TestFixtures.minimalGame(
+      final game = diplomacyGame(
         players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: true)],
         minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
         diplomacyRelations: const [

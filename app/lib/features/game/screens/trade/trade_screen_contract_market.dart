@@ -1,11 +1,10 @@
 part of 'trade_screen.dart';
 
-/// Market-tab chrome widget keys and copy literals for [TradeScreen].
-/// Row-level contract literals live in [_TradeScreenMarketRowContract]
-/// (`trade_screen_contract_market_rows.dart`). Library part of the trade
-/// screen contract split (Refs #3878).
-abstract final class _TradeScreenMarketContract {
-  _TradeScreenMarketContract._();
+/// Public Market-tab (and shared chrome) keys/literals for the trade screen.
+/// Row-level literals live in [_TradeScreenMarketRowKeys] (private).
+/// Tests and Market UI parts use this type directly (Refs #4035 trade API collapse).
+abstract final class TradeScreenMarketKeys {
+  TradeScreenMarketKeys._();
 
   /// Localized back-button label rendered immediately after the chevron on
   /// the dark-theme `CtTopBar`. SPEC requires the literal `"Map"` so the
@@ -77,49 +76,49 @@ abstract final class _TradeScreenMarketContract {
       ValueKey<String>('tradeScreenMarketSection:manufactured');
 
   static Key marketCommodityRowKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketCommodityRowKey(commodityId);
+      _TradeScreenMarketRowKeys.marketCommodityRowKey(commodityId);
   static Key marketRowNoneChipKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowNoneChipKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowNoneChipKey(commodityId);
   static Key marketRowBidChipKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowBidChipKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowBidChipKey(commodityId);
   static Key marketRowOfferChipKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowOfferChipKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowOfferChipKey(commodityId);
   static Key marketRowDecrementKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowDecrementKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowDecrementKey(commodityId);
   static Key marketRowIncrementKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowIncrementKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowIncrementKey(commodityId);
   static Key marketRowQuantityTextKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowQuantityTextKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowQuantityTextKey(commodityId);
   static Key marketRowSellableReadoutKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowSellableReadoutKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowSellableReadoutKey(commodityId);
   static Key marketRowResourceIconKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowResourceIconKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowResourceIconKey(commodityId);
   static Key marketRowPriceCoinIconKey(CommodityId commodityId) =>
-      _TradeScreenMarketRowContract.marketRowPriceCoinIconKey(commodityId);
+      _TradeScreenMarketRowKeys.marketRowPriceCoinIconKey(commodityId);
   static const double marketRowResourceIconSize =
-      _TradeScreenMarketRowContract.marketRowResourceIconSize;
+      _TradeScreenMarketRowKeys.marketRowResourceIconSize;
   static const double marketRowPriceCoinIconSize =
-      _TradeScreenMarketRowContract.marketRowPriceCoinIconSize;
+      _TradeScreenMarketRowKeys.marketRowPriceCoinIconSize;
   static const double marketRowPriceColumnWidth =
-      _TradeScreenMarketRowContract.marketRowPriceColumnWidth;
+      _TradeScreenMarketRowKeys.marketRowPriceColumnWidth;
   static const double marketRowPriceColumnInnerGap =
-      _TradeScreenMarketRowContract.marketRowPriceColumnInnerGap;
+      _TradeScreenMarketRowKeys.marketRowPriceColumnInnerGap;
   @visibleForTesting
   static ResourceRules? get marketPriceResourceRulesOverride =>
-      _TradeScreenMarketRowContract.marketPriceResourceRulesOverride;
+      _TradeScreenMarketRowKeys.marketPriceResourceRulesOverride;
   @visibleForTesting
   static set marketPriceResourceRulesOverride(ResourceRules? value) =>
-      _TradeScreenMarketRowContract.marketPriceResourceRulesOverride = value;
+      _TradeScreenMarketRowKeys.marketPriceResourceRulesOverride = value;
   static const String marketRowPriceCoinAssetPath =
-      _TradeScreenMarketRowContract.marketRowPriceCoinAssetPath;
+      _TradeScreenMarketRowKeys.marketRowPriceCoinAssetPath;
   static const int marketRowQuantityMin =
-      _TradeScreenMarketRowContract.marketRowQuantityMin;
+      _TradeScreenMarketRowKeys.marketRowQuantityMin;
   static const int marketRowQuantityDefault =
-      _TradeScreenMarketRowContract.marketRowQuantityDefault;
+      _TradeScreenMarketRowKeys.marketRowQuantityDefault;
   static const int marketRowDefaultPriority =
-      _TradeScreenMarketRowContract.marketRowDefaultPriority;
+      _TradeScreenMarketRowKeys.marketRowDefaultPriority;
   static const String marketRowQuantityIdleGlyph =
-      _TradeScreenMarketRowContract.marketRowQuantityIdleGlyph;
+      _TradeScreenMarketRowKeys.marketRowQuantityIdleGlyph;
 
   /// Stable widget key for the cross-commodity cargo indicator header
   /// rendered above the Market tab commodity list (Refs #2993 E5c).

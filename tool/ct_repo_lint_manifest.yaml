@@ -218,7 +218,7 @@ rules:
 
   - rule_id: repo.economy_test_support_loc
     group: testing
-    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7999 (Refs #4014)
+    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7495 (Refs #4014, #4049)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_support_loc.dart
@@ -229,6 +229,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_no_local_run_scenarios.dart
+
+  - rule_id: repo.economy_source_file_size
+    group: structure
+    title: colonizethis_economy lib files must stay at or below the phase-7 310 physical-line ceiling (Refs #4049)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_source_file_size.dart
 
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
@@ -286,6 +293,27 @@ rules:
     runner: dart
     script: tool/check_diplomacy_no_loop_upsert_relation.dart
 
+  - rule_id: repo.diplomacy_no_list_relation_wrappers
+    group: architecture
+    title: colonizethis_diplomacy lib must not call deleted list-returning war/peace/aid/subsidy wrappers (Refs #4037)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_no_list_relation_wrappers.dart
+
+  - rule_id: repo.diplomacy_relation_upsert_commit
+    group: architecture
+    title: colonizethis_diplomacy lib must commit RelationUpsertIndex via committedRelations/withCommittedRelations (Refs #4028)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_relation_upsert_commit.dart
+
+  - rule_id: repo.diplomacy_test_support_loc
+    group: testing
+    title: colonizethis_diplomacy_test_support/lib physical LOC must stay at or below 2488 (Refs #4028, #4037)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_diplomacy_test_support_loc.dart
+
   - rule_id: repo.diplomacy_test_duplicate_descriptions
     group: testing
     title: colonizethis_diplomacy test descriptions must not duplicate across files (Refs #3825)
@@ -295,7 +323,7 @@ rules:
 
   - rule_id: repo.diplomacy_test_inline_game_ctor
     group: testing
-    title: colonizethis_diplomacy tests must not construct Game(...) inline (Refs #3825)
+    title: colonizethis_diplomacy tests must not construct Game(...) inline (package-wide; Refs #3825, #4028)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_test_inline_game_ctor.dart
@@ -637,10 +665,31 @@ rules:
 
   - rule_id: repo.turn_world_market_test_support
     group: testing
-    title: colonizethis_turn world-market tests must import world_market_test_support when invoking worldMarketTurnPhaseHandler (Refs #3876)
+    title: colonizethis_turn world-market phase tests must use shared runners (not local handler+pipeline wiring) (Refs #3876 / #4039)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_turn_world_market_test_support.dart
+
+  - rule_id: repo.turn_test_resolve_complete
+    group: testing
+    title: colonizethis_turn success-path tests must use resolveTurnComplete (not nested requireTurnResolutionComplete(resolveTurnForGame)) (Refs #4039)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_resolve_complete.dart
+
+  - rule_id: repo.turn_test_fixture_location
+    group: testing
+    title: colonizethis_turn fixture/test_support modules must live under test/support/ (Refs #4039)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_fixture_location.dart
+
+  - rule_id: repo.turn_test_support_loc
+    group: testing
+    title: "colonizethis_turn test/support physical LOC must stay at or below ratchet ceiling (Refs #4039)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_support_loc.dart
 
   - rule_id: repo.diplomacy_no_part_of
     group: structure
@@ -693,7 +742,7 @@ rules:
 
   - rule_id: repo.world_test_no_raw_game_worldstate
     group: architecture
-    title: fog/capital/connectivity world tests must not inline Game/WorldState outside world_test_support (Refs #3978)
+    title: fog/capital/connectivity/ownership/player_view/travers world tests must not inline Game/WorldState outside world_test_support (Refs #3978, #4038)
     spec: SPEC/program/world-test-no-raw-game-worldstate.md
     runner: dart
     script: tool/check_world_test_no_raw_game_worldstate.dart
@@ -742,6 +791,14 @@ rules:
     runner: dart
     script: tool/check_chrome_button_base.dart
     pr_incremental: true
+
+  - rule_id: repo.app_no_feature_chrome_imports
+    group: structure
+    title: ban imports of deleted features/game/widgets/chrome shims; shared Ct-* chrome lives under app/lib/widgets (Refs #4035)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_no_feature_chrome_imports.dart
+    pr_incremental: false
 
   - rule_id: repo.split_dialog_base
     group: structure
@@ -1366,6 +1423,20 @@ rules:
     runner: dart
     script: tool/check_map_test_shared_topology_fixtures.dart
 
+  - rule_id: repo.map_test_run_generation_harness
+    group: architecture
+    title: colonizethis_map generator tests must use runTileMapGeneration (Refs #4022)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_run_generation_harness.dart
+
+  - rule_id: repo.map_test_minimal_game_shared
+    group: architecture
+    title: colonizethis_map colour/capital/format tests must use minimalGame (Refs #4022)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_minimal_game_shared.dart
+
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture
     title: colonizethis_combat tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #3716)
@@ -1463,6 +1534,62 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_setup_dedup_faction_capital_collect.dart
+
+  - rule_id: repo.setup_dedup_raise_road_at_least
+    group: architecture
+    title: setup raise-road-at-least must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_raise_road_at_least.dart
+
+  - rule_id: repo.setup_dedup_road_tile_key_maps
+    group: architecture
+    title: setup coord/owned tile-key road helpers must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_road_tile_key_maps.dart
+
+  - rule_id: repo.setup_dedup_seaboard_nearest_tile
+    group: architecture
+    title: setup nearest-seaboard tile selection must live in setup_road_wiring.dart (Refs #4020)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_seaboard_nearest_tile.dart
+
+  - rule_id: repo.setup_dedup_full_grid_tile_scans
+    group: architecture
+    title: setup nested full-grid tile walks must route through tile_cell_scan.dart (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_full_grid_tile_scans.dart
+
+  - rule_id: repo.setup_dedup_advanced_start_flood_fill
+    group: architecture
+    title: setup advanced-start province flood-fill must use advancedStartFloodFillProvinces (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_advanced_start_flood_fill.dart
+
+  - rule_id: repo.setup_dedup_ownership_paint
+    group: architecture
+    title: setup ownership paint scaffolding must use _paintLandmass facade (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_ownership_paint.dart
+
+  - rule_id: repo.setup_helpers_first_class_libraries
+    group: architecture
+    title: setup helpers towns/naming/bootstrap must stay first-class libraries (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_helpers_first_class_libraries.dart
+
+  - rule_id: repo.setup_test_use_shared_fixtures
+    group: architecture
+    title: setup tests must use TestFixtures and configWithOverrides (Refs #4029)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_test_use_shared_fixtures.dart
 
   - rule_id: repo.orders_file_size
     group: structure
@@ -1651,10 +1778,24 @@ rules:
 
   - rule_id: repo.app_test_file_size
     group: testing
-    title: "app/test files must stay at or below 1000 physical lines (shrink-only allowlist; Refs #4013)"
+    title: "app/test files must stay at or below 800 physical lines (shrink-only allowlist; Refs #4021)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_file_size.dart
+
+  - rule_id: repo.app_test_support_loc
+    group: testing
+    title: "app/test/support physical LOC must stay at or below ratchet ceiling (Refs #4021, #4048)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_support_loc.dart
+
+  - rule_id: repo.app_test_support_file_size
+    group: testing
+    title: "app/test/support files must stay at or below 600 physical lines (shrink-only allowlist; Refs #4048)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_support_file_size.dart
 
   - rule_id: repo.app_test_no_duplicate_dark_token_asserts
     group: testing
@@ -1662,6 +1803,41 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_test_no_duplicate_dark_token_asserts.dart
+
+  - rule_id: repo.app_test_no_duplicate_scaffolding
+    group: testing
+    title: "app/test must not reintroduce duplicated min-viewport / widgetbook / trade / units-panel scaffolding (Refs #3730, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_scaffolding.dart
+
+  - rule_id: repo.app_test_no_duplicate_golden_host
+    group: testing
+    title: "app/test must not reintroduce duplicated golden-host scaffolding (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_golden_host.dart
+
+  - rule_id: repo.app_test_no_duplicate_diplomacy_host
+    group: testing
+    title: "app/test must not reintroduce duplicated diplomacy/civilian bus-dialog hosts (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_diplomacy_host.dart
+
+  - rule_id: repo.app_test_no_duplicate_yarn_bundle
+    group: testing
+    title: "app/test must not reintroduce duplicated Yarn AssetBundle fakes (Refs #3847, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_duplicate_yarn_bundle.dart
+
+  - rule_id: repo.app_test_no_partn_double_suffix
+    group: testing
+    title: "app/test split families must use <family>_partN_test.dart (no _test_partN_test.dart) (Refs #3730, #4035)"
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_test_no_partn_double_suffix.dart
 
   - rule_id: repo.app_region_string_literals
     group: architecture

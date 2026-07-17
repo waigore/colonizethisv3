@@ -135,22 +135,12 @@ void main() {
       RegionMapViewportSnapshot? snap;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 400,
-                height: 320,
-                child: CtRegionMap(
-                  region: region,
-                  cellSizePx: region.cellSize.toDouble(),
-                  visibilityMode: CtMapVisibilityMode.full,
-                  bus: bus,
-                  onViewportSnapshotChanged: (s) => snap = s,
-                ),
-              ),
-            ),
-          ),
+        ctRegionMapTestHarness(
+          region: region,
+          cellSizePx: region.cellSize.toDouble(),
+          visibilityMode: CtMapVisibilityMode.full,
+          bus: bus,
+          onViewportSnapshotChanged: (s) => snap = s,
         ),
       );
 
@@ -211,22 +201,12 @@ void main() {
       RegionMapViewportSnapshot? snap;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 400,
-                height: 320,
-                child: CtRegionMap(
-                  region: region,
-                  cellSizePx: region.cellSize.toDouble(),
-                  visibilityMode: CtMapVisibilityMode.full,
-                  bus: bus,
-                  onViewportSnapshotChanged: (s) => snap = s,
-                ),
-              ),
-            ),
-          ),
+        ctRegionMapTestHarness(
+          region: region,
+          cellSizePx: region.cellSize.toDouble(),
+          visibilityMode: CtMapVisibilityMode.full,
+          bus: bus,
+          onViewportSnapshotChanged: (s) => snap = s,
         ),
       );
 
@@ -294,29 +274,28 @@ void main() {
       var controlledZoomMultiplier = 1.0;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                return Center(
-                  child: SizedBox(
-                    width: 400,
-                    height: 320,
-                    child: CtRegionMap(
-                      region: activeRegion,
-                      cellSizePx: activeRegion.cellSize.toDouble(),
-                      visibilityMode: CtMapVisibilityMode.full,
-                      bus: bus,
-                      zoomMultiplier: controlledZoomMultiplier,
-                      onViewportSnapshotChanged: (s) {
-                        snap = s;
-                        controlledZoomMultiplier = s.zoomMultiplier;
-                      },
-                    ),
+        ctRegionMapTestHarness(
+          region: activeRegion,
+          scaffoldBody: StatefulBuilder(
+            builder: (context, setState) {
+              return Center(
+                child: SizedBox(
+                  width: 400,
+                  height: 320,
+                  child: CtRegionMap(
+                    region: activeRegion,
+                    cellSizePx: activeRegion.cellSize.toDouble(),
+                    visibilityMode: CtMapVisibilityMode.full,
+                    bus: bus,
+                    zoomMultiplier: controlledZoomMultiplier,
+                    onViewportSnapshotChanged: (s) {
+                      snap = s;
+                      controlledZoomMultiplier = s.zoomMultiplier;
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       );
@@ -335,30 +314,29 @@ void main() {
       expect(zoomBeforeSwitch, closeTo(2.0, 0.08));
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: StatefulBuilder(
-              builder: (context, setState) {
-                activeRegion = newWorld;
-                return Center(
-                  child: SizedBox(
-                    width: 400,
-                    height: 320,
-                    child: CtRegionMap(
-                      region: activeRegion,
-                      cellSizePx: activeRegion.cellSize.toDouble(),
-                      visibilityMode: CtMapVisibilityMode.full,
-                      bus: bus,
-                      zoomMultiplier: controlledZoomMultiplier,
-                      onViewportSnapshotChanged: (s) {
-                        snap = s;
-                        controlledZoomMultiplier = s.zoomMultiplier;
-                      },
-                    ),
+        ctRegionMapTestHarness(
+          region: newWorld,
+          scaffoldBody: StatefulBuilder(
+            builder: (context, setState) {
+              activeRegion = newWorld;
+              return Center(
+                child: SizedBox(
+                  width: 400,
+                  height: 320,
+                  child: CtRegionMap(
+                    region: activeRegion,
+                    cellSizePx: activeRegion.cellSize.toDouble(),
+                    visibilityMode: CtMapVisibilityMode.full,
+                    bus: bus,
+                    zoomMultiplier: controlledZoomMultiplier,
+                    onViewportSnapshotChanged: (s) {
+                      snap = s;
+                      controlledZoomMultiplier = s.zoomMultiplier;
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       );

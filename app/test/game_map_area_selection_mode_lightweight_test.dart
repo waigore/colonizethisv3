@@ -27,10 +27,10 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/map_view_test_fixtures.dart';
 import 'support/panel_test_fixtures.dart';
 
@@ -57,8 +57,9 @@ void main() {
 
     final sampleUnitId = game.worldState.oldWorld.units.first.id;
 
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      ProviderScope(
+      buildAppShell(
         overrides: [
           appEventBusProvider.overrideWith((ref) => bus),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
@@ -71,10 +72,8 @@ void main() {
           ),
           mapViewDataProvider.overrideWith((ref) => mapViewData),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: GameMapArea(game: game, mapViewData: mapViewData),
-          ),
+        child: Scaffold(
+          body: GameMapArea(game: game, mapViewData: mapViewData),
         ),
       ),
     );

@@ -4,19 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-Game _gameWithPlayer({TurnPhase phase = TurnPhase.orders}) {
-  return Game(
-    id: 'g-stockpile',
-    worldState: WorldState(
-      turnState: TurnState(phase: phase, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'p1', displayName: 'P1', isHuman: true),
-    ],
-  );
-}
+import 'support/debug_handler_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -25,7 +13,7 @@ void main() {
 
   group('applyDebugStockpileCredit', () {
     test('credits commodity and reports new balance (equal amounts)', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(id: 'g-stockpile');
       final event = CreditDebugStockpileCommodityEvent(
         humanPlayerId: 'p1',
         commodityId: commodityId,
@@ -44,7 +32,7 @@ void main() {
     });
 
     test('clamped credit includes requested and credited amounts', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(id: 'g-stockpile');
       final event = CreditDebugStockpileCommodityEvent(
         humanPlayerId: 'p1',
         commodityId: commodityId,
@@ -72,7 +60,10 @@ void main() {
     });
 
     test('rejects outside human Orders phase', () {
-      final game = _gameWithPlayer(phase: TurnPhase.movement);
+      final game = buildDebugHandlerPlayerGame(
+        id: 'g-stockpile',
+        phase: TurnPhase.movement,
+      );
       final event = CreditDebugStockpileCommodityEvent(
         humanPlayerId: 'p1',
         commodityId: commodityId,
@@ -89,7 +80,7 @@ void main() {
     });
 
     test('short-circuits when credited amount below minimum', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(id: 'g-stockpile');
       final event = CreditDebugStockpileCommodityEvent(
         humanPlayerId: 'p1',
         commodityId: commodityId,
@@ -105,7 +96,7 @@ void main() {
     });
 
     test('short-circuits on unknown player', () {
-      final game = _gameWithPlayer();
+      final game = buildDebugHandlerPlayerGame(id: 'g-stockpile');
       final event = CreditDebugStockpileCommodityEvent(
         humanPlayerId: 'ghost',
         commodityId: commodityId,

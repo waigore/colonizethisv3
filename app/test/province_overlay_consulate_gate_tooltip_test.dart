@@ -13,15 +13,13 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+
+import 'support/province_overlay_test_harness.dart';
 
 const String _kConsulateTooltip =
     'Establish a consulate before exploring or prospecting';
@@ -48,6 +46,8 @@ Game _demoGameWithSampleProvinceOwner(String ownerId, {bool asNewTribe = false})
   );
 }
 
+/// Editorial shell via [buildProvinceOverlayDarkThemeShell] (Refs #4035 —
+/// no inline MaterialApp).
 Widget _overlay({
   required Game game,
   bool showExploreActionIcon = false,
@@ -55,24 +55,16 @@ Widget _overlay({
   bool showProspectActionIcon = false,
   bool prospectActionEnabled = false,
 }) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: sampleProvinceIdForOverlay,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        showExploreActionIcon: showExploreActionIcon,
-        exploreActionEnabled: exploreActionEnabled,
-        onExploreWithExplorerTap: () {},
-        showProspectActionIcon: showProspectActionIcon,
-        prospectActionEnabled: prospectActionEnabled,
-        onProspectWithExplorerTap: () {},
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: game,
+    displayId: sampleProvinceIdForOverlay,
+    selectedTileKey: sampleTileKeyForProvinceOverlay,
+    showExploreActionIcon: showExploreActionIcon,
+    exploreActionEnabled: exploreActionEnabled,
+    onExploreWithExplorerTap: () {},
+    showProspectActionIcon: showProspectActionIcon,
+    prospectActionEnabled: prospectActionEnabled,
+    onProspectWithExplorerTap: () {},
   );
 }
 
