@@ -57,6 +57,7 @@ import 'check_setup_dedup_full_grid_tile_scans.dart';
 import 'check_setup_dedup_advanced_start_flood_fill.dart';
 import 'check_setup_dedup_ownership_paint.dart';
 import 'check_setup_dedup_advanced_start_selection.dart';
+import 'check_setup_dedup_unit_spawn.dart';
 import 'check_setup_per_pass_nw_owner_map.dart';
 import 'check_setup_prefixed_province_id_normalizer.dart';
 import 'check_setup_helpers_first_class_libraries.dart';
@@ -1045,6 +1046,8 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupPerPassNwOwnerMap(repoRoot);
     case 'repo.setup_dedup_advanced_start_selection':
       return runCheckSetupDedupAdvancedStartSelection(repoRoot);
+    case 'repo.setup_dedup_unit_spawn':
+      return runCheckSetupDedupUnitSpawn(repoRoot);
     case 'repo.setup_helpers_first_class_libraries':
       return runCheckSetupHelpersFirstClassLibraries(repoRoot);
     case 'repo.setup_test_default_init_options':

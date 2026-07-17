@@ -1521,6 +1521,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_advanced_start_selection.dart
 
+  - rule_id: repo.setup_dedup_unit_spawn
+    group: architecture
+    title: capital unit spawn and home-fleet merge must use setup_unit_spawn.dart helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_unit_spawn.dart
+
   - rule_id: repo.setup_dedup_grid_bfs_coord_keys
     group: architecture
     title: setup grid BFS + 2D coord keys must route through grid_bfs.dart (no inline cardinal-delta arrays / raw "$x|$y" interpolation outside grid_bfs.dart) (Refs #3740)
