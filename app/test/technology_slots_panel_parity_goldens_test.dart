@@ -21,36 +21,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
-
-import 'support/golden_capture_harness.dart';
 import 'support/panel_test_fixtures.dart';
-
-Future<void> _pumpPanel(
-  WidgetTester tester, {
-  required Key boundaryKey,
-  required Size viewport,
-  required Game game,
-  required Player player,
-}) {
-  return pumpGoldenHost(
-    tester,
-    boundaryKey: boundaryKey,
-    physicalSize: viewport,
-    includeLocalizations: true,
-    child: SizedBox(
-      width: viewport.width,
-      height: viewport.height,
-      child: SingleChildScrollView(
-        child: TechnologyPanel(
-          game: game,
-          player: player,
-          onOrdersChanged: (_) {},
-        ),
-      ),
-    ),
-  );
-}
+import 'support/technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -67,7 +39,7 @@ void main() {
     'golden: Slots tab parity at desktop width (Refs #3510 AC1/AC8)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('technologySlotsPanelDesktopGolden');
-      await _pumpPanel(
+      await pumpTechnologyPanelGolden(
         tester,
         boundaryKey: boundaryKey,
         viewport: const Size(900, 760),
@@ -87,7 +59,7 @@ void main() {
     'golden: Slots tab parity at 360x640 mobile viewport (Refs #3510 AC1/AC8)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('technologySlotsPanelMobileGolden');
-      await _pumpPanel(
+      await pumpTechnologyPanelGolden(
         tester,
         boundaryKey: boundaryKey,
         viewport: const Size(360, 640),

@@ -1,11 +1,8 @@
 // Focused tests for the shared lightweight panel fixtures (Refs #3656).
-
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-
 import 'panel_test_fixtures.dart';
-
 void main() {
   group('buildPanelTestGame', () {
     test('defaults to a single human player and empty regions', () {
@@ -17,7 +14,6 @@ void main() {
       expect(game.worldState.newWorld.units, isEmpty);
       expect(game.worldState.fleets, isEmpty);
     });
-
     test('threads provided provinces and units into each region', () {
       final game = buildPanelTestGame(
         oldWorldProvinces: const [
@@ -36,7 +32,6 @@ void main() {
       expect(game.worldState.oldWorld.provinces, hasLength(1));
       expect(game.worldState.oldWorld.units.single.id, 'u1');
     });
-
     test('threads nextArmySeq, visibility, and empty diplomacyRelations', () {
       const tile = 'oldWorld|p1|0|0';
       final game = buildPanelTestGame(
@@ -54,7 +49,6 @@ void main() {
       expect(game.diplomacyRelations, isEmpty);
     });
   });
-
   group('buildCivilianPanelTestGame', () {
     test('human owns idle civilians in both regions for panel coverage', () {
       final game = buildCivilianPanelTestGame();
@@ -68,7 +62,6 @@ void main() {
       expect(idleOld, isNotEmpty);
       expect(idleNew, isNotEmpty);
     });
-
     test('includes one in-progress (working) civilian', () {
       final game = buildCivilianPanelTestGame();
       final working = [
@@ -78,7 +71,6 @@ void main() {
       expect(working, hasLength(1));
       expect(working.single.status, UnitStatus.working);
     });
-
     test('a non-owning player id yields no civilian units (empty state)', () {
       final game = buildCivilianPanelTestGame();
       final owned = [
@@ -88,7 +80,6 @@ void main() {
       expect(owned, isEmpty);
     });
   });
-
   group('buildMilitaryPanelTestGame', () {
     test('human owns military regiments and armies in both regions', () {
       final game = buildMilitaryPanelTestGame();
@@ -101,7 +92,6 @@ void main() {
       );
       expect(oldRegiments, isNotEmpty);
       expect(newRegiments, isNotEmpty);
-
       final armies = game.worldState.armies.where((a) => a.ownerId == human);
       expect(armies.map((a) => a.regionId).toSet(), {'oldWorld', 'newWorld'});
       expect(
@@ -109,7 +99,6 @@ void main() {
         hasLength(2),
       );
     });
-
     test('stationed provinces carry display names and town tile keys', () {
       final game = buildMilitaryPanelTestGame();
       final provinces = [
@@ -121,7 +110,6 @@ void main() {
         expect(province.townTileKey, isNotNull);
       }
     });
-
     test(
       'a non-owning player id yields no armies or regiments (empty state)',
       () {
@@ -138,7 +126,6 @@ void main() {
       },
     );
   });
-
   group('empty-human panel fixtures', () {
     test('technology / side-menu / game-screen share solo human + empty regions', () {
       final tech = buildTechnologyPanelTestGame();
@@ -148,19 +135,16 @@ void main() {
       expect(tech.players.first.techUnlocked ?? const <String, bool>{}, isEmpty);
       expect(tech.players.first.researchSlots, isNull);
       expect(tech.worldState.oldWorld.units, isEmpty);
-
       final side = buildSideMenuTestGame();
       expect(side.players.first.id, kPanelTestHumanPlayerId);
       expect(side.infiniteMode, isFalse);
       expect(side.worldState.newWorld.units, isEmpty);
-
       final screen = buildGameScreenSpecsTestGame();
       expect(screen.players.first.isHuman, isTrue);
       expect(screen.victory, isNull);
       expect(screen.worldState.oldWorld.units, isEmpty);
     });
   });
-
   group('buildDiplomacyScreenTestGame / buildDiplomacyPanelTestGame', () {
     test('screen: affordable human+AI, undiscovered; panel: at-peace relation', () {
       final screen = buildDiplomacyScreenTestGame();
@@ -170,7 +154,6 @@ void main() {
       expect(screen.players[1].id, 'gp2');
       expect(screen.diplomacyRelations, isEmpty);
       expect(screen.worldState.oldWorld.units, isEmpty);
-
       final panel = buildDiplomacyPanelTestGame();
       expect(panel.players.first.isHuman, isTrue);
       expect(panel.players[1].isHuman, isFalse);
@@ -183,7 +166,6 @@ void main() {
       expect(relation.state, RelationState.atPeace);
     });
   });
-
   group('buildDiplomacyRichPanelTestGame', () {
     test('seeds three GPs, one Minor Nation, and one Tribe', () {
       final game = buildDiplomacyRichPanelTestGame();
@@ -196,7 +178,6 @@ void main() {
       expect(game.minorNations.map((m) => m.id), ['m1']);
       expect(game.tribes.map((t) => t.id), ['t1']);
     });
-
     test('discovers every opponent via a persisted human relation', () {
       final game = buildDiplomacyRichPanelTestGame();
       expect(game.diplomacyRelations, hasLength(4));
@@ -216,7 +197,6 @@ void main() {
       expect(byOther['gp2']!.state, RelationState.atPeace);
       expect(byOther['gp3']!.state, RelationState.atWar);
     });
-
     test('gp2 outranks gp3 by military strength for a non-vacuous GP sort', () {
       final game = buildDiplomacyRichPanelTestGame();
       int regimentsFor(String id) =>
@@ -224,7 +204,6 @@ void main() {
       expect(regimentsFor('gp2'), greaterThan(regimentsFor('gp3')));
     });
   });
-
   group('buildDiplomacyPanelGameWithNoDiscoveredFactions', () {
     test('seeds only the solo human with empty relations', () {
       final game = buildDiplomacyPanelGameWithNoDiscoveredFactions();
@@ -234,7 +213,6 @@ void main() {
       expect(game.minorNations, isEmpty);
     });
   });
-
   group('buildDiplomacyPanelGameWithTribeDiscoveredByVisibility', () {
     test('seeds tribe ownership and full visibility without a relation', () {
       final game = buildDiplomacyPanelGameWithTribeDiscoveredByVisibility();
@@ -247,7 +225,6 @@ void main() {
       expect(game.worldState.newWorld.provinces.single.ownerId, 't1');
     });
   });
-
   group('buildNavalPanelTestGame', () {
     test('home+sea fleets, capital, ports, and empty-state filter', () {
       final game = buildNavalPanelTestGame();
@@ -273,7 +250,6 @@ void main() {
       );
     });
   });
-
   group('buildSelectionPromptTestGame', () {
     test('human owns one old-world explorer resolvable as the sample unit', () {
       final game = buildSelectionPromptTestGame();
@@ -285,7 +261,6 @@ void main() {
       expect(game.worldState.newWorld.units, isEmpty);
     });
   });
-
   group('buildEventFeedNarrowInsetTestGame', () {
     test(
       'single human owns one old-world province for the narrow inset suite',
@@ -301,7 +276,6 @@ void main() {
         expect(game.worldState.newWorld.units, isEmpty);
       },
     );
-
     test(
       'exposes a tappable old-world tile key mapped back to its province',
       () {
@@ -318,7 +292,6 @@ void main() {
       },
     );
   });
-
   group('buildMapAreaEventFeedTestGame', () {
     test('exposes a human plus a named AI opponent for feed-line lookups', () {
       final game = buildMapAreaEventFeedTestGame();
@@ -331,7 +304,6 @@ void main() {
       expect(opponent.displayName, isNotEmpty);
       expect(game.worldState.oldWorld.units, isNotEmpty);
     });
-
     test('seaboard entry resolves a known sea zone but not an unknown one', () {
       final game = buildMapAreaEventFeedTestGame();
       final ports = game.worldState.portsByProvinceSeaboard;
@@ -342,7 +314,6 @@ void main() {
       expect(ports[key], isNotEmpty);
     });
   });
-
   group('buildProductionBreakdownDeltaTestGame', () {
     test(
       'human carries fed labour + recipe-input stockpile for non-zero deltas',
@@ -355,7 +326,6 @@ void main() {
         expect(human.stockpile.quantityOf('timber'), greaterThanOrEqualTo(10));
       },
     );
-
     test(
       'a non-owning player id resolves to no player (empty-state guard)',
       () {

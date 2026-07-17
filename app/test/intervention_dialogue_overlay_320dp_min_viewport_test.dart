@@ -70,18 +70,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'support/yarn_test_fixtures.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'support/dialogs_320dp_min_viewport_support.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing screen-, panel-, and dialog-level pin files.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same overlay renders its default layout. Mirrors
 /// the contract used by `dialogs_320dp_min_viewport_test.dart` and
 /// `overture_dialogue_overlay_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 /// Asset-bundle stub that always fails the `loadString` call so the
 /// overlay routes immediately to the degraded error panel. Mirrors the
@@ -105,9 +105,7 @@ const Game _kFixtureGame = Game(
     Player(id: 'gp1', displayName: 'Human', isHuman: true, treasury: 0),
     Player(id: 'gp2', displayName: 'Aggressor', isHuman: false, treasury: 0),
   ],
-  minorNations: [
-    MinorNation(id: 'minor1', displayName: 'Minor 1'),
-  ],
+  minorNations: [MinorNation(id: 'minor1', displayName: 'Minor 1')],
 );
 
 /// One-prompt fixture — the smallest payload that still exercises the
@@ -141,17 +139,7 @@ Future<void> _pumpOverlay(
   Widget overlay, {
   required Size size,
 }) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: overlay)),
-  );
-  // The harness pumps the first frame (for the failed `loadString`
-  // future); a second timed pump drives the post-microtask
-  // `setState(_loadError = ...)` rebuild that mounts the degraded panel
-  // (mirrors the existing intervention degraded-path tests).
+  await pumpDialogs320At(tester, overlay, size: size, settle: false);
   await tester.pump(const Duration(milliseconds: 100));
 }
 
@@ -168,23 +156,22 @@ const String _kLoadErrorPrefix = 'Could not load intervention dialogue';
 void main() {
   suppressLogsForTests();
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — InterventionDialogueOverlay @ '
-        '320 dp (Refs #2870 S8/S10)',
-    () {
-      Widget buildOverlay() {
-        return InterventionDialogueOverlay(
-          game: _kFixtureGame,
-          prompts: _kFixturePrompts,
-          skipIntroForTest: true,
-          assetBundle: YarnThrowingAssetBundle(error: StateError('missing intervention yarn')),
-          onDecisions: (_) {},
-          child: const SizedBox.expand(),
-        );
-      }
+  group('SPEC/ui/mobile-adaptation.md § 7 — InterventionDialogueOverlay @ '
+      '320 dp (Refs #2870 S8/S10)', () {
+    Widget buildOverlay() {
+      return InterventionDialogueOverlay(
+        game: _kFixtureGame,
+        prompts: _kFixturePrompts,
+        skipIntroForTest: true,
+        assetBundle: YarnThrowingAssetBundle(
+          error: StateError('missing intervention yarn'),
+        ),
+        onDecisions: (_) {},
+        child: const SizedBox.expand(),
+      );
+    }
 
-      testWidgets(
-        'AC (positive) InterventionDialogueOverlay degraded panel @ '
+    testWidgets('AC (positive) InterventionDialogueOverlay degraded panel @ '
         '320×640: no RenderFlex overflow exception, "Pending '
         'Intervention" title + brass divider + load-error body + '
         '"Continue" action label render — the '
@@ -199,74 +186,59 @@ void main() {
         'phase that still exercises the column body. Per the '
         'overlay\'s § Dark editorial-monocle chrome AC (every phase '
         'routes through the same `_buildScrimmedShell` helper), this '
-        'positive pin proves the chrome contract for every phase.',
-        (WidgetTester tester) async {
-          await _pumpOverlay(
-            tester,
-            buildOverlay(),
-            size: _kMinViewport,
-          );
+        'positive pin proves the chrome contract for every phase.', (
+      WidgetTester tester,
+    ) async {
+      await _pumpOverlay(tester, buildOverlay(), size: _kMinViewport);
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: '
-                'InterventionDialogueOverlay must not emit a '
-                'RenderFlex overflow exception at kMinViewportWidth '
-                '(320 dp). The CtFullScreenDialogueShell scrim + '
-                'centered CtDialogShell + Pending Intervention '
-                'title + CtBrassDivider + degraded body must wrap '
-                'within the ~288 dp content column.',
-          );
-
-          // Title + chrome anchors render via `_buildScrimmedShell`.
-          expect(
-            find.byKey(
-              const ValueKey<String>(kInterventionOverlayTitleKey),
-            ),
-            findsOneWidget,
-          );
-          expect(find.text(_kOverlayTitle), findsOneWidget);
-          expect(
-            find.byKey(
-              const ValueKey<String>(kInterventionOverlayBrassDividerKey),
-            ),
-            findsOneWidget,
-          );
-          expect(find.byType(CtBrassDivider), findsOneWidget);
-
-          // Degraded body labels render end-to-end.
-          expect(
-            find.textContaining(_kLoadErrorPrefix),
-            findsOneWidget,
-          );
-          expect(find.text(_kContinueLabel), findsOneWidget);
-        },
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: '
+            'InterventionDialogueOverlay must not emit a '
+            'RenderFlex overflow exception at kMinViewportWidth '
+            '(320 dp). The CtFullScreenDialogueShell scrim + '
+            'centered CtDialogShell + Pending Intervention '
+            'title + CtBrassDivider + degraded body must wrap '
+            'within the ~288 dp content column.',
       );
 
-      testWidgets(
-        'Negative control: InterventionDialogueOverlay degraded panel @ '
-        '1024×768 also pumps without exception (regression sentinel '
-        'for the overflow contract — keeps the 320 dp positive pin '
-        'meaningful).',
-        (WidgetTester tester) async {
-          await _pumpOverlay(
-            tester,
-            buildOverlay(),
-            size: _kWideRegressionViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.text(_kOverlayTitle), findsOneWidget);
-          expect(find.byType(CtBrassDivider), findsOneWidget);
-          expect(
-            find.textContaining(_kLoadErrorPrefix),
-            findsOneWidget,
-          );
-          expect(find.text(_kContinueLabel), findsOneWidget);
-        },
+      // Title + chrome anchors render via `_buildScrimmedShell`.
+      expect(
+        find.byKey(const ValueKey<String>(kInterventionOverlayTitleKey)),
+        findsOneWidget,
       );
-    },
-  );
+      expect(find.text(_kOverlayTitle), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>(kInterventionOverlayBrassDividerKey)),
+        findsOneWidget,
+      );
+      expect(find.byType(CtBrassDivider), findsOneWidget);
+
+      // Degraded body labels render end-to-end.
+      expect(find.textContaining(_kLoadErrorPrefix), findsOneWidget);
+      expect(find.text(_kContinueLabel), findsOneWidget);
+    });
+
+    testWidgets(
+      'Negative control: InterventionDialogueOverlay degraded panel @ '
+      '1024×768 also pumps without exception (regression sentinel '
+      'for the overflow contract — keeps the 320 dp positive pin '
+      'meaningful).',
+      (WidgetTester tester) async {
+        await _pumpOverlay(
+          tester,
+          buildOverlay(),
+          size: _kWideRegressionViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(_kOverlayTitle), findsOneWidget);
+        expect(find.byType(CtBrassDivider), findsOneWidget);
+        expect(find.textContaining(_kLoadErrorPrefix), findsOneWidget);
+        expect(find.text(_kContinueLabel), findsOneWidget);
+      },
+    );
+  });
 }

@@ -29,8 +29,10 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
     );
   }
 
-  final humanId =
-      game.players.where((p) => p.isHuman).map((p) => p.id).firstOrNull;
+  final humanId = game.players
+      .where((p) => p.isHuman)
+      .map((p) => p.id)
+      .firstOrNull;
 
   if (!observe.isObserving) {
     final id = humanId ?? game.players.first.id;
@@ -56,19 +58,8 @@ final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
 
   switch (observe.mode) {
     case ObserveMode.global:
-      return ShellPlayerContext(
-        effectiveHumanPlayerId: null,
-        viewingPlayerId: null,
-        mapVisibilityMode: CtMapVisibilityMode.full,
-        playerView: null,
-        omniscientDetail: true,
-        showPlayerChrome: false,
-        canMutateViaUi: false,
+      return ShellPlayerContext.globalObserve(
         debugCommandTargetPlayerId: observe.lastControlledPlayerId,
-        inObservePhase: true,
-        observeBannerLabel: 'Observing: global',
-        treasuryNotDefined: true,
-        cargoNotDefined: true,
       );
     case ObserveMode.player:
       final targetId = observe.observedPlayerId ?? game.players.first.id;

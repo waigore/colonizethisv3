@@ -23,12 +23,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 
-import 'support/golden_capture_harness.dart';
 import 'support/panel_test_fixtures.dart';
+import 'support/technology_panel_test_support.dart';
 
 // Three prerequisite-free tier-1 techs occupy slots 0-2, mirroring the
 // `technologyPersistedSlotFixture` Widgetbook fixture so the golden matches the
@@ -62,21 +61,6 @@ Player _persistedInProgressPlayer(Player basePlayer) {
   );
 }
 
-Future<void> _pumpBoundary(
-  WidgetTester tester, {
-  required Key boundaryKey,
-  required Size viewport,
-  required Widget child,
-}) {
-  return pumpGoldenHost(
-    tester,
-    boundaryKey: boundaryKey,
-    physicalSize: viewport,
-    includeLocalizations: true,
-    child: child,
-  );
-}
-
 void main() {
   suppressLogsForTests();
 
@@ -101,22 +85,13 @@ void main() {
         players: [player, ...baseGame.players.skip(1)],
       );
 
-      await _pumpBoundary(
+      await pumpTechnologyPanelGolden(
         tester,
         boundaryKey: boundaryKey,
         viewport: viewport,
-        child: SizedBox(
-          width: viewport.width,
-          height: viewport.height,
-          child: SingleChildScrollView(
-            child: TechnologyPanel(
-              game: game,
-              player: player,
-              currentOrders: const Orders(),
-              onOrdersChanged: (_) {},
-            ),
-          ),
-        ),
+        game: game,
+        player: player,
+        currentOrders: const Orders(),
       );
 
       expect(tester.takeException(), isNull);
@@ -129,45 +104,44 @@ void main() {
     },
   );
 
-  testWidgets(
-    'golden: cancel-forfeiture warning dialog (Refs #3512)',
-    (WidgetTester tester) async {
-      const boundaryKey = ValueKey<String>('researchCancelForfeitureGolden');
-      const points = 600;
-      late String title;
-      late String message;
-      late String confirmLabel;
-      late String cancelLabel;
+  testWidgets('golden: cancel-forfeiture warning dialog (Refs #3512)', (
+    WidgetTester tester,
+  ) async {
+    const boundaryKey = ValueKey<String>('researchCancelForfeitureGolden');
+    const points = 600;
+    late String title;
+    late String message;
+    late String confirmLabel;
+    late String cancelLabel;
 
-      await _pumpBoundary(
-        tester,
-        boundaryKey: boundaryKey,
-        viewport: const Size(540, 360),
-        child: Builder(
-          builder: (context) {
-            final l10n = appL10n(context);
-            title = l10n.technologyPanel_cancelWarningTitle;
-            message = l10n.technologyPanel_cancelWarningMessage(
-              techDisplayName(kTechIdCropRotation),
-              points,
-            );
-            confirmLabel = l10n.technologyPanel_cancelWarningConfirm;
-            cancelLabel = l10n.technologyPanel_cancelWarningKeep;
-            return CtConfirmDialog(
-              title: title,
-              message: message,
-              confirmLabel: confirmLabel,
-              cancelLabel: cancelLabel,
-            );
-          },
-        ),
-      );
+    await pumpTechnologyPanelGolden(
+      tester,
+      boundaryKey: boundaryKey,
+      viewport: const Size(540, 360),
+      child: Builder(
+        builder: (context) {
+          final l10n = appL10n(context);
+          title = l10n.technologyPanel_cancelWarningTitle;
+          message = l10n.technologyPanel_cancelWarningMessage(
+            techDisplayName(kTechIdCropRotation),
+            points,
+          );
+          confirmLabel = l10n.technologyPanel_cancelWarningConfirm;
+          cancelLabel = l10n.technologyPanel_cancelWarningKeep;
+          return CtConfirmDialog(
+            title: title,
+            message: message,
+            confirmLabel: confirmLabel,
+            cancelLabel: cancelLabel,
+          );
+        },
+      ),
+    );
 
-      expect(tester.takeException(), isNull);
-      await expectLater(
-        find.byKey(boundaryKey),
-        matchesGoldenFile('goldens/research_cancel_forfeiture_dialog.png'),
-      );
-    },
-  );
+    expect(tester.takeException(), isNull);
+    await expectLater(
+      find.byKey(boundaryKey),
+      matchesGoldenFile('goldens/research_cancel_forfeiture_dialog.png'),
+    );
+  });
 }

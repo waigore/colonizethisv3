@@ -56,7 +56,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'support/dialogs_320dp_min_viewport_support.dart';
 import 'support/panel_test_fixtures.dart';
 
 final _kChooseTechDialogTestGame = buildTechnologyPanelTestGame();
@@ -64,12 +64,12 @@ final _kChooseTechDialogTestGame = buildTechnologyPanelTestGame();
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing screen-, panel-, and dialog-level pin files.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same dialog renders its default layout. Mirrors the
 /// contract used by `dialogs_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 /// The three catalog techs with the longest display names. These are the
 /// worst case for the option-row `Expanded` label column at 320 dp, so
@@ -78,8 +78,9 @@ const Size _kWideRegressionViewport = Size(1024, 768);
 List<TechDefinition> _longestNamedTechs() {
   final all = techCatalog.values.toList()
     ..sort((a, b) {
-      final lenCmp =
-          (b.displayName ?? '').length.compareTo((a.displayName ?? '').length);
+      final lenCmp = (b.displayName ?? '').length.compareTo(
+        (a.displayName ?? '').length,
+      );
       if (lenCmp != 0) return lenCmp;
       // Deterministic tiebreak by id so the fixture is stable across runs.
       return a.id.compareTo(b.id);
@@ -87,146 +88,105 @@ List<TechDefinition> _longestNamedTechs() {
   return all.take(3).toList();
 }
 
-/// Pumps [dialog] at [size] under the running editorial-monocle theme.
-///
-/// Delegates to the shared `pumpAtMinViewport` harness
-/// — which sets the
-/// surface size (so the binding's render flex math sees the minimum
-/// viewport) and overrides MediaQuery so dialog code that reads
-/// `MediaQuery.sizeOf(context).width` resolves to the same value.
-///
-/// Embeds [dialog] directly in the Scaffold body rather than driving the
-/// real `showDialog` flow because the contract under test is the dialog's
-/// own `CtDialogShell` layout at the narrow viewport, not the barrier /
-/// overlay route plumbing (already covered by
-/// `technology_panel_choose_tech_dialog_test.dart`).
-Future<void> _pumpDialog(
-  WidgetTester tester,
-  Widget dialog, {
-  required Size size,
-}) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: dialog)),
-    settle: true,
-  );
-}
-
 void main() {
   suppressLogsForTests();
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — ChooseTechDialog (GAME40001) '
-    '@ 320 dp (Refs #2870 S8/S10)',
-    () {
-      testWidgets(
-        'AC (positive) ChooseTechDialog (3 longest-name techs) @ 320×640: '
-        'no RenderFlex overflow exception, "Choose Tech — Slot 1" title + '
-        'each option display name + Close label render — the bordered '
-        'option rows (icon + Expanded name/meta column) and the trailing '
-        'full-width Close CtNinePatchButton must wrap within the ~288 dp '
-        'CtDialogShell content column per '
-        'SPEC/ui/technology-panel.md § Choose-tech dialog.',
-        (WidgetTester tester) async {
-          final techs = _longestNamedTechs();
+  group('SPEC/ui/mobile-adaptation.md § 7 — ChooseTechDialog (GAME40001) '
+      '@ 320 dp (Refs #2870 S8/S10)', () {
+    testWidgets(
+      'AC (positive) ChooseTechDialog (3 longest-name techs) @ 320×640: '
+      'no RenderFlex overflow exception, "Choose Tech — Slot 1" title + '
+      'each option display name + Close label render — the bordered '
+      'option rows (icon + Expanded name/meta column) and the trailing '
+      'full-width Close CtNinePatchButton must wrap within the ~288 dp '
+      'CtDialogShell content column per '
+      'SPEC/ui/technology-panel.md § Choose-tech dialog.',
+      (WidgetTester tester) async {
+        final techs = _longestNamedTechs();
 
-          await _pumpDialog(
-            tester,
-            ChooseTechDialog(
-              game: _kChooseTechDialogTestGame,
-              contextPlayerId: kPanelTestHumanPlayerId,
-              slotIndex: 0,
-              availableTechs: techs,
-              onSelect: (_) {},
-            ),
-            size: _kMinViewport,
-          );
+        await pumpDialogs320At(
+          tester,
+          ChooseTechDialog(
+            game: _kChooseTechDialogTestGame,
+            contextPlayerId: kPanelTestHumanPlayerId,
+            slotIndex: 0,
+            availableTechs: techs,
+            onSelect: (_) {},
+          ),
+          size: _kMinViewport,
+        );
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: ChooseTechDialog must '
-                'not emit a RenderFlex overflow exception at '
-                'kMinViewportWidth (320 dp). The accent title, each '
-                'bordered option row (StrictAssetIcon + Expanded name / '
-                'era·category·cost label column), and the trailing Close '
-                'CtNinePatchButton must wrap within the ~288 dp content '
-                'width.',
-          );
-          // Title renders for the 1-based slot label.
-          expect(find.text('Choose Tech \u2014 Slot 1'), findsOneWidget);
-          // Each option's localized display name surfaces so the dialog
-          // body is actually exercised at the narrow size (vs a no-op).
-          for (final tech in techs) {
-            expect(find.text(techDisplayName(tech.id)), findsOneWidget);
-          }
-          expect(find.text('Close'), findsOneWidget);
-          // Empty-state line MUST be absent on the populated path.
-          expect(
-            find.text('No techs available to research'),
-            findsNothing,
-          );
-        },
-      );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: ChooseTechDialog must '
+              'not emit a RenderFlex overflow exception at '
+              'kMinViewportWidth (320 dp). The accent title, each '
+              'bordered option row (StrictAssetIcon + Expanded name / '
+              'era·category·cost label column), and the trailing Close '
+              'CtNinePatchButton must wrap within the ~288 dp content '
+              'width.',
+        );
+        // Title renders for the 1-based slot label.
+        expect(find.text('Choose Tech \u2014 Slot 1'), findsOneWidget);
+        // Each option's localized display name surfaces so the dialog
+        // body is actually exercised at the narrow size (vs a no-op).
+        for (final tech in techs) {
+          expect(find.text(techDisplayName(tech.id)), findsOneWidget);
+        }
+        expect(find.text('Close'), findsOneWidget);
+        // Empty-state line MUST be absent on the populated path.
+        expect(find.text('No techs available to research'), findsNothing);
+      },
+    );
 
-      testWidgets(
-        'AC (positive) ChooseTechDialog (empty state) @ 320×640: no '
+    testWidgets('AC (positive) ChooseTechDialog (empty state) @ 320×640: no '
         'RenderFlex overflow exception, the muted "No techs available to '
         'research" line + Close render — pins the empty-state branch '
-        'fitting within the ~288 dp content width.',
-        (WidgetTester tester) async {
-          await _pumpDialog(
-            tester,
-            ChooseTechDialog(
-              game: _kChooseTechDialogTestGame,
-              contextPlayerId: kPanelTestHumanPlayerId,
-              slotIndex: 2,
-              availableTechs: const <TechDefinition>[],
-              onSelect: (_) {},
-            ),
-            size: _kMinViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          // 1-based slot label flips to Slot 3 for slotIndex 2.
-          expect(find.text('Choose Tech \u2014 Slot 3'), findsOneWidget);
-          expect(
-            find.text('No techs available to research'),
-            findsOneWidget,
-          );
-          expect(find.text('Close'), findsOneWidget);
-        },
+        'fitting within the ~288 dp content width.', (
+      WidgetTester tester,
+    ) async {
+      await pumpDialogs320At(
+        tester,
+        ChooseTechDialog(
+          game: _kChooseTechDialogTestGame,
+          contextPlayerId: kPanelTestHumanPlayerId,
+          slotIndex: 2,
+          availableTechs: const <TechDefinition>[],
+          onSelect: (_) {},
+        ),
+        size: _kMinViewport,
       );
 
-      testWidgets(
-        'Negative control: ChooseTechDialog (3 longest-name techs) @ '
+      expect(tester.takeException(), isNull);
+      // 1-based slot label flips to Slot 3 for slotIndex 2.
+      expect(find.text('Choose Tech \u2014 Slot 3'), findsOneWidget);
+      expect(find.text('No techs available to research'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+    });
+
+    testWidgets('Negative control: ChooseTechDialog (3 longest-name techs) @ '
         '1024×768 also pumps without exception (regression sentinel for '
         'the overflow contract — keeps the 320 dp positive pins '
-        'meaningful).',
-        (WidgetTester tester) async {
-          final techs = _longestNamedTechs();
+        'meaningful).', (WidgetTester tester) async {
+      final techs = _longestNamedTechs();
 
-          await _pumpDialog(
-            tester,
-            ChooseTechDialog(
-              game: _kChooseTechDialogTestGame,
-              contextPlayerId: kPanelTestHumanPlayerId,
-              slotIndex: 0,
-              availableTechs: techs,
-              onSelect: (_) {},
-            ),
-            size: _kWideRegressionViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.text('Choose Tech \u2014 Slot 1'), findsOneWidget);
-          expect(find.text('Close'), findsOneWidget);
-        },
+      await pumpDialogs320At(
+        tester,
+        ChooseTechDialog(
+          game: _kChooseTechDialogTestGame,
+          contextPlayerId: kPanelTestHumanPlayerId,
+          slotIndex: 0,
+          availableTechs: techs,
+          onSelect: (_) {},
+        ),
+        size: _kWideRegressionViewport,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Choose Tech \u2014 Slot 1'), findsOneWidget);
+      expect(find.text('Close'), findsOneWidget);
+    });
+  });
 }

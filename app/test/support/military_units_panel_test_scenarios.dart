@@ -1,12 +1,10 @@
 // Military units-panel scenario Game factories (Refs #4048).
 // SPEC: SPEC/ui/military-units-panel.md; SPEC/program/repo-lint.md.
-
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'panel_fixtures/core.dart';
 import 'units_panel_test_shared.dart';
 
-/// Minimal province + tile-key lookup game (Refs #4013).
+/// Minimal province + tile-key lookup (Refs #4013).
 Game buildMilitaryProvinceTileLookupGame({
   String id = 'min',
   String regionId = 'oldWorld',
@@ -35,7 +33,7 @@ Game buildMilitaryProvinceTileLookupGame({
   );
 }
 
-/// Sea-zone fleet display scenario (Refs #4013).
+/// Sea-zone fleet display (Refs #4013).
 Game buildMilitarySeaFleetDisplayGame({
   required String id,
   required String playerId,
@@ -75,7 +73,7 @@ Game buildMilitarySeaFleetDisplayGame({
   );
 }
 
-/// Land-army display at Lisbon (medals / status pins).
+/// Land army at Lisbon (medals / status).
 Game buildMilitaryArmyAtLisbonDisplayGame({
   required String id,
   required String playerId,
@@ -108,7 +106,7 @@ Game buildMilitaryArmyAtLisbonDisplayGame({
   );
 }
 
-/// Home army at capital for split-UI / shell smoke (Refs #4013).
+/// Home army at capital (Refs #4013).
 Game buildMilitaryHomeArmyAtCapitalGame({
   required String id,
   required String playerId,
@@ -153,7 +151,7 @@ Game buildMilitaryHomeArmyAtCapitalGame({
   );
 }
 
-/// Sea-fleet location header via [seaZoneDisplayNameById] (Refs #4021).
+/// Sea-zone label via seaZoneDisplayNameById (Refs #4021).
 Game buildMilitarySeaZoneLabelGame({
   String id = 'g_mil_sea_label',
   String humanId = 'gp_mil_sea_label',
@@ -193,7 +191,7 @@ Game buildMilitarySeaZoneLabelGame({
   );
 }
 
-/// Field army + named province for display-name pins (Refs #4021).
+/// Field army + named province (Refs #4021).
 Game buildMilitaryProvinceDisplayNamesGame({
   String id = 'g_display_mil',
   String playerId = 'gp_display_names',
@@ -241,7 +239,7 @@ Game buildMilitaryProvinceDisplayNamesGame({
   );
 }
 
-/// Two field armies at one owned province (Combine scenario).
+/// Two field armies at one province (Combine).
 Game buildMilitaryTwoFieldArmiesAtProvinceGame({
   required String id,
   required String playerId,
@@ -287,7 +285,7 @@ Game buildMilitaryTwoFieldArmiesAtProvinceGame({
   );
 }
 
-/// Field army with adjacent owned dest for Move/Locate.
+/// Field army + adjacent owned dest (Move/Locate).
 Game buildMilitaryFieldArmyWithAdjacentOwnedGame({
   required String id,
   required String playerId,
@@ -346,7 +344,7 @@ Game buildMilitaryFieldArmyWithAdjacentOwnedGame({
   );
 }
 
-/// Cross-region OW+NW owned dests for MoveArmyDialog grouping.
+/// Cross-region OW+NW owned dests (MoveArmyDialog).
 Game buildMilitaryCrossRegionOwnedMoveGame({
   required String id,
   required String playerId,
@@ -416,7 +414,7 @@ Game buildMilitaryCrossRegionOwnedMoveGame({
   );
 }
 
-/// Adjacent hostile province for invasion declare-war confirm.
+/// Adjacent hostile province (invasion confirm).
 Game buildMilitaryInvasionAdjacentHostileGame({
   required String id,
   required String playerId,
@@ -465,14 +463,12 @@ Game buildMilitaryInvasionAdjacentHostileGame({
   );
 }
 
-Player _human(String id, String displayName, String capitalProvinceId) =>
-    Player(
-      id: id,
-      displayName: displayName,
-      isHuman: true,
-      capitalProvinceId: capitalProvinceId,
-    );
-
+Player _human(String id, String name, String capital) => Player(
+  id: id,
+  displayName: name,
+  isHuman: true,
+  capitalProvinceId: capital,
+);
 Province _owProvince(
   String id,
   String ownerId, {
@@ -485,22 +481,15 @@ Province _owProvince(
   displayName: displayName,
   townTileKey: townTileKey,
 );
-
 List<Unit> _regimentsAt(
   List<String> ids,
   String ownerId,
   String provinceId, {
   required String type,
 }) => [
-  for (final regimentId in ids)
-    Unit(
-      id: regimentId,
-      type: type,
-      ownerId: ownerId,
-      locationProvinceId: provinceId,
-    ),
+  for (final id in ids)
+    Unit(id: id, type: type, ownerId: ownerId, locationProvinceId: provinceId),
 ];
-
 Army _army({
   required String id,
   required String ownerId,
@@ -515,11 +504,9 @@ Army _army({
   regimentUnitIds: regimentUnitIds,
   isHomeArmy: isHomeArmy,
 );
-
 Map<String, Map<String, List<String>>> _owTiles(
   Map<String, List<String>> byProvince,
 ) => {'oldWorld': byProvince};
-
 Map<String, Map<String, String>> _visibility(
   String playerId,
   List<String> tiles,

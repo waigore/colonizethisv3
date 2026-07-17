@@ -40,79 +40,30 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show OvertureOffer;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'support/dialogs_320dp_min_viewport_support.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing screen-, panel-, and dialog-level pin files.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same dialog renders its default layout. Mirrors
 /// the contract used by `dialogs_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
-
-/// Pumps [dialog] at [size] under the running editorial-monocle theme.
-///
-/// Delegates to the shared `pumpAtMinViewport` harness
-/// — which sets
-/// the surface size (so the binding's render flex math sees the minimum
-/// viewport) and overrides MediaQuery so dialog code that reads
-/// `MediaQuery.sizeOf(context).width` resolves to the same value.
-///
-/// Embeds [dialog] directly in the Scaffold body rather than driving
-/// the real `showDialog` flow because the contract under test is the
-/// overlay's own [CtDialogShell] layout at the narrow viewport, not the
-/// barrier / overlay route plumbing (which is already covered by the
-/// overlay's own widget tests).
-Future<void> _pumpDialog(
-  WidgetTester tester,
-  Widget dialog, {
-  required Size size,
-}) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: dialog)),
-    settle: true,
-  );
-}
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 void main() {
   suppressLogsForTests();
 
   group('SPEC/ui/mobile-adaptation.md § 7 — OvertureDialogueOverlay @ '
       '320 dp (Refs #2870 S8/S10)', () {
-    // Minimal Game fixture: three GPs so the `_offererDisplayName`
-    // lookup in phase-2 resolves `gp_portugal` / `gp_spain` to display
-    // names (mirrors the fixture used by
-    // `overture_dialogue_overlay_test.dart` so the narrow-pin tests
-    // exercise the same name-resolution path as the existing chrome
-    // pins).
-    Game overtureGame() {
-      return const Game(
-        id: 'overture_320',
-        worldState: WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 5),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: [
-          Player(id: 'gp_player', displayName: 'Player', isHuman: true),
-          Player(id: 'gp_portugal', displayName: 'Portugal', isHuman: false),
-          Player(id: 'gp_spain', displayName: 'Spain', isHuman: false),
-        ],
-      );
-    }
+    Game overtureGame() => buildThreeGpDialogueOverlayGame(id: 'overture_320');
 
     const OvertureOffer singleOffer = OvertureOffer(
       offererGpId: 'gp_portugal',
@@ -136,87 +87,81 @@ void main() {
     const String overtureRejectLabel = 'Reject';
     const String overtureSubmitLabel = 'Submit';
 
-    testWidgets(
-      'AC (positive) OvertureDialogueOverlay (one pending offer) @ '
-      '320×640: no RenderFlex overflow exception, "Diplomatic overtures" '
-      'title + Accept / Reject / Submit action labels render — the '
-      'phase-2 Column(Row(offerer + ": " + stage) + Wrap(Accept toggle + '
-      'Reject toggle)) from SPEC/ui/overture-dialogue-overlay.md § '
-      'Layout / wireframe must wrap within the ~288 dp CtDialogShell '
-      'content column at kMinViewportWidth (CtFullScreenDialogueShell.'
-      'maxWidth 520 is dominated by Dialog.insetPadding 16 dp each side '
-      'at 320 dp; the labeled Accept + Reject CtToggleSwitch rows flow '
-      'onto a second Wrap run rather than overflowing horizontally per '
-      '#2867 R22).',
-      (WidgetTester tester) async {
-        await _pumpDialog(
-          tester,
-          OvertureDialogueOverlay(
-            game: overtureGame(),
-            pendingOvertures: const [singleOffer],
-            skipIntroForTest: true,
-            onDecisions: (_) {},
-            child: const SizedBox.expand(),
-          ),
-          size: _kMinViewport,
-        );
+    testWidgets('AC (positive) OvertureDialogueOverlay (one pending offer) @ '
+        '320×640: no RenderFlex overflow exception, "Diplomatic overtures" '
+        'title + Accept / Reject / Submit action labels render — the '
+        'phase-2 Column(Row(offerer + ": " + stage) + Wrap(Accept toggle + '
+        'Reject toggle)) from SPEC/ui/overture-dialogue-overlay.md § '
+        'Layout / wireframe must wrap within the ~288 dp CtDialogShell '
+        'content column at kMinViewportWidth (CtFullScreenDialogueShell.'
+        'maxWidth 520 is dominated by Dialog.insetPadding 16 dp each side '
+        'at 320 dp; the labeled Accept + Reject CtToggleSwitch rows flow '
+        'onto a second Wrap run rather than overflowing horizontally per '
+        '#2867 R22).', (WidgetTester tester) async {
+      await pumpDialogs320At(
+        tester,
+        OvertureDialogueOverlay(
+          game: overtureGame(),
+          pendingOvertures: const [singleOffer],
+          skipIntroForTest: true,
+          onDecisions: (_) {},
+          child: const SizedBox.expand(),
+        ),
+        size: _kMinViewport,
+      );
 
-        expect(
-          tester.takeException(),
-          isNull,
-          reason:
-              'SPEC/ui/mobile-adaptation.md § 7: OvertureDialogueOverlay '
-              'must not emit a RenderFlex overflow exception at '
-              'kMinViewportWidth (320 dp). The per-offer Column(Row('
-              'offerer + ": " + stage) + Wrap(Accept + Reject)) under '
-              'the CtFullScreenDialogueShell scrim + CtDialogShell '
-              'chrome must wrap within the ~288 dp content column.',
-        );
-        expect(find.text(overtureTitle), findsOneWidget);
-        expect(find.text(overtureAcceptLabel), findsOneWidget);
-        expect(find.text(overtureRejectLabel), findsOneWidget);
-        expect(find.text(overtureSubmitLabel), findsOneWidget);
-      },
-    );
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: OvertureDialogueOverlay '
+            'must not emit a RenderFlex overflow exception at '
+            'kMinViewportWidth (320 dp). The per-offer Column(Row('
+            'offerer + ": " + stage) + Wrap(Accept + Reject)) under '
+            'the CtFullScreenDialogueShell scrim + CtDialogShell '
+            'chrome must wrap within the ~288 dp content column.',
+      );
+      expect(find.text(overtureTitle), findsOneWidget);
+      expect(find.text(overtureAcceptLabel), findsOneWidget);
+      expect(find.text(overtureRejectLabel), findsOneWidget);
+      expect(find.text(overtureSubmitLabel), findsOneWidget);
+    });
 
-    testWidgets(
-      'AC (positive) OvertureDialogueOverlay (two pending offers) @ '
-      '320×640: no RenderFlex overflow exception, both Accept + Reject '
-      'rows mount within the ~288 dp content column (the '
-      'ListView.builder shrink-wrapped body from '
-      'SPEC/ui/overture-dialogue-overlay.md § Layout / wireframe stacks '
-      'each per-offer Column(Row + Wrap) body at the narrow viewport '
-      'without horizontal overflow).',
-      (WidgetTester tester) async {
-        await _pumpDialog(
-          tester,
-          OvertureDialogueOverlay(
-            game: overtureGame(),
-            pendingOvertures: const [singleOffer, secondOffer],
-            skipIntroForTest: true,
-            onDecisions: (_) {},
-            child: const SizedBox.expand(),
-          ),
-          size: _kMinViewport,
-        );
+    testWidgets('AC (positive) OvertureDialogueOverlay (two pending offers) @ '
+        '320×640: no RenderFlex overflow exception, both Accept + Reject '
+        'rows mount within the ~288 dp content column (the '
+        'ListView.builder shrink-wrapped body from '
+        'SPEC/ui/overture-dialogue-overlay.md § Layout / wireframe stacks '
+        'each per-offer Column(Row + Wrap) body at the narrow viewport '
+        'without horizontal overflow).', (WidgetTester tester) async {
+      await pumpDialogs320At(
+        tester,
+        OvertureDialogueOverlay(
+          game: overtureGame(),
+          pendingOvertures: const [singleOffer, secondOffer],
+          skipIntroForTest: true,
+          onDecisions: (_) {},
+          child: const SizedBox.expand(),
+        ),
+        size: _kMinViewport,
+      );
 
-        expect(tester.takeException(), isNull);
-        expect(find.text(overtureTitle), findsOneWidget);
-        // Two rows -> two Accept buttons + two Reject buttons + one
-        // Submit action (the Submit button label is shared across the
-        // row count, mirroring the call-to-arms 320 dp pin contract).
-        expect(find.text(overtureAcceptLabel), findsNWidgets(2));
-        expect(find.text(overtureRejectLabel), findsNWidgets(2));
-        expect(find.text(overtureSubmitLabel), findsOneWidget);
-      },
-    );
+      expect(tester.takeException(), isNull);
+      expect(find.text(overtureTitle), findsOneWidget);
+      // Two rows -> two Accept buttons + two Reject buttons + one
+      // Submit action (the Submit button label is shared across the
+      // row count, mirroring the call-to-arms 320 dp pin contract).
+      expect(find.text(overtureAcceptLabel), findsNWidgets(2));
+      expect(find.text(overtureRejectLabel), findsNWidgets(2));
+      expect(find.text(overtureSubmitLabel), findsOneWidget);
+    });
 
     testWidgets(
       'Negative control: OvertureDialogueOverlay @ 1024×768 also pumps '
       'without exception (regression sentinel for the overflow contract '
       '— keeps the 320 dp positive pins meaningful).',
       (WidgetTester tester) async {
-        await _pumpDialog(
+        await pumpDialogs320At(
           tester,
           OvertureDialogueOverlay(
             game: overtureGame(),
