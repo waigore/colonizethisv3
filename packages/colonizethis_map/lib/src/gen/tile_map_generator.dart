@@ -14,18 +14,15 @@ import 'tile_map_generator_land_seeds.dart';
 import 'tile_map_generator_lakes_provinces.dart';
 import 'tile_map_generator_terrain_assign.dart';
 import 'tile_map_land_sentinel.dart';
-import 'tile_map_land_seed_contract.dart';
 import 'tile_map_params.dart';
+import 'tile_map_generator_types.dart';
 import 'map_gen_stage.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
 import 'topology_inference.dart';
 
 export 'tile_map_params.dart';
-
-/// Shared params for [TileMapGenerator] (generation orchestration only).
-
-part 'tile_map_generator_types.dart';
+export 'tile_map_generator_types.dart';
 
 abstract class _TileMapGeneratorShell {
   _TileMapGeneratorShell({this.params = const TileMapParams()});
@@ -297,7 +294,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
   int _countLandCells(List<List<String>> grid) {
     var landCount = 0;
     TileMapGrid.forEachCell(grid, (_, __, value) {
-      if (value == _landSentinel) landCount++;
+      if (value == kTileMapLandSentinel) landCount++;
     });
     return landCount;
   }

@@ -1,10 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_world/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
 
 import '../world_constants.dart';
 import 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
+import 'move_order_apply_logging.dart';
 import 'province_lookup.dart';
 import 'region_unit_lists.dart';
 import 'topology_helpers.dart';
@@ -118,12 +117,13 @@ WorldState applyCivilianTileMoveOrdersToWorldRegions(
     moveOrdersByPlayerId,
     onCivilianMoveOrderTrace: onCivilianMoveOrderTrace,
   );
-  if (result.totals.ordersSeen > 0) {
-    worldLog.i(
-      'civilian tile movement apply orders=${result.totals.ordersSeen} '
-      'applied=${result.totals.applied} ignored=${result.totals.ignored}',
-    );
-  }
+  logMoveOrderApplySummary(
+    message:
+        'civilian tile movement apply orders=${result.totals.ordersSeen} '
+        'applied=${result.totals.applied} ignored=${result.totals.ignored}',
+    applied: result.totals.applied,
+    ignored: result.totals.ignored,
+  );
   return game.worldState.mapBothRegionUnits(
     (regionId, _) => result.lists.unitListForRegion(regionId),
   );
@@ -312,12 +312,10 @@ CivilianMoveOrderOutcome _ignoredMove(
   String? ownerId,
   CivilianMoveOrderTraceCallback? onCivilianMoveOrderTrace,
 }) {
-  if (Level.debug.value >= Logger.level.value) {
-    worldLog.d(
-      'civilian movement ignored reason=$reason unitId=${order.unitId} '
-      'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
-    );
-  }
+  logMoveOrderIgnoredIfDebug(
+    'civilian movement ignored reason=$reason unitId=${order.unitId} '
+    'orderPlayerId=$playerId${ownerId == null ? '' : ' unitOwnerId=$ownerId'}',
+  );
   onCivilianMoveOrderTrace?.call(
     playerId: playerId,
     order: order,

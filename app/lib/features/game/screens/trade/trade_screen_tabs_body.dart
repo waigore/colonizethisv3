@@ -37,18 +37,18 @@ class _TradeScreenTabsBody extends StatelessWidget {
         child: CtTabStrip(
           initialTabIndex: initialTabIndex,
           tabLabels: const <String>[
-            TradeScreen.marketTabLabel,
-            TradeScreen.dealBookTabLabel,
+            TradeScreenMarketKeys.marketTabLabel,
+            TradeScreenDealBookKeys.dealBookTabLabel,
           ],
           tabViews: <Widget>[
             _MarketTabContent(
-              key: TradeScreen.marketTabBodyKey,
+              key: TradeScreenMarketKeys.marketTabBodyKey,
               game: game,
               playerId: playerId,
               canEdit: canEdit,
             ),
             _DealBookTabContent(
-              key: TradeScreen.dealBookTabBodyKey,
+              key: TradeScreenDealBookKeys.dealBookTabBodyKey,
               game: game,
               playerId: playerId,
             ),

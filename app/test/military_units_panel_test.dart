@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_action_row.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart'
@@ -34,10 +34,11 @@ void main() {
     testWidgets('AC: Panel shows title Military Units', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('Military Units'), findsOneWidget);
     });
@@ -45,10 +46,11 @@ void main() {
     testWidgets(
       'AC: Empty state when human player has zero regiments and no fleets',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithNoUnits,
         );
-        await tester.pumpAndSettle();
 
         expect(find.text('No military units'), findsOneWidget);
         expect(find.byType(ListTile), findsNothing);
@@ -61,10 +63,11 @@ void main() {
     ) async {
       // Empty roster isolates the header so the only button chrome is the
       // Train pill (no row Move/Split CtNinePatchButtons, no Combine).
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithNoUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithNoUnits,
       );
-      await tester.pumpAndSettle();
 
       final headerButtons = find.descendant(
         of: find.byType(UnitsPanelShell),
@@ -81,10 +84,11 @@ void main() {
       'header Combine renders as a primary CtActionTextButton pill when a '
       'combinable roster is present — #3514 owner decisions #5/#15',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
         );
-        await tester.pumpAndSettle();
 
         final combine = find.ancestor(
           of: find.text('Combine'),
@@ -118,51 +122,8 @@ void main() {
       WidgetTester tester,
     ) async {
       const humanId = 'gp_mil_sea_label';
-      const cap = 'oldWorld|c1';
-      final miniGame = Game(
-        id: 'g_mil_sea_label',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(
-            provinces: [
-              Province(
-                id: 'c1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Cap',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          fleets: [
-            Fleet(
-              id: 'f_at_sea',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_x',
-              ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-            ),
-          ],
-          seaZoneDisplayNameById: const {'oldWorld|zone_x': 'Mil Named Sea'},
-        ),
-        players: const [
-          Player(
-            id: humanId,
-            displayName: 'Mil Sea Tester',
-            isHuman: true,
-            capitalProvinceId: cap,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: cap,
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-      );
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: miniGame, humanPlayerId: humanId),
-      );
+      final miniGame = buildMilitarySeaZoneLabelGame(humanId: humanId);
+      await pumpMilitaryPanel(tester, game: miniGame, humanPlayerId: humanId);
       await tester.pump();
       expect(find.textContaining('Mil Named Sea'), findsWidgets);
     });
@@ -170,10 +131,11 @@ void main() {
     testWidgets(
       'AC: When player has military units, tree shows regions and type rows',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
         );
-        await tester.pumpAndSettle();
 
         final militaryCount =
             game.worldState.oldWorld.units
@@ -219,64 +181,16 @@ void main() {
       (WidgetTester tester) async {
         const playerId = 'gp_display_names';
         const provinceLocal = 'lisbon';
-        const fullProvince = 'oldWorld|$provinceLocal';
-        final miniGame = Game(
-          id: 'g_display_mil',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              units: [
-                Unit(
-                  id: 'levy1',
-                  type: 'peasant_levies',
-                  ownerId: playerId,
-                  locationProvinceId: fullProvince,
-                  medals: 0,
-                  status: UnitStatus.idle,
-                ),
-              ],
-              provinces: [
-                Province(
-                  id: fullProvince,
-                  regionId: 'oldWorld',
-                  ownerId: playerId,
-                  displayName: 'Lisbon Harbor',
-                  townTileKey: 'oldWorld|lisbon|0|0',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            fleets: [],
-            armies: [
-              Army(
-                id: 'army_field',
-                ownerId: playerId,
-                regionId: 'oldWorld',
-                stationedProvinceId: fullProvince,
-                regimentUnitIds: const ['levy1'],
-                isHomeArmy: false,
-              ),
-            ],
-            tileKeysByRegionAndProvince: {
-              'oldWorld': {
-                fullProvince: ['oldWorld|lisbon|0|0'],
-              },
-            },
-          ),
-          players: const [
-            Player(
-              id: playerId,
-              displayName: 'Tester',
-              isHuman: true,
-              capitalProvinceId: fullProvince,
-            ),
-          ],
+        final miniGame = buildMilitaryProvinceDisplayNamesGame(
+          playerId: playerId,
+          provinceLocal: provinceLocal,
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: miniGame, humanPlayerId: playerId),
+        await pumpMilitaryPanel(
+          tester,
+          game: miniGame,
+          humanPlayerId: playerId,
         );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('regiments · Lisbon Harbor'), findsWidgets);
         await expandFirstArmyExpansion(tester);
@@ -288,10 +202,11 @@ void main() {
     testWidgets('AC: Regiment rows show type, count, medals, status', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
       );
-      await tester.pumpAndSettle();
 
       final militaryCount =
           game.worldState.oldWorld.units
@@ -321,10 +236,11 @@ void main() {
     testWidgets(
       'AC: When tree has content, location headers show region (name — region)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
         );
-        await tester.pumpAndSettle();
 
         // Skip when the panel has no unit content (armies → UnitsEntityActionRow,
         // naval ship rows → "Status: …" subtitle). Detail rows no longer use
@@ -338,10 +254,11 @@ void main() {
     );
 
     testWidgets('panel is wrapped in CtPanel', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
       );
-      await tester.pumpAndSettle();
 
       expect(find.byType(CtPanel), findsOneWidget);
     });
@@ -352,10 +269,12 @@ void main() {
       LocateMapTileEvent? locateEvent;
       final bus = AppEventBus.create();
       bus.on<LocateMapTileEvent>().listen((e) => locateEvent = e);
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        bus: bus,
       );
-      await tester.pumpAndSettle();
 
       final locateButtons = find.byIcon(Icons.my_location);
       if (locateButtons.evaluate().isEmpty) return;
@@ -372,10 +291,11 @@ void main() {
     });
 
     testWidgets('builds without locate callback', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
       );
-      await tester.pumpAndSettle();
 
       expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
       // Locate-tap behavior on detail sub-rows is covered by the dedicated
@@ -391,10 +311,12 @@ void main() {
       final bus = AppEventBus.create();
       bus.on<OpenDialogEvent>().listen((e) => openDialogEvent = e);
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits, bus: bus),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
+        bus: bus,
       );
-      await tester.pumpAndSettle();
 
       final trainButton = find.text('Train');
       expect(trainButton, findsOneWidget);
@@ -413,14 +335,12 @@ void main() {
         final sequence = <Type>[];
         bus.stream.listen((e) => sequence.add(e.runtimeType));
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(
-            game: game,
-            humanPlayerId: humanPlayerIdWithUnits,
-            bus: bus,
-          ),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: humanPlayerIdWithUnits,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final locateButtons = find.byIcon(Icons.my_location);
         if (locateButtons.evaluate().isEmpty) return;
@@ -436,10 +356,11 @@ void main() {
     );
 
     testWidgets('panel is scrollable', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: humanPlayerIdWithUnits),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: humanPlayerIdWithUnits,
       );
-      await tester.pumpAndSettle();
 
       expect(find.byType(ListView), findsOneWidget);
     });

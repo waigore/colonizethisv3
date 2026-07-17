@@ -263,6 +263,33 @@ void main() {
       expect(find.byType(MaterialApp), findsOneWidget);
     },
   );
+
+  testWidgets('buildAppShell named routes + MaterialApp chrome', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildAppShell(
+        child: const SizedBox.shrink(),
+        initialRoute: '/game',
+        routes: <String, WidgetBuilder>{
+          '/game': (_) => const Text('game-route'),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('game-route'), findsOneWidget);
+    await tester.pumpWidget(
+      buildAppShellMaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: const Text('shell-material'),
+      ),
+    );
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp))
+          .debugShowCheckedModeBanner,
+      isFalse,
+    );
+  });
 }
 
 /// Inert wrapper used to assert `shellWrapper` composes above the MaterialApp.

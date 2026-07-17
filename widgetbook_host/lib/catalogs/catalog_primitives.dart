@@ -37,16 +37,11 @@ class _PauseMenuPanelStoryHostState extends State<_PauseMenuPanelStoryHost> {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
+      child: widgetbookEditorialMonocleApp(
         localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          backgroundColor: EditorialMonoclePalette.dialogScrim,
-          body: Center(
-            child: PauseMenuPanel(bus: _bus),
-          ),
-        ),
+        scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+        child: Center(child: PauseMenuPanel(bus: _bus)),
       ),
     );
   }
@@ -138,18 +133,13 @@ class _SaveGameNameDialogStoryHost extends StatelessWidget {
     );
     return ProviderScope(
       overrides: [
-        currentGameProvider.overrideWith(
-          () => CurrentGameNotifier(game),
-        ),
+        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
       ],
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
+      child: widgetbookEditorialMonocleApp(
         localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          backgroundColor: EditorialMonoclePalette.dialogScrim,
-          body: const Center(child: SaveGameNameDialog()),
-        ),
+        scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+        child: const Center(child: SaveGameNameDialog()),
       ),
     );
   }
@@ -211,20 +201,17 @@ class _LoadGameListDialogStoryHost extends StatelessWidget {
         ? 'England_-_Queen_Victoria_-_3'
         : null;
     return ProviderScope(
-      child: MaterialApp(
-        theme: AppThemes.editorialMonocle,
+      child: widgetbookEditorialMonocleApp(
         localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: MediaQuery(
+        scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
+        child: MediaQuery(
           data: const MediaQueryData(size: Size(390, 844)),
-          child: Scaffold(
-            backgroundColor: EditorialMonoclePalette.dialogScrim,
-            body: Center(
-              child: LoadGameListDialog(
-                fromPause: false,
-                previewEntries: entries,
-                previewPendingDeleteId: pendingDelete,
-              ),
+          child: Center(
+            child: LoadGameListDialog(
+              fromPause: false,
+              previewEntries: entries,
+              previewPendingDeleteId: pendingDelete,
             ),
           ),
         ),
@@ -260,20 +247,17 @@ class _GameSideMenuStoryHostState extends State<_GameSideMenuStoryHost> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(child: Container(color: Colors.black12)),
-            GameSideMenu(
-              sideMenuOpen: _open,
-              onClose: () => setState(() => _open = false),
-            ),
-          ],
-        ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: Container(color: Colors.black12)),
+          GameSideMenu(
+            sideMenuOpen: _open,
+            onClose: () => setState(() => _open = false),
+          ),
+        ],
       ),
     );
   }
@@ -337,28 +321,25 @@ class _GameMapNarrowDetailOverlaySlotStoryHostState
   Widget build(BuildContext context) {
     final game = demoGameForOverlay;
     final region = demoRegionForOverlay;
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    return widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MediaQuery(
+      child: MediaQuery(
         data: const MediaQueryData(size: Size(400, 600)),
-        child: Scaffold(
-          body: Stack(
-            children: [
-              Positioned.fill(child: Container(color: Colors.black12)),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: GameMapNarrowDetailOverlaySlot(
-                  game: game,
-                  region: region,
-                  humanPlayerId: game.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
-                ),
+        child: Stack(
+          children: [
+            Positioned.fill(child: Container(color: Colors.black12)),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: GameMapNarrowDetailOverlaySlot(
+                game: game,
+                region: region,
+                humanPlayerId: game.players.first.id,
+                playerView: demoHumanPlayerViewForOverlay,
+                workTargetSelectionCache: PerPlayerWorkTargetSelectionCache(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -519,7 +500,10 @@ class _CtDialogShellStory extends StatelessWidget {
                     Text(
                       // ignore: avoid_hardcoded_strings_in_widgets
                       'Dialog shell preview',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 8),
                     Text(

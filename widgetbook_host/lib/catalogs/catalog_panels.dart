@@ -125,9 +125,8 @@ List<WidgetbookNode> get techTreeDirectories => [
       WidgetbookUseCase(
         name: 'Mid-game (half researched)',
         builder: (context) {
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(body: _midGameTechnologyScreenStory(context)),
+          return widgetbookEditorialMonocleApp(
+            child: _midGameTechnologyScreenStory(context),
           );
         },
       ),
@@ -135,9 +134,8 @@ List<WidgetbookNode> get techTreeDirectories => [
         name: 'Mid-game slots (mobile)',
         builder: (context) => mobileViewport(
           context,
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(body: _midGameTechnologyScreenStory(context)),
+          widgetbookEditorialMonocleApp(
+            child: _midGameTechnologyScreenStory(context),
           ),
         ),
       ),
@@ -159,24 +157,17 @@ List<WidgetbookNode> get techTreeDirectories => [
             ),
             players: [
               basePlayer,
-          const Player(
-            id: 'gp2',
-            displayName: 'France',
-            isHuman: false,
-          ),
-          const Player(
-            id: 'gp3',
-            displayName: 'Spain',
-            isHuman: false,
-            techUnlocked: {kTechIdCropRotation: true},
-          ),
+              const Player(id: 'gp2', displayName: 'France', isHuman: false),
+              const Player(
+                id: 'gp3',
+                displayName: 'Spain',
+                isHuman: false,
+                techUnlocked: {kTechIdCropRotation: true},
+              ),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: TechTreeWidget(game: game, player: basePlayer),
-            ),
+          return widgetbookEditorialMonocleApp(
+            child: TechTreeWidget(game: game, player: basePlayer),
           );
         },
       ),
@@ -208,16 +199,13 @@ List<WidgetbookNode> get techTreeDirectories => [
           final tech = techById(kTechIdCropRotation);
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
-              home: Scaffold(
-                body: ChooseTechDialog(
-                  game: game,
-                  contextPlayerId: 'gp1',
-                  slotIndex: 0,
-                  availableTechs: tech != null ? [tech] : const [],
-                  onSelect: (_) {},
-                ),
+            widgetbookEditorialMonocleApp(
+              child: ChooseTechDialog(
+                game: game,
+                contextPlayerId: 'gp1',
+                slotIndex: 0,
+                availableTechs: tech != null ? [tech] : const [],
+                onSelect: (_) {},
               ),
             ),
           );
@@ -241,9 +229,9 @@ List<WidgetbookNode> get techTreeDirectories => [
           final midGame = game.copyWith(
             players: [midGamePlayer, ...game.players.skip(1)],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
+          return widgetbookEditorialMonocleApp(
+            useScaffold: false,
+            child: Scaffold(
               appBar: AppBar(
                 title: Text(appL10n(context).widgetbook_techTreeTitle),
               ),
@@ -336,14 +324,10 @@ Widget _technologySlotsStoryHost({
     variant: variant,
   );
   return ProviderScope(
-    child: MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-        body: TechnologyScreen(game: storyGame, player: storyPlayer),
-      ),
+      child: TechnologyScreen(game: storyGame, player: storyPlayer),
     ),
   );
 }
@@ -528,16 +512,12 @@ Widget _technologyPersistedSlotStoryHost(BuildContext context) {
   if (game.players.isEmpty) {
     return Center(child: Text(appL10n(context).widgetbook_noPlayers));
   }
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: _TechnologyPersistedSlotStory(
-        baseGame: game,
-        basePlayer: game.players.first,
-      ),
+    child: _TechnologyPersistedSlotStory(
+      baseGame: game,
+      basePlayer: game.players.first,
     ),
   );
 }
@@ -600,16 +580,12 @@ Widget _technologyFundingPreviewStoryHost(BuildContext context) {
   if (game.players.isEmpty) {
     return Center(child: Text(appL10n(context).widgetbook_noPlayers));
   }
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: _TechnologyFundingPreviewStory(
-        baseGame: game,
-        basePlayer: game.players.first,
-      ),
+    child: _TechnologyFundingPreviewStory(
+      baseGame: game,
+      basePlayer: game.players.first,
     ),
   );
 }
@@ -696,24 +672,19 @@ List<WidgetbookNode> get interventionDialogueDirectories => [
               MinorNation(id: 'minorca', displayName: 'Minorca'),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: Scaffold(
-              body: InterventionDialogueOverlay(
-                game: game,
-                prompts: const [
-                  InterventionPrompt(
-                    aggressorGpId: 'spain',
-                    defenderMinorOrTribeId: 'minorca',
-                    interveningGpId: 'portugal',
-                  ),
-                ],
-                skipIntroForTest: true,
-                onDecisions: (_) {},
-                child: Center(
-                  child: Text(appL10n(context).widgetbook_gameShell),
+          return widgetbookEditorialMonocleApp(
+            child: InterventionDialogueOverlay(
+              game: game,
+              prompts: const [
+                InterventionPrompt(
+                  aggressorGpId: 'spain',
+                  defenderMinorOrTribeId: 'minorca',
+                  interveningGpId: 'portugal',
                 ),
-              ),
+              ],
+              skipIntroForTest: true,
+              onDecisions: (_) {},
+              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
             ),
           );
         },
@@ -772,18 +743,15 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
               const TurnNewsProvinceDiscoveredLine(provinceId: 'oldWorld|P1'),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
+          return widgetbookEditorialMonocleApp(
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: TurnNewsDialog(
-                  game: game,
-                  digest: digest,
-                  newTurnNumber: 3,
-                ),
+            child: Center(
+              child: TurnNewsDialog(
+                game: game,
+                digest: digest,
+                newTurnNumber: 3,
               ),
             ),
           );
@@ -808,21 +776,15 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
               ),
             ],
           );
-          return MaterialApp(
-            theme: AppThemes.editorialMonocle,
+          return widgetbookEditorialMonocleApp(
             localizationsDelegates:
                 AppLocalizationsBinding.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: TurnNewsDialog(
-                  game: game,
-                  digest: const TurnNewsDigest(
-                    resolvedTurnNumber: 1,
-                    lines: [],
-                  ),
-                  newTurnNumber: 2,
-                ),
+            child: Center(
+              child: TurnNewsDialog(
+                game: game,
+                digest: const TurnNewsDigest(resolvedTurnNumber: 1, lines: []),
+                newTurnNumber: 2,
               ),
             ),
           );
@@ -849,21 +811,18 @@ List<WidgetbookNode> get turnNewsDialogDirectories => [
           );
           return mobileViewport(
             context,
-            MaterialApp(
-              theme: AppThemes.editorialMonocle,
+            widgetbookEditorialMonocleApp(
               localizationsDelegates:
                   AppLocalizationsBinding.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: Center(
-                  child: TurnNewsDialog(
-                    game: game,
-                    digest: const TurnNewsDigest(
-                      resolvedTurnNumber: 1,
-                      lines: [],
-                    ),
-                    newTurnNumber: 2,
+              child: Center(
+                child: TurnNewsDialog(
+                  game: game,
+                  digest: const TurnNewsDigest(
+                    resolvedTurnNumber: 1,
+                    lines: [],
                   ),
+                  newTurnNumber: 2,
                 ),
               ),
             ),

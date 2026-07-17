@@ -222,7 +222,7 @@ Game processAlliances(
                 formalAlliance: true,
               ),
       );
-      game = game.copyWith(diplomacyRelations: relationsIndex.toList());
+      game = withCommittedRelations(game, relationsIndex);
       game = logDiplomaticEvent(
         game,
         turn,

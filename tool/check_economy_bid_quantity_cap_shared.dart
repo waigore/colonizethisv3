@@ -7,10 +7,12 @@ import 'ct_repo_lint_scan_contract.dart';
 /// SPEC: SPEC/program/repo-lint.md (Refs #3836).
 ///
 /// Guards the shared bid-quantity cap helper in the economy package.
-/// `treasury_bid_budget.dart` owns `capBidQuantityForBudgets`; the suggester
-/// must delegate to it instead of re-inlining cargo + treasury capping.
+/// `treasury_bid_caps.dart` (re-exported via the `treasury_bid_budget.dart`
+/// barrel; phase-7 split Refs #4049) owns `capBidQuantityForBudgets`; the
+/// suggester must delegate to it instead of re-inlining cargo + treasury
+/// capping.
 const _helperRelativePath =
-    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart';
+    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_caps.dart';
 
 const _consumerRelativePath =
     'packages/colonizethis_economy/lib/src/economy/world_market/trade_order_suggester.dart';

@@ -293,17 +293,11 @@ void main() {
     test(
       'foreign province with an active spy-reveal timer shows full intel',
       () {
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            spyRevealTurnsByPlayer: const {
-              'p1': {'oldWorld|e': 2},
-            },
-          ),
+        final game = TestFixtures.minimalGame(
           players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
+          spyRevealTurnsByPlayer: const {
+            'p1': {'oldWorld|e': 2},
+          },
         );
         final view = viewWith(
           provincesById: const {

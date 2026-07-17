@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,7 +17,227 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
+
+CellViewData _copyCell(
+  CellViewData c, {
+  TileVisibility? visibility,
+}) {
+  return CellViewData(
+    x: c.x,
+    y: c.y,
+    regionCellId: c.regionCellId,
+    isSea: c.isSea,
+    terrainTypeId: c.terrainTypeId,
+    terrainType: c.terrainType,
+    resourceId: c.resourceId,
+    ownerFactionId: c.ownerFactionId,
+    provinceDisplayName: c.provinceDisplayName,
+    improvementLevel: c.improvementLevel,
+    roadLevel: c.roadLevel,
+    visibility: visibility ?? c.visibility,
+  );
+}
+
+RegionMapViewData _regionWithCells(
+  RegionMapViewData base,
+  List<CellViewData> cells,
+) {
+  return RegionMapViewData(
+    regionId: base.regionId,
+    width: base.width,
+    height: base.height,
+    cellSize: base.cellSize,
+    cells: cells,
+    capitalMarkers: base.capitalMarkers,
+    portMarkers: base.portMarkers,
+    factionColors: base.factionColors,
+    greatPowerFactionIds: base.greatPowerFactionIds,
+    terrainColors: base.terrainColors,
+    unitMarkers: base.unitMarkers,
+  );
+}
+
+RegionMapViewData _regionWithVisibility(
+  RegionMapViewData base,
+  TileVisibility Function(CellViewData c) visibilityFor,
+) {
+  return _regionWithCells(
+    base,
+    base.cells.map((c) => _copyCell(c, visibility: visibilityFor(c))).toList(),
+  );
+}
+
+Game _namedSeaZoneGame({String name = 'Named Test Sea'}) {
+  final game = demoGameForOverlay;
+  return game.copyWith(
+    worldState: game.worldState.copyWith(
+      seaZoneDisplayNameById: {sampleSeaZoneIdForOverlay: name},
+    ),
+  );
+}
+
+Future<void> _pumpOverlay(
+  WidgetTester tester, {
+  required String displayId,
+  String? selectedTileKey,
+  Game? game,
+  RegionMapViewData? region,
+  void Function(String?)? onHighlightTile,
+  VoidCallback? onClose,
+  bool showProspectActionIcon = false,
+  bool prospectActionEnabled = false,
+  VoidCallback? onProspectWithExplorerTap,
+  bool showExploreActionIcon = false,
+  bool exploreActionEnabled = false,
+  VoidCallback? onExploreWithExplorerTap,
+  bool showBuildImprovementActionIcon = false,
+  bool buildImprovementActionEnabled = false,
+  VoidCallback? onBuildImprovementTap,
+  Size? mediaQuerySize,
+  bool settle = true,
+}) async {
+  final g = game ?? demoGameForOverlay;
+  // Editorial shell via [buildAppShell] (Refs #4035 — no inline MaterialApp).
+  // Optional [mediaQuerySize] maps to the shell viewport wrapper.
+  await tester.pumpWidget(
+    buildAppShell(
+      viewport: mediaQuerySize,
+      child: Scaffold(
+        body: ProvinceSeaZoneDetailOverlay(
+          game: g,
+          region: region ?? demoRegionForOverlay,
+          displayId: displayId,
+          selectedTileKey: selectedTileKey,
+          humanPlayerId: g.players.first.id,
+          playerView: demoHumanPlayerViewForOverlay,
+          onHighlightTile: onHighlightTile,
+          onClose: onClose,
+          showProspectActionIcon: showProspectActionIcon,
+          prospectActionEnabled: prospectActionEnabled,
+          onProspectWithExplorerTap: onProspectWithExplorerTap,
+          showExploreActionIcon: showExploreActionIcon,
+          exploreActionEnabled: exploreActionEnabled,
+          onExploreWithExplorerTap: onExploreWithExplorerTap,
+          showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+          buildImprovementActionEnabled: buildImprovementActionEnabled,
+          onBuildImprovementTap: onBuildImprovementTap,
+        ),
+      ),
+    ),
+  );
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+}
+
+Future<void> _pumpProvinceDemo(
+  WidgetTester tester, {
+  VoidCallback? onClose,
+  bool showProspectActionIcon = false,
+  bool prospectActionEnabled = false,
+  VoidCallback? onProspectWithExplorerTap,
+  bool showExploreActionIcon = false,
+  bool exploreActionEnabled = false,
+  VoidCallback? onExploreWithExplorerTap,
+  bool showBuildImprovementActionIcon = false,
+  bool buildImprovementActionEnabled = false,
+  VoidCallback? onBuildImprovementTap,
+  Size? mediaQuerySize,
+  Game? game,
+  RegionMapViewData? region,
+}) {
+  return _pumpOverlay(
+    tester,
+    displayId: sampleProvinceIdForOverlay,
+    selectedTileKey: sampleTileKeyForProvinceOverlay,
+    onClose: onClose,
+    showProspectActionIcon: showProspectActionIcon,
+    prospectActionEnabled: prospectActionEnabled,
+    onProspectWithExplorerTap: onProspectWithExplorerTap,
+    showExploreActionIcon: showExploreActionIcon,
+    exploreActionEnabled: exploreActionEnabled,
+    onExploreWithExplorerTap: onExploreWithExplorerTap,
+    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+    buildImprovementActionEnabled: buildImprovementActionEnabled,
+    onBuildImprovementTap: onBuildImprovementTap,
+    mediaQuerySize: mediaQuerySize,
+    game: game,
+    region: region,
+  );
+}
+
+Future<void> _pumpNamedSea(
+  WidgetTester tester, {
+  RegionMapViewData? region,
+}) async {
+  await installNinePatchAssetMock();
+  await _pumpOverlay(
+    tester,
+    displayId: sampleSeaZoneIdForOverlay,
+    game: _namedSeaZoneGame(),
+    region: region,
+  );
+}
+
+void _expectMaxHeight(double maxHeight) {
+  expect(
+    find.byWidgetPredicate(
+      (w) => w is ConstrainedBox && w.constraints.maxHeight == maxHeight,
+    ),
+    findsAtLeastNWidgets(1),
+  );
+}
+
+/// Map + optional overlay side-by-side host (Refs #4021 densify).
+/// Editorial shell via [buildAppShell] (Refs #4035 — no inline MaterialApp).
+Widget _mapBesideOverlayHost({
+  required Widget map,
+  Widget? overlay,
+  bool expandMap = true,
+  double mapWidth = 400,
+  double mapHeight = 320,
+}) {
+  return buildAppShell(
+    child: Scaffold(
+      body: Row(
+        children: [
+          if (expandMap)
+            Expanded(child: map)
+          else
+            SizedBox(width: mapWidth, height: mapHeight, child: map),
+          if (overlay != null) SizedBox(width: 320, child: overlay),
+        ],
+      ),
+    ),
+  );
+}
+
+ProvinceSeaZoneDetailOverlay _demoOverlay({
+  required String displayId,
+  required String? selectedTileKey,
+  required VoidCallback onClose,
+}) {
+  final g = demoGameForOverlay;
+  return ProvinceSeaZoneDetailOverlay(
+    game: g,
+    region: demoRegionForOverlay,
+    displayId: displayId,
+    selectedTileKey: selectedTileKey,
+    humanPlayerId: g.players.first.id,
+    playerView: demoHumanPlayerViewForOverlay,
+    onClose: onClose,
+  );
+}
+
+void _expectOverlayTexts(Iterable<String> texts) {
+  for (final text in texts) {
+    expect(find.text(text), findsOneWidget);
+  }
+}
 
 void main() {
   suppressLogsForTests();
@@ -37,449 +258,144 @@ void main() {
   });
 
   group('ProvinceSeaZoneDetailOverlay', () {
-    Widget buildOverlay({
-      required String displayId,
-      String? selectedTileKey,
-      void Function(String?)? onHighlightTile,
-      VoidCallback? onClose,
-    }) {
-      final game = demoGameForOverlay;
-      final region = demoRegionForOverlay;
-      return MaterialApp(
-        home: Scaffold(
-          body: ProvinceSeaZoneDetailOverlay(
-            game: game,
-            region: region,
-            displayId: displayId,
-            selectedTileKey: selectedTileKey,
-            humanPlayerId: game.players.first.id,
-            playerView: demoHumanPlayerViewForOverlay,
-            onHighlightTile: onHighlightTile,
-            onClose: onClose,
-          ),
-        ),
-      );
-    }
-
     testWidgets(
-      'AC: Standalone province overlay displays Political, Economic, Military, Civilian, Naval',
+      'AC: province sections, name/owner, close, and sea-zone sections',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildOverlay(
-            displayId: sampleProvinceIdForOverlay,
-            selectedTileKey: sampleTileKeyForProvinceOverlay,
-          ),
+        final region = demoRegionForOverlay;
+        final selectedId = sampleProvinceIdForOverlay;
+        final cell = region.cells.firstWhere(
+          (c) =>
+              !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
         );
-        await tester.pumpAndSettle();
+        final game = demoGameForOverlay;
+        var closed = false;
+        await _pumpProvinceDemo(tester, onClose: () => closed = true);
 
         expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-        expect(find.text('Province'), findsOneWidget);
-        // Section headers render via CtSectionLabel (Refs #2865 S4) which
-        // upper-cases the label per SPEC § Dark-theme section labels.
-        expect(find.text('TILE'), findsOneWidget);
-        expect(find.text('POLITICAL'), findsOneWidget);
-        expect(find.text('ECONOMIC'), findsOneWidget);
-        expect(find.text('MILITARY'), findsOneWidget);
-        expect(find.text('CIVILIAN'), findsOneWidget);
-        expect(find.text('NAVAL'), findsOneWidget);
+        _expectOverlayTexts(const [
+          'Province',
+          'TILE',
+          'POLITICAL',
+          'ECONOMIC',
+          'MILITARY',
+          'CIVILIAN',
+          'NAVAL',
+        ]);
         expect(find.byKey(const Key('overlay_close')), findsOneWidget);
+
+        final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
+        expect(provinceName, isNotEmpty);
+        expect(find.textContaining(provinceName), findsAtLeastNWidgets(1));
+        final ownerId = cell.ownerFactionId;
+        if (ownerId != null && ownerId.isNotEmpty) {
+          final ownerName =
+              game.players
+                  .where((p) => p.id == ownerId)
+                  .map((p) => p.displayName)
+                  .firstOrNull ??
+              game.minorNations
+                  .where((m) => m.id == ownerId)
+                  .map((m) => m.displayName ?? m.id)
+                  .firstOrNull ??
+              ownerId;
+          expect(find.textContaining(ownerName), findsAtLeastNWidgets(1));
+        }
+
+        await tester.tap(find.byKey(const Key('overlay_close')));
+        await tester.pumpAndSettle();
+        expect(closed, isTrue);
+
+        await _pumpOverlay(tester, displayId: sampleSeaZoneIdForOverlay);
+        expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
+        _expectOverlayTexts(const ['Sea zone', 'POLITICAL', 'NAVAL']);
       },
     );
 
-    testWidgets('AC: Province overlay shows province name and owner', (
+    testWidgets('sea zone display name follows reveal/fog visibility', (
       WidgetTester tester,
     ) async {
-      final region = demoRegionForOverlay;
-      final selectedId = sampleProvinceIdForOverlay;
-      final cell = region.cells.firstWhere(
-        (c) => !c.isSea && '${region.regionId}|${c.regionCellId}' == selectedId,
-      );
-      final game = demoGameForOverlay;
-      await tester.pumpWidget(
-        buildOverlay(
-          displayId: selectedId,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
+      await _pumpNamedSea(tester);
+      expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
+
+      await _pumpNamedSea(
+        tester,
+        region: _regionWithVisibility(
+          demoRegionForOverlay,
+          (_) => TileVisibility.unrevealed,
         ),
       );
-      await tester.pumpAndSettle();
+      expect(find.textContaining('Named Test Sea'), findsNothing);
+      expect(find.textContaining('Sea zone:'), findsNothing);
+      expect(find.text('???'), findsWidgets);
 
-      final provinceName = cell.provinceDisplayName ?? cell.regionCellId;
-      expect(provinceName, isNotEmpty);
-      expect(find.textContaining(provinceName), findsAtLeastNWidgets(1));
-      final ownerId = cell.ownerFactionId;
-      if (ownerId != null && ownerId.isNotEmpty) {
-        final ownerName =
-            game.players
-                .where((p) => p.id == ownerId)
-                .map((p) => p.displayName)
-                .firstOrNull ??
-            game.minorNations
-                .where((m) => m.id == ownerId)
-                .map((m) => m.displayName ?? m.id)
-                .firstOrNull ??
-            ownerId;
-        expect(find.textContaining(ownerName), findsAtLeastNWidgets(1));
-      }
-    });
-
-    testWidgets('AC: Sea zone overlay displays Political and Naval', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildOverlay(displayId: sampleSeaZoneIdForOverlay),
+      final seaParts = sampleSeaZoneIdForOverlay.split('|');
+      final localSea = seaParts.length >= 2
+          ? seaParts.sublist(1).join('|')
+          : sampleSeaZoneIdForOverlay;
+      var revealOneSeaInZone = true;
+      await _pumpNamedSea(
+        tester,
+        region: _regionWithVisibility(demoRegionForOverlay, (c) {
+          final inZone = c.isSea && c.regionCellId == localSea;
+          if (inZone && revealOneSeaInZone) {
+            revealOneSeaInZone = false;
+            return TileVisibility.fogged;
+          }
+          return TileVisibility.unrevealed;
+        }),
       );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ProvinceSeaZoneDetailOverlay), findsOneWidget);
-      expect(find.text('Sea zone'), findsOneWidget);
-      // Section headers render via CtSectionLabel (Refs #2865 S4) which
-      // upper-cases the label per SPEC § Dark-theme section labels.
-      expect(find.text('POLITICAL'), findsOneWidget);
-      expect(find.text('NAVAL'), findsOneWidget);
-    });
-
-    testWidgets('sea zone overlay uses sea-zone display name field', (
-      WidgetTester tester,
-    ) async {
-      await installNinePatchAssetMock();
-
-      final game = demoGameForOverlay;
-      final named = game.copyWith(
-        worldState: game.worldState.copyWith(
-          seaZoneDisplayNameById: {sampleSeaZoneIdForOverlay: 'Named Test Sea'},
-        ),
-      );
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProvinceSeaZoneDetailOverlay(
-              game: named,
-              region: demoRegionForOverlay,
-              displayId: sampleSeaZoneIdForOverlay,
-              selectedTileKey: null,
-              humanPlayerId: named.players.first.id,
-              playerView: demoHumanPlayerViewForOverlay,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
     });
 
-    testWidgets(
-      'AC: sea zone hides canonical name when all sea tiles in zone are unrevealed',
-      (WidgetTester tester) async {
-        await installNinePatchAssetMock();
-
-        final baseRegion = demoRegionForOverlay;
-        final cells = baseRegion.cells
-            .map(
-              (c) => CellViewData(
-                x: c.x,
-                y: c.y,
-                regionCellId: c.regionCellId,
-                isSea: c.isSea,
-                terrainTypeId: c.terrainTypeId,
-                terrainType: c.terrainType,
-                resourceId: c.resourceId,
-                ownerFactionId: c.ownerFactionId,
-                provinceDisplayName: c.provinceDisplayName,
-                improvementLevel: c.improvementLevel,
-                roadLevel: c.roadLevel,
-                visibility: TileVisibility.unrevealed,
-              ),
-            )
-            .toList();
-        final region = RegionMapViewData(
-          regionId: baseRegion.regionId,
-          width: baseRegion.width,
-          height: baseRegion.height,
-          cellSize: baseRegion.cellSize,
-          cells: cells,
-          capitalMarkers: baseRegion.capitalMarkers,
-          portMarkers: baseRegion.portMarkers,
-          factionColors: baseRegion.factionColors,
-          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
-          terrainColors: baseRegion.terrainColors,
-          unitMarkers: baseRegion.unitMarkers,
-        );
-
-        final game = demoGameForOverlay;
-        final named = game.copyWith(
-          worldState: game.worldState.copyWith(
-            seaZoneDisplayNameById: {
-              sampleSeaZoneIdForOverlay: 'Named Test Sea',
-            },
-          ),
-        );
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: named,
-                region: region,
-                displayId: sampleSeaZoneIdForOverlay,
-                selectedTileKey: null,
-                humanPlayerId: named.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.textContaining('Named Test Sea'), findsNothing);
-        expect(find.textContaining('Sea zone:'), findsNothing);
-        expect(find.text('???'), findsWidgets);
-      },
-    );
-
-    testWidgets(
-      'AC: sea zone shows display name when at least one sea tile in zone is fogged',
-      (WidgetTester tester) async {
-        await installNinePatchAssetMock();
-
-        final baseRegion = demoRegionForOverlay;
-        final seaPrefixed = sampleSeaZoneIdForOverlay;
-        final seaParts = seaPrefixed.split('|');
-        final localSea = seaParts.length >= 2
-            ? seaParts.sublist(1).join('|')
-            : seaPrefixed;
-        var revealOneSeaInZone = true;
-        final cells = baseRegion.cells.map((c) {
-          final inZone = c.isSea && c.regionCellId == localSea;
-          var visibility = TileVisibility.unrevealed;
-          if (inZone && revealOneSeaInZone) {
-            revealOneSeaInZone = false;
-            visibility = TileVisibility.fogged;
-          }
-          return CellViewData(
-            x: c.x,
-            y: c.y,
-            regionCellId: c.regionCellId,
-            isSea: c.isSea,
-            terrainTypeId: c.terrainTypeId,
-            terrainType: c.terrainType,
-            resourceId: c.resourceId,
-            ownerFactionId: c.ownerFactionId,
-            provinceDisplayName: c.provinceDisplayName,
-            improvementLevel: c.improvementLevel,
-            roadLevel: c.roadLevel,
-            visibility: visibility,
-          );
-        }).toList();
-        final region = RegionMapViewData(
-          regionId: baseRegion.regionId,
-          width: baseRegion.width,
-          height: baseRegion.height,
-          cellSize: baseRegion.cellSize,
-          cells: cells,
-          capitalMarkers: baseRegion.capitalMarkers,
-          portMarkers: baseRegion.portMarkers,
-          factionColors: baseRegion.factionColors,
-          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
-          terrainColors: baseRegion.terrainColors,
-          unitMarkers: baseRegion.unitMarkers,
-        );
-
-        final game = demoGameForOverlay;
-        final named = game.copyWith(
-          worldState: game.worldState.copyWith(
-            seaZoneDisplayNameById: {
-              sampleSeaZoneIdForOverlay: 'Named Test Sea',
-            },
-          ),
-        );
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: named,
-                region: region,
-                displayId: sampleSeaZoneIdForOverlay,
-                selectedTileKey: null,
-                humanPlayerId: named.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.text('Sea zone: Named Test Sea'), findsOneWidget);
-      },
-    );
-
-    testWidgets('AC: Close button invokes onClose', (
+    testWidgets('tile shortcut tooltips: prospect / explore order / build', (
       WidgetTester tester,
     ) async {
-      var closed = false;
-      await tester.pumpWidget(
-        buildOverlay(
-          displayId: sampleProvinceIdForOverlay,
-          selectedTileKey: sampleTileKeyForProvinceOverlay,
-          onClose: () => closed = true,
-        ),
+      await _pumpProvinceDemo(
+        tester,
+        showProspectActionIcon: true,
+        prospectActionEnabled: true,
+        onProspectWithExplorerTap: () {},
       );
-      await tester.pumpAndSettle();
+      expect(find.byTooltip('Prospect with explorer'), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('overlay_close')));
-      await tester.pumpAndSettle();
-
-      expect(closed, isTrue);
+      await _pumpProvinceDemo(
+        tester,
+        showExploreActionIcon: true,
+        exploreActionEnabled: true,
+        onExploreWithExplorerTap: () {},
+        showProspectActionIcon: true,
+        prospectActionEnabled: true,
+        onProspectWithExplorerTap: () {},
+        showBuildImprovementActionIcon: true,
+        buildImprovementActionEnabled: true,
+        onBuildImprovementTap: () {},
+      );
+      final exploreFinder = find.byTooltip('Explore with explorer');
+      final prospectFinder = find.byTooltip('Prospect with explorer');
+      expect(exploreFinder, findsOneWidget);
+      expect(prospectFinder, findsOneWidget);
+      expect(find.byTooltip('Build improvement'), findsOneWidget);
+      expect(
+        tester.getTopLeft(exploreFinder).dx,
+        lessThan(tester.getTopLeft(prospectFinder).dx),
+      );
     });
 
-    testWidgets(
-      'Tile prospected row shows prospect shortcut icon with tooltip when enabled',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: demoGameForOverlay,
-                region: demoRegionForOverlay,
-                displayId: sampleProvinceIdForOverlay,
-                selectedTileKey: sampleTileKeyForProvinceOverlay,
-                humanPlayerId: demoGameForOverlay.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                showProspectActionIcon: true,
-                prospectActionEnabled: true,
-                onProspectWithExplorerTap: () {},
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.byTooltip('Prospect with explorer'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'Tile prospected row shows explore icon before prospect when both enabled',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: demoGameForOverlay,
-                region: demoRegionForOverlay,
-                displayId: sampleProvinceIdForOverlay,
-                selectedTileKey: sampleTileKeyForProvinceOverlay,
-                humanPlayerId: demoGameForOverlay.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                showExploreActionIcon: true,
-                exploreActionEnabled: true,
-                onExploreWithExplorerTap: () {},
-                showProspectActionIcon: true,
-                prospectActionEnabled: true,
-                onProspectWithExplorerTap: () {},
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final exploreFinder = find.byTooltip('Explore with explorer');
-        final prospectFinder = find.byTooltip('Prospect with explorer');
-        expect(exploreFinder, findsOneWidget);
-        expect(prospectFinder, findsOneWidget);
-        final exploreX = tester.getTopLeft(exploreFinder).dx;
-        final prospectX = tester.getTopLeft(prospectFinder).dx;
-        expect(exploreX, lessThan(prospectX));
-      },
-    );
-
-    testWidgets(
-      'Tile improvement row shows build improvement shortcut icon tooltip when enabled',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: demoGameForOverlay,
-                region: demoRegionForOverlay,
-                displayId: sampleProvinceIdForOverlay,
-                selectedTileKey: sampleTileKeyForProvinceOverlay,
-                humanPlayerId: demoGameForOverlay.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                showBuildImprovementActionIcon: true,
-                buildImprovementActionEnabled: true,
-                onBuildImprovementTap: () {},
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        expect(find.byTooltip('Build improvement'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'AC: Overlay constrained to one-third height on narrow viewport',
-      (WidgetTester tester) async {
-        const viewportHeight = 600.0;
-        const expectedMaxHeight = 198.0; // 0.33 * 600
-        await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(size: Size(400, viewportHeight)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: ProvinceSeaZoneDetailOverlay(
-                  game: demoGameForOverlay,
-                  region: demoRegionForOverlay,
-                  displayId: sampleProvinceIdForOverlay,
-                  selectedTileKey: sampleTileKeyForProvinceOverlay,
-                  humanPlayerId: demoGameForOverlay.players.first.id,
-                  playerView: demoHumanPlayerViewForOverlay,
-                  onClose: () {},
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final constrained = find.byWidgetPredicate(
-          (w) =>
-              w is ConstrainedBox &&
-              w.constraints.maxHeight == expectedMaxHeight,
-        );
-        expect(constrained, findsAtLeastNWidgets(1));
-      },
-    );
-
-    testWidgets('AC: Overlay uses full height on desktop', (
+    testWidgets('AC: overlay height — narrow one-third vs desktop full', (
       WidgetTester tester,
     ) async {
       const viewportHeight = 600.0;
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(size: Size(800, viewportHeight)),
-          child: MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: demoGameForOverlay,
-                region: demoRegionForOverlay,
-                displayId: sampleProvinceIdForOverlay,
-                selectedTileKey: sampleTileKeyForProvinceOverlay,
-                humanPlayerId: demoGameForOverlay.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                onClose: () {},
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final constrained = find.byWidgetPredicate(
-        (w) => w is ConstrainedBox && w.constraints.maxHeight == viewportHeight,
-      );
-      expect(constrained, findsAtLeastNWidgets(1));
+      for (final case_ in <({double width, double maxHeight})>[
+        (width: 400, maxHeight: 198.0), // 0.33 * 600
+        (width: 800, maxHeight: viewportHeight),
+      ]) {
+        await _pumpProvinceDemo(
+          tester,
+          onClose: () {},
+          mediaQuerySize: Size(case_.width, viewportHeight),
+        );
+        _expectMaxHeight(case_.maxHeight);
+      }
     });
 
     testWidgets(
@@ -495,60 +411,24 @@ void main() {
                     other.visibility != TileVisibility.unrevealed,
               ),
         );
-        final cells = baseRegion.cells
-            .map(
-              (c) => CellViewData(
-                x: c.x,
-                y: c.y,
-                regionCellId: c.regionCellId,
-                isSea: c.isSea,
-                terrainTypeId: c.terrainTypeId,
-                terrainType: c.terrainType,
-                resourceId: c.resourceId,
-                ownerFactionId: c.ownerFactionId,
-                provinceDisplayName: c.provinceDisplayName,
-                improvementLevel: c.improvementLevel,
-                roadLevel: c.roadLevel,
-                visibility: c.x == targetCell.x && c.y == targetCell.y
-                    ? TileVisibility.unrevealed
-                    : c.visibility,
-              ),
-            )
-            .toList();
-        final region = RegionMapViewData(
-          regionId: baseRegion.regionId,
-          width: baseRegion.width,
-          height: baseRegion.height,
-          cellSize: baseRegion.cellSize,
-          cells: cells,
-          capitalMarkers: baseRegion.capitalMarkers,
-          portMarkers: baseRegion.portMarkers,
-          factionColors: baseRegion.factionColors,
-          greatPowerFactionIds: baseRegion.greatPowerFactionIds,
-          terrainColors: baseRegion.terrainColors,
-          unitMarkers: baseRegion.unitMarkers,
+        final region = _regionWithVisibility(
+          baseRegion,
+          (c) => c.x == targetCell.x && c.y == targetCell.y
+              ? TileVisibility.unrevealed
+              : c.visibility,
         );
 
         final selectedTileKey =
             '${region.regionId}|${targetCell.regionCellId}|${targetCell.x}|${targetCell.y}';
         final provinceId = '${region.regionId}|${targetCell.regionCellId}';
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: ProvinceSeaZoneDetailOverlay(
-                game: demoGameForOverlay,
-                region: region,
-                displayId: provinceId,
-                selectedTileKey: selectedTileKey,
-                humanPlayerId: demoGameForOverlay.players.first.id,
-                playerView: demoHumanPlayerViewForOverlay,
-                onClose: () {},
-              ),
-            ),
-          ),
+        await _pumpOverlay(
+          tester,
+          displayId: provinceId,
+          selectedTileKey: selectedTileKey,
+          region: region,
+          onClose: () {},
         );
-        await tester.pumpAndSettle();
 
         expect(find.textContaining('Coordinates: ???'), findsOneWidget);
         expect(find.textContaining('Terrain: ???'), findsOneWidget);
@@ -559,58 +439,19 @@ void main() {
     testWidgets('Province sections use ??? when province is fully unrevealed', (
       WidgetTester tester,
     ) async {
-      final baseRegion = demoRegionForOverlay;
-      final cells = baseRegion.cells
-          .map(
-            (c) => CellViewData(
-              x: c.x,
-              y: c.y,
-              regionCellId: c.regionCellId,
-              isSea: c.isSea,
-              terrainTypeId: c.terrainTypeId,
-              terrainType: c.terrainType,
-              resourceId: c.resourceId,
-              ownerFactionId: c.ownerFactionId,
-              provinceDisplayName: c.provinceDisplayName,
-              improvementLevel: c.improvementLevel,
-              roadLevel: c.roadLevel,
-              visibility: TileVisibility.unrevealed,
-            ),
-          )
-          .toList();
-      final region = RegionMapViewData(
-        regionId: baseRegion.regionId,
-        width: baseRegion.width,
-        height: baseRegion.height,
-        cellSize: baseRegion.cellSize,
-        cells: cells,
-        capitalMarkers: baseRegion.capitalMarkers,
-        portMarkers: baseRegion.portMarkers,
-        factionColors: baseRegion.factionColors,
-        greatPowerFactionIds: baseRegion.greatPowerFactionIds,
-        terrainColors: baseRegion.terrainColors,
-        unitMarkers: baseRegion.unitMarkers,
+      final region = _regionWithVisibility(
+        demoRegionForOverlay,
+        (_) => TileVisibility.unrevealed,
       );
-
       final provinceId =
           '${region.regionId}|${region.cells.first.regionCellId}';
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProvinceSeaZoneDetailOverlay(
-              game: demoGameForOverlay,
-              region: region,
-              displayId: provinceId,
-              selectedTileKey: null,
-              humanPlayerId: demoGameForOverlay.players.first.id,
-              playerView: demoHumanPlayerViewForOverlay,
-              onClose: () {},
-            ),
-          ),
-        ),
+      await _pumpOverlay(
+        tester,
+        displayId: provinceId,
+        region: region,
+        onClose: () {},
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('???'), findsWidgets);
     });
@@ -620,44 +461,27 @@ void main() {
     testWidgets('AC: Map orange selection may persist after overlay closes', (
       WidgetTester tester,
     ) async {
-      final game = demoGameForOverlay;
       final selectedTk = sampleTileKeyForProvinceOverlay;
       var overlayOpen = true;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: StatefulBuilder(
-            builder: (context, setState) {
-              return Scaffold(
-                body: Row(
-                  children: [
-                    Expanded(
-                      child: CtRegionMap(
-                        region: demoRegionForOverlay,
-                        cellSizePx: 28,
-                        selectedTileKey: selectedTk,
-                      ),
-                    ),
-                    if (overlayOpen)
-                      SizedBox(
-                        width: 320,
-                        child: ProvinceSeaZoneDetailOverlay(
-                          game: game,
-                          region: demoRegionForOverlay,
-                          displayId: sampleProvinceIdForOverlay,
-                          selectedTileKey: selectedTk,
-                          humanPlayerId: game.players.first.id,
-                          playerView: demoHumanPlayerViewForOverlay,
-                          onClose: () => setState(() {
-                            overlayOpen = false;
-                          }),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
+        StatefulBuilder(
+          builder: (context, setState) {
+            return _mapBesideOverlayHost(
+              map: CtRegionMap(
+                region: demoRegionForOverlay,
+                cellSizePx: 28,
+                selectedTileKey: selectedTk,
+              ),
+              overlay: overlayOpen
+                  ? _demoOverlay(
+                      displayId: sampleProvinceIdForOverlay,
+                      selectedTileKey: selectedTk,
+                      onClose: () => setState(() => overlayOpen = false),
+                    )
+                  : null,
+            );
+          },
         ),
       );
       await tester.pump();
@@ -679,47 +503,33 @@ void main() {
         String? selectedTileKey;
         var overlayOpen = false;
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: StatefulBuilder(
-                builder: (context, setState) {
-                  return Row(
-                    children: [
-                      SizedBox(
-                        width: 400,
-                        height: 320,
-                        child: CtRegionMap(
-                          region: region,
-                          cellSizePx: 28,
-                          selectedTileKey: selectedTileKey,
-                          onMapTileTappedForDetail: (tk) => setState(() {
-                            selectedTileKey = tk;
-                            overlayOpen = true;
-                          }),
-                        ),
-                      ),
-                      if (overlayOpen && selectedTileKey != null)
-                        SizedBox(
-                          width: 320,
-                          child: ProvinceSeaZoneDetailOverlay(
-                            game: demoGameForOverlay,
-                            region: demoRegionForOverlay,
-                            displayId: selectedTileKey!.split('|').length >= 2
-                                ? '${selectedTileKey!.split('|')[0]}|${selectedTileKey!.split('|')[1]}'
-                                : '',
-                            selectedTileKey: selectedTileKey,
-                            humanPlayerId: demoGameForOverlay.players.first.id,
-                            playerView: demoHumanPlayerViewForOverlay,
-                            onClose: () => setState(() {
-                              overlayOpen = false;
-                            }),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
+          StatefulBuilder(
+            builder: (context, setState) {
+              final tk = selectedTileKey;
+              final parts = tk?.split('|') ?? const <String>[];
+              final displayId = parts.length >= 2
+                  ? '${parts[0]}|${parts[1]}'
+                  : '';
+              return _mapBesideOverlayHost(
+                expandMap: false,
+                map: CtRegionMap(
+                  region: region,
+                  cellSizePx: 28,
+                  selectedTileKey: selectedTileKey,
+                  onMapTileTappedForDetail: (next) => setState(() {
+                    selectedTileKey = next;
+                    overlayOpen = true;
+                  }),
+                ),
+                overlay: overlayOpen && tk != null
+                    ? _demoOverlay(
+                        displayId: displayId,
+                        selectedTileKey: tk,
+                        onClose: () => setState(() => overlayOpen = false),
+                      )
+                    : null,
+              );
+            },
           ),
         );
         await tester.pump();

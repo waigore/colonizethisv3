@@ -1,6 +1,6 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -13,7 +13,7 @@ Province _prov(String regionId, String localId, String? owner) => Province(
   ownerId: owner,
 );
 
-Game _gameWithOwnership() => TestFixtures.minimalGame(
+Game _gameWithOwnership() => diplomacyGame(
   players: const [
     Player(id: 'gp1', displayName: 'GP', isHuman: true, treasury: 100000),
   ],

@@ -33,8 +33,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, buildPlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -104,7 +103,6 @@ final Map<String, TileMapResult> _tileMapByRegion = {
   ),
 };
 
-/// GameService returning the static map data aligned with the test game.
 class _GameServiceBuildImprovement extends GameService {
   _GameServiceBuildImprovement(super.box, super.adapter);
 
@@ -126,8 +124,6 @@ class _GameServiceBuildImprovement extends GameService {
   }
 }
 
-/// Game where the human GP owns the province and (when [withBuilder]) has an
-/// idle Builder on the resource tile so `build_improvement` can be assigned.
 Game _buildGame({required bool withBuilder}) {
   return Game(
     id: _kGameId,
@@ -210,23 +206,54 @@ RegionMapViewData _region() {
   );
 }
 
-PerPlayerWorkTargetSelectionCache _refreshedCache({
-  required Game game,
-  required PlayerView playerView,
-}) {
-  final cache = PerPlayerWorkTargetSelectionCache();
-  cache.refresh(
-    WorkTargetSelectionSnapshot(
-      game: game,
-      playerId: _kHumanPlayerId,
-      playerView: playerView,
-      topology: _combinedTopology,
-      currentOrders: const Orders(),
-      tileMapByRegion: _tileMapByRegion,
-    ),
-  );
-  return cache;
+PerPlayerWorkTargetSelectionCache _refreshedCache(Game game) {
+  final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
+  return PerPlayerWorkTargetSelectionCache()
+    ..refresh(
+      WorkTargetSelectionSnapshot(
+        game: game,
+        playerId: _kHumanPlayerId,
+        playerView: playerView,
+        topology: _combinedTopology,
+        currentOrders: const Orders(),
+        tileMapByRegion: _tileMapByRegion,
+      ),
+    );
 }
+
+Finder _buildImprovementAction({required bool enabledOnly}) {
+  return find.byWidgetPredicate(
+    (Widget w) =>
+        w is CtIconAction &&
+        w.icon == Icons.handyman &&
+        (!enabledOnly || w.onPressed != null),
+  );
+}
+
+typedef _HostCase = ({
+  String label,
+  Type hostType,
+  Size surfaceSize,
+  bool selectTileTab,
+  bool wide,
+});
+
+const List<_HostCase> _hostCases = <_HostCase>[
+  (
+    label: 'The wide side panel',
+    hostType: GameMapProvinceDetailSidePanel,
+    surfaceSize: Size(720, 720),
+    selectTileTab: false,
+    wide: true,
+  ),
+  (
+    label: 'The narrow bottom-slot host',
+    hostType: GameMapNarrowDetailOverlaySlot,
+    surfaceSize: Size(400, 600),
+    selectTileTab: true,
+    wide: false,
+  ),
+];
 
 void main() {
   suppressLogsForTests();
@@ -238,42 +265,47 @@ void main() {
     gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
-  Future<void> _selectTileOnHost(WidgetTester tester, Type hostType) async {
-    final ctx = tester.element(find.byType(hostType));
-    ProviderScope.containerOf(ctx)
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(_kTileKey);
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> _tapTileTabIfNarrow(WidgetTester tester, Type hostType) async {
-    if (hostType != GameMapNarrowDetailOverlaySlot) {
-      return;
-    }
-    final tileTab = find.text('Tile');
-    expect(tileTab, findsOneWidget);
-    await tester.tap(tileTab);
-    await tester.pumpAndSettle();
-  }
-
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
     WidgetTester tester, {
     required Game game,
-    required Type hostType,
-    required Size surfaceSize,
-    required Widget host,
-    bool selectTileTab = false,
+    required _HostCase host,
   }) async {
+    final region = _region();
+    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
+    final cache = _refreshedCache(game);
+    final Widget body = host.wide
+        ? Center(
+            child: SizedBox(
+              width: 320,
+              child: GameMapProvinceDetailSidePanel(
+                game: game,
+                region: region,
+                humanPlayerId: _kHumanPlayerId,
+                playerView: playerView,
+                workTargetSelectionCache: cache,
+              ),
+            ),
+          )
+        : Align(
+            alignment: Alignment.bottomCenter,
+            child: GameMapNarrowDetailOverlaySlot(
+              game: game,
+              region: region,
+              humanPlayerId: _kHumanPlayerId,
+              playerView: playerView,
+              workTargetSelectionCache: cache,
+            ),
+          );
+
     final bus = AppEventBus.create();
     addTearDown(bus.dispose);
-
     final opened = <OpenCivilianUnitsPanelEvent>[];
     final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
     addTearDown(sub.cancel);
 
     await pumpAppShell(
       tester,
-      viewport: surfaceSize,
+      viewport: host.surfaceSize,
       overrides: [
         gamesBoxProvider.overrideWith((ref) => gamesBox),
         gameServiceProvider.overrideWith(
@@ -285,65 +317,29 @@ void main() {
           () => CurrentOrdersNotifier(const Orders()),
         ),
       ],
-      child: Scaffold(body: host),
+      child: Scaffold(body: body),
     );
 
-    await _selectTileOnHost(tester, hostType);
-    if (selectTileTab) {
-      await _tapTileTabIfNarrow(tester, hostType);
+    final ctx = tester.element(find.byType(host.hostType));
+    ProviderScope.containerOf(ctx)
+        .read(mapProvincePanelProvider.notifier)
+        .reportMapTileTapped(_kTileKey);
+    await tester.pumpAndSettle();
+    if (host.selectTileTab) {
+      final tileTab = find.text('Tile');
+      expect(tileTab, findsOneWidget);
+      await tester.tap(tileTab);
+      await tester.pumpAndSettle();
     }
     return opened;
   }
 
-  Widget _wideHost({
-    required Game game,
-    required PerPlayerWorkTargetSelectionCache cache,
-  }) {
-    final region = _region();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    return Center(
-      child: SizedBox(
-        width: 320,
-        child: GameMapProvinceDetailSidePanel(
-          game: game,
-          region: region,
-          humanPlayerId: _kHumanPlayerId,
-          playerView: playerView,
-          workTargetSelectionCache: cache,
-        ),
-      ),
-    );
-  }
-
-  Widget _narrowHost({
-    required Game game,
-    required PerPlayerWorkTargetSelectionCache cache,
-  }) {
-    final region = _region();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: GameMapNarrowDetailOverlaySlot(
-        game: game,
-        region: region,
-        humanPlayerId: _kHumanPlayerId,
-        playerView: playerView,
-        workTargetSelectionCache: cache,
-      ),
-    );
-  }
-
-  Future<void> _expectBuildImprovementShortcutEmitsBusEvent(
+  Future<void> expectBuildImprovementShortcutEmits(
     WidgetTester tester, {
     required List<OpenCivilianUnitsPanelEvent> opened,
     required String hostLabel,
   }) async {
-    final shortcut = find.byWidgetPredicate(
-      (Widget w) =>
-          w is CtIconAction &&
-          w.icon == Icons.handyman &&
-          w.onPressed != null,
-    );
+    final shortcut = _buildImprovementAction(enabledOnly: true);
     expect(
       shortcut,
       findsOneWidget,
@@ -351,11 +347,9 @@ void main() {
           '$hostLabel must render an enabled Build improvement inline action '
           'for a valid Builder + affordable improvement tile.',
     );
-
     await tester.ensureVisible(shortcut);
     await tester.tap(shortcut);
     await tester.pump();
-
     expect(
       opened,
       hasLength(1),
@@ -377,135 +371,62 @@ void main() {
     expect(event.prospectShortcutTargetTileKey, isNull);
   }
 
-  testWidgets(
-    'wide host: tapping the enabled Build improvement shortcut emits a '
-    'Builder-only OpenCivilianUnitsPanelEvent targeting the exact selected '
-    'tile key (SPEC § Tile inline actions — Build improvement shortcut '
-    'assignment)',
-    (WidgetTester tester) async {
-      final game = _buildGame(withBuilder: true);
-      final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapProvinceDetailSidePanel,
-        surfaceSize: const Size(720, 720),
-        host: _wideHost(
-          game: game,
-          cache: _refreshedCache(game: game, playerView: playerView),
-        ),
-      );
-      await _expectBuildImprovementShortcutEmitsBusEvent(
-        tester,
-        opened: opened,
-        hostLabel: 'The wide side panel',
-      );
-    },
-  );
+  for (final host in _hostCases) {
+    testWidgets(
+      '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Build '
+      'improvement shortcut emits a Builder-only OpenCivilianUnitsPanelEvent '
+      'targeting the exact selected tile key (SPEC § Tile inline actions — '
+      'Build improvement shortcut assignment)',
+      (WidgetTester tester) async {
+        final opened = await pumpHostAndSelect(
+          tester,
+          game: _buildGame(withBuilder: true),
+          host: host,
+        );
+        await expectBuildImprovementShortcutEmits(
+          tester,
+          opened: opened,
+          hostLabel: host.label,
+        );
+      },
+    );
 
-  testWidgets(
-    'narrow host: tapping the enabled Build improvement shortcut emits a '
-    'Builder-only OpenCivilianUnitsPanelEvent targeting the exact selected '
-    'tile key (SPEC § Tile inline actions — Build improvement shortcut '
-    'assignment)',
-    (WidgetTester tester) async {
-      final game = _buildGame(withBuilder: true);
-      final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapNarrowDetailOverlaySlot,
-        surfaceSize: const Size(400, 600),
-        selectTileTab: true,
-        host: _narrowHost(
-          game: game,
-          cache: _refreshedCache(game: game, playerView: playerView),
-        ),
-      );
-      await _expectBuildImprovementShortcutEmitsBusEvent(
-        tester,
-        opened: opened,
-        hostLabel: 'The narrow bottom-slot host',
-      );
-    },
-  );
-
-  testWidgets(
-    'negative — wide host with no Builder unit does not enable Build '
-    'improvement and emits no OpenCivilianUnitsPanelEvent',
-    (WidgetTester tester) async {
-      final game = _buildGame(withBuilder: false);
-      final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapProvinceDetailSidePanel,
-        surfaceSize: const Size(720, 720),
-        host: _wideHost(
-          game: game,
-          cache: _refreshedCache(game: game, playerView: playerView),
-        ),
-      );
-
-      final enabledShortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.icon == Icons.handyman &&
-            w.onPressed != null,
-      );
-      expect(
-        enabledShortcut,
-        findsNothing,
-        reason:
-            'Without an assignable Builder the Build improvement inline action '
-            'must not be enabled (SPEC AC L401 — disabled, non-clickable).',
-      );
-
-      final anyShortcut = find.byWidgetPredicate(
-        (Widget w) => w is CtIconAction && w.icon == Icons.handyman,
-      );
-      if (anyShortcut.evaluate().isNotEmpty) {
-        await tester.tap(anyShortcut.first, warnIfMissed: false);
-        await tester.pump();
-      }
-
-      expect(
-        opened,
-        isEmpty,
-        reason:
-            'A disabled / absent Build improvement shortcut must never open the '
-            'Civilian Units panel via OpenCivilianUnitsPanelEvent.',
-      );
-    },
-  );
-
-  testWidgets(
-    'negative — narrow host with no Builder unit does not enable Build '
-    'improvement and emits no OpenCivilianUnitsPanelEvent',
-    (WidgetTester tester) async {
-      final game = _buildGame(withBuilder: false);
-      final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-      final opened = await pumpHostAndSelect(
-        tester,
-        game: game,
-        hostType: GameMapNarrowDetailOverlaySlot,
-        surfaceSize: const Size(400, 600),
-        selectTileTab: true,
-        host: _narrowHost(
-          game: game,
-          cache: _refreshedCache(game: game, playerView: playerView),
-        ),
-      );
-
-      final enabledShortcut = find.byWidgetPredicate(
-        (Widget w) =>
-            w is CtIconAction &&
-            w.icon == Icons.handyman &&
-            w.onPressed != null,
-      );
-      expect(enabledShortcut, findsNothing);
-
-      expect(opened, isEmpty);
-    },
-  );
+    testWidgets(
+      'negative — ${host.wide ? 'wide' : 'narrow'} host with no Builder unit '
+      'does not enable Build improvement and emits no '
+      'OpenCivilianUnitsPanelEvent',
+      (WidgetTester tester) async {
+        final opened = await pumpHostAndSelect(
+          tester,
+          game: _buildGame(withBuilder: false),
+          host: host,
+        );
+        expect(
+          _buildImprovementAction(enabledOnly: true),
+          findsNothing,
+          reason: host.wide
+              ? 'Without an assignable Builder the Build improvement inline '
+                    'action must not be enabled (SPEC AC L401 — disabled, '
+                    'non-clickable).'
+              : null,
+        );
+        if (host.wide) {
+          final anyShortcut = _buildImprovementAction(enabledOnly: false);
+          if (anyShortcut.evaluate().isNotEmpty) {
+            await tester.tap(anyShortcut.first, warnIfMissed: false);
+            await tester.pump();
+          }
+          expect(
+            opened,
+            isEmpty,
+            reason:
+                'A disabled / absent Build improvement shortcut must never '
+                'open the Civilian Units panel via OpenCivilianUnitsPanelEvent.',
+          );
+        } else {
+          expect(opened, isEmpty);
+        }
+      },
+    );
+  }
 }

@@ -3,8 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_turn/src/turn/phases/extraction_phase.dart';
 import 'package:colonizethis_test/test.dart';
 
-import '../extraction_auto_transport_test_fixtures.dart';
-import '../extraction_town_manufacturing_bonus_fixtures.dart';
+import '../support/extraction_auto_transport_test_fixtures.dart';
+import '../support/extraction_town_manufacturing_bonus_fixtures.dart';
 
 /// End-to-end extraction-phase tests for town manufacturing bonus AC matrix
 /// (Refs #3872).

@@ -7,11 +7,12 @@ import 'ct_repo_lint_scan_contract.dart';
 /// SPEC: SPEC/program/repo-lint.md (Refs #3856 / #3979).
 ///
 /// Guards shared deal-matcher treasury affordability helpers in
-/// `treasury_bid_budget.dart`. After de-part, match attempts live in
+/// `treasury_bid_caps.dart` (re-exported via the `treasury_bid_budget.dart`
+/// barrel; phase-7 split Refs #4049). After de-part, match attempts live in
 /// `deal_matcher_session.dart` and must call the shared symbols;
 /// `deal_matcher_indexing.dart` must not redefine local treasury math.
 const _helperRelativePath =
-    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart';
+    'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_caps.dart';
 
 const _consumerRelativePath =
     'packages/colonizethis_economy/lib/src/economy/world_market/deal_matcher_indexing.dart';

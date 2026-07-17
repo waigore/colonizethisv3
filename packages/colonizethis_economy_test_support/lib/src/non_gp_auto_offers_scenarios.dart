@@ -37,8 +37,9 @@ NonGpAutoOffersScenario nonGpAutoOfferPurchasedRow({required String label, requi
   refs: refs,
 );
 /// Canonical scenarios from `non_gp_auto_offers_test.dart` (Issue #2991 C4).
-List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() => [..._nonGpAutoOffersEmptyScenarios(), ..._nonGpAutoOffersOfferScenarios(), ...nonGpAutoOffersPurchasedTileScenarios()];
-List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
+List<NonGpAutoOffersScenario> nonGpAutoOffersScenarios() {
+  final dual = nonGpMinorTribeTimberFursFixture();
+  return [
   nonGpEmptyAutoOfferRow(label: 'empty when no minors and no tribes are configured'),
   nonGpEmptyAutoOfferRow(
     label: 'empty when tileMapByRegion is empty',
@@ -57,10 +58,6 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersEmptyScenarios() => [
     emptyConnectivity: true,
     expect: const NonGpAutoOffersExpectation(empty: true),
   ),
-];
-List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
-  final dual = nonGpMinorTribeTimberFursFixture();
-  return [
     nonGpAutoOfferMinorRow(
       label: 'emits one priority-1 offer per non-riches tile with originTileKey set',
       tileSpecs: tileImps(const ['oldWorld|m1|0|0', 'oldWorld|m1|1|0']),
@@ -103,6 +100,7 @@ List<NonGpAutoOffersScenario> _nonGpAutoOffersOfferScenarios() {
       connected: const {'oldWorld|m1|0|0', 'oldWorld|m1|1|0'},
       expect: nonGpM1OffersExpect(length: 1, singleCommodityId: 'grain', factionKeys: null),
     ),
+    ...nonGpAutoOffersPurchasedTileScenarios(),
   ];
 }
 /// Purchased-tile parity scenarios (Refs #2991 C6, #3939).

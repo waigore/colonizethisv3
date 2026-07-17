@@ -11,14 +11,15 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _host(Widget child, {Size? size}) {
-  return MaterialApp(
+  return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
+    child: Scaffold(
       body: Center(
         child: size == null
             ? child
@@ -201,16 +202,14 @@ void main() {
     ) async {
       final game = gameWith(gpStronger: true);
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DiplomacyDetailScreen(
-              game: game,
-              humanPlayerId: 'gp1',
-              factionId: 'gp2',
-              factionDisplayName: 'Other GP',
-              kind: FactionKind.greatPower,
-              relation: getRelation(game, 'gp1', 'gp2'),
-            ),
+        buildAppShell(
+          child: DiplomacyDetailScreen(
+            game: game,
+            humanPlayerId: 'gp1',
+            factionId: 'gp2',
+            factionDisplayName: 'Other GP',
+            kind: FactionKind.greatPower,
+            relation: getRelation(game, 'gp1', 'gp2'),
           ),
         ),
       );
@@ -226,16 +225,14 @@ void main() {
     testWidgets('Minor target renders no relative-power line', (tester) async {
       final game = gameWith(gpStronger: true);
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DiplomacyDetailScreen(
-              game: game,
-              humanPlayerId: 'gp1',
-              factionId: 'gp2',
-              factionDisplayName: 'Other GP',
-              kind: FactionKind.minor,
-              relation: getRelation(game, 'gp1', 'gp2'),
-            ),
+        buildAppShell(
+          child: DiplomacyDetailScreen(
+            game: game,
+            humanPlayerId: 'gp1',
+            factionId: 'gp2',
+            factionDisplayName: 'Other GP',
+            kind: FactionKind.minor,
+            relation: getRelation(game, 'gp1', 'gp2'),
           ),
         ),
       );

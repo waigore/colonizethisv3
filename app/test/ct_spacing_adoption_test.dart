@@ -1,4 +1,4 @@
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';

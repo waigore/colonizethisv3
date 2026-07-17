@@ -9,14 +9,15 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 /// PR-blocking structural gate for the shared chrome text-button base
-/// (Refs #3594 target state #1).
+/// (Refs #3594 target state #1; chrome home moved under `app/lib/widgets/`
+/// in Refs #4035).
 ///
 /// The editorial-monocle chrome text buttons
 /// (`CtActionTextButton`, `CtDangerTextButton`, …) all repeat the same hover
 /// state machine and disabled / interactive / semantics / tooltip wrapping.
 /// That shared chrome lives in [_canonicalMixin]
 /// ([CtHoverButtonStateMixin], declared in
-/// `app/lib/features/game/widgets/chrome/ct_hover_button.dart`).
+/// `app/lib/widgets/ct_hover_button.dart`).
 ///
 /// This check prevents regression where a new `*TextButton` re-implements the
 /// hover/disabled chrome instead of adopting the canonical base. A
@@ -27,7 +28,7 @@ import 'ct_repo_lint_scan_contract.dart';
 /// [_chromeDirRelative]) must declare `with $_canonicalMixin`.
 ///
 /// SPEC: `SPEC/program/repo-lint.md`.
-const _chromeDirRelative = 'app/lib/features/game/widgets/chrome';
+const _chromeDirRelative = 'app/lib/widgets';
 const _canonicalMixin = 'CtHoverButtonStateMixin';
 const _buttonStateSuffix = 'TextButton';
 
@@ -93,7 +94,7 @@ int runCheckChromeButtonBase(
   logE(
     'Fix: have each `*$_buttonStateSuffix` widget\'s State adopt '
     '`with $_canonicalMixin` (see '
-    'app/lib/features/game/widgets/chrome/ct_hover_button.dart) and reuse '
+    'app/lib/widgets/ct_hover_button.dart) and reuse '
     '`buildHoverButton(...)` instead of re-implementing the hover/disabled '
     'chrome.',
   );

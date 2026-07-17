@@ -9,19 +9,19 @@ import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_
 
 void main() {
   group('dialogueEventsForReactiveFortsOnBorder', () {
-    for (final scenario in eventDialogueReactiveScenarios().take(3)) {
+    for (final scenario in eventDialogueReactiveFortsOnBorderScenarios()) {
       test(scenario.label, () => runEventDialogueReactiveScenario(scenario));
     }
   });
 
   group('dialogueEventsForReactiveHumanAttack', () {
-    for (final scenario in eventDialogueReactiveScenarios().skip(3).take(3)) {
+    for (final scenario in eventDialogueReactiveHumanAttackScenarios()) {
       test(scenario.label, () => runEventDialogueReactiveScenario(scenario));
     }
   });
 
   group('additional event/reactive situations', () {
-    for (final scenario in eventDialogueReactiveScenarios().skip(6)) {
+    for (final scenario in eventDialogueReactiveDiscoveryAndSpyScenarios()) {
       test(scenario.label, () => runEventDialogueReactiveScenario(scenario));
     }
   });

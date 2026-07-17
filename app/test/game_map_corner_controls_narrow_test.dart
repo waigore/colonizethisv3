@@ -10,7 +10,6 @@
 // Negative regression guard: with `narrow: false` (default) the existing
 // wide-layout 32 × 32 dp + 3 dp gap contract still holds.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -19,13 +18,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _wrap({required Widget child}) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+  return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en'),
-    home: Scaffold(body: Align(alignment: Alignment.bottomLeft, child: child)),
+    child: Scaffold(body: Align(alignment: Alignment.bottomLeft, child: child)),
   );
 }
 

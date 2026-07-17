@@ -56,39 +56,21 @@ void main() {
 
   group('DebugLogViewerScreen', () {
     testWidgets('shows title and close button', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(find.text('Debug log'), findsOneWidget);
       expect(find.byType(CtBackButton), findsOneWidget);
     });
 
     testWidgets('shows filter chips for package and level', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(find.text('logic'), findsOneWidget);
       expect(find.text('debug'), findsOneWidget);
     });
 
     testWidgets('default package filter is app only and ctdev chip is hidden', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(find.text('ctdev'), findsNothing);
       expect(_chipWithLabel(tester, 'app').selected, isTrue);
@@ -96,13 +78,7 @@ void main() {
     });
 
     testWidgets('default level filter is info warning error without debug', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(_chipWithLabel(tester, 'debug').selected, isFalse);
       expect(_chipWithLabel(tester, 'info').selected, isTrue);
@@ -112,13 +88,7 @@ void main() {
 
     testWidgets('selecting debug level shows app debug lines', (WidgetTester tester) async {
       SessionLogBuffer.instance.add(LogEvent(Level.debug, 'app: hidden until debug'));
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(find.textContaining('hidden until debug'), findsNothing);
 
@@ -131,27 +101,24 @@ void main() {
     });
 
     testWidgets('close button pops route', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: Builder(
-            builder: (context) => Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const DebugLogViewerScreen(),
-                    ),
+      await _pumpLightViewer(
+        tester,
+        child: Builder(
+          builder: (context) => Column(
+            children: [
+              ElevatedButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const DebugLogViewerScreen(),
                   ),
-                  child: const Text('Open'),
                 ),
-              ],
-            ),
+                child: const Text('Open'),
+              ),
+            ],
           ),
         ),
       );
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
@@ -164,13 +131,7 @@ void main() {
 
     testWidgets('displays session log entries when present', (WidgetTester tester) async {
       SessionLogBuffer.instance.add(LogEvent(Level.info, 'app: test message'));
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.light,
-          home: const DebugLogViewerScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpLightViewer(tester);
 
       expect(find.textContaining('test message'), findsOneWidget);
     });
@@ -304,6 +265,18 @@ void main() {
 }
 
 const double _expectedRowAlpha = 0.08;
+
+Future<void> _pumpLightViewer(
+  WidgetTester tester, {
+  Widget child = const DebugLogViewerScreen(),
+}) async {
+  await pumpAppShell(
+    tester,
+    theme: AppThemes.light,
+    settle: true,
+    child: child,
+  );
+}
 
 Future<void> _pumpEditorialMonocleViewer(WidgetTester tester) async {
   await pumpAppShell(

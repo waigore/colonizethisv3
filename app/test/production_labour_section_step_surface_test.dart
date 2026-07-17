@@ -17,6 +17,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_lab
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 
+import 'support/app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 const _playerId = 'gp_labour_surface_test';
@@ -51,10 +52,11 @@ Widget _mount({
   Orders currentOrders = const Orders(),
   bool canEdit = true,
 }) {
-  return MaterialApp(
+  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+  return buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: const [Locale('en')],
-    home: Scaffold(
+    child: Scaffold(
       body: SizedBox(
         width: 800,
         height: 600,

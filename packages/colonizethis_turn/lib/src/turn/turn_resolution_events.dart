@@ -178,10 +178,6 @@ void emitVictorySetEvent(Game state, int turn, TurnEventSink sink) {
   }
 }
 
-String _prefixedProvinceId(Province province) => province.id.contains('|')
-    ? province.id
-    : ProvinceId.full(province.regionId, province.id);
-
 Set<String> _seaZonesAtSeaForPlayer(Game game, String playerId) {
   final zones = <String>{};
   for (final fleet in game.worldState.fleets) {
@@ -298,7 +294,7 @@ void _emitPlayerProvinceDiscoveryEvents({
   required TurnEventSink sink,
 }) {
   for (final province in stateAfter.worldState.allProvinces()) {
-    final fullProvinceId = _prefixedProvinceId(province);
+    final fullProvinceId = prefixedProvinceId(province);
     final wasKnown = beforeIndex.isKnownToPlayer(playerId, fullProvinceId);
     final nowKnown = afterIndex.isKnownToPlayer(playerId, fullProvinceId);
     if (wasKnown || !nowKnown) {

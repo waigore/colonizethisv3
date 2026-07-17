@@ -354,6 +354,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
@@ -448,6 +450,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
@@ -513,6 +517,8 @@ jobs:
         if: needs.changes.outputs.tests == 'true'
         run: |
           set -euo pipefail
+          # Runner Chrome apt source intermittently flakes mid-mirror-sync.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             clang cmake ninja-build pkg-config \
@@ -828,6 +834,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends python3-pil
           cd pytool && python3 test_wang_incremental_assets_and_preview.py
+
+      - name: Plantation field retune gate (Python, Refs #3961)
+        run: cd pytool && python3 test_plantation_field_retune_3961_gate.py
 
       - name: Test run_observer_game (Dart, coverage)
         if: needs.changes.outputs.tests == 'true'

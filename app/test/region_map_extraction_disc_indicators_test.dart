@@ -20,7 +20,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
         paintResourceExtractionDiscIndicators;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart';
-import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
+
+import 'ct_region_map_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -69,25 +70,19 @@ void main() {
       (WidgetTester tester) async {
         final region = oneCellCopperExtractionRegion();
         await tester.pumpWidget(
-          MaterialApp(
-            home: Center(
-              child: RepaintBoundary(
-                key: const ValueKey('region_map_extraction_discs_golden'),
-                child: SizedBox(
-                  width: 96,
-                  height: 64,
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: 64,
-                    visibilityMode: CtMapVisibilityMode.full,
-                    showPoliticalOverlay: false,
-                    showProvinceOverlay: false,
-                    showProvinceNamesLayer: false,
-                    baseLayerDisplayMode:
-                        BaseLayerDisplayMode.terrainAndResources,
-                  ),
-                ),
-              ),
+          ctRegionMapTestHarness(
+            region: region,
+            width: 96,
+            height: 64,
+            cellSizePx: 64,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'region_map_extraction_discs_golden',
             ),
           ),
         );

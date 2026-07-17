@@ -7,6 +7,8 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_di
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'support/app_shell_harness.dart';
+
 Widget _openDialogButton(VoidCallback onOpen) {
   return TextButton(onPressed: onOpen, child: const Text('open'));
 }
@@ -40,9 +42,10 @@ void main() {
     required bool isHomeArmy,
     required AppEventBus bus,
   }) async {
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: Builder(
             builder: (context) {
               return _openDialogButton(() {

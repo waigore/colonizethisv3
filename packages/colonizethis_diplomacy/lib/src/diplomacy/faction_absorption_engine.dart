@@ -150,71 +150,13 @@ Game _absorbIntoGp(
   );
   next = bulk.game;
 
-  // Great Power absorption remaps GP-only game fields (`generals`,
-  // `purchasedTilesByTileKey`, `playerProspectedTiles`, AI metadata maps,
-  // `politicalGlyphByPlayerId`, `subsidyStates`). Minor/Tribe targets are not
-  // GPs: `SPEC/game/diplomacy.md` Join Empire mandates province/unit/fleet
-  // transfer and relation cleanup for them, but does **not** require those
-  // GP-only cleanups on the minor path—so the branch below is intentionally
-  // GP-only (avoids conflating nation ids with player-owned persistence).
-  if (kind == _AbsorptionKind.greatPower) {
-    final generals = next.generals
-        .map(
-          (g) => g.ownerId == absorbedFactionId ? g.copyWith(ownerId: gpId) : g,
-        )
-        .toList();
-
-    final purchased = <String, String>{};
-    for (final e in next.worldState.purchasedTilesByTileKey.entries) {
-      purchased[e.key] = e.value == absorbedFactionId ? gpId : e.value;
-    }
-
-    final prospected = <String, Set<String>>{};
-    for (final e in next.worldState.playerProspectedTiles.entries) {
-      if (e.key == absorbedFactionId) continue;
-      prospected[e.key] = Set<String>.from(e.value);
-    }
-    final targetPros = next.worldState.playerProspectedTiles[absorbedFactionId];
-    if (targetPros != null && targetPros.isNotEmpty) {
-      prospected.putIfAbsent(gpId, () => <String>{}).addAll(targetPros);
-    }
-
-    var ws = next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(
-        next.worldState.fleets,
-        absorbedFactionId,
-        gpId,
-      ),
-      purchasedTilesByTileKey: purchased,
-      playerProspectedTiles: prospected,
-      spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-        next.worldState.spyRevealTurnsByPlayer,
-        absorbedFactionId,
-      ),
-    );
-    ws = ws.mapBothRegionUnits(
-      (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
-    );
-    // Atomic multi-field mutation (generals + worldState); kept as raw
-    // copyWith per Issue #2836 AC 6 single-field-only helper scope.
-    next = next.copyWith(generals: generals, worldState: ws);
-  } else {
-    var ws = next.worldState.copyWith(
-      fleets: _remapAllFleetsFromTo(
-        next.worldState.fleets,
-        absorbedFactionId,
-        gpId,
-      ),
-      spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-        next.worldState.spyRevealTurnsByPlayer,
-        absorbedFactionId,
-      ),
-    );
-    ws = ws.mapBothRegionUnits(
-      (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
-    );
-    next = next.withWorldState(ws);
-  }
+  // Great Power absorption remaps GP-only game fields. Minor/Tribe targets are
+  // not GPs: Join Empire mandates province/unit/fleet transfer and relation
+  // cleanup, but does not require GP-only cleanups on the minor path
+  // (Refs #4028 extract under 200-line guideline).
+  next = kind == _AbsorptionKind.greatPower
+      ? _remapAbsorbedGreatPowerAssets(next, gpId, absorbedFactionId)
+      : _remapAbsorbedMinorOrTribeAssets(next, gpId, absorbedFactionId);
 
   next = relocateIllegalCiviliansInChangedProvinces(
     next,
@@ -225,41 +167,114 @@ Game _absorbIntoGp(
     reconcileArmiesAfterUnitsChanged(next.worldState, next),
   );
 
-  if (kind == _AbsorptionKind.minorOrTribe) {
-    var minorNations = next.minorNations;
-    var tribes = next.tribes;
-    if (next.minorNations.any((m) => m.id == absorbedFactionId)) {
-      minorNations = next.minorNations
-          .where((m) => m.id != absorbedFactionId)
-          .toList();
-    }
-    if (next.tribes.any((t) => t.id == absorbedFactionId)) {
-      tribes = next.tribes.where((t) => t.id != absorbedFactionId).toList();
-    }
+  return kind == _AbsorptionKind.minorOrTribe
+      ? _cleanupAfterMinorOrTribeAbsorb(next, absorbedFactionId)
+      : _cleanupAfterGreatPowerAbsorb(next, absorbedFactionId);
+}
 
-    // Canonical full-faction overture teardown (Refs #3562 AC1) replaces the
-    // prior inline `targetId == absorbedFactionId` filter. Minor/Tribe targets
-    // never originate overtures, so clearing either side is equivalent here.
-    final overtures =
-        clearOverturesInvolvingFaction(next, absorbedFactionId).game
-            .overtureStates;
+Game _remapAbsorbedGreatPowerAssets(
+  Game next,
+  String gpId,
+  String absorbedFactionId,
+) {
+  final generals = next.generals
+      .map(
+        (g) => g.ownerId == absorbedFactionId ? g.copyWith(ownerId: gpId) : g,
+      )
+      .toList();
 
-    final relations = next.diplomacyRelations
-        .where(
-          (r) =>
-              r.factionId1 != absorbedFactionId &&
-              r.factionId2 != absorbedFactionId,
-        )
-        .toList();
-
-    return next.copyWith(
-      minorNations: minorNations,
-      tribes: tribes,
-      overtureStates: overtures,
-      diplomacyRelations: relations,
-    );
+  final purchased = <String, String>{};
+  for (final e in next.worldState.purchasedTilesByTileKey.entries) {
+    purchased[e.key] = e.value == absorbedFactionId ? gpId : e.value;
   }
 
+  final prospected = <String, Set<String>>{};
+  for (final e in next.worldState.playerProspectedTiles.entries) {
+    if (e.key == absorbedFactionId) continue;
+    prospected[e.key] = Set<String>.from(e.value);
+  }
+  final targetPros = next.worldState.playerProspectedTiles[absorbedFactionId];
+  if (targetPros != null && targetPros.isNotEmpty) {
+    prospected.putIfAbsent(gpId, () => <String>{}).addAll(targetPros);
+  }
+
+  var ws = next.worldState.copyWith(
+    fleets: _remapAllFleetsFromTo(
+      next.worldState.fleets,
+      absorbedFactionId,
+      gpId,
+    ),
+    purchasedTilesByTileKey: purchased,
+    playerProspectedTiles: prospected,
+    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
+      next.worldState.spyRevealTurnsByPlayer,
+      absorbedFactionId,
+    ),
+  );
+  ws = ws.mapBothRegionUnits(
+    (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
+  );
+  // Atomic multi-field mutation (generals + worldState); kept as raw
+  // copyWith per Issue #2836 AC 6 single-field-only helper scope.
+  return next.copyWith(generals: generals, worldState: ws);
+}
+
+Game _remapAbsorbedMinorOrTribeAssets(
+  Game next,
+  String gpId,
+  String absorbedFactionId,
+) {
+  var ws = next.worldState.copyWith(
+    fleets: _remapAllFleetsFromTo(
+      next.worldState.fleets,
+      absorbedFactionId,
+      gpId,
+    ),
+    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
+      next.worldState.spyRevealTurnsByPlayer,
+      absorbedFactionId,
+    ),
+  );
+  ws = ws.mapBothRegionUnits(
+    (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
+  );
+  return next.withWorldState(ws);
+}
+
+Game _cleanupAfterMinorOrTribeAbsorb(Game next, String absorbedFactionId) {
+  var minorNations = next.minorNations;
+  var tribes = next.tribes;
+  if (next.minorNations.any((m) => m.id == absorbedFactionId)) {
+    minorNations = next.minorNations
+        .where((m) => m.id != absorbedFactionId)
+        .toList();
+  }
+  if (next.tribes.any((t) => t.id == absorbedFactionId)) {
+    tribes = next.tribes.where((t) => t.id != absorbedFactionId).toList();
+  }
+
+  // Canonical full-faction overture teardown (Refs #3562 AC1).
+  final overtures =
+      clearOverturesInvolvingFaction(next, absorbedFactionId).game
+          .overtureStates;
+
+  final relations = next.diplomacyRelations
+      .where(
+        (r) =>
+            r.factionId1 != absorbedFactionId &&
+            r.factionId2 != absorbedFactionId,
+      )
+      .toList();
+
+  return next.copyWith(
+    minorNations: minorNations,
+    tribes: tribes,
+    overtureStates: overtures,
+    diplomacyRelations: relations,
+  );
+}
+
+Game _cleanupAfterGreatPowerAbsorb(Game next, String absorbedFactionId) {
   final aiControl = Map<String, bool>.from(next.aiControlByGpId)
     ..remove(absorbedFactionId);
   final aiSeed = Map<String, int>.from(next.aiSeedByGpId)
@@ -269,8 +284,7 @@ Game _absorbIntoGp(
   final glyphs = Map<String, String>.from(next.politicalGlyphByPlayerId)
     ..remove(absorbedFactionId);
 
-  // Canonical full-faction overture teardown (Refs #3562 AC1) replaces the prior
-  // inline `gpId == absorbedFactionId || targetId == absorbedFactionId` filter.
+  // Canonical full-faction overture teardown (Refs #3562 AC1).
   final overtures =
       clearOverturesInvolvingFaction(next, absorbedFactionId).game
           .overtureStates;
@@ -290,13 +304,8 @@ Game _absorbIntoGp(
       )
       .toList();
 
-  // When the removed GP held colonies, those Tribes lose their suzerain and
-  // become independent again (their favoured trading partner reverts to the
-  // relation-based lookup). Every boycott the removed GP issued, and every
-  // boycott directed at it, is meaningless once it leaves the game and is
-  // cleared. SPEC/game/diplomacy.md § GP–Tribe Rules (Join Empire → colony,
-  // Boycott) — colony relationship ends when the colonizing GP is removed
-  // (Refs #3753 R5.5 / R6.4).
+  // When the removed GP held colonies, those Tribes lose their suzerain.
+  // SPEC/game/diplomacy.md § GP–Tribe Rules (Refs #3753 R5.5 / R6.4).
   final colonies = next.colonyStates
       .where((c) => c.colonyOfGpId != absorbedFactionId)
       .toList();

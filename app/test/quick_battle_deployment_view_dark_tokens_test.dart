@@ -5,8 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
+
+import 'support/app_shell_harness.dart';
 
 /// Pins SPEC/ui/quick-battle-deployment-view.md § Layout / wireframe and the
 /// dark-theme `--muted` AC added under Refs #2869 S3 R14.
@@ -19,9 +20,8 @@ void main() {
   suppressLogsForTests();
 
   Widget frame(Widget child) {
-    return MaterialApp(
-      theme: AppThemes.editorialMonocle,
-      home: Scaffold(body: Center(child: child)),
+    return buildAppShell(
+      child: Scaffold(body: Center(child: child)),
     );
   }
 

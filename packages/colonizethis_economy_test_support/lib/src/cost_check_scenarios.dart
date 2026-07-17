@@ -1,10 +1,37 @@
 // dart format off
-// Table-driven cost-check precondition scenarios (Refs #3939 phase 3 slice 35, #3979).
-import 'cost_check_expectations.dart';
+// Table-driven cost-check precondition scenarios and compact assertions
+// (Refs #3939 phase 3 slice 35, #3979; pair merged Refs #4049).
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_test/test.dart';
+/// One precondition step in a [checkPreconditionsInOrder] pin row.
+typedef CostPreconditionStep = ({String failReason, bool pass, bool trackEvaluation});
+/// Pins for [checkPreconditionsInOrder] rows.
+typedef CheckPreconditionsInOrderPins = ({List<CostPreconditionStep> steps, String? expectedReason, List<String>? expectedEvaluated});
 /// One row for `CheckPreconditionsInOrderScenario` tables (Refs #3979).
 typedef CheckPreconditionsInOrderScenario = ({String label, CheckPreconditionsInOrderPins pins, String? refs});
+CheckPreconditionsInOrderScenario checkPreconditionsInOrderScenario({required String label, required CheckPreconditionsInOrderPins pins, String? refs}) =>
+    (label: label, pins: pins, refs: refs);
 void runCheckPreconditionsInOrderScenario(CheckPreconditionsInOrderScenario scenario) {
   runCheckPreconditionsInOrderExpectation(scenario.pins);
+}
+void runCheckPreconditionsInOrderExpectation(CheckPreconditionsInOrderPins pins) {
+  final evaluated = <String>[];
+  final preconditions = <CostPrecondition>[
+    for (final step in pins.steps)
+      (
+        failReason: step.failReason,
+        check: () {
+          if (step.trackEvaluation) {
+            evaluated.add(step.failReason);
+          }
+          return step.pass;
+        },
+      ),
+  ];
+  expect(checkPreconditionsInOrder(preconditions), pins.expectedReason);
+  if (pins.expectedEvaluated != null) {
+    expect(evaluated, pins.expectedEvaluated);
+  }
 }
 /// Canonical scenarios for [checkPreconditionsInOrder].
 List<CheckPreconditionsInOrderScenario> checkPreconditionsInOrderScenarios() => [

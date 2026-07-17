@@ -17,59 +17,151 @@ import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
 import 'support/new_game_leader_selection_dialog_test_support.dart';
 
+const _largeViewport = Size(900, 2000);
+const _duplicateSurface = Size(900, 1600);
+const _duplicateEnglandIds = <String>[
+  'england',
+  'france',
+  'spain',
+  'portugal',
+  'netherlands',
+  'england',
+];
+
+GameSetupConfig get _duplicateEnglandConfig =>
+    GameSetupConfig(selectedGreatPowerIds: _duplicateEnglandIds);
+
 void main() {
   suppressLogsForTests();
 
-  group('parseSeedInput', () {
-    test('empty and invalid map to 42', () {
-      expect(NewGameLeaderSelectionDialog.parseSeedInput(''), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('   '), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('abc'), 42);
-      expect(NewGameLeaderSelectionDialog.parseSeedInput('-3'), 42);
-    });
+  Future<void> enterSeed(WidgetTester tester, String value) async {
+    final field = find.byType(TextField);
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.enterText(field, value);
+    await tester.pump();
+  }
 
-    test('accepts non-negative integers', () {
+  Future<void> tapSliderEdge(WidgetTester tester, {required bool left}) async {
+    final slider = find.byType(CtSlider);
+    await tester.ensureVisible(slider);
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(slider);
+    await tester.tapAt(
+      Offset(left ? rect.left + 1 : rect.right - 1, rect.center.dy),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  CtNinePatchButton startButton(WidgetTester tester) {
+    return tester.widget<CtNinePatchButton>(
+      find.ancestor(
+        of: find.text('Start'),
+        matching: find.byType(CtNinePatchButton),
+      ),
+    );
+  }
+
+  void expectDialogChromeTexts(Iterable<String> texts) {
+    for (final text in texts) {
+      expect(find.text(text), findsOneWidget);
+    }
+  }
+
+  Finder keyed(String key) => find.byKey(ValueKey<String>(key));
+
+  Text keyedText(WidgetTester tester, String key) =>
+      tester.widget<Text>(keyed(key));
+
+  Future<void> pumpDuplicateEngland(WidgetTester tester) {
+    return pumpNewGameLeaderSelectionDialog(
+      tester,
+      baseConfig: _duplicateEnglandConfig,
+      surfaceSize: _duplicateSurface,
+    );
+  }
+
+  Future<int?> confirmWithSeed(WidgetTester tester, String seed) async {
+    int? gotSeed;
+    await pumpNewGameLeaderSelectionDialog(
+      tester,
+      onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
+    );
+    await enterSeed(tester, seed);
+    await ensureTapNewGameLeaderSelectionStart(tester);
+    return gotSeed;
+  }
+
+  Future<double?> confirmTerrain(WidgetTester tester, {bool? dragLeft}) async {
+    double? gotTerrainVariation;
+    await pumpNewGameLeaderSelectionDialog(
+      tester,
+      onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
+          gotTerrainVariation = terrainVariation,
+    );
+    if (dragLeft != null) {
+      await tapSliderEdge(tester, left: dragLeft);
+    }
+    await ensureTapNewGameLeaderSelectionStart(tester);
+    return gotTerrainVariation;
+  }
+
+  Future<AdvancedStartType?> confirmAdvancedStart(
+    WidgetTester tester, {
+    Size surfaceSize = const Size(800, 1300),
+    GameSetupConfig? baseConfig,
+    Future<void> Function(WidgetTester tester)? beforeStart,
+  }) async {
+    AdvancedStartType? gotAdvancedStart;
+    await pumpNewGameLeaderSelectionDialog(
+      tester,
+      surfaceSize: surfaceSize,
+      baseConfig: baseConfig,
+      onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+          gotAdvancedStart = advancedStart,
+    );
+    if (beforeStart != null) {
+      await beforeStart(tester);
+    }
+    await ensureTapNewGameLeaderSelectionStart(tester);
+    return gotAdvancedStart;
+  }
+
+  group('parseSeedInput', () {
+    test('maps empty/invalid to 42; accepts non-negative integers', () {
+      for (final input in ['', '   ', 'abc', '-3']) {
+        expect(NewGameLeaderSelectionDialog.parseSeedInput(input), 42);
+      }
       expect(NewGameLeaderSelectionDialog.parseSeedInput('0'), 0);
       expect(NewGameLeaderSelectionDialog.parseSeedInput(' 99 '), 99);
     });
   });
 
   group('NewGameLeaderSelectionDialog', () {
-    testWidgets('shows six GP colour swatches and default nation labels', (
-      WidgetTester tester,
-    ) async {
-      await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-
-      expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
-      expect(find.text('England'), findsWidgets);
-      expect(find.text('Choose nations and leaders'), findsOneWidget);
-      expect(
-        find.text('Choose six great powers and a leader variant for each'),
-        findsOneWidget,
-      );
-      // Mockup slot labels: "Slot N" with an uppercase "YOU" tag on slot 0.
-      expect(find.text('Slot 1'), findsOneWidget);
-      expect(find.text('YOU'), findsOneWidget);
-      expect(find.text('Slot 2'), findsOneWidget);
-      expect(find.text('Slot 6'), findsOneWidget);
-      expect(find.text('Game seed'), findsOneWidget);
-      expect(find.text('Enter 0 for a random seed'), findsOneWidget);
-      expect(find.text('Infinite mode (no victory condition)'), findsOneWidget);
-      // Infinite mode uses the pixel-art CtToggleSwitch, not Material chrome.
-      expect(find.byType(CtToggleSwitch), findsOneWidget);
-      expect(find.byType(CheckboxListTile), findsNothing);
-    });
-
     testWidgets(
-      'CtDialogShell frame is pinned to the mockup-authoritative 540 dp width',
+      'shows six GP swatches, shell chrome, seed/infinite, and terrain slider',
       (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
+        await pumpNewGameLeaderSelectionDialog(tester);
 
-        // SPEC/ui/new-game-leader-selection-dialog.md § Dialog frame width:
-        // the dialog frame is pinned to the refreshed mockup
-        // `.dialog-shell{max-width:540px}` (Refs #3506/#3507 D1). This guards
-        // against regressing to the stale 480 dp figure in the original
-        // D1 text — the mockup is the visual source of truth.
+        expect(find.byType(GpDefaultMapColorSwatch), findsNWidgets(6));
+        expect(find.text('England'), findsWidgets);
+        expectDialogChromeTexts(const [
+          'Choose nations and leaders',
+          'Choose six great powers and a leader variant for each',
+          'Slot 1',
+          'YOU',
+          'Slot 2',
+          'Slot 6',
+          'Game seed',
+          'Enter 0 for a random seed',
+          'Infinite mode (no victory condition)',
+          'Terrain variation:',
+          '50%',
+          '0% flat — 100% extreme',
+        ]);
+        expect(find.byType(CtToggleSwitch), findsOneWidget);
+        expect(find.byType(CheckboxListTile), findsNothing);
+        expect(find.byType(CtSlider), findsOneWidget);
         final shell = tester.widget<CtDialogShell>(find.byType(CtDialogShell));
         expect(shell.maxWidth, 540);
         expect(shell.maxHeight, 720);
@@ -81,8 +173,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpNewGameLeaderSelectionDialog(
           tester,
-          surfaceSize: const Size(900, 2000),
-          onConfirmed: (_, _, _, _, _, _, _) {},
+          surfaceSize: _largeViewport,
         );
         await tester.pumpAndSettle();
 
@@ -108,7 +199,6 @@ void main() {
       await pumpNewGameLeaderSelectionDialog(
         tester,
         surfaceSize: const Size(520, 420),
-        onConfirmed: (_, _, _, _, _, _, _) {},
       );
       await tester.pumpAndSettle();
 
@@ -154,42 +244,37 @@ void main() {
       expect(gotInfiniteMode, isFalse);
     });
 
-    testWidgets('AI slots show profile dropdown when blessed names exist', (
-      WidgetTester tester,
-    ) async {
-      Map<String, String?>? gotProfiles;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        surfaceSize: const Size(900, 2000),
-        blessedProfileNames: const ['aggressive_v2'],
-        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-      );
-      expect(find.byType(CtDropdown<String>), findsNWidgets(17));
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotProfiles, isEmpty);
-    });
+    testWidgets(
+      'AI profile dropdowns mount for blessed names and forward selected id',
+      (WidgetTester tester) async {
+        Map<String, String?>? gotProfiles;
+        Future<void> pumpBlessed({
+          required void Function(Map<String, String?>?) onConfirmed,
+        }) {
+          return pumpNewGameLeaderSelectionDialog(
+            tester,
+            surfaceSize: _largeViewport,
+            blessedProfileNames: const ['aggressive_v2'],
+            onConfirmed: (_, _, _, _, _, profiles, __) => onConfirmed(profiles),
+          );
+        }
 
-    testWidgets('selecting blessed profile forwards aiProfileByGpId', (
-      WidgetTester tester,
-    ) async {
-      Map<String, String?>? gotProfiles;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        surfaceSize: const Size(900, 2000),
-        blessedProfileNames: const ['aggressive_v2'],
-        onConfirmed: (_, _, _, _, _, profiles, __) => gotProfiles = profiles,
-      );
-      final profileDropdowns = find.widgetWithText(
-        CtDropdown<String>,
-        'Normal',
-      );
-      await tester.tap(profileDropdowns.first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('aggressive_v2').last);
-      await tester.pumpAndSettle();
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotProfiles?.values, contains('aggressive_v2'));
-    });
+        await pumpBlessed(onConfirmed: (p) => gotProfiles = p);
+        expect(find.byType(CtDropdown<String>), findsNWidgets(17));
+        await ensureTapNewGameLeaderSelectionStart(tester);
+        expect(gotProfiles, isEmpty);
+
+        await pumpBlessed(onConfirmed: (p) => gotProfiles = p);
+        await tester.tap(
+          find.widgetWithText(CtDropdown<String>, 'Normal').first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('aggressive_v2').last);
+        await tester.pumpAndSettle();
+        await ensureTapNewGameLeaderSelectionStart(tester);
+        expect(gotProfiles?.values, contains('aggressive_v2'));
+      },
+    );
 
     testWidgets('Cancel closes dialog without calling onConfirmed', (
       WidgetTester tester,
@@ -235,39 +320,13 @@ void main() {
       expect(gotLeaders!['sweden'], 'gustavus');
     });
 
-    testWidgets('Start passes seed 0 when field is 0', (
-      WidgetTester tester,
-    ) async {
-      int? gotSeed;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
-      );
-      final field = find.byType(TextField);
-      await tester.ensureVisible(field);
-      await tester.pumpAndSettle();
-      await tester.enterText(field, '0');
-      await tester.pump();
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotSeed, 0);
-    });
-
-    testWidgets('Start uses 42 when field is cleared', (
-      WidgetTester tester,
-    ) async {
-      int? gotSeed;
-      await pumpNewGameLeaderSelectionDialog(
-        tester,
-        onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
-      );
-      final field = find.byType(TextField);
-      await tester.ensureVisible(field);
-      await tester.pumpAndSettle();
-      await tester.enterText(field, '');
-      await tester.pump();
-      await ensureTapNewGameLeaderSelectionStart(tester);
-      expect(gotSeed, 42);
-    });
+    testWidgets(
+      'Start seed field: 0 passes through; cleared falls back to 42',
+      (WidgetTester tester) async {
+        expect(await confirmWithSeed(tester, '0'), 0);
+        expect(await confirmWithSeed(tester, ''), 42);
+      },
+    );
 
     testWidgets('Start passes infiniteMode true when toggle switched on', (
       WidgetTester tester,
@@ -291,146 +350,78 @@ void main() {
       testWidgets('default Start emits AdvancedStartType.none', (
         WidgetTester tester,
       ) async {
-        AdvancedStartType? gotAdvancedStart;
-        await pumpNewGameLeaderSelectionDialog(
+        final got = await confirmAdvancedStart(
           tester,
-          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
-              gotAdvancedStart = advancedStart,
+          beforeStart: (t) async {
+            expect(find.text('Advanced start'), findsOneWidget);
+            expect(find.text('None (Turn 0)'), findsOneWidget);
+          },
         );
-        expect(find.text('Advanced start'), findsOneWidget);
-        expect(find.text('None (Turn 0)'), findsOneWidget);
-        await ensureTapNewGameLeaderSelectionStart(tester);
-        expect(gotAdvancedStart, AdvancedStartType.none);
+        expect(got, AdvancedStartType.none);
       });
 
       testWidgets('selecting 50 Turns In forwards AdvancedStartType.turns50', (
         WidgetTester tester,
       ) async {
-        AdvancedStartType? gotAdvancedStart;
-        await pumpNewGameLeaderSelectionDialog(
+        final got = await confirmAdvancedStart(
           tester,
-          onConfirmed: (_, _, _, _, _, __, advancedStart) =>
-              gotAdvancedStart = advancedStart,
+          beforeStart: (t) async {
+            final advancedDropdown = find.widgetWithText(
+              CtDropdown<AdvancedStartType>,
+              'None (Turn 0)',
+            );
+            await t.ensureVisible(advancedDropdown);
+            await t.pumpAndSettle();
+            await t.tap(advancedDropdown);
+            await t.pumpAndSettle();
+            await t.tap(find.text('50 Turns In (1598)').last);
+            await t.pumpAndSettle();
+          },
         );
-        final advancedDropdown = find.widgetWithText(
-          CtDropdown<AdvancedStartType>,
-          'None (Turn 0)',
-        );
-        await tester.ensureVisible(advancedDropdown);
-        await tester.pumpAndSettle();
-        await tester.tap(advancedDropdown);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('50 Turns In (1598)').last);
-        await tester.pumpAndSettle();
-        await ensureTapNewGameLeaderSelectionStart(tester);
-        expect(gotAdvancedStart, AdvancedStartType.turns50);
+        expect(got, AdvancedStartType.turns50);
       });
 
       testWidgets(
         'non-locked profile shows disabled helper and Start emits none',
         (WidgetTester tester) async {
-          AdvancedStartType? gotAdvancedStart;
-          await pumpNewGameLeaderSelectionDialog(
+          final got = await confirmAdvancedStart(
             tester,
-            surfaceSize: const Size(900, 2000),
+            surfaceSize: _largeViewport,
             baseConfig: GameSetupConfig(
               numProvincesOldWorld: 24,
               numProvincesNewWorld: 12,
             ),
-            onConfirmed: (_, _, _, _, _, __, advancedStart) =>
-                gotAdvancedStart = advancedStart,
+            beforeStart: (t) async {
+              expect(
+                find.text(
+                  'Advanced start requires the standard six-power campaign '
+                  'profile.',
+                ),
+                findsOneWidget,
+              );
+            },
           );
-          expect(
-            find.text(
-              'Advanced start requires the standard six-power campaign profile.',
-            ),
-            findsOneWidget,
-          );
-          await ensureTapNewGameLeaderSelectionStart(tester);
-          expect(gotAdvancedStart, AdvancedStartType.none);
+          expect(got, AdvancedStartType.none);
         },
       );
     });
 
-    testWidgets(
-      'shows terrain variation slider with default helper and label',
-      (WidgetTester tester) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-        expect(find.byType(CtSlider), findsOneWidget);
-        expect(find.text('Terrain variation:'), findsOneWidget);
-        // Live percent value rendered separately from the static label.
-        expect(find.text('50%'), findsOneWidget);
-        expect(find.text('0% flat — 100% extreme'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'Start passes default terrainVariation 0.5 when slider not moved',
-      (WidgetTester tester) async {
-        double? gotTerrainVariation;
-        await pumpNewGameLeaderSelectionDialog(
-          tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
-              gotTerrainVariation = terrainVariation,
+    testWidgets('Start passes terrainVariation default and left/right edges', (
+      WidgetTester tester,
+    ) async {
+      for (final case_ in <({bool? dragLeft, double want})>[
+        (dragLeft: null, want: 0.5),
+        (dragLeft: true, want: 0.0),
+        (dragLeft: false, want: 1.0),
+      ]) {
+        expect(
+          await confirmTerrain(tester, dragLeft: case_.dragLeft),
+          closeTo(case_.want, case_.dragLeft == null ? 1e-9 : 1e-6),
         );
-        await ensureTapNewGameLeaderSelectionStart(tester);
-        expect(gotTerrainVariation, closeTo(0.5, 1e-9));
-      },
-    );
-
-    testWidgets(
-      'Start passes terrainVariation 0.0 after dragging slider to leftmost',
-      (WidgetTester tester) async {
-        double? gotTerrainVariation;
-        await pumpNewGameLeaderSelectionDialog(
-          tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
-              gotTerrainVariation = terrainVariation,
-        );
-
-        final slider = find.byType(CtSlider);
-        await tester.ensureVisible(slider);
-        await tester.pumpAndSettle();
-        // Tap at the far-left of the slider track to snap to min (0.0).
-        final rect = tester.getRect(slider);
-        await tester.tapAt(Offset(rect.left + 1, rect.center.dy));
-        await tester.pumpAndSettle();
-        await ensureTapNewGameLeaderSelectionStart(tester);
-        expect(gotTerrainVariation, closeTo(0.0, 1e-6));
-      },
-    );
-
-    testWidgets(
-      'Start passes terrainVariation 1.0 after dragging slider to rightmost',
-      (WidgetTester tester) async {
-        double? gotTerrainVariation;
-        await pumpNewGameLeaderSelectionDialog(
-          tester,
-          onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
-              gotTerrainVariation = terrainVariation,
-        );
-
-        final slider = find.byType(CtSlider);
-        await tester.ensureVisible(slider);
-        await tester.pumpAndSettle();
-        final rect = tester.getRect(slider);
-        await tester.tapAt(Offset(rect.right - 1, rect.center.dy));
-        await tester.pumpAndSettle();
-        await ensureTapNewGameLeaderSelectionStart(tester);
-        expect(gotTerrainVariation, closeTo(1.0, 1e-6));
-      },
-    );
+      }
+    });
 
     // Duplicate slot validation feedback contract (#2867 R19).
-    //
-    // SPEC: `SPEC/ui/new-game-leader-selection-dialog.md`
-    // § Duplicate slot validation feedback. Positive AC pins that every
-    // duplicate slot's nation `CtDropdown<String>` is wrapped in a keyed
-    // `DecoratedBox` painting a 1 dp `EditorialMonoclePalette.danger`
-    // border. Negative AC pins the absence of that wrapper when all six
-    // slots hold unique ids. Recovery AC pins that swapping a duplicate
-    // slot to a previously unused nation unmounts the wrapper and
-    // re-enables Start.
     group('Duplicate slot validation feedback (#2867 R19)', () {
       bool hasDangerBorder(WidgetTester tester, int slotIndex) {
         final finder = find.byKey(
@@ -438,15 +429,11 @@ void main() {
             NewGameLeaderSelectionDialog.duplicateSlotBorderKey(slotIndex),
           ),
         );
-        if (finder.evaluate().isEmpty) {
-          return false;
-        }
+        if (finder.evaluate().isEmpty) return false;
         final DecoratedBox box = tester.widget<DecoratedBox>(finder);
         final BoxDecoration decoration = box.decoration as BoxDecoration;
         final BoxBorder? border = decoration.border;
-        if (border is! Border) {
-          return false;
-        }
+        if (border is! Border) return false;
         return border.top.color == EditorialMonoclePalette.danger &&
             border.top.width ==
                 NewGameLeaderSelectionDialog.duplicateSlotBorderWidth;
@@ -456,65 +443,17 @@ void main() {
         'positive: two slots sharing England wrap both nation dropdowns in '
         '1 dp --danger DecoratedBox and Start stays disabled',
         (WidgetTester tester) async {
-          // Force duplicate by repeating "england" in slots 0 and 5.
-          final config = GameSetupConfig(
-            selectedGreatPowerIds: const [
-              'england',
-              'france',
-              'spain',
-              'portugal',
-              'netherlands',
-              'england',
-            ],
-          );
+          await pumpDuplicateEngland(tester);
 
-          await pumpNewGameLeaderSelectionDialog(
-            tester,
-            baseConfig: config,
-            surfaceSize: const Size(900, 1600),
-          );
-
-          expect(
-            hasDangerBorder(tester, 0),
-            isTrue,
-            reason:
-                'Slot 0 holds the duplicate "england" id — its nation '
-                'dropdown must be wrapped in the keyed danger border per '
-                '#2867 R19.',
-          );
-          expect(
-            hasDangerBorder(tester, 5),
-            isTrue,
-            reason:
-                'Slot 5 also holds the duplicate "england" id — its '
-                'nation dropdown must carry the keyed danger border.',
-          );
+          expect(hasDangerBorder(tester, 0), isTrue);
+          expect(hasDangerBorder(tester, 5), isTrue);
           for (final i in const [1, 2, 3, 4]) {
-            expect(
-              hasDangerBorder(tester, i),
-              isFalse,
-              reason: 'Slot $i holds a unique id; no danger border.',
-            );
+            expect(hasDangerBorder(tester, i), isFalse);
           }
 
-          final Finder startButtonText = find.text('Start');
-          await tester.ensureVisible(startButtonText);
+          await tester.ensureVisible(find.text('Start'));
           await tester.pumpAndSettle();
-          final CtNinePatchButton startButton = tester
-              .widget<CtNinePatchButton>(
-                find.ancestor(
-                  of: startButtonText,
-                  matching: find.byType(CtNinePatchButton),
-                ),
-              );
-          expect(
-            startButton.enabled,
-            isFalse,
-            reason:
-                'Start must remain disabled while any slot is part of a '
-                'duplicate group (mirrors _startEnabled rejecting '
-                'duplicates).',
-          );
+          expect(startButton(tester).enabled, isFalse);
         },
       );
 
@@ -523,21 +462,13 @@ void main() {
         await pumpNewGameLeaderSelectionDialog(
           tester,
           baseConfig: GameSetupConfig.defaultConfig,
-          surfaceSize: const Size(900, 1600),
+          surfaceSize: _duplicateSurface,
         );
 
         for (var i = 0; i < 6; i++) {
-          final finder = find.byKey(
-            ValueKey<String>(
-              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
-            ),
-          );
           expect(
-            finder,
+            keyed(NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i)),
             findsNothing,
-            reason:
-                'Slot $i: with six unique nations, no slot must carry '
-                'the duplicate-border wrapper (negative AC).',
           );
         }
       });
@@ -546,167 +477,63 @@ void main() {
         'recovery: replacing the duplicate nation unmounts the wrapper and '
         're-enables Start',
         (WidgetTester tester) async {
-          final config = GameSetupConfig(
-            selectedGreatPowerIds: const [
-              'england',
-              'france',
-              'spain',
-              'portugal',
-              'netherlands',
-              'england',
-            ],
-          );
+          await pumpDuplicateEngland(tester);
 
-          await pumpNewGameLeaderSelectionDialog(
-            tester,
-            baseConfig: config,
-            surfaceSize: const Size(900, 1600),
-          );
-
-          // Confirm initial duplicate borders are present.
           expect(hasDangerBorder(tester, 0), isTrue);
           expect(hasDangerBorder(tester, 5), isTrue);
 
-          // Open slot 5's nation dropdown (the second "England" instance)
-          // and pick a previously unused nation. Slot 5's dropdown is the
-          // last keyed border wrapper, so its descendant CtDropdown is
-          // unambiguous.
-          final slot5Border = find.byKey(
-            ValueKey<String>(
-              NewGameLeaderSelectionDialog.duplicateSlotBorderKey(5),
-            ),
-          );
           final slot5Dropdown = find.descendant(
-            of: slot5Border,
+            of: keyed(NewGameLeaderSelectionDialog.duplicateSlotBorderKey(5)),
             matching: find.byType(CtDropdown<String>),
           );
           await tester.ensureVisible(slot5Dropdown);
           await tester.pumpAndSettle();
           await tester.tap(slot5Dropdown);
           await tester.pumpAndSettle();
-
-          // Pick "Sweden" — not present in any other slot in this config.
           await tester.tap(find.text('Sweden').last);
           await tester.pumpAndSettle();
 
-          // Both wrappers must now be absent — slot 0's id is unique
-          // again and slot 5 holds a fresh unique id.
           for (var i = 0; i < 6; i++) {
-            final finder = find.byKey(
-              ValueKey<String>(
-                NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i),
-              ),
-            );
             expect(
-              finder,
+              keyed(NewGameLeaderSelectionDialog.duplicateSlotBorderKey(i)),
               findsNothing,
-              reason:
-                  'After resolving the duplicate, no slot must carry the '
-                  'duplicate-border wrapper.',
             );
           }
-
-          final CtNinePatchButton startButton = tester
-              .widget<CtNinePatchButton>(
-                find.ancestor(
-                  of: find.text('Start'),
-                  matching: find.byType(CtNinePatchButton),
-                ),
-              );
-          expect(
-            startButton.enabled,
-            isTrue,
-            reason:
-                'Start must re-enable once every slot holds a unique '
-                'non-empty Great Power id (mirrors _startEnabled).',
-          );
+          expect(startButton(tester).enabled, isTrue);
         },
       );
     });
 
     // Dark editorial-monocle chrome contract (#2867 S6 / R1 / R2 / R21).
-    //
-    // Pins the keyed title color + `letterSpacing == fontSize * 0.05`, the
-    // single keyed `CtBrassDivider` between title and intro, and the muted
-    // italic intro style — mirroring the contract already pinned by the
-    // overture (`overture_dialogue_overlay_test.dart`) and intervention
-    // (`intervention_dialogue_overlay_dark_chrome_test.dart`) overlays so
-    // every #2867 surface enforces the same dark chrome shape.
     group('Dark editorial-monocle chrome (#2867 S6)', () {
       testWidgets(
-        'title resolves --accent color and letterSpacing == fontSize * 0.05',
+        'title/intro/divider use editorial-monocle tokens (not raw theme)',
         (WidgetTester tester) async {
-          await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-          final titleFinder = find.byKey(
-            const ValueKey<String>('leaderSelectionDialogTitle'),
-          );
-          expect(titleFinder, findsOneWidget);
-          final Text title = tester.widget<Text>(titleFinder);
+          await pumpNewGameLeaderSelectionDialog(tester);
+          final Text title = keyedText(tester, 'leaderSelectionDialogTitle');
           expect(title.style?.color, EditorialMonoclePalette.accent);
           final double fontSize = title.style?.fontSize ?? 16;
+          expect(title.style?.letterSpacing, closeTo(fontSize * 0.05, 1e-9));
           expect(
-            title.style?.letterSpacing,
-            closeTo(fontSize * 0.05, 1e-9),
-            reason:
-                'letterSpacing must scale with the resolved fontSize so '
-                'theme text-scale overrides preserve the canonical 0.05em '
-                'ratio (#2867 R2).',
+            title.style?.color,
+            isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
           );
+
+          final dividerFinder = keyed('leaderSelectionDialogBrassDivider');
+          expect(dividerFinder, findsOneWidget);
+          expect(find.byType(CtBrassDivider), findsOneWidget);
+          expect(
+            tester.getRect(dividerFinder).top,
+            greaterThanOrEqualTo(
+              tester.getRect(keyed('leaderSelectionDialogTitle')).bottom,
+            ),
+          );
+
+          final Text intro = keyedText(tester, 'leaderSelectionDialogIntro');
+          expect(intro.style?.color, EditorialMonoclePalette.muted);
+          expect(intro.style?.fontStyle, FontStyle.italic);
         },
       );
-
-      testWidgets('renders exactly one CtBrassDivider keyed below the title', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-        final dividerFinder = find.byKey(
-          const ValueKey<String>('leaderSelectionDialogBrassDivider'),
-        );
-        expect(dividerFinder, findsOneWidget);
-        expect(find.byType(CtBrassDivider), findsOneWidget);
-        final Rect titleRect = tester.getRect(
-          find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
-        );
-        final Rect dividerRect = tester.getRect(dividerFinder);
-        expect(
-          dividerRect.top,
-          greaterThanOrEqualTo(titleRect.bottom),
-          reason:
-              'Brass divider must paint below the title band per '
-              '#2867 R21 chrome ordering.',
-        );
-      });
-
-      testWidgets('intro paints --muted italic body color', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-        final introFinder = find.byKey(
-          const ValueKey<String>('leaderSelectionDialogIntro'),
-        );
-        expect(introFinder, findsOneWidget);
-        final Text intro = tester.widget<Text>(introFinder);
-        expect(intro.style?.color, EditorialMonoclePalette.muted);
-        expect(intro.style?.fontStyle, FontStyle.italic);
-      });
-
-      testWidgets('title does NOT use the raw textTheme.titleMedium color '
-          '(regression guard against unstyled headings)', (
-        WidgetTester tester,
-      ) async {
-        await pumpNewGameLeaderSelectionDialog(tester, onConfirmed: (_, _, _, _, _, _, _) {});
-        final Text title = tester.widget<Text>(
-          find.byKey(const ValueKey<String>('leaderSelectionDialogTitle')),
-        );
-        expect(
-          title.style?.color,
-          isNot(equals(AppThemes.colonial.textTheme.titleMedium?.color)),
-          reason:
-              'A regression that drops the EditorialMonoclePalette '
-              'override would surface the colonial titleMedium color '
-              'instead of the canonical --accent token (#2867 R1).',
-        );
-      });
     });
   });
 }

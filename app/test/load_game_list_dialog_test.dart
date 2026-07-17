@@ -11,9 +11,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'support/app_shell_harness.dart';
 
 class _LoadDialogGameService extends GameService {
   _LoadDialogGameService(super.box, super.adapter);
@@ -118,21 +119,20 @@ void main() {
       productionDesiredOutputByRecipe: const {'r1': 2},
       displayName: 'Spain Save',
     );
-    return ProviderScope(
+    // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
+    return buildAppShell(
       overrides: [
         gamesBoxProvider.overrideWithValue(gamesBox),
         gameServiceProvider.overrideWith((ref) => service),
         appEventBusProvider.overrideWith((ref) => bus),
         currentGameProvider.overrideWith(() => CurrentGameNotifier()),
       ],
-      child: MaterialApp(
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: LoadGameListDialog(
-            fromPause: fromPause,
-            previewPendingDeleteId: previewPendingDeleteId,
-          ),
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      child: Scaffold(
+        body: LoadGameListDialog(
+          fromPause: fromPause,
+          previewPendingDeleteId: previewPendingDeleteId,
         ),
       ),
     );

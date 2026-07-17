@@ -18,7 +18,7 @@ extension _MarketTabContentQuantityHandlers on _MarketTabContent {
     );
     if (prior == null) return; // No staged direction → ignore.
     final int rawNext = prior.quantity + delta;
-    if (rawNext < TradeScreen.marketRowQuantityMin) return;
+    if (rawNext < TradeScreenMarketKeys.marketRowQuantityMin) return;
     if (rawNext == prior.quantity) return;
     if (prior.type == TradeOrderType.bid && delta > 0) {
       // Refs #2993 E5c: increment is blocked when the cross-commodity

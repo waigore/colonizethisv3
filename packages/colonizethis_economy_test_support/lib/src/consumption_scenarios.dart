@@ -10,8 +10,7 @@ void runResolveConsumptionScenario(ResolveConsumptionScenario scenario) {
   runResolveConsumption(stockpile: scenario.stockpile, workers: scenario.workers, militaryUnits: scenario.militaryUnits, shipCountsById: scenario.shipCountsById, pins: scenario.pins, expectUnknownShipThrows: scenario.expectUnknownShipThrows);
 }
 /// Canonical scenarios for [resolveConsumption].
-List<ResolveConsumptionScenario> resolveConsumptionScenarios() => [..._resolveConsumptionWorkerFoodScenarios(), ..._resolveConsumptionMilitaryLuxuryScenarios()];
-List<ResolveConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
+List<ResolveConsumptionScenario> resolveConsumptionScenarios() => [
   resolveConsumptionScenario(
     label: 'peasants consume 1 food each (grain or meat)',
     stockpileDeltas: {'grain': 5, 'meat': 0},
@@ -49,8 +48,6 @@ List<ResolveConsumptionScenario> _resolveConsumptionWorkerFoodScenarios() => [
     pins: ResolveConsumptionPins(idleLabour: WorkerIdleCounts(apprentices: 2), grainRemaining: 0, meatRemaining: 8),
   ),
   resolveConsumptionScenario(label: 'zero workers and zero military leaves stockpile unchanged', stockpileDeltas: {'grain': 5, 'meat': 5}, workers: const WorkerPool(peasants: 0), pins: const ResolveConsumptionPins(grainRemaining: 5, meatRemaining: 5, totalRegiments: 0, fullyFedRegiments: 0, totalShips: 0, fullyFedShips: 0)),
-];
-List<ResolveConsumptionScenario> _resolveConsumptionMilitaryLuxuryScenarios() => [
   resolveConsumptionScenario(label: 'unknown ship type id throws ConsumptionUnknownShipTypeException', stockpile: const Stockpile(), workers: const WorkerPool(peasants: 0), shipCountsById: const {'not_a_real_ship': 1}, expectUnknownShipThrows: true, pins: const ResolveConsumptionPins()),
   resolveConsumptionScenario(
     label: 'resolveConsumption wires military→navy→workers strike order and counts',

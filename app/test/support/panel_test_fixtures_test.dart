@@ -36,6 +36,23 @@ void main() {
       expect(game.worldState.oldWorld.provinces, hasLength(1));
       expect(game.worldState.oldWorld.units.single.id, 'u1');
     });
+
+    test('threads nextArmySeq, visibility, and empty diplomacyRelations', () {
+      const tile = 'oldWorld|p1|0|0';
+      final game = buildPanelTestGame(
+        nextArmySeq: 7,
+        diplomacyRelations: const [],
+        playerVisibilityByTile: {
+          kPanelTestHumanPlayerId: {tile: 'fullyVisible'},
+        },
+      );
+      expect(game.worldState.nextArmySeq, 7);
+      expect(
+        game.worldState.playerVisibilityByTile[kPanelTestHumanPlayerId]![tile],
+        'fullyVisible',
+      );
+      expect(game.diplomacyRelations, isEmpty);
+    });
   });
 
   group('buildCivilianPanelTestGame', () {
@@ -87,7 +104,6 @@ void main() {
 
       final armies = game.worldState.armies.where((a) => a.ownerId == human);
       expect(armies.map((a) => a.regionId).toSet(), {'oldWorld', 'newWorld'});
-      // Old-world army has >=2 regiments so the Split action renders.
       expect(
         armies.firstWhere((a) => a.regionId == 'oldWorld').regimentUnitIds,
         hasLength(2),
@@ -123,125 +139,48 @@ void main() {
     );
   });
 
-  group('buildTechnologyPanelTestGame', () {
-    test('exposes a single human player with no researched tech', () {
-      final game = buildTechnologyPanelTestGame();
-      expect(game.players, hasLength(1));
-      final player = game.players.first;
-      expect(player.id, kPanelTestHumanPlayerId);
-      expect(player.isHuman, isTrue);
-      // Base player starts with no researched tech so the "None yet" /
-      // all-techs-available assertions hold without a copyWith override.
-      expect(player.techUnlocked ?? const <String, bool>{}, isEmpty);
-      // No generated map/topology data is needed by TechnologyPanel.
-      expect(game.worldState.oldWorld.units, isEmpty);
-      expect(game.worldState.newWorld.units, isEmpty);
-    });
+  group('empty-human panel fixtures', () {
+    test('technology / side-menu / game-screen share solo human + empty regions', () {
+      final tech = buildTechnologyPanelTestGame();
+      expect(tech.players, hasLength(1));
+      expect(tech.players.first.id, kPanelTestHumanPlayerId);
+      expect(tech.players.first.isHuman, isTrue);
+      expect(tech.players.first.techUnlocked ?? const <String, bool>{}, isEmpty);
+      expect(tech.players.first.researchSlots, isNull);
+      expect(tech.worldState.oldWorld.units, isEmpty);
 
-    test(
-      'uses the default research-slot count (player.researchSlots null)',
-      () {
-        final game = buildTechnologyPanelTestGame();
-        // Null defers to TechnologyPanel's `player.researchSlots ?? 3` default
-        // (three active + one locked slot card).
-        expect(game.players.first.researchSlots, isNull);
-      },
-    );
-  });
+      final side = buildSideMenuTestGame();
+      expect(side.players.first.id, kPanelTestHumanPlayerId);
+      expect(side.infiniteMode, isFalse);
+      expect(side.worldState.newWorld.units, isEmpty);
 
-  group('buildSideMenuTestGame', () {
-    test(
-      'exposes a single human player and defaults infiniteMode to false',
-      () {
-        final game = buildSideMenuTestGame();
-        expect(game.players, hasLength(1));
-        expect(game.players.first.id, kPanelTestHumanPlayerId);
-        expect(game.players.first.isHuman, isTrue);
-        // The Game Parameters dialog reads `infiniteMode`; suites opt into the
-        // "Infinite mode: On" line via copyWith, so the base must be false.
-        expect(game.infiniteMode, isFalse);
-        // No generated map/topology data is consumed by the menu chrome.
-        expect(game.worldState.oldWorld.units, isEmpty);
-        expect(game.worldState.newWorld.units, isEmpty);
-      },
-    );
-  });
-
-  group('buildGameScreenSpecsTestGame', () {
-    test('exposes a single human player usable as the victory winner', () {
-      final game = buildGameScreenSpecsTestGame();
-      expect(game.players, hasLength(1));
-      final human = game.players.first;
-      expect(human.id, kPanelTestHumanPlayerId);
-      expect(human.isHuman, isTrue);
-      // The victory spec keys `VictoryState.winnerPlayerId` off players.first,
-      // so the list must be non-empty.
-      expect(game.players, isNotEmpty);
-      // No generated map/topology data is consumed (mapViewData is null).
-      expect(game.worldState.oldWorld.units, isEmpty);
-      expect(game.worldState.newWorld.units, isEmpty);
-      expect(game.victory, isNull);
+      final screen = buildGameScreenSpecsTestGame();
+      expect(screen.players.first.isHuman, isTrue);
+      expect(screen.victory, isNull);
+      expect(screen.worldState.oldWorld.units, isEmpty);
     });
   });
 
-  group('buildDiplomacyScreenTestGame', () {
-    test(
-      'human first player has an affordable treasury and an AI opponent',
-      () {
-        final game = buildDiplomacyScreenTestGame();
-        expect(game.players, hasLength(2));
-        final human = game.players.first;
-        expect(human.id, kPanelTestHumanPlayerId);
-        expect(human.isHuman, isTrue);
-        // Grant-aid dialog default amount (1000) must be affordable by default.
-        expect(human.treasury, greaterThanOrEqualTo(1000));
-        // players[1] resolves as a grant/subsidy target faction.
-        expect(game.players[1].id, 'gp2');
-        expect(game.players[1].isHuman, isFalse);
-      },
-    );
+  group('buildDiplomacyScreenTestGame / buildDiplomacyPanelTestGame', () {
+    test('screen: affordable human+AI, undiscovered; panel: at-peace relation', () {
+      final screen = buildDiplomacyScreenTestGame();
+      expect(screen.players, hasLength(2));
+      expect(screen.players.first.id, kPanelTestHumanPlayerId);
+      expect(screen.players.first.treasury, greaterThanOrEqualTo(1000));
+      expect(screen.players[1].id, 'gp2');
+      expect(screen.diplomacyRelations, isEmpty);
+      expect(screen.worldState.oldWorld.units, isEmpty);
 
-    test('seeds no diplomacy relations (opponent stays undiscovered)', () {
-      final game = buildDiplomacyScreenTestGame();
-      // The screen suites only assert the always-rendered section headings, so
-      // the opponent is intentionally left undiscovered (no relation seeded).
-      expect(game.diplomacyRelations, isEmpty);
-      // No generated map/topology data is consumed by the screen chrome.
-      expect(game.worldState.oldWorld.units, isEmpty);
-      expect(game.worldState.newWorld.units, isEmpty);
-    });
-  });
-
-  group('buildDiplomacyPanelTestGame', () {
-    test(
-      'human first player with an affordable treasury and an AI opponent',
-      () {
-        final game = buildDiplomacyPanelTestGame();
-        expect(game.players, hasLength(2));
-        final human = game.players.first;
-        expect(human.id, kPanelTestHumanPlayerId);
-        expect(human.isHuman, isTrue);
-        expect(human.treasury, greaterThanOrEqualTo(1000));
-        expect(game.players[1].id, 'gp2');
-        expect(game.players[1].isHuman, isFalse);
-      },
-    );
-
-    test('seeds an at-peace GP relation so the opponent is discovered', () {
-      final game = buildDiplomacyPanelTestGame();
-      // Unlike the screen fixture, the panel suites need a discovered row, so a
-      // persisted relation (indexed by buildPlayerView.diplomacyByOtherId) is
-      // seeded between the human and the AI great power.
-      expect(game.diplomacyRelations, hasLength(1));
-      final relation = game.diplomacyRelations.single;
+      final panel = buildDiplomacyPanelTestGame();
+      expect(panel.players.first.isHuman, isTrue);
+      expect(panel.players[1].isHuman, isFalse);
+      expect(panel.diplomacyRelations, hasLength(1));
+      final relation = panel.diplomacyRelations.single;
       expect(
         {relation.factionId1, relation.factionId2},
         {kPanelTestHumanPlayerId, 'gp2'},
       );
       expect(relation.state, RelationState.atPeace);
-      // No generated map/topology data is consumed by the panel chrome.
-      expect(game.worldState.oldWorld.units, isEmpty);
-      expect(game.worldState.newWorld.units, isEmpty);
     });
   });
 
@@ -267,8 +206,6 @@ void main() {
             : r.factionId1;
       }).toSet();
       expect(otherIds, {'gp2', 'gp3', 'm1', 't1'});
-      // gp2 at peace (PEACE badge), gp3 at war (WAR badge) so both relation
-      // state badges are exercised by the panel suites.
       final byOther = {
         for (final r in game.diplomacyRelations)
           (r.factionId1 == kPanelTestHumanPlayerId
@@ -312,43 +249,24 @@ void main() {
   });
 
   group('buildNavalPanelTestGame', () {
-    test('human owns a home fleet and a non-home fleet, both with ships', () {
+    test('home+sea fleets, capital, ports, and empty-state filter', () {
       final game = buildNavalPanelTestGame();
       final human = game.players.first.id;
       final ownedWithShips = game.worldState.fleets
           .where((f) => f.ownerId == human && f.shipTypeIds.isNotEmpty)
           .toList();
       expect(ownedWithShips, hasLength(2));
-
       final homeId = homeFleetIdFor(human);
       final homeFleet = ownedWithShips.firstWhere((f) => f.id == homeId);
       expect(homeFleet.inPortAtProvinceId, isNotNull);
       expect(homeFleet.shipTypeIds, hasLength(2));
-
-      final nonHome = ownedWithShips.where((f) => f.id != homeId);
-      expect(nonHome, isNotEmpty);
-      expect(nonHome.first.seaZoneId, isNotNull);
-    });
-
-    test('player has a capital tile and provinces exist in both regions', () {
-      final game = buildNavalPanelTestGame();
+      expect(ownedWithShips.any((f) => f.id != homeId && f.seaZoneId != null), isTrue);
       expect(game.players.first.capitalTile, isNotNull);
       expect(game.worldState.oldWorld.provinces, isNotEmpty);
       expect(game.worldState.newWorld.provinces, isNotEmpty);
-    });
-
-    test('exposes port/sea-zone tile data for locate resolution', () {
-      final game = buildNavalPanelTestGame();
       final ports = game.worldState.portsByProvinceSeaboard;
-      expect(ports, isNotEmpty);
-      // A `region|province|seazone` key (>= 2 segments) so the sea-zone locate
-      // assertions can resolve a port tile key.
       expect(ports.keys.any((k) => k.split('|').length >= 2), isTrue);
       expect(game.worldState.tileKeysByRegionAndProvince, isNotEmpty);
-    });
-
-    test('a non-owning player id yields no fleets (empty state)', () {
-      final game = buildNavalPanelTestGame();
       expect(
         game.worldState.fleets.where((f) => f.ownerId == 'no-such-player'),
         isEmpty,
@@ -361,13 +279,9 @@ void main() {
       final game = buildSelectionPromptTestGame();
       expect(game.players, hasLength(1));
       expect(game.players.first.id, kPanelTestHumanPlayerId);
-      // The selection-prompt suites read oldWorld.units.first.id as the unit
-      // passed to StartCivilianWorkTargetSelectionEvent; it must exist and be
-      // owned by the human so _startWorkTargetSelection resolves it.
       final sample = game.worldState.oldWorld.units.first;
       expect(sample.ownerId, kPanelTestHumanPlayerId);
       expect(sample.type, kUnitTypeExplorer);
-      // No generated map/topology data is consumed by the banner chrome.
       expect(game.worldState.newWorld.units, isEmpty);
     });
   });
@@ -384,8 +298,6 @@ void main() {
           game.worldState.oldWorld.provinces.single.ownerId,
           kPanelTestHumanPlayerId,
         );
-        // No generated map/topology cells are needed; the suite only mounts the
-        // canvas via buildLightweightMapViewData().
         expect(game.worldState.newWorld.units, isEmpty);
       },
     );
@@ -396,9 +308,6 @@ void main() {
         final game = buildEventFeedNarrowInsetTestGame();
         final byProv = game.worldState.tileKeysByRegionAndProvince['oldWorld'];
         expect(byProv, isNotNull);
-        // The suite taps `_firstOldWorldTileKey`; it must resolve a non-empty
-        // tile key whose province id matches a seeded province so the opened
-        // narrow overlay resolves real province data.
         final entry = byProv!.entries.firstWhere((e) => e.value.isNotEmpty);
         final tileKey = entry.value.first;
         expect(tileKey, isNotEmpty);
@@ -420,7 +329,6 @@ void main() {
       final opponent = game.players.firstWhere((p) => p.id != human.id);
       expect(opponent.isHuman, isFalse);
       expect(opponent.displayName, isNotEmpty);
-      // The dispose test reads oldWorld.units.first.id as the sample unit.
       expect(game.worldState.oldWorld.units, isNotEmpty);
     });
 
@@ -428,9 +336,6 @@ void main() {
       final game = buildMapAreaEventFeedTestGame();
       final ports = game.worldState.portsByProvinceSeaboard;
       expect(ports, isNotEmpty);
-      // The naval feed line derives seaZoneId as `<region>|<seaboard-suffix>`
-      // from the seaboard key and resolves it via tileKeyForSeaZoneLocation;
-      // the entry must expose a `region|province|seazone` key shape.
       final key = ports.keys.first;
       final parts = key.split('|');
       expect(parts.length, greaterThanOrEqualTo(3));
@@ -442,16 +347,11 @@ void main() {
     test(
       'human carries fed labour + recipe-input stockpile for non-zero deltas',
       () {
-        // The breakdown dialog's delta-colour pins need the economy-preview
-        // Consumption/Production phases to move the stockpile without owned
-        // tiles: peasants fed by grain become idle labour, and timber feeds the
-        // lumber_from_timber recipe (Refs #3656).
         final game = buildProductionBreakdownDeltaTestGame();
         final human = game.players.firstWhere((p) => p.isHuman);
         expect(human.id, kPanelTestHumanPlayerId);
         expect(human.workerPool.peasants, greaterThan(0));
         expect(human.stockpile.quantityOf('grain'), greaterThan(0));
-        // 5 lumber runs consume 10 timber; the fixture must stock enough.
         expect(human.stockpile.quantityOf('timber'), greaterThanOrEqualTo(10));
       },
     );

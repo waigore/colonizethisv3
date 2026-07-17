@@ -84,3 +84,27 @@ final mapProvincePanelProvider =
     NotifierProvider<MapProvincePanelNotifier, MapProvincePanelUiState>(
       MapProvincePanelNotifier.new,
     );
+
+/// Map-canvas highlight + selection fields (excludes [MapProvincePanelUiState.overlayOpen]).
+///
+/// Used with `ref.watch(mapProvincePanelProvider.select(mapCanvasHighlightSlice))`
+/// so overlay open/close alone does not rebuild the Flame [CtRegionMap] host.
+/// Refs #4018.
+({
+  String? selectedTileKey,
+  String? secondaryHighlightTileKey,
+  Set<String>? secondaryHighlightTileKeys,
+})
+mapCanvasHighlightSlice(MapProvincePanelUiState state) => (
+  selectedTileKey: state.selectedTileKey,
+  secondaryHighlightTileKey: state.secondaryHighlightTileKey,
+  secondaryHighlightTileKeys: state.secondaryHighlightTileKeys,
+);
+
+/// Detail-host fields (excludes secondary highlight).
+///
+/// Hover/multi-tile secondary highlight must not rebuild wide/narrow hosts.
+/// Refs #4018.
+({bool overlayOpen, String? selectedTileKey}) mapProvinceDetailHostSlice(
+  MapProvincePanelUiState state,
+) => (overlayOpen: state.overlayOpen, selectedTileKey: state.selectedTileKey);

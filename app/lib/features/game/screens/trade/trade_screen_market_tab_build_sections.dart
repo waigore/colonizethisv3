@@ -47,7 +47,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
   }) {
     return <Widget>[
       ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionFoodKey,
+        sectionKey: TradeScreenMarketKeys.marketSectionFoodKey,
         sectionLabel: l10n.production_food,
         commodities: sectioned.food,
         offerCap: offerCap,
@@ -63,7 +63,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         l10n: l10n,
       ),
       ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionRawMaterialsKey,
+        sectionKey: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
         sectionLabel: l10n.production_rawMaterials,
         commodities: sectioned.rawMaterials,
         offerCap: offerCap,
@@ -80,7 +80,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         l10n: l10n,
       ),
       ..._buildCommoditySectionWidgets(
-        sectionKey: TradeScreen.marketSectionManufacturedKey,
+        sectionKey: TradeScreenMarketKeys.marketSectionManufacturedKey,
         sectionLabel: l10n.production_manufactured,
         commodities: sectioned.manufactured,
         offerCap: offerCap,

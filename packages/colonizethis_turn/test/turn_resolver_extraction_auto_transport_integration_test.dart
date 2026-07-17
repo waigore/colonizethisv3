@@ -3,7 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'extraction_auto_transport_test_fixtures.dart';
+import 'support/extraction_auto_transport_test_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Extraction auto-transport (TurnResolver integration)', () {
@@ -50,15 +51,13 @@ void main() {
         );
         expect(allocated['sugarCane'], 3);
 
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         expect(next.players.first.stockpile.quantityOf('sugarCane'), 3);
         const shipFood = 2;
@@ -115,15 +114,13 @@ void main() {
         expect(allocated['cotton'], 2);
         expect(allocated['sugarCane'], 1);
 
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         expect(next.players.first.stockpile.quantityOf('grain'), 1000 - 2 + 1);
         expect(next.players.first.stockpile.quantityOf('cotton'), 2);
@@ -195,15 +192,13 @@ void main() {
           lessThan(allocated.values.fold<int>(0, (a, b) => a + b)),
         );
 
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: topology,
             orders: const Orders(),
             tileMapByRegion: tileMapByRegion,
             defaultAssignments: const [],
-          ),
-        );
+          );
 
         final expectedSugar =
             intercepted.reducedDelivered[CommodityCatalog.sugarCane.id] ?? 0;

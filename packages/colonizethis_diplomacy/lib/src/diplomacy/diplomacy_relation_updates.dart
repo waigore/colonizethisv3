@@ -9,8 +9,8 @@ import 'diplomacy_relation_lookup.dart';
   return (id1: parts[0], id2: parts[1]);
 }
 
-/// Updater applying declare-war relation state. Shared by [setWarStateForPair] and
-/// the batched [RelationUpsertIndex] path (Refs #3837).
+/// Updater applying declare-war relation state for the batched
+/// [RelationUpsertIndex] path (Refs #3837 / #4037).
 DiplomacyRelation Function(DiplomacyRelation?) warStateRelationUpdater(
   String gpId,
   String targetId,
@@ -42,8 +42,8 @@ DiplomacyRelation Function(DiplomacyRelation?) warStateRelationUpdater(
   };
 }
 
-/// Updater applying offer-peace relation state. Shared by [applyPeaceForPair] and
-/// the batched [RelationUpsertIndex] path (Refs #3837).
+/// Updater applying offer-peace relation state for the batched
+/// [RelationUpsertIndex] path (Refs #3837 / #4037).
 DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
   String gpId,
   String targetId,
@@ -56,45 +56,16 @@ DiplomacyRelation Function(DiplomacyRelation?) peaceRelationUpdater(
   );
 };
 
-List<DiplomacyRelation> setWarStateForPair({
-  required List<DiplomacyRelation> relations,
-  required String gpId,
-  required String targetId,
-  required int turn,
-}) {
-  return upsertRelation(
-    relations,
-    gpId,
-    targetId,
-    warStateRelationUpdater(gpId, targetId, turn),
-  );
-}
-
-List<DiplomacyRelation> applyPeaceForPair({
-  required List<DiplomacyRelation> relations,
-  required String gpId,
-  required String targetId,
-  required int turn,
-}) {
-  return upsertRelation(
-    relations,
-    gpId,
-    targetId,
-    peaceRelationUpdater(gpId, targetId, turn),
-  );
-}
-
-/// Updater applying a fixed Grant Aid relation modifier (+5, clamped). Shared by
-/// [applyGrantAidModifier] and the batched [RelationUpsertIndex] path so the
-/// relation-construction logic lives in one place (Refs #3419 step 5).
+/// Updater applying a fixed Grant Aid relation modifier (+5, clamped) for the
+/// batched [RelationUpsertIndex] path (Refs #3419 step 5 / #4037).
 DiplomacyRelation Function(DiplomacyRelation?) grantAidRelationUpdater(
   String gpId,
   String targetId,
   int turn,
 ) => _scoreDeltaUpdater(gpId, targetId, 5, turn);
 
-/// Updater applying a [boost] to the relation score (clamped). Shared by
-/// [applySubsidyBoost] and the batched [RelationUpsertIndex] path.
+/// Updater applying a [boost] to the relation score (clamped) for the batched
+/// [RelationUpsertIndex] path (Refs #4037).
 DiplomacyRelation Function(DiplomacyRelation?) subsidyBoostRelationUpdater(
   String payerId,
   String targetId,
@@ -130,35 +101,6 @@ DiplomacyRelation Function(DiplomacyRelation?) _scoreDeltaUpdater(
       lastInteractionTurn: turn,
     );
   };
-}
-
-List<DiplomacyRelation> applyGrantAidModifier({
-  required List<DiplomacyRelation> relations,
-  required String gpId,
-  required String targetId,
-  required int turn,
-}) {
-  return upsertRelation(
-    relations,
-    gpId,
-    targetId,
-    grantAidRelationUpdater(gpId, targetId, turn),
-  );
-}
-
-List<DiplomacyRelation> applySubsidyBoost({
-  required List<DiplomacyRelation> relations,
-  required String payerId,
-  required String targetId,
-  required int boost,
-  required int turn,
-}) {
-  return upsertRelation(
-    relations,
-    payerId,
-    targetId,
-    subsidyBoostRelationUpdater(payerId, targetId, boost, turn),
-  );
 }
 
 /// Every Great Power (other than [breakerId] itself and any id in [exclude])

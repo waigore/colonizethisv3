@@ -76,9 +76,10 @@ MapTopology singleProvinceAndSeaTopology(String regionId) {
 /// Minimal dual-region [Game] for `buildInitGameMapViewData` tests.
 ///
 /// Wires the standard `WorldState(turnState: orders, oldWorld, newWorld)` shape
-/// with optional units, fleets, players, minor nations, tribes, ports, and
-/// sea-zone display names. Every parameter keeps the production default so a
-/// bare `minimalGame(...)` matches the inline boilerplate it replaces.
+/// with optional units, fleets, players, minor nations, tribes, ports,
+/// sea-zone display names, and great-power colour overrides. Every parameter
+/// keeps the production default so a bare `minimalGame(...)` matches the
+/// inline boilerplate it replaces.
 Game minimalGame({
   String id = 'map-view-test',
   int turnNumber = 0,
@@ -92,6 +93,7 @@ Game minimalGame({
   List<Tribe> tribes = const [],
   Map<String, String> portsByProvinceSeaboard = const {},
   Map<String, String> seaZoneDisplayNameById = const {},
+  Map<String, List<int>>? greatPowerColorOverride,
 }) {
   return Game(
     id: id,
@@ -106,6 +108,7 @@ Game minimalGame({
     players: players,
     minorNations: minorNations,
     tribes: tribes,
+    greatPowerColorOverride: greatPowerColorOverride,
   );
 }
 
@@ -177,7 +180,8 @@ class DualRegionViewScenario {
       resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
       resourceExtractionEffectiveUnitsByTile:
           resourceExtractionEffectiveUnitsByTile,
-      resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
+      resourceExtractionBlockedUnitsByTile:
+          resourceExtractionBlockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIds,
     );
   }
@@ -203,8 +207,8 @@ DualRegionViewScenario dualRegionViewScenario({
 
 /// Default single-tile new-world map for view-builder tests that focus on OW.
 TileMapResult defaultNewWorldMap() => mapTileGrid([
-      ['p1'],
-    ]);
+  ['p1'],
+]);
 
 /// Default single-province new-world topology for view-builder tests.
 MapTopology defaultNewWorldTopology({List<String> provinceIds = const ['p1']}) {
@@ -228,9 +232,12 @@ DualRegionViewScenario dualRegionScenario({
       terrainGrid: oldWorldTerrainGrid,
       resourceGrid: oldWorldResourceGrid,
     ),
-    newWorldMap: mapTileGrid(newWorldGrid ?? const [
-          ['p1'],
-        ]),
+    newWorldMap: mapTileGrid(
+      newWorldGrid ??
+          const [
+            ['p1'],
+          ],
+    ),
     oldWorldTopology: oldWorldTopology,
     newWorldTopology: newWorldTopology ?? defaultNewWorldTopology(),
   );
@@ -249,10 +256,7 @@ DualRegionViewScenario oldWorldFocusedScenario({
 }) {
   return dualRegionViewScenario(
     game: game,
-    oldWorldMap: mapTileGrid(
-      oldWorldGrid,
-      terrainGrid: oldWorldTerrainGrid,
-    ),
+    oldWorldMap: mapTileGrid(oldWorldGrid, terrainGrid: oldWorldTerrainGrid),
     newWorldMap: mapTileGrid(newWorldGrid),
     oldWorldTopology: oldWorldTopology,
     newWorldTopology:
@@ -309,7 +313,8 @@ InitGameMapViewData buildViewDataForScenario(
     visibilityByTile: visibilityByTile,
     warpLinks: warpLinks,
     resourceExtractionUnitsByTile: resourceExtractionUnitsByTile,
-    resourceExtractionEffectiveUnitsByTile: resourceExtractionEffectiveUnitsByTile,
+    resourceExtractionEffectiveUnitsByTile:
+        resourceExtractionEffectiveUnitsByTile,
     resourceExtractionBlockedUnitsByTile: resourceExtractionBlockedUnitsByTile,
     civilianMarkerOwnerIds: civilianMarkerOwnerIds,
   );

@@ -1,9 +1,9 @@
 part of 'trade_screen.dart';
 
-/// Per-row widget keys, sizing, and quantity contract literals for the
-/// Market tab. Library part of the trade screen contract split (Refs #3878).
-abstract final class _TradeScreenMarketRowContract {
-  _TradeScreenMarketRowContract._();
+/// Per-row Market-tab keys/literals (private implementation detail of
+/// [TradeScreenMarketKeys]; not imported by tests). Refs #4035.
+abstract final class _TradeScreenMarketRowKeys {
+  _TradeScreenMarketRowKeys._();
 
   /// Per-row key for a Market tab commodity row. Deterministic so widget
   /// tests can pin a specific commodity (e.g. `timber`) without relying

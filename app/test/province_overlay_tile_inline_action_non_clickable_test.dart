@@ -22,19 +22,16 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
-    show
-        demoGameForOverlay,
-        demoHumanPlayerViewForOverlay,
-        demoRegionForOverlay,
-        sampleProvinceIdForOverlay,
-        sampleTileKeyForProvinceOverlay;
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+    show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 
+import 'support/province_overlay_test_harness.dart';
+
 /// Builds the overlay with the Tile section inline actions shown and a
-/// configurable enabled state plus tap-recording callbacks.
+/// configurable enabled state plus tap-recording callbacks. Editorial shell
+/// via [buildProvinceOverlayDarkThemeShell] (Refs #4035 — no inline
+/// MaterialApp).
 Widget _overlayWithInlineActions({
   bool showExploreActionIcon = false,
   bool exploreActionEnabled = false,
@@ -46,28 +43,19 @@ Widget _overlayWithInlineActions({
   bool buildImprovementActionEnabled = false,
   VoidCallback? onBuildImprovementTap,
 }) {
-  final game = demoGameForOverlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      body: ProvinceSeaZoneDetailOverlay(
-        game: game,
-        region: demoRegionForOverlay,
-        displayId: sampleProvinceIdForOverlay,
-        selectedTileKey: sampleTileKeyForProvinceOverlay,
-        humanPlayerId: game.players.first.id,
-        playerView: demoHumanPlayerViewForOverlay,
-        showExploreActionIcon: showExploreActionIcon,
-        exploreActionEnabled: exploreActionEnabled,
-        onExploreWithExplorerTap: onExploreWithExplorerTap,
-        showProspectActionIcon: showProspectActionIcon,
-        prospectActionEnabled: prospectActionEnabled,
-        onProspectWithExplorerTap: onProspectWithExplorerTap,
-        showBuildImprovementActionIcon: showBuildImprovementActionIcon,
-        buildImprovementActionEnabled: buildImprovementActionEnabled,
-        onBuildImprovementTap: onBuildImprovementTap,
-      ),
-    ),
+  return buildProvinceOverlayDarkThemeShell(
+    game: demoGameForOverlay,
+    displayId: sampleProvinceIdForOverlay,
+    selectedTileKey: sampleTileKeyForProvinceOverlay,
+    showExploreActionIcon: showExploreActionIcon,
+    exploreActionEnabled: exploreActionEnabled,
+    onExploreWithExplorerTap: onExploreWithExplorerTap,
+    showProspectActionIcon: showProspectActionIcon,
+    prospectActionEnabled: prospectActionEnabled,
+    onProspectWithExplorerTap: onProspectWithExplorerTap,
+    showBuildImprovementActionIcon: showBuildImprovementActionIcon,
+    buildImprovementActionEnabled: buildImprovementActionEnabled,
+    onBuildImprovementTap: onBuildImprovementTap,
   );
 }
 

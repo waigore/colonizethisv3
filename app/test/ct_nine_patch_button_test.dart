@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
 
 void main() {
@@ -17,8 +18,8 @@ void main() {
     'CtNinePatchButton works in AlertDialog action layout',
     (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
+        buildAppShell(
+          child: Builder(
             builder: (context) => Scaffold(
               body: Center(
                 child: TextButton(

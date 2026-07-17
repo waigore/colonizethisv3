@@ -43,10 +43,13 @@ int countResourceOnGpOldWorldTiles({
   final gpIds = gpIdsSortedFromPlayers(game).toSet();
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
-  return _countResourceOnGpTiles(
+  final inventory = _buildGpOwTileInventory(
     map: map,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
+  );
+  return _countResourceOnGpTiles(
+    inventory: inventory,
     forbidden: forbidden,
     resource: resource,
   );
@@ -82,12 +85,16 @@ applyGreatPowerOldWorldResourceRedistribution({
   final forbidden = collectTownAndCapitalTileKeys(game);
   final resourceSet = _resourcesInRedistributionSet(resourceRules);
 
+  // Single pre-clear inventory for N_r counts (Refs #4029).
+  final preClearInventory = _buildGpOwTileInventory(
+    map: tileMapOldWorld,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+  );
   final inventoryN = <Resource, int>{};
   for (final r in resourceSet) {
     inventoryN[r] = _countResourceOnGpTiles(
-      map: tileMapOldWorld,
-      ownerByLocal: ownerByLocal,
-      gpIds: gpIds,
+      inventory: preClearInventory,
       forbidden: forbidden,
       resource: r,
     );
@@ -131,11 +138,16 @@ applyGreatPowerOldWorldResourceRedistribution({
     game = game.withWorldState(ws);
   }
 
+  final postInventory = _buildGpOwTileInventory(
+    map: map,
+    ownerByLocal: ownerByLocal,
+    gpIds: gpIds,
+  );
   final fairness = _fairnessScore(
     gpIdsSorted: gpIdsSorted,
     inventoryN: inventoryN,
-    game: game,
-    map: map,
+    inventory: postInventory,
+    forbidden: forbidden,
     resourceSet: resourceSet,
   );
 

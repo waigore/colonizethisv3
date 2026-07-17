@@ -14,13 +14,15 @@ void _writeFile(Directory root, String relative, String source) {
 void main() {
   group('runCheckEconomyDealMatcherTreasuryShared', () {
     test('passes when matcher delegates to shared treasury helpers', () {
-      final root = Directory.systemTemp.createTempSync('economy_matcher_treasury_ok');
+      final root = Directory.systemTemp.createTempSync(
+        'economy_matcher_treasury_ok',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
-        'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart',
+        'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_caps.dart',
         'int maxAffordableBidQuantity({required int bidRemaining}) => 0;\n'
-        'void decrementTreasuryForFill({required String buyerFactionId}) {}\n',
+            'void decrementTreasuryForFill({required String buyerFactionId}) {}\n',
       );
       _writeFile(
         root,
@@ -43,13 +45,15 @@ void main() {
     });
 
     test('fails when indexing redefines private treasury helpers', () {
-      final root = Directory.systemTemp.createTempSync('economy_matcher_treasury_bad');
+      final root = Directory.systemTemp.createTempSync(
+        'economy_matcher_treasury_bad',
+      );
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
         root,
-        'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_budget.dart',
+        'packages/colonizethis_economy/lib/src/economy/world_market/treasury_bid_caps.dart',
         'int maxAffordableBidQuantity({required int bidRemaining}) => 0;\n'
-        'void decrementTreasuryForFill({required String buyerFactionId}) {}\n',
+            'void decrementTreasuryForFill({required String buyerFactionId}) {}\n',
       );
       _writeFile(
         root,

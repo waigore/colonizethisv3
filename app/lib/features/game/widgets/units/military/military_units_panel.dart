@@ -12,7 +12,7 @@ import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
 import '../../../../../widgets/ct_spacing.dart';
-import '../../chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import '../../panels/game_panel_contract.dart';
 import '../../panels/tree_builders/military_tree_builder.dart';
 import '../../unit_orders/move_army_dialog.dart';

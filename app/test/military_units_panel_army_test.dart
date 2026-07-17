@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'support/military_units_panel_test_support.dart';
@@ -28,8 +28,7 @@ void main() {
         playerDisplayName: 'Home',
       );
 
-      await tester.pumpWidget(buildMilitaryPanel(game: game, humanPlayerId: playerId));
-      await tester.pumpAndSettle();
+      await pumpMilitaryPanel(tester, game: game, humanPlayerId: playerId);
 
       final homeTile = find.widgetWithText(ExpansionTile, 'Home Army');
       expect(homeTile, findsOneWidget);
@@ -62,10 +61,12 @@ void main() {
           playerId: playerId,
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(game: game, humanPlayerId: playerId, bus: bus),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
         );
-        await tester.pumpAndSettle();
 
         final checks = find.byType(Checkbox);
         expect(checks, findsNWidgets(3));
@@ -90,7 +91,7 @@ void main() {
 
       const playerId = 'gp_move';
       const p3 = 'oldWorld|p3';
-      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final topology = buildUnitsPanelAdjacentOwProvincesTopology();
       final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
         id: 'gm',
         playerId: playerId,
@@ -98,15 +99,13 @@ void main() {
         regimentUnitIds: const ['um1'],
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(
-          game: game,
-          humanPlayerId: playerId,
-          bus: bus,
-          topology: topology,
-        ),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        bus: bus,
+        topology: topology,
       );
-      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Army amove'));
       await tester.pumpAndSettle();
@@ -137,7 +136,7 @@ void main() {
         bus.on<LocateMapTileEvent>().listen((e) => locate = e);
 
         const playerId = 'gp_locate_cluster';
-        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final topology = buildUnitsPanelAdjacentOwProvincesTopology();
         final game = buildMilitaryFieldArmyWithAdjacentOwnedGame(
           id: 'g_locate_cluster',
           playerId: playerId,
@@ -145,15 +144,13 @@ void main() {
           regimentUnitIds: const ['um1', 'um2'],
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(
-            game: game,
-            humanPlayerId: playerId,
-            bus: bus,
-            topology: topology,
-          ),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
         );
-        await tester.pumpAndSettle();
 
         final armyTile = find.widgetWithText(ExpansionTile, 'Army acluster');
         expect(armyTile, findsOneWidget);
@@ -198,21 +195,19 @@ void main() {
 
         const playerId = 'gp_move_grouped';
         const newDest = 'newWorld|n2';
-        final topology = buildMilitaryAdjacentOwProvincesTopology();
+        final topology = buildUnitsPanelAdjacentOwProvincesTopology();
         final game = buildMilitaryCrossRegionOwnedMoveGame(
           id: 'g_move_grouped',
           playerId: playerId,
         );
 
-        await tester.pumpWidget(
-          buildMilitaryPanel(
-            game: game,
-            humanPlayerId: playerId,
-            bus: bus,
-            topology: topology,
-          ),
+        await pumpMilitaryPanel(
+          tester,
+          game: game,
+          humanPlayerId: playerId,
+          bus: bus,
+          topology: topology,
         );
-        await tester.pumpAndSettle();
 
         await tester.tap(find.text('Army amove'));
         await tester.pumpAndSettle();
@@ -262,10 +257,12 @@ void main() {
           ],
         },
       );
-      await tester.pumpWidget(
-        buildMilitaryPanel(game: game, humanPlayerId: playerId, draftOrders: draft),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        draftOrders: draft,
       );
-      await tester.pumpAndSettle();
 
       expect(find.textContaining('Moving to: There'), findsOneWidget);
     });
@@ -280,22 +277,20 @@ void main() {
       const playerId = 'gp_inv';
       const enemyId = 'gp_enemy';
       const loc2 = 'oldWorld|p3';
-      final topology = buildMilitaryAdjacentOwProvincesTopology();
+      final topology = buildUnitsPanelAdjacentOwProvincesTopology();
       final game = buildMilitaryInvasionAdjacentHostileGame(
         id: 'g_inv',
         playerId: playerId,
         enemyId: enemyId,
       );
 
-      await tester.pumpWidget(
-        buildMilitaryPanel(
-          game: game,
-          humanPlayerId: playerId,
-          bus: bus,
-          topology: topology,
-        ),
+      await pumpMilitaryPanel(
+        tester,
+        game: game,
+        humanPlayerId: playerId,
+        bus: bus,
+        topology: topology,
       );
-      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Army ainv'));
       await tester.pumpAndSettle();

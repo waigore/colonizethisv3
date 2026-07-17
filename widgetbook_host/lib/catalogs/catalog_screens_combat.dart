@@ -114,8 +114,7 @@ class NavalPanelWithMapStory extends StatefulWidget {
   const NavalPanelWithMapStory({super.key});
 
   @override
-  State<NavalPanelWithMapStory> createState() =>
-      NavalPanelWithMapStoryState();
+  State<NavalPanelWithMapStory> createState() => NavalPanelWithMapStoryState();
 }
 
 class NavalPanelWithMapStoryState extends State<NavalPanelWithMapStory> {
@@ -467,21 +466,19 @@ QuickBattleInput _sampleQuickBattleInput() {
   );
 }
 
-MaterialApp _victoryStoryFrame(Widget child) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+Widget _victoryStoryFrame(Widget child) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(body: Center(child: child)),
+    child: Center(child: child),
   );
 }
 
-MaterialApp _combatStoryFrame(Widget child) {
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
+Widget _combatStoryFrame(Widget child) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(body: Center(child: child)),
+    child: Center(child: child),
   );
 }
 
@@ -516,7 +513,9 @@ List<WidgetbookNode> get victoryUiDirectories => [
               child: Stack(
                 children: [
                   ColoredBox(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                   ),
                   VictoryOverlay(
                     game: game,
@@ -565,10 +564,7 @@ List<WidgetbookNode> get playersBarDirectories => [
           final result = loadSeed42InitGameResult();
           final game = result.game;
           final humanId = game.players
-              .firstWhere(
-                (p) => p.isHuman,
-                orElse: () => game.players.first,
-              )
+              .firstWhere((p) => p.isHuman, orElse: () => game.players.first)
               .id;
           return _victoryStoryFrame(
             SizedBox(
@@ -577,10 +573,7 @@ List<WidgetbookNode> get playersBarDirectories => [
               child: Stack(
                 children: [
                   ColoredBox(color: EditorialMonoclePalette.bgDeep),
-                  GameMapPlayersBar(
-                    game: game,
-                    highlightPlayerId: humanId,
-                  ),
+                  GameMapPlayersBar(game: game, highlightPlayerId: humanId),
                 ],
               ),
             ),
@@ -804,13 +797,12 @@ List<WidgetbookNode> get combatUiDirectories => [
   ),
 ];
 
-Widget _shellOrGameStoryFrame({required Widget child, Object? navigatorKey}) {
-  return MaterialApp(
-    navigatorKey: navigatorKey is GlobalKey<NavigatorState> ? navigatorKey : null,
-    theme: AppThemes.editorialMonocle,
+Widget _shellOrGameStoryFrame({required Widget child}) {
+  return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: child,
+    useScaffold: false,
+    child: child,
   );
 }
 
@@ -822,7 +814,9 @@ ProviderScope _shellScreenProviderScope({required bool autoSaveAvailable}) {
         ref.onDispose(bus.dispose);
         return bus;
       }),
-      mainMenuAutoSaveAvailableProvider.overrideWith((ref) => autoSaveAvailable),
+      mainMenuAutoSaveAvailableProvider.overrideWith(
+        (ref) => autoSaveAvailable,
+      ),
     ],
     child: _shellOrGameStoryFrame(child: const ShellScreen()),
   );

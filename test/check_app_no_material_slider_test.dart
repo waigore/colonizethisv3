@@ -112,35 +112,38 @@ Widget c() => MyZoomSlider(value: 1);
       expect(code, 0);
     });
 
-    test('allowlists Ct-* chrome widgets and dev-tooling screens', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_slider_allow_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'flags resurrected feature chrome and promoted debug screens (Refs #4035 AC2)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_slider_allow_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const allowed = <String>[
-        'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
-      ];
-      for (final rel in allowed) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+        const fixtures = <String>[
+          'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
+        ];
+        for (final rel in fixtures) {
+          File('${temp.path}/$rel')
+            ..createSync(recursive: true)
+            ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => Slider(value: 0.5, onChanged: (_) {});
 ''');
-      }
+        }
 
-      final code = runCheckAppNoMaterialSlider(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialSlider(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+      },
+    );
 
     test('returns exit 1 when app/lib/features does not exist', () {
       final temp = Directory.systemTemp.createTempSync(

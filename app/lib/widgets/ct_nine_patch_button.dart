@@ -52,7 +52,6 @@ class CtNinePatchButton extends StatefulWidget {
     required this.child,
     this.enabled = true,
     this.padding,
-    this.destTileSize = 16,
     this.minHeight = 48,
     this.shrinkWrap = false,
     this.dangerVariant = false,
@@ -88,15 +87,6 @@ class CtNinePatchButton extends StatefulWidget {
     horizontal: CtSpacing.l,
     vertical: CtSpacing.ml,
   );
-
-  /// Retained for backward compatibility with the legacy nine-patch
-  /// rendering. The dark editorial-monocle visual contract no longer
-  /// rasterises a nine-patch image, so this argument has **no effect** on
-  /// rendering; it remains in the constructor signature so existing call
-  /// sites continue to compile without churn. Removal is deferred to a
-  /// follow-up cleanup slice once all `destTileSize:` arguments are
-  /// dropped.
-  final double destTileSize;
 
   /// Minimum tap-target height. The 48 dp default keeps the button above
   /// the 44 dp accessibility threshold called out in

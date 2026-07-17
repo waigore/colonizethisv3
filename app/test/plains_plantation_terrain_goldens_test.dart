@@ -20,14 +20,15 @@ import 'package:colonizethis_app/features/game/flame/caches/town_icon_cache.dart
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
-import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
+
+import 'ct_region_map_test_support.dart';
 
 /// PIL field mid-tones from SPEC/ui/layered-terrain-rendering.md.
 const _plantationFieldMidTones = <String, (int, int, int)>{
-  'tile_plains_sugar_cane': (124, 179, 66),
+  'tile_plains_sugar_cane': (109, 137, 77),
   'tile_plains_tobacco': (128, 108, 42),
-  'tile_plains_cotton': (214, 208, 178),
-  'tile_plains_spices': (196, 98, 42),
+  'tile_plains_cotton': (181, 179, 173),
+  'tile_plains_spices': (149, 102, 59),
 };
 
 const _owPlainsKeys = <String>[
@@ -124,26 +125,21 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
         await tester.pumpWidget(
-          MaterialApp(
-            home: Center(
-              child: RepaintBoundary(
-                key: const ValueKey('plains_plantation_terrain_strip_golden'),
-                child: SizedBox(
-                  width: width,
-                  height: height,
-                  child: CtRegionMap(
-                    region: region,
-                    cellSizePx: cellPx,
-                    visibilityMode: CtMapVisibilityMode.full,
-                    showPoliticalOverlay: false,
-                    showProvinceOverlay: false,
-                    showProvinceNamesLayer: false,
-                    // terrainOnly still paints L1 plains resource overlays;
-                    // omits commodity icon layer so the golden pins decals.
-                    baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
-                  ),
-                ),
-              ),
+          ctRegionMapTestHarness(
+            region: region,
+            width: width,
+            height: height,
+            cellSizePx: cellPx,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            // terrainOnly still paints L1 plains resource overlays;
+            // omits commodity icon layer so the golden pins decals.
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainOnly,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'plains_plantation_terrain_strip_golden',
             ),
           ),
         );

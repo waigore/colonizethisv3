@@ -1,9 +1,11 @@
 // Shared Widgetbook story lookup and viewport pump helpers for
-// `widgetbook_*_test.dart` pins. Refs #3847.
+// `widgetbook_*_test.dart` pins. Refs #3847 / #4035.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+
+import 'app_shell_harness.dart';
 
 /// Locate the single use-case with [useCaseName] inside the
 /// [WidgetbookFolder] whose name matches [folderName], failing with a
@@ -28,24 +30,18 @@ WidgetbookUseCase findWidgetbookUseCase(
   );
 }
 
-/// Pumps [useCase] inside a [MaterialApp] with [size] bound on both the test
-/// surface and an explicit [MediaQuery] (matches production mobileViewport).
+/// Pumps [useCase] inside [buildAppShell] / [pumpAppShell] with [size]
+/// bound on both the test surface and an explicit [MediaQuery] (matches
+/// production mobileViewport / editorial-monocle host). Refs #4035.
 Future<void> pumpWidgetbookUseCaseAtSize(
   WidgetTester tester,
   WidgetbookUseCase useCase, {
   Size size = const Size(360, 640),
 }) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(size);
-
-  await tester.pumpWidget(
-    MediaQuery(
-      data: MediaQueryData(size: size),
-      child: MaterialApp(
-        home: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
-      ),
-    ),
+  await pumpAppShell(
+    tester,
+    viewport: size,
+    child: Builder(builder: (BuildContext ctx) => useCase.builder(ctx)),
   );
-  await tester.pump();
   await tester.pump(const Duration(milliseconds: 16));
 }

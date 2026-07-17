@@ -1,8 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'tile_map_generation_determinism_test.dart' show tileMapGenerationDigest;
 import 'support/tile_map_gen_fixtures.dart';
 
 /// Tests for Pass 6b.5 noise perturbation
@@ -26,7 +24,8 @@ void main() {
         seaFraction: 0.5,
         terrainVariation: terrainVariation,
       );
-      final (result, _) = TileMapGenerator(params: params).generate(
+      final (result, _) = runTileMapGeneration(
+        params: params,
         numProvinces: 30,
         numContinents: 2,
         regionId: 'oldWorld',

@@ -9,32 +9,31 @@ import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_
 
 void main() {
   group('dialogueEventsForLandBattleResult', () {
-    for (final scenario in eventDialogueCoreScenarios().take(3)) {
+    for (final scenario in eventDialogueCoreLandBattleScenarios()) {
       test(scenario.label, () => runEventDialogueScenario(scenario));
     }
   });
 
   group('dialogueEventsForNavalBattleResult', () {
-    for (final scenario in eventDialogueCoreScenarios().skip(3).take(2)) {
+    for (final scenario in eventDialogueCoreNavalBattleScenarios()) {
       test(scenario.label, () => runEventDialogueScenario(scenario));
     }
   });
 
   group('eraFromYear', () {
-    test(
-      eventDialogueCoreScenarios()[5].label,
-      () => runEventDialogueScenario(eventDialogueCoreScenarios()[5]),
-    );
+    for (final scenario in eventDialogueCoreEraFromYearScenarios()) {
+      test(scenario.label, () => runEventDialogueScenario(scenario));
+    }
   });
 
   group('dialogueEventsForEraChange', () {
-    for (final scenario in eventDialogueCoreScenarios().skip(6).take(2)) {
+    for (final scenario in eventDialogueCoreEraChangeScenarios()) {
       test(scenario.label, () => runEventDialogueScenario(scenario));
     }
   });
 
   group('dialogueEventForNegotiation', () {
-    for (final scenario in eventDialogueCoreScenarios().skip(8)) {
+    for (final scenario in eventDialogueCoreNegotiationScenarios()) {
       test(scenario.label, () => runEventDialogueScenario(scenario));
     }
   });

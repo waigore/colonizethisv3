@@ -12,7 +12,6 @@
 // border, no Material chrome) — fails CI immediately.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -24,6 +23,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'support/app_shell_harness.dart';
 import 'support/widgetbook_test_harness.dart';
 
 /// Normative inventory of the new DLG60001 stories that issue #2867 S13
@@ -114,7 +114,7 @@ void main() {
 
     for (final useCaseName in kNextTurnConfirmationUseCaseNames) {
       testWidgets(
-        '$useCaseName pumps under editorialMonocle without exceptions',
+        '$useCaseName pumps under editorialMonocle with CtDialogShell chrome',
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
@@ -125,50 +125,15 @@ void main() {
             ),
           );
           expect(tester.takeException(), isNull);
-        },
-      );
-
-      testWidgets(
-        '$useCaseName wraps the dialog in CtDialogShell with two '
-        'CtNinePatchButton actions and no Material AlertDialog',
-        (WidgetTester tester) async {
-          await _pumpStory(
-            tester,
-            findWidgetbookUseCase(
-              nextTurnConfirmationDialogDirectories,
-              folderName: 'Next Turn Confirmation',
-              useCaseName: useCaseName,
-            ),
-          );
           expect(find.byType(CtDialogShell), findsOneWidget);
           expect(find.byType(NextTurnConfirmationDialog), findsOneWidget);
           expect(find.byType(CtNinePatchButton), findsNWidgets(2));
           expect(find.byType(AlertDialog), findsNothing);
-        },
-      );
-
-      testWidgets(
-        '$useCaseName renders under the editorialMonocle dark theme',
-        (WidgetTester tester) async {
-          await _pumpStory(
-            tester,
-            findWidgetbookUseCase(
-              nextTurnConfirmationDialogDirectories,
-              folderName: 'Next Turn Confirmation',
-              useCaseName: useCaseName,
-            ),
-          );
           final ThemeData theme = Theme.of(
             tester.element(find.byType(NextTurnConfirmationDialog)),
           );
           expect(theme.brightness, Brightness.dark);
-          expect(
-            theme.scaffoldBackgroundColor,
-            EditorialMonoclePalette.bg,
-            reason:
-                'Story host must inject AppThemes.editorialMonocle so DLG60001 '
-                'renders against the canonical scaffold token.',
-          );
+          expect(theme.scaffoldBackgroundColor, EditorialMonoclePalette.bg);
           expect(theme.colorScheme.primary, EditorialMonoclePalette.accent);
         },
       );
@@ -195,7 +160,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       final useCaseName = kGameInitializingUseCaseNames[i];
       testWidgets(
-        '$useCaseName paints the 48 px --accent spinner per R32',
+        '$useCaseName paints 48 px accent spinner, phase label, no AlertDialog',
         (WidgetTester tester) async {
           await _pumpStory(
             tester,
@@ -209,36 +174,14 @@ void main() {
           final indicator = tester.widget<CtLoadingIndicator>(
             find.byType(CtLoadingIndicator),
           );
+          expect(indicator.size, 48);
+          expect(indicator.color, EditorialMonoclePalette.accent);
           expect(
-            indicator.size,
-            48,
-            reason: 'SPEC/ui/game-initializing.md R32: 48 px ring',
+            tester.widget<NewGameSetupProgressView>(
+              find.byType(NewGameSetupProgressView),
+            ).stepIndex,
+            i,
           );
-          expect(
-            indicator.color,
-            EditorialMonoclePalette.accent,
-            reason: 'SPEC/ui/game-initializing.md R32: --accent top border',
-          );
-        },
-      );
-
-      testWidgets(
-        '$useCaseName resolves the canonical phase label for step '
-        '${useCaseName.contains('phase ') ? useCaseName.split('phase ')[1][0] : '?'}',
-        (WidgetTester tester) async {
-          await _pumpStory(
-            tester,
-            findWidgetbookUseCase(
-              gameInitializingDirectories,
-              folderName: 'Game Initializing',
-              useCaseName: useCaseName,
-            ),
-          );
-          final view = tester.widget<NewGameSetupProgressView>(
-            find.byType(NewGameSetupProgressView),
-          );
-          expect(view.stepIndex, i);
-
           final l10n = appL10n(
             tester.element(find.byType(NewGameSetupProgressView)),
           );
@@ -251,71 +194,14 @@ void main() {
             _ => l10n.shell_newGameProgress_title,
           };
           expect(find.text(expectedLabel), findsOneWidget);
-        },
-      );
-
-      testWidgets(
-        '$useCaseName renders no Material AlertDialog chrome',
-        (WidgetTester tester) async {
-          await _pumpStory(
-            tester,
-            findWidgetbookUseCase(
-              gameInitializingDirectories,
-              folderName: 'Game Initializing',
-              useCaseName: useCaseName,
-            ),
-          );
-          // CtLoadingIndicator legitimately wraps a Material
-          // CircularProgressIndicator (see app/lib/widgets/ct_loading_indicator.dart),
-          // so we assert only that the dialog tree avoids the broader
-          // Material `AlertDialog` chrome banned by
-          // SPEC/ui/pixel-art-ui-catalog.md § Material design ban.
           expect(find.byType(AlertDialog), findsNothing);
         },
       );
     }
 
     testWidgets(
-      '${kGameInitializingUseCaseNames[5]} paints a 1 px --danger border '
-      'around the NewGameErrorCard per R34',
-      (WidgetTester tester) async {
-        await _pumpStory(
-          tester,
-          findWidgetbookUseCase(
-            gameInitializingDirectories,
-            folderName: 'Game Initializing',
-            useCaseName: kGameInitializingUseCaseNames[5],
-          ),
-        );
-        expect(find.byType(NewGameErrorCard), findsOneWidget);
-
-        final decoratedBoxes = tester.widgetList<DecoratedBox>(
-          find.byType(DecoratedBox),
-        );
-        final dangerBordered = decoratedBoxes.where((box) {
-          final deco = box.decoration;
-          if (deco is! BoxDecoration) return false;
-          final border = deco.border;
-          if (border is! Border) return false;
-          return border.top.color == EditorialMonoclePalette.danger &&
-              border.top.width == 1 &&
-              border.bottom.color == EditorialMonoclePalette.danger &&
-              border.left.color == EditorialMonoclePalette.danger &&
-              border.right.color == EditorialMonoclePalette.danger;
-        });
-        expect(
-          dangerBordered,
-          isNotEmpty,
-          reason:
-              'SPEC/ui/game-initializing.md R34: error card must paint a '
-              '1 px --danger border on all four sides.',
-        );
-      },
-    );
-
-    testWidgets(
-      '${kGameInitializingUseCaseNames[5]} exposes Retry primary and Close '
-      'secondary CtNinePatchButton actions',
+      '${kGameInitializingUseCaseNames[5]} paints 1 px danger border with '
+      'Retry/Close CtNinePatchButtons (R34)',
       (WidgetTester tester) async {
         await _pumpStory(
           tester,
@@ -327,34 +213,49 @@ void main() {
         );
         expect(find.byType(NewGameErrorCard), findsOneWidget);
         expect(find.byType(CtNinePatchButton), findsNWidgets(2));
-
-        final l10n = appL10n(
-          tester.element(find.byType(NewGameErrorCard)),
-        );
+        final l10n = appL10n(tester.element(find.byType(NewGameErrorCard)));
         expect(find.text(l10n.shell_newGameError_retry), findsOneWidget);
         expect(find.text(l10n.common_close), findsOneWidget);
+
+        final dangerBordered = tester.widgetList<DecoratedBox>(
+          find.byType(DecoratedBox),
+        ).where((box) {
+          final deco = box.decoration;
+          if (deco is! BoxDecoration) return false;
+          final border = deco.border;
+          if (border is! Border) return false;
+          return border.top.color == EditorialMonoclePalette.danger &&
+              border.top.width == 1 &&
+              border.bottom.color == EditorialMonoclePalette.danger &&
+              border.left.color == EditorialMonoclePalette.danger &&
+              border.right.color == EditorialMonoclePalette.danger;
+        });
+        expect(dangerBordered, isNotEmpty);
       },
     );
   });
 
   group('NewGameSetupProgressView phase label contract (Refs #2867 R33)', () {
-    Widget host(int stepIndex) => MaterialApp(
-      theme: AppThemes.editorialMonocle,
+    Widget host(int stepIndex) => buildAppShell(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
+      child: Scaffold(
         body: Center(child: NewGameSetupProgressView(stepIndex: stepIndex)),
       ),
     );
 
-    for (var i = 0; i < 5; i++) {
-      testWidgets(
-        'stepIndex=$i shows the matching phase label and no other phase',
-        (WidgetTester tester) async {
-          await tester.pumpWidget(host(i));
-          for (var f = 0; f < 5; f++) {
-            await tester.pump(const Duration(milliseconds: 20));
-          }
+    Future<void> pumpProgress(WidgetTester tester, int stepIndex) async {
+      await tester.pumpWidget(host(stepIndex));
+      for (var f = 0; f < 5; f++) {
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+    }
+
+    testWidgets(
+      'stepIndex 0..4 shows only its matching phase label',
+      (WidgetTester tester) async {
+        for (var i = 0; i < 5; i++) {
+          await pumpProgress(tester, i);
           final l10n = appL10n(
             tester.element(find.byType(NewGameSetupProgressView)),
           );
@@ -368,27 +269,17 @@ void main() {
           expect(find.text(allLabels[i]), findsOneWidget);
           for (var j = 0; j < allLabels.length; j++) {
             if (j == i) continue;
-            expect(
-              find.text(allLabels[j]),
-              findsNothing,
-              reason:
-                  'stepIndex=$i must render only its own phase label; '
-                  'leaking label "${allLabels[j]}" indicates the label '
-                  'mapping has regressed.',
-            );
+            expect(find.text(allLabels[j]), findsNothing);
           }
-        },
-      );
-    }
+        }
+      },
+    );
 
     testWidgets(
       'stepIndex outside 0..4 falls back to the generic progress title '
       '(negative path)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(host(99));
-        for (var f = 0; f < 5; f++) {
-          await tester.pump(const Duration(milliseconds: 20));
-        }
+        await pumpProgress(tester, 99);
         final l10n = appL10n(
           tester.element(find.byType(NewGameSetupProgressView)),
         );
@@ -398,119 +289,69 @@ void main() {
   });
 
   group('NewGameErrorCard callback contract (Refs #2867 R34)', () {
-    testWidgets(
-      'tapping Retry invokes onRetry and not onClose',
-      (WidgetTester tester) async {
-        var retryCount = 0;
-        var closeCount = 0;
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: Builder(
-                  builder: (ctx) {
-                    final l10n = appL10n(ctx);
-                    return NewGameErrorCard(
-                      title: l10n.shell_newGameError_title,
-                      message: 'forced failure',
-                      closeLabel: l10n.common_close,
-                      retryLabel: l10n.shell_newGameError_retry,
-                      onClose: () => closeCount++,
-                      onRetry: () => retryCount++,
-                    );
-                  },
-                ),
+    Future<void> pumpErrorCard(
+      WidgetTester tester, {
+      VoidCallback? onClose,
+      VoidCallback? onRetry,
+    }) async {
+      await tester.pumpWidget(
+        buildAppShell(
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          child: Scaffold(
+            body: Center(
+              child: Builder(
+                builder: (ctx) {
+                  final l10n = appL10n(ctx);
+                  return NewGameErrorCard(
+                    title: l10n.shell_newGameError_title,
+                    message: 'forced failure',
+                    closeLabel: l10n.common_close,
+                    retryLabel: l10n.shell_newGameError_retry,
+                    onClose: onClose,
+                    onRetry: onRetry,
+                  );
+                },
               ),
             ),
           ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'Retry/Close callbacks are exclusive; omitted handlers disable buttons',
+      (WidgetTester tester) async {
+        var retryCount = 0;
+        var closeCount = 0;
+        await pumpErrorCard(
+          tester,
+          onClose: () => closeCount++,
+          onRetry: () => retryCount++,
         );
-        await tester.pumpAndSettle();
-        final l10n = appL10n(
-          tester.element(find.byType(NewGameErrorCard)),
-        );
+        final l10n = appL10n(tester.element(find.byType(NewGameErrorCard)));
         await tester.tap(find.text(l10n.shell_newGameError_retry));
         await tester.pump();
         expect(retryCount, 1);
         expect(closeCount, 0);
-      },
-    );
 
-    testWidgets(
-      'tapping Close invokes onClose and not onRetry',
-      (WidgetTester tester) async {
-        var retryCount = 0;
-        var closeCount = 0;
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: Builder(
-                  builder: (ctx) {
-                    final l10n = appL10n(ctx);
-                    return NewGameErrorCard(
-                      title: l10n.shell_newGameError_title,
-                      message: 'forced failure',
-                      closeLabel: l10n.common_close,
-                      retryLabel: l10n.shell_newGameError_retry,
-                      onClose: () => closeCount++,
-                      onRetry: () => retryCount++,
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-        final l10n = appL10n(
-          tester.element(find.byType(NewGameErrorCard)),
+        retryCount = 0;
+        closeCount = 0;
+        await pumpErrorCard(
+          tester,
+          onClose: () => closeCount++,
+          onRetry: () => retryCount++,
         );
         await tester.tap(find.text(l10n.common_close));
         await tester.pump();
         expect(closeCount, 1);
         expect(retryCount, 0);
-      },
-    );
 
-    testWidgets(
-      'omitting onClose / onRetry disables the buttons (negative path)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            localizationsDelegates:
-                AppLocalizationsBinding.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: Center(
-                child: Builder(
-                  builder: (ctx) {
-                    final l10n = appL10n(ctx);
-                    return NewGameErrorCard(
-                      title: l10n.shell_newGameError_title,
-                      message: 'forced failure',
-                      closeLabel: l10n.common_close,
-                      retryLabel: l10n.shell_newGameError_retry,
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-        final buttons = tester.widgetList<CtNinePatchButton>(
+        await pumpErrorCard(tester);
+        for (final btn in tester.widgetList<CtNinePatchButton>(
           find.byType(CtNinePatchButton),
-        );
-        for (final btn in buttons) {
+        )) {
           expect(btn.onPressed, isNull);
         }
       },

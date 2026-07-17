@@ -16,7 +16,17 @@ export 'package:colonizethis_world/src/world/ai_control.dart';
 export 'package:colonizethis_world/src/world/army_migration.dart';
 export 'package:colonizethis_world/src/world/army_movement.dart';
 export 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
-export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart';
+// Capital / GP-fall cascade stays `show`-restricted (Refs #4038): combat + debug
+// entry points only. Eligibility helpers beyond this list, and the setup-facing
+// `capital_reassignment.dart` surface, remain deep-import (not fully published).
+export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart'
+    show
+        CapitalReassignmentEligibility,
+        applyCapitalReassignmentAfterCombat,
+        applyFactionCapitalReassignmentAfterCombat,
+        applyFactionTerminalFall,
+        applyGreatPowerFall,
+        evaluateCapitalReassignmentEligibility;
 export 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 export 'package:colonizethis_world/src/world/connectivity_resolver.dart';
 // Connectivity hot-path metrics counters (Refs #2268 AC-10). Previously surfaced

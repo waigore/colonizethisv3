@@ -37,6 +37,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -98,30 +100,25 @@ void main() {
         const railWidth = 320.0; // < viewportWidth - 8 → not full-width.
         const expectedMaxHeight = viewportHeight; // parentMax
 
-        await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(
-              size: Size(viewportWidth, viewportHeight),
-            ),
-            child: MaterialApp(
-              home: Scaffold(
-                // A `Row` with the overlay constrained to a fixed-width
-                // side rail mirrors how a narrow shell may host the panel
-                // beside other UI rather than as the full-width bottom
-                // slot. The trailing `Spacer` consumes the remaining
-                // viewport width so `constraints.maxWidth` reaching the
-                // overlay is exactly `railWidth`.
-                body: Row(
-                  children: [
-                    SizedBox(width: railWidth, child: buildOverlay()),
-                    const Spacer(),
-                  ],
-                ),
-              ),
+        await pumpAppShell(
+          tester,
+          viewport: const Size(viewportWidth, viewportHeight),
+          child: Scaffold(
+            // A `Row` with the overlay constrained to a fixed-width
+            // side rail mirrors how a narrow shell may host the panel
+            // beside other UI rather than as the full-width bottom
+            // slot. The trailing `Spacer` consumes the remaining
+            // viewport width so `constraints.maxWidth` reaching the
+            // overlay is exactly `railWidth`.
+            body: Row(
+              children: [
+                SizedBox(width: railWidth, child: buildOverlay()),
+                const Spacer(),
+              ],
             ),
           ),
+          settle: true,
         );
-        await tester.pumpAndSettle();
 
         final resolved = readOverlayMaxHeight(tester);
         expect(
@@ -160,26 +157,21 @@ void main() {
         const parentHeight = 150.0; // < 0.33 × 600 = 198
         const expectedMaxHeight = parentHeight;
 
-        await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(
-              size: Size(viewportWidth, viewportHeight),
-            ),
-            child: MaterialApp(
-              home: Scaffold(
-                body: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SizedBox(
-                    width: viewportWidth,
-                    height: parentHeight,
-                    child: buildOverlay(),
-                  ),
-                ),
+        await pumpAppShell(
+          tester,
+          viewport: const Size(viewportWidth, viewportHeight),
+          child: Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(
+                width: viewportWidth,
+                height: parentHeight,
+                child: buildOverlay(),
               ),
             ),
           ),
+          settle: true,
         );
-        await tester.pumpAndSettle();
 
         final resolved = readOverlayMaxHeight(tester);
         expect(

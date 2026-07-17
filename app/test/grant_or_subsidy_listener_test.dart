@@ -4,6 +4,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -32,8 +33,8 @@ void main() {
     addTearDown(confirmSub.cancel);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: GrantOrSubsidyListener(
+      buildAppShell(
+        child: GrantOrSubsidyListener(
           bus: bus,
           game: game,
           humanPlayerId: humanPlayerId,
@@ -75,8 +76,8 @@ void main() {
           .timeout(const Duration(seconds: 2));
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GrantOrSubsidyListener(
+        buildAppShell(
+          child: GrantOrSubsidyListener(
             bus: bus,
             game: game,
             humanPlayerId: humanPlayerId,
@@ -115,8 +116,8 @@ void main() {
           .timeout(const Duration(seconds: 2));
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GrantOrSubsidyListener(
+        buildAppShell(
+          child: GrantOrSubsidyListener(
             bus: bus,
             game: game,
             humanPlayerId: humanPlayerId,

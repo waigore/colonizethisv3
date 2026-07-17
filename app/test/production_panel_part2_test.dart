@@ -10,7 +10,6 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
-import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
@@ -361,32 +360,16 @@ void main() {
       Orders currentOrders = const Orders(),
       bool canEditLabour = true,
     }) {
-      final game = productionPanelTestGameFor(player);
-      final captured = <Map<String, int>>[];
-      final labourCallbacks = ProductionLabourCallbacks(
-        onAppendRecruitOrder: (_) {},
-        onPopLastRecruitOrder: (_) {},
-        onDisband: (_) {},
-      );
-      return MaterialApp(
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: const [Locale('en')],
-        home: Scaffold(
-          body: SizedBox(
-            width: 800,
-            height: 700,
-            child: ProductionPanel(
-              game: game,
-              player: player,
-              desiredOutputByRecipe: const {},
-              netDeltasByCommodity: const {},
-              onDesiredOutputChanged: captured.add,
-              currentOrders: currentOrders,
-              labourCallbacks: labourCallbacks,
-              canEditLabour: canEditLabour,
-            ),
-          ),
+      return buildProductionPanel(
+        player: player,
+        currentOrders: currentOrders,
+        labourCallbacks: ProductionLabourCallbacks(
+          onAppendRecruitOrder: (_) {},
+          onPopLastRecruitOrder: (_) {},
+          onDisband: (_) {},
         ),
+        canEditLabour: canEditLabour,
+        height: 700,
       );
     }
 

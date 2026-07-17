@@ -145,28 +145,31 @@ ThemeData t() => ThemeData(cardTheme: const CardTheme());
       expect(code, 0);
     });
 
-    test('allowlists Ct-* catalog widgets under features/game/widgets/chrome/', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_card_chrome_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_card_chrome_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
-        ..createSync(recursive: true)
-        ..writeAsStringSync('''
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
+          ..createSync(recursive: true)
+          ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget fallback() => Card(child: const Text('x'));
 ''');
 
-      final code = runCheckAppNoMaterialCard(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialCard(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 1);
+      },
+    );
 
     test('allowlists the dev-tooling screens (SYS10001 + SYS20001)', () {
       final temp = Directory.systemTemp.createTempSync(
@@ -231,26 +234,29 @@ Widget bypass() => Card(child: const Text('x'));
       );
     });
 
-    test('skips Ct-* chrome catalog widgets and dev-tooling screens', () {
-      expect(
-        shouldSkipAppNoMaterialCardFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-      expect(
-        shouldSkipAppNoMaterialCardFile(
-          'app/lib/features/debug_log/debug_log_viewer_screen.dart',
-        ),
-        isTrue,
-      );
-      expect(
-        shouldSkipAppNoMaterialCardFile(
-          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialCardFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+        expect(
+          shouldSkipAppNoMaterialCardFile(
+            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+          ),
+          isTrue,
+        );
+        expect(
+          shouldSkipAppNoMaterialCardFile(
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('does not skip ordinary feature widgets', () {
       expect(

@@ -6,9 +6,9 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import '../turn/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
 import 'turn_phase_test_harness.dart';
 
+export 'world_market_pipeline_game_fixtures.dart';
 export 'world_market_trade_scenario_fixtures.dart';
 
 const kEmptyTopology = MapTopology(nodes: [], edges: []);
@@ -18,12 +18,16 @@ const frrCreditTestMinorProvinceId = '$frrCreditTestOw|M1';
 const frrCreditTestTileKey = '$frrCreditTestOw|M1|0|0';
 
 /// Shared two-GP world-market fixture for phase-handler integration tests.
+///
+/// Defaults match phase-handler suites (`worldMarket` / turn 3). Full-pipeline
+/// resolve suites pass [phase] `orders` and [turnNumber] `0`.
 Game gameWithTwoGps({
   required Stockpile sellerStockpile,
   required int sellerTreasury,
   required int buyerTreasury,
   required Map<CommodityId, int> marketPrices,
   int turnNumber = 3,
+  TurnPhase phase = TurnPhase.worldMarket,
 }) {
   return Game(
     id: 'g1',
@@ -45,7 +49,7 @@ Game gameWithTwoGps({
     ],
     worldState: WorldState(
       turnState: TurnState(
-        phase: TurnPhase.worldMarket,
+        phase: phase,
         turnNumber: turnNumber,
       ),
       oldWorld: const RegionData(),
@@ -54,6 +58,34 @@ Game gameWithTwoGps({
     worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
   );
 }
+
+/// GP↔GP timber offer+bid orders for [gameWithTwoGps] seller/buyer ids.
+Orders gpGpTimberTradeOrders({
+  required int offerQuantity,
+  required int bidQuantity,
+  int offerPriority = 1,
+  int bidPriority = 1,
+}) =>
+    Orders(
+      tradeOrdersByPlayerId: {
+        'gpSeller': [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.offer,
+            quantity: offerQuantity,
+            priority: offerPriority,
+          ),
+        ],
+        'gpBuyer': [
+          TradeOrder(
+            commodityId: 'timber',
+            type: TradeOrderType.bid,
+            quantity: bidQuantity,
+            priority: bidPriority,
+          ),
+        ],
+      },
+    );
 
 TurnResolverConfig worldMarketPhaseConfig({
   required Orders orders,
@@ -243,142 +275,3 @@ List<TradeOrder> gpTimberBid({required int quantity, int priority = 1}) => [
         priority: priority,
       ),
     ];
-
-Game minorTimberAutoOfferPipelineGame({
-  required int buyerTreasury,
-  int timberPrice = 30,
-}) {
-  const ow = 'oldWorld';
-  const minorProvinceId = '$ow|m1';
-  const tileKey = '$ow|m1|0|0';
-  return Game(
-    id: 'g_c7_minor_timber',
-    players: [
-      Player(
-        id: 'gpBuyer',
-        displayName: 'Buyer',
-        isHuman: false,
-        stockpile: Stockpile.empty,
-        treasury: buyerTreasury,
-      ),
-    ],
-    minorNations: const [
-      MinorNation(
-        id: 'm1',
-        capitalProvinceId: minorProvinceId,
-        capitalTile: CapitalTile(
-          regionId: ow,
-          provinceId: minorProvinceId,
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: minorProvinceId,
-            regionId: ow,
-            ownerId: 'm1',
-            townDevelopmentLevel: 1,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          minorProvinceId: [tileKey],
-        },
-      },
-      tileState: TileMapState()
-          .setImprovement(tileKey, 1)
-          .setRoadLevel(tileKey, 1),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(
-      prices: {'timber': timberPrice},
-    ),
-  );
-}
-
-Map<String, TileMapResult> minorTimberTileMapByRegion() =>
-    tileMapByRegionForResource(Resource.timber);
-
-Game purchasedTimberBidPipelineGame({
-  required int gpATreasury,
-  int timberPrice = 25,
-}) {
-  const ow = 'oldWorld';
-  const minorProvinceId = '$ow|M1';
-  const tileKey = '$ow|M1|0|0';
-  return Game(
-    id: 'g_c7_purchased_timber',
-    players: [
-      Player(
-        id: 'gpA',
-        displayName: 'GP A',
-        isHuman: true,
-        treasury: gpATreasury,
-        stockpile: Stockpile.empty,
-      ),
-    ],
-    minorNations: const [
-      MinorNation(
-        id: 'M1',
-        displayName: 'Minor 1',
-        capitalProvinceId: minorProvinceId,
-        capitalTile: CapitalTile(
-          regionId: ow,
-          provinceId: minorProvinceId,
-          x: 0,
-          y: 0,
-        ),
-      ),
-    ],
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: minorProvinceId,
-            regionId: ow,
-            ownerId: 'M1',
-            townDevelopmentLevel: 1,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        ow: {
-          minorProvinceId: [tileKey],
-        },
-      },
-      purchasedTilesByTileKey: const {tileKey: 'gpA'},
-      tileState: TileMapState()
-          .setImprovement(tileKey, 1)
-          .setRoadLevel(tileKey, 1),
-    ),
-    worldMarketState: WorldMarketState.empty.copyWith(
-      prices: {'timber': timberPrice},
-    ),
-  );
-}
-
-Orders timberBidOrdersForGp({
-  required String gpId,
-  int quantity = 1,
-  int priority = 1,
-}) =>
-    Orders(
-      tradeOrdersByPlayerId: {
-        gpId: [
-          TradeOrder(
-            commodityId: 'timber',
-            type: TradeOrderType.bid,
-            quantity: quantity,
-            priority: priority,
-          ),
-        ],
-      },
-    );

@@ -25,9 +25,9 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/widget_test_assets.dart';
 import 'support/widgetbook_test_harness.dart';
-
 
 void main() {
   suppressLogsForTests();
@@ -68,13 +68,11 @@ void main() {
         );
 
         await tester.pumpWidget(
-          MediaQuery(
-            data: const MediaQueryData(size: Size(360, 640)),
-            child: MaterialApp(
-              home: Scaffold(
-                body: Builder(
-                  builder: (BuildContext ctx) => useCase.builder(ctx),
-                ),
+          buildAppShell(
+            viewport: const Size(360, 640),
+            child: Scaffold(
+              body: Builder(
+                builder: (BuildContext ctx) => useCase.builder(ctx),
               ),
             ),
           ),

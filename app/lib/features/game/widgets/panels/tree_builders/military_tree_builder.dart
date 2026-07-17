@@ -8,6 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import '../../../flame/map_state/map_location_resolver.dart';
 import '../../province_overlay/sea_zone_name_resolver.dart';
 import 'fleet_mission_label.dart';
+import 'draft_move_destination_line.dart';
 
 part 'military_tree_builder_assembly.dart';
 part 'military_tree_builder_assembly_province.dart';
@@ -41,7 +42,7 @@ String? armyDraftMoveLineForArmy({
     );
     final p = game.worldState.tryGetProvince(full);
     final name = p?.displayName ?? p?.id ?? ProvinceId.localIdFrom(full);
-    return 'Moving to: $name';
+    return formatDraftMoveDestinationLine(name);
   }
   return null;
 }

@@ -127,7 +127,7 @@ extension _MarketTabContentBuild on _MarketTabContent {
     );
 
     final Widget list = SingleChildScrollView(
-      key: TradeScreen.marketCommodityListKey,
+      key: TradeScreenMarketKeys.marketCommodityListKey,
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

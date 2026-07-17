@@ -15,7 +15,7 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import '../support/turn_phase_test_harness.dart';
-import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import '../support/riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
 
 void main() {
   group('richesToTreasuryTurnPhaseHandler — purchased-tile riches handoff', () {

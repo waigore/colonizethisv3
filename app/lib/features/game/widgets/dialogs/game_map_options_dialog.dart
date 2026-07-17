@@ -9,7 +9,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
-import '../chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 /// Stable key for the "Show province overlay" [CtToggleSwitch] inside
 /// [GameMapOptionsDialog]. Used by widget tests and E2E lookups.

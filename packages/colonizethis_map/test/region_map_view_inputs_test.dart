@@ -4,17 +4,17 @@ import 'package:colonizethis_map/src/tile_map_capital_markers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 Game _gameWithRegions({
   List<Province> oldWorldProvinces = const [],
   List<Province> newWorldProvinces = const [],
 }) {
-  return Game(
+  return minimalGame(
     id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: oldWorldProvinces, units: const []),
-      newWorld: RegionData(provinces: newWorldProvinces, units: const []),
-    ),
+    turnNumber: 1,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
     players: const [
       Player(
         id: 'gp1',
@@ -28,7 +28,6 @@ Game _gameWithRegions({
         ),
       ),
     ],
-    minorNations: const [],
     tribes: const [
       Tribe(
         id: 'tribe1',

@@ -99,3 +99,33 @@ class RelationUpsertIndex {
   /// Defensive copy of the accumulated relations for storing on a [Game].
   List<DiplomacyRelation> toList() => List<DiplomacyRelation>.from(_relations);
 }
+
+/// Defensive relations list for multi-field [Game.copyWith] sites.
+///
+/// Prefer this over calling [RelationUpsertIndex.toList] at the call site so
+/// resolver commits go through one shared primitive (Refs #4028).
+List<DiplomacyRelation> committedRelations(RelationUpsertIndex index) =>
+    index.toList();
+
+/// Commits [index] onto [game] when only [Game.diplomacyRelations] change.
+///
+/// For copyWith that also sets players, dossier evidence, etc., use
+/// [committedRelations] once inside that copyWith (Refs #4028).
+Game withCommittedRelations(Game game, RelationUpsertIndex index) =>
+    game.copyWith(diplomacyRelations: committedRelations(index));
+
+/// Builds a [RelationUpsertIndex] from [game], runs [mutate], then commits.
+///
+/// Use for **relations-only single-pass** commits (e.g. trade-deal boosts,
+/// GP–Tribe first contact). Do **not** wrap mid-order loops that also mutate
+/// players, dossier, subsidy state, or other Game fields between upserts —
+/// those keep an explicit [RelationUpsertIndex] and [committedRelations] /
+/// multi-field `copyWith` (Refs #4028 / #4037).
+Game withRelationUpserts(
+  Game game,
+  void Function(RelationUpsertIndex index) mutate,
+) {
+  final index = RelationUpsertIndex(game.diplomacyRelations);
+  mutate(index);
+  return withCommittedRelations(game, index);
+}

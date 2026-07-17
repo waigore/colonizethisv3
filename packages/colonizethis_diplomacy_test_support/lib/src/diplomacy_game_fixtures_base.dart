@@ -22,6 +22,7 @@ Game diplomacyGame({
       const {},
   Map<String, Map<String, String>>? playerVisibilityByTile,
   Map<String, String>? purchasedTilesByTileKey,
+  Map<String, Set<String>>? playerProspectedTiles,
   List<Fleet> fleets = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
   List<OvertureState> overtureStates = const [],
@@ -48,6 +49,7 @@ Game diplomacyGame({
     tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     playerVisibilityByTile: playerVisibilityByTile,
     purchasedTilesByTileKey: purchasedTilesByTileKey,
+    playerProspectedTiles: playerProspectedTiles,
     fleets: fleets,
     minorNations: minorNations,
     tribes: tribes,
@@ -179,21 +181,38 @@ Game twoGpGameWithFleets({
         Player(id: 'gp2', displayName: 'B', isHuman: true),
       ],
       fleets: [
-        Fleet(
-          id: 'f1',
-          ownerId: 'gp1',
-          regionId: 'oldWorld',
-          shipTypeIds: shipTypesGp1,
-        ),
-        Fleet(
-          id: 'f2',
-          ownerId: 'gp2',
-          regionId: 'oldWorld',
-          shipTypeIds: shipTypesGp2,
-        ),
+        Fleet(id: 'f1', ownerId: 'gp1', regionId: 'oldWorld', shipTypeIds: shipTypesGp1),
+        Fleet(id: 'f2', ownerId: 'gp2', regionId: 'oldWorld', shipTypeIds: shipTypesGp2),
       ],
       diplomacyRelations: const [],
     );
+
+const _fourGpPlayers = [
+  Player(id: 'gp1', displayName: 'GP1', isHuman: false),
+  Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+  Player(id: 'gp3', displayName: 'GP3', isHuman: false),
+  Player(id: 'gp4', displayName: 'GP4', isHuman: false),
+];
+
+DiplomacyRelation _peaceRel(
+  String a,
+  String b,
+  num score, {
+  bool formalAlliance = false,
+  RelationState state = RelationState.atPeace,
+}) {
+  final ids = canonicalPairIds(a, b);
+  return DiplomacyRelation(
+    factionId1: ids.id1,
+    factionId2: ids.id2,
+    score: score,
+    level: scoreToLevel(score),
+    state: state,
+    sinceTurn: 0,
+    lastInteractionTurn: 0,
+    formalAlliance: formalAlliance,
+  );
+}
 
 /// Four-GP game for voluntary alliance-break resolver tests (R11).
 Game fourGpGame({
@@ -208,50 +227,18 @@ Game fourGpGame({
     diplomacyGame(
       id: id,
       turnNumber: turnNumber,
-      players: const [
-        Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-        Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-        Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-        Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-      ],
+      players: _fourGpPlayers,
       diplomacyRelations: [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          score: gp1gp2Score,
-          level: scoreToLevel(gp1gp2Score),
-          state: gp1gp2State,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
+        _peaceRel(
+          'gp1',
+          'gp2',
+          gp1gp2Score,
           formalAlliance: gp1gp2FormalAlliance,
+          state: gp1gp2State,
         ),
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp3',
-          score: gp1gp3Score,
-          level: scoreToLevel(gp1gp3Score),
-          state: RelationState.atPeace,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
-        ),
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp4',
-          score: gp1gp4Score,
-          level: scoreToLevel(gp1gp4Score),
-          state: RelationState.atPeace,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
-        ),
-        const DiplomacyRelation(
-          factionId1: 'gp2',
-          factionId2: 'gp3',
-          score: 50,
-          level: RelationLevel.neutral,
-          state: RelationState.atPeace,
-          sinceTurn: 0,
-          lastInteractionTurn: 0,
-        ),
+        _peaceRel('gp1', 'gp3', gp1gp3Score),
+        _peaceRel('gp1', 'gp4', gp1gp4Score),
+        _peaceRel('gp2', 'gp3', 50),
       ],
     );
 
@@ -263,47 +250,21 @@ Game fourGpBreakDecayGame({
   required num gp1gp3Score,
   required num gp1gp4Score,
   required num gp2gp3Score,
-}) {
-  DiplomacyRelation rel(
-    String a,
-    String b,
-    num score, {
-    bool formalAlliance = false,
-  }) {
-    final ids = canonicalPairIds(a, b);
-    return DiplomacyRelation(
-      factionId1: ids.id1,
-      factionId2: ids.id2,
-      score: score,
-      level: scoreToLevel(score),
-      state: RelationState.atPeace,
-      sinceTurn: 0,
-      lastInteractionTurn: 0,
-      formalAlliance: formalAlliance,
+}) =>
+    diplomacyGame(
+      id: id,
+      turnNumber: turnNumber,
+      players: _fourGpPlayers,
+      diplomacyRelations: [
+        _peaceRel('gp1', 'gp2', gp1gp2Score, formalAlliance: true),
+        _peaceRel('gp1', 'gp3', gp1gp3Score),
+        _peaceRel('gp1', 'gp4', gp1gp4Score),
+        _peaceRel('gp2', 'gp3', gp2gp3Score),
+      ],
     );
-  }
-
-  return diplomacyGame(
-    id: id,
-    turnNumber: turnNumber,
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-      Player(id: 'gp3', displayName: 'GP3', isHuman: false),
-      Player(id: 'gp4', displayName: 'GP4', isHuman: false),
-    ],
-    diplomacyRelations: [
-      rel('gp1', 'gp2', gp1gp2Score, formalAlliance: true),
-      rel('gp1', 'gp3', gp1gp3Score),
-      rel('gp1', 'gp4', gp1gp4Score),
-      rel('gp2', 'gp3', gp2gp3Score),
-    ],
-  );
-}
 
 /// Minimal game with configurable overtures for overture-clear helper tests.
-Game diplomacyGameWithOvertures(List<OvertureState> overtures) =>
-    TestFixtures.minimalGame(
+Game diplomacyGameWithOvertures(List<OvertureState> overtures) => diplomacyGame(
       players: const [Player(id: 'gp1', displayName: 'A', isHuman: false)],
       overtureStates: overtures,
     );
@@ -313,19 +274,8 @@ Game factionMembershipStressTestGame() => diplomacyGame(
       id: 'g-membership',
       players: List.generate(
         6,
-        (i) => Player(
-          id: 'gp$i',
-          displayName: 'GP $i',
-          isHuman: false,
-          treasury: 1000,
-        ),
+        (i) => Player(id: 'gp$i', displayName: 'GP $i', isHuman: false, treasury: 1000),
       ),
-      minorNations: List.generate(
-        5,
-        (i) => MinorNation(id: 'minor$i', displayName: 'Minor $i'),
-      ),
-      tribes: List.generate(
-        5,
-        (i) => Tribe(id: 'tribe$i', displayName: 'Tribe $i'),
-      ),
+      minorNations: List.generate(5, (i) => MinorNation(id: 'minor$i', displayName: 'Minor $i')),
+      tribes: List.generate(5, (i) => Tribe(id: 'tribe$i', displayName: 'Tribe $i')),
     );

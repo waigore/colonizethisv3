@@ -9,6 +9,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 /// Widget tests for the in-game shell top bar (issue #2861 S1).
 ///
 /// Pins the dark editorial-monocle chrome contract:
@@ -48,17 +50,16 @@ void main() {
     String? observeBannerLabel,
     double hostWidth = 600,
   }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: MediaQuery(
-          data: MediaQueryData(size: Size(hostWidth, 200)),
-          child: SizedBox(
-            width: hostWidth,
-            height: 200,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                GameTopBar(
+    return buildAppShell(
+      viewport: Size(hostWidth, 200),
+      child: Scaffold(
+        body: SizedBox(
+          width: hostWidth,
+          height: 200,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              GameTopBar(
                 onToggleSideMenu: onToggleSideMenu,
                 onPausePressed: onPausePressed,
                 onNextTurn: onNextTurn,
@@ -73,7 +74,6 @@ void main() {
           ),
         ),
       ),
-    ),
     );
   }
 

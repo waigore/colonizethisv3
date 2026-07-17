@@ -4,8 +4,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'app_shell_harness.dart';
 
 /// Players and games for production panel widget tests without debug game init.
 Player productionPanelTestFullPlayer() {
@@ -52,6 +56,8 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
+    this.labourCallbacks,
+    this.canEditLabour = false,
   });
 
   final Game displayGame;
@@ -61,6 +67,8 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final VoidCallback? onOpenCommodityBreakdown;
   final Orders? currentOrders;
+  final ProductionLabourCallbacks? labourCallbacks;
+  final bool canEditLabour;
 
   @override
   State<ProductionPanelTestWrapper> createState() =>
@@ -92,11 +100,14 @@ class _ProductionPanelTestWrapperState
       },
       onOpenCommodityBreakdown: widget.onOpenCommodityBreakdown,
       currentOrders: widget.currentOrders,
+      labourCallbacks: widget.labourCallbacks,
+      canEditLabour: widget.canEditLabour,
     );
   }
 }
 
-/// Canonical [ProductionPanel] host for widget tests (Refs #4013).
+/// Canonical [ProductionPanel] host for widget tests via [buildAppShell]
+/// (Refs #4013, #4035).
 Widget buildProductionPanel({
   required Player player,
   Game? gameOverride,
@@ -104,6 +115,8 @@ Widget buildProductionPanel({
   ValueChanged<Map<String, int>>? onDesiredOutputChanged,
   VoidCallback? onOpenCommodityBreakdown,
   Orders? currentOrders,
+  ProductionLabourCallbacks? labourCallbacks,
+  bool canEditLabour = false,
   double width = 800,
   double height = 500,
 }) {
@@ -120,22 +133,23 @@ Widget buildProductionPanel({
         (netDeltasByCommodity[recipe.outputCommodityId] ?? 0) +
         (recipe.outputQuantity * entry.value);
   }
-  return MaterialApp(
-    home: MediaQuery(
-      data: MediaQueryData(size: Size(width, height)),
-      child: Scaffold(
-        body: SizedBox(
-          width: width,
-          height: height,
-          child: ProductionPanelTestWrapper(
-            displayGame: displayGame,
-            player: player,
-            initialDesiredOutput: desiredOutputByRecipe,
-            netDeltasByCommodity: netDeltasByCommodity,
-            onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
-            onOpenCommodityBreakdown: onOpenCommodityBreakdown,
-            currentOrders: currentOrders,
-          ),
+  return buildAppShell(
+    viewport: Size(width, height),
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    child: Scaffold(
+      body: SizedBox(
+        width: width,
+        height: height,
+        child: ProductionPanelTestWrapper(
+          displayGame: displayGame,
+          player: player,
+          initialDesiredOutput: desiredOutputByRecipe,
+          netDeltasByCommodity: netDeltasByCommodity,
+          onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+          onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+          currentOrders: currentOrders,
+          labourCallbacks: labourCallbacks,
+          canEditLabour: canEditLabour,
         ),
       ),
     ),

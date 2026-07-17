@@ -305,18 +305,13 @@ void main() {
 
   group('Panel hosts bridge mapProvincePanelProvider → overlay', () {
     test(
-      '$_sidePanelHostRelativePath imports both '
-      'map_province_panel_provider.dart and '
-      'province_sea_zone_detail_overlay.dart',
+      '$_sidePanelHostRelativePath imports map_province_panel_provider and '
+      'calls buildProvinceSeaZoneDetailOverlayForPanel',
       () {
         final code = _stripDartComments(
           _readAppSource(_sidePanelHostRelativePath),
         );
         final providerMatches = _mapProvincePanelProviderImportPattern
-            .allMatches(code)
-            .map((m) => m.group(0)?.trim())
-            .toList(growable: false);
-        final overlayMatches = _overlayImportPattern
             .allMatches(code)
             .map((m) => m.group(0)?.trim())
             .toList(growable: false);
@@ -331,30 +326,23 @@ void main() {
               'Refs #2865 S1).',
         );
         expect(
-          overlayMatches,
-          isNotEmpty,
+          code.contains('buildProvinceSeaZoneDetailOverlayForPanel'),
+          isTrue,
           reason:
-              '$_sidePanelHostRelativePath must import '
-              '`province_sea_zone_detail_overlay.dart` so the host can '
-              'instantiate the overlay (SPEC § Architecture and wiring, '
-              'Refs #2865 S1).',
+              '$_sidePanelHostRelativePath must use the shared host factory '
+              '(Refs #4018) so overlay wiring is not duplicated.',
         );
       },
     );
 
     test(
-      '$_narrowOverlayHostRelativePath imports both '
-      'map_province_panel_provider.dart and '
-      'province_sea_zone_detail_overlay.dart',
+      '$_narrowOverlayHostRelativePath imports map_province_panel_provider and '
+      'calls buildProvinceSeaZoneDetailOverlayForPanel',
       () {
         final code = _stripDartComments(
           _readAppSource(_narrowOverlayHostRelativePath),
         );
         final providerMatches = _mapProvincePanelProviderImportPattern
-            .allMatches(code)
-            .map((m) => m.group(0)?.trim())
-            .toList(growable: false);
-        final overlayMatches = _overlayImportPattern
             .allMatches(code)
             .map((m) => m.group(0)?.trim())
             .toList(growable: false);
@@ -369,13 +357,11 @@ void main() {
               'Refs #2865 S1).',
         );
         expect(
-          overlayMatches,
-          isNotEmpty,
+          code.contains('buildProvinceSeaZoneDetailOverlayForPanel'),
+          isTrue,
           reason:
-              '$_narrowOverlayHostRelativePath must import '
-              '`province_sea_zone_detail_overlay.dart` so the host can '
-              'instantiate the overlay (SPEC § Architecture and wiring, '
-              'Refs #2865 S1).',
+              '$_narrowOverlayHostRelativePath must use the shared host factory '
+              '(Refs #4018) so overlay wiring is not duplicated.',
         );
       },
     );

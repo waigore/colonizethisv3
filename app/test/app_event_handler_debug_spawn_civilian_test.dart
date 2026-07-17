@@ -3,41 +3,14 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-Game _gameWithCapital() {
-  return Game(
-    id: 'g-civilian',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: true,
-        capitalProvinceId: 'oldWorld|1',
-        capitalTile: CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: 'oldWorld|1',
-          x: 5,
-          y: 5,
-        ),
-      ),
-    ],
-  );
-}
+import 'support/debug_handler_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
 
   group('applyDebugCivilianSpawnAtCapital', () {
     test('spawns civilians into the capital region bucket', () {
-      final game = _gameWithCapital();
+      final game = buildDebugHandlerCapitalGame(id: 'g-civilian');
       final event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: kUnitTypeBuilder,
@@ -71,7 +44,7 @@ void main() {
     });
 
     test('short-circuits on unknown player', () {
-      final game = _gameWithCapital();
+      final game = buildDebugHandlerCapitalGame(id: 'g-civilian');
       final event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'ghost',
         unitType: kUnitTypeBuilder,
@@ -85,7 +58,7 @@ void main() {
     });
 
     test('rejects unsupported civilian type', () {
-      final game = _gameWithCapital();
+      final game = buildDebugHandlerCapitalGame(id: 'g-civilian');
       const event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: 'not_a_civilian',
@@ -102,7 +75,7 @@ void main() {
     });
 
     test('short-circuits when count below minimum', () {
-      final game = _gameWithCapital();
+      final game = buildDebugHandlerCapitalGame(id: 'g-civilian');
       final event = SpawnDebugCivilianAtCapitalEvent(
         humanPlayerId: 'p1',
         unitType: kUnitTypeBuilder,

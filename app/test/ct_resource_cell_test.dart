@@ -1,5 +1,4 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -7,14 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
   Future<void> pumpCell(WidgetTester tester, Widget child) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppThemes.editorialMonocle,
-        home: Scaffold(
+      buildAppShell(
+        child: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(width: 240, child: child),
@@ -185,9 +185,8 @@ void main() {
 
     testWidgets('name truncates with ellipsis under tight width', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Padding(
               padding: const EdgeInsets.all(16),
               child: SizedBox(
@@ -222,9 +221,8 @@ void main() {
       required double width,
     }) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(width: width, child: cell),
@@ -365,9 +363,8 @@ void main() {
       required double width,
     }) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(width: width, child: cell),
@@ -384,9 +381,8 @@ void main() {
       required double cellWidth,
     }) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppThemes.editorialMonocle,
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
               child: SizedBox(

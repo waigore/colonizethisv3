@@ -1,8 +1,9 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_worker_pool.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/debug_handler_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -21,21 +22,9 @@ void main() {
     });
 
     test('adds credited amount to matching worker tier', () {
-      final game = Game(
+      final game = buildDebugHandlerPlayerGame(
         id: 'g-workers',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            workerPool: WorkerPool(peasants: 10, apprentices: 2),
-          ),
-        ],
+        workerPool: const WorkerPool(peasants: 10, apprentices: 2),
       );
       const event = CreditDebugWorkerPoolEvent(
         humanPlayerId: 'p1',
@@ -53,21 +42,9 @@ void main() {
     });
 
     test('clamped success message includes requested and credited amounts', () {
-      final game = Game(
+      final game = buildDebugHandlerPlayerGame(
         id: 'g-workers2',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            workerPool: WorkerPool(masters: 1),
-          ),
-        ],
+        workerPool: const WorkerPool(masters: 1),
       );
       const event = CreditDebugWorkerPoolEvent(
         humanPlayerId: 'p1',
@@ -82,21 +59,10 @@ void main() {
     });
 
     test('applies during non-Orders turn phases (parity with debug treasury policy)', () {
-      final game = Game(
+      final game = buildDebugHandlerPlayerGame(
         id: 'g-workers3',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.movement, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(
-            id: 'p1',
-            displayName: 'P1',
-            isHuman: true,
-            workerPool: WorkerPool(apprentices: 1),
-          ),
-        ],
+        phase: TurnPhase.movement,
+        workerPool: const WorkerPool(apprentices: 1),
       );
       const event = CreditDebugWorkerPoolEvent(
         humanPlayerId: 'p1',
@@ -111,17 +77,7 @@ void main() {
     });
 
     test('ignores unknown worker tier on event', () {
-      final game = Game(
-        id: 'g-workers4',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(),
-          newWorld: RegionData(),
-        ),
-        players: const [
-          Player(id: 'p1', displayName: 'P1', isHuman: true),
-        ],
-      );
+      final game = buildDebugHandlerPlayerGame(id: 'g-workers4');
       const event = CreditDebugWorkerPoolEvent(
         humanPlayerId: 'p1',
         workerTierId: 'not_a_tier',

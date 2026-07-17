@@ -33,9 +33,9 @@ class _MarketCommodityRowHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         ResourceIcon(
-          key: TradeScreen.marketRowResourceIconKey(commodityId),
+          key: TradeScreenMarketKeys.marketRowResourceIconKey(commodityId),
           commodityId: commodityId,
-          size: TradeScreen.marketRowResourceIconSize,
+          size: TradeScreenMarketKeys.marketRowResourceIconSize,
         ),
         const SizedBox(width: 4),
         Expanded(
@@ -52,27 +52,27 @@ class _MarketCommodityRowHeader extends StatelessWidget {
               Text(
                 // ignore: avoid_hardcoded_strings_in_widgets
                 '($sellableHeadroom)',
-                key: TradeScreen.marketRowSellableReadoutKey(commodityId),
+                key: TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId),
                 style: sellableStyle,
               ),
             ],
           ),
         ),
         SizedBox(
-          width: TradeScreen.marketRowPriceColumnWidth,
+          width: TradeScreenMarketKeys.marketRowPriceColumnWidth,
           child: Align(
             alignment: Alignment.centerRight,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 StrictAssetIcon(
-                  key: TradeScreen.marketRowPriceCoinIconKey(commodityId),
-                  assetPath: TradeScreen.marketRowPriceCoinAssetPath,
-                  width: TradeScreen.marketRowPriceCoinIconSize,
-                  height: TradeScreen.marketRowPriceCoinIconSize,
+                  key: TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
+                  assetPath: TradeScreenMarketKeys.marketRowPriceCoinAssetPath,
+                  width: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
+                  height: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
                 ),
                 const SizedBox(
-                  width: TradeScreen.marketRowPriceColumnInnerGap,
+                  width: TradeScreenMarketKeys.marketRowPriceColumnInnerGap,
                 ),
                 Text(priceText, style: priceStyle),
               ],

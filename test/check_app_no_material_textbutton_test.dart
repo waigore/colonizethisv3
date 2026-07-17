@@ -18,7 +18,7 @@ void main() {
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 class Clean extends StatelessWidget {
   const Clean({super.key});
@@ -70,14 +70,8 @@ Widget cancel() => TextButton(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('bad_cancel.dart:3: TextButton('),
-      );
-      expect(
-        logs.join('\n'),
-        contains('CtNinePatchButton'),
-      );
+      expect(logs.join('\n'), contains('bad_cancel.dart:3: TextButton('));
+      expect(logs.join('\n'), contains('CtNinePatchButton'));
     });
 
     test('fails for TextButton.icon / .tonalIcon variants', () {
@@ -147,18 +141,16 @@ class C {}
       },
     );
 
-    test(
-      'does not flag identifiers that contain "TextButton" without '
-      'an opening paren (false-positive guard)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_textbutton_identifier_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag identifiers that contain "TextButton" without '
+        'an opening paren (false-positive guard)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_textbutton_identifier_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 class FakeTextButtonProbe {
@@ -166,15 +158,14 @@ class FakeTextButtonProbe {
 }
 ''');
 
-        final code = runCheckAppNoMaterialTextButton(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialTextButton(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
       'does not flag CtDangerTextButton (Ct-* catalog widget with TextButton '
@@ -189,7 +180,7 @@ class FakeTextButtonProbe {
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_danger_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
 
 Widget disband() => CtDangerTextButton(
   label: 'Disband',
@@ -207,18 +198,16 @@ Widget disband() => CtDangerTextButton(
       },
     );
 
-    test(
-      'does not flag TextButton.styleFrom (static ButtonStyle factory; '
-      'legitimate theme work that does not construct the widget)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_textbutton_style_from_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag TextButton.styleFrom (static ButtonStyle factory; '
+        'legitimate theme work that does not construct the widget)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_textbutton_style_from_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/widgets/theme_helpers.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/widgets/theme_helpers.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 ButtonStyle accentStyle() => TextButton.styleFrom(
@@ -226,27 +215,24 @@ ButtonStyle accentStyle() => TextButton.styleFrom(
 );
 ''');
 
-        final code = runCheckAppNoMaterialTextButton(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialTextButton(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_textbutton_chrome_',
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -260,37 +246,40 @@ Widget fallback() => TextButton(onPressed: () {}, child: const Text('ok'));
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
-    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_textbutton_devtools_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'allowlists the Debug Console Overlay dev-tooling screen (SYS20001)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_textbutton_devtools_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const debugConsole =
-          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
+        const debugConsole =
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
-      for (final rel in [debugConsole]) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+        for (final rel in [debugConsole]) {
+          File('${temp.path}/$rel')
+            ..createSync(recursive: true)
+            ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => TextButton(onPressed: () {}, child: const Text('ok'));
 ''');
-      }
+        }
 
-      final code = runCheckAppNoMaterialTextButton(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialTextButton(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 0);
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -300,9 +289,7 @@ Widget bypass() => TextButton(onPressed: () {}, child: const Text('ok'));
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/some_widget_test.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -370,9 +357,7 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
   group('shouldSkipAppNoMaterialTextButtonFile (scope predicate)', () {
     test('skips generated suffixes', () {
       expect(
-        shouldSkipAppNoMaterialTextButtonFile(
-          'app/lib/features/x/y.g.dart',
-        ),
+        shouldSkipAppNoMaterialTextButtonFile('app/lib/features/x/y.g.dart'),
         isTrue,
       );
       expect(
@@ -391,27 +376,26 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
 
     test('skips test files inside features/', () {
       expect(
-        shouldSkipAppNoMaterialTextButtonFile(
-          'app/lib/features/x/y_test.dart',
-        ),
+        shouldSkipAppNoMaterialTextButtonFile('app/lib/features/x/y_test.dart'),
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialTextButtonFile(
-          'app/lib/features/x/test/y.dart',
-        ),
+        shouldSkipAppNoMaterialTextButtonFile('app/lib/features/x/test/y.dart'),
         isTrue,
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialTextButtonFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialTextButtonFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       const skipped = <String>[
@@ -426,29 +410,26 @@ Widget probe() => TextButton(onPressed: () {}, child: const Text('ok'));
       }
     });
 
-    test(
-      'does not skip ordinary feature widgets (in scope for the check)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/flame/map_area/game_map_canvas_stack.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialTextButtonFile(
-            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip ordinary feature widgets (in scope for the check)', () {
+      expect(
+        shouldSkipAppNoMaterialTextButtonFile(
+          'app/lib/features/game/flame/map_area/game_map_canvas_stack.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialTextButtonFile(
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialTextButtonFile(
+          'app/lib/features/game/widgets/units/military/military_units_panel.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('bannedTextButtonConstructionPattern (regex shape)', () {

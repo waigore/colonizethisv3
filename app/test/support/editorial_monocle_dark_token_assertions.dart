@@ -1,5 +1,4 @@
-// Shared editorial-monocle dark-token / chrome assertion helpers for app widget
-// tests. Refs #4013.
+// Shared editorial-monocle dark-token / chrome assertion helpers. Refs #4013 / #4021.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
@@ -14,75 +13,78 @@ int editorialMonocleArgb(Color c) {
   return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
-/// Asserts [color] is an explicit [EditorialMonoclePalette.muted] (not white,
+/// Asserts [color] is explicit [EditorialMonoclePalette.muted] (not white,
 /// not [onSurface], not null DefaultTextStyle fall-through).
 void expectMutedSingleSource(Color? color, Color onSurface, String label) {
   expect(
     color,
     isNotNull,
-    reason:
-        'Material defaults regression guard: the $label placeholder '
-        'must declare its own TextStyle.color rather than relying on '
-        'DefaultTextStyle fall-through.',
+    reason: 'Material defaults: $label must declare TextStyle.color.',
   );
   expect(
     color,
     isNot(equals(Colors.white)),
-    reason:
-        'Material defaults regression guard: the $label placeholder '
-        'must not resolve to the dark Material `Colors.white` fallback.',
+    reason: 'Material defaults: $label must not be Colors.white.',
   );
   expect(
     color,
     isNot(equals(onSurface)),
     reason:
-        'Material defaults regression guard: the $label placeholder '
-        'must not resolve to Theme.of(context).colorScheme.onSurface (the '
-        'dark Material `bodyMedium` proxy — distinct from '
-        '`EditorialMonoclePalette.muted` under any non-`editorialMonocle` '
-        'theme).',
+        'Material defaults: $label must not use colorScheme.onSurface; '
+        'use EditorialMonoclePalette.muted.',
   );
   expect(
     color,
     equals(EditorialMonoclePalette.muted),
-    reason:
-        'Material defaults regression guard: the $label placeholder '
-        'must resolve to EditorialMonoclePalette.muted (the single source).',
+    reason: '$label must resolve to EditorialMonoclePalette.muted.',
   );
 }
 
-/// Asserts an obfuscated `???` [Text] body row uses
-/// [EditorialMonoclePalette.muted] with an explicit style color.
+/// Asserts [color] is explicit [EditorialMonoclePalette.fg] (not white, not
+/// null). Omits `isNot(onSurface)` because editorialMonocle wires onSurface to
+/// fg.
+void expectFgSingleSource(Color? color, String label) {
+  expect(
+    color,
+    isNotNull,
+    reason: 'Material defaults: $label must declare TextStyle.color.',
+  );
+  expect(
+    color,
+    isNot(equals(Colors.white)),
+    reason: 'Material defaults: $label must not be Colors.white.',
+  );
+  expect(
+    color,
+    equals(EditorialMonoclePalette.fg),
+    reason: '$label must resolve to EditorialMonoclePalette.fg.',
+  );
+}
+
+/// Asserts an obfuscated `???` [Text] body row uses muted with an explicit
+/// style color.
 void expectMutedObfuscated(Text widget, {required String context}) {
+  final data = widget.data ?? '';
   expect(
     widget.style?.color,
     isNotNull,
-    reason:
-        'Material defaults regression guard: obfuscated body row '
-        '"${widget.data}" ($context) must declare its own '
-        'TextStyle.color rather than relying on DefaultTextStyle '
-        'fall-through.',
+    reason: 'Obfuscated "$data" ($context) must declare TextStyle.color.',
   );
   expect(
     widget.style?.color,
     isNot(equals(Colors.white)),
-    reason:
-        'Material defaults regression guard: obfuscated body row '
-        '"${widget.data}" ($context) must not resolve to the dark '
-        'Material `Colors.white` fallback.',
+    reason: 'Obfuscated "$data" ($context) must not be Colors.white.',
   );
   expect(
     widget.style?.color,
     equals(EditorialMonoclePalette.muted),
     reason:
-        'Obfuscated body row "${widget.data}" ($context) must resolve '
-        'TextStyle.color to EditorialMonoclePalette.muted per SPEC '
-        '§ Dark-theme obfuscated `???` body tokens.',
+        'Obfuscated "$data" ($context) must resolve to '
+        'EditorialMonoclePalette.muted.',
   );
 }
 
-/// Asserts the pumped tree is under editorial-monocle dark chrome
-/// (`Brightness.dark` + accent primary).
+/// Asserts the pumped tree is under editorial-monocle dark chrome.
 void expectEditorialMonocleDarkChrome(
   WidgetTester tester, {
   String reason =

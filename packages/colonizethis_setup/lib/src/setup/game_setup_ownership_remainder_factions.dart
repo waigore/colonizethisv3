@@ -1,14 +1,5 @@
 part of 'game_setup_ownership.dart';
 
-List<String> _lockedGrowthOrder(
-  List<String> factionIds,
-  Map<String, int> targetPerFaction,
-) {
-  final list = List<String>.from(factionIds)
-    ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targetPerFaction));
-  return list;
-}
-
 List<MapEntry<int, List<String>>> _landmassEntriesSortedBySize(
   Map<int, List<String>> landmassToProvinces,
 ) {
@@ -55,16 +46,14 @@ Map<String, String> _assignFactionsSingleComponentLocked({
     );
   }
   final land = comps.single;
-  final order = _lockedGrowthOrder(factionIds, targets);
-  return assignTerritoriesLockedOnLandmass(
+  return _paintLandmass(
+    mode: _LandmassPaintMode.locked,
     landmassProvinceIds: land,
     neighbours: neighbours,
-    growthOrder: order,
+    factionIds: factionIds,
     targetPerFaction: targets,
-    mandatorySeedProvinceByFaction: const {},
-    seedPickerRandom: assignmentRandom,
+    assignmentRandom: assignmentRandom,
     backtrackLimitPerFaction: backtrackLimitPerFaction,
-    observation: null,
   );
 }
 
@@ -162,17 +151,15 @@ Map<String, String> _assignFactionsMultiComponentLocked({
     final fs = e.value
       ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targets));
     final localTargets = {for (final f in fs) f: targets[f]!};
-    final order = _lockedGrowthOrder(fs, localTargets);
     out.addAll(
-      assignTerritoriesLockedOnLandmass(
+      _paintLandmass(
+        mode: _LandmassPaintMode.locked,
         landmassProvinceIds: land,
         neighbours: neighbours,
-        growthOrder: order,
+        factionIds: fs,
         targetPerFaction: localTargets,
-        mandatorySeedProvinceByFaction: const {},
-        seedPickerRandom: assignmentRandom,
+        assignmentRandom: assignmentRandom,
         backtrackLimitPerFaction: backtrackLimitPerFaction,
-        observation: null,
       ),
     );
   }

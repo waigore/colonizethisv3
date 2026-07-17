@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/turn_game_fixtures.dart';
+import 'support/turn_resolver_test_harness.dart';
 
 void main() {
   group('Research phase funding', () {
@@ -28,9 +29,7 @@ void main() {
       );
 
       final topology = const MapTopology();
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(game: game, topology: topology, orders: orders),
-      );
+      final next = resolveTurnComplete(game: game, topology: topology, orders: orders);
       final player = next.players.single;
 
       // One turn of maximum funding should make progress > 0 and reduce treasury.
@@ -68,13 +67,11 @@ void main() {
         },
       );
 
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       final player = next.players.single;
 
       // Treasury unchanged and no progress recorded because prerequisite not met.
@@ -101,13 +98,11 @@ void main() {
             ],
           },
         );
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
         expect(next.players.single.treasury, 100);
         expect(
           next.players.single.researchProgressByTechId ?? const {},
@@ -134,13 +129,11 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       // Low funding: 50 gold cost, 100 RP per turn (per SPEC/game/tech-tree.md)
       expect(next.players.single.treasury, 50);
       expect(
@@ -166,13 +159,11 @@ void main() {
           ],
         },
       );
-      final next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      final next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       // Maximum funding: 1000 gold cost, 2500 RP per turn (2.5x efficiency).
       // crop_rotation tier-1 cost is 1800, so 2500 RP >= 1800 unlocks the tech
       // and progress is cleared. SPEC/game/tech-tree.md § Research Model.
@@ -201,13 +192,11 @@ void main() {
             ],
           },
         );
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
         expect(next.players.single.treasury, 30);
         expect(
           next.players.single.researchProgressByTechId ?? const {},
@@ -240,13 +229,11 @@ void main() {
             ],
           },
         );
-        final next = requireTurnResolutionComplete(
-          resolveTurnForGame(
+        final next = resolveTurnComplete(
             game: game,
             topology: const MapTopology(),
             orders: orders,
-          ),
-        );
+          );
         expect(next.players.single.treasury, -20);
         expect(
           (next.players.single.researchProgressByTechId ??
@@ -278,13 +265,11 @@ void main() {
           ],
         },
       );
-      var next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      var next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       expect(next.players.single.treasury, 50);
       expect(
         (next.players.single.researchProgressByTechId ??
@@ -305,13 +290,11 @@ void main() {
           ],
         },
       );
-      next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       expect(next.players.single.treasury, 50);
       expect(
         (next.players.single.researchProgressByTechId ??
@@ -336,13 +319,11 @@ void main() {
           ],
         },
       );
-      next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       expect(next.players.single.treasury, 100);
       expect(
         (next.players.single.researchProgressByTechId ??
@@ -367,13 +348,11 @@ void main() {
           ],
         },
       );
-      next = requireTurnResolutionComplete(
-        resolveTurnForGame(
+      next = resolveTurnComplete(
           game: game,
           topology: const MapTopology(),
           orders: orders,
-        ),
-      );
+        );
       expect(next.players.single.treasury, 500);
       expect(next.players.single.techUnlocked![kTechIdWindSawMill], isTrue);
     });

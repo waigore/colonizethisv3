@@ -100,11 +100,16 @@ def main() -> None:
     if src.size != (64, 64):
         raise SystemExit(f"expected 64×64 base, got {src.size}")
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    base_alpha = [p[3] for p in src.convert("RGBA").get_flattened_data()]
+    def _rgba_pixels(im: Image.Image):
+        rgba = im.convert("RGBA")
+        flat = getattr(rgba, "get_flattened_data", None)
+        return flat() if flat is not None else rgba.getdata()
+
+    base_alpha = [p[3] for p in _rgba_pixels(src)]
     for stem, rgb in FIELD_TARGETS.items():
         out_path = args.out_dir / f"tile_plains_{stem}.png"
         out = recolour_field(src, rgb)
-        out_alpha = [p[3] for p in out.convert("RGBA").get_flattened_data()]
+        out_alpha = [p[3] for p in _rgba_pixels(out)]
         if out_alpha != base_alpha:
             raise SystemExit(f"alpha silhouette changed for {stem}")
         out.save(out_path, optimize=True)

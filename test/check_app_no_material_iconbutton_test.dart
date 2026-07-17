@@ -71,14 +71,8 @@ Widget locate() => IconButton(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('bad_locate.dart:3: IconButton('),
-      );
-      expect(
-        logs.join('\n'),
-        contains('CtIconAction'),
-      );
+      expect(logs.join('\n'), contains('bad_locate.dart:3: IconButton('));
+      expect(logs.join('\n'), contains('CtIconAction'));
     });
 
     test('fails for IconButton.outlined / .filled / .filledTonal variants', () {
@@ -152,18 +146,16 @@ class C {}
       },
     );
 
-    test(
-      'does not flag identifiers that contain "IconButton" without '
-      'an opening paren (false-positive guard)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_iconbutton_identifier_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag identifiers that contain "IconButton" without '
+        'an opening paren (false-positive guard)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_iconbutton_identifier_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 class FakeIconButtonProbe {
@@ -171,27 +163,24 @@ class FakeIconButtonProbe {
 }
 ''');
 
-        final code = runCheckAppNoMaterialIconButton(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialIconButton(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_iconbutton_chrome_',
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -205,81 +194,75 @@ Widget fallback() => IconButton(icon: const Icon(Icons.menu), onPressed: () {});
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
-    test(
-      'no longer allowlists the Debug Log Viewer (SYS10001) after the '
-      'Refs #2914 S8 CtScreenShell migration',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_iconbutton_debug_log_promoted_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('no longer allowlists the Debug Log Viewer (SYS10001) after the '
+        'Refs #2914 S8 CtScreenShell migration', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_iconbutton_debug_log_promoted_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        const debugViewer =
-            'app/lib/features/debug_log/debug_log_viewer_screen.dart';
+      const debugViewer =
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart';
 
-        File('${temp.path}/$debugViewer')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/$debugViewer')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
 ''');
 
-        final logs = <String>[];
-        final code = runCheckAppNoMaterialIconButton(
-          temp.path,
-          info: logs.add,
-          err: logs.add,
-        );
+      final logs = <String>[];
+      final code = runCheckAppNoMaterialIconButton(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
 
-        expect(code, 1);
-        expect(
-          logs.join('\n'),
-          contains('debug_log_viewer_screen.dart:3: IconButton('),
-        );
-      },
-    );
+      expect(code, 1);
+      expect(
+        logs.join('\n'),
+        contains('debug_log_viewer_screen.dart:3: IconButton('),
+      );
+    });
 
-    test(
-      'no longer allowlists the Debug Console Overlay (SYS20001) after the '
-      'Refs #2914 S8 CtIconAction migration',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_iconbutton_debug_console_promoted_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('no longer allowlists the Debug Console Overlay (SYS20001) after the '
+        'Refs #2914 S8 CtIconAction migration', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_iconbutton_debug_console_promoted_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        const debugConsole =
-            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
-        File('${temp.path}/$debugConsole')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      const debugConsole =
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
+      File('${temp.path}/$debugConsole')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
 ''');
 
-        final logs = <String>[];
-        final code = runCheckAppNoMaterialIconButton(
-          temp.path,
-          info: logs.add,
-          err: logs.add,
-        );
+      final logs = <String>[];
+      final code = runCheckAppNoMaterialIconButton(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
 
-        expect(code, 1);
-        expect(
-          logs.join('\n'),
-          contains(
-            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart:3: '
-            'IconButton(',
-          ),
-        );
-      },
-    );
+      expect(code, 1);
+      expect(
+        logs.join('\n'),
+        contains(
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart:3: '
+          'IconButton(',
+        ),
+      );
+    });
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -289,9 +272,7 @@ Widget bypass() => IconButton(icon: const Icon(Icons.close), onPressed: () {});
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/some_widget_test.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -359,9 +340,7 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
   group('shouldSkipAppNoMaterialIconButtonFile (scope predicate)', () {
     test('skips generated suffixes', () {
       expect(
-        shouldSkipAppNoMaterialIconButtonFile(
-          'app/lib/features/x/y.g.dart',
-        ),
+        shouldSkipAppNoMaterialIconButtonFile('app/lib/features/x/y.g.dart'),
         isTrue,
       );
       expect(
@@ -380,77 +359,67 @@ Widget probe() => IconButton(icon: const Icon(Icons.bug_report), onPressed: () {
 
     test('skips test files inside features/', () {
       expect(
-        shouldSkipAppNoMaterialIconButtonFile(
-          'app/lib/features/x/y_test.dart',
-        ),
+        shouldSkipAppNoMaterialIconButtonFile('app/lib/features/x/y_test.dart'),
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialIconButtonFile(
-          'app/lib/features/x/test/y.dart',
-        ),
-        isTrue,
-      );
-    });
-
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialIconButtonFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
+        shouldSkipAppNoMaterialIconButtonFile('app/lib/features/x/test/y.dart'),
         isTrue,
       );
     });
 
     test(
-      'does not skip debug_log_viewer_screen.dart (in scope for the '
-      'check after Refs #2914 S8 CtScreenShell migration)',
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
       () {
         expect(
           shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
           ),
           isFalse,
         );
       },
     );
 
-    test(
-      'does not skip debug_console_overlay_panel.dart (in scope for the '
-      'check after Refs #2914 S8 CtIconAction migration)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip debug_log_viewer_screen.dart (in scope for the '
+        'check after Refs #2914 S8 CtScreenShell migration)', () {
+      expect(
+        shouldSkipAppNoMaterialIconButtonFile(
+          'app/lib/features/debug_log/debug_log_viewer_screen.dart',
+        ),
+        isFalse,
+      );
+    });
 
-    test(
-      'does not skip ordinary feature widgets (in scope for the check)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialIconButtonFile(
-            'app/lib/features/game/screens/game/game_screen.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip debug_console_overlay_panel.dart (in scope for the '
+        'check after Refs #2914 S8 CtIconAction migration)', () {
+      expect(
+        shouldSkipAppNoMaterialIconButtonFile(
+          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
+        ),
+        isFalse,
+      );
+    });
+
+    test('does not skip ordinary feature widgets (in scope for the check)', () {
+      expect(
+        shouldSkipAppNoMaterialIconButtonFile(
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialIconButtonFile(
+          'app/lib/features/game/widgets/units/military/military_units_panel.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialIconButtonFile(
+          'app/lib/features/game/screens/game/game_screen.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('bannedIconButtonConstructionPattern (regex shape)', () {

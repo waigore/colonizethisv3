@@ -12,6 +12,8 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'support/app_shell_harness.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -81,9 +83,10 @@ void main() {
         tester.view.physicalSize = surfaceSize;
         tester.view.devicePixelRatio = 1.0;
         final fixture = buildFixture();
+        // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
+          buildAppShell(
+            child: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
                   onPressed: () {

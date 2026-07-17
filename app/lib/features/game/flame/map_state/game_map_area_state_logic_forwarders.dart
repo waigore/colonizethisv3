@@ -7,27 +7,30 @@ part of 'game_map_area_state_logic.dart';
 /// dedicated modules; this class keeps the public entry points used by the
 /// `GameMapArea` widget, tests, and the order-suggestions SPEC pointer
 /// (`SPEC/program/order-suggestions.md` § Authoritative pipeline).
+///
+/// Wave-5 (#4018): calls shell / work-target / draft / province modules
+/// directly (no thin middle `Api*` hop).
 abstract final class GameMapAreaStateLogic {
   GameMapAreaStateLogic._();
 
   static bool allowsFullTurnResolution(ct_models.Game game) =>
-      _GameMapAreaStateLogicApiShellWork.allowsFullTurnResolution(game);
+      GameMapAreaStateLogicShell.allowsFullTurnResolution(game);
 
   static const ({bool showIcon, bool enabled, bool hasExplorerUnits})
   kHiddenExplorerInlineActionState =
-      _GameMapAreaStateLogicApiShellWork.kHiddenExplorerInlineActionState;
+      GameMapAreaProvinceActionStates.kHiddenExplorerInlineActionState;
   static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
   kHiddenBuilderInlineActionState =
-      _GameMapAreaStateLogicApiShellWork.kHiddenBuilderInlineActionState;
+      GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState;
 
   static int regionIndexFromWorldRegionId(String regionId) =>
-      _GameMapAreaStateLogicApiShellWork.regionIndexFromWorldRegionId(regionId);
+      GameMapAreaStateLogicShell.regionIndexFromWorldRegionId(regionId);
 
   static ShellEntryAutoCenter? resolveShellEntryAutoCenter({
     required ct_models.Game game,
     required String? currentPlayerId,
   }) =>
-      _GameMapAreaStateLogicApiShellWork.resolveShellEntryAutoCenter(
+      GameMapAreaStateLogicShell.resolveShellEntryAutoCenter(
         game: game,
         currentPlayerId: currentPlayerId,
       );
@@ -36,13 +39,13 @@ abstract final class GameMapAreaStateLogic {
     required String tileKey,
     required String workTarget,
   }) =>
-      _GameMapAreaStateLogicApiShellWork.translateWorkTargetTileKey(
+      GameMapAreaStateLogicShell.translateWorkTargetTileKey(
         tileKey: tileKey,
         workTarget: workTarget,
       );
 
   static const Set<String> kCacheFirstWorkTargets =
-      _GameMapAreaStateLogicApiShellWork.kCacheFirstWorkTargets;
+      GameMapAreaStateLogicWorkTargets.kCacheFirstWorkTargets;
 
   static Set<String> filterCacheSelectionForRuntimeStaleTileConflicts({
     required Set<String> cachedTileKeys,
@@ -52,7 +55,7 @@ abstract final class GameMapAreaStateLogic {
     required String selectedUnitId,
     required String workTarget,
   }) =>
-      _GameMapAreaStateLogicApiShellWork
+      GameMapAreaStateLogicWorkTargets
           .filterCacheSelectionForRuntimeStaleTileConflicts(
         cachedTileKeys: cachedTileKeys,
         game: game,
@@ -73,7 +76,7 @@ abstract final class GameMapAreaStateLogic {
     required MapTopology topology,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) =>
-      _GameMapAreaStateLogicApiShellWork
+      GameMapAreaStateLogicWorkTargets
           .resolveValidTileKeysForCivilianWorkSelection(
         workTarget: workTarget,
         workTargetSelectionCache: workTargetSelectionCache,
@@ -91,7 +94,7 @@ abstract final class GameMapAreaStateLogic {
     required String humanPlayerId,
     required ct_models.WorkOrder workOrder,
   }) =>
-      _GameMapAreaStateLogicApiShellWork.addHumanWorkOrder(
+      GameMapAreaStateLogicWorkTargets.addHumanWorkOrder(
         orders: orders,
         humanPlayerId: humanPlayerId,
         workOrder: workOrder,
@@ -101,7 +104,7 @@ abstract final class GameMapAreaStateLogic {
     required String? currentSelectedCivilianTileKey,
     required String assignedTileKey,
   }) =>
-      _GameMapAreaStateLogicApiShellWork.selectionAfterWorkAssignment(
+      GameMapAreaStateLogicWorkTargets.selectionAfterWorkAssignment(
         currentSelectedCivilianTileKey: currentSelectedCivilianTileKey,
         assignedTileKey: assignedTileKey,
       );
@@ -113,7 +116,7 @@ abstract final class GameMapAreaStateLogic {
     required String humanPlayerId,
     Set<String>? civilianMarkerOwnerIds,
   }) =>
-      _GameMapAreaStateLogicApiDraft.projectCivilianMarkersForHumanDraft(
+      GameMapAreaStateLogicDraftProjection.projectCivilianMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -130,7 +133,7 @@ abstract final class GameMapAreaStateLogic {
     required Map<String, MapTopology> topologyByRegion,
     required MapTopology combinedTopology,
   }) =>
-      _GameMapAreaStateLogicApiDraft.projectFleetMarkersForHumanDraft(
+      GameMapAreaStateLogicDraftProjection.projectFleetMarkersForHumanDraft(
         region: region,
         game: game,
         orders: orders,
@@ -150,7 +153,7 @@ abstract final class GameMapAreaStateLogic {
     MapTopology? combinedTopology,
     Set<String>? civilianMarkerOwnerIds,
   }) =>
-      _GameMapAreaStateLogicApiDraft.projectHumanDraftMarkersForRegion(
+      GameMapAreaStateLogicDraftProjection.projectHumanDraftMarkersForRegion(
         baseRegion: baseRegion,
         game: game,
         orders: orders,
@@ -171,7 +174,7 @@ abstract final class GameMapAreaStateLogic {
     required ct_models.Orders currentOrders,
     required Map<String, TileMapResult>? tileMapByRegion,
   }) =>
-      _GameMapAreaStateLogicApiProvince.provinceProspectActionState(
+      GameMapAreaStateLogicProvinceActions.provinceProspectActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
@@ -189,7 +192,7 @@ abstract final class GameMapAreaStateLogic {
     required Map<String, TileMapResult>? tileMapByRegion,
     required ct_models.Orders currentOrders,
   }) =>
-      _GameMapAreaStateLogicApiProvince.buildExploreEligibleTileKeyCache(
+      GameMapAreaStateLogicProvinceActions.buildExploreEligibleTileKeyCache(
         game: game,
         humanPlayerId: humanPlayerId,
         playerView: playerView,
@@ -207,7 +210,7 @@ abstract final class GameMapAreaStateLogic {
     PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
     Set<String>? cachedExploreEligibleTileKeys,
   }) =>
-      _GameMapAreaStateLogicApiProvince.provinceExploreActionState(
+      GameMapAreaStateLogicProvinceActions.provinceExploreActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
@@ -227,7 +230,7 @@ abstract final class GameMapAreaStateLogic {
     ct_models.Orders currentOrders = const ct_models.Orders(),
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
-      _GameMapAreaStateLogicApiProvince.provinceBuildImprovementActionState(
+      GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

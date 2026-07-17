@@ -34,7 +34,7 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_actio
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
@@ -171,14 +171,34 @@ Widget civilianUnitsPanelWithRiverpod({
 /// Host for Widgetbook use cases that need a nested [MaterialApp]. Without an
 /// explicit [ThemeData], nested apps default to Material light and break dark
 /// editorial-monocle review for unit panels and train dialogs (Refs #2866 S6).
-Widget widgetbookEditorialMonocleApp({required Widget child}) {
+///
+/// Pass [localizationsDelegates] / [supportedLocales] when the story body
+/// reads `AppLocalizations` (turn-news, event-feed cards, …). Optional
+/// [scaffoldBackgroundColor] overrides the theme scaffold colour for stories
+/// that pin a deeper scrim (event-feed card chrome). When [useScaffold] is
+/// false, [child] is the [MaterialApp.home] directly (leader-selection mobile
+/// story and similar bare-center hosts).
+Widget widgetbookEditorialMonocleApp({
+  required Widget child,
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
+  Iterable<Locale> supportedLocales = const <Locale>[Locale('en', 'US')],
+  Color? scaffoldBackgroundColor,
+  bool useScaffold = true,
+}) {
+  final Widget home = useScaffold
+      ? Scaffold(
+          backgroundColor:
+              scaffoldBackgroundColor ??
+              AppThemes.editorialMonocle.scaffoldBackgroundColor,
+          body: child,
+        )
+      : child;
   return MaterialApp(
     debugShowCheckedModeBanner: false,
     theme: AppThemes.editorialMonocle,
-    home: Scaffold(
-      backgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-      body: child,
-    ),
+    localizationsDelegates: localizationsDelegates,
+    supportedLocales: supportedLocales,
+    home: home,
   );
 }
 

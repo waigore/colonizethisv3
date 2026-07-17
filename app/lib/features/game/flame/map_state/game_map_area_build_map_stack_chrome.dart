@@ -18,7 +18,9 @@ mixin _GameMapAreaBuildMapStackChrome
     return [
       Consumer(
         builder: (context, ref, _) {
-          final panelOpen = ref.watch(mapProvincePanelProvider).overlayOpen;
+          final panelOpen = ref.watch(
+            mapProvincePanelProvider.select((s) => s.overlayOpen),
+          );
           final rightInset = !isNarrow
               ? gameMapWideOverlayRightInset(provincePanelOpen: panelOpen)
               : kGameMapWideStackRightGutter;
@@ -51,7 +53,9 @@ mixin _GameMapAreaBuildMapStackChrome
       if (!isNarrow)
         Consumer(
           builder: (context, ref, _) {
-            final panelOpen = ref.watch(mapProvincePanelProvider).overlayOpen;
+            final panelOpen = ref.watch(
+              mapProvincePanelProvider.select((s) => s.overlayOpen),
+            );
             final rightInset = gameMapWideOverlayRightInset(
               provincePanelOpen: panelOpen,
             );

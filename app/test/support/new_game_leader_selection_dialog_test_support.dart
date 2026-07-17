@@ -11,6 +11,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'app_shell_harness.dart';
+
 typedef NewGameLeaderSelectionConfirmed = void Function(
   List<String> orderedGreatPowerIds,
   Map<String, String> leaderVariantByGpId,
@@ -36,13 +38,14 @@ Future<void> pumpNewGameLeaderSelectionDialog(
   addTearDown(tester.view.reset);
   tester.view.physicalSize = surfaceSize;
   tester.view.devicePixelRatio = 1.0;
+  // Colonial specialization via buildAppShell theme (Refs #4035).
   await tester.pumpWidget(
-    MaterialApp(
+    buildAppShell(
       theme: AppThemes.colonial,
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
-      home: Scaffold(
+      child: Scaffold(
         body: Builder(
           builder: (context) {
             return TextButton(

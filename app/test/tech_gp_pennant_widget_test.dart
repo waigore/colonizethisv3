@@ -14,6 +14,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 
 void main() {
@@ -43,10 +44,10 @@ void main() {
     );
   }
 
-  Widget wrap(Widget child) => MaterialApp(
+  Widget wrap(Widget child) => buildAppShell(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(body: child),
+    child: Scaffold(body: child),
   );
 
   group('TechGpPennantRow', () {
@@ -202,8 +203,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(320, 640));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
+        buildAppShell(
+          child: Scaffold(
             body: ChooseTechDialog(
               game: game,
               contextPlayerId: 'gp1',

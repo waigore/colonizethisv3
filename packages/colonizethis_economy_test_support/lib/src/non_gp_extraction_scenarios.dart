@@ -99,8 +99,9 @@ List<NonGpExtractionScenario> nonGpExtractionSpecAcScenarios() => [
   ),
 ];
 /// Boundary / multi-faction cases from `non_gp_extraction_test.dart`.
-List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() => [..._nonGpExtractionBoundarySkipScenarios(), ..._nonGpExtractionBoundaryAggregationScenarios()];
-List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
+List<NonGpExtractionScenario> nonGpExtractionBoundaryScenarios() {
+  final dual = nonGpMinorTribeTimberFursFixture();
+  return [
   nonGpEmptyExtractionRow(label: 'empty minors and tribes lists yield an empty result and skip lookups'),
   nonGpEmptyExtractionRow(
     label: 'empty tileMapByRegion short-circuits even when minors/tribes present',
@@ -148,10 +149,6 @@ List<NonGpExtractionScenario> _nonGpExtractionBoundarySkipScenarios() => [
     expect: const NonGpExtractionExpectation(empty: true),
     refs: '#2991',
   ),
-];
-List<NonGpExtractionScenario> _nonGpExtractionBoundaryAggregationScenarios() {
-  final dual = nonGpMinorTribeTimberFursFixture();
-  return [
     nonGpExtractionRow(
       label: 'minor and tribe in the same Game both produce per-faction totals keyed by their ids',
       game: dual.game,

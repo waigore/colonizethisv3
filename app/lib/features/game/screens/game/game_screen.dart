@@ -43,6 +43,7 @@ import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
 import '../../flame/overlays/victory_overlay.dart';
+import 'diplomacy_resume_helper.dart';
 
 part 'game_screen_fallback_next_turn_runner.dart';
 part 'game_screen_fallback_next_turn.dart';

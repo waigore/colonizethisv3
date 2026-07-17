@@ -160,7 +160,7 @@ class FakeSwitchListTileProbe {
     });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_switchlisttile_chrome_',
@@ -185,23 +185,25 @@ Widget fallback() => SwitchListTile(
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
-    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_switchlisttile_devtools_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'allowlists the Debug Console Overlay dev-tooling screen (SYS20001)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_switchlisttile_devtools_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const debugConsole =
-          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
+        const debugConsole =
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
-      for (final rel in [debugConsole]) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+        for (final rel in [debugConsole]) {
+          File('${temp.path}/$rel')
+            ..createSync(recursive: true)
+            ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => SwitchListTile(
@@ -210,16 +212,17 @@ Widget bypass() => SwitchListTile(
   onChanged: (_) {},
 );
 ''');
-      }
+        }
 
-      final code = runCheckAppNoMaterialSwitchListTile(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialSwitchListTile(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 0);
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -341,14 +344,17 @@ Widget probe() => SwitchListTile(
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialSwitchListTileFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialSwitchListTileFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       const skipped = <String>[

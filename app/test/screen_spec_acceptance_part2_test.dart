@@ -8,8 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
-import 'package:colonizethis_app/features/game/widgets/chrome/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
@@ -18,25 +17,44 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
+
+import 'support/app_shell_harness.dart';
 import 'support/screen_spec_acceptance_test_support.dart';
 
+Future<void> _pumpMainMenu(
+  WidgetTester tester, {
+  MainMenuVariant variant = MainMenuVariant.plain,
+  VoidCallback? onQuit,
+  bool resumeGameVisible = false,
+  VoidCallback? onResumeGame,
+}) async {
+  await tester.pumpWidget(
+    buildScreenSpecMainMenu(
+      variant: variant,
+      resumeGameVisible: resumeGameVisible,
+      onResumeGame: onResumeGame,
+      onNewGame: () {},
+      onLoadGame: () {},
+      onSettings: () {},
+      onQuit: onQuit ?? () {},
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Finder _textsWithLetterSpacing(double spacing) => find.byWidgetPredicate(
+      (Widget w) => w is Text && w.style?.letterSpacing == spacing,
+    );
+
 void main() {
+
   suppressLogsForTests();
 
   group('CtMainMenu — SPEC/ui/main-menu.md acceptance criteria (part 2)', () {
     testWidgets(
       'AC Variant rendering (pixelArt): collage, compass rose, fleur-de-lis, brass divider all present',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester, variant: MainMenuVariant.pixelArt);
 
         expect(find.byType(CtMainMenuCollage), findsOneWidget);
         expect(find.byType(CtCompassRose), findsOneWidget);
@@ -52,16 +70,11 @@ void main() {
       'render as a wood-panel CtNinePatchButton with brass corner brackets',
       (WidgetTester tester) async {
         var called = false;
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () => called = true,
-          ),
+        await _pumpMainMenu(
+          tester,
+          variant: MainMenuVariant.pixelArt,
+          onQuit: () => called = true,
         );
-        await tester.pumpAndSettle();
 
         final Finder quitChip = find.byKey(const Key(kMainMenuFooterQuitKey));
         expect(quitChip, findsOneWidget);
@@ -100,16 +113,7 @@ void main() {
         'EditorialMonoclePalette.muted token, not --fg', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(
-        buildScreenSpecMainMenu(
-          variant: MainMenuVariant.pixelArt,
-          onNewGame: () {},
-          onLoadGame: () {},
-          onSettings: () {},
-          onQuit: () {},
-        ),
-      );
-      await tester.pumpAndSettle();
+      await _pumpMainMenu(tester, variant: MainMenuVariant.pixelArt);
 
       final Finder quitChip = find.byKey(const Key(kMainMenuFooterQuitKey));
       final Text quitLabel = tester.widget<Text>(
@@ -122,15 +126,7 @@ void main() {
       'AC Variant rendering (plain) Footer Quit: plain variant does not '
       'render the pixelArt Quit chip key (chip is pixelArt-only)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester);
 
         expect(
           find.byKey(const Key(kMainMenuFooterQuitKey)),
@@ -146,16 +142,7 @@ void main() {
       'paints the three-stop CtGradients.woodPanelButtonGradient '
       '(--surface-lite → --surface → --bg-deep) in the rest state',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester, variant: MainMenuVariant.pixelArt);
 
         final DecoratedBox surface = findGradientSurfaceFor(tester, 'New Game');
         final BoxDecoration decoration = surface.decoration as BoxDecoration;
@@ -177,16 +164,7 @@ void main() {
       'CtGradients.woodPanelButtonGradientPressed; after release the '
       'gradient reverts to the rest CtGradients.woodPanelButtonGradient',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester, variant: MainMenuVariant.pixelArt);
 
         final Finder newGameButton = woodPanelButtonFinderFor('New Game');
         final Offset center = tester.getCenter(newGameButton);
@@ -234,9 +212,8 @@ void main() {
       'configured for the legacy 2-stop CtNinePatchButton)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            theme: AppThemes.editorialMonocle,
-            home: CtMainMenu(
+          buildAppShell(
+            child: CtMainMenu(
               variant: MainMenuVariant.plain,
               state: MainMenuState.default_,
               version: formatDebugAwareVersion('v1.0.0'),
@@ -290,15 +267,7 @@ void main() {
     testWidgets(
       'AC Variant rendering (plain): no SVG collage, compass rose, fleur-de-lis, or brass divider',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester);
 
         expect(find.byType(CtMainMenuCollage), findsNothing);
         expect(find.byType(CtCompassRose), findsNothing);
@@ -315,16 +284,7 @@ void main() {
     testWidgets(
       'AC Variant rendering (pixelArt): scroll-bracket gutters flank the buttons region',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester, variant: MainMenuVariant.pixelArt);
 
         final Finder leftBracket = find.byKey(
           const Key(kMainMenuScrollBracketLeftKey),
@@ -359,15 +319,7 @@ void main() {
     testWidgets(
       'AC Variant rendering (plain): no scroll-bracket gutters (negative)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
-        );
-        await tester.pumpAndSettle();
+        await _pumpMainMenu(tester);
 
         expect(
           find.byKey(const Key(kMainMenuScrollBracketLeftKey)),
@@ -383,18 +335,12 @@ void main() {
     testWidgets(
       'AC Variant rendering (pixelArt + resumeGameVisible): scroll brackets still flank the resized buttons region',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildScreenSpecMainMenu(
-            variant: MainMenuVariant.pixelArt,
-            resumeGameVisible: true,
-            onResumeGame: () {},
-            onNewGame: () {},
-            onLoadGame: () {},
-            onSettings: () {},
-            onQuit: () {},
-          ),
+        await _pumpMainMenu(
+          tester,
+          variant: MainMenuVariant.pixelArt,
+          resumeGameVisible: true,
+          onResumeGame: () {},
         );
-        await tester.pumpAndSettle();
 
         expect(
           find.byKey(const Key(kMainMenuScrollBracketLeftKey)),
@@ -458,19 +404,11 @@ void main() {
       // Every wood-panel button label Text in the pixelArt tree has the
       // narrow letter-spacing applied; default-spacing labels are absent.
       expect(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is Text &&
-              w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
-        ),
+        _textsWithLetterSpacing(kMainMenuButtonLetterSpacingNarrow),
         findsWidgets,
       );
       expect(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is Text &&
-              w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
-        ),
+        _textsWithLetterSpacing(kMainMenuButtonLetterSpacingDefault),
         findsNothing,
       );
     });
@@ -491,19 +429,11 @@ void main() {
         expect(bodyPadding.padding, kMainMenuBodyPaddingDefault);
 
         expect(
-          find.byWidgetPredicate(
-            (Widget w) =>
-                w is Text &&
-                w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
-          ),
+          _textsWithLetterSpacing(kMainMenuButtonLetterSpacingDefault),
           findsWidgets,
         );
         expect(
-          find.byWidgetPredicate(
-            (Widget w) =>
-                w is Text &&
-                w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
-          ),
+          _textsWithLetterSpacing(kMainMenuButtonLetterSpacingNarrow),
           findsNothing,
         );
       },
@@ -522,53 +452,39 @@ void main() {
         // Plain variant uses bare `Text(label)` for menu actions; no
         // explicit `letterSpacing` is set by main-menu code on those Texts.
         expect(
-          find.byWidgetPredicate(
-            (Widget w) =>
-                w is Text &&
-                w.style?.letterSpacing == kMainMenuButtonLetterSpacingNarrow,
-          ),
+          _textsWithLetterSpacing(kMainMenuButtonLetterSpacingNarrow),
           findsNothing,
         );
         expect(
-          find.byWidgetPredicate(
-            (Widget w) =>
-                w is Text &&
-                w.style?.letterSpacing == kMainMenuButtonLetterSpacingDefault,
-          ),
+          _textsWithLetterSpacing(kMainMenuButtonLetterSpacingDefault),
           findsNothing,
         );
       },
     );
 
-    testWidgets(
-      'AC ≤ 430 dp boundary: viewport exactly at 430 dp is treated as narrow',
-      (WidgetTester tester) async {
+    for (final case_ in <({String name, Size size, EdgeInsets padding})>[
+      (
+        name: 'AC ≤ 430 dp boundary: viewport exactly at 430 dp is treated as narrow',
+        size: const Size(kMainMenuNarrowBreakpoint, 640),
+        padding: kMainMenuBodyPaddingNarrow,
+      ),
+      (
+        name: 'AC > 430 dp boundary: viewport 431 dp is treated as wide',
+        size: const Size(kMainMenuNarrowBreakpoint + 1, 640),
+        padding: kMainMenuBodyPaddingDefault,
+      ),
+    ]) {
+      testWidgets(case_.name, (WidgetTester tester) async {
         await pumpScreenSpecMainMenuAtSize(
           tester,
-          size: const Size(kMainMenuNarrowBreakpoint, 640),
+          size: case_.size,
           variant: MainMenuVariant.plain,
         );
-
         final Padding bodyPadding = tester.widget<Padding>(
           find.byKey(const Key(kMainMenuBodyPaddingKey)),
         );
-        expect(bodyPadding.padding, kMainMenuBodyPaddingNarrow);
-      },
-    );
-
-    testWidgets('AC > 430 dp boundary: viewport 431 dp is treated as wide', (
-      WidgetTester tester,
-    ) async {
-      await pumpScreenSpecMainMenuAtSize(
-        tester,
-        size: const Size(kMainMenuNarrowBreakpoint + 1, 640),
-        variant: MainMenuVariant.plain,
-      );
-
-      final Padding bodyPadding = tester.widget<Padding>(
-        find.byKey(const Key(kMainMenuBodyPaddingKey)),
-      );
-      expect(bodyPadding.padding, kMainMenuBodyPaddingDefault);
-    });
+        expect(bodyPadding.padding, case_.padding);
+      });
+    }
   });
 }

@@ -17,7 +17,6 @@
 //   * not throw during pump + settle,
 //   * surface the expected slot-card counts per SPEC § Slot behaviour.
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -27,9 +26,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/app_shell_harness.dart';
 import 'support/panel_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
@@ -113,7 +112,7 @@ void main() {
     double width = 900,
     double height = 700,
   }) {
-    return ProviderScope(
+    return buildAppShell(
       overrides: [
         currentGameProvider.overrideWith(
           () => CurrentGameNotifier(game),
@@ -127,14 +126,8 @@ void main() {
           return bus;
         }),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: AppThemes.editorialMonocle,
-        home: MediaQuery(
-          data: MediaQueryData(size: Size(width, height)),
-          child: TechnologyScreen(game: game, player: player),
-        ),
-      ),
+      viewport: Size(width, height),
+      child: TechnologyScreen(game: game, player: player),
     );
   }
 

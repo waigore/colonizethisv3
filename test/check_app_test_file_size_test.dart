@@ -45,7 +45,7 @@ void main() {
     Directory('${temp.path}/app/test').createSync(recursive: true);
     File('${temp.path}/app/test/huge_test.dart')
       ..createSync()
-      ..writeAsStringSync(List.filled(1001, '// line').join('\n'));
+      ..writeAsStringSync(List.filled(801, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppTestFileSize(

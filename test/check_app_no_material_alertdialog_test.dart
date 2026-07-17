@@ -69,14 +69,8 @@ Widget confirm() => AlertDialog(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('bad_confirm.dart:3: AlertDialog('),
-      );
-      expect(
-        logs.join('\n'),
-        contains('CtDialogShell'),
-      );
+      expect(logs.join('\n'), contains('bad_confirm.dart:3: AlertDialog('));
+      expect(logs.join('\n'), contains('CtDialogShell'));
     });
 
     test('fails for AlertDialog.adaptive variant', () {
@@ -104,10 +98,7 @@ Widget adaptive() => AlertDialog.adaptive(
       );
 
       expect(code, 1);
-      expect(
-        logs.join('\n'),
-        contains('AlertDialog.adaptive('),
-      );
+      expect(logs.join('\n'), contains('AlertDialog.adaptive('));
     });
 
     test(
@@ -140,18 +131,16 @@ class C {}
       },
     );
 
-    test(
-      'does not flag identifiers that contain "AlertDialog" without '
-      'an opening paren (false-positive guard)',
-      () {
-        final temp = Directory.systemTemp.createTempSync(
-          'check_app_no_material_alertdialog_identifier_',
-        );
-        addTearDown(() => temp.deleteSync(recursive: true));
+    test('does not flag identifiers that contain "AlertDialog" without '
+        'an opening paren (false-positive guard)', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_no_material_alertdialog_identifier_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
 
-        File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+      File('${temp.path}/app/lib/features/game/widgets/identifier.dart')
+        ..createSync(recursive: true)
+        ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 class FakeAlertDialogProbe {
@@ -159,27 +148,24 @@ class FakeAlertDialogProbe {
 }
 ''');
 
-        final code = runCheckAppNoMaterialAlertDialog(
-          temp.path,
-          info: (_) {},
-          err: (_) {},
-        );
+      final code = runCheckAppNoMaterialAlertDialog(
+        temp.path,
+        info: (_) {},
+        err: (_) {},
+      );
 
-        expect(code, 0);
-      },
-    );
+      expect(code, 0);
+    });
 
     test(
-      'allowlists Ct-* catalog widgets under features/game/widgets/chrome/',
+      'no longer allowlists resurrected features/game/widgets/chrome/ (Refs #4035 AC2)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_no_material_alertdialog_chrome_',
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/chrome/ct_thing.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -193,37 +179,40 @@ Widget fallback() => AlertDialog(title: const Text('x'), actions: const []);
           err: (_) {},
         );
 
-        expect(code, 0);
+        expect(code, 1);
       },
     );
 
-    test('allowlists the Debug Console Overlay dev-tooling screen (SYS20001)', () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_no_material_alertdialog_devtools_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
+    test(
+      'allowlists the Debug Console Overlay dev-tooling screen (SYS20001)',
+      () {
+        final temp = Directory.systemTemp.createTempSync(
+          'check_app_no_material_alertdialog_devtools_',
+        );
+        addTearDown(() => temp.deleteSync(recursive: true));
 
-      const debugConsole =
-          'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
+        const debugConsole =
+            'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
 
-      for (final rel in [debugConsole]) {
-        File('${temp.path}/$rel')
-          ..createSync(recursive: true)
-          ..writeAsStringSync('''
+        for (final rel in [debugConsole]) {
+          File('${temp.path}/$rel')
+            ..createSync(recursive: true)
+            ..writeAsStringSync('''
 import 'package:flutter/material.dart';
 
 Widget bypass() => AlertDialog(title: const Text('x'), actions: const []);
 ''');
-      }
+        }
 
-      final code = runCheckAppNoMaterialAlertDialog(
-        temp.path,
-        info: (_) {},
-        err: (_) {},
-      );
+        final code = runCheckAppNoMaterialAlertDialog(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
 
-      expect(code, 0);
-    });
+        expect(code, 0);
+      },
+    );
 
     test(
       'does not scan test files inside features/ (production surface only)',
@@ -233,9 +222,7 @@ Widget bypass() => AlertDialog(title: const Text('x'), actions: const []);
         );
         addTearDown(() => temp.deleteSync(recursive: true));
 
-        File(
-          '${temp.path}/app/lib/features/game/widgets/some_widget_test.dart',
-        )
+        File('${temp.path}/app/lib/features/game/widgets/some_widget_test.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -303,9 +290,7 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
   group('shouldSkipAppNoMaterialAlertDialogFile (scope predicate)', () {
     test('skips generated suffixes', () {
       expect(
-        shouldSkipAppNoMaterialAlertDialogFile(
-          'app/lib/features/x/y.g.dart',
-        ),
+        shouldSkipAppNoMaterialAlertDialogFile('app/lib/features/x/y.g.dart'),
         isTrue,
       );
       expect(
@@ -321,9 +306,7 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
         isTrue,
       );
       expect(
-        shouldSkipAppNoMaterialAlertDialogFile(
-          'app/lib/features/x/y.gen.dart',
-        ),
+        shouldSkipAppNoMaterialAlertDialogFile('app/lib/features/x/y.gen.dart'),
         isTrue,
       );
     });
@@ -343,14 +326,17 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
       );
     });
 
-    test('skips Ct-* chrome catalog widgets', () {
-      expect(
-        shouldSkipAppNoMaterialAlertDialogFile(
-          'app/lib/features/game/widgets/chrome/ct_thing.dart',
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'does not skip resurrected features/.../chrome path (Refs #4035 AC2)',
+      () {
+        expect(
+          shouldSkipAppNoMaterialAlertDialogFile(
+            'app/lib/features/game/widgets/chrome/ct_thing.dart',
+          ),
+          isFalse,
+        );
+      },
+    );
 
     test('skips the Debug Console Overlay dev-tooling screen (SYS20001)', () {
       const skipped = <String>[
@@ -365,29 +351,26 @@ Widget probe() => AlertDialog(title: const Text('x'), actions: const []);
       }
     });
 
-    test(
-      'does not skip ordinary feature widgets (in scope for the check)',
-      () {
-        expect(
-          shouldSkipAppNoMaterialAlertDialogFile(
-            'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialAlertDialogFile(
-            'app/lib/features/game/widgets/units/military/military_units_panel.dart',
-          ),
-          isFalse,
-        );
-        expect(
-          shouldSkipAppNoMaterialAlertDialogFile(
-            'app/lib/features/game/screens/game/game_screen.dart',
-          ),
-          isFalse,
-        );
-      },
-    );
+    test('does not skip ordinary feature widgets (in scope for the check)', () {
+      expect(
+        shouldSkipAppNoMaterialAlertDialogFile(
+          'app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialAlertDialogFile(
+          'app/lib/features/game/widgets/units/military/military_units_panel.dart',
+        ),
+        isFalse,
+      );
+      expect(
+        shouldSkipAppNoMaterialAlertDialogFile(
+          'app/lib/features/game/screens/game/game_screen.dart',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('bannedAlertDialogConstructionPattern (regex shape)', () {

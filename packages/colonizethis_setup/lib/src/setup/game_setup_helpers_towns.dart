@@ -7,6 +7,7 @@ import 'faction_setup_helpers.dart';
 import 'game_setup_context.dart';
 import 'game_setup_town_tile_ranking.dart';
 import 'grid_bfs.dart';
+import 'setup_road_wiring.dart';
 import 'setup_topology_adjacency.dart';
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
@@ -20,7 +21,7 @@ Game assignProvinceTowns({
   final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
   final ports = game.worldState.portsByProvinceSeaboard;
   final capitalData = collectCapitalMapsByOwner(game);
-  final coordToKey = _buildCoordToTileKeyByRegion(tileKeysByRegion);
+  final coordToKey = coordToTileKeyByRegion(tileKeysByRegion);
 
   Province assignTownTile(Province p) {
     final tk = _townTileKeyForProvince(
@@ -44,30 +45,6 @@ Game assignProvinceTowns({
       ),
     ),
   );
-}
-
-Map<String, Map<String, String>> _buildCoordToTileKeyByRegion(
-  Map<String, Map<String, List<String>>> tileKeysByRegion,
-) {
-  final coordToKey = <String, Map<String, String>>{};
-  for (final regionEntry in tileKeysByRegion.entries) {
-    final regionId = regionEntry.key;
-    final byProvince = regionEntry.value;
-    final map = <String, String>{};
-    for (final list in byProvince.values) {
-      for (final tileKey in list) {
-        _addCoordMappingIfPresent(map, tileKey);
-      }
-    }
-    coordToKey[regionId] = map;
-  }
-  return coordToKey;
-}
-
-void _addCoordMappingIfPresent(Map<String, String> out, String tileKey) {
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return;
-  out[gridCoordKey(coords.x, coords.y)] = tileKey;
 }
 
 String? _townTileKeyForProvince({
@@ -207,4 +184,3 @@ String? _portTileInProvince({
   }
   return null;
 }
-

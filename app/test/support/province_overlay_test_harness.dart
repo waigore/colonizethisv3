@@ -13,7 +13,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -21,7 +20,10 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         demoRegionForOverlay,
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+
+import 'app_shell_harness.dart';
 
 /// Returns a province id (`regionId|localId`) owned by [ownerId] in the demo
 /// Old World. Province ids in the debug-init game are already prefixed.
@@ -62,8 +64,9 @@ Game gameWithRoadLevelOnTile({
   return base.copyWith(worldState: ws.copyWith(tileState: tileState));
 }
 
-/// Builds a [MaterialApp] shell mounting [ProvinceSeaZoneDetailOverlay] under
-/// `AppThemes.editorialMonocle` for dark-token widget tests.
+/// Builds the canonical [buildAppShell] host mounting
+/// [ProvinceSeaZoneDetailOverlay] under editorial-monocle for dark-token
+/// widget tests (Refs #4035).
 Widget buildProvinceOverlayDarkThemeShell({
   required Game game,
   required String displayId,
@@ -87,9 +90,9 @@ Widget buildProvinceOverlayDarkThemeShell({
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
-  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
-      const {},
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ThemeData? shellTheme,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
     game: game,
@@ -119,9 +122,16 @@ Widget buildProvinceOverlayDarkThemeShell({
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
       : overlay;
-  return MaterialApp(
-    theme: AppThemes.editorialMonocle,
-    home: Scaffold(body: body),
+  final scaffold = Scaffold(body: body);
+  // Province overlay strings resolve via AppLocalizations (Refs #4035).
+  // Optional [shellTheme] is a documented buildAppShell specialization
+  // (same l10n wiring; no inline MaterialApp).
+  return buildAppShell(
+    theme: shellTheme,
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
+    child: scaffold,
   );
 }
 
@@ -150,9 +160,9 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
-  Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
-      const {},
+  Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ThemeData? shellTheme,
 }) async {
   await tester.pumpWidget(
     buildProvinceOverlayDarkThemeShell(
@@ -180,6 +190,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      shellTheme: shellTheme,
     ),
   );
   await tester.pump();
