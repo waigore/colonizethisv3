@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/debug_handler_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
@@ -11,46 +13,20 @@ void main() {
     test(
       'resolves immediate terminal outcome when owner has no eligible replacement capital',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-flip-no-replacement',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'ai_1',
-                  displayName: 'New Bordeaux',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {'oldWorld|P1|0|0': 'fogged'},
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-            Player(
-              id: 'ai_1',
-              displayName: 'AI',
-              isHuman: false,
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
-            ),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'ai_1', 'New Bordeaux'),
           ],
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {debugHandlerTileKey('oldWorld|P1'): 'fogged'},
+          },
+          aiCapitalProvinceId: 'oldWorld|P1',
         );
         const event = FlipDebugProvinceOwnershipEvent(
           humanPlayerId: 'human_1',
@@ -76,58 +52,26 @@ void main() {
     test(
       'flip foreign capital applies immediate reassignment and great power fall',
       () {
-        final game = Game(
+        final game = buildDebugHandlerFlipCapitalGame(
           id: 'g-flip-capital-fall',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
-            oldWorld: const RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|P1',
-                  regionId: 'oldWorld',
-                  ownerId: 'ai_1',
-                  displayName: 'New Bordeaux',
-                  townTileKey: 'oldWorld|P1|0|0',
-                ),
-                Province(
-                  id: 'oldWorld|P2',
-                  regionId: 'oldWorld',
-                  ownerId: 'ai_1',
-                  displayName: 'Inland Hold',
-                  townTileKey: 'oldWorld|P2|1|1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            portsByProvinceSeaboard: {'oldWorld|P1|sea1': 'oldWorld|P1|0|0'},
-            tileKeysByRegionAndProvince: const {
-              'oldWorld': {
-                'oldWorld|P1': ['oldWorld|P1|0|0'],
-                'oldWorld|P2': ['oldWorld|P2|1|1'],
-              },
-            },
-            playerVisibilityByTile: {
-              'human_1': {
-                'oldWorld|P1|0|0': 'fogged',
-                'oldWorld|P2|1|1': 'fogged',
-              },
-            },
-          ),
-          players: const [
-            Player(id: 'human_1', displayName: 'Human', isHuman: true),
-            Player(
-              id: 'ai_1',
-              displayName: 'AI',
-              isHuman: false,
-              capitalProvinceId: 'oldWorld|P1',
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|P1',
-                x: 0,
-                y: 0,
-              ),
-            ),
+          oldWorldProvinces: [
+            debugHandlerTownProvince('oldWorld|P1', 'ai_1', 'New Bordeaux'),
+            debugHandlerTownProvince('oldWorld|P2', 'ai_1', 'Inland Hold', 1, 1),
           ],
+          portsByProvinceSeaboard: {'oldWorld|P1|sea1': 'oldWorld|P1|0|0'},
+          tileKeysByRegionAndProvince: {
+            'oldWorld': {
+              'oldWorld|P1': [debugHandlerTileKey('oldWorld|P1')],
+              'oldWorld|P2': [debugHandlerTileKey('oldWorld|P2', 1, 1)],
+            },
+          },
+          playerVisibilityByTile: {
+            'human_1': {
+              debugHandlerTileKey('oldWorld|P1'): 'fogged',
+              debugHandlerTileKey('oldWorld|P2', 1, 1): 'fogged',
+            },
+          },
+          aiCapitalProvinceId: 'oldWorld|P1',
         );
         final topology = MapTopology(
           nodes: const [

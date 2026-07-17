@@ -113,3 +113,155 @@ Game buildDebugHandlerDiplomacyGame({
     debugDiplomacyUsedPairKeys: usedPairKeys,
   );
 }
+
+/// Tile key for a prefixed province id at integer coords.
+String debugHandlerTileKey(String provinceFullId, [int x = 0, int y = 0]) =>
+    '$provinceFullId|$x|$y';
+
+/// Capital tile keyed by prefixed province id (flip / reveal suites).
+CapitalTile debugHandlerCapitalTile(String provinceFullId, [int x = 0, int y = 0]) =>
+    CapitalTile(
+      regionId: provinceFullId.split('|').first,
+      provinceId: provinceFullId,
+      x: x,
+      y: y,
+    );
+
+/// Province with matching town tile key (flip capital suites).
+Province debugHandlerTownProvince(
+  String provinceFullId,
+  String ownerId,
+  String displayName, [
+  int x = 0,
+  int y = 0,
+]) =>
+    Province(
+      id: provinceFullId,
+      regionId: provinceFullId.split('|').first,
+      ownerId: ownerId,
+      displayName: displayName,
+      townTileKey: debugHandlerTileKey(provinceFullId, x, y),
+    );
+
+/// Visibility + tile-key Game used by flip/reveal province debug suites.
+Game buildDebugHandlerVisibilityGame({
+  required String id,
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+      const {},
+  Map<String, Map<String, String>> playerVisibilityByTile = const {},
+  Map<String, String> portsByProvinceSeaboard = const {},
+  List<Player> players = const [
+    Player(id: 'human_1', displayName: 'Human', isHuman: true),
+  ],
+  List<MinorNation> minorNations = const [],
+  List<Tribe> tribes = const [],
+  TurnPhase phase = TurnPhase.orders,
+  int turnNumber = 2,
+}) {
+  return Game(
+    id: id,
+    worldState: WorldState(
+      turnState: TurnState(phase: phase, turnNumber: turnNumber),
+      oldWorld: RegionData(provinces: oldWorldProvinces),
+      newWorld: RegionData(provinces: newWorldProvinces),
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+      playerVisibilityByTile: playerVisibilityByTile,
+      portsByProvinceSeaboard: portsByProvinceSeaboard,
+    ),
+    players: players,
+    minorNations: minorNations,
+    tribes: tribes,
+  );
+}
+
+/// Reveal-province baseline: unknown OW province + adjacent sea tile keys.
+Game buildDebugHandlerRevealProvinceGame({
+  String id = 'g-reveal',
+  TurnPhase phase = TurnPhase.orders,
+  int turnNumber = 2,
+  Map<String, Map<String, String>>? playerVisibilityByTile,
+}) {
+  return buildDebugHandlerVisibilityGame(
+    id: id,
+    phase: phase,
+    turnNumber: turnNumber,
+    oldWorldProvinces: const [
+      Province(
+        id: 'oldWorld|P1',
+        regionId: 'oldWorld',
+        ownerId: 'ai_1',
+        displayName: 'New Bordeaux',
+      ),
+    ],
+    tileKeysByRegionAndProvince: const {
+      'oldWorld': {
+        'oldWorld|P1': ['oldWorld|P1|0|0'],
+        'oldWorld|s1': ['oldWorld|s1|0|0'],
+      },
+    },
+    playerVisibilityByTile: playerVisibilityByTile ??
+        const {
+          'human_1': {
+            'oldWorld|P1|0|0': 'unknown',
+            'oldWorld|s1|0|0': 'unknown',
+          },
+        },
+    players: const [
+      Player(id: 'human_1', displayName: 'Human', isHuman: true),
+      Player(id: 'ai_1', displayName: 'AI', isHuman: false),
+    ],
+  );
+}
+
+/// Flip-province capital cast: human + optional AI / minor / tribe capital.
+Game buildDebugHandlerFlipCapitalGame({
+  required String id,
+  List<Province> oldWorldProvinces = const [],
+  List<Province> newWorldProvinces = const [],
+  required Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince,
+  required Map<String, Map<String, String>> playerVisibilityByTile,
+  Map<String, String> portsByProvinceSeaboard = const {},
+  String? aiCapitalProvinceId,
+  String? minorCapitalProvinceId,
+  String? tribeCapitalProvinceId,
+}) {
+  return buildDebugHandlerVisibilityGame(
+    id: id,
+    oldWorldProvinces: oldWorldProvinces,
+    newWorldProvinces: newWorldProvinces,
+    tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
+    playerVisibilityByTile: playerVisibilityByTile,
+    portsByProvinceSeaboard: portsByProvinceSeaboard,
+    players: [
+      const Player(id: 'human_1', displayName: 'Human', isHuman: true),
+      if (aiCapitalProvinceId != null)
+        Player(
+          id: 'ai_1',
+          displayName: 'AI',
+          isHuman: false,
+          capitalProvinceId: aiCapitalProvinceId,
+          capitalTile: debugHandlerCapitalTile(aiCapitalProvinceId),
+        ),
+    ],
+    minorNations: [
+      if (minorCapitalProvinceId != null)
+        MinorNation(
+          id: 'minor_1',
+          displayName: 'Minor',
+          capitalProvinceId: minorCapitalProvinceId,
+          capitalTile: debugHandlerCapitalTile(minorCapitalProvinceId),
+        ),
+    ],
+    tribes: [
+      if (tribeCapitalProvinceId != null)
+        Tribe(
+          id: 'tribe_1',
+          displayName: 'Tribe',
+          capitalProvinceId: tribeCapitalProvinceId,
+          capitalTile: debugHandlerCapitalTile(tribeCapitalProvinceId),
+        ),
+    ],
+  );
+}

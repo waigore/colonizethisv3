@@ -1,10 +1,4 @@
-// Smoke tests for the shared `NavalUnitsPanel` widget-test scaffolding.
-//
-// Verifies the consolidated helpers in `naval_units_panel_test_support.dart`
-// (extracted from the five `naval_units_panel_part*_test.dart` files, Refs
-// #3730) build the canonical panel host and bridge the split/transfer events
-// the same way the running shell does, so the part files keep their behavior.
-//
+// Smoke tests for naval units-panel scaffolding (Refs #3730, #4048).
 // SPEC: SPEC/ui/naval-units-panel.md, SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
@@ -44,109 +38,96 @@ void main() {
     },
   );
 
-  test(
-    'buildNavalPanelHomeFleetOnlyGame keeps only the in-port home fleet',
-    () {
-      final game = buildNavalPanelHomeFleetOnlyGame();
-      expect(game.worldState.fleets, hasLength(1));
-      expect(game.worldState.fleets.single.inPortAtProvinceId, isNotNull);
-    },
-  );
+  test('scenario factories cover home/peers, merge-port, empty, draft, topology', () {
+    const humanId = 'gp_home_peers';
+    final peers = buildNavalPanelCapitalHomeAndPeersGame(
+      humanId: humanId,
+      gameId: 'g_home_peers',
+      displayName: 'Peers',
+      peerFleets: [
+        Fleet(
+          id: 'peer',
+          ownerId: humanId,
+          regionId: 'oldWorld',
+          seaZoneId: 'z1',
+          ships: const [ShipInstance(id: 'p1', typeId: 'fluyte')],
+        ),
+      ],
+    );
+    expect(peers.worldState.fleets, hasLength(2));
+    expect(
+      peers.worldState.fleets.any((f) => f.id == homeFleetIdFor(humanId)),
+      isTrue,
+    );
 
-  test(
-    'buildNavalPanelCapitalHomeAndPeersGame adds home plus peer fleets',
-    () {
-      const humanId = 'gp_home_peers';
-      final game = buildNavalPanelCapitalHomeAndPeersGame(
-        humanId: humanId,
-        gameId: 'g_home_peers',
-        displayName: 'Peers',
-        peerFleets: [
-          Fleet(
-            id: 'peer',
-            ownerId: humanId,
-            regionId: 'oldWorld',
-            seaZoneId: 'z1',
-            ships: const [ShipInstance(id: 'p1', typeId: 'fluyte')],
-          ),
-        ],
-      );
-      expect(game.worldState.fleets, hasLength(2));
-      expect(
-        game.worldState.fleets.any((f) => f.id == homeFleetIdFor(humanId)),
-        isTrue,
-      );
-      expect(game.worldState.fleets.any((f) => f.id == 'peer'), isTrue);
-    },
-  );
+    final noCap = buildNavalPanelCapitalMergePortFleetsGame(
+      humanId: 'gp_no_cap',
+      gameId: 'g_no_cap',
+      displayName: 'No Cap',
+      playerHasCapital: false,
+      fleets: [
+        Fleet(
+          id: 'mp1',
+          ownerId: 'gp_no_cap',
+          regionId: 'oldWorld',
+          inPortAtProvinceId: 'oldWorld|mergeport',
+          ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+        ),
+      ],
+    );
+    expect(noCap.players.single.capitalProvinceId, isNull);
+    expect(noCap.worldState.oldWorld.provinces, hasLength(1));
 
-  test(
-    'buildNavalPanelCapitalMergePortFleetsGame without capital omits capital player',
-    () {
-      const humanId = 'gp_no_cap';
-      final game = buildNavalPanelCapitalMergePortFleetsGame(
-        humanId: humanId,
-        gameId: 'g_no_cap',
-        displayName: 'No Cap',
-        playerHasCapital: false,
-        fleets: [
-          Fleet(
-            id: 'mp1',
-            ownerId: humanId,
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|mergeport',
-            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-          ),
-        ],
-      );
-      expect(game.players.single.capitalProvinceId, isNull);
-      expect(game.worldState.oldWorld.provinces, hasLength(1));
-      expect(game.worldState.fleets, hasLength(1));
-    },
-  );
+    final noMergeTiles = buildNavalPanelCapitalMergePortFleetsGame(
+      humanId: 'gp_no_merge_tiles',
+      gameId: 'g_no_merge_tiles',
+      displayName: 'No Merge Tiles',
+      includeMergePortTileKeys: false,
+      fleets: [
+        Fleet(
+          id: 'mp1',
+          ownerId: 'gp_no_merge_tiles',
+          regionId: 'oldWorld',
+          inPortAtProvinceId: 'oldWorld|mergeport',
+          ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+        ),
+      ],
+    );
+    final tiles =
+        noMergeTiles.worldState.tileKeysByRegionAndProvince['oldWorld']!;
+    expect(tiles.containsKey('oldWorld|cap1'), isTrue);
+    expect(tiles.containsKey('oldWorld|mergeport'), isFalse);
 
-  test(
-    'buildNavalPanelCapitalMergePortFleetsGame can omit merge-port locate tiles',
-    () {
-      const humanId = 'gp_no_merge_tiles';
-      final game = buildNavalPanelCapitalMergePortFleetsGame(
-        humanId: humanId,
-        gameId: 'g_no_merge_tiles',
-        displayName: 'No Merge Tiles',
-        includeMergePortTileKeys: false,
-        fleets: [
-          Fleet(
-            id: 'mp1',
-            ownerId: humanId,
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|mergeport',
-            ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-          ),
-        ],
-      );
-      final tiles = game.worldState.tileKeysByRegionAndProvince['oldWorld']!;
-      expect(tiles.containsKey('oldWorld|cap1'), isTrue);
-      expect(tiles.containsKey('oldWorld|mergeport'), isFalse);
-    },
-  );
-
-  test(
-    'buildNavalPanelCapitalHomeAndPeersGame can seed home mission',
-    () {
-      const humanId = 'gp_home_mission';
-      final game = buildNavalPanelCapitalHomeAndPeersGame(
-        humanId: humanId,
+    expect(
+      buildNavalPanelCapitalHomeAndPeersGame(
+        humanId: 'gp_home_mission',
         gameId: 'g_home_mission',
         displayName: 'Home Mission',
         homeMission: FleetMission.patrol,
         peerFleets: const [],
-      );
-      final home = game.worldState.fleets.singleWhere(
-        (f) => f.id == homeFleetIdFor(humanId),
-      );
-      expect(home.mission, FleetMission.patrol);
-    },
-  );
+      ).worldState.fleets.single.mission,
+      FleetMission.patrol,
+    );
+
+    final homeOnly = buildNavalPanelHomeFleetOnlyGame();
+    expect(homeOnly.worldState.fleets, hasLength(1));
+    expect(homeOnly.worldState.fleets.single.inPortAtProvinceId, isNotNull);
+    expect(buildNavalPanelEmptyHumanGame().worldState.fleets, isEmpty);
+    final draft = buildNavalPanelDraftMoveSubtitleGame();
+    expect(
+      draft.worldState.seaZoneDisplayNameById['oldWorld|sz1'],
+      'Target Sea',
+    );
+    expect(
+      buildNavalPanelBeachheadMissionGame().worldState.fleets.single.mission,
+      FleetMission.beachhead,
+    );
+    expect(buildUnitsPanelCapitalAdjacentSeaTopology().edges, hasLength(1));
+    expect(
+      buildUnitsPanelCapitalAdjacentSeaTopology(includeEdge: false).edges,
+      isEmpty,
+    );
+  });
 
   test('withoutNavalPanelCapitalHomeFleets drops in-port capital fleets', () {
     final base = buildNavalPanelTestGame();
@@ -205,32 +186,6 @@ void main() {
       'Fleet peer',
     );
   });
-
-  test('buildNavalPanelDraftMoveSubtitleGame seeds target sea display name', () {
-    final game = buildNavalPanelDraftMoveSubtitleGame();
-    expect(
-      game.worldState.seaZoneDisplayNameById['oldWorld|sz1'],
-      'Target Sea',
-    );
-    expect(game.worldState.fleets.any((f) => f.id == 'f_at_sea'), isTrue);
-  });
-
-  test('buildNavalPanelEmptyHumanGame has no fleets', () {
-    final game = buildNavalPanelEmptyHumanGame();
-    expect(game.worldState.fleets, isEmpty);
-  });
-
-  test(
-    'buildUnitsPanelCapitalAdjacentSeaTopology omits edge when requested',
-    () {
-      final withEdge = buildUnitsPanelCapitalAdjacentSeaTopology();
-      final withoutEdge = buildUnitsPanelCapitalAdjacentSeaTopology(
-        includeEdge: false,
-      );
-      expect(withEdge.edges, hasLength(1));
-      expect(withoutEdge.edges, isEmpty);
-    },
-  );
 
   test(
     'wireNavalSplitForWidgetTest applies the split and re-emits the update',

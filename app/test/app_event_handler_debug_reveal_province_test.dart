@@ -4,48 +4,14 @@ import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_rev
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/debug_handler_test_fixtures.dart';
+
 void main() {
   suppressLogsForTests();
 
   group('applyDebugRevealProvince', () {
-    Game revealBaseGame() {
-      return Game(
-        id: 'g-reveal',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 2),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: 'oldWorld|P1',
-                regionId: 'oldWorld',
-                ownerId: 'ai_1',
-                displayName: 'New Bordeaux',
-              ),
-            ],
-          ),
-          newWorld: RegionData(),
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|P1': ['oldWorld|P1|0|0'],
-              'oldWorld|s1': ['oldWorld|s1|0|0'],
-            },
-          },
-          playerVisibilityByTile: {
-            'human_1': {
-              'oldWorld|P1|0|0': 'unknown',
-              'oldWorld|s1|0|0': 'unknown',
-            },
-          },
-        ),
-        players: const [
-          Player(id: 'human_1', displayName: 'Human', isHuman: true),
-          Player(id: 'ai_1', displayName: 'AI', isHuman: false),
-        ],
-      );
-    }
-
     test('reveals province by full id for unknown target', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'oldWorld|P1',
@@ -62,8 +28,9 @@ void main() {
     });
 
     test('reveal by display name returns disambiguation candidates', () {
-      final game = revealBaseGame().copyWith(
-        worldState: revealBaseGame().worldState.copyWith(
+      final base = buildDebugHandlerRevealProvinceGame();
+      final game = base.copyWith(
+        worldState: base.worldState.copyWith(
           newWorld: const RegionData(
             provinces: [
               Province(
@@ -92,13 +59,13 @@ void main() {
     });
 
     test('reveals adjacent sea-zone tiles for coastal province', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'oldWorld|P1',
         targetIsFullProvinceId: true,
       );
-      final topology = const MapTopology(
+      const topology = MapTopology(
         nodes: [
           TopologyNode(
             id: 'P1',
@@ -123,22 +90,20 @@ void main() {
     });
 
     test('returns deterministic no-op when already fully revealed', () {
-      final game = revealBaseGame().copyWith(
-        worldState: revealBaseGame().worldState.copyWith(
-          playerVisibilityByTile: {
-            'human_1': {
-              'oldWorld|P1|0|0': 'fullyVisible',
-              'oldWorld|s1|0|0': 'fullyVisible',
-            },
+      final game = buildDebugHandlerRevealProvinceGame(
+        playerVisibilityByTile: {
+          'human_1': {
+            'oldWorld|P1|0|0': 'fullyVisible',
+            'oldWorld|s1|0|0': 'fullyVisible',
           },
-        ),
+        },
       );
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'oldWorld|P1',
         targetIsFullProvinceId: true,
       );
-      final topology = const MapTopology(
+      const topology = MapTopology(
         nodes: [
           TopologyNode(
             id: 'P1',
@@ -162,10 +127,8 @@ void main() {
     });
 
     test('rejects reveal outside human Orders phase without mutating state', () {
-      final game = revealBaseGame().copyWith(
-        worldState: revealBaseGame().worldState.copyWith(
-          turnState: const TurnState(phase: TurnPhase.buildWork, turnNumber: 2),
-        ),
+      final game = buildDebugHandlerRevealProvinceGame(
+        phase: TurnPhase.buildWork,
       );
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
@@ -189,7 +152,7 @@ void main() {
     });
 
     test('reveals province by global display name when exactly one match', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'New Bordeaux',
@@ -206,7 +169,7 @@ void main() {
     });
 
     test('not-found full province id leaves visibility unchanged', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'oldWorld|MissingProvince',
@@ -226,7 +189,7 @@ void main() {
     });
 
     test('not-found display name leaves visibility unchanged', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'No Such Display Name Xyz',
@@ -246,7 +209,7 @@ void main() {
     });
 
     test('JSON round-trip preserves reveal visibility (persistence parity)', () {
-      final game = revealBaseGame();
+      final game = buildDebugHandlerRevealProvinceGame();
       const event = RevealDebugProvinceEvent(
         humanPlayerId: 'human_1',
         target: 'oldWorld|P1',

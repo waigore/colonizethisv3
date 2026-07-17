@@ -28,54 +28,35 @@ Game buildNavalPanelNamedSeaZoneGame({
   String displayName = 'Caribbean Sea',
 }) {
   const capProvince = 'oldWorld|cap1';
-  return Game(
-    id: 'named-sea',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: 'cap1',
-            regionId: 'oldWorld',
-            ownerId: humanId,
-            displayName: 'Capital',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      fleets: [
-        Fleet(
-          id: 'sea_named',
-          ownerId: humanId,
-          regionId: 'oldWorld',
-          seaZoneId: zoneId,
-          ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
-        ),
-      ],
-      seaZoneDisplayNameById: {'oldWorld|$zoneId': displayName},
-      portsByProvinceSeaboard: const {
-        'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
-      },
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          capProvince: ['oldWorld|cap1|0|0'],
-        },
-      },
-    ),
-    players: [
-      Player(
-        id: humanId,
-        displayName: 'Named Sea Tester',
-        isHuman: true,
-        capitalProvinceId: capProvince,
-        capitalTile: const CapitalTile(
-          regionId: 'oldWorld',
-          provinceId: capProvince,
-          x: 0,
-          y: 0,
-        ),
+  return buildNavalPanelOwFleetsGame(
+    gameId: 'named-sea',
+    humanId: humanId,
+    displayName: 'Named Sea Tester',
+    capitalProvinceId: capProvince,
+    oldWorldProvinces: [
+      Province(
+        id: 'cap1',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital',
       ),
     ],
+    fleets: [
+      Fleet(
+        id: 'sea_named',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: zoneId,
+        ships: const [ShipInstance(id: 's1', typeId: 'carrack')],
+      ),
+    ],
+    seaZoneDisplayNameById: {'oldWorld|$zoneId': displayName},
+    portsByProvinceSeaboard: const {
+      'oldWorld|cap1|zone_alpha': 'oldWorld|cap1|0|0',
+    },
+    tileKeysByProvince: const {
+      capProvince: ['oldWorld|cap1|0|0'],
+    },
   );
 }
 
@@ -285,32 +266,27 @@ Game buildNavalPanelBeachheadMissionGame({
   String fleetId = 'bf1',
   String seaZoneId = 'atlantic',
 }) {
-  return Game(
-    id: gameId,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(units: []),
-      newWorld: const RegionData(),
-      fleets: [
-        Fleet(
-          id: fleetId,
-          ownerId: humanId,
-          regionId: 'oldWorld',
-          seaZoneId: seaZoneId,
-          shipTypeIds: const ['carrack'],
-          mission: FleetMission.beachhead,
-        ),
-      ],
-      portsByProvinceSeaboard: {
-        'oldWorld|lisbon|$seaZoneId': 'oldWorld|lisbon|0|0',
-      },
-      tileKeysByRegionAndProvince: {
-        'oldWorld': {
-          'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-        },
-      },
-    ),
-    players: [Player(id: humanId, displayName: 'P', isHuman: true)],
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: 'P',
+    oldWorldProvinces: const [],
+    fleets: [
+      Fleet(
+        id: fleetId,
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: seaZoneId,
+        shipTypeIds: const ['carrack'],
+        mission: FleetMission.beachhead,
+      ),
+    ],
+    portsByProvinceSeaboard: {
+      'oldWorld|lisbon|$seaZoneId': 'oldWorld|lisbon|0|0',
+    },
+    tileKeysByProvince: const {
+      'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+    },
   );
 }
 
