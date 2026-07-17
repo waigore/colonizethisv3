@@ -77,40 +77,6 @@ RegionMapViewData _portDrawableRegion() {
   );
 }
 
-Future<void> _pumpPortMapDirect(
-  WidgetTester tester, {
-  required AppEventBus bus,
-}) async {
-  await tester.pumpWidget(
-    ctRegionMapTestHarness(
-      region: _portDrawableRegion(),
-      width: 64,
-      height: 64,
-      cellSizePx: 32,
-      bus: bus,
-      baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-    ),
-  );
-  await tester.pump();
-}
-
-Future<void> _pumpPortMapHarness(
-  WidgetTester tester, {
-  void Function(String)? onProvinceSelected,
-}) async {
-  await tester.pumpWidget(
-    ctRegionMapTestHarness(
-      region: _portDrawableRegion(),
-      width: 64,
-      height: 64,
-      cellSizePx: 32,
-      baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
-      onProvinceSelected: onProvinceSelected,
-    ),
-  );
-  await tester.pump();
-}
-
 Future<void> _tapPortSeaCell(WidgetTester tester) async {
   final topLeft = tester.getTopLeft(find.byType(CtRegionMap));
   await tester.tapAt(topLeft + const Offset(48, 16));
@@ -177,7 +143,15 @@ void main() {
           panelProvinceId = e.provinceId;
         });
 
-        await _pumpPortMapDirect(tester, bus: bus);
+        await pumpCtRegionMapTest(
+          tester,
+          region: _portDrawableRegion(),
+          width: 64,
+          height: 64,
+          cellSizePx: 32,
+          bus: bus,
+          baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+        );
         await _tapPortSeaCell(tester);
 
         expect(panelProvinceId, equals('oldWorld|p1'));
@@ -189,8 +163,13 @@ void main() {
       'tap on port drawable sea cell selects owning province not sea zone id',
       (WidgetTester tester) async {
         String? selectedProvinceId;
-        await _pumpPortMapHarness(
+        await pumpCtRegionMapTest(
           tester,
+          region: _portDrawableRegion(),
+          width: 64,
+          height: 64,
+          cellSizePx: 32,
+          baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
           onProvinceSelected: (id) => selectedProvinceId = id,
         );
         await _tapPortSeaCell(tester);
