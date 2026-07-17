@@ -17,7 +17,6 @@ export 'src/consumption_expectations.dart';
 export 'src/consumption_phases_expectations.dart';
 export 'src/consumption_phases_scenarios.dart';
 export 'src/consumption_scenarios.dart';
-export 'src/cost_check_expectations.dart';
 export 'src/cost_check_scenarios.dart';
 export 'src/core_economy_test_support.dart';
 export 'src/economy_extraction_expectations.dart';

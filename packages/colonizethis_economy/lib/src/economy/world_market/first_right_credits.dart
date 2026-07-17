@@ -38,6 +38,7 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'embassy_kickback_accumulation.dart';
 import 'first_right_profit.dart';
 import 'gp_treasury_credit_accumulator.dart';
 import 'gp_treasury_credit_rollup.dart';
@@ -248,7 +249,8 @@ FirstRightCreditsResult computeFirstRightCredits({
     // Source Minor/Tribe: the purchased-tile attribution when present,
     // otherwise the deal's seller faction (R8.6 — kickbacks still apply to
     // unattributed Minor/Tribe sales).
-    final sourceFactionId = attribution?.sourceFactionId ?? deal.sellerFactionId;
+    final sourceFactionId =
+        attribution?.sourceFactionId ?? deal.sellerFactionId;
 
     // Tile-owner full share (R8.2): only when the buyer is not the owner.
     if (attribution != null &&
@@ -278,7 +280,7 @@ FirstRightCreditsResult computeFirstRightCredits({
 
     // Embassy kickbacks (R8.3): every embassy-holding GP except the tile
     // owner. Deterministic in the callback's iteration order.
-    _accumulateEmbassyKickbacks(
+    accumulateEmbassyKickbacksForDeal(
       deal: deal,
       sourceFactionId: sourceFactionId,
       owningGpId: owningGpId,
@@ -297,34 +299,4 @@ FirstRightCreditsResult computeFirstRightCredits({
     totalProfitTreasury: treasuryByGp.total,
     totalEmbassyKickback: kickbackByGp.total,
   );
-}
-
-/// Credits embassy kickbacks (#3753 R8.3) for a single [deal] to every
-/// embassy-holding GP returned by [embassyGpRelationsFor] except the tile
-/// [owningGpId]. No-op when [embassyGpRelationsFor] is `null` or the
-/// [sourceFactionId] is empty. Extracted from [computeFirstRightCredits] so
-/// that function stays within the control-flow nesting-depth budget; the
-/// callback's iteration order is preserved for determinism.
-void _accumulateEmbassyKickbacks({
-  required FilledDeal deal,
-  required String sourceFactionId,
-  required String owningGpId,
-  required Map<String, num> Function(String sourceFactionId)?
-  embassyGpRelationsFor,
-  required GpTreasuryCreditAccumulator<double> kickbackByGp,
-}) {
-  if (embassyGpRelationsFor == null || sourceFactionId.isEmpty) return;
-  final embassyRelations = embassyGpRelationsFor(sourceFactionId);
-  for (final entry in embassyRelations.entries) {
-    final gpId = entry.key;
-    if (gpId.isEmpty || gpId == owningGpId) continue;
-    final kickback = computeEmbassyKickback(
-      relationScore: entry.value,
-      filledQuantity: deal.quantity,
-      pricePerUnit: deal.pricePerUnit,
-    );
-    if (kickback > 0.0) {
-      kickbackByGp.add(gpId, kickback);
-    }
-  }
 }
