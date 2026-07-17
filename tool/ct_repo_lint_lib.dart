@@ -56,6 +56,11 @@ import 'check_setup_dedup_seaboard_nearest_tile.dart';
 import 'check_setup_dedup_full_grid_tile_scans.dart';
 import 'check_setup_dedup_advanced_start_flood_fill.dart';
 import 'check_setup_dedup_ownership_paint.dart';
+import 'check_setup_dedup_advanced_start_selection.dart';
+import 'check_setup_dedup_unit_spawn.dart';
+import 'check_setup_naming_lookup.dart';
+import 'check_setup_per_pass_nw_owner_map.dart';
+import 'check_setup_prefixed_province_id_normalizer.dart';
 import 'check_setup_helpers_first_class_libraries.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
@@ -1036,6 +1041,16 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupAdvancedStartFloodFill(repoRoot);
     case 'repo.setup_dedup_ownership_paint':
       return runCheckSetupDedupOwnershipPaint(repoRoot);
+    case 'repo.setup_prefixed_province_id_normalizer':
+      return runCheckSetupPrefixedProvinceIdNormalizer(repoRoot);
+    case 'repo.setup_per_pass_nw_owner_map':
+      return runCheckSetupPerPassNwOwnerMap(repoRoot);
+    case 'repo.setup_dedup_advanced_start_selection':
+      return runCheckSetupDedupAdvancedStartSelection(repoRoot);
+    case 'repo.setup_dedup_unit_spawn':
+      return runCheckSetupDedupUnitSpawn(repoRoot);
+    case 'repo.setup_naming_lookup':
+      return runCheckSetupNamingLookup(repoRoot);
     case 'repo.setup_helpers_first_class_libraries':
       return runCheckSetupHelpersFirstClassLibraries(repoRoot);
     case 'repo.setup_test_default_init_options':

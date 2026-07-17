@@ -20,8 +20,7 @@ import 'tile_cell_scan.dart';
 /// Decides whether the cell at ([x], [y]) — whose canonical tile key is
 /// [tileKey] — is eligible for selection. The shared ranking helper computes
 /// the distance and ordering; callers supply only this predicate.
-typedef ProvinceTileEligibility =
-    bool Function(int x, int y, String tileKey);
+typedef ProvinceTileEligibility = bool Function(int x, int y, String tileKey);
 
 /// Returns the tile keys of [capital]'s province in [map] ranked by Manhattan
 /// distance from the capital ascending, then `y` ascending, then `x`
@@ -37,9 +36,7 @@ List<String> rankProvinceTileKeysByDistance({
   int? maxTiles,
 }) {
   final regionId = capital.regionId;
-  final localId = ProvinceId.isPrefixed(capital.provinceId)
-      ? ProvinceId.localIdFrom(capital.provinceId)
-      : capital.provinceId;
+  final localId = ProvinceId.localFromMaybePrefixed(capital.provinceId);
   final ranked = <(int dist, int y, int x, String key)>[];
   forEachTileCell(map, regionId, (x, y, cellLocalId, tileKey) {
     if (cellLocalId != localId) return;

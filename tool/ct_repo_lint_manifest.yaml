@@ -1500,6 +1500,41 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_gp_ids_from_players.dart
 
+  - rule_id: repo.setup_prefixed_province_id_normalizer
+    group: architecture
+    title: setup prefixed province-id normalization must use ProvinceId helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_prefixed_province_id_normalizer.dart
+
+  - rule_id: repo.setup_per_pass_nw_owner_map
+    group: architecture
+    title: advanced-start NW world/colonization owner lookup must use per-pass maps (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_per_pass_nw_owner_map.dart
+
+  - rule_id: repo.setup_dedup_advanced_start_selection
+    group: architecture
+    title: advanced-start fraction selection and minor-buyer round-robin must use shared helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_advanced_start_selection.dart
+
+  - rule_id: repo.setup_dedup_unit_spawn
+    group: architecture
+    title: capital unit spawn and home-fleet merge must use setup_unit_spawn.dart helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_dedup_unit_spawn.dart
+
+  - rule_id: repo.setup_naming_lookup
+    group: architecture
+    title: minor/tribe naming lookup must use setup_naming_lookup.dart helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_naming_lookup.dart
+
   - rule_id: repo.setup_dedup_grid_bfs_coord_keys
     group: architecture
     title: setup grid BFS + 2D coord keys must route through grid_bfs.dart (no inline cardinal-delta arrays / raw "$x|$y" interpolation outside grid_bfs.dart) (Refs #3740)

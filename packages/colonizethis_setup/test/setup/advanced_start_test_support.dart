@@ -240,10 +240,8 @@ Game advancedStartColonizationFixture({List<Province> nwProvinces = const []}) {
     tileKeysByRegionAndProvince: {
       kRegionNewWorld: {
         for (final p in nwProvinces)
-          (ProvinceId.isPrefixed(p.id)
-              ? p.id
-              : ProvinceId.full(p.regionId, p.id)): [
-            '${ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id)}|0|0',
+          ProvinceId.prefixedFrom(p.regionId, p.id): [
+            '${ProvinceId.prefixedFrom(p.regionId, p.id)}|0|0',
           ],
       },
     },
