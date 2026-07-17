@@ -213,9 +213,10 @@ void main() {
     expect(
       logs.join('\n'),
       contains(
-        'no duplicated min-viewport, widgetbook use-case, trade-screen host, '
-        'units-panel Game, naval/military/technology pump, panel MaterialApp, '
-        'or debug-handler Game scaffolding found',
+        'no duplicated min-viewport, 320 dp Center-host dialog, widgetbook '
+        'use-case, trade-screen host, units-panel Game, '
+        'naval/military/technology pump, panel MaterialApp, or debug-handler '
+        'Game scaffolding found',
       ),
     );
   });
