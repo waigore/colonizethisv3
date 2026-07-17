@@ -3,7 +3,6 @@
 // data model, `SPEC/game/world-market.md` § Initial price seeding).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
@@ -14,10 +13,7 @@ void main() {
     test(
       'prices map seeds every tradeable commodity with integer catalog default',
       () {
-        final result = runInitGame(
-          config: GameSetupConfig.defaultConfig,
-          options: defaultInitOptions,
-        );
+        final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
         final prices = result.game.worldMarketState.prices;
 
@@ -48,10 +44,7 @@ void main() {
             isA<int>(),
             reason: 'price entry for "$id" must be an integer',
           );
-          expect(
-            value,
-            isNotNull,
-          );
+          expect(value, isNotNull);
           expect(
             value! >= 0,
             isTrue,
@@ -75,13 +68,16 @@ void main() {
     test(
       'prices map contains no riches or spices entries (non-tradeable filter)',
       () {
-        final result = runInitGame(
-          config: GameSetupConfig.defaultConfig,
-          options: defaultInitOptions,
-        );
+        final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
         final prices = result.game.worldMarketState.prices;
-        for (final id in const ['gold', 'silver', 'gems', 'diamonds', 'spices']) {
+        for (final id in const [
+          'gold',
+          'silver',
+          'gems',
+          'diamonds',
+          'spices',
+        ]) {
           expect(
             prices.containsKey(id),
             isFalse,
@@ -93,32 +89,23 @@ void main() {
       },
     );
 
-    test(
-      'prices map pins canonical integer values for representative '
-      'raw-resource and manufactured commodities',
-      () {
-        final result = runInitGame(
-          config: GameSetupConfig.defaultConfig,
-          options: defaultInitOptions,
-        );
+    test('prices map pins canonical integer values for representative '
+        'raw-resource and manufactured commodities', () {
+      final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
-        final prices = result.game.worldMarketState.prices;
-        expect(prices['grain'], 50);
-        expect(prices['timber'], 30);
-        expect(prices['iron'], 80);
-        expect(prices['lumber'], 60);
-        expect(prices['castIron'], 160);
-        expect(prices['steel'], 170);
-      },
-    );
+      final prices = result.game.worldMarketState.prices;
+      expect(prices['grain'], 50);
+      expect(prices['timber'], 30);
+      expect(prices['iron'], 80);
+      expect(prices['lumber'], 60);
+      expect(prices['castIron'], 160);
+      expect(prices['steel'], 170);
+    });
 
     test(
       'lastTurnActivity and carry-forward maps start empty on a fresh game',
       () {
-        final result = runInitGame(
-          config: GameSetupConfig.defaultConfig,
-          options: defaultInitOptions,
-        );
+        final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
         final wms = result.game.worldMarketState;
         expect(wms.lastTurnActivity, isEmpty);
@@ -128,10 +115,7 @@ void main() {
     );
 
     test('seeded prices round-trip through JSON', () {
-      final result = runInitGame(
-        config: GameSetupConfig.defaultConfig,
-        options: defaultInitOptions,
-      );
+      final result = sharedInitGameResult(GameSetupConfig.defaultConfig);
 
       final beforePrices = Map<CommodityId, int>.from(
         result.game.worldMarketState.prices,

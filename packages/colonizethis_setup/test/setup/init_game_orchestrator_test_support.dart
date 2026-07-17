@@ -51,6 +51,79 @@ void runLockedFullInitAc11SeedBatch({
 /// repeated across nearly every orchestrator test (Refs #3712).
 const defaultInitOptions = InitGameOptions(cellSize: 8, renderPng: false);
 
+final Map<String, InitGameResult> _sharedInitGameResultBySignature = {};
+
+/// Memoized full [runInitGame] pipeline run for [config] with
+/// [defaultInitOptions] (Refs #4054). Assert-only tests that share an
+/// identical config reuse one map-generation + setup run per distinct
+/// [initGameConfigSignature] instead of regenerating everything.
+///
+/// Contract:
+/// - The cached [InitGameResult] is shared: treat it (and its [Game]) as
+///   **read-only**; never mutate it from a test.
+/// - Determinism-comparison tests must keep explicit repeated [runInitGame]
+///   calls; do not route them through this harness.
+/// - Only [defaultInitOptions] runs are memoized; tests needing custom
+///   [InitGameOptions] call [runInitGame] directly.
+/// - `seed: 0` selects a time-based effective seed, so such configs are not
+///   cacheable (asserted below).
+InitGameResult sharedInitGameResult(GameSetupConfig config) {
+  assert(
+    config.seed != 0,
+    'seed 0 is time-based (non-deterministic); call runInitGame directly',
+  );
+  return _sharedInitGameResultBySignature.putIfAbsent(
+    initGameConfigSignature(config),
+    () => runInitGame(config: config, options: defaultInitOptions),
+  );
+}
+
+/// Canonical signature covering every [GameSetupConfig] field (including the
+/// nested [StartingResourcesConfig]) so distinct configs never collide in
+/// [sharedInitGameResult].
+String initGameConfigSignature(GameSetupConfig c) {
+  final r = c.startingResources;
+  final sortedRoadRegions = c.initTownRoadWiringRegionIds.toList()..sort();
+  final sortedHumanSlots = c.humanGreatPowerSlotIndices.toList()..sort();
+  final sortedLeaderVariants =
+      c.leaderVariantByGpId.entries.map((e) => '${e.key}=${e.value}').toList()
+        ..sort();
+  final sortedAiProfiles =
+      c.aiProfileByGpId.entries.map((e) => '${e.key}=${e.value}').toList()
+        ..sort();
+  final sortedCivilianUnits =
+      r.startingCivilianUnits.entries.map((e) => '${e.key}=${e.value}').toList()
+        ..sort();
+  return [
+    'gps:${c.selectedGreatPowerIds.join(',')}',
+    'leaders:${sortedLeaderVariants.join(',')}',
+    'continents:${c.continentCount}',
+    'minors:${c.minorNationCount}',
+    'tribes:${c.tribeCount}',
+    'owProvinces:${c.numProvincesOldWorld}',
+    'nwProvinces:${c.numProvincesNewWorld}',
+    'minPerMinor:${c.minProvincesPerMinor}',
+    'seed:${c.seed}',
+    'infinite:${c.infiniteMode}',
+    'terrainVariation:${c.terrainVariation}',
+    'zoom:${c.preferredInitialMapZoomMultiplier}',
+    'roadRegions:${sortedRoadRegions.join(',')}',
+    'humanSlots:${sortedHumanSlots.join(',')}',
+    'aiProfiles:${sortedAiProfiles.join(',')}',
+    'advancedStart:${c.advancedStart}',
+    'res.peasants:${r.initialPeasants}',
+    'res.grainTurns:${r.initialGrainTurns}',
+    'res.treasury:${r.initialTreasury}',
+    'res.slots:${r.initialImprovementSlots}',
+    'res.wool:${r.initialWool}',
+    'res.paper:${r.initialPaper}',
+    'res.regiments:${r.initialMilitaryRegiments}',
+    'res.ships:${r.initialNavalShips}',
+    'res.capitalGrain:${r.capitalTileGrainBonusPerTurn}',
+    'res.civilianUnits:${sortedCivilianUnits.join(',')}',
+  ].join('|');
+}
+
 /// Builds a [GameSetupConfig] from [GameSetupConfig.defaultConfig], overriding
 /// only the provided fields. Removes the verbose full-config rebuild blocks
 /// tests used to vary a single field — the config has no `copyWith` (#3712 /
