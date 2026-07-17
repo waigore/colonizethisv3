@@ -1500,6 +1500,13 @@ rules:
     runner: dart
     script: tool/check_setup_dedup_gp_ids_from_players.dart
 
+  - rule_id: repo.setup_prefixed_province_id_normalizer
+    group: architecture
+    title: setup prefixed province-id normalization must use ProvinceId helpers (Refs #4054)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_setup_prefixed_province_id_normalizer.dart
+
   - rule_id: repo.setup_dedup_grid_bfs_coord_keys
     group: architecture
     title: setup grid BFS + 2D coord keys must route through grid_bfs.dart (no inline cardinal-delta arrays / raw "$x|$y" interpolation outside grid_bfs.dart) (Refs #3740)

@@ -35,10 +35,7 @@ List<String> _rankDevelopableTileKeys({
     )) {
       continue;
     }
-    ranked.add((
-      advancedStartDevelopableTilePriority(resourceId!),
-      key,
-    ));
+    ranked.add((advancedStartDevelopableTilePriority(resourceId!), key));
   }
   ranked.sort((a, b) {
     final c = a.$1.compareTo(b.$1);
@@ -242,9 +239,10 @@ Game applyAdvancedStartMinorDevelopment({
 
     for (final province in game.worldState.oldWorld.provinces) {
       if (province.ownerId != minor.id) continue;
-      final provinceFullId = ProvinceId.isPrefixed(province.id)
-          ? province.id
-          : ProvinceId.full(province.regionId, province.id);
+      final provinceFullId = ProvinceId.prefixedFrom(
+        province.regionId,
+        province.id,
+      );
       final provinceSelected = selected.where((key) {
         final coords = parseTileKeyCoordinates(key);
         if (coords == null) return false;

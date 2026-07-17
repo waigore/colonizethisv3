@@ -16,9 +16,7 @@ String _fullNwProvinceId(String localId) =>
 String? _tribeOwnerForLocalProvince(Game game, String localProvinceId) {
   final fullId = _fullNwProvinceId(localProvinceId);
   for (final province in game.worldState.newWorld.provinces) {
-    final id = ProvinceId.isPrefixed(province.id)
-        ? province.id
-        : ProvinceId.full(province.regionId, province.id);
+    final id = ProvinceId.prefixedFrom(province.regionId, province.id);
     if (id != fullId) continue;
     final ownerId = province.ownerId;
     if (ownerId != null && game.tribes.any((t) => t.id == ownerId)) {
@@ -76,7 +74,9 @@ Game applyAdvancedStartNwColonization({
   final nwMap = tileMapByRegion[kRegionNewWorld];
   final nwTopology = topologyByRegion[kRegionNewWorld] ?? topologyNewWorld;
   if (nwMap == null) {
-    setupLog.w('logic: advanced start NW colonization skipped — no NW tile map');
+    setupLog.w(
+      'logic: advanced start NW colonization skipped — no NW tile map',
+    );
     return game;
   }
 
@@ -126,9 +126,7 @@ Game applyAdvancedStartNwColonization({
   if (assignedToGp.isEmpty) return game;
 
   final updatedProvinces = game.worldState.newWorld.provinces.map((province) {
-    final localId = ProvinceId.isPrefixed(province.id)
-        ? ProvinceId.localIdFrom(province.id)
-        : province.id;
+    final localId = ProvinceId.localFromMaybePrefixed(province.id);
     final gpId = assignedToGp[localId];
     if (gpId == null) return province;
     return province.copyWith(ownerId: gpId);
@@ -152,14 +150,10 @@ Game applyAdvancedStartNwColonization({
   var ws = updated.worldState;
   for (final entry in assignedToGp.entries) {
     final provinceId = _fullNwProvinceId(entry.key);
-    final province = ws.newWorld.provinces
-        .where((p) {
-          final id = ProvinceId.isPrefixed(p.id)
-              ? p.id
-              : ProvinceId.full(p.regionId, p.id);
-          return id == provinceId;
-        })
-        .singleOrNull;
+    final province = ws.newWorld.provinces.where((p) {
+      final id = ProvinceId.prefixedFrom(p.regionId, p.id);
+      return id == provinceId;
+    }).singleOrNull;
     final townKey = province?.townTileKey;
     if (townKey == null) continue;
     ws = applySeaboardPortAndRoadToTile(

@@ -22,9 +22,7 @@ class AdvancedStartWorldKnowledgeResult {
 String? _ownerIdForLocalProvince(Game game, String localProvinceId) {
   final fullId = ProvinceId.full(kRegionNewWorld, localProvinceId);
   for (final province in game.worldState.newWorld.provinces) {
-    final id = ProvinceId.isPrefixed(province.id)
-        ? province.id
-        : ProvinceId.full(province.regionId, province.id);
+    final id = ProvinceId.prefixedFrom(province.regionId, province.id);
     if (id == fullId) return province.ownerId;
   }
   return null;
@@ -36,7 +34,10 @@ void _setNwSeaZoneTilesFogged({
   required Iterable<String> seaZoneLocalIds,
 }) {
   for (final seaLocalId in seaZoneLocalIds) {
-    final bucketKey = canonicalSeaZoneTileBucketKey(kRegionNewWorld, seaLocalId);
+    final bucketKey = canonicalSeaZoneTileBucketKey(
+      kRegionNewWorld,
+      seaLocalId,
+    );
     final tileKeys = nwTileKeysByProvince[bucketKey] ?? const [];
     for (final tileKey in tileKeys) {
       final current = playerVisibility[tileKey];
@@ -113,8 +114,10 @@ AdvancedStartWorldKnowledgeResult applyAdvancedStartWorldKnowledge({
       revealedProvinceLocalIds: revealedLocalIds.toSet(),
     );
 
-    final playerVisibility =
-        visibilityByPlayer.putIfAbsent(player.id, () => <String, String>{});
+    final playerVisibility = visibilityByPlayer.putIfAbsent(
+      player.id,
+      () => <String, String>{},
+    );
 
     for (final localId in revealedLocalIds) {
       final ownerId = _ownerIdForLocalProvince(game, localId);
