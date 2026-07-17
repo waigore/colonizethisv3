@@ -221,10 +221,10 @@ void main() {
   });
 
   test(
-    'buildNavalCapitalAdjacentSeaTopology omits edge when requested',
+    'buildUnitsPanelCapitalAdjacentSeaTopology omits edge when requested',
     () {
-      final withEdge = buildNavalCapitalAdjacentSeaTopology();
-      final withoutEdge = buildNavalCapitalAdjacentSeaTopology(
+      final withEdge = buildUnitsPanelCapitalAdjacentSeaTopology();
+      final withoutEdge = buildUnitsPanelCapitalAdjacentSeaTopology(
         includeEdge: false,
       );
       expect(withEdge.edges, hasLength(1));

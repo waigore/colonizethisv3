@@ -3,40 +3,19 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-const _regimentType = 'peasant_levies';
+import 'support/debug_handler_test_fixtures.dart';
 
-Game _gameWith({
-  bool isHuman = true,
-  String? capitalProvinceId = 'oldWorld|1',
-}) {
-  return Game(
-    id: 'g-regiment',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'oldWorld|1', regionId: 'oldWorld', ownerId: 'p1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(
-        id: 'p1',
-        displayName: 'P1',
-        isHuman: isHuman,
-        capitalProvinceId: capitalProvinceId,
-      ),
-    ],
-  );
-}
+const _regimentType = 'peasant_levies';
 
 void main() {
   suppressLogsForTests();
 
   group('applyDebugRegimentSpawnAtCapital', () {
     test('spawns regiments into the capital region bucket', () {
-      final game = _gameWith();
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: _regimentType,
@@ -70,7 +49,10 @@ void main() {
     });
 
     test('short-circuits on unknown player', () {
-      final game = _gameWith();
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'ghost',
         regimentTypeId: _regimentType,
@@ -84,7 +66,11 @@ void main() {
     });
 
     test('short-circuits on non-human player', () {
-      final game = _gameWith(isHuman: false);
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        isHuman: false,
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: _regimentType,
@@ -98,7 +84,10 @@ void main() {
     });
 
     test('rejects unsupported regiment type', () {
-      final game = _gameWith();
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: 'not_a_regiment',
@@ -115,7 +104,10 @@ void main() {
     });
 
     test('short-circuits when count below minimum', () {
-      final game = _gameWith();
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: _regimentType,
@@ -130,7 +122,11 @@ void main() {
     });
 
     test('short-circuits when player has no capital province', () {
-      final game = _gameWith(capitalProvinceId: null);
+      final game = buildDebugHandlerCapitalGame(
+        id: 'g-regiment',
+        capitalProvinceId: null,
+        includeCapitalTile: false,
+      );
       const event = SpawnDebugRegimentAtCapitalEvent(
         humanPlayerId: 'p1',
         regimentTypeId: _regimentType,

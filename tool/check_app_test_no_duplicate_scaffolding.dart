@@ -136,13 +136,22 @@ int runCheckAppTestNoDuplicateScaffolding(
       );
       parsed.unit.accept(visitor);
     }
+    if (_isGovernedDebugHandlerFile(relativePath)) {
+      final visitor = _DebugHandlerLocalGameFactoryVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(visitor);
+    }
   }
 
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
       'widgetbook use-case, trade-screen host, units-panel Game, naval/military/'
-      'technology pump, or panel MaterialApp scaffolding found.',
+      'technology pump, panel MaterialApp, or debug-handler Game scaffolding '
+      'found.',
     );
     return 0;
   }
@@ -175,7 +184,10 @@ int runCheckAppTestNoDuplicateScaffolding(
     'Production/naval/civilian/narrow-overlay/technology hosts: use '
     'buildProductionPanel / buildNavalPanel / buildCivilianPanel / '
     'buildMilitaryPanel / buildTechnologyPanel / '
-    'buildAppShell (no inline MaterialApp).',
+    'buildAppShell (no inline MaterialApp). '
+    'Debug handler suites: use buildDebugHandler* from '
+    'app/test/support/debug_handler_test_fixtures.dart '
+    '(no private _gameWithCapital / _gameWithPlayer / _gameWith / _buildGame).',
   );
   return 1;
 }
@@ -598,6 +610,16 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name == 'e2e_low_risk_mirror_barrel_smoke_test.dart';
 }
 
+/// True for `app/test/app_event_handler_debug_*_test.dart` (Refs #4048).
+bool _isGovernedDebugHandlerFile(String relativePath) {
+  if (relativePath.startsWith('app/test/support/')) {
+    return false;
+  }
+  final name = p.basename(relativePath);
+  return name.startsWith('app_event_handler_debug_') &&
+      name.endsWith('_test.dart');
+}
+
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
   _ScaffoldingVisitor({
     required this.relativePath,
@@ -862,6 +884,48 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
       _flagIfMaterialApp(node.methodName.name, node.methodName.offset);
     }
     super.visitMethodInvocation(node);
+  }
+}
+
+/// Flags private capital/empty Game factory reintroductions in debug-handler
+/// suites (Refs #4048). Canonical APIs live in
+/// `app/test/support/debug_handler_test_fixtures.dart`.
+class _DebugHandlerLocalGameFactoryVisitor extends RecursiveAstVisitor<void> {
+  _DebugHandlerLocalGameFactoryVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  static const _banned = {
+    '_gameWithCapital',
+    '_gameWithPlayer',
+    '_gameWith',
+    '_buildGame',
+  };
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  @override
+  void visitFunctionDeclaration(FunctionDeclaration node) {
+    final name = node.name.lexeme;
+    if (_banned.contains(name)) {
+      _report(
+        node.name.offset,
+        'function "$name" reintroduces a local debug Game factory; use '
+        'buildDebugHandlerPlayerGame / buildDebugHandlerCapitalGame / '
+        'buildDebugHandlerDiplomacyGame from '
+        'debug_handler_test_fixtures.dart',
+      );
+    }
+    super.visitFunctionDeclaration(node);
   }
 }
 

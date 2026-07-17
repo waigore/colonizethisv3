@@ -136,8 +136,8 @@ void main() {
     );
   });
 
-  test('buildMilitaryAdjacentOwProvincesTopology links the default OW pair', () {
-    final topology = buildMilitaryAdjacentOwProvincesTopology();
+  test('buildUnitsPanelAdjacentOwProvincesTopology links the default OW pair', () {
+    final topology = buildUnitsPanelAdjacentOwProvincesTopology();
     expect(topology.nodes, hasLength(2));
     expect(topology.edges.single.id1, 'oldWorld|p2');
     expect(topology.edges.single.id2, 'oldWorld|p3');

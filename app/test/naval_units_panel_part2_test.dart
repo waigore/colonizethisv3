@@ -508,7 +508,7 @@ void main() {
           tester,
           game: gameAdj,
           humanPlayerId: humanId,
-          topology: buildNavalCapitalAdjacentSeaTopology(),
+          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
         );
 
         await _tapFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);

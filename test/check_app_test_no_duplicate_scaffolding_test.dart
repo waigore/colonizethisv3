@@ -1106,4 +1106,29 @@ void main() {
       expect(code, 0);
     },
   );
+
+  test('fails when a debug-handler suite reintroduces _gameWithCapital', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_debug_game_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'app_event_handler_debug_spawn_civilian_test.dart',
+      '''
+Game _gameWithCapital() => throw UnimplementedError();
+
+void main() {}
+''',
+    );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('_gameWithCapital'));
+    expect(logs.join('\n'), contains('debug_handler_test_fixtures'));
+  });
 }
