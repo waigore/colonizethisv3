@@ -218,7 +218,7 @@ rules:
 
   - rule_id: repo.economy_test_support_loc
     group: testing
-    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7999 (Refs #4014)
+    title: colonizethis_economy_test_support/lib physical LOC must stay at or below 7495 (Refs #4014, #4049)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_support_loc.dart
@@ -229,6 +229,13 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_test_no_local_run_scenarios.dart
+
+  - rule_id: repo.economy_source_file_size
+    group: structure
+    title: colonizethis_economy lib files must stay at or below the phase-7 310 physical-line ceiling (Refs #4049)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_source_file_size.dart
 
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing

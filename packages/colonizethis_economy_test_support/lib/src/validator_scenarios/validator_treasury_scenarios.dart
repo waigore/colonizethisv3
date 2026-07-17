@@ -15,8 +15,7 @@ int _catalogLumberBudgetForQty1() {
 }
 /// Rule 5 treasury-cap scenarios from
 /// `world_market_trade_order_validator_treasury_test.dart`.
-List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [...tradeOrderValidatorTreasuryCapScenarios(), ...tradeOrderValidatorTreasuryCatalogScenarios()];
-List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
+List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryScenarios() => [
   validatorTreasuryTimberIronBids(
     label: 'rejects bid when cumulative spend exceeds treasuryBudgetForBids',
     treasuryBudgetForBids: 60,
@@ -45,8 +44,6 @@ List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCapScenarios() => [
     expect: ValidatorExpectation(outcomes: [(accepted: false, reason: TradeOrderRejectionReasons.bidExceedsTreasuryBudget), (accepted: true, reason: null)], orderAcceptedPin: (index: 1, accepted: true, reason: 'greedy continuation: rejected bid must not consume the running spend budget so a later bid that fits the remaining budget is admitted')),
     refs: '#3123',
   ),
-];
-List<TradeOrderValidatorScenario> tradeOrderValidatorTreasuryCatalogScenarios() => [
   validatorTreasuryTimberBids(
     label: 'treasuryBudgetForBids == 0 rejects every priced bid (Refs #3123)',
     treasuryBudgetForBids: 0,
