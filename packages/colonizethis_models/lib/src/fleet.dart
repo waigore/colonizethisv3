@@ -1,3 +1,4 @@
+import 'model_collection_equality.dart';
 import 'ship_instance.dart';
 import 'model_validation_exception.dart';
 
@@ -170,7 +171,7 @@ class Fleet {
           seaZoneId == other.seaZoneId &&
           inPortAtProvinceId == other.inPortAtProvinceId &&
           regionId == other.regionId &&
-          _listEqualsShips(ships, other.ships) &&
+          modelListEquals(ships, other.ships) &&
           mission == other.mission &&
           targetPortId == other.targetPortId &&
           targetProvinceId == other.targetProvinceId;
@@ -187,12 +188,4 @@ class Fleet {
     targetPortId,
     targetProvinceId,
   );
-
-  static bool _listEqualsShips(List<ShipInstance> a, List<ShipInstance> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }

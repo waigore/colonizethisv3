@@ -19,9 +19,12 @@ library's private scope. Part fragments keep the extracted code implicitly
 coupled to the host (shared imports and private members), which defeats the
 testability and decoupling goal the size gate exists to encourage. The
 `colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416),
-`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419), and
-`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543) packages
-already forbid `part` directives in their `lib/` trees; other packages SHOULD
+`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419),
+`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543),
+`colonizethis_world` (`repo.world_no_part_directives`, Refs #3968),
+`colonizethis_economy` (`repo.economy_no_part_directives`, Refs #3979), and
+`colonizethis_models` (`repo.models_no_part_directives`, Refs #4068) packages
+forbid `part` directives in their `lib/` trees; other packages SHOULD
 prefer the same standalone-library shape when extracting for size, and MAY add an
 equivalent no-`part` gate once their `lib/` tree is part-free.
 
@@ -113,18 +116,34 @@ lines) for the split domain packages.
 
 - Phase 5 split the three largest hand-written offenders (`app_events.dart`,
   `world_market.dart`, `orders.dart`) into `part` files below the cap.
-- `game.dart` (554 non-comment lines) is dominated by the single `Game`
-  aggregate class, which cannot be reduced under the cap by simple `part`
-  extraction; it is recorded in `modelsFileSizeGrandfatheredForTests` as a
-  documented baseline pending a follow-up API-shaping split. The checker asserts
-  each grandfathered path still exists so the allowlist cannot silently rot.
+- Slice A (Refs #4068) extracted `VictoryType` / `VictoryState` into
+  `victory.dart` and shared collection equality into
+  `model_collection_equality.dart`, so `game.dart` is at or below 500
+  non-comment lines. `modelsFileSizeGrandfatheredForTests` is therefore
+  **empty**; the checker still accepts an explicit override list for tests and
+  fails on stale allowlist paths that no longer exist.
+- Slice B (Refs #4068) splits former monolithic `diplomacy.dart` into
+  first-class concern libraries under `lib/src/diplomacy/` (relations,
+  overtures, orders, treaty states, events, debug tokens). The host
+  `diplomacy.dart` is a barrel re-export only; public import paths via the
+  models barrel stay stable.
+- Slice C (Refs #4068) promotes former `part` trees under `orders/`,
+  `world_state/`, `world_market/`, and `app_events/` to first-class
+  libraries with explicit imports; `repo.models_no_part_directives`
+  (`SPEC/program/models-no-part-directives.md`) forbids reintroducing
+  `part` / `part of` under `packages/colonizethis_models/lib/`.
+- Slice D (Refs #4068) densifies oversized models suites
+  (`world_market_test`, `game_test`, `app_events_test`,
+  `diplomacy_models_test`) into concern-split files at or below 400
+  physical lines, with a shared `test/support/minimal_game.dart`
+  scaffold; `repo.models_test_file_size` enforces the ceiling.
 
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
   `runCheckModelsFileSize`, then the checker exits zero because every
-  non-grandfathered `colonizethis_models/lib/src` Dart file is at or below 500
-  non-comment lines.
+  `colonizethis_models/lib/src` Dart file is at or below 500 non-comment lines
+  (no active grandfather baseline).
 
 - Given a temporary workspace whose only models source file is a hand-written
   `packages/colonizethis_models/lib/src/huge.dart` with more than 500

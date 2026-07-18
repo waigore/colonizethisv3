@@ -1,4 +1,9 @@
-part of '../world_market.dart';
+/// Trade order intent types for the world market.
+///
+/// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
+
+import '../model_validation_exception.dart';
+import '../stockpile.dart';
 
 /// Buy or sell intent for a [TradeOrder].
 enum TradeOrderType {

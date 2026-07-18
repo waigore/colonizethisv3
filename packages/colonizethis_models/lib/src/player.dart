@@ -1,3 +1,4 @@
+import 'model_collection_equality.dart';
 import 'capital_tile.dart';
 import 'province_id.dart';
 import 'research_slot_assignment.dart';
@@ -273,16 +274,16 @@ class Player {
           treasury == other.treasury &&
           capitalProvinceId == other.capitalProvinceId &&
           capitalTile == other.capitalTile &&
-          _mapEquals(techUnlocked, other.techUnlocked) &&
+          modelNullableMapEquals(techUnlocked, other.techUnlocked) &&
           militaryLevel == other.militaryLevel &&
           leaderKey == other.leaderKey &&
           personalityId == other.personalityId &&
-          _intMapEquals(
+          modelNullableMapEquals(
             researchProgressByTechId,
             other.researchProgressByTechId,
           ) &&
           researchSlots == other.researchSlots &&
-          _slotAssignmentsEqual(
+          modelNullableMapEquals(
             researchSlotAssignments,
             other.researchSlotAssignments,
           ) &&
@@ -314,34 +315,4 @@ class Player {
           ]),
     generalCap,
   );
-
-  static bool _mapEquals(Map<String, bool>? a, Map<String, bool>? b) {
-    if (a == b) return true;
-    if (a == null || b == null || a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
-
-  static bool _intMapEquals(Map<String, int>? a, Map<String, int>? b) {
-    if (a == b) return true;
-    if (a == null || b == null || a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
-
-  static bool _slotAssignmentsEqual(
-    Map<int, ResearchSlotAssignment>? a,
-    Map<int, ResearchSlotAssignment>? b,
-  ) {
-    if (a == b) return true;
-    if (a == null || b == null || a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
 }

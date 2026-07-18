@@ -1,4 +1,11 @@
-part of '../world_market.dart';
+/// Per-commodity market activity and audit notes.
+///
+/// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
+
+import '../model_collection_equality.dart';
+import '../model_validation_exception.dart';
+import '../stockpile.dart';
+import 'filled_deal.dart';
 
 /// Categorical reason recorded on a [MarketActivityNote] when the world
 /// market phase drops a carry-forward order or otherwise emits an
@@ -105,9 +112,7 @@ class MarketActivityNote {
       );
     }
     final qtyRaw = json['quantity'];
-    final qty = qtyRaw is int
-        ? qtyRaw
-        : int.tryParse(qtyRaw?.toString() ?? '');
+    final qty = qtyRaw is int ? qtyRaw : int.tryParse(qtyRaw?.toString() ?? '');
     if (qty == null) {
       throw ModelValidationException.value(
         qtyRaw,
@@ -185,10 +190,8 @@ class MarketActivity {
     'totalOfferQuantity': totalOfferQuantity,
     'filledQuantity': filledQuantity,
     'priceChangePercent': priceChangePercent,
-    if (deals.isNotEmpty)
-      'deals': [for (final d in deals) d.toJson()],
-    if (notes.isNotEmpty)
-      'notes': [for (final n in notes) n.toJson()],
+    if (deals.isNotEmpty) 'deals': [for (final d in deals) d.toJson()],
+    if (notes.isNotEmpty) 'notes': [for (final n in notes) n.toJson()],
   };
 
   static MarketActivity fromJson(Map<String, dynamic> json) {
@@ -244,8 +247,8 @@ class MarketActivity {
           totalOfferQuantity == other.totalOfferQuantity &&
           filledQuantity == other.filledQuantity &&
           priceChangePercent == other.priceChangePercent &&
-          _listEquals(deals, other.deals) &&
-          _listEquals(notes, other.notes);
+          modelListEquals(deals, other.deals) &&
+          modelListEquals(notes, other.notes);
 
   @override
   int get hashCode => Object.hash(

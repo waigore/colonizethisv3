@@ -1,4 +1,6 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
 
 // ---------------------------------------------------------------------------
 // UISystemEvent — emitted by any layer to request transient system feedback.

@@ -1,4 +1,7 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
+import '../turn_news_digest.dart';
 
 // ---------------------------------------------------------------------------
 // Game-to-UI bridge — emitted by services when game state changes.

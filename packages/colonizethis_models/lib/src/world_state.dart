@@ -1,13 +1,15 @@
 import 'army.dart';
 import 'fleet.dart';
+import 'model_collection_equality.dart';
 import 'province_extraction_snapshot.dart';
 import 'province_id.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
+import 'world_state/equality_helpers.dart';
 
-part 'world_state/equality_helpers.dart';
-part 'world_state/focused_accessors.dart';
+export 'world_state/focused_accessors.dart';
+
 
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
 class WorldState {
@@ -245,7 +247,7 @@ class WorldState {
           if (keys is! List<Object?>) return;
           final key = bucketId.toString();
           final tileKeys = keys.map((e) => e.toString()).toList();
-          final canonicalKey = _canonicalTileBucketKeyForLoad(
+          final canonicalKey = worldStateCanonicalTileBucketKeyForLoad(
             regionId: regionId,
             bucketKey: key,
             tileKeys: tileKeys,
@@ -397,36 +399,45 @@ class WorldState {
           oldWorld == other.oldWorld &&
           newWorld == other.newWorld &&
           tileState == other.tileState &&
-          _mapEquals(portsByProvinceSeaboard, other.portsByProvinceSeaboard) &&
-          _nestedStringMapEquals(
+          modelMapEquals(
+            portsByProvinceSeaboard,
+            other.portsByProvinceSeaboard,
+          ) &&
+          worldStateNestedStringMapEquals(
             playerVisibilityByTile,
             other.playerVisibilityByTile,
           ) &&
-          _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
-          _listEqualsFleet(fleets, other.fleets) &&
-          _tileKeysByRegionEquals(
+          worldStateMapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
+          modelListEquals(fleets, other.fleets) &&
+          worldStateTileKeysByRegionEquals(
             tileKeysByRegionAndProvince,
             other.tileKeysByRegionAndProvince,
           ) &&
-          _spyRevealEquals(
+          worldStateSpyRevealEquals(
             spyRevealTurnsByPlayer,
             other.spyRevealTurnsByPlayer,
           ) &&
-          _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
-          _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
-          _mapEquals(seaZoneDisplayNameById, other.seaZoneDisplayNameById) &&
+          modelMapEquals(
+            purchasedTilesByTileKey,
+            other.purchasedTilesByTileKey,
+          ) &&
+          modelMapEquals(resourceByTileKey, other.resourceByTileKey) &&
+          modelMapEquals(
+            seaZoneDisplayNameById,
+            other.seaZoneDisplayNameById,
+          ) &&
           nextShipInstanceSeq == other.nextShipInstanceSeq &&
-          _listEqualsArmy(armies, other.armies) &&
+          modelListEquals(armies, other.armies) &&
           nextArmySeq == other.nextArmySeq &&
-          _listEqualsString(
-            _sortedCopy(newsDigestProvinceRevealDoneIds),
-            _sortedCopy(other.newsDigestProvinceRevealDoneIds),
+          modelListEquals(
+            worldStateSortedCopy(newsDigestProvinceRevealDoneIds),
+            worldStateSortedCopy(other.newsDigestProvinceRevealDoneIds),
           ) &&
-          _listEqualsString(
-            _sortedCopy(newsDigestSeaZoneFleetDoneIds),
-            _sortedCopy(other.newsDigestSeaZoneFleetDoneIds),
+          modelListEquals(
+            worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds),
+            worldStateSortedCopy(other.newsDigestSeaZoneFleetDoneIds),
           ) &&
-          _provinceExtractionEquals(
+          worldStateProvinceExtractionEquals(
             lastTurnProvinceExtractionByProvinceId,
             other.lastTurnProvinceExtractionByProvinceId,
           );
@@ -472,8 +483,8 @@ class WorldState {
     nextShipInstanceSeq,
     Object.hashAll(armies),
     nextArmySeq,
-    Object.hashAll(_sortedCopy(newsDigestProvinceRevealDoneIds)),
-    Object.hashAll(_sortedCopy(newsDigestSeaZoneFleetDoneIds)),
+    Object.hashAll(worldStateSortedCopy(newsDigestProvinceRevealDoneIds)),
+    Object.hashAll(worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds)),
     Object.hashAll(
       lastTurnProvinceExtractionByProvinceId.entries.map(
         (e) => Object.hash(e.key, e.value),
