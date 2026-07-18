@@ -14,10 +14,8 @@ class WorldMarketState {
   const WorldMarketState({
     this.prices = const <CommodityId, int>{},
     this.lastTurnActivity = const <CommodityId, MarketActivity>{},
-    this.carryForwardOffersByFactionId =
-        const <String, List<TradeOrder>>{},
-    this.carryForwardBidsByFactionId =
-        const <String, List<TradeOrder>>{},
+    this.carryForwardOffersByFactionId = const <String, List<TradeOrder>>{},
+    this.carryForwardBidsByFactionId = const <String, List<TradeOrder>>{},
     this.completedTradePairKeys = const <String>{},
   });
 
@@ -154,17 +152,17 @@ class WorldMarketState {
       identical(this, other) ||
       other is WorldMarketState &&
           runtimeType == other.runtimeType &&
-          _mapEquals(prices, other.prices) &&
-          _mapEquals(lastTurnActivity, other.lastTurnActivity) &&
-          _carryMapEquals(
+          modelMapEquals(prices, other.prices) &&
+          modelMapEquals(lastTurnActivity, other.lastTurnActivity) &&
+          modelMapOfListEquals(
             carryForwardOffersByFactionId,
             other.carryForwardOffersByFactionId,
           ) &&
-          _carryMapEquals(
+          modelMapOfListEquals(
             carryForwardBidsByFactionId,
             other.carryForwardBidsByFactionId,
           ) &&
-          _setEquals(completedTradePairKeys, other.completedTradePairKeys);
+          modelSetEquals(completedTradePairKeys, other.completedTradePairKeys);
 
   @override
   int get hashCode {
@@ -182,15 +180,6 @@ class WorldMarketState {
       Object.hashAll(completedTradePairKeys),
     );
   }
-}
-
-bool _setEquals(Set<String> a, Set<String> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (final e in a) {
-    if (!b.contains(e)) return false;
-  }
-  return true;
 }
 
 Set<String> _deserializeCompletedTradePairKeys(Object? raw) {
@@ -223,9 +212,7 @@ Map<String, List<TradeOrder>> _deserializeCarryForward(Object? raw) {
       final orders = <TradeOrder>[];
       for (final entry in value) {
         if (entry is Map<dynamic, dynamic>) {
-          orders.add(
-            TradeOrder.fromJson(Map<String, dynamic>.from(entry)),
-          );
+          orders.add(TradeOrder.fromJson(Map<String, dynamic>.from(entry)));
         }
       }
       if (orders.isNotEmpty) {

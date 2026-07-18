@@ -1,3 +1,4 @@
+import 'model_collection_equality.dart';
 import 'diplomacy.dart';
 import 'model_validation_exception.dart';
 import 'province_id.dart';
@@ -282,37 +283,43 @@ class Orders {
       identical(this, other) ||
       other is Orders &&
           runtimeType == other.runtimeType &&
-          _mapEquals(moveOrdersByPlayerId, other.moveOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            moveOrdersByPlayerId,
+            other.moveOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             armyMoveOrdersByPlayerId,
             other.armyMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             buildUnitOrdersByPlayerId,
             other.buildUnitOrdersByPlayerId,
           ) &&
-          _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            workOrdersByPlayerId,
+            other.workOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             diplomaticOrdersByPlayerId,
             other.diplomaticOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             researchOrdersByPlayerId,
             other.researchOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMoveOrdersByPlayerId,
             other.navalMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMissionOrdersByPlayerId,
             other.navalMissionOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             recruitWorkerOrdersByPlayerId,
             other.recruitWorkerOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             tradeOrdersByPlayerId,
             other.tradeOrdersByPlayerId,
           );
@@ -380,21 +387,6 @@ class Orders {
         navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
     navalMissionOrdersByPlayerId:
         navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
-    tradeOrdersByPlayerId:
-        tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
+    tradeOrdersByPlayerId: tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
   );
-
-  static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      final otherList = b[entry.key];
-      if (otherList == null || otherList.length != entry.value.length) {
-        return false;
-      }
-      for (var i = 0; i < entry.value.length; i++) {
-        if (entry.value[i] != otherList[i]) return false;
-      }
-    }
-    return true;
-  }
 }

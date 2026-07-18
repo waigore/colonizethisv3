@@ -110,12 +110,9 @@ class FilledDeal {
 class DealMatchResult {
   const DealMatchResult({
     this.filledDeals = const <FilledDeal>[],
-    this.unfilledOffersByFactionId =
-        const <String, List<TradeOrder>>{},
-    this.unfilledBidsByFactionId =
-        const <String, List<TradeOrder>>{},
-    this.activityByCommodityId =
-        const <CommodityId, MarketActivity>{},
+    this.unfilledOffersByFactionId = const <String, List<TradeOrder>>{},
+    this.unfilledBidsByFactionId = const <String, List<TradeOrder>>{},
+    this.activityByCommodityId = const <CommodityId, MarketActivity>{},
   });
 
   final List<FilledDeal> filledDeals;
@@ -130,16 +127,16 @@ class DealMatchResult {
       identical(this, other) ||
       other is DealMatchResult &&
           runtimeType == other.runtimeType &&
-          _listEquals(filledDeals, other.filledDeals) &&
-          _carryMapEquals(
+          modelListEquals(filledDeals, other.filledDeals) &&
+          modelMapOfListEquals(
             unfilledOffersByFactionId,
             other.unfilledOffersByFactionId,
           ) &&
-          _carryMapEquals(
+          modelMapOfListEquals(
             unfilledBidsByFactionId,
             other.unfilledBidsByFactionId,
           ) &&
-          _mapEquals(activityByCommodityId, other.activityByCommodityId);
+          modelMapEquals(activityByCommodityId, other.activityByCommodityId);
 
   @override
   int get hashCode => Object.hash(

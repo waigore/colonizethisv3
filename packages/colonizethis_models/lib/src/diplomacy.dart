@@ -1,5 +1,7 @@
 /// Diplomacy models. SPEC/game/diplomacy.md, diplomacy-resolution.md.
 
+import 'model_collection_equality.dart';
+
 /// Relation state per faction-pair.
 enum RelationState { atPeace, atWar }
 
@@ -339,15 +341,12 @@ class SubsidyState {
   /// Order Types (Refs #3753 R3).
   final int percent;
 
-  SubsidyState copyWith({
-    String? payerId,
-    String? targetId,
-    int? percent,
-  }) => SubsidyState(
-    payerId: payerId ?? this.payerId,
-    targetId: targetId ?? this.targetId,
-    percent: percent ?? this.percent,
-  );
+  SubsidyState copyWith({String? payerId, String? targetId, int? percent}) =>
+      SubsidyState(
+        payerId: payerId ?? this.payerId,
+        targetId: targetId ?? this.targetId,
+        percent: percent ?? this.percent,
+      );
 
   Map<String, dynamic> toJson() => {
     'payerId': payerId,
@@ -508,15 +507,12 @@ class BoycottState {
   /// Turn the boycott was established.
   final int sinceTurn;
 
-  BoycottState copyWith({
-    String? gpId,
-    String? targetGpId,
-    int? sinceTurn,
-  }) => BoycottState(
-    gpId: gpId ?? this.gpId,
-    targetGpId: targetGpId ?? this.targetGpId,
-    sinceTurn: sinceTurn ?? this.sinceTurn,
-  );
+  BoycottState copyWith({String? gpId, String? targetGpId, int? sinceTurn}) =>
+      BoycottState(
+        gpId: gpId ?? this.gpId,
+        targetGpId: targetGpId ?? this.targetGpId,
+        sinceTurn: sinceTurn ?? this.sinceTurn,
+      );
 
   Map<String, dynamic> toJson() => {
     'gpId': gpId,
@@ -646,7 +642,7 @@ class DiplomaticEvent {
           turn == other.turn &&
           intraTurnIndex == other.intraTurnIndex &&
           type == other.type &&
-          _setEquals(participants, other.participants) &&
+          modelSetEquals(participants, other.participants) &&
           fromFactionId == other.fromFactionId &&
           toFactionId == other.toFactionId &&
           overtureStage == other.overtureStage &&
@@ -667,12 +663,4 @@ class DiplomaticEvent {
     reason,
     wasAiInitiator,
   );
-
-  static bool _setEquals<T>(Set<T> a, Set<T> b) {
-    if (a.length != b.length) return false;
-    for (final value in a) {
-      if (!b.contains(value)) return false;
-    }
-    return true;
-  }
 }

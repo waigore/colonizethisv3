@@ -1,5 +1,6 @@
 import 'army.dart';
 import 'fleet.dart';
+import 'model_collection_equality.dart';
 import 'province_extraction_snapshot.dart';
 import 'province_id.dart';
 import 'region_data.dart';
@@ -397,13 +398,16 @@ class WorldState {
           oldWorld == other.oldWorld &&
           newWorld == other.newWorld &&
           tileState == other.tileState &&
-          _mapEquals(portsByProvinceSeaboard, other.portsByProvinceSeaboard) &&
+          modelMapEquals(
+            portsByProvinceSeaboard,
+            other.portsByProvinceSeaboard,
+          ) &&
           _nestedStringMapEquals(
             playerVisibilityByTile,
             other.playerVisibilityByTile,
           ) &&
           _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
-          _listEqualsFleet(fleets, other.fleets) &&
+          modelListEquals(fleets, other.fleets) &&
           _tileKeysByRegionEquals(
             tileKeysByRegionAndProvince,
             other.tileKeysByRegionAndProvince,
@@ -412,17 +416,23 @@ class WorldState {
             spyRevealTurnsByPlayer,
             other.spyRevealTurnsByPlayer,
           ) &&
-          _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
-          _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
-          _mapEquals(seaZoneDisplayNameById, other.seaZoneDisplayNameById) &&
+          modelMapEquals(
+            purchasedTilesByTileKey,
+            other.purchasedTilesByTileKey,
+          ) &&
+          modelMapEquals(resourceByTileKey, other.resourceByTileKey) &&
+          modelMapEquals(
+            seaZoneDisplayNameById,
+            other.seaZoneDisplayNameById,
+          ) &&
           nextShipInstanceSeq == other.nextShipInstanceSeq &&
-          _listEqualsArmy(armies, other.armies) &&
+          modelListEquals(armies, other.armies) &&
           nextArmySeq == other.nextArmySeq &&
-          _listEqualsString(
+          modelListEquals(
             _sortedCopy(newsDigestProvinceRevealDoneIds),
             _sortedCopy(other.newsDigestProvinceRevealDoneIds),
           ) &&
-          _listEqualsString(
+          modelListEquals(
             _sortedCopy(newsDigestSeaZoneFleetDoneIds),
             _sortedCopy(other.newsDigestSeaZoneFleetDoneIds),
           ) &&

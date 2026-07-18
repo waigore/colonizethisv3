@@ -113,18 +113,19 @@ lines) for the split domain packages.
 
 - Phase 5 split the three largest hand-written offenders (`app_events.dart`,
   `world_market.dart`, `orders.dart`) into `part` files below the cap.
-- `game.dart` (554 non-comment lines) is dominated by the single `Game`
-  aggregate class, which cannot be reduced under the cap by simple `part`
-  extraction; it is recorded in `modelsFileSizeGrandfatheredForTests` as a
-  documented baseline pending a follow-up API-shaping split. The checker asserts
-  each grandfathered path still exists so the allowlist cannot silently rot.
+- Slice A (Refs #4068) extracted `VictoryType` / `VictoryState` into
+  `victory.dart` and shared collection equality into
+  `model_collection_equality.dart`, so `game.dart` is at or below 500
+  non-comment lines. `modelsFileSizeGrandfatheredForTests` is therefore
+  **empty**; the checker still accepts an explicit override list for tests and
+  fails on stale allowlist paths that no longer exist.
 
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
   `runCheckModelsFileSize`, then the checker exits zero because every
-  non-grandfathered `colonizethis_models/lib/src` Dart file is at or below 500
-  non-comment lines.
+  `colonizethis_models/lib/src` Dart file is at or below 500 non-comment lines
+  (no active grandfather baseline).
 
 - Given a temporary workspace whose only models source file is a hand-written
   `packages/colonizethis_models/lib/src/huge.dart` with more than 500

@@ -4,6 +4,8 @@
 library;
 
 /// Per-commodity totals for one province's last Extraction-phase snapshot.
+import 'model_collection_equality.dart';
+
 class ProvinceExtractionCommodityTotals {
   const ProvinceExtractionCommodityTotals({
     required this.effective,
@@ -45,18 +47,10 @@ class ProvinceExtractionCommodityTotals {
       other is ProvinceExtractionCommodityTotals &&
           effective == other.effective &&
           full == other.full &&
-          _listEquals(tileKeys, other.tileKeys);
+          modelListEquals(tileKeys, other.tileKeys);
 
   @override
   int get hashCode => Object.hash(effective, full, Object.hashAll(tileKeys));
-
-  static bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }
 
 /// Last-turn Extraction snapshot for one province.
@@ -103,24 +97,13 @@ class ProvinceExtractionSnapshot {
       identical(this, other) ||
       other is ProvinceExtractionSnapshot &&
           ownerId == other.ownerId &&
-          _mapEquals(byCommodity, other.byCommodity);
+          modelMapEquals(byCommodity, other.byCommodity);
 
   @override
   int get hashCode => Object.hash(
     ownerId,
     Object.hashAll(byCommodity.entries.map((e) => Object.hash(e.key, e.value))),
   );
-
-  static bool _mapEquals(
-    Map<String, ProvinceExtractionCommodityTotals> a,
-    Map<String, ProvinceExtractionCommodityTotals> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
 }
 
 /// Returns [snapshot] only when [currentOwnerId] matches [snapshot.ownerId].

@@ -2,6 +2,8 @@
 ///
 /// Tile key format: "regionId|provinceId|x|y" (see [CapitalTile.tileKey]).
 /// Road level: 0 = none, 1 = primitive, 2 = improved, 4 = port or railroad.
+import 'model_collection_equality.dart';
+
 class TileMapState {
   const TileMapState({
     this.improvementByTile = const {},
@@ -75,20 +77,12 @@ class TileMapState {
       identical(this, other) ||
       other is TileMapState &&
           runtimeType == other.runtimeType &&
-          _mapEquals(improvementByTile, other.improvementByTile) &&
-          _mapEquals(roadLevelByTile, other.roadLevelByTile);
+          modelMapEquals(improvementByTile, other.improvementByTile) &&
+          modelMapEquals(roadLevelByTile, other.roadLevelByTile);
 
   @override
   int get hashCode => Object.hash(
     Object.hashAll(improvementByTile.entries),
     Object.hashAll(roadLevelByTile.entries),
   );
-
-  static bool _mapEquals(Map<String, int> a, Map<String, int> b) {
-    if (a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
 }

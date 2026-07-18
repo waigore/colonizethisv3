@@ -1,3 +1,4 @@
+import 'model_collection_equality.dart';
 import 'province_id.dart';
 
 /// Land military army: container for regiment unit ids. SPEC/game/military-armies.md.
@@ -71,7 +72,7 @@ class Army {
           ownerId == other.ownerId &&
           regionId == other.regionId &&
           stationedProvinceId == other.stationedProvinceId &&
-          _listEquals(regimentUnitIds, other.regimentUnitIds) &&
+          modelListEquals(regimentUnitIds, other.regimentUnitIds) &&
           isHomeArmy == other.isHomeArmy;
 
   @override
@@ -83,12 +84,4 @@ class Army {
     Object.hashAll(regimentUnitIds),
     isHomeArmy,
   );
-
-  static bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }
