@@ -57,16 +57,16 @@ Game assignProvinceTowns({
 
   final ow = outGame.worldState.oldWorld;
   final nw = outGame.worldState.newWorld;
+  // Run region assignment before copyWith so ensureTileIsPlains game updates
+  // (resource/improvement clears) land on [outGame] before the worldState
+  // receiver is read — evaluating assignTownsInRegion inside copyWith args
+  // would snapshot a stale worldState and drop those clears (Refs #4065).
+  final owProvinces = assignTownsInRegion(ow.provinces);
+  final nwProvinces = assignTownsInRegion(nw.provinces);
   return outGame.copyWith(
     worldState: outGame.worldState.copyWith(
-      oldWorld: RegionData(
-        provinces: assignTownsInRegion(ow.provinces),
-        units: ow.units,
-      ),
-      newWorld: RegionData(
-        provinces: assignTownsInRegion(nw.provinces),
-        units: nw.units,
-      ),
+      oldWorld: RegionData(provinces: owProvinces, units: ow.units),
+      newWorld: RegionData(provinces: nwProvinces, units: nw.units),
     ),
   );
 }
