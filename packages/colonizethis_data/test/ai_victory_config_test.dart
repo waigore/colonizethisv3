@@ -13,5 +13,27 @@ void main() {
       expect(kDeclareWarGpWeakNeighborBonus, greaterThan(0));
       expect(kBuildRegimentBonusWhenBehindVictoryPace, greaterThan(0));
     });
+
+    test('barrel re-exports civilian-build planner constants', () {
+      expect(kCivilianBuildBaseScore, 1.0);
+      expect(kCivilianBuildMinCapScoreBoost, 50.0);
+      expect(kCivilianBuildPoolWeight, 1.0);
+      expect(kCivilianBuildResearchPaperReserveShare, 0.5);
+      expect(kCivilianBuildPhaseExpand, 'expand');
+      expect(isCivilianGatingTech('merchant_companies'), isTrue);
+      expect(isCivilianGatingTech('not_a_tech'), isFalse);
+    });
+
+    test('region ids remain stable serialization strings', () {
+      expect(kOldWorldRegionId, 'oldWorld');
+      expect(kNewWorldRegionId, 'newWorld');
+    });
+
+    test('researchReservedPaper floors the configured share', () {
+      expect(researchReservedPaper(0), 0);
+      expect(researchReservedPaper(-1), 0);
+      expect(researchReservedPaper(10), 5);
+      expect(researchReservedPaper(11), 5);
+    });
   });
 }

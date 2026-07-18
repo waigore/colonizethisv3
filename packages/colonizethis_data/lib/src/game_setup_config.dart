@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'region_ids.dart';
 import 'starting_resources_config.dart';
 
 final _log = packageLogger();
@@ -29,10 +30,9 @@ class GameSetupConfig {
     Set<String>? initTownRoadWiringRegionIds,
     this.aiProfileByGpId = const {},
     this.advancedStart = AdvancedStartType.none,
-  }) : humanGreatPowerSlotIndices =
-           humanGreatPowerSlotIndices ?? const {0},
+  }) : humanGreatPowerSlotIndices = humanGreatPowerSlotIndices ?? const {0},
        initTownRoadWiringRegionIds =
-           initTownRoadWiringRegionIds ?? const {'oldWorld'},
+           initTownRoadWiringRegionIds ?? const {kOldWorldRegionId},
        assert(
          selectedGreatPowerIds.isNotEmpty,
          'At least one Great Power required',
