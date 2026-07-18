@@ -3,6 +3,8 @@
 /// SPEC: SPEC/program/province-extraction-snapshot.md
 library;
 
+import 'model_collection_equality.dart';
+
 /// Per-commodity totals for one province Extraction projection.
 class ProvinceExtractionCommodityTotals {
   const ProvinceExtractionCommodityTotals({
@@ -45,18 +47,10 @@ class ProvinceExtractionCommodityTotals {
       other is ProvinceExtractionCommodityTotals &&
           effective == other.effective &&
           full == other.full &&
-          _listEquals(tileKeys, other.tileKeys);
+          modelListEquals(tileKeys, other.tileKeys);
 
   @override
   int get hashCode => Object.hash(effective, full, Object.hashAll(tileKeys));
-
-  static bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }
 
 /// Display-time Extraction projection for one province (not persisted).
@@ -111,7 +105,7 @@ class ProvinceExtractionSnapshot {
       other is ProvinceExtractionSnapshot &&
           ownerId == other.ownerId &&
           capitalGrainBonus == other.capitalGrainBonus &&
-          _mapEquals(byCommodity, other.byCommodity);
+          modelMapEquals(byCommodity, other.byCommodity);
 
   @override
   int get hashCode => Object.hash(
@@ -119,17 +113,6 @@ class ProvinceExtractionSnapshot {
     capitalGrainBonus,
     Object.hashAll(byCommodity.entries.map((e) => Object.hash(e.key, e.value))),
   );
-
-  static bool _mapEquals(
-    Map<String, ProvinceExtractionCommodityTotals> a,
-    Map<String, ProvinceExtractionCommodityTotals> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
 }
 
 /// Returns [snapshot] only when [currentOwnerId] matches [snapshot.ownerId].

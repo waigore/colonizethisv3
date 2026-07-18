@@ -12,23 +12,20 @@
 // Panel requests: prefer typed subclasses below (SPEC/program/app-ui-wiring.md).
 // [OpenPanelEvent] remains for legacy string-id panels until migrated.
 //
-// Concrete event types are split across `app_events/` part files by event
-// category: `ui_action_events.dart` (UIActionEvent), `session_command_events.dart`
-// (SessionCommandEvent), `ui_system_events.dart` (UISystemEvent), and
-// `game_to_ui_events.dart` (GameToUIEvent + app-prefixed GameEvent mirrors).
+// Concrete event types live under `app_events/` as first-class libraries
+// (Refs #4068 Slice C): `ui_action_events.dart` (UIActionEvent),
+// `session_command_events.dart` (SessionCommandEvent),
+// `ui_system_events.dart` (UISystemEvent), and `game_to_ui_events.dart`
+// (GameToUIEvent + app-prefixed GameEvent mirrors).
 
-import 'combat_mode.dart';
-import 'diplomacy.dart';
-import 'game.dart';
-import 'turn_news_digest.dart';
-import 'orders.dart';
 
 export 'ai_events.dart' show DialogueEvent, PortraitMoodEvent;
 
-part 'app_events/ui_action_events.dart';
-part 'app_events/session_command_events.dart';
-part 'app_events/ui_system_events.dart';
-part 'app_events/game_to_ui_events.dart';
+export 'app_events/game_to_ui_events.dart';
+export 'app_events/session_command_events.dart';
+export 'app_events/ui_action_events.dart';
+export 'app_events/ui_system_events.dart';
+
 
 abstract class AppEvent {
   const AppEvent();

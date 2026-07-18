@@ -1,4 +1,7 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
+import '../combat_mode.dart';
 
 // ---------------------------------------------------------------------------
 // UIActionEvent — emitted by UI components that need other UI components to act.

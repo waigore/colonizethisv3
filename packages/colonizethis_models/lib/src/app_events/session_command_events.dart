@@ -1,4 +1,9 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
+import '../diplomacy.dart';
+import '../game.dart';
+import '../orders.dart';
 
 // ---------------------------------------------------------------------------
 // SessionCommandEvent — applied by long-lived shell listeners, not AppEventHandler.

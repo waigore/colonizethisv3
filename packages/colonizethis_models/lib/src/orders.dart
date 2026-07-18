@@ -1,11 +1,13 @@
+import 'model_collection_equality.dart';
 import 'diplomacy.dart';
-import 'model_validation_exception.dart';
-import 'province_id.dart';
-import 'worker_tier.dart';
 import 'world_market.dart';
 
-part 'orders/move_orders.dart';
-part 'orders/build_work_orders.dart';
+import 'orders/build_work_orders.dart';
+import 'orders/move_orders.dart';
+
+export 'orders/build_work_orders.dart';
+export 'orders/move_orders.dart';
+
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -282,37 +284,43 @@ class Orders {
       identical(this, other) ||
       other is Orders &&
           runtimeType == other.runtimeType &&
-          _mapEquals(moveOrdersByPlayerId, other.moveOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            moveOrdersByPlayerId,
+            other.moveOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             armyMoveOrdersByPlayerId,
             other.armyMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             buildUnitOrdersByPlayerId,
             other.buildUnitOrdersByPlayerId,
           ) &&
-          _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            workOrdersByPlayerId,
+            other.workOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             diplomaticOrdersByPlayerId,
             other.diplomaticOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             researchOrdersByPlayerId,
             other.researchOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMoveOrdersByPlayerId,
             other.navalMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMissionOrdersByPlayerId,
             other.navalMissionOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             recruitWorkerOrdersByPlayerId,
             other.recruitWorkerOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             tradeOrdersByPlayerId,
             other.tradeOrdersByPlayerId,
           );
@@ -380,21 +388,6 @@ class Orders {
         navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
     navalMissionOrdersByPlayerId:
         navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
-    tradeOrdersByPlayerId:
-        tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
+    tradeOrdersByPlayerId: tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
   );
-
-  static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      final otherList = b[entry.key];
-      if (otherList == null || otherList.length != entry.value.length) {
-        return false;
-      }
-      for (var i = 0; i < entry.value.length; i++) {
-        if (entry.value[i] != otherList[i]) return false;
-      }
-    }
-    return true;
-  }
 }

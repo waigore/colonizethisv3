@@ -1,7 +1,7 @@
 // colonizethis_models non-comment line limit (`repo.models_file_size`).
 //
 // SPEC: SPEC/program/dart-file-non-comment-line-size.md (§ colonizethis_models
-// 500-line gate). Refs #3393 Phase 5.
+// 500-line gate). Refs #3393 Phase 5; grandfather cleared Refs #4068.
 //
 // The repository-wide `repo.dart_file_non_comment_line_size` gate caps every
 // Dart file at 1000 non-comment lines. `colonizethis_models` holds the shared
@@ -9,9 +9,9 @@
 // 500 non-comment-line cap (mirroring `repo.domain_package_source_file_size`'s
 // 500-physical-line cap for the split domain packages). Phase 5 split the three
 // largest offenders (`app_events.dart`, `world_market.dart`, `orders.dart`) into
-// `part` files below the cap; the remaining over-cap monoliths are recorded in
-// [modelsFileSizeGrandfatheredForTests] so the gate prevents regression today
-// while their concern-splits land in a follow-up slice.
+// `part` files below the cap; Slice A (Refs #4068) extracted `VictoryState` /
+// shared collection equality so `game.dart` also stays under the cap with an
+// empty grandfather list.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -26,17 +26,10 @@ final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 const String _modelsSrcRelDir = 'packages/colonizethis_models/lib/src';
 
-/// Files that currently exceed the 500 non-comment-line cap and are accepted as
-/// a documented baseline pending their own concern-split (Refs #3393 Phase 5).
-///
-/// `game.dart` (554 non-comment lines) is dominated by the single `Game`
-/// aggregate class, which cannot be reduced under the cap by simple `part`
-/// extraction; splitting it requires API-shaping work tracked as follow-up.
-/// The gate still asserts these files exist so the allowlist cannot silently
-/// rot, and any *new* file over the cap fails.
-const List<String> modelsFileSizeGrandfatheredForTests = [
-  'packages/colonizethis_models/lib/src/game.dart',
-];
+/// Formerly held over-cap models paths (Refs #3393). Cleared when `game.dart`
+/// dropped under 500 NCL (Refs #4068). Kept as an empty allowlist so stale-entry
+/// checks and override tests remain meaningful.
+const List<String> modelsFileSizeGrandfatheredForTests = <String>[];
 
 int runCheckModelsFileSize(
   String repoRoot, {

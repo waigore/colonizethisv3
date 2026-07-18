@@ -20,21 +20,16 @@ void main() {
       reason:
           'Every colonizethis_models lib/src file must stay at or below '
           '${maxModelsFileNonCommentLinesForTests()} non-comment lines '
-          '(grandfathered baseline excepted).\n${logs.join('\n')}',
+          '(grandfather list empty after Refs #4068).\n${logs.join('\n')}',
     );
   });
 
-  test('grandfathered real offenders still exist (allowlist not stale)', () {
-    for (final relativePath in modelsFileSizeGrandfatheredForTests) {
-      expect(
-        File('${Directory.current.path}/$relativePath').existsSync(),
-        isTrue,
-        reason:
-            'Grandfathered entry $relativePath must exist; remove it from the '
-            'allowlist once the file is split below the cap.',
-      );
-    }
-  });
+  test(
+    'grandfather allowlist is empty after game.dart extract (Refs #4068)',
+    () {
+      expect(modelsFileSizeGrandfatheredForTests, isEmpty);
+    },
+  );
 
   test('fails when a non-generated models file exceeds the cap', () {
     final temp = Directory.systemTemp.createTempSync('check_models_size_fail_');
@@ -113,7 +108,9 @@ void main() {
   });
 
   test('fails when a grandfather entry no longer exists', () {
-    final temp = Directory.systemTemp.createTempSync('check_models_size_stale_');
+    final temp = Directory.systemTemp.createTempSync(
+      'check_models_size_stale_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     Directory('${temp.path}/$_srcRel').createSync(recursive: true);
@@ -132,7 +129,9 @@ void main() {
   });
 
   test('fails when the models lib/src directory is missing', () {
-    final temp = Directory.systemTemp.createTempSync('check_models_size_nodir_');
+    final temp = Directory.systemTemp.createTempSync(
+      'check_models_size_nodir_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     final logs = <String>[];
