@@ -193,42 +193,33 @@ void main() {
           );
         }
 
+        // Shared economy_test_support builder (Refs #3836 / #3856).
         Game gameWithOwner(String p1OwnerId) {
           final p2OwnerId = p1OwnerId == 'pl1' ? 'pl2' : 'pl1';
-          return Game(
+          return gameForNonGpExtractionTest(
             id: 'g_ownership_projection',
             capitalTileGrainBonusPerTurn: 3,
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 2,
+            tileState: tileState,
+            provinces: [
+              Province(
+                id: provinceId,
+                regionId: 'oldWorld',
+                ownerId: p1OwnerId,
+                townDevelopmentLevel: 4,
               ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(
-                    id: provinceId,
-                    regionId: 'oldWorld',
-                    ownerId: p1OwnerId,
-                    townDevelopmentLevel: 4,
-                  ),
-                  Province(
-                    id: otherProvinceId,
-                    regionId: 'oldWorld',
-                    ownerId: p2OwnerId,
-                    townDevelopmentLevel: 4,
-                  ),
-                ],
+              Province(
+                id: otherProvinceId,
+                regionId: 'oldWorld',
+                ownerId: p2OwnerId,
+                townDevelopmentLevel: 4,
               ),
-              newWorld: const RegionData(),
-              tileState: tileState,
-              resourceByTileKey: const {tk: 'grain'},
-              tileKeysByRegionAndProvince: const {
-                'oldWorld': {
-                  provinceId: [tk],
-                  otherProvinceId: <String>[],
-                },
+            ],
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                provinceId: [tk],
+                otherProvinceId: <String>[],
               },
-            ),
+            },
             players: [
               gp(
                 id: 'pl1',
