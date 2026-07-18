@@ -1,4 +1,11 @@
-part of '../world_market.dart';
+/// Per-commodity market activity and audit notes.
+///
+/// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
+
+import '../model_collection_equality.dart';
+import '../model_validation_exception.dart';
+import '../stockpile.dart';
+import 'filled_deal.dart';
 
 /// Categorical reason recorded on a [MarketActivityNote] when the world
 /// market phase drops a carry-forward order or otherwise emits an

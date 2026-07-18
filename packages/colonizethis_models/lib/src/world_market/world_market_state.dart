@@ -1,4 +1,11 @@
-part of '../world_market.dart';
+/// Persisted world-market aggregate state.
+///
+/// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
+
+import '../model_collection_equality.dart';
+import '../stockpile.dart';
+import 'market_activity.dart';
+import 'trade_order.dart';
 
 /// Aggregate market state stored on `Game` between turns.
 ///

@@ -1,12 +1,3 @@
-import 'model_collection_equality.dart';
-import 'model_validation_exception.dart';
-import 'stockpile.dart';
-
-part 'world_market/trade_order.dart';
-part 'world_market/market_activity.dart';
-part 'world_market/world_market_state.dart';
-part 'world_market/deal_matching.dart';
-
 /// World market data types for the per-turn commodity trading system.
 ///
 /// SPEC/game/world-market.md, SPEC/program/world-market-resolution.md.
@@ -16,8 +7,11 @@ part 'world_market/deal_matching.dart';
 /// Resolution algorithms live in `colonizethis_logic` (matching engine,
 /// price discovery), and order plumbing lives on `Orders.tradeOrders`.
 ///
-/// Concrete types are split across `world_market/` part files by concern:
-/// `trade_order.dart` (order intent), `market_activity.dart` (per-commodity
-/// activity + notes), `world_market_state.dart` (persisted aggregate), and
-/// `deal_matching.dart` (matcher output). Collection equality uses
-/// [model_collection_equality] (Refs #4068).
+/// Concrete types live under `world_market/` as first-class libraries
+/// (Refs #4068 Slice C). Collection equality uses [model_collection_equality].
+
+export 'world_market/deal_matching.dart';
+export 'world_market/filled_deal.dart';
+export 'world_market/market_activity.dart';
+export 'world_market/trade_order.dart';
+export 'world_market/world_market_state.dart';

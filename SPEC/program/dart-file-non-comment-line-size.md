@@ -19,9 +19,12 @@ library's private scope. Part fragments keep the extracted code implicitly
 coupled to the host (shared imports and private members), which defeats the
 testability and decoupling goal the size gate exists to encourage. The
 `colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416),
-`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419), and
-`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543) packages
-already forbid `part` directives in their `lib/` trees; other packages SHOULD
+`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419),
+`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543),
+`colonizethis_world` (`repo.world_no_part_directives`, Refs #3968),
+`colonizethis_economy` (`repo.economy_no_part_directives`, Refs #3979), and
+`colonizethis_models` (`repo.models_no_part_directives`, Refs #4068) packages
+forbid `part` directives in their `lib/` trees; other packages SHOULD
 prefer the same standalone-library shape when extracting for size, and MAY add an
 equivalent no-`part` gate once their `lib/` tree is part-free.
 
@@ -124,6 +127,11 @@ lines) for the split domain packages.
   overtures, orders, treaty states, events, debug tokens). The host
   `diplomacy.dart` is a barrel re-export only; public import paths via the
   models barrel stay stable.
+- Slice C (Refs #4068) promotes former `part` trees under `orders/`,
+  `world_state/`, `world_market/`, and `app_events/` to first-class
+  libraries with explicit imports; `repo.models_no_part_directives`
+  (`SPEC/program/models-no-part-directives.md`) forbids reintroducing
+  `part` / `part of` under `packages/colonizethis_models/lib/`.
 
 ### Acceptance criteria
 

@@ -1,13 +1,19 @@
-part of '../world_state.dart';
+/// Equality and JSON-load helpers for [WorldState].
+///
+/// First-class library (Refs #4068 Slice C).
+
+import '../model_collection_equality.dart';
+import '../province_extraction_snapshot.dart';
+import '../province_id.dart';
 
 /// Equality and JSON-load helpers for [WorldState]. Extracted into a part file
 /// to keep `world_state.dart` under the models 500 non-comment-line cap
 /// (`repo.models_file_size`). Collection comparisons use
 /// [modelListEquals] / [modelMapEquals] / [modelSetEquals] (Refs #4068).
 
-List<String> _sortedCopy(List<String> xs) => List<String>.from(xs)..sort();
+List<String> worldStateSortedCopy(List<String> xs) => List<String>.from(xs)..sort();
 
-bool _tileKeysByRegionEquals(
+bool worldStateTileKeysByRegionEquals(
   Map<String, Map<String, List<String>>> a,
   Map<String, Map<String, List<String>>> b,
 ) {
@@ -26,12 +32,12 @@ bool _tileKeysByRegionEquals(
   return true;
 }
 
-bool _provinceExtractionEquals(
+bool worldStateProvinceExtractionEquals(
   Map<String, ProvinceExtractionSnapshot> a,
   Map<String, ProvinceExtractionSnapshot> b,
 ) => modelMapEquals(a, b);
 
-bool _nestedStringMapEquals(
+bool worldStateNestedStringMapEquals(
   Map<String, Map<String, String>> a,
   Map<String, Map<String, String>> b,
 ) {
@@ -45,7 +51,7 @@ bool _nestedStringMapEquals(
   return true;
 }
 
-bool _spyRevealEquals(
+bool worldStateSpyRevealEquals(
   Map<String, Map<String, int>> a,
   Map<String, Map<String, int>> b,
 ) {
@@ -59,7 +65,7 @@ bool _spyRevealEquals(
   return true;
 }
 
-bool _mapOfSetEquals(Map<String, Set<String>> a, Map<String, Set<String>> b) {
+bool worldStateMapOfSetEquals(Map<String, Set<String>> a, Map<String, Set<String>> b) {
   if (a.length != b.length) return false;
   for (final entry in a.entries) {
     final otherSet = b[entry.key];
@@ -70,7 +76,7 @@ bool _mapOfSetEquals(Map<String, Set<String>> a, Map<String, Set<String>> b) {
   return true;
 }
 
-String _canonicalTileBucketKeyForLoad({
+String worldStateCanonicalTileBucketKeyForLoad({
   required String regionId,
   required String bucketKey,
   required List<String> tileKeys,

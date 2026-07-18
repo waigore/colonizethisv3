@@ -1,12 +1,13 @@
 import 'model_collection_equality.dart';
 import 'diplomacy.dart';
-import 'model_validation_exception.dart';
-import 'province_id.dart';
-import 'worker_tier.dart';
 import 'world_market.dart';
 
-part 'orders/move_orders.dart';
-part 'orders/build_work_orders.dart';
+import 'orders/build_work_orders.dart';
+import 'orders/move_orders.dart';
+
+export 'orders/build_work_orders.dart';
+export 'orders/move_orders.dart';
+
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.

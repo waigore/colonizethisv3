@@ -719,6 +719,13 @@ rules:
     runner: dart
     script: tool/check_economy_no_part_directives.dart
 
+  - rule_id: repo.models_no_part_directives
+    group: structure
+    title: colonizethis_models lib must not use Dart part / part of directives (Refs #4068)
+    spec: SPEC/program/models-no-part-directives.md
+    runner: dart
+    script: tool/check_models_no_part_directives.dart
+
   - rule_id: repo.world_topology_identity_home
     group: structure
     title: topology identity helpers must live in topology_identity.dart not naval.dart (Refs #3968)
