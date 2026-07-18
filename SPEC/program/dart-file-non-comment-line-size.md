@@ -119,6 +119,11 @@ lines) for the split domain packages.
   non-comment lines. `modelsFileSizeGrandfatheredForTests` is therefore
   **empty**; the checker still accepts an explicit override list for tests and
   fails on stale allowlist paths that no longer exist.
+- Slice B (Refs #4068) splits former monolithic `diplomacy.dart` into
+  first-class concern libraries under `lib/src/diplomacy/` (relations,
+  overtures, orders, treaty states, events, debug tokens). The host
+  `diplomacy.dart` is a barrel re-export only; public import paths via the
+  models barrel stay stable.
 
 ### Acceptance criteria
 
