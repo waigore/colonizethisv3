@@ -23,7 +23,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
         TopologyNodeType,
         kTechIdMoldboardPlow;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, buildPlayerView;
+    show PlayerView, buildPlayerView, kWorkTargetBuildImprovement;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -351,7 +351,7 @@ void main() {
             'gp1': [
               const WorkOrder(
                 unitId: 'u_builder',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: tk,
               ),
             ],
