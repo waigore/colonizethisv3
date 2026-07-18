@@ -30,6 +30,7 @@ void main() {
       expect(ids, contains('repo.map_gen_no_new_partfiles'));
       expect(ids, contains('repo.map_lib_file_size'));
       expect(ids, contains('repo.data_lib_file_size'));
+      expect(ids, contains('repo.data_victory_config_registry_parity'));
       expect(ids, contains('repo.map_test_run_generation_harness'));
       expect(ids, contains('repo.map_test_minimal_game_shared'));
       expect(
