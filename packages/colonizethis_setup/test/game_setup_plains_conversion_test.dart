@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -58,7 +59,7 @@ void main() {
         ],
       );
       final maps = {'oldWorld': map};
-      final game = _minimalGame(
+      final game = _minimalOwnedProvinceGame(
         provinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
         resourceByTileKey: {'oldWorld|p1|0|0': 'grain'},
@@ -90,7 +91,7 @@ void main() {
         ],
       );
       final maps = {'oldWorld': map};
-      final game = _minimalGame(
+      final game = _minimalOwnedProvinceGame(
         provinceId: 'oldWorld|p1',
         tileKey: 'oldWorld|p1|0|0',
         resourceByTileKey: {'oldWorld|p1|0|0': 'iron'},
@@ -216,19 +217,16 @@ void main() {
         regionId: 'oldWorld',
         ownerId: null,
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(provinces: [p1]),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            'oldWorld': {
-              'oldWorld|p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
-            },
-          },
-        ),
+        turnNumber: 0,
         players: const [],
+        oldWorld: RegionData(provinces: [p1]),
+        tileKeysByRegionAndProvince: {
+          'oldWorld': {
+            'oldWorld|p1': ['oldWorld|p1|0|0', 'oldWorld|p1|1|0'],
+          },
+        },
       );
       final next = assignProvinceTowns(
         game: game,
@@ -245,9 +243,125 @@ void main() {
       expect(maps['oldWorld']!.resourceAt(parsed.x, parsed.y), isNull);
     });
   });
+
+  group('restoreGpOwTerrainCountsAfterSettlementPlains', () {
+    test('relocates destroyed hills onto non-settlement plains', () {
+      // (0,0) settlement plains (was hills); (1,0) non-settlement plains donor.
+      final map = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['p1', 'p1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains, TerrainType.plains],
+        ],
+        resourceGrid: [
+          [null, null],
+        ],
+      );
+      final game = TestFixtures.minimalGame(
+        id: 'g',
+        turnNumber: 0,
+        players: const [
+          Player(id: 'gp1', displayName: 'G', isHuman: true),
+        ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'gp1',
+              townTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        ),
+      ).copyWith(
+        players: [
+          const Player(id: 'gp1', displayName: 'G', isHuman: true).copyWith(
+            capitalProvinceId: 'oldWorld|p1',
+            capitalTile: const CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      final targets = <TerrainType, int>{
+        for (final t in TerrainType.values) t: 0,
+      };
+      targets[TerrainType.hills] = 1;
+      targets[TerrainType.plains] = 1;
+      final out = restoreGpOwTerrainCountsAfterSettlementPlains(
+        game: game,
+        tileMapOldWorld: map,
+        targetCounts: targets,
+      );
+      expect(out.terrainAt(0, 0), TerrainType.plains);
+      expect(out.terrainAt(1, 0), TerrainType.hills);
+      final counts = countGpOwTerrainByType(game: game, tileMapOldWorld: out);
+      expect(counts[TerrainType.hills], 1);
+      expect(counts[TerrainType.plains], 1);
+    });
+
+    test('negative: does not mutate settlement plains when no deficit', () {
+      final map = TileMapResult(
+        width: 2,
+        height: 1,
+        grid: [
+          ['p1', 'p1'],
+        ],
+        terrainGrid: [
+          [TerrainType.plains, TerrainType.hills],
+        ],
+        resourceGrid: [
+          [null, null],
+        ],
+      );
+      final game = TestFixtures.minimalGame(
+        id: 'g',
+        turnNumber: 0,
+        players: const [
+          Player(id: 'gp1', displayName: 'G', isHuman: true),
+        ],
+        oldWorld: RegionData(
+          provinces: [
+            Province(
+              id: 'oldWorld|p1',
+              regionId: 'oldWorld',
+              ownerId: 'gp1',
+              townTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        ),
+      ).copyWith(
+        players: [
+          const Player(id: 'gp1', displayName: 'G', isHuman: true).copyWith(
+            capitalProvinceId: 'oldWorld|p1',
+            capitalTile: const CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      final targets = countGpOwTerrainByType(game: game, tileMapOldWorld: map);
+      final out = restoreGpOwTerrainCountsAfterSettlementPlains(
+        game: game,
+        tileMapOldWorld: map,
+        targetCounts: targets,
+      );
+      expect(out.terrainAt(0, 0), TerrainType.plains);
+      expect(out.terrainAt(1, 0), TerrainType.hills);
+    });
+  });
 }
 
-Game _minimalGame({
+Game _minimalOwnedProvinceGame({
   required String provinceId,
   required String tileKey,
   Map<String, String> resourceByTileKey = const {},
@@ -257,21 +371,18 @@ Game _minimalGame({
   if (improvement != 0) {
     tileState = tileState.setImprovement(tileKey, improvement);
   }
-  return Game(
+  return TestFixtures.minimalGame(
     id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: provinceId, regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey,
-      tileState: tileState,
-    ),
-    players: [
+    turnNumber: 0,
+    players: const [
       Player(id: 'gp1', displayName: 'G', isHuman: true),
     ],
+    oldWorld: RegionData(
+      provinces: [
+        Province(id: provinceId, regionId: 'oldWorld', ownerId: 'gp1'),
+      ],
+    ),
+    resourceByTileKey: resourceByTileKey,
+    tileState: tileState,
   );
 }

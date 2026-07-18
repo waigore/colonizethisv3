@@ -12,6 +12,7 @@ import 'game_setup_ownership.dart';
 import 'game_setup_topology.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
+import 'gp_ow_terrain_count_restore.dart';
 import 'gp_starting_grain.dart';
 import 'minor_tribe_starting_development.dart';
 import 'init_town_roads.dart';
@@ -106,6 +107,12 @@ GameSetupResult createGameFromGeneratedMaps({
   );
   game = gpTerrainRedist.game;
   tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
+  // Snapshot N_T after §7d.terrain so §7d.terrain-restore can relocate labels
+  // destroyed by settlement plains conversion (keeps §7d.redist capacity feasible).
+  final gpOwTerrainTargets = countGpOwTerrainByType(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+  );
 
   game = _assignAllCapitals(
     game: game,
@@ -150,6 +157,14 @@ GameSetupResult createGameFromGeneratedMaps({
       tileMapByRegion[e.key] = e.value;
     }
   }
+
+  // §7d.terrain-restore — relocate non-plains labels lost to settlement plains
+  // conversion onto non-settlement plains so §7d.redist capacity stays feasible.
+  tileMapByRegion[kRegionOldWorld] = restoreGpOwTerrainCountsAfterSettlementPlains(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    targetCounts: gpOwTerrainTargets,
+  );
 
   // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
   // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
