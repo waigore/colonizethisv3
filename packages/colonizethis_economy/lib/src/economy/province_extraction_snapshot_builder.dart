@@ -1,4 +1,4 @@
-/// Builds last-turn province Extraction snapshots for display. Refs #4002.
+/// Builds province Extraction display projections. Refs #4064.
 ///
 /// SPEC: SPEC/program/province-extraction-snapshot.md
 library;
@@ -96,7 +96,32 @@ TileExtractionDisplayContribution? computeTileExtractionDisplayContribution({
   );
 }
 
-/// Builds a fresh map of province Extraction snapshots for all GP owners.
+/// Projects Extraction for a single province from the current post-resolution
+/// world (display-only; does not apply stockpile). Refs #4064.
+ProvinceExtractionSnapshot? projectProvinceExtraction({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+  required String provinceId,
+  int Function(String playerId) techCapForPlayer = _defaultTechCap,
+  int Function(String playerId, String resourceId)? techCapForPlayerAndResource,
+}) {
+  if (tileMapByRegion.isEmpty) return null;
+  final connectivity = resolveConnectivity(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+  return computeProvinceExtractionSnapshots(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    connectivityResult: connectivity,
+    techCapForPlayer: techCapForPlayer,
+    techCapForPlayerAndResource: techCapForPlayerAndResource,
+  )[provinceId];
+}
+
+/// Builds Extraction projections for all GP-owned provinces with contributions.
 Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
   required Game game,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -108,6 +133,7 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
   final portTileKeys = collectPortTileKeys(game);
   final accByProvince = <String, Map<String, _CommodityAcc>>{};
   final ownerByProvince = <String, String>{};
+  final capitalBonusByProvince = <String, int>{};
 
   for (final player in game.players) {
     final cr = connectivityResult[player.id];
@@ -164,6 +190,7 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
         capitalProvinceId != null &&
         capBonus > 0) {
       ownerByProvince[capitalProvinceId] = player.id;
+      capitalBonusByProvince[capitalProvinceId] = capBonus;
       final byCommodity = accByProvince.putIfAbsent(
         capitalProvinceId,
         () => {},
@@ -197,6 +224,7 @@ Map<String, ProvinceExtractionSnapshot> computeProvinceExtractionSnapshots({
     out[provinceId] = ProvinceExtractionSnapshot(
       ownerId: ownerId,
       byCommodity: byCommodity,
+      capitalGrainBonus: capitalBonusByProvince[provinceId] ?? 0,
     );
   }
   return out;

@@ -51,16 +51,6 @@ bool _listEqualsFleet(List<Fleet> a, List<Fleet> b) {
   return true;
 }
 
-bool _provinceExtractionEquals(
-  Map<String, ProvinceExtractionSnapshot> a,
-  Map<String, ProvinceExtractionSnapshot> b,
-) {
-  if (a.length != b.length) return false;
-  for (final e in a.entries) {
-    if (b[e.key] != e.value) return false;
-  }
-  return true;
-}
 
 bool _mapEquals(Map<String, String> a, Map<String, String> b) {
   if (a.length != b.length) return false;

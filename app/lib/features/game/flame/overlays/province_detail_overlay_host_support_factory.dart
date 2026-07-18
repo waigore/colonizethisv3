@@ -57,6 +57,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final extractionSnapshot = provinceExtractionSnapshotPreview(
     game: game,
     provinceId: displayId,
+    mapData: mapData,
   );
   final availableByCommodity = provinceAvailableResourceCountsPreview(
     game: game,

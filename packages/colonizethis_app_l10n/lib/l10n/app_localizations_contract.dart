@@ -1576,7 +1576,7 @@ abstract class AppLocalizations {
   /// Signed quantity for a projected town manufacturing bonus commodity row.
   String provinceOverlay_townProductionQuantity(int quantity);
 
-  /// Subheading for last-turn Extraction condensed line.
+  /// Subheading for Extraction condensed line (post-resolution projection).
   String get provinceOverlay_extractionHeading;
 
   /// Subheading for improvable Available condensed line.
@@ -1591,6 +1591,9 @@ abstract class AppLocalizations {
     int full,
     String name,
   );
+
+  /// Muted capital grain bonus annotation on the Extraction line.
+  String provinceOverlay_extractionCapitalGrainBonus(int bonus);
 
   /// Available improvable tile-count commodity segment text.
   String provinceOverlay_availableTileCount(int count, String name);

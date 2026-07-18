@@ -30,14 +30,7 @@ Game runExtractionPhase(
   Map<String, int>? overseasShippedTonnageOut,
 }) {
   if (extractedByPlayerId.isNotEmpty) {
-    // Scripted override: clear tile-accurate province Extraction snapshots.
-    // SPEC/program/province-extraction-snapshot.md. Refs #4002.
-    final cleared = state.copyWith(
-      worldState: state.worldState.copyWith(
-        lastTurnProvinceExtractionByProvinceId: const {},
-      ),
-    );
-    return applyExtractionForPlayers(cleared, extractedByPlayerId);
+    return applyExtractionForPlayers(state, extractedByPlayerId);
   }
   if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
     return state;
@@ -61,13 +54,6 @@ Game runExtractionPhase(
   }
 
   final extraction = computeExtraction(
-    game: state,
-    tileMapByRegion: tileMapByRegion,
-    connectivityResult: connectivity,
-    techCapForPlayerAndResource: techCapForPlayerAndResource,
-    techCapForPlayer: techCapForPlayer,
-  );
-  final provinceSnapshots = computeProvinceExtractionSnapshots(
     game: state,
     tileMapByRegion: tileMapByRegion,
     connectivityResult: connectivity,
@@ -143,12 +129,7 @@ Game runExtractionPhase(
     }
     updatedPlayers.add(player.copyWith(stockpile: stockpile));
   }
-  final withPlayers = currentState.withPlayers(updatedPlayers);
-  return withPlayers.copyWith(
-    worldState: withPlayers.worldState.copyWith(
-      lastTurnProvinceExtractionByProvinceId: provinceSnapshots,
-    ),
-  );
+  return currentState.withPlayers(updatedPlayers);
 }
 
 void _recordOverseasShippedTonnage(

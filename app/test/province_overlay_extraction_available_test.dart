@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show ProvinceImprovableCommodityCount, buildPlayerView;
@@ -29,9 +30,13 @@ String _foreignOwnedProvinceId({
   );
 }
 
-ProvinceExtractionSnapshot _sampleExtractionSnapshot(String ownerId) {
+ProvinceExtractionSnapshot _sampleExtractionSnapshot(
+  String ownerId, {
+  int capitalGrainBonus = 0,
+}) {
   return ProvinceExtractionSnapshot(
     ownerId: ownerId,
+    capitalGrainBonus: capitalGrainBonus,
     byCommodity: {
       'grain': const ProvinceExtractionCommodityTotals(
         effective: 1,
@@ -254,6 +259,43 @@ void main() {
           .widgetList<Text>(find.byType(Text))
           .where((t) => t.overflow == TextOverflow.ellipsis);
       expect(ellipsized, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'capital grain bonus annotation is muted and distinct (Refs #4064)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(
+          humanId,
+          capitalGrainBonus: 2,
+        ),
+        availableByCommodity: _sampleAvailable,
+      );
+
+      expect(
+        find.textContaining('incl. +2 capital grain bonus'),
+        findsOneWidget,
+      );
+      final annotation = tester.widget<Text>(
+        find.textContaining('incl. +2 capital grain bonus'),
+      );
+      expect(annotation.style?.color, EditorialMonoclePalette.muted);
     },
   );
 

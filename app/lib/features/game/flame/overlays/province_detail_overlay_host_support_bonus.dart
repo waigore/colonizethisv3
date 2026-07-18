@@ -20,16 +20,21 @@ Map<String, int> provinceTownProductionBonusPreview({
   return byProvince[provinceId] ?? const {};
 }
 
-/// Ownership-gated last-turn Extraction snapshot for [provinceId].
+/// Post-resolution Extraction projection for [provinceId] (Refs #4064).
 ct_models.ProvinceExtractionSnapshot? provinceExtractionSnapshotPreview({
   required ct_models.Game game,
   required String provinceId,
+  required GameMapData? mapData,
 }) {
-  final province = game.worldState.tryGetProvince(provinceId);
-  return ct_models.provinceExtractionSnapshotForDisplay(
-    snapshot:
-        game.worldState.lastTurnProvinceExtractionByProvinceId[provinceId],
-    currentOwnerId: province?.ownerId,
+  final tileMapByRegion = mapData?.tileMapByRegion;
+  if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
+    return null;
+  }
+  return projectProvinceExtraction(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    topology: mapData!.combinedTopology,
+    provinceId: provinceId,
   );
 }
 

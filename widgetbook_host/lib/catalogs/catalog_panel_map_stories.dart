@@ -67,11 +67,12 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               omniscientDetail: true,
               extractionSnapshot: ProvinceExtractionSnapshot(
                 ownerId: ownerId,
+                capitalGrainBonus: 2,
                 byCommodity: {
                   CommodityCatalog.grain.id:
                       const ProvinceExtractionCommodityTotals(
-                        effective: 1,
-                        full: 5,
+                        effective: 3,
+                        full: 7,
                         tileKeys: ['oldWorld|p1|0|0'],
                       ),
                   CommodityCatalog.iron.id:

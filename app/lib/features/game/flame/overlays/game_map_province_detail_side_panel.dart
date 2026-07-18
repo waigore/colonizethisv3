@@ -58,6 +58,9 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
       );
     }
     if (kCtE2EEnabled && panel.selectedTileKey != null) {
+      final mapData = tryGetGameMapData(
+        () => ref.read(gameServiceProvider).getMapData(game.id),
+      );
       updateCtE2eLastPanelSnapshotIfEnabled(
         CtE2eLastPanelSnapshot(
           game: game,
@@ -67,6 +70,8 @@ class GameMapProvinceDetailSidePanel extends ConsumerWidget {
           humanPlayerId: humanPlayerId,
           playerView: playerView,
           draftOrders: draftOrders,
+          topology: mapData?.combinedTopology,
+          tileMapByRegion: mapData?.tileMapByRegion,
         ),
       );
     }

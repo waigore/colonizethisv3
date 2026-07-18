@@ -59,6 +59,17 @@ Widget _extractionCondensedLine({
         ),
       ),
     );
+    // Capital grain bonus is a special non-tile case — muted annotation,
+    // not a hover-highlight target (Refs #4064).
+    if (commodity.id == CommodityCatalog.grain.id &&
+        snapshot.capitalGrainBonus > 0) {
+      segments.add(
+        Text(
+          ' ${l10n.provinceOverlay_extractionCapitalGrainBonus(snapshot.capitalGrainBonus)}',
+          style: TextStyle(color: EditorialMonoclePalette.muted),
+        ),
+      );
+    }
   }
   if (segments.isEmpty) return _emptyBodyDashText();
   return _condensedCommodityWrap(segments);

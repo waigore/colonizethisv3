@@ -1,9 +1,9 @@
-/// Last-turn province Extraction display snapshot. Refs #4002.
+/// Province Extraction display projection DTO. Refs #4064.
 ///
 /// SPEC: SPEC/program/province-extraction-snapshot.md
 library;
 
-/// Per-commodity totals for one province's last Extraction-phase snapshot.
+/// Per-commodity totals for one province Extraction projection.
 class ProvinceExtractionCommodityTotals {
   const ProvinceExtractionCommodityTotals({
     required this.effective,
@@ -59,24 +59,30 @@ class ProvinceExtractionCommodityTotals {
   }
 }
 
-/// Last-turn Extraction snapshot for one province.
+/// Display-time Extraction projection for one province (not persisted).
 class ProvinceExtractionSnapshot {
   const ProvinceExtractionSnapshot({
     required this.ownerId,
     this.byCommodity = const {},
+    this.capitalGrainBonus = 0,
   });
 
-  /// Province owner id at snapshot write time.
+  /// Province owner id used when projecting.
   final String ownerId;
 
   /// Commodity id → totals.
   final Map<String, ProvinceExtractionCommodityTotals> byCommodity;
+
+  /// Capital grain bonus units folded into grain (`0` when none).
+  /// SPEC/ui/province-economic-extraction-available.md capital-bonus indication.
+  final int capitalGrainBonus;
 
   Map<String, dynamic> toJson() => {
     'ownerId': ownerId,
     'byCommodity': {
       for (final e in byCommodity.entries) e.key: e.value.toJson(),
     },
+    if (capitalGrainBonus > 0) 'capitalGrainBonus': capitalGrainBonus,
   };
 
   static ProvinceExtractionSnapshot fromJson(Map<String, dynamic> json) {
@@ -95,6 +101,7 @@ class ProvinceExtractionSnapshot {
     return ProvinceExtractionSnapshot(
       ownerId: json['ownerId']?.toString() ?? '',
       byCommodity: byCommodity,
+      capitalGrainBonus: (json['capitalGrainBonus'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -103,11 +110,13 @@ class ProvinceExtractionSnapshot {
       identical(this, other) ||
       other is ProvinceExtractionSnapshot &&
           ownerId == other.ownerId &&
+          capitalGrainBonus == other.capitalGrainBonus &&
           _mapEquals(byCommodity, other.byCommodity);
 
   @override
   int get hashCode => Object.hash(
     ownerId,
+    capitalGrainBonus,
     Object.hashAll(byCommodity.entries.map((e) => Object.hash(e.key, e.value))),
   );
 

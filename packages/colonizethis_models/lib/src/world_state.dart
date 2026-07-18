@@ -1,6 +1,5 @@
 import 'army.dart';
 import 'fleet.dart';
-import 'province_extraction_snapshot.dart';
 import 'province_id.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
@@ -30,7 +29,6 @@ class WorldState {
     this.nextArmySeq = 1,
     this.newsDigestProvinceRevealDoneIds = const [],
     this.newsDigestSeaZoneFleetDoneIds = const [],
-    this.lastTurnProvinceExtractionByProvinceId = const {},
   });
 
   final TurnState turnState;
@@ -88,10 +86,6 @@ class WorldState {
   /// Prefixed sea zone ids that already generated a news "first fleet" line.
   final List<String> newsDigestSeaZoneFleetDoneIds;
 
-  /// Last-turn province Extraction display snapshots by prefixed province id.
-  /// SPEC/program/province-extraction-snapshot.md. Refs #4002.
-  final Map<String, ProvinceExtractionSnapshot>
-  lastTurnProvinceExtractionByProvinceId;
 
   Map<String, dynamic> toJson() => {
     'turnState': turnState.toJson(),
@@ -127,11 +121,6 @@ class WorldState {
       'newsDigestProvinceRevealDoneIds': newsDigestProvinceRevealDoneIds,
     if (newsDigestSeaZoneFleetDoneIds.isNotEmpty)
       'newsDigestSeaZoneFleetDoneIds': newsDigestSeaZoneFleetDoneIds,
-    if (lastTurnProvinceExtractionByProvinceId.isNotEmpty)
-      'lastTurnProvinceExtractionByProvinceId': {
-        for (final e in lastTurnProvinceExtractionByProvinceId.entries)
-          e.key: e.value.toJson(),
-      },
   };
 
   static WorldState fromJson(Map<String, dynamic> json) {
@@ -291,19 +280,7 @@ class WorldState {
           )
         : <String, String>{};
 
-    final extractionSnapRaw = json['lastTurnProvinceExtractionByProvinceId'];
-    final lastTurnProvinceExtractionByProvinceId =
-        <String, ProvinceExtractionSnapshot>{};
-    if (extractionSnapRaw is Map<Object?, Object?>) {
-      extractionSnapRaw.forEach((provinceId, value) {
-        if (value is Map<Object?, Object?>) {
-          lastTurnProvinceExtractionByProvinceId[provinceId
-              .toString()] = ProvinceExtractionSnapshot.fromJson(
-            Map<String, dynamic>.from(value),
-          );
-        }
-      });
-    }
+    // Legacy key lastTurnProvinceExtractionByProvinceId ignored (Refs #4064).
 
     return WorldState(
       turnState: TurnState.fromJson(
@@ -326,8 +303,6 @@ class WorldState {
       nextArmySeq: nextArmySeq,
       newsDigestProvinceRevealDoneIds: newsDigestProvinceRevealDoneIds,
       newsDigestSeaZoneFleetDoneIds: newsDigestSeaZoneFleetDoneIds,
-      lastTurnProvinceExtractionByProvinceId:
-          lastTurnProvinceExtractionByProvinceId,
     );
   }
 
@@ -350,8 +325,6 @@ class WorldState {
     int? nextArmySeq,
     List<String>? newsDigestProvinceRevealDoneIds,
     List<String>? newsDigestSeaZoneFleetDoneIds,
-    Map<String, ProvinceExtractionSnapshot>?
-    lastTurnProvinceExtractionByProvinceId,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -382,9 +355,6 @@ class WorldState {
           this.newsDigestProvinceRevealDoneIds,
       newsDigestSeaZoneFleetDoneIds:
           newsDigestSeaZoneFleetDoneIds ?? this.newsDigestSeaZoneFleetDoneIds,
-      lastTurnProvinceExtractionByProvinceId:
-          lastTurnProvinceExtractionByProvinceId ??
-          this.lastTurnProvinceExtractionByProvinceId,
     );
   }
 
@@ -425,10 +395,6 @@ class WorldState {
           _listEqualsString(
             _sortedCopy(newsDigestSeaZoneFleetDoneIds),
             _sortedCopy(other.newsDigestSeaZoneFleetDoneIds),
-          ) &&
-          _provinceExtractionEquals(
-            lastTurnProvinceExtractionByProvinceId,
-            other.lastTurnProvinceExtractionByProvinceId,
           );
 
   @override
@@ -474,10 +440,5 @@ class WorldState {
     nextArmySeq,
     Object.hashAll(_sortedCopy(newsDigestProvinceRevealDoneIds)),
     Object.hashAll(_sortedCopy(newsDigestSeaZoneFleetDoneIds)),
-    Object.hashAll(
-      lastTurnProvinceExtractionByProvinceId.entries.map(
-        (e) => Object.hash(e.key, e.value),
-      ),
-    ),
   );
 }

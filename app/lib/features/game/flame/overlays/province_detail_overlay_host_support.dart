@@ -19,6 +19,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         PlayerView,
         ProvinceImprovableCommodityCount,
         previewTownManufacturingBonusByProvince,
+        projectProvinceExtraction,
         provinceImprovableResourceTileCounts,
         WorldStateProvinceLookup;
 import 'package:colonizethis_map/colonizethis_map.dart';

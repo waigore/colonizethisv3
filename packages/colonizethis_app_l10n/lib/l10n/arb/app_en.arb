@@ -2745,6 +2745,15 @@
       }
     }
   },
+  "provinceOverlay_extractionCapitalGrainBonus": "(incl. +{bonus} capital grain bonus)",
+  "@provinceOverlay_extractionCapitalGrainBonus": {
+    "description": "Muted annotation that capital grain bonus units are a special non-tile case on the Extraction line.",
+    "placeholders": {
+      "bonus": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_availableTileCount": "{count} {name}",
   "@provinceOverlay_availableTileCount": {
     "description": "Available improvable resource tile count commodity segment.",

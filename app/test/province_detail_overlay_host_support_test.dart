@@ -10,9 +10,18 @@
 // runtime tap/emit behavior remains pinned by the host-level tests
 // (`province_*_shortcut_host_emit_event_test.dart`).
 
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        MapTopology,
+        Resource,
+        TileMapResult,
+        TopologyNode,
+        TopologyNodeType,
+        kTechIdMoldboardPlow;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
@@ -182,15 +191,14 @@ void main() {
     });
   });
 
-  group('provinceExtractionSnapshotPreview ownership gate (Refs #4002)', () {
+  group('provinceExtractionSnapshotPreview projection (Refs #4064)', () {
     const provinceId = 'oldWorld|p1';
+    const tk = 'oldWorld|p1|0|0';
 
-    Game gameWithSnapshot({
-      required String provinceOwnerId,
-      required String snapshotOwnerId,
-    }) {
+    Game gameWithImprovedGrain({required String ownerId}) {
       return Game(
         id: 'g_extraction_preview',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
           oldWorld: RegionData(
@@ -198,74 +206,86 @@ void main() {
               Province(
                 id: provinceId,
                 regionId: 'oldWorld',
-                ownerId: provinceOwnerId,
+                ownerId: ownerId,
+                townDevelopmentLevel: 4,
               ),
             ],
           ),
           newWorld: const RegionData(),
-          lastTurnProvinceExtractionByProvinceId: {
-            provinceId: ProvinceExtractionSnapshot(
-              ownerId: snapshotOwnerId,
-              byCommodity: const {
-                'grain': ProvinceExtractionCommodityTotals(
-                  effective: 1,
-                  full: 5,
-                  tileKeys: ['oldWorld|p1|0|0'],
-                ),
-              },
-            ),
+          tileState: TileMapState().setImprovement(tk, 2).setRoadLevel(tk, 4),
+          resourceByTileKey: const {tk: 'grain'},
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'oldWorld|p1': [tk],
+            },
           },
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        players: [
+          Player(
+            id: ownerId,
+            displayName: 'GP',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+            capitalTile: const CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+            techUnlocked: const {kTechIdMoldboardPlow: true},
+          ),
         ],
       );
     }
 
-    test('returns snapshot when owner matches', () {
-      final game = gameWithSnapshot(
-        provinceOwnerId: 'gp1',
-        snapshotOwnerId: 'gp1',
+    GameMapData mapDataForProjection() {
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['p1'],
+        ],
+        resourceGrid: const [
+          [Resource.grain],
+        ],
       );
+      return (
+        combinedTopology: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        ),
+        tileMapByRegion: {'oldWorld': tileMap},
+        topologyByRegion: const <String, MapTopology>{},
+        warpLinks: null,
+      );
+    }
+
+    test('projects non-empty Extraction without last-turn history', () {
+      final game = gameWithImprovedGrain(ownerId: 'gp1');
       final snap = provinceExtractionSnapshotPreview(
         game: game,
         provinceId: provinceId,
+        mapData: mapDataForProjection(),
       );
       expect(snap, isNotNull);
-      expect(snap!.byCommodity['grain']!.effective, 1);
-      expect(snap.byCommodity['grain']!.full, 5);
+      expect(snap!.ownerId, 'gp1');
+      expect(snap.byCommodity['grain']!.full, greaterThan(0));
     });
 
-    test('returns null when ownership changed after last extraction', () {
-      final game = gameWithSnapshot(
-        provinceOwnerId: 'gp2',
-        snapshotOwnerId: 'gp1',
-      );
+    test('returns null when map data is missing', () {
+      final game = gameWithImprovedGrain(ownerId: 'gp1');
       expect(
-        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
-        isNull,
-      );
-    });
-
-    test('returns null when snapshot is absent', () {
-      final game = Game(
-        id: 'g_no_snap',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: 'oldWorld', ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: RegionData(),
+        provinceExtractionSnapshotPreview(
+          game: game,
+          provinceId: provinceId,
+          mapData: null,
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-        ],
-      );
-      expect(
-        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
         isNull,
       );
     });
