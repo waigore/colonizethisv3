@@ -1,5 +1,5 @@
 import 'package:colonizethis_models/src/model_collection_equality.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('modelListEquals', () {
