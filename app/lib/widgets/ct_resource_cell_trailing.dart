@@ -19,7 +19,12 @@ extension _CtResourceCellTrailing on CtResourceCell {
     );
   }
 
-  /// Quantity + reserved delta slot inside [FittedBox] scale-down (Refs #3999).
+  /// Quantity + optional delta inside [FittedBox] scale-down (Refs #3999).
+  ///
+  /// When [deltaText] is null the trailing cluster is quantity-only so the
+  /// painted amount's right inset matches the leading icon inset
+  /// ([CtSpacing.s]); a non-null delta sits immediately to the right of the
+  /// quantity (owner wide-layout inset parity follow-up on #3999).
   Widget trailingCluster(
     BuildContext context, {
     required String quantityText,
@@ -40,25 +45,16 @@ extension _CtResourceCellTrailing on CtResourceCell {
             color: EditorialMonoclePalette.accentDim,
             fontSize: CtResourceCell.quantityFontSize,
           ),
-          SizedBox(
-            width:
-                CtResourceCell.quantityToDeltaGap +
-                CtResourceCell.reservedDeltaSlotWidth,
-            child: deltaText == null
-                ? const SizedBox.shrink()
-                : Padding(
-                    padding: const EdgeInsets.only(
-                      left: CtResourceCell.quantityToDeltaGap,
-                    ),
-                    child: monoText(
-                      context,
-                      key: CtResourceCell.deltaTextKey,
-                      text: deltaText,
-                      color: deltaTextColor!,
-                      fontSize: CtResourceCell.deltaFontSize,
-                    ),
-                  ),
-          ),
+          if (deltaText != null) ...<Widget>[
+            const SizedBox(width: CtResourceCell.quantityToDeltaGap),
+            monoText(
+              context,
+              key: CtResourceCell.deltaTextKey,
+              text: deltaText,
+              color: deltaTextColor!,
+              fontSize: CtResourceCell.deltaFontSize,
+            ),
+          ],
         ],
       ),
     );
