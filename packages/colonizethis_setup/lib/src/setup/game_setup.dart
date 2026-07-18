@@ -4,3 +4,4 @@
 
 export 'game_setup_create.dart';
 export 'game_setup_helpers.dart';
+export 'game_setup_plains_conversion.dart';

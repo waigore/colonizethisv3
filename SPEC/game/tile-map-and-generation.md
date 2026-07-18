@@ -48,15 +48,15 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
 
 ## GP Old World terrain redistribution (setup)
 
-**When:** Immediately after **§7d.strip** and **before** §7d.redist resource redistribution. **Program order** matches `createGameFromGeneratedMaps` in `colonizethis_logic`. **Applicability:** same as §7d.redist — both Old World `terrainGrid` and `resourceGrid` must be present; otherwise skipped. **Not** configurable off when applicable.
+**When:** Immediately after ownership / initial `Game` construction and **before** §7b capitals and §7d towns. **Program order** matches `createGameFromGeneratedMaps`. **Applicability:** same as §7d.redist — both Old World `terrainGrid` and `resourceGrid` must be present; otherwise skipped. **Not** configurable off when applicable.
 
-**What:** Reassigns **terrain types** on **Great Power–owned** Old World **land** tiles only (same scope exclusions as §7d.redist: **minor-owned** tiles unchanged; **town/capital** tiles excluded from the reassignment pool — their terrain is left as after strip). Uses **capacity-weighted Hamilton quotas** per terrain type then a deterministic **permutation** across eligible tiles so each in-scope terrain-type total `N_T` is preserved exactly. **Fairness** is diagnostic only (no setup hard-fail). Full algorithm: [game-setup-pipeline.md](../program/game-setup-pipeline.md) §7d.terrain.
+**What:** Reassigns **terrain types** on **Great Power–owned** Old World **land** tiles only (**minor-owned** tiles unchanged). Capitals/towns are not yet assigned at this step, so the town/capital exclusion set is empty. Uses **capacity-weighted Hamilton quotas** per terrain type then a deterministic **permutation** across eligible tiles so each in-scope terrain-type total `N_T` is preserved exactly. Redistribution may leave a province with zero plains; capital/town **select-then-convert** then forces settlement tiles to plains (conversion volume accepted). **Fairness** is diagnostic only. Full algorithm: [game-setup-pipeline.md](../program/game-setup-pipeline.md) §7d.terrain.
 
 ---
 
 ## GP Old World resource redistribution (setup)
 
-**When:** Immediately after **§7d.terrain** (when grids exist) and **before** Great Power starting grain bootstrap. **Program order** matches `createGameFromGeneratedMaps` in `colonizethis_logic` (after strip and terrain balance, **before** `applyGreatPowerStartingGrainBootstrap`, **before** init town→capital roads). **Mandatory** whenever the Old World map has both `terrainGrid` and `resourceGrid`; skipped only when either grid is missing (same applicability as grain bootstrap). **Not** configurable off via `GameSetupConfig`, ruleset JSON, or CLI for the current product.
+**When:** Immediately after **§7d.strip** (when grids exist) and **before** Great Power starting grain bootstrap. **Program order** matches `createGameFromGeneratedMaps` (**before** `applyGreatPowerStartingGrainBootstrap`, **before** init town→capital roads). **Mandatory** whenever the Old World map has both `terrainGrid` and `resourceGrid`; skipped only when either grid is missing. **Not** configurable off via `GameSetupConfig`, ruleset JSON, or CLI for the current product.
 
 **What:** Rebalances **terrain resources** on **Great Power–owned** Old World land tiles only; **minor-owned** Old World tiles are untouched. Clears all resources and extraction improvements on GP in-scope land (including town/capital tiles on GP land), then places back each resource type `r` in the active **S** set per [resource-terrain-region-rules.md](resource-terrain-region-rules.md) / `ResourceRules` so per-type totals match pre-clear inventory on GP tiles (town/capital excluded from counts). **Pass 7’s global 30% multi-region resource cap is not re-evaluated** during this pass (only rearranges resources already present on GP tiles). **Fairness diagnostic** (before grain bootstrap): `max_{g,r} |A_{g,r} − N_r/G|` per [game-setup-pipeline.md](../program/game-setup-pipeline.md) §7d.redist.
 
@@ -98,7 +98,7 @@ Pass 7 may still roll RNG resources on land cells that **later** become town or 
 
 - Given the Old World `TileMapResult` includes `terrainGrid` and `resourceGrid` and `createGameFromGeneratedMaps` reaches §7d.strip  
   When The System proceeds toward Great Power starting grain bootstrap  
-  Then The System runs **§7d.terrain** GP Old World terrain redistribution **before** §7d.redist, runs **§7d.redist** GP Old World resource redistribution **before** grain bootstrap, **does not** re-apply Pass 7’s global 30% multi-region resource cap during that redistribution pass, and **does not** modify **minor-owned** Old World land tiles in either pass.
+  Then The System runs **§7d.terrain** GP Old World terrain redistribution **before** capitals/towns and **before** §7d.redist, runs **§7d.redist** GP Old World resource redistribution **after** §7d.strip and **before** grain bootstrap, **does not** re-apply Pass 7’s global 30% multi-region resource cap during that redistribution pass, and **does not** modify **minor-owned** Old World land tiles in either pass.
 
 - Given a Great Power’s capital province contains at least **four** **eligible** land tiles (excluding its capital/town tile) that may host resource `grain` per [resource-terrain-region-rules.md](resource-terrain-region-rules.md) and the capital tile is fixed  
   When the System runs the **Great Power starting grain (bootstrap)** post-pass then initial road networking per [capital-and-connectivity.md](capital-and-connectivity.md)  

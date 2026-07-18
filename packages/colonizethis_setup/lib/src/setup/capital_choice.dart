@@ -66,27 +66,27 @@ enum CapitalTileClass { a, b, c }
     localProvinceId: localProvinceId,
     provinceIds: provinceIds,
   );
-  final classAx = c.classAx;
-  final classAy = c.classAy;
-  final classBx = c.classBx;
-  final classBy = c.classBy;
-  final classCx = c.classCx;
-  final classCy = c.classCy;
-  final classCCoastalX = c.classCCoastalX;
-  final classCCoastalY = c.classCCoastalY;
 
   final (x, y) = _capitalTileXYFromScan(
     requireSeaBound: requireSeaBound,
     provinceId: provinceId,
     regionId: regionId,
-    classAx: classAx,
-    classAy: classAy,
-    classBx: classBx,
-    classBy: classBy,
-    classCx: classCx,
-    classCy: classCy,
-    classCCoastalX: classCCoastalX,
-    classCCoastalY: classCCoastalY,
+    classAx: c.classAx,
+    classAy: c.classAy,
+    classAPlainsX: c.classAPlainsX,
+    classAPlainsY: c.classAPlainsY,
+    classBx: c.classBx,
+    classBy: c.classBy,
+    classBPlainsX: c.classBPlainsX,
+    classBPlainsY: c.classBPlainsY,
+    classCx: c.classCx,
+    classCy: c.classCy,
+    classCPlainsX: c.classCPlainsX,
+    classCPlainsY: c.classCPlainsY,
+    classCCoastalX: c.classCCoastalX,
+    classCCoastalY: c.classCCoastalY,
+    classCCoastalPlainsX: c.classCCoastalPlainsX,
+    classCCoastalPlainsY: c.classCCoastalPlainsY,
   );
   final tile = CapitalTile(
     regionId: regionId,

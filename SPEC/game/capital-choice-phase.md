@@ -27,60 +27,63 @@ When UI is deferred, capitals are set automatically during game setup. Runs once
 - **Great Powers:** From owned provinces, keep only sea-bound (P–S edge). Pick first by sorted id. If none sea-bound, setup is invalid.
 - **Minor Nations / Tribes:** Prefer sea-bound; otherwise any owned province. Pick first by sorted id.
 
-**2. Choose tile (border-avoidance heuristic):**
-- **Class A:** Coastal tiles not adjacent to any other province.
-- **Class B:** Interior tiles not adjacent to any other province.
-- **Class C:** All remaining tiles.
-- **Great Powers:** Pick first tile in Class A (row-major scan). If Class A is empty, pick the first coastal tile in Class C (row-major scan). If no coastal tile exists in the selected province, setup is invalid.
-- **Minor Nations / Tribes:** Pick first tile in Class A (row-major scan), then Class B, then Class C.
+**2. Choose tile (Class A/B/C + plains):**
+- **Class A:** Coastal, not adjacent to another province. **Class B:** Interior, not adjacent to another province. **Class C:** Remaining.
+- **Within each class:** Prefer first **plains** tile (row-major); else first tile. Class rank beats terrain (Class A non-plains beats Class B plains).
+- **Great Powers:** Class A (plains-first); else first coastal Class C (plains-first). No coastal tile → invalid.
+- **Minor Nations / Tribes:** Class A, then B, then C (plains-first within each).
 
-**3. Apply:** Set capitalProvinceId and capitalTile. For sea-bound provinces, apply port/road auto-build per [capital-and-connectivity.md](capital-and-connectivity.md) § Capital Setup. For inland Minors/Tribes, skip port/road.
+**3. Select-then-convert:** If the winning tile is not `TerrainType.plains`, convert it to plains and clear resource/extraction on that tile.
 
-The border-avoidance heuristic is purely aesthetic; it does not affect connectivity or extraction.
+**4. Apply:** Set capitalProvinceId and capitalTile. Sea-bound: port/road per [capital-and-connectivity.md](capital-and-connectivity.md). Inland Minors/Tribes: skip port/road.
 
 ---
 
 ## Acceptance Criteria
 
-- Given a Great Power owns at least one province marked as sea-bound in the map topology (has at least one P–S edge)  
-  When the system runs the capital auto-choice phase for that Great Power during game setup  
-  Then the system selects the first sea-bound owned province by sorted province id and marks that province as the capital province for that Great Power
+- Given a Great Power owns at least one sea-bound province (P–S edge)  
+  When capital auto-choice runs for that Great Power  
+  Then The System selects the first sea-bound owned province by sorted id as capital province
 
-- Given a Great Power owns no provinces marked as sea-bound in the map topology (no P–S edges on any owned province)  
-  When the system runs the capital auto-choice phase for that Great Power during game setup  
-  Then the system marks game setup as invalid for that game configuration and surfaces an error reason `no_sea_bound_capital_province` for that Great Power via a setup validation exception code
+- Given a Great Power owns no sea-bound provinces  
+  When capital auto-choice runs for that Great Power  
+  Then The System fails setup with code `no_sea_bound_capital_province`
 
-- Given a Minor Nation or Tribe owns at least one sea-bound province and at least one inland province  
-  When the system runs the capital auto-choice phase for that faction during game setup  
-  Then the system filters to sea-bound owned provinces first, selects the first by sorted province id, and marks that province as the capital province for that faction
+- Given a Minor Nation or Tribe owns at least one sea-bound and at least one inland province  
+  When capital auto-choice runs for that faction  
+  Then The System prefers sea-bound owned provinces and selects the first by sorted id
 
-- Given a Minor Nation or Tribe owns no sea-bound provinces but owns at least one inland province  
-  When the system runs the capital auto-choice phase for that faction during game setup  
-  Then the system selects the first inland owned province by sorted province id and marks that province as the capital province for that faction
+- Given a Minor Nation or Tribe owns no sea-bound provinces but owns inland provinces  
+  When capital auto-choice runs for that faction  
+  Then The System selects the first inland owned province by sorted id
 
-- Given the system has selected a capital province for a Great Power that is sea-bound and the province contains at least one tile in Class A (coastal tiles not adjacent to any other province)  
-  When the system selects the capital tile for that Great Power during game setup  
-  Then the system selects the first tile in Class A in row-major order and sets that tile as the capital tile
+- Given a sea-bound GP capital province with at least one Class A tile  
+  When The System selects the capital tile  
+  Then The System picks the first plains Class A tile in row-major order if any, else the first Class A tile, then converts to plains and clears resource/extraction if the selected tile was non-plains
 
-- Given the system has selected a capital province for a Great Power that is sea-bound and the province contains no tiles in Class A but contains at least one coastal tile in Class C (remaining tiles)  
-  When the system selects the capital tile for that Great Power during game setup  
-  Then the system selects the first coastal tile in Class C in row-major order and sets that tile as the capital tile
+- Given a capital province with a Class A non-plains tile earlier than a Class B plains tile  
+  When The System selects the capital tile  
+  Then The System selects the Class A tile (class beats plains) and converts it to plains if needed
 
-- Given the system has selected a capital province for a Great Power that is sea-bound and the province contains no coastal tiles in Class A or Class C  
-  When the system selects the capital tile for that Great Power during game setup  
-  Then the system marks game setup as invalid for that game configuration and surfaces an error reason `no_coastal_capital_tile_for_gp` for that Great Power via a setup validation exception code
+- Given a sea-bound GP capital province with no Class A but at least one coastal Class C tile  
+  When The System selects the capital tile  
+  Then The System picks the first coastal plains Class C tile if any, else the first coastal Class C tile, then converts to plains if needed
 
-- Given the system has selected a capital province for a Minor Nation or Tribe and classified its tiles into Class A (coastal, no foreign border), Class B (interior, no foreign border), and Class C (remaining)  
-  When the system selects the capital tile for that faction during game setup  
-  Then the system selects the first available tile in Class A in row-major order, or if Class A is empty the first tile in Class B, or if Class B is also empty the first tile in Class C
+- Given a sea-bound GP capital province with no coastal Class A or Class C tiles  
+  When The System selects the capital tile  
+  Then The System fails setup with code `no_coastal_capital_tile_for_gp`
 
-- Given the system has set a sea-bound capital province and capital tile for any faction during game setup  
-  When the capital-choice phase completes for that faction  
-  Then the system applies port and road auto-build for that capital exactly once according to `capital-and-connectivity.md` § Capital Setup and records the resulting connectivity in the map data
+- Given a Minor/Tribe capital province with Class A/B/C tiles  
+  When The System selects the capital tile  
+  Then The System picks Class A then B then C (plains-first within class) and converts to plains if the selected tile is non-plains
 
-- Given the system has set an inland capital province and capital tile for a Minor Nation or Tribe during game setup  
-  When the capital-choice phase completes for that faction  
-  Then the system does not create any port structures or sea connections for that capital and leaves existing road topology unchanged
+- Given a sea-bound capital for any faction  
+  When capital-choice completes for that faction  
+  Then The System applies port/road auto-build exactly once per `capital-and-connectivity.md` § Capital Setup
+
+- Given an inland Minor/Tribe capital  
+  When capital-choice completes for that faction  
+  Then The System creates no ports or sea connections for that capital
 
 ## Interactions
 

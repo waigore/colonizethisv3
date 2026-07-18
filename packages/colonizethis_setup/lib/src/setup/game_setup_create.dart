@@ -97,6 +97,16 @@ GameSetupResult createGameFromGeneratedMaps({
     initialMapZoomMultiplier: initialMapZoomMultiplier,
   );
 
+  // §7d.terrain GP Old World terrain redistribution — after ownership, before capitals/towns.
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    setupSeedBase: perturbBase,
+  );
+  game = gpTerrainRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
+
   game = _assignAllCapitals(
     game: game,
     gpIds: gpIds,
@@ -106,8 +116,8 @@ GameSetupResult createGameFromGeneratedMaps({
     newWorldProvinces: newWorldProvinces,
     topologyOldWorld: topologyOldWorld,
     topologyNewWorld: topologyNewWorld,
-    tileMapOldWorld: tileMapOldWorld,
-    tileMapNewWorld: tileMapNewWorld,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    tileMapNewWorld: tileMapByRegion[kRegionNewWorld]!,
     tileMapByRegion: tileMapByRegion,
   );
 
@@ -140,16 +150,6 @@ GameSetupResult createGameFromGeneratedMaps({
       tileMapByRegion[e.key] = e.value;
     }
   }
-
-  // §7d.terrain GP Old World terrain redistribution (always-on when OW grids exist), then §7d.redist resources.
-  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
-  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
-    game: game,
-    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    setupSeedBase: perturbBase,
-  );
-  game = gpTerrainRedist.game;
-  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
 
   // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
   // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.

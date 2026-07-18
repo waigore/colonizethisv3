@@ -7,6 +7,7 @@ import 'package:colonizethis_world/colonizethis_world.dart'
     show connectedComponentsInSubset, landmassIdsFromProvinceAdjacency;
 import 'capital_choice.dart';
 import 'faction_setup_helpers.dart';
+import 'game_setup_plains_conversion.dart';
 import 'game_setup_topology.dart';
 import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
@@ -43,13 +44,20 @@ Game assignCapitalsForFactions({
       sorted: false,
     );
     if (owned.isEmpty) continue;
+    final mapForPick = tileMapByRegion[regionId] ?? tileMap;
     final (provinceId, tile) = pickCapitalForFaction(
       owned,
       regionId,
       topology,
-      tileMap,
+      mapForPick,
       requireSeaBound: requireSeaBound,
     );
+    final ensured = ensureTileIsPlains(
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      tileKey: tile.toTileKey(),
+    );
+    game = ensured.game;
     game = setCapitalFn(
       game,
       factionId,
