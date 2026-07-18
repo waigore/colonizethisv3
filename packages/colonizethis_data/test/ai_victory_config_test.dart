@@ -20,7 +20,7 @@ void main() {
       expect(kCivilianBuildPoolWeight, 1.0);
       expect(kCivilianBuildResearchPaperReserveShare, 0.5);
       expect(kCivilianBuildPhaseExpand, 'expand');
-      expect(isCivilianGatingTech('merchant_companies'), isTrue);
+      expect(isCivilianGatingTech(kTechIdMerchantCompanies), isTrue);
       expect(isCivilianGatingTech('not_a_tech'), isFalse);
     });
 
