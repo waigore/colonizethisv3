@@ -289,5 +289,92 @@ void main() {
         isNull,
       );
     });
+
+    test(
+      'negative: draft build_improvement Orders do not change Extraction '
+      'preview (world tile state only)',
+      () {
+        // Host preview has no draftOrders parameter; staged WorkOrders must not
+        // invent yields until turn resolution updates Game.tileState.
+        final unresolved = Game(
+          id: 'g_extraction_draft_ignore',
+          capitalTileGrainBonusPerTurn: 0,
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: provinceId,
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                  townDevelopmentLevel: 4,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            // No improvement yet — draft build_improvement would raise this.
+            tileState: const TileMapState(),
+            resourceByTileKey: const {tk: 'grain'},
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                'oldWorld|p1': [tk],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|p1',
+                x: 0,
+                y: 0,
+              ),
+              techUnlocked: const {kTechIdMoldboardPlow: true},
+            ),
+          ],
+        );
+        final mapData = mapDataForProjection();
+        final beforeDraft = provinceExtractionSnapshotPreview(
+          game: unresolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(beforeDraft?.byCommodity['grain'], isNull);
+
+        // Local draft Orders exist mid-turn but are never passed into preview.
+        final draftOrders = Orders(
+          workOrdersByPlayerId: {
+            'gp1': [
+              const WorkOrder(
+                unitId: 'u_builder',
+                target: 'build_improvement',
+                targetTileKey: tk,
+              ),
+            ],
+          },
+        );
+        expect(draftOrders.workOrdersByPlayerId['gp1'], isNotEmpty);
+
+        final afterDraftPresence = provinceExtractionSnapshotPreview(
+          game: unresolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(afterDraftPresence, beforeDraft);
+
+        final resolved = gameWithImprovedGrain(ownerId: 'gp1');
+        final afterResolution = provinceExtractionSnapshotPreview(
+          game: resolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(afterResolution, isNotNull);
+        expect(afterResolution!.byCommodity['grain']!.full, greaterThan(0));
+      },
+    );
   });
 }

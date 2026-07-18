@@ -60,4 +60,83 @@ void main() {
       expect(grain.tileKeys, [inBounds]);
     },
   );
+
+  group('projectProvinceExtraction (Refs #4064)', () {
+    test(
+      'negative: mid-turn draft improve intent is not applied — only Game '
+      'tile state drives projection',
+      () {
+        // SPEC/program/province-extraction-snapshot.md: drafts ignored.
+        // projectProvinceExtraction has no Orders parameter; quantities track
+        // post-resolution improvement levels only.
+        const tk = 'oldWorld|p1|0|0';
+        const provinceId = 'oldWorld|p1';
+        final map = TileMapResult(
+          width: 2,
+          height: 1,
+          grid: const [
+            ['p1', 'p1'],
+          ],
+          resourceGrid: const [
+            [Resource.grain, Resource.grain],
+          ],
+        );
+        final topology = const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        );
+
+        // Current post-resolution world: level-1 grain (draft build_improvement
+        // would raise to 2 if applied — it must not affect projection).
+        final unresolvedGame = resourceExtractorGame(
+          tileState: tileStateFromSpecs([
+            const TileImprovementSpec(tk, 1, 4),
+          ]),
+        );
+        final unresolved = projectProvinceExtraction(
+          game: unresolvedGame,
+          tileMapByRegion: {'oldWorld': map},
+          topology: topology,
+          provinceId: provinceId,
+          techCapForPlayer: (_) => 4,
+        );
+        expect(unresolved, isNotNull);
+        final unresolvedGrain = unresolved!.byCommodity['grain']!;
+        expect(unresolvedGrain.full, 1);
+
+        // Same Game again → identical (no draft channel into the projector).
+        final again = projectProvinceExtraction(
+          game: unresolvedGame,
+          tileMapByRegion: {'oldWorld': map},
+          topology: topology,
+          provinceId: provinceId,
+          techCapForPlayer: (_) => 4,
+        );
+        expect(again, unresolved);
+
+        // After turn resolution writes level 2 into Game, projection rises.
+        final resolvedGame = resourceExtractorGame(
+          tileState: tileStateFromSpecs([
+            const TileImprovementSpec(tk, 2, 4),
+          ]),
+        );
+        final resolved = projectProvinceExtraction(
+          game: resolvedGame,
+          tileMapByRegion: {'oldWorld': map},
+          topology: topology,
+          provinceId: provinceId,
+          techCapForPlayer: (_) => 4,
+        );
+        expect(resolved, isNotNull);
+        expect(resolved!.byCommodity['grain']!.full, 2);
+        expect(resolved.byCommodity['grain']!.full, isNot(unresolvedGrain.full));
+      },
+    );
+  });
 }
