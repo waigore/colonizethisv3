@@ -164,6 +164,45 @@ lines) for the split domain packages.
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
 
+## colonizethis_data 500 non-comment-line gate (Refs #4072)
+
+`colonizethis_data` holds ruleset constants and catalogs consumed by logic and
+AI, so it carries a **tighter 500 non-comment-line soft cap** under
+`repo.data_lib_file_size` (mirroring `repo.models_file_size`).
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_data_lib_file_size.dart` | Walker, counter, CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.data_lib_file_size` |
+
+### Scan scope
+
+- Walks `packages/colonizethis_data/lib/src/**` recursively; only `*.dart`.
+- Skips generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`,
+  `.gen.dart`) and the generated embed
+  `tech_effect_summary_embed.dart`.
+- **Failure threshold:** strictly greater than 500 non-comment lines fails
+  (500 inclusive passes), using `countNonCommentLinesFromSource`.
+- `dataFileSizeGrandfatheredForTests` is **empty** after the #4072 topic splits
+  (victory-config / tech catalog chunks / combat & naming catalogs).
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckDataLibFileSize`, then the checker exits zero because every
+  hand-written `colonizethis_data/lib/src` Dart file is at or below 500
+  non-comment lines.
+
+- Given a temporary workspace whose only data source file is a hand-written
+  `packages/colonizethis_data/lib/src/huge.dart` with more than 500
+  non-comment lines and an empty grandfather list, when the System runs
+  `runCheckDataLibFileSize`, then the checker exits non-zero and names
+  `huge.dart`.
+
+- Given a temporary workspace whose only data source file is
+  `tech_effect_summary_embed.dart` and exceeds 500 non-comment lines, when the
+  System runs `runCheckDataLibFileSize`, then the checker exits zero.
+
 ## app flame 600 non-comment-line gate (Refs #3878)
 
 `app/lib/features/game/flame/**` holds the in-game Flame map stack (render,

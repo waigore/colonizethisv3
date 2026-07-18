@@ -35,5 +35,20 @@ void main() {
       expect(researchReservedPaper(10), 5);
       expect(researchReservedPaper(11), 5);
     });
+
+    test('civilian build cap maps expose expected type keys', () {
+      expect(kCivilianBuildMinCountByType.containsKey('Builder'), isTrue);
+      expect(kCivilianBuildTargetCountByType.containsKey('Spy'), isTrue);
+      expect(kCivilianBuildMaxCountByType.containsKey('Rail Builder'), isTrue);
+      expect(
+        kCivilianBuildMaxCountByType['Builder']!,
+        greaterThanOrEqualTo(kCivilianBuildMinCountByType['Builder']!),
+      );
+    });
+
+    test('overture embassy kickback scalars stay positive', () {
+      expect(kEstablishOvertureEmbassyKickbackBonusMax, greaterThan(0));
+      expect(kEstablishOvertureEmbassyKickbackVolumeFull, greaterThan(0));
+    });
   });
 }
