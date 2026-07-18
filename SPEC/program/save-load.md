@@ -104,5 +104,5 @@
 
 ## Province last-turn extraction snapshot
 
-`WorldState.lastTurnProvinceExtractionByProvinceId` round-trips with the game save (JSON key of the same name). Missing field → empty map. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4002.
+Legacy saves may still contain JSON key `lastTurnProvinceExtractionByProvinceId`; load **ignores** it. Province Extraction UI uses display-time projection. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4064.
 

@@ -3,13 +3,15 @@
 /// First-class library (Refs #4068 Slice C).
 
 import '../model_collection_equality.dart';
-import '../province_extraction_snapshot.dart';
 import '../province_id.dart';
 
 /// Equality and JSON-load helpers for [WorldState]. Extracted into a part file
 /// to keep `world_state.dart` under the models 500 non-comment-line cap
 /// (`repo.models_file_size`). Collection comparisons use
 /// [modelListEquals] / [modelMapEquals] / [modelSetEquals] (Refs #4068).
+///
+/// `lastTurnProvinceExtractionByProvinceId` comparison removed with the field
+/// (Refs #4064).
 
 List<String> worldStateSortedCopy(List<String> xs) => List<String>.from(xs)..sort();
 
@@ -31,11 +33,6 @@ bool worldStateTileKeysByRegionEquals(
   }
   return true;
 }
-
-bool worldStateProvinceExtractionEquals(
-  Map<String, ProvinceExtractionSnapshot> a,
-  Map<String, ProvinceExtractionSnapshot> b,
-) => modelMapEquals(a, b);
 
 bool worldStateNestedStringMapEquals(
   Map<String, Map<String, String>> a,

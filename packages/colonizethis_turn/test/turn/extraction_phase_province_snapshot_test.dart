@@ -5,7 +5,6 @@ import 'package:colonizethis_turn/src/turn/phases/extraction_phase.dart';
 
 Game _baseGame({
   TileMapState? tileState,
-  Map<String, ProvinceExtractionSnapshot> snapshots = const {},
   int capitalGrainBonus = 0,
   Map<String, bool>? techUnlocked,
 }) {
@@ -23,7 +22,6 @@ Game _baseGame({
     ),
     newWorld: const RegionData(),
     tileState: tileState ?? const TileMapState(),
-    lastTurnProvinceExtractionByProvinceId: snapshots,
   );
   return Game(
     id: 'g_snap',
@@ -48,8 +46,8 @@ Game _baseGame({
 }
 
 void main() {
-  group('runExtractionPhase province Extraction snapshot (Refs #4002)', () {
-    test('normal path writes last-turn province snapshot', () {
+  group('runExtractionPhase display projection decoupling (Refs #4064)', () {
+    test('normal path delivers stockpile without writing province Extraction map', () {
       const tk = 'oldWorld|p1|0|0';
       final tileMap = TileMapResult(
         width: 1,
@@ -64,6 +62,9 @@ void main() {
       final game = _baseGame(
         tileState: TileMapState().setImprovement(tk, 2).setRoadLevel(tk, 4),
         techUnlocked: const {kTechIdMoldboardPlow: true},
+      );
+      final priorGrain = game.players.first.stockpile.quantityOf(
+        CommodityCatalog.grain.id,
       );
       final topology = MapTopology(
         nodes: const [
@@ -80,28 +81,25 @@ void main() {
         'oldWorld': tileMap,
       }, const {});
 
-      final snap =
-          next.worldState.lastTurnProvinceExtractionByProvinceId['oldWorld|p1'];
-      expect(snap, isNotNull);
-      expect(snap!.ownerId, 'pl1');
-      final grain = snap.byCommodity['grain'];
-      expect(grain, isNotNull);
-      expect(grain!.effective, greaterThan(0));
-      expect(grain.full, greaterThanOrEqualTo(grain.effective));
-      expect(grain.tileKeys, contains(tk));
+      expect(
+        next.players.first.stockpile.quantityOf(CommodityCatalog.grain.id),
+        greaterThan(priorGrain),
+      );
+      expect(
+        next.toJson()['worldState'],
+        isA<Map<Object?, Object?>>(),
+      );
+      final wsJson = Map<String, dynamic>.from(
+        next.toJson()['worldState'] as Map<Object?, Object?>,
+      );
+      expect(
+        wsJson.containsKey('lastTurnProvinceExtractionByProvinceId'),
+        isFalse,
+      );
     });
 
-    test('scripted extractedByPlayerId clears province snapshots', () {
-      final prior = _baseGame(
-        snapshots: const {
-          'oldWorld|p1': ProvinceExtractionSnapshot(
-            ownerId: 'pl1',
-            byCommodity: {
-              'grain': ProvinceExtractionCommodityTotals(effective: 3, full: 3),
-            },
-          ),
-        },
-      );
+    test('scripted extractedByPlayerId still applies stockpile', () {
+      final prior = _baseGame();
       final priorGrain = prior.players.first.stockpile.quantityOf(
         CommodityCatalog.grain.id,
       );
@@ -115,7 +113,6 @@ void main() {
         },
       );
 
-      expect(next.worldState.lastTurnProvinceExtractionByProvinceId, isEmpty);
       expect(
         next.players.first.stockpile.quantityOf(CommodityCatalog.grain.id),
         priorGrain + 2,

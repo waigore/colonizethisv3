@@ -9,7 +9,7 @@
 // If drift fails tests, align this file with the overlay widget.
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show CommodityCatalog, isMilitaryUnit, terrainDisplayName;
+    show CommodityCatalog, MapTopology, TileMapResult, isMilitaryUnit, terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -60,6 +60,8 @@ class _ProvincePanelWideExpectedCtx {
     required this.byResImproved,
     required this.byResImprovable,
     required this.resourceKeysSorted,
+    this.topology,
+    this.tileMapByRegion,
   });
 
   final Game game;
@@ -78,6 +80,8 @@ class _ProvincePanelWideExpectedCtx {
   final Map<String, String> resourceByTile;
   final TileMapState tileState;
   final Set<String> prospected;
+  final MapTopology? topology;
+  final Map<String, TileMapResult>? tileMapByRegion;
   final Map<String, List<({String tileKey, String terrain, String impBase})>>
   byResImproved;
   final Map<String, List<({String tileKey, String terrain})>> byResImprovable;
@@ -220,6 +224,8 @@ _ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
     byResImproved: byResImproved,
     byResImprovable: byResImprovable,
     resourceKeysSorted: resourceKeysSorted,
+    topology: snap.topology,
+    tileMapByRegion: snap.tileMapByRegion,
   );
 }
 
@@ -346,13 +352,18 @@ void _appendProvincePanelEconomicSection(
 ) {
   _appendProvincePanelSection(out, 'Economic', () {
     out.add(l10n.provinceOverlay_extractionHeading);
-    final extraction = provinceExtractionSnapshotForDisplay(
-      snapshot: ctx
-          .game
-          .worldState
-          .lastTurnProvinceExtractionByProvinceId[ctx.provinceId],
-      currentOwnerId: ctx.province?.ownerId,
-    );
+    final tileMaps = ctx.tileMapByRegion;
+    final topology = ctx.topology;
+    final extraction = (tileMaps != null &&
+            tileMaps.isNotEmpty &&
+            topology != null)
+        ? projectProvinceExtraction(
+            game: ctx.game,
+            tileMapByRegion: tileMaps,
+            topology: topology,
+            provinceId: ctx.provinceId,
+          )
+        : null;
     if (extraction == null || extraction.byCommodity.isEmpty) {
       out.add('—');
     } else {
@@ -362,15 +373,19 @@ void _appendProvincePanelEconomicSection(
         if (totals == null) continue;
         if (totals.effective == 0 && totals.full == 0) continue;
         final name = commodityDisplayName(l10n, commodity.id);
-        parts.add(
-          totals.effective < totals.full
-              ? l10n.provinceOverlay_extractionQuantityPartial(
-                  totals.effective,
-                  totals.full,
-                  name,
-                )
-              : l10n.provinceOverlay_extractionQuantity(totals.effective, name),
-        );
+        var segment = totals.effective < totals.full
+            ? l10n.provinceOverlay_extractionQuantityPartial(
+                totals.effective,
+                totals.full,
+                name,
+              )
+            : l10n.provinceOverlay_extractionQuantity(totals.effective, name);
+        if (commodity.id == CommodityCatalog.grain.id &&
+            extraction.capitalGrainBonus > 0) {
+          segment =
+              '$segment${l10n.provinceOverlay_extractionCapitalGrainBonus(extraction.capitalGrainBonus)}';
+        }
+        parts.add(segment);
       }
       out.add(parts.isEmpty ? '—' : parts.join(', '));
     }
