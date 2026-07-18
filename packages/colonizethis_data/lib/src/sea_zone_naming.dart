@@ -1,4 +1,5 @@
 import 'map_topology.dart';
+import 'region_ids.dart';
 import 'topology_node.dart';
 
 const List<String> oldWorldSeaNamePreset = [
@@ -144,7 +145,7 @@ Map<String, String> buildSeaZoneDisplayNamesForRegion({
         ..sort();
   if (seaZoneIds.isEmpty) return const <String, String>{};
 
-  final preset = regionId == 'newWorld'
+  final preset = regionId == kNewWorldRegionId
       ? newWorldSeaNamePreset
       : oldWorldSeaNamePreset;
   final n = preset.length;

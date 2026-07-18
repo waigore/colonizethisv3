@@ -9,17 +9,32 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 void main() {
   group('civilian build scoring helpers (Refs #3793)', () {
     test('AC8: default caps come from the GA-tunable config maps', () {
-      expect(civilianBuildMinCount(kUnitTypeBuilder), 2);
-      expect(civilianBuildMinCount(kUnitTypeExplorer), 1);
-      expect(civilianBuildMinCount(kUnitTypeEngineer), 1);
-      expect(civilianBuildMinCount(kUnitTypeSpy), 0);
+      const minCases = <(String, int)>[
+        (kUnitTypeBuilder, 2),
+        (kUnitTypeExplorer, 1),
+        (kUnitTypeEngineer, 1),
+        (kUnitTypeSpy, 0),
+      ];
+      for (final (type, min) in minCases) {
+        expect(civilianBuildMinCount(type), min, reason: type);
+      }
 
-      expect(civilianBuildTargetCount(kUnitTypeBuilder), 2);
-      expect(civilianBuildTargetCount(kUnitTypeExplorer), 2);
-      expect(civilianBuildTargetCount(kUnitTypeEngineer), 1);
+      const targetCases = <(String, int)>[
+        (kUnitTypeBuilder, 2),
+        (kUnitTypeExplorer, 2),
+        (kUnitTypeEngineer, 1),
+      ];
+      for (final (type, target) in targetCases) {
+        expect(civilianBuildTargetCount(type), target, reason: type);
+      }
 
-      expect(civilianBuildMaxCount(kUnitTypeBuilder), 6);
-      expect(civilianBuildMaxCount(kUnitTypeSpy), isNull);
+      const maxCases = <(String, int?)>[
+        (kUnitTypeBuilder, 6),
+        (kUnitTypeSpy, null),
+      ];
+      for (final (type, max) in maxCases) {
+        expect(civilianBuildMaxCount(type), max, reason: type);
+      }
     });
 
     test('AC8: unknown type defaults — minCount 0, targetCount = minCount, '
@@ -29,16 +44,22 @@ void main() {
       expect(civilianBuildMaxCount('NotACivilian'), isNull);
     });
 
-    test('AC3: count below minCount yields the min-cap hard-floor boost', () {
-      final score = civilianBuildCandidateScore(kUnitTypeBuilder, 0);
-      expect(score, kCivilianBuildBaseScore * kCivilianBuildMinCapScoreBoost);
-      expect(score, 50.0);
-    });
-
-    test('AC3: every count strictly below minCount uses the min-cap boost', () {
-      // Builder minCount = 2, so counts 0 and 1 are below the floor.
-      expect(civilianBuildCandidateScore(kUnitTypeBuilder, 1), 50.0);
-    });
+    test(
+      'AC3: counts strictly below minCount use the min-cap hard-floor boost',
+      () {
+        // Builder minCount = 2, so counts 0 and 1 are below the floor.
+        const belowMinCounts = <int>[0, 1];
+        for (final count in belowMinCounts) {
+          final score = civilianBuildCandidateScore(kUnitTypeBuilder, count);
+          expect(
+            score,
+            kCivilianBuildBaseScore * kCivilianBuildMinCapScoreBoost,
+            reason: 'count=$count',
+          );
+          expect(score, 50.0, reason: 'count=$count');
+        }
+      },
+    );
 
     test(
       'AC13: replacement urgency applies between minCount and targetCount',
@@ -57,15 +78,25 @@ void main() {
 
     test('AC13: at or above targetCount the multiplier is neutral base', () {
       // Builder targetCount = 2.
-      expect(civilianBuildCandidateScore(kUnitTypeBuilder, 2), 1.0);
-      expect(civilianBuildCandidateScore(kUnitTypeBuilder, 3), 1.0);
+      for (final count in [2, 3]) {
+        expect(
+          civilianBuildCandidateScore(kUnitTypeBuilder, count),
+          1.0,
+          reason: 'count=$count',
+        );
+      }
     });
 
     test('ACMax: at or above maxCount is flagged for pool exclusion', () {
       // Builder maxCount = 6.
-      expect(isCivilianBuildAtOrAboveMaxCount(kUnitTypeBuilder, 5), isFalse);
-      expect(isCivilianBuildAtOrAboveMaxCount(kUnitTypeBuilder, 6), isTrue);
-      expect(isCivilianBuildAtOrAboveMaxCount(kUnitTypeBuilder, 7), isTrue);
+      const cases = <(int, bool)>[(5, false), (6, true), (7, true)];
+      for (final (count, atOrAbove) in cases) {
+        expect(
+          isCivilianBuildAtOrAboveMaxCount(kUnitTypeBuilder, count),
+          atOrAbove,
+          reason: 'count=$count',
+        );
+      }
     });
 
     test('ACMax: a type with no ceiling is never excluded', () {
@@ -76,87 +107,39 @@ void main() {
   group('civilian build phase multiplier (Refs #3793, AC4)', () {
     test('phase keys default to the neutral base multiplier', () {
       // Null / unknown phase, or a type the phase does not favor → base.
-      expect(civilianBuildPhaseMultiplier(kUnitTypeBuilder, null), 1.0);
-      expect(civilianBuildPhaseMultiplier(kUnitTypeBuilder, 'nope'), 1.0);
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeEngineer,
-          kCivilianBuildPhaseExpand,
-        ),
-        1.0,
-      );
+      const cases = <(String, String?)>[
+        (kUnitTypeBuilder, null),
+        (kUnitTypeBuilder, 'nope'),
+        (kUnitTypeEngineer, kCivilianBuildPhaseExpand),
+      ];
+      for (final (type, phase) in cases) {
+        expect(
+          civilianBuildPhaseMultiplier(type, phase),
+          1.0,
+          reason: 'type=$type phase=$phase',
+        );
+      }
     });
 
-    test('AC4: EXPAND favors Builder (and COLONIAL-lite mirrors it)', () {
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseExpand,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseColonialLite,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseExpand,
-        ),
-        1.0,
-      );
-    });
-
-    test('AC4: COLONIAL favors Explorer + Merchant', () {
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseColonial,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeMerchant,
-          kCivilianBuildPhaseColonial,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseColonial,
-        ),
-        1.0,
-      );
-    });
-
-    test('AC4: DEVELOP favors Engineer + Rail Builder', () {
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeEngineer,
-          kCivilianBuildPhaseDevelop,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeRailBuilder,
-          kCivilianBuildPhaseDevelop,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplier(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseDevelop,
-        ),
-        1.0,
-      );
+    test('AC4: each phase favors its documented civilian types', () {
+      const cases = <(String, String, double)>[
+        (kUnitTypeBuilder, kCivilianBuildPhaseExpand, 2.0),
+        (kUnitTypeBuilder, kCivilianBuildPhaseColonialLite, 2.0),
+        (kUnitTypeExplorer, kCivilianBuildPhaseExpand, 1.0),
+        (kUnitTypeExplorer, kCivilianBuildPhaseColonial, 2.0),
+        (kUnitTypeMerchant, kCivilianBuildPhaseColonial, 2.0),
+        (kUnitTypeBuilder, kCivilianBuildPhaseColonial, 1.0),
+        (kUnitTypeEngineer, kCivilianBuildPhaseDevelop, 2.0),
+        (kUnitTypeRailBuilder, kCivilianBuildPhaseDevelop, 2.0),
+        (kUnitTypeExplorer, kCivilianBuildPhaseDevelop, 1.0),
+      ];
+      for (final (type, phase, expected) in cases) {
+        expect(
+          civilianBuildPhaseMultiplier(type, phase),
+          expected,
+          reason: 'type=$type phase=$phase',
+        );
+      }
     });
 
     test(
@@ -284,25 +267,27 @@ void main() {
       expect(kCivilianBuildSpyTechStealDeficit, 1);
     });
 
-    test('AC4c: a rival lead at or beyond the deficit is a tech-steal posture',
-        () {
-      // Own 2, rival 4 → lead 2 >= deficit 1 → posture.
-      expect(
-        isCivilianBuildSpyTechStealPosture(
-          ownUnlockedTechCount: 2,
-          maxRivalUnlockedTechCount: 4,
-        ),
-        isTrue,
-      );
-      // Exactly the default deficit (1) still qualifies.
-      expect(
-        isCivilianBuildSpyTechStealPosture(
-          ownUnlockedTechCount: 3,
-          maxRivalUnlockedTechCount: 4,
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'AC4c: a rival lead at or beyond the deficit is a tech-steal posture',
+      () {
+        // Own 2, rival 4 → lead 2 >= deficit 1 → posture.
+        expect(
+          isCivilianBuildSpyTechStealPosture(
+            ownUnlockedTechCount: 2,
+            maxRivalUnlockedTechCount: 4,
+          ),
+          isTrue,
+        );
+        // Exactly the default deficit (1) still qualifies.
+        expect(
+          isCivilianBuildSpyTechStealPosture(
+            ownUnlockedTechCount: 3,
+            maxRivalUnlockedTechCount: 4,
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('AC4c: parity or a lead is not a tech-steal posture', () {
       // Equal counts → lead 0 < deficit 1 → no posture.
@@ -345,11 +330,14 @@ void main() {
   });
 
   group('civilian build pool weight (Refs #3793, ACPool)', () {
-    test('ACPool/AC8: default pool weight is declared in [0.0, 1.0] and 1.0', () {
-      expect(kCivilianBuildPoolWeight, 1.0);
-      expect(kCivilianBuildPoolWeight, greaterThanOrEqualTo(0.0));
-      expect(kCivilianBuildPoolWeight, lessThanOrEqualTo(1.0));
-    });
+    test(
+      'ACPool/AC8: default pool weight is declared in [0.0, 1.0] and 1.0',
+      () {
+        expect(kCivilianBuildPoolWeight, 1.0);
+        expect(kCivilianBuildPoolWeight, greaterThanOrEqualTo(0.0));
+        expect(kCivilianBuildPoolWeight, lessThanOrEqualTo(1.0));
+      },
+    );
 
     test('ACPool: at the default weight the pooled score equals the per-type '
         'score for every civilian type and count (no regression)', () {
@@ -417,83 +405,44 @@ void main() {
   });
 
   group('smooth phase weighting / hysteresis (Refs #3793 slice 9)', () {
-    test('nextCivilianBuildPhaseName: canonical EXPAND→COLONIAL→DEVELOP order',
-        () {
-      expect(
-        nextCivilianBuildPhaseName(kCivilianBuildPhaseExpand),
-        kCivilianBuildPhaseColonial,
-      );
-      expect(
-        nextCivilianBuildPhaseName(kCivilianBuildPhaseColonialLite),
-        kCivilianBuildPhaseColonial,
-      );
-      expect(
-        nextCivilianBuildPhaseName(kCivilianBuildPhaseColonial),
-        kCivilianBuildPhaseDevelop,
-      );
-      // DEVELOP is terminal — ramps toward itself (no-op).
-      expect(
-        nextCivilianBuildPhaseName(kCivilianBuildPhaseDevelop),
-        kCivilianBuildPhaseDevelop,
-      );
-      // Unknown phase is treated as terminal (returns itself).
-      expect(nextCivilianBuildPhaseName('mystery'), 'mystery');
-    });
+    test(
+      'nextCivilianBuildPhaseName: canonical EXPAND→COLONIAL→DEVELOP order',
+      () {
+        const cases = <(String, String)>[
+          (kCivilianBuildPhaseExpand, kCivilianBuildPhaseColonial),
+          (kCivilianBuildPhaseColonialLite, kCivilianBuildPhaseColonial),
+          (kCivilianBuildPhaseColonial, kCivilianBuildPhaseDevelop),
+          // DEVELOP is terminal — ramps toward itself (no-op).
+          (kCivilianBuildPhaseDevelop, kCivilianBuildPhaseDevelop),
+          // Unknown phase is treated as terminal (returns itself).
+          ('mystery', 'mystery'),
+        ];
+        for (final (current, next) in cases) {
+          expect(nextCivilianBuildPhaseName(current), next, reason: current);
+        }
+      },
+    );
 
-    test('ACHyst: Builder ramps 2.0 → 1.5 → 1.0 across expand→colonial', () {
-      // expand Builder = favored 2.0; next phase colonial Builder = base 1.0.
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseExpand,
-          0.0,
-        ),
-        2.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseExpand,
-          0.5,
-        ),
-        1.5,
-      );
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeBuilder,
-          kCivilianBuildPhaseExpand,
-          1.0,
-        ),
-        1.0,
-      );
-    });
-
-    test('ACHyst: Explorer ramps 1.0 → 1.5 → 2.0 across expand→colonial', () {
-      // expand Explorer = base 1.0; next phase colonial Explorer = favored 2.0.
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseExpand,
-          0.0,
-        ),
-        1.0,
-      );
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseExpand,
-          0.5,
-        ),
-        1.5,
-      );
-      expect(
-        civilianBuildPhaseMultiplierSmooth(
-          kUnitTypeExplorer,
-          kCivilianBuildPhaseExpand,
-          1.0,
-        ),
-        2.0,
-      );
+    test('ACHyst: Builder/Explorer ramp across expand→colonial', () {
+      const cases = <(String, double, double)>[
+        (kUnitTypeBuilder, 0.0, 2.0),
+        (kUnitTypeBuilder, 0.5, 1.5),
+        (kUnitTypeBuilder, 1.0, 1.0),
+        (kUnitTypeExplorer, 0.0, 1.0),
+        (kUnitTypeExplorer, 0.5, 1.5),
+        (kUnitTypeExplorer, 1.0, 2.0),
+      ];
+      for (final (type, progress, expected) in cases) {
+        expect(
+          civilianBuildPhaseMultiplierSmooth(
+            type,
+            kCivilianBuildPhaseExpand,
+            progress,
+          ),
+          expected,
+          reason: 'type=$type p=$progress',
+        );
+      }
     });
 
     test('ACHyst: phaseProgress is clamped to [0,1]', () {
@@ -531,38 +480,40 @@ void main() {
       );
     });
 
-    test('ACHystNull: null phaseProgress equals the discrete-multiplier score',
-        () {
-      for (final type in [
-        kUnitTypeBuilder,
-        kUnitTypeExplorer,
-        kUnitTypeEngineer,
-        kUnitTypeMerchant,
-        kUnitTypeRailBuilder,
-        kUnitTypeSpy,
-      ]) {
-        for (final phase in [
-          kCivilianBuildPhaseExpand,
-          kCivilianBuildPhaseColonialLite,
-          kCivilianBuildPhaseColonial,
-          kCivilianBuildPhaseDevelop,
-          null,
+    test(
+      'ACHystNull: null phaseProgress equals the discrete-multiplier score',
+      () {
+        for (final type in [
+          kUnitTypeBuilder,
+          kUnitTypeExplorer,
+          kUnitTypeEngineer,
+          kUnitTypeMerchant,
+          kUnitTypeRailBuilder,
+          kUnitTypeSpy,
         ]) {
-          for (final count in [0, 1, 2, 3]) {
-            expect(
-              civilianBuildCandidateScore(
-                type,
-                count,
-                phaseName: phase,
-                // phaseProgress omitted → null → discrete path.
-              ),
-              civilianBuildCandidateScore(type, count, phaseName: phase),
-              reason: 'type=$type phase=$phase count=$count must be discrete',
-            );
+          for (final phase in [
+            kCivilianBuildPhaseExpand,
+            kCivilianBuildPhaseColonialLite,
+            kCivilianBuildPhaseColonial,
+            kCivilianBuildPhaseDevelop,
+            null,
+          ]) {
+            for (final count in [0, 1, 2, 3]) {
+              expect(
+                civilianBuildCandidateScore(
+                  type,
+                  count,
+                  phaseName: phase,
+                  // phaseProgress omitted → null → discrete path.
+                ),
+                civilianBuildCandidateScore(type, count, phaseName: phase),
+                reason: 'type=$type phase=$phase count=$count must be discrete',
+              );
+            }
           }
         }
-      }
-    });
+      },
+    );
 
     test('ACHystSpy: Spy stays phase-flat for every phaseProgress', () {
       for (final phase in [
@@ -596,18 +547,20 @@ void main() {
       expect(a, b);
     });
 
-    test('ACHyst: pooled score threads phaseProgress through the pool weight',
-        () {
-      const weight = 0.5;
-      final pooled = civilianBuildPooledScore(
-        kUnitTypeBuilder,
-        2,
-        phaseName: kCivilianBuildPhaseExpand,
-        phaseProgress: 0.5,
-        poolWeight: weight,
-      );
-      // base(1.0) × smooth multiplier(1.5) × poolWeight(0.5) = 0.75.
-      expect(pooled, 0.75);
-    });
+    test(
+      'ACHyst: pooled score threads phaseProgress through the pool weight',
+      () {
+        const weight = 0.5;
+        final pooled = civilianBuildPooledScore(
+          kUnitTypeBuilder,
+          2,
+          phaseName: kCivilianBuildPhaseExpand,
+          phaseProgress: 0.5,
+          poolWeight: weight,
+        );
+        // base(1.0) × smooth multiplier(1.5) × poolWeight(0.5) = 0.75.
+        expect(pooled, 0.75);
+      },
+    );
   });
 }
