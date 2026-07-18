@@ -1,4 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show kUnitTypeBuilder, kUnitTypeRailBuilder, kUnitTypeSpy;
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -37,12 +39,15 @@ void main() {
     });
 
     test('civilian build cap maps expose expected type keys', () {
-      expect(kCivilianBuildMinCountByType.containsKey('Builder'), isTrue);
-      expect(kCivilianBuildTargetCountByType.containsKey('Spy'), isTrue);
-      expect(kCivilianBuildMaxCountByType.containsKey('Rail Builder'), isTrue);
+      expect(kCivilianBuildMinCountByType.containsKey(kUnitTypeBuilder), isTrue);
+      expect(kCivilianBuildTargetCountByType.containsKey(kUnitTypeSpy), isTrue);
       expect(
-        kCivilianBuildMaxCountByType['Builder']!,
-        greaterThanOrEqualTo(kCivilianBuildMinCountByType['Builder']!),
+        kCivilianBuildMaxCountByType.containsKey(kUnitTypeRailBuilder),
+        isTrue,
+      );
+      expect(
+        kCivilianBuildMaxCountByType[kUnitTypeBuilder]!,
+        greaterThanOrEqualTo(kCivilianBuildMinCountByType[kUnitTypeBuilder]!),
       );
     });
 
