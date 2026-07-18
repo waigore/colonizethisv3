@@ -383,7 +383,7 @@ void _appendProvincePanelEconomicSection(
         if (commodity.id == CommodityCatalog.grain.id &&
             extraction.capitalGrainBonus > 0) {
           segment =
-              '$segment ${l10n.provinceOverlay_extractionCapitalGrainBonus(extraction.capitalGrainBonus)}';
+              '$segment${l10n.provinceOverlay_extractionCapitalGrainBonus(extraction.capitalGrainBonus)}';
         }
         parts.add(segment);
       }

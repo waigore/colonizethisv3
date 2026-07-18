@@ -65,7 +65,9 @@ Widget _extractionCondensedLine({
         snapshot.capitalGrainBonus > 0) {
       segments.add(
         Text(
-          ' ${l10n.provinceOverlay_extractionCapitalGrainBonus(snapshot.capitalGrainBonus)}',
+          l10n.provinceOverlay_extractionCapitalGrainBonus(
+            snapshot.capitalGrainBonus,
+          ),
           style: TextStyle(color: EditorialMonoclePalette.muted),
         ),
       );

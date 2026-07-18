@@ -2745,9 +2745,9 @@
       }
     }
   },
-  "provinceOverlay_extractionCapitalGrainBonus": "(incl. +{bonus} capital grain bonus)",
+  "provinceOverlay_extractionCapitalGrainBonus": " (incl. +{bonus} capital grain bonus)",
   "@provinceOverlay_extractionCapitalGrainBonus": {
-    "description": "Muted annotation that capital grain bonus units are a special non-tile case on the Extraction line.",
+    "description": "Muted annotation (leading space) that capital grain bonus units are a special non-tile case on the Extraction line.",
     "placeholders": {
       "bonus": {
         "type": "int"

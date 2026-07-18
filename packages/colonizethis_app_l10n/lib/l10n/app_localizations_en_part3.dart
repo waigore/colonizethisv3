@@ -573,7 +573,7 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
-    return '(incl. +$bonus capital grain bonus)';
+    return ' (incl. +$bonus capital grain bonus)';
   }
 
   @override
