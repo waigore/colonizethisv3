@@ -44,16 +44,9 @@ void main() {
     }
 
     Future<void> openPicker(WidgetTester tester) async {
-      final triggerFinder = find.descendant(
-        of: find.byType(CtDropdown<String>),
-        matching: find.byType(InkWell),
-      );
-      // Fallback when the trigger surface is not an InkWell: tap by text.
-      if (triggerFinder.evaluate().isEmpty) {
-        await tester.tap(find.text('Select nation'));
-      } else {
-        await tester.tap(triggerFinder.first);
-      }
+      final hitFinder = find.byKey(CtDropdown.kCtDropdownTriggerHitTargetKey);
+      expect(hitFinder, findsOneWidget);
+      await tester.tap(hitFinder);
       await tester.pumpAndSettle();
     }
 
@@ -105,7 +98,7 @@ void main() {
     /// Returns the outer per-row DecoratedBoxes added by the picker
     /// itemBuilder — i.e. the DecoratedBoxes that are the **direct** child
     /// of each per-row [Padding] under the picker [ListView]. This avoids
-    /// matching DecoratedBoxes painted by inner CtNinePatchButton chrome.
+    /// matching DecoratedBoxes painted by inner row chrome.
     List<DecoratedBox> findPickerRowOuterBoxes(WidgetTester tester) {
       final paddings = find.descendant(
         of: find.byType(ListView),
@@ -233,7 +226,7 @@ void main() {
           reason:
               'Tapping the selected row should still emit the row value '
               '— the DecoratedBox highlight wraps but does not absorb '
-              'the inner CtNinePatchButton tap.',
+              'the inner InkWell tap.',
         );
 
         // Picker closed: selected-row key is no longer in the tree.

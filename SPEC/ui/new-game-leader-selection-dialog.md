@@ -129,7 +129,7 @@ Implementation: `app/lib/features/shell/new_game_leader_selection_dialog.dart`. 
 
 ## Components
 
-- `CtDialogShell`, `CtBrassDivider`, `CtDropdown`, `CtNinePatchButton`, `CtSlider`, `CtToggleSwitch`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
+- `CtDialogShell`, `CtBrassDivider`, `CtDropdown` (compact flat select per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) / #4062), `CtNinePatchButton`, `CtSlider`, `CtToggleSwitch`, `GpDefaultMapColorSwatch` (see `app/lib/widgets/`).
 - `EditorialMonoclePalette` tokens: `accent`, `accentDim`, `muted`, `fg`, `border`, `bgDeep`, `surface` (no hex literals in widget source per #2867 R1).
 - Material (chrome host only): `TextField`, `DecoratedBox`, `Row`, `Column`, `Flexible`, `Padding`, `Text` (the infinite-mode control is the custom `CtToggleSwitch`, not Material `CheckboxListTile`).
 - Helpers: `NewGameLeaderSelectionDialog.parseSeedInput`, `defaultTerrainVariation`.
