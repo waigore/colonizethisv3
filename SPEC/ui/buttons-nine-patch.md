@@ -34,7 +34,7 @@
 ## Theme and framework integration
 
 - **Material shell only:** Material and Cupertino widgets are **not used for user-facing chrome** (no `ElevatedButton`, `TextButton`, `FilledButton`, `AlertDialog`, `Card`, `ChoiceChip`, `Slider`, `DropdownButton`, etc.). They may be used only as invisible plumbing (e.g. `MaterialApp`, `DefaultTabController`) where required by Flutter.
-- **Button catalog:** All tappable controls (primary, secondary, toolbar, dialog actions) are built from `CtNinePatchButton` or components that wrap it (e.g. `CtDropdown`, `CtSlider`, `CtChoiceChip`, `CtScreenShell` headers). No new button-like components may be introduced without reusing this nine-patch canon.
+- **Button catalog:** All tappable controls (primary, secondary, toolbar, dialog actions) are built from `CtNinePatchButton` or components that wrap it (e.g. `CtSlider`, `CtChoiceChip`, `CtScreenShell` headers). Exception: `CtDropdown` is a compact flat select (no nine-patch chrome) per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) / #4062. No new button-like components may be introduced without reusing this nine-patch canon or an explicit SPEC exception.
 - **Pixel-art first:** Every interactive component must either (a) use nine-patch assets for its frame/chrome or (b) be explicitly specified in SPEC/ui as a pixel-art friendly primitive (e.g. 1-px borders, hard-edged fills) with no Material elevation, ripples, or rounded-corner cards.
 
 ## References

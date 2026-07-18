@@ -21,7 +21,7 @@ When designing screens for the app, **mobile must be considered from the start.*
 
 ### 1. Touch targets
 
-- Interactive elements (buttons, list tiles, dropdowns) must have **at least 44 dp** in the smallest dimension (already required in UXD 03). Buttons in Main Menu and Game Setup use 48 dp height; keep that or larger.
+- Interactive elements (buttons, list tiles, dropdowns) must have **at least 44 dp** in the smallest dimension (already required in UXD 03). Buttons in Main Menu and Game Setup use 48 dp height; keep that or larger. Compact controls (e.g. `CtDropdown` trigger at 34 dp visual height per [pixel-art-ui-catalog.md](pixel-art-ui-catalog.md) / DLG10001 mockup) may satisfy the 44 dp rule via an **invisible hit-area expansion** that does not change the painted visual height or the parent layout contribution.
 
 ### 2. Content width and centering
 

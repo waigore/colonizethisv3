@@ -67,7 +67,7 @@ void main() {
 
         final icon = findChevronIcon(tester);
         expect(icon.icon, Icons.expand_more);
-        expect(icon.size, 16);
+        expect(icon.size, kCtDropdownChevronSize);
         expect(icon.color, EditorialMonoclePalette.accentDim);
       },
     );
