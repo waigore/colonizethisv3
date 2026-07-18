@@ -726,6 +726,13 @@ rules:
     runner: dart
     script: tool/check_models_no_part_directives.dart
 
+  - rule_id: repo.models_test_file_size
+    group: testing
+    title: colonizethis_models test files must stay at or below 400 physical lines (Refs #4068)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_models_test_file_size.dart
+
   - rule_id: repo.world_topology_identity_home
     group: structure
     title: topology identity helpers must live in topology_identity.dart not naval.dart (Refs #3968)

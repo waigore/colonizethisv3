@@ -132,6 +132,11 @@ lines) for the split domain packages.
   libraries with explicit imports; `repo.models_no_part_directives`
   (`SPEC/program/models-no-part-directives.md`) forbids reintroducing
   `part` / `part of` under `packages/colonizethis_models/lib/`.
+- Slice D (Refs #4068) densifies oversized models suites
+  (`world_market_test`, `game_test`, `app_events_test`,
+  `diplomacy_models_test`) into concern-split files at or below 400
+  physical lines, with a shared `test/support/minimal_game.dart`
+  scaffold; `repo.models_test_file_size` enforces the ceiling.
 
 ### Acceptance criteria
 
