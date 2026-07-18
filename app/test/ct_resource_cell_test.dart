@@ -304,8 +304,7 @@ void main() {
     );
 
     testWidgets(
-      'name keeps the same width and visibility with vs without a delta '
-      '(delta-stable name column, C10)',
+      'name stays fully visible with vs without a delta (C10)',
       (tester) async {
         const name = 'Iron';
         const width = 220.0;
@@ -315,11 +314,8 @@ void main() {
           CtResourceCell(iconBuilder: tinyIcon, name: name, quantity: 430),
           width: width,
         );
-        final noDeltaParagraph = paragraphFor(tester, name);
-        final noDeltaExceeded = noDeltaParagraph.didExceedMaxLines;
-        final noDeltaGlyphWidth = noDeltaParagraph.getMaxIntrinsicWidth(
-          double.infinity,
-        );
+        final noDeltaExceeded =
+            paragraphFor(tester, name).didExceedMaxLines;
 
         await pumpFixedWidth(
           tester,
@@ -331,23 +327,13 @@ void main() {
           ),
           width: width,
         );
-        final withDeltaParagraph = paragraphFor(tester, name);
-        final withDeltaExceeded = withDeltaParagraph.didExceedMaxLines;
-        final withDeltaGlyphWidth = withDeltaParagraph.getMaxIntrinsicWidth(
-          double.infinity,
-        );
+        final withDeltaExceeded =
+            paragraphFor(tester, name).didExceedMaxLines;
 
-        // The name is fully visible (no ellipsis) whether or not a delta is
-        // present, and the laid-out glyph width is identical — adding a delta
-        // does not push the name into ellipsis (C10).
+        // Name must not ellipsis whether or not a delta is present (C10 /
+        // #3999 inset-parity trailing is intrinsic; delta may reclaim flex).
         expect(noDeltaExceeded, isFalse);
         expect(withDeltaExceeded, isFalse);
-        expect(
-          withDeltaGlyphWidth,
-          noDeltaGlyphWidth,
-          reason: 'Adding a +N / -N delta must not shrink the rendered name '
-              'per #2862 C10.',
-        );
       },
     );
   });
@@ -517,15 +503,17 @@ void main() {
     );
 
     testWidgets(
-      'quantity right-edge is delta-stable (null vs non-zero delta)',
+      'wide-layout painted trailing inset matches leading icon inset',
       (tester) async {
-        const Key noDeltaKey = ValueKey<String>('cell_no_delta');
-        const Key withDeltaKey = ValueKey<String>('cell_with_delta');
+        const Key nullDeltaKey = ValueKey<String>('inset_null');
+        const Key withDeltaKey = ValueKey<String>('inset_delta');
+        // Representative wide Available 3-column slot (~800 dp Production).
+        const double wideCellWidth = 240;
         await pumpAlignedColumn(
           tester,
           <Widget>[
             CtResourceCell(
-              key: noDeltaKey,
+              key: nullDeltaKey,
               iconBuilder: tinyIcon,
               name: 'Meat',
               quantity: 0,
@@ -538,11 +526,65 @@ void main() {
               delta: -16,
             ),
           ],
-          cellWidth: gridCellWidth,
+          cellWidth: wideCellWidth,
+        );
+
+        for (final Key key in <Key>[nullDeltaKey, withDeltaKey]) {
+          final Finder cellFinder = find.byKey(key);
+          final Rect cellBox = tester.getRect(cellFinder);
+          final double iconLeft = tester
+              .getTopLeft(
+                find.descendant(
+                  of: cellFinder,
+                  matching: find.byKey(const Key('test-icon')),
+                ),
+              )
+              .dx;
+          final bool hasDelta = key == withDeltaKey;
+          final Finder trailing = hasDelta
+              ? find.descendant(
+                  of: cellFinder,
+                  matching: find.byKey(CtResourceCell.deltaTextKey),
+                )
+              : find.descendant(
+                  of: cellFinder,
+                  matching: find.byKey(CtResourceCell.quantityTextKey),
+                );
+          final double trailingRight = tester.getTopRight(trailing).dx;
+          final double leftInset = iconLeft - cellBox.left;
+          final double rightInset = cellBox.right - trailingRight;
+          expect(leftInset, closeTo(CtSpacing.s, 1.0));
+          expect(rightInset, closeTo(leftInset, 1.0));
+        }
+      },
+    );
+
+    testWidgets(
+      'label-length alignment still holds after inset parity (null deltas)',
+      (tester) async {
+        const Key shortKey = ValueKey<String>('parity_short');
+        const Key longKey = ValueKey<String>('parity_long');
+        await pumpAlignedColumn(
+          tester,
+          <Widget>[
+            CtResourceCell(
+              key: shortKey,
+              iconBuilder: tinyIcon,
+              name: 'Tin',
+              quantity: 4,
+            ),
+            CtResourceCell(
+              key: longKey,
+              iconBuilder: tinyIcon,
+              name: 'Refined Sugar',
+              quantity: 4,
+            ),
+          ],
+          cellWidth: 240,
         );
         expect(
-          quantityRight(tester, find.byKey(noDeltaKey)),
-          closeTo(quantityRight(tester, find.byKey(withDeltaKey)), 0.5),
+          quantityRight(tester, find.byKey(shortKey)),
+          closeTo(quantityRight(tester, find.byKey(longKey)), 0.5),
         );
       },
     );
@@ -646,20 +688,12 @@ void main() {
     );
 
     testWidgets(
-      'delta sits immediately to the right of quantity without shifting '
-      'the quantity anchor vs a null-delta peer',
+      'delta sits immediately to the right of quantity',
       (tester) async {
-        const Key peerKey = ValueKey<String>('adj_peer');
         const Key deltaKey = ValueKey<String>('adj_delta');
         await pumpAlignedColumn(
           tester,
           <Widget>[
-            CtResourceCell(
-              key: peerKey,
-              iconBuilder: tinyIcon,
-              name: 'Wool',
-              quantity: 4,
-            ),
             CtResourceCell(
               key: deltaKey,
               iconBuilder: tinyIcon,
@@ -677,16 +711,15 @@ void main() {
               of: deltaCell,
               matching: find.text('-40'),
             )).dx;
-        expect(deltaLeft - qtyRight, closeTo(CtResourceCell.quantityToDeltaGap, 1.0));
         expect(
-          quantityRight(tester, find.byKey(peerKey)),
-          closeTo(qtyRight, 0.5),
+          deltaLeft - qtyRight,
+          closeTo(CtResourceCell.quantityToDeltaGap, 1.0),
         );
       },
     );
 
     testWidgets(
-      'trailing cluster right edge remains within card inner-right bounds',
+      'painted trailing cluster right edge matches leading icon inset',
       (tester) async {
         await pumpFixedWidth(
           tester,
@@ -698,17 +731,17 @@ void main() {
           ),
           width: 240,
         );
-        final double cardRight =
-            tester.getTopRight(find.byType(CtResourceCell)).dx;
-        final double innerRight = cardRight - CtSpacing.s;
+        final Rect cellBox = tester.getRect(find.byType(CtResourceCell));
+        final double iconLeft = tester
+            .getTopLeft(find.byKey(const Key('test-icon')))
+            .dx;
         final double clusterRight = tester
             .getTopRight(find.byKey(CtResourceCell.deltaTextKey))
             .dx;
-        expect(clusterRight, lessThanOrEqualTo(innerRight + 0.5));
-        expect(
-          innerRight - clusterRight,
-          lessThan(CtResourceCell.reservedDeltaSlotWidth + 1),
-        );
+        final double leftInset = iconLeft - cellBox.left;
+        final double rightInset = cellBox.right - clusterRight;
+        expect(leftInset, closeTo(CtSpacing.s, 1.0));
+        expect(rightInset, closeTo(leftInset, 1.0));
       },
     );
   });
