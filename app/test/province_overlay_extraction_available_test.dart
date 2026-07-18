@@ -299,6 +299,58 @@ void main() {
     },
   );
 
+  testWidgets(
+    'capital grain bonus annotation is not a hover-highlight target '
+    '(Refs #4064)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+      Iterable<String>? highlighted;
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(
+          humanId,
+          capitalGrainBonus: 2,
+        ),
+        availableByCommodity: _sampleAvailable,
+        onHighlightTiles: (keys) {
+          highlighted = keys;
+        },
+      );
+
+      final bonus = find.textContaining('incl. +2 capital grain bonus');
+      expect(bonus, findsOneWidget);
+      expect(
+        find.ancestor(of: bonus, matching: find.byType(MouseRegion)),
+        findsNothing,
+      );
+
+      final grainSegment = find.textContaining('1 (5)');
+      expect(grainSegment, findsOneWidget);
+      final grainRegions = find.ancestor(
+        of: grainSegment,
+        matching: find.byType(MouseRegion),
+      );
+      expect(grainRegions, findsWidgets);
+      tester.widget<MouseRegion>(grainRegions.first).onEnter!(
+        const PointerEnterEvent(),
+      );
+      expect(highlighted, ['oldWorld|p1|0|0', 'oldWorld|p1|0|1']);
+    },
+  );
+
   test(
     'setSecondaryHighlights stores multi keys and clears single (Refs #4002)',
     () {

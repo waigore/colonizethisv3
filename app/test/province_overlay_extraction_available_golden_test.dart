@@ -1,9 +1,9 @@
 // Visual goldens for province overlay Economic Extraction / Available
-// condensed lines (MAP20001 / Refs #4002).
+// condensed lines (MAP20001 / Refs #4002, #4064).
 //
 // Structural behavior is pinned by `province_overlay_extraction_available_test.dart`.
-// This suite adds `matchesGoldenFile` proof for the partial-bracket fixture and
-// multi-commodity narrow wrap variant.
+// This suite adds `matchesGoldenFile` proof for the partial-bracket fixture,
+// capital-grain-bonus annotation, and multi-commodity narrow wrap variant.
 // SPEC: SPEC/ui/province-economic-extraction-available.md § Acceptance criteria.
 
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
@@ -70,6 +70,25 @@ ProvinceExtractionSnapshot _multiCommoditySnapshot(String ownerId) {
   );
 }
 
+ProvinceExtractionSnapshot _capitalBonusSnapshot(String ownerId) {
+  return ProvinceExtractionSnapshot(
+    ownerId: ownerId,
+    capitalGrainBonus: 2,
+    byCommodity: {
+      'grain': const ProvinceExtractionCommodityTotals(
+        effective: 3,
+        full: 7,
+        tileKeys: ['oldWorld|p1|0|0', 'oldWorld|p1|0|1'],
+      ),
+      'iron': const ProvinceExtractionCommodityTotals(
+        effective: 5,
+        full: 5,
+        tileKeys: ['oldWorld|p1|1|0'],
+      ),
+    },
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -131,6 +150,67 @@ void main() {
         find.byKey(boundaryKey),
         matchesGoldenFile(
           'goldens/province_overlay_extraction_available_partial.png',
+        ),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: Extraction capital grain bonus annotation (Refs #4064)',
+    (WidgetTester tester) async {
+      await configureGoldenSurface(tester, size: const Size(600, 1000));
+      configureGoldenView(
+        tester,
+        physicalSize: const Size(600, 1000),
+        devicePixelRatio: 1.0,
+      );
+
+      const boundaryKey = ValueKey<String>(
+        'province_overlay_extraction_capital_bonus_golden',
+      );
+
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await tester.pumpWidget(
+        wrapGoldenBoundary(
+          boundaryKey: boundaryKey,
+          child: SizedBox(
+            width: 460,
+            height: 900,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: demoRegionForOverlay,
+              displayId: provinceId,
+              selectedTileKey: null,
+              humanPlayerId: humanId,
+              playerView: playerView,
+              draftOrders: const Orders(),
+              omniscientDetail: true,
+              extractionSnapshot: _capitalBonusSnapshot(humanId),
+              availableByCommodity: _sampleAvailable,
+            ),
+          ),
+        ),
+      );
+      await pumpForGolden(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Extraction'), findsOneWidget);
+      expect(
+        find.textContaining('incl. +2 capital grain bonus'),
+        findsOneWidget,
+      );
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/province_overlay_extraction_capital_bonus.png',
         ),
       );
     },

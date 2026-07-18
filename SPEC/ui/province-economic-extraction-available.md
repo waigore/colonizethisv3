@@ -64,3 +64,4 @@ Use case **Standalone — extraction & available** with partial-bracket fixture,
 - Given many commodities on a narrow panel, when the line lays out, then segments wrap and none are ellipsized.
 - Given Town production bonuses, when Economic renders, then Town production still shows icon + `+N` rows (or `—`) below the new subsections.
 - Given the partial-bracket Extraction fixture and Available grain/timber counts under Economic full intel, when the System runs the province overlay Extraction/Available widget golden suite, then `matchesGoldenFile` baselines match committed PNGs under `app/test/goldens/`.
+- Given Extraction grain with `capitalGrainBonus > 0` under Economic full intel, when the System runs the capital-bonus widget golden, then `matchesGoldenFile` shows the muted capital-grain-bonus annotation immediately after the grain segment.
