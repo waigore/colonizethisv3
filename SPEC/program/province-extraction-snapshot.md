@@ -42,6 +42,7 @@ Pure helper `provinceImprovableResourceTileCounts` over current world state afte
 - Given an improved disconnected tile with production N in province P, when the system projects Extraction for P, then that commodity includes effective contribution `0` and full contribution `N` for that tile.
 - Given capital province P with `capitalTileGrainBonusPerTurn = B > 0`, when the system projects Extraction for P, then grain effective and full each include B and `capitalGrainBonus` equals B.
 - Given mid-turn draft improve/road/town orders, when the system projects Extraction, then quantities match the unresolved world state (drafts ignored).
+- Given province P owned by GP A with improved extractable tiles, when ownership of P changes to GP B and the system projects Extraction for P, then the projection `ownerId` is B and B’s tile contributions appear immediately (no prior Extraction-phase write required); A’s capital grain bonus no longer applies unless P remains A’s capital.
 - Given a legacy save JSON that still contains `lastTurnProvinceExtractionByProvinceId`, when the system loads the save, then the field is ignored and display uses projection instead.
 - Given three improvable grain tiles and two improvable timber tiles under the owner’s tech/terrain caps, when Available counts are computed, then grain count is 3 and timber count is 2.
 - Given an unprospected mineral tile, when Available counts are computed, then that tile is excluded.

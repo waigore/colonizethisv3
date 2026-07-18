@@ -278,6 +278,31 @@ void main() {
       expect(snap.byCommodity['grain']!.full, greaterThan(0));
     });
 
+    test(
+      'ownership change: preview attributes to new owner without Extraction write',
+      () {
+        final mapData = mapDataForProjection();
+        final before = provinceExtractionSnapshotPreview(
+          game: gameWithImprovedGrain(ownerId: 'gp1'),
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(before, isNotNull);
+        expect(before!.ownerId, 'gp1');
+        expect(before.byCommodity['grain']!.full, greaterThan(0));
+
+        final after = provinceExtractionSnapshotPreview(
+          game: gameWithImprovedGrain(ownerId: 'gp2'),
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(after, isNotNull);
+        expect(after!.ownerId, 'gp2');
+        expect(after.byCommodity['grain']!.full, greaterThan(0));
+        expect(after.ownerId, isNot(before.ownerId));
+      },
+    );
+
     test('returns null when map data is missing', () {
       final game = gameWithImprovedGrain(ownerId: 'gp1');
       expect(
