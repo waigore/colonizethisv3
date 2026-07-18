@@ -113,8 +113,9 @@ double _fairnessMaxAbsFracDeviation({
   return maxDev;
 }
 
-/// Best-effort GP Old World terrain balancing after §7d.strip and before §7d.redist
-/// resource redistribution. Never throws for terrain fairness; see SPEC/program/game-setup-pipeline.md.
+/// Best-effort GP Old World terrain balancing after ownership and before
+/// capitals/towns (§7b/§7d). Never throws for terrain fairness; see
+/// SPEC/program/game-setup-pipeline.md.
 ({Game game, TileMapResult tileMap, double fairnessMaxAbsFracDeviation})
 applyGreatPowerOldWorldTerrainRedistribution({
   required Game game,

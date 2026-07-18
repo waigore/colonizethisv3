@@ -4,3 +4,5 @@
 
 export 'game_setup_create.dart';
 export 'game_setup_helpers.dart';
+export 'game_setup_plains_conversion.dart';
+export 'gp_ow_terrain_count_restore.dart';
