@@ -770,6 +770,13 @@ rules:
     runner: dart
     script: tool/check_ai_contracts_no_part_directives.dart
 
+  - rule_id: repo.ai_contracts_h8_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai_contracts H8 seller/supplier pins must not redeclare local _flaggedSellerGame / _supplierGame (use test/support/) (Refs #4084)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_contracts_h8_test_shared_fixtures.dart
+
   - rule_id: repo.ai_source_file_size
     group: structure
     title: colonizethis_ai lib/src files must stay at or below 500 physical lines (Refs #4079)
