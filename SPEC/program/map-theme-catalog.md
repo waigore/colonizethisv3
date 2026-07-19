@@ -40,6 +40,8 @@ Every listed group id above **must** appear and contain at least one theme with 
 
 Filenames/stems are identical across themes within a group; only the prefix (and terrain tileset config path) changes.
 
+Non-default terrain themes ship under `assets/themes/<theme_id>/` with their own tileset config JSON and Wang/transport atlas PNG+JSON pairs. The `default` theme keeps the historical `assets/data/map_terrain_tilesets.json` and `assets/images/terrain/tilesets/` paths (identity with pre-theme goldens). Standalone L2+ feature tiles may still share the default `standalone_tile_prefix` until a theme supplies alternate stems.
+
 Loader fail-fast validates schema (required keys/types). Asset-existence tests verify every declared theme’s assets are present in the bundle.
 
 ---
@@ -78,6 +80,7 @@ Flame icon caches build `assetPath` from `ActiveMapTheme` icon prefixes during `
 - Given a fresh install with empty settings, when the System resolves themes at startup, then every group selects `default` and default asset paths match the pre-theme paths used by region-map goldens.
 - Given a catalog manifest, when a schema/asset-existence test runs, then every group has a `default` theme and every declared theme’s required assets exist in the bundle.
 - Given a stored theme id absent from the catalog, when the System resolves at startup, then that group falls back to `default`, a warning is logged, and startup completes.
-- Given `ActiveMapTheme` installed with a non-default terrain `tileset_config`, when `TerrainTilesetCache.load()` runs, then `MapTerrainConfig` was loaded from that config path (verified by path/assert test).
+- Given `ActiveMapTheme` installed with a non-default terrain `tileset_config`, when `TerrainTilesetCache.load()` / `MapTerrainConfig.ensureLoaded` runs, then wang and transport `atlas_png` paths resolve under `assets/themes/<theme_id>/` (verified by path/assert test).
+- Given `MapTerrainConfig` already loaded for `default`, when the player selects a non-default terrain theme mid-session and `ensureLoaded` is called again with that themed path, then the memoized config stays on the first-loaded path (no mid-session atlas swap).
 - Given `ActiveMapTheme` installed with a non-default civilian `icon_prefix`, when `CivilianIconCache` builds paths for the six civilian slugs, then each path uses that prefix.
 - Given icon caches load themed PNGs, when `tool/check_app_asset_image_decode_dedup.dart` runs, then every concrete `*IconCache` still extends `AssetImageCache` and decode routes through `decodeImageAsset`.

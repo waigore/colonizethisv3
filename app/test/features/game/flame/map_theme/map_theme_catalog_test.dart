@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_app/config/app_constants.dart';
@@ -101,13 +102,25 @@ void main() {
       );
     });
 
-    test('default theme asset paths exist in bundle', () async {
+    test('every declared theme has required assets in the bundle', () async {
       await MapThemeCatalogLoader.ensureLoaded();
       final catalog = MapThemeCatalogLoader.instance;
       for (final group in MapThemeGroupId.values) {
         for (final theme in catalog.themesFor(group)) {
           if (group == MapThemeGroupId.terrain) {
-            await rootBundle.loadString(theme.tilesetConfig!);
+            final raw = await rootBundle.loadString(theme.tilesetConfig!);
+            final cfgMap = jsonDecode(raw) as Map<String, dynamic>;
+            for (final section in const [
+              'wang_tilesets',
+              'transport_tilesets',
+            ]) {
+              final entries = cfgMap[section]! as Map<String, dynamic>;
+              for (final entry in entries.values) {
+                final obj = entry! as Map<String, dynamic>;
+                await rootBundle.loadString(obj['spec_json']! as String);
+                await rootBundle.load(obj['atlas_png']! as String);
+              }
+            }
           } else if (group == MapThemeGroupId.civilianIcons) {
             for (final slug in kCivilianIconSlugs) {
               final path = '${theme.iconPrefix}ui_icon_civ_$slug.png';
@@ -197,5 +210,63 @@ void main() {
         '${kAppIcon64AssetPrefix}ui_icon_civ_builder.png',
       );
     });
+
+    test('sepia terrain install loads themed wang and transport atlases',
+        () async {
+      await MapThemeCatalogLoader.ensureLoaded();
+      final theme = resolveActiveMapTheme(
+        storedIds: {MapThemeGroupId.terrain.settingsKey: 'sepia'},
+      );
+      ActiveMapTheme.install(theme);
+      await MapTerrainConfig.ensureLoaded(
+        assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+      );
+      expect(
+        MapTerrainConfig.loadedAssetPath,
+        'assets/themes/sepia/data/map_terrain_tilesets.json',
+      );
+      expect(
+        MapTerrainConfig.instance.wangTilesets['sea_plains']!.atlasPngPath,
+        'assets/themes/sepia/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
+      );
+      expect(
+        MapTerrainConfig.instance.transportTilesets['road']!.atlasPngPath,
+        'assets/themes/sepia/images/terrain/tilesets/tileset_transport_road_64.png',
+      );
+    });
+
+    test(
+      'mid-session theme swap does not replace already-loaded MapTerrainConfig',
+      () async {
+        await MapThemeCatalogLoader.ensureLoaded();
+        ActiveMapTheme.install(
+          resolveActiveMapTheme(storedIds: const {}),
+        );
+        await MapTerrainConfig.ensureLoaded(
+          assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+        );
+        expect(
+          MapTerrainConfig.loadedAssetPath,
+          MapTerrainConfig.kDefaultMapTerrainTilesetsAsset,
+        );
+
+        ActiveMapTheme.install(
+          resolveActiveMapTheme(
+            storedIds: {MapThemeGroupId.terrain.settingsKey: 'sepia'},
+          ),
+        );
+        await MapTerrainConfig.ensureLoaded(
+          assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+        );
+        expect(
+          MapTerrainConfig.loadedAssetPath,
+          MapTerrainConfig.kDefaultMapTerrainTilesetsAsset,
+        );
+        expect(
+          MapTerrainConfig.instance.wangTilesets['sea_plains']!.atlasPngPath,
+          'assets/images/terrain/tilesets/tileset_sea_plains_v2_64.png',
+        );
+      },
+    );
   });
 }
