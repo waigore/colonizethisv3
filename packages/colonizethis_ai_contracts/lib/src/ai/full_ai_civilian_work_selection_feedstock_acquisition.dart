@@ -1,9 +1,10 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'full_ai_civilian_work_selection_feedstock.dart';
 import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'full_ai_civilian_work_selection_feedstock.dart';
 
 // Seller feedstock-tile acquisition target selection plus the
 // lock-recovery producible improvement-input staging and Old World

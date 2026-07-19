@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import '../constants.dart';
 import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
 import 'full_ai_civilian_work_selection_build_purchase.dart';
@@ -10,8 +12,6 @@ import 'full_ai_civilian_work_selection_rail.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
 import 'full_ai_civilian_work_selection_spy.dart';
 import 'full_ai_civilian_work_selection_upgrade_town.dart';
-import 'package:colonizethis_world/src/world/faction_membership.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
 
 // Per-unit civilian-work path selection: the Builder / Merchant / Explorer /
 // lexicographic appenders and the per-unit dispatcher that routes each unit's
