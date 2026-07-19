@@ -95,6 +95,10 @@ const String saveGameNameDialogId = 'save_game_name';
 /// SPEC/ui/load-game-list-dialog.md, SPEC/program/app-ui-wiring.md.
 const String loadGameListDialogId = 'load_game_list';
 
+/// [OpenDialogEvent] id for the app Settings dialog (shell feature builder).
+/// SPEC/ui/settings-dialog.md, SPEC/program/app-ui-wiring.md.
+const String settingsDialogId = 'settings';
+
 final _logEvent = packageLogger('event');
 
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.

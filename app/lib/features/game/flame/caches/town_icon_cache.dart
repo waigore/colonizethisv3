@@ -1,5 +1,8 @@
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+
 import '../../../../config/app_assets.dart';
 import '../../../../config/ct_legacy_town_icons.dart';
 import 'asset_image_cache.dart';
@@ -53,16 +56,20 @@ class TownIconCache extends AssetImageCache {
   static String assetPathForId(
     String assetId, {
     bool? useLegacyTownIcons,
+    String? iconPrefix,
   }) {
+    final prefix =
+        iconPrefix ??
+        ActiveMapTheme.current.iconPrefixFor(MapThemeGroupId.townIcons);
     if (assetId == portIconId) {
-      return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
+      return '${prefix}ui_icon_com_port.png';
     }
     final useLegacy = useLegacyTownIcons ?? kCtLegacyTownIconsEnabled;
     if (useLegacy && _isLevel1TownIconId(assetId)) {
       final suffix = assetId.replaceFirst('town_', '');
-      return '${kAppIcon64AssetPrefix}ui_icon_com_town_${suffix}_legacy_64.png';
+      return '${prefix}ui_icon_com_town_${suffix}_legacy_64.png';
     }
-    return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
+    return '${prefix}ui_icon_com_${assetId}_64.png';
   }
 
   static bool _isLevel1TownIconId(String assetId) {

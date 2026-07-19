@@ -57,6 +57,7 @@ const Map<String, String> _expectedConstants = {
   'loadGameListDialog': UiScreenIds.loadGameListDialog,
   'debugLogViewer': UiScreenIds.debugLogViewer,
   'debugConsolePanel': UiScreenIds.debugConsolePanel,
+  'settingsDialog': UiScreenIds.settingsDialog,
 };
 
 /// Returns the set of (id, status) tuples from the SPEC/ui/screen-registry.md

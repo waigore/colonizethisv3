@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
 import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'package:colonizethis_app/core/errors/ui_validation_exception.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -58,7 +59,9 @@ class TerrainTilesetCache {
     _isLoading = true;
 
     try {
-      await MapTerrainConfig.ensureLoaded();
+      await MapTerrainConfig.ensureLoaded(
+        assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+      );
       // Load L0/L1 Wang tilesets for coastline and land transitions.
       await Future.wait([
         loadWangTileset(
