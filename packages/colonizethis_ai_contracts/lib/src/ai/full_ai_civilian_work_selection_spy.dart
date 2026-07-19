@@ -1,10 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import '../constants.dart';
 import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
 import 'full_ai_civilian_work_selection_shared.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
 
 // Spy (`counter_spy`) candidate scoring / row selection. Refs #3834 R11.
 // Empire-wide counter-espionage: one spy on counter_spy anywhere is sufficient.

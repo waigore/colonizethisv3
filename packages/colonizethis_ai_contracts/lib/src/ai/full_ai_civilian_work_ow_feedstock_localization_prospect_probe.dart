@@ -1,9 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
-import 'package:colonizethis_orders/src/orders/bundled_civilian_work_order.dart'
-    show validateCivilianBundledWorkMoveLeg;
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        isMineralEligibleTile,
+        provinceHasAtLeastVisibility,
+        validateCivilianBundledWorkMoveLeg;
 import 'package:colonizethis_orders/src/orders/order_resolution_context.dart'
     show OrderResolutionContext, orderResolutionContextFromView;
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart'
@@ -12,13 +14,9 @@ import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart'
         isWorkOrderAcceptedWithValidator;
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart'
     show suggestWorkOrders;
-import 'package:colonizethis_orders/src/orders/order_visibility.dart'
-    show provinceHasAtLeastVisibility;
-import 'package:colonizethis_orders/src/orders/orders_application_helpers.dart'
-    show isMineralEligibleTile;
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import '../constants.dart';
 
 /// Per-gate pass signals for a co-located mineral-eligible feedstock `prospect`
 /// probe (Refs #2847 § H8-extraction prospect intra-pass localization).

@@ -1,12 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'full_ai_civilian_work_selection_build_purchase.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
 import 'full_ai_civilian_work_selection_unit_paths.dart';
-import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
-import 'package:colonizethis_world/src/world/faction_membership.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
 
 /// Idle civilian (no new work) for Full AI observability.
 class FullAiCivilianWorkIdle {

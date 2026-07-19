@@ -5,8 +5,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import '../constants.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 /// True iff [playerId] owns at least one **Old World** province tile hosting a
 /// resource in [feedstockIds] that is still unimproved (`improvementLevel < 1`)

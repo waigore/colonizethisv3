@@ -1,7 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 // Old World feedstock-tile ownership predicates and the feedstock-tile
 // acquisition residual for the below-quota zero-NW lock-recovery seller /
