@@ -1,11 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
-import 'package:colonizethis_orders/src/orders/orders_application_helpers.dart'
+import 'package:colonizethis_orders/colonizethis_orders.dart'
     show isMineralEligibleTile;
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import '../constants.dart';
 
 /// True iff [playerId] owns at least one **Old World** province tile hosting a
 /// **mineral** feedstock resource in [feedstockIds] that the player **has**

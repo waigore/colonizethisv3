@@ -1,12 +1,11 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import '../constants.dart';
 import 'full_ai_civilian_work_selection_feedstock_predicates.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
-import 'package:colonizethis_world/src/world/faction_membership.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
 
 // Builder (`build_improvement`) and Merchant (`purchase_land`) candidate
 // scoring / row selection, plus the Old World feedstock unit reservation that
