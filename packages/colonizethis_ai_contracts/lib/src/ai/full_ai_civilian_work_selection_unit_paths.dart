@@ -1,10 +1,23 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
+import 'full_ai_civilian_work_selection_build_purchase.dart';
+import 'full_ai_civilian_work_selection_engineer.dart';
+import 'full_ai_civilian_work_selection_explore_prospect.dart';
+import 'full_ai_civilian_work_selection_rail.dart';
+import 'full_ai_civilian_work_selection_shared.dart';
+import 'full_ai_civilian_work_selection_spy.dart';
+import 'full_ai_civilian_work_selection_upgrade_town.dart';
+import 'package:colonizethis_world/src/world/faction_membership.dart';
+import 'package:colonizethis_world/src/world/player_view.dart';
 
 // Per-unit civilian-work path selection: the Builder / Merchant / Explorer /
 // lexicographic appenders and the per-unit dispatcher that routes each unit's
 // candidate set to the right path. Split out of
 // full_ai_civilian_work_selection.dart by concern to keep each library file
-// small; shares the parent library's private scope via `part`.
+// small.
 
 void _appendBuilderPathResult({
   required Unit? unit,
@@ -18,7 +31,7 @@ void _appendBuilderPathResult({
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
 }) {
   final chosen =
-      _bestBuilderRow(
+      bestBuilderRow(
         w,
         game,
         playerId: playerId,
@@ -28,7 +41,7 @@ void _appendBuilderPathResult({
         growthStageInfraFeedstockResourceIds:
             growthStageInfraFeedstockResourceIds,
       ) ??
-      _pickLexicographic(w);
+      pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;
@@ -52,7 +65,7 @@ void _appendMerchantPathResult({
   required List<FullAiCivilianWorkIdle> idleEvents,
 }) {
   final chosen =
-      _bestPurchaseLandRow(w, game, factionMembership) ?? _pickLexicographic(w);
+      bestPurchaseLandRow(w, game, factionMembership) ?? pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;
@@ -103,7 +116,7 @@ void _appendExplorerPathResult({
     );
     return;
   }
-  final chosen = _pickExplorerCandidateSet(
+  final chosen = pickExplorerCandidateSet(
     c,
     game,
     view,
@@ -143,12 +156,12 @@ void _appendLexicographicPathResult({
     );
     return;
   }
-  final chosen = _pickLexicographic(w);
+  final chosen = pickLexicographic(w);
   if (chosen == null) return;
   workOrders.add(chosen);
 }
 
-void _appendSelectionForUnitId({
+void appendSelectionForUnitId({
   required String unitId,
   required Map<String, List<WorkOrder>> byUnit,
   required PlayerView view,
@@ -160,15 +173,15 @@ void _appendSelectionForUnitId({
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
-  _OwFeedstockReservation reservation = _OwFeedstockReservation.none,
+  OwFeedstockReservation reservation = OwFeedstockReservation.none,
   bool spyDevelopPhase = false,
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
-  _sortWorkOrdersLex(W);
+  sortWorkOrdersLex(W);
   final unit = view.ownUnitsById[unitId];
 
   if (unit != null &&
-      (unit.currentWork != null || !_civilianWorkCapableType(unit.type))) {
+      (unit.currentWork != null || !civilianWorkCapableType(unit.type))) {
     return;
   }
 
@@ -177,7 +190,7 @@ void _appendSelectionForUnitId({
   // colonial work, staying available for the Old World feedstock prospect /
   // build_improvement the feedstock score boosts then select.
   if (reservation.reserves(unitId)) {
-    _dropNewWorldWorkOrders(W);
+    dropNewWorldWorkOrders(W);
   }
 
   final isExplorerCase = unit != null && isExplorerUnit(unit.type);
@@ -218,7 +231,7 @@ void _appendSelectionForUnitId({
   }
 
   if (unit != null && unit.type == kUnitTypeRailBuilder) {
-    _appendRailBuilderPathResult(
+    appendRailBuilderPathResult(
       unit: unit,
       w: W,
       game: game,
@@ -230,7 +243,7 @@ void _appendSelectionForUnitId({
   }
 
   if (unit != null && unit.type == kUnitTypeEngineer) {
-    _appendEngineerPathResult(
+    appendEngineerPathResult(
       unit: unit,
       w: W,
       game: game,
@@ -242,7 +255,7 @@ void _appendSelectionForUnitId({
   }
 
   if (unit != null && isSpyUnit(unit.type)) {
-    _appendSpyPathResult(
+    appendSpyPathResult(
       unit: unit,
       w: W,
       game: game,

@@ -763,6 +763,13 @@ rules:
     runner: dart
     script: tool/check_ai_no_part_directives.dart
 
+  - rule_id: repo.ai_contracts_no_part_directives
+    group: structure
+    title: colonizethis_ai_contracts lib must not use Dart part / part of directives (Refs #4084)
+    spec: SPEC/program/ai-contracts-no-part-directives.md
+    runner: dart
+    script: tool/check_ai_contracts_no_part_directives.dart
+
   - rule_id: repo.ai_source_file_size
     group: structure
     title: colonizethis_ai lib/src files must stay at or below 500 physical lines (Refs #4079)

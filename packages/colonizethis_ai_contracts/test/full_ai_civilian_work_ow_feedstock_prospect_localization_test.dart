@@ -3,7 +3,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
+import 'support/full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
+import 'support/h8_supplier_prospect_game.dart';
 
 // Refs #2847 § H8-extraction Old World mineral feedstock prospect localization.
 //
@@ -19,55 +20,13 @@ import 'full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
 // (`ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile`
 // false while `hasIdleExplorerUnit` is true → reservation positioning residual).
 
-const _supplierIronTile = 'oldWorld|s0|2|0';
-const _supplierTimberTile = 'oldWorld|s0|1|0';
-const _newWorldIronTile = 'newWorld|n0|0|0';
-
-Game _supplierGame({
-  Map<String, String>? resourceByTileKey,
-  List<Unit> extraUnits = const [],
-}) {
-  return twoPlayerSupplierFeedstockGame(
-    resourceByTileKey:
-        resourceByTileKey ??
-        const {
-          _supplierTimberTile: 'timber',
-          _supplierIronTile: 'iron',
-          sellerWoolTile: 'wool',
-        },
-    extraUnits: extraUnits,
-  );
-}
-
-Unit _explorer(String id, {CurrentWork? currentWork}) =>
-    _explorerAt(id, 'oldWorld|s0', currentWork: currentWork);
-
-Unit _explorerAt(
-  String id,
-  String locationProvinceId, {
-  CurrentWork? currentWork,
-}) => Unit(
-  id: id,
-  type: kUnitTypeExplorer,
-  ownerId: supplierFeedstockId,
-  locationProvinceId: locationProvinceId,
-  currentWork: currentWork,
-);
-
-Unit _builder(String id) => Unit(
-  id: id,
-  type: kUnitTypeBuilder,
-  ownerId: supplierFeedstockId,
-  locationProvinceId: 'oldWorld|s0',
-);
-
 void main() {
   group(
     'ownsProspectedOldWorldMineralFeedstockTile (Refs #2847 H8-extraction)',
     () {
       test('true when the supplier owns a prospected Old World iron tile', () {
-        final game = _supplierGame().copyWithSupplierProspected({
-          _supplierIronTile,
+        final game = supplierGame().copyWithSupplierProspected({
+          h8SupplierProspectIronTile,
         });
         expect(
           ownsProspectedOldWorldMineralFeedstockTile(
@@ -80,7 +39,7 @@ void main() {
       });
 
       test('false when the owned Old World iron tile is not prospected', () {
-        final game = _supplierGame();
+        final game = supplierGame();
         expect(
           ownsProspectedOldWorldMineralFeedstockTile(
             game,
@@ -94,8 +53,8 @@ void main() {
       test('false for a prospected non-mineral (surface) feedstock tile', () {
         // timber is a surface resource (not in kMineralResourceIds): only
         // mineral feedstock tiles require a prospect, so timber never counts.
-        final game = _supplierGame().copyWithSupplierProspected({
-          _supplierTimberTile,
+        final game = supplierGame().copyWithSupplierProspected({
+          h8SupplierProspectTimberTile,
         });
         expect(
           ownsProspectedOldWorldMineralFeedstockTile(
@@ -108,13 +67,13 @@ void main() {
       });
 
       test('false for a prospected New World iron tile (Old World only)', () {
-        final game = _supplierGame(
+        final game = supplierGame(
           resourceByTileKey: const {
-            _supplierTimberTile: 'timber',
-            _newWorldIronTile: 'iron',
+            h8SupplierProspectTimberTile: 'timber',
+            h8SupplierProspectNewWorldIronTile: 'iron',
             sellerWoolTile: 'wool',
           },
-        ).copyWithSupplierProspected({_newWorldIronTile});
+        ).copyWithSupplierProspected({h8SupplierProspectNewWorldIronTile});
         expect(
           ownsProspectedOldWorldMineralFeedstockTile(
             game,
@@ -126,8 +85,8 @@ void main() {
       });
 
       test('false for an empty feedstock set (negative control)', () {
-        final game = _supplierGame().copyWithSupplierProspected({
-          _supplierIronTile,
+        final game = supplierGame().copyWithSupplierProspected({
+          h8SupplierProspectIronTile,
         });
         expect(
           ownsProspectedOldWorldMineralFeedstockTile(
@@ -143,18 +102,18 @@ void main() {
 
   group('hasIdleExplorerUnit (Refs #2847 H8-extraction)', () {
     test('true when the player owns an idle Explorer', () {
-      final game = _supplierGame(extraUnits: [_explorer('e1')]);
+      final game = supplierGame(extraUnits: [supplierProspectExplorer('e1')]);
       expect(hasIdleExplorerUnit(game, supplierFeedstockId), isTrue);
     });
 
     test('false when the only Explorer is busy (currentWork set)', () {
-      final game = _supplierGame(
+      final game = supplierGame(
         extraUnits: [
-          _explorer(
+          supplierProspectExplorer(
             'e1',
             currentWork: const CurrentWork(
               workTarget: kWorkTargetExplore,
-              tileKey: _newWorldIronTile,
+              tileKey: h8SupplierProspectNewWorldIronTile,
               totalTurns: 5,
               remainingTurns: 3,
             ),
@@ -165,7 +124,7 @@ void main() {
     });
 
     test('false when the player owns no Explorer (only a Builder)', () {
-      final game = _supplierGame(extraUnits: [_builder('b1')]);
+      final game = supplierGame(extraUnits: [supplierProspectBuilder('b1')]);
       expect(hasIdleExplorerUnit(game, supplierFeedstockId), isFalse);
     });
   });
@@ -175,7 +134,7 @@ void main() {
     test(
       'true when an idle Explorer shares the unprospected iron province',
       () {
-        final game = _supplierGame(extraUnits: [_explorer('e1')]);
+        final game = supplierGame(extraUnits: [supplierProspectExplorer('e1')]);
         expect(
           ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
             game,
@@ -188,8 +147,8 @@ void main() {
     );
 
     test('false when the idle Explorer is in a different province', () {
-      final game = _supplierGame(
-        extraUnits: [_explorerAt('e1', 'oldWorld|s9')],
+      final game = supplierGame(
+        extraUnits: [supplierProspectExplorerAt('e1', 'oldWorld|s9')],
       );
       expect(
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
@@ -202,13 +161,13 @@ void main() {
     });
 
     test('false when the co-located Explorer is busy (currentWork set)', () {
-      final game = _supplierGame(
+      final game = supplierGame(
         extraUnits: [
-          _explorer(
+          supplierProspectExplorer(
             'e1',
             currentWork: const CurrentWork(
               workTarget: kWorkTargetExplore,
-              tileKey: _newWorldIronTile,
+              tileKey: h8SupplierProspectNewWorldIronTile,
               totalTurns: 5,
               remainingTurns: 3,
             ),
@@ -227,9 +186,9 @@ void main() {
 
     test('false when the iron tile is already prospected (no unprospected '
         'feedstock province)', () {
-      final game = _supplierGame(
-        extraUnits: [_explorer('e1')],
-      ).copyWithSupplierProspected({_supplierIronTile});
+      final game = supplierGame(
+        extraUnits: [supplierProspectExplorer('e1')],
+      ).copyWithSupplierProspected({h8SupplierProspectIronTile});
       expect(
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
           game,
@@ -241,13 +200,13 @@ void main() {
     });
 
     test('false for a New World iron tile (Old World only)', () {
-      final game = _supplierGame(
+      final game = supplierGame(
         resourceByTileKey: const {
-          _supplierTimberTile: 'timber',
-          _newWorldIronTile: 'iron',
+          h8SupplierProspectTimberTile: 'timber',
+          h8SupplierProspectNewWorldIronTile: 'iron',
           sellerWoolTile: 'wool',
         },
-        extraUnits: [_explorer('e1')],
+        extraUnits: [supplierProspectExplorer('e1')],
       );
       expect(
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
@@ -260,7 +219,7 @@ void main() {
     });
 
     test('false for an empty feedstock set (negative control)', () {
-      final game = _supplierGame(extraUnits: [_explorer('e1')]);
+      final game = supplierGame(extraUnits: [supplierProspectExplorer('e1')]);
       expect(
         ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
           game,
@@ -274,7 +233,7 @@ void main() {
     test(
       'false when only a co-located Builder is present (Explorers only)',
       () {
-        final game = _supplierGame(extraUnits: [_builder('b1')]);
+        final game = supplierGame(extraUnits: [supplierProspectBuilder('b1')]);
         expect(
           ownsIdleExplorerColocatedWithUnprospectedOldWorldMineralFeedstockTile(
             game,
