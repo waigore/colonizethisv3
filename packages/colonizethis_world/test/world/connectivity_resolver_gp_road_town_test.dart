@@ -1,8 +1,9 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
+/// GP road/town resolveConnectivity cases ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver road/town', () {
     test('no roads: capital and adjacent tiles connected', () {

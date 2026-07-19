@@ -1,7 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_test/test.dart';
 
+/// Local-id naval topology helper cases ported from logic naval_test_part2 (Refs #4090).
 void main() {
   group('Naval', () {
     late MapTopology topology;

@@ -85,4 +85,15 @@ Remaining Slice B orphans: connectivity_resolver_* (non-blockade) / naval_test_p
 | `test/connectivity_resolver_blockade_additional_test.dart` | `colonizethis_world` | port+delete | Ported auto fleet+diplomacy, same-region two-port, inland-capital toggle to `connectivity_resolver_blockade_additional_test.dart` |
 | `test/naval_test_part2_part2_test.dart` | `colonizethis_world` | delete | Covered by `naval_topology_test.dart` |
 
-Remaining Slice B orphans: connectivity_resolver_test / sea / per_player_cache / town_closure / naval_test_part1 / naval_test_part2 deferred.
+## Slice B — World leaf purge/port (connectivity + naval)
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/connectivity_resolver_test.dart` | `colonizethis_world` | port+delete | Ported all 5 GP road/town cases to `world/connectivity_resolver_gp_road_town_test.dart` (non-GP peers only partial) |
+| `test/connectivity_resolver_sea_test.dart` | `colonizethis_world` | port+delete | Ported all 3 GP sea/port cases to `world/connectivity_resolver_gp_sea_test.dart` (blockade peers only negative overseas) |
+| `test/connectivity_resolver_per_player_province_cache_test.dart` | `colonizethis_world` | port+delete | Ported both multi-player cache pins to `world/connectivity_resolver_per_player_province_cache_test.dart` |
+| `test/connectivity_resolver_town_closure_worklist_test.dart` | `colonizethis_world` | port+delete | Ported multi-town + 40-port-map pins to `world/connectivity_resolver_town_closure_worklist_test.dart` |
+| `test/naval_test_part1_test.dart` | `colonizethis_world` | port+delete | Ported local-id index/adjacency/fleet-pick cases to `world/naval_local_topology_part1_test.dart` (3 cases overlapped `naval_topology_test.dart`) |
+| `test/naval_test_part2_test.dart` | `colonizethis_world` | port+delete | Ported lookup/combined-topology pins to `world/naval_local_topology_part2_test.dart` (5 cases overlapped `naval_topology_test.dart`) |
+
+Slice B world connectivity/naval leaf orphans complete. Remaining issue slices: C (setup), D (orders/combat/diplomacy/turn), E (thin residual + CI).

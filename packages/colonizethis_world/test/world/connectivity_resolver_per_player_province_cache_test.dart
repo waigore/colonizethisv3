@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Regression cover for the connectivity per-player province cache built once
 /// per `resolveConnectivity` call (Refs #2394). The previous implementation
@@ -9,6 +9,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 /// lookup); the consolidated single pass must keep results equivalent for
 /// multi-player scenes, isolate ownership across players, and degrade
 /// gracefully when ownership is mixed with unowned provinces.
+/// Per-player province cache resolveConnectivity pins ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver per-player province cache (Refs #2394)', () {
     test(

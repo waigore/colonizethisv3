@@ -1,8 +1,9 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
+/// Town-rule worklist / port-map resolveConnectivity pins ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver town-rule worklist', () {
     test(
