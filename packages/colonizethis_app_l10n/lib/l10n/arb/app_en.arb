@@ -74,7 +74,79 @@
   },
   "game_pauseMenu_settings": "Settings",
   "@game_pauseMenu_settings": {
-    "description": "Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to open the Settings dialog."
+  },
+  "settingsDialog_title": "Settings",
+  "@settingsDialog_title": {
+    "description": "Title of the app Settings dialog (DLG90001)."
+  },
+  "settingsDialog_restartHint": "Theme changes take effect after restart.",
+  "@settingsDialog_restartHint": {
+    "description": "Hint that map theme pickers apply on next app start."
+  },
+  "settingsDialog_close": "Close",
+  "@settingsDialog_close": {
+    "description": "Close button on the Settings dialog."
+  },
+  "settingsDialog_catalogUnavailable": "Theme catalog is not loaded.",
+  "@settingsDialog_catalogUnavailable": {
+    "description": "Shown when Settings opens before the map theme catalog is ready."
+  },
+  "settingsDialog_group_terrain": "Terrain",
+  "@settingsDialog_group_terrain": {
+    "description": "Settings dialog label for the terrain theme picker."
+  },
+  "settingsDialog_group_civilianIcons": "Civilian icons",
+  "@settingsDialog_group_civilianIcons": {
+    "description": "Settings dialog label for the civilian icon theme picker."
+  },
+  "settingsDialog_group_townIcons": "Town icons",
+  "@settingsDialog_group_townIcons": {
+    "description": "Settings dialog label for the town icon theme picker."
+  },
+  "settingsDialog_group_resourceIcons": "Resource icons",
+  "@settingsDialog_group_resourceIcons": {
+    "description": "Settings dialog label for the resource icon theme picker."
+  },
+  "settingsDialog_group_fleetIcons": "Fleet icons",
+  "@settingsDialog_group_fleetIcons": {
+    "description": "Settings dialog label for the fleet icon theme picker."
+  },
+  "settingsDialog_group_provinceLabelIcons": "Province label icons",
+  "@settingsDialog_group_provinceLabelIcons": {
+    "description": "Settings dialog label for the province-label icon theme picker."
+  },
+  "mapTheme_terrain_default": "Default",
+  "@mapTheme_terrain_default": {
+    "description": "Display name for the default terrain map theme."
+  },
+  "mapTheme_terrain_sepia": "Sepia",
+  "@mapTheme_terrain_sepia": {
+    "description": "Display name for the sepia terrain map theme."
+  },
+  "mapTheme_civilian_default": "Default",
+  "@mapTheme_civilian_default": {
+    "description": "Display name for the default civilian icon theme."
+  },
+  "mapTheme_civilian_sepia": "Sepia",
+  "@mapTheme_civilian_sepia": {
+    "description": "Display name for the sepia civilian icon theme."
+  },
+  "mapTheme_town_default": "Default",
+  "@mapTheme_town_default": {
+    "description": "Display name for the default town icon theme."
+  },
+  "mapTheme_resource_default": "Default",
+  "@mapTheme_resource_default": {
+    "description": "Display name for the default resource icon theme."
+  },
+  "mapTheme_fleet_default": "Default",
+  "@mapTheme_fleet_default": {
+    "description": "Display name for the default fleet icon theme."
+  },
+  "mapTheme_provinceLabel_default": "Default",
+  "@mapTheme_provinceLabel_default": {
+    "description": "Display name for the default province-label icon theme."
   },
   "game_pauseMenu_exitToMainMenu": "Exit to Main Menu",
   "@game_pauseMenu_exitToMainMenu": {

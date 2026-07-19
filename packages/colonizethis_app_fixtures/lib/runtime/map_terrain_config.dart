@@ -55,6 +55,10 @@ class MapTerrainConfig {
       kMapTerrainTilesetsAsset;
 
   static MapTerrainConfig? _instance;
+  static String? _loadedAssetPath;
+
+  /// Asset path used for the currently memoized instance, if loaded.
+  static String? get loadedAssetPath => _loadedAssetPath;
 
   /// Logical map cell size in pixels (Flame [RegionMapViewData.cellSize] / [CtRegionMap.cellSizePx]).
   final int mapCellSizePx;
@@ -79,6 +83,15 @@ class MapTerrainConfig {
     String assetPath = kDefaultMapTerrainTilesetsAsset,
   }) async {
     if (_instance != null) {
+      // Once-per-process: themed path is chosen at app start. A later call with
+      // a different path must not silently replace the memoized config
+      // (SPEC/program/map-theme-catalog.md).
+      if (assetPath != _loadedAssetPath) {
+        _log.w(
+          'map: MapTerrainConfig already loaded from $_loadedAssetPath; '
+          'ignoring ensureLoaded($assetPath)',
+        );
+      }
       return;
     }
     _log.d('map: loading terrain/map config from $assetPath');
@@ -141,12 +154,14 @@ class MapTerrainConfig {
       wangTilesets: wang,
       transportTilesets: transport,
     );
-    _log.i('map: terrain config loaded map_cell_size_px=$cell');
+    _loadedAssetPath = assetPath;
+    _log.i('map: terrain config loaded map_cell_size_px=$cell path=$assetPath');
   }
 
   /// Test / hot-reload helper.
   @visibleForTesting
   static void resetForTest() {
     _instance = null;
+    _loadedAssetPath = null;
   }
 }

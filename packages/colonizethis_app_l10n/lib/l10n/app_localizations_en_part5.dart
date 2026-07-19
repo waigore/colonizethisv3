@@ -487,4 +487,60 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   @override
   String get debugConsole_hintSpawnCivilian =>
       '/spawn_regiment peasant_levies 1';
+
+  @override
+  String get settingsDialog_title => 'Settings';
+
+  @override
+  String get settingsDialog_restartHint =>
+      'Theme changes take effect after restart.';
+
+  @override
+  String get settingsDialog_close => 'Close';
+
+  @override
+  String get settingsDialog_catalogUnavailable =>
+      'Theme catalog is not loaded.';
+
+  @override
+  String get settingsDialog_group_terrain => 'Terrain';
+
+  @override
+  String get settingsDialog_group_civilianIcons => 'Civilian icons';
+
+  @override
+  String get settingsDialog_group_townIcons => 'Town icons';
+
+  @override
+  String get settingsDialog_group_resourceIcons => 'Resource icons';
+
+  @override
+  String get settingsDialog_group_fleetIcons => 'Fleet icons';
+
+  @override
+  String get settingsDialog_group_provinceLabelIcons => 'Province label icons';
+
+  @override
+  String get mapTheme_terrain_default => 'Default';
+
+  @override
+  String get mapTheme_terrain_sepia => 'Sepia';
+
+  @override
+  String get mapTheme_civilian_default => 'Default';
+
+  @override
+  String get mapTheme_civilian_sepia => 'Sepia';
+
+  @override
+  String get mapTheme_town_default => 'Default';
+
+  @override
+  String get mapTheme_resource_default => 'Default';
+
+  @override
+  String get mapTheme_fleet_default => 'Default';
+
+  @override
+  String get mapTheme_provinceLabel_default => 'Default';
 }

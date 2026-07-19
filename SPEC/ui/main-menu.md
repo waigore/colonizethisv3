@@ -178,7 +178,7 @@ For both variants the widget contract (`variant`, `state`, `version`, callbacks,
 | New Game | Always | `onNewGame` | Shell opens leader-selection dialog. |
 | Resume game | `resumeGameVisible == true` | `onResumeGame` | Shell loads auto-save and navigates to game. |
 | Load Game | Saves exist | `onLoadGame` | Shell loads game or no-op when disabled. |
-| Settings | Always | `onSettings` | Shell opens Settings (stub). |
+| Settings | Always | `onSettings` | Shell emits `OpenDialogEvent(settings)` → [`settings-dialog.md`](settings-dialog.md). |
 | Quit | Always | `onQuit` | App exit. |
 
 ---

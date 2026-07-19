@@ -15,8 +15,8 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 /// Pause menu modal for [OpenPauseMenuPanelEvent]. Emits bus events only.
 ///
-/// SPEC: `SPEC/ui/pause-menu-panel.md`. Save/Load open dialogs when not
-/// turn-resolution-blocking; Settings remains a disabled placeholder.
+/// SPEC: `SPEC/ui/pause-menu-panel.md`. Save/Load/Settings open dialogs when
+/// not turn-resolution-blocking.
 class PauseMenuPanel extends ConsumerWidget {
   const PauseMenuPanel({super.key, required this.bus});
 
@@ -37,7 +37,7 @@ class PauseMenuPanel extends ConsumerWidget {
     'pauseMenuPanel.loadGameButton',
   );
 
-  /// Key for the Settings action (disabled placeholder).
+  /// Key for the Settings action.
   static const Key settingsButtonKey = ValueKey<String>(
     'pauseMenuPanel.settingsButton',
   );
@@ -77,11 +77,15 @@ class PauseMenuPanel extends ConsumerWidget {
     );
   }
 
+  void _onSettingsTap() {
+    bus.emit(const OpenDialogEvent(settingsDialogId));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
-    final saveLoadEnabled = !ref.watch(turnResolutionBlockingProvider);
+    final actionsEnabled = !ref.watch(turnResolutionBlockingProvider);
     return CtDialogShell(
       maxWidth: 360,
       maxHeight: 480,
@@ -103,7 +107,7 @@ class PauseMenuPanel extends ConsumerWidget {
             child: CtBrassDivider(),
           ),
           CtGap.l,
-          ..._actionRows(l10n, saveLoadEnabled: saveLoadEnabled),
+          ..._actionRows(l10n, actionsEnabled: actionsEnabled),
         ],
       ),
     );
@@ -118,7 +122,7 @@ class PauseMenuPanel extends ConsumerWidget {
 
   List<Widget> _actionRows(
     AppLocalizations l10n, {
-    required bool saveLoadEnabled,
+    required bool actionsEnabled,
   }) =>
       <Widget>[
         CtNinePatchButton(
@@ -129,22 +133,22 @@ class PauseMenuPanel extends ConsumerWidget {
         CtGap.m,
         CtNinePatchButton(
           key: saveGameButtonKey,
-          onPressed: saveLoadEnabled ? _onSaveTap : null,
-          enabled: saveLoadEnabled,
+          onPressed: actionsEnabled ? _onSaveTap : null,
+          enabled: actionsEnabled,
           child: Text(l10n.game_pauseMenu_saveGame),
         ),
         CtGap.m,
         CtNinePatchButton(
           key: loadGameButtonKey,
-          onPressed: saveLoadEnabled ? _onLoadTap : null,
-          enabled: saveLoadEnabled,
+          onPressed: actionsEnabled ? _onLoadTap : null,
+          enabled: actionsEnabled,
           child: Text(l10n.game_pauseMenu_loadGame),
         ),
         CtGap.m,
         CtNinePatchButton(
           key: settingsButtonKey,
-          onPressed: null,
-          enabled: false,
+          onPressed: actionsEnabled ? _onSettingsTap : null,
+          enabled: actionsEnabled,
           child: Text(l10n.game_pauseMenu_settings),
         ),
         CtGap.m,

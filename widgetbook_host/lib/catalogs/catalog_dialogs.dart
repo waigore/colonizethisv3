@@ -963,3 +963,57 @@ List<WidgetbookNode> get newGameLeaderSelectionDialogDirectories => [
     ],
   ),
 ];
+
+/// Settings Dialog stories. SPEC/ui/settings-dialog.md (DLG90001).
+List<WidgetbookNode> get settingsDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Settings Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default (multi-theme pickers)',
+        builder: (context) {
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () async {
+                  await MapThemeCatalogLoader.ensureLoaded();
+                  if (!innerContext.mounted) return;
+                  await showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => const SettingsDialog(),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Settings'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Default (mobile)',
+        builder: (context) {
+          return MediaQuery(
+            data: const MediaQueryData(size: Size(390, 844)),
+            child: _moveDialogStoryFrame(
+              open: (innerContext) {
+                return ElevatedButton(
+                  onPressed: () async {
+                    await MapThemeCatalogLoader.ensureLoaded();
+                    if (!innerContext.mounted) return;
+                    await showDialog<void>(
+                      context: innerContext,
+                      builder: (_) => const SettingsDialog(),
+                    );
+                  },
+                  // ignore: avoid_hardcoded_strings_in_widgets
+                  child: const Text('Open Settings (mobile)'),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    ],
+  ),
+];
