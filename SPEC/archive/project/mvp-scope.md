@@ -50,7 +50,7 @@ For each phase the **full dev workflow** is followed: **Design → Dev → Test 
 | **5** | Military victory check, small tech tree (1–2 eras), leader bonuses (GDD 09) | Victory screen, research phase, leader selection, leader bonuses in combat | Victory triggers correctly; tech unlocks apply; leader bonuses apply; integration test to victory | Victory, tech, and leaders match GDD | Military victory checks and a small tech tree are in place. **U1** can complete the Victory and Progress UI (`03l`), and **U3** can implement the basic Technology panel (`03k`) that surfaces current caps and the Phase 5 tech subset. |
 | **6** | Pixel-art canon, asset set, main menu per UXD | Asset pipeline, Flame/Flutter integration, main menu | Assets load; main menu flows; no regressions on prior phases | Style and structure match UXD | Pixel-art canon and main menu styling apply to all previously implemented UIs (`03a`–`03m`). No new layouts are required; this phase focuses on asset pipeline and visual fidelity for the existing UI frame. |
 
-**Known issues:** Map-generation polish and other deferred items are listed in [known-issues.md](known-issues.md) and are to be tackled after the main development phases.
+**Known issues:** Deferred map-generation polish and similar items were tracked in the project issue tracker (not in SPEC) after the main development phases.
 
 ---
 
