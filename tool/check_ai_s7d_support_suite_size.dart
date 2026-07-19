@@ -4,9 +4,10 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Soft physical-line ceiling for S7D support modules after the Phase-8
-/// campaign-runner split (Refs #3997).
-const int aiS7dSupportSuitePhysicalLineCeiling = 800;
+/// Soft physical-line ceiling for S7D support modules after the Phase-9
+/// residual densify (Refs #3997 / #4079 Slice D). Prior Phase-8 ceiling was
+/// 800; residual ≥650 offenders were topic-split under this tightened cap.
+const int aiS7dSupportSuitePhysicalLineCeiling = 650;
 
 /// Repo-relative path prefix for S7D support modules.
 const String _aiS7dSupportPathPrefix =
