@@ -1,78 +1,43 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/civilian_work_scenario_matrix_fixture.dart';
+
 /// Scenario matrix SC-06-SC-09 for GitHub #2082 / `selectFullAiCivilianWorkOrders`.
 /// Split from monolith for #2288; see sibling file for SC-01-SC-05 and regressions.
 void main() {
-  const playerId = 'gp1';
-  const ow = 'oldWorld';
-
   group('Full AI civilian work #2082 scenario matrix (SC-06-SC-09)', () {
     test('SC-06: two explore rows — pick higher E (province β, 124)', () {
-      const pAlpha = '$ow|pAlpha';
-      const pBeta = '$ow|pBeta';
-      final alphaTiles = List.generate(7, (i) => '$ow|pAlpha|$i|0');
-      final betaTiles = List.generate(8, (i) => '$ow|pBeta|$i|0');
+      final alphaTiles = matrixProvinceTiles('pAlpha', 7);
+      final betaTiles = matrixProvinceTiles('pBeta', 8);
+      final pAlpha = matrixProvinceId('pAlpha');
+      final pBeta = matrixProvinceId('pBeta');
       final vis = <String, VisibilityLevel>{
         alphaTiles[0]: VisibilityLevel.unknown,
         alphaTiles[1]: VisibilityLevel.unknown,
         for (var i = 2; i < 7; i++) alphaTiles[i]: VisibilityLevel.fogged,
         for (final t in betaTiles) t: VisibilityLevel.unknown,
       };
-
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: pAlpha, regionId: ow, ownerId: 'tribe1'),
-              Province(id: pBeta, regionId: ow, ownerId: 'tribe1'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {pAlpha: alphaTiles, pBeta: betaTiles},
-          },
-        ),
-        players: const [
-          Player(id: playerId, displayName: 'GP', isHuman: false),
+      final game = matrixOwGame(
+        provinces: [
+          matrixTribeProvince('pAlpha'),
+          matrixTribeProvince('pBeta'),
         ],
-        tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
+        tilesByProvince: {pAlpha: alphaTiles, pBeta: betaTiles},
       );
-      final view = PlayerView(
-        playerId: playerId,
-        player: game.players.single,
-        ownUnitsById: {
-          'e1': Unit(
-            id: 'e1',
-            type: kUnitTypeExplorer,
-            ownerId: playerId,
-            locationProvinceId: pAlpha,
-            tileKey: alphaTiles[0],
-          ),
-        },
-        provincesById: const {},
+      final view = matrixExplorerView(
+        game: game,
+        locationProvinceId: pAlpha,
+        tileKey: alphaTiles[0],
         visibilityByTile: vis,
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
       );
       final r = selectFullAiCivilianWorkOrders(
         workSuggestions: [
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetExplore,
-            targetTileKey: alphaTiles[0],
-          ),
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetExplore,
-            targetTileKey: betaTiles[0],
-          ),
+          matrixExploreWork(alphaTiles[0]),
+          matrixExploreWork(betaTiles[0]),
         ],
         view: view,
         game: game,
@@ -84,60 +49,29 @@ void main() {
     test(
       'SC-07b: equal P_score prospects → lexicographically smaller tile',
       () {
-        const pOwn = '$ow|pOwn';
-        const tkLo = '$ow|pOwn|0|0';
-        const tkHi = '$ow|pOwn|1|0';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [Province(id: pOwn, regionId: ow, ownerId: playerId)],
-              units: const [],
-            ),
-            newWorld: const RegionData(),
-            tileKeysByRegionAndProvince: {
-              ow: {
-                pOwn: [tkLo, tkHi],
-              },
-            },
-          ),
-          players: const [
-            Player(id: playerId, displayName: 'GP', isHuman: false),
-          ],
-        );
-        final view = PlayerView(
-          playerId: playerId,
-          player: game.players.single,
-          ownUnitsById: {
-            'e1': Unit(
-              id: 'e1',
-              type: kUnitTypeExplorer,
-              ownerId: playerId,
-              locationProvinceId: pOwn,
-              tileKey: tkLo,
-            ),
+        final pOwn = matrixProvinceId('pOwn');
+        final tkLo = matrixTileKey('pOwn');
+        final tkHi = matrixTileKey('pOwn', 1);
+        final game = matrixOwGame(
+          provinces: [matrixOwnedProvince('pOwn')],
+          tilesByProvince: {
+            pOwn: [tkLo, tkHi],
           },
-          provincesById: const {},
-          visibilityByTile: const {
+          tribes: const [],
+        );
+        final view = matrixExplorerView(
+          game: game,
+          locationProvinceId: pOwn,
+          tileKey: tkLo,
+          visibilityByTile: {
             tkLo: VisibilityLevel.fullyVisible,
             tkHi: VisibilityLevel.fullyVisible,
           },
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
         );
         final r = selectFullAiCivilianWorkOrders(
           workSuggestions: [
-            WorkOrder(
-              unitId: 'e1',
-              target: kWorkTargetProspect,
-              targetTileKey: tkHi,
-            ),
-            WorkOrder(
-              unitId: 'e1',
-              target: kWorkTargetProspect,
-              targetTileKey: tkLo,
-            ),
+            matrixProspectWork(tkHi),
+            matrixProspectWork(tkLo),
           ],
           view: view,
           game: game,
@@ -147,66 +81,35 @@ void main() {
     );
 
     test('SC-08: owned prospect beats minor (57 > 37)', () {
-      const pOwn = '$ow|pOwn';
-      const pMin = '$ow|pMin';
-      const tkOwn = '$ow|pOwn|0|0';
-      const tkMin = '$ow|pMin|0|0';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: pOwn, regionId: ow, ownerId: playerId),
-              Province(id: pMin, regionId: ow, ownerId: 'minor1'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              pOwn: [tkOwn],
-              pMin: [tkMin],
-            },
-          },
-        ),
-        players: const [
-          Player(id: playerId, displayName: 'GP', isHuman: false),
+      final pOwn = matrixProvinceId('pOwn');
+      final pMin = matrixProvinceId('pMin');
+      final tkOwn = matrixTileKey('pOwn');
+      final tkMin = matrixTileKey('pMin');
+      final game = matrixOwGame(
+        provinces: [
+          matrixOwnedProvince('pOwn'),
+          matrixMinorProvince('pMin'),
         ],
+        tilesByProvince: {
+          pOwn: [tkOwn],
+          pMin: [tkMin],
+        },
+        tribes: const [],
         minorNations: const [MinorNation(id: 'minor1', displayName: 'M')],
       );
-      final view = PlayerView(
-        playerId: playerId,
-        player: game.players.single,
-        ownUnitsById: {
-          'e1': Unit(
-            id: 'e1',
-            type: kUnitTypeExplorer,
-            ownerId: playerId,
-            locationProvinceId: pOwn,
-            tileKey: tkOwn,
-          ),
-        },
-        provincesById: const {},
-        visibilityByTile: const {
+      final view = matrixExplorerView(
+        game: game,
+        locationProvinceId: pOwn,
+        tileKey: tkOwn,
+        visibilityByTile: {
           tkOwn: VisibilityLevel.fullyVisible,
           tkMin: VisibilityLevel.fullyVisible,
         },
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
       );
       final r = selectFullAiCivilianWorkOrders(
         workSuggestions: [
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetProspect,
-            targetTileKey: tkMin,
-          ),
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetProspect,
-            targetTileKey: tkOwn,
-          ),
+          matrixProspectWork(tkMin),
+          matrixProspectWork(tkOwn),
         ],
         view: view,
         game: game,
@@ -215,10 +118,10 @@ void main() {
     });
 
     test('SC-09: urgent minor prospect beats explore-only (132 > 100)', () {
-      const pOwn = '$ow|pOwn';
-      const pTribe = '$ow|pTr';
-      const tkExp = '$ow|pOwn|0|0';
-      const tkPr = '$ow|pTr|0|0';
+      final pOwn = matrixProvinceId('pOwn');
+      final pTribe = matrixProvinceId('pTr');
+      final tkExp = matrixTileKey('pOwn');
+      final tkPr = matrixTileKey('pTr');
       final tileMap = TileMapResult(
         width: 1,
         height: 1,
@@ -229,66 +132,33 @@ void main() {
           [TerrainType.swamp],
         ],
       );
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: pOwn, regionId: ow, ownerId: playerId),
-              Province(id: pTribe, regionId: ow, ownerId: 'tribe1'),
-            ],
-            units: const [],
-          ),
-          newWorld: const RegionData(),
-          tileKeysByRegionAndProvince: {
-            ow: {
-              pOwn: [tkExp],
-              pTribe: [tkPr],
-            },
-          },
-        ),
-        players: const [
-          Player(id: playerId, displayName: 'GP', isHuman: false),
+      final game = matrixOwGame(
+        provinces: [
+          matrixOwnedProvince('pOwn'),
+          matrixTribeProvince('pTr'),
         ],
-        tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
-      );
-      final view = PlayerView(
-        playerId: playerId,
-        player: game.players.single,
-        ownUnitsById: {
-          'e1': Unit(
-            id: 'e1',
-            type: kUnitTypeExplorer,
-            ownerId: playerId,
-            locationProvinceId: pOwn,
-            tileKey: tkExp,
-          ),
+        tilesByProvince: {
+          pOwn: [tkExp],
+          pTribe: [tkPr],
         },
-        provincesById: const {},
-        visibilityByTile: const {
+      );
+      final view = matrixExplorerView(
+        game: game,
+        locationProvinceId: pOwn,
+        tileKey: tkExp,
+        visibilityByTile: {
           tkExp: VisibilityLevel.fullyVisible,
           tkPr: VisibilityLevel.fullyVisible,
         },
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
       );
       final r = selectFullAiCivilianWorkOrders(
         workSuggestions: [
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetExplore,
-            targetTileKey: tkExp,
-          ),
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetProspect,
-            targetTileKey: tkPr,
-          ),
+          matrixExploreWork(tkExp),
+          matrixProspectWork(tkPr),
         ],
         view: view,
         game: game,
-        tileMapByRegion: {ow: tileMap},
+        tileMapByRegion: {matrixOw: tileMap},
       );
       expect(r.workOrders.single.target, kWorkTargetProspect);
       expect(r.workOrders.single.targetTileKey, tkPr);
