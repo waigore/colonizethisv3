@@ -133,11 +133,11 @@ Slice C setup leaf orphans complete (`game_setup_*` / `capital_choice_*` / `gp_*
 |-------------|---------------|--------|----------|
 | `test/army_integration_combine_split_test.dart` | `colonizethis_world` | delete | Covered by `world/army_commands_test.dart` combine/split groups |
 | `test/army_integration_ensure_reconcile_test.dart` | `colonizethis_world` | delete | Covered by `world/army_migration_test.dart` ensure/reconcile groups |
-| `test/army_integration_test.dart` | `colonizethis_orders` + `colonizethis_world` | port+delete | `last order per armyId wins` → `orders/army_move_order_draft_mutations_test.dart`; adjacent/home-army moves covered by `world/army_movement_test.dart`; sequential cross-region ported into that peer |
-| `test/army_move_picker_destinations_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/army_move_picker_destinations_own_test.dart` + `orders/army_move_picker_destinations_invasion_test.dart` (+ shared fixtures; split for ≤400 LOC) |
-| `test/draft_orders_naval_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/draft_orders_naval_test.dart` |
-| `test/civilian_work_draft_commit_validation_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_draft_commit_validation_test.dart` |
-| `test/civilian_work_orders_issue_2070_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_orders_issue_2070_test.dart` |
+| `test/army_integration_test.dart` | `colonizethis_orders` + `colonizethis_world` | port+delete | `last order per armyId wins` → `orders/logic_orphan_ports_dense_test.dart`; adjacent/home-army moves covered by `world/army_movement_test.dart`; sequential cross-region ported into that peer |
+| `test/army_move_picker_destinations_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` (dense under `repo.orders_test_support_loc`) |
+| `test/draft_orders_naval_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` |
+| `test/civilian_work_draft_commit_validation_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` |
+| `test/civilian_work_orders_issue_2070_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` |
 | `test/combat_logging_test.dart` | `colonizethis_combat` | port+delete | Ported to `combat/combat_logging_resolve_battle_context_test.dart` (turn peer covers phase-level logs only) |
 | `test/capital_reassignment_after_combat_test.dart` | `colonizethis_world` | port+delete | Ported to `world/capital_reassignment_after_combat_unique_ports_test.dart` (seaboard preference + no port/tileState side effects; peers cover clear/fatal) |
 | `test/faction_capital_reassignment_after_combat_test.dart` | `colonizethis_world` | delete | Covered by `world/capital_and_gp_fall_reassignment_test.dart` minor/tribe groups |
@@ -162,9 +162,9 @@ Slice D orders/combat/diplomacy/turn leaf orphans complete. Remaining: Slice E (
 |-------------|---------------|--------|----------|
 | `test/foreign_civilian_visibility_test.dart` | `colonizethis_world` | delete | Asserts match `world/player_view_helpers_test.dart` `foreignCivilianVisibleToPlayer` group (owner/spy/fogged/unknown) |
 | `test/production_input_consumption_test.dart` | `colonizethis_economy` | port+delete | Ported to `economy/production_input_consumption_test.dart` |
-| `test/prospectable_terrain_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/prospectable_terrain_test.dart` |
+| `test/prospectable_terrain_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` |
 | `test/prospect_terrain_known_resource_test.dart` | `colonizethis_orders` | delete | Wool/hills + already-prospected + suggest exclusion covered by `order_engine_move_and_work_context_scenarios`, `application_helpers_scenarios`, `valid_work_tiles_scenarios` |
-| `test/dev_exclusive_reserved_tiles_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/dev_exclusive_reserved_tiles_test.dart` |
+| `test/dev_exclusive_reserved_tiles_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/logic_orphan_ports_dense_test.dart` |
 | `test/characterization/combat_engagement_snapshot_test.dart` | `colonizethis_combat` | port+delete | Fails keep gate (single domain `resolveEngagement`); ported to `combat/combat_engagement_snapshot_test.dart` |
 | `test/characterization/game_setup_snapshot_test.dart` | `colonizethis_setup` | port+delete | Fails keep gate (single domain `createGameFromGeneratedMaps`); ported to `setup/game_setup_snapshot_test.dart` |
 | `test/contract_api_smoke_test.dart` | `colonizethis_logic` | keep | New AC4 contract smoke for `ai_api` / `order_suggestion_api` / `debug_console_api` |
