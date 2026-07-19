@@ -79,7 +79,7 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `13-mastery-of-the-seas.md` | Present (S7) |
 | `14-passage-of-turns.md` | Present (S8) |
 | `15-road-to-victory.md` | Present (S8) |
-| `16-appendix-actions.md` | Pending (S9) |
+| `16-appendix-actions.md` | Present (S9) |
 
 ## Related process artifacts
 
