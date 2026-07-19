@@ -73,7 +73,11 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `07-engines-of-industry.md` | Present (S6) |
 | `08-commerce-and-the-world-market.md` | Present (S6) |
 | `09-pursuit-of-knowledge.md` | Present (S6) |
-| `10-diplomacy.md` … `16-appendix-actions.md` | Pending (S7–S9) |
+| `10-diplomacy.md` | Present (S7) |
+| `11-raising-the-banners.md` | Present (S7) |
+| `12-art-of-war.md` | Present (S7) |
+| `13-mastery-of-the-seas.md` | Present (S7) |
+| `14-passage-of-turns.md` … `16-appendix-actions.md` | Pending (S8–S9) |
 
 ## Related process artifacts
 
