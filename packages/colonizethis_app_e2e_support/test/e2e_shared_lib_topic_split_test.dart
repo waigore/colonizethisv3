@@ -7,8 +7,10 @@ import 'dart:io';
 import 'package:colonizethis_test/test.dart';
 import 'package:path/path.dart' as p;
 
+import 'support/e2e_support_package_root.dart';
+
 void main() {
-  final libDir = Directory(p.join(Directory.current.path, 'lib'));
+  final libDir = Directory(p.join(e2eSupportPackageRoot().path, 'lib'));
 
   group('e2e_test_shared topic split (Refs #4075 AC1)', () {
     test('umbrella exports residual topic libraries', () {
