@@ -1,30 +1,26 @@
 // Ported from colonizethis_logic (Refs #4090 Slice D).
+// Table-driven for repo.orders_test_prefer_scenario_tables (Refs #3949).
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'support/scenario_runner.dart';
 
 void main() {
-  group('applyNavalMoveOrderForPlayer', () {
-    test('replaces prior naval move for same fleet', () {
+  runLabeledScenarioGroup('applyNavalMoveOrderForPlayer', [
+    rs('replaces prior naval move for same fleet', () {
       const p1 = 'p1';
       final before = Orders(
         navalMoveOrdersByPlayerId: {
           p1: [
-            const NavalMoveOrder(
-              fleetId: 'f1',
-              destinationSeaZoneId: 'sea1',
-            ),
+            const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea1'),
           ],
         },
       );
       final after = applyNavalMoveOrderForPlayer(
         before,
         p1,
-        const NavalMoveOrder(
-          fleetId: 'f1',
-          destinationSeaZoneId: 'sea2',
-        ),
+        const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
       );
       expect(
         after.navalMoveOrdersByPlayerId[p1],
@@ -32,9 +28,8 @@ void main() {
           const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
         ]),
       );
-    });
-
-    test('removes naval mission orders for same fleet', () {
+    }),
+    rs('removes naval mission orders for same fleet', () {
       const p1 = 'p1';
       final before = Orders(
         navalMoveOrdersByPlayerId: {
@@ -58,24 +53,20 @@ void main() {
         after.navalMissionOrdersByPlayerId[p1]?.map((e) => e.fleetId).toList(),
         equals(['f2']),
       );
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('navalMissionOrdersRespectingNavalMoves', () {
-    test('drops mission for fleet that has a move order', () {
+  runLabeledScenarioGroup('navalMissionOrdersRespectingNavalMoves', [
+    rs('drops mission for fleet that has a move order', () {
       const p1 = 'p1';
       final missions = {
-        p1: [
-          NavalMissionOrder(fleetId: 'f1', mission: 'patrol'),
-        ],
+        p1: [NavalMissionOrder(fleetId: 'f1', mission: 'patrol')],
       };
       final moves = {
-        p1: [
-          const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'z'),
-        ],
+        p1: [const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'z')],
       };
       final out = navalMissionOrdersRespectingNavalMoves(missions, moves);
       expect(out.isEmpty, isTrue);
-    });
-  });
+    }),
+  ], runRunnableScenario);
 }

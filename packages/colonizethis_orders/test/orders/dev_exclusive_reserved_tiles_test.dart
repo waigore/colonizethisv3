@@ -1,12 +1,14 @@
 // Ported from colonizethis_logic (Refs #4090 Slice E).
-import 'package:colonizethis_test/test.dart';
+// Table-driven for repo.orders_test_prefer_scenario_tables (Refs #3949).
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_test/test.dart';
+
+import 'support/scenario_runner.dart';
 
 void main() {
-  group('devExclusiveReservedTileKeysForPlayer', () {
-    test('includes in-progress dev work tile from world state', () {
+  runLabeledScenarioGroup('devExclusiveReservedTileKeysForPlayer', [
+    rs('includes in-progress dev work tile from world state', () {
       const playerId = 'gp1';
       const tk = 'oldWorld|p1|0|0';
       final game = Game(
@@ -42,9 +44,8 @@ void main() {
         playerId,
       );
       expect(reserved, contains(tk));
-    });
-
-    test('includes pending dev-exclusive work order target tiles', () {
+    }),
+    rs('includes pending dev-exclusive work order target tiles', () {
       const playerId = 'gp1';
       const tk = 'oldWorld|p1|0|0';
       final game = Game(
@@ -74,9 +75,8 @@ void main() {
         playerId,
       );
       expect(reserved, contains(tk));
-    });
-
-    test('ignorePendingWorkOrderUnitId omits that unit pending only', () {
+    }),
+    rs('ignorePendingWorkOrderUnitId omits that unit pending only', () {
       const playerId = 'gp1';
       const tk = 'oldWorld|p1|0|0';
       final game = Game(
@@ -115,6 +115,6 @@ void main() {
         ignorePendingWorkOrderUnitId: 'b2',
       );
       expect(forB2, contains(tk));
-    });
-  });
+    }),
+  ], runRunnableScenario);
 }
