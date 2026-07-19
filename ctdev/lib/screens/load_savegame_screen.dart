@@ -1,5 +1,5 @@
 // Load Savegame: list saved games, load and navigate to Init Game Map Debug with GP colours from save.
-// SPEC/program/ctdev-app.md, SPEC/project/plan-update-gp-colours-save-load.
+// SPEC/program/ctdev-app.md, SPEC/program/map-visualization.md (greatPowerColorOverride).
 
 import 'dart:typed_data';
 
