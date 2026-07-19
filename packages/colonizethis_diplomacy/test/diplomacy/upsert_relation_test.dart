@@ -1,5 +1,6 @@
+// Ported from colonizethis_logic (Refs #4090 Slice D).
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 void main() {

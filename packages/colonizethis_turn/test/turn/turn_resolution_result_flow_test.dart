@@ -1,4 +1,6 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+// Ported from colonizethis_logic (Refs #4090 Slice D).
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 

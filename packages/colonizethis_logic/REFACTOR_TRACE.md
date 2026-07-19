@@ -126,3 +126,32 @@ Slice B world connectivity/naval leaf orphans complete. Remaining issue slices: 
 | `test/game_setup_variants_and_naming_additional_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_variants_and_naming_additional_test.dart` |
 
 Slice C setup leaf orphans complete (`game_setup_*` / `capital_choice_*` / `gp_*` / `minor_tribe_*` / `warp_zone` / `province_assignment` / `effective_setup_seed`). Remaining issue slices: D (orders/combat/diplomacy/turn + combat-adjacent capital reassignment), E (thin residual + CI). Characterization `game_setup_snapshot_test.dart` deferred to Slice D/E eligibility gate.
+
+## Slice D — Orders / combat / diplomacy / turn residual
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/army_integration_combine_split_test.dart` | `colonizethis_world` | delete | Covered by `world/army_commands_test.dart` combine/split groups |
+| `test/army_integration_ensure_reconcile_test.dart` | `colonizethis_world` | delete | Covered by `world/army_migration_test.dart` ensure/reconcile groups |
+| `test/army_integration_test.dart` | `colonizethis_orders` + `colonizethis_world` | port+delete | `last order per armyId wins` → `orders/army_move_order_draft_mutations_test.dart`; adjacent/home-army moves covered by `world/army_movement_test.dart`; sequential cross-region ported into that peer |
+| `test/army_move_picker_destinations_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/army_move_picker_destinations_test.dart` (declare-war / sort destinations absent from scenario runner) |
+| `test/draft_orders_naval_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/draft_orders_naval_test.dart` |
+| `test/civilian_work_draft_commit_validation_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_draft_commit_validation_test.dart` |
+| `test/civilian_work_orders_issue_2070_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_orders_issue_2070_test.dart` |
+| `test/combat_logging_test.dart` | `colonizethis_combat` | port+delete | Ported to `combat/combat_logging_resolve_battle_context_test.dart` (turn peer covers phase-level logs only) |
+| `test/capital_reassignment_after_combat_test.dart` | `colonizethis_world` | port+delete | Ported to `world/capital_reassignment_after_combat_unique_ports_test.dart` (seaboard preference + no port/tileState side effects; peers cover clear/fatal) |
+| `test/faction_capital_reassignment_after_combat_test.dart` | `colonizethis_world` | delete | Covered by `world/capital_and_gp_fall_reassignment_test.dart` minor/tribe groups |
+| `test/faction_terminal_fall_test.dart` | `colonizethis_world` | delete | Covered by `world/capital_and_gp_fall_terminal_test.dart` |
+| `test/hostile_factions_by_faction_test.dart` | `colonizethis_world` | port+delete | Ported to `world/hostile_factions_by_faction_test.dart` (empty/three-party/atPeace pins beyond peer adjacency smoke) |
+| `test/upsert_relation_test.dart` | `colonizethis_diplomacy` | port+delete | Ported to `diplomacy/upsert_relation_test.dart` |
+| `test/turn_resolution_result_test.dart` | `colonizethis_diplomacy` + `colonizethis_turn` | delete | Equality/`DiplomacyPhaseResult.isPending` covered by `diplomacy_phase_result_value_types_test.dart`; `gameFromTurnResolutionResult` covered by `turn/turn_resolution_result_test.dart` |
+| `test/turn_resolution_result_flow_test.dart` | `colonizethis_turn` | port+delete | Ported to `turn/turn_resolution_result_flow_test.dart` (`requireTurnResolutionComplete` error hints + sealed `.game`) |
+| `test/game_events_test.dart` | `colonizethis_world` | delete | Subtype construction covered by `world/event_bus/game_event_bus_test.dart` |
+
+### Slice D basename collisions resolved (AC3 subset)
+
+| Basename | Status |
+|----------|--------|
+| `turn_resolution_result_test.dart` | removed from logic |
+
+Slice D orders/combat/diplomacy/turn leaf orphans complete. Remaining: Slice E (thin residual + CI ratchet + characterization gate + AC10 map dep). Characterization snapshots deferred to Slice E eligibility gate.
