@@ -70,7 +70,10 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `04-charting-the-unknown.md` | Present (S5) |
 | `05-people-and-prosperity.md` | Present (S5) |
 | `06-bounty-of-the-earth.md` | Present (S5) |
-| `07-engines-of-industry.md` … `16-appendix-actions.md` | Pending (S6–S9) |
+| `07-engines-of-industry.md` | Present (S6) |
+| `08-commerce-and-the-world-market.md` | Present (S6) |
+| `09-pursuit-of-knowledge.md` | Present (S6) |
+| `10-diplomacy.md` … `16-appendix-actions.md` | Pending (S7–S9) |
 
 ## Related process artifacts
 
