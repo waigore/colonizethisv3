@@ -1,8 +1,8 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/src/world/minor_military_parity.dart';
-import 'package:colonizethis_test/test.dart';
-
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/src/world/minor_military_parity.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up).
 ///
@@ -143,7 +143,7 @@ void main() {
         units: [
           Unit(
             id: 'u_minor_nw',
-            type: 'horse_artillery',
+            type: kTechIdHorseArtillery,
             ownerId: 'm1',
             locationProvinceId: 'newWorld|n1',
             medals: 1,
