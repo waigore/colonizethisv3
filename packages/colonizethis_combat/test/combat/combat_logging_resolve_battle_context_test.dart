@@ -1,10 +1,10 @@
 // Ported from colonizethis_logic (Refs #4090 Slice D).
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:logger/logger.dart';
-
 import 'package:colonizethis_test/combat_logging_test_support.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   group('land combat logging (resolveBattleContext)', () {
@@ -39,32 +39,9 @@ void main() {
             medals: 0,
           ),
         ];
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: 'p', regionId: 'oldWorld', ownerId: 'def'),
-              ],
-              units: [...attackerUnits, ...defenderUnits],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(
-              id: 'att',
-              displayName: 'France',
-              isHuman: true,
-              leaderKey: 'napoleon',
-            ),
-            Player(
-              id: 'def',
-              displayName: 'Prussia',
-              isHuman: false,
-              leaderKey: 'frederick',
-            ),
-          ],
+        final game = landResolverBattleGame(
+          units: [...attackerUnits, ...defenderUnits],
+          players: landResolverNapoleonFrederickPlayers,
         );
         const ctx = BattleContext(
           provinceId: 'p',
@@ -124,46 +101,37 @@ void main() {
       final capture = getCapture();
       // First attacker must lose (defender still holds); otherwise a decisive
       // first attacker victory skips remaining attackers (no second engagement).
-      final game = Game(
-        id: 'g1',
+      final game = landResolverBattleGame(
+        turnNumber: 8,
         globalGameSeed: 1234,
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 8),
-          oldWorld: RegionData(
-            provinces: const [
-              Province(id: 'p', regionId: 'oldWorld', ownerId: 'def'),
-            ],
-            units: [
-              Unit(
-                id: 'a1',
-                type: 'peasant_levies',
-                ownerId: 'attA',
-                locationProvinceId: 'p',
-              ),
-              Unit(
-                id: 'a2',
-                type: 'peasant_levies',
-                ownerId: 'attB',
-                locationProvinceId: 'p',
-              ),
-              Unit(
-                id: 'd1',
-                type: 'grenadiers',
-                ownerId: 'def',
-                locationProvinceId: 'p',
-                medals: 2,
-              ),
-              Unit(
-                id: 'd2',
-                type: 'grenadiers',
-                ownerId: 'def',
-                locationProvinceId: 'p',
-                medals: 2,
-              ),
-            ],
+        units: [
+          Unit(
+            id: 'a1',
+            type: 'peasant_levies',
+            ownerId: 'attA',
+            locationProvinceId: 'p',
           ),
-          newWorld: const RegionData(),
-        ),
+          Unit(
+            id: 'a2',
+            type: 'peasant_levies',
+            ownerId: 'attB',
+            locationProvinceId: 'p',
+          ),
+          Unit(
+            id: 'd1',
+            type: 'grenadiers',
+            ownerId: 'def',
+            locationProvinceId: 'p',
+            medals: 2,
+          ),
+          Unit(
+            id: 'd2',
+            type: 'grenadiers',
+            ownerId: 'def',
+            locationProvinceId: 'p',
+            medals: 2,
+          ),
+        ],
         players: const [
           Player(id: 'attA', displayName: 'A', isHuman: true),
           Player(id: 'attB', displayName: 'B', isHuman: true),
