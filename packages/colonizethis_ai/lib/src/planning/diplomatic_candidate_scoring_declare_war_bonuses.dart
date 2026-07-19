@@ -1,23 +1,13 @@
-import 'dart:math' as math;
-
-import '../util/faction_query.dart';
 import 'diplomatic_candidate_scoring_declare_war_context.dart';
-import 'diplomatic_candidate_scoring_shared.dart';
-import 'expand_phase_planner.dart';
-import 'goal_manager.dart';
 import 'phase_planner_diplomacy_filter.dart';
-import 'planning_helpers.dart'
-    show
-        gpFactionIdsAtWarWith,
-        isAtWarWithAnyGreatPower,
-        isOwnOldWorldBelowConquestQuota,
-        kDiplomaticDefaultBaseScore;
+import 'planning_helpers.dart' show kDiplomaticDefaultBaseScore;
 import 'planning_imports.dart';
+import 'diplomatic_candidate_scoring_declare_war_bonuses_adjacency.dart';
 
 final _log = packageLogger();
 
 /// OW-expansion declare-war addend scaled by [oldWorldConquestWeight].
-int _owConquestDeclareWarBonus(DeclareWarTargetContext ctx, int baseBonus) =>
+int owConquestDeclareWarBonus(DeclareWarTargetContext ctx, int baseBonus) =>
     declareWarOldWorldConquestScaledBonus(
       baseBonus: baseBonus,
       oldWorldConquestWeight: ctx.oldWorldConquestWeight,
@@ -29,10 +19,10 @@ int _owConquestDeclareWarBonus(DeclareWarTargetContext ctx, int baseBonus) =>
 /// Captures the repeated `oldWorldConquestWeight: ctx.oldWorldConquestWeight`
 /// plumbing across the five declare-war floor call sites in this file (Refs
 /// #3717 declare-war OW-conquest scoring-skeleton dedup), mirroring the sibling
-/// [_owConquestDeclareWarBonus] addend wrapper. Pure delegation to the shared
+/// [owConquestDeclareWarBonus] addend wrapper. Pure delegation to the shared
 /// [raiseToDeclareWarOldWorldConquestFloor] helper — byte-identical to the
 /// inline keyword call it replaces.
-int _raiseToOwConquestDeclareWarFloor(
+int raiseToOwConquestDeclareWarFloorLocal(
   DeclareWarTargetContext ctx, {
   required int currentScore,
   required int floorBonus,
@@ -45,8 +35,8 @@ int _raiseToOwConquestDeclareWarFloor(
 int scoreDeclareWarBonuses(DeclareWarTargetContext ctx) {
   var s = _declareWarCoreBonuses(ctx);
   s = _declareWarExpansionAndColonialBonuses(ctx, s);
-  s = _declareWarAdjacencyAndStalledBonuses(ctx, s);
-  return _declareWarFinalizeBonuses(ctx, s);
+  s = declareWarAdjacencyAndStalledBonuses(ctx, s);
+  return declareWarFinalizeBonuses(ctx, s);
 }
 
 int _declareWarCoreBonuses(DeclareWarTargetContext ctx) {
@@ -76,7 +66,7 @@ int _declareWarCoreBonuses(DeclareWarTargetContext ctx) {
   if (ctx.snapshot.conquest.preferredConquestTargetFactionIdsSorted.contains(
     ctx.order.targetFactionId,
   )) {
-    s += _owConquestDeclareWarBonus(ctx, 15);
+    s += owConquestDeclareWarBonus(ctx, 15);
   }
   if (_log.debugEnabled) {
     _log.d(
@@ -88,7 +78,7 @@ int _declareWarCoreBonuses(DeclareWarTargetContext ctx) {
   return s;
 }
 
-int _stalledOwMinorRecoveryBonus(DeclareWarTargetContext ctx) {
+int stalledOwMinorRecoveryBonus(DeclareWarTargetContext ctx) {
   final owned = ctx.snapshot.conquest.oldWorldProvincesOwned;
   if (owned <= kFewOldWorldProvincesDefendThreshold) {
     return kDeclareWarWeakGpOwMinorRecoveryBonus;
@@ -144,13 +134,13 @@ int _declareWarStalledOldWorldExpansionBonuses(
     return s;
   }
   if (ctx.isAdjacentInvadableOwMinor) {
-    s += _owConquestDeclareWarBonus(
+    s += owConquestDeclareWarBonus(
       ctx,
       kDeclareWarStalledOwMinorPriorityBonus,
     );
-    s += _owConquestDeclareWarBonus(ctx, _stalledOwMinorRecoveryBonus(ctx));
+    s += owConquestDeclareWarBonus(ctx, stalledOwMinorRecoveryBonus(ctx));
     if (ctx.lowWarLikelihood) {
-      s += _owConquestDeclareWarBonus(
+      s += owConquestDeclareWarBonus(
         ctx,
         kDeclareWarLowWarLikelihoodAdjacentBonus,
       );
@@ -176,7 +166,7 @@ int _declareWarEarlyExpansionBonuses(DeclareWarTargetContext ctx, int s) {
     return s;
   }
   if (ctx.isAdjacentInvadableOwMinor) {
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarEarlyExpansionMinorBonus);
+    s += owConquestDeclareWarBonus(ctx, kDeclareWarEarlyExpansionMinorBonus);
   }
   if (ctx.isTribeTarget && !ctx.ownsInvadableNw) {
     s -= kDeclareWarEarlyExpansionTribePenalty;
@@ -218,307 +208,3 @@ int _declareWarExpansionAndColonialBonuses(
   return s;
 }
 
-int _declareWarAdjacentOwnerBonuses(DeclareWarTargetContext ctx, int s) {
-  if (ctx.isAdjacentOwner) {
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarAdjacentOwnerBonus);
-    if (ctx.behindVictoryPace && ctx.isMinorTarget) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
-      );
-    }
-    if (ctx.isMinorTarget && ctx.targetIsInvadableOwner) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarMinorWithInvadableProvinceBonus,
-      );
-    }
-    if (ctx.isAdjacentInvadableOwMinor &&
-        isOwnOldWorldBelowConquestQuota(ctx.snapshot)) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarBelowObserverQuotaMinorBonus,
-      );
-    }
-    final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-    if (ctx.isAdjacentInvadableOwMinor &&
-        isBelowObserverConquestQuota(ownedOw) &&
-        !_gpWarBlocksPlateauMinorDeclare(ctx)) {
-      s += _owConquestDeclareWarBonus(ctx, kDeclareWarPlateauOwMinorBonus);
-    }
-    if (ctx.isAdjacentInvadableOwMinor &&
-        ownedOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
-        ownedOw < kObserverConquestMinOwProvincesPerGp &&
-        !_gpWarBlocksPlateauMinorDeclare(ctx)) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarNearObserverQuotaMinorBonus,
-      );
-    }
-    if (ctx.isMinorTarget && ctx.stalledOwExpansion) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledExpansionMinorBonus,
-      );
-    }
-    if (ctx.stalledOwExpansion &&
-        ctx.isAdjacentInvadableOwMinor &&
-        ctx.lowWarLikelihood) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledLowWarLikelihoodMinorBonus,
-      );
-    }
-    if (ctx.isMinorTarget &&
-        !ctx.stalledOwExpansion &&
-        !isOwnOldWorldBelowConquestQuota(ctx.snapshot) &&
-        ctx.snapshot.conquest.oldWorldProvincesOwned >=
-            kDeclareWarSatedExpansionMinorThreshold) {
-      final ownedOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-      s -= ownedOw >= kObserverConquestMinOwProvincesPerGp + 2
-          ? kDeclareWarSatedExpansionMinorPenalty * 3
-          : kDeclareWarSatedExpansionMinorPenalty;
-    }
-    if (!ctx.suppressGpDeclareWar &&
-        ctx.behindVictoryPace &&
-        ctx.isAdjacentGp) {
-      s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
-    }
-    if (ctx.lowWarLikelihood) {
-      s += kDeclareWarLowWarLikelihoodAdjacentBonus;
-    }
-  }
-  return s;
-}
-
-int _declareWarAdjacencyAndStalledBonuses(DeclareWarTargetContext ctx, int s) {
-  s = _declareWarAdjacentOwnerBonuses(ctx, s);
-  if (!ctx.isAdjacentOwner &&
-      ctx.stalledOwExpansion &&
-      ctx.ownsInvadableOwMinor) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarAdjacentMinorBonusWhenFarFromVictory,
-    );
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarMinorWithInvadableProvinceBonus,
-    );
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledExpansionMinorBonus);
-    if (ctx.lowWarLikelihood) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarLowWarLikelihoodAdjacentBonus,
-      );
-    }
-  }
-  if (ctx.stalledOwExpansion && ctx.isMinorTarget && !ctx.isTribeTarget) {
-    final targetMinorProvinces = ctx.targetProvinceCount;
-    if (targetMinorProvinces > 0 &&
-        targetMinorProvinces < ctx.snapshot.conquest.oldWorldProvincesOwned) {
-      s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledWeakerMinorBonus);
-    }
-    if (ctx.behindVictoryPace && targetMinorProvinces > 0) {
-      s += _owConquestDeclareWarBonus(
-        ctx,
-        kDeclareWarStalledActiveOwMinorBonus,
-      );
-    }
-  }
-  if (ctx.weakerDistantMinor && ctx.activeMinorConflicts.isEmpty) {
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledWeakerMinorBonus);
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledActiveOwMinorBonus);
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.invadableOwOwnedByGp &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      !ctx.isAdjacentOwner &&
-      !ctx.targetIsInvadableOwner) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledGpBlockerDistantMinorBonus,
-    );
-  }
-  if (ctx.snapshot.conquest.oldWorldProvincesOwned ==
-          kObserverDefaultStartOldWorldProvincesPerGp &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      ctx.invadableOwOwnedByGp) {
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarDefaultStartOwMinorBonus);
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.invadableOwOwnedByGp &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId)) {
-    s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledAnyOwMinorBonus);
-  }
-  if (ctx.stalledOwExpansion && ctx.invadableGpBlockerWeaker) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledWeakestInvadableGpBonus,
-    );
-    if (ctx.behindVictoryPace) {
-      s += kDeclareWarAdjacentGpBonusWhenFarFromVictory;
-    }
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.invadableGpBlockerWeaker) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledInvadableGpBlockerBonus,
-    );
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledWeakestInvadableGpBonus,
-    );
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.invadableGpBlocker &&
-      ctx.invadableOwOwnedByGp &&
-      !ctx.hasInvadableMinorOwner) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarStalledInvadableGpBlockerBonus,
-    );
-    s = _raiseToOwConquestDeclareWarFloor(
-      ctx,
-      currentScore: s,
-      floorBonus: kDeclareWarStalledGpInvadableBlockerFloor,
-    );
-  }
-  if (ctx.suppressGpDeclareWar &&
-      ctx.isAdjacentGp &&
-      ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.hasInvadableMinorOwner &&
-      !ctx.invadableGpBlocker) {
-    s -= kDeclareWarStalledGpWhenMinorsRemainPenalty;
-  }
-  final targetOw = ctx.targetProvinceCount;
-  if (ctx.isAdjacentGp &&
-      targetOw > 0 &&
-      targetOw < ctx.snapshot.conquest.oldWorldProvincesOwned &&
-      isStalledOldWorldExpansion(targetOw)) {
-    s -= kDeclareWarOnStalledWeakerNeighborPenalty;
-  }
-  final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, ctx.snapshot);
-  if (!atWarWithGp &&
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      ctx.snapshot.conquest.oldWorldProvincesOwned <=
-          kFewOldWorldProvincesDefendThreshold &&
-      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
-    s += _owConquestDeclareWarBonus(
-      ctx,
-      kDeclareWarCriticalWeakNoGpWarMinorBonus,
-    );
-    if (ctx.isAdjacentOwner && ctx.targetIsInvadableOwner) {
-      s = _raiseToOwConquestDeclareWarFloor(
-        ctx,
-        currentScore: s,
-        floorBonus: kDeclareWarWeakGpAdjacentInvadableMinorFloor,
-      );
-    }
-  }
-  return s;
-}
-
-int _declareWarFinalizeBonuses(DeclareWarTargetContext ctx, int s) {
-  if (ctx.primaryGoal == StrategicGoal.conquer) {
-    s += 20;
-  }
-  s += ctx.behindVictoryPace
-      ? conquerScoreBonusForProvincesToVictory(
-          ctx.snapshot.conquest.provincesToVictory,
-        )
-      : conquerScoreBonusForProvincesToVictory(
-              ctx.snapshot.conquest.provincesToVictory,
-            ) ~/
-            4;
-  if (ctx.relation?.level == RelationLevel.allied) {
-    s += getDeclareWarTargetBonusAlly(ctx.agendaId);
-  }
-  final adjacentWeakMinor =
-      ctx.isMinorTarget &&
-      !ctx.isTribeTarget &&
-      ctx.isAdjacentOwner &&
-      ctx.snapshot.opportunities.weakNeighbors.contains(
-        ctx.order.targetFactionId,
-      );
-  if (ctx.stalledOwExpansion && ctx.isAdjacentInvadableOwMinor) {
-    final floor =
-        ctx.snapshot.conquest.oldWorldProvincesOwned <=
-            kFewOldWorldProvincesDefendThreshold
-        ? kDeclareWarWeakGpAdjacentInvadableMinorFloor
-        : kDeclareWarStalledAdjacentInvadableMinorFloor;
-    s = _raiseToOwConquestDeclareWarFloor(
-      ctx,
-      currentScore: s,
-      floorBonus: floor,
-    );
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      adjacentWeakMinor &&
-      (ctx.targetIsInvadableOwner ||
-          isMinorFaction(ctx.game, ctx.order.targetFactionId))) {
-    s = _raiseToOwConquestDeclareWarFloor(
-      ctx,
-      currentScore: s,
-      floorBonus: kDeclareWarStalledAdjacentInvadableMinorFloor,
-    );
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.isTribeTarget &&
-      ctx.hasInvadableMinorOwner) {
-    s = math.min(s, kDeclareWarStalledTribeWhenOwMinorCap);
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.isTribeTarget &&
-      ctx.lowWarLikelihood &&
-      ctx.invadableOwners.any((id) => isMinorFaction(ctx.game, id))) {
-    s = math.min(s, kDeclareWarStalledLowWarLikelihoodTribeCap);
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.isAdjacentInvadableOwMinor &&
-      ctx.lowWarLikelihood) {
-    s = _raiseToOwConquestDeclareWarFloor(
-      ctx,
-      currentScore: s,
-      floorBonus: kDeclareWarStalledLowWarLikelihoodMinorFloor,
-    );
-  }
-  return s;
-}
-
-/// Plateau minor declare is blocked only by distracting multi-front GP wars.
-bool _gpWarBlocksPlateauMinorDeclare(DeclareWarTargetContext ctx) {
-  final gpWars = gpFactionIdsAtWarWith(ctx.game, ctx.snapshot);
-  if (gpWars.isEmpty) {
-    return false;
-  }
-  if (unwinnableSoleGpFrontierPeaceTarget(
-        game: ctx.game,
-        snapshot: ctx.snapshot,
-      ) !=
-      null) {
-    return false;
-  }
-  if (gpWars.length == 1 &&
-      isStalledOldWorldGpBlockerFocus(game: ctx.game, snapshot: ctx.snapshot) &&
-      gpWars.single ==
-          primaryInvadableOldWorldGpBlocker(
-            game: ctx.game,
-            snapshot: ctx.snapshot,
-          )) {
-    return false;
-  }
-  return true;
-}
