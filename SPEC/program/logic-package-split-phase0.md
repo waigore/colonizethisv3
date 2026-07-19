@@ -437,6 +437,19 @@ The script also enforces an **≥80% line coverage** gate for the non-logic-doma
 - **Given** `PACKAGES_TO_TEST=colonizethis_save` and a fresh `packages/colonizethis_save/coverage/lcov.info` from `dart test --coverage`, **when** `tool/run_package_tests.sh` completes, **then** it invokes `tool/check_coverage_threshold.sh 80 packages/colonizethis_save` and fails when line coverage is below 80%.
 - **Given** the `run_package_tests.sh` 80% coverage-gate target list, **when** it is enumerated, **then** it contains `colonizethis_data`, `colonizethis_models`, and `colonizethis_save`.
 
+## Residual `colonizethis_logic/test` tree (Refs #4090)
+
+After the post-split orphan purge, `packages/colonizethis_logic/test/**` holds only thin-core and contract smoke suites (`constants`, `di`, `turn_to_year`, package logger, `ai_api` / `order_suggestion_api` / `debug_console_api` smoke). Domain suites live under owning Melos packages. Cross-domain `test/characterization/` files are allowed only when both hold: (1) the suite exercises ≥2 domain packages through public APIs, and (2) placing it in any single owner would create a forbidden Melos DAG edge. Inventory decisions use `packages/colonizethis_logic/REFACTOR_TRACE.md` (`source_file`, `owner_package`, `action`, `evidence`). Economy/combat equivalence matches scenario `label:` rows; world/setup/orders/diplomacy/turn equivalence matches peer assert inventories.
+
+CI: `repo.logic_test_tree_loc` caps total physical LOC at ≤5,800; `repo.logic_test_orphan_basenames` rejects the thirteen pre-purge collision basenames if reintroduced under logic `test/`.
+
+### Acceptance criteria (residual logic test tree)
+
+- **Given** the post-#4090 residual tree, **when** `find packages/colonizethis_logic/test -name '*.dart' -print0 | xargs -0 cat | wc -l` runs, **then** the physical LOC is ≤5,800.
+- **Given** `repo.logic_test_tree_loc` and a synthetic tree above 5,800 LOC, **when** the check runs, **then** it exits `1`.
+- **Given** `repo.logic_test_orphan_basenames` and a reintroduced `economy_production_test.dart` under logic `test/`, **when** the check runs, **then** it exits `1`.
+- **Given** a suite kept under `test/characterization/`, **when** its file-level comment is read, **then** it cites both characterization eligibility criteria and why they hold.
+
 ## Acceptance criteria (Phase 0 / C0)
 
 - **Given** the monolith on `dev`, **when** `repo.logic_domain_import_dag` runs, **then** zero imports match forbidden pairs outside the documented grandfather allowlist.
