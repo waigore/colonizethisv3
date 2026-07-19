@@ -62,11 +62,12 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 
 ## Chapter status
 
-Chapters land in staged batches after this foundation. Until a chapter file exists, follow [`STYLE_GUIDE.md`](STYLE_GUIDE.md) and the updater skill when authoring.
-
 | File | Status |
 |------|--------|
-| `01-primer.md` … `16-appendix-actions.md` | Pending (S4–S9) |
+| `01-primer.md` | Present (S4) |
+| `02-founding-your-reign.md` | Present (S4) |
+| `03-the-lay-of-the-land.md` | Present (S4) |
+| `04-charting-the-unknown.md` … `16-appendix-actions.md` | Pending (S5–S9) |
 
 ## Related process artifacts
 
