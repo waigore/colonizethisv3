@@ -74,4 +74,15 @@ Remaining Slice B orphans (connectivity/movement/player_view/naval leaf suites) 
 | `test/sea_reachable_provinces_distance_test.dart` | `colonizethis_world` | port+delete | Distances 1/2/shortest/region-filter covered by `world/sea_reachable_provinces_test.dart`; ported NW distance-3 route |
 | `test/sea_reachable_provinces_distance_part2_test.dart` | `colonizethis_world` | port+delete | Region filter covered; ported distance foreign non-expansion + determinism into same world peer |
 
-Remaining Slice B orphans: connectivity_resolver_* / movement / player_view / naval_test_part* deferred.
+Remaining Slice B orphans: connectivity_resolver_* (non-blockade) / naval_test_part1 / naval_test_part2 deferred.
+
+## Slice B — World leaf purge/port (inventory batch)
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/player_view_test.dart` | `colonizethis_world` | delete | Covered by `player_view_build_test.dart` + `player_view_helpers_test.dart` |
+| `test/movement_test.dart` | `colonizethis_world` | port+delete | Civilian apply covered by `movement_helpers_test.dart`; ported dual-region ambiguous ids, prefixed neighbors, sea-destination reject |
+| `test/connectivity_resolver_blockade_additional_test.dart` | `colonizethis_world` | port+delete | Ported auto fleet+diplomacy, same-region two-port, inland-capital toggle to `connectivity_resolver_blockade_additional_test.dart` |
+| `test/naval_test_part2_part2_test.dart` | `colonizethis_world` | delete | Covered by `naval_topology_test.dart` |
+
+Remaining Slice B orphans: connectivity_resolver_test / sea / per_player_cache / town_closure / naval_test_part1 / naval_test_part2 deferred.

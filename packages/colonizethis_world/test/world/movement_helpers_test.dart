@@ -1,3 +1,4 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/src/world/movement.dart';
 import 'package:colonizethis_test/test.dart';
@@ -67,6 +68,70 @@ void main() {
         isFalse,
       );
     });
+
+    test('duplicate local ids across regions stay region-scoped', () {
+      const dual = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p1',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'p2',
+            regionId: 'newWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
+      );
+      expect(
+        neighborProvinceIdsInRegion(dual, 'oldWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(
+        neighborProvinceIdsInRegion(dual, 'newWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(isValidLandMoveInRegion(dual, 'oldWorld', 'p1', 'p2'), isTrue);
+      expect(isValidLandMove(dual, 'p1', 'p2'), isFalse);
+    });
+
+    test('prefixed node ids resolve neighbors via local province id', () {
+      const prefixed = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'oldWorld|p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'oldWorld|p2',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2')],
+      );
+      expect(
+        neighborProvinceIdsInRegion(prefixed, 'oldWorld', 'p1').toList(),
+        ['p2'],
+      );
+      expect(
+        neighborProvinceIdsInRegion(prefixed, 'oldWorld', 'p2').toList(),
+        ['p1'],
+      );
+    });
   });
 
   group('isValidLandMove', () {
@@ -82,6 +147,26 @@ void main() {
 
     test('rejects when the from-province has no resolvable node', () {
       expect(isValidLandMove(topology, 'ghost', 'p2'), isFalse);
+    });
+
+    test('rejects a move onto an adjacent sea zone', () {
+      const withSea = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'A',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: 'Sea1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [TopologyEdge(id1: 'A', id2: 'Sea1')],
+      );
+      expect(isValidLandMove(withSea, 'A', 'Sea1'), isFalse);
+      expect(isValidLandMove(withSea, 'A', 'B'), isFalse);
     });
   });
 
