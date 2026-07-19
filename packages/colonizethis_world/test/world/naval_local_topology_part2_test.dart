@@ -2,13 +2,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../world_test_support/world_test_support.dart';
 /// Local-id naval topology helper cases ported from logic naval_test_part2 (Refs #4090).
 void main() {
   group('Naval', () {
     late MapTopology topology;
 
     setUp(() {
-      topology = MapTopology(
+      topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'p1',
@@ -41,7 +42,7 @@ void main() {
 
     group('firstAdjacentSeaZone', () {
       test('returns id2 when id1 matches seaZoneId', () {
-        final seaOnly = MapTopology(
+        final seaOnly = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'sea1',
@@ -60,7 +61,7 @@ void main() {
       });
 
       test('returns id1 when id2 matches seaZoneId', () {
-        final seaOnly = MapTopology(
+        final seaOnly = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'sea1',
@@ -79,7 +80,7 @@ void main() {
       });
 
       test('returns null when sea zone has no edges', () {
-        final noEdgeTopology = MapTopology(
+        final noEdgeTopology = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'sea0',
@@ -102,7 +103,7 @@ void main() {
       test(
         'when regionId is provided, lookup is region-scoped (world-model-identity)',
         () {
-          final multiRegion = MapTopology(
+          final multiRegion = topologyFromGraph(
             nodes: const [
               TopologyNode(
                 id: 'p1',
@@ -143,7 +144,7 @@ void main() {
       );
 
       test('returns null for province with no sea edge', () {
-        final inland = MapTopology(
+        final inland = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'p1',
@@ -165,7 +166,7 @@ void main() {
         'supports combined topology: prefixed node ids and edges (app/turn resolver graph)',
         () {
           const ow = 'oldWorld';
-          final combined = MapTopology(
+          final combined = topologyFromGraph(
             nodes: [
               TopologyNode(
                 id: '$ow|cap',
@@ -211,7 +212,7 @@ void main() {
           const fullProv = '$nw|provA';
           const localSea = 'seaDest';
           const prefixedSea = '$nw|$localSea';
-          final combined = MapTopology(
+          final combined = topologyFromGraph(
             nodes: [
               TopologyNode(
                 id: fullProv,
@@ -243,7 +244,7 @@ void main() {
           const owProvince = '$ow|p1';
           const nwProvince = '$nw|p1';
           const nwSeaOther = '$nw|seaOther';
-          final combined = MapTopology(
+          final combined = topologyFromGraph(
             nodes: const [
               TopologyNode(
                 id: owProvince,
@@ -292,7 +293,7 @@ void main() {
       test('full province id matches prefixed province node on P–S edge '
           '(combined topology)', () {
         const ow = 'oldWorld';
-        final combined = MapTopology(
+        final combined = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: '$ow|p1',
@@ -322,7 +323,7 @@ void main() {
 
       test('resolves local id when exactly one prefixed sea node matches', () {
         const nw = 'newWorld';
-        final combined = MapTopology(
+        final combined = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: '$nw|seaA',

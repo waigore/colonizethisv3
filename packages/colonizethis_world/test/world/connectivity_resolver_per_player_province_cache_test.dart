@@ -26,8 +26,8 @@ void main() {
         final grid = [
           ['p1', 'p2', 'p3'],
         ];
-        final tileMap = TileMapResult(width: 3, height: 1, grid: grid);
-        final topology = MapTopology(
+        final tileMap = tileMapFromGrid(grid);
+        final topology = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: 'p1',
@@ -122,8 +122,8 @@ void main() {
         final grid = [
           ['p1', 'p2'],
         ];
-        final tileMap = TileMapResult(width: 2, height: 1, grid: grid);
-        final topology = MapTopology(
+        final tileMap = tileMapFromGrid(grid);
+        final topology = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: 'p1',

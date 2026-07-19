@@ -3,13 +3,14 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../world_test_support/world_test_support.dart';
 /// Local-id naval topology helper cases ported from logic naval_test_part1 (Refs #4090).
 void main() {
   group('Naval', () {
     late MapTopology topology;
 
     setUp(() {
-      topology = MapTopology(
+      topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'p1',
@@ -61,7 +62,7 @@ void main() {
       );
 
       test('separate topology instances do not share cached node maps', () {
-        final other = MapTopology(
+        final other = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'pX',
@@ -128,7 +129,7 @@ void main() {
       });
 
       test('in port: undock list is P–S only (all seas touching port)', () {
-        final top = MapTopology(
+        final top = topologyFromGraph(
           nodes: const [
             TopologyNode(
               id: 'p1',

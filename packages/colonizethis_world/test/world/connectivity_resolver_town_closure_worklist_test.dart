@@ -16,8 +16,8 @@ void main() {
           ['p1', 'p2', 'p3'],
           ['p1', 'p2', 'p3'],
         ];
-        final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
-        final topology = MapTopology(
+        final tileMap = tileMapFromGrid(grid);
+        final topology = topologyFromGraph(
           nodes: [
             TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
             TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
@@ -82,8 +82,8 @@ void main() {
         ['p1', 'p1'],
         ['p1', 'p1'],
       ];
-      final tileMap = TileMapResult(width: 2, height: 2, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)],
         edges: [],
       );

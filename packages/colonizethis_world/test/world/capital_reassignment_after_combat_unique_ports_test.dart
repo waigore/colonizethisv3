@@ -11,7 +11,7 @@ void main() {
     const ow = 'oldWorld';
 
     test('sets capital from chosen province townTileKey; no port/tileState change', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'P1',
@@ -80,7 +80,7 @@ void main() {
     });
 
     test('prefers seaboard province by sorted id among owned', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'P1',
@@ -149,7 +149,7 @@ void main() {
     });
 
     test('throws CapitalReassignmentFatalError when townTileKey missing', () {
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: const [
           TopologyNode(
             id: 'P1',

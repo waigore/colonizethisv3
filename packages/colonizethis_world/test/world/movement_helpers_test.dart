@@ -70,7 +70,7 @@ void main() {
     });
 
     test('duplicate local ids across regions stay region-scoped', () {
-      const dual = MapTopology(
+      final dual = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'p1',
@@ -108,7 +108,7 @@ void main() {
     });
 
     test('prefixed node ids resolve neighbors via local province id', () {
-      const prefixed = MapTopology(
+      final prefixed = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'oldWorld|p1',
@@ -150,7 +150,7 @@ void main() {
     });
 
     test('rejects a move onto an adjacent sea zone', () {
-      const withSea = MapTopology(
+      final withSea = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'A',

@@ -18,7 +18,7 @@ void main() {
         ['p2', 'p2'],
         ['p2', 'p2'],
       ];
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: 'newWorld', type: TopologyNodeType.province),
@@ -60,8 +60,8 @@ void main() {
       final result = resolveConnectivity(
         game: game,
         tileMapByRegion: {
-          'oldWorld': TileMapResult(width: 2, height: 2, grid: oldGrid),
-          'newWorld': TileMapResult(width: 2, height: 2, grid: newGrid),
+          'oldWorld': tileMapFromGrid(oldGrid),
+          'newWorld': tileMapFromGrid(newGrid),
         },
         topology: topology,
       );
@@ -83,7 +83,7 @@ void main() {
         ['p2', 'sea2'],
         ['p2', 'p2'],
       ];
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: 'newWorld', type: TopologyNodeType.province),
@@ -128,8 +128,8 @@ void main() {
       final result = resolveConnectivity(
         game: game,
         tileMapByRegion: {
-          'oldWorld': TileMapResult(width: 2, height: 2, grid: oldGrid),
-          'newWorld': TileMapResult(width: 2, height: 2, grid: newGrid),
+          'oldWorld': tileMapFromGrid(oldGrid),
+          'newWorld': tileMapFromGrid(newGrid),
         },
         topology: topology,
       );
@@ -148,7 +148,7 @@ void main() {
         ['p2', 'p2'],
         ['p2', 'p2'],
       ];
-      final topology = MapTopology(
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: 'newWorld', type: TopologyNodeType.province),
@@ -192,8 +192,8 @@ void main() {
       final result = resolveConnectivity(
         game: game,
         tileMapByRegion: {
-          'oldWorld': TileMapResult(width: 2, height: 2, grid: oldGrid),
-          'newWorld': TileMapResult(width: 2, height: 2, grid: newGrid),
+          'oldWorld': tileMapFromGrid(oldGrid),
+          'newWorld': tileMapFromGrid(newGrid),
         },
         topology: topology,
       );

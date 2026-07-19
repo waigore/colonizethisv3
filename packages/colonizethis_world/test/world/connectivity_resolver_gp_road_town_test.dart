@@ -15,8 +15,8 @@ void main() {
         ['p1', 'p1', 'p1'],
         ['p1', 'p1', 'p1'],
       ];
-      final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'p1',
@@ -63,8 +63,8 @@ void main() {
         ['p1', 'p1', 'p1'],
         ['p1', 'p1', 'p1'],
       ];
-      final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(
             id: 'p1',
@@ -111,8 +111,8 @@ void main() {
       final grid = [
         ['p1'],
       ];
-      final tileMap = TileMapResult(width: 1, height: 1, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
         ],
@@ -139,8 +139,8 @@ void main() {
         ['p1', 'p2', 'p3'],
         ['p1', 'p2', 'p3'],
       ];
-      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
@@ -220,8 +220,8 @@ void main() {
         ['p1', 'p2', 'p2'],
         ['p1', 'p2', 'p2'],
       ];
-      final tileMap = TileMapResult(width: 3, height: 2, grid: grid);
-      final topology = MapTopology(
+      final tileMap = tileMapFromGrid(grid);
+      final topology = topologyFromGraph(
         nodes: [
           TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
           TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),

@@ -51,7 +51,7 @@ void main() {
       'same-region two ports: explicit blockade keeps capital port, cuts other',
       () {
         const ow = kWorldTestOw;
-        final topology = MapTopology(
+        final topology = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: 'p1',
@@ -118,7 +118,7 @@ void main() {
         final result = resolveConnectivity(
           game: game,
           tileMapByRegion: {
-            ow: TileMapResult(width: 4, height: 2, grid: grid),
+            ow: tileMapFromGrid(grid),
           },
           topology: topology,
           blockadedPortProvincesByPlayerId: {
@@ -137,7 +137,7 @@ void main() {
       'inland capital: land-connected port excluded only when blockaded',
       () {
         const ow = kWorldTestOw;
-        final topology = MapTopology(
+        final topology = topologyFromGraph(
           nodes: [
             TopologyNode(
               id: 'p1',
@@ -185,7 +185,7 @@ void main() {
           ],
         );
         final tileMaps = {
-          ow: TileMapResult(width: 2, height: 2, grid: grid),
+          ow: tileMapFromGrid(grid),
         };
         final noBlockade = resolveConnectivity(
           game: game,
