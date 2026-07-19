@@ -155,3 +155,32 @@ Slice C setup leaf orphans complete (`game_setup_*` / `capital_choice_*` / `gp_*
 | `turn_resolution_result_test.dart` | removed from logic |
 
 Slice D orders/combat/diplomacy/turn leaf orphans complete. Remaining: Slice E (thin residual + CI ratchet + characterization gate + AC10 map dep). Characterization snapshots deferred to Slice E eligibility gate.
+
+## Slice E — Thin residual tree + CI ratchet
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/foreign_civilian_visibility_test.dart` | `colonizethis_world` | delete | Asserts match `world/player_view_helpers_test.dart` `foreignCivilianVisibleToPlayer` group (owner/spy/fogged/unknown) |
+| `test/production_input_consumption_test.dart` | `colonizethis_economy` | port+delete | Ported to `economy/production_input_consumption_test.dart` |
+| `test/prospectable_terrain_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/prospectable_terrain_test.dart` |
+| `test/prospect_terrain_known_resource_test.dart` | `colonizethis_orders` | delete | Wool/hills + already-prospected + suggest exclusion covered by `order_engine_move_and_work_context_scenarios`, `application_helpers_scenarios`, `valid_work_tiles_scenarios` |
+| `test/dev_exclusive_reserved_tiles_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/dev_exclusive_reserved_tiles_test.dart` |
+| `test/characterization/combat_engagement_snapshot_test.dart` | `colonizethis_combat` | port+delete | Fails keep gate (single domain `resolveEngagement`); ported to `combat/combat_engagement_snapshot_test.dart` |
+| `test/characterization/game_setup_snapshot_test.dart` | `colonizethis_setup` | port+delete | Fails keep gate (single domain `createGameFromGeneratedMaps`); ported to `setup/game_setup_snapshot_test.dart` |
+| `test/contract_api_smoke_test.dart` | `colonizethis_logic` | keep | New AC4 contract smoke for `ai_api` / `order_suggestion_api` / `debug_console_api` |
+| `test/constants_test.dart` | `colonizethis_logic` | keep | Thin-core |
+| `test/constants/grid_neighbors_cardinal_test.dart` | `colonizethis_logic` | keep | Thin-core |
+| `test/di/logic_providers_test.dart` | `colonizethis_logic` | keep | Thin-core |
+| `test/package_logger_shared_test.dart` | `colonizethis_logic` | keep | Thin-core |
+| `test/turn_to_year_test.dart` | `colonizethis_logic` | keep | Thin-core |
+
+### Slice E CI / deps
+
+| Item | Status |
+|------|--------|
+| `repo.logic_test_tree_loc` (≤5800) | added (`tool/check_logic_test_tree_loc.dart`) |
+| `repo.logic_test_orphan_basenames` | added (13 collision basenames) |
+| SPEC residual policy | `logic-package-split-phase0.md` + `repo-lint.md` |
+| `colonizethis_map` dev_dependency | removed (AC10; zero remaining logic test imports) |
+
+Slice E complete. Residual logic `test/` is thin-core + contract smoke only.

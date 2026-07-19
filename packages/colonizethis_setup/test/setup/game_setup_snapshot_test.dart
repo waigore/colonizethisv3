@@ -1,6 +1,8 @@
-import 'package:colonizethis_test/test.dart';
+// Ported from logic characterization (Refs #4090 Slice E; single-domain, fails keep gate).
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 void main() {
   group('GameSetup characterization', () {

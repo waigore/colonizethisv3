@@ -36,5 +36,6 @@ export 'orders_application_context.dart'
         spyResearchBoostPerGp;
 export 'orders_application_helpers.dart';
 export 'projected_effects.dart';
+export 'unit_type_helpers.dart' show devExclusiveReservedTileKeysForPlayer;
 export 'validators/work_order_cost_calculator.dart';
 export 'work_order_duration_preview.dart';

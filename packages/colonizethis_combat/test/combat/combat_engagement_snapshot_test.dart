@@ -1,5 +1,6 @@
+// Ported from logic characterization (Refs #4090 Slice E; single-domain, fails keep gate).
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 Unit _unit(String id, String type, {int medals = 0}) => Unit(

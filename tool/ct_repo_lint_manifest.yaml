@@ -933,6 +933,20 @@ rules:
     script: tool/check_logic_test_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.logic_test_tree_loc
+    group: testing
+    title: colonizethis_logic/test physical LOC must stay at or below 5800 (Refs #4090)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_test_tree_loc.dart
+
+  - rule_id: repo.logic_test_orphan_basenames
+    group: testing
+    title: colonizethis_logic/test must not reintroduce purged domain collision basenames (Refs #4090)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_logic_test_orphan_basenames.dart
+
   - rule_id: repo.logic_domain_import_dag
     group: architecture
     title: colonizethis_logic domain imports must follow one-way DAG (Refs #3290 Phase 0)

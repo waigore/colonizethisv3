@@ -1,3 +1,4 @@
+// Ported from colonizethis_logic (Refs #4090 Slice E).
 // Unit tests for the production-input consumption projector
 // `productionInputConsumptionByCommodityIdForAssignments` (Refs #3093 —
 // industry-allocation reservation slice).
@@ -7,7 +8,8 @@
 // projection.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
