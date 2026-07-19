@@ -1,7 +1,23 @@
-part of 'diplomatic_candidate_scoring.dart';
+import 'dart:math' as math;
+
+import '../util/faction_query.dart';
+import 'diplomatic_candidate_scoring_declare_war_context.dart';
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'expand_phase_planner.dart';
+import 'goal_manager.dart';
+import 'phase_planner_diplomacy_filter.dart';
+import 'planning_helpers.dart'
+    show
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower,
+        isOwnOldWorldBelowConquestQuota,
+        kDiplomaticDefaultBaseScore;
+import 'planning_imports.dart';
+
+final _log = packageLogger();
 
 /// OW-expansion declare-war addend scaled by [oldWorldConquestWeight].
-int _owConquestDeclareWarBonus(_DeclareWarTargetContext ctx, int baseBonus) =>
+int _owConquestDeclareWarBonus(DeclareWarTargetContext ctx, int baseBonus) =>
     declareWarOldWorldConquestScaledBonus(
       baseBonus: baseBonus,
       oldWorldConquestWeight: ctx.oldWorldConquestWeight,
@@ -17,7 +33,7 @@ int _owConquestDeclareWarBonus(_DeclareWarTargetContext ctx, int baseBonus) =>
 /// [raiseToDeclareWarOldWorldConquestFloor] helper — byte-identical to the
 /// inline keyword call it replaces.
 int _raiseToOwConquestDeclareWarFloor(
-  _DeclareWarTargetContext ctx, {
+  DeclareWarTargetContext ctx, {
   required int currentScore,
   required int floorBonus,
 }) => raiseToDeclareWarOldWorldConquestFloor(
@@ -26,14 +42,14 @@ int _raiseToOwConquestDeclareWarFloor(
   oldWorldConquestWeight: ctx.oldWorldConquestWeight,
 );
 
-int _scoreDeclareWarBonuses(_DeclareWarTargetContext ctx) {
+int scoreDeclareWarBonuses(DeclareWarTargetContext ctx) {
   var s = _declareWarCoreBonuses(ctx);
   s = _declareWarExpansionAndColonialBonuses(ctx, s);
   s = _declareWarAdjacencyAndStalledBonuses(ctx, s);
   return _declareWarFinalizeBonuses(ctx, s);
 }
 
-int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
+int _declareWarCoreBonuses(DeclareWarTargetContext ctx) {
   final warDesire = ctx.warDesireForTarget(
     ctx.order.targetFactionId,
     ctx.relationScore,
@@ -72,7 +88,7 @@ int _declareWarCoreBonuses(_DeclareWarTargetContext ctx) {
   return s;
 }
 
-int _stalledOwMinorRecoveryBonus(_DeclareWarTargetContext ctx) {
+int _stalledOwMinorRecoveryBonus(DeclareWarTargetContext ctx) {
   final owned = ctx.snapshot.conquest.oldWorldProvincesOwned;
   if (owned <= kFewOldWorldProvincesDefendThreshold) {
     return kDeclareWarWeakGpOwMinorRecoveryBonus;
@@ -83,7 +99,7 @@ int _stalledOwMinorRecoveryBonus(_DeclareWarTargetContext ctx) {
   return 0;
 }
 
-int _declareWarColonialNwTribeBonuses(_DeclareWarTargetContext ctx, int s) {
+int _declareWarColonialNwTribeBonuses(DeclareWarTargetContext ctx, int s) {
   if (!ctx.colonialPressure || !ctx.ownsInvadableNw || !ctx.isTribeTarget) {
     return s;
   }
@@ -114,10 +130,10 @@ int _declareWarColonialNwTribeBonuses(_DeclareWarTargetContext ctx, int s) {
 }
 
 int _declareWarStalledOldWorldExpansionBonuses(
-  _DeclareWarTargetContext ctx,
+  DeclareWarTargetContext ctx,
   int s,
 ) {
-  // Reuse the precomputed [_DeclareWarTargetContext.stalledOwExpansion] field
+  // Reuse the precomputed [DeclareWarTargetContext.stalledOwExpansion] field
   // (built once from the same `snapshot.conquest.oldWorldProvincesOwned`)
   // instead of recomputing the observer expansion-pressure predicate inline
   // (Refs #3717 diplomatic-scoring dedup).
@@ -146,8 +162,8 @@ int _declareWarStalledOldWorldExpansionBonuses(
   return s;
 }
 
-int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
-  // Reuse the precomputed [_DeclareWarTargetContext.stalledOwExpansion] field
+int _declareWarEarlyExpansionBonuses(DeclareWarTargetContext ctx, int s) {
+  // Reuse the precomputed [DeclareWarTargetContext.stalledOwExpansion] field
   // rather than recomputing the observer expansion-pressure predicate inline
   // (Refs #3717 diplomatic-scoring dedup).
   final observerExpansionPressure = ctx.stalledOwExpansion;
@@ -169,7 +185,7 @@ int _declareWarEarlyExpansionBonuses(_DeclareWarTargetContext ctx, int s) {
 }
 
 int _declareWarColonialPressureOwMinorPenalty(
-  _DeclareWarTargetContext ctx,
+  DeclareWarTargetContext ctx,
   int s,
 ) {
   if (!ctx.colonialPressure ||
@@ -186,7 +202,7 @@ int _declareWarColonialPressureOwMinorPenalty(
 }
 
 int _declareWarExpansionAndColonialBonuses(
-  _DeclareWarTargetContext ctx,
+  DeclareWarTargetContext ctx,
   int s,
 ) {
   if (ctx.ownsInvadableNw && ctx.isMinorTarget && !ctx.stalledOwExpansion) {
@@ -202,7 +218,7 @@ int _declareWarExpansionAndColonialBonuses(
   return s;
 }
 
-int _declareWarAdjacentOwnerBonuses(_DeclareWarTargetContext ctx, int s) {
+int _declareWarAdjacentOwnerBonuses(DeclareWarTargetContext ctx, int s) {
   if (ctx.isAdjacentOwner) {
     s += _owConquestDeclareWarBonus(ctx, kDeclareWarAdjacentOwnerBonus);
     if (ctx.behindVictoryPace && ctx.isMinorTarget) {
@@ -275,7 +291,7 @@ int _declareWarAdjacentOwnerBonuses(_DeclareWarTargetContext ctx, int s) {
   return s;
 }
 
-int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
+int _declareWarAdjacencyAndStalledBonuses(DeclareWarTargetContext ctx, int s) {
   s = _declareWarAdjacentOwnerBonuses(ctx, s);
   if (!ctx.isAdjacentOwner &&
       ctx.stalledOwExpansion &&
@@ -336,7 +352,7 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
       ctx.invadableOwOwnedByGp &&
       ctx.isMinorTarget &&
       !ctx.isTribeTarget &&
-      _minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId)) {
+      minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId)) {
     s += _owConquestDeclareWarBonus(ctx, kDeclareWarStalledAnyOwMinorBonus);
   }
   if (ctx.stalledOwExpansion && ctx.invadableGpBlockerWeaker) {
@@ -412,7 +428,7 @@ int _declareWarAdjacencyAndStalledBonuses(_DeclareWarTargetContext ctx, int s) {
   return s;
 }
 
-int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
+int _declareWarFinalizeBonuses(DeclareWarTargetContext ctx, int s) {
   if (ctx.primaryGoal == StrategicGoal.conquer) {
     s += 20;
   }
@@ -483,7 +499,7 @@ int _declareWarFinalizeBonuses(_DeclareWarTargetContext ctx, int s) {
 }
 
 /// Plateau minor declare is blocked only by distracting multi-front GP wars.
-bool _gpWarBlocksPlateauMinorDeclare(_DeclareWarTargetContext ctx) {
+bool _gpWarBlocksPlateauMinorDeclare(DeclareWarTargetContext ctx) {
   final gpWars = gpFactionIdsAtWarWith(ctx.game, ctx.snapshot);
   if (gpWars.isEmpty) {
     return false;

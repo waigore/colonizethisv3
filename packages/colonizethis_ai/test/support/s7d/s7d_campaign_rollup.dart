@@ -396,7 +396,7 @@ class Seed42S7dCampaignRollup {
   //   * `castIronRecipeLabourFeasibleTurns` — the castIron recipe also
   //     clears the planner's own labour gate (`feasibleRuns(...) > 0`
   //     against the full `effectiveLabourForWorkers`, the same compute
-  //     `economy_planner.dart` § `_allocateLabour` runs). A near-zero count
+  //     `economy_planner_labour.dart` § `allocateLabour` runs). A near-zero count
   //     here while `gpCastIronRecipeFeasibleTurns` is high localizes the
   //     break to **labour starvation** (effective labour, after mandatory
   //     food upkeep, cannot fund even one `labourPerOutput` run), moving the

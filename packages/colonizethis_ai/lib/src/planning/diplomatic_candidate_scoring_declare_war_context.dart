@@ -1,16 +1,29 @@
-part of 'diplomatic_candidate_scoring.dart';
+import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'expand_phase_planner.dart';
+import 'goal_manager.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_diplomacy_filter.dart';
+import 'phase_planner_dispatch.dart';
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByGreatPower,
+        factionOwnsInvadableOldWorldProvince;
+import 'planning_imports.dart';
 
 /// Context builder for the declare-war scoring family.
 ///
-/// Holds [_DeclareWarTargetContext], the precomputed per-target projection
+/// Holds [DeclareWarTargetContext], the precomputed per-target projection
 /// consumed by the declare-war score ladder in
 /// `diplomatic_candidate_scoring_declare_war.dart` and the bonus addends in
 /// `diplomatic_candidate_scoring_declare_war_bonuses.dart`. Split out of the
 /// score-ladder module so the context-builder and score-ladder concerns live
-/// in separate files (Refs #3749). All members stay library-private `part`
-/// declarations of `diplomatic_candidate_scoring.dart`; behaviour is unchanged.
-final class _DeclareWarTargetContext {
-  _DeclareWarTargetContext._({
+/// in separate files (Refs #3749; de-parted into its own library Refs #4079
+/// Slice A — bumped to package-private (no leading `_`) so sibling scoring
+/// libraries can import it). Behaviour is unchanged.
+final class DeclareWarTargetContext {
+  DeclareWarTargetContext._({
     required this.order,
     required this.nationId,
     required this.game,
@@ -232,7 +245,7 @@ final class _DeclareWarTargetContext {
   bool get lowWarLikelihood =>
       thresholds.warLikelihood <= kDeclareWarLowWarLikelihoodThreshold;
 
-  factory _DeclareWarTargetContext.build({
+  factory DeclareWarTargetContext.build({
     required DiplomaticOrder order,
     required String nationId,
     required Game game,
@@ -332,7 +345,7 @@ final class _DeclareWarTargetContext {
           isMinorFaction(game, factionId) &&
           invadableOwners.contains(factionId),
     );
-    final activeMinorConflicts = _activeOldWorldMinorConflictIds(
+    final activeMinorConflicts = activeOldWorldMinorConflictIds(
       game: game,
       nationId: nationId,
       currentTurn: currentTurn,
@@ -368,7 +381,7 @@ final class _DeclareWarTargetContext {
           provinceOwner: provinceOwner,
           factionId: order.targetFactionId,
         );
-    return _DeclareWarTargetContext._(
+    return DeclareWarTargetContext._(
       order: order,
       nationId: nationId,
       game: game,

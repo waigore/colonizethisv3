@@ -1,6 +1,11 @@
-part of 'perception_snapshot.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {
+import 'perception_topology.dart';
+import 'summary_models.dart';
+
+ThreatSummary buildThreatSummary(PlayerView view, MapTopology? topology) {
   final atWarWith = <String>[];
   for (final e in view.diplomacyByOtherId.entries) {
     final rel = e.value;
@@ -61,7 +66,7 @@ ThreatSummary _buildThreatSummary(PlayerView view, MapTopology? topology) {
   );
 }
 
-OpportunitySummary _buildOpportunitySummary(
+OpportunitySummary buildOpportunitySummary(
   PlayerView view,
   MapTopology? topology,
 ) {
@@ -105,7 +110,7 @@ List<String> _weakNeighborOwnerIds(PlayerView view, MapTopology topology) {
   return weakNeighbors;
 }
 
-ConquestSummary _buildConquestSummary(
+ConquestSummary buildConquestSummary(
   PlayerView view,
   MapTopology? topology,
   ThreatSummary threats,
@@ -138,7 +143,7 @@ ConquestSummary _buildConquestSummary(
   );
 }
 
-ColonialSummary _buildColonialSummary(
+ColonialSummary buildColonialSummary(
   PlayerView view,
   MapTopology? topology,
   ThreatSummary threats,
@@ -310,7 +315,7 @@ List<String> _invadableProvinceIdsForRegion(
   return invadable;
 }
 
-EconomySummary _buildEconomySummary(PlayerView view) {
+EconomySummary buildEconomySummary(PlayerView view) {
   final p = view.player;
   final workerCount = p.workerPool.totalWorkers;
   final treasury = p.treasury;

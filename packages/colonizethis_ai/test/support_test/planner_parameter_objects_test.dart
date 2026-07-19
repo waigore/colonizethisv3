@@ -31,10 +31,17 @@ void main() {
         contains('List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input)'),
       );
 
+      final recruitmentTypes = File(
+        p.join(planningDir.path, 'recruitment_planner_types.dart'),
+      ).readAsStringSync();
+      expect(
+        recruitmentTypes,
+        contains('final class RecruitmentPlannerInput'),
+      );
+
       final recruitment = File(
         p.join(planningDir.path, 'recruitment_planner.dart'),
       ).readAsStringSync();
-      expect(recruitment, contains('final class RecruitmentPlannerInput'));
       expect(
         recruitment,
         contains(
@@ -43,22 +50,42 @@ void main() {
       );
     });
 
-    test('recruitment planner is concern-split under the near-gate preference '
-        '(Refs #3997 AC5)', () {
+    test('recruitment planner is concern-split into explicit-import libraries '
+        '(Refs #3997 AC5; #4079 Slice A)', () {
       final recruitment = File(
         p.join(planningDir.path, 'recruitment_planner.dart'),
       );
       final candidates = File(
         p.join(planningDir.path, 'recruitment_planner_candidates.dart'),
       );
+      final types = File(
+        p.join(planningDir.path, 'recruitment_planner_types.dart'),
+      );
       expect(candidates.existsSync(), isTrue);
+      expect(types.existsSync(), isTrue);
+
+      final recruitmentSource = recruitment.readAsStringSync();
+      final candidatesSource = candidates.readAsStringSync();
+      final typesSource = types.readAsStringSync();
+      for (final source in [
+        recruitmentSource,
+        candidatesSource,
+        typesSource,
+      ]) {
+        expect(source, isNot(contains("part '")));
+        expect(source, isNot(contains('part of ')));
+      }
       expect(
-        recruitment.readAsStringSync(),
-        contains("part 'recruitment_planner_candidates.dart';"),
+        recruitmentSource,
+        contains("import 'recruitment_planner_candidates.dart';"),
       );
       expect(
-        candidates.readAsStringSync(),
-        contains("part of 'recruitment_planner.dart';"),
+        recruitmentSource,
+        contains("import 'recruitment_planner_types.dart';"),
+      );
+      expect(
+        candidatesSource,
+        contains("import 'recruitment_planner_types.dart';"),
       );
       expect(
         recruitment.readAsLinesSync().length,
@@ -115,8 +142,9 @@ void main() {
       expect(recruitment, isNot(contains('runRecruitmentPlanner({')));
     });
 
-    test('economy labour helpers are topic-split under the near-gate preference',
-        () {
+    test(
+        'economy labour helpers are topic-split into an explicit-import '
+        'library (Refs #4079 Slice A)', () {
       final economy = File(
         p.join(planningDir.path, 'economy_planner.dart'),
       );
@@ -124,13 +152,16 @@ void main() {
         p.join(planningDir.path, 'economy_planner_labour.dart'),
       );
       expect(labour.existsSync(), isTrue);
+
+      final economySource = economy.readAsStringSync();
+      final labourSource = labour.readAsStringSync();
+      for (final source in [economySource, labourSource]) {
+        expect(source, isNot(contains("part '")));
+        expect(source, isNot(contains('part of ')));
+      }
       expect(
-        economy.readAsStringSync(),
-        contains("part 'economy_planner_labour.dart';"),
-      );
-      expect(
-        labour.readAsStringSync(),
-        contains("part of 'economy_planner.dart';"),
+        economySource,
+        contains("import 'economy_planner_labour.dart';"),
       );
       expect(
         economy.readAsLinesSync().length,

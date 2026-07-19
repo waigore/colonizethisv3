@@ -69,7 +69,7 @@ bool _isAtWar(PlannerContext ctx) => ctx.game.diplomacyRelations.any(
 /// Whether [ctx]'s player has stalled Old World expansion this turn, i.e. owns
 /// at most `kStalledOldWorldProvinceThreshold` Old World provinces. Counts the
 /// player's Old World holdings from the player view (same scan perception uses
-/// in `_buildConquestSummary`); evaluated lazily only when the stalled cap
+/// in `buildConquestSummary`); evaluated lazily only when the stalled cap
 /// could bind. Refs #3472 (Stalled-expansion cap).
 bool _isStalledExpansion(PlannerContext ctx) {
   var owned = 0;

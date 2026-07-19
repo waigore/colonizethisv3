@@ -1,11 +1,12 @@
-part of 'recruitment_planner.dart';
+import 'ai_commodity_ids.dart';
+import 'growth_stage.dart';
+import 'planning_imports.dart';
+import 'recruitment_planner_types.dart';
 
 // Candidate gather / evaluate / emit for the recruitment planner
-// (Refs #3997 AC5 concern split). Behaviour-preserving move into a `part of`
-// the recruitment-planner library so imports and private visibility are
-// unchanged.
+// (Refs #3997 AC5 concern split; de-parted Refs #4079 Slice A).
 
-/// Prepared candidate pools + ledger state for one [runRecruitmentPlanner] call.
+/// Prepared candidate pools + ledger state for one `runRecruitmentPlanner` call.
 final class _PreparedRecruitmentPlan {
   const _PreparedRecruitmentPlan({
     required this.recruitCandidates,
@@ -22,7 +23,7 @@ final class _PreparedRecruitmentPlan {
   final bool reserveFabricForMilitary;
 }
 
-_PreparedRecruitmentPlan _prepareRecruitmentPlan({
+_PreparedRecruitmentPlan prepareRecruitmentPlan({
   required RecruitmentPlannerInput input,
   required Player player,
 }) {
@@ -109,7 +110,7 @@ _PreparedRecruitmentPlan _prepareRecruitmentPlan({
   );
 }
 
-void _processRecruitCandidates({
+void processRecruitCandidates({
   required _PreparedRecruitmentPlan prepared,
   required List<RecruitWorkerOrder> recruitOrders,
   required List<RejectedRecruitmentSuggestion> rejected,
@@ -155,7 +156,7 @@ void _processRecruitCandidates({
   }
 }
 
-void _processBuildCandidates({
+void processBuildCandidates({
   required _PreparedRecruitmentPlan prepared,
   required List<BuildUnitOrder> buildUnitOrders,
   required List<RejectedRecruitmentSuggestion> rejected,

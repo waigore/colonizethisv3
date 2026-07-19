@@ -1,6 +1,13 @@
-part of 'economy_planner.dart';
+import 'ai_commodity_ids.dart';
+import 'economy_planner_constants.dart';
+import 'growth_stage.dart';
+import 'planning_imports.dart';
+import 'recipe_scoring.dart';
+import 'scored_candidate.dart';
 
-/// Bundles inputs for [_allocateLabour] (Refs #3977 AC5).
+final _log = packageLogger('economy_planner_labour');
+
+/// Bundles inputs for [allocateLabour] (Refs #3977 AC5).
 final class LabourAllocationInput {
   const LabourAllocationInput({
     required this.stockpile,
@@ -35,7 +42,7 @@ final class LabourAllocationInput {
 
 /// Commodity ids the cheapest regiment still needs in the stockpile before
 /// `suggestBuildOrders` will surface it (Refs #2847 H8).
-Set<String> _missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
+Set<String> missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
   final missing = <String>{};
   for (final entry
       in RegimentEconomyCatalog.peasantLevies.buildInputs.entries) {
@@ -46,7 +53,7 @@ Set<String> _missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
   return missing;
 }
 
-List<AssignedRecipe> _allocateLabour(LabourAllocationInput input) {
+List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
   final stockpile = input.stockpile;
   final workers = input.workers;
   final effectiveLabour = input.effectiveLabour;
@@ -277,7 +284,7 @@ void _assignCastIronLabourFabricPrePass({
 /// Deterministic over the static `ProductionRecipesCatalog`; returns the empty
 /// set when [outputIds] is empty so feasibility falls back to the unreduced
 /// stockpile (behaviour-equal).
-Set<String> _multiInputImprovementOutputs(Set<String> outputIds) {
+Set<String> multiInputImprovementOutputs(Set<String> outputIds) {
   if (outputIds.isEmpty) return const <String>{};
   final result = <String>{};
   for (final outputId in outputIds) {

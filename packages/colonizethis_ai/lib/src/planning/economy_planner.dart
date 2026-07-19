@@ -13,32 +13,15 @@ import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
 import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import 'ai_commodity_ids.dart';
+import 'economy_planner_labour.dart';
 import 'effective_labour_state.dart';
 import 'planning_imports.dart';
-import 'recipe_scoring.dart';
-import 'scored_candidate.dart';
 import 'treasury_planner.dart';
 
-part 'economy_planner_labour.dart';
+export 'economy_planner_constants.dart';
+export 'economy_planner_labour.dart' show LabourAllocationInput;
 
 final _log = packageLogger('economy_planner');
-
-/// Recipe-score boost for outputs that supply a missing cheapest-regiment
-/// build input when the EXPAND regiment-rebuild directive is active
-/// (Refs #2847 H8 production companion).
-const double kRegimentBuildInputProductionScoreBoost = 50.0;
-
-/// Recipe-score boost an **affluent supplier** applies to a domestically
-/// produced improvement input (e.g. `castIron`) that a *peer* lock-recovery
-/// seller needs but the world market structurally cannot supply (Refs #2847
-/// H8-supply castIron source). Deliberately **small** — far below the
-/// shortage-driven score of the supplier's own essential recipes
-/// (`kShortageWeight * kShortageThreshold == 16`) — so the supplier only
-/// converts **leftover** labour/feedstock into a releasable surplus and never
-/// starves its own conquest economy. This keeps the +6 OW baseline for the
-/// healthy GPs (gp1/gp2) safe by construction. Planner-internal (not a new
-/// `ai_victory_config.dart` constant).
-const double kSupplierBuildInputReleaseProductionScoreBoost = 5.0;
 
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
@@ -143,7 +126,7 @@ EconomyPlan runEconomyPlanner({
   final expandEconomy = phasePlan != null
       ? expandEconomyPlanFromPhasePlan(phasePlan)
       : ExpandEconomyPlan.defaultPlan;
-  final missingRegimentBuildInputs = _missingCheapestRegimentBuildInputIds(
+  final missingRegimentBuildInputs = missingCheapestRegimentBuildInputIds(
     stockpile,
   );
   // Refs #2847 § H8-extraction (S7-D lumber re-localization): when the
@@ -200,7 +183,7 @@ EconomyPlan runEconomyPlanner({
   // Refs #2847 § castIron labour peasant-recruit fabric bootstrap: the peasant
   // recruit row costs 2 `fabric` while the cheapest regiment build input only
   // requires 1, so a seller holding one unit is not in
-  // `_missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
+  // `missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
   // the #3303 boost emits. Stage domestic `fabric` production whenever the
   // castIron-labour population-bound gate holds and the stockpile is short the
   // recruit cost — **independent of** `forceCheapestRegimentBuild` / treasury
@@ -281,8 +264,8 @@ EconomyPlan runEconomyPlanner({
   // only relaxes the seller path while preserving the supplier's release sizing
   // and the +6 OW baseline.
   final feedstockReserveOutputIds = <String>{
-    ..._multiInputImprovementOutputs(domesticImprovementInputOutputs),
-    ..._multiInputImprovementOutputs(stageableImprovementInputs),
+    ...multiInputImprovementOutputs(domesticImprovementInputOutputs),
+    ...multiInputImprovementOutputs(stageableImprovementInputs),
     ...supplierReleaseImprovementInputs,
   };
 
@@ -290,7 +273,7 @@ EconomyPlan runEconomyPlanner({
       ? GrowthStage.compute(game, view.playerId, snapshot: snapshot)
       : null;
 
-  final assignments = _allocateLabour(
+  final assignments = allocateLabour(
     LabourAllocationInput(
       stockpile: stockpile,
       workers: workers,

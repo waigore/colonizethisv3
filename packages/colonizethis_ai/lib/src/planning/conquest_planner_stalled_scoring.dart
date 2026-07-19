@@ -1,4 +1,8 @@
-part of 'conquest_planner.dart';
+import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
+import 'expand_phase_planner.dart' show expandIsGeographicPeerWarLock;
+import 'planning_helpers.dart' show oldWorldProvinceLeadOver;
+import 'planning_imports.dart';
 
 // Geographic peer-war lock helpers and stalled-expansion army-move
 // score deltas extracted from conquest_planner.dart (Refs #3967 step 4).
@@ -70,8 +74,8 @@ final class _GeographicPeerLockTransitInput {
 
 /// Shared destination inputs for stalled-expansion army-move score deltas
 /// (Refs #3997).
-final class _StalledExpansionArmyMoveScoreDeltaInput {
-  const _StalledExpansionArmyMoveScoreDeltaInput({
+final class StalledExpansionArmyMoveScoreDeltaInput {
+  const StalledExpansionArmyMoveScoreDeltaInput({
     required this.move,
     required this.nationId,
     required this.game,
@@ -152,8 +156,8 @@ bool _isGeographicPeerLockMinorTransitDestination(
   return false;
 }
 
-double _stalledExpansionArmyMoveScoreDelta(
-  _StalledExpansionArmyMoveScoreDeltaInput input,
+double stalledExpansionArmyMoveScoreDelta(
+  StalledExpansionArmyMoveScoreDeltaInput input,
 ) {
   final geoLockPeerGpId = _geographicPeerWarLockPeerGpId(input.snapshot);
   final geoLockActive =

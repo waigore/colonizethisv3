@@ -207,7 +207,7 @@ bool stockpileAffordsAnyProductionRecipe(
 /// labour — the labour-aware analogue of [stockpileAffordsAnyProductionRecipe].
 ///
 /// Mirrors the economy planner's own per-recipe feasibility test
-/// (`economy_planner.dart` § `_allocateLabour` → `feasibleRuns`) by computing
+/// (`economy_planner_labour.dart` § `allocateLabour` → `feasibleRuns`) by computing
 /// `effectiveLabourForWorkers` from the same inputs the planner uses (the
 /// player's `WorkerPool` + `Stockpile`, with land-regiment and ship upkeep food
 /// reserved via `regimentTypeCountsForPlayer` / `shipTypeCountsForPlayer`) and
