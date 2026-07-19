@@ -90,4 +90,89 @@ void main() {
     final game = parityGame(minorNations: const [], tribes: const []);
     expect(identical(applyMinorMilitaryParity(game), game), isTrue);
   });
+
+  test('sets minor level to max across multiple GPs', () {
+    final game = TestFixtures.minimalGame(
+      players: [
+        const Player(id: 'gp1', displayName: 'GP1', isHuman: true, militaryLevel: 2),
+        const Player(id: 'gp2', displayName: 'GP2', isHuman: true, militaryLevel: 4),
+        const Player(id: 'gp3', displayName: 'GP3', isHuman: true, militaryLevel: 3),
+      ],
+      minorNations: const [
+        MinorNation(id: 'm1', displayName: 'Minor1'),
+        MinorNation(id: 'm2', displayName: 'Minor2'),
+      ],
+      tribes: const [Tribe(id: 't1', displayName: 'Tribe')],
+      oldWorld: const RegionData(
+        provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+      ),
+    );
+    final result = applyMinorMilitaryParity(game);
+    expect(result.minorNations[0].effectiveMilitaryLevel, 4);
+    expect(result.minorNations[1].effectiveMilitaryLevel, 4);
+    expect(result.tribes.single.effectiveMilitaryLevel, 1);
+  });
+
+  test('upgrades dual-region regiments in place and preserves medals', () {
+    final game = TestFixtures.minimalGame(
+      players: [
+        const Player(id: 'gp1', displayName: 'GP', isHuman: true, militaryLevel: 4),
+      ],
+      minorNations: const [MinorNation(id: 'm1', displayName: 'Minor')],
+      tribes: const [],
+      oldWorld: RegionData(
+        provinces: const [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+        units: [
+          Unit(
+            id: 'u_minor',
+            type: 'halberdiers',
+            ownerId: 'm1',
+            locationProvinceId: 'oldWorld|p1',
+            medals: 2,
+          ),
+          Unit(
+            id: 'u_gp',
+            type: 'halberdiers',
+            ownerId: 'gp1',
+            locationProvinceId: 'oldWorld|p1',
+          ),
+        ],
+      ),
+      newWorld: RegionData(
+        provinces: const [Province(id: 'newWorld|n1', regionId: 'newWorld')],
+        units: [
+          Unit(
+            id: 'u_minor_nw',
+            type: 'horse_artillery',
+            ownerId: 'm1',
+            locationProvinceId: 'newWorld|n1',
+            medals: 1,
+          ),
+        ],
+      ),
+    );
+    final result = applyMinorMilitaryParity(game);
+    final ow = {for (final u in result.worldState.oldWorld.units) u.id: u};
+    final nw = {for (final u in result.worldState.newWorld.units) u.id: u};
+    expect(ow['u_minor']!.type, 'rifle_infantry');
+    expect(ow['u_minor']!.medals, 2);
+    expect(nw['u_minor_nw']!.type, 'field_artillery');
+    expect(nw['u_minor_nw']!.medals, 1);
+    expect(ow['u_gp']!.type, 'halberdiers');
+  });
+
+  test('uses 1 when no GP has militaryLevel set', () {
+    final game = TestFixtures.minimalGame(
+      players: [const Player(id: 'gp1', displayName: 'GP', isHuman: true)],
+      minorNations: const [
+        MinorNation(id: 'm1', displayName: 'Minor', effectiveMilitaryLevel: 2),
+      ],
+      tribes: const [],
+      oldWorld: const RegionData(
+        provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld')],
+      ),
+    );
+    final result = applyMinorMilitaryParity(game);
+    expect(result.minorNations.single.effectiveMilitaryLevel, 1);
+  });
 }

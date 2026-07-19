@@ -44,3 +44,21 @@ Inventory equivalence decisions for orphan suite purge. Schema columns:
 | `world_market_trade_order_validator_test.dart` | removed from logic (domain peer under `test/economy/world_market/`) |
 
 World/turn collisions (`province_lookup`, `minor_military_parity`, `tile_control`, `turn_resolution_result`) deferred to Slices B/D.
+
+## Slice B — World leaf purge/port (basename collisions)
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/tile_control_test.dart` | `colonizethis_world` | delete | All 4 cases match `world/tile_control_test.dart` observables |
+| `test/province_lookup_test.dart` | `colonizethis_world` | port+delete | Covered peers in `world/province_lookup_test.dart`; unique legacy/null/update/index contracts ported to `world/province_lookup_unique_ports_test.dart` |
+| `test/minor_military_parity_test.dart` | `colonizethis_world` | port+delete | Covered peers in `world/minor_military_parity_test.dart`; unique multi-GP max, dual-region medal-preserving upgrade, unset-GP→1 ported into that file; JSON round-trip covered by models |
+
+### Slice B basename collisions resolved (AC3 subset)
+
+| Basename | Status |
+|----------|--------|
+| `tile_control_test.dart` | removed from logic |
+| `province_lookup_test.dart` | removed from logic |
+| `minor_military_parity_test.dart` | removed from logic |
+
+Remaining Slice B orphans (connectivity/movement/player_view/naval/sea_reachable/province_name_fallback) deferred.
