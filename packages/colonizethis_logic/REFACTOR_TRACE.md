@@ -61,4 +61,17 @@ World/turn collisions (`province_lookup`, `minor_military_parity`, `tile_control
 | `province_lookup_test.dart` | removed from logic |
 | `minor_military_parity_test.dart` | removed from logic |
 
-Remaining Slice B orphans (connectivity/movement/player_view/naval/sea_reachable/province_name_fallback) deferred.
+Remaining Slice B orphans (connectivity/movement/player_view/naval leaf suites) deferred.
+
+## Slice B — World / setup leaf purge/port (continued)
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/naval_port_province_id_test.dart` | `colonizethis_world` | port+delete | Prefixed + legacy covered by `world/naval_topology_test.dart`; multi-pipe local-id remainder ported there |
+| `test/player_view_spy_intel_test.dart` | `colonizethis_world` | delete | Spy-reveal timer case matches `world/player_view_build_test.dart` `foreign province with an active spy-reveal timer shows full intel` |
+| `test/province_name_fallback_test.dart` | `colonizethis_setup` | port+delete | Peer `setup/setup_exception_and_seed_coverage_test.dart`; ported determinism + 50-unique non-empty asserts |
+| `test/gp_land_connectivity_repair_test.dart` | `colonizethis_setup` | port+delete | Ported unit cases to `setup/gp_land_connectivity_repair_test.dart` (integration peers only used helper) |
+| `test/sea_reachable_provinces_distance_test.dart` | `colonizethis_world` | port+delete | Distances 1/2/shortest/region-filter covered by `world/sea_reachable_provinces_test.dart`; ported NW distance-3 route |
+| `test/sea_reachable_provinces_distance_part2_test.dart` | `colonizethis_world` | port+delete | Region filter covered; ported distance foreign non-expansion + determinism into same world peer |
+
+Remaining Slice B orphans: connectivity_resolver_* / movement / player_view / naval_test_part* deferred.

@@ -252,5 +252,104 @@ void main() {
       );
       expect(result.keys, ['newWorld|colony']);
     });
+
+    test(
+      'canonical NW route via owned -> OW sea -> NW sea -> NW colony is distance 3',
+      () {
+        final topology = topologyFromGraph(
+          nodes: [
+            prefixedProvinceNode('oldWorld|own'),
+            prefixedSeaZoneNode('oldWorld|owSea'),
+            prefixedSeaZoneNode('newWorld|nwSea'),
+            prefixedProvinceNode('newWorld|colony'),
+          ],
+          edges: const [
+            TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|owSea'),
+            TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
+            TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+          ],
+        );
+        final view = _viewOwning(const {
+          'oldWorld|own': 'p1',
+          'newWorld|colony': 'p2',
+        });
+
+        final result = reachableNonOwnedProvinceDistancesViaSeas(
+          topology,
+          {'oldWorld|own'},
+          view,
+          regionIdFilter: kNewWorldRegionId,
+        );
+        expect(result, {'newWorld|colony': 3});
+      },
+    );
+
+    test('distance BFS does not expand through foreign provinces', () {
+      final topology = topologyFromGraph(
+        nodes: [
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('newWorld|nwSea'),
+          prefixedProvinceNode('newWorld|colony'),
+          prefixedProvinceNode('newWorld|far'),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'oldWorld|own', id2: 'newWorld|nwSea'),
+          TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
+          TopologyEdge(id1: 'newWorld|colony', id2: 'newWorld|far'),
+        ],
+      );
+      final view = _viewOwning(const {
+        'oldWorld|own': 'p1',
+        'newWorld|colony': 'p2',
+        'newWorld|far': 'p3',
+      });
+
+      final result = reachableNonOwnedProvinceDistancesViaSeas(
+        topology,
+        {'oldWorld|own'},
+        view,
+        regionIdFilter: kNewWorldRegionId,
+      );
+      expect(result.containsKey('newWorld|colony'), isTrue);
+      expect(result.containsKey('newWorld|far'), isFalse);
+    });
+
+    test('identical inputs produce identical distance maps', () {
+      final topology = topologyFromGraph(
+        nodes: [
+          prefixedProvinceNode('oldWorld|own'),
+          prefixedSeaZoneNode('oldWorld|owSea'),
+          prefixedSeaZoneNode('newWorld|nwSea'),
+          prefixedProvinceNode('newWorld|colonyA'),
+          prefixedProvinceNode('newWorld|colonyB'),
+        ],
+        edges: const [
+          TopologyEdge(id1: 'oldWorld|own', id2: 'oldWorld|owSea'),
+          TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
+          TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colonyA'),
+          TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colonyB'),
+        ],
+      );
+      final view = _viewOwning(const {
+        'oldWorld|own': 'p1',
+        'newWorld|colonyA': 'p2',
+        'newWorld|colonyB': 'p3',
+      });
+
+      final first = reachableNonOwnedProvinceDistancesViaSeas(
+        topology,
+        {'oldWorld|own'},
+        view,
+        regionIdFilter: kNewWorldRegionId,
+      );
+      final second = reachableNonOwnedProvinceDistancesViaSeas(
+        topology,
+        {'oldWorld|own'},
+        view,
+        regionIdFilter: kNewWorldRegionId,
+      );
+      expect(first, second);
+      expect(first, {'newWorld|colonyA': 3, 'newWorld|colonyB': 3});
+    });
   });
 }

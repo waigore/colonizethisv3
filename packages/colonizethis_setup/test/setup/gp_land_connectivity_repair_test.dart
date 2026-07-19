@@ -1,7 +1,7 @@
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-
+/// Unit coverage for [gpProvincesAreLandConnected] (Refs #4090 port from logic).
 void main() {
   group('gpProvincesAreLandConnected', () {
     test('single province is connected', () {
@@ -10,7 +10,7 @@ void main() {
         'p1': {'p2'},
         'p2': {'p1'},
       };
-      expect(gpProvincesAreLandConnected('gp1', owners, n), true);
+      expect(gpProvincesAreLandConnected('gp1', owners, n), isTrue);
     });
 
     test('two adjacent provinces are connected', () {
@@ -20,7 +20,7 @@ void main() {
         'p2': {'p1', 'p3'},
         'p3': {},
       };
-      expect(gpProvincesAreLandConnected('gp1', owners, n), true);
+      expect(gpProvincesAreLandConnected('gp1', owners, n), isTrue);
     });
 
     test('two non-adjacent provinces are not connected', () {
@@ -30,7 +30,7 @@ void main() {
         'p2': {'p1', 'p3'},
         'p3': {'p2'},
       };
-      expect(gpProvincesAreLandConnected('gp1', owners, n), false);
+      expect(gpProvincesAreLandConnected('gp1', owners, n), isFalse);
     });
   });
 }
