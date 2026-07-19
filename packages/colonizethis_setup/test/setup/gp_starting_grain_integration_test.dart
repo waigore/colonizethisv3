@@ -1,8 +1,11 @@
+// Ported from colonizethis_logic (Refs #4090 Slice C).
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 void main() {
   group('Great Power starting grain bootstrap (integration)', () {

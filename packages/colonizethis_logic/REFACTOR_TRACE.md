@@ -97,3 +97,32 @@ Remaining Slice B orphans: connectivity_resolver_* (non-blockade) / naval_test_p
 | `test/naval_test_part2_test.dart` | `colonizethis_world` | port+delete | Ported lookup/combined-topology pins to `world/naval_local_topology_part2_test.dart` (5 cases overlapped `naval_topology_test.dart`) |
 
 Slice B world connectivity/naval leaf orphans complete. Remaining issue slices: C (setup), D (orders/combat/diplomacy/turn), E (thin residual + CI).
+
+## Slice C — Setup leaf purge/port (capital / warp / assignment / seed)
+
+| source_file | owner_package | action | evidence |
+|-------------|---------------|--------|----------|
+| `test/effective_setup_seed_test.dart` | `colonizethis_setup` | delete | Covered by `setup/setup_exception_and_seed_coverage_test.dart` (`resolveEffectiveSetupSeed` positive/zero/negative) |
+| `test/capital_choice_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/capital_choice_test.dart` (no prior peer suite) |
+| `test/capital_choice_assignment_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/capital_choice_assignment_test.dart` |
+| `test/capital_choice_classification_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/capital_choice_classification_test.dart` |
+| `test/capital_choice_reassignment_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/capital_choice_reassignment_test.dart` |
+| `test/warp_zone_generator_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/warp_zone_generator_test.dart` |
+| `test/province_assignment_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/province_assignment_test.dart` |
+
+| `test/minor_tribe_starting_development_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/minor_tribe_starting_development_test.dart` |
+| `test/minor_tribe_starting_development_select_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/minor_tribe_starting_development_select_test.dart` |
+| `test/minor_tribe_starting_development_integration_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/minor_tribe_starting_development_integration_test.dart` |
+| `test/gp_old_world_resource_redistribution_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/gp_old_world_resource_redistribution_test.dart` |
+| `test/gp_old_world_terrain_redistribution_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/gp_old_world_terrain_redistribution_test.dart` |
+| `test/gp_starting_grain_integration_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/gp_starting_grain_integration_test.dart` |
+| `test/game_setup_creation_and_assignment_part1_segment1_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_creation_and_assignment_part1_segment1_test.dart` |
+| `test/game_setup_creation_and_assignment_part1_segment2_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_creation_and_assignment_part1_segment2_test.dart` |
+| `test/game_setup_creation_and_assignment_part2_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_creation_and_assignment_part2_test.dart` |
+| `test/game_setup_creation_and_assignment_part2_assignment_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_creation_and_assignment_part2_assignment_test.dart` |
+| `test/game_setup_landmass_gp_count_gt_landmass_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_landmass_gp_count_gt_landmass_test.dart` |
+| `test/game_setup_landmass_visibility_and_gp_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_landmass_visibility_and_gp_test.dart` |
+| `test/game_setup_variants_and_naming_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_variants_and_naming_test.dart` |
+| `test/game_setup_variants_and_naming_additional_test.dart` | `colonizethis_setup` | port+delete | Ported to `setup/game_setup_variants_and_naming_additional_test.dart` |
+
+Slice C setup leaf orphans complete (`game_setup_*` / `capital_choice_*` / `gp_*` / `minor_tribe_*` / `warp_zone` / `province_assignment` / `effective_setup_seed`). Remaining issue slices: D (orders/combat/diplomacy/turn + combat-adjacent capital reassignment), E (thin residual + CI). Characterization `game_setup_snapshot_test.dart` deferred to Slice D/E eligibility gate.

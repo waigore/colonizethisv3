@@ -1,6 +1,7 @@
+// Ported from colonizethis_logic (Refs #4090 Slice C).
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 
 void main() {
   group('GameSetup', () {
