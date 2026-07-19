@@ -12,7 +12,7 @@
           "id": "sepia",
           "name_l10n_key": "mapTheme_terrain_sepia",
           "tileset_config": "assets/themes/sepia/data/map_terrain_tilesets.json",
-          "standalone_tile_prefix": "assets/images/terrain/tile_"
+          "standalone_tile_prefix": "assets/themes/sepia/images/terrain/tile_"
         }
       ]
     },

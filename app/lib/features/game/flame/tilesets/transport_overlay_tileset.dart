@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
 import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/services.dart';
@@ -32,7 +33,9 @@ class TransportOverlayTilesetCache {
     if (_isLoaded || _isLoading) return;
     _isLoading = true;
     try {
-      await MapTerrainConfig.ensureLoaded();
+      await MapTerrainConfig.ensureLoaded(
+        assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+      );
       _roadTileset = await _loadFamilyTileset(TransportTileFamily.road);
       _railTileset = await _loadFamilyTileset(TransportTileFamily.rail);
       _isLoaded = true;
