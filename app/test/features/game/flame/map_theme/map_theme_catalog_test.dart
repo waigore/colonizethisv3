@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/config/app_constants.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
@@ -13,6 +14,26 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+/// Stems loaded by [TerrainTilesetCache] (required + best-effort overlays).
+const _kStandaloneTerrainStems = <String>[
+  'plains_grain',
+  'plains_meat',
+  'plains_horses',
+  'plains_sugar_cane',
+  'plains_tobacco',
+  'plains_cotton',
+  'plains_spices',
+  'hardwood_forest',
+  'hardwood_forest_timber',
+  'scrub_forest',
+  'scrub_forest_timber',
+  'hills',
+  'hills_mine',
+  'hills_wool',
+  'mountain',
+  'swamp',
+];
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -120,6 +141,10 @@ void main() {
                 await rootBundle.loadString(obj['spec_json']! as String);
                 await rootBundle.load(obj['atlas_png']! as String);
               }
+            }
+            final prefix = theme.standaloneTilePrefix!;
+            for (final stem in _kStandaloneTerrainStems) {
+              await rootBundle.load('$prefix$stem.png');
             }
           } else if (group == MapThemeGroupId.civilianIcons) {
             for (final slug in kCivilianIconSlugs) {
@@ -232,6 +257,14 @@ void main() {
       expect(
         MapTerrainConfig.instance.transportTilesets['road']!.atlasPngPath,
         'assets/themes/sepia/images/terrain/tilesets/tileset_transport_road_64.png',
+      );
+      expect(
+        theme.terrainStandaloneTilePrefix,
+        'assets/themes/sepia/images/terrain/tile_',
+      );
+      expect(
+        terrainTileAssetPath('hills'),
+        'assets/themes/sepia/images/terrain/tile_hills.png',
       );
     });
 
