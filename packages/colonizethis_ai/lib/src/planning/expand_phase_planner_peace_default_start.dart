@@ -1,11 +1,12 @@
-part of 'expand_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'expand_peace_frontier_helpers.dart';
+import 'planning_helpers.dart';
+import 'planning_imports.dart';
 
-// EXPAND-phase default-start / near-quota / distraction `offerPeace` target
-// deciders plus the `stalledOwExpansionNeedsPeacePass` composite, extracted
-// from `expand_phase_planner.dart` for maintainability (Refs #3278
-// file-split). Behaviour-preserving move: same library scope (this is a
-// `part of` the EXPAND planner library), so imports, shared helpers, and
-// visibility are unchanged.
+import 'expand_phase_planner_gp_blocker_peace.dart';
+import 'expand_phase_planner_peace_targets.dart';
+import 'expand_phase_planner_peer_peace.dart';
 
 /// Returns the deterministic ascending-sorted list of at-war minor
 /// `factionId`s that the active player should `offerPeace` toward when
@@ -289,62 +290,6 @@ List<String> nearQuotaHoldPeaceTargets({
     return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
   }
   return gpWars;
-}
-
-/// At-war minor with the most invadable Old World provinces (single-front
-/// focus minor), or `null` when no at-war minor owns any invadable OW
-/// province.
-///
-/// Canonical home (Refs #2509 S1) for the legacy `stalledFocusMinorTarget`
-/// helper previously hosted in `diplomacy_planner_peace_targets.dart`. The
-/// helper survives the now-completed S1 deletion of that file alongside its
-/// EXPAND-phase consumers ([belowQuotaActiveMinorWarTarget],
-/// `stalledExpansionDistractionPeaceTargets`,
-/// `belowQuotaMultiMinorDistractionPeaceTargets`) which all use the
-/// "focused minor" identity to keep one OW minor war open while peacing
-/// every other distraction front.
-///
-/// Inputs:
-///   - [game]: used to resolve `(playerId, minor.id)` relations via
-///     [getRelation] and to score each at-war minor against
-///     [ConquestSummary.invadableProvinceIdsSorted] via [getProvinceOwnerMap].
-///   - [snapshot]: per-player [AIWorldSnapshot] supplying the active player
-///     id and the deterministic invadable OW frontier list.
-///
-/// Output:
-///   - The `factionId` of the at-war minor that owns the most provinces in
-///     [ConquestSummary.invadableProvinceIdsSorted]. The first minor that
-///     reaches a strictly greater invadable count wins, so ties resolve to
-///     the iteration order of `Game.minorNations` (deterministic for a
-///     fixed game-state input).
-///   - `null` when no at-war minor owns any invadable OW province (every
-///     candidate stays at `bestInvadableCount == 0`).
-///
-/// Pure and deterministic — identical inputs always yield identical output
-/// (Refs #2509 Must-have #7). Linear in `Game.minorNations` with one
-/// [ConquestSummary.invadableProvinceIdsSorted] scan per at-war minor;
-/// matches the budget-rule note in
-/// `colonizethis-turn-resolution-budget.mdc` (no global province / tile
-/// scans introduced by the move).
-String? stalledFocusMinorTarget({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  final provinceOwner = getProvinceOwnerMap(game);
-  String? bestMinorId;
-  var bestInvadableCount = 0;
-  for (final minor in game.minorNations) {
-    final rel = getRelation(game, snapshot.playerId, minor.id);
-    if (rel?.state != RelationState.atWar) continue;
-    final invadableCount = snapshot.conquest.invadableProvinceIdsSorted
-        .where((pid) => provinceOwner[pid] == minor.id)
-        .length;
-    if (invadableCount > bestInvadableCount) {
-      bestInvadableCount = invadableCount;
-      bestMinorId = minor.id;
-    }
-  }
-  return bestMinorId;
 }
 
 /// At-war minor "active OW front" target while the active player is below

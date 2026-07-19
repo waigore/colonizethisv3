@@ -1,4 +1,5 @@
-part of 'expand_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 
 /// The single deterministic **primary** Old World feedstock-tile acquisition
 /// target province id the flagged below-quota zero-NW lock-recovery seller

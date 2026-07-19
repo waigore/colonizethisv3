@@ -1,11 +1,17 @@
-part of 'domain_planner_orchestrator.dart';
+import '../perception/perception_snapshot.dart';
+import 'conquest_planner.dart';
+import 'move_planner.dart';
+import 'phase_planner_conquest_filter.dart';
+import 'phase_planner_dispatch.dart';
+import 'planner_context.dart';
+import 'planning_imports.dart';
 
 /// Military-phase orchestrator slice carrying the post-pass
 /// [PlannerContext] plus the conquest army-move gate signals required to
 /// populate `thresholds.domainGates` in the AI trace (Refs #2832) and the
 /// [DomainPlannerOutcome.conquestArmyMoveCount] surfaced to callers.
-class _MilitaryDomainPlannersResult {
-  const _MilitaryDomainPlannersResult({
+class MilitaryDomainPlannersResult {
+  const MilitaryDomainPlannersResult({
     required this.ctx,
     required this.conquestArmyMovePlannerRan,
     required this.conquestPasses,
@@ -37,7 +43,7 @@ class _MilitaryDomainPlannersResult {
 /// the GP is in the stalled extra-passes state (relocation would undo frontier
 /// marches). The `aiStageD` progress phase is emitted at the tail exactly as in
 /// the inlined version.
-_MilitaryDomainPlannersResult _runMilitaryDomainPlanners({
+MilitaryDomainPlannersResult runMilitaryDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
@@ -102,7 +108,7 @@ _MilitaryDomainPlannersResult _runMilitaryDomainPlanners({
     );
   }
   emit('aiStageD');
-  return _MilitaryDomainPlannersResult(
+  return MilitaryDomainPlannersResult(
     ctx: ctx,
     conquestArmyMovePlannerRan: conquestArmyMovePlannerRan,
     conquestPasses: conquestPasses,

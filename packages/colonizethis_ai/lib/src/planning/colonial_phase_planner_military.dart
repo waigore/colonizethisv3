@@ -1,4 +1,9 @@
-part of 'colonial_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'expand_phase_planner_economy.dart' show ExpandEconomyPlan;
+import 'phase_destination_result.dart';
+import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
+import 'region_military_destination_filter.dart';
 
 /// COLONIAL-phase conquest destination filter returned by
 /// [planColonialMilitary].
@@ -159,8 +164,8 @@ ColonialMilitaryPlan planColonialMilitary({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? colonialDeclaredWarTargetFactionId,
-  expand_phase_planner.ExpandEconomyPlan expandEconomyPlan =
-      expand_phase_planner.ExpandEconomyPlan.defaultPlan,
+  ExpandEconomyPlan expandEconomyPlan =
+      ExpandEconomyPlan.defaultPlan,
 }) {
   if (isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
       !isNwLockRecoveryPathEActive(

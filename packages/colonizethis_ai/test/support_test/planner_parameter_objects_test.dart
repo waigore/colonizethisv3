@@ -174,9 +174,19 @@ void main() {
       final colonial = File(
         p.join(planningDir.path, 'colonial_phase_planner.dart'),
       ).readAsStringSync();
-      expect(colonial, contains("part 'colonial_phase_planner_naval.dart';"));
-      expect(colonial, contains("part 'colonial_phase_planner_lite.dart';"));
-      expect(colonial, contains("part 'colonial_phase_planner_civilian.dart';"));
+      expect(
+        colonial,
+        contains("import 'colonial_phase_planner_naval.dart';"),
+      );
+      expect(
+        colonial,
+        contains("import 'colonial_phase_planner_lite.dart';"),
+      );
+      expect(
+        colonial,
+        contains("export 'colonial_phase_planner_civilian.dart';"),
+      );
+      expect(colonial, isNot(contains("part '")));
 
       for (final name in <String>[
         'colonial_phase_planner_naval.dart',
@@ -194,25 +204,40 @@ void main() {
           lessThanOrEqualTo(750),
           reason: '$name should sit under ~750 after Phase-5 near-gate splits',
         );
+        expect(
+          file.readAsStringSync(),
+          isNot(contains("part of '")),
+          reason: '$name should be an explicit-import library (Refs #4079)',
+        );
       }
 
       final diplomacy = File(
         p.join(planningDir.path, 'diplomacy_planner.dart'),
       ).readAsStringSync();
-      expect(diplomacy, contains("part 'diplomacy_planner_pass_helpers.dart';"));
       expect(
-        File(
-          p.join(planningDir.path, 'diplomacy_planner_pass_helpers.dart'),
-        ).readAsStringSync(),
-        contains("part of 'diplomacy_planner.dart';"),
+        diplomacy,
+        contains("import 'diplomacy_planner_pass_helpers.dart';"),
       );
+      expect(diplomacy, isNot(contains("part '")));
 
       final orchestrator = File(
         p.join(planningDir.path, 'domain_planner_orchestrator.dart'),
       ).readAsStringSync();
       expect(
         orchestrator,
-        contains("part 'domain_planner_orchestrator_economy_build.dart';"),
+        contains("import 'domain_planner_orchestrator_economy.dart';"),
+      );
+      expect(orchestrator, isNot(contains("part '")));
+
+      final economy = File(
+        p.join(
+          planningDir.path,
+          'domain_planner_orchestrator_economy.dart',
+        ),
+      ).readAsStringSync();
+      expect(
+        economy,
+        contains("import 'domain_planner_orchestrator_economy_build.dart';"),
       );
     });
 

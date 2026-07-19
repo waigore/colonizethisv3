@@ -1,4 +1,6 @@
-part of 'colonial_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'phase_destination_result.dart';
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 
 /// Returns the deterministic list of NW tribe / minor faction ids the active
 /// COLONIAL-lite player should `establishOverture` toward this turn.

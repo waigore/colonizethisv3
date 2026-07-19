@@ -1,35 +1,15 @@
 library;
 
-import 'dart:math' as math;
 
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
-import 'army_conquest_prep.dart';
 import 'domain_gate_data.dart';
-import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_planner_economy_filter.dart';
-import 'phase_planner_work_order_filter.dart';
-import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
-import 'planning_helpers.dart'
-    show
-        isAtWarWithAnyGreatPower,
-        isPursuingTechStealPosture,
-        oldWorldProvinceLeadOver;
 import 'planning_imports.dart';
 import 'goal_manager.dart';
 import '../perception/perception_snapshot.dart';
-import '../util/orders_builder.dart';
 import '../util/orders_extensions.dart';
-import 'build_planner.dart';
-import 'growth_stage.dart';
-import 'conquest_planner.dart';
-import 'expand_phase_planner.dart' show ExpandEconomyPlan;
-import 'growth_stage_builder_relocation.dart';
-import 'growth_stage_work_priorities.dart';
-import 'diplomacy_planner.dart';
 import 'domain_planner_outcome.dart';
-import 'economy_phase_gates.dart';
 import 'move_planner.dart';
 import 'orchestrator_options.dart';
 import 'naval_planner.dart';
@@ -37,12 +17,9 @@ import 'planner_context.dart';
 import 'research_planner.dart';
 import 'treasury_planner.dart';
 
-part 'domain_planner_orchestrator_economy.dart';
-part 'domain_planner_orchestrator_economy_build.dart';
-part 'domain_planner_orchestrator_military.dart';
-part 'domain_planner_orchestrator_diplomacy.dart';
-
-final _log = packageLogger();
+import 'domain_planner_orchestrator_diplomacy.dart';
+import 'domain_planner_orchestrator_economy.dart';
+import 'domain_planner_orchestrator_military.dart';
 
 // Domain planners (utility AI). SPEC/ai/ai-architecture.md, ai-systems-impl.md, economy-planner.md.
 
@@ -136,7 +113,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome(DomainPlannerInput input) {
     civilianBuildPlannerEnabled: options.civilianBuildPlannerEnabled,
   );
 
-  final economyResult = _runEconomyDomainPlanners(
+  final economyResult = runEconomyDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
@@ -150,7 +127,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome(DomainPlannerInput input) {
   ctx = ctx.withOrders(runMovePlanner(ctx: ctx));
   emit('aiStageC');
 
-  final preConquestDiplomacy = _runPreConquestDiplomacyPlanners(
+  final preConquestDiplomacy = runPreConquestDiplomacyPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
@@ -159,7 +136,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome(DomainPlannerInput input) {
   final declaredWarTargetFactionId =
       preConquestDiplomacy.declaredWarTargetFactionId;
 
-  final militaryResult = _runMilitaryDomainPlanners(
+  final militaryResult = runMilitaryDomainPlanners(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
@@ -184,7 +161,7 @@ DomainPlannerOutcome runDomainPlannersWithOutcome(DomainPlannerInput input) {
 
   // Late peace pass undoes same-turn declare-war on the OW frontier blocker
   // (observer seed-42 gp5/gp6; Refs #2509).
-  ctx = _runLatePeaceDiplomacyPlanner(
+  ctx = runLatePeaceDiplomacyPlanner(
     ctx: ctx,
     snapshot: snapshot,
     phasePlan: resolvedPhasePlan,
