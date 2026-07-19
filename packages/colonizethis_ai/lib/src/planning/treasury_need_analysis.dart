@@ -1,4 +1,8 @@
-part of 'treasury_planner.dart';
+
+import 'planning_imports.dart';
+import 'recipe_scoring.dart' show kShortageThreshold;
+import 'treasury_market_pricing.dart';
+import 'treasury_planner_constants.dart';
 
 // Surplus / need-map analysis for the treasury planner (Refs #2994 F1–F5/F8 +
 // #2924 F10), extracted from `treasury_planner.dart` for maintainability
@@ -6,7 +10,7 @@ part of 'treasury_planner.dart';
 // is a `part of` the treasury-planner library), so imports, shared helpers, and
 // visibility are unchanged.
 
-Stockpile _projectStockpileAfterProduction({
+Stockpile projectStockpileAfterProduction({
   required Stockpile stockpile,
   required List<AssignedRecipe> productionAssignments,
 }) {
@@ -27,7 +31,7 @@ Stockpile _projectStockpileAfterProduction({
   return projected;
 }
 
-Set<CommodityId> _trackedCommodityIds({
+Set<CommodityId> trackedCommodityIds({
   required Stockpile stockpile,
   required Stockpile projected,
   required Map<CommodityId, int> inputNeeds,
@@ -54,7 +58,7 @@ Set<CommodityId> _trackedCommodityIds({
   return ids;
 }
 
-int _consumptionForecast({
+int consumptionForecast({
   required CommodityId commodityId,
   required Commodity commodity,
   required Map<CommodityId, int> inputNeeds,
@@ -68,7 +72,7 @@ int _consumptionForecast({
   return (kShortageThreshold ~/ 2).clamp(1, kShortageThreshold);
 }
 
-Map<CommodityId, int> _inputNeedsFromAssignments(
+Map<CommodityId, int> inputNeedsFromAssignments(
   List<AssignedRecipe> productionAssignments,
 ) {
   final needs = <CommodityId, int>{};
@@ -84,9 +88,9 @@ Map<CommodityId, int> _inputNeedsFromAssignments(
   return needs;
 }
 
-/// Parameter bag for [_populateTreasurySurplusAndNeedMaps] (Refs #3997).
-final class _TreasurySurplusNeedMapsInput {
-  const _TreasurySurplusNeedMapsInput({
+/// Parameter bag for [populateTreasurySurplusAndNeedMaps] (Refs #3997).
+final class TreasurySurplusNeedMapsInput {
+  const TreasurySurplusNeedMapsInput({
     required this.trackedCommodityIds,
     required this.inputNeeds,
     required this.projected,
@@ -111,12 +115,12 @@ final class _TreasurySurplusNeedMapsInput {
   final Map<CommodityId, int> need;
 }
 
-void _populateTreasurySurplusAndNeedMaps(_TreasurySurplusNeedMapsInput input) {
+void populateTreasurySurplusAndNeedMaps(TreasurySurplusNeedMapsInput input) {
   for (final id in input.trackedCommodityIds) {
     if (richesCommodityIds.contains(id)) continue;
     final commodity = CommodityCatalog.byId[id];
     if (commodity == null) continue;
-    final consumption = _consumptionForecast(
+    final consumption = consumptionForecast(
       commodityId: id,
       commodity: commodity,
       inputNeeds: input.inputNeeds,
@@ -126,7 +130,7 @@ void _populateTreasurySurplusAndNeedMaps(_TreasurySurplusNeedMapsInput input) {
         ? (input.isLockRecoverySeller ? 0 : consumption * 2)
         : consumption;
     if (input.isRegimentBuildInputMarketSupplier &&
-        _regimentBuildInputSupplyCommodityIds.contains(id)) {
+        regimentBuildInputSupplyCommodityIds.contains(id)) {
       safety = 0;
     }
     final reserve = consumption + inputs + safety;
@@ -140,7 +144,7 @@ void _populateTreasurySurplusAndNeedMaps(_TreasurySurplusNeedMapsInput input) {
         projectedQty -
         (input.carryForwardBids[id] ?? 0);
     if (deficit > 0 &&
-        _marketPriceBelowProductionCost(id, input.marketPrices)) {
+        marketPriceBelowProductionCost(id, input.marketPrices)) {
       input.need[id] = deficit;
     }
   }
@@ -150,7 +154,7 @@ void _populateTreasurySurplusAndNeedMaps(_TreasurySurplusNeedMapsInput input) {
 /// [state.lastTurnActivity]. Returns `1.0` when no activity exists or
 /// `totalOfferQuantity <= 0`, matching the "no prior data → assume fully
 /// fillable" convention used elsewhere in F2/F3. Refs #2994 F8.
-double _priorTurnOfferFillRate(WorldMarketState state, CommodityId commodityId) {
+double priorTurnOfferFillRate(WorldMarketState state, CommodityId commodityId) {
   final activity = state.lastTurnActivity[commodityId];
   if (activity == null) return 1.0;
   final total = activity.totalOfferQuantity;
@@ -165,7 +169,7 @@ double _priorTurnOfferFillRate(WorldMarketState state, CommodityId commodityId) 
 /// Carry-forward residual quantity per commodity for [playerId] on the given
 /// [side], summed across all carry-forward entries. Returns an empty map when
 /// the player has no carry-forward state. Refs #2994 F8.
-Map<CommodityId, int> _carryForwardQuantitiesByCommodity({
+Map<CommodityId, int> carryForwardQuantitiesByCommodity({
   required WorldMarketState state,
   required String playerId,
   required TradeOrderType side,
@@ -190,7 +194,7 @@ Map<CommodityId, int> _carryForwardQuantitiesByCommodity({
 /// prior-turn offer-side fill rate per commodity, rounded to an integer
 /// treasury unit. A first-ever market turn (no prior activity) returns the
 /// nominal sum (full-fill credit) per the F2/F3 default. Refs #2994 F8.
-int _expectedOfferInflow({
+int expectedOfferInflow({
   required Map<CommodityId, int> available,
   required Map<CommodityId, int> marketPrices,
   required WorldMarketState state,
@@ -203,7 +207,7 @@ int _expectedOfferInflow({
     if (quantity <= 0) continue;
     final price = marketPrices[commodityId] ?? 0;
     if (price <= 0) continue;
-    final fillRate = _priorTurnOfferFillRate(state, commodityId);
+    final fillRate = priorTurnOfferFillRate(state, commodityId);
     inflow += quantity * price * fillRate;
   }
   if (!inflow.isFinite) return 0;
@@ -231,7 +235,7 @@ int _expectedOfferInflow({
 ///   [kSpeculativeBidStockpileTarget] (no positive target),
 /// - commodities whose remaining target is already covered by a carry-forward
 ///   bid residual ([carryForwardBids]).
-void _addSpeculativeBidNeeds({
+void addSpeculativeBidNeeds({
   required Map<CommodityId, int> need,
   required Map<CommodityId, int> available,
   required Stockpile projected,

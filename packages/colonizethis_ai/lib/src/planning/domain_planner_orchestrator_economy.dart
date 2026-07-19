@@ -1,17 +1,40 @@
-part of 'domain_planner_orchestrator.dart';
+import 'dart:math' as math;
+
+
+import '../perception/perception_snapshot.dart';
+import '../util/orders_builder.dart';
+import 'build_planner.dart';
+import 'domain_planner_orchestrator_economy_build.dart';
+import 'economy_phase_gates.dart';
+import 'expand_phase_planner_economy.dart';
+import 'growth_stage.dart';
+import 'growth_stage_builder_relocation.dart';
+import 'growth_stage_work_priorities.dart';
+import 'goal_manager.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_economy_filter.dart';
+import 'phase_planner_work_order_filter.dart';
+import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        isAtWarWithAnyGreatPower,
+        isPursuingTechStealPosture;
+import 'planning_imports.dart';
+
+final _log = packageLogger('domain_planner_orchestrator_economy');
 
 /// Economy-phase orchestrator slice carrying both the post-pass
 /// [PlannerContext] and the [EconomyGateRecord] required to populate
 /// `thresholds.domainGates` in the AI trace (Refs #2832).
-class _EconomyDomainPlannersResult {
-  const _EconomyDomainPlannersResult({required this.ctx, required this.gate});
+class EconomyDomainPlannersResult {
+  const EconomyDomainPlannersResult({required this.ctx, required this.gate});
 
   final PlannerContext ctx;
   final EconomyGateRecord gate;
 }
 
 /// Captures the resolved civilian-work and build gate decisions of one
-/// [_runEconomyDomainPlanners] pass.
+/// [runEconomyDomainPlanners] pass.
 class EconomyGateRecord {
   const EconomyGateRecord({
     required this.workPlannerRan,
@@ -26,7 +49,7 @@ class EconomyGateRecord {
   final int buildThreshold;
 }
 
-_EconomyDomainPlannersResult _runEconomyDomainPlanners({
+EconomyDomainPlannersResult runEconomyDomainPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
@@ -257,7 +280,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
   }
   emit('aiStageA');
 
-  _appendEconomyPeasantRecruit(
+  appendEconomyPeasantRecruit(
     ctx: ctx,
     expandEconomy: economyPhaseGates.expandEconomy,
     growthStage: growthStage,
@@ -265,7 +288,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ordersBuilder: ordersBuilder,
   );
 
-  final buildResult = _appendEconomyBuildOrders(
+  final buildResult = appendEconomyBuildOrders(
     EconomyBuildPassInput(
       ctx: ctx,
       snapshot: snapshot,
@@ -280,7 +303,7 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
     ),
   );
   emit('aiStageB');
-  return _EconomyDomainPlannersResult(
+  return EconomyDomainPlannersResult(
     ctx: ctx.withOrders(ordersBuilder.build()),
     gate: EconomyGateRecord(
       workPlannerRan: runFullAiCivilianWork,
@@ -295,10 +318,10 @@ _EconomyDomainPlannersResult _runEconomyDomainPlanners({
 /// growth-stage worker-growth priority (Refs #3371) or the legacy castIron
 /// labour expand boost authorizes it and the GP can afford it.
 ///
-/// Extracted verbatim from [_runEconomyDomainPlanners] to keep that
+/// Extracted verbatim from [runEconomyDomainPlanners] to keep that
 /// orchestrator slice within the repo function-size budget; behaviour is
 /// unchanged.
-void _appendEconomyPeasantRecruit({
+void appendEconomyPeasantRecruit({
   required PlannerContext ctx,
   required ExpandEconomyPlan expandEconomy,
   required GrowthStage? growthStage,

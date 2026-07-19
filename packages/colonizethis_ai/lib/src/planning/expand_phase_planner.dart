@@ -107,42 +107,30 @@
 ///     snapshot exposes one.
 library;
 
-import 'package:colonizethis_data/colonizethis_data.dart'
-    as regiment_catalog
-    show cheapestRegimentBuildTreasuryCost;
 
 import '../perception/perception_snapshot.dart';
-import '../util/faction_query.dart';
-import 'cast_iron_labour_gate.dart'
-    show isCastIronLabourPopulationBoundForLockRecoverySeller;
 import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'phase_destination_result.dart';
-import 'region_military_destination_filter.dart';
 import 'expand_peace_frontier_helpers.dart';
-import 'expand_phase_planner_peer_peace.dart';
 import 'planning_helpers.dart'
     show
-        anyInvadableProvinceOwnedByMinor,
-        factionOwnsInvadableOldWorldProvince,
-        gpAtWarPeaceTargetsWhere,
         gpFactionIdsAtWarWith,
         hasRecentDiplomaticEventWithinCooldown,
-        isOwnOldWorldBelowConquestQuota,
-        isOwnOldWorldExpansionStalled,
-        minorAtWarPeaceTargetsWhere,
-        oldWorldProvinceLeadOver,
         peaceTargetsExcludingBlocker;
 
 export 'expand_peace_frontier_helpers.dart';
 export 'expand_phase_planner_peer_peace.dart';
+export 'expand_phase_planner_economy.dart';
+export 'expand_phase_planner_feedstock_acquisition.dart';
+export 'expand_phase_planner_gp_blocker_peace.dart';
+export 'expand_phase_planner_military.dart';
+export 'expand_phase_planner_peace_default_start.dart';
+export 'expand_phase_planner_peace_targets.dart';
 
-part 'expand_phase_planner_gp_blocker_peace.dart';
-part 'expand_phase_planner_feedstock_acquisition.dart';
-part 'expand_phase_planner_economy.dart';
-part 'expand_phase_planner_military.dart';
-part 'expand_phase_planner_peace_targets.dart';
-part 'expand_phase_planner_peace_default_start.dart';
+import 'expand_phase_planner_economy.dart';
+import 'expand_phase_planner_feedstock_acquisition.dart';
+import 'expand_phase_planner_military.dart';
+
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in EXPAND phase.
@@ -190,7 +178,7 @@ part 'expand_phase_planner_peace_default_start.dart';
 ///     that GP owns the primary OW invadable blocker, both sides are in
 ///     the stalled below-quota plateau band
 ///     ([isMutualBelowQuotaPlateauPeer]), the invadable frontier is
-///     GP-only ([expandIsOldWorldGpOnlyInvadableFrontier]), and no uninvaded
+///     GP-only ([isOldWorldGpOnlyInvadableFrontier]), and no uninvaded
 ///     OW minors remain ([hasUninvadedOldWorldMinor] is false).
 ///   - The single GP (still sorted as a 1-element list) when the
 ///     geographic peer-war lock carve-out fires: exactly one GP at war,
@@ -213,7 +201,7 @@ List<String> planExpandPeace({
     return const [];
   }
 
-  final blocker = expandPrimaryInvadableOldWorldGpBlocker(
+  final blocker = primaryInvadableOldWorldGpBlocker(
     game: game,
     snapshot: snapshot,
   );
@@ -229,7 +217,7 @@ List<String> planExpandPeace({
     if (expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: blocker)) {
       return List<String>.unmodifiable(gpWars);
     }
-    if (expandIsOldWorldGpOnlyInvadableFrontier(
+    if (isOldWorldGpOnlyInvadableFrontier(
           game: game,
           snapshot: snapshot,
         ) &&
@@ -241,45 +229,7 @@ List<String> planExpandPeace({
   return peaceTargetsExcludingBlocker(factionIds: gpWars, blocker: blocker);
 }
 
-/// Whether the active player is in a geographic peer-war lock against
-/// [peerGpId] — exactly one Great Power foe owns every Old World province
-/// adjacent to the active player's territory (Refs #2847 § H4-a).
-///
-/// When this predicate fires, the uninvaded OW minor pivot guarded by
-/// [hasUninvadedOldWorldMinor] is irrelevant for the EXPAND peace
-/// decision: uninvaded minors exist on the wider map but none of them
-/// are reachable from the active player's anchors (their provinces are
-/// not in [ConquestSummary.adjacentOwnerFactionIdsSorted]). The
-/// canonical [planExpandPeace] arm pairs this geographic check with
-/// [isMutualBelowQuotaPlateauPeer] so the mutual-plateau stalemate is
-/// peaced even when minors are still alive somewhere on the map but
-/// outside the active player's reach (seed-42 gp3↔gp4 and gp5↔gp6
-/// mid-game lock; the failing GPs spent 45–53 turns at war with their
-/// peer with no minor-frontier route through their own territory).
-///
-/// Returns `false` when [ConquestSummary.adjacentOwnerFactionIdsSorted]
-/// is empty (no OW adjacency at all — no lock to break), when it
-/// contains more than one entry (the active player has another OW
-/// neighbor that may still be reachable), or when its single entry is
-/// not [peerGpId] (some other faction owns the OW frontier).
-///
-/// Pure and deterministic — identical inputs always yield identical
-/// results (Refs #2509 Must-have #7). Constant-time on the adjacency
-/// list length (single equality check); no global province / tile
-/// scans introduced, matching the budget-rule note in
-/// `colonizethis-turn-resolution-budget.mdc`.
-bool expandIsGeographicPeerWarLock({
-  required AIWorldSnapshot snapshot,
-  required String peerGpId,
-}) {
-  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
-  if (adjacentOwners.length != 1) {
-    return false;
-  }
-  return adjacentOwners.single == peerGpId;
-}
-
-/// Number of turns the EXPAND declare-war planner suppresses a re-declaration
+/// Whether the active player and [peerGpId] completed a peace event within
 /// against a Great Power immediately after a peace event involving the
 /// active player and that peer (Refs #2847 § H2).
 ///
@@ -347,38 +297,7 @@ bool expandRecentlyPeacedWithGreatPower({
   );
 }
 
-/// Whether [planExpandEconomy] should widen the insufficient-regiment
-/// force-build arm (Arm D) under the EXPAND-trap (Refs #2847 § H3).
-///
-/// Fires when the active player owns zero New World provinces and the
-/// geographic peer-war lock predicate holds for the sole OW adjacent
-/// Great Power. The cargo-recovery boost in Arm C is left to fire
-/// independently (the cargo signal is the planner-output the resource-
-/// need NW=0.60 weight floor in `phase_priority_weights.dart` consumes
-/// per § Resource-need overrides; suppressing it under the lock would
-/// also disable the override the soft-phase design depends on).
-///
-/// Pure and deterministic — identical inputs always yield identical
-/// results (Refs #2509 Must-have #7).
-bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  if (snapshot.colonial.newWorldProvincesOwned > 0) {
-    return false;
-  }
-  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
-  if (adjacentOwners.length != 1) {
-    return false;
-  }
-  final peerGpId = adjacentOwners.single;
-  if (game.playerById(peerGpId) == null) {
-    return false;
-  }
-  return expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: peerGpId);
-}
-
-/// Returns the deterministic factionId of the next declare-war target for
+/// Number of turns the EXPAND declare-war planner suppresses a re-declaration
 /// the active EXPAND player, or `null` when no priority arm applies.
 ///
 /// Contract (issue #2509 § EXPAND phase planner § planExpandDeclareWar):

@@ -9,14 +9,11 @@ import 'planning_helpers.dart'
         anyInvadableProvinceOwnedByMinor,
         gpFactionIdsAtWarWith,
         isAtWarWithAnyGreatPower;
-import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
-import 'diplomacy_planner_declare_war_targets.dart';
+import 'diplomacy_planner_pass_helpers.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_result.dart';
-import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_planner_peace_targets.dart';
 
 // Public peace-target / OW frontier helper re-exports below replace the legacy
 // `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart`
@@ -78,9 +75,7 @@ export 'war_desire_calculator.dart' show computeWarDesireScore;
 export 'diplomacy_planner_result.dart'
     show DiplomacyPlannerPass, DiplomacyPlannerResult;
 
-part 'diplomacy_planner_pass_helpers.dart';
-
-final _log = packageLogger();
+final _log = packageLogger('diplomacy_planner');
 
 // Top-level declare-war target helpers live in
 // `diplomacy_planner_declare_war_targets.dart` and are re-exported by this
@@ -298,7 +293,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   // Survival peace must run even when diplomacy weight is low or suggestion
   // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    final peaceResult = _stalledPeacePlannerResultIfNeeded(
+    final peaceResult = stalledPeacePlannerResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,
       pass: pass,
@@ -309,7 +304,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final phaseDeclareResult = _phasePlannerDeclareWarPlannerResultIfNeeded(
+    final phaseDeclareResult = phasePlannerDeclareWarPlannerResultIfNeeded(
       ctx: ctx,
       pass: pass,
       phasePlan: phasePlan,
@@ -325,8 +320,8 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     // and `war_declaration_target_scoring_warmonger_test.dart`; the legacy
     // `colonial_pressure.dart` host was deleted in S1, the surviving
     // helpers are canonical in `expand_phase_planner.dart`).
-    for (final shortcut in _legacyMinorDeclareWarShortcuts) {
-      final shortcutResult = _legacyDeclareWarShortcutResultIfNeeded(
+    for (final shortcut in legacyMinorDeclareWarShortcuts) {
+      final shortcutResult = legacyDeclareWarShortcutResultIfNeeded(
         ctx: ctx,
         snapshot: snapshot,
         pass: pass,
@@ -337,21 +332,21 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       }
     }
     if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-      final blockerDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+      final blockerDeclareResult = legacyDeclareWarShortcutResultIfNeeded(
         ctx: ctx,
         snapshot: snapshot,
         pass: pass,
-        shortcut: _legacyGpBlockerDeclareWarShortcut,
+        shortcut: legacyGpBlockerDeclareWarShortcut,
       );
       if (blockerDeclareResult != null) {
         return blockerDeclareResult;
       }
     }
-    final stalledGpDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+    final stalledGpDeclareResult = legacyDeclareWarShortcutResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,
       pass: pass,
-      shortcut: _legacyStalledGpDeclareWarShortcut,
+      shortcut: legacyStalledGpDeclareWarShortcut,
     );
     if (stalledGpDeclareResult != null) {
       return stalledGpDeclareResult;
@@ -405,7 +400,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
   }
 
-  final chosen = _chooseDiplomaticOrder(
+  final chosen = chooseDiplomaticOrder(
     ctx: ctx,
     snapshot: snapshot,
     pass: pass,

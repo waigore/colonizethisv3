@@ -1,10 +1,13 @@
-part of 'domain_planner_orchestrator.dart';
+import '../perception/perception_snapshot.dart';
+import 'diplomacy_planner.dart';
+import 'phase_planner_dispatch.dart';
+import 'planner_context.dart';
 
 /// Pre-conquest diplomacy slice carrying the post-pass [PlannerContext] and the
 /// declare-war target (if any) the military pass needs to thread into conquest
 /// planning (Refs #2509).
-class _PreConquestDiplomacyResult {
-  const _PreConquestDiplomacyResult({
+class PreConquestDiplomacyResult {
+  const PreConquestDiplomacyResult({
     required this.ctx,
     required this.declaredWarTargetFactionId,
   });
@@ -22,7 +25,7 @@ class _PreConquestDiplomacyResult {
 /// Extracted verbatim from [runDomainPlannersWithOutcome] to keep that
 /// orchestrator within the repo function-size budget and to mirror the
 /// economy/military pass modules; behaviour and pass ordering are unchanged.
-_PreConquestDiplomacyResult _runPreConquestDiplomacyPlanners({
+PreConquestDiplomacyResult runPreConquestDiplomacyPlanners({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,
@@ -43,7 +46,7 @@ _PreConquestDiplomacyResult _runPreConquestDiplomacyPlanners({
   );
   nextCtx = nextCtx.withOrders(declareWarResult.orders);
 
-  return _PreConquestDiplomacyResult(
+  return PreConquestDiplomacyResult(
     ctx: nextCtx,
     declaredWarTargetFactionId: declareWarResult.declaredWarTargetFactionId,
   );
@@ -55,7 +58,7 @@ _PreConquestDiplomacyResult _runPreConquestDiplomacyPlanners({
 ///
 /// Extracted verbatim from [runDomainPlannersWithOutcome]; behaviour is
 /// unchanged.
-PlannerContext _runLatePeaceDiplomacyPlanner({
+PlannerContext runLatePeaceDiplomacyPlanner({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required PhasePlanOutcome phasePlan,

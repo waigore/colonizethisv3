@@ -16,7 +16,7 @@ import '../util/faction_query.dart';
 /// m.id == owner); })` — duplicated across the EXPAND-peace deciders
 /// ([stalledStrongerGpBlockerPeaceTarget], [stalledGpBlockerFocusPeaceTargets],
 /// [stalledExpansionDistractionPeaceTargets],
-/// [expandIsOldWorldGpOnlyInvadableFrontier], the peer-peace ratchet collector)
+/// [isOldWorldGpOnlyInvadableFrontier], the peer-peace ratchet collector)
 /// and the declare-war family (the `diplomacy_planner` declare-war tribe-drop
 /// filter and the declare-war candidate-scoring near-parity suppression) (Refs
 /// #3717 expand-peace scoring-skeleton dedup).
@@ -47,7 +47,7 @@ bool anyInvadableProvinceOwnedByMinor({
 /// Single source of truth for the `gpOwnsInvadable` scan —
 /// `snapshot.conquest.invadableProvinceIdsSorted.any((pid) =>
 /// game.playerById(provinceOwner[pid] ?? '') != null)` — duplicated across the
-/// EXPAND GP-only-frontier gate ([expandIsOldWorldGpOnlyInvadableFrontier]) and
+/// EXPAND GP-only-frontier gate ([isOldWorldGpOnlyInvadableFrontier]) and
 /// the declare-war candidate-scoring near-parity suppression (the
 /// `invadableOwOwnedByGp` projection in `diplomatic_candidate_scoring_declare_
 /// war.dart`) (Refs #3717 expand-peace / diplomatic-scoring scoring-skeleton

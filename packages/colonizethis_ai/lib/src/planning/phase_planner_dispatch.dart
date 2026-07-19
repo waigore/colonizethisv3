@@ -288,13 +288,13 @@ class PhasePlanOutcome {
 
   /// Whether the invadable Old World frontier is held only by Great
   /// Powers (no minor owns any invadable OW province). Populated from
-  /// [expandIsOldWorldGpOnlyInvadableFrontier] for
+  /// [isOldWorldGpOnlyInvadableFrontier] for
   /// [ObserverGoalPhase.expand] and [ObserverGoalPhase.colonialLite];
   /// `false` for COLONIAL and DEVELOP.
   final bool expandGpOnlyInvadableFrontierActive;
 
   /// Primary OW invadable GP blocker from
-  /// [expandPrimaryInvadableOldWorldGpBlocker]. Populated for EXPAND and
+  /// [primaryInvadableOldWorldGpBlocker]. Populated for EXPAND and
   /// COLONIAL-lite; `null` for COLONIAL and DEVELOP or when no GP owns
   /// an invadable OW province.
   final String? expandPrimaryInvadableGpBlockerFactionId;
@@ -692,11 +692,11 @@ _expandFrontierContext({
   required AIWorldSnapshot snapshot,
 }) {
   return (
-    gpOnlyInvadableFrontierActive: expandIsOldWorldGpOnlyInvadableFrontier(
+    gpOnlyInvadableFrontierActive: isOldWorldGpOnlyInvadableFrontier(
       game: game,
       snapshot: snapshot,
     ),
-    primaryInvadableGpBlockerFactionId: expandPrimaryInvadableOldWorldGpBlocker(
+    primaryInvadableGpBlockerFactionId: primaryInvadableOldWorldGpBlocker(
       game: game,
       snapshot: snapshot,
     ),

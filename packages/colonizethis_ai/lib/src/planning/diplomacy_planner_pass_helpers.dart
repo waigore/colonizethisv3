@@ -1,57 +1,44 @@
-part of 'diplomacy_planner.dart';
+import '../perception/perception_snapshot.dart';
+import '../util/ai_random_utils.dart';
+import '../util/faction_query.dart';
+import '../util/orders_extensions.dart';
+import 'diplomacy_planner_declare_war_targets.dart';
+import 'diplomacy_planner_result.dart';
+import 'expand_peace_frontier_helpers.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_declare_war_targets.dart';
+import 'phase_planner_dispatch.dart';
+import 'phase_planner_peace_targets.dart';
+import 'planner_context.dart';
+import 'planning_imports.dart';
 
-DiplomacyPlannerResult? _legacyDeclareWarShortcutResultIfNeeded({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-  required _DeclareWarShortcut shortcut,
-}) {
-  if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    return null;
-  }
-  if (shortcut.preGate != null &&
-      !shortcut.preGate!(
-        game: ctx.game,
-        snapshot: snapshot,
-      )) {
-    return null;
-  }
-  final target = shortcut.targetFor(game: ctx.game, snapshot: snapshot);
-  if (target == null) {
-    return null;
-  }
-  return _forcedDeclareWarPlannerResult(
-    ctx: ctx,
-    target: target,
-    logLabel: shortcut.logLabel,
-  );
-}
+final _log = packageLogger('diplomacy_planner_pass_helpers');
 
-typedef _DeclareWarTargetSelector =
+typedef DeclareWarTargetSelector =
     String? Function({
       required Game game,
       required AIWorldSnapshot snapshot,
     });
 
-typedef _DeclareWarShortcutPreGate =
+typedef DeclareWarShortcutPreGate =
     bool Function({
       required Game game,
       required AIWorldSnapshot snapshot,
     });
 
-final class _DeclareWarShortcut {
-  const _DeclareWarShortcut({
+final class DeclareWarShortcut {
+  const DeclareWarShortcut({
     required this.targetFor,
     required this.logLabel,
     this.preGate,
   });
 
-  final _DeclareWarTargetSelector targetFor;
+  final DeclareWarTargetSelector targetFor;
   final String logLabel;
-  final _DeclareWarShortcutPreGate? preGate;
+  final DeclareWarShortcutPreGate? preGate;
 }
 
-bool _plateauGpBlockerDeclarePreGate({
+bool plateauGpBlockerDeclarePreGate({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
@@ -70,37 +57,64 @@ bool _plateauGpBlockerDeclarePreGate({
   );
 }
 
-const _legacyMinorDeclareWarShortcuts = <_DeclareWarShortcut>[
-  _DeclareWarShortcut(
+const legacyMinorDeclareWarShortcuts = <DeclareWarShortcut>[
+  DeclareWarShortcut(
     targetFor: defaultStartOwMinorDeclareTarget,
     logLabel: 'defaultStartMinor',
   ),
-  _DeclareWarShortcut(
+  DeclareWarShortcut(
     targetFor: plateauOwMinorDeclareTarget,
     logLabel: 'plateauMinor',
   ),
-  _DeclareWarShortcut(
+  DeclareWarShortcut(
     targetFor: belowQuotaUninvadedMinorDeclareTarget,
     logLabel: 'belowQuotaMinor',
   ),
-  _DeclareWarShortcut(
+  DeclareWarShortcut(
     targetFor: criticalWeakUninvadedMinorDeclareTarget,
     logLabel: 'target',
   ),
 ];
 
-const _legacyGpBlockerDeclareWarShortcut = _DeclareWarShortcut(
+const legacyGpBlockerDeclareWarShortcut = DeclareWarShortcut(
   targetFor: stalledGpBlockerDeclareWarTarget,
   logLabel: 'gpBlocker',
-  preGate: _plateauGpBlockerDeclarePreGate,
+  preGate: plateauGpBlockerDeclarePreGate,
 );
 
-const _legacyStalledGpDeclareWarShortcut = _DeclareWarShortcut(
+const legacyStalledGpDeclareWarShortcut = DeclareWarShortcut(
   targetFor: stalledInvadableGpOwnerDeclareTarget,
   logLabel: 'stalledInvadableGp',
 );
 
-DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
+DiplomacyPlannerResult? legacyDeclareWarShortcutResultIfNeeded({
+  required PlannerContext ctx,
+  required AIWorldSnapshot snapshot,
+  required DiplomacyPlannerPass pass,
+  required DeclareWarShortcut shortcut,
+}) {
+  if (pass != DiplomacyPlannerPass.declareWarOnly) {
+    return null;
+  }
+  if (shortcut.preGate != null &&
+      !shortcut.preGate!(
+        game: ctx.game,
+        snapshot: snapshot,
+      )) {
+    return null;
+  }
+  final target = shortcut.targetFor(game: ctx.game, snapshot: snapshot);
+  if (target == null) {
+    return null;
+  }
+  return forcedDeclareWarPlannerResult(
+    ctx: ctx,
+    target: target,
+    logLabel: shortcut.logLabel,
+  );
+}
+
+DiplomacyPlannerResult? forcedDeclareWarPlannerResult({
   required PlannerContext ctx,
   required String target,
   required String logLabel,
@@ -125,7 +139,7 @@ DiplomacyPlannerResult? _forcedDeclareWarPlannerResult({
 /// When [phasePlan] is set, declare-war targets come only from the phase
 /// planners via [gpExpandDeclareWarTargetFromPhasePlan] and
 /// [gpColonialDeclareWarTargetFromPhasePlan] (Refs #2509 S5).
-DiplomacyPlannerResult? _phasePlannerDeclareWarPlannerResultIfNeeded({
+DiplomacyPlannerResult? phasePlannerDeclareWarPlannerResultIfNeeded({
   required PlannerContext ctx,
   required DiplomacyPlannerPass pass,
   PhasePlanOutcome? phasePlan,
@@ -135,7 +149,7 @@ DiplomacyPlannerResult? _phasePlannerDeclareWarPlannerResultIfNeeded({
   }
   final expandTarget = gpExpandDeclareWarTargetFromPhasePlan(phasePlan);
   if (expandTarget != null) {
-    return _forcedDeclareWarPlannerResult(
+    return forcedDeclareWarPlannerResult(
       ctx: ctx,
       target: expandTarget,
       logLabel: 'phaseExpand',
@@ -143,7 +157,7 @@ DiplomacyPlannerResult? _phasePlannerDeclareWarPlannerResultIfNeeded({
   }
   final colonialTarget = gpColonialDeclareWarTargetFromPhasePlan(phasePlan);
   if (colonialTarget != null) {
-    return _forcedDeclareWarPlannerResult(
+    return forcedDeclareWarPlannerResult(
       ctx: ctx,
       target: colonialTarget,
       logLabel: 'phaseColonial',
@@ -152,7 +166,7 @@ DiplomacyPlannerResult? _phasePlannerDeclareWarPlannerResultIfNeeded({
   return null;
 }
 
-DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
+DiplomacyPlannerResult? stalledPeacePlannerResultIfNeeded({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
@@ -203,7 +217,7 @@ DiplomacyPlannerResult? _stalledPeacePlannerResultIfNeeded({
 ///
 /// Prefers positive scores; when all minor scores are zero, picks the stable
 /// lowest [DiplomaticOrder.targetFactionId] among minor targets.
-int? _pickMinorDeclareCandidateIndex({
+int? pickMinorDeclareCandidateIndex({
   required PlannerContext ctx,
   required List<DiplomaticOrder> candidates,
   required List<int> scores,
@@ -241,7 +255,7 @@ int? _pickMinorDeclareCandidateIndex({
   return bestZeroIdx < 0 ? null : bestZeroIdx;
 }
 
-DiplomaticOrder? _chooseDiplomaticOrder({
+DiplomaticOrder? chooseDiplomaticOrder({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
   required DiplomacyPlannerPass pass,
@@ -257,7 +271,7 @@ DiplomaticOrder? _chooseDiplomaticOrder({
           game: ctx.game,
           snapshot: snapshot,
         )) {
-      final minorIdx = _pickMinorDeclareCandidateIndex(
+      final minorIdx = pickMinorDeclareCandidateIndex(
         ctx: ctx,
         candidates: candidates,
         scores: scores,
@@ -279,7 +293,7 @@ DiplomaticOrder? _chooseDiplomaticOrder({
     if (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
         snapshot.conquest.provincesToVictory >
             kConquerScoreFloorProvincesToVictoryThreshold) {
-      final idx = _pickHighestScoreIndex(scores);
+      final idx = pickHighestScoreIndex(scores);
       return idx == null ? null : candidates[idx];
     }
   }
@@ -291,7 +305,7 @@ DiplomaticOrder? _chooseDiplomaticOrder({
 }
 
 /// Deterministic tie-break: lowest candidate index wins equal scores.
-int? _pickHighestScoreIndex(List<int> scores) {
+int? pickHighestScoreIndex(List<int> scores) {
   var bestIdx = -1;
   var bestScore = 0;
   for (var i = 0; i < scores.length; i++) {

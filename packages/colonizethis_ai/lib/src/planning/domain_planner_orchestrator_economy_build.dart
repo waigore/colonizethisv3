@@ -1,7 +1,27 @@
-part of 'domain_planner_orchestrator.dart';
+import 'dart:math' as math;
 
-class _BuildPassResult {
-  const _BuildPassResult({
+
+import '../perception/perception_snapshot.dart';
+import '../util/orders_builder.dart';
+import 'build_planner.dart';
+import 'economy_phase_gates.dart';
+import 'expand_phase_planner_economy.dart';
+import 'growth_stage.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'phase_planner_dispatch.dart';
+import 'phase_priority_weights.dart' show kPhasePriorityNwTreasuryRecoveryFloor;
+import 'phase_planner_economy_filter.dart';
+import 'planner_context.dart';
+import 'planning_helpers.dart'
+    show
+        isAtWarWithAnyGreatPower,
+        oldWorldProvinceLeadOver;
+import 'planning_imports.dart';
+
+final _log = packageLogger('domain_planner_orchestrator_economy_build');
+
+class BuildPassResult {
+  const BuildPassResult({
     required this.buildPlannerRan,
     required this.buildThreshold,
   });
@@ -10,7 +30,7 @@ class _BuildPassResult {
   final int buildThreshold;
 }
 
-/// Bundles inputs for [_appendEconomyBuildOrders] (Refs #3977 AC5).
+/// Bundles inputs for [appendEconomyBuildOrders] (Refs #3977 AC5).
 final class EconomyBuildPassInput {
   const EconomyBuildPassInput({
     required this.ctx,
@@ -41,7 +61,7 @@ final class EconomyBuildPassInput {
 /// returns the build-gate decision. Refs #3288 (mutable orders accumulation).
 /// Computes the base economy build-order threshold for the build pass.
 ///
-/// Extracted from [_appendEconomyBuildOrders] to keep that orchestrator slice
+/// Extracted from [appendEconomyBuildOrders] to keep that orchestrator slice
 /// within the repo function-size budget; behaviour is unchanged. The threshold
 /// starts from the agenda-adjusted base, tightens under EXPAND quota pressure
 /// (and the GP-blocker focus sub-cap), then applies the dispatched colonial
@@ -53,7 +73,7 @@ final class EconomyBuildPassInput {
 /// `observerGoalPhaseFor`, so the phase-derived `int?` is field-equal to the
 /// legacy single reachable arm (see `SPEC/ai/phase-planner-dispatch.md`
 /// § Orchestrator economy build colonial-cap slice).
-int _computeBaseBuildThreshold({
+int computeBaseBuildThreshold({
   required PlannerContext ctx,
   required EconomyPhaseGates economyPhaseGates,
   required bool expandQuotaPressure,
@@ -73,7 +93,7 @@ int _computeBaseBuildThreshold({
   return buildThreshold;
 }
 
-typedef _RegimentFloorContext = ({
+typedef RegimentFloorContext = ({
   bool atWarWithGpBlocker,
   String? gpBlocker,
   bool criticallyWeakNoGpWar,
@@ -84,14 +104,14 @@ typedef _RegimentFloorContext = ({
 
 /// Computes the stalled-expansion minimum regiment floor for the build pass.
 ///
-/// Extracted from [_appendEconomyBuildOrders] to keep that orchestrator slice
+/// Extracted from [appendEconomyBuildOrders] to keep that orchestrator slice
 /// within the repo function-size budget; behaviour is unchanged (the floor is
 /// raised for an at-war GP blocker province deficit and the critically-weak /
 /// below-quota rebuild bands, then pinned to 1 on a zero-regiment rebuild).
-int _computeMinRegimentFloor({
+int computeMinRegimentFloor({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
-  required _RegimentFloorContext floorContext,
+  required RegimentFloorContext floorContext,
 }) {
   var minRegimentFloor = floorContext.atWarWithGpBlocker
       ? kStalledMinRegimentCountWhenGpBlockerAtWar
@@ -125,8 +145,8 @@ int _computeMinRegimentFloor({
 }
 
 /// Resolved gate state for the economy build pass (Refs #3977 AC6).
-final class _EconomyBuildPassGate {
-  const _EconomyBuildPassGate({
+final class EconomyBuildPassGate {
+  const EconomyBuildPassGate({
     required this.buildThreshold,
     required this.forceRegimentRebuild,
     required this.firstNavalTransportBootstrap,
@@ -157,7 +177,7 @@ final class _EconomyBuildPassGate {
   final bool skipWithoutRunning;
 }
 
-_EconomyBuildPassGate _resolveEconomyBuildPassGate(
+EconomyBuildPassGate resolveEconomyBuildPassGate(
   EconomyBuildPassInput input,
 ) {
   final ctx = input.ctx;
@@ -184,7 +204,7 @@ _EconomyBuildPassGate _resolveEconomyBuildPassGate(
         playerId: ctx.nationId,
       );
 
-  var buildThreshold = _computeBaseBuildThreshold(
+  var buildThreshold = computeBaseBuildThreshold(
     ctx: ctx,
     economyPhaseGates: economyPhaseGates,
     expandQuotaPressure: expandQuotaPressure,
@@ -239,7 +259,7 @@ _EconomyBuildPassGate _resolveEconomyBuildPassGate(
   );
   final atWarWithGpBlocker =
       gpBlocker != null && snapshot.threats.atWarWith.contains(gpBlocker);
-  final minRegimentFloor = _computeMinRegimentFloor(
+  final minRegimentFloor = computeMinRegimentFloor(
     ctx: ctx,
     snapshot: snapshot,
     floorContext: (
@@ -292,7 +312,7 @@ _EconomyBuildPassGate _resolveEconomyBuildPassGate(
     }
   }
 
-  _EconomyBuildPassGate skippedGate() => _EconomyBuildPassGate(
+  EconomyBuildPassGate skippedGate() => EconomyBuildPassGate(
     buildThreshold: buildThreshold,
     forceRegimentRebuild: forceRegimentRebuild,
     firstNavalTransportBootstrap: firstNavalTransportBootstrap,
@@ -347,7 +367,7 @@ _EconomyBuildPassGate _resolveEconomyBuildPassGate(
       colonialPressureWeight < kPhasePriorityNwTreasuryRecoveryFloor) {
     colonialPressureWeight = kPhasePriorityNwTreasuryRecoveryFloor;
   }
-  return _EconomyBuildPassGate(
+  return EconomyBuildPassGate(
     buildThreshold: buildThreshold,
     forceRegimentRebuild: forceRegimentRebuild,
     firstNavalTransportBootstrap: firstNavalTransportBootstrap,
@@ -364,7 +384,7 @@ _EconomyBuildPassGate _resolveEconomyBuildPassGate(
   );
 }
 
-_BuildPassResult _appendEconomyBuildOrders(EconomyBuildPassInput input) {
+BuildPassResult appendEconomyBuildOrders(EconomyBuildPassInput input) {
   final ctx = input.ctx;
   final snapshot = input.snapshot;
   final economyPlan = input.economyPlan;
@@ -372,9 +392,9 @@ _BuildPassResult _appendEconomyBuildOrders(EconomyBuildPassInput input) {
   final colonialPressure = input.colonialPressure;
   final civilianScoring = input.civilianScoring;
 
-  final gate = _resolveEconomyBuildPassGate(input);
+  final gate = resolveEconomyBuildPassGate(input);
   if (gate.skipWithoutRunning) {
-    return _BuildPassResult(
+    return BuildPassResult(
       buildPlannerRan: false,
       buildThreshold: gate.buildThreshold,
     );
@@ -406,14 +426,14 @@ _BuildPassResult _appendEconomyBuildOrders(EconomyBuildPassInput input) {
     ),
   );
   if (chosen == null) {
-    return _BuildPassResult(
+    return BuildPassResult(
       buildPlannerRan: true,
       buildThreshold: gate.buildThreshold,
     );
   }
   _log.i('build chosen nationId=${ctx.nationId} unitType=${chosen.unitType}');
   ordersBuilder.appendBuildOrders(ctx.nationId, [chosen]);
-  return _BuildPassResult(
+  return BuildPassResult(
     buildPlannerRan: true,
     buildThreshold: gate.buildThreshold,
   );

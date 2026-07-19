@@ -1,11 +1,14 @@
-part of 'expand_phase_planner.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    as regiment_catalog
+    show cheapestRegimentBuildTreasuryCost;
 
-// EXPAND-phase economy directive planner ([planExpandEconomy] /
-// [ExpandEconomyPlan]) and the below-quota treasury-recovery predicates,
-// extracted from `expand_phase_planner.dart` for maintainability
-// (Refs #3278 file-split). Behaviour-preserving move: same library scope
-// (this is a `part of` the EXPAND planner library), so imports, shared
-// helpers, and visibility are unchanged.
+import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'cast_iron_labour_gate.dart'
+    show isCastIronLabourPopulationBoundForLockRecoverySeller;
+import 'expand_peace_frontier_helpers.dart';
+import 'planning_helpers.dart';
+import 'planning_imports.dart';
 
 /// EXPAND-phase economy directive returned by [planExpandEconomy].
 ///

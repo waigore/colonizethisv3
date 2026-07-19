@@ -1,18 +1,21 @@
-part of 'treasury_planner.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart'
+    show TradeOrderSuggester, TradeSuggestionContext;
+
+import 'planning_imports.dart';
+import 'treasury_market_pricing.dart';
+import 'treasury_planner_constants.dart';
 
 // Bid prioritization, cargo/treasury-budget clamping, and tier alignment for
 // the treasury planner (Refs #3122 + #2924 F12/F16), extracted from
-// `treasury_planner.dart` for maintainability (Refs #3288 file-split).
-// Behaviour-preserving move: same library scope (this is a `part of` the
-// treasury-planner library), so imports, shared helpers, and visibility are
-// unchanged.
+// `treasury_planner.dart` for maintainability (Refs #3288 file-split;
+// de-parted Refs #4079 Slice B).
 
-/// Parameter bag for [_emitTradeOrders] (Refs #3967).
+/// Parameter bag for [emitTradeOrders] (Refs #3967).
 ///
 /// Collapses the 13-field emission signature so [runTreasuryPlanner] forwards
 /// one context object instead of re-listing the same scalars at the call site.
-final class _EmitTradeOrdersInput {
-  const _EmitTradeOrdersInput({
+final class EmitTradeOrdersInput {
+  const EmitTradeOrdersInput({
     required this.game,
     required this.playerId,
     required this.bidTypeCap,
@@ -48,7 +51,7 @@ final class _EmitTradeOrdersInput {
 /// relation-boost bid-preference hint are resolved. Extracted (Refs #3758
 /// file-split) to keep the planner body within the function-size budget;
 /// behaviour-preserving move (same library scope, identical emission logic).
-List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
+List<TradeOrder> emitTradeOrders(EmitTradeOrdersInput input) {
   // Refs #3122 + #3127: pass the treasury-budget-aware bid cap (computed in the
   // planner — `rawTreasury - pendingCosts - carryForwardBidNotional`, floored at
   // 0) into the suggester so it never emits bids the validator rule 5 would
@@ -76,7 +79,7 @@ List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
   // Refs #2847 H8-supply market order matching: a lock-recovery supplier
   // releases its surplus at the GP's general `offerPriority` (the urgent tier
   // when broke, the moderate tier otherwise), but the locked buyer bids the
-  // build inputs at `_bidPriorityForCommodity` (essential = 1 for the
+  // build inputs at `bidPriorityForCommodity` (essential = 1 for the
   // manufactured `lumber` / `castIron` / `fabric` inputs) once it has recovered
   // above the regiment threshold. The DealMatcher crosses offers and bids only
   // **within** the same integer priority tier
@@ -89,7 +92,7 @@ List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
   // tier-alignment machinery (Refs #2924 F12/F16).
   // SPEC/ai/treasury-planner.md § Supplier offer-tier alignment.
   final offers = input.isRegimentBuildInputMarketSupplier
-      ? _alignBuildInputSupplyOfferTiers(suggestion.offers)
+      ? alignBuildInputSupplyOfferTiers(suggestion.offers)
       : suggestion.offers;
   // Refs #2924 F11/F12: when the designated buyer is affluent its own forecast
   // is above the regiment threshold (offerPriority == moderate); the lock-
@@ -97,7 +100,7 @@ List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
   // it matches broke GPs' urgent grain offers. forceBidPriority overrides the
   // tier-alignment computation so the synthetic grain bid always goes out at
   // kTreasuryOfferPriorityUrgent regardless of the buyer's own offerPriority.
-  final bids = _prioritizedBids(
+  final bids = prioritizedBids(
     rawBids: suggestion.bids,
     need: input.need,
     bidTypeCap: input.bidTypeCap,
@@ -108,7 +111,7 @@ List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
     forceBidPriority:
         input.isLiquidityBuyer ? kTreasuryOfferPriorityUrgent : null,
     preferCommodityId: input.isLiquidityBuyer
-        ? _lockRecoveryLiquidityCommodity(input.game.worldMarketState)
+        ? lockRecoveryLiquidityCommodity(input.game.worldMarketState)
         : input.tradeDealPreferredBidCommodityId,
     treasuryBudgetForBids: input.treasuryBudgetForBids,
     worldMarketState: input.game.worldMarketState,
@@ -118,7 +121,7 @@ List<TradeOrder> _emitTradeOrders(_EmitTradeOrdersInput input) {
   return [...offers, ...bids];
 }
 
-List<TradeOrder> _prioritizedBids({
+List<TradeOrder> prioritizedBids({
   required List<TradeOrder> rawBids,
   required Map<CommodityId, int> need,
   required int bidTypeCap,
@@ -144,7 +147,7 @@ List<TradeOrder> _prioritizedBids({
         if (b == preferCommodityId) return 1;
       }
       final priorityCmp =
-          _bidPriorityForCommodity(a).compareTo(_bidPriorityForCommodity(b));
+          bidPriorityForCommodity(a).compareTo(bidPriorityForCommodity(b));
       if (priorityCmp != 0) return priorityCmp;
       return a.compareTo(b);
     });
@@ -192,7 +195,7 @@ List<TradeOrder> _prioritizedBids({
         priority: forceBidPriority ??
             (alignBidPriorityWithUrgentOffers
                 ? offerPriority
-                : _bidPriorityForCommodity(commodityId)),
+                : bidPriorityForCommodity(commodityId)),
       ),
     );
     remainingCargo -= cappedQty;

@@ -15,7 +15,7 @@ dependencies:
   colonizethis_logic:
   colonizethis_ai_contracts:
   colonizethis_models:
-
+  colonizethis_orders:
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint
