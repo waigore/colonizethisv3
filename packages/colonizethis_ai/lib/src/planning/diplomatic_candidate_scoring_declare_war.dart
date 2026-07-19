@@ -1,16 +1,29 @@
-part of 'diplomatic_candidate_scoring.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
+import 'diplomatic_candidate_scoring_declare_war_context.dart';
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'expand_phase_planner.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_diplomacy_filter.dart';
+import 'planning_helpers.dart'
+    show
+        anyInvadableProvinceOwnedByMinor,
+        gpFactionIdsAtWarWith,
+        isAtWarWithAnyGreatPower;
+import 'planning_imports.dart';
 
 /// Declare-war score ladder.
 ///
-/// Entry point [_scoreDeclareWarDiplomaticOrder] accepts a prebuilt
-/// [_DeclareWarTargetContext] (see
+/// Entry point [scoreDeclareWarDiplomaticOrder] accepts a prebuilt
+/// [DeclareWarTargetContext] (see
 /// `diplomatic_candidate_scoring_declare_war_context.dart`), then walks the
 /// suppression chain ([_declareWarSuppressedScore]) before delegating the
 /// surviving candidates to the bonus addends
 /// (`diplomatic_candidate_scoring_declare_war_bonuses.dart`). Call sites build
-/// the context once (Refs #3967); behaviour is unchanged.
-int _scoreDeclareWarDiplomaticOrder(
-  _DeclareWarTargetContext ctx, {
+/// the context once (Refs #3967); de-parted into its own library (Refs #4079
+/// Slice A); behaviour is unchanged.
+int scoreDeclareWarDiplomaticOrder(
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final suppressed = _declareWarSuppressedScore(
@@ -20,12 +33,12 @@ int _scoreDeclareWarDiplomaticOrder(
   if (suppressed != null) {
     return suppressed;
   }
-  return _scoreDeclareWarBonuses(ctx);
+  return scoreDeclareWarBonuses(ctx);
 }
 
 /// Returns a suppressed score when declare-war should not proceed; null = score.
 int? _declareWarSuppressedScore(
-  _DeclareWarTargetContext ctx, {
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   return _declareWarSuppressedDevelopPhaseScore(ctx) ??
@@ -43,7 +56,7 @@ int? _declareWarSuppressedScore(
       _declareWarSuppressedRelationAndCooldownScore(ctx);
 }
 
-int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedDevelopPhaseScore(DeclareWarTargetContext ctx) {
   // Refs #2509 S5: derive DEVELOP suppression from the dispatched phase
   // plan instead of recomputing `observerGoalPhaseFor` per declare-war
   // candidate via `isObserverDevelopPhase`. The phase dispatcher already
@@ -83,7 +96,7 @@ int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
 /// the suppression ordering in `_declareWarSuppressedScore` and the
 /// independent Phase 4 retirement paths for the EXPAND / COLONIAL-lite Phase 2
 /// resolvers are unchanged.
-int? _declareWarSuppressedNwColonialScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedNwColonialScore(DeclareWarTargetContext ctx) {
   if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
@@ -93,7 +106,7 @@ int? _declareWarSuppressedNwColonialScore(_DeclareWarTargetContext ctx) {
   return null;
 }
 
-int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedExpandColonialScore(DeclareWarTargetContext ctx) {
   // Refs #2847 Phase 3 diplomacy wiring: derive EXPAND NW-colonial
   // suppression from the soft-phase NW acquisition weight on the
   // dispatched phase plan instead of the boolean
@@ -105,7 +118,7 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
   // floor at OW<=7, so EXPAND turns now keep NW declare-war candidates
   // scorable at low priority rather than structurally collapsing them.
   // Callers without a phase plan use the legacy-derived weight (1.0 /
-  // 0.0) from `_DeclareWarTargetContext.build`, preserving the
+  // 0.0) from `DeclareWarTargetContext.build`, preserving the
   // pre-soft-phase behaviour for tests and other entry points. The
   // soft-phase NW-weight predicate body is shared with the COLONIAL-lite
   // branch via `_declareWarSuppressedNwColonialScore` (Refs #3717).
@@ -132,7 +145,7 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
 // ("establishOverture, colonial naval/cargo") is unaffected and the rule
 // stays distinct from the broader DEVELOP suppression
 // (`_declareWarSuppressedDevelopPhaseScore`).
-int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedColonialLiteScore(DeclareWarTargetContext ctx) {
   // Refs #2847 Phase 3 diplomacy wiring: collapsed to the same soft-phase
   // NW-weight predicate as `_declareWarSuppressedExpandColonialScore`.
   // Under the soft-phase curve both EXPAND and COLONIAL-lite share the
@@ -148,13 +161,13 @@ int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
   // can retire the EXPAND / COLONIAL-lite Phase 2 boolean resolvers
   // independently of this scoring path. Callers without a phase plan
   // use the legacy-derived weight (1.0 / 0.0) from
-  // `_DeclareWarTargetContext.build`. The soft-phase NW-weight predicate
+  // `DeclareWarTargetContext.build`. The soft-phase NW-weight predicate
   // body is shared with the EXPAND branch via
   // `_declareWarSuppressedNwColonialScore` (Refs #3717).
   return _declareWarSuppressedNwColonialScore(ctx);
 }
 
-int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedStalledOwFrontierScore(DeclareWarTargetContext ctx) {
   if (ctx.isTribeTarget &&
       ctx.stalledOwExpansion &&
       (ctx.minorsHoldOldWorldProvinces ||
@@ -192,7 +205,7 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
         !distantInvadableMinorOwner &&
         !(ctx.behindVictoryPace &&
             ctx.anyMinorOwnsOldWorld &&
-            _minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId))) {
+            minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId))) {
       return 0;
     }
   }
@@ -215,7 +228,7 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
 }
 
 int? _declareWarSuppressedAdjacentGpScore(
-  _DeclareWarTargetContext ctx, {
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   if (ctx.order.type == DiplomaticOrderType.declareWar && ctx.isAdjacentGp) {
@@ -371,7 +384,7 @@ int? _declareWarSuppressedAdjacentGpScore(
 }
 
 int? _declareWarSuppressedWarConcentrationScore(
-  _DeclareWarTargetContext ctx, {
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, ctx.snapshot);
@@ -460,7 +473,7 @@ int? _declareWarSuppressedWarConcentrationScore(
 }
 
 int? _declareWarSuppressedRelationAndCooldownScore(
-  _DeclareWarTargetContext ctx,
+  DeclareWarTargetContext ctx,
 ) {
   final effectiveMaxRelation = ctx.behindVictoryPace && ctx.isMinorTarget
       ? kDeclareWarMinorMaxRelationWhenFarFromVictory
@@ -470,7 +483,7 @@ int? _declareWarSuppressedRelationAndCooldownScore(
   if (ctx.relationScore > effectiveMaxRelation) {
     return 0;
   }
-  if (_isDecisionOnCooldown(
+  if (isDecisionOnCooldown(
     game: ctx.game,
     actorFactionId: ctx.nationId,
     targetFactionId: ctx.order.targetFactionId,

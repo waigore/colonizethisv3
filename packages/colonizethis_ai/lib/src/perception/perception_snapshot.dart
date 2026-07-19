@@ -3,12 +3,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'perception_topology.dart';
+import 'perception_snapshot_builders.dart';
 import 'summary_models.dart';
 
 export 'summary_models.dart';
-
-part 'perception_snapshot_builders.dart';
 
 final _log = packageLogger();
 
@@ -40,11 +38,11 @@ class AIWorldSnapshot {
     PlayerView view, {
     MapTopology? topology,
   }) {
-    final threats = _buildThreatSummary(view, topology);
-    final opportunities = _buildOpportunitySummary(view, topology);
-    final conquest = _buildConquestSummary(view, topology, threats, opportunities);
-    final colonial = _buildColonialSummary(view, topology, threats, opportunities);
-    final economy = _buildEconomySummary(view);
+    final threats = buildThreatSummary(view, topology);
+    final opportunities = buildOpportunitySummary(view, topology);
+    final conquest = buildConquestSummary(view, topology, threats, opportunities);
+    final colonial = buildColonialSummary(view, topology, threats, opportunities);
+    final economy = buildEconomySummary(view);
     final snapshot = AIWorldSnapshot(
       playerId: view.playerId,
       threats: threats,

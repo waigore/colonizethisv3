@@ -1,4 +1,21 @@
-part of 'diplomatic_candidate_scoring.dart';
+import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'diplomatic_scoring_context.dart';
+import 'expand_phase_planner.dart';
+import 'planning_helpers.dart'
+    show
+        atWarGreatPowerOrderTarget,
+        atWarPeaceTargetBonus,
+        factionOwnsInvadableOldWorldProvince,
+        gpFactionIdsAtWarWith,
+        isOwnOldWorldBelowConquestQuota,
+        isOwnOldWorldExpansionStalled,
+        kDiplomaticDefaultBaseScore,
+        mutualExhaustedGpStalemateSideQualifies,
+        orderTargetIsAtWarInvadableBlocker;
+import 'planning_imports.dart';
 
 /// True when [order] proposes offerPeace toward the sole at-war Great Power and
 /// the mutual-exhausted plateau conditions hold for both sides. Mirrors
@@ -188,7 +205,7 @@ int _offerPeacePeaceTargetListAdjustments({
   return s;
 }
 
-int _scoreOfferPeaceDiplomaticOrder(
+int scoreOfferPeaceDiplomaticOrder(
   DiplomaticScoringContext ctx,
   OfferPeaceScoringParams params,
 ) {
@@ -209,7 +226,7 @@ int _scoreOfferPeaceDiplomaticOrder(
   s -= (warDesire - 50);
   if (isMinorOrTribeFaction(game, order.targetFactionId) &&
       snapshot.threats.atWarWith.contains(order.targetFactionId) &&
-      (!_minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
+      (!minorOwnsOldWorldProvinces(game, order.targetFactionId) ||
           !invadableOwners.contains(order.targetFactionId))) {
     s += kOfferPeaceFutileMinorWarBonus;
   }

@@ -1,6 +1,7 @@
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
 import 'conquest_move_scoring_context.dart';
+import 'conquest_planner_destination_scoring.dart';
 import 'goal_manager.dart';
 import 'planning_imports.dart';
 import '../perception/perception_snapshot.dart';
@@ -8,21 +9,17 @@ import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
 import 'phase_planner_conquest_filter.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_priority_weights.dart';
 import 'planner_context.dart';
 import 'planning_helpers.dart'
     show
-        clampPhaseWeightUpperUnit,
         colonialPressureScaleFromWeight,
         factionOwnsInvadableOldWorldProvince,
         isAtWarWithAnyGreatPower,
-        minorAtWarPeaceTargetsWhere,
-        oldWorldProvinceLeadOver;
+        minorAtWarPeaceTargetsWhere;
 import '../util/ai_random_utils.dart';
-import '../util/faction_query.dart';
 
-part 'conquest_planner_stalled_scoring.dart';
-part 'conquest_planner_destination_scoring.dart';
+export 'conquest_planner_destination_scoring.dart'
+    show conquestOldWorldArmyMoveScaledBonus, conquestNwInvadableArmyMoveBonus;
 
 final _log = packageLogger();
 
@@ -341,10 +338,10 @@ Orders runConquestArmyMovePlanner({
   // emitting any army move, and the capital armies sit at the capital across
   // every turn of the 100-turn observer run (gp1 OW gain = 0 against the
   // turn-100 +3 gate). Bypass the prefilter on the stalled-expansion path so
-  // the stalled-expansion scoring in `_scoreArmyMoveDestination` (which
+  // the stalled-expansion scoring in `scoreArmyMoveDestination` (which
   // already prefers invadable destinations first, then own-territory
   // adjacent-at-war-frontier marches via
-  // `_stalledExpansionArmyMoveScoreDelta`, and structurally returns `0` for
+  // `stalledExpansionArmyMoveScoreDelta`, and structurally returns `0` for
   // foreign non-invadable destinations) picks the best multi-turn approach
   // move toward the at-war frontier instead. Non-stalled (at-quota) callers
   // keep the strict prefilter so DEVELOP / COLONIAL stay structural.
@@ -380,7 +377,7 @@ Orders runConquestArmyMovePlanner({
   final selected = selectWeightedCandidate(
     candidates: scoringCandidates,
     seed: ctx.seeds.militarySeed + 4000,
-    score: (m) => _scoreArmyMoveDestination(scoringCtx, m),
+    score: (m) => scoreArmyMoveDestination(scoringCtx, m),
   );
   if (selected == null) return ctx.orders;
   if (_log.infoEnabled) {
@@ -458,7 +455,7 @@ Orders _applyStalledArmyMovesForAllFieldArmies({
     final best = selectFeedstockBiasedBestArmyMove(
       candidates: candidates,
       feedstockConquestTarget: feedstockConquestTarget,
-      score: (move) => _scoreArmyMoveDestination(scoringCtx, move),
+      score: (move) => scoreArmyMoveDestination(scoringCtx, move),
     );
     if (best == null) continue;
     if (_log.infoEnabled) {
@@ -518,7 +515,7 @@ Orders _runStalledFrontierArmyMoveFallback({
   final best = selectFeedstockBiasedBestArmyMove(
     candidates: acceptedCandidates,
     feedstockConquestTarget: feedstockConquestTarget,
-    score: (candidate) => _scoreArmyMoveDestination(scoringCtx, candidate),
+    score: (candidate) => scoreArmyMoveDestination(scoringCtx, candidate),
   );
   if (best == null) {
     return ctx.orders;
