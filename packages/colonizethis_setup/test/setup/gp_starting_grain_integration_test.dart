@@ -6,6 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('Great Power starting grain bootstrap (integration)', () {
@@ -20,7 +21,7 @@ void main() {
 
     for (final seed in seeds) {
       test('seed $seed: four bootstrap farms, connected, four grain extracted', () {
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: const ['england', 'france'],
           continentCount: 2,
           minorNationCount: 0,
@@ -182,7 +183,7 @@ void main() {
     }
 
     test('capital province has townDevelopmentLevel 4 after setup', () {
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: const ['england'],
         continentCount: 1,
         minorNationCount: 0,

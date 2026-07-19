@@ -2,6 +2,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('GameSetup', () {
@@ -69,7 +70,7 @@ void main() {
         const totalOw = 12;
         const availableForGps = totalOw - (minorCount * minPerMinor);
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england', 'france'],
           continentCount: 1,
           minorNationCount: minorCount,
@@ -186,7 +187,7 @@ void main() {
       const totalNw = 9;
       const basePerTribe = totalNw ~/ tribeCount; // 3
 
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
@@ -281,7 +282,7 @@ void main() {
       const reservedForMinors = minorCount * minPerMinor; // 12
       const basePerMinor = reservedForMinors ~/ minorCount; // 2
 
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england', 'france'],
         continentCount: 1,
         minorNationCount: minorCount,

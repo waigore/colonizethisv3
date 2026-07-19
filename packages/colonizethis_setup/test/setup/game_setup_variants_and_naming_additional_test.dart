@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('GameSetup (additional naming coverage)', () {
@@ -65,7 +66,7 @@ void main() {
           ],
         );
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 1,
@@ -153,7 +154,7 @@ void main() {
           TopologyEdge(id1: 'ns1', id2: 'ns2'),
         ],
       );
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
@@ -251,7 +252,7 @@ void main() {
           ],
         );
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 0,
@@ -307,7 +308,7 @@ void main() {
           TopologyEdge(id1: 's1', id2: 's2'),
         ],
       );
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,

@@ -2,6 +2,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -44,28 +45,8 @@ void main() {
       final paFull = ProvinceId.full(kRegionOldWorld, pa);
       final pbFull = ProvinceId.full(kRegionOldWorld, pb);
 
-      var game = Game(
+      var game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: paFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp1',
-                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
-              ),
-              Province(
-                id: pbFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'minor1',
-                townTileKey: CapitalTile.tileKey(kRegionOldWorld, pbFull, 2, 0),
-              ),
-            ],
-          ),
-          newWorld: const RegionData(provinces: []),
-        ),
         players: [
           Player(
             id: 'gp1',
@@ -93,6 +74,24 @@ void main() {
             ),
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: paFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
+              ),
+              Province(
+                id: pbFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'minor1',
+                townTileKey: CapitalTile.tileKey(kRegionOldWorld, pbFull, 2, 0),
+              ),
+            ],
+          ),
+        newWorld: const RegionData(provinces: []),
       );
 
       int countTerrain(TerrainType t) =>
@@ -159,28 +158,8 @@ void main() {
       final paFull = ProvinceId.full(kRegionOldWorld, pa);
       final pbFull = ProvinceId.full(kRegionOldWorld, pb);
 
-      Game buildGame() => Game(
+      Game buildGame() => TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: paFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp1',
-                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
-              ),
-              Province(
-                id: pbFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp2',
-                townTileKey: CapitalTile.tileKey(kRegionOldWorld, pbFull, 2, 0),
-              ),
-            ],
-          ),
-          newWorld: const RegionData(provinces: []),
-        ),
         players: [
           Player(
             id: 'gp1',
@@ -207,6 +186,24 @@ void main() {
             ),
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: paFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
+              ),
+              Province(
+                id: pbFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp2',
+                townTileKey: CapitalTile.tileKey(kRegionOldWorld, pbFull, 2, 0),
+              ),
+            ],
+          ),
+        newWorld: const RegionData(provinces: []),
       );
 
       TileMapResult runOnce() {
@@ -242,21 +239,8 @@ void main() {
         terrainGrid: terrain,
       );
       final paFull = ProvinceId.full(kRegionOldWorld, pa);
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: paFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp1',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(provinces: []),
-        ),
         players: [
           Player(
             id: 'gp1',
@@ -271,6 +255,17 @@ void main() {
             ),
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: paFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+              ),
+            ],
+          ),
+        newWorld: const RegionData(provinces: []),
       );
       final out = applyGreatPowerOldWorldTerrainRedistribution(
         game: game,
@@ -308,26 +303,8 @@ void main() {
       final paFull = ProvinceId.full(kRegionOldWorld, pa);
       final pbFull = ProvinceId.full(kRegionOldWorld, pb);
 
-      var game = Game(
+      var game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: paFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp1',
-              ),
-              Province(
-                id: pbFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp2',
-              ),
-            ],
-          ),
-          newWorld: const RegionData(provinces: []),
-        ),
         players: [
           Player(
             id: 'gp1',
@@ -354,6 +331,22 @@ void main() {
             ),
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: paFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+              ),
+              Province(
+                id: pbFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp2',
+              ),
+            ],
+          ),
+        newWorld: const RegionData(provinces: []),
       );
 
       // Eligible tiles: (1,0) gp1 and (3,0) gp2 — capitals at (0,0) and (2,0) are excluded.

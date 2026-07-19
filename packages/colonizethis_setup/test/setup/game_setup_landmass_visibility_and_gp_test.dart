@@ -2,6 +2,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('GameSetup', () {
@@ -103,7 +104,7 @@ void main() {
       );
       final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
 
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england', 'france'],
         continentCount: 2,
         minorNationCount: 0,
@@ -227,7 +228,7 @@ void main() {
       );
       final nwTileMap = TileMapResult(width: 2, height: 1, grid: nwGrid);
 
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,

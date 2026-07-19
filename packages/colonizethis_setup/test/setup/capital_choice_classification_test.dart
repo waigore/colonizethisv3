@@ -1,4 +1,5 @@
 // Ported from colonizethis_logic (Refs #4090 Slice C).
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -34,16 +35,13 @@ void main() {
           TopologyEdge(id1: 'p1', id2: 'sea2'),
         ],
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
-            ],
-          ),
-          newWorld: const RegionData(),
+        turnNumber: 1,
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ],
         ),
         players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
       );
@@ -96,16 +94,13 @@ void main() {
           TopologyEdge(id1: 'p1', id2: 'sea2'),
         ],
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
-            ],
-          ),
-          newWorld: const RegionData(),
+        turnNumber: 1,
+        oldWorld: RegionData(
+          provinces: [
+            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'pl1'),
+          ],
         ),
         players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
       );

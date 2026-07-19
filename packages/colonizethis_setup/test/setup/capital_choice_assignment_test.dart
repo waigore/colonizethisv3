@@ -1,4 +1,5 @@
 // Ported from colonizethis_logic (Refs #4090 Slice C).
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -26,11 +27,12 @@ void main() {
         ],
         edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
-          oldWorld: RegionData(
+        players: const [],
+        minorNations: [MinorNation(id: 'min1', displayName: 'Portugal')],
+        turnNumber: 0,
+        oldWorld: RegionData(
             provinces: [
               Province(
                 id: 'oldWorld|p1',
@@ -39,10 +41,7 @@ void main() {
               ),
             ],
           ),
-          newWorld: const RegionData(),
-        ),
-        players: const [],
-        minorNations: [MinorNation(id: 'min1', displayName: 'Portugal')],
+        newWorld: const RegionData(),
       );
       final next = setCapitalForMinorNation(
         game: game,
@@ -88,12 +87,13 @@ void main() {
         ],
         edges: [TopologyEdge(id1: 'nw1', id2: 'sea1')],
       );
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
-          oldWorld: const RegionData(),
-          newWorld: RegionData(
+        players: const [],
+        tribes: [Tribe(id: 'tribe1', displayName: 'Aztec')],
+        turnNumber: 0,
+        oldWorld: const RegionData(),
+        newWorld: RegionData(
             provinces: [
               Province(
                 id: 'newWorld|nw1',
@@ -102,9 +102,6 @@ void main() {
               ),
             ],
           ),
-        ),
-        players: const [],
-        tribes: [Tribe(id: 'tribe1', displayName: 'Aztec')],
       );
       final next = setCapitalForTribe(
         game: game,
@@ -151,11 +148,12 @@ void main() {
           ],
           edges: [TopologyEdge(id1: 'p1', id2: 'p2')],
         );
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
-            oldWorld: RegionData(
+          players: const [],
+          minorNations: [MinorNation(id: 'min1', displayName: 'Inland Minor')],
+          turnNumber: 0,
+          oldWorld: RegionData(
               provinces: [
                 Province(
                   id: 'oldWorld|p1',
@@ -164,10 +162,7 @@ void main() {
                 ),
               ],
             ),
-            newWorld: const RegionData(),
-          ),
-          players: const [],
-          minorNations: [MinorNation(id: 'min1', displayName: 'Inland Minor')],
+          newWorld: const RegionData(),
         );
         final next = setCapitalForMinorNation(
           game: game,
@@ -212,12 +207,13 @@ void main() {
           ],
           edges: [TopologyEdge(id1: 'nw1', id2: 'nw2')],
         );
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
-            oldWorld: const RegionData(),
-            newWorld: RegionData(
+          players: const [],
+          tribes: [Tribe(id: 'tribe1', displayName: 'Inland Tribe')],
+          turnNumber: 0,
+          oldWorld: const RegionData(),
+          newWorld: RegionData(
               provinces: [
                 Province(
                   id: 'newWorld|nw1',
@@ -226,9 +222,6 @@ void main() {
                 ),
               ],
             ),
-          ),
-          players: const [],
-          tribes: [Tribe(id: 'tribe1', displayName: 'Inland Tribe')],
         );
         final next = setCapitalForTribe(
           game: game,
@@ -273,11 +266,11 @@ void main() {
           ],
           edges: [TopologyEdge(id1: 'p1', id2: 'sea1')],
         );
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 0, phase: TurnPhase.orders),
-            oldWorld: RegionData(
+          players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+          turnNumber: 0,
+          oldWorld: RegionData(
               provinces: [
                 Province(
                   id: 'oldWorld|p1',
@@ -286,9 +279,7 @@ void main() {
                 ),
               ],
             ),
-            newWorld: const RegionData(),
-          ),
-          players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
+          newWorld: const RegionData(),
         );
         final tileMapByRegion = {
           'oldWorld': TileMapResult(width: 3, height: 2, grid: grid),

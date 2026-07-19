@@ -8,6 +8,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('Minor/Tribe starting developed resources (integration)', () {
@@ -16,7 +17,7 @@ void main() {
     for (final seed in seeds) {
       test('seed $seed: every minor and tribe with a capital has up to K '
           'developed tiles in its capital province', () {
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: const ['england', 'france'],
           continentCount: 2,
           minorNationCount: 4,
@@ -181,7 +182,7 @@ void main() {
 
     test('GP starting grain bootstrap is unaffected by minor/tribe '
         'development step', () {
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: const ['england', 'france'],
         continentCount: 2,
         minorNationCount: 2,

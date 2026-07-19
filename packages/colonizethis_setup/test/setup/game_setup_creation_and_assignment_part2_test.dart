@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' show RegionData;
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('GameSetup', () {
@@ -60,7 +61,7 @@ void main() {
         );
         final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 0,
@@ -147,7 +148,7 @@ void main() {
         );
         final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 0,
@@ -219,7 +220,7 @@ void main() {
         );
         final nwTileMap = TileMapResult(width: 3, height: 2, grid: nwGrid);
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 0,
@@ -327,7 +328,7 @@ void main() {
           edges: [TopologyEdge(id1: 'nw1', id2: 'sea1')],
         );
         final nwTileMap = TileMapResult(width: 2, height: 2, grid: nwGrid);
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['england'],
           continentCount: 1,
           minorNationCount: 0,

@@ -2,6 +2,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -52,8 +53,9 @@ void main() {
           y: 1,
         );
 
-        final ws = WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        var game = TestFixtures.minimalGame(
+          id: 't',
+          turnNumber: 0,
           oldWorld: RegionData(
             provinces: [
               Province(
@@ -93,11 +95,6 @@ void main() {
               CapitalTile.tileKey(kRegionOldWorld, pbFull, 2, 2): 1,
             },
           ),
-        );
-
-        var game = Game(
-          id: 't',
-          worldState: ws,
           players: [
             Player(
               id: 'gp1',
@@ -210,52 +207,8 @@ void main() {
             [null, null, Resource.copper],
             [Resource.grain, Resource.tin, Resource.copper],
           ];
-          return Game(
+          return TestFixtures.minimalGame(
             id: 't',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(
-                    id: paFull,
-                    regionId: kRegionOldWorld,
-                    ownerId: 'gp1',
-                    townTileKey: CapitalTile.tileKey(
-                      kRegionOldWorld,
-                      paFull,
-                      1,
-                      0,
-                    ),
-                  ),
-                  Province(
-                    id: pbFull,
-                    regionId: kRegionOldWorld,
-                    ownerId: 'gp2',
-                    townTileKey: CapitalTile.tileKey(
-                      kRegionOldWorld,
-                      pbFull,
-                      2,
-                      1,
-                    ),
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(provinces: []),
-              resourceByTileKey: {
-                for (var y = 0; y < 2; y++)
-                  for (var x = 0; x < 3; x++)
-                    if (resGrid[y][x] != null)
-                      CapitalTile.tileKey(
-                        kRegionOldWorld,
-                        ProvinceId.full(kRegionOldWorld, grid[y][x]),
-                        x,
-                        y,
-                      ): resGrid[y][x]!.name,
-              },
-            ),
             players: [
               Player(
                 id: 'gp1',
@@ -282,6 +235,45 @@ void main() {
                 ),
               ),
             ],
+            turnNumber: 0,
+            oldWorld: RegionData(
+                provinces: [
+                  Province(
+                    id: paFull,
+                    regionId: kRegionOldWorld,
+                    ownerId: 'gp1',
+                    townTileKey: CapitalTile.tileKey(
+                      kRegionOldWorld,
+                      paFull,
+                      1,
+                      0,
+                    ),
+                  ),
+                  Province(
+                    id: pbFull,
+                    regionId: kRegionOldWorld,
+                    ownerId: 'gp2',
+                    townTileKey: CapitalTile.tileKey(
+                      kRegionOldWorld,
+                      pbFull,
+                      2,
+                      1,
+                    ),
+                  ),
+                ],
+              ),
+            newWorld: const RegionData(provinces: []),
+            resourceByTileKey: {
+                for (var y = 0; y < 2; y++)
+                  for (var x = 0; x < 3; x++)
+                    if (resGrid[y][x] != null)
+                      CapitalTile.tileKey(
+                        kRegionOldWorld,
+                        ProvinceId.full(kRegionOldWorld, grid[y][x]),
+                        x,
+                        y,
+                      ): resGrid[y][x]!.name,
+              },
           );
         }
 
@@ -325,26 +317,8 @@ void main() {
         resourceGrid: resources,
       );
       final paFull = ProvinceId.full(kRegionOldWorld, pa);
-      final game = Game(
+      final game = TestFixtures.minimalGame(
         id: 't',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: RegionData(
-            provinces: [
-              Province(
-                id: paFull,
-                regionId: kRegionOldWorld,
-                ownerId: 'gp1',
-                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
-              ),
-            ],
-          ),
-          newWorld: const RegionData(provinces: []),
-          resourceByTileKey: {
-            CapitalTile.tileKey(kRegionOldWorld, paFull, 0, 1): 'tin',
-            CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 1): 'tin',
-          },
-        ),
         players: [
           Player(
             id: 'gp1',
@@ -359,6 +333,22 @@ void main() {
             ),
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: paFull,
+                regionId: kRegionOldWorld,
+                ownerId: 'gp1',
+                townTileKey: CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 0),
+              ),
+            ],
+          ),
+        newWorld: const RegionData(provinces: []),
+        resourceByTileKey: {
+            CapitalTile.tileKey(kRegionOldWorld, paFull, 0, 1): 'tin',
+            CapitalTile.tileKey(kRegionOldWorld, paFull, 1, 1): 'tin',
+          },
       );
 
       expect(

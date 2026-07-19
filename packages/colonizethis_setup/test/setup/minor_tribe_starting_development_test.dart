@@ -7,6 +7,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {
@@ -29,16 +30,8 @@ void main() {
           ownerId: 'tribe_1',
         ),
       ];
-      return Game(
+      return TestFixtures.minimalGame(
         id: 'g_minor_tribe_dev',
-        worldState: WorldState(
-          turnState: const TurnState(
-            turnNumber: 0,
-            phase: TurnPhase.orders,
-          ),
-          oldWorld: RegionData(provinces: owProvinces),
-          newWorld: RegionData(provinces: nwProvinces),
-        ),
         players: const <Player>[
           Player(id: 'gp1', displayName: 'Power 1', isHuman: true),
         ],
@@ -60,6 +53,9 @@ void main() {
             capitalTile: tribeCapital,
           ),
         ],
+        turnNumber: 0,
+        oldWorld: RegionData(provinces: owProvinces),
+        newWorld: RegionData(provinces: nwProvinces),
       );
     }
 

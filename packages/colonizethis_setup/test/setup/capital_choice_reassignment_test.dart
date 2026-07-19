@@ -1,4 +1,5 @@
 // Ported from colonizethis_logic (Refs #4090 Slice C).
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -9,24 +10,21 @@ void main() {
     test(
       'setCapitalForReassignment updates player capital only; no port/road changes',
       () {
-        final game = Game(
+        final game = TestFixtures.minimalGame(
           id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(
-                  id: 'oldWorld|p1',
-                  regionId: 'oldWorld',
-                  ownerId: 'pl1',
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-            portsByProvinceSeaboard: const {
-              'oldWorld|p1|sea1': 'oldWorld|p1|0|0',
-            },
+          turnNumber: 1,
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                ownerId: 'pl1',
+              ),
+            ],
           ),
+          portsByProvinceSeaboard: const {
+            'oldWorld|p1|sea1': 'oldWorld|p1|0|0',
+          },
           players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true)],
         );
         final next = setCapitalForReassignment(

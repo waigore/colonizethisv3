@@ -3,6 +3,7 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_setup/colonizethis_setup.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'init_game_orchestrator_test_support.dart';
 
 void main() {
   group('GameSetup', () {
@@ -72,7 +73,7 @@ void main() {
           ],
         );
 
-        final config = GameSetupConfig(
+        final config = configWithOverrides(
           selectedGreatPowerIds: ['prussia'],
           leaderVariantByGpId: {'prussia': prussiaVariantFrederickWilliam},
           continentCount: 1,
@@ -184,7 +185,7 @@ void main() {
           ['nwSea'],
         ],
       );
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
@@ -299,7 +300,7 @@ void main() {
         ],
       );
 
-      final config = GameSetupConfig(
+      final config = configWithOverrides(
         selectedGreatPowerIds: ['england'],
         continentCount: 1,
         minorNationCount: 0,
