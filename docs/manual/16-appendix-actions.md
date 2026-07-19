@@ -86,7 +86,7 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - [ ] Lists every current order type, every WorkOrder target, and every DiplomaticOrder subtype.
 - [ ] Gives each action an entry point, control or draft status, cost summary, refusal highlights, resolution phase, and chapter cross-link.
 - [ ] Distinguishes queued orders from immediate disband, cancellation, army/fleet organization, and Home-Fleet transfer.
-- [ ] Marks draft `GAME60001` as non-operable.
+- [ ] Marks **[DRAFT]** `GAME60001` as non-operable.
 - [ ] Uses only active screen IDs or explicitly marked draft surfaces.
 
 ## Sources

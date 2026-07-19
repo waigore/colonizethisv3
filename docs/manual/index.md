@@ -80,6 +80,7 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `14-passage-of-turns.md` | Present (S8) |
 | `15-road-to-victory.md` | Present (S8) |
 | `16-appendix-actions.md` | Present (S9) |
+| S10 completeness audit | Done in-branch (active screen IDs cited; draft IDs marked) |
 
 ## Related process artifacts
 

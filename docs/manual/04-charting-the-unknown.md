@@ -70,7 +70,7 @@ Rival courts race the same fog. AI civilian planners score Explorer **explore** 
 - [ ] Documents Explorer `explore` (partial-reveal gate, free, ≤3 turns, province reveal on complete) and `prospect` (eligible terrain, free, 1 turn, completion-only).
 - [ ] Documents Consulate gate for Minor/Tribe explore/prospect.
 - [ ] Documents fleet enter → coastal/sea reveal and end-of-turn re-fog conditions.
-- [ ] Documents `OVL80001` first contact and discovery reporting via `DLG50001`; marks `OVL70001` as draft.
+- [ ] Documents `OVL80001` first contact and discovery reporting via `DLG50001`; marks **[DRAFT]** `OVL70001` as draft.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources

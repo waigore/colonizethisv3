@@ -59,7 +59,7 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 - [ ] Explains global market, tradeable vs riches, TradeOrder bid/offer, Phase 13 timing.
 - [ ] Documents mutual exclusion, bid-type caps (1/3/6), cargo and treasury caps, carry-forward.
 - [ ] Covers first right of refusal / overseas profit / FTP at player level.
-- [ ] Marks `GAME60001` with `**[DRAFT]**` and keeps How-it-is-done free of draft operable steps.
+- [ ] Marks **[DRAFT]** `GAME60001` and keeps How-it-is-done free of draft operable steps.
 - [ ] Notes Production sellable headroom linkage.
 - [ ] Sources match the chapter coverage map.
 

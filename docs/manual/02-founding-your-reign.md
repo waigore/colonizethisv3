@@ -8,7 +8,7 @@ Before the first Orders phase, you choose your court: which Great Power you are,
 
 ### Main menu → New Game
 
-1. On `SHEL10002` **Main menu**, tap **New Game**.
+1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**. Tap **New Game**.
 2. The shell opens `DLG10001` **New game leader selection** (does not mutate the live game until you confirm Start).
 3. Configure slots, options, and seed as below, then **Start**. Cancel returns you to the menu without creating a game.
 4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting you may see **[DRAFT]** `SHEL30001` **Game initializing** — do not treat it as an interactive form.
@@ -73,12 +73,12 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents Main menu `SHEL10002` → New Game → `DLG10001` → setup → `GAME10001` / `OVL10001`.
+- [ ] Documents shell `SHEL10001` → Main menu `SHEL10002` → New Game → `DLG10001` → setup → `GAME10001` / `OVL10001`.
 - [ ] Explains human slot 0 vs AI slots, nation uniqueness, leader pick, AI profiles.
 - [ ] Covers leader combat bonuses (Napoleon / Frederick / none).
 - [ ] Covers advanced start presets and when the control is disabled.
 - [ ] States capital is auto-chosen (sea-bound) with no post-setup override UI.
-- [ ] Marks `SHEL30001` with `**[DRAFT]**` if mentioned.
+- [ ] Marks **[DRAFT]** `SHEL30001` if mentioned.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
@@ -90,6 +90,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 - `SPEC/game/capital-choice-phase.md`
 - `SPEC/game/naming.md`
 - `SPEC/ui/main-menu.md`
+- `SPEC/ui/shell-screen.md`
 - `SPEC/ui/new-game-leader-selection-dialog.md`
 - `SPEC/ui/game-initializing.md`
 - `SPEC/ui/game-start-intro-overlay.md`

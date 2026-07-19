@@ -64,7 +64,7 @@ Rival Great Powers plan with the same order surface you do. Early turns they typ
 - [ ] Victory at a glance states 31+ OW provinces, calendar halt vs infinite mode, and that only GPs win.
 - [ ] Turn rhythm describes Orders → next turn → resolution → new Orders (or end).
 - [ ] Orientation cites `GAME10001`, `MAP10001`, empire buttons → production/diplomacy/tech IDs, `GAME50001`, `MAP20001`.
-- [ ] Draft surfaces `GAME60001` and `SHEL30001` use `**[DRAFT]**` and are not operable how-to steps.
+- [ ] Draft surfaces **[DRAFT]** `GAME60001` and **[DRAFT]** `SHEL30001` are not operable how-to steps.
 - [ ] Sources footer lists the primary paths from the coverage map.
 
 ## Sources
