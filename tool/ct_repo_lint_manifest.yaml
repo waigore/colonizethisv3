@@ -763,6 +763,14 @@ rules:
     runner: dart
     script: tool/check_ai_no_part_directives.dart
 
+  - rule_id: repo.ai_source_file_size
+    group: structure
+    title: colonizethis_ai lib/src files must stay at or below 500 physical lines (Refs #4079)
+    spec: SPEC/program/ai-source-file-size.md
+    runner: dart
+    script: tool/check_ai_source_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.models_test_file_size
     group: testing
     title: colonizethis_models test files must stay at or below 400 physical lines (Refs #4068)
