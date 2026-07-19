@@ -48,42 +48,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards. Mirrors the helper used by the existing
-/// `e2e_dismiss_snackbar_if_present_test.dart` /
-/// `e2e_dismiss_alert_dialog_if_present_test.dart` pins so this file
-/// verifies counter emission against the same
-/// `E2E_COUNTER|...|name=dismiss_generic_ok_calls|value=...` substring
-/// the `E2ePerfLog.bumpCounter` contract guarantees.
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
-bool _hasGenericOkCounterLine(
-  List<String> lines, {
-  required String test,
-  required int expectedValue,
-}) {
-  final needle =
-      'E2E_COUNTER|test=$test|name=dismiss_generic_ok_calls'
-      '|value=$expectedValue';
-  return lines.any((line) => line == needle);
-}
-
-bool _hasAnyGenericOkCounterLine(List<String> lines, {required String test}) {
-  final prefix = 'E2E_COUNTER|test=$test|name=dismiss_generic_ok_calls|';
-  return lines.any((line) => line.startsWith(prefix));
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 /// Hosts an `OK` label inside a `Stack` with an opaque `AbsorbPointer`
 /// overlay on top, so the label is **mounted but non-hit-testable**. The
@@ -101,13 +66,8 @@ class _CoveredOkLabel extends StatelessWidget {
     return SizedBox(
       width: 120,
       height: 48,
-      child: Stack(
-        children: [
-          TextButton(onPressed: onTap, child: Text(label)),
-          const Positioned.fill(
-            child: AbsorbPointer(child: ColoredBox(color: Color(0xFFFF0000))),
-          ),
-        ],
+      child: absorbPointerCover(
+        child: TextButton(onPressed: onTap, child: Text(label)),
       ),
     );
   }
@@ -209,7 +169,7 @@ void main() {
         );
 
         final dismissed = await e2eDismissGenericOkIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(
           dismissed,
@@ -259,7 +219,7 @@ void main() {
         );
 
         final dismissed = await e2eDismissGenericOkIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
@@ -306,7 +266,7 @@ void main() {
         // up-front and returns `false` so the caller can fall back to a
         // broader dismissal strategy.
         final dismissed = await e2eDismissGenericOkIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(
           dismissed,
@@ -356,7 +316,7 @@ void main() {
           tester,
           label: 'Dismiss',
         );
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
@@ -394,17 +354,14 @@ void main() {
         );
 
         late bool dismissed;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           dismissed = await e2eDismissGenericOkIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
-          _hasGenericOkCounterLine(
-            lines,
-            test: 'generic_ok_perf_pin',
-            expectedValue: 1,
+          hasE2eCounterLine(lines, test: 'generic_ok_perf_pin', name: 'dismiss_generic_ok_calls', expectedValue: 1,
           ),
           isTrue,
           reason:
@@ -437,15 +394,15 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('generic_ok_perf_no_ok_pin');
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          wrapDismissMaterial(const Scaffold(body: SizedBox())),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissGenericOkIfPresent(tester, perf: perf);
         });
 
         expect(
-          _hasAnyGenericOkCounterLine(lines, test: 'generic_ok_perf_no_ok_pin'),
+          hasAnyE2eCounterLine(lines, test: 'generic_ok_perf_no_ok_pin', name: 'dismiss_generic_ok_calls'),
           isFalse,
           reason:
               'No-OK short-circuit must not emit the counter marker (the '
@@ -469,15 +426,15 @@ void main() {
           ),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissGenericOkIfPresent(tester, perf: perf);
         });
 
         expect(
-          _hasAnyGenericOkCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'generic_ok_perf_covered_pin',
-          ),
+            name: 'dismiss_generic_ok_calls'),
           isFalse,
           reason:
               'Covered-OK short-circuit must not emit the counter marker '
@@ -517,10 +474,10 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('generic_ok_phase_not_present_pin');
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          wrapDismissMaterial(const Scaffold(body: SizedBox())),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissGenericOkIfPresent(tester, perf: perf);
         });
 
@@ -547,10 +504,10 @@ void main() {
               'from real dismissals.',
         );
         expect(
-          _hasAnyGenericOkCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'generic_ok_phase_not_present_pin',
-          ),
+            name: 'dismiss_generic_ok_calls'),
           isFalse,
           reason:
               'No-OK short-circuit must not bump `dismiss_generic_ok_calls` '
@@ -575,10 +532,10 @@ void main() {
         );
 
         late bool dismissed;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           dismissed = await e2eDismissGenericOkIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         final timing = lines
@@ -619,10 +576,10 @@ void main() {
           ),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissGenericOkIfPresent(tester);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final phaseLines = lines
             .where(
@@ -658,14 +615,14 @@ void main() {
           ),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissGenericOkIfPresent(
             tester,
             perf: perf,
             phaseName: customPhase,
           );
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final customTiming = lines
             .where(

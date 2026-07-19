@@ -29,70 +29,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
-class _ShellHost extends StatefulWidget {
-  const _ShellHost({required this.builder});
-
-  /// Builds the dialog contents; receives a [close] callback the inner
-  /// widgets can invoke from their `onPressed` callbacks to unmount the
-  /// shell. Avoids `tester.state` hops inside button taps that would
-  /// otherwise add lookup noise unrelated to the helper contract.
-  final Widget Function(BuildContext context, VoidCallback close) builder;
-
-  @override
-  State<_ShellHost> createState() => _ShellHostState();
-}
-
-class _ShellHostState extends State<_ShellHost> {
-  bool open = true;
-
-  void _close() {
-    setState(() => open = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!open) {
-      return const SizedBox.shrink();
-    }
-    return CtDialogShell(child: widget.builder(context, _close));
-  }
-}
-
-Widget _wrap(Widget body) => MaterialApp(
-  home: Scaffold(body: Center(child: body)),
-);
-
-/// Captures `debugPrint` lines while [body] runs so the test can assert on
-/// `E2E_TIMING|...|phase=...` markers without leaking the override to the
-/// rest of the suite. [body] may throw; captured lines are returned even
-/// when it does, and the original `debugPrint` is restored before the
-/// exception propagates.
-Future<List<String>> _captureDebugPrint(
-  Future<void> Function() body, {
-  bool expectThrows = false,
-}) async {
-  final lines = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    lines.add(message ?? '');
-  };
-  try {
-    await body();
-    if (expectThrows) {
-      throw StateError(
-        'Expected body to throw but it returned normally; captured lines: '
-        '$lines',
-      );
-    }
-  } on TestFailure {
-    if (!expectThrows) {
-      rethrow;
-    }
-  } finally {
-    debugPrint = original;
-  }
-  return lines;
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -109,7 +46,7 @@ void main() {
         // label so a future regression that always invoked the
         // escalation arm cannot pass silently.
         await tester.pumpWidget(
-          _wrap(
+          wrapDismissCentered(
             TextButton(
               onPressed: () => unrelatedTaps++,
               child: const Text('Cancel'),
@@ -118,7 +55,7 @@ void main() {
         );
 
         final perf = E2ePerfLog('no_shell_branch');
-        final lines = await _captureDebugPrint(() async {
+        final lines = await captureE2eDebugPrints(() async {
           final dismissed = await dismissCtDialogShellWithPopRouteEscalation(
             tester,
             perf: perf,
@@ -162,8 +99,8 @@ void main() {
         WidgetTester tester,
       ) async {
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) =>
                   TextButton(onPressed: close, child: const Text('Cancel')),
             ),
@@ -172,7 +109,7 @@ void main() {
         expect(find.byType(CtDialogShell), findsOneWidget);
 
         final perf = E2ePerfLog('first_pass_dismiss');
-        final lines = await _captureDebugPrint(() async {
+        final lines = await captureE2eDebugPrints(() async {
           final dismissed = await dismissCtDialogShellWithPopRouteEscalation(
             tester,
             perf: perf,
@@ -229,8 +166,8 @@ void main() {
         // pre-lift inline block produced — pinning the fail-fast
         // contract the production opener relies on.
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) =>
                   const Text('no dismiss target inside this shell'),
             ),
@@ -239,7 +176,7 @@ void main() {
         expect(find.byType(CtDialogShell), findsOneWidget);
 
         final perf = E2ePerfLog('escalation_branch');
-        final lines = await _captureDebugPrint(expectThrows: true, () async {
+        final lines = await captureE2eDebugPrints(expectThrows: true, () async {
           await dismissCtDialogShellWithPopRouteEscalation(
             tester,
             perf: perf,
@@ -284,8 +221,8 @@ void main() {
         'attribute the wait under their own phase namespace',
         (WidgetTester tester) async {
           await tester.pumpWidget(
-            _wrap(
-              _ShellHost(
+            wrapDismissCentered(
+              DismissCtDialogShellHost(
                 builder: (context, close) =>
                     const Text('still no dismiss target'),
               ),
@@ -295,7 +232,7 @@ void main() {
 
           const overridePhase = 'pump_until_custom_opener_shell_cleared';
           final perf = E2ePerfLog('escalation_phase_override');
-          final lines = await _captureDebugPrint(expectThrows: true, () async {
+          final lines = await captureE2eDebugPrints(expectThrows: true, () async {
             await dismissCtDialogShellWithPopRouteEscalation(
               tester,
               perf: perf,
@@ -334,15 +271,15 @@ void main() {
       testWidgets('perf is optional — escalation arm runs without emitting any '
           'E2E_TIMING when perf is null', (WidgetTester tester) async {
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) =>
                   const Text('no dismiss target either'),
             ),
           ),
         );
 
-        final lines = await _captureDebugPrint(expectThrows: true, () async {
+        final lines = await captureE2eDebugPrints(expectThrows: true, () async {
           await dismissCtDialogShellWithPopRouteEscalation(
             tester,
             escalationTimeout: const Duration(milliseconds: 200),

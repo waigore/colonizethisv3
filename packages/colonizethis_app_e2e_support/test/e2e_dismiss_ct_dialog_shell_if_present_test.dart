@@ -32,39 +32,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-class _ShellHost extends StatefulWidget {
-  const _ShellHost({required this.builder});
-
-  /// Builds the dialog contents; receives a [close] callback the inner
-  /// widgets can invoke from their `onPressed` callbacks to unmount the
-  /// shell. Avoids tester.state hops inside button taps that would
-  /// otherwise add lookup noise unrelated to the helper contract.
-  final Widget Function(BuildContext context, VoidCallback close) builder;
-
-  @override
-  State<_ShellHost> createState() => _ShellHostState();
-}
-
-class _ShellHostState extends State<_ShellHost> {
-  bool open = true;
-
-  void _close() {
-    setState(() => open = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!open) {
-      return const SizedBox.shrink();
-    }
-    return CtDialogShell(
-      child: widget.builder(context, _close),
-    );
-  }
-}
-
-Widget _wrap(Widget body) =>
-    MaterialApp(home: Scaffold(body: Center(child: body)));
+import 'support/dismiss_widget_tester_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -76,7 +44,7 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       var taps = 0;
       await tester.pumpWidget(
-        _wrap(
+        wrapDismissCentered(
           TextButton(
             onPressed: () => taps++,
             child: Text(l10n.common_cancel),
@@ -104,8 +72,8 @@ void main() {
       (WidgetTester tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) => TextButton(
                 onPressed: close,
                 child: Text(l10n.common_cancel),
@@ -135,8 +103,8 @@ void main() {
       var cancelTaps = 0;
       var closeTaps = 0;
       await tester.pumpWidget(
-        _wrap(
-          _ShellHost(
+        wrapDismissCentered(
+          DismissCtDialogShellHost(
             builder: (context, close) => Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -186,8 +154,8 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       var closeTaps = 0;
       await tester.pumpWidget(
-        _wrap(
-          _ShellHost(
+        wrapDismissCentered(
+          DismissCtDialogShellHost(
             builder: (context, close) => TextButton(
               key: const ValueKey('candidate-close-only'),
               onPressed: () {
@@ -215,8 +183,8 @@ void main() {
         final l10n = lookupAppLocalizations(const Locale('en'));
         var iconTaps = 0;
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) => IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
@@ -247,8 +215,8 @@ void main() {
         // contract for callers that need single-purpose semantics.
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) => const Text('Nothing tappable'),
             ),
           ),
@@ -285,8 +253,8 @@ void main() {
         final l10n = lookupAppLocalizations(const Locale('en'));
         final perf = E2ePerfLog('dismiss_shell_phase');
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) => TextButton(
                 onPressed: close,
                 child: Text(l10n.common_cancel),
