@@ -237,6 +237,22 @@ rules:
     runner: dart
     script: tool/check_economy_source_file_size.dart
 
+  - rule_id: repo.save_source_file_size
+    group: structure
+    title: colonizethis_save lib/src files must stay at or below 400 physical lines (Refs #4077)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_save_source_file_size.dart
+    pr_incremental: true
+
+  - rule_id: repo.save_test_file_size
+    group: testing
+    title: colonizethis_save test files must stay at or below 400 physical lines (Refs #4077)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_save_test_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.economy_test_core_fixtures_shared
     group: testing
     title: colonizethis_economy tests must not inline Game(...) builders (Refs #3836, #3856)
