@@ -57,41 +57,11 @@ void runCarryForwardBidNotionalScenario(CarryForwardBidNotionalScenario scenario
   assertCarryForwardBidNotionalExpectation(notional: notional, rules: rules, expectation: scenario.expect);
 }
 List<CarryForwardBidNotionalScenario> carryForwardBidNotionalScenarios() => [
-  carryForwardBidNotionalRow(
-    label: 'returns 0 when player has no carry-forward bids',
-    bids: const [],
-    prices: const <CommodityId, int>{},
-    expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0),
-    refs: '#3122',
-  ),
-  carryForwardBidNotionalRow(
-    label: 'sums quantity * effectivePrice across carry-forward bids',
-    bids: [testBid('timber', 5), testBid('iron', 3)],
-    prices: const {'timber': 10, 'iron': 20},
-    expect: const CarryForwardBidNotionalExpectation(expectedNotional: 5 * 10 + 3 * 20),
-    refs: '#3122',
-  ),
-  carryForwardBidNotionalRow(
-    label: 'falls back to catalog default price when world price is missing',
-    bids: [testBid('timber', 4)],
-    prices: const <CommodityId, int>{},
-    expect: const CarryForwardBidNotionalExpectation(catalogCommodity: 'timber', quantity: 4),
-    refs: '#3122',
-  ),
-  carryForwardBidNotionalRow(
-    label: 'skips bids whose effective price is null (defensive guard against unknown / future commodity ids)',
-    bids: [testBid('not_a_commodity', 5)],
-    prices: const <CommodityId, int>{},
-    expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0),
-    refs: '#3122',
-  ),
-  carryForwardBidNotionalRow(
-    label: 'skips offers (type != bid) and zero-quantity bids',
-    bids: [testOffer('timber', 10), testBid('iron', 0)],
-    prices: const {'timber': 10, 'iron': 20},
-    expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0),
-    refs: '#3122',
-  ),
+  carryForwardBidNotionalRow(label: 'returns 0 when player has no carry-forward bids', bids: const [], prices: const <CommodityId, int>{}, expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0), refs: '#3122'),
+  carryForwardBidNotionalRow(label: 'sums quantity * effectivePrice across carry-forward bids', bids: [testBid('timber', 5), testBid('iron', 3)], prices: const {'timber': 10, 'iron': 20}, expect: const CarryForwardBidNotionalExpectation(expectedNotional: 5 * 10 + 3 * 20), refs: '#3122'),
+  carryForwardBidNotionalRow(label: 'falls back to catalog default price when world price is missing', bids: [testBid('timber', 4)], prices: const <CommodityId, int>{}, expect: const CarryForwardBidNotionalExpectation(catalogCommodity: 'timber', quantity: 4), refs: '#3122'),
+  carryForwardBidNotionalRow(label: 'skips bids whose effective price is null (defensive guard against unknown / future commodity ids)', bids: [testBid('not_a_commodity', 5)], prices: const <CommodityId, int>{}, expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0), refs: '#3122'),
+  carryForwardBidNotionalRow(label: 'skips offers (type != bid) and zero-quantity bids', bids: [testOffer('timber', 10), testBid('iron', 0)], prices: const {'timber': 10, 'iron': 20}, expect: const CarryForwardBidNotionalExpectation(expectedNotional: 0), refs: '#3122'),
 ];
 typedef BidSpendParityScenario = ({String label, List<TradeOrder> bids, Map<CommodityId, int> prices, String playerId, BidSpendParityExpectation expect});
 BidSpendParityScenario bidSpendParityScenarioExpect({required String label, required List<TradeOrder> bids, required Map<CommodityId, int> prices, String playerId = _gp, required BidSpendParityExpectation expect}) => (label: label, bids: bids, prices: prices, playerId: playerId, expect: expect);

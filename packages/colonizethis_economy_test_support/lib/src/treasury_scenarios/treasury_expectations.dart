@@ -70,30 +70,16 @@ void assertTreasuryAvailableExpectation({required Game game, required String pla
 }
 /// Data-driven expectations for carry-forward bid-notional rows.
 class CarryForwardBidNotionalExpectation {
-  const CarryForwardBidNotionalExpectation({
-    this.catalogCommodity,
-    this.quantity,
-    this.expectedNotional,
-  }) : assert(
-          (expectedNotional != null) ||
-              (catalogCommodity != null && quantity != null),
-          'Provide expectedNotional or catalogCommodity+quantity',
-        );
+  const CarryForwardBidNotionalExpectation({this.catalogCommodity, this.quantity, this.expectedNotional}) : assert((expectedNotional != null) || (catalogCommodity != null && quantity != null), 'Provide expectedNotional or catalogCommodity+quantity');
   final CommodityId? catalogCommodity;
   final int? quantity;
   final int? expectedNotional;
 }
 void assertCarryForwardBidNotionalExpectation({required int notional, required data.ResourceRules rules, required CarryForwardBidNotionalExpectation expectation}) {
-  final expected = expectation.expectedNotional;
-  if (expected != null) {
-    expect(notional, expected);
-    return;
-  }
-  final catalogCommodity = expectation.catalogCommodity!;
-  final quantity = expectation.quantity!;
-  final catalogPrice = rules.defaultMarketPriceForCommodityId(catalogCommodity) ?? 0;
+  if (expectation.expectedNotional != null) { expect(notional, expectation.expectedNotional); return; }
+  final catalogPrice = rules.defaultMarketPriceForCommodityId(expectation.catalogCommodity!) ?? 0;
   expect(catalogPrice, greaterThan(0));
-  expect(notional, quantity * catalogPrice);
+  expect(notional, expectation.quantity! * catalogPrice);
 }
 /// Data-driven expectations for [GpTreasuryCreditAccumulator] scenario rows.
 class GpTreasuryCreditExpectation<T extends num> {

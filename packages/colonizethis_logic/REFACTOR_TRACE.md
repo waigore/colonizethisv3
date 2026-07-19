@@ -13,7 +13,7 @@ Inventory equivalence decisions for orphan suite purge. Schema columns:
 | `test/economy_riches_to_treasury_test.dart` | `colonizethis_economy` | delete | All 8 cases match `economy_riches_to_treasury_scenarios.dart` labels |
 | `test/economy_logic_test.dart` | `colonizethis_economy` | delete | Smoke duplicates of production/extraction/consumption/riches suites; asserts covered by scenario labels cited above (e.g. `trained workers capped by luxury after food`, `consumes inputs and produces output per recipe`, `military upkeep consumes food before workers`, `non-riches in stockpile are unchanged`) |
 | `test/economy_debt_rules_test.dart` | `colonizethis_turn` | port | Ported to `packages/colonizethis_turn/test/economy_debt_rules_test.dart` (`maxDebtForPlayer` lives in turn) |
-| `test/economy_consumption_production_integration_test.dart` | `colonizethis_economy` | port | Ported 4 cases into `consumption_production_integration_scenarios.dart` + `economy_consumption_production_integration_test.dart` |
+| `test/economy_consumption_production_integration_test.dart` | `colonizethis_economy` | port | Ported 4 cases into `economy_consumption_production_integration_test.dart` (kept in economy/test to preserve economy_test_support LOC ceiling) |
 | `test/build_cost_test.dart` | `colonizethis_economy` | delete | All 9 cases match `build_cost_scenarios.dart` labels |
 | `test/worker_action_cost_test.dart` | `colonizethis_economy` | delete | All 13 cases match `worker_action_cost_scenarios.dart` labels |
 | `test/sea_transport_test.dart` | `colonizethis_economy` | delete | All 12 cases match `sea_transport_scenarios.dart` / trade-interception labels |
