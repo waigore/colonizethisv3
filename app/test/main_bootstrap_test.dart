@@ -17,6 +17,7 @@ void main() {
             bindingZone = Zone.current;
           },
           initSessionLogBuffer: () {},
+          ensureMapThemeResolved: () async {},
           ensureMapTerrainLoaded: () async {},
           initHive: () async {},
           openHiveBoxSafely: (_) async {},
@@ -52,6 +53,9 @@ void main() {
       initSessionLogBuffer: () {
         callOrder.add('session');
       },
+      ensureMapThemeResolved: () async {
+        callOrder.add('theme');
+      },
       ensureMapTerrainLoaded: () async {
         callOrder.add('terrain');
       },
@@ -78,11 +82,12 @@ void main() {
       equals([
         'binding',
         'session',
-        'terrain',
         'hive',
         'box:${HiveBoxNames.settings}',
         'box:${HiveBoxNames.games}',
         'box:${HiveBoxNames.offlineQueue}',
+        'theme',
+        'terrain',
         'desktop',
         'fonts',
         'runApp',

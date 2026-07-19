@@ -1,5 +1,8 @@
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+
 import '../../../../config/app_assets.dart';
 import 'asset_image_cache.dart';
 
@@ -19,7 +22,8 @@ class ProvinceLabelIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) =>
-      '${kAppIcon64AssetPrefix}ui_icon_$assetId.png';
+      '${ActiveMapTheme.current.iconPrefixFor(MapThemeGroupId.provinceLabelIcons)}'
+      'ui_icon_$assetId.png';
 
   @override
   String get loadLogLabel => 'province label icons';

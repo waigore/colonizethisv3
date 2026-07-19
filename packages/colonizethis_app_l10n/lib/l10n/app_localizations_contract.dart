@@ -2548,4 +2548,58 @@ abstract class AppLocalizations {
 
   /// Input hint showing an example slash command in debug console overlay.
   String get debugConsole_hintSpawnCivilian;
+
+  /// Title of the app Settings dialog (DLG90001).
+  String get settingsDialog_title;
+
+  /// Hint that map theme changes apply after restart.
+  String get settingsDialog_restartHint;
+
+  /// Close button on the Settings dialog.
+  String get settingsDialog_close;
+
+  /// Shown when the theme catalog is not loaded.
+  String get settingsDialog_catalogUnavailable;
+
+  /// Settings dialog group label: terrain.
+  String get settingsDialog_group_terrain;
+
+  /// Settings dialog group label: civilian icons.
+  String get settingsDialog_group_civilianIcons;
+
+  /// Settings dialog group label: town icons.
+  String get settingsDialog_group_townIcons;
+
+  /// Settings dialog group label: resource icons.
+  String get settingsDialog_group_resourceIcons;
+
+  /// Settings dialog group label: fleet icons.
+  String get settingsDialog_group_fleetIcons;
+
+  /// Settings dialog group label: province label icons.
+  String get settingsDialog_group_provinceLabelIcons;
+
+  /// Default terrain theme display name.
+  String get mapTheme_terrain_default;
+
+  /// Sepia terrain theme display name.
+  String get mapTheme_terrain_sepia;
+
+  /// Default civilian icon theme display name.
+  String get mapTheme_civilian_default;
+
+  /// Sepia civilian icon theme display name.
+  String get mapTheme_civilian_sepia;
+
+  /// Default town icon theme display name.
+  String get mapTheme_town_default;
+
+  /// Default resource icon theme display name.
+  String get mapTheme_resource_default;
+
+  /// Default fleet icon theme display name.
+  String get mapTheme_fleet_default;
+
+  /// Default province-label icon theme display name.
+  String get mapTheme_provinceLabel_default;
 }
