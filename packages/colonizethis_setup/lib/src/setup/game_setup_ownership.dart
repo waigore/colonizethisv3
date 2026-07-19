@@ -4,19 +4,19 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show connectedComponentsInSubset, landmassIdsFromProvinceAdjacency;
+    show landmassIdsFromProvinceAdjacency;
 import 'capital_choice.dart';
 import 'faction_setup_helpers.dart';
+import 'game_setup_ownership_gp_packing.dart';
+import 'game_setup_ownership_paint.dart';
+import 'game_setup_ownership_remainder_factions.dart';
 import 'game_setup_plains_conversion.dart';
 import 'game_setup_topology.dart';
 import 'locked_province_assigner.dart';
 import 'province_assignment.dart';
 import 'setup_exceptions.dart';
 
-part 'game_setup_ownership_comparators.dart';
-part 'game_setup_ownership_gp_packing.dart';
-part 'game_setup_ownership_paint.dart';
-part 'game_setup_ownership_remainder_factions.dart';
+export 'game_setup_ownership_comparators.dart';
 
 Game assignCapitalsForFactions({
   required Game game,
@@ -121,8 +121,8 @@ Map<String, String> _assignOldWorldSingleLandmass({
   final factionIds = [...gpHere, ...minorHere];
 
   if (lockedSixMinorsOnFourContinents) {
-    return _paintLandmass(
-      mode: _LandmassPaintMode.locked,
+    return paintLandmass(
+      mode: LandmassPaintMode.locked,
       landmassProvinceIds: provs,
       neighbours: neighbours,
       factionIds: factionIds,
@@ -150,8 +150,8 @@ Map<String, String> _assignOldWorldSingleLandmass({
   // Cap total assignments so greedy leftovers cannot consume provinces reserved
   // for minors assigned later on the OW remainder (non-locked painting path).
   final maxTotalAssignment = targets.values.fold<int>(0, (a, b) => a + b);
-  return _paintLandmass(
-    mode: _LandmassPaintMode.bfs,
+  return paintLandmass(
+    mode: LandmassPaintMode.bfs,
     landmassProvinceIds: Set<String>.from(provs),
     neighbours: neighbours,
     factionIds: factionIds,
@@ -210,7 +210,7 @@ Map<String, String> assignOldWorldOwnershipContiguous({
     seaBoundCountByLandmass[lm] = (seaBoundCountByLandmass[lm] ?? 0) + 1;
   }
 
-  final maxGpProvincesByTopology = _maxFeasibleGpProvinceBudgetOnLandmasses(
+  final maxGpProvincesByTopology = maxFeasibleGpProvinceBudgetOnLandmasses(
     landmassSizes: landmassSizes,
     seaBoundCountByLandmass: seaBoundCountByLandmass,
     gpCount: gpCount,
@@ -229,7 +229,7 @@ Map<String, String> assignOldWorldOwnershipContiguous({
   // Fair targets must pack into landmasses: sum of targets per landmass ≤ |L|, and
   // (# GPs on L) ≤ sea-bound slots on L. Union-only caps are insufficient when
   // gpCount > landmassCount (e.g. three GPs on two continents).
-  final gpProvinceBudget = _largestFeasibleGpProvinceBudgetByPacking(
+  final gpProvinceBudget = largestFeasibleGpProvinceBudgetByPacking(
     gpIds: gpIds,
     gpCount: gpCount,
     cap: cap,
@@ -247,7 +247,7 @@ Map<String, String> assignOldWorldOwnershipContiguous({
     );
   }
 
-  final pack = _tryPackGpsOntoLandmassesGreedy(
+  final pack = tryPackGpsOntoLandmassesGreedy(
     gpIds: gpIds,
     gpProvinceBudget: gpProvinceBudget,
     landmassSizes: landmassSizes,
@@ -275,7 +275,7 @@ Map<String, String> assignOldWorldOwnershipContiguous({
   final gpAvailable = provinceIds.toSet();
   final owners = <String, String>{};
 
-  final lmSorted = _landmassEntriesSortedBySize(landmassToProvinces);
+  final lmSorted = landmassEntriesSortedBySize(landmassToProvinces);
   final lockedSixMinorsOnFourContinents = useLockedSixMinorContinentPainting;
 
   for (var li = 0; li < lmSorted.length; li++) {
@@ -284,7 +284,7 @@ Map<String, String> assignOldWorldOwnershipContiguous({
     final gpHere = gpIds.where((g) => gpLandmassAssignments[g] == lmId).toList()
       ..sort();
     final minorHere = lockedSixMinorsOnFourContinents
-        ? _lockedMinorIdsOnSortedLandmassIndex(
+        ? lockedMinorIdsOnSortedLandmassIndex(
             landmassIndexSorted: li,
             minorIdsSorted: minorIds.toList()..sort(),
           )
@@ -326,13 +326,13 @@ Map<String, String> assignOldWorldOwnershipContiguous({
     final minorUniverse = Set<String>.from(gpAvailable);
     final minorTargets = computeFairTargets(minorIds, minorUniverse.length);
     owners.addAll(
-      _paintLandmass(
-        mode: _LandmassPaintMode.bfs,
+      paintLandmass(
+        mode: LandmassPaintMode.bfs,
         landmassProvinceIds: minorUniverse,
         neighbours: neighbours,
         factionIds: minorIds,
         targetPerFaction: minorTargets,
-        bfsSeedMode: _BfsSeedMode.pickSimple,
+        bfsSeedMode: BfsSeedMode.pickSimple,
         assignmentRandom: assignmentRandom,
       ),
     );
@@ -408,7 +408,7 @@ Map<String, String> assignNewWorldOwnershipContiguous({
 
   final neighbours = provinceNeighboursFromTopology(topologyNewWorld);
   final universe = provinceIds.toSet();
-  return _assignFactionsOnRemainderAuto(
+  return assignFactionsOnRemainderAuto(
     factionIds: tribeIds,
     universe: Set<String>.from(universe),
     neighbours: neighbours,

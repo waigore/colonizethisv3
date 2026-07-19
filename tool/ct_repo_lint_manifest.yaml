@@ -770,6 +770,13 @@ rules:
     runner: dart
     script: tool/check_ai_contracts_no_part_directives.dart
 
+  - rule_id: repo.setup_no_part_directives
+    group: structure
+    title: colonizethis_setup lib must not use Dart part / part of directives (Refs #4086)
+    spec: SPEC/program/setup-no-part-directives.md
+    runner: dart
+    script: tool/check_setup_no_part_directives.dart
+
   - rule_id: repo.ai_contracts_h8_test_shared_fixtures
     group: testing
     title: colonizethis_ai_contracts H8 seller/supplier pins must not redeclare local _flaggedSellerGame / _supplierGame (use test/support/) (Refs #4084)

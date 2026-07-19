@@ -1,324 +1,14 @@
-// SPEC/program/game-setup-pipeline.md §7c — province/sea-zone naming (importable library).
+// SPEC/program/game-setup-pipeline.md §7c — province/sea-zone naming entry
+// (Refs #4086 Slice C topic-split).
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'faction_setup_helpers.dart';
 import 'game_setup_context.dart';
+import 'game_setup_helpers_naming_gp.dart';
+import 'game_setup_helpers_naming_minor_tribe.dart';
 import 'province_name_fallback.dart';
 import 'setup_naming_lookup.dart';
-
-
-const int _kNamingCapitalCollisionSalt = 919_393;
-const int _kNamingPoolExhaustedSalt = 271_828;
-const int _kNamingHybridExhaustedSalt = 314_159;
-const int _kNamingFinalEmptySalt = 161_803;
-
-String _namingResolveCapitalDisplayName({
-  required String capitalName,
-  required int rowSalt,
-  required Set<String> usedProvinceNames,
-  required String Function(int seedOffset) generateFallback,
-}) {
-  if (capitalName.isEmpty) return generateFallback(rowSalt);
-  if (usedProvinceNames.contains(capitalName)) {
-    return generateFallback(rowSalt + _kNamingCapitalCollisionSalt);
-  }
-  usedProvinceNames.add(capitalName);
-  return capitalName;
-}
-
-({String name, int nextPoolScan}) _namingPickNonCapitalPoolName({
-  required List<String> pool,
-  required List<int> poolIndices,
-  required int poolScan,
-  required Set<String> usedProvinceNames,
-  required int rowSalt,
-  required String Function(int seedOffset) generateFallback,
-}) {
-  final permLen = poolIndices.length;
-  for (var j = 0; j < permLen; j++) {
-    final pos = (poolScan + j) % permLen;
-    final candidate = pool[poolIndices[pos]];
-    if (usedProvinceNames.contains(candidate)) continue;
-    usedProvinceNames.add(candidate);
-    return (name: candidate, nextPoolScan: (poolScan + j + 1) % permLen);
-  }
-  return (
-    name: generateFallback(rowSalt + _kNamingPoolExhaustedSalt),
-    nextPoolScan: poolScan,
-  );
-}
-
-String _namingResolveEmptyPoolNonCapital({
-  required int rowIndex,
-  required int iterationSalt,
-  required String fallbackPrefix,
-  required Set<String> usedProvinceNames,
-  required String Function(int seedOffset) generateFallback,
-}) {
-  var ordinal = rowIndex + 1;
-  var name = '$fallbackPrefix $ordinal';
-  if (name.isEmpty) return generateFallback(iterationSalt);
-  while (usedProvinceNames.contains(name) && ordinal < 1_000_000) {
-    ordinal++;
-    name = '$fallbackPrefix $ordinal';
-  }
-  if (usedProvinceNames.contains(name)) {
-    return generateFallback(iterationSalt + _kNamingHybridExhaustedSalt);
-  }
-  usedProvinceNames.add(name);
-  return name;
-}
-
-void _applyGreatPowerProvinceNaming({
-  required Game game,
-  required ResolvedNamingConfig naming,
-  required List<String> selectedGreatPowerIds,
-  required Map<String, String> leaderVariantByGpId,
-  required List<Province> oldWorldProvinces,
-  required Map<String, Province> oldWorldById,
-  required Set<String> usedOldWorldProvinceNames,
-  required int namingSeed,
-  required String Function(int seedOffset) fallbackOldWorld,
-}) {
-  for (var i = 0; i < game.players.length; i++) {
-    if (i >= selectedGreatPowerIds.length) continue;
-    final player = game.players[i];
-    final semanticId = selectedGreatPowerIds[i];
-    final gpNaming = naming.gpById(semanticId);
-    if (gpNaming == null || gpNaming.leaderVariants.isEmpty) continue;
-    final variantId =
-        leaderVariantByGpId[semanticId] ??
-        naming.defaultLeaderVariantId(semanticId);
-    final variant = gpNaming.variantById(variantId);
-    final capitalProvId = player.capitalProvinceId;
-    if (capitalProvId == null) continue;
-    _namingApplyNamingToFaction(
-      ownedProvinces: ownedProvincesForFaction(
-        oldWorldProvinces,
-        player.id,
-        sorted: false,
-      ),
-      capitalProvinceId: capitalProvId,
-      capitalName: gpNaming.capitalCityName,
-      pool: variant.provinceNamePool,
-      fallbackPrefix: gpNaming.countryName,
-      rngSeed: namingSeed + player.id.hashCode,
-      outById: oldWorldById,
-      usedInRegion: usedOldWorldProvinceNames,
-      generateFallback: fallbackOldWorld,
-    );
-  }
-}
-
-/// One minor/tribe faction's resolved naming inputs for the shared
-/// non-Great-Power naming pass. [empty] mirrors the prior `namingX.id.isEmpty`
-/// branch (no naming entry matched), selecting the procedural-fallback path for
-/// the capital name and the `'Territory'` fallback prefix.
-typedef _MinorOrTribeNamingEntry = ({
-  String factionId,
-  String? capitalProvinceId,
-  bool empty,
-  String displayName,
-  List<String> provinceNamePool,
-  String fallbackPrefix,
-});
-
-/// Shared naming pass for the structurally identical Minor Nation and Tribe
-/// province naming. Both previously threaded the always-constant
-/// `_namingApplyNamingToFaction` callback and duplicated the
-/// `firstWhere(..., orElse: empty)` / capital-name fallback / skip-when-empty
-/// shape, differing only in region, faction list, and `fallbackPrefix`.
-void _applyMinorOrTribeProvinceNaming({
-  required List<_MinorOrTribeNamingEntry> factions,
-  required List<Province> regionProvinces,
-  required Map<String, Province> regionById,
-  required Set<String> usedRegionProvinceNames,
-  required int namingSeed,
-  required String Function(int seedOffset) fallback,
-}) {
-  for (final faction in factions) {
-    final owned = ownedProvincesForFaction(regionProvinces, faction.factionId);
-    if (owned.isEmpty) continue;
-    final capitalName = faction.empty
-        ? fallback(namingSeed + faction.factionId.hashCode)
-        : (faction.provinceNamePool.isNotEmpty
-              ? faction.provinceNamePool.first
-              : faction.displayName);
-    _namingApplyNamingToFaction(
-      ownedProvinces: owned,
-      capitalProvinceId: faction.capitalProvinceId,
-      capitalName: capitalName,
-      pool: faction.provinceNamePool,
-      fallbackPrefix: faction.fallbackPrefix,
-      rngSeed: namingSeed + faction.factionId.hashCode,
-      outById: regionById,
-      usedInRegion: usedRegionProvinceNames,
-      generateFallback: fallback,
-    );
-  }
-}
-
-List<_MinorOrTribeNamingEntry> _minorNationNamingEntries(
-  Game game,
-  ResolvedNamingConfig naming,
-) {
-  return [
-    for (final minor in game.minorNations)
-      () {
-        final namingMinor = resolvedMinorNaming(naming, minor.id);
-        return (
-          factionId: minor.id,
-          capitalProvinceId: minor.capitalProvinceId,
-          empty: namingMinor.id.isEmpty,
-          displayName: namingMinor.displayName,
-          provinceNamePool: namingMinor.provinceNamePool,
-          fallbackPrefix: namingMinor.id.isEmpty
-              ? 'Territory'
-              : namingMinor.displayName,
-        );
-      }(),
-  ];
-}
-
-List<_MinorOrTribeNamingEntry> _tribeNamingEntries(
-  Game game,
-  ResolvedNamingConfig naming,
-) {
-  return [
-    for (final tribe in game.tribes)
-      () {
-        final namingTribe = resolvedTribeNaming(naming, tribe.id);
-        return (
-          factionId: tribe.id,
-          capitalProvinceId: tribe.capitalProvinceId,
-          empty: namingTribe.id.isEmpty,
-          displayName: namingTribe.displayName,
-          provinceNamePool: namingTribe.provinceNamePool,
-          fallbackPrefix: namingTribe.id.isEmpty
-              ? 'Territory'
-              : '${namingTribe.displayName} Territory',
-        );
-      }(),
-  ];
-}
-
-List<Player> _updatedPlayersWithNaming({
-  required Game game,
-  required ResolvedNamingConfig naming,
-  required List<String> selectedGreatPowerIds,
-  required Map<String, String> leaderVariantByGpId,
-}) {
-  final updatedPlayers = <Player>[];
-  for (var i = 0; i < game.players.length; i++) {
-    final p = game.players[i];
-    if (i >= selectedGreatPowerIds.length) {
-      updatedPlayers.add(p);
-      continue;
-    }
-    final semanticId = selectedGreatPowerIds[i];
-    final gpNaming = naming.gpById(semanticId);
-    if (gpNaming == null || gpNaming.leaderVariants.isEmpty) {
-      updatedPlayers.add(p);
-      continue;
-    }
-    final variantId =
-        leaderVariantByGpId[semanticId] ??
-        naming.defaultLeaderVariantId(semanticId);
-    final variant = gpNaming.variantById(variantId);
-    updatedPlayers.add(
-      p.copyWith(
-        displayName: gpNaming.countryName,
-        leaderKey: variant.leaderKey,
-      ),
-    );
-  }
-  return updatedPlayers;
-}
-
-void _namingAssignProvinceNames({
-  required List<Province> provinces,
-  required String? capitalProvinceId,
-  required String capitalName,
-  required List<String> pool,
-  required String fallbackPrefix,
-  required int rngSeed,
-  required Set<String> usedProvinceNames,
-  required String Function(int seedOffset) generateFallback,
-  required Map<String, Province> outById,
-}) {
-  if (provinces.isEmpty) return;
-  final sorted = List.of(provinces)..sort((a, b) => a.id.compareTo(b.id));
-  final poolIndices = shuffledPoolIndices(
-    poolLength: pool.length,
-    seed: rngSeed,
-  );
-  var poolScan = 0;
-
-  for (var i = 0; i < sorted.length; i++) {
-    final p = sorted[i];
-    final rowSalt = rngSeed + i;
-    final String name;
-    if (p.id == capitalProvinceId) {
-      name = _namingResolveCapitalDisplayName(
-        capitalName: capitalName,
-        rowSalt: rowSalt,
-        usedProvinceNames: usedProvinceNames,
-        generateFallback: generateFallback,
-      );
-    } else if (pool.isNotEmpty) {
-      final picked = _namingPickNonCapitalPoolName(
-        pool: pool,
-        poolIndices: poolIndices,
-        poolScan: poolScan,
-        usedProvinceNames: usedProvinceNames,
-        rowSalt: rowSalt,
-        generateFallback: generateFallback,
-      );
-      name = picked.name;
-      poolScan = picked.nextPoolScan;
-    } else {
-      name = _namingResolveEmptyPoolNonCapital(
-        rowIndex: i,
-        iterationSalt: rowSalt,
-        fallbackPrefix: fallbackPrefix,
-        usedProvinceNames: usedProvinceNames,
-        generateFallback: generateFallback,
-      );
-    }
-    outById[p.id] = p.copyWith(
-      displayName: name.isEmpty
-          ? generateFallback(rowSalt + _kNamingFinalEmptySalt)
-          : name,
-    );
-  }
-}
-
-void _namingApplyNamingToFaction({
-  required List<Province> ownedProvinces,
-  required String? capitalProvinceId,
-  required String capitalName,
-  required List<String> pool,
-  required String fallbackPrefix,
-  required int rngSeed,
-  required Map<String, Province> outById,
-  required Set<String> usedInRegion,
-  required String Function(int seedOffset) generateFallback,
-}) {
-  if (ownedProvinces.isEmpty) return;
-  _namingAssignProvinceNames(
-    provinces: ownedProvinces,
-    capitalProvinceId: capitalProvinceId,
-    capitalName: capitalName,
-    pool: pool,
-    fallbackPrefix: fallbackPrefix,
-    rngSeed: rngSeed,
-    usedProvinceNames: usedInRegion,
-    generateFallback: generateFallback,
-    outById: outById,
-  );
-}
 
 Game applyNaming({
   required Game game,
@@ -347,7 +37,7 @@ Game applyNaming({
   final fallbackOw = fallbackFactory(usedOwProvinceDisplayNames);
   final fallbackNw = fallbackFactory(usedNwProvinceDisplayNames);
 
-  _applyGreatPowerProvinceNaming(
+  applyGreatPowerProvinceNaming(
     game: game,
     naming: naming,
     selectedGreatPowerIds: selectedGreatPowerIds,
@@ -358,16 +48,16 @@ Game applyNaming({
     namingSeed: namingSeed,
     fallbackOldWorld: fallbackOw,
   );
-  _applyMinorOrTribeProvinceNaming(
-    factions: _minorNationNamingEntries(game, naming),
+  applyMinorOrTribeProvinceNaming(
+    factions: minorNationNamingEntries(game, naming),
     regionProvinces: owProvinces,
     regionById: owById,
     usedRegionProvinceNames: usedOwProvinceDisplayNames,
     namingSeed: namingSeed,
     fallback: fallbackOw,
   );
-  _applyMinorOrTribeProvinceNaming(
-    factions: _tribeNamingEntries(game, naming),
+  applyMinorOrTribeProvinceNaming(
+    factions: tribeNamingEntries(game, naming),
     regionProvinces: nwProvinces,
     regionById: nwById,
     usedRegionProvinceNames: usedNwProvinceDisplayNames,
@@ -375,7 +65,7 @@ Game applyNaming({
     fallback: fallbackNw,
   );
 
-  final updatedPlayers = _updatedPlayersWithNaming(
+  final updatedPlayers = updatedPlayersWithNaming(
     game: game,
     naming: naming,
     selectedGreatPowerIds: selectedGreatPowerIds,

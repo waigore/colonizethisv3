@@ -1,4 +1,13 @@
-part of 'capital_choice.dart';
+// SPEC/game/capital-choice-phase — capital tile candidate scan
+// (Refs #4086 Slice B de-part).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'capital_choice_classify.dart';
+import 'capital_choice_port_road_geometry.dart';
+import 'setup_exceptions.dart';
+import 'tile_cell_scan.dart';
 
 final class _CapitalTileCandidateScan {
   int? classAx;
@@ -36,7 +45,7 @@ final class _CapitalTileCandidateScan {
       classCPlainsX = x;
       classCPlainsY = y;
     }
-    if (_isTileAdjacentToSea(
+    if (isTileAdjacentToSea(
           x,
           y,
           tileMap,
@@ -106,7 +115,7 @@ final class _CapitalTileCandidateScan {
   int? classCCoastalPlainsX,
   int? classCCoastalPlainsY,
 })
-_scanCapitalTileCandidates({
+scanCapitalTileCandidates({
   required TileMapResult tileMap,
   required MapTopology topology,
   required String localProvinceId,
@@ -144,7 +153,7 @@ _scanCapitalTileCandidates({
   );
 }
 
-String _capitalProvinceIdFromSeaBoundOrFallback(
+String capitalProvinceIdFromSeaBoundOrFallback(
   List<String> ownedProvinceIds,
   MapTopology topology, {
   required bool requireSeaBound,
@@ -166,7 +175,7 @@ String _capitalProvinceIdFromSeaBoundOrFallback(
   return (List<String>.from(ownedProvinceIds)..sort()).first;
 }
 
-(int, int) _capitalTileXYFromScan({
+(int, int) capitalTileXYFromScan({
   required bool requireSeaBound,
   required String provinceId,
   required String regionId,

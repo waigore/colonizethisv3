@@ -2,24 +2,11 @@
 
 import 'dart:math';
 
-import 'setup_logging.dart' show setupLog;
+import 'locked_province_assigner_engine.dart';
+import 'locked_province_assigner_graph.dart';
+import 'locked_province_assigner_types.dart';
 
-part 'locked_province_assigner_graph.dart';
-part 'locked_province_assigner_engine.dart';
-
-/// Default cap on backtracks **while growing one faction** before cross-faction
-/// unwind or capital restart (#1830 / phased assigner).
-const int kDefaultBacktrackLimitPerFaction = 20;
-
-/// Kept for call sites that still import the old name; equals [kDefaultBacktrackLimitPerFaction].
-const int kMaxBacktracksPerLandmassBeforeCapitalRestart =
-    kDefaultBacktrackLimitPerFaction;
-
-/// Optional counters for tests (AC-14 / AC-15).
-final class LockedAssignerObservation {
-  int backtracks = 0;
-  int capitalRestarts = 0;
-}
+export 'locked_province_assigner_types.dart';
 
 /// Greedy necessary check: each residual can be placed on some island at least as large.
 bool islandResidualsFeasibleGreedy({
@@ -29,7 +16,7 @@ bool islandResidualsFeasibleGreedy({
   required List<int> residualsSortedDesc,
 }) {
   if (residualsSortedDesc.isEmpty) return true;
-  final islands = _islandSizesOnLand(unassignedOnLand, neighbours, land);
+  final islands = islandSizesOnLand(unassignedOnLand, neighbours, land);
   if (islands.isEmpty) return residualsSortedDesc.every((r) => r == 0);
   var j = 0;
   for (final r in residualsSortedDesc) {
@@ -64,7 +51,7 @@ Map<String, String> assignTerritoriesLockedOnLandmass({
   int backtrackLimitPerFaction = kDefaultBacktrackLimitPerFaction,
   LockedAssignerObservation? observation,
 }) {
-  final engine = _LockedAssignerEngine(
+  final engine = LockedAssignerEngine(
     landmassProvinceIds: landmassProvinceIds,
     neighbours: neighbours,
     growthOrder: growthOrder,
