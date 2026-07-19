@@ -1,7 +1,8 @@
+import 'package:colonizethis_app/config/app_constants.dart';
 import 'package:flutter/foundation.dart';
 
-/// Theme group ids matching `assets/data/map_themes.json` and Flame cache
-/// boundaries. SPEC/program/map-theme-catalog.md.
+/// Theme group ids matching [kMapThemesAsset] and Flame cache boundaries.
+/// SPEC/program/map-theme-catalog.md.
 enum MapThemeGroupId {
   terrain('terrain', 'mapTheme.terrain'),
   civilianIcons('civilian_icons', 'mapTheme.civilianIcons'),
@@ -52,14 +53,14 @@ class MapThemeEntry {
   final String? iconPrefix;
 }
 
-/// Validated theme catalog loaded from `assets/data/map_themes.json`.
+/// Validated theme catalog loaded from [kMapThemesAsset].
 @immutable
 class MapThemeCatalog {
   const MapThemeCatalog({required this.themesByGroup});
 
   final Map<MapThemeGroupId, List<MapThemeEntry>> themesByGroup;
 
-  static const String assetPath = 'assets/data/map_themes.json';
+  static const String assetPath = kMapThemesAsset;
 
   List<MapThemeEntry> themesFor(MapThemeGroupId group) =>
       themesByGroup[group] ?? const [];

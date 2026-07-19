@@ -28,6 +28,9 @@ const String kDialogueTribeFirstContactAsset =
 /// Map terrain config asset loaded at app startup.
 const String kMapTerrainTilesetsAsset = 'assets/data/map_terrain_tilesets.json';
 
+/// Bundled map theme catalog (terrain + icon groups). SPEC/program/map-theme-catalog.md.
+const String kMapThemesAsset = 'assets/data/map_themes.json';
+
 /// Root-relative prefix for blessed GA AI profile JSON assets.
 const String kBlessedAiProfilesAssetPrefix = 'assets/profiles/';
 
