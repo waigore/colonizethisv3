@@ -1,35 +1,9 @@
-/// Pins the widget-tree contract of [e2eDismissAlertDialogIfPresent]
-/// (`app/integration_test/e2e_test_shared_dismiss_alert_dialog.dart`).
+/// Pins [e2eDismissAlertDialogIfPresent] widget-tree contract
+/// (`e2e_test_shared_dismiss_alert_dialog.dart`).
 ///
-/// The shared broad-spectrum sweep [e2eDismissTransientUi] consumes this
-/// helper for its AlertDialog branch (every panel-opener pre-tap dismiss
-/// across the three integration scenarios). The pre-lift inline block had
-/// the same structural shape but was duplicated copy across the test files
-/// and not testable in isolation. This pin guards:
-///
-/// - Priority ordering of [kE2eDefaultAlertDialogDismissLabels] (`Close` →
-///   `OK` → `Cancel` → `Yes`). A silent reorder would change which button
-///   gets tapped when more than one candidate is hit-testable — for example
-///   a dialog with both `Close` and `OK` should prefer `Close` to avoid
-///   accidentally confirming a destructive default action.
-/// - Hit-testable filter on the labelled candidates. A label finder that
-///   matched without `.hitTestable()` would tap a button covered by a
-///   transient overlay and silently miss the dismiss.
-/// - The `handlePopRoute` fallback. When no labelled button is
-///   hit-testable the helper falls through to
-///   `tester.binding.handlePopRoute()` rather than returning `false`
-///   (the legacy inline block had no `false` branch when an AlertDialog
-///   was mounted).
-/// - The `dismiss_alert_dialog_calls` perf counter is bumped once per
-///   successful dismissal attempt and **not** bumped on the no-AlertDialog
-///   short-circuit.
-///
-/// The integration suite cannot validate this directly today (the
-/// `app_e2e_linux` lane is a no-op per
-/// `SPEC/program/e2e-integration-tests.md` § CI), so this widget-test
-/// layer carries the behavioural pin.
-///
-/// Refs GitHub #2336 AC1 / AC2 / AC10.
+/// Guards: label priority (`Close`→`OK`→`Cancel`→`Yes`), hit-testable
+/// filter, `handlePopRoute` fallback, and `dismiss_alert_dialog_calls`
+/// counter (bumped on success only). Refs GitHub #2336 AC1 / AC2 / AC10.
 library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -38,129 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards. Mirrors the helper used by the existing
-/// `e2e_dismiss_snackbar_if_present_test.dart` so this pin verifies counter
-/// emission against the same
-/// `E2E_COUNTER|...|name=dismiss_alert_dialog_calls|value=...` substring
-/// the `E2ePerfLog.bumpCounter` contract guarantees.
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
-bool _hasAlertDialogCounterLine(
-  List<String> lines, {
-  required String test,
-  required int expectedValue,
-}) {
-  final needle =
-      'E2E_COUNTER|test=$test|name=dismiss_alert_dialog_calls'
-      '|value=$expectedValue';
-  return lines.any((line) => line == needle);
-}
-
-bool _hasAnyAlertDialogCounterLine(List<String> lines, {required String test}) {
-  final prefix = 'E2E_COUNTER|test=$test|name=dismiss_alert_dialog_calls|';
-  return lines.any((line) => line.startsWith(prefix));
-}
-
-/// Surfaces an [AlertDialog] once after the first frame so test bodies can
-/// assert against a steady state without driving `showDialog` directly from
-/// a stateless [Widget.build].
-class _AlertDialogHost extends StatefulWidget {
-  const _AlertDialogHost({required this.dialogBuilder});
-
-  /// Builder for the [AlertDialog] under test. Allowing the host to supply
-  /// the actions per-case keeps each pin focused.
-  final WidgetBuilder dialogBuilder;
-
-  @override
-  State<_AlertDialogHost> createState() => _AlertDialogHostState();
-}
-
-class _AlertDialogHostState extends State<_AlertDialogHost> {
-  bool _shown = false;
-
-  void _show(BuildContext context) {
-    if (_shown) return;
-    _shown = true;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: widget.dialogBuilder,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _show(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
-
-/// Surfaces an [AlertDialog] whose [actions] contain two [TextButton]s
-/// matching the requested labels, with the first action **covered** by an
-/// opaque [AbsorbPointer] overlay so the first labelled button is mounted
-/// but non-hit-testable. The second labelled button remains hit-testable.
-///
-/// Exercises the hit-testable filter contract — a regression that dropped
-/// `.hitTestable()` would tap the covered first action and miss the
-/// dismiss.
-class _CoveredFirstActionDialog extends StatelessWidget {
-  const _CoveredFirstActionDialog({
-    required this.firstLabel,
-    required this.secondLabel,
-  });
-
-  final String firstLabel;
-  final String secondLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('covered-first-dialog'),
-      actions: [
-        SizedBox(
-          width: 120,
-          height: 48,
-          child: Stack(
-            children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(firstLabel),
-              ),
-              const Positioned.fill(
-                child: AbsorbPointer(
-                  child: ColoredBox(color: Color(0xFFFF0000)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(secondLabel),
-        ),
-      ],
-    );
-  }
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -205,14 +57,10 @@ void main() {
       (WidgetTester tester) async {
         var siblingTaps = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: Center(
-                child: TextButton(
-                  onPressed: () => siblingTaps++,
-                  child: const Text('Close'),
-                ),
-              ),
+          wrapDismissCentered(
+            TextButton(
+              onPressed: () => siblingTaps++,
+              child: const Text('Close'),
             ),
           ),
         );
@@ -244,8 +92,8 @@ void main() {
       var closeTaps = 0;
       var okTaps = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: _AlertDialogHost(
+        wrapDismissMaterial(
+          DismissPostFrameDialogHost(
             dialogBuilder: (context) => AlertDialog(
               title: const Text('priority-pin'),
               actions: [
@@ -268,12 +116,11 @@ void main() {
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
 
       final dismissed = await e2eDismissAlertDialogIfPresent(tester);
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(
         dismissed,
@@ -301,8 +148,8 @@ void main() {
         var okTaps = 0;
         var cancelTaps = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('ok-priority-pin'),
                 actions: [
@@ -325,11 +172,10 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
         final dismissed = await e2eDismissAlertDialogIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
@@ -350,8 +196,8 @@ void main() {
     ) async {
       var yesTaps = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: _AlertDialogHost(
+        wrapDismissMaterial(
+          DismissPostFrameDialogHost(
             dialogBuilder: (context) => AlertDialog(
               title: const Text('yes-only-pin'),
               actions: [
@@ -367,11 +213,10 @@ void main() {
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
 
       final dismissed = await e2eDismissAlertDialogIfPresent(tester);
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(dismissed, isTrue);
       expect(yesTaps, 1);
@@ -383,17 +228,16 @@ void main() {
     testWidgets('taps a later labelled match when the higher-priority label is '
         'covered (non-hit-testable)', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: _AlertDialogHost(
-            dialogBuilder: (context) => const _CoveredFirstActionDialog(
+        wrapDismissMaterial(
+          DismissPostFrameDialogHost(
+            dialogBuilder: (context) => coveredFirstActionAlertDialog(
               firstLabel: 'Close',
               secondLabel: 'OK',
             ),
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.text('Close'),
@@ -412,7 +256,7 @@ void main() {
       // testable matches up-front, falls through, and finds the
       // hit-testable `OK` button on the next iteration.
       final dismissed = await e2eDismissAlertDialogIfPresent(tester);
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(
         dismissed,
@@ -437,8 +281,8 @@ void main() {
       'falls back to handlePopRoute when no labelled button is present',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => const AlertDialog(
                 title: Text('no-buttons-pin'),
                 content: Text('AlertDialog with no labelled actions'),
@@ -446,12 +290,11 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
         expect(find.byType(AlertDialog), findsOneWidget);
 
         final dismissed = await e2eDismissAlertDialogIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(
           dismissed,
@@ -479,8 +322,8 @@ void main() {
         var customTaps = 0;
         var closeTaps = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('custom-labels-pin'),
                 actions: [
@@ -503,14 +346,13 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
         final dismissed = await e2eDismissAlertDialogIfPresent(
           tester,
           dismissLabels: const <String>['Dismiss'],
         );
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
@@ -540,8 +382,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_perf_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('counter-success'),
                 actions: [
@@ -554,22 +396,17 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
         late bool dismissed;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           dismissed = await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
-          _hasAlertDialogCounterLine(
-            lines,
-            test: 'alert_dialog_perf_pin',
-            expectedValue: 1,
-          ),
+          hasE2eCounterLine(lines, test: 'alert_dialog_perf_pin', name: 'dismiss_alert_dialog_calls', expectedValue: 1),
           isTrue,
           reason:
               'Labelled-tap success must emit exactly one '
@@ -602,8 +439,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_fallback_perf_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => const AlertDialog(
                 title: Text('counter-fallback'),
                 content: Text('No labelled actions'),
@@ -611,20 +448,15 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(
-          _hasAlertDialogCounterLine(
-            lines,
-            test: 'alert_dialog_fallback_perf_pin',
-            expectedValue: 1,
-          ),
+          hasE2eCounterLine(lines, test: 'alert_dialog_fallback_perf_pin', name: 'dismiss_alert_dialog_calls', expectedValue: 1),
           isTrue,
           reason:
               'handlePopRoute fallback must also count as a successful '
@@ -638,18 +470,20 @@ void main() {
       'does not emit dismiss_alert_dialog_calls when no AlertDialog is mounted',
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_perf_no_dialog_pin');
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+        await pumpDismissMaterial(
+          tester,
+          const Scaffold(body: SizedBox()),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
 
         expect(
-          _hasAnyAlertDialogCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'alert_dialog_perf_no_dialog_pin',
+            name: 'dismiss_alert_dialog_calls',
           ),
           isFalse,
           reason:
@@ -689,11 +523,12 @@ void main() {
       'AlertDialog is mounted',
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_phase_not_present_pin');
-        await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+        await pumpDismissMaterial(
+          tester,
+          const Scaffold(body: SizedBox()),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
 
@@ -720,9 +555,10 @@ void main() {
               'from real dismissals.',
         );
         expect(
-          _hasAnyAlertDialogCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'alert_dialog_phase_not_present_pin',
+            name: 'dismiss_alert_dialog_calls',
           ),
           isFalse,
           reason:
@@ -739,8 +575,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_phase_labelled_tap_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('phase-labelled-tap'),
                 actions: [
@@ -753,14 +589,13 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
         late bool dismissed;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           dismissed = await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         final timing = lines
@@ -795,8 +630,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('alert_dialog_phase_fallback_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => const AlertDialog(
                 title: Text('phase-fallback'),
                 content: Text('No labelled actions'),
@@ -804,13 +639,12 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final timing = lines
             .where(
@@ -844,8 +678,8 @@ void main() {
       'no perf line emitted when perf is null (default opt-out contract)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('phase-quiet'),
                 actions: [
@@ -858,13 +692,12 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(tester);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final phaseLines = lines
             .where(
@@ -891,8 +724,8 @@ void main() {
         const customPhase = 'alert_dialog_custom_phase_label';
         final perf = E2ePerfLog('alert_dialog_custom_phase_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
               dialogBuilder: (context) => AlertDialog(
                 title: const Text('phase-custom'),
                 actions: [
@@ -905,17 +738,16 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissAlertDialogIfPresent(
             tester,
             perf: perf,
             phaseName: customPhase,
           );
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final customTiming = lines
             .where(

@@ -41,78 +41,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-class _SnackBarHost extends StatefulWidget {
-  const _SnackBarHost();
-
-  @override
-  State<_SnackBarHost> createState() => _SnackBarHostState();
-}
-
-class _SnackBarHostState extends State<_SnackBarHost> {
-  bool _shown = false;
-
-  void _show(BuildContext context) {
-    if (_shown) return;
-    _shown = true;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 30),
-        content: const Text('snack-content'),
-        action: SnackBarAction(label: 'Undo', onPressed: () {}),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _show(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
-
-class _AlertDialogHost extends StatefulWidget {
-  const _AlertDialogHost({required this.actions});
-
-  final List<Widget> actions;
-
-  @override
-  State<_AlertDialogHost> createState() => _AlertDialogHostState();
-}
-
-class _AlertDialogHostState extends State<_AlertDialogHost> {
-  bool _shown = false;
-
-  void _show(BuildContext context) {
-    if (_shown) return;
-    _shown = true;
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('alert-title'),
-        content: const Text('alert-content'),
-        actions: widget.actions,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _show(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -121,7 +50,7 @@ void main() {
     'e2eDismissTransientUi short-circuits when no transient UI is present',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        wrapDismissMaterial(const Scaffold(body: SizedBox())),
       );
       final sw = Stopwatch()..start();
       await e2eDismissTransientUi(tester);
@@ -139,9 +68,18 @@ void main() {
   testWidgets(
     'e2eDismissTransientUi taps SnackBar action and removes the SnackBar',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: _SnackBarHost()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pumpWidget(
+        wrapDismissMaterial(
+          DismissSnackBarHost(
+            snackBar: SnackBar(
+              duration: const Duration(seconds: 30),
+              content: const Text('snack-content'),
+              action: SnackBarAction(label: 'Undo', onPressed: () {}),
+            ),
+          ),
+        ),
+      );
+      await pumpDismissOverlaySettle(tester);
       expect(
         find.byType(SnackBar),
         findsOneWidget,
@@ -151,7 +89,7 @@ void main() {
       await e2eDismissTransientUi(tester);
       // Allow the SnackBar dismissal animation to settle within the
       // helper's 2s pump-until-empty budget.
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(
         find.byType(SnackBar),
@@ -169,16 +107,12 @@ void main() {
   ) async {
     var tapped = false;
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: TextButton(
-              onPressed: () {
-                tapped = true;
-              },
-              child: const Text('OK'),
-            ),
-          ),
+      wrapDismissCentered(
+        TextButton(
+          onPressed: () {
+            tapped = true;
+          },
+          child: const Text('OK'),
         ),
       ),
     );
@@ -199,20 +133,23 @@ void main() {
     'e2eDismissTransientUi taps a labelled Close action on an AlertDialog',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: _AlertDialogHost(
-            actions: [
-              TextButton(
-                onPressed: () =>
-                    Navigator.of(tester.element(find.text('Close'))).pop(),
-                child: const Text('Close'),
-              ),
-            ],
+        wrapDismissMaterial(
+          DismissPostFrameDialogHost(
+            dialogBuilder: (_) => AlertDialog(
+              title: const Text('alert-title'),
+              content: const Text('alert-content'),
+              actions: [
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(tester.element(find.text('Close'))).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
 
       await e2eDismissTransientUi(tester);
@@ -235,10 +172,17 @@ void main() {
     'e2eDismissTransientUi pops an AlertDialog with no recognised label',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _AlertDialogHost(actions: <Widget>[])),
+        wrapDismissMaterial(
+          DismissPostFrameDialogHost(
+            dialogBuilder: (_) => const AlertDialog(
+              title: Text('alert-title'),
+              content: Text('alert-content'),
+              actions: <Widget>[],
+            ),
+          ),
+        ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
 
       await e2eDismissTransientUi(tester);
@@ -295,10 +239,10 @@ void main() {
         // dispatcher must report `result=broad_sweep` (the fall-through
         // path) and still bump `dismiss_transient_ui_calls` once on entry.
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          wrapDismissMaterial(const Scaffold(body: SizedBox())),
         );
         final perf = E2ePerfLog('pin_dismiss_transient_ui');
-        final lines = await _captureDebugPrintsAsync(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissTransientUi(tester, perf: perf);
         });
 
@@ -345,9 +289,18 @@ void main() {
     testWidgets('emits result=snackbar when a SnackBar action is dispatched', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: _SnackBarHost()));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await tester.pumpWidget(
+        wrapDismissMaterial(
+          DismissSnackBarHost(
+            snackBar: SnackBar(
+              duration: const Duration(seconds: 30),
+              content: const Text('snack-content'),
+              action: SnackBarAction(label: 'Undo', onPressed: () {}),
+            ),
+          ),
+        ),
+      );
+      await pumpDismissOverlaySettle(tester);
       expect(
         find.byType(SnackBar),
         findsOneWidget,
@@ -355,7 +308,7 @@ void main() {
       );
 
       final perf = E2ePerfLog('pin_dismiss_transient_ui');
-      final lines = await _captureDebugPrintsAsync(() async {
+      final lines = await captureE2eDebugPrints(() async {
         await e2eDismissTransientUi(tester, perf: perf);
       });
 
@@ -398,7 +351,7 @@ void main() {
         ),
       );
       final perf = E2ePerfLog('pin_dismiss_transient_ui');
-      final lines = await _captureDebugPrintsAsync(() async {
+      final lines = await captureE2eDebugPrints(() async {
         await e2eDismissTransientUi(tester, perf: perf);
       });
 
@@ -433,24 +386,27 @@ void main() {
       'dispatched',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _AlertDialogHost(
-              actions: [
-                TextButton(
-                  onPressed: () =>
-                      Navigator.of(tester.element(find.text('Close'))).pop(),
-                  child: const Text('Close'),
-                ),
-              ],
+          wrapDismissMaterial(
+            DismissPostFrameDialogHost(
+              dialogBuilder: (_) => AlertDialog(
+                title: const Text('alert-title'),
+                content: const Text('alert-content'),
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(tester.element(find.text('Close'))).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
         expect(find.byType(AlertDialog), findsOneWidget);
 
         final perf = E2ePerfLog('pin_dismiss_transient_ui');
-        final lines = await _captureDebugPrintsAsync(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissTransientUi(tester, perf: perf);
         });
         // Allow dismissal animation to settle so the dispatcher does not
@@ -494,10 +450,9 @@ void main() {
       // inner helpers also stay byte-quiet because they only emit when a
       // non-null perf is threaded through.
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        wrapDismissMaterial(const Scaffold(body: SizedBox())),
       );
-      final lines = <String>[];
-      await _runWithDebugPrintCapture(lines, () async {
+      final lines = await captureE2eDebugPrints(() async {
         await e2eDismissTransientUi(tester);
       });
 
@@ -528,10 +483,10 @@ void main() {
       // same; only the phase=... label changes.
       const customPhase = 'dismiss_transient_ui_custom_call_site';
       await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: SizedBox())),
+        wrapDismissMaterial(const Scaffold(body: SizedBox())),
       );
       final perf = E2ePerfLog('pin_dismiss_transient_ui');
-      final lines = await _captureDebugPrintsAsync(() async {
+      final lines = await captureE2eDebugPrints(() async {
         await e2eDismissTransientUi(tester, perf: perf, phaseName: customPhase);
       });
 
@@ -583,34 +538,3 @@ void main() {
   });
 }
 
-/// Captures `debugPrint` output during [body]. Mirrors the
-/// `_captureDebugPrintsAsync` helper in
-/// `app/test/e2e_advance_game_start_intro_test.dart` so the
-/// dispatcher-level perf-attribution pins added here use the same capture
-/// contract as the canonical intro-dismiss perf-attribution group. Refs
-/// GitHub #2336 AC8 baseline-marker contract.
-Future<List<String>> _captureDebugPrintsAsync(
-  Future<void> Function() body,
-) async {
-  final captured = <String>[];
-  await _runWithDebugPrintCapture(captured, body);
-  return captured;
-}
-
-/// Underlying `debugPrint` override used by [_captureDebugPrintsAsync] and
-/// any future fail-path perf tests that need to inspect captured lines even
-/// when [body] throws.
-Future<void> _runWithDebugPrintCapture(
-  List<String> out,
-  Future<void> Function() body,
-) async {
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    out.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-}

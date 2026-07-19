@@ -51,119 +51,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards. Mirrors the helper used by
-/// `e2e_dismiss_alert_dialog_if_present_test.dart` and
-/// `e2e_dismiss_snackbar_if_present_test.dart` so this pin verifies counter
-/// emission against the same
-/// `E2E_COUNTER|...|name=dismiss_ct_dialog_shell_broad_sweep_calls|value=...`
-/// substring the [E2ePerfLog.bumpCounter] contract guarantees.
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
-bool _hasCounterLine(
-  List<String> lines, {
-  required String test,
-  required int expectedValue,
-}) {
-  final needle =
-      'E2E_COUNTER|test=$test|name=dismiss_ct_dialog_shell_broad_sweep_calls'
-      '|value=$expectedValue';
-  return lines.any((line) => line == needle);
-}
-
-bool _hasAnyCounterLine(List<String> lines, {required String test}) {
-  final prefix =
-      'E2E_COUNTER|test=$test|'
-      'name=dismiss_ct_dialog_shell_broad_sweep_calls|';
-  return lines.any((line) => line.startsWith(prefix));
-}
-
-class _ShellHost extends StatefulWidget {
-  const _ShellHost({required this.builder});
-
-  /// Builds the dialog contents; receives a [close] callback the inner
-  /// widgets can invoke from their `onPressed` callbacks to unmount the
-  /// shell. Avoids tester.state hops inside button taps that would
-  /// otherwise add lookup noise unrelated to the helper contract.
-  final Widget Function(BuildContext context, VoidCallback close) builder;
-
-  @override
-  State<_ShellHost> createState() => _ShellHostState();
-}
-
-class _ShellHostState extends State<_ShellHost> {
-  bool open = true;
-
-  void _close() {
-    setState(() => open = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!open) {
-      return const SizedBox.shrink();
-    }
-    return CtDialogShell(child: widget.builder(context, _close));
-  }
-}
-
-/// Surfaces a [CtDialogShell] **as a route** via `showDialog` so
-/// `tester.binding.handlePopRoute()` can dismiss it during the
-/// handlePopRoute-fallback pin. The non-route [_ShellHost] above keeps the
-/// labelled / icon candidate tests focused on the helper's tap-resolve
-/// contract, but `handlePopRoute()` only operates on the navigator's route
-/// stack — a route-pushed fixture is required to exercise the fallback arm
-/// realistically (the broad-sweep helper is consumed in production by
-/// [e2eDismissTransientUi] for shells that were typically mounted via
-/// `showDialog` or pushed by the panel openers).
-class _RouteShellHost extends StatefulWidget {
-  const _RouteShellHost({required this.dialogBuilder});
-
-  /// Builder for the [CtDialogShell] under test. Allowing the host to
-  /// supply the shell contents per-case keeps each pin focused.
-  final WidgetBuilder dialogBuilder;
-
-  @override
-  State<_RouteShellHost> createState() => _RouteShellHostState();
-}
-
-class _RouteShellHostState extends State<_RouteShellHost> {
-  bool _shown = false;
-
-  void _show(BuildContext context) {
-    if (_shown) return;
-    _shown = true;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: widget.dialogBuilder,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _show(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 /// Surfaces a [CtDialogShell] whose contents include the [firstLabel] text
 /// covered by an opaque [AbsorbPointer] overlay (so the first labelled
@@ -193,15 +81,8 @@ class _CoveredFirstActionShell extends StatelessWidget {
           SizedBox(
             width: 120,
             height: 48,
-            child: Stack(
-              children: [
-                TextButton(onPressed: () {}, child: Text(firstLabel)),
-                const Positioned.fill(
-                  child: AbsorbPointer(
-                    child: ColoredBox(color: Color(0xFFFF0000)),
-                  ),
-                ),
-              ],
+            child: absorbPointerCover(
+              child: TextButton(onPressed: () {}, child: Text(firstLabel)),
             ),
           ),
           TextButton(onPressed: onTapSecond, child: Text(secondLabel)),
@@ -211,14 +92,10 @@ class _CoveredFirstActionShell extends StatelessWidget {
   }
 }
 
-Widget _wrap(Widget body) => MaterialApp(
-  home: Scaffold(body: Center(child: body)),
-);
-
 /// Top-level [WidgetBuilder] tear-off used by the route-based handlePopRoute
 /// fallback pin. Surfaces a [CtDialogShell] with **no** labelled candidates
 /// so the helper has to fall through to `tester.binding.handlePopRoute()`.
-/// Must be a top-level function so the const constructor of [_RouteShellHost]
+/// Must be a top-level function so the const [DismissPostFrameDialogHost]
 /// can hold it as a [WidgetBuilder] tear-off constant.
 Widget _routeShellNoCandidatesBuilder(BuildContext context) {
   return const CtDialogShell(child: Text('Nothing tappable'));
@@ -261,7 +138,7 @@ void main() {
       (WidgetTester tester) async {
         var siblingTaps = 0;
         await tester.pumpWidget(
-          _wrap(
+          wrapDismissCentered(
             TextButton(
               onPressed: () => siblingTaps++,
               child: const Text('Cancel'),
@@ -302,8 +179,8 @@ void main() {
         var cancelTaps = 0;
         var closeTaps = 0;
         await tester.pumpWidget(
-          _wrap(
-            _ShellHost(
+          wrapDismissCentered(
+            DismissCtDialogShellHost(
               builder: (context, close) => Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -353,8 +230,8 @@ void main() {
         (WidgetTester tester) async {
           var closeTaps = 0;
           await tester.pumpWidget(
-            _wrap(
-              _ShellHost(
+            wrapDismissCentered(
+              DismissCtDialogShellHost(
                 builder: (context, close) => TextButton(
                   onPressed: () {
                     closeTaps++;
@@ -381,8 +258,8 @@ void main() {
         (WidgetTester tester) async {
           var iconTaps = 0;
           await tester.pumpWidget(
-            _wrap(
-              _ShellHost(
+            wrapDismissCentered(
+              DismissCtDialogShellHost(
                 builder: (context, close) => IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () {
@@ -417,8 +294,8 @@ void main() {
         (WidgetTester tester) async {
           var arrowTaps = 0;
           await tester.pumpWidget(
-            _wrap(
-              _ShellHost(
+            wrapDismissCentered(
+              DismissCtDialogShellHost(
                 builder: (context, close) => IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () {
@@ -456,7 +333,7 @@ void main() {
         'covered (non-hit-testable)', (WidgetTester tester) async {
       var closeTaps = 0;
       await tester.pumpWidget(
-        _wrap(
+        wrapDismissCentered(
           _CoveredFirstActionShell(
             firstLabel: 'Cancel',
             secondLabel: 'Close',
@@ -519,25 +396,24 @@ void main() {
           // nothing".
           //
           // The fixture pushes the shell as a route so `handlePopRoute()`
-          // can actually pop it (the inline `_ShellHost` keeps the labelled
+          // can actually pop it (the inline `DismissCtDialogShellHost` keeps the labelled
           // tests focused on the tap-resolve contract but is unaffected by
           // `handlePopRoute()`). This route-based fixture mirrors the
-          // sibling AlertDialog pin's `_AlertDialogHost` pattern.
+          // sibling AlertDialog pin's `DismissPostFrameDialogHost` pattern.
           await tester.pumpWidget(
-            const MaterialApp(
-              home: _RouteShellHost(
+            wrapDismissMaterial(
+              const DismissPostFrameDialogHost(
                 dialogBuilder: _routeShellNoCandidatesBuilder,
               ),
             ),
           );
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 250));
+          await pumpDismissOverlaySettle(tester);
           expect(find.byType(CtDialogShell), findsOneWidget);
 
           final dismissed = await e2eDismissCtDialogShellBroadSweepIfPresent(
             tester,
           );
-          await tester.pump(const Duration(milliseconds: 50));
+          await pumpDismissPostTapSettle(tester);
 
           expect(
             dismissed,
@@ -569,8 +445,8 @@ void main() {
         (WidgetTester tester) async {
           final perf = E2ePerfLog('shell_broad_sweep_perf_pin');
           await tester.pumpWidget(
-            _wrap(
-              _ShellHost(
+            wrapDismissCentered(
+              DismissCtDialogShellHost(
                 builder: (context, close) =>
                     TextButton(onPressed: close, child: const Text('Cancel')),
               ),
@@ -578,7 +454,7 @@ void main() {
           );
 
           late bool dismissed;
-          final lines = await _captureDebugPrints(() async {
+          final lines = await captureE2eDebugPrints(() async {
             dismissed = await e2eDismissCtDialogShellBroadSweepIfPresent(
               tester,
               perf: perf,
@@ -587,10 +463,7 @@ void main() {
 
           expect(dismissed, isTrue);
           expect(
-            _hasCounterLine(
-              lines,
-              test: 'shell_broad_sweep_perf_pin',
-              expectedValue: 1,
+            hasE2eCounterLine(lines, test: 'shell_broad_sweep_perf_pin', name: 'dismiss_ct_dialog_shell_broad_sweep_calls', expectedValue: 1,
             ),
             isTrue,
             reason:
@@ -626,28 +499,24 @@ void main() {
         (WidgetTester tester) async {
           final perf = E2ePerfLog('shell_broad_sweep_fallback_perf_pin');
           await tester.pumpWidget(
-            const MaterialApp(
-              home: _RouteShellHost(
+            wrapDismissMaterial(
+              const DismissPostFrameDialogHost(
                 dialogBuilder: _routeShellNoCandidatesPerfBuilder,
               ),
             ),
           );
-          await tester.pump();
-          await tester.pump(const Duration(milliseconds: 250));
+          await pumpDismissOverlaySettle(tester);
 
-          final lines = await _captureDebugPrints(() async {
+          final lines = await captureE2eDebugPrints(() async {
             await e2eDismissCtDialogShellBroadSweepIfPresent(
               tester,
               perf: perf,
             );
           });
-          await tester.pump(const Duration(milliseconds: 50));
+          await pumpDismissPostTapSettle(tester);
 
           expect(
-            _hasCounterLine(
-              lines,
-              test: 'shell_broad_sweep_fallback_perf_pin',
-              expectedValue: 1,
+            hasE2eCounterLine(lines, test: 'shell_broad_sweep_fallback_perf_pin', name: 'dismiss_ct_dialog_shell_broad_sweep_calls', expectedValue: 1,
             ),
             isTrue,
             reason:
@@ -665,10 +534,10 @@ void main() {
         (WidgetTester tester) async {
           final perf = E2ePerfLog('shell_broad_sweep_perf_no_shell_pin');
           await tester.pumpWidget(
-            const MaterialApp(home: Scaffold(body: SizedBox())),
+            wrapDismissMaterial(const Scaffold(body: SizedBox())),
           );
 
-          final lines = await _captureDebugPrints(() async {
+          final lines = await captureE2eDebugPrints(() async {
             await e2eDismissCtDialogShellBroadSweepIfPresent(
               tester,
               perf: perf,
@@ -676,9 +545,10 @@ void main() {
           });
 
           expect(
-            _hasAnyCounterLine(
+            hasAnyE2eCounterLine(
               lines,
               test: 'shell_broad_sweep_perf_no_shell_pin',
+              name: 'dismiss_ct_dialog_shell_broad_sweep_calls',
             ),
             isFalse,
             reason:

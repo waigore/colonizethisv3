@@ -58,70 +58,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-/// Captures every `debugPrint` line emitted while [body] runs and restores
-/// the original printer afterwards. Mirrors the helper used by the existing
-/// `e2e_perf_log_markers_test.dart` so this pin verifies counter emission
-/// against the same `E2E_COUNTER|...|name=dismiss_snackbar_calls|value=...`
-/// substring the `E2ePerfLog.bumpCounter` contract guarantees.
-Future<List<String>> _captureDebugPrints(Future<void> Function() body) async {
-  final captured = <String>[];
-  final original = debugPrint;
-  debugPrint = (String? message, {int? wrapWidth}) {
-    captured.add(message ?? '');
-  };
-  try {
-    await body();
-  } finally {
-    debugPrint = original;
-  }
-  return captured;
-}
-
-bool _hasSnackbarCounterLine(List<String> lines, int expectedValue) {
-  final needle =
-      'E2E_COUNTER|test=snackbar_perf_pin|name=dismiss_snackbar_calls'
-      '|value=$expectedValue';
-  return lines.any((line) => line == needle);
-}
-
-bool _hasAnySnackbarCounterLine(List<String> lines, {required String test}) {
-  final prefix = 'E2E_COUNTER|test=$test|name=dismiss_snackbar_calls|';
-  return lines.any((line) => line.startsWith(prefix));
-}
-
-/// Surfaces a SnackBar once after the first frame so test bodies can
-/// assert against a steady state without driving `ScaffoldMessenger`
-/// directly.
-class _SnackBarHost extends StatefulWidget {
-  const _SnackBarHost({required this.snackBar});
-
-  final SnackBar snackBar;
-
-  @override
-  State<_SnackBarHost> createState() => _SnackBarHostState();
-}
-
-class _SnackBarHostState extends State<_SnackBarHost> {
-  bool _shown = false;
-
-  void _show(BuildContext context) {
-    if (_shown) return;
-    _shown = true;
-    ScaffoldMessenger.of(context).showSnackBar(widget.snackBar);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (innerCtx) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _show(innerCtx));
-          return const SizedBox.expand();
-        },
-      ),
-    );
-  }
-}
+import 'support/dismiss_widget_tester_harness.dart';
 
 /// Builds a SnackBar that surfaces two action [TextButton]s. When
 /// [coverFirstAction] is `true`, an [AbsorbPointer] overlay sits above
@@ -147,16 +84,7 @@ SnackBar _twoActionSnackBar({required bool coverFirstAction}) {
           SizedBox(
             width: 120,
             height: 48,
-            child: Stack(
-              children: [
-                firstButton,
-                const Positioned.fill(
-                  child: AbsorbPointer(
-                    child: ColoredBox(color: Color(0xFFFF0000)),
-                  ),
-                ),
-              ],
-            ),
+            child: absorbPointerCover(child: firstButton),
           )
         else
           firstButton,
@@ -211,8 +139,8 @@ void main() {
       (WidgetTester tester) async {
         var actionTaps = 0;
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: SnackBar(
                 duration: const Duration(seconds: 30),
                 content: const Text('snack-content'),
@@ -224,12 +152,11 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
         expect(find.byType(SnackBar), findsOneWidget);
 
         final dismissed = await e2eDismissSnackBarIfPresent(tester);
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(
           dismissed,
@@ -261,14 +188,13 @@ void main() {
     testWidgets('taps the second action when the first action is covered '
         '(non-hit-testable)', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: _SnackBarHost(
+        wrapDismissMaterial(
+          DismissSnackBarHost(
             snackBar: _twoActionSnackBar(coverFirstAction: true),
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
       expect(find.byType(SnackBar), findsOneWidget);
       expect(
         find.text('first-action'),
@@ -288,7 +214,7 @@ void main() {
       // SnackBar would never dismiss — the post-dismiss expectation
       // below would fail with the SnackBar still in the tree.
       final dismissed = await e2eDismissSnackBarIfPresent(tester);
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(
         dismissed,
@@ -313,8 +239,8 @@ void main() {
       'returns false when the SnackBar has no hit-testable TextButton',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: const SnackBar(
                 duration: Duration(seconds: 30),
                 content: Text('no-action-content'),
@@ -322,8 +248,7 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
         expect(find.byType(SnackBar), findsOneWidget);
 
         final dismissed = await e2eDismissSnackBarIfPresent(tester);
@@ -356,8 +281,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('snackbar_perf_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: SnackBar(
                 duration: const Duration(seconds: 30),
                 content: const Text('snack-content'),
@@ -366,18 +291,17 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
         late bool dismissed;
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           dismissed = await e2eDismissSnackBarIfPresent(tester, perf: perf);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
-          _hasSnackbarCounterLine(lines, 1),
+          hasE2eCounterLine(lines, test: 'snackbar_perf_pin', name: 'dismiss_snackbar_calls', expectedValue: 1),
           isTrue,
           reason:
               'Success path must emit exactly one '
@@ -408,15 +332,15 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('snackbar_perf_no_sb_pin');
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          wrapDismissMaterial(const Scaffold(body: SizedBox())),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(tester, perf: perf);
         });
 
         expect(
-          _hasAnySnackbarCounterLine(lines, test: 'snackbar_perf_no_sb_pin'),
+          hasAnyE2eCounterLine(lines, test: 'snackbar_perf_no_sb_pin', name: 'dismiss_snackbar_calls'),
           isFalse,
           reason:
               'No-SnackBar short-circuit must not emit the counter marker '
@@ -431,8 +355,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('snackbar_perf_no_action_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: const SnackBar(
                 duration: Duration(seconds: 30),
                 content: Text('no-action-content'),
@@ -440,17 +364,17 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(tester, perf: perf);
         });
 
         expect(
-          _hasAnySnackbarCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'snackbar_perf_no_action_pin',
+            name: 'dismiss_snackbar_calls',
           ),
           isFalse,
           reason:
@@ -506,10 +430,10 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('snackbar_phase_pin');
         await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: SizedBox())),
+          wrapDismissMaterial(const Scaffold(body: SizedBox())),
         );
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(tester, perf: perf);
         });
 
@@ -537,7 +461,7 @@ void main() {
               'from real dismissals.',
         );
         expect(
-          _hasAnySnackbarCounterLine(lines, test: 'snackbar_phase_pin'),
+          hasAnyE2eCounterLine(lines, test: 'snackbar_phase_pin', name: 'dismiss_snackbar_calls'),
           isFalse,
           reason:
               'No-SnackBar short-circuit must not bump '
@@ -553,8 +477,8 @@ void main() {
       (WidgetTester tester) async {
         final perf = E2ePerfLog('snackbar_no_action_phase_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: const SnackBar(
                 duration: Duration(seconds: 30),
                 content: Text('no-action-content'),
@@ -562,10 +486,9 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(tester, perf: perf);
         });
 
@@ -593,9 +516,10 @@ void main() {
               'this cheap fallthrough path from a real action tap.',
         );
         expect(
-          _hasAnySnackbarCounterLine(
+          hasAnyE2eCounterLine(
             lines,
             test: 'snackbar_no_action_phase_pin',
+            name: 'dismiss_snackbar_calls',
           ),
           isFalse,
           reason:
@@ -609,8 +533,8 @@ void main() {
         'hit-testable action is dismissed', (WidgetTester tester) async {
       final perf = E2ePerfLog('snackbar_tapped_phase_pin');
       await tester.pumpWidget(
-        MaterialApp(
-          home: _SnackBarHost(
+        wrapDismissMaterial(
+          DismissSnackBarHost(
             snackBar: SnackBar(
               duration: const Duration(seconds: 30),
               content: const Text('snack-content'),
@@ -619,14 +543,13 @@ void main() {
           ),
         ),
       );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
+      await pumpDismissOverlaySettle(tester);
 
       late bool dismissed;
-      final lines = await _captureDebugPrints(() async {
+      final lines = await captureE2eDebugPrints(() async {
         dismissed = await e2eDismissSnackBarIfPresent(tester, perf: perf);
       });
-      await tester.pump(const Duration(milliseconds: 50));
+      await pumpDismissPostTapSettle(tester);
 
       expect(dismissed, isTrue);
       final timing = lines
@@ -657,8 +580,8 @@ void main() {
       'no perf line emitted when perf is null (default opt-out contract)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: SnackBar(
                 duration: const Duration(seconds: 30),
                 content: const Text('quiet'),
@@ -667,13 +590,12 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(tester);
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final phaseLines = lines
             .where(
@@ -700,8 +622,8 @@ void main() {
         const customPhase = 'snackbar_custom_phase_label';
         final perf = E2ePerfLog('snackbar_custom_phase_pin');
         await tester.pumpWidget(
-          MaterialApp(
-            home: _SnackBarHost(
+          wrapDismissMaterial(
+            DismissSnackBarHost(
               snackBar: SnackBar(
                 duration: const Duration(seconds: 30),
                 content: const Text('custom-phase'),
@@ -710,17 +632,16 @@ void main() {
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 250));
+        await pumpDismissOverlaySettle(tester);
 
-        final lines = await _captureDebugPrints(() async {
+        final lines = await captureE2eDebugPrints(() async {
           await e2eDismissSnackBarIfPresent(
             tester,
             perf: perf,
             phaseName: customPhase,
           );
         });
-        await tester.pump(const Duration(milliseconds: 50));
+        await pumpDismissPostTapSettle(tester);
 
         final customTiming = lines
             .where(
