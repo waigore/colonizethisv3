@@ -1,154 +1,19 @@
 // Ported from colonizethis_logic (Refs #4090 Slice D).
+// Split from army_move_picker_destinations_test for
+// repo.domain_package_test_file_size (≤400 physical lines).
 // Table-driven for repo.orders_test_prefer_scenario_tables (Refs #3949).
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/army_move_picker_destinations_fixtures.dart';
 import 'support/scenario_runner.dart';
 
 void main() {
-  const ow = 'oldWorld';
-  const nw = 'newWorld';
+  const ow = kArmyMovePickerOw;
 
-  Army fieldArmy(
-    String regionId,
-    String ownerId,
-    String localId,
-    String unitId,
-  ) {
-    final pid = ProvinceId.full(regionId, localId);
-    return Army(
-      id: fieldArmyIdFor(ownerId, pid),
-      ownerId: ownerId,
-      regionId: regionId,
-      stationedProvinceId: pid,
-      regimentUnitIds: [unitId],
-      isHomeArmy: false,
-    );
-  }
-
-  final adjacencyOw = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
-      TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [TopologyEdge(id1: 'P1', id2: 'P2')],
-  );
-
-  Map<String, String> vis(List<(String, String)> tiles) {
-    return {for (final (_, tk) in tiles) tk: 'fullyVisible'};
-  }
-
-  runLabeledScenarioGroup('armyMovePickerDestinations', [
-    rs('picker includes adjacent own-province move (no declare war)', () {
-      const p1 = 'gp1';
-      const p2 = 'gp2';
-      const loc1 = '$ow|P1';
-      const loc2 = '$ow|P2';
-      final army = fieldArmy(ow, p1, 'P1', 'u1');
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: loc1, regionId: ow, ownerId: p1),
-              Province(id: loc2, regionId: ow, ownerId: p1),
-            ],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: p1,
-                locationProvinceId: loc1,
-              ),
-            ],
-          ),
-          newWorld: const RegionData(),
-          armies: [army],
-          playerVisibilityByTile: {
-            p1: vis([(loc1, '$ow|P1|0|0'), (loc2, '$ow|P2|0|0')]),
-          },
-          tileKeysByRegionAndProvince: {
-            ow: {
-              loc1: ['$ow|P1|0|0'],
-              loc2: ['$ow|P2|0|0'],
-            },
-          },
-        ),
-        players: const [
-          Player(id: p1, displayName: 'A', isHuman: true),
-          Player(id: p2, displayName: 'B', isHuman: true),
-        ],
-      );
-      final list = armyMovePickerDestinations(
-        game: game,
-        topology: adjacencyOw,
-        playerId: p1,
-        army: army,
-        currentOrders: const Orders(),
-      );
-      expect(list.map((e) => e.fullProvinceId), contains(loc2));
-      expect(list.every((e) => !e.requiresDeclareWarOnConfirm), isTrue);
-    }),
-    rs('picker includes cross-region own province (different landmass)', () {
-      const p1 = 'gp1';
-      const locOw = '$ow|P1';
-      const locNw = '$nw|N1';
-      final army = fieldArmy(ow, p1, 'P1', 'u1');
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [Province(id: locOw, regionId: ow, ownerId: p1)],
-            units: [
-              Unit(
-                id: 'u1',
-                type: 'musketeers',
-                ownerId: p1,
-                locationProvinceId: locOw,
-              ),
-            ],
-          ),
-          newWorld: RegionData(
-            provinces: [
-              Province(
-                id: locNw,
-                regionId: nw,
-                ownerId: p1,
-                displayName: 'Colony',
-              ),
-            ],
-          ),
-          armies: [army],
-          playerVisibilityByTile: {
-            p1: vis([(locOw, '$ow|P1|0|0'), (locNw, '$nw|N1|0|0')]),
-          },
-          tileKeysByRegionAndProvince: {
-            ow: {
-              locOw: ['$ow|P1|0|0'],
-            },
-            nw: {
-              locNw: ['$nw|N1|0|0'],
-            },
-          },
-        ),
-        players: const [Player(id: p1, displayName: 'A', isHuman: true)],
-      );
-      final list = armyMovePickerDestinations(
-        game: game,
-        topology: const MapTopology(),
-        playerId: p1,
-        army: army,
-        currentOrders: const Orders(),
-      );
-      expect(list.map((e) => e.fullProvinceId), contains(locNw));
-      final nwEntry = list.firstWhere((e) => e.fullProvinceId == locNw);
-      expect(nwEntry.isPlayerOwned, isTrue);
-      expect(nwEntry.requiresDeclareWarOnConfirm, isFalse);
-    }),
+  runLabeledScenarioGroup('armyMovePickerDestinationsInvasion', [
     rs(
       'adjacent enemy province requires declare war on confirm when at peace',
       () {
@@ -156,7 +21,7 @@ void main() {
         const p2 = 'gp2';
         const loc1 = '$ow|P1';
         const loc2 = '$ow|P2';
-        final army = fieldArmy(ow, p1, 'P1', 'u1');
+        final army = armyMovePickerFieldArmy(ow, p1, 'P1', 'u1');
         final game = Game(
           id: 'g',
           worldState: WorldState(
@@ -178,7 +43,10 @@ void main() {
             newWorld: const RegionData(),
             armies: [army],
             playerVisibilityByTile: {
-              p1: vis([(loc1, '$ow|P1|0|0'), (loc2, '$ow|P2|0|0')]),
+              p1: armyMovePickerVis([
+                (loc1, '$ow|P1|0|0'),
+                (loc2, '$ow|P2|0|0'),
+              ]),
             },
             tileKeysByRegionAndProvince: {
               ow: {
@@ -195,7 +63,7 @@ void main() {
         );
         final list = armyMovePickerDestinations(
           game: game,
-          topology: adjacencyOw,
+          topology: armyMovePickerAdjacencyOw,
           playerId: p1,
           army: army,
           currentOrders: const Orders(),
@@ -213,7 +81,7 @@ void main() {
         const loc1 = '$ow|P1';
         const loc2 = '$ow|P2';
         const loc3 = '$ow|P3';
-        final army = fieldArmy(ow, p1, 'P1', 'u1');
+        final army = armyMovePickerFieldArmy(ow, p1, 'P1', 'u1');
         final topology = MapTopology(
           nodes: const [
             TopologyNode(
@@ -259,7 +127,7 @@ void main() {
             newWorld: const RegionData(),
             armies: [army],
             playerVisibilityByTile: {
-              p1: vis([
+              p1: armyMovePickerVis([
                 (loc1, '$ow|P1|0|0'),
                 (loc2, '$ow|P2|0|0'),
                 (loc3, '$ow|P3|0|0'),
@@ -299,7 +167,7 @@ void main() {
       const p2 = 'gp2';
       const loc1 = '$ow|P1';
       const loc2 = '$ow|P2';
-      final army = fieldArmy(ow, p1, 'P1', 'u1');
+      final army = armyMovePickerFieldArmy(ow, p1, 'P1', 'u1');
       final game = Game(
         id: 'g',
         worldState: WorldState(
@@ -321,7 +189,7 @@ void main() {
           newWorld: const RegionData(),
           armies: [army],
           playerVisibilityByTile: {
-            p1: vis([(loc1, '$ow|P1|0|0'), (loc2, '$ow|P2|0|0')]),
+            p1: armyMovePickerVis([(loc1, '$ow|P1|0|0'), (loc2, '$ow|P2|0|0')]),
           },
           tileKeysByRegionAndProvince: {
             ow: {
@@ -344,7 +212,7 @@ void main() {
       );
       final list = armyMovePickerDestinations(
         game: game,
-        topology: adjacencyOw,
+        topology: armyMovePickerAdjacencyOw,
         playerId: p1,
         army: army,
         currentOrders: const Orders(),
@@ -358,7 +226,7 @@ void main() {
       const loc1 = '$ow|P1';
       const loc2 = '$ow|P2';
       const loc3 = '$ow|P3';
-      final army = fieldArmy(ow, p1, 'P1', 'u1');
+      final army = armyMovePickerFieldArmy(ow, p1, 'P1', 'u1');
       final topology = MapTopology(
         nodes: const [
           TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
@@ -397,7 +265,7 @@ void main() {
           newWorld: const RegionData(),
           armies: [army],
           playerVisibilityByTile: {
-            p1: vis([
+            p1: armyMovePickerVis([
               (loc1, '$ow|P1|0|0'),
               (loc2, '$ow|P2|0|0'),
               (loc3, '$ow|P3|0|0'),

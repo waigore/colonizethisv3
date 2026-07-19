@@ -134,7 +134,7 @@ Slice C setup leaf orphans complete (`game_setup_*` / `capital_choice_*` / `gp_*
 | `test/army_integration_combine_split_test.dart` | `colonizethis_world` | delete | Covered by `world/army_commands_test.dart` combine/split groups |
 | `test/army_integration_ensure_reconcile_test.dart` | `colonizethis_world` | delete | Covered by `world/army_migration_test.dart` ensure/reconcile groups |
 | `test/army_integration_test.dart` | `colonizethis_orders` + `colonizethis_world` | port+delete | `last order per armyId wins` → `orders/army_move_order_draft_mutations_test.dart`; adjacent/home-army moves covered by `world/army_movement_test.dart`; sequential cross-region ported into that peer |
-| `test/army_move_picker_destinations_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/army_move_picker_destinations_test.dart` (declare-war / sort destinations absent from scenario runner) |
+| `test/army_move_picker_destinations_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/army_move_picker_destinations_own_test.dart` + `orders/army_move_picker_destinations_invasion_test.dart` (+ shared fixtures; split for ≤400 LOC) |
 | `test/draft_orders_naval_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/draft_orders_naval_test.dart` |
 | `test/civilian_work_draft_commit_validation_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_draft_commit_validation_test.dart` |
 | `test/civilian_work_orders_issue_2070_test.dart` | `colonizethis_orders` | port+delete | Ported to `orders/civilian_work_orders_issue_2070_test.dart` |
