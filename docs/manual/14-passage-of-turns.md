@@ -1,0 +1,86 @@
+# The Passage of Turns
+
+## Purpose
+
+A turn is the span in which your court gives its orders, the other Great Powers make their own plans, and the world answers both. Ending it commits the orders you have already set; the result is a new political, military, and economic situation to read before issuing the next decrees.
+
+The campaign calendar advances with the turn. By default, turn 1 is 1500; turns through 100 advance two years each, reaching 1700, and later turns advance one year at a time. The HUD and turn news use that calendar to place your reign in its age.
+
+## How it is done
+
+### Ending a turn
+
+1. On `GAME10001` **Game screen**, finish the orders and immediate actions you mean to give this turn, then use **Next turn** in the top bar.
+2. The current confirmation surface is **[DRAFT]** `DLG60001` Next turn confirmation. It is reserved to ask whether you wish to end the displayed turn and prevent an accidental commitment; do not rely on it as an operable route until it is active.
+3. Once resolution begins, the game blocks map interaction and further Next turn requests while it processes the turn. The hamburger side menu remains available, but changes that would alter the resolving turn must wait.
+4. Resolution may pause for a decision when diplomacy requires your answer: for example, an overture, intervention, or call to arms. Give that answer before the remaining phases can continue.
+
+### What the realm resolves
+
+The game completes its phases in a fixed order. You see their combined consequences after resolution rather than watching every individual exchange as it happens.
+
+1. **Orders:** your decrees and the other Great Powers’ orders are gathered and checked together.
+2. **The economy:** extraction fills stockpiles; riches become treasury; food and luxuries are consumed; then idle labour produces goods. This is why a stockpile, treasury, or labour forecast can differ after the turn.
+3. **Courts and knowledge:** diplomacy resolves before research, so agreements, wars, and ownership changes can affect what follows. Spy activity and research then resolve.
+4. **Forces in motion:** land and naval movement occur, followed by minor-nation military adjustment, naval interception and combat, then land combat. Expect losses, new positions, and captured provinces only after these stages have finished.
+5. **Works and trade:** units build, explore, prospect, improve, and perform other assigned work; the World Market then settles submitted offers and bids.
+6. **The reckoning:** victory and campaign-end conditions are checked, visibility updates, and the turn advances. If the campaign continues, you return to the Orders phase with the new state.
+
+A completed turn’s principal report appears in `DLG50001` **Turn news dialog**, unless victory takes precedence. It lists major events from the resolved turn; if none qualify, it plainly says so. Close the report, inspect the map and your empire screens, and prepare the next turn.
+
+The map may also gain a compact account of outcomes in **[DRAFT]** `OVL70001` Player turn event feed. It is intended to replace its entries each resolved turn and to focus relevant reports on the map, but is not yet an operable player surface.
+
+### Pausing, saving, and loading
+
+1. Open `SHEL40001` **Pause menu panel** when the game is not resolving. Choose **Resume**, **Save Game**, **Load Game**, **Settings**, or **Exit to Main Menu**.
+2. Choose **Save Game** to open `DLG70001` **Save Game Name dialog**. Its proposed name includes your nation, leader, and current turn. Enter a valid name and save it. A conflicting name asks before overwriting; invalid names remain unsaved. You may keep up to 20 manual saves, though an existing save may still be overwritten at that limit.
+3. Choose **Load Game** to open `DLG80001` **Load Game List dialog**. The auto-save, when available, is kept apart from the manual list; manual saves are shown newest first and are paged after ten entries. Select a save, confirm that you wish to discard the current session, and the chosen game replaces it. You may also delete a listed save after confirmation.
+4. Choose **Settings** to open `DLG90001` **Settings dialog**. Select among available map-theme choices, then close the dialog. Settings persist, but take effect after restarting the app; a theme group with only one choice is not shown.
+5. Choose **Exit to Main Menu** only when you mean to leave the current game. The pause panel closes first and the game asks for confirmation before returning to the main menu.
+
+The `GAME50001` **Game side menu** is separate from the pause menu. It offers read-only Game Parameters and the Debug log; it is not the place to save, load, or change settings.
+
+## Counsel
+
+**Counsel.** Hark, my liege: treat the final review before Next turn as a council meeting. Check food, treasury, vulnerable armies, and unfinished work before you commit the realm to events you cannot recall.
+
+**Warning.** Do not mistake an order for its result. A march, treaty, recipe, or market offer is settled in its appointed phase and may meet another court’s decree before the next Orders phase begins.
+
+**Tip.** Name manual saves for a decision you may wish to revisit—before a war, great purchase, or expedition—rather than trusting memory alone.
+
+## The other courts
+
+Every AI-controlled Great Power plans during the turn before its orders are merged with yours. Its court observes only what it can legitimately know, chooses goals according to personality and circumstances, and makes economic, military, diplomatic, and research plans under the same rules that govern your realm.
+
+Their choices are deterministic for the same world state and seeds, but they are not passive. A rival may strengthen its industry, seek an alliance, pursue research, move into a contested frontier, or make war while your own orders await resolution.
+
+## Consequences
+
+- A completed turn can change your stockpile, treasury, labour, relations, research, unit locations, province ownership, and market holdings before you act again.
+- News is a summary, not a substitute for inspection. Read `DLG50001` Turn news, then check the affected province, fleet, diplomacy, production, and technology views.
+- Saving preserves a named point in your campaign; loading from pause deliberately discards the active session in favour of the selected save.
+- The fixed calendar keeps moving with each completed turn: early decades pass quickly, while the years after 1700 become more granular.
+
+## Acceptance criteria for this chapter
+
+- [ ] Explains ending a turn, resolution blocking, and the reserved **[DRAFT]** `DLG60001` confirmation without presenting it as operable.
+- [ ] Summarizes the player-visible resolution sequence and states that results appear after resolution, including possible diplomacy decisions that suspend it.
+- [ ] Documents `DLG50001` Turn news, its empty state, and victory precedence; mentions **[DRAFT]** `OVL70001` without operable instructions.
+- [ ] Documents `SHEL40001` pause actions plus `DLG70001` saving, `DLG80001` loading, and `DLG90001` settings.
+- [ ] Distinguishes `GAME50001` Game side menu from the pause menu.
+- [ ] States default turn-to-year pacing and accurately describes rival Great Powers’ per-turn planning.
+
+## Sources
+
+- `SPEC/game/turn-time-mapping.md`
+- `SPEC/program/turn-resolution-phases.md`
+- `SPEC/ui/next-turn-confirmation.md`
+- `SPEC/ui/turn-news-dialog.md`
+- `SPEC/ui/player-turn-event-feed.md`
+- `SPEC/ui/save-game-name-dialog.md`
+- `SPEC/ui/load-game-list-dialog.md`
+- `SPEC/ui/pause-menu-panel.md`
+- `SPEC/ui/settings-dialog.md`
+- `SPEC/ui/screen-registry.md`
+- `SPEC/ui/game-side-menu.md`
+- `SPEC/ai/ai-architecture.md`
