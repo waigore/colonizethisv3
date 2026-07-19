@@ -1,8 +1,10 @@
-import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
 
+/// Debt rules for labour/economy techs. SPEC/game/tech-tree-labour-economy.md.
+/// Ported from logic orphan suite (Refs #4090 Slice A).
 void main() {
   group('maxDebtForPlayer', () {
     Player player(Map<String, bool>? techUnlocked) => Player(
