@@ -1,0 +1,106 @@
+# Appendix: The Royal Decrees
+
+## Purpose
+
+Use this ledger to issue every decree available to your court, check its price and limits, and know when its result will be seen. “Phase” names are the player-facing stages of the next turn; rejected decrees change nothing.
+
+## How it is done
+
+### Orders issued for the next turn
+
+| Decree | Entry point and control | Cost / chief refusal | Result appears | See |
+|---|---|---|---|---|
+| Civilian move (`MoveOrder`) | No dedicated active panel control is registered for a standalone civilian Move decree; civilians usually relocate as the implicit leg of a `WorkOrder` (Chs. 4, 6). | Civilian must be yours; destination must be land, visible, and legally occupiable. | **Movement** | Ch. 4 |
+| Army move / invasion (`ArmyMoveOrder`) | `UNIT20001` **Military Units** → **Move** on a non-Home Army → `DLG20001` **Move army** → destination; invasion confirmation may add Declare War. | Free. Home Army cannot leave capital; own destinations or adjacent valid foreign targets only; war must exist or be declared in the same draft. | **Diplomacy**, then **Movement**; battle follows if contested. | Chs. 11–12 |
+| Civilian work (`WorkOrder`) | `UNIT10001` **Civilian Units** → idle unit **Assign** → target → highlighted valid map tile; `MAP20001` shortcuts may open filtered assignment. | One pending work per unit; target, occupancy, terrain, ownership, technology, materials, and tile reservation must pass. | Implicit move: **Movement**; assignment/progress: **Build / work**. | Chs. 4, 6 |
+| Recruit / train worker (`RecruitWorkerOrder`) | `GAME20001` **Production** → **Labour Controls** → tier **+**. | Peasant: fabric ×2. Higher tiers consume one peasant, need paper/treasury and required technologies; queued military/naval builds share the peasant reserve. | **Build / work** | Ch. 5 |
+| Research (`ResearchOrder`) | `GAME40001` **Technology** → **Slots** → choose technology and funding. **Cancel** clears the slot and forfeits its progress. | Funding is paid from treasury; technology must be researchable, not complete, and fit an available slot. | **Research** | Ch. 9 |
+| Build civilian (`BuildUnitOrder`) | `UNIT10001` → **Train** → `UNIT40001` **Train civilians**. | Treasury + paper; Merchant/Rail Builder need their unlocks; capital tile required. | **Build / work**; unit appears at capital. | Ch. 5 |
+| Build regiment (`BuildUnitOrder`) | `UNIT20001` → **Train** → `UNIT50001` **Train Military**. | Treasury, materials, one reserved peasant, and regiment technology. | **Build / work**; joins Home Army. | Ch. 11 |
+| Build ship (`BuildUnitOrder`) | `UNIT30001` → **Train** → `UNIT60001` **Train Naval**. | Treasury, materials, one reserved peasant, and ship technology where required. | **Build / work**; joins Home Fleet. | Ch. 13 |
+| Fleet move (`NavalMoveOrder`) | `UNIT30001` → **Move** on a sea-going fleet → `DLG30001` **Move Fleet** → legal destination. | Free. Home Fleet cannot move; only one adjacent sea/port step; ports must be yours. Replaces that fleet’s pending mission. | **Movement** | Ch. 13 |
+| Fleet mission (`NavalMissionOrder`) | `UNIT30001` fleet controls: **Patrol**, **Blockade**, **Beachhead**, **Defend**, or **Join Home Fleet** where offered. | Free. Patrol/blockade/beachhead/defend require a sea-going fleet at sea; Join Home Fleet requires capital port. A fleet moves or takes one mission, never both. | Assignment: **Movement**; interceptions: **Naval Interception & Naval Combat**. | Ch. 13 |
+| Trade bid / offer (`TradeOrder`) | **[DRAFT]** `GAME60001` **Trade screen** has no active operable entry point. | Bid/offer are mutually exclusive per commodity; quantity, cargo, treasury, stockpile, and bid-type caps apply; riches cannot trade. | **World Market** | Ch. 8 |
+
+### Work targets
+
+| Target and unit | Cost / key refusal | Result |
+|---|---|---|
+| `explore` — Explorer | Free; province must be partly revealed and occupiable. | Reveals province on completion. |
+| `prospect` — Explorer | Free; mineral-eligible, visible, occupiable unprospected tile. | One-turn completion marks tile prospected. |
+| `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. | Raises improvement level. |
+| `upgrade_town` — Builder | Materials and valid town tile; availability reflects current validator rules. | Raises town development. |
+| `build_road` — Engineer | Lumber + metal; terrain/road technology limits. | Raises transport level. |
+| `build_port` — Engineer | Lumber + metal; valid coastal town/river tile. | Creates port and transport level 4. |
+| `build_fort` — Engineer | Materials, town tile, and fort technology where required. | Raises fort level. |
+| `build_rail` — Rail Builder | Steel ×2 + lumber ×2; road level 1–2, known terrain, matching rail technology. | Sets railroad transport level 4. |
+| `counter_spy` — Spy | Free; owned province. | Ongoing empire-wide counter-espionage effect; spy checks occur in **Spy resolution**. |
+| `purchase_land` — Merchant | Embassy, peace, resource tile, prospection for minerals, and treasury ≥ 15× base price; no prior buyer. | One-turn completion debits treasury and records the tile purchase. |
+
+### Diplomacy
+
+All begin at `GAME30001` **Diplomacy** → select faction → `GAME30002` detail/actions → confirm. Most are pending decrees resolved in **Diplomacy**.
+
+| Decree | Cost / key refusal | Result |
+|---|---|---|
+| Declare War | Must be at peace; may accompany an invasion. | War before Movement. |
+| Offer Peace | Must be at war; target must accept. | Peace if accepted. |
+| Alliance | Great Power only; peace; no existing formal alliance. | Treaty if accepted. |
+| Break Alliance | Formal alliance required. `GAME30001` panel **Break Alliance** confirmation is immediate for the human player. | Treaty ends immediately; same-pair alliance/overture/aid/subsidy blocked until next turn. |
+| Establish Overture | One stage at a time; relation, treasury, target, and technology gates apply. | Target accepts/rejects in Diplomacy. |
+| Grant Aid | Embassy; positive £1,000 steps; sufficient treasury. `DIPL20001` **Grant or subsidy** dialog. | Transfer and relation effect in Diplomacy. |
+| Set Subsidy | Embassy; Minor/Tribe only; 5–20% in steps of 5. `DIPL20001`. | No treasury charge; active market/relation effect. |
+| Boycott | Great Power target; own at least one colony; peace; no existing boycott. | Colonial trade embargo. |
+| Revoke Boycott | Active boycott required. | Ends embargo. |
+
+A non-economic decree blocks further ordinary diplomacy toward that faction that turn. Grant Aid and Set Subsidy may coexist once each; Boycott actions are separate.
+
+### Immediate court actions
+
+| Action | Entry point | Cost / limits |
+|---|---|---|
+| Disband trained worker | `GAME20001` → **Labour Controls** → trained-tier **Disband**. | Immediate in **Orders**; tier −1, peasant +1; no refund. |
+| Cancel pending or in-progress work | `UNIT10001` → civilian **Cancel** → confirmation. | Pending order is removed; in-progress work clears and unit returns to origin; no material refund. |
+| Split / combine armies | `UNIT20001` → **Split Army**, or select same-province armies → **Combine**. | Immediate; split needs a non-empty regiment subset; combine requires same province. |
+| Split / combine fleets | `UNIT30001` → **Split**, or select fleets sharing one port/sea zone → **Combine**. | Immediate; non-Home split retains one ship; Home Fleet survives empty. |
+| Transfer to Home Fleet | `UNIT30001` → eligible fleet **Transfer to Home Fleet** → `DLG40001` → **Transfer**. | Immediate; selected hulls move home; source must meet capital-location rules. |
+
+## Counsel
+
+**Counsel.** Hark, my liege: issue related decrees together—war before invasion, prospect before mining, and workers before the banners that consume them.
+
+**Warning.** Orders validate in submission order. The first rejected order, and those after it, do not proceed; inspect the stated reason before ending the turn.
+
+## The other courts
+
+Other Great Powers submit comparable decrees under the same validation and phase order. Their diplomacy may require your response through `OVL30001` Overture, `OVL40001` Call to Arms, or `OVL50001` Intervention before resolution can continue.
+
+## Consequences
+
+- The turn clears its order list after resolution; reissue any intended decree next turn.
+- Diplomacy precedes Research and Movement; movement precedes Build / work; World Market follows Build / work.
+- `DLG50001` Turn news reports major outcomes after a completed turn. Inspect affected panels as news is a summary, not a complete ledger.
+
+## Acceptance criteria for this chapter
+
+- [ ] Lists every current order type, every WorkOrder target, and every DiplomaticOrder subtype.
+- [ ] Gives each action an entry point, control or draft status, cost summary, refusal highlights, resolution phase, and chapter cross-link.
+- [ ] Distinguishes queued orders from immediate disband, cancellation, army/fleet organization, and Home-Fleet transfer.
+- [ ] Marks **[DRAFT]** `GAME60001` as non-operable.
+- [ ] Uses only active screen IDs or explicitly marked draft surfaces.
+
+## Sources
+
+- `SPEC/program/orders.md`
+- `SPEC/program/order-engine.md`
+- `SPEC/program/turn-resolution-phase-details.md`
+- `SPEC/program/turn-resolution-phases.md`
+- `SPEC/ui/screen-registry.md`
+- `SPEC/program/development-resolution.md`
+- `SPEC/game/workers-and-population.md`
+- `SPEC/game/military-armies.md`
+- `SPEC/game/ships-and-naval.md`
+- `SPEC/game/diplomacy.md`
+- `SPEC/ui/civilian-units-panel.md`
+- `SPEC/ui/military-units-army-management.md`
+- `SPEC/ui/naval-units-fleet-management.md`

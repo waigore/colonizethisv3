@@ -33,6 +33,7 @@ Cursor rules are the source of truth for implementation and review behavior.
 | `colonizethis-lifecycle.mdc` | `app/lib/game/**/*.dart`, `app/lib/widgets/**/*.dart`, `app/lib/ui/**/*.dart`, `app/lib/screens/**/*.dart`, `app/lib/pages/**/*.dart` | Flame/Flutter lifecycle conventions |
 | `colonizethis-assets.mdc` | `**/pubspec.yaml`, `**/assets/**`, targeted asset-loading Dart files | Asset structure, naming, loading |
 | `colonizethis-acceptance-criteria.mdc` | `SPEC/ai/**`, `SPEC/game/**`, `SPEC/program/**`, `SPEC/ui/**` | Given–When–Then, testable AC quality |
+| `colonizethis-game-manual.mdc` | `docs/manual/**`, `SPEC/game/**`, `SPEC/ui/**`, allowlisted `SPEC/program/` order/turn files | Player game manual: SPEC-derived prose, required review on player-facing SPEC changes |
 
 ## Rule interaction
 
@@ -72,6 +73,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md` (source of truth for all agen
 | `review-github-issue` | Review an issue for **purpose ↔ proposed method** coherence and internal consistency; repo/SPEC/test evidence only when needed to show the method cannot satisfy the purpose. Consolidated comment with priorities and remedies; use **`verify-github-issue`** for AC↔implementation closure. |
 | `verify-github-issue` | Verify one open issue against ACs/specs/tests on merged `dev`; UI issues need widget golden PNG proof on the issue comment; post via `gh issue comment` only. OpenCode: `.opencode/skills/verify-github-issue/`. |
 | `document-app-ui` | Document player-app screens/UI changes per `colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook, registry, `UiScreenIds`). OpenCode: `.opencode/skills/document-app-ui/`. |
+| `update-game-manual` | Update `docs/manual/` after player-facing SPEC/UI/order changes: map chapters via `## Sources` footers, preserve vizier tone and player-angle framing, enforce template and draft marking. OpenCode: `.opencode/skills/update-game-manual/`. |
 
 ## Contributing
 

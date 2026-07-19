@@ -1,0 +1,51 @@
+---
+description: Player game manual — SPEC-derived docs under docs/manual/; required review on player-facing SPEC changes; tone, template, Sources footers
+globs: "docs/manual/**,SPEC/game/**,SPEC/ui/**,SPEC/program/orders.md,SPEC/program/turn-resolution-phases.md,SPEC/program/turn-resolution-phase-details.md,SPEC/program/order-engine.md"
+alwaysApply: false
+---
+
+# Player game manual
+
+Authoritative player handbook lives under **`docs/manual/`**. GDD/TDD/UI/AI SPECs remain the sole sources of truth for behavior; the manual must never contradict them. On conflict, fix the manual.
+
+Normative writing conventions: [`docs/manual/STYLE_GUIDE.md`](../../docs/manual/STYLE_GUIDE.md). ToC: [`docs/manual/index.md`](../../docs/manual/index.md). Updater workflow: `.cursor/skills/update-game-manual/SKILL.md`.
+
+## When this rule applies
+
+- Editing any file under `docs/manual/**`.
+- Editing `SPEC/game/**`, `SPEC/ui/**`, or an allowlisted `SPEC/program/` file (below).
+
+## Required-review trigger
+
+A PR **must** review affected manual chapters (update them, or explicitly justify no update) when it modifies:
+
+- any path under `SPEC/game/**`
+- any path under `SPEC/ui/**`
+- any of these allowlisted files:
+  - `SPEC/program/orders.md`
+  - `SPEC/program/turn-resolution-phases.md`
+  - `SPEC/program/turn-resolution-phase-details.md`
+  - `SPEC/program/order-engine.md`
+
+**Advisory only** (no mandatory review): every other `SPEC/program/**` path. Authors may still update the manual if the change affects what the player can do, see, or be told.
+
+Do **not** reintroduce a subjective “behavior-relevant” qualifier — use this allowlist only.
+
+Identify affected chapters by **exact string match** of changed SPEC paths against each chapter’s `## Sources` bullets (see style guide).
+
+## Manual update principles
+
+1. **Player angle** — Explain why the player uses the mechanic and how it affects winning or enjoyment; do not merely restate a rule diff.
+2. **Tone** — Vizier advising a young monarch; modern clear body prose; archaic flourishes only in Counsel callouts.
+3. **Chapter template** — Purpose; How it is done; Counsel; The other courts; Consequences; Acceptance criteria for this chapter; Sources (last `##`).
+4. **Sources footer** — Last `##` is exactly `## Sources`; each bullet is one backtick-wrapped repo-relative SPEC path with no trailing prose.
+5. **Draft surfaces** — Omit, or cite as `**[DRAFT]** \`SCREENID\``; never operable steps in How it is done.
+6. **Screen IDs** — Cite UI by stable 8-char IDs from `SPEC/ui/screen-registry.md`.
+7. **Honesty** — Document only implemented, specced behavior; no exploit min-max guides.
+
+## PR checklist (manual-impacting)
+
+- [ ] Required-review paths listed above were checked against chapter `## Sources` footers.
+- [ ] Affected chapters updated **or** PR body justifies non-update.
+- [ ] Player-angle framing preserved; tone contract respected.
+- [ ] Draft citations use `**[DRAFT]** \`SCREENID\`` or are omitted.
