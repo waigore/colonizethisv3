@@ -1,4 +1,5 @@
-part of 'colonial_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 
 /// Returns deterministic `build_improvement` work orders for the active
 /// player's idle Builder units, ranked by extractable-tile priority and

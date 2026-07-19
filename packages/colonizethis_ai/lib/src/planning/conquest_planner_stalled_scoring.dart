@@ -1,6 +1,6 @@
 import '../perception/perception_snapshot.dart';
 import '../util/faction_query.dart';
-import 'expand_phase_planner.dart' show expandIsGeographicPeerWarLock;
+import 'expand_peace_frontier_helpers.dart';
 import 'planning_helpers.dart' show oldWorldProvinceLeadOver;
 import 'planning_imports.dart';
 

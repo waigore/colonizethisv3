@@ -1,11 +1,31 @@
-part of 'expand_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'expand_peace_frontier_helpers.dart';
+import 'planning_helpers.dart';
+import 'planning_imports.dart';
 
-// EXPAND-phase sole-GP / quota / critical-hold `offerPeace` target deciders,
-// extracted from `expand_phase_planner.dart` for maintainability
-// (Refs #3278 file-split). Behaviour-preserving move: same library scope
-// (this is a `part of` the EXPAND planner library), so imports, shared
-// helpers, and visibility are unchanged. The shared frontier predicates and
-// the four `planExpand*` entry points remain in the parent library file.
+/// At-war minor with the most invadable Old World provinces (single-front
+/// focus minor), or `null` when no at-war minor owns any invadable OW
+/// province.
+String? stalledFocusMinorTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final provinceOwner = getProvinceOwnerMap(game);
+  String? bestMinorId;
+  var bestInvadableCount = 0;
+  for (final minor in game.minorNations) {
+    final rel = getRelation(game, snapshot.playerId, minor.id);
+    if (rel?.state != RelationState.atWar) continue;
+    final invadableCount = snapshot.conquest.invadableProvinceIdsSorted
+        .where((pid) => provinceOwner[pid] == minor.id)
+        .length;
+    if (invadableCount > bestInvadableCount) {
+      bestInvadableCount = invadableCount;
+      bestMinorId = minor.id;
+    }
+  }
+  return bestMinorId;
+}
 
 /// Whether peacing a below-quota sole-GP war leaves the EXPAND-phase
 /// player a pivot path back to active OW expansion (a remaining

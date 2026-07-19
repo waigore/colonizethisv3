@@ -210,19 +210,17 @@ library;
 
 import '../perception/perception_snapshot.dart';
 import 'planning_imports.dart';
-import 'army_conquest_prep.dart' show regimentCountForPlayer;
-import 'expand_phase_planner.dart' as expand_phase_planner;
 import 'observer_goal_phase.dart' show primaryColonialGpBlocker;
-import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
-import 'phase_destination_result.dart';
-import 'region_military_destination_filter.dart';
-import 'planning_helpers.dart' show gpFactionIdsAtWarWith, planningListEquals;
+import 'planning_helpers.dart' show gpFactionIdsAtWarWith;
+import 'colonial_phase_planner_lite.dart';
+import 'colonial_phase_planner_military.dart';
+import 'colonial_phase_planner_naval.dart';
 
-part 'colonial_phase_planner_acquisition.dart';
-part 'colonial_phase_planner_military.dart';
-part 'colonial_phase_planner_naval.dart';
-part 'colonial_phase_planner_lite.dart';
-part 'colonial_phase_planner_civilian.dart';
+export 'colonial_phase_planner_acquisition.dart';
+export 'colonial_phase_planner_civilian.dart';
+export 'colonial_phase_planner_lite.dart';
+export 'colonial_phase_planner_military.dart';
+export 'colonial_phase_planner_naval.dart';
 
 /// Returns the deterministic list of at-war Great Powers the active player
 /// should `offerPeace` toward this turn while in COLONIAL phase.

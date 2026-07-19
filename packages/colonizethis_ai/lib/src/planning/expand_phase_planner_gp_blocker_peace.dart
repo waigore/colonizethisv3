@@ -1,4 +1,11 @@
-part of 'expand_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'expand_peace_frontier_helpers.dart';
+import 'planning_helpers.dart';
+import 'planning_imports.dart';
+
+import 'expand_phase_planner_peace_targets.dart';
 
 /// Resolved minor-on-frontier / stalled GP-blocker-focus pivot inputs shared by
 /// the EXPAND stalled-expansion peace deciders, or `null` when neither pivot

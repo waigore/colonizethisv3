@@ -756,6 +756,13 @@ rules:
     runner: dart
     script: tool/check_models_no_part_directives.dart
 
+  - rule_id: repo.ai_no_part_directives
+    group: structure
+    title: colonizethis_ai lib must not use Dart part / part of directives (Refs #4079)
+    spec: SPEC/program/ai-no-part-directives.md
+    runner: dart
+    script: tool/check_ai_no_part_directives.dart
+
   - rule_id: repo.models_test_file_size
     group: testing
     title: colonizethis_models test files must stay at or below 400 physical lines (Refs #4068)

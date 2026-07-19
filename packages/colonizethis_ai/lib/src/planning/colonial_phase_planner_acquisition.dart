@@ -1,4 +1,8 @@
-part of 'colonial_phase_planner.dart';
+import '../perception/perception_snapshot.dart';
+import 'army_conquest_prep.dart' show regimentCountForPlayer;
+import 'expand_phase_planner_economy.dart' show ExpandEconomyPlan, cheapestRegimentBuildTreasuryCost;
+import 'phase_priority_weights.dart' show isNwLockRecoveryPathEActive;
+import 'planning_imports.dart' hide cheapestRegimentBuildTreasuryCost;
 
 /// Method by which a COLONIAL acquisition target should be pursued
 /// (issue #2509 § COLONIAL phase planner § planColonialAcquisition).
@@ -282,8 +286,8 @@ ColonialAcquisitionTarget? planColonialAcquisition({
   required Game game,
   required AIWorldSnapshot snapshot,
   String? personalityId,
-  expand_phase_planner.ExpandEconomyPlan expandEconomyPlan =
-      expand_phase_planner.ExpandEconomyPlan.defaultPlan,
+  ExpandEconomyPlan expandEconomyPlan =
+      ExpandEconomyPlan.defaultPlan,
 }) {
   if (game.playerById(snapshot.playerId) == null) {
     return null;
@@ -487,7 +491,7 @@ ColonialAcquisitionTarget? _findDeclareWarTarget(
     return null;
   }
   if (!waiveTreasuryGate &&
-      ctx.treasury < _cheapestRegimentBuildTreasuryCost()) {
+      ctx.treasury < cheapestRegimentBuildTreasuryCost()) {
     return null;
   }
 
@@ -551,19 +555,6 @@ List<String> _acquisitionIterationOrder(ColonialSummary colonial) {
   }
   return colonial.invadableNewWorldProvinceIdsSorted;
 }
-
-/// Minimum [RegimentEconomyCatalog] build treasury cost (deterministic
-/// catalog scan).
-///
-/// Delegates to the canonical
-/// [expand_phase_planner.cheapestRegimentBuildTreasuryCost] (Refs #2509
-/// S1) so the COLONIAL declare-war arm shares the same affordability
-/// gate as `planExpandDeclareWar` / `planExpandEconomy`. The COLONIAL
-/// planner intentionally keeps the call site private so it remains
-/// self-contained against the now-completed S1 deletion of
-/// `colonial_pressure.dart`.
-int _cheapestRegimentBuildTreasuryCost() =>
-    expand_phase_planner.cheapestRegimentBuildTreasuryCost();
 
 /// True when [playerId] owns at least one [kUnitTypeMerchant] unit
 /// with [UnitStatus.idle] in either region. Region of the Merchant is

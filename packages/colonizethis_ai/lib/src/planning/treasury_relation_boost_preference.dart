@@ -1,4 +1,6 @@
-part of 'treasury_planner.dart';
+
+import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 
 // Trade-deal relation-boost-aware bid preference for the treasury planner
 // (Refs #3758 S9/R10). Extracted into its own `part of` fragment so the central
@@ -6,7 +8,7 @@ part of 'treasury_planner.dart';
 // visibility are unchanged.
 
 /// Resolves the single "preferred bid commodity" the trade-deal relation-boost
-/// preference passes to [_prioritizedBids] as the `preferCommodityId` ordering
+/// preference passes to [prioritizedBids] as the `preferCommodityId` ordering
 /// hint, so a buy that would earn the largest trade-deal relation boost from a
 /// peace-time below-neutral partner is admitted first under the bid-type /
 /// cargo / treasury caps.
@@ -22,7 +24,7 @@ part of 'treasury_planner.dart';
 /// tradeDealRelationBoostPerSubsidyPercent × subsidy% + (embassy ?
 /// tradeDealRelationBoostEmbassyBonus : 0)`), ties broken by ascending faction
 /// id, then the lowest qualifying commodity id offered by that partner.
-CommodityId? _tradeDealRelationBoostPreferredBidCommodityId({
+CommodityId? tradeDealRelationBoostPreferredBidCommodityId({
   required Game game,
   required String playerId,
   required AIWorldSnapshot snapshot,
@@ -62,7 +64,7 @@ CommodityId? _tradeDealRelationBoostPreferredBidCommodityId({
     if (partnerCommodityId == null) continue;
 
     final subsidyPercent =
-        _subsidyPercentFromPlayerTo(game, playerId, partnerId);
+        subsidyPercentFromPlayerTo(game, playerId, partnerId);
     final hasEmbassy = greatPowerIds.contains(partnerId) ||
         hasEmbassyOverture(game, playerId, partnerId);
     final boost = tradeDealRelationBoostBase +
@@ -79,7 +81,7 @@ CommodityId? _tradeDealRelationBoostPreferredBidCommodityId({
 
 /// Subsidy percentage the planning GP [playerId] grants Minor/Tribe [targetId]
 /// (`0` when none). Subsidies are GP→Minor/Tribe only (Refs #3753 R3).
-int _subsidyPercentFromPlayerTo(Game game, String playerId, String targetId) {
+int subsidyPercentFromPlayerTo(Game game, String playerId, String targetId) {
   for (final s in game.subsidyStates) {
     if (s.payerId == playerId && s.targetId == targetId) return s.percent;
   }

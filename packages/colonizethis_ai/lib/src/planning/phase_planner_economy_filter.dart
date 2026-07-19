@@ -232,7 +232,7 @@ bool resolvePhaseEconomyExpandQuotaPressureActive({
 /// the below-quota arm of the legacy helper is satisfied structurally
 /// and the remaining signal is
 /// [PhasePlanOutcome.expandGpOnlyInvadableFrontierActive] (computed once
-/// in [runPhasePlanners] via [expandIsOldWorldGpOnlyInvadableFrontier]).
+/// in [runPhasePlanners] via [isOldWorldGpOnlyInvadableFrontier]).
 ///
 /// Returns `false` under COLONIAL and DEVELOP even when the expand
 /// frontier slots are populated.
@@ -251,7 +251,7 @@ bool resolvePhaseEconomyExpandGpBlockerFocusActive({
 /// plan is set. Phase-derived `String?` is field-equal to the legacy
 /// helper across every reachable `(ObserverGoalPhase, AIWorldSnapshot)`
 /// pair because the dispatcher already computed the blocker once via
-/// [expandPrimaryInvadableOldWorldGpBlocker].
+/// [primaryInvadableOldWorldGpBlocker].
 String? expandPrimaryInvadableGpBlockerFromPhasePlan({
   required PhasePlanOutcome phasePlan,
 }) {
