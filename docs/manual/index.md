@@ -67,7 +67,10 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `01-primer.md` | Present (S4) |
 | `02-founding-your-reign.md` | Present (S4) |
 | `03-the-lay-of-the-land.md` | Present (S4) |
-| `04-charting-the-unknown.md` … `16-appendix-actions.md` | Pending (S5–S9) |
+| `04-charting-the-unknown.md` | Present (S5) |
+| `05-people-and-prosperity.md` | Present (S5) |
+| `06-bounty-of-the-earth.md` | Present (S5) |
+| `07-engines-of-industry.md` … `16-appendix-actions.md` | Pending (S6–S9) |
 
 ## Related process artifacts
 
