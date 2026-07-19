@@ -1,27 +1,19 @@
-import 'dart:math';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'capital_choice.dart';
+
 import 'game_setup_context.dart';
+import 'game_setup_create_capitals.dart';
+import 'game_setup_create_initial_game.dart';
+import 'game_setup_create_ownership.dart';
 import 'game_setup_helpers.dart';
-import 'game_setup_ownership.dart';
-import 'game_setup_topology.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
 import 'gp_ow_terrain_count_restore.dart';
 import 'gp_starting_grain.dart';
-import 'minor_tribe_starting_development.dart';
 import 'init_town_roads.dart';
 import 'initial_visibility.dart';
-import 'setup_exceptions.dart';
-
-part 'game_setup_create_ownership.dart';
-part 'game_setup_create_initial_game.dart';
-part 'game_setup_create_capitals.dart';
+import 'minor_tribe_starting_development.dart';
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {
@@ -77,7 +69,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final links = warpLinks ?? [];
   final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
-  final ownership = _assignInitialOwnership(
+  final ownership = assignInitialOwnership(
     config: config,
     topologyOldWorld: topologyOldWorld,
     topologyNewWorld: topologyNewWorld,
@@ -87,7 +79,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final gpIds = ownership.gpIds;
   final minorIds = ownership.minorIds;
   final tribeIds = ownership.tribeIds;
-  var game = _buildInitialGame(
+  var game = buildInitialGame(
     config: config,
     gameId: gameId,
     oldWorldProvinces: oldWorldProvinces,
@@ -114,7 +106,7 @@ GameSetupResult createGameFromGeneratedMaps({
     tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
   );
 
-  game = _assignAllCapitals(
+  game = assignAllCapitals(
     game: game,
     gpIds: gpIds,
     minorIds: minorIds,

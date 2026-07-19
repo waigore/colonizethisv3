@@ -1,5 +1,18 @@
-part of 'game_setup_create.dart';
+import 'dart:math';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'game_setup_context.dart';
+import 'game_setup_helpers.dart';
+import 'game_setup_ownership.dart';
+import 'game_setup_topology.dart';
+import 'setup_exceptions.dart';
+
+/// Assigns initial OW/NW province ownership and returns faction id lists.
+///
+/// Package-visible after de-part from [game_setup_create] (Refs #4086 Slice A).
 ({
   List<String> gpIds,
   List<String> minorIds,
@@ -7,7 +20,7 @@ part of 'game_setup_create.dart';
   List<Province> oldWorldProvinces,
   List<Province> newWorldProvinces,
 })
-_assignInitialOwnership({
+assignInitialOwnership({
   required GameSetupConfig config,
   required MapTopology topologyOldWorld,
   required MapTopology topologyNewWorld,

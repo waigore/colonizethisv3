@@ -1,6 +1,14 @@
-part of 'game_setup_create.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-Game _assignAllCapitals({
+import 'capital_choice.dart';
+import 'game_setup_ownership.dart';
+
+/// Assigns capitals for GPs, minors, and tribes after the initial [Game] shell.
+///
+/// Package-visible after de-part from [game_setup_create] (Refs #4086 Slice A).
+Game assignAllCapitals({
   required Game game,
   required List<String> gpIds,
   required List<String> minorIds,

@@ -1,6 +1,16 @@
-part of 'game_setup_ownership.dart';
+// Remainder-faction locked assignment helpers (Refs #4086 Slice A+B de-part).
 
-List<MapEntry<int, List<String>>> _landmassEntriesSortedBySize(
+import 'dart:math';
+
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show connectedComponentsInSubset;
+
+import 'game_setup_ownership_comparators.dart';
+import 'game_setup_ownership_paint.dart';
+import 'province_assignment.dart';
+import 'setup_exceptions.dart';
+
+List<MapEntry<int, List<String>>> landmassEntriesSortedBySize(
   Map<int, List<String>> landmassToProvinces,
 ) {
   final list = landmassToProvinces.entries.toList()
@@ -8,7 +18,7 @@ List<MapEntry<int, List<String>>> _landmassEntriesSortedBySize(
   return list;
 }
 
-List<String> _lockedMinorIdsOnSortedLandmassIndex({
+List<String> lockedMinorIdsOnSortedLandmassIndex({
   required int landmassIndexSorted,
   required List<String> minorIdsSorted,
 }) {
@@ -46,8 +56,8 @@ Map<String, String> _assignFactionsSingleComponentLocked({
     );
   }
   final land = comps.single;
-  return _paintLandmass(
-    mode: _LandmassPaintMode.locked,
+  return paintLandmass(
+    mode: LandmassPaintMode.locked,
     landmassProvinceIds: land,
     neighbours: neighbours,
     factionIds: factionIds,
@@ -152,8 +162,8 @@ Map<String, String> _assignFactionsMultiComponentLocked({
       ..sort((a, b) => compareByTargetDescThenIdAsc(a, b, targets));
     final localTargets = {for (final f in fs) f: targets[f]!};
     out.addAll(
-      _paintLandmass(
-        mode: _LandmassPaintMode.locked,
+      paintLandmass(
+        mode: LandmassPaintMode.locked,
         landmassProvinceIds: land,
         neighbours: neighbours,
         factionIds: fs,
@@ -166,7 +176,7 @@ Map<String, String> _assignFactionsMultiComponentLocked({
   return out;
 }
 
-Map<String, String> _assignFactionsOnRemainderAuto({
+Map<String, String> assignFactionsOnRemainderAuto({
   required List<String> factionIds,
   required Set<String> universe,
   required Map<String, Set<String>> neighbours,

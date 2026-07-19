@@ -1,4 +1,11 @@
-part of 'locked_province_assigner.dart';
+// SPEC/program/locked-province-assigner.md — DFS engine for locked assigner
+// (Refs #4086 Slice B de-part).
+
+import 'dart:math';
+
+import 'locked_province_assigner_graph.dart';
+import 'locked_province_assigner_types.dart';
+import 'setup_logging.dart' show setupLog;
 
 /// When true (`dart run --define=CT_TRACE_LOCKED_ASSIGNER_DFS=true`),
 /// prints every DFS branch to stdout (tabu skips, greedy prunes, try_push with
@@ -27,8 +34,8 @@ const int _dfsOk = 0;
 const int _dfsDeadEnd = 1;
 const int _dfsBudget = 2;
 
-final class _LockedAssignerEngine {
-  _LockedAssignerEngine({
+final class LockedAssignerEngine {
+  LockedAssignerEngine({
     required Set<String> landmassProvinceIds,
     required this.neighbours,
     required this.growthOrder,
@@ -109,7 +116,7 @@ final class _LockedAssignerEngine {
       return _dfsDeadEnd;
     }
     final depth = placementStack.length;
-    final tryOrder = _rotateList(
+    final tryOrder = rotateList(
       ranked,
       (capitalGeneration + depth * 31) % max(1, ranked.length),
     );
@@ -136,7 +143,7 @@ final class _LockedAssignerEngine {
     }
     final trialCounts = Map<String, int>.from(countPerFaction)
       ..[faction] = countPerFaction[faction]! + 1;
-    if (!_phasedGrowthFeasibilityHolds(
+    if (!phasedGrowthFeasibilityHolds(
       activeFaction: faction,
       trialProvince: province,
       ownersNow: owners,
@@ -199,7 +206,7 @@ final class _LockedAssignerEngine {
           lastBlockedFaction = faction;
           return null;
         }
-        return _rankLegalNeighbors(
+        return rankLegalNeighbors(
           legal: [fixed],
           unassigned: unassigned,
           neighbours: neighbours,
@@ -214,7 +221,7 @@ final class _LockedAssignerEngine {
         cand.shuffle(seedPickerRandom);
       }
       if (cand.isEmpty) return null;
-      return _rankLegalNeighbors(
+      return rankLegalNeighbors(
         legal: cand,
         unassigned: unassigned,
         neighbours: neighbours,
@@ -223,7 +230,7 @@ final class _LockedAssignerEngine {
     }
     final legalList = _legalNeighborSet(faction).toList()..sort();
     if (legalList.isEmpty) return null;
-    return _rankLegalNeighbors(
+    return rankLegalNeighbors(
       legal: legalList,
       unassigned: unassigned,
       neighbours: neighbours,

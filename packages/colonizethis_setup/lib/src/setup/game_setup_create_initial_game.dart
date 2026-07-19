@@ -1,6 +1,11 @@
-part of 'game_setup_create.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _buildInitialGame({
+/// Builds the initial [Game] shell after ownership assignment.
+///
+/// Package-visible after de-part from [game_setup_create] (Refs #4086 Slice A).
+Game buildInitialGame({
   required GameSetupConfig config,
   required String gameId,
   required List<Province> oldWorldProvinces,
@@ -84,7 +89,7 @@ Game _buildInitialGame({
 /// (`gold`, `silver`, `gems`, `diamonds`, `spices`). Riches auto-convert to
 /// treasury in phase 3 and are excluded from the world market entirely.
 ///
-/// Used by [_buildInitialGame] to populate `Game.worldMarketState.prices`
+/// Used by [buildInitialGame] to populate `Game.worldMarketState.prices`
 /// at game start (per #3093 § Price presentation & data model) so the
 /// Trade screen never has to fall back to the canonical em-dash glyph
 /// for a tradeable commodity and the validator / AI treasury planner can

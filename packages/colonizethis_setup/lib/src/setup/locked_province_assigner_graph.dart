@@ -1,4 +1,5 @@
-part of 'locked_province_assigner.dart';
+// SPEC/program/locked-province-assigner.md — P–P land graph helpers for the
+// locked assigner (Refs #4086 Slice B de-part).
 
 int _ppDegreeOnLand(
   String province,
@@ -48,7 +49,7 @@ int _unassignedIslandCountOnLand(
   return components;
 }
 
-List<int> _islandSizesOnLand(
+List<int> islandSizesOnLand(
   Set<String> unassigned,
   Map<String, Set<String>> neighbours,
   Set<String> land,
@@ -73,14 +74,14 @@ List<int> _islandSizesOnLand(
   return sizes;
 }
 
-List<T> _rotateList<T>(List<T> items, int start) {
+List<T> rotateList<T>(List<T> items, int start) {
   if (items.isEmpty) return items;
   final s = start % items.length;
   if (s == 0) return items;
   return [...items.sublist(s), ...items.sublist(0, s)];
 }
 
-List<String> _rankLegalNeighbors({
+List<String> rankLegalNeighbors({
   required List<String> legal,
   required Set<String> unassigned,
   required Map<String, Set<String>> neighbours,
@@ -163,7 +164,7 @@ int _reachableTerritoryForFaction({
 /// valid carve orders. Instead: [activeFaction] must reach its final target, and
 /// every **not yet started** faction with a mandatory seed must still have a
 /// component around that seed large enough for its target (#1830).
-bool _phasedGrowthFeasibilityHolds({
+bool phasedGrowthFeasibilityHolds({
   required String activeFaction,
   required String trialProvince,
   required Map<String, String> ownersNow,
