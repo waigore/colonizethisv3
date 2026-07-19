@@ -47,7 +47,7 @@ class ShellScreen extends ConsumerWidget {
       },
       onLoadGame: () =>
           bus.emit(const OpenDialogEvent(loadGameListDialogId)),
-      onSettings: () {},
+      onSettings: () => bus.emit(const OpenDialogEvent(settingsDialogId)),
       onQuit: () {
         SystemNavigator.pop();
       },

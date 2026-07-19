@@ -49,6 +49,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/features/shell/save_load/save_game_name_dialog.dart';
+import 'package:colonizethis_app/features/shell/settings/settings_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog_loader.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
@@ -285,6 +287,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...playerTurnEventFeedCardDirectories,
   ...pauseMenuPanelDirectories,
   ...saveLoadDialogDirectories,
+  ...settingsDialogDirectories,
   ...nextTurnConfirmationDialogDirectories,
   ...gameInitializingDirectories,
   ...gameSideMenuDirectories,

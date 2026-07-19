@@ -16,8 +16,11 @@ import 'config/themes.dart';
 import 'core/services/app_event_handler/app_event_handler_scope.dart';
 import 'core/services/ai/blessed_ai_profile_loader.dart';
 import 'core/services/platform/desktop_window_startup_service.dart';
+import 'features/game/flame/map_theme/active_map_theme.dart';
+import 'features/game/flame/map_theme/map_theme_resolver.dart';
 import 'features/shell/new_game_leader_dialog_builder.dart';
 import 'features/shell/save_load/save_load_dialog_builders.dart';
+import 'features/shell/settings/settings_dialog_builder.dart';
 
 /// Opens one Hive box; failures are isolated so another box (e.g. games) still opens.
 Future<void> _openHiveBoxSafely(String name) async {
@@ -41,14 +44,20 @@ Future<void> bootstrapApp({
   required Future<void> Function() ensureDesktopWindowStartup,
   required void Function(Widget app) runAppFn,
   Future<void> Function()? preloadFonts,
+  Future<void> Function()? ensureMapThemeResolved,
 }) async {
   ensureBindingInitialized();
   initSessionLogBuffer();
-  await ensureMapTerrainLoaded();
+  // Hive settings must open before theme resolution and themed terrain load
+  // (SPEC/program/map-theme-catalog.md — apply on restart from persisted ids).
   await initHive();
   await openHiveBoxSafely(HiveBoxNames.settings);
   await openHiveBoxSafely(HiveBoxNames.games);
   await openHiveBoxSafely(HiveBoxNames.offlineQueue);
+  final resolveTheme =
+      ensureMapThemeResolved ?? loadAndInstallActiveMapTheme;
+  await resolveTheme();
+  await ensureMapTerrainLoaded();
   await ensureDesktopWindowStartup();
   // Warm blessed AI profile asset bundle for new-game UI and turn resolution.
   await BlessedAiProfileLoader.loadCatalog();
@@ -70,6 +79,7 @@ Future<void> bootstrapApp({
           newGameLeaderSelectionDialogId: buildNewGameLeaderSelectionDialog,
           saveGameNameDialogId: buildSaveGameNameDialog,
           loadGameListDialogId: buildLoadGameListDialog,
+          settingsDialogId: buildSettingsDialog,
         },
         child: App(),
       ),
@@ -89,7 +99,9 @@ Future<void> bootstrapForIntegrationTest() async {
     // Logger.defaultFilter, undoing suppressLogsForTests() and adding listener
     // overhead — Linux e2e then misses fleet NW wall-clock (Quality workflow).
     initSessionLogBuffer: kCtE2EEnabled ? () {} : SessionLogBuffer.init,
-    ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
+    ensureMapTerrainLoaded: () => MapTerrainConfig.ensureLoaded(
+      assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+    ),
     initHive: () async {
       if (kCtE2EEnabled) {
         final tmp = Directory.systemTemp.createTempSync('ct_e2e_hive_');
@@ -112,7 +124,9 @@ void main() {
       await bootstrapApp(
         ensureBindingInitialized: WidgetsFlutterBinding.ensureInitialized,
         initSessionLogBuffer: SessionLogBuffer.init,
-        ensureMapTerrainLoaded: MapTerrainConfig.ensureLoaded,
+        ensureMapTerrainLoaded: () => MapTerrainConfig.ensureLoaded(
+          assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,
+        ),
         initHive: Hive.initFlutter,
         openHiveBoxSafely: _openHiveBoxSafely,
         ensureDesktopWindowStartup:

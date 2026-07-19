@@ -1,5 +1,8 @@
 import 'dart:ui' as ui;
 
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+
 import '../../../../config/app_assets.dart';
 import 'asset_image_cache.dart';
 
@@ -46,7 +49,8 @@ class ResourceIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) =>
-      '${kAppIcon64AssetPrefix}ui_icon_com_$assetId.png';
+      '${ActiveMapTheme.current.iconPrefixFor(MapThemeGroupId.resourceIcons)}'
+      'ui_icon_com_$assetId.png';
 
   @override
   String get loadLogLabel => 'resource icons';

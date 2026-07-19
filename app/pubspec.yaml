@@ -68,6 +68,8 @@ flutter:
     - assets/images/terrain/base_64/
     - assets/images/terrain/base_32/
     - assets/images/terrain/tilesets/
+    - assets/themes/sepia/data/
+    - assets/themes/sepia/icons/64/
     - assets/dialogue/
     - assets/profiles/
     - google_fonts/
