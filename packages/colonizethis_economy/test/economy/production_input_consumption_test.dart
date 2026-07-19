@@ -6,163 +6,125 @@
 // SPEC/game/world-market.md § Per-commodity quantity cap,
 // SPEC/program/order-projections.md § Production input consumption
 // projection.
+// Table-driven (Refs #3939) for economy scenario-table preference.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-void main() {
-  group('productionInputConsumptionByCommodityIdForAssignments (Refs #3093)',
-      () {
-    test('returns empty map for empty assignments', () {
-      expect(
-        productionInputConsumptionByCommodityIdForAssignments(
-          const <AssignedRecipe>[],
-        ),
-        isEmpty,
-      );
-    });
+typedef _ConsumptionScenario = ({
+  String label,
+  List<AssignedRecipe> assignments,
+  Map<CommodityId, int> expected,
+});
 
-    test(
-        'sums input quantity x runs per commodity (paper_from_timber: '
-        'labour 2 -> runs 1 -> consumes 2 timber)', () {
-      // paper_from_timber recipe: inputQuantities = {timber: 2},
-      // labourPerOutput = 2. Assigned labour = 2 → runs = 1 → 2 timber
-      // reserved. This is the canonical AC example from #3093:
-      //   "industry allocation reserving 2"
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 2,
-          ),
+List<_ConsumptionScenario> _scenarios() => [
+      (
+        label: 'returns empty map for empty assignments',
+        assignments: const <AssignedRecipe>[],
+        expected: const <CommodityId, int>{},
+      ),
+      (
+        // paper_from_timber: inputQuantities = {timber: 2}, labourPerOutput = 2.
+        // Assigned labour = 2 → runs = 1 → 2 timber reserved (#3093 AC).
+        label: 'sums input quantity x runs per commodity (paper_from_timber: '
+            'labour 2 -> runs 1 -> consumes 2 timber)',
+        assignments: const [
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 2),
         ],
-      );
-      expect(consumption[CommodityCatalog.timber.id], 2);
-      expect(consumption.length, 1);
-    });
-
-    test(
-        'single-input recipe (castIron_from_iron: iron 2, '
-        'labour 2 -> runs 1) populates input commodity', () {
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'castIron_from_iron',
-            assignedLabour: 2,
-          ),
+        expected: {CommodityCatalog.timber.id: 2},
+      ),
+      (
+        label: 'single-input recipe (castIron_from_iron: iron 2, '
+            'labour 2 -> runs 1) populates input commodity',
+        assignments: const [
+          AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 2),
         ],
-      );
-      expect(consumption[CommodityCatalog.iron.id], 2);
-      expect(consumption.containsKey(CommodityCatalog.timber.id), isFalse);
-      expect(consumption.containsKey(CommodityCatalog.coal.id), isFalse);
-    });
-
-    test('floor(assignedLabour / labourPerOutput) — fractional runs drop', () {
-      // paper_from_timber: labourPerOutput = 2. Assigned labour = 8 →
-      // runs = floor(8/2) = 4 → 8 timber consumed.
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 8,
-          ),
+        expected: {CommodityCatalog.iron.id: 2},
+      ),
+      (
+        // paper_from_timber labourPerOutput = 2; labour 8 → runs 4 → 8 timber.
+        label: 'floor(assignedLabour / labourPerOutput) — fractional runs drop',
+        assignments: const [
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 8),
         ],
-      );
-      expect(consumption[CommodityCatalog.timber.id], 8);
-    });
-
-    test('multiple recipes contributing to the same input sum together', () {
-      // paper_from_timber (2 labour → 2 timber) +
-      // lumber_from_timber (4 labour → runs 2 → 4 timber) = 6 timber.
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 2,
-          ),
-          AssignedRecipe(
-            recipeId: 'lumber_from_timber',
-            assignedLabour: 4,
-          ),
+        expected: {CommodityCatalog.timber.id: 8},
+      ),
+      (
+        // paper_from_timber (2 labour → 2 timber) + lumber_from_timber
+        // (4 labour → runs 2 → 4 timber) = 6 timber.
+        label: 'multiple recipes contributing to the same input sum together',
+        assignments: const [
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 2),
+          AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 4),
         ],
-      );
-      expect(consumption[CommodityCatalog.timber.id], 6);
-    });
-
-    test(
-        'zero labour assignments contribute nothing (negative labour is '
-        'forbidden by AssignedRecipe constructor assert)', () {
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 0,
-          ),
+        expected: {CommodityCatalog.timber.id: 6},
+      ),
+      (
+        label: 'zero labour assignments contribute nothing (negative labour is '
+            'forbidden by AssignedRecipe constructor assert)',
+        assignments: const [
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 0),
         ],
-      );
-      expect(consumption, isEmpty);
-    });
-
-    test('unknown recipe ids are silently skipped (defensive)', () {
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
+        expected: const <CommodityId, int>{},
+      ),
+      (
+        label: 'unknown recipe ids are silently skipped (defensive)',
+        assignments: const [
           AssignedRecipe(
             recipeId: 'ghost_recipe_does_not_exist',
             assignedLabour: 9999,
           ),
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 2,
-          ),
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 2),
         ],
-      );
-      expect(consumption[CommodityCatalog.timber.id], 2);
-      expect(consumption.length, 1);
-    });
+        expected: {CommodityCatalog.timber.id: 2},
+      ),
+      (
+        // paper_from_timber needs 2 labour/run; 1 labour → runs 0 → absent key.
+        label: 'sub-labourPerOutput assignment contributes zero (runs = 0; '
+            'commodity absent from map, not present with value 0)',
+        assignments: const [
+          AssignedRecipe(recipeId: 'paper_from_timber', assignedLabour: 1),
+        ],
+        expected: const <CommodityId, int>{},
+      ),
+      (
+        label: 'steel_from_iron_coal consumes iron and coal per normalized '
+            'recipe (Refs #3873)',
+        assignments: const [
+          AssignedRecipe(recipeId: 'steel_from_iron_coal', assignedLabour: 2),
+        ],
+        expected: {
+          CommodityCatalog.iron.id: 1,
+          CommodityCatalog.coal.id: 1,
+        },
+      ),
+    ];
 
-    test(
-        'sub-labourPerOutput assignment contributes zero (runs = 0; '
-        'commodity absent from map, not present with value 0)', () {
-      // paper_from_timber needs 2 labour per run; 1 labour → runs 0
-      // → no consumption. The commodity should NOT appear as a 0
-      // entry — callers treat absence as 0.
+void main() {
+  group('productionInputConsumptionByCommodityIdForAssignments (Refs #3093)',
+      () {
+    runLabeledScenarios(_scenarios(), (scenario) {
       final consumption =
           productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'paper_from_timber',
-            assignedLabour: 1,
-          ),
-        ],
+        scenario.assignments,
       );
-      expect(consumption.containsKey(CommodityCatalog.timber.id), isFalse);
-      expect(consumption, isEmpty);
-    });
-
-    test(
-        'steel_from_iron_coal consumes iron and coal per normalized recipe '
-        '(Refs #3873)',
-        () {
-      final consumption =
-          productionInputConsumptionByCommodityIdForAssignments(
-        const [
-          AssignedRecipe(
-            recipeId: 'steel_from_iron_coal',
-            assignedLabour: 2,
-          ),
-        ],
-      );
-      expect(consumption[CommodityCatalog.iron.id], 1);
-      expect(consumption[CommodityCatalog.coal.id], 1);
-      expect(consumption.containsKey(CommodityCatalog.castIron.id), isFalse);
-    });
+      expect(consumption, scenario.expected);
+      // Negative: unrelated inputs must not appear as zero placeholders.
+      if (!scenario.expected.containsKey(CommodityCatalog.timber.id)) {
+        expect(consumption.containsKey(CommodityCatalog.timber.id), isFalse);
+      }
+      if (!scenario.expected.containsKey(CommodityCatalog.coal.id)) {
+        expect(consumption.containsKey(CommodityCatalog.coal.id), isFalse);
+      }
+      if (!scenario.expected.containsKey(CommodityCatalog.castIron.id)) {
+        expect(
+          consumption.containsKey(CommodityCatalog.castIron.id),
+          isFalse,
+        );
+      }
+    }, labelOf: (s) => s.label);
   });
 }
