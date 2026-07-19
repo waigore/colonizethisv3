@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Town-rule worklist / port-map resolveConnectivity pins ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver town-rule worklist', () {
@@ -38,33 +40,28 @@ void main() {
           capitalProvinceId: '$ow|p1',
           capitalTile: cap,
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(provinces: [
-              Province(
-                id: '$ow|p1',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: 'oldWorld|p1|0|0',
-              ),
-              Province(
-                id: '$ow|p2',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: 'oldWorld|p2|1|0',
-              ),
-              Province(
-                id: '$ow|p3',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: 'oldWorld|p3|2|0',
-              ),
-            ]),
-            newWorld: const RegionData(),
-            tileState: tileState,
-          ),
+        final game = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(
+              id: '$ow|p1',
+              regionId: ow,
+              ownerId: 'pl1',
+              townTileKey: 'oldWorld|p1|0|0',
+            ),
+            Province(
+              id: '$ow|p2',
+              regionId: ow,
+              ownerId: 'pl1',
+              townTileKey: 'oldWorld|p2|1|0',
+            ),
+            Province(
+              id: '$ow|p3',
+              regionId: ow,
+              ownerId: 'pl1',
+              townTileKey: 'oldWorld|p3|2|0',
+            ),
+          ],
+          tileState: tileState,
           players: [player],
         );
         final result = resolveConnectivity(
@@ -104,17 +101,12 @@ void main() {
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-          portsByProvinceSeaboard: ports,
-        ),
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
+        tileState: tileState,
+        portsByProvinceSeaboard: ports,
         players: [player],
       );
       final result = resolveConnectivity(

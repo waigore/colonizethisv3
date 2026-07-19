@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// Regression cover for the connectivity per-player province cache built once
 /// per `resolveConnectivity` call (Refs #2394). The previous implementation
 /// scanned `allProvinces()` twice per player (owned-province set + town-tile
@@ -57,21 +59,14 @@ void main() {
           x: 2,
           y: 0,
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-                // p2 is unowned (ownerId == null) — must appear in neither
-                // player's bucket in the per-player province cache.
-                Province(id: '$ow|p2', regionId: ow),
-                Province(id: '$ow|p3', regionId: ow, ownerId: 'pl2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+            // p2 is unowned (ownerId == null) — must appear in neither
+            // player's bucket in the per-player province cache.
+            Province(id: '$ow|p2', regionId: ow),
+            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl2'),
+          ],
           players: [
             Player(
               id: 'pl1',
@@ -152,18 +147,11 @@ void main() {
           x: 0,
           y: 0,
         );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: '$ow|p1', regionId: ow),
-                Province(id: '$ow|p2', regionId: ow, ownerId: 'pl2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
+        final game = ordersPhaseGame(
+          oldWorldProvinces: [
+            Province(id: '$ow|p1', regionId: ow),
+            Province(id: '$ow|p2', regionId: ow, ownerId: 'pl2'),
+          ],
           players: [
             Player(
               id: 'pl1',

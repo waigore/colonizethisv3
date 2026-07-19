@@ -4,6 +4,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 void main() {
   group('applyCapitalReassignmentAfterCombat', () {
     const ow = 'oldWorld';
@@ -36,42 +38,30 @@ void main() {
       final portsBefore = const {'$ow|P1|sea1': '$ow|P1|0|0'};
       final tileStateBefore = TileMapState().setRoadLevel('$ow|P2|2|2', 2);
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              const Province(
-                id: '$ow|P1',
-                regionId: ow,
-                ownerId: 'enemy',
-                townTileKey: '$ow|P1|0|0',
-              ),
-              Province(
-                id: '$ow|P2',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: '$ow|P2|2|2',
-              ),
-            ],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          const Province(
+            id: '$ow|P1',
+            regionId: ow,
+            ownerId: 'enemy',
+            townTileKey: '$ow|P1|0|0',
           ),
-          newWorld: const RegionData(),
-          portsByProvinceSeaboard: portsBefore,
-          tileState: tileStateBefore,
-        ),
+          Province(
+            id: '$ow|P2',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: '$ow|P2|2|2',
+          ),
+        ],
+        portsByProvinceSeaboard: portsBefore,
+        tileState: tileStateBefore,
         players: [
           Player(
             id: 'pl1',
             displayName: 'GP',
             isHuman: true,
             capitalProvinceId: '$ow|P1',
-            capitalTile: const CapitalTile(
-              regionId: ow,
-              provinceId: '$ow|P1',
-              x: 0,
-              y: 0,
-            ),
+            capitalTile: capitalTileFor('$ow|P1'),
           ),
         ],
       );
@@ -120,46 +110,34 @@ void main() {
         ],
       );
 
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              const Province(
-                id: '$ow|P1',
-                regionId: ow,
-                ownerId: 'enemy',
-                townTileKey: '$ow|P1|0|0',
-              ),
-              const Province(
-                id: '$ow|P2',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: '$ow|P2|1|1',
-              ),
-              const Province(
-                id: '$ow|P3',
-                regionId: ow,
-                ownerId: 'pl1',
-                townTileKey: '$ow|P3|2|2',
-              ),
-            ],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          const Province(
+            id: '$ow|P1',
+            regionId: ow,
+            ownerId: 'enemy',
+            townTileKey: '$ow|P1|0|0',
           ),
-          newWorld: const RegionData(),
-        ),
+          const Province(
+            id: '$ow|P2',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: '$ow|P2|1|1',
+          ),
+          const Province(
+            id: '$ow|P3',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: '$ow|P3|2|2',
+          ),
+        ],
         players: [
           Player(
             id: 'pl1',
             displayName: 'GP',
             isHuman: true,
             capitalProvinceId: '$ow|P1',
-            capitalTile: const CapitalTile(
-              regionId: ow,
-              provinceId: '$ow|P1',
-              x: 0,
-              y: 0,
-            ),
+            capitalTile: capitalTileFor('$ow|P1'),
           ),
         ],
       );
@@ -186,39 +164,27 @@ void main() {
         ],
         edges: const [],
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              const Province(
-                id: '$ow|P1',
-                regionId: ow,
-                ownerId: 'enemy',
-                townTileKey: '$ow|P1|0|0',
-              ),
-              const Province(
-                id: '$ow|P2',
-                regionId: ow,
-                ownerId: 'pl1',
-              ),
-            ],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          const Province(
+            id: '$ow|P1',
+            regionId: ow,
+            ownerId: 'enemy',
+            townTileKey: '$ow|P1|0|0',
           ),
-          newWorld: const RegionData(),
-        ),
+          const Province(
+            id: '$ow|P2',
+            regionId: ow,
+            ownerId: 'pl1',
+          ),
+        ],
         players: [
           Player(
             id: 'pl1',
             displayName: 'GP',
             isHuman: true,
             capitalProvinceId: '$ow|P1',
-            capitalTile: const CapitalTile(
-              regionId: ow,
-              provinceId: '$ow|P1',
-              x: 0,
-              y: 0,
-            ),
+            capitalTile: capitalTileFor('$ow|P1'),
           ),
         ],
       );

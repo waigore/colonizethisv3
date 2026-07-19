@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// GP road/town resolveConnectivity cases ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver road/town', () {
@@ -15,7 +17,13 @@ void main() {
       ];
       final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
       final topology = MapTopology(
-        nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
         edges: [],
       );
       const ow = 'oldWorld';
@@ -27,15 +35,10 @@ void main() {
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-        ),
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
         players: [player],
       );
       final result = resolveConnectivity(
@@ -62,7 +65,13 @@ void main() {
       ];
       final tileMap = TileMapResult(width: 3, height: 3, grid: grid);
       final topology = MapTopology(
-        nodes: [TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province)],
+        nodes: [
+          TopologyNode(
+            id: 'p1',
+            regionId: 'oldWorld',
+            type: TopologyNodeType.province,
+          ),
+        ],
         edges: [],
       );
       const ow = 'oldWorld';
@@ -78,16 +87,11 @@ void main() {
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
+        tileState: tileState,
         players: [player],
       );
       final result = resolveConnectivity(
@@ -104,22 +108,21 @@ void main() {
 
     test('player without capital gets empty set', () {
       const ow = 'oldWorld';
-      final grid = [['p1']];
+      final grid = [
+        ['p1'],
+      ];
       final tileMap = TileMapResult(width: 1, height: 1, grid: grid);
       final topology = MapTopology(
-        nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)],
+        nodes: [
+          TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
+        ],
         edges: [],
       );
       final player = Player(id: 'pl1', displayName: 'Spain', isHuman: true);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-        ),
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
         players: [player],
       );
       final result = resolveConnectivity(
@@ -152,62 +155,62 @@ void main() {
           .setRoadLevel('oldWorld|p2|1|0', 1)
           .setRoadLevel('oldWorld|p2|2|0', 1)
           .setRoadLevel('oldWorld|p3|2|0', 1);
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-            Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
+      final players = [
+        Player(
+          id: 'pl1',
+          displayName: 'Spain',
+          isHuman: true,
+          capitalProvinceId: '$ow|p1',
+          capitalTile: cap,
         ),
-        players: [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+      ];
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+          Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
         ],
+        tileState: tileState,
+        players: players,
       );
       final tileMapByRegion = {'oldWorld': tileMap};
-      var result = resolveConnectivity(game: game, tileMapByRegion: tileMapByRegion, topology: topology);
+      var result = resolveConnectivity(
+        game: game,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
       expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), true);
 
-      final gameP2Lost = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-            Province(id: '$ow|p2', regionId: ow, ownerId: 'other'),
-            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
-        players: [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+      final gameP2Lost = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'other'),
+          Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
         ],
+        tileState: tileState,
+        players: players,
       );
-      result = resolveConnectivity(game: gameP2Lost, tileMapByRegion: tileMapByRegion, topology: topology);
+      result = resolveConnectivity(
+        game: gameP2Lost,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
       expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), false);
 
-      final gameP2Restored = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-            Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
-            Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
-        players: [
-          Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap),
+      final gameP2Restored = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+          Province(id: '$ow|p2', regionId: ow, ownerId: 'pl1'),
+          Province(id: '$ow|p3', regionId: ow, ownerId: 'pl1'),
         ],
+        tileState: tileState,
+        players: players,
       );
-      result = resolveConnectivity(game: gameP2Restored, tileMapByRegion: tileMapByRegion, topology: topology);
+      result = resolveConnectivity(
+        game: gameP2Restored,
+        tileMapByRegion: tileMapByRegion,
+        topology: topology,
+      );
       expect(result['pl1']!.connected.contains('oldWorld|p3|2|0'), true);
     });
 
@@ -231,69 +234,52 @@ void main() {
           .setRoadLevel('oldWorld|p2|1|0', 1)
           .setRoadLevel('oldWorld|p2|2|0', 1)
           .setRoadLevel('oldWorld|p2|2|1', 1);
-
-      final gameTownA = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(
-              id: '$ow|p1',
-              regionId: ow,
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p1|0|0',
-            ),
-            Province(
-              id: '$ow|p2',
-              regionId: ow,
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p2|1|0',
-            ),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
+      final players = [
+        Player(
+          id: 'pl1',
+          displayName: 'Spain',
+          isHuman: true,
+          capitalProvinceId: '$ow|p1',
+          capitalTile: cap,
         ),
-        players: [
-          Player(
-            id: 'pl1',
-            displayName: 'Spain',
-            isHuman: true,
-            capitalProvinceId: '$ow|p1',
-            capitalTile: cap,
+      ];
+
+      final gameTownA = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(
+            id: '$ow|p1',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: 'oldWorld|p1|0|0',
+          ),
+          Province(
+            id: '$ow|p2',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: 'oldWorld|p2|1|0',
           ),
         ],
+        tileState: tileState,
+        players: players,
       );
 
-      final gameTownB = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(
-              id: '$ow|p1',
-              regionId: ow,
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p1|1|1',
-            ),
-            Province(
-              id: '$ow|p2',
-              regionId: ow,
-              ownerId: 'pl1',
-              townTileKey: 'oldWorld|p2|2|1',
-            ),
-          ]),
-          newWorld: const RegionData(),
-          tileState: tileState,
-        ),
-        players: [
-          Player(
-            id: 'pl1',
-            displayName: 'Spain',
-            isHuman: true,
-            capitalProvinceId: '$ow|p1',
-            capitalTile: cap,
+      final gameTownB = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(
+            id: '$ow|p1',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: 'oldWorld|p1|1|1',
+          ),
+          Province(
+            id: '$ow|p2',
+            regionId: ow,
+            ownerId: 'pl1',
+            townTileKey: 'oldWorld|p2|2|1',
           ),
         ],
+        tileState: tileState,
+        players: players,
       );
 
       final resultA = resolveConnectivity(

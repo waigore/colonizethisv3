@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import '../world_test_support/world_test_support.dart';
+
 /// GP sea/port resolveConnectivity cases ported from logic (Refs #4090).
 void main() {
   group('ConnectivityResolver sea/port', () {
@@ -44,19 +46,15 @@ void main() {
         capitalProvinceId: '$ow|p1',
         capitalTile: cap,
       );
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [
-            Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
-          ]),
-          newWorld: RegionData(provinces: [
-            Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1'),
-          ]),
-          tileState: tileState,
-          portsByProvinceSeaboard: ports,
-        ),
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
+        newWorldProvinces: [
+          Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1'),
+        ],
+        tileState: tileState,
+        portsByProvinceSeaboard: ports,
         players: [player],
       );
       final result = resolveConnectivity(
@@ -108,16 +106,24 @@ void main() {
         '$ow|p1|sea1': 'oldWorld|p1|0|0',
         '$nw|p2|sea2': 'newWorld|p2|0|0',
       };
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1')]),
-          newWorld: RegionData(provinces: [Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1')]),
-          tileState: tileState,
-          portsByProvinceSeaboard: ports,
-        ),
-        players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap)],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
+        newWorldProvinces: [
+          Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1'),
+        ],
+        tileState: tileState,
+        portsByProvinceSeaboard: ports,
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: '$ow|p1',
+            capitalTile: cap,
+          ),
+        ],
       );
       final result = resolveConnectivity(
         game: game,
@@ -134,8 +140,14 @@ void main() {
     });
 
     test('sea path multi-zone: S1–S2 edge, capital on S1, overseas port on S2 connected', () {
-      final oldGrid = [['p1', 'p1'], ['p1', 'p1']];
-      final newGrid = [['p2', 'p2'], ['p2', 'p2']];
+      final oldGrid = [
+        ['p1', 'p1'],
+        ['p1', 'p1'],
+      ];
+      final newGrid = [
+        ['p2', 'p2'],
+        ['p2', 'p2'],
+      ];
       final topology = MapTopology(
         nodes: [
           TopologyNode(id: 'p1', regionId: 'oldWorld', type: TopologyNodeType.province),
@@ -158,16 +170,24 @@ void main() {
         '$ow|p1|sea1': 'oldWorld|p1|0|0',
         '$nw|p2|sea2': 'newWorld|p2|0|0',
       };
-      final game = Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-          oldWorld: RegionData(provinces: [Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1')]),
-          newWorld: RegionData(provinces: [Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1')]),
-          tileState: tileState,
-          portsByProvinceSeaboard: ports,
-        ),
-        players: [Player(id: 'pl1', displayName: 'Spain', isHuman: true, capitalProvinceId: '$ow|p1', capitalTile: cap)],
+      final game = ordersPhaseGame(
+        oldWorldProvinces: [
+          Province(id: '$ow|p1', regionId: ow, ownerId: 'pl1'),
+        ],
+        newWorldProvinces: [
+          Province(id: '$nw|p2', regionId: nw, ownerId: 'pl1'),
+        ],
+        tileState: tileState,
+        portsByProvinceSeaboard: ports,
+        players: [
+          Player(
+            id: 'pl1',
+            displayName: 'Spain',
+            isHuman: true,
+            capitalProvinceId: '$ow|p1',
+            capitalTile: cap,
+          ),
+        ],
       );
       final result = resolveConnectivity(
         game: game,
