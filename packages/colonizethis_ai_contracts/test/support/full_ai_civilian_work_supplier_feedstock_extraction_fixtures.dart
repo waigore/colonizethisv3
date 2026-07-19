@@ -1,3 +1,6 @@
+/// Two-player H8-extraction supplier feedstock Game fixtures (Refs #2847).
+library;
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

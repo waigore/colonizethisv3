@@ -100,6 +100,123 @@ void main() {
     });
   });
 
+  group('runCheckAiContractsNoPartDirectives', () {
+    test('fails for a `part` parent directive in ai_contracts lib', () {
+      final temp =
+          Directory.systemTemp.createTempSync('ai-contracts-no-part-parent-');
+      try {
+        final lib = Directory(
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_ai_contracts',
+            'lib',
+            'src',
+          ),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(lib.path, 'parent.dart'),
+          "// header\npart 'child.dart';\nvoid x() {}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckAiContractsNoPartDirectives(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('parent.dart:2'));
+        expect(errors.join('\n'), contains('#4084'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('fails for a `part of` fragment in ai_contracts lib', () {
+      final temp =
+          Directory.systemTemp.createTempSync('ai-contracts-no-part-frag-');
+      try {
+        final lib = Directory(
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_ai_contracts',
+            'lib',
+            'src',
+          ),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(lib.path, 'child.dart'),
+          "part of 'parent.dart';\nvoid x() {}\n",
+        );
+
+        final errors = <String>[];
+        final exitCode = runCheckAiContractsNoPartDirectives(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(exitCode, 1);
+        expect(errors.join('\n'), contains('child.dart:1'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('passes for a clean ai_contracts lib tree', () {
+      final temp =
+          Directory.systemTemp.createTempSync('ai-contracts-no-part-ok-');
+      try {
+        final lib = Directory(
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_ai_contracts',
+            'lib',
+            'src',
+          ),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(lib.path, 'lib_file.dart'),
+          "import 'helpers.dart';\n\nvoid x() {}\n",
+        );
+
+        final exitCode = runCheckAiContractsNoPartDirectives(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('ignores `part of` under colonizethis_ai when scanning contracts', () {
+      final temp =
+          Directory.systemTemp.createTempSync('ai-contracts-no-part-other-');
+      try {
+        final aiLib = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_ai', 'lib', 'src'),
+        )..createSync(recursive: true);
+        _writeDartFile(
+          p.join(aiLib.path, 'child.dart'),
+          "part of 'parent.dart';\nvoid x() {}\n",
+        );
+
+        final exitCode = runCheckAiContractsNoPartDirectives(
+          temp.path,
+          info: (_) {},
+          err: (_) {},
+        );
+        expect(exitCode, 0);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+  });
+
   group('aiNoPartDirectivesLineIsPartDirective', () {
     test('matches part and part of directive forms', () {
       expect(
