@@ -21,7 +21,7 @@ import 'treasury_lock_recovery.dart';
 import 'treasury_market_pricing.dart';
 import 'treasury_need_analysis.dart';
 import 'treasury_planner_constants.dart';
-import 'treasury_regiment_bootstrap.dart';
+import 'treasury_regiment_bootstrap_bids.dart';
 import 'treasury_relation_boost_preference.dart';
 
 export 'treasury_lock_recovery.dart'
