@@ -1,5 +1,6 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_radius.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
@@ -27,6 +28,8 @@ class DebugConsoleOverlayPanel extends StatefulWidget {
     required this.onClose,
     super.key,
   });
+
+  static const screenId = UiScreenIds.debugConsolePanel;
 
   final AppEventBus bus;
   final String humanPlayerId;
