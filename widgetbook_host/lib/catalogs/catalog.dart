@@ -46,6 +46,7 @@ import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/features/shell/save_load/save_game_name_dialog.dart';
@@ -146,6 +147,7 @@ part 'catalog_data_screens.dart';
 part 'catalog_game_chrome.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';
+part 'catalog_observe_mode.dart';
 part 'catalog_debug_log_viewer.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
@@ -289,6 +291,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameRegionMinimapDirectories,
   ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
+  ...observeModeNotDefinedPanelDirectories,
   ...pauseMenuPanelDirectories,
   ...saveLoadDialogDirectories,
   ...settingsDialogDirectories,
