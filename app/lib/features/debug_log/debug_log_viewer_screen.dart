@@ -1,4 +1,5 @@
-// Debug log viewer. SPEC/program/debug-log-viewer.md.
+// Debug log viewer. SPEC/ui/debug-log-viewer.md (SYS10001).
+// TDD buffer/filters: SPEC/program/debug-log-viewer.md.
 
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
