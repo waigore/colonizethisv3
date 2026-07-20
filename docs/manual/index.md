@@ -10,7 +10,7 @@ The manual is **player-facing documentation**. Game Design Documents under `SPEC
 2. Follow chapters in order for a campaign-shaped tour, or jump via the table of contents to a system you need.
 3. Use the **Appendix: The Royal Decrees** as a quick-reference for every order and immediate action.
 4. Screen surfaces are cited by stable **8-character screen IDs** (e.g. `GAME20001`) so renames in the UI do not break references. See `SPEC/ui/screen-registry.md`.
-5. Surfaces marked **`[DRAFT]`** are not yet playable as described; omit them from operable how-to steps.
+5. Surfaces marked **`[DRAFT]`** (per `STYLE_GUIDE.md`) are not yet playable as described; omit them from operable how-to steps. The chapters below cite only active player surfaces; remaining registry drafts are debug/observe tools and stay out of this handbook.
 
 ## Tone
 
@@ -46,17 +46,17 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | 1 | Premise (1500–1850, Old & New Worlds, Great Powers / Minor Nations / Tribes); victory at a glance; turn rhythm; orientation tour of game screen, toolbar, empire buttons, side menu, map | `SPEC/game/victory.md`, `SPEC/game/turn-time-mapping.md`, `SPEC/game/factions.md`; `SPEC/ui/game-screen.md`, `SPEC/ui/game-toolbar-icons.md`, `SPEC/ui/empire-buttons.md`, `SPEC/ui/game-side-menu.md`, `SPEC/ui/map-widget.md` |
 | 2 | Main menu → New Game → leader selection; human/AI GP slots; leader bonuses; advanced starts; capital auto-choice; game-start intro overlay | `SPEC/game/game-setup.md`, `SPEC/game/factions.md`, `SPEC/game/leader-bonuses.md`, `SPEC/game/advanced-starts.md`, `SPEC/game/capital-choice-phase.md`, `SPEC/game/naming.md`; `SPEC/ui/main-menu.md`, `SPEC/ui/new-game-leader-selection-dialog.md`, `SPEC/ui/game-initializing.md`, `SPEC/ui/game-start-intro-overlay.md` |
 | 3 | Reading the map; provinces and sea zones; terrain and resources; capital and connectivity; province overlay and town/port icons; province identity as the UI names places | `SPEC/game/world-model.md`, `SPEC/game/map-topology.md`, `SPEC/game/tile-map-and-generation.md`, `SPEC/game/resource-terrain-region-rules.md`, `SPEC/game/capital-and-connectivity.md`; `SPEC/ui/map-widget.md`, `SPEC/ui/empire-overview.md`, `SPEC/ui/province-sea-zone-detail-overlay.md`, `SPEC/ui/layered-terrain-rendering.md`, `SPEC/ui/town-port-icons.md` |
-| 4 | Fog levels; Explorer work (`explore`, `prospect`); fleets into new sea zones; tribe first contact; where discoveries are reported | `SPEC/game/fog-and-exploration.md`; `SPEC/ui/tribe-first-contact-overlay.md`, `SPEC/ui/player-turn-event-feed.md` (draft), map rendering specs |
+| 4 | Fog levels; Explorer work (`explore`, `prospect`); fleets into new sea zones; tribe first contact; where discoveries are reported | `SPEC/game/fog-and-exploration.md`; `SPEC/ui/tribe-first-contact-overlay.md`, `SPEC/ui/player-turn-event-feed.md`, map rendering specs |
 | 5 | Population and worker tiers; Recruit/Train; disband; civilian roster via civilians panel and train dialog | `SPEC/game/workers-and-population.md`, `SPEC/game/civilian-units.md`; `SPEC/ui/civilian-units-panel.md`, `SPEC/ui/train-civilians-dialog.md` |
 | 6 | Civilian work targets; costs; one work order per unit per turn; exclusivity; cancel in-progress work; extraction caps | `SPEC/game/extraction-and-improvements.md`, `SPEC/game/tech-and-extraction-cap.md`, `SPEC/program/orders.md` § WorkOrder; related UI |
 | 7 | Stockpiles and production pipeline; recipes; production screen and commodity breakdown | `SPEC/game/stockpiles-and-production.md`, `SPEC/game/production-recipes.md`, `SPEC/game/commodity-catalog.md`; `SPEC/ui/production-panel.md`, `SPEC/ui/production-commodity-breakdown-dialog.md` |
-| 8 | Bids and offers; caps; first right of refusal; Phase 13 results; trade screen (draft until active) | `SPEC/game/world-market.md`, `SPEC/game/world-market-first-right-of-refusal.md`, `SPEC/program/orders.md` § TradeOrder; `SPEC/ui/trade-screen.md` (draft) |
+| 8 | Bids and offers; caps; first right of refusal; Phase 13 results; operable Trade screen (Market + Deal Book) | `SPEC/game/world-market.md`, `SPEC/game/world-market-first-right-of-refusal.md`, `SPEC/program/orders.md` § TradeOrder; `SPEC/ui/trade-screen.md` |
 | 9 | Research slots and funding; prerequisites; eight tech branches; University slot bonus | `SPEC/game/tech-tree.md` (+ subtrees), `SPEC/game/research-state.md`, `SPEC/program/orders.md` § ResearchOrder; `SPEC/ui/technology-panel.md`, `SPEC/ui/tech-tree-widget.md` |
 | 10 | Every DiplomaticOrder subtype; overtures; Join Empire; grants/subsidies; power score | `SPEC/game/diplomacy.md`, `SPEC/program/orders.md` § DiplomaticOrder; diplomacy UI; `SPEC/ai/diplomacy-planner.md`, `SPEC/ai/dialogue-and-mood.md`, `SPEC/ai/hidden-agendas.md` |
 | 11 | Military roster; training; armies and generals; Move Army dialog; Home Army constraint | `SPEC/game/military-units.md`, `SPEC/game/military-armies.md`, `SPEC/game/military-generals.md`, `SPEC/program/orders.md`; military UI |
 | 12 | Attacking; combat mode choice; quick battle; siege; reading outcomes | `SPEC/game/combat.md`, `SPEC/game/quick-battle.md`, `SPEC/game/siege-mechanics.md`; combat UI |
 | 13 | Ships; fleets; missions; home fleet constraint; naval combat | `SPEC/game/ships-and-naval.md`, `SPEC/program/orders.md`; naval UI |
-| 14 | Ending the turn; resolution timing (player-facing); turn news; save/load; pause; settings | `SPEC/game/turn-time-mapping.md`, `SPEC/program/turn-resolution-phases.md`; related UI (some draft) |
+| 14 | Ending the turn; next-turn confirmation; resolution timing (player-facing); turn news; player turn event feed; save/load; pause; settings | `SPEC/game/turn-time-mapping.md`, `SPEC/program/turn-resolution-phases.md`; related UI |
 | 15 | Military victory (31+ OW provinces); calendar cap; power-score declared winner; infinite mode; victory overlay; endgame counsel | `SPEC/game/victory.md`, `SPEC/game/turn-time-mapping.md`, `SPEC/game/diplomacy.md`; `SPEC/ui/victory-overlay.md`; AI growth/personality specs |
 | 16 | Exhaustive action table: every order type/subtype and immediate action with UI entry, validation, phase, chapter link | `SPEC/program/orders.md`, `SPEC/program/order-engine.md`, `SPEC/program/turn-resolution-phase-details.md` |
 
@@ -80,7 +80,7 @@ Full tone, chapter template, Sources footers, and draft-marking rules: [`STYLE_G
 | `14-passage-of-turns.md` | Present (S8) |
 | `15-road-to-victory.md` | Present (S8) |
 | `16-appendix-actions.md` | Present (S9) |
-| S10 completeness audit | Done in-branch (active screen IDs cited; draft IDs marked) |
+| S10 completeness audit | Done (player-manual screen IDs active; draft convention retained for future / non-manual surfaces) |
 
 ## Related process artifacts
 

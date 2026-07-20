@@ -10,6 +10,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import 'recruitment_planner_test_support.dart';
 
 const _config = AIConfig(
   leaderId: 'victoria',
@@ -19,15 +20,6 @@ const _config = AIConfig(
 
 const _topology = MapTopology(nodes: [], edges: []);
 
-Game _gameWith(Player player) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [], units: []),
-    newWorld: RegionData(provinces: [], units: []),
-  ),
-  players: [player],
-);
 
 OrderSuggestionAPI _fakeApi({
   List<RecruitWorkerOrder> recruit = const [],
@@ -49,7 +41,7 @@ void main() {
     test(
       'drops both candidates when pending consumes already exhaust peasants',
       () {
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -105,7 +97,7 @@ void main() {
     );
 
     test('peasant recruit consumes no peasant (free to emit)', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         const Player(
           id: 'gp1',
           displayName: 'A',
@@ -137,7 +129,7 @@ void main() {
       'civilian builds do not draw on peasant budget; trained recruit still '
       'fits a single peasant',
       () {
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -184,7 +176,7 @@ void main() {
       () {
         // sustainable[apprentice] = stockpile.refinedSugar + projected = 0 + 0 = 0
         // projected after emit = 0 + 1 = 1 > 0 → reject.
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -221,7 +213,7 @@ void main() {
         // sustainable[journeyman] = stockpile.cigars + projected = 1 + 0 = 1.
         // deficit limit floor(1 * 12 / 10) = 1.
         // current = 1, projected after one emit = 2 > 1 → reject.
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -266,7 +258,7 @@ void main() {
       () {
         // sustainable[apprentice] = 3 (stockpile) + 0 (no hint) = 3.
         // current = 0, projected after one emit = 1 ≤ 3 → accept.
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -302,7 +294,7 @@ void main() {
       () {
         // sustainable[apprentice] = 0 (stockpile) + 2 (projected: 4 labour at
         // 2 labour/run × 1 output = 2). projected after one emit = 1 ≤ 2 → accept.
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
@@ -351,7 +343,7 @@ void main() {
     );
 
     test('DEVELOP processes recruit before build (recruit wins peasant)', () {
-      final game = _gameWith(playerWithOnePeasant());
+      final game = recruitmentPlannerTestGameWith(playerWithOnePeasant());
       final view = buildPlayerView(game, _topology, 'gp1');
       final api = _fakeApi(
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -383,7 +375,7 @@ void main() {
     });
 
     test('EXPAND processes build before recruit (military wins peasant)', () {
-      final game = _gameWith(playerWithOnePeasant());
+      final game = recruitmentPlannerTestGameWith(playerWithOnePeasant());
       final view = buildPlayerView(game, _topology, 'gp1');
       final api = _fakeApi(
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -415,7 +407,7 @@ void main() {
     });
 
     test('COLONIAL also processes build before recruit (matches EXPAND)', () {
-      final game = _gameWith(playerWithOnePeasant());
+      final game = recruitmentPlannerTestGameWith(playerWithOnePeasant());
       final view = buildPlayerView(game, _topology, 'gp1');
       final api = _fakeApi(
         recruit: const [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
@@ -445,7 +437,7 @@ void main() {
 
   group('runRecruitmentPlanner — determinism (AC-RP-4)', () {
     test('two identical invocations return equal plans', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         const Player(
           id: 'gp1',
           displayName: 'A',
@@ -502,7 +494,7 @@ void main() {
 
   group('runRecruitmentPlanner — edge cases', () {
     test('returns empty plan when player view targets unknown player', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         const Player(
           id: 'gp1',
           displayName: 'A',
@@ -541,7 +533,7 @@ void main() {
     });
 
     test('returns empty plan when suggestion API returns nothing', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         const Player(
           id: 'gp1',
           displayName: 'A',
@@ -574,7 +566,7 @@ void main() {
         // peasant (free), apprentice (consumes 1), journeyman (consumes 1).
         // sustainable: refinedSugar=10, cigars=10 → both fit.
         // Result: all 3 emitted, budget after = 1 peasant remaining.
-        final game = _gameWith(
+        final game = recruitmentPlannerTestGameWith(
           const Player(
             id: 'gp1',
             displayName: 'A',
