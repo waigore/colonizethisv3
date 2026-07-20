@@ -43,8 +43,9 @@ Every update must answer, explicitly or by structure:
 Aligned with `SPEC/ui/screen-registry.md` (`draft` vs `active`):
 
 - **Omit** a draft surface, **or** mention it only with the marker.
-- Inline form (required on every draft citation): `**[DRAFT]** \`SCREENID\`` immediately before the display name, e.g. `**[DRAFT]** \`GAME60001\` Trade screen`.
+- Inline form (required on every draft citation): `**[DRAFT]** \`SCREENID\`` immediately before the display name (placeholder shape: `**[DRAFT]** \`XXXXXXXX\` Display name`).
 - Draft surfaces must **not** appear in **How it is done** as operable steps; if mentioned, use Counsel or a short “not yet available” note, still with the marker.
+- When the player manual cites only `active` registry rows, keep this convention as process text for future drafts — no live exemplar screen is required.
 
 ## Callout conventions
 

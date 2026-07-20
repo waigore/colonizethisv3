@@ -10,6 +10,7 @@
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/phase_planner_diplomacy_filter_test_support.dart';
 
 const PhasePriorityWeights _owConquestFull = PhasePriorityWeights(
   oldWorldConquest: 1.0,
@@ -55,25 +56,7 @@ const AIWorldSnapshot _stalledAdjacentInvadableMinorSnap = AIWorldSnapshot(
   relations: {},
 );
 
-Game _buildGame() => Game(
-  id: 'g-phase3-diplomacy-ow-soft-weight',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-    oldWorld: const RegionData(
-      provinces: [
-        Province(
-          id: 'oldWorld|minor1_a',
-          regionId: 'oldWorld',
-          ownerId: 'minor1',
-        ),
-      ],
-    ),
-    newWorld: const RegionData(),
-  ),
-  players: const [Player(id: 'gp1', displayName: 'P1', isHuman: false)],
-  minorNations: const [MinorNation(id: 'minor1', displayName: 'Minor 1')],
-  aiControlByGpId: const {'gp1': true},
-);
+
 
 int _minorDeclareWarScore({required PhasePlanOutcome phasePlan}) {
   return computeDiplomaticCandidateScores(
@@ -85,7 +68,7 @@ int _minorDeclareWarScore({required PhasePlanOutcome phasePlan}) {
         ),
       ],
       nationId: 'gp1',
-      game: _buildGame(),
+      game: buildPhasePlannerDiplomacyOwBonusScalingGame(),
       snapshot: _stalledAdjacentInvadableMinorSnap,
       config: _config,
       phasePlan: phasePlan,
@@ -156,7 +139,7 @@ void main() {
             ),
           ],
           nationId: 'gp1',
-          game: _buildGame(),
+          game: buildPhasePlannerDiplomacyOwBonusScalingGame(),
           snapshot: _stalledAdjacentInvadableMinorSnap,
           config: _config,
           phasePlan: null,

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-When your warehouse overflows with timber or starves for coal, the **world market** lets Great Powers bid treasury for goods and offer surplus for coin. Minors and Tribes auto-sell what they extract. Mastery here smooths shortages, funds wars, and rewards Merchants who purchased foreign tiles. This chapter explains bids, offers, caps, first right of refusal, and where results appear — while the dedicated Trade desk remains draft in the registry.
+When your warehouse overflows with timber or starves for coal, the **world market** lets Great Powers bid treasury for goods and offer surplus for coin. Minors and Tribes auto-sell what they extract. Mastery here smooths shortages, funds wars, and rewards Merchants who purchased foreign tiles. This chapter explains bids, offers, caps, first right of refusal, and how to stage trade at the dedicated Trade desk.
 
 ## How it is done
 
@@ -30,17 +30,21 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 
 **Favored Trading Partner** (diplomacy) only breaks ties inside the same priority tier; it never overrides first right of refusal.
 
-### Where you act in the UI today
+### Where you act in the UI
 
-1. Production (`GAME20001`) already shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
-2. Market clearance and Deal Book results resolve in **Phase 13**; review turn news / market activity after you end the turn.
-3. The full Market + Deal Book desk is **[DRAFT]** `GAME60001` **Trade screen** — cite it for orientation, but do **not** treat it as an operable how-to surface while the registry marks it draft. When it becomes active, expect bid/offer chips, quantity steppers, cargo remaining, and a Deal Book of last-turn fills and carry-forwards.
+1. From `GAME10001`, tap **Trade** on the left empire rail (or open route `/game/trade`) to reach `GAME60001` **Trade screen**.
+2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Cargo remaining**. Bid and offer are mutually exclusive per commodity; staged bids respect cargo and treasury caps from the rules above. Riches never appear as trade rows.
+3. **Deal Book** tab: review last-turn filled buys/sales and any carry-forward unfilled orders for your court.
+4. Production (`GAME20001`) shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
+5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, turn news, and market activity.
 
 ## Counsel
 
 **Counsel.** Hark, my liege: a bid without cargo is a promise the fleet cannot keep — leave holds for extraction first, then for the market.
 
 **Tip.** Embassy and `trade_fairs` multiply how many commodities you may chase in one turn. Diplomacy is market infrastructure.
+
+**Tip.** A per-row priority dropdown is not yet on the Market tab; staged orders use the default priority until that control ships.
 
 **Warning.** Selling the last timber you still assigned to lumber on `GAME20001` invites rejected offers or a silent industry stall. Watch sellable headroom.
 
@@ -59,7 +63,7 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 - [ ] Explains global market, tradeable vs riches, TradeOrder bid/offer, Phase 13 timing.
 - [ ] Documents mutual exclusion, bid-type caps (1/3/6), cargo and treasury caps, carry-forward.
 - [ ] Covers first right of refusal / overseas profit / FTP at player level.
-- [ ] Marks **[DRAFT]** `GAME60001` and keeps How-it-is-done free of draft operable steps.
+- [ ] Documents operable `GAME60001` Trade (left-rail / route entry, Market + Deal Book, caps) without a draft-screen marker; notes any deferred control separately.
 - [ ] Notes Production sellable headroom linkage.
 - [ ] Sources match the chapter coverage map.
 

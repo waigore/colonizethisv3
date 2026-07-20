@@ -7,7 +7,9 @@
 ///
 /// Topic modules (Phase 5 / Refs #3972):
 /// - `s7d_findings_geography.dart` — peer-war lock / H1–H4 geography
-/// - `s7d_findings_feedstock_extraction.dart` — H8 feedstock-stage split
+/// - `s7d_findings_feedstock_extraction.dart` — H8 feedstock-stage barrel
+/// - `s7d_findings_feedstock_extraction_early.dart` — early H8 disambiguation
+/// - `s7d_findings_feedstock_extraction_late.dart` — castIron / supplier diagnostics
 /// - `s7d_findings_feedstock_castiron.dart` — castIron / fabric / labour
 /// - `s7d_findings_lock_recovery.dart` — #2924 lock-recovery + labour wall
 ///
@@ -30,6 +32,8 @@ library;
 
 export 's7d_findings_feedstock_castiron.dart';
 export 's7d_findings_feedstock_extraction.dart';
+export 's7d_findings_feedstock_extraction_early.dart';
+export 's7d_findings_feedstock_extraction_late.dart';
 export 's7d_findings_geography.dart';
 export 's7d_findings_lock_recovery.dart';
 

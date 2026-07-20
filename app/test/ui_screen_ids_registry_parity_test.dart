@@ -25,6 +25,7 @@ const Map<String, String> _expectedConstants = {
   'diplomacyDetailScreen': UiScreenIds.diplomacyDetailScreen,
   'technologyScreen': UiScreenIds.technologyScreen,
   'gameSideMenu': UiScreenIds.gameSideMenu,
+  'tradeScreen': UiScreenIds.tradeScreen,
   'empireOverviewMapArea': UiScreenIds.empireOverviewMapArea,
   'provinceSeaZoneOverlay': UiScreenIds.provinceSeaZoneOverlay,
   'civilianUnitsPanel': UiScreenIds.civilianUnitsPanel,
