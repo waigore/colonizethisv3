@@ -31,6 +31,8 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   colonizethis_logger: any
+  logger: any
+  session_log_buffer: any
   flutter:
     sdk: flutter
   widgetbook: ^3.23.0

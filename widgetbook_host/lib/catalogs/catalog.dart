@@ -94,8 +94,11 @@ import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
+import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_fixtures/test_support/seed42_init_game_result.dart';
+import 'package:logger/logger.dart';
+import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
@@ -146,6 +149,7 @@ part 'catalog_game_chrome.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';
 part 'catalog_observe_mode.dart';
+part 'catalog_debug_log_viewer.dart';
 part 'catalog_debug_console.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
@@ -300,6 +304,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameMapNarrowDetailOverlaySlotDirectories,
   ...diplomacyDetailScreenDirectories,
   ...tradeScreenDirectories,
+  ...debugLogViewerDirectories,
   ...ctDarkThemePrimitiveDirectories,
 ];
 

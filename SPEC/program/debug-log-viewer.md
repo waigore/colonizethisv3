@@ -2,6 +2,7 @@
 
 **SPEC/program** — In-app viewer for all runtime logs from the current session. Available in the Flutter app. Coexists with existing Sim Log (ctdev); this viewer shows full debug traces from all packages, not just game events.
 
+**UI screen doc (registry / layout / Widgetbook):** [debug-log-viewer.md](../ui/debug-log-viewer.md) (`SYS10001`).
 ---
 
 ## 1. Purpose and scope
