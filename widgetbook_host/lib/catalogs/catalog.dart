@@ -77,6 +77,7 @@ import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
@@ -143,6 +144,7 @@ part 'catalog_data_screens.dart';
 part 'catalog_game_chrome.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';
+part 'catalog_debug_console.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -285,6 +287,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameRegionMinimapDirectories,
   ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
+  ...debugConsolePanelDirectories,
   ...pauseMenuPanelDirectories,
   ...saveLoadDialogDirectories,
   ...settingsDialogDirectories,
