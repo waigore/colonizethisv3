@@ -40,6 +40,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/phase_planner_diplomacy_filter_test_support.dart';
 
 // NW acquisition weight pinned to zero — emulates the legacy
 // hard-suppress contract on the Phase 3 weight gate. The curve never
@@ -97,25 +98,7 @@ const AIWorldSnapshot _atQuotaColonialAdjacentTribeSnap = AIWorldSnapshot(
   relations: {},
 );
 
-Game _buildGame() => Game(
-  id: 'g-phase3-diplomacy-soft-weight',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(
-      provinces: [
-        Province(
-          id: 'newWorld|tribe1_a',
-          regionId: 'newWorld',
-          ownerId: 'tribe1',
-        ),
-      ],
-    ),
-  ),
-  players: const [Player(id: 'gp1', displayName: 'P1', isHuman: false)],
-  tribes: const [Tribe(id: 'tribe1', displayName: 'Tribe 1')],
-  aiControlByGpId: const {'gp1': true},
-);
+
 
 int _tribeDeclareWarScore({required PhasePlanOutcome? phasePlan}) {
   return computeDiplomaticCandidateScores(
@@ -127,7 +110,7 @@ int _tribeDeclareWarScore({required PhasePlanOutcome? phasePlan}) {
         ),
       ],
       nationId: 'gp1',
-      game: _buildGame(),
+      game: buildPhasePlannerDiplomacyNwSuppressionGame(),
       snapshot: _atQuotaColonialAdjacentTribeSnap,
       config: _config,
       phasePlan: phasePlan,

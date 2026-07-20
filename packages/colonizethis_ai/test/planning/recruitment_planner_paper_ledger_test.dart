@@ -14,6 +14,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import 'recruitment_planner_test_support.dart';
 
 const _config = AIConfig(
   leaderId: 'victoria',
@@ -27,15 +28,6 @@ final _paperId = CommodityCatalog.paper.id;
 final _cigarsId = CommodityCatalog.cigars.id;
 final _refinedSugarId = CommodityCatalog.refinedSugar.id;
 
-Game _gameWith(Player player) => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: RegionData(provinces: [], units: []),
-    newWorld: RegionData(provinces: [], units: []),
-  ),
-  players: [player],
-);
 
 OrderSuggestionAPI _fakeApi({
   List<RecruitWorkerOrder> recruit = const [],
@@ -73,7 +65,7 @@ void main() {
   group('runRecruitmentPlanner — shared paper ledger (AC7)', () {
     test('reserves research paper then accepts only what the remaining budget '
         'funds; over-budget trained recruits are paper-rejected', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         Player(
           id: 'gp1',
           displayName: 'A',
@@ -117,7 +109,7 @@ void main() {
 
     test('civilian builds compete for the same paper budget (recruit-first '
         'phase wins, build is paper-rejected)', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         Player(
           id: 'gp1',
           displayName: 'A',
@@ -162,7 +154,7 @@ void main() {
 
     test('build-first phase spends the budget on the civilian build; the '
         'trained recruit is paper-rejected (phase emit order respected)', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         Player(
           id: 'gp1',
           displayName: 'A',
@@ -203,7 +195,7 @@ void main() {
     });
 
     test('pending paper orders shrink the allocatable budget', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         Player(
           id: 'gp1',
           displayName: 'A',
@@ -250,7 +242,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 5),
         stockpile: Stockpile(quantities: {_paperId: 7, _cigarsId: 100}),
       );
-      final game = _gameWith(player());
+      final game = recruitmentPlannerTestGameWith(player());
       final view = buildPlayerView(game, _topology, 'gp1');
       List<RecruitWorkerOrder> recruits() => const [
         RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
@@ -281,7 +273,7 @@ void main() {
 
   group('runRecruitmentPlanner — paper ledger disabled is inert (AC7c)', () {
     test('default flag: no paper rejections; both candidates emit', () {
-      final game = _gameWith(
+      final game = recruitmentPlannerTestGameWith(
         Player(
           id: 'gp1',
           displayName: 'A',
