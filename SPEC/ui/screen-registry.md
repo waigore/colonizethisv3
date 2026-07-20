@@ -74,7 +74,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | `app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart` | Player Turn Event Feed Card | active |
 | `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
 | `SYS10001` | Debug log viewer | [debug-log-viewer.md](debug-log-viewer.md) | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Debug Log Viewer | active |
-| `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | TBD | — | draft |
+| `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart` | Debug Console Panel | active |
 
 Add new rows at the bottom of the sub-flow group. Gaps in `####` are intentional only when reserved in an open PR.
 
