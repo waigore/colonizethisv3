@@ -4,8 +4,9 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Physical-line ceiling for AI planning `*_cases.dart` modules (Refs #3997).
-const int aiPlanningCasesSuitePhysicalLineCeiling = 650;
+/// Physical-line ceiling for AI planning `*_cases.dart` modules
+/// (Refs #3997). Phase-10 Slice C densify ratchets 650→600 (Refs #4104).
+const int aiPlanningCasesSuitePhysicalLineCeiling = 600;
 
 /// Repo-relative path prefix for AI planning case libraries.
 const String _aiPlanningCasesPathPrefix =
