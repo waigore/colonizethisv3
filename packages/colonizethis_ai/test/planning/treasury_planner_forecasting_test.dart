@@ -9,47 +9,8 @@ import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'treasury_planner_main_support.dart';
 
-Game _gameWithStockpile({
-  required Stockpile stockpile,
-  required int treasury,
-  List<OvertureState> overtures = const [],
-  int turnNumber = 1,
-  List<Player>? extraPlayers,
-}) {
-  const ow = 'oldWorld';
-  final players = [
-    Player(
-      id: 'gp1',
-      displayName: 'GP1',
-      isHuman: false,
-      capitalProvinceId: '$ow|p1',
-      stockpile: stockpile,
-      treasury: treasury,
-    ),
-    ...?extraPlayers,
-  ];
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$ow|p1', regionId: ow, ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    overtureStates: overtures,
-    worldMarketState: WorldMarketState.withDefaultPrices(const {
-      'timber': 20,
-      'iron': 20,
-      'fabric': 40,
-      'castIron': 60,
-    }),
-  );
-}
 
 void main() {
   group('runTreasuryPlanner partial-fill-aware forecasting (Refs #2994 F8)', () {
@@ -61,7 +22,7 @@ void main() {
         // A carry-forward of exactly 72 should drop new emission to zero.
         const carryForwardQuantity = 72;
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
         ).copyWith(
@@ -111,7 +72,7 @@ void main() {
         const carryForwardQuantity = 30;
         const expectedResidual = 42;
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
         ).copyWith(
@@ -162,7 +123,7 @@ void main() {
           ),
         ];
         const carryForwardBidQuantity = 2;
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: cheapestRegimentBuildTreasuryCost() + 100,
           overtures: const [
@@ -222,7 +183,7 @@ void main() {
         // bare treasury and the planner must stay in urgent mode.
         const treasury = 1000;
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: treasury,
         ).copyWith(
@@ -270,7 +231,7 @@ void main() {
         // while the GP is still broke (seed-42 gp5 stalled at 1999 otherwise).
         const treasury = 1000;
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: treasury,
         ).copyWith(
@@ -331,7 +292,7 @@ void main() {
         final affluent = treasuryAffluenceThreshold();
         final stockpile = stockpileWellStockedExcept(const ['grain', 'meat'])
             .applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: affluent,
         );
@@ -379,7 +340,7 @@ void main() {
         final affluent = treasuryAffluenceThreshold();
         final stockpile = stockpileWellStockedExcept(const ['iron'])
             .applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: affluent,
         ).copyWith(
@@ -430,7 +391,7 @@ void main() {
             kSpeculativeBidStockpileTarget + 4,
           );
         }
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: affluent,
         );
@@ -465,7 +426,7 @@ void main() {
             kSpeculativeBidStockpileTarget * 4,
           );
         }
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: justBelow,
         );
@@ -493,7 +454,7 @@ void main() {
       () {
         final affluent = treasuryAffluenceThreshold();
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: affluent,
         );
@@ -519,7 +480,7 @@ void main() {
       'deterministic with carry-forward and prior activity state populated',
       () {
         final stockpile = const Stockpile().applyDelta('timber', 80);
-        final game = _gameWithStockpile(
+        final game = treasuryPlannerTestGameWithStockpile(
           stockpile: stockpile,
           treasury: 0,
         ).copyWith(

@@ -11,7 +11,7 @@ Before the first Orders phase, you choose your court: which Great Power you are,
 1. The app shell is `SHEL10001` **Shell screen**; from it you reach `SHEL10002` **Main menu**. Tap **New Game**.
 2. The shell opens `DLG10001` **New game leader selection** (does not mutate the live game until you confirm Start).
 3. Configure slots, options, and seed as below, then **Start**. Cancel returns you to the menu without creating a game.
-4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting you may see **[DRAFT]** `SHEL30001` **Game initializing** — do not treat it as an interactive form.
+4. Setup runs (world generation, ownership, capitals, naming, optional advanced-start bootstrap). While waiting, `SHEL30001` **Game initializing** shows coarse progress (creating maps, building the world, saving). It is a **non-interactive wait-gate** — there is no form to fill; wait until it finishes.
 5. Navigation lands on `GAME10001`. On first entry for that game id, `OVL10001` **Game start intro** may appear; dismiss it to play. The app remembers dismissal per game id so it does not loop every resume.
 
 ### Leader selection (`DLG10001`) — step by step
@@ -78,7 +78,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 - [ ] Covers leader combat bonuses (Napoleon / Frederick / none).
 - [ ] Covers advanced start presets and when the control is disabled.
 - [ ] States capital is auto-chosen (sea-bound) with no post-setup override UI.
-- [ ] Marks **[DRAFT]** `SHEL30001` if mentioned.
+- [ ] Documents `SHEL30001` Game initializing as a real non-interactive wait-gate (no draft marker).
 - [ ] Sources match the chapter coverage map.
 
 ## Sources

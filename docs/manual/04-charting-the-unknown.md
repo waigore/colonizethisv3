@@ -43,7 +43,7 @@ Land **Move** orders also need fogged or fully visible tiles at source and desti
 
 - When your court first gains **non-unknown land** visibility into a **Tribe-owned** province, `OVL80001` **Tribe first contact herald** may block the screen with the tribe and capital names. A peaceful relation is established for that contact; each tribe heralds once per game session for you.
 - After turn resolution, `DLG50001` **Turn news dialog** summarizes discoveries (including province-discovered lines) for turns after the first.
-- A richer scrolling feed may appear later as **[DRAFT]** `OVL70001` **Player turn event feed** — do not rely on it as an operable surface yet; use turn news and the map fog itself.
+- On the map chrome, the news toggle opens `OVL70001` **Player turn event feed** — a compact, human-scoped scroll of outcomes that replaces its entries each resolved turn. Use it alongside turn news and the fog itself (Chapter 14).
 
 ## Counsel
 
@@ -70,7 +70,7 @@ Rival courts race the same fog. AI civilian planners score Explorer **explore** 
 - [ ] Documents Explorer `explore` (partial-reveal gate, free, ≤3 turns, province reveal on complete) and `prospect` (eligible terrain, free, 1 turn, completion-only).
 - [ ] Documents Consulate gate for Minor/Tribe explore/prospect.
 - [ ] Documents fleet enter → coastal/sea reveal and end-of-turn re-fog conditions.
-- [ ] Documents `OVL80001` first contact and discovery reporting via `DLG50001`; marks **[DRAFT]** `OVL70001` as draft.
+- [ ] Documents `OVL80001` first contact and discovery reporting via `DLG50001`; documents operable `OVL70001` Player turn event feed (news toggle).
 - [ ] Sources match the chapter coverage map.
 
 ## Sources

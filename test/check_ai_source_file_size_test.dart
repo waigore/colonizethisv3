@@ -13,11 +13,15 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckAiSourceFileSize', () {
-    test('passes on current repo tree under 500 physical-line ceiling', () {
+    test('passes on current repo tree under 450 physical-line ceiling', () {
       expect(runCheckAiSourceFileSize('.'), 0);
     });
 
-    test('grandfather allowlist is empty after #4079 Slice C splits', () {
+    test('ceiling is 450 after #4104 Slice B headroom ratchet', () {
+      expect(aiSourceFileSizeCeiling, 450);
+    });
+
+    test('grandfather allowlist is empty after #4079 / #4104 splits', () {
       expect(aiSourceFileSizeGrandfatheredForTests, isEmpty);
     });
 
@@ -110,10 +114,7 @@ void main() {
         List.generate(12, (i) => '// line $i').join('\n'),
       );
 
-      final code = runCheckAiSourceFileSize(
-        root.path,
-        ceiling: 10,
-      );
+      final code = runCheckAiSourceFileSize(root.path, ceiling: 10);
       expect(code, 0);
     });
   });

@@ -11,7 +11,7 @@ The campaign calendar advances with the turn. By default, turn 1 is 1500; turns 
 ### Ending a turn
 
 1. On `GAME10001` **Game screen**, finish the orders and immediate actions you mean to give this turn, then use **Next turn** in the top bar.
-2. The current confirmation surface is **[DRAFT]** `DLG60001` Next turn confirmation. It is reserved to ask whether you wish to end the displayed turn and prevent an accidental commitment; do not rely on it as an operable route until it is active.
+2. Confirm in `DLG60001` **Next turn confirmation** (“End turn?”). Choose **Yes** to commit the displayed turn, or **No** to abort and keep planning.
 3. Once resolution begins, the game blocks map interaction and further Next turn requests while it processes the turn. The hamburger side menu remains available, but changes that would alter the resolving turn must wait.
 4. Resolution may pause for a decision when diplomacy requires your answer: for example, an overture, intervention, or call to arms. Give that answer before the remaining phases can continue.
 
@@ -28,7 +28,7 @@ The game completes its phases in a fixed order. You see their combined consequen
 
 A completed turn’s principal report appears in `DLG50001` **Turn news dialog**, unless victory takes precedence. It lists major events from the resolved turn; if none qualify, it plainly says so. Close the report, inspect the map and your empire screens, and prepare the next turn.
 
-The map may also gain a compact account of outcomes in **[DRAFT]** `OVL70001` Player turn event feed. It is intended to replace its entries each resolved turn and to focus relevant reports on the map, but is not yet an operable player surface.
+On the map chrome, the news toggle opens `OVL70001` **Player turn event feed** — a compact, human-scoped card of outcomes over the map. It replaces its entries each resolved turn and can be shown or hidden without leaving `GAME10001`. Use it with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect.
 
 ### Pausing, saving, and loading
 
@@ -63,9 +63,9 @@ Their choices are deterministic for the same world state and seeds, but they are
 
 ## Acceptance criteria for this chapter
 
-- [ ] Explains ending a turn, resolution blocking, and the reserved **[DRAFT]** `DLG60001` confirmation without presenting it as operable.
+- [ ] Explains ending a turn via operable `DLG60001` Next turn confirmation, and resolution blocking.
 - [ ] Summarizes the player-visible resolution sequence and states that results appear after resolution, including possible diplomacy decisions that suspend it.
-- [ ] Documents `DLG50001` Turn news, its empty state, and victory precedence; mentions **[DRAFT]** `OVL70001` without operable instructions.
+- [ ] Documents `DLG50001` Turn news, its empty state, and victory precedence; documents operable `OVL70001` Player turn event feed (news toggle).
 - [ ] Documents `SHEL40001` pause actions plus `DLG70001` saving, `DLG80001` loading, and `DLG90001` settings.
 - [ ] Distinguishes `GAME50001` Game side menu from the pause menu.
 - [ ] States default turn-to-year pacing and accurately describes rival Great Powers’ per-turn planning.
