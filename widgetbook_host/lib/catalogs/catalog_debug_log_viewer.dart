@@ -47,11 +47,15 @@ Widget _debugLogViewerFrame({
   SessionLogBuffer.resetForTest();
   SessionLogBuffer.init();
   if (seedLogs) {
-    final logger = Logger();
+    // Seed the buffer directly (same pattern as app/test/debug_log_viewer_test.dart).
     // ignore: avoid_hardcoded_strings_in_widgets
-    logger.w('app: widgetbook seeded warning one');
+    SessionLogBuffer.instance.add(
+      LogEvent(Level.warning, 'app: widgetbook seeded warning one'),
+    );
     // ignore: avoid_hardcoded_strings_in_widgets
-    logger.w('app: widgetbook seeded warning two');
+    SessionLogBuffer.instance.add(
+      LogEvent(Level.warning, 'app: widgetbook seeded warning two'),
+    );
   }
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
