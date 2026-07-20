@@ -70,7 +70,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
 | `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart` | Call to Arms Dialogue Overlay | active |
 | `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
-| `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
+| `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | `app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart` | Observe Mode Not Defined Panel | active |
 | `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | `app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart` | Player Turn Event Feed Card | active |
 | `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
 | `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |

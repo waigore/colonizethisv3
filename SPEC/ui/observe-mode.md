@@ -1,7 +1,8 @@
 # In-app observe mode (debug console)
 
 **Screen ID:** `OVL60001` — stable; do not reassign.
-**SPEC/ui** — Session-only spectator mode entered via `/observe` when `CT_DEBUG_CONSOLE=true`. Out of scope: `tool/run_observer_game` CLI ([run_observer_game-tool.md](../program/run_observer_game-tool.md)).
+**SPEC/ui** — Session-only spectator mode entered via `/observe` when `CT_DEBUG_CONSOLE=true`. Implementation: `app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart` (global-observe sentinel for P4–P17 chrome; session wiring in `observe_session_provider.dart` / `shell_player_context*.dart`). Out of scope: `tool/run_observer_game` CLI ([run_observer_game-tool.md](../program/run_observer_game-tool.md)).
+**Widgetbook:** `Observe Mode Not Defined Panel` → `widgetbook_host/lib/catalogs/catalog_observe_mode.dart`.
 
 ---
 
