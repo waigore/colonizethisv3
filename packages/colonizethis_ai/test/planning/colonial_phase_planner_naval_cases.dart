@@ -3,9 +3,11 @@
 // topic modules stay ≤650 physical lines.
 
 import 'colonial_phase_planner_naval_priority_cases.dart';
-import 'colonial_phase_planner_naval_suppression_path_e_cases.dart';
+import 'colonial_phase_planner_naval_suppression_core_cases.dart';
+import 'colonial_phase_planner_naval_suppression_path_e_waiver_cases.dart';
 
 void registerColonialPhasePlannerNavalCases() {
   registerColonialPhasePlannerNavalPriorityCases();
-  registerColonialPhasePlannerNavalSuppressionPathECases();
+  registerColonialPhasePlannerNavalSuppressionCoreCases();
+  registerColonialPhasePlannerNavalSuppressionPathEWaiverCases();
 }

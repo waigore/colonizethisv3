@@ -5,15 +5,16 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 /// Physical-line ceiling for residual fat pin contracts after case
-/// extraction (Refs #3997 / #4079 Slice D). Phase-8 used ≤750-or-cases;
-/// Phase-9 densify tightens to ≤650-or-cases for gated basenames.
-const int residualFatPinSuitePhysicalLineCeiling = 650;
+/// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
+/// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
+/// ratchets to ≤600-or-cases for gated basenames.
+const int residualFatPinSuitePhysicalLineCeiling = 600;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
     'packages/colonizethis_ai/test/support_test/';
 
-/// Basenames gated as residual fat pins are cases-split under Phase 8.
+/// Basenames gated as residual fat pins are cases-split under Phase 8+.
 const Set<String> residualFatPinSuiteGatedBasenames = {
   'observer_goal_phase_test.dart',
   'treasury_planner_treasury_budget_test.dart',
@@ -32,6 +33,16 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'expand_phase_planner_economy_test.dart',
   'phase_planner_naval_ranking_test.dart',
   'phase_planner_conquest_frontier_march_test.dart',
+  // Phase-10 Slice C ungated ≥600 densify (Refs #4104).
+  'diplomacy_planner_stalled_peace_test.dart',
+  'recruitment_planner_test.dart',
+  'colonial_naval_scoring_branches_test.dart',
+  'army_conquest_prep_test.dart',
+  'colonial_phase_planner_acquisition_declare_war_test.dart',
+  'domain_planner_orchestrator_expand_nw_work_suppression_test.dart',
+  'expand_phase_planner_declare_war_test.dart',
+  'expand_phase_planner_military_test.dart',
+  'growth_stage_planner_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {

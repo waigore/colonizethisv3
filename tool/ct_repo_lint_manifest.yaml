@@ -1394,7 +1394,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_pin_cases_required
     group: testing
-    title: colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 650 physical lines must import a sibling *_cases.dart (Refs #3977)
+    title: colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 600 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_pin_suite_size.dart
@@ -1450,21 +1450,21 @@ rules:
 
   - rule_id: repo.ai_planning_cases_suite_size
     group: testing
-    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 650 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997)
+    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 600 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_planning_cases_suite_size.dart
 
   - rule_id: repo.ai_residual_fat_pin_cases_required
     group: testing
-    title: colonizethis_ai residual fat-pin contracts (observer_goal_phase / treasury_budget / regiment production) above 750 physical lines must import a sibling *_cases.dart (Refs #3997)
+    title: colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 600 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
 
   - rule_id: repo.ai_s7d_support_suite_size
     group: testing
-    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 800 physical lines (soft post-split gate) (Refs #3997)
+    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 600 physical lines (Refs #3997, #4079, #4104 Slice C)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart
