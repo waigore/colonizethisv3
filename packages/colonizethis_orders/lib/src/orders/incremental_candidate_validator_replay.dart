@@ -1,60 +1,88 @@
-/// Accepted-prefix replay validators and economy-projection probe helpers for
-/// [IncrementalCandidateValidator] (Refs #2394, #2692 S7, Category B).
+/// Accepted-prefix replay validators for [IncrementalCandidateValidator]
+/// (Refs #2394, #2692 S7, Category B).
 ///
 /// Promoted from the `part of 'incremental_candidate_validator.dart'` fragments
 /// `incremental_candidate_validator_prefix_replay.dart` and
-/// `incremental_candidate_validator_projection.dart` to a single standalone
-/// library with explicit imports (Refs #3543 — de-part-file orders; the
-/// extraction-shape policy in `SPEC/program/dart-file-non-comment-line-size.md`
-/// § Extraction shape requires standalone libraries rather than part fragments).
+/// `incremental_candidate_validator_projection.dart` to standalone libraries
+/// with explicit imports (Refs #3543 — de-part-file orders).
 ///
-/// The two extensions stay in one library so their private probe helpers
-/// (`_player`, `_ensurePostWorkPrefixState`, etc.) remain shared without
-/// widening the package surface; the per-pass memoization slots they read and
-/// write live on [IncrementalCandidateValidator.cache]
-/// ([IncrementalCandidateValidatorCache]). Behaviour is unchanged from the
-/// previous part-fragment caches.
+/// Wave 5 slice C splits diplomatic replay and shared economy-projection probes
+/// into companion libraries; recruit/build prefix acceptance is table-driven
+/// via [ProjectedResourcePrefixReplayConfig].
 library;
 
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'incremental_candidate_validator.dart';
-import 'order_validators.dart';
+import 'incremental_candidate_validator_replay_shared.dart';
 import 'order_validator_factory.dart';
-import 'projected_economy_prefix_replay.dart';
-import 'unit_type_helpers.dart';
+import 'order_validators.dart';
+import 'projected_resource_prefix_replay_config.dart';
+
+export 'incremental_candidate_validator_diplomatic_replay.dart';
+
+final _recruitWorkerPrefixReplayConfig =
+    ProjectedResourcePrefixReplayConfig<RecruitWorkerOrder,
+        RecruitWorkerOrderValidator>(
+  existingOrders: (validator) =>
+      validator.basePrefix.recruitWorkerOrdersByPlayerId[validator.playerId] ??
+      const <RecruitWorkerOrder>[],
+  readPrefixReplaySucceeded: (cache) => cache.recruitWorkerPrefixReplaySucceeded,
+  readCachedLedgers: (cache) => cache.postRecruitWorkerPrefixEconomy,
+  writePrefixReplaySucceeded: (cache, value) {
+    cache.recruitWorkerPrefixReplaySucceeded = value;
+  },
+  writeCachedLedgers: (cache, ledgers) {
+    cache.postRecruitWorkerPrefixEconomy = ledgers;
+  },
+  createValidator: (player, ledgers, _) =>
+      createProjectedRecruitWorkerValidator(
+        player: player,
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+  readLedgers: (validator) => (
+    stockpile: validator.stockpile,
+    treasury: validator.treasury,
+    workers: validator.workers,
+  ),
+  validate: (validator, order) =>
+      validator.validate(order, previousRejected: false),
+);
+
+final _buildPrefixReplayConfig =
+    ProjectedResourcePrefixReplayConfig<BuildUnitOrder, BuildOrderValidator>(
+  existingOrders: (validator) =>
+      validator.basePrefix.buildUnitOrdersByPlayerId[validator.playerId] ??
+      const <BuildUnitOrder>[],
+  readPrefixReplaySucceeded: (cache) => cache.buildPrefixReplaySucceeded,
+  readCachedLedgers: (cache) => cache.postBuildPrefixEconomy,
+  writePrefixReplaySucceeded: (cache, value) {
+    cache.buildPrefixReplaySucceeded = value;
+  },
+  writeCachedLedgers: (cache, ledgers) {
+    cache.postBuildPrefixEconomy = ledgers;
+  },
+  createValidator: (player, ledgers, validator) =>
+      createProjectedBuildValidator(
+        game: validator.game,
+        player: player,
+        stockpile: ledgers.stockpile,
+        treasury: ledgers.treasury,
+        workerPool: ledgers.workers,
+      ),
+  readLedgers: (validator) => (
+    stockpile: validator.stockpile,
+    treasury: validator.treasury,
+    workers: validator.workers,
+  ),
+  validate: (validator, order) =>
+      validator.validate(order, previousRejected: false),
+);
 
 extension IncrementalCandidateValidatorPrefixReplay
     on IncrementalCandidateValidator {
-  bool _acceptPlayerProjectedResourceOrder<TOrder, V>({
-    required Player player,
-    required List<TOrder> existingOrders,
-    required bool? prefixReplaySucceeded,
-    required ProjectedResourceLedgers? cachedLedgers,
-    required void Function(bool value) setPrefixReplaySucceeded,
-    required void Function(ProjectedResourceLedgers ledgers) setCachedLedgers,
-    required V Function(ProjectedResourceLedgers ledgers) createValidator,
-    required ProjectedResourceLedgers Function(V validator) readLedgers,
-    required OrderValidationResult Function(V validator, TOrder order) validate,
-    required TOrder candidate,
-  }) =>
-      acceptProjectedResourcePrefixCandidate(
-        prefixReplaySucceeded: prefixReplaySucceeded,
-        cachedLedgers: cachedLedgers,
-        setPrefixReplaySucceeded: setPrefixReplaySucceeded,
-        setCachedLedgers: setCachedLedgers,
-        existingOrders: existingOrders,
-        createPrefixValidator: () =>
-            createValidator(projectedResourceLedgersFromPlayer(player)),
-        validate: validate,
-        readLedgers: readLedgers,
-        createCandidateValidator: (ledgers) =>
-            createValidator(copiedProjectedResourceLedgers(ledgers)),
-        candidate: candidate,
-      );
-
   /// Validates a [RecruitWorkerOrder] candidate against accepted recruit
   /// worker orders in [basePrefix] (Refs #2692 S7,
   /// SPEC/program/order-suggestions.md § Recruit worker orders).
@@ -64,85 +92,38 @@ extension IncrementalCandidateValidatorPrefixReplay
   /// snapshot worker pool / stockpile / treasury so the candidate sees the
   /// post-prefix peasant reservation ledger.
   bool isRecruitWorkerAccepted(RecruitWorkerOrder candidate) {
-    final player = _player();
+    final player = replayProbePlayer();
     if (player == null) return false;
-    final existing =
-        basePrefix.recruitWorkerOrdersByPlayerId[playerId] ??
-        const <RecruitWorkerOrder>[];
-    return _acceptPlayerProjectedResourceOrder(
+    return acceptIncrementalProjectedResourceCandidate(
+      validator: this,
       player: player,
-      existingOrders: existing,
-      prefixReplaySucceeded: cache.recruitWorkerPrefixReplaySucceeded,
-      cachedLedgers: cache.postRecruitWorkerPrefixEconomy,
-      setPrefixReplaySucceeded: (v) {
-        cache.recruitWorkerPrefixReplaySucceeded = v;
-      },
-      setCachedLedgers: (ledgers) {
-        cache.postRecruitWorkerPrefixEconomy = ledgers;
-      },
-      createValidator: (ledgers) => createProjectedRecruitWorkerValidator(
-        player: player,
-        stockpile: ledgers.stockpile,
-        treasury: ledgers.treasury,
-        workerPool: ledgers.workers,
-      ),
-      readLedgers: (validator) => (
-        stockpile: validator.stockpile,
-        treasury: validator.treasury,
-        workers: validator.workers,
-      ),
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
+      config: _recruitWorkerPrefixReplayConfig,
       candidate: candidate,
     );
   }
 
   bool isBuildAccepted(BuildUnitOrder candidate) {
-    final player = _player();
+    final player = replayProbePlayer();
     if (player == null) return false;
-    final builds =
-        basePrefix.buildUnitOrdersByPlayerId[playerId] ??
-        const <BuildUnitOrder>[];
-    return _acceptPlayerProjectedResourceOrder(
+    return acceptIncrementalProjectedResourceCandidate(
+      validator: this,
       player: player,
-      existingOrders: builds,
-      prefixReplaySucceeded: cache.buildPrefixReplaySucceeded,
-      cachedLedgers: cache.postBuildPrefixEconomy,
-      setPrefixReplaySucceeded: (v) {
-        cache.buildPrefixReplaySucceeded = v;
-      },
-      setCachedLedgers: (ledgers) {
-        cache.postBuildPrefixEconomy = ledgers;
-      },
-      createValidator: (ledgers) => createProjectedBuildValidator(
-        game: game,
-        player: player,
-        stockpile: ledgers.stockpile,
-        treasury: ledgers.treasury,
-        workerPool: ledgers.workers,
-      ),
-      readLedgers: (validator) => (
-        stockpile: validator.stockpile,
-        treasury: validator.treasury,
-        workers: validator.workers,
-      ),
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
+      config: _buildPrefixReplayConfig,
       candidate: candidate,
     );
   }
 
   bool isWorkAccepted(WorkOrder candidate) {
-    final player = _player();
+    final player = replayProbePlayer();
     if (player == null) return false;
     if (cache.workPrefixReplaySucceeded == false) {
       return false;
     }
-    final prefix = _ensurePostWorkPrefixState(player);
+    final prefix = ensurePostWorkPrefixState(player);
     if (prefix == null) {
       return false;
     }
-    final workValidator = _workOrderValidatorForProbe(
+    final workValidator = workOrderValidatorForReplayProbe(
       player: player,
       stockpile: Stockpile(quantities: prefix.stockpile.copyQuantities()),
       treasury: prefix.treasury,
@@ -153,288 +134,4 @@ extension IncrementalCandidateValidatorPrefixReplay
         .validate(candidate, previousRejected: false)
         .isAccepted;
   }
-
-  bool isDiplomaticAccepted(DiplomaticOrder candidate) {
-    return _validateDiplomaticCandidate(candidate).isAccepted;
-  }
-
-  /// Like [isDiplomaticAccepted] but returns the full [OrderValidationResult]
-  /// so UI layers can surface validator rejection text on disabled controls.
-  OrderValidationResult probeDiplomaticOrder(DiplomaticOrder candidate) {
-    return _validateDiplomaticCandidate(
-      candidate,
-      playerNotFoundReason: 'Player not found',
-      prefixReplayFailedReason: 'Previous invalid diplomatic order in prefix',
-    );
-  }
-
-  OrderValidationResult _validateDiplomaticCandidate(
-    DiplomaticOrder candidate, {
-    String? playerNotFoundReason,
-    String? prefixReplayFailedReason,
-  }) {
-    final prepared = _prepareDiplomaticCandidateValidator(
-      playerNotFoundReason: playerNotFoundReason,
-      prefixReplayFailedReason: prefixReplayFailedReason,
-    );
-    if (!prepared.ok) {
-      return prepared.reject ??
-          OrderValidationResult.rejected('Diplomatic order rejected');
-    }
-    return prepared.validator!
-        .validate(candidate, previousRejected: false)
-        .result;
-  }
-
-  ({
-    bool ok,
-    OrderValidationResult? reject,
-    DiplomaticOrderValidator? validator,
-  })
-  _prepareDiplomaticCandidateValidator({
-    String? playerNotFoundReason,
-    String? prefixReplayFailedReason,
-  }) {
-    final player = _player();
-    if (player == null) {
-      return (
-        ok: false,
-        reject: playerNotFoundReason == null
-            ? null
-            : OrderValidationResult.rejected(playerNotFoundReason),
-        validator: null,
-      );
-    }
-    if (cache.diplomaticPrefixReplaySucceeded == false) {
-      return (
-        ok: false,
-        reject: prefixReplayFailedReason == null
-            ? null
-            : OrderValidationResult.rejected(prefixReplayFailedReason),
-        validator: null,
-      );
-    }
-    final economy = _projectEconomyAfterAcceptedBuildAndWorkOrders(player);
-    final membership = factionMembershipSnapshot;
-
-    if (cache.postDiplomaticPrefixState == null) {
-      final prefixValidator = createProjectedDiplomaticValidator(
-        game: game,
-        playerId: playerId,
-        initialTreasury: economy.treasury,
-        factionMembership: membership,
-      );
-      for (final existing in diplomaticOrders) {
-        final result = prefixValidator.validate(
-          existing,
-          previousRejected: false,
-        );
-        if (!result.result.isAccepted) {
-          cache.diplomaticPrefixReplaySucceeded = false;
-          return (
-            ok: false,
-            reject: prefixReplayFailedReason == null ? null : result.result,
-            validator: null,
-          );
-        }
-      }
-      cache.diplomaticPrefixReplaySucceeded = true;
-      cache.postDiplomaticPrefixState = prefixValidator
-          .capturePrefixCheckpoint();
-    }
-
-    final checkpoint = cache.postDiplomaticPrefixState!;
-    final candidateValidator = DiplomaticOrderValidator.fromPrefixCheckpoint(
-      game: game,
-      playerId: playerId,
-      checkpoint: checkpoint,
-      factionMembership: membership,
-    );
-    return (ok: true, reject: null, validator: candidateValidator);
-  }
-}
-
-extension IncrementalCandidateValidatorProjection
-    on IncrementalCandidateValidator {
-  ({Stockpile stockpile, int treasury}) _projectEconomyAfterAcceptedBuildOrders(
-    Player player,
-  ) {
-    final cached = cache.economyAfterBuildOrders;
-    if (cached != null) {
-      return cached;
-    }
-    final builds =
-        basePrefix.buildUnitOrdersByPlayerId[playerId] ??
-        const <BuildUnitOrder>[];
-    bool? prefixReplaySucceeded;
-    ProjectedResourceLedgers? cachedLedgers;
-    final snap = ensureProjectedResourcePrefixReplay<BuildUnitOrder,
-        BuildOrderValidator>(
-      prefixReplaySucceeded: prefixReplaySucceeded,
-      cachedLedgers: cachedLedgers,
-      setPrefixReplaySucceeded: (value) => prefixReplaySucceeded = value,
-      setCachedLedgers: (ledgers) => cachedLedgers = ledgers,
-      existingOrders: builds,
-      createPrefixValidator: () => createProjectedBuildValidator(
-        game: game,
-        player: player,
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-        workerPool: player.workerPool,
-      ),
-      validate: (validator, order) =>
-          validator.validate(order, previousRejected: false),
-      readLedgers: (validator) => (
-        stockpile: validator.stockpile,
-        treasury: validator.treasury,
-        workers: validator.workers,
-      ),
-    );
-    if (snap == null) {
-      final fallback = (
-        stockpile: player.stockpile,
-        treasury: player.treasury,
-      );
-      cache.economyAfterBuildOrders = fallback;
-      return fallback;
-    }
-    final projected = (stockpile: snap.stockpile, treasury: snap.treasury);
-    cache.economyAfterBuildOrders = projected;
-    return projected;
-  }
-
-  ({Stockpile stockpile, int treasury})
-  _projectEconomyAfterAcceptedBuildAndWorkOrders(Player player) {
-    final cached = cache.economyAfterBuildAndWorkOrders;
-    if (cached != null) {
-      return cached;
-    }
-    final prefix = _ensurePostWorkPrefixState(player);
-    if (prefix == null) {
-      final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
-      cache.economyAfterBuildAndWorkOrders = afterBuild;
-      return afterBuild;
-    }
-    final projected = (stockpile: prefix.stockpile, treasury: prefix.treasury);
-    cache.economyAfterBuildAndWorkOrders = projected;
-    return projected;
-  }
-
-  /// Replays accepted work orders in [basePrefix] once per validator instance,
-  /// then exposes projected economy + work-order state for candidate probes
-  /// and diplomatic projection (Refs #2394, Category B).
-  ({
-    Stockpile stockpile,
-    int treasury,
-    Set<String> seenUnitIds,
-    Set<String> devExclusive,
-  })?
-  _ensurePostWorkPrefixState(Player player) {
-    if (cache.workPrefixReplaySucceeded == false) {
-      return null;
-    }
-    final cachedState = cache.postWorkPrefixState;
-    if (cachedState != null) {
-      return cachedState;
-    }
-    final afterBuild = _projectEconomyAfterAcceptedBuildOrders(player);
-    final works =
-        basePrefix.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[];
-    final baseDev = Set<String>.from(_devExclusiveTiles());
-    if (works.isEmpty) {
-      final proj = (
-        stockpile: Stockpile(quantities: afterBuild.stockpile.copyQuantities()),
-        treasury: afterBuild.treasury,
-        seenUnitIds: <String>{},
-        devExclusive: baseDev,
-      );
-      cache.workPrefixReplaySucceeded = true;
-      cache.postWorkPrefixState = proj;
-      return proj;
-    }
-    final workValidator = _workOrderValidatorForProbe(
-      player: player,
-      stockpile: afterBuild.stockpile,
-      treasury: afterBuild.treasury,
-      devExclusiveTiles: baseDev,
-    );
-    for (final existing in works) {
-      final result = workValidator.validate(existing, previousRejected: false);
-      if (!result.isAccepted) {
-        cache.workPrefixReplaySucceeded = false;
-        return null;
-      }
-    }
-    final proj = (
-      stockpile: Stockpile(
-        quantities: workValidator.stockpile.copyQuantities(),
-      ),
-      treasury: workValidator.treasury,
-      seenUnitIds: {for (final w in works) w.unitId},
-      devExclusive: Set<String>.from(baseDev),
-    );
-    cache.workPrefixReplaySucceeded = true;
-    cache.postWorkPrefixState = proj;
-    return proj;
-  }
-
-  Set<String> _civilianDraftMoveUnitIds() {
-    final cached = cache.civilianDraftMoveUnitIds;
-    if (cached != null) {
-      return cached;
-    }
-    final ids = <String>{};
-    final moves =
-        basePrefix.moveOrdersByPlayerId[playerId] ?? const <MoveOrder>[];
-    for (final move in moves) {
-      final unit = unitsById[move.unitId];
-      if (unit != null && unit.tileKey != null && unit.tileKey!.isNotEmpty) {
-        ids.add(move.unitId);
-      }
-    }
-    cache.civilianDraftMoveUnitIds = ids;
-    return ids;
-  }
-
-  /// Shared work-validator construction for prefix replay and candidate probes
-  /// (Refs #3971 — 2+ call sites in this library).
-  WorkOrderValidator _workOrderValidatorForProbe({
-    required Player player,
-    required Stockpile stockpile,
-    required int treasury,
-    required Set<String> devExclusiveTiles,
-    Set<String> initialSeenUnitIds = const <String>{},
-  }) {
-    return createWorkOrderValidator(
-      game: game,
-      player: player,
-      playerId: playerId,
-      resolution: (
-        view: view,
-        unitsById: unitsById,
-        provinceById: view.provincesById,
-      ),
-      topology: topology,
-      diplomaticOrders: diplomaticOrders,
-      tileMapByRegion: tileMapByRegion,
-      civilianDraftMoveUnitIds: _civilianDraftMoveUnitIds(),
-      devExclusiveTiles: devExclusiveTiles,
-      stockpile: stockpile,
-      treasury: treasury,
-      factionMembership: factionMembershipSnapshot,
-      initialSeenUnitIds: initialSeenUnitIds,
-    );
-  }
-
-  Set<String> _devExclusiveTiles() {
-    final cached = cache.devExclusiveTiles;
-    if (cached != null) {
-      return cached;
-    }
-    final computed = devExclusiveTilesFromWorld(game.worldState, playerId);
-    cache.devExclusiveTiles = computed;
-    return computed;
-  }
-
-  Player? _player() => game.playerById(playerId);
 }

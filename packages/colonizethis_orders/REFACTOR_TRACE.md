@@ -2571,3 +2571,14 @@ Support LOC after slice A: **12964** (AC ≤13,950; ≥400 headroom). Package `t
 
 Original monolith **414** physical lines → five libraries (max **122** lines). Behaviour unchanged; existing precheck scenario suites green. Remaining for #4109: slices C–E.
 
+## Wave 5 — Slice C: incremental replay split + prefix table (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| replay-shared-probes | extract shared economy/work-prefix probe helpers | `incremental_candidate_validator_replay.dart` | `incremental_candidate_validator_replay_shared.dart` | #4109 |
+| replay-diplomatic-split | extract diplomatic prefix prep/validate | `incremental_candidate_validator_replay.dart` | `incremental_candidate_validator_diplomatic_replay.dart` | #4109 |
+| replay-prefix-table | table-driven recruit/build cache wiring | `incremental_candidate_validator_replay.dart` | `projected_resource_prefix_replay_config.dart` | #4109 |
+| replay-prefix-barrel | slim prefix-replay extension (recruit/build/work) | `incremental_candidate_validator_replay.dart` | same | #4109 |
+
+Original replay monolith **440** physical lines → four libraries (max **201** lines). Behaviour unchanged; ICE equivalence + diplomatic probe suites green. Remaining for #4109: slices D–E.
+
