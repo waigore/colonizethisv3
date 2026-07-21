@@ -2559,3 +2559,15 @@ Behaviour unchanged (rejection messages + candidacy filters preserved). Remainin
 
 Support LOC after slice A: **12964** (AC ≤13,950; ≥400 headroom). Package `test/` LOC: **14915** (AC ≤15,800; ≥500 headroom). Remaining for #4109: slices B–E (lib splits + `repo.orders_lib_source_file_size`).
 
+## Wave 5 — Slice B: work_order_target_prechecks split (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| precheck-split-shared | extract context, typedef, shared gates, embassy/resource helpers | `work_order_target_prechecks.dart` | `work_order_target_prechecks_shared.dart` | #4109 |
+| precheck-split-purchase | `precheckUpgradeTown` + `precheckPurchaseLand` | `work_order_target_prechecks.dart` | `work_order_target_prechecks_purchase.dart` | #4109 |
+| precheck-split-improvement | `precheckBuildImprovement` + `precheckDevExclusiveTileConflict` | `work_order_target_prechecks.dart` | `work_order_target_prechecks_improvement.dart` | #4109 |
+| precheck-split-explore | `precheckCounterSpy` + explorer consulate + default foreign province | `work_order_target_prechecks.dart` | `work_order_target_prechecks_explore.dart` | #4109 |
+| precheck-split-registry | thin `workOrderTargetPrechecks` map + `runWorkOrderTargetPrecheck` | `work_order_target_prechecks.dart` | same (barrel re-exports) | #4109 |
+
+Original monolith **414** physical lines → five libraries (max **122** lines). Behaviour unchanged; existing precheck scenario suites green. Remaining for #4109: slices C–E.
+
