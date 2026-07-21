@@ -50,5 +50,49 @@ void main() {
       expect(code, 1);
       expect(logs.join('\n'), contains('worker_economy_test.dart'));
     });
+
+    test('passes when support lib defers Game( to fixture_builders', () {
+      final root = Directory.systemTemp.createTempSync('economy_support_fixture_ok');
+      addTearDown(() => root.deleteSync(recursive: true));
+      _writeFile(
+        root,
+        'packages/colonizethis_economy_test_support/lib/src/core_economy_test_support.dart',
+        "import 'fixture_builders/core_game_builders.dart';\n"
+        'void main() { final p = corePlayer(); }\n',
+      );
+      _writeFile(
+        root,
+        'packages/colonizethis_economy_test_support/lib/src/fixture_builders/core_game_builders.dart',
+        "final game = Game(id: 'g1');\n",
+      );
+
+      final logs = <String>[];
+      final code = runCheckEconomyTestCoreFixturesShared(
+        root.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(code, 0, reason: logs.join('\n'));
+    });
+
+    test('fails when support lib outside fixture_builders inlines Game(', () {
+      final root =
+          Directory.systemTemp.createTempSync('economy_support_fixture_bad');
+      addTearDown(() => root.deleteSync(recursive: true));
+      _writeFile(
+        root,
+        'packages/colonizethis_economy_test_support/lib/src/extraction_fixture_support.dart',
+        "final game = Game(id: 'g1');\n",
+      );
+
+      final logs = <String>[];
+      final code = runCheckEconomyTestCoreFixturesShared(
+        root.path,
+        info: logs.add,
+        err: logs.add,
+      );
+      expect(code, 1);
+      expect(logs.join('\n'), contains('extraction_fixture_support.dart'));
+    });
   });
 }

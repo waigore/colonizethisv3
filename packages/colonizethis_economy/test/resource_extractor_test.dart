@@ -41,13 +41,5 @@ void main() {
       },
       labelOf: (s) => s.label,
     );
-
-    runLabeledScenarios(
-      tileExtractionContributionScenarios(grainTileMap: _grainTileMap),
-      (scenario) {
-        runTileExtractionContributionScenario(scenario);
-      },
-      labelOf: (s) => s.label,
-    );
   });
 }

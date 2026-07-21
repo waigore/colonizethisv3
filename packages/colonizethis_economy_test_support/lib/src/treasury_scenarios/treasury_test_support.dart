@@ -1,37 +1,13 @@
 // dart format off
-// Shared treasury bid-budget fixtures and game builders (Refs #3093, #3661, #3939).
+// Shared treasury bid-budget fixtures and row builders (Refs #3093, #3661, #3939, #4108).
 import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import '../fixture_builders/game_builders.dart';
 import '../trade_order_factory.dart';
 import 'treasury_expectations.dart';
+export '../fixture_builders/game_builders.dart';
 /// Canonical human-player id used across treasury-bid-budget test suites.
 const String humanPlayerId = 'gp_h';
-/// Builds a minimal `Game` shaped for treasury-bid-budget tests.
-Game buildTreasuryBidBudgetGame({int treasury = 100, Map<CommodityId, int>? prices, Map<CommodityId, int>? stockpile, WorldMarketState? worldMarketState, String playerId = humanPlayerId, String gameId = 'test_treasury_bid_budget', String playerDisplayName = 'England', bool isHuman = true, List<TradeOrder>? carryForwardBids}) {
-  final resolvedPrices = prices ?? const <CommodityId, int>{};
-  return Game(
-    id: gameId,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      Player(
-        id: playerId,
-        displayName: playerDisplayName,
-        isHuman: isHuman,
-        treasury: treasury,
-        stockpile: Stockpile(quantities: stockpile ?? const <CommodityId, int>{}),
-      ),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: worldMarketState ?? WorldMarketState(prices: resolvedPrices, carryForwardBidsByFactionId: carryForwardBids == null ? const {} : {playerId: carryForwardBids}),
-  );
-}
 /// Stockpile-player game builder for sellable-quantity suites (Refs #3831).
 Game buildStockpilePlayerGame({Map<CommodityId, int>? stockpile}) => buildTreasuryBidBudgetGame(treasury: 500, stockpile: stockpile, worldMarketState: const WorldMarketState());
 /// Wraps trade orders into the per-player map for [humanPlayerId].
