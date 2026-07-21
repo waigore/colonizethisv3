@@ -2582,3 +2582,13 @@ Original monolith **414** physical lines → five libraries (max **122** lines).
 
 Original replay monolith **440** physical lines → four libraries (max **201** lines). Behaviour unchanged; ICE equivalence + diplomatic probe suites green. Remaining for #4109: slices D–E.
 
+## Wave 5 — Slice D: work-tile candidacy + explorer thinning (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| explorer-province-probe | extract shared province/tile probe scaffolding (capped sweep, location-first sort, prospect acceptance) | `order_suggestion_work_explorer.dart` | `work_tile_candidacy/explorer_province_probe.dart` | #4109 |
+| explorer-explore-only | retain explore-only gates (usefulness, visibility ok, bundled move leg) inline | `order_suggestion_work_explorer.dart` | same | #4109 |
+| explorer-candidacy-export | re-export probe helpers from `work_tile_candidacy.dart` barrel | `work_tile_candidacy/work_tile_candidacy.dart` | same | #4109 |
+
+Original explorer monolith **419** physical lines → **288** lines + **149**-line candidacy probe module. Probe caps unchanged (`kMaxExploreProvinceProbesPerUnit`, `kMaxWorkProbeAttemptsPerUnitPerTarget`). Behaviour unchanged; explorer/prospect scenario suites green. Remaining for #4109: slice E.
+
