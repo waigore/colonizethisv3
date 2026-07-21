@@ -1,7 +1,12 @@
 // dart format off
 // Table-driven per-phase consumption helper scenarios (Refs #3856, #3939 slice 7, #3979).
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'consumption_phases_expectations.dart';
+
+/// Pins for military/navy food consumption rows.
+typedef FoodConsumptionPins = ({int? total, int? fullyFed, int? grainRemaining});
+
+MilitaryFoodScenario militaryFoodScenario({required String label, required int stockpileGrain, Map<String, int>? regimentCountsById, int? militaryUnits, required FoodConsumptionPins pins}) => (label: label, stockpileGrain: stockpileGrain, regimentCountsById: regimentCountsById, militaryUnits: militaryUnits, pins: pins, refs: null);
+
 /// Military-food consumption scenario row (Refs #3979).
 typedef MilitaryFoodScenario = ({
   String label,
@@ -11,14 +16,9 @@ typedef MilitaryFoodScenario = ({
   FoodConsumptionPins pins,
   String? refs,
 });
-void runMilitaryFoodScenario(MilitaryFoodScenario scenario) {
-  runMilitaryFoodConsumption(
-    stockpileGrain: scenario.stockpileGrain,
-    regimentCountsById: scenario.regimentCountsById,
-    militaryUnits: scenario.militaryUnits,
-    pins: scenario.pins,
-  );
-}
+
+NavyFoodScenario navyFoodScenario({required String label, required int stockpileGrain, Map<String, int>? shipCountsById, FoodConsumptionPins? pins, bool expectUnknownShipThrows = false}) => (label: label, stockpileGrain: stockpileGrain, shipCountsById: shipCountsById, pins: pins, expectUnknownShipThrows: expectUnknownShipThrows, refs: null);
+
 /// Navy-food consumption scenario row (Refs #3979).
 typedef NavyFoodScenario = ({
   String label,
@@ -28,14 +28,20 @@ typedef NavyFoodScenario = ({
   bool expectUnknownShipThrows,
   String? refs,
 });
-void runNavyFoodScenario(NavyFoodScenario scenario) {
-  runNavyFoodConsumption(
-    stockpileGrain: scenario.stockpileGrain,
-    shipCountsById: scenario.shipCountsById,
-    pins: scenario.pins,
-    expectUnknownShipThrows: scenario.expectUnknownShipThrows,
-  );
+
+/// Data-driven expectations for [consumeWorkerFood] rows.
+class WorkerFoodConsumptionExpectation {
+  const WorkerFoodConsumptionExpectation({this.fedMasters, this.fedJourneymen, this.fedApprentices, this.fedPeasants, this.grainRemaining, this.meatRemaining});
+  final int? fedMasters;
+  final int? fedJourneymen;
+  final int? fedApprentices;
+  final int? fedPeasants;
+  final int? grainRemaining;
+  final int? meatRemaining;
 }
+
+WorkerFoodScenario workerFoodScenario({required String label, required Stockpile stockpile, required WorkerPool workers, required WorkerFoodConsumptionExpectation expectation}) => (label: label, stockpile: stockpile, workers: workers, expectation: expectation, refs: null);
+
 /// Worker-food consumption scenario row (Refs #3979).
 typedef WorkerFoodScenario = ({
   String label,
@@ -44,13 +50,12 @@ typedef WorkerFoodScenario = ({
   WorkerFoodConsumptionExpectation expectation,
   String? refs,
 });
-void runWorkerFoodScenario(WorkerFoodScenario scenario) {
-  runWorkerFoodConsumption(
-    stockpile: scenario.stockpile,
-    workers: scenario.workers,
-    expectation: scenario.expectation,
-  );
-}
+
+/// Pins for [assignWorkerLuxury] rows.
+typedef WorkerLuxuryPins = ({int withLuxury, int sugarRemaining});
+
+WorkerLuxuryScenario workerLuxuryScenario({required String label, required Stockpile stockpile, required int foodFedCount, required WorkerLuxuryPins pins}) => (label: label, stockpile: stockpile, foodFedCount: foodFedCount, pins: pins, refs: null);
+
 /// Worker-luxury assignment scenario row (Refs #3979).
 typedef WorkerLuxuryScenario = ({
   String label,
@@ -59,13 +64,12 @@ typedef WorkerLuxuryScenario = ({
   WorkerLuxuryPins pins,
   String? refs,
 });
-void runWorkerLuxuryScenario(WorkerLuxuryScenario scenario) {
-  runWorkerLuxuryAssignment(
-    stockpile: scenario.stockpile,
-    foodFedCount: scenario.foodFedCount,
-    pins: scenario.pins,
-  );
-}
+
+/// Pins for [consumeFoodUnits] rows.
+typedef FoodUnitsPins = ({int consumed, int grainRemaining, int? meatRemaining});
+
+FoodUnitsScenario foodUnitsScenario({required String label, required Stockpile stockpile, required int required, required FoodUnitsPins pins}) => (label: label, stockpile: stockpile, required: required, pins: pins, refs: null);
+
 /// Food-units consumption scenario row (Refs #3979).
 typedef FoodUnitsScenario = ({
   String label,
@@ -74,13 +78,7 @@ typedef FoodUnitsScenario = ({
   FoodUnitsPins pins,
   String? refs,
 });
-void runFoodUnitsScenario(FoodUnitsScenario scenario) {
-  runFoodUnitsConsumption(
-    stockpile: scenario.stockpile,
-    requiredUnits: scenario.required,
-    pins: scenario.pins,
-  );
-}
+
 /// Canonical scenarios for [consumeMilitaryFood].
 List<MilitaryFoodScenario> consumeMilitaryFoodScenarios() => [
   militaryFoodScenario(label: 'per-type foodUpkeep fully feeds regiments from catalog', stockpileGrain: 10, regimentCountsById: const {'pikemen': 2}, pins: (total: 2, fullyFed: 2, grainRemaining: 6)),
