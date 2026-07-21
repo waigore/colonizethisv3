@@ -2592,3 +2592,15 @@ Original replay monolith **440** physical lines → four libraries (max **201** 
 
 Original explorer monolith **419** physical lines → **288** lines + **149**-line candidacy probe module. Probe caps unchanged (`kMaxExploreProvinceProbesPerUnit`, `kMaxWorkProbeAttemptsPerUnitPerTarget`). Behaviour unchanged; explorer/prospect scenario suites green. Remaining for #4109: slice E.
 
+## Wave 5 — Slice E: feedstock split + lib source file-size gate (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| feedstock-gate-shared | shared seller-band identity + unimproved-tile carve-out helpers | `feedstock_extraction_targets.dart` | `feedstock_extraction_gate_shared.dart` | #4109 |
+| feedstock-seller-split | regiment-build-input + seller improvement-input gates | `feedstock_extraction_targets.dart` | `feedstock_seller_extraction_targets.dart` | #4109 |
+| feedstock-supplier-split | affluent supplier improvement-input gate | `feedstock_extraction_targets.dart` | `feedstock_supplier_extraction_targets.dart` | #4109 |
+| feedstock-barrel | stable re-exports + `feedstockExtractionResourceIdsForPlayer` union | `feedstock_extraction_targets.dart` | same (thin barrel) | #4109 |
+| lib-source-size-gate | add `repo.orders_lib_source_file_size` (≤400 physical lines) | `tool/check_orders_lib_source_file_size.dart` | manifest + `repo-lint.md` | #4109 |
+| orders-file-size-extend | extend `repo.orders_file_size` gated set for wave-5 hot files | `tool/check_orders_file_size.dart` | same | #4109 |
+
+Original feedstock monolith **358** physical lines → four libraries (max **104** lines) + **29**-line barrel. Behaviour unchanged; feedstock priority + bootstrap scenario suites green. Wave 5 complete for #4109.
