@@ -40,8 +40,6 @@ void runTradeCargoCapacityForGreatPowerScenario(TradeCargoCapacityForGreatPowerS
   runTradeCargoCapacityGpExpectation(scenario.target);
 }
 
-Game _gameWithGp(String id) => minimalGpGame(playerId: id);
-
 final Map<String, TileMapResult> _nonEmptyTileMapForTradeCargo = {
   'r1': TileMapResult(
     width: 1,
@@ -55,7 +53,7 @@ final Map<String, TileMapResult> _nonEmptyTileMapForTradeCargo = {
 const MapTopology _emptyTopologyForTradeCargo = MapTopology(nodes: [], edges: []);
 
 void runForecastOverseasTonnageExpectation(ForecastOverseasTonnagePins pins) {
-  final game = _gameWithGp(pins.playerId);
+  final game = minimalGpGame(playerId: pins.playerId);
   final shipped = forecastOverseasShippedTonnageForPlayer(game: game, playerId: pins.playerId, tileMapByRegion: _nonEmptyTileMapForTradeCargo, topology: _emptyTopologyForTradeCargo, extractionById: pins.extractionById);
   if (pins.deriveOverseasTotals != null) {
     expect(shipped, overseasShippedTonnageFromExtractionTotals(pins.deriveOverseasTotals!, homeFleetCargoHolds: cargoHoldsForHomeFleet(game, pins.playerId)));
@@ -66,14 +64,14 @@ void runForecastOverseasTonnageExpectation(ForecastOverseasTonnagePins pins) {
 }
 
 void runTradeCargoCapacityExtractionExpectation(TradeCargoCapacityExtractionPins pins) {
-  final game = _gameWithGp(pins.playerId);
+  final game = minimalGpGame(playerId: pins.playerId);
   final holds = cargoHoldsForHomeFleet(game, pins.playerId);
   final capacity = tradeCargoCapacityForGreatPower(game: game, playerId: pins.playerId, tileMapByRegion: _nonEmptyTileMapForTradeCargo, topology: _emptyTopologyForTradeCargo, extractionById: pins.extractionById);
   expect(capacity, holds - pins.overseasTonnageSubtracted);
 }
 
 void runComputeExtractionTotalsEmptyMapsExpectation() {
-  final game = _gameWithGp('gp1');
+  final game = minimalGpGame(playerId: 'gp1');
   expect(computeExtractionTotalsForTradeForecast(game: game, tileMapByRegion: const {}, topology: _emptyTopologyForTradeCargo), isEmpty);
 }
 
