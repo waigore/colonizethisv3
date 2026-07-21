@@ -21,46 +21,7 @@ void osaidRunReturnsAllianceSingleDiploPerTarget() {final list = _suggestFor(dip
 
 void osaidRunReturnsDeclareWarWhenAllied() {final list = _suggestFor(diplomaticApiImplGame(diplomacyRelations: const [DiplomacyRelation(factionId1: 'gp1',factionId2: 'gp2',state: RelationState.atPeace,level: RelationLevel.allied,),],),); final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList(); expect(toGp2,hasLength(1)); expect(toGp2.single.type,DiplomaticOrderType.declareWar);}
 
-void osaidRunReturnsBreakAllianceWhenFormalAllianceExists() {
-  final list = _suggestFor(
-    diplomaticApiImplGame(
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'gp1',
-          factionId2: 'gp2',
-          state: RelationState.atPeace,
-          level: RelationLevel.allied,
-          formalAlliance: true,
-        ),
-      ],
-    ),
-  );
-  final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList();
-  expect(toGp2, hasLength(1));
-  expect(toGp2.single.type, DiplomaticOrderType.breakAlliance);
-  final eng = OrderEngine();
-  expect(
-    eng
-        .addDiplomaticOrderWithContext(
-          diplomaticApiImplGame(
-            diplomacyRelations: const [
-              DiplomacyRelation(
-                factionId1: 'gp1',
-                factionId2: 'gp2',
-                state: RelationState.atPeace,
-                level: RelationLevel.allied,
-                formalAlliance: true,
-              ),
-            ],
-          ),
-          diplomaticApiImplTopology,
-          'gp1',
-          toGp2.single,
-        )
-        .isAccepted,
-    isTrue,
-  );
-}
+void osaidRunReturnsBreakAllianceWhenFormalAllianceExists() {final list = _suggestFor( diplomaticApiImplGame( diplomacyRelations: const [ DiplomacyRelation( factionId1: 'gp1', factionId2: 'gp2', state: RelationState.atPeace, level: RelationLevel.allied, formalAlliance: true, ), ], ), ); final toGp2 = list.where((o) => o.targetFactionId == 'gp2').toList(); expect(toGp2, hasLength(1)); expect(toGp2.single.type, DiplomaticOrderType.breakAlliance); final eng = OrderEngine(); expect( eng .addDiplomaticOrderWithContext( diplomaticApiImplGame( diplomacyRelations: const [ DiplomacyRelation( factionId1: 'gp1', factionId2: 'gp2', state: RelationState.atPeace, level: RelationLevel.allied, formalAlliance: true, ), ], ), diplomaticApiImplTopology, 'gp1', toGp2.single, ) .isAccepted, isTrue, );}
 
 void osaidRunDoesNotReturnAllianceWhenFormalAllianceExists() {final list = _suggestFor(diplomaticApiImplGame(diplomacyRelations: const [DiplomacyRelation(factionId1: 'gp1',factionId2: 'gp2',state: RelationState.atPeace,level: RelationLevel.allied,formalAlliance: true,),],),); expect(list.where((o) => o.type == DiplomaticOrderType.alliance && o.targetFactionId == 'gp2',),isEmpty,);}
 

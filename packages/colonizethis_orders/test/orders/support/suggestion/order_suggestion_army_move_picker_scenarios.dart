@@ -13,44 +13,7 @@ void osampRunSharedPlayerViewMatchesDefaultArmyMovePickerDestinations() {final g
 
 void osampRunSharedFactionMembershipMatchesDefaultArmyMovePickerDestinations() {final game = armyMovePickerGameMinimal(id: 'g_army_picker_shared_membership'); final topology = armyMovePickerEmptyTopology; final army = armyMovePickerFieldArmy(game); final baseline = armyMovePickerDestinations(game: game,topology: topology,playerId: armyMovePickerGp,army: army,currentOrders: const Orders(),); final membership = DiplomacyFactionMembership.from(game); final withShared = armyMovePickerDestinations(game: game,topology: topology,playerId: armyMovePickerGp,army: army,currentOrders: const Orders(),factionMembership: membership,); expect(withShared,baseline);}
 
-void osampRunSharedCandidateValidatorMatchesDefaultAndSkipsForPlayerRebuild() {
-  final game = armyMovePickerGameTwoNeighborsOnly(
-    id: 'g_army_picker_shared_validator',
-  );
-  final topology = armyMovePickerTopologyThreeProvinces();
-  const orders = Orders();
-  final army = armyMovePickerFieldArmy(game);
-  final baseline = armyMovePickerDestinations(
-    game: game,
-    topology: topology,
-    playerId: armyMovePickerGp,
-    army: army,
-    currentOrders: orders,
-  );
-  final view = buildPlayerView(game, topology, armyMovePickerGp);
-  final shared = IncrementalCandidateValidator.forPlayer(
-    game: game,
-    topology: topology,
-    playerId: armyMovePickerGp,
-    basePrefix: orders,
-    resolution: orderResolutionContextFromView(view, game),
-  );
-  resetIncrementalCandidateValidatorBuildCountForTests();
-  final withSharedValidator = armyMovePickerDestinations(
-    game: game,
-    topology: topology,
-    playerId: armyMovePickerGp,
-    army: army,
-    currentOrders: orders,
-    sharedCandidateValidator: shared,
-  );
-  expect(withSharedValidator, baseline);
-  expect(
-    incrementalCandidateValidatorBuildCountForTests,
-    0,
-    reason: 'army picker must reuse supplied pass validator (Refs #2394)',
-  );
-}
+void osampRunSharedCandidateValidatorMatchesDefaultAndSkipsForPlayerRebuild() {final game = armyMovePickerGameTwoNeighborsOnly( id: 'g_army_picker_shared_validator', ); final topology = armyMovePickerTopologyThreeProvinces(); const orders = Orders(); final army = armyMovePickerFieldArmy(game); final baseline = armyMovePickerDestinations( game: game, topology: topology, playerId: armyMovePickerGp, army: army, currentOrders: orders, ); final view = buildPlayerView(game, topology, armyMovePickerGp); final shared = IncrementalCandidateValidator.forPlayer( game: game, topology: topology, playerId: armyMovePickerGp, basePrefix: orders, resolution: orderResolutionContextFromView(view, game), ); resetIncrementalCandidateValidatorBuildCountForTests(); final withSharedValidator = armyMovePickerDestinations( game: game, topology: topology, playerId: armyMovePickerGp, army: army, currentOrders: orders, sharedCandidateValidator: shared, ); expect(withSharedValidator, baseline); expect( incrementalCandidateValidatorBuildCountForTests, 0, reason: 'army picker must reuse supplied pass validator (Refs #2394)', );}
 
 List<RunnableScenario> orderSuggestionArmyMovePickerScenarios() => [
   rs('cached player-owned set matches default destination picker path', osampRunCachedPlayerOwnedMatchesDefaultDestinationPickerPath),

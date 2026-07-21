@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../common/expectation_asserts.dart';
 import 'move_validator_test_support.dart';
 
 // dart format off
@@ -32,22 +33,20 @@ void mvExpectUnitMove({
   Matcher? reasonContains,
 }) {
   const validator = MoveValidator();
-  final result = validator.validate(
-    MoveOrder(unitId: unitId, destinationTileKey: destinationTileKey),
-    game,
-    'p1',
-    moveValidatorTestContext(game, topology, 'p1'),
-    const [],
-    topology,
-    previousRejected: previousRejected,
+  expectOrderValidationResult(
+    validator.validate(
+      MoveOrder(unitId: unitId, destinationTileKey: destinationTileKey),
+      game,
+      'p1',
+      moveValidatorTestContext(game, topology, 'p1'),
+      const [],
+      topology,
+      previousRejected: previousRejected,
+    ),
+    status: status,
+    reasonExact: reasonExact,
+    reasonContains: reasonContains,
   );
-  expect(result.status, status);
-  if (reasonExact != null) {
-    expect(result.reason, reasonExact);
-  }
-  if (reasonContains != null) {
-    expect(result.reason, reasonContains);
-  }
 }
 
 void mvExpectArmyMove({
@@ -74,13 +73,12 @@ void mvExpectArmyMove({
     view,
     topology,
   );
-  expect(result.status, status);
-  if (reasonExact != null) {
-    expect(result.reason, reasonExact);
-  }
-  if (reasonContains != null) {
-    expect(result.reason, reasonContains);
-  }
+  expectOrderValidationResult(
+    result,
+    status: status,
+    reasonExact: reasonExact,
+    reasonContains: reasonContains,
+  );
   for (final matcher in reasonContainsAll ?? const <Matcher>[]) {
     expect(result.reason, matcher);
   }

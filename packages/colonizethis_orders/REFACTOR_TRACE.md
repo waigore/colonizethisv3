@@ -2549,3 +2549,13 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 11: **14373**. Pac
 
 Behaviour unchanged (rejection messages + candidacy filters preserved). Remaining for #3971: none expected after this slice (LOC ACs + balanced lib extracts landed).
 
+## Wave 5 — Slice A: scenario densify + LOC ratchet + shorthand gate (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| scenario-run-densify | collapse multi-line `void *Run*` bodies to single-line across 28 scenario modules | `test/orders/support/**/*_scenarios.dart` | same | #4109 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 14500 → 13950; package 16400 → 15800 | `tool/check_orders_test_support_loc.dart` | same | #4109 |
+| shorthand-file-size-gate | add `repo.orders_test_shorthand_file_size` (≤180 physical lines) | `tool/check_orders_test_shorthand_file_size.dart` | manifest + `repo-lint.md` | #4109 |
+
+Support LOC after slice A: **12964** (AC ≤13,950; ≥400 headroom). Package `test/` LOC: **14915** (AC ≤15,800; ≥500 headroom). Remaining for #4109: slices B–E (lib splits + `repo.orders_lib_source_file_size`).
+

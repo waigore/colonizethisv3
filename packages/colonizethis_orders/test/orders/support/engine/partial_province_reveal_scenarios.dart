@@ -14,60 +14,7 @@ void pprRunIncludesPrefixedProvinceWhenLandTilesMixVisibility() {const playerId 
 
 void pprRunExcludesUnprefixedKeysAndUniformVisibility() {const playerId = 'gp1'; const ow = 'oldWorld'; final game = TestFixtures.minimalGame(id: 'g1',players: [Player(id: playerId,displayName: 'GP',isHuman: true)],oldWorld: const RegionData(provinces: [],units: []),tileKeysByRegionAndProvince: {ow: {'p1': ['$ow|p1|0|0'],'$ow|p2': ['$ow|p2|0|0','$ow|p2|0|1'],},},); final view = PlayerView(playerId: playerId,player: Player(id: playerId,displayName: 'GP',isHuman: true),ownUnitsById: const {},provincesById: const {},visibilityByTile: {'$ow|p2|0|0': VisibilityLevel.fogged,'$ow|p2|0|1': VisibilityLevel.fullyVisible,},prospectedTiles: const {},diplomacyByOtherId: const {},); final ids = partiallyRevealedPrefixedProvinceIdsForPlayer(game: game,view: view,); expect(ids,isEmpty);}
 
-void pprRunPartialRevealIdsResolveViaProvincesById() {
-  const playerId = 'gp1';
-  const ow = 'oldWorld';
-  final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId);
-  final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId);
-  final world = WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: RegionData(provinces: [p1, p2], units: const []),
-    newWorld: const RegionData(),
-    tileKeysByRegionAndProvince: {
-      ow: {
-        '$ow|p1': ['$ow|p1|0|0', '$ow|p1|0|1'],
-        '$ow|p2': ['$ow|p2|0|0'],
-      },
-    },
-    playerVisibilityByTile: {
-      playerId: {
-        '$ow|p1|0|0': 'unknown',
-        '$ow|p1|0|1': 'fogged',
-        '$ow|p2|0|0': 'fogged',
-      },
-    },
-  );
-  final game = Game(
-    id: 'g1',
-    worldState: world,
-    players: const [Player(id: playerId, displayName: 'GP', isHuman: true)],
-  );
-  final topology = MapTopology(
-    nodes: const [
-      TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province),
-      TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province),
-    ],
-    edges: const [],
-  );
-  final view = buildPlayerView(game, topology, playerId);
-  final cache = partiallyRevealedPrefixedProvinceIdsForPlayer(
-    game: game,
-    view: view,
-  );
-  final legacy = allProvinces(
-    game.worldState,
-  ).where((p) => cache.contains(p.id)).map((p) => p.id).toList()..sort();
-  final optimized = <String>[];
-  for (final id in cache) {
-    final p = view.provincesById[id] ?? game.worldState.tryGetProvince(id);
-    if (p != null) {
-      optimized.add(p.id);
-    }
-  }
-  optimized.sort();
-  expect(cache, isNotEmpty);
-  expect(optimized, legacy);
-}
+void pprRunPartialRevealIdsResolveViaProvincesById() {const playerId = 'gp1'; const ow = 'oldWorld'; final p1 = Province(id: '$ow|p1', regionId: ow, ownerId: playerId); final p2 = Province(id: '$ow|p2', regionId: ow, ownerId: playerId); final world = WorldState( turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1), oldWorld: RegionData(provinces: [p1, p2], units: const []), newWorld: const RegionData(), tileKeysByRegionAndProvince: { ow: { '$ow|p1': ['$ow|p1|0|0', '$ow|p1|0|1'], '$ow|p2': ['$ow|p2|0|0'], }, }, playerVisibilityByTile: { playerId: { '$ow|p1|0|0': 'unknown', '$ow|p1|0|1': 'fogged', '$ow|p2|0|0': 'fogged', }, }, ); final game = Game( id: 'g1', worldState: world, players: const [Player(id: playerId, displayName: 'GP', isHuman: true)], ); final topology = MapTopology( nodes: const [ TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province), TopologyNode(id: 'p2', regionId: ow, type: TopologyNodeType.province), ], edges: const [], ); final view = buildPlayerView(game, topology, playerId); final cache = partiallyRevealedPrefixedProvinceIdsForPlayer( game: game, view: view, ); final legacy = allProvinces( game.worldState, ).where((p) => cache.contains(p.id)).map((p) => p.id).toList()..sort(); final optimized = <String>[]; for (final id in cache) { final p = view.provincesById[id] ?? game.worldState.tryGetProvince(id); if (p != null) { optimized.add(p.id); } } optimized.sort(); expect(cache, isNotEmpty); expect(optimized, legacy);}
 
 void pprRunReturnsEmptyWithoutScanningWhenIdSetEmpty() {final game = TestFixtures.minimalGame(id: 'g1',players: const [Player(id: 'p1',displayName: 'P',isHuman: true)],oldWorld: RegionData(provinces: [Province(id: 'oldWorld|a',regionId: 'oldWorld',displayName: 'A',ownerId: 'p1',),],units: const [],),); final view = buildPlayerView(game,const MapTopology(),'p1'); expect(sortedProvincesForPartialRevealPrefixedIds(view: view,partiallyRevealedPrefixedProvinceIds: const {},),isEmpty,);}
 

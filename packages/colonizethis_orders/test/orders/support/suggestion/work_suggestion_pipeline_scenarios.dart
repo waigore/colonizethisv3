@@ -12,42 +12,7 @@ void wspRunDuplicatePendingShortCircuits() {withWspLogCapture((events) {final un
 
 void wspRunFirstAcceptedStopsIteration() {withWspLogCapture((events) {final unit = wspBuilderUnit(); final suggestions = <WorkOrder>[]; final existing = <String,Set<String>>{}; WorkSuggestionPipeline.run(unit: unit,unitType: unit.type,unitRegionId: 'ow',atProvinceId: 'ow|p1',workTarget: kWorkTargetBuildImprovement,existingTargetsByUnit: existing,suggestions: suggestions,candidatesProvider: () sync* {yield WorkOrder(unitId: unit.id,target: kWorkTargetBuildImprovement,targetTileKey: 'a',); yield WorkOrder(unitId: unit.id,target: kWorkTargetBuildImprovement,targetTileKey: 'b',); },candidateAcceptor: (_) => true,noCandidateReason: 'no_valid_tile',); expect(suggestions,hasLength(1)); expect(suggestions.single.targetTileKey,'a'); expect(existing[unit.id],contains(kWorkTargetBuildImprovement)); });}
 
-void wspRunIncludeAllAcceptedCollectsMultiple() {
-  withWspLogCapture((events) {
-    final unit = wspBuilderUnit();
-    final suggestions = <WorkOrder>[];
-    final existing = <String, Set<String>>{};
-
-    WorkSuggestionPipeline.run(
-      unit: unit,
-      unitType: unit.type,
-      unitRegionId: 'ow',
-      atProvinceId: 'ow|p1',
-      workTarget: kWorkTargetBuildImprovement,
-      existingTargetsByUnit: existing,
-      suggestions: suggestions,
-      candidatesProvider: () sync* {
-        yield WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetBuildImprovement,
-          targetTileKey: 'a',
-        );
-        yield WorkOrder(
-          unitId: unit.id,
-          target: kWorkTargetBuildImprovement,
-          targetTileKey: 'b',
-        );
-      },
-      candidateAcceptor: (_) => true,
-      noCandidateReason: 'no_valid_tile',
-      includeAllAccepted: true,
-    );
-
-    expect(suggestions, hasLength(2));
-    final lines = wspSuggestWorkLines(events);
-    expect(lines.last, contains('includedCount=2'));
-  });
-}
+void wspRunIncludeAllAcceptedCollectsMultiple() {withWspLogCapture((events) { final unit = wspBuilderUnit(); final suggestions = <WorkOrder>[]; final existing = <String, Set<String>>{}; WorkSuggestionPipeline.run( unit: unit, unitType: unit.type, unitRegionId: 'ow', atProvinceId: 'ow|p1', workTarget: kWorkTargetBuildImprovement, existingTargetsByUnit: existing, suggestions: suggestions, candidatesProvider: () sync* { yield WorkOrder( unitId: unit.id, target: kWorkTargetBuildImprovement, targetTileKey: 'a', ); yield WorkOrder( unitId: unit.id, target: kWorkTargetBuildImprovement, targetTileKey: 'b', ); }, candidateAcceptor: (_) => true, noCandidateReason: 'no_valid_tile', includeAllAccepted: true, ); expect(suggestions, hasLength(2)); final lines = wspSuggestWorkLines(events); expect(lines.last, contains('includedCount=2')); });}
 
 void wspRunNoCandidatesLogsReason() {withWspLogCapture((events) {final unit = wspBuilderUnit(); final suggestions = <WorkOrder>[]; final existing = <String,Set<String>>{}; WorkSuggestionPipeline.run(unit: unit,unitType: unit.type,unitRegionId: 'ow',atProvinceId: 'ow|p1',workTarget: kWorkTargetBuildImprovement,existingTargetsByUnit: existing,suggestions: suggestions,candidatesProvider: () => const <WorkOrder>[],candidateAcceptor: (_) => true,noCandidateReason: 'custom_empty',); expect(suggestions,isEmpty); final lines = wspSuggestWorkLines(events); expect(lines.single,contains('reason=custom_empty')); });}
 
@@ -55,43 +20,7 @@ void wspRunResolveNoCandidateOverrides() {withWspLogCapture((events) {final unit
 
 void wspRunMaxProbeAttemptsOverride() {withWspLogCapture((events) {final unit = wspExplorerUnit(); final suggestions = <WorkOrder>[]; final existing = <String,Set<String>>{}; WorkSuggestionPipeline.run(unit: unit,unitType: unit.type,unitRegionId: 'ow',atProvinceId: 'ow|p1',workTarget: kWorkTargetProspect,existingTargetsByUnit: existing,suggestions: suggestions,candidatesProvider: () sync* {for (var i = 0; i < 6; i++) {yield WorkOrder(unitId: unit.id,target: kWorkTargetProspect,targetTileKey: 'ow|p1|$i|0',); } },candidateAcceptor: (_) => true,noCandidateReason: 'no_valid_tile',includeAllAccepted: true,maxProbeAttempts: 6,); expect(suggestions,hasLength(6)); final lines = wspSuggestWorkLines(events); expect(lines.last,contains('includedCount=6')); });}
 
-void wspRunDefaultCapKMaxWorkProbeAttempts() {
-  withWspLogCapture((events) {
-    final unit = wspExplorerUnit();
-    final suggestions = <WorkOrder>[];
-    final existing = <String, Set<String>>{};
-
-    WorkSuggestionPipeline.run(
-      unit: unit,
-      unitType: unit.type,
-      unitRegionId: 'ow',
-      atProvinceId: 'ow|p1',
-      workTarget: kWorkTargetProspect,
-      existingTargetsByUnit: existing,
-      suggestions: suggestions,
-      candidatesProvider: () sync* {
-        for (var i = 0; i < 6; i++) {
-          yield WorkOrder(
-            unitId: unit.id,
-            target: kWorkTargetProspect,
-            targetTileKey: 'ow|p1|$i|0',
-          );
-        }
-      },
-      candidateAcceptor: (_) => true,
-      noCandidateReason: 'no_valid_tile',
-      includeAllAccepted: true,
-    );
-
-    expect(
-      suggestions,
-      hasLength(kMaxWorkProbeAttemptsPerUnitPerTarget),
-      reason:
-          'default cap should match SPEC § Throughput bounds '
-          'kMaxWorkProbeAttemptsPerUnitPerTarget',
-    );
-  });
-}
+void wspRunDefaultCapKMaxWorkProbeAttempts() {withWspLogCapture((events) { final unit = wspExplorerUnit(); final suggestions = <WorkOrder>[]; final existing = <String, Set<String>>{}; WorkSuggestionPipeline.run( unit: unit, unitType: unit.type, unitRegionId: 'ow', atProvinceId: 'ow|p1', workTarget: kWorkTargetProspect, existingTargetsByUnit: existing, suggestions: suggestions, candidatesProvider: () sync* { for (var i = 0; i < 6; i++) { yield WorkOrder( unitId: unit.id, target: kWorkTargetProspect, targetTileKey: 'ow|p1|$i|0', ); } }, candidateAcceptor: (_) => true, noCandidateReason: 'no_valid_tile', includeAllAccepted: true, ); expect( suggestions, hasLength(kMaxWorkProbeAttemptsPerUnitPerTarget), reason: 'default cap should match SPEC § Throughput bounds ' 'kMaxWorkProbeAttemptsPerUnitPerTarget', ); });}
 
 void wspRunRejectedCandidatesLogEngineRejectedReason() {withWspLogCapture((events) {final unit = wspBuilderUnit(); final suggestions = <WorkOrder>[]; final existing = <String,Set<String>>{}; WorkSuggestionPipeline.run(unit: unit,unitType: unit.type,unitRegionId: 'ow',atProvinceId: 'ow|p1',workTarget: kWorkTargetBuildImprovement,existingTargetsByUnit: existing,suggestions: suggestions,candidatesProvider: () => [WorkOrder(unitId: unit.id,target: kWorkTargetBuildImprovement,targetTileKey: 'a',),],candidateAcceptor: (_) => false,noCandidateReason: 'no_valid_tile',engineRejectedReason: 'rejected_by_test',); expect(suggestions,isEmpty); final lines = wspSuggestWorkLines(events); expect(lines.single,contains('reason=rejected_by_test')); });}
 
