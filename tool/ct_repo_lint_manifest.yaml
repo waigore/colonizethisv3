@@ -735,6 +735,13 @@ rules:
     runner: dart
     script: tool/check_turn_lib_file_size.dart
 
+  - rule_id: repo.turn_test_file_size
+    group: testing
+    title: colonizethis_turn non-support test files must stay at or below the wave-4 400 physical-line ceiling (Refs #4113)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_file_size.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)
