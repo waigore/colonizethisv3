@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'fixture_builders/game_builders.dart' show gameForNonGpExtractionTest;
+export 'fixture_builders/game_builders.dart' show gameForNonGpExtractionTest;
 /// A 1×1 [TileMapResult] for [province] (local id, default `p1`) carrying
 /// [resource] (`null` for an empty/no-resource tile).
 TileMapResult singleTileMap(Resource? resource, {String province = 'p1'}) => TileMapResult(
@@ -91,23 +93,6 @@ Province capitalProvinceForNonGpExtractionTest({required String provinceId, int 
   final regionId = provinceId.split('|').first;
   final factionId = provinceId.split('|').last;
   return Province(id: provinceId, regionId: regionId, ownerId: factionId, townDevelopmentLevel: townDev, townTileKey: townTileKey);
-}
-/// Builds a minimal [Game] hosting the supplied non-GP factions.
-Game gameForNonGpExtractionTest({required List<Province> provinces, TileMapState? tileState, List<MinorNation> minorNations = const [], List<Tribe> tribes = const [], int capitalTileGrainBonusPerTurn = 0, List<Province> newWorldProvinces = const [], String id = 'g_test', List<Player> players = const [], Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince = const {}}) {
-  return Game(
-    id: id,
-    capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
-    worldState: WorldState(
-      turnState: TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: RegionData(provinces: newWorldProvinces),
-      tileState: tileState ?? TileMapState(),
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-  );
 }
 /// Empty non-GP [Game] (no provinces / minors / tribes) (Refs #3939 slice 58).
 Game nonGpEmptyGame() => gameForNonGpExtractionTest(provinces: const []);
