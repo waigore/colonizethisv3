@@ -6,6 +6,7 @@ import 'package:colonizethis_orders/src/orders/validators/naval_order_validator.
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../common/expectation_asserts.dart';
 import 'naval_order_validator_test_support.dart';
 
 const _novDefaultPlayer = Player(
@@ -21,19 +22,6 @@ NavalMoveOrder novSeaMove(String fleetId, String seaZoneId) =>
     NavalMoveOrder(fleetId: fleetId, destinationSeaZoneId: seaZoneId);
 
 // dart format off
-void _novExpectResult(
-  OrderValidationResult result, {
-  required OrderValidationStatus status,
-  String? reasonExact,
-  Matcher? reasonContains,
-  bool reasonIsNull = false,
-}) {
-  expect(result.status, status);
-  if (reasonExact != null) expect(result.reason, reasonExact);
-  if (reasonContains != null) expect(result.reason, reasonContains);
-  if (reasonIsNull) expect(result.reason, isNull);
-}
-
 void novExpectNavalMove({
   required NavalOrderValidator validator,
   required NavalMoveOrder order,
@@ -42,7 +30,7 @@ void novExpectNavalMove({
   String? reasonExact,
   Matcher? reasonContains,
   bool reasonIsNull = false,
-}) => _novExpectResult(
+}) => expectOrderValidationResult(
   validator.validateNavalMove(order, previousRejected: previousRejected),
   status: status,
   reasonExact: reasonExact,
@@ -58,7 +46,7 @@ void novExpectNavalMission({
   String? reasonExact,
   Matcher? reasonContains,
   bool reasonIsNull = false,
-}) => _novExpectResult(
+}) => expectOrderValidationResult(
   validator.validateNavalMission(order, previousRejected: previousRejected),
   status: status,
   reasonExact: reasonExact,

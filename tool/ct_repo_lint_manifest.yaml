@@ -1345,10 +1345,24 @@ rules:
 
   - rule_id: repo.orders_test_support_loc
     group: testing
-    title: colonizethis_orders test/orders/support/ and package test/ physical LOC must stay under wave-4 ratchet ceilings (Refs #3971)
+    title: colonizethis_orders test/orders/support/ and package test/ physical LOC must stay under wave-5 ratchet ceilings (Refs #4109)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_test_support_loc.dart
+
+  - rule_id: repo.orders_test_shorthand_file_size
+    group: testing
+    title: colonizethis_orders support *expectation_shorthand.dart files must stay ≤180 physical lines (Refs #4109)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_test_shorthand_file_size.dart
+
+  - rule_id: repo.orders_lib_source_file_size
+    group: structure
+    title: colonizethis_orders lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4109)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_lib_source_file_size.dart
 
   - rule_id: repo.orders_test_support_raw_game
     group: testing

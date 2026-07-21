@@ -15,58 +15,7 @@ void osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes() {expe
 
 void osdpRunPlayerOverturesByTargetIdForPlayerKeepsFirstRowPerTarget() {final game = orderSuggestionDiplomaticPassDuplicateOvertureGame(); final map = playerOverturesByTargetIdForPlayer(game,'gp1'); expect(map.keys,['minor1']); expect(map['minor1']!.stage,OvertureStage.tradeConsulate);}
 
-void osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets() {
-  final atPeaceGame = gpMinorGame(
-    includeProvinces: true,
-    relationState: RelationState.atPeace,
-  );
-  final atWarGame = gpMinorGame(
-    includeProvinces: true,
-    relationState: RelationState.atWar,
-  );
-  final suggestions = <DiplomaticOrder>[];
-
-  void runPass(Game game) {
-    final topology = emptyTopology;
-    final inputs = DiplomaticSuggestionPassInputs(
-      subValidatorContext: DiplomaticSubValidatorContext(
-        game: game,
-        playerId: 'gp1',
-      ),
-      knownTargetIds: {'minor1'},
-      knownFactionIds: {'minor1'},
-      playerOverturesByTargetId: const {},
-      playerHoldsColony: false,
-      player: game.players.first,
-    );
-    acceptDeclareWarCandidatesForTargets(
-      sortedTargetIds: ['gp1', 'minor1'],
-      playerId: 'gp1',
-      inputs: inputs,
-      state: DiplomaticSuggestionPassState(
-        workingOrders: const Orders(),
-        passValidator: IncrementalCandidateValidator.forPlayer(
-          game: game,
-          topology: topology,
-          playerId: 'gp1',
-          basePrefix: const Orders(),
-        ),
-        suggestions: suggestions,
-      ),
-    );
-  }
-
-  runPass(atPeaceGame);
-  expect(suggestions.map((o) => o.targetFactionId), isNot(contains('gp1')));
-  expect(suggestions, isNotEmpty);
-  for (final order in suggestions) {
-    expect(order.type, DiplomaticOrderType.declareWar);
-  }
-
-  suggestions.clear();
-  runPass(atWarGame);
-  expect(suggestions, isEmpty);
-}
+void osdpRunAcceptDeclareWarCandidatesForTargetsSkipsSelfAndAtWarTargets() {final atPeaceGame = gpMinorGame( includeProvinces: true, relationState: RelationState.atPeace, ); final atWarGame = gpMinorGame( includeProvinces: true, relationState: RelationState.atWar, ); final suggestions = <DiplomaticOrder>[]; void runPass(Game game) { final topology = emptyTopology; final inputs = DiplomaticSuggestionPassInputs( subValidatorContext: DiplomaticSubValidatorContext( game: game, playerId: 'gp1', ), knownTargetIds: {'minor1'}, knownFactionIds: {'minor1'}, playerOverturesByTargetId: const {}, playerHoldsColony: false, player: game.players.first, ); acceptDeclareWarCandidatesForTargets( sortedTargetIds: ['gp1', 'minor1'], playerId: 'gp1', inputs: inputs, state: DiplomaticSuggestionPassState( workingOrders: const Orders(), passValidator: IncrementalCandidateValidator.forPlayer( game: game, topology: topology, playerId: 'gp1', basePrefix: const Orders(), ), suggestions: suggestions, ), ); } runPass(atPeaceGame); expect(suggestions.map((o) => o.targetFactionId), isNot(contains('gp1'))); expect(suggestions, isNotEmpty); for (final order in suggestions) { expect(order.type, DiplomaticOrderType.declareWar); } suggestions.clear(); runPass(atWarGame); expect(suggestions, isEmpty);}
 
 List<RunnableScenario> orderSuggestionDiplomaticPassScenarios() => [
   rs('isIndependentDiplomaticCandidate flags economic and boycott types', osdpRunIsIndependentDiplomaticCandidateFlagsEconomicAndBoycottTypes),

@@ -21,42 +21,7 @@ void wotpRunUpgradeTownRejectsMaxDevelopment() {final game = workOrderPrecheckBa
 
 void wotpRunSkippingDefaultForeignCheckSet() {expect(kWorkTargetsSkippingDefaultForeignProvinceCheck,equals({kWorkTargetCounterSpy,kWorkTargetPurchaseLand,kWorkTargetBuildImprovement,kWorkTargetUpgradeTown,}),);}
 
-void wotpRunPurchaseLandFactionMembershipParity() {
-  final game = workOrderPrecheckPurchaseLandGame();
-  final player = game.players.single;
-  final membership = DiplomacyFactionMembership.from(game);
-  WorkOrderTargetPrecheckContext ctx({required bool withSnap}) =>
-      WorkOrderTargetPrecheckContext(
-        game: game,
-        player: player,
-        playerId: 'p1',
-        treasury: 500,
-        civilianEmbassyWorkAllowed: (_, __) => false,
-        factionMembership: withSnap ? membership : null,
-        devExclusiveTiles: const {},
-      );
-  final order = WorkOrder(
-    unitId: 'merchant1',
-    target: kWorkTargetPurchaseLand,
-    targetTileKey: PurchaseLandTestFixture.tileKey,
-  );
-  final withSnap = runWorkOrderTargetPrecheck(
-    ctx(withSnap: true),
-    order,
-    PurchaseLandTestFixture.minorProvinceId,
-    'minor1',
-    kUnitTypeMerchant,
-  );
-  final linear = runWorkOrderTargetPrecheck(
-    ctx(withSnap: false),
-    order,
-    PurchaseLandTestFixture.minorProvinceId,
-    'minor1',
-    kUnitTypeMerchant,
-  );
-  expect(withSnap, isNull);
-  expect(linear, isNull);
-}
+void wotpRunPurchaseLandFactionMembershipParity() {final game = workOrderPrecheckPurchaseLandGame(); final player = game.players.single; final membership = DiplomacyFactionMembership.from(game); WorkOrderTargetPrecheckContext ctx({required bool withSnap}) => WorkOrderTargetPrecheckContext( game: game, player: player, playerId: 'p1', treasury: 500, civilianEmbassyWorkAllowed: (_, __) => false, factionMembership: withSnap ? membership : null, devExclusiveTiles: const {}, ); final order = WorkOrder( unitId: 'merchant1', target: kWorkTargetPurchaseLand, targetTileKey: PurchaseLandTestFixture.tileKey, ); final withSnap = runWorkOrderTargetPrecheck( ctx(withSnap: true), order, PurchaseLandTestFixture.minorProvinceId, 'minor1', kUnitTypeMerchant, ); final linear = runWorkOrderTargetPrecheck( ctx(withSnap: false), order, PurchaseLandTestFixture.minorProvinceId, 'minor1', kUnitTypeMerchant, ); expect(withSnap, isNull); expect(linear, isNull);}
 
 void wotpRunBuildImprovementRejectsUnprospectedMineral() {final game = workOrderPrecheckBaseGame(resourceByTileKey: {workOrderPrecheckTileKey: 'iron'},tileKeysByProvince: {workOrderPrecheckProvinceId: [workOrderPrecheckTileKey],},); final ctx = workOrderPrecheckContext(game); final order = WorkOrder(unitId: 'b1',target: kWorkTargetBuildImprovement,targetTileKey: workOrderPrecheckTileKey,); final r = runWorkOrderTargetPrecheck(ctx,order,workOrderPrecheckProvinceId,'p1',kUnitTypeBuilder,); expect(r,isNotNull); expect(r!.status,OrderValidationStatus.rejected); expect(r.reason,contains('prospected'));}
 

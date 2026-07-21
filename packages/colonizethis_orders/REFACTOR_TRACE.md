@@ -2549,3 +2549,58 @@ Raw `Game(` outside `common/`: **0**. Support LOC after slice 11: **14373**. Pac
 
 Behaviour unchanged (rejection messages + candidacy filters preserved). Remaining for #3971: none expected after this slice (LOC ACs + balanced lib extracts landed).
 
+## Wave 5 — Slice A: scenario densify + LOC ratchet + shorthand gate (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| scenario-run-densify | collapse multi-line `void *Run*` bodies to single-line across 28 scenario modules | `test/orders/support/**/*_scenarios.dart` | same | #4109 |
+| support-loc-ratchet | lower `ordersTestSupportLocCeiling` 14500 → 13950; package 16400 → 15800 | `tool/check_orders_test_support_loc.dart` | same | #4109 |
+| shorthand-file-size-gate | add `repo.orders_test_shorthand_file_size` (≤180 physical lines) | `tool/check_orders_test_shorthand_file_size.dart` | manifest + `repo-lint.md` | #4109 |
+
+Support LOC after slice A: **12964** (AC ≤13,950; ≥400 headroom). Package `test/` LOC: **14915** (AC ≤15,800; ≥500 headroom). Remaining for #4109: slices B–E (lib splits + `repo.orders_lib_source_file_size`).
+
+## Wave 5 — Slice B: work_order_target_prechecks split (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| precheck-split-shared | extract context, typedef, shared gates, embassy/resource helpers | `work_order_target_prechecks.dart` | `work_order_target_prechecks_shared.dart` | #4109 |
+| precheck-split-purchase | `precheckUpgradeTown` + `precheckPurchaseLand` | `work_order_target_prechecks.dart` | `work_order_target_prechecks_purchase.dart` | #4109 |
+| precheck-split-improvement | `precheckBuildImprovement` + `precheckDevExclusiveTileConflict` | `work_order_target_prechecks.dart` | `work_order_target_prechecks_improvement.dart` | #4109 |
+| precheck-split-explore | `precheckCounterSpy` + explorer consulate + default foreign province | `work_order_target_prechecks.dart` | `work_order_target_prechecks_explore.dart` | #4109 |
+| precheck-split-registry | thin `workOrderTargetPrechecks` map + `runWorkOrderTargetPrecheck` | `work_order_target_prechecks.dart` | same (barrel re-exports) | #4109 |
+
+Original monolith **414** physical lines → five libraries (max **122** lines). Behaviour unchanged; existing precheck scenario suites green. Remaining for #4109: slices C–E.
+
+## Wave 5 — Slice C: incremental replay split + prefix table (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| replay-shared-probes | extract shared economy/work-prefix probe helpers | `incremental_candidate_validator_replay.dart` | `incremental_candidate_validator_replay_shared.dart` | #4109 |
+| replay-diplomatic-split | extract diplomatic prefix prep/validate | `incremental_candidate_validator_replay.dart` | `incremental_candidate_validator_diplomatic_replay.dart` | #4109 |
+| replay-prefix-table | table-driven recruit/build cache wiring | `incremental_candidate_validator_replay.dart` | `projected_resource_prefix_replay_config.dart` | #4109 |
+| replay-prefix-barrel | slim prefix-replay extension (recruit/build/work) | `incremental_candidate_validator_replay.dart` | same | #4109 |
+
+Original replay monolith **440** physical lines → four libraries (max **201** lines). Behaviour unchanged; ICE equivalence + diplomatic probe suites green. Remaining for #4109: slices D–E.
+
+## Wave 5 — Slice D: work-tile candidacy + explorer thinning (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| explorer-province-probe | extract shared province/tile probe scaffolding (capped sweep, location-first sort, prospect acceptance) | `order_suggestion_work_explorer.dart` | `work_tile_candidacy/explorer_province_probe.dart` | #4109 |
+| explorer-explore-only | retain explore-only gates (usefulness, visibility ok, bundled move leg) inline | `order_suggestion_work_explorer.dart` | same | #4109 |
+| explorer-candidacy-export | re-export probe helpers from `work_tile_candidacy.dart` barrel | `work_tile_candidacy/work_tile_candidacy.dart` | same | #4109 |
+
+Original explorer monolith **419** physical lines → **288** lines + **149**-line candidacy probe module. Probe caps unchanged (`kMaxExploreProvinceProbesPerUnit`, `kMaxWorkProbeAttemptsPerUnitPerTarget`). Behaviour unchanged; explorer/prospect scenario suites green. Remaining for #4109: slice E.
+
+## Wave 5 — Slice E: feedstock split + lib source file-size gate (Refs #4109)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| feedstock-gate-shared | shared seller-band identity + unimproved-tile carve-out helpers | `feedstock_extraction_targets.dart` | `feedstock_extraction_gate_shared.dart` | #4109 |
+| feedstock-seller-split | regiment-build-input + seller improvement-input gates | `feedstock_extraction_targets.dart` | `feedstock_seller_extraction_targets.dart` | #4109 |
+| feedstock-supplier-split | affluent supplier improvement-input gate | `feedstock_extraction_targets.dart` | `feedstock_supplier_extraction_targets.dart` | #4109 |
+| feedstock-barrel | stable re-exports + `feedstockExtractionResourceIdsForPlayer` union | `feedstock_extraction_targets.dart` | same (thin barrel) | #4109 |
+| lib-source-size-gate | add `repo.orders_lib_source_file_size` (≤400 physical lines) | `tool/check_orders_lib_source_file_size.dart` | manifest + `repo-lint.md` | #4109 |
+| orders-file-size-extend | extend `repo.orders_file_size` gated set for wave-5 hot files | `tool/check_orders_file_size.dart` | same | #4109 |
+
+Original feedstock monolith **358** physical lines → four libraries (max **104** lines) + **29**-line barrel. Behaviour unchanged; feedstock priority + bootstrap scenario suites green. Wave 5 complete for #4109.

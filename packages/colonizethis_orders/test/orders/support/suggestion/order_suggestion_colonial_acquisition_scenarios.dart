@@ -15,63 +15,7 @@ void oscaRunJoinEmpireCandidateEmitted() {final game = colonialAcquisitionEmbass
 
 void oscaRunDeclareWarCandidateEmitted() {final game = colonialAcquisitionEmbassyScenarioGame(); final view = colonialAcquisitionViewFor(game); final orders = _api.suggestDeclareWarOrders(view,game,colonialAcquisitionTopology,_emptyOrders,); final declareForTribe = orders.where((o) => o.targetFactionId == 'tribe1' && o.type == DiplomaticOrderType.declareWar,); expect(declareForTribe,isNotEmpty,reason: 'AC: merged orders may include declareWar toward an at-peace ' 'tribe in the known target set (colonial-support weights must ' 'not gate emission); declare-war-only pass is independent of ' 'the per-target single-diplo cap in suggestDiplomaticOrders',);}
 
-void oscaRunDeterministicAcrossRepeatedCalls() {
-  final game = colonialAcquisitionEmbassyScenarioGame();
-  final view = colonialAcquisitionViewFor(game);
-
-  List<String> overtureKeys() => _api
-      .suggestDiplomaticOrders(
-        view,
-        game,
-        colonialAcquisitionTopology,
-        _emptyOrders,
-      )
-      .map(colonialAcquisitionOrderKey)
-      .toList();
-  List<String> declareKeys() => _api
-      .suggestDeclareWarOrders(
-        view,
-        game,
-        colonialAcquisitionTopology,
-        _emptyOrders,
-      )
-      .map(colonialAcquisitionOrderKey)
-      .toList();
-
-  final overtureFirst = overtureKeys();
-  final overtureSecond = overtureKeys();
-  final declareFirst = declareKeys();
-  final declareSecond = declareKeys();
-
-  expect(
-    overtureSecond,
-    equals(overtureFirst),
-    reason:
-        'AC: deterministic for fixed seed (suggestDiplomaticOrders '
-        'returns the same candidate set every pass)',
-  );
-  expect(
-    declareSecond,
-    equals(declareFirst),
-    reason:
-        'AC: deterministic for fixed seed (suggestDeclareWarOrders '
-        'returns the same candidate set every pass)',
-  );
-  expect(
-    overtureFirst,
-    contains('establishOverture:tribe1:joinEmpire'),
-    reason:
-        'deterministic Join Empire candidate must appear in the '
-        'overture-pass suggestions',
-  );
-  expect(
-    declareFirst,
-    contains('declareWar:tribe1:'),
-    reason:
-        'deterministic declare-war candidate must appear in the '
-        'declare-war-only pass suggestions',
-  );
-}
+void oscaRunDeterministicAcrossRepeatedCalls() {final game = colonialAcquisitionEmbassyScenarioGame(); final view = colonialAcquisitionViewFor(game); List<String> overtureKeys() => _api .suggestDiplomaticOrders( view, game, colonialAcquisitionTopology, _emptyOrders, ) .map(colonialAcquisitionOrderKey) .toList(); List<String> declareKeys() => _api .suggestDeclareWarOrders( view, game, colonialAcquisitionTopology, _emptyOrders, ) .map(colonialAcquisitionOrderKey) .toList(); final overtureFirst = overtureKeys(); final overtureSecond = overtureKeys(); final declareFirst = declareKeys(); final declareSecond = declareKeys(); expect( overtureSecond, equals(overtureFirst), reason: 'AC: deterministic for fixed seed (suggestDiplomaticOrders ' 'returns the same candidate set every pass)', ); expect( declareSecond, equals(declareFirst), reason: 'AC: deterministic for fixed seed (suggestDeclareWarOrders ' 'returns the same candidate set every pass)', ); expect( overtureFirst, contains('establishOverture:tribe1:joinEmpire'), reason: 'deterministic Join Empire candidate must appear in the ' 'overture-pass suggestions', ); expect( declareFirst, contains('declareWar:tribe1:'), reason: 'deterministic declare-war candidate must appear in the ' 'declare-war-only pass suggestions', );}
 
 List<RunnableScenario> orderSuggestionColonialAcquisitionScenarios() => [
   rs('embassy-stage tribe: suggestDiplomaticOrders surfaces Join Empire', oscaRunJoinEmpireCandidateEmitted, '#2509'),
