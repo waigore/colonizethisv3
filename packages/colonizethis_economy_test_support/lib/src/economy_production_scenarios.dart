@@ -3,17 +3,23 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'core_economy_test_support.dart';
-import 'economy_production_expectations.dart';
+
+/// Pins for [resolveProduction] recipe rows.
+typedef ResolveProductionPins = ({Map<String, int> stockpileDeltas, WorkerPool workers, WorkerIdleCounts idleLabour, List<AssignedRecipe> assignments, Map<String, int> expectedQuantities, WorkerPool? expectedWorkers});
+
+ResolveProductionScenario resolveProductionScenario({required String label, required ResolveProductionPins pins, String? refs}) => (label: label, pins: pins, refs: refs);
+
 /// One row for [resolveProduction] tables (Refs #3979).
 typedef ResolveProductionScenario = ({String label, ResolveProductionPins pins, String? refs});
-void runResolveProductionScenario(ResolveProductionScenario scenario) {
-  runResolveProductionExpectation(scenario.pins);
-}
+
+/// Pins for production [effectiveLabourForWorkers] rows (Refs #3979).
+typedef ProductionEffectiveLabourPins = ({WorkerPool workers, Map<String, int> stockpileDeltas, int expectedLabour});
+
+ProductionEffectiveLabourScenario productionEffectiveLabourScenario({required String label, required ProductionEffectiveLabourPins pins, String? refs}) => (label: label, pins: pins, refs: refs);
+
 /// One row for production [effectiveLabourForWorkers] tables (Refs #3979).
 typedef ProductionEffectiveLabourScenario = ({String label, ProductionEffectiveLabourPins pins, String? refs});
-void runProductionEffectiveLabourScenario(ProductionEffectiveLabourScenario scenario) {
-  runProductionEffectiveLabourExpectation(scenario.pins);
-}
+
 /// Canonical scenarios for [resolveProduction].
 List<ResolveProductionScenario> resolveProductionScenarios() => [
   resolveProductionScenario(

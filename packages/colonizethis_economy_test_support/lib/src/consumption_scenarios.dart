@@ -1,14 +1,31 @@
 // dart format off
 // Table-driven resolveConsumption scenarios (Refs #3856, #3939 slices 34 / 45, #3979).
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'consumption_expectations.dart';
 import 'core_economy_test_support.dart';
+
+/// Pins for [resolveConsumption] integration rows.
+///
+/// Optional fields default to `null` (no assertion) so scenario tables omit
+/// unused keys (Refs #3939 slice 45 LOC compaction).
+class ResolveConsumptionPins {
+  const ResolveConsumptionPins({this.workerPool, this.idleLabour, this.grainRemaining, this.meatRemaining, this.combinedFoodRemaining, this.sugarRemaining, this.cigarsRemaining, this.furHatsRemaining, this.totalRegiments, this.fullyFedRegiments, this.totalShips, this.fullyFedShips});
+  final WorkerPool? workerPool;
+  final WorkerIdleCounts? idleLabour;
+  final int? grainRemaining;
+  final int? meatRemaining;
+  final int? combinedFoodRemaining;
+  final int? sugarRemaining;
+  final int? cigarsRemaining;
+  final int? furHatsRemaining;
+  final int? totalRegiments;
+  final int? fullyFedRegiments;
+  final int? totalShips;
+  final int? fullyFedShips;
+}
+
 /// One row for resolveConsumption tables (Refs #3979).
 typedef ResolveConsumptionScenario = ({String label, Stockpile stockpile, WorkerPool workers, int? militaryUnits, Map<String, int>? shipCountsById, ResolveConsumptionPins pins, bool expectUnknownShipThrows, String? refs});
-/// Runs [scenario] via [runResolveConsumption].
-void runResolveConsumptionScenario(ResolveConsumptionScenario scenario) {
-  runResolveConsumption(stockpile: scenario.stockpile, workers: scenario.workers, militaryUnits: scenario.militaryUnits, shipCountsById: scenario.shipCountsById, pins: scenario.pins, expectUnknownShipThrows: scenario.expectUnknownShipThrows);
-}
+
 /// Canonical scenarios for [resolveConsumption].
 List<ResolveConsumptionScenario> resolveConsumptionScenarios() => [
   resolveConsumptionScenario(
