@@ -8,7 +8,7 @@ export 'app_event_handler_scope_session_helpers.dart'
     show
         civilianWorkUpsertValidationPassCountForTests,
         resetCivilianWorkUpsertValidationPassCountForTests;
-export 'app_event_handler_scope_session_subscriptions.dart'
+export 'app_event_handler_scope_train_orders.dart'
     show applyCombatModeChoiceToGame;
 
 const String trainCiviliansDialogId = 'train_civilians';
