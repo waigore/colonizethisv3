@@ -12,7 +12,32 @@ import '../view/region_map_view_inputs.dart';
 import '../tile_map_grid.dart';
 import '../tile_map_topology_helpers.dart';
 import 'tile_map_visualization.dart';
-import 'tile_map_visualization_shared.dart';
+import 'tile_map_visualization_cell_fill.dart'
+    show drawBorders, fillRegionViewCells, fillTileGridCells;
+import 'tile_map_visualization_legend_layout.dart'
+    show
+        ResourceLegendRowsStyle,
+        drawLegendLine,
+        drawPortsLegendLine,
+        kGameWorldMapOwnershipLegendBlurb,
+        legendHeightForLineCount,
+        legendLineHeight,
+        legendPadding,
+        swatchGap,
+        swatchSize;
+import 'tile_map_visualization_png_markers.dart'
+    show
+        capitalMarkerRgb,
+        drawCapitalMarkersOnImage,
+        drawPortMarkersOnImage;
+import 'tile_map_visualization_shared.dart'
+    show
+        colorMapFromIds,
+        drawResourceLegendRows,
+        geographicGameWorldLegendResources,
+        geographicGameWorldResourceGlyphs,
+        seaZoneLocalIdsFromRegionCells;
+import 'tile_map_resource_legend.dart' show drawResourceLetterAtCellCenter;
 import 'multi_region_map_rendering.dart';
 import '../view/init_game_map_view_data.dart';
 import '../region_constants.dart';
@@ -82,7 +107,7 @@ Uint8List renderSingleRegionGameStateMapToPng({
   var legendLines = titleLines + 1 + factionIds.length;
   if (capitalTiles.isNotEmpty) legendLines += 1 + capitalTiles.length;
   if (portTiles.isNotEmpty) legendLines += 1;
-  final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+  final legendHeight = legendHeightForLineCount(legendLines);
   final totalWidth = mapW;
   final totalHeight = mapH + legendHeight;
 
@@ -263,7 +288,7 @@ Uint8List renderInitGameMapToPngFromViewData({
         : (2 +
               region.factionColors.length +
               (region.portMarkers.isNotEmpty ? 1 : 0));
-    final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+    final legendHeight = legendHeightForLineCount(legendLines);
 
     final image = img.Image(width: mapW, height: mapH + legendHeight);
     final white = image.getColor(255, 255, 255);

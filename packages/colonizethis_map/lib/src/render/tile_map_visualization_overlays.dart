@@ -5,16 +5,16 @@ import 'package:image/image.dart' as img;
 
 import '../tile_map_grid.dart';
 import '../tile_map_topology_helpers.dart';
-import 'tile_map_visualization_shared.dart'
+import '../tile_map_colors.dart'
     show
         colorMapFromIds,
         continentSeedMarkerRgb,
-        drawResourceLetterAtCellCenter,
-        fillTileGridCells,
         landSeedMarkerRgb,
         regionPalette,
-        terrainColorRgb,
-        tileMapResourceGlyphs;
+        terrainColorRgb;
+import 'tile_map_resource_legend.dart'
+    show drawResourceLetterAtCellCenter, tileMapResourceGlyphs;
+import 'tile_map_visualization_cell_fill.dart' show fillTileGridCells;
 import 'tile_map_visualization_colors.dart' show regionIdLabelRgb, seaColorRgb;
 
 void drawMapCells({

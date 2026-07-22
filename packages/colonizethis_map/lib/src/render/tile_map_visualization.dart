@@ -17,8 +17,9 @@ import 'tile_map_visualization_overlays.dart'
         drawResourceLettersOnMap,
         regionColorsForResult,
         seaZoneIdsForTopology;
-import 'tile_map_visualization_shared.dart'
-    show drawBorders, legendLineHeight, legendPadding;
+import 'tile_map_visualization_cell_fill.dart' show drawBorders;
+import 'tile_map_visualization_legend_layout.dart'
+    show legendHeightForLineCount;
 
 export '../tile_map_image_viewer.dart' show openInDefaultViewer;
 export 'tile_map_visualization_colors.dart';
@@ -59,7 +60,7 @@ Uint8List renderTileMapToPng(
     landSeedContinentIndices: landSeedContinentIndices,
     hasResourceGrid: result.resourceGrid != null,
   );
-  final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+  final legendHeight = legendHeightForLineCount(legendLines);
   final totalWidth = mapW;
   final totalHeight = mapH + legendHeight;
 

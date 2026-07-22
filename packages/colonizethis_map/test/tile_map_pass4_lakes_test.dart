@@ -17,7 +17,7 @@ void main() {
           [land, sea, sea, sea, land],
           [land, land, land, land, land],
         ];
-        final out = TileMapGenerator.fillLakesPass4ForTest(
+        final out = fillLakesPass4ForTest(
           params: params,
           grid: grid.map((r) => r.toList()).toList(),
           seaZoneId: sea,
@@ -38,7 +38,7 @@ void main() {
         [land, sea, sea, land],
         [land, land, land, land],
       ];
-      final out = TileMapGenerator.fillLakesPass4ForTest(
+      final out = fillLakesPass4ForTest(
         params: params,
         grid: grid.map((r) => r.toList()).toList(),
         seaZoneId: sea,
