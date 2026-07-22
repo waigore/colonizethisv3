@@ -6,15 +6,15 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     final keys = validTileKeys!;
     final t = session.hoverAnimationT;
     final opacity =
-        _kValidWorkTargetGlowOpacityBase +
-        _kValidWorkTargetGlowOpacityAmplitude *
-            (_kSinNormalizedMid +
-                _kSinNormalizedMid *
-                    math.sin(t * _kValidWorkTargetGlowTimeScale));
+        RegionMapPalette.validWorkTargetGlowOpacityBase +
+        RegionMapPalette.validWorkTargetGlowOpacityAmplitude *
+            (RegionMapPalette.sinNormalizedMid +
+                RegionMapPalette.sinNormalizedMid *
+                    math.sin(t * RegionMapPalette.validWorkTargetGlowTimeScale));
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapValidTileTargetStrokeWidth
-      ..color = _kValidWorkTargetStrokeYellow.withValues(alpha: opacity);
+      ..color = RegionMapPalette.validWorkTargetStrokeYellow.withValues(alpha: opacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -31,7 +31,7 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     _paintTileOutlineRing(
       canvas,
       tileKey: selectedTileKey!,
-      color: _kMapSelectedHighlightOrange,
+      color: RegionMapPalette.mapSelectedHighlightOrange,
       strokeWidth: kMapSelectedTileStrokeWidth,
     );
   }
@@ -40,7 +40,7 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     _paintTileOutlineRing(
       canvas,
       tileKey: secondaryHighlightTileKey!,
-      color: _kMapSecondarySelectionCyan,
+      color: RegionMapPalette.mapSecondarySelectionCyan,
       strokeWidth: kMapSecondaryHighlightStrokeWidth,
     );
   }
@@ -50,7 +50,7 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
       _paintTileOutlineRing(
         canvas,
         tileKey: tileKey,
-        color: _kMapSecondarySelectionCyan,
+        color: RegionMapPalette.mapSecondarySelectionCyan,
         strokeWidth: kMapSecondaryHighlightStrokeWidth,
       );
     }
@@ -81,9 +81,9 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     final x = session.hoveredTileX!;
     final y = session.hoveredTileY!;
     final bounce =
-        _kHoverSelectorBounceBaseline +
-        _kHoverSelectorBounceAmplitude *
-            math.sin(session.hoverAnimationT * _kHoveredProvinceGlowAngularFrequency);
+        RegionMapPalette.hoverSelectorBounceBaseline +
+        RegionMapPalette.hoverSelectorBounceAmplitude *
+            math.sin(session.hoverAnimationT * RegionMapPalette.hoveredProvinceGlowAngularFrequency);
     final cx = x * cellSize + cellSize / 2;
     final cy = y * cellSize + cellSize / 2;
     final half = (cellSize / 2 - 2.0) * bounce;
@@ -92,8 +92,8 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     final size = half * 2;
     final rect = Rect.fromLTWH(left, top, size, size);
     final color = (validTileKeys != null && validTileKeys!.isNotEmpty)
-        ? _kMapSelectedHighlightOrange
-        : _kMapHoverSelectorIdle;
+        ? RegionMapPalette.mapSelectedHighlightOrange
+        : RegionMapPalette.mapHoverSelectorIdle;
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapHoverSelectorStrokeWidth

@@ -1,7 +1,6 @@
 import 'dart:async' show unawaited;
 
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -13,39 +12,6 @@ import '../caches/resource_icon_cache.dart';
 import '../caches/town_icon_cache.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
-
-/// Visibility mode for the region map. SPEC/ui/map-widget.md.
-enum CtMapVisibilityMode {
-  full,
-  playerConstrained,
-}
-
-void assertCtMapPlayerViewRequired({
-  required CtMapVisibilityMode visibilityMode,
-  required PlayerView? playerViewForResources,
-}) {
-  if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
-      playerViewForResources == null) {
-    throw StateError(
-      'CtMapVisibilityMode.playerConstrained requires a non-null '
-      'PlayerView (pass playerViewForResources), e.g. '
-      'buildPlayerView(game, topology, humanPlayerId).',
-    );
-  }
-}
-
-/// Base layer display mode. SPEC/ui/map-widget.md § Base layer display mode.
-enum BaseLayerDisplayMode {
-  terrainOnly,
-  terrainAndResources,
-  terrainAndResourcesImprovementLabels,
-  terrainAndResourcesImprovementsRoads,
-}
-
-bool shouldShowExtractionUnitIndicators({
-  required BaseLayerDisplayMode baseLayerDisplayMode,
-}) =>
-    baseLayerDisplayMode != BaseLayerDisplayMode.terrainOnly;
 
 /// Mutable session fields for de-parted [CtRegionMapComponent] libraries (Refs #4117).
 class CtRegionMapComponentSession {

@@ -35,7 +35,7 @@ extension _CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
         tileVisibility: _visibilityForTerrain(cell),
       )) {
         overlayPaint.colorFilter = ColorFilter.mode(
-          Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+          Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
           BlendMode.darken,
         );
       }
@@ -121,7 +121,7 @@ extension _CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
     }
 
     final terrain = cell.terrainType;
-    if (terrain == null || !_isFeatureTerrain(terrain)) return;
+    if (terrain == null || !regionMapComponentIsFeatureTerrain(terrain)) return;
 
     final overlayTileKey = featureOverlayTileKey(
       terrain: terrain,
@@ -146,7 +146,7 @@ extension _CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
       terrain: terrain,
     )) {
       paint.colorFilter = ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+        Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
         BlendMode.darken,
       );
     }
@@ -166,8 +166,8 @@ extension _CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         _visibilityForTerrain(cell) == TileVisibility.fogged) {
       paint.colorFilter = ColorFilter.mode(
-        _kMapHoverSelectorIdle.withValues(
-          alpha: _kFoggedResourceIconModulateAlpha,
+        RegionMapPalette.mapHoverSelectorIdle.withValues(
+          alpha: RegionMapPalette.foggedResourceIconModulateAlpha,
         ),
         BlendMode.modulate,
       );

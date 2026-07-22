@@ -19,22 +19,44 @@ import '../tilesets/tilesets.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
 import '../render/warp_zone_edge_geometry.dart';
+import 'region_map_component_shared_palette.dart';
+import 'region_map_component_shared_visibility.dart';
 import 'region_map_component_support.dart';
 
-export 'region_map_component_support.dart'
+export 'region_map_component_shared_palette.dart'
     show
         BaseLayerDisplayMode,
         CtMapVisibilityMode,
+        RegionMapPalette,
         assertCtMapPlayerViewRequired,
         shouldShowExtractionUnitIndicators;
+export 'region_map_component_shared_visibility.dart'
+    show
+        extractionIndicatorDisplaySizePx,
+        extractionIndicatorRectsForIconRect,
+        isCellUnderCivilianRevealHalo,
+        isCellUnderFleetRevealHalo,
+        isRailTransportLevel,
+        paintResourceExtractionDiscIndicators,
+        regionMapComponentDominantAdjacentLandBase,
+        regionMapComponentIsFeatureTerrain,
+        resolveProvinceLabelIconIds,
+        resolveProvinceLabelPresenceIconIds,
+        resolveSeaZoneLabelPrefixIconIds,
+        resolveSeaZoneNamePlateCenterWorld,
+        resourceIconDisplaySizePx,
+        shouldApplyFogToFeatureOverlay,
+        shouldApplyFogToInteriorPlainsVariantBase,
+        shouldApplyFogToInteriorPlainsVariantOverlay,
+        shouldApplyFogToLandBase,
+        shouldEllipsizeProvinceLabelText,
+        shouldPaintTransportOverlayForCell,
+        shouldRenderTransportOverlay,
+        shouldWrapProvinceLabelPresenceIcons,
+        visibilityForTerrainForMapCell;
+export 'region_map_component_support.dart';
 
 part 'region_map_component_shared.dart';
-part 'region_map_component_shared_palette.dart';
-part 'region_map_component_shared_label_placement.dart';
-part 'region_map_component_shared_visibility_halos.dart';
-part 'region_map_component_shared_visibility_labels.dart';
-part 'region_map_component_shared_visibility_fog_transport.dart';
-part 'region_map_component_shared_visibility_extraction.dart';
 part 'region_map_component_render_orchestrator.dart';
 part 'region_map_component_render_core.dart';
 part 'region_map_component_render_core_base_tiles_helpers.dart';

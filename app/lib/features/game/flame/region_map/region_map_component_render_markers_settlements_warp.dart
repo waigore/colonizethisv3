@@ -24,11 +24,11 @@ extension _CtRegionMapRenderMarkersSettlementsWarp on CtRegionMapComponent {
     final glowOuter = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kWarpZoneGlowOuterStrokeWidth
-      ..color = _kMapSelectionGold.withValues(alpha: _kWarpZoneOuterGlowAlpha);
+      ..color = RegionMapPalette.mapSelectionGold.withValues(alpha: RegionMapPalette.warpZoneOuterGlowAlpha);
     final glowInner = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kWarpZoneGlowInnerStrokeWidth
-      ..color = _kWarpZoneInnerHighlight;
+      ..color = RegionMapPalette.warpZoneInnerHighlight;
 
     for (final (x, y) in warpTiles) {
       final cell = region.cellAt(x, y);

@@ -28,7 +28,7 @@ extension _CtRegionMapRenderPoliticalLabelsProvinceCompute
           visibilityMode == CtMapVisibilityMode.playerConstrained,
     );
     if (rgb == null) {
-      return _provinceLabelPlateColor;
+      return RegionMapPalette.provinceLabelPlateColor;
     }
     return Color.fromRGBO(rgb.$1, rgb.$2, rgb.$3, kProvinceLabelPlateTintAlpha);
   }

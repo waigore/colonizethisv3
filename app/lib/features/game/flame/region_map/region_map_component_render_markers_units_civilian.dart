@@ -22,10 +22,10 @@ extension _CtRegionMapRenderMarkersUnitsCivilian on CtRegionMapComponent {
       final top = marker.y * cellSize;
       final selected = selectedCivilianTileKey == marker.tileKey;
       final blinkAlpha = selected
-          ? _kHoveredProvinceGlowOpacityMid +
-                _kHoveredProvinceGlowOpacityAmplitude *
+          ? RegionMapPalette.hoveredProvinceGlowOpacityMid +
+                RegionMapPalette.hoveredProvinceGlowOpacityAmplitude *
                     math.sin(
-                      session.hoverAnimationT * _kHoveredProvinceGlowAngularFrequency,
+                      session.hoverAnimationT * RegionMapPalette.hoveredProvinceGlowAngularFrequency,
                     )
           : 1.0;
 
