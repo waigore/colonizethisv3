@@ -1,21 +1,37 @@
-part of 'ct_region_map_game.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:flame/components.dart';
+import 'package:flutter/material.dart' show Offset;
 
-void _ctRegionMapGameSetCameraCenterWorld(CtRegionMapGame game, double x, double y) {
-  game.camera.viewfinder.position = Vector2(x, y);
-  game._clampCameraToMap();
+import 'ct_region_map_game_mixins.dart';
+import 'region_map_viewport_snapshot.dart'
+    show kRegionMapZoomMultiplierMax, kRegionMapZoomMultiplierMin;
+
+void _ctRegionMapGameFinishCameraMove(CtRegionMapGameFields game) {
+  (game as CtRegionMapGameCamera).clampCameraToMap();
   game.onRegionViewChanged?.call();
-  game._emitViewportSnapshot();
+  (game as CtRegionMapGameCamera).emitViewportSnapshot();
 }
 
-void _ctRegionMapGamePanCameraWorld(CtRegionMapGame game, double dx, double dy) {
+void ctRegionMapGameSetCameraCenterWorld(
+  CtRegionMapGameFields game,
+  double x,
+  double y,
+) {
+  game.camera.viewfinder.position = Vector2(x, y);
+  _ctRegionMapGameFinishCameraMove(game);
+}
+
+void ctRegionMapGamePanCameraWorld(
+  CtRegionMapGameFields game,
+  double dx,
+  double dy,
+) {
   if (dx == 0 && dy == 0) return;
   game.camera.viewfinder.position += Vector2(dx, dy);
-  game._clampCameraToMap();
-  game.onRegionViewChanged?.call();
-  game._emitViewportSnapshot();
+  _ctRegionMapGameFinishCameraMove(game);
 }
 
-void _ctRegionMapGameCenterOnTileKey(CtRegionMapGame game, String tileKey) {
+void ctRegionMapGameCenterOnTileKey(CtRegionMapGameFields game, String tileKey) {
   final parsed = tryParseTileKey(tileKey);
   if (parsed == null || parsed.regionId != game.region.regionId) return;
   final x = parsed.x;
@@ -26,45 +42,41 @@ void _ctRegionMapGameCenterOnTileKey(CtRegionMapGame game, String tileKey) {
   final worldX = x * game.cellSizePx + game.cellSizePx / 2;
   final worldY = y * game.cellSizePx + game.cellSizePx / 2;
   game.camera.moveTo(Vector2(worldX, worldY));
-  game._clampCameraToMap();
-  game.onRegionViewChanged?.call();
-  game._emitViewportSnapshot();
+  _ctRegionMapGameFinishCameraMove(game);
 }
 
-void _ctRegionMapGamePanBy(CtRegionMapGame game, Offset delta) {
+void ctRegionMapGamePanBy(CtRegionMapGameFields game, Offset delta) {
   if (delta == Offset.zero) return;
   final z = game.camera.viewfinder.zoom;
   if (z <= 0 || !z.isFinite) return;
   game.camera.viewfinder.position -= Vector2(delta.dx, delta.dy) / z;
-  game._clampCameraToMap();
-  game.onRegionViewChanged?.call();
-  game._emitViewportSnapshot();
+  _ctRegionMapGameFinishCameraMove(game);
 }
 
-void _ctRegionMapGameZoomBy(CtRegionMapGame game, double factor) {
-  game._zoomMultiplier = (game._zoomMultiplier * factor).clamp(
+void ctRegionMapGameZoomBy(CtRegionMapGameFields game, double factor) {
+  game.state.zoomMultiplier = (game.state.zoomMultiplier * factor).clamp(
     kRegionMapZoomMultiplierMin,
     kRegionMapZoomMultiplierMax,
   );
-  game._syncCameraZoomFromMultiplier();
+  (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
 }
 
-void _ctRegionMapGameSetZoomMultiplierAbsolute(
-  CtRegionMapGame game,
+void ctRegionMapGameSetZoomMultiplierAbsolute(
+  CtRegionMapGameFields game,
   double multiplier,
 ) {
-  game._zoomMultiplier = multiplier.clamp(
+  game.state.zoomMultiplier = multiplier.clamp(
     kRegionMapZoomMultiplierMin,
     kRegionMapZoomMultiplierMax,
   );
-  game._syncCameraZoomFromMultiplier();
+  (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
 }
 
-void _ctRegionMapGameUpdateHoverFromLocal(
-  CtRegionMapGame game,
+void ctRegionMapGameUpdateHoverFromLocal(
+  CtRegionMapGameFields game,
   Offset localPosition,
 ) {
-  if (!game._mapLoaded || game.size == Vector2.zero()) return;
+  if (!game.state.mapLoaded || game.size == Vector2.zero()) return;
 
   final z = game.camera.viewfinder.zoom;
   if (z <= 0 || !z.isFinite) return;
@@ -72,5 +84,5 @@ void _ctRegionMapGameUpdateHoverFromLocal(
   final halfView = game.size / 2;
   final world = game.camera.viewfinder.position + (screen - halfView) / z;
 
-  game._mapComponent.updateHoverFromWorld(world);
+  game.state.mapComponent.updateHoverFromWorld(world);
 }
