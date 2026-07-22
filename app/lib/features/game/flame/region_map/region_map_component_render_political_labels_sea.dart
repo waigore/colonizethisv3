@@ -3,14 +3,14 @@ part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
   void _ensureSeaZoneLabelCache() {
-    if (identical(_seaZoneLabelsRegionRef, region) &&
-        _seaZoneLabelsCellSize == cellSize &&
-        _seaZoneLabelsCached != null) {
+    if (identical(session.seaZoneLabelsRegionRef, region) &&
+        session.seaZoneLabelsCellSize == cellSize &&
+        session.seaZoneLabelsCached != null) {
       return;
     }
-    _seaZoneLabelsRegionRef = region;
-    _seaZoneLabelsCellSize = cellSize;
-    _seaZoneLabelsCached = _computeSeaZoneLabels();
+    session.seaZoneLabelsRegionRef = region;
+    session.seaZoneLabelsCellSize = cellSize;
+    session.seaZoneLabelsCached = _computeSeaZoneLabels();
   }
 
   List<({int cx, int cy, String text, bool isWarpZone})>
@@ -55,7 +55,7 @@ extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
 
   void _paintSeaZoneNames(Canvas canvas) {
     _ensureSeaZoneLabelCache();
-    final items = _seaZoneLabelsCached;
+    final items = session.seaZoneLabelsCached;
     if (items == null || items.isEmpty) {
       return;
     }

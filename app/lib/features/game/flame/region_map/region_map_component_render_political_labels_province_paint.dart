@@ -5,7 +5,7 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
     on CtRegionMapComponent {
   void _paintProvinceNames(Canvas canvas) {
     _ensureProvinceLabelCache();
-    final labels = _provinceLabelsCached;
+    final labels = session.provinceLabelsCached;
     if (labels == null || labels.isEmpty) {
       return;
     }

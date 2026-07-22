@@ -1,35 +1,38 @@
-import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show PlayerView, resourceIdVisibleInPlayerView;
-import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import '../render/gp_ownership_tint_layer.dart';
 import '../caches/civilian_icon_cache.dart';
 import '../caches/fleet_icon_cache.dart';
+import '../caches/province_label_icon_cache.dart';
+import '../caches/resource_icon_cache.dart';
+import '../caches/town_icon_cache.dart';
+import '../render/gp_ownership_tint_layer.dart';
+import '../tilesets/tilesets.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_province_overlay_geometry.dart';
-import '../caches/resource_icon_cache.dart';
-import '../caches/province_label_icon_cache.dart';
-import '../tilesets/tilesets.dart';
-import '../caches/town_icon_cache.dart';
 import '../render/warp_zone_edge_geometry.dart';
+import 'region_map_component_support.dart';
 
-
-
+export 'region_map_component_support.dart'
+    show
+        BaseLayerDisplayMode,
+        CtMapVisibilityMode,
+        assertCtMapPlayerViewRequired,
+        shouldShowExtractionUnitIndicators;
 
 part 'region_map_component_shared.dart';
 part 'region_map_component_shared_palette.dart';
 part 'region_map_component_shared_label_placement.dart';
 part 'region_map_component_shared_visibility_halos.dart';
 part 'region_map_component_shared_visibility_labels.dart';
-part 'region_map_component_shared_visibility.dart';
 part 'region_map_component_shared_visibility_fog_transport.dart';
 part 'region_map_component_shared_visibility_extraction.dart';
 part 'region_map_component_render_orchestrator.dart';
@@ -50,8 +53,6 @@ part 'region_map_component_render_markers_settlements_towns.dart';
 part 'region_map_component_render_markers_settlements_warp.dart';
 part 'region_map_component_render_markers_units_civilian.dart';
 part 'region_map_component_render_markers_units_fleet.dart';
-part 'region_map_component_interaction.dart';
-part 'region_map_component_lifecycle.dart';
 
 final _log = packageLogger();
 
@@ -121,36 +122,13 @@ class CtRegionMapComponent extends PositionComponent {
   Set<String>? validTileKeys;
   void Function(String provinceId)? onTownIconTapped;
 
-  int? _hoveredTileX;
-  int? _hoveredTileY;
-  String? _hoveredProvinceId;
-  double _hoverAnimationT = 0.0;
+  /// Session fields shared by de-parted implementation libraries (Refs #4117).
+  final CtRegionMapComponentSession session = CtRegionMapComponentSession();
 
   /// When true, topology/political border segments and hover glow segments are
   /// omitted unless at least one adjacent tile is not unrevealed. SPEC/ui/map-widget.md.
-  bool get _gateMapBoundariesByVisibility =>
+  bool get gateMapBoundariesByVisibility =>
       visibilityMode == CtMapVisibilityMode.playerConstrained;
-
-  RegionMapViewData? _provinceLabelsRegionRef;
-  double? _provinceLabelsCellSize;
-  CtMapVisibilityMode? _provinceLabelsVisibilityMode;
-  List<
-    ({
-      double cx,
-      double cy,
-      String text,
-      String provinceId,
-      Color plateColor,
-      bool isCapital,
-      int? avoidTileX,
-      int? avoidTileY,
-    })
-  >?
-  _provinceLabelsCached;
-
-  RegionMapViewData? _seaZoneLabelsRegionRef;
-  double? _seaZoneLabelsCellSize;
-  List<({int cx, int cy, String text, bool isWarpZone})>? _seaZoneLabelsCached;
 
   @override
   Future<void> onLoad() async {
@@ -159,24 +137,24 @@ class CtRegionMapComponent extends PositionComponent {
       playerViewForResources: playerViewForResources,
     );
     await super.onLoad();
-    await _ctRegionMapComponentAfterSuperOnLoad(this);
+    await ctRegionMapComponentAfterSuperOnLoad(this);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _ctRegionMapComponentAdvanceHoverAnimation(this, dt);
+    ctRegionMapComponentAdvanceHoverAnimation(this, dt);
   }
 
   /// Updates hover state from a world-space position.
   void updateHoverFromWorld(Vector2 worldPosition) =>
-      _ctRegionMapComponentUpdateHoverFromWorld(this, worldPosition);
+      ctRegionMapComponentUpdateHoverFromWorld(this, worldPosition);
 
   /// Handles a tap at the given world-space position.
   /// Reports province selection and the tapped tile (so overlay can show tile
   /// details on mobile where hover is unavailable). SPEC/ui/province-sea-zone-detail-overlay.md.
   void handleTapAtWorld(Vector2 worldPosition) =>
-      _ctRegionMapComponentHandleTapAtWorld(this, worldPosition);
+      ctRegionMapComponentHandleTapAtWorld(this, worldPosition);
 
   @override
   void render(Canvas canvas) {

@@ -4,7 +4,7 @@ part of 'region_map_component.dart';
 extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
   void _paintValidTilesGlow(Canvas canvas) {
     final keys = validTileKeys!;
-    final t = _hoverAnimationT;
+    final t = session.hoverAnimationT;
     final opacity =
         _kValidWorkTargetGlowOpacityBase +
         _kValidWorkTargetGlowOpacityAmplitude *
@@ -78,12 +78,12 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
   }
 
   void _paintSelector(Canvas canvas) {
-    final x = _hoveredTileX!;
-    final y = _hoveredTileY!;
+    final x = session.hoveredTileX!;
+    final y = session.hoveredTileY!;
     final bounce =
         _kHoverSelectorBounceBaseline +
         _kHoverSelectorBounceAmplitude *
-            math.sin(_hoverAnimationT * _kHoveredProvinceGlowAngularFrequency);
+            math.sin(session.hoverAnimationT * _kHoveredProvinceGlowAngularFrequency);
     final cx = x * cellSize + cellSize / 2;
     final cy = y * cellSize + cellSize / 2;
     final half = (cellSize / 2 - 2.0) * bounce;

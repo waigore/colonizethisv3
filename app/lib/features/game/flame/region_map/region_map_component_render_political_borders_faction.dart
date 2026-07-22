@@ -16,7 +16,7 @@ extension _CtRegionMapRenderPoliticalBordersFaction on CtRegionMapComponent {
           final right = region.cellAt(x + 1, y);
           if (!right.isSea && (right.ownerFactionId ?? '') != owner) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(right),
             )) {
@@ -33,7 +33,7 @@ extension _CtRegionMapRenderPoliticalBordersFaction on CtRegionMapComponent {
           final bottom = region.cellAt(x, y + 1);
           if (!bottom.isSea && (bottom.ownerFactionId ?? '') != owner) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(bottom),
             )) {

@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 339 app/lib files still using part directives.
+// Generated grandfather allowlist: 336 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -64,8 +64,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/overlays/victory_overlay_panel_actions.dart',
   'app/lib/features/game/flame/overlays/victory_overlay_panel_corners.dart',
   'app/lib/features/game/flame/region_map/region_map_component.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_interaction.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_lifecycle.dart',
   'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
   'app/lib/features/game/flame/region_map/region_map_component_render_core_base_tiles_helpers.dart',
   'app/lib/features/game/flame/region_map/region_map_component_render_core_base_tiles_land.dart',
@@ -87,7 +85,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/region_map/region_map_component_shared.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_label_placement.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_palette.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_shared_visibility.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_visibility_extraction.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_visibility_fog_transport.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_visibility_halos.dart',
