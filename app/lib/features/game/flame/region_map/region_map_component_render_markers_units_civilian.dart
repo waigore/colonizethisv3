@@ -25,7 +25,7 @@ extension _CtRegionMapRenderMarkersUnitsCivilian on CtRegionMapComponent {
           ? _kHoveredProvinceGlowOpacityMid +
                 _kHoveredProvinceGlowOpacityAmplitude *
                     math.sin(
-                      _hoverAnimationT * _kHoveredProvinceGlowAngularFrequency,
+                      session.hoverAnimationT * _kHoveredProvinceGlowAngularFrequency,
                     )
           : 1.0;
 

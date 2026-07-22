@@ -3,7 +3,7 @@ part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
   void _paintHoveredProvinceGlow(Canvas canvas) {
-    final t = _hoverAnimationT;
+    final t = session.hoverAnimationT;
     final opacity =
         _kHoveredProvinceGlowOpacityMid +
         _kHoveredProvinceGlowOpacityAmplitude *
@@ -16,7 +16,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayHoverGlowStrokeWidth
       ..color = _kMapHoverSelectorIdle.withValues(alpha: opacity);
-    final provinceId = _hoveredProvinceId!;
+    final provinceId = session.hoveredProvinceId!;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -25,7 +25,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           final right = region.cellAt(x + 1, y);
           if (right.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(right),
             )) {
@@ -48,7 +48,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           final bottom = region.cellAt(x, y + 1);
           if (bottom.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(bottom),
             )) {
@@ -97,7 +97,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           final right = region.cellAt(x + 1, y);
           if (cell.regionCellId != right.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(right),
             )) {
@@ -121,7 +121,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           final bottom = region.cellAt(x, y + 1);
           if (cell.regionCellId != bottom.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
-              gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
               visibilityA: _visibilityForTerrain(cell),
               visibilityB: _visibilityForTerrain(bottom),
             )) {

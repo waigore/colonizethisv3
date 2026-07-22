@@ -20,7 +20,7 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     if (showProvinceOverlay) {
       _paintProvinceBorders(canvas);
     }
-    if (_hoveredProvinceId != null) {
+    if (session.hoveredProvinceId != null) {
       _paintHoveredProvinceGlow(canvas);
     }
     if (showPoliticalOverlay && showProvinceOverlay) {
@@ -35,7 +35,7 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     _paintWarpZones(canvas);
     _paintCivilianTileMarkers(canvas);
     _paintFleetTileMarkers(canvas);
-    if (_hoveredTileX != null && _hoveredTileY != null) {
+    if (session.hoveredTileX != null && session.hoveredTileY != null) {
       _paintSelector(canvas);
     }
     if (selectedTileKey != null) {

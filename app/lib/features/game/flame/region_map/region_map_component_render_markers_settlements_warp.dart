@@ -109,7 +109,7 @@ extension _CtRegionMapRenderMarkersSettlementsWarp on CtRegionMapComponent {
     }
 
     if (!regionMapDrawBoundaryBetweenAdjacentCells(
-      gateByUnrevealedTiles: _gateMapBoundariesByVisibility,
+      gateByUnrevealedTiles: gateMapBoundariesByVisibility,
       visibilityA: _visibilityForTerrain(cell),
       visibilityB: _visibilityForTerrain(neighbor),
     )) {

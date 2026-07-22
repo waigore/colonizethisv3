@@ -4,16 +4,16 @@ part of 'region_map_component.dart';
 extension _CtRegionMapRenderPoliticalLabelsProvinceCompute
     on CtRegionMapComponent {
   void _ensureProvinceLabelCache() {
-    if (identical(_provinceLabelsRegionRef, region) &&
-        _provinceLabelsCellSize == cellSize &&
-        _provinceLabelsVisibilityMode == visibilityMode &&
-        _provinceLabelsCached != null) {
+    if (identical(session.provinceLabelsRegionRef, region) &&
+        session.provinceLabelsCellSize == cellSize &&
+        session.provinceLabelsVisibilityMode == visibilityMode &&
+        session.provinceLabelsCached != null) {
       return;
     }
-    _provinceLabelsRegionRef = region;
-    _provinceLabelsCellSize = cellSize;
-    _provinceLabelsVisibilityMode = visibilityMode;
-    _provinceLabelsCached = _computeProvinceLabels();
+    session.provinceLabelsRegionRef = region;
+    session.provinceLabelsCellSize = cellSize;
+    session.provinceLabelsVisibilityMode = visibilityMode;
+    session.provinceLabelsCached = _computeProvinceLabels();
   }
 
   Color _provinceNamePlateColor({

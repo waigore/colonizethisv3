@@ -9,7 +9,7 @@ const double _kValidWorkTargetGlowOpacityBase = 0.4;
 /// Work-target valid tiles: extra opacity added by sin pulse (peak = base + amplitude).
 const double _kValidWorkTargetGlowOpacityAmplitude = 0.4;
 
-/// Work-target pulse speed: sin argument is `t *` this factor ([_hoverAnimationT] domain).
+/// Work-target pulse speed: sin argument is `t *` this factor ([session.hoverAnimationT] domain).
 const double _kValidWorkTargetGlowTimeScale = 3;
 
 /// Hovered-province glow: midpoint opacity for stroke (linear 0–1).
@@ -18,7 +18,7 @@ const double _kHoveredProvinceGlowOpacityMid = 0.5;
 /// Hovered-province glow: half-amplitude of sin oscillation (linear 0–1).
 const double _kHoveredProvinceGlowOpacityAmplitude = 0.25;
 
-/// Hovered-province glow: angular frequency (radians per unit [_hoverAnimationT]); one full cycle per t=1.
+/// Hovered-province glow: angular frequency (radians per unit [session.hoverAnimationT]); one full cycle per t=1.
 const double _kHoveredProvinceGlowAngularFrequency = 6.283185307179586;
 
 /// Capital marker fill and warp-zone accent (gold).
