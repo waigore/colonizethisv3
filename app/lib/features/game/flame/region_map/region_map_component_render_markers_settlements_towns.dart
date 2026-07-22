@@ -84,7 +84,7 @@ extension _CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
     var paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         _visibilityForTerrain(cell) == TileVisibility.fogged) {
-      paint.color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity);
+      paint.color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity);
     }
     canvas.drawImageRect(uiImage, srcRect, dstRect, paint);
   }

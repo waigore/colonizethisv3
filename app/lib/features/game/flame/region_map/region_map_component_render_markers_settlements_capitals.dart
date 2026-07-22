@@ -18,7 +18,7 @@ extension _CtRegionMapRenderMarkersSettlementsCapitals on CtRegionMapComponent {
       }
       final cx = cap.x * cellSize + cellSize / 2;
       final cy = cap.y * cellSize + cellSize / 2;
-      fill.color = _kMapSelectionGold;
+      fill.color = RegionMapPalette.mapSelectionGold;
       canvas.drawCircle(Offset(cx, cy), 6, fill);
       canvas.drawCircle(Offset(cx, cy), 6, stroke);
     }

@@ -48,7 +48,7 @@ extension _CtRegionMapRenderCoreBaseTilesHelpers on CtRegionMapComponent {
       terrain: terrain,
     )) {
       paint.colorFilter = ColorFilter.mode(
-        Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+        Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
         BlendMode.darken,
       );
     }
@@ -149,7 +149,7 @@ extension _CtRegionMapRenderCoreBaseTilesHelpers on CtRegionMapComponent {
         _visibilityForTerrain(cell) == TileVisibility.fogged) {
       canvas.drawRect(
         dstRect,
-        Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+        Paint()..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
       );
     }
     return true;

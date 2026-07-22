@@ -29,7 +29,7 @@ extension _CtRegionMapRenderCoreTiles on CtRegionMapComponent {
     for (final cell in region.cells) {
       if (!cell.isSea &&
           cell.terrainType != null &&
-          _isFeatureTerrain(cell.terrainType!)) {
+          regionMapComponentIsFeatureTerrain(cell.terrainType!)) {
         _paintFeatureCell(canvas, cell);
       }
     }

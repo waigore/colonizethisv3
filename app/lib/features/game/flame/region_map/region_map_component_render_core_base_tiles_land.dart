@@ -30,7 +30,7 @@ extension _CtRegionMapRenderCoreBaseTilesLand on CtRegionMapComponent {
     final terrain = terrainNullable;
 
     final isPlains =
-        terrain == TerrainType.plains || _isFeatureTerrain(terrain);
+        terrain == TerrainType.plains || regionMapComponentIsFeatureTerrain(terrain);
     final isDesert = terrain == TerrainType.desert;
 
     final nearDesertCorner = _getCornerValues(
@@ -44,7 +44,7 @@ extension _CtRegionMapRenderCoreBaseTilesLand on CtRegionMapComponent {
       (c) =>
           !c.isSea &&
           (c.terrainType == TerrainType.plains ||
-              (c.terrainType != null && _isFeatureTerrain(c.terrainType!))),
+              (c.terrainType != null && regionMapComponentIsFeatureTerrain(c.terrainType!))),
     );
 
     if (isPlains && !nearDesertCorner.same && nearDesertCorner.value) {
