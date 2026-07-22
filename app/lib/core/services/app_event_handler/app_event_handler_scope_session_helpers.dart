@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +10,8 @@ import '../debug/debug_command_session_handler.dart';
 import '../debug/debug_command_helpers.dart' show DebugCommandResult;
 import '../observe/observe_mode_session_handler.dart' as observe_session;
 import 'app_event_handler_scope.dart';
-import 'app_event_handler_scope_log.dart';
+
+final appEventHandlerScopeLog = packageLogger('event');
 
 int civilianWorkUpsertValidationPassCountForTests = 0;
 
