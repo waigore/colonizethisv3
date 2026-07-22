@@ -1,6 +1,13 @@
-part of 'game_service.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
 
-(TileMapResult, MapTopology) _gameServiceGenerateTileMapOldWorld(
+import 'game_service.dart';
+import 'game_service_map_cache.dart';
+
+(TileMapResult, MapTopology) gameServiceGenerateTileMapOldWorld(
   GameSetupConfig cfg,
   int effectiveSeed,
 ) {
@@ -25,11 +32,11 @@ part of 'game_service.dart';
     numContinents: cfg.continentCount,
     regionId: kRegionOldWorld,
     resourceRules: ResourceRules.defaultRules,
-    onLog: _mapGenPassLog.d,
+    onLog: gameServiceMapGenPassLog.d,
   );
 }
 
-(TileMapResult, MapTopology) _gameServiceGenerateTileMapNewWorld(
+(TileMapResult, MapTopology) gameServiceGenerateTileMapNewWorld(
   GameSetupConfig cfg,
   int effectiveSeed,
 ) {
@@ -54,11 +61,11 @@ part of 'game_service.dart';
     numContinents: cfg.continentCount.clamp(1, cfg.numProvincesNewWorld),
     regionId: kRegionNewWorld,
     resourceRules: ResourceRules.defaultRules,
-    onLog: _mapGenPassLog.d,
+    onLog: gameServiceMapGenPassLog.d,
   );
 }
 
-List<WarpLink> _gameServiceGenerateWarpLinks({
+List<WarpLink> gameServiceGenerateWarpLinks({
   required int effectiveSeed,
   required TileMapResult tileMapOW,
   required MapTopology topoOW,
@@ -76,19 +83,19 @@ List<WarpLink> _gameServiceGenerateWarpLinks({
   );
 }
 
-void _gameServicePersistNewGame(
+void gameServicePersistNewGame(
   GameService service, {
   required String gameId,
   required GameSetupResult result,
 }) {
-  service._mapCache[gameId] = _GameMapCache(
+  service.state.mapCache[gameId] = GameMapCache(
     combinedTopology: result.combinedTopology,
     tileMapByRegion: result.tileMapByRegion,
     topologyByRegion: result.topologyByRegion,
     warpLinks: result.warpLinks,
   );
-  service._adapter.saveMapData(
-    service._box,
+  service.state.adapter.saveMapData(
+    service.state.box,
     gameId,
     tileMapByRegion: result.tileMapByRegion,
     topologyByRegion: result.topologyByRegion,
@@ -96,6 +103,6 @@ void _gameServicePersistNewGame(
     warpLinks: result.warpLinks,
   );
   service.saveGame(result.game);
-  _gameServiceMirrorAutoSave(service, result.game);
+  gameServiceMirrorAutoSave(service, result.game);
   service.eventBus?.emit(NewGameCreatedEvent(gameId: result.game.id));
 }

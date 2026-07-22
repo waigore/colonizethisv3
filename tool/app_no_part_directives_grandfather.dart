@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 399 app/lib files still using part directives.
+// Generated grandfather allowlist: 391 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -8,14 +8,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/app_event_handler/app_event_handler.dart',
   'app/lib/core/services/app_event_handler/app_event_handler_navigation.dart',
   'app/lib/core/services/app_event_handler/app_event_handler_unit_panels.dart',
-  'app/lib/core/services/game_service/game_service.dart',
-  'app/lib/core/services/game_service/game_service_map_cache.dart',
-  'app/lib/core/services/game_service/game_service_new_game_setup.dart',
-  'app/lib/core/services/game_service/game_service_new_game_setup_maps.dart',
-  'app/lib/core/services/game_service/game_service_new_game_setup_pipeline.dart',
-  'app/lib/core/services/game_service/game_service_turn_resume.dart',
-  'app/lib/core/services/game_service/game_service_turn_trace.dart',
-  'app/lib/core/services/game_service/game_service_turn_trace_ai_sections.dart',
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
   'app/lib/core/services/debug/app_event_handler_debug_flip_province_resolve.dart',
   'app/lib/core/services/debug/app_event_handler_debug_set_diplomacy.dart',

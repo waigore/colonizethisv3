@@ -1,9 +1,16 @@
-part of 'game_service.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart';
+
+import 'game_service_map_cache.dart';
+import 'game_service_new_game_setup_maps.dart';
 
 const int _kLockedFullInitPipelineMaxAttempts = 64;
 const int _kFreeformPipelineMaxAttempts = 64;
 
-GameSetupResult _gameServiceFreeformMapsWarpSetupWithRetry({
+GameSetupResult gameServiceFreeformMapsWarpSetupWithRetry({
   required GameSetupConfig cfg,
   required String gameId,
   required int effectiveSeed,
@@ -12,9 +19,9 @@ GameSetupResult _gameServiceFreeformMapsWarpSetupWithRetry({
   for (var attempt = 0; attempt < _kFreeformPipelineMaxAttempts; attempt++) {
     final mapSeed = effectiveSeed + attempt * 100003;
     try {
-      final ow = _gameServiceGenerateTileMapOldWorld(cfg, mapSeed);
-      final nw = _gameServiceGenerateTileMapNewWorld(cfg, mapSeed);
-      final warpLinks = _gameServiceGenerateWarpLinks(
+      final ow = gameServiceGenerateTileMapOldWorld(cfg, mapSeed);
+      final nw = gameServiceGenerateTileMapNewWorld(cfg, mapSeed);
+      final warpLinks = gameServiceGenerateWarpLinks(
         effectiveSeed: mapSeed,
         tileMapOW: ow.$1,
         topoOW: ow.$2,
@@ -55,7 +62,7 @@ GameSetupResult _gameServiceFreeformMapsWarpSetupWithRetry({
   );
 }
 
-GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
+GameSetupResult gameServiceLockedFullInitMapsWarpSetupWithRetry({
   required GameSetupConfig cfg,
   required String gameId,
   required int effectiveSeed,
@@ -71,9 +78,9 @@ GameSetupResult _gameServiceLockedFullInitMapsWarpSetupWithRetry({
       final r = generateLockedFullInitTileMapPair(
         config: cfg,
         effectiveSeed: mapSeed,
-        onLog: _mapGenPassLog.d,
+        onLog: gameServiceMapGenPassLog.d,
       );
-      final warpLinks = _gameServiceGenerateWarpLinks(
+      final warpLinks = gameServiceGenerateWarpLinks(
         effectiveSeed: mapSeed,
         tileMapOW: r.tileOw,
         topoOW: r.topoOw,
