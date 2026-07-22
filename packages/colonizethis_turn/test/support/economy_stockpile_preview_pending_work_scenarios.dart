@@ -8,144 +8,54 @@ import 'economy_stockpile_preview_test_support.dart';
 
 void runPendingWorkTargetSkipScenarios() {
   for (final t in kMaterialBackedWorkTargets) {
-    final validBaseStockpile = const Stockpile()
-        .applyDelta(CommodityCatalog.lumber.id, 20)
-        .applyDelta(CommodityCatalog.castIron.id, 20)
-        .applyDelta(CommodityCatalog.bronze.id, 20)
-        .applyDelta(CommodityCatalog.steel.id, 20);
-
-    final missingUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
-      playerStockpile: validBaseStockpile,
-      units: [],
-      tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
-    );
-    final missingUnitOrders = Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          WorkOrder(
-            unitId: 'missing',
-            target: t.target,
-            targetTileKey: kEconomyPreviewWorkTileKey,
-          ),
-        ],
-      },
-    );
-    expect(
-      previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: missingUnitGame,
-        topology: const MapTopology(),
-        playerId: 'p1',
-        inputs: economyPreviewInputs(currentOrders: missingUnitOrders),
-      )[EconomyPreviewStockpilePhase.pendingBuildCosts],
-      isEmpty,
+    expectEconomyPreviewPendingBuildCostsEmpty(
+      game: TestFixtures.singlePlayerWorkPreviewGame(
+        playerStockpile: validWorkPreviewStockpile(),
+        units: [],
+        tileState: const TileMapState().setImprovement(
+          kEconomyPreviewWorkTileKey,
+          0,
+        ),
+      ),
+      orders: economyPreviewSingleWorkOrder(
+        unitId: 'missing',
+        target: t.target,
+      ),
       reason: 'missing unit target=${t.target}',
     );
 
-    final busyUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
-      playerStockpile: validBaseStockpile,
-      units: [
-        Unit(
-          id: 'u1',
-          type: t.unitType,
-          ownerId: 'p1',
-          locationProvinceId: 'ow|p1',
+    expectEconomyPreviewPendingBuildCostsEmpty(
+      game: economyPreviewWorkUnitGame(
+        unitId: 'u1',
+        unitType: t.unitType,
+        status: UnitStatus.working,
+        currentWork: const CurrentWork(
+          workTarget: kWorkTargetBuildImprovement,
           tileKey: kEconomyPreviewWorkTileKey,
-          status: UnitStatus.working,
-          currentWork: const CurrentWork(
-            workTarget: kWorkTargetBuildImprovement,
-            tileKey: kEconomyPreviewWorkTileKey,
-            totalTurns: 1,
-            remainingTurns: 1,
-          ),
+          totalTurns: 1,
+          remainingTurns: 1,
         ),
-      ],
-      tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
-    );
-    final busyOrders = Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          WorkOrder(
-            unitId: 'u1',
-            target: t.target,
-            targetTileKey: kEconomyPreviewWorkTileKey,
-          ),
-        ],
-      },
-    );
-    expect(
-      previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: busyUnitGame,
-        topology: const MapTopology(),
-        playerId: 'p1',
-        inputs: economyPreviewInputs(currentOrders: busyOrders),
-      )[EconomyPreviewStockpilePhase.pendingBuildCosts],
-      isEmpty,
+      ),
+      orders: economyPreviewSingleWorkOrder(unitId: 'u1', target: t.target),
       reason: 'busy unit target=${t.target}',
     );
 
-    final disallowedUnitGame = TestFixtures.singlePlayerWorkPreviewGame(
-      playerStockpile: validBaseStockpile,
-      units: [
-        Unit(
-          id: 'u1',
-          type: 'peasant_levies',
-          ownerId: 'p1',
-          locationProvinceId: 'ow|p1',
-          tileKey: kEconomyPreviewWorkTileKey,
-        ),
-      ],
-      tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
-    );
-    final disallowedOrders = Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          WorkOrder(
-            unitId: 'u1',
-            target: t.target,
-            targetTileKey: kEconomyPreviewWorkTileKey,
-          ),
-        ],
-      },
-    );
-    expect(
-      previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: disallowedUnitGame,
-        topology: const MapTopology(),
-        playerId: 'p1',
-        inputs: economyPreviewInputs(currentOrders: disallowedOrders),
-      )[EconomyPreviewStockpilePhase.pendingBuildCosts],
-      isEmpty,
+    expectEconomyPreviewPendingBuildCostsEmpty(
+      game: economyPreviewWorkUnitGame(
+        unitId: 'u1',
+        unitType: 'peasant_levies',
+      ),
+      orders: economyPreviewSingleWorkOrder(unitId: 'u1', target: t.target),
       reason: 'disallowed unit target=${t.target}',
     );
 
-    final invalidTileGame = TestFixtures.singlePlayerWorkPreviewGame(
-      playerStockpile: validBaseStockpile,
-      units: [
-        Unit(
-          id: 'u1',
-          type: t.unitType,
-          ownerId: 'p1',
-          locationProvinceId: 'ow|p1',
-          tileKey: kEconomyPreviewWorkTileKey,
-        ),
-      ],
-      tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
-    );
-    final invalidTileOrders = Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          WorkOrder(unitId: 'u1', target: t.target, targetTileKey: ''),
-        ],
-      },
-    );
-    expect(
-      previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: invalidTileGame,
-        topology: const MapTopology(),
-        playerId: 'p1',
-        inputs: economyPreviewInputs(currentOrders: invalidTileOrders),
-      )[EconomyPreviewStockpilePhase.pendingBuildCosts],
-      isEmpty,
+    expectEconomyPreviewPendingBuildCostsEmpty(
+      game: economyPreviewWorkUnitGame(unitId: 'u1', unitType: t.unitType),
+      orders: economyPreviewSingleWorkOrder(
+        unitId: 'u1',
+        target: t.target,
+        targetTileKey: '',
+      ),
       reason: 'invalid target key target=${t.target}',
     );
 
@@ -156,38 +66,18 @@ void runPendingWorkTargetSkipScenarios() {
         return acc.applyDelta(e.key, amount);
       },
     );
-    final insufficientGame = TestFixtures.singlePlayerWorkPreviewGame(
+    final insufficientGame = economyPreviewWorkUnitGame(
+      unitId: 'u1',
+      unitType: t.unitType,
       playerStockpile: insufficientStockpile,
-      units: [
-        Unit(
-          id: 'u1',
-          type: t.unitType,
-          ownerId: 'p1',
-          locationProvinceId: 'ow|p1',
-          tileKey: kEconomyPreviewWorkTileKey,
-        ),
-      ],
-      tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
     );
-    final insufficientOrders = Orders(
-      workOrdersByPlayerId: {
-        'p1': [
-          WorkOrder(
-            unitId: 'u1',
-            target: t.target,
-            targetTileKey: kEconomyPreviewWorkTileKey,
-          ),
-        ],
-      },
+    final insufficientOrders = economyPreviewSingleWorkOrder(
+      unitId: 'u1',
+      target: t.target,
     );
-    expect(
-      previewStockpilePhaseDeltasByCommodityForPlayer(
-        game: insufficientGame,
-        topology: const MapTopology(),
-        playerId: 'p1',
-        inputs: economyPreviewInputs(currentOrders: insufficientOrders),
-      )[EconomyPreviewStockpilePhase.pendingBuildCosts],
-      isEmpty,
+    expectEconomyPreviewPendingBuildCostsEmpty(
+      game: insufficientGame,
+      orders: insufficientOrders,
       reason: 'insufficient stockpile target=${t.target}',
     );
     expectPhaseDeltasSumToNet(
@@ -287,13 +177,7 @@ void runMixedWorkTargetAggregationScenario() {
       ],
     },
   );
-  final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
-    game: game,
-    topology: const MapTopology(),
-    playerId: 'p1',
-    inputs: economyPreviewInputs(currentOrders: orders),
-  );
-  final pending = phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
+  final pending = economyPreviewPendingBuildCosts(game: game, orders: orders);
   expect(pending[CommodityCatalog.lumber.id], -13);
   expect(pending[CommodityCatalog.castIron.id], -8);
   expect(pending[CommodityCatalog.bronze.id], -3);
@@ -356,13 +240,7 @@ void runSequentialAffordabilityScenario() {
       ],
     },
   );
-  final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
-    game: game,
-    topology: const MapTopology(),
-    playerId: 'p1',
-    inputs: economyPreviewInputs(currentOrders: orders),
-  );
-  final pending = phases[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
+  final pending = economyPreviewPendingBuildCosts(game: game, orders: orders);
   expect(pending[CommodityCatalog.lumber.id], -2);
   expect(pending[CommodityCatalog.castIron.id], -2);
   expectPhaseDeltasSumToNet(
