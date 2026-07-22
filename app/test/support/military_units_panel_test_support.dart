@@ -30,15 +30,13 @@ Widget buildMilitaryPanel({
   MapTopology? topology,
   Orders draftOrders = const Orders(),
 }) {
-  return buildAppShell(
-    child: Scaffold(
-      body: MilitaryUnitsPanel(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        bus: bus ?? AppEventBus.create(),
-        topology: topology ?? const MapTopology(),
-        draftOrders: draftOrders,
-      ),
+  return buildPanelScaffoldShell(
+    MilitaryUnitsPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus ?? AppEventBus.create(),
+      topology: topology ?? const MapTopology(),
+      draftOrders: draftOrders,
     ),
   );
 }
@@ -57,7 +55,8 @@ Future<void> pumpMilitaryPanel(
   Orders draftOrders = const Orders(),
   Widget? widget,
 }) async {
-  await tester.pumpWidget(
+  await pumpSettledWidget(
+    tester,
     widget ??
         buildMilitaryPanel(
           game: game,
@@ -67,7 +66,6 @@ Future<void> pumpMilitaryPanel(
           draftOrders: draftOrders,
         ),
   );
-  await tester.pumpAndSettle();
 }
 
 /// Taps the first [ExpansionTile] in the tree (if any) and settles, expanding

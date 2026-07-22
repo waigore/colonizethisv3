@@ -81,16 +81,14 @@ Widget buildNavalPanel({
   String? locationScopeKey,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
-  return buildAppShell(
-    child: Scaffold(
-      body: NavalUnitsPanel(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        bus: resolvedBus,
-        topology: topology,
-        draftOrders: draftOrders,
-        locationScopeKey: locationScopeKey,
-      ),
+  return buildPanelScaffoldShell(
+    NavalUnitsPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: resolvedBus,
+      topology: topology,
+      draftOrders: draftOrders,
+      locationScopeKey: locationScopeKey,
     ),
   );
 }
@@ -109,7 +107,8 @@ Future<void> pumpNavalPanel(
   String? locationScopeKey,
   Widget? widget,
 }) async {
-  await tester.pumpWidget(
+  await pumpSettledWidget(
+    tester,
     widget ??
         buildNavalPanel(
           game: game,
@@ -120,7 +119,6 @@ Future<void> pumpNavalPanel(
           locationScopeKey: locationScopeKey,
         ),
   );
-  await tester.pumpAndSettle();
 }
 
 /// Panel ExpansionTile title for [fleet] owned by [humanId].
@@ -213,16 +211,14 @@ Widget buildNavalPanelWideViewport({
   AppEventBus? bus,
   MapTopology topology = const MapTopology(),
 }) {
-  return buildAppShell(
-    viewport: size,
-    child: Scaffold(
-      body: NavalUnitsPanel(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        bus: bus ?? AppEventBus.create(),
-        topology: topology,
-      ),
+  return buildPanelScaffoldShell(
+    NavalUnitsPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus ?? AppEventBus.create(),
+      topology: topology,
     ),
+    viewport: size,
   );
 }
 

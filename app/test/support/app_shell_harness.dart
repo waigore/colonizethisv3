@@ -118,6 +118,39 @@ Widget _wrapViewport(Widget child, Size? viewport) {
         );
 }
 
+/// Editorial-monocle [Scaffold] host for panel widget tests (Refs #4117).
+Widget buildPanelScaffoldShell(
+  Widget panel, {
+  Size? viewport,
+  List<Override> overrides = const <Override>[],
+}) {
+  return buildAppShell(
+    viewport: viewport,
+    overrides: overrides,
+    child: Scaffold(body: panel),
+  );
+}
+
+/// Forces a fixed binding surface for tall/wide panel layout pins.
+Future<void> bindFixedTestSurface(WidgetTester tester, Size size) async {
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.binding.setSurfaceSize(size);
+}
+
+/// Pumps a prebuilt widget tree; settles by default (panel pump canonical).
+Future<void> pumpSettledWidget(
+  WidgetTester tester,
+  Widget widget, {
+  bool settle = true,
+}) async {
+  await tester.pumpWidget(widget);
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+}
+
 /// Pumps [child] inside [buildAppShell].
 ///
 /// When [viewport] is non-null, registers a tear-down that restores the

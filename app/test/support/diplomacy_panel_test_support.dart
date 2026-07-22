@@ -23,17 +23,13 @@ Future<void> pumpDiplomacyPanelBuilt(WidgetTester tester) async {
 /// Dialogs: `showDialog` from async bus listeners + route transition.
 /// Tall surface so diplomacy rows and action buttons are on-screen without
 /// calling `ensureVisible` (avoids long scroll pump loops on [ListView]).
-Future<void> bindDiplomacyTallTestSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(800, 4000));
-}
+Future<void> bindDiplomacyTallTestSurface(WidgetTester tester) =>
+    bindFixedTestSurface(tester, const Size(800, 4000));
 
 /// Wide test surface for responsive-layout tests where viewport is driven
 /// by an inner [MediaQuery] override, not the surface size alone.
-Future<void> bindDiplomacyStandardTestSurface(WidgetTester tester) async {
-  addTearDown(() => tester.binding.setSurfaceSize(null));
-  await tester.binding.setSurfaceSize(const Size(900, 1600));
-}
+Future<void> bindDiplomacyStandardTestSurface(WidgetTester tester) =>
+    bindFixedTestSurface(tester, const Size(900, 1600));
 
 /// Shared panel bus dialog leaf (Refs #4035).
 ///
