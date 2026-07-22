@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 370 app/lib files still using part directives.
+// Generated grandfather allowlist: 344 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -35,26 +35,11 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/map_state/game_map_area_build_map_stack.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build_map_stack_chrome.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build_overlays.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_civilian_draft_projection.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_civilian_draft_projection_helpers.dart',
   'app/lib/features/game/flame/map_state/game_map_area_e2e.dart',
   'app/lib/features/game/flame/map_state/game_map_area_events.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_fleet_draft_projection.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_fleet_draft_projection_scope.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_fleet_draft_projection_tiles.dart',
   'app/lib/features/game/flame/map_state/game_map_area_lifecycle.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_province_action_states.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_province_action_states_build_improvement.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_province_action_states_explore.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_province_action_states_prospect.dart',
   'app/lib/features/game/flame/map_state/game_map_area_selection.dart',
   'app/lib/features/game/flame/map_state/game_map_area_state_base.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic_draft_projection.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic_forwarders.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic_province_actions.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic_shell.dart',
-  'app/lib/features/game/flame/map_state/game_map_area_state_logic_work_targets.dart',
   'app/lib/features/game/flame/map_state/game_map_area_turn_feed.dart',
   'app/lib/features/game/flame/map_state/game_map_area_turn_feed_labels.dart',
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
