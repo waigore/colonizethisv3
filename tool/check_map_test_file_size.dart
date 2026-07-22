@@ -10,11 +10,7 @@ const _maxPhysicalLines = 400;
 const _mapTestsRelativePath = 'packages/colonizethis_map/test';
 
 /// Shrink-only allowlist during transition; remove entries as densify lands.
-const List<String> mapTestFileSizeGrandfathered = <String>[
-  'packages/colonizethis_map/test/init_game_map_view_builder_region_cells_test.dart',
-  'packages/colonizethis_map/test/init_game_map_view_builder_town_civilian_markers_test.dart',
-  'packages/colonizethis_map/test/tile_map_visualization_render_test.dart',
-];
+const List<String> mapTestFileSizeGrandfathered = <String>[];
 
 int runCheckMapTestFileSize(
   String repoRoot, {

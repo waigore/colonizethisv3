@@ -16,6 +16,8 @@ const Set<String> mapTestMinimalGameSharedScopedFiles = {
   'packages/colonizethis_map/test/region_map_view_inputs_test.dart',
   'packages/colonizethis_map/test/map_format_util_test.dart',
   'packages/colonizethis_map/test/port_icon_placement_test.dart',
+  'packages/colonizethis_map/test/town_icon_style_test.dart',
+  'packages/colonizethis_map/test/game_world_state_map_visualizer_test.dart',
 };
 
 final RegExp _inlineGameConstructor = RegExp(r'\bGame\s*\(');

@@ -3,19 +3,16 @@ import 'package:colonizethis_data/colonizethis_data.dart' show kNewWorldRegionId
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/init_game_map_view_fixtures.dart';
+
 void main() {
   group('townIconStyleForProvince', () {
     Game gameWith({
       List<Player> players = const [],
       List<MinorNation> minorNations = const [],
       List<Tribe> tribes = const [],
-    }) => Game(
+    }) => minimalGame(
       id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-      ),
       players: players,
       minorNations: minorNations,
       tribes: tribes,

@@ -6,7 +6,7 @@ import '../tool/check_map_test_minimal_game_shared.dart';
 
 void main() {
   group('mapTestMinimalGameSharedPathInScope', () {
-    test('scopes the five colour/capital/format suites', () {
+    test('scopes colour/capital/format and residual non-view-builder suites', () {
       expect(
         mapTestMinimalGameSharedPathInScope(
           'packages/colonizethis_map/test/faction_ownership_color_test.dart',
@@ -17,7 +17,13 @@ void main() {
         mapTestMinimalGameSharedPathInScope(
           'packages/colonizethis_map/test/town_icon_style_test.dart',
         ),
-        isFalse,
+        isTrue,
+      );
+      expect(
+        mapTestMinimalGameSharedPathInScope(
+          'packages/colonizethis_map/test/game_world_state_map_visualizer_test.dart',
+        ),
+        isTrue,
       );
     });
   });
