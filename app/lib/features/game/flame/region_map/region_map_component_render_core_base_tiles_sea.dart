@@ -14,7 +14,7 @@ extension _CtRegionMapRenderCoreBaseTilesSea on CtRegionMapComponent {
     }
 
     final landCorner = _getCoastlineCornerValues(cell.x, cell.y);
-    final dominantLandType = _getDominantAdjacentLandBase(
+    final dominantLandType = regionMapComponentDominantAdjacentLandBase(
       cell.x,
       cell.y,
       _getCellAt,
@@ -43,7 +43,7 @@ extension _CtRegionMapRenderCoreBaseTilesSea on CtRegionMapComponent {
             _visibilityForTerrain(cell) == TileVisibility.fogged) {
           canvas.drawRect(
             dstRect,
-            Paint()..color = Color.fromRGBO(0, 0, 0, _fogOverlayOpacity),
+            Paint()..color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity),
           );
         }
       }

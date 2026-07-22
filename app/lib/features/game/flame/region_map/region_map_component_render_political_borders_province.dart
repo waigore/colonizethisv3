@@ -5,9 +5,9 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
   void _paintHoveredProvinceGlow(Canvas canvas) {
     final t = session.hoverAnimationT;
     final opacity =
-        _kHoveredProvinceGlowOpacityMid +
-        _kHoveredProvinceGlowOpacityAmplitude *
-            math.sin(t * _kHoveredProvinceGlowAngularFrequency);
+        RegionMapPalette.hoveredProvinceGlowOpacityMid +
+        RegionMapPalette.hoveredProvinceGlowOpacityAmplitude *
+            math.sin(t * RegionMapPalette.hoveredProvinceGlowAngularFrequency);
     final coastInset = provinceOverlayLandSeaInsetPx(
       cellSizePx: cellSize,
       topologyStrokeWidth: kProvinceOverlayTopologyStrokeWidth,
@@ -15,7 +15,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayHoverGlowStrokeWidth
-      ..color = _kMapHoverSelectorIdle.withValues(alpha: opacity);
+      ..color = RegionMapPalette.mapHoverSelectorIdle.withValues(alpha: opacity);
     final provinceId = session.hoveredProvinceId!;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
@@ -89,7 +89,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayTopologyStrokeWidth
-      ..color = _provinceBorderLandColor;
+      ..color = RegionMapPalette.provinceBorderLandColor;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -148,8 +148,8 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
   Color _provinceBorderColor(CellViewData a, CellViewData b) {
     final aIsSea = a.isSea;
     final bIsSea = b.isSea;
-    if (aIsSea && bIsSea) return _provinceBorderSeaZoneColor;
-    if (!aIsSea && !bIsSea) return _provinceBorderLandColor;
-    return _provinceBorderSeaLandColor;
+    if (aIsSea && bIsSea) return RegionMapPalette.provinceBorderSeaZoneColor;
+    if (!aIsSea && !bIsSea) return RegionMapPalette.provinceBorderLandColor;
+    return RegionMapPalette.provinceBorderSeaLandColor;
   }
 }

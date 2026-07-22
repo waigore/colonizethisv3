@@ -62,12 +62,12 @@ extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
 
     final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
     const textStyle = TextStyle(
-      color: _seaZoneLabelTextColor,
-      fontSize: _provinceLabelFontSizePx,
+      color: RegionMapPalette.seaZoneLabelTextColor,
+      fontSize: RegionMapPalette.provinceLabelFontSizePx,
       fontWeight: FontWeight.w600,
     );
-    const pad = _provinceLabelPlatePaddingPx;
-    final platePaint = Paint()..color = _seaZoneLabelPlateColor;
+    const pad = RegionMapPalette.provinceLabelPlatePaddingPx;
+    final platePaint = Paint()..color = RegionMapPalette.seaZoneLabelPlateColor;
 
     for (final item in items) {
       final centroidCell = region.cellAt(item.cx, item.cy);
@@ -83,12 +83,12 @@ extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
       );
       final hasPrefixIcon = prefixIconIds.isNotEmpty;
       final prefixIconWidth = hasPrefixIcon
-          ? _provinceLabelIconRenderedPx + _provinceLabelTextIconGapPx
+          ? RegionMapPalette.provinceLabelIconRenderedPx + RegionMapPalette.provinceLabelTextIconGapPx
           : 0.0;
       final contentWidth = prefixIconWidth + tp.width;
       final contentHeight = math.max(
         tp.height,
-        hasPrefixIcon ? _provinceLabelIconRenderedPx : 0.0,
+        hasPrefixIcon ? RegionMapPalette.provinceLabelIconRenderedPx : 0.0,
       );
       final bw = contentWidth + pad * 2;
       final bh = contentHeight + pad * 2;
@@ -118,8 +118,8 @@ extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
           canvas: canvas,
           iconIds: prefixIconIds,
           left: rowLeft,
-          top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
-          rowWidth: _provinceLabelIconRenderedPx,
+          top: rowTop + (contentHeight - RegionMapPalette.provinceLabelIconRenderedPx) / 2,
+          rowWidth: RegionMapPalette.provinceLabelIconRenderedPx,
         );
       }
       tp.paint(
@@ -151,17 +151,17 @@ extension _CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
     for (final iconId in iconIds) {
       final icon = provinceLabelIconCache.getIcon(iconId);
       if (icon == null) {
-        x += _provinceLabelIconRenderedPx + _provinceLabelIconGapPx;
+        x += RegionMapPalette.provinceLabelIconRenderedPx + RegionMapPalette.provinceLabelIconGapPx;
         continue;
       }
       final dstRect = Rect.fromLTWH(
         x,
         top,
-        _provinceLabelIconRenderedPx,
-        _provinceLabelIconRenderedPx,
+        RegionMapPalette.provinceLabelIconRenderedPx,
+        RegionMapPalette.provinceLabelIconRenderedPx,
       );
       canvas.drawImageRect(icon, srcRect, dstRect, Paint());
-      x += _provinceLabelIconRenderedPx + _provinceLabelIconGapPx;
+      x += RegionMapPalette.provinceLabelIconRenderedPx + RegionMapPalette.provinceLabelIconGapPx;
     }
   }
 }

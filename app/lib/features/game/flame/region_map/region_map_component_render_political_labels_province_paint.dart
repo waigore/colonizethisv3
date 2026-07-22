@@ -13,12 +13,12 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
     final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
     const textStyle = TextStyle(
       color: Colors.white,
-      fontSize: _provinceLabelFontSizePx,
+      fontSize: RegionMapPalette.provinceLabelFontSizePx,
       fontWeight: FontWeight.w600,
       shadows: <Shadow>[
         Shadow(
           blurRadius: 2,
-          color: _kProvinceLabelShadowColor,
+          color: RegionMapPalette.provinceLabelShadowColor,
           offset: Offset(0.5, 0.5),
         ),
       ],
@@ -27,15 +27,15 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
       final platePaint = Paint()..color = item.plateColor;
       final presence = region.provinceUnitPresenceByProvinceId[item.provinceId];
       final hasCapitalIcon = item.isCapital;
-      const capitalIconIds = <String>[_provinceLabelCapitalIconId];
+      const capitalIconIds = <String>[RegionMapPalette.provinceLabelCapitalIconId];
       final presenceIconIds = resolveProvinceLabelPresenceIconIds(presence);
       final presenceIconCount = presenceIconIds.length;
       final presenceIconsWidth = presenceIconCount > 0
-          ? (presenceIconCount * _provinceLabelIconRenderedPx) +
-                ((presenceIconCount - 1) * _provinceLabelIconGapPx)
+          ? (presenceIconCount * RegionMapPalette.provinceLabelIconRenderedPx) +
+                ((presenceIconCount - 1) * RegionMapPalette.provinceLabelIconGapPx)
           : 0.0;
       final capitalInlineWidth = hasCapitalIcon
-          ? _provinceLabelIconRenderedPx + _provinceLabelTextIconGapPx
+          ? RegionMapPalette.provinceLabelIconRenderedPx + RegionMapPalette.provinceLabelTextIconGapPx
           : 0.0;
       final shouldEllipsize = shouldEllipsizeProvinceLabelText(
         isCapital: item.isCapital,
@@ -48,14 +48,14 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
             ellipsis: shouldEllipsize ? '…' : null,
           )..layout(
             maxWidth: shouldEllipsize
-                ? _provinceLabelMaxWidthPx
+                ? RegionMapPalette.provinceLabelMaxWidthPx
                 : double.infinity,
           );
 
       final tw = tp.width;
       final th = tp.height;
       final singleLinePresenceWidth = presenceIconCount > 0
-          ? _provinceLabelTextIconGapPx + presenceIconsWidth
+          ? RegionMapPalette.provinceLabelTextIconGapPx + presenceIconsWidth
           : 0.0;
       final singleLineContentWidth =
           capitalInlineWidth + tw + singleLinePresenceWidth;
@@ -65,20 +65,20 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
       );
       final lineOneWidth = capitalInlineWidth + tw;
       final lineOneHeight = hasCapitalIcon
-          ? math.max(th, _provinceLabelIconRenderedPx)
+          ? math.max(th, RegionMapPalette.provinceLabelIconRenderedPx)
           : th;
       final contentWidth = wrapIconsToSecondLine
           ? math.max(lineOneWidth, presenceIconsWidth)
           : singleLineContentWidth;
       final contentHeight = wrapIconsToSecondLine
           ? lineOneHeight +
-                _provinceLabelTextIconGapPx +
-                _provinceLabelIconRenderedPx
+                RegionMapPalette.provinceLabelTextIconGapPx +
+                RegionMapPalette.provinceLabelIconRenderedPx
           : math.max(
               lineOneHeight,
-              presenceIconCount > 0 ? _provinceLabelIconRenderedPx : 0,
+              presenceIconCount > 0 ? RegionMapPalette.provinceLabelIconRenderedPx : 0,
             );
-      const pad = _provinceLabelPlatePaddingPx;
+      const pad = RegionMapPalette.provinceLabelPlatePaddingPx;
       final bw = contentWidth + pad * 2;
       final bh = contentHeight + pad * 2;
       final center = item.avoidTileX != null && item.avoidTileY != null
@@ -114,8 +114,8 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
             iconIds: capitalIconIds,
             left: lineOneLeft,
             top:
-                lineOneTop + (lineOneHeight - _provinceLabelIconRenderedPx) / 2,
-            rowWidth: _provinceLabelIconRenderedPx,
+                lineOneTop + (lineOneHeight - RegionMapPalette.provinceLabelIconRenderedPx) / 2,
+            rowWidth: RegionMapPalette.provinceLabelIconRenderedPx,
           );
         }
         tp.paint(
@@ -126,7 +126,7 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
           ),
         );
         final iconTop =
-            lineOneTop + lineOneHeight + _provinceLabelTextIconGapPx;
+            lineOneTop + lineOneHeight + RegionMapPalette.provinceLabelTextIconGapPx;
         _paintProvinceLabelIconsRow(
           canvas: canvas,
           iconIds: presenceIconIds,
@@ -141,20 +141,20 @@ extension _CtRegionMapRenderPoliticalLabelsProvincePaint
             canvas: canvas,
             iconIds: capitalIconIds,
             left: rowLeft,
-            top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
-            rowWidth: _provinceLabelIconRenderedPx,
+            top: rowTop + (contentHeight - RegionMapPalette.provinceLabelIconRenderedPx) / 2,
+            rowWidth: RegionMapPalette.provinceLabelIconRenderedPx,
           );
         }
         final textLeft = rowLeft + capitalInlineWidth;
         final textTop = rowTop + (contentHeight - th) / 2;
         tp.paint(canvas, Offset(textLeft, textTop));
         if (presenceIconCount > 0) {
-          final iconLeft = textLeft + tw + _provinceLabelTextIconGapPx;
+          final iconLeft = textLeft + tw + RegionMapPalette.provinceLabelTextIconGapPx;
           _paintProvinceLabelIconsRow(
             canvas: canvas,
             iconIds: presenceIconIds,
             left: iconLeft,
-            top: rowTop + (contentHeight - _provinceLabelIconRenderedPx) / 2,
+            top: rowTop + (contentHeight - RegionMapPalette.provinceLabelIconRenderedPx) / 2,
             rowWidth: presenceIconsWidth,
           );
         }

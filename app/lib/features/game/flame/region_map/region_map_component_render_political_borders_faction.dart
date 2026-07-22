@@ -6,7 +6,7 @@ extension _CtRegionMapRenderPoliticalBordersFaction on CtRegionMapComponent {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kProvinceOverlayPoliticalStrokeWidth
-      ..color = _kFactionPoliticalBorderColor;
+      ..color = RegionMapPalette.factionPoliticalBorderColor;
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
