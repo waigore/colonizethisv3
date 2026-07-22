@@ -1224,6 +1224,13 @@ rules:
     runner: dart
     script: tool/check_map_lib_file_size.dart
 
+  - rule_id: repo.map_lib_file_size_headroom
+    group: structure
+    title: colonizethis_map gen/view/render source files must be 400 non-comment lines or fewer (wave-4 headroom, Refs #4112)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_lib_file_size_headroom.dart
+
   - rule_id: repo.map_grid_ops_central
     group: structure
     title: colonizethis_map lib tile-grid deep copies must route through TileMapGrid.copy (Refs #3459)
@@ -1587,6 +1594,20 @@ rules:
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_map_test_minimal_game_shared.dart
+
+  - rule_id: repo.map_test_file_size
+    group: architecture
+    title: colonizethis_map test files must be 400 physical lines or fewer (Refs #4112)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_test_file_size.dart
+
+  - rule_id: repo.map_render_legend_layout_dedup
+    group: architecture
+    title: colonizethis_map render visualizers must use legendHeightForLineCount (Refs #4112)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_map_render_legend_layout_dedup.dart
 
   - rule_id: repo.combat_test_mirrors_lib
     group: architecture

@@ -17,7 +17,12 @@ The **generation layer** — the deterministic tile-map pipeline that turns `Til
 The **render layer** — the only modules permitted to depend on `package:image` for PNG encoding — lives under `packages/colonizethis_map/lib/src/render/`:
 
 - `render/tile_map_visualization.dart` — base tile map PNG visualizer.
-- `render/tile_map_visualization_shared.dart` — shared fill / borders / legend / swatch helpers.
+- `render/tile_map_visualization_cell_fill.dart` — shared cell-fill and border primitives (`fillCellRect`, `fillTileGridCells`, `fillRegionViewCells`, `drawBorders`).
+- `render/tile_map_visualization_png_markers.dart` — on-map port/capital marker painting.
+- `render/tile_map_visualization_legend_layout.dart` — legend layout constants, `legendHeightForLineCount`, and primitive legend row drawing.
+- `render/tile_map_visualization_shared.dart` — barrel re-exporting the modules above plus colour/resource legend helpers.
+- `render/tile_map_visualization_legend.dart` — tile-map legend sections (terrain/region optional blocks).
+- `render/tile_map_visualization_overlays.dart` — on-map seed/resource/label overlays for the base visualizer.
 - `render/game_world_state_map_visualizer.dart` — game-world ownership/marker overlay visualizer.
 - `render/multi_region_map_rendering.dart` — OW+NW composite rendering.
 - `render/tile_map_resource_legend.dart` — resource legend drawing.
@@ -25,7 +30,8 @@ The **render layer** — the only modules permitted to depend on `package:image`
 The **view layer** — view-model building that converts generation/topology output into the `RegionMapViewData` / `CellViewData` shapes consumed by the player app — lives under `packages/colonizethis_map/lib/src/view/`:
 
 - `view/init_game_map_view_builder.dart` (+ fleet/orchestration/cells/map-markers part files) — builds per-region map view data.
-- `view/init_game_map_view_data.dart` — view-data value types.
+- `view/init_game_map_view_data.dart` — cell/region view-data value types (barrel).
+- `view/init_game_map_view_marker_types.dart` — marker view types re-exported from the view-data barrel.
 - `view/region_map_view_inputs.dart` — region view-input bundling (colour/capital/port scopes).
 
 The view layer depends only on generation/topology and shared data; the render layer may depend on the view layer (for the view-data shapes it draws), never the reverse. Generation passes and view-model builders must stay image-free. The boundary is enforced by `repo.map_gen_no_image_import`, which permits `package:image` only for files under `lib/src/render/` (so `lib/src/gen/`, `lib/src/view/`, and shared root modules are all image-free) ([repo-lint.md](repo-lint.md)). The public `colonizethis_map.dart` barrel re-exports the relocated generation, render, and view modules, so consumers (`app/`, `ctdev/`, `tool/`) are unaffected by the relocation.
