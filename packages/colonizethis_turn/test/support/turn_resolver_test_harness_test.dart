@@ -19,6 +19,19 @@ void main() {
       expect(topology.edges, isEmpty);
     });
 
+    test('turnTestOwProvinceStacksFixture builds mass-province OW maps', () {
+      final fixture = turnTestOwProvinceStacksFixture(
+        stacks: [
+          (ownerId: 'p1', count: 2, localIdPrefix: 'A'),
+          (ownerId: 'p2', count: 1, localIdPrefix: 'B'),
+        ],
+        turnNumber: 4,
+      );
+      expect(fixture.game.worldState.oldWorld.provinces.length, 3);
+      expect(fixture.topology.nodes.length, 3);
+      expect(fixture.game.worldState.turnState.turnNumber, 4);
+    });
+
     test('adjacentOwP1P2Game builds split-ownership OW stack', () {
       const ow = turnTestOldWorldRegionId;
       final game = adjacentOwP1P2Game(
