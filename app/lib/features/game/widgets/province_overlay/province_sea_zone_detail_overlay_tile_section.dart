@@ -1,8 +1,17 @@
 /// Tile section builder for [ProvinceSeaZoneDetailOverlay].
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-Widget _buildTileSection({
+import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
+import 'province_sea_zone_detail_overlay_tile_section_revealed.dart';
+
+Widget buildTileSection({
   required BuildContext context,
   required AppLocalizations l10n,
   required Game game,
@@ -23,12 +32,7 @@ Widget _buildTileSection({
   VoidCallback? onBuildImprovementTap,
 }) {
   if (selectedTileKey == null) {
-    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
-    // The no-selection guidance prompt is placeholder copy, not live
-    // world-state data, so it resolves to the muted token rather than
-    // falling through `DefaultTextStyle` to the Material `bodyMedium`.
-    return _buildSection(
+    return buildOverlaySection(
       l10n.provinceOverlay_sectionTile,
       Text(
         l10n.provinceOverlay_clickTileForDetails,
@@ -43,37 +47,33 @@ Widget _buildTileSection({
     selectedTileKey: selectedTileKey,
   );
   if (coords == null) {
-    // SPEC: SPEC/ui/province-sea-zone-detail-overlay.md
-    // § Dark-theme Tile section placeholder body tokens (S5 follow-up).
-    // Reuse the shared S9 em-dash helper so every `Text('—')` placeholder
-    // surface in the overlay resolves to one muted token source.
-    return _buildSection(
+    return buildOverlaySection(
       l10n.provinceOverlay_sectionTile,
-      _emptyBodyDashText(),
+      overlayEmptyBodyDashText(),
     );
   }
   final x = coords.x;
   final y = coords.y;
   final cell = region.cellAt(x, y);
   if (cell.visibility == TileVisibility.unrevealed) {
-    return _buildSection(
+    return buildOverlaySection(
       l10n.provinceOverlay_sectionTile,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _obfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
-          _obfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCoordinatesUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileTerrainUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileResourceUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileProspectedUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileImprovementUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileRoadUnknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_tileCivilianUnitsUnknown),
         ],
       ),
     );
   }
-  return _buildRevealedTileSection(
+  return buildRevealedTileSection(
     context: context,
     l10n: l10n,
     game: game,

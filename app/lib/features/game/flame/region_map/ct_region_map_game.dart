@@ -1,107 +1,90 @@
-import 'dart:async';
-
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter/material.dart' show Offset;
 
+import 'ct_region_map_game_mixins.dart';
+import 'ct_region_map_game_props.dart';
+import 'ct_region_map_game_viewport.dart';
 import 'region_map_component.dart';
-import 'region_map_viewport_snapshot.dart'
-    show
-        RegionMapViewportSnapshot,
-        computeRegionMapFitMapZoom,
-        kRegionMapZoomMultiplierMax,
-        kRegionMapZoomMultiplierMin;
-
-part 'ct_region_map_game_camera.dart';
-part 'ct_region_map_game_lifecycle.dart';
-part 'ct_region_map_game_props.dart';
-part 'ct_region_map_game_viewport.dart';
+import 'region_map_viewport_snapshot.dart' show RegionMapViewportSnapshot;
 
 // ignore_for_file: deprecated_member_use
 
 /// FlameGame host for the region map, with basic tap/drag/pinch wiring.
-class CtRegionMapGame extends FlameGame with TapDetector {
+class CtRegionMapGame extends FlameGame
+    with
+        TapDetector,
+        CtRegionMapGameFields,
+        CtRegionMapGameCamera,
+        CtRegionMapGameLifecycle {
   CtRegionMapGame({
-    required this.region,
-    required this.cellSizePx,
-    required this.showPoliticalOverlay,
-    required this.showProvinceOverlay,
-    required this.showProvinceOwnershipTint,
-    required this.showProvinceNamesLayer,
-    required this.visibilityMode,
-    this.baseLayerDisplayMode =
+    required RegionMapViewData region,
+    required double cellSizePx,
+    required bool showPoliticalOverlay,
+    required bool showProvinceOverlay,
+    required bool showProvinceOwnershipTint,
+    required bool showProvinceNamesLayer,
+    required CtMapVisibilityMode visibilityMode,
+    BaseLayerDisplayMode baseLayerDisplayMode =
         BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-    required this.onProvinceSelected,
-    this.onMapTileTappedForDetail,
-    required this.onRegionViewChanged,
-    required this.onProvinceHovered,
-    required this.onTileHovered,
-    required this.onCivilianTileTapped,
-    this.onFleetMarkerTapped,
-    required this.onCivilianTileSelectionCleared,
-    required this.selectedTileKey,
-    required this.selectedCivilianTileKey,
-    required this.secondaryHighlightTileKey,
-    this.secondaryHighlightTileKeys,
-    required this.validTileKeys,
-    required this.onTileSelected,
-    required this.onWorkTargetSelectionCancelled,
-    required this.onTownIconTapped,
-    this.playerViewForResources,
-    this.onViewportSnapshotChanged,
-    this.initialZoomMultiplier = 1.0,
-  });
-
-  RegionMapViewData region;
-  final double cellSizePx;
-  bool showPoliticalOverlay;
-  bool showProvinceOverlay;
-  bool showProvinceOwnershipTint;
-  bool showProvinceNamesLayer;
-  CtMapVisibilityMode visibilityMode;
-  BaseLayerDisplayMode baseLayerDisplayMode;
-  void Function(String provinceId)? onProvinceSelected;
-  void Function(String tileKey)? onMapTileTappedForDetail;
-  VoidCallback? onRegionViewChanged;
-  void Function(String? provinceId)? onProvinceHovered;
-  void Function(String? tileKey)? onTileHovered;
-  void Function(String tileKey)? onCivilianTileTapped;
-  void Function(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  )?
-  onFleetMarkerTapped;
-  VoidCallback? onCivilianTileSelectionCleared;
-  String? selectedTileKey;
-  String? selectedCivilianTileKey;
-  String? secondaryHighlightTileKey;
-  Set<String>? secondaryHighlightTileKeys;
-  Set<String>? validTileKeys;
-  void Function(String tileKey)? onTileSelected;
-  VoidCallback? onWorkTargetSelectionCancelled;
-  void Function(String provinceId)? onTownIconTapped;
-  PlayerView? playerViewForResources;
-  void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged;
-  final double initialZoomMultiplier;
-
-  late final CtRegionMapComponent _mapComponent;
-
-  /// Widget tests only: Flame [onLoad] must have completed before reading.
-  @visibleForTesting
-  CtRegionMapComponent get debugMapComponentForTest => _mapComponent;
-
-  /// `m` in [kRegionMapZoomMultiplierMin]–[kRegionMapZoomMultiplierMax]; camera zoom = `m × z_fit`.
-  late double _zoomMultiplier = initialZoomMultiplier;
-  bool _mapLoaded = false;
-  Vector2? _lastCanvasSize;
-
-  double get zoomMultiplier => _zoomMultiplier;
+    void Function(String provinceId)? onProvinceSelected,
+    void Function(String tileKey)? onMapTileTappedForDetail,
+    VoidCallback? onRegionViewChanged,
+    void Function(String? provinceId)? onProvinceHovered,
+    void Function(String? tileKey)? onTileHovered,
+    void Function(String tileKey)? onCivilianTileTapped,
+    void Function(
+      String locationScopeKey,
+      String? initialFleetId,
+      String markerTileKey,
+    )?
+    onFleetMarkerTapped,
+    VoidCallback? onCivilianTileSelectionCleared,
+    String? selectedTileKey,
+    String? selectedCivilianTileKey,
+    String? secondaryHighlightTileKey,
+    Set<String>? secondaryHighlightTileKeys,
+    Set<String>? validTileKeys,
+    void Function(String tileKey)? onTileSelected,
+    VoidCallback? onWorkTargetSelectionCancelled,
+    void Function(String provinceId)? onTownIconTapped,
+    PlayerView? playerViewForResources,
+    void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
+    double initialZoomMultiplier = 1.0,
+  }) {
+    this.region = region;
+    this.cellSizePx = cellSizePx;
+    this.showPoliticalOverlay = showPoliticalOverlay;
+    this.showProvinceOverlay = showProvinceOverlay;
+    this.showProvinceOwnershipTint = showProvinceOwnershipTint;
+    this.showProvinceNamesLayer = showProvinceNamesLayer;
+    this.visibilityMode = visibilityMode;
+    this.baseLayerDisplayMode = baseLayerDisplayMode;
+    this.onProvinceSelected = onProvinceSelected;
+    this.onMapTileTappedForDetail = onMapTileTappedForDetail;
+    this.onRegionViewChanged = onRegionViewChanged;
+    this.onProvinceHovered = onProvinceHovered;
+    this.onTileHovered = onTileHovered;
+    this.onCivilianTileTapped = onCivilianTileTapped;
+    this.onFleetMarkerTapped = onFleetMarkerTapped;
+    this.onCivilianTileSelectionCleared = onCivilianTileSelectionCleared;
+    this.selectedTileKey = selectedTileKey;
+    this.selectedCivilianTileKey = selectedCivilianTileKey;
+    this.secondaryHighlightTileKey = secondaryHighlightTileKey;
+    this.secondaryHighlightTileKeys = secondaryHighlightTileKeys;
+    this.validTileKeys = validTileKeys;
+    this.onTileSelected = onTileSelected;
+    this.onWorkTargetSelectionCancelled = onWorkTargetSelectionCancelled;
+    this.onTownIconTapped = onTownIconTapped;
+    this.playerViewForResources = playerViewForResources;
+    this.onViewportSnapshotChanged = onViewportSnapshotChanged;
+    state.zoomMultiplier = initialZoomMultiplier;
+  }
 
   @override
   Future<void> onLoad() async {
@@ -115,7 +98,6 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     updateRegionMapGame(dt);
   }
 
-  /// Update map configuration without recreating the game.
   void updateProps({
     RegionMapViewData? region,
     bool? showPoliticalOverlay,
@@ -148,7 +130,7 @@ class CtRegionMapGame extends FlameGame with TapDetector {
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
     double? zoomMultiplier,
   }) =>
-      _ctRegionMapGameUpdateProps(
+      ctRegionMapGameUpdateProps(
         this,
         region: region,
         showPoliticalOverlay: showPoliticalOverlay,
@@ -177,38 +159,29 @@ class CtRegionMapGame extends FlameGame with TapDetector {
         zoomMultiplier: zoomMultiplier,
       );
 
-  /// Sets the camera center in world space (used by the region minimap). Clamped to the map.
   void setCameraCenterWorld(double x, double y) =>
-      _ctRegionMapGameSetCameraCenterWorld(this, x, y);
+      ctRegionMapGameSetCameraCenterWorld(this, x, y);
 
-  /// Pans the camera center in world space (used by the region minimap). Clamped each step.
   void panCameraWorld(double dx, double dy) =>
-      _ctRegionMapGamePanCameraWorld(this, dx, dy);
+      ctRegionMapGamePanCameraWorld(this, dx, dy);
 
-  /// Centers the camera on the given tile key, if valid.
   void centerOnTileKey(String tileKey) =>
-      _ctRegionMapGameCenterOnTileKey(this, tileKey);
+      ctRegionMapGameCenterOnTileKey(this, tileKey);
 
-  /// Pan the camera by a Flutter offset (in logical pixels).
-  void panBy(Offset delta) => _ctRegionMapGamePanBy(this, delta);
+  void panBy(Offset delta) => ctRegionMapGamePanBy(this, delta);
 
-  /// Zoom the camera by [factor] (>1 zooms in, <1 zooms out) on [zoomMultiplier].
-  void zoomBy(double factor) => _ctRegionMapGameZoomBy(this, factor);
+  void zoomBy(double factor) => ctRegionMapGameZoomBy(this, factor);
 
-  /// Absolute fit-relative multiplier from the shell (slider). SPEC/ui/map-widget.md.
   void setZoomMultiplierAbsolute(double multiplier) =>
-      _ctRegionMapGameSetZoomMultiplierAbsolute(this, multiplier);
+      ctRegionMapGameSetZoomMultiplierAbsolute(this, multiplier);
 
-  /// Update hover state from a widget-local position.
   void updateHoverFromLocal(Offset localPosition) =>
-      _ctRegionMapGameUpdateHoverFromLocal(this, localPosition);
+      ctRegionMapGameUpdateHoverFromLocal(this, localPosition);
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-
-    final previousSize = _lastCanvasSize;
-    handleRegionMapGameResize(size, previousSize);
+    handleRegionMapGameResize(size, state.lastCanvasSize);
   }
 
   @override

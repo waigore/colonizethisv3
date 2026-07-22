@@ -210,8 +210,8 @@ void main() {
     },
   );
 
-  group('GameMapAreaStateLogic Api hop collapse (#4018)', () {
-    test('positive: public facade has no middle Api* part files', () {
+  group('GameMapAreaStateLogic explicit-import library (#4018, #4117)', () {
+    test('positive: state-logic library has no part directives or Api* hops', () {
       final mapStateDir = Directory(
         '${Directory.current.path}/lib/features/game/flame/map_state',
       );
@@ -220,22 +220,23 @@ void main() {
           .whereType<File>()
           .map((f) => p.basename(f.path))
           .toList();
-      expect(names, contains('game_map_area_state_logic_forwarders.dart'));
+      expect(names, contains('game_map_area_state_logic.dart'));
+      expect(names, isNot(contains('game_map_area_state_logic_forwarders.dart')));
       expect(
         names.where((n) => n.contains('forwarders_')).toList(),
         isEmpty,
       );
-      final facade = File(
-        '${mapStateDir.path}/game_map_area_state_logic_forwarders.dart',
+      final library = File(
+        '${mapStateDir.path}/game_map_area_state_logic.dart',
       ).readAsStringSync();
-      expect(facade.contains('_GameMapAreaStateLogicApi'), isFalse);
-      expect(facade.contains('GameMapAreaStateLogicShell.'), isTrue);
-      expect(facade.contains('GameMapAreaStateLogicWorkTargets.'), isTrue);
-      expect(facade.contains('GameMapAreaStateLogicDraftProjection.'), isTrue);
-      expect(facade.contains('GameMapAreaStateLogicProvinceActions.'), isTrue);
+      expect(library.contains('_GameMapAreaStateLogicApi'), isFalse);
+      expect(library.contains('GameMapAreaStateLogicShell.'), isTrue);
+      expect(library.contains('GameMapAreaStateLogicWorkTargets.'), isTrue);
+      expect(library.contains('GameMapAreaStateLogicDraftProjection.'), isTrue);
+      expect(library.contains('GameMapAreaStateLogicProvinceActions.'), isTrue);
     });
 
-    test('negative: library entry does not declare Api* part directives', () {
+    test('negative: state-logic library does not declare part directives', () {
       final library = File(
         '${Directory.current.path}/lib/features/game/flame/map_state/'
         'game_map_area_state_logic.dart',
@@ -245,8 +246,12 @@ void main() {
         isFalse,
       );
       expect(
-        library.contains("part 'game_map_area_state_logic_forwarders.dart';"),
-        isTrue,
+        RegExp(r'^\s*part\s+', multiLine: true).hasMatch(library),
+        isFalse,
+      );
+      expect(
+        RegExp(r'^\s*part\s+of\s+', multiLine: true).hasMatch(library),
+        isFalse,
       );
     });
   });

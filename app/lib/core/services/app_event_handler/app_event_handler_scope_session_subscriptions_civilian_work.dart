@@ -1,15 +1,25 @@
-part of 'app_event_handler_scope.dart';
+import 'dart:async';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'app_event_handler_scope_session_helpers.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/observe_session_provider.dart';
+import '../../../features/game/widgets/shell/shell_player_context.dart';
+import 'app_event_handler_scope_train_orders.dart';
 
-extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
-  List<StreamSubscription<dynamic>> _civilianWorkSessionListeners(
+mixin AppEventHandlerScopeSessionCivilianWorkListeners
+    on AppEventHandlerScopeSessionHelpers {
+  List<StreamSubscription<dynamic>> civilianWorkSessionListeners(
     AppEventBus bus,
   ) {
     return [
       bus.on<RemovePendingWorkOrderRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'RemovePendingWorkOrderRequestedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             final updated = removePendingWorkOrderAt(
               current,
@@ -21,10 +31,10 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<UpsertPendingCivilianWorkOrderRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'UpsertPendingCivilianWorkOrderRequestedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             final playerId = e.playerId;
             final workOrder = e.workOrder;
@@ -70,7 +80,7 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
                 tileMapByRegion: tileMaps,
               );
               if (!results.every((r) => r.isAccepted)) {
-                _logEvent.e(
+                appEventHandlerScopeLog.e(
                   'ui: civilian work upsert rejected: draft failed order validation',
                 );
                 var message = 'Could not assign work order (orders invalid).';
@@ -82,7 +92,7 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
                     break;
                   }
                 }
-                _showSnackBar(ShowSnackBarEvent(message: message));
+                showSnackBarForEvent(ShowSnackBarEvent(message: message));
                 assert(
                   results.every((r) => r.isAccepted),
                   'UpsertPendingCivilianWorkOrderRequestedEvent produced an invalid draft',
@@ -96,10 +106,10 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'CancelInProgressCivilianWorkRequestedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final game = ref.read(currentGameProvider);
             if (game == null) return;
             final newGame = clearUnitCurrentWork(game, e.unitId);
@@ -115,10 +125,10 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<TrainCivilianBuildOrdersCommittedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'TrainCivilianBuildOrdersCommittedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
             final pid = resolveShellPanelPlayerId(
@@ -129,7 +139,7 @@ extension _SessionCivilianWorkListeners on _AppEventHandlerScopeState {
             ref
                 .read(currentOrdersProvider.notifier)
                 .replaceAll(
-                  _mergeTrainCivilianOrdersForPlayer(
+                  mergeTrainCivilianOrdersForPlayer(
                     current: o,
                     game: g,
                     humanPlayerId: pid,

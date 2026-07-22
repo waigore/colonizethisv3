@@ -3,19 +3,28 @@
 // the host file under the repo-lint non-comment line limit per
 // `SPEC/program/dart-file-non-comment-line-size.md`).
 //
-// All classes here are library-private (`_MarketCommodityRow*`,
-// `_StepperButton`) and consumed only by `_MarketTabContent` inside the
-// parent library, so they keep using `TradeScreen` / `_MarketTabContent`
+// All classes here are library-private (`MarketCommodityRow*`,
+// `StepperButton`) and consumed only by `MarketTabContent` inside the
+// parent library, so they keep using `TradeScreen` / `MarketTabContent`
 // static constants without further plumbing.
-
-part of 'trade_screen.dart';
 
 /// One row of the Market tab commodity table. Lays the read-only
 /// content on the first two lines and the interactive direction
 /// selector + stepper on a third line so the row remains overflow-safe
 /// at the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
-class _MarketCommodityRow extends StatelessWidget {
-  const _MarketCommodityRow({
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_row_controls.dart';
+import 'trade_screen_market_row_header.dart';
+import 'trade_screen_market_tab.dart';
+
+class MarketCommodityRow extends StatelessWidget {
+  const MarketCommodityRow({
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
@@ -39,7 +48,7 @@ class _MarketCommodityRow extends StatelessWidget {
   final TradeOrder? stagedOrder;
 
   /// Refs #3093 — sellable clamp slice. The `(N)` value rendered
-  /// next to the commodity name. Computed in [_MarketTabContent] as
+  /// next to the commodity name. Computed in [MarketTabContent] as
   /// `max(0, offerCap − stagedOffer)`.
   final int sellableHeadroom;
 
@@ -69,7 +78,7 @@ class _MarketCommodityRow extends StatelessWidget {
 
   /// True when the row's `+` button can grow the staged order quantity.
   /// For bids the cross-commodity cargo cap (Refs #2993 E5c) gates this
-  /// via the `_handleQuantityDelta` no-op when cargo is exhausted; for
+  /// via the `handleQuantityDelta` no-op when cargo is exhausted; for
   /// offers (Refs #3093) the per-commodity offer cap caps the row at
   /// `offerCap` so the button reads as disabled at saturation.
   bool get _canIncrement {
@@ -95,7 +104,7 @@ class _MarketCommodityRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _MarketCommodityRowHeader(
+        MarketCommodityRowHeader(
           commodityId: commodityId,
           commodityDisplayName: commodityDisplayName,
           priceText: priceText,
@@ -106,7 +115,7 @@ class _MarketCommodityRow extends StatelessWidget {
         const SizedBox(height: 2),
         Text(volumeText, style: volumeStyle),
         const SizedBox(height: 6),
-        _MarketCommodityRowControls(
+        MarketCommodityRowControls(
           commodityId: commodityId,
           stagedType: stagedOrder?.type,
           quantityText: _quantityText,

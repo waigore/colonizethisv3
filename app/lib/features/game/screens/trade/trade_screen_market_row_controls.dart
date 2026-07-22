@@ -2,12 +2,21 @@
 // Split from `trade_screen_market_row.dart` to keep each trade-screen
 // part under the repo file-size target (Refs #3878).
 
-part of 'trade_screen.dart';
-
 /// Direction selector + quantity stepper below the static read-only data on a
 /// Market tab commodity row.
-class _MarketCommodityRowControls extends StatelessWidget {
-  const _MarketCommodityRowControls({
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../widgets/ct_choice_chip.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_row_stepper.dart';
+import 'trade_screen_market_tab.dart';
+
+class MarketCommodityRowControls extends StatelessWidget {
+  const MarketCommodityRowControls({
     required this.commodityId,
     required this.stagedType,
     required this.quantityText,
@@ -49,13 +58,13 @@ class _MarketCommodityRowControls extends StatelessWidget {
           key: TradeScreenMarketKeys.marketRowNoneChipKey(commodityId),
           selected: stagedType == null,
           onSelected: (_) => onDirectionChanged(null),
-          label: const Text(_MarketTabContent.noneChipLabel),
+          label: const Text(MarketTabContent.noneChipLabel),
         ),
         CtChoiceChip(
           key: TradeScreenMarketKeys.marketRowBidChipKey(commodityId),
           selected: stagedType == TradeOrderType.bid,
           onSelected: (_) => onDirectionChanged(TradeOrderType.bid),
-          label: const Text(_MarketTabContent.bidChipLabel),
+          label: const Text(MarketTabContent.bidChipLabel),
         ),
         CtChoiceChip(
           key: TradeScreenMarketKeys.marketRowOfferChipKey(commodityId),
@@ -63,13 +72,13 @@ class _MarketCommodityRowControls extends StatelessWidget {
           onSelected: canSelectOffer
               ? (_) => onDirectionChanged(TradeOrderType.offer)
               : null,
-          label: const Text(_MarketTabContent.offerChipLabel),
+          label: const Text(MarketTabContent.offerChipLabel),
         ),
-        _StepperButton(
+        StepperButton(
           buttonKey: TradeScreenMarketKeys.marketRowDecrementKey(commodityId),
           // ignore: avoid_hardcoded_strings_in_widgets
           glyph: '−',
-          semanticLabel: _MarketTabContent.decrementSemanticLabel,
+          semanticLabel: MarketTabContent.decrementSemanticLabel,
           onPressed: canDecrement ? onDecrement : null,
         ),
         SizedBox(
@@ -81,11 +90,11 @@ class _MarketCommodityRowControls extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        _StepperButton(
+        StepperButton(
           buttonKey: TradeScreenMarketKeys.marketRowIncrementKey(commodityId),
           // ignore: avoid_hardcoded_strings_in_widgets
           glyph: '+',
-          semanticLabel: _MarketTabContent.incrementSemanticLabel,
+          semanticLabel: MarketTabContent.incrementSemanticLabel,
           onPressed: canIncrement ? onIncrement : null,
         ),
       ],

@@ -2,9 +2,21 @@
 // Split from `trade_screen_market_tab_handlers.dart` to keep each trade-screen
 // part under the repo file-size target (Refs #3878).
 
-part of 'trade_screen.dart';
 
-extension _MarketTabContentCatalog on _MarketTabContent {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../widgets/ct_section_label.dart';
+import '../../widgets/production/commodity_ui_helpers.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_row.dart';
+import 'trade_screen_market_tab.dart';
+
+extension MarketTabContentCatalog on MarketTabContent {
   /// Builds the widget list that renders one Market commodity category
   /// section: a `CtSectionLabel` header keyed by [sectionKey] followed
   /// by the per-commodity rows for [commodities] in their input order.
@@ -17,7 +29,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
   /// section snugs against the cargo header without leaving extra
   /// whitespace, and subsequent sections get a 12 dp separator that
   /// matches the Production panel's between-section gap.
-  List<Widget> _buildCommoditySectionWidgets({
+  List<Widget> buildCommoditySectionWidgets({
     required Key sectionKey,
     required String sectionLabel,
     required List<Commodity> commodities,
@@ -44,15 +56,15 @@ extension _MarketTabContentCatalog on _MarketTabContent {
         Padding(
           key: TradeScreenMarketKeys.marketCommodityRowKey(commodities[index].id),
           padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-          child: _MarketCommodityRow(
+          child: MarketCommodityRow(
             commodityId: commodities[index].id,
             commodityDisplayName:
                 commodityDisplayName(l10n, commodities[index].id),
-            priceText: _formatPrice(
+            priceText: formatMarketPrice(
               market.prices[commodities[index].id],
               commodityId: commodities[index].id,
             ),
-            volumeText: _volumeText(
+            volumeText: volumeText(
               market.lastTurnActivity[commodities[index].id] ??
                   MarketActivity.empty,
             ),
@@ -61,7 +73,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
               playerId,
               commodities[index].id,
             ),
-            sellableHeadroom: _sellableHeadroomFor(
+            sellableHeadroom: sellableHeadroomFor(
               offerCap: offerCap,
               stagedOffers: stagedOffers,
               commodityId: commodities[index].id,
@@ -88,7 +100,7 @@ extension _MarketTabContentCatalog on _MarketTabContent {
 /// `sellableHeadroomByCommodityId` but with per-row resolution so
 /// the build path passes one int per row instead of rebuilding the
 /// full map per child.
-int _sellableHeadroomFor({
+int sellableHeadroomFor({
   required Map<CommodityId, int> offerCap,
   required Map<CommodityId, int> stagedOffers,
   required CommodityId commodityId,
@@ -99,9 +111,9 @@ int _sellableHeadroomFor({
   return headroom < 0 ? 0 : headroom;
 }
 
-String _volumeText(MarketActivity activity) {
-  return '${_MarketTabContent.bidsLabel} ${activity.totalBidQuantity} / '
-      '${_MarketTabContent.offersLabel} ${activity.totalOfferQuantity}';
+String volumeText(MarketActivity activity) {
+  return '${MarketTabContent.bidsLabel} ${activity.totalBidQuantity} / '
+      '${MarketTabContent.offersLabel} ${activity.totalOfferQuantity}';
 }
 
 /// Returns the tradeable commodities grouped by their
@@ -113,7 +125,7 @@ String _volumeText(MarketActivity activity) {
 /// preserves `CommodityCatalog.all` iteration order so this surface
 /// matches the Production panel's Available subpanel (which iterates
 /// the same catalog list filtered by category).
-_SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
+SectionedTradeableCommodities tradeableCommoditiesByCategory() {
   final List<Commodity> food = <Commodity>[];
   final List<Commodity> rawMaterials = <Commodity>[];
   final List<Commodity> manufactured = <Commodity>[];
@@ -133,7 +145,7 @@ _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
         break;
     }
   }
-  return _SectionedTradeableCommodities(
+  return SectionedTradeableCommodities(
     food: food,
     rawMaterials: rawMaterials,
     manufactured: manufactured,
@@ -152,23 +164,23 @@ _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
 /// `SPEC/game/commodity-catalog.md` § Manufactured base prices). The
 /// canonical em-dash glyph is a defensive fallback retained for future
 /// commodity additions that ship without a catalog default.
-String _formatPrice(int? price, {required CommodityId commodityId}) {
+String formatMarketPrice(int? price, {required CommodityId commodityId}) {
   final ResourceRules rules =
       TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
       ResourceRules.defaultRules;
   final int? effective =
       price ?? rules.defaultMarketPriceForCommodityId(commodityId);
-  if (effective == null) return _MarketTabContent.priceUnknownGlyph;
+  if (effective == null) return MarketTabContent.priceUnknownGlyph;
   return effective.toString();
 }
 
 /// Pre-grouped tradeable commodities passed from
-/// `_tradeableCommoditiesByCategory()` to the section builder. Holds
+/// `tradeableCommoditiesByCategory()` to the section builder. Holds
 /// the three Market tab sections (food / raw materials / manufactured)
 /// in catalog order so the renderer does not re-iterate
 /// [CommodityCatalog.all] per section.
-class _SectionedTradeableCommodities {
-  const _SectionedTradeableCommodities({
+class SectionedTradeableCommodities {
+  const SectionedTradeableCommodities({
     required this.food,
     required this.rawMaterials,
     required this.manufactured,

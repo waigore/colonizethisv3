@@ -1,6 +1,16 @@
-part of 'game_service.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart'
+    show applyAdvancedStartBootstrap, assignHiddenAgendasForGame;
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _gameServiceCreateNewGame(
+import 'game_service.dart';
+import 'game_service_new_game_setup_maps.dart';
+import 'game_service_new_game_setup_pipeline.dart';
+
+Game gameServiceCreateNewGame(
   GameService service, {
   String? id,
   GameSetupConfig? config,
@@ -10,32 +20,32 @@ Game _gameServiceCreateNewGame(
   final effectiveSeed = resolveEffectiveSetupSeed(cfg.seed);
   late final GameSetupResult setupResult;
   if (cfg.isLockedFullInitProfile) {
-    setupResult = _gameServiceLockedFullInitMapsWarpSetupWithRetry(
+    setupResult = gameServiceLockedFullInitMapsWarpSetupWithRetry(
       cfg: cfg,
       gameId: gameId,
       effectiveSeed: effectiveSeed,
     );
   } else {
-    setupResult = _gameServiceFreeformMapsWarpSetupWithRetry(
+    setupResult = gameServiceFreeformMapsWarpSetupWithRetry(
       cfg: cfg,
       gameId: gameId,
       effectiveSeed: effectiveSeed,
     );
   }
-  final bootstrappedSetup = _gameServiceSetupResultAfterAdvancedStartBootstrap(
+  final bootstrappedSetup = gameServiceSetupResultAfterAdvancedStartBootstrap(
     setupResult,
     cfg,
   );
-  final result = _gameServiceSetupResultWithFinalizedGame(
+  final result = gameServiceSetupResultWithFinalizedGame(
     bootstrappedSetup,
     effectiveSeed,
     aiProfileByGpId: cfg.aiProfileByGpId,
   );
-  _gameServicePersistNewGame(service, gameId: gameId, result: result);
+  gameServicePersistNewGame(service, gameId: gameId, result: result);
   return result.game;
 }
 
-Future<Game> _gameServiceCreateNewGameAsync(
+Future<Game> gameServiceCreateNewGameAsync(
   GameService service, {
   String? id,
   GameSetupConfig? config,
@@ -63,7 +73,7 @@ Future<Game> _gameServiceCreateNewGameAsync(
   await yieldUi();
   late final GameSetupResult setupResult;
   if (cfg.isLockedFullInitProfile) {
-    setupResult = _gameServiceLockedFullInitMapsWarpSetupWithRetry(
+    setupResult = gameServiceLockedFullInitMapsWarpSetupWithRetry(
       cfg: cfg,
       gameId: gameId,
       effectiveSeed: effectiveSeed,
@@ -75,7 +85,7 @@ Future<Game> _gameServiceCreateNewGameAsync(
     reportPhase(3);
     await yieldUi();
   } else {
-    setupResult = _gameServiceFreeformMapsWarpSetupWithRetry(
+    setupResult = gameServiceFreeformMapsWarpSetupWithRetry(
       cfg: cfg,
       gameId: gameId,
       effectiveSeed: effectiveSeed,
@@ -87,11 +97,11 @@ Future<Game> _gameServiceCreateNewGameAsync(
     reportPhase(3);
     await yieldUi();
   }
-  final bootstrappedSetup = _gameServiceSetupResultAfterAdvancedStartBootstrap(
+  final bootstrappedSetup = gameServiceSetupResultAfterAdvancedStartBootstrap(
     setupResult,
     cfg,
   );
-  final result = _gameServiceSetupResultWithFinalizedGame(
+  final result = gameServiceSetupResultWithFinalizedGame(
     bootstrappedSetup,
     effectiveSeed,
     aiProfileByGpId: cfg.aiProfileByGpId,
@@ -99,13 +109,13 @@ Future<Game> _gameServiceCreateNewGameAsync(
 
   reportPhase(4);
   await yieldUi();
-  _gameServicePersistNewGame(service, gameId: gameId, result: result);
+  gameServicePersistNewGame(service, gameId: gameId, result: result);
   ctAppPerfInstant('newGameAsync.complete');
   log.i('newGameAsync complete gameId=$gameId');
   return result.game;
 }
 
-GameSetupResult _gameServiceSetupResultAfterAdvancedStartBootstrap(
+GameSetupResult gameServiceSetupResultAfterAdvancedStartBootstrap(
   GameSetupResult setup,
   GameSetupConfig cfg,
 ) {
@@ -127,7 +137,7 @@ GameSetupResult _gameServiceSetupResultAfterAdvancedStartBootstrap(
   );
 }
 
-GameSetupResult _gameServiceSetupResultWithFinalizedGame(
+GameSetupResult gameServiceSetupResultWithFinalizedGame(
   GameSetupResult setup,
   int effectiveSeed, {
   Map<String, String?> aiProfileByGpId = const {},

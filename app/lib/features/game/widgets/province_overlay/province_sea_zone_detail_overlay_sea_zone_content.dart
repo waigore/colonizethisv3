@@ -1,8 +1,18 @@
 /// Sea-zone tab content assembly for [ProvinceSeaZoneDetailOverlay].
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kRegionOldWorld;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-_OverlayContent _seaZoneContent({
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+
+import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+import 'sea_zone_name_resolver.dart';
+
+OverlayContent seaZoneContent({
   required AppLocalizations l10n,
   required Game game,
   required RegionMapViewData region,
@@ -29,20 +39,20 @@ _OverlayContent _seaZoneContent({
       l10n.provinceOverlay_sectionPolitical,
       l10n.provinceOverlay_sectionNaval,
     ];
-    final politicalObs = _buildSection(
+    final politicalObs = buildOverlaySection(
       l10n.provinceOverlay_sectionPolitical,
-      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+      overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
-    final navalObs = _buildSection(
+    final navalObs = buildOverlaySection(
       l10n.provinceOverlay_sectionNaval,
-      _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+      overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
     );
     final sections = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [politicalObs, navalObs],
     );
-    return _OverlayContent(
+    return OverlayContent(
       tabLabels: tabLabels,
       tabViews: [politicalObs, navalObs],
       sections: sections,
@@ -54,14 +64,14 @@ _OverlayContent _seaZoneContent({
     regionId: regionId,
     seaZoneId: localSeaZoneId,
   );
-  final political = _buildSection(
+  final political = buildOverlaySection(
     l10n.provinceOverlay_sectionPolitical,
     Text(
       l10n.provinceOverlay_seaZone(seaName),
-      style: _fgBodyStyle(),
+      style: overlayFgBodyStyle(),
     ),
   );
-  final naval = _buildNavalSection(
+  final naval = buildNavalSection(
     l10n: l10n,
     game: game,
     fleets: fleets,
@@ -80,7 +90,7 @@ _OverlayContent _seaZoneContent({
     mainAxisSize: MainAxisSize.min,
     children: [political, naval],
   );
-  return _OverlayContent(
+  return OverlayContent(
     tabLabels: tabLabels,
     tabViews: tabViews,
     sections: sections,

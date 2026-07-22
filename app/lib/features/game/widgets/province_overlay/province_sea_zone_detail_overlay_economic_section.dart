@@ -1,11 +1,19 @@
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show ProvinceExtractionSnapshot;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-/// Shared empty-state body for Economic/Military/Civilian/Naval (S9 muted).
-Widget _emptyBodyDashText() {
-  return Text('—', style: TextStyle(color: EditorialMonoclePalette.muted));
-}
+import '../production/commodity_ui_helpers.dart';
+import 'province_sea_zone_detail_overlay_economic_condensed.dart';
+import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
 
-Widget _buildEconomicSection({
+Widget buildEconomicSection({
   required AppLocalizations l10n,
   required List<String> resourceKeysSorted,
   required Map<String, List<({String tileKey, String terrain, String impBase})>>
@@ -19,17 +27,17 @@ Widget _buildEconomicSection({
   Map<String, int> townProductionBonusByCommodity = const {},
 }) {
   final children = <Widget>[
-    _extractionAvailableSubsection(
+    extractionAvailableSubsection(
       heading: l10n.provinceOverlay_extractionHeading,
-      child: _extractionCondensedLine(
+      child: extractionCondensedLine(
         l10n: l10n,
         snapshot: extractionSnapshot,
         onHighlightTiles: onHighlightTiles,
       ),
     ),
-    _extractionAvailableSubsection(
+    extractionAvailableSubsection(
       heading: l10n.provinceOverlay_availableHeading,
-      child: _availableCondensedLine(
+      child: availableCondensedLine(
         l10n: l10n,
         availableByCommodity: availableByCommodity,
         onHighlightTiles: onHighlightTiles,
@@ -41,7 +49,7 @@ Widget _buildEconomicSection({
     final improved = byResImproved[resId] ?? const [];
     for (final row in improved) {
       children.add(
-        _economicHoverRow(
+        economicHoverRow(
           tileKey: row.tileKey,
           onHighlightTile: onHighlightTile,
           child: Row(
@@ -70,7 +78,7 @@ Widget _buildEconomicSection({
     final improvable = byResImprovable[resId] ?? const [];
     for (final row in improvable) {
       children.add(
-        _economicHoverRow(
+        economicHoverRow(
           tileKey: row.tileKey,
           onHighlightTile: onHighlightTile,
           child: Row(
@@ -111,7 +119,7 @@ Widget _buildEconomicSection({
     ),
   );
   if (townProductionBonusByCommodity.isEmpty) {
-    children.add(_emptyBodyDashText());
+    children.add(overlayEmptyBodyDashText());
   } else {
     final commodityIds = townProductionBonusByCommodity.keys.toList()..sort();
     for (final commodityId in commodityIds) {
@@ -135,7 +143,7 @@ Widget _buildEconomicSection({
     }
   }
 
-  return _buildSection(
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionEconomic,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,

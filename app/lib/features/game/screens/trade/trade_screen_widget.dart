@@ -1,5 +1,3 @@
-part of 'trade_screen.dart';
-
 /// Full-screen World Market trade screen.
 ///
 /// Dark editorial-monocle chrome per `SPEC/ui/trade-screen.md` § Top bar: a
@@ -8,6 +6,20 @@ part of 'trade_screen.dart';
 /// `CtTabStrip` (Market + Deal Book). Widget keys and copy literals live on
 /// [TradeScreenMarketKeys] / [TradeScreenDealBookKeys] (Refs #4035) — this
 /// widget no longer re-declares that static surface.
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../config/ui_screen_ids.dart';
+import '../../../../widgets/ct_game_feature_screen_shell.dart';
+import '../../../../widgets/game_feature_screen_top_bar.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../../widgets/shell/shell_player_guarded_body.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_tabs_body.dart';
+
 class TradeScreen extends ConsumerWidget {
   const TradeScreen({
     super.key,
@@ -48,7 +60,7 @@ class TradeScreen extends ConsumerWidget {
         final sentinel = observeNotDefinedSentinel(shell, 'Trade');
         if (sentinel != null) return sentinel;
         final bool canEdit = shell.canMutateViaUi;
-        return _TradeScreenTabsBody(
+        return TradeScreenTabsBody(
           key: TradeScreenMarketKeys.tabsBodyKey,
           game: displayGame,
           playerId: player.id,

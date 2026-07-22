@@ -1,15 +1,18 @@
 /// Fully unrevealed province tab assembly for [ProvinceSeaZoneDetailOverlay].
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-_OverlayContent _provinceContentUnrevealed({required AppLocalizations l10n}) {
-  final politicalObs = _buildSection(
+import 'province_sea_zone_detail_overlay_support.dart';
+
+OverlayContent provinceContentUnrevealed({required AppLocalizations l10n}) {
+  final politicalObs = buildOverlaySection(
     l10n.provinceOverlay_sectionPolitical,
-    _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+    overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
   );
-  final tileObs = _buildSection(
+  final tileObs = buildOverlaySection(
     l10n.provinceOverlay_sectionTile,
-    _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+    overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
   );
   final obfuscatedSectionTitles = <String>[
     l10n.provinceOverlay_sectionPolitical,
@@ -24,9 +27,9 @@ _OverlayContent _provinceContentUnrevealed({required AppLocalizations l10n}) {
     mainAxisSize: MainAxisSize.min,
     children: [
       for (final title in obfuscatedSectionTitles)
-        _buildSection(
+        buildOverlaySection(
           title,
-          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         ),
     ],
   );
@@ -34,12 +37,12 @@ _OverlayContent _provinceContentUnrevealed({required AppLocalizations l10n}) {
   final tabViews = [
     politicalObs,
     tileObs,
-    _ObfuscatedSection(l10n: l10n),
-    _ObfuscatedSection(l10n: l10n),
-    _ObfuscatedSection(l10n: l10n),
-    _ObfuscatedSection(l10n: l10n),
+    OverlayObfuscatedSection(l10n: l10n),
+    OverlayObfuscatedSection(l10n: l10n),
+    OverlayObfuscatedSection(l10n: l10n),
+    OverlayObfuscatedSection(l10n: l10n),
   ];
-  return _OverlayContent(
+  return OverlayContent(
     tabLabels: tabLabels,
     tabViews: tabViews,
     sections: sections,

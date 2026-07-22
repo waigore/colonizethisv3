@@ -1,8 +1,18 @@
 /// Political section assembly and owner/region display helpers.
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {
+import 'province_sea_zone_detail_overlay_support.dart';
+
+String ownerNameForProvinceOverlay(
+  AppLocalizations l10n,
+  Game game,
+  String? ownerId,
+) {
   if (ownerId == null || ownerId.isEmpty) {
     return l10n.provinceOverlay_ownerUnclaimed;
   }
@@ -18,22 +28,14 @@ String _ownerName(AppLocalizations l10n, Game game, String? ownerId) {
   return ownerId;
 }
 
-/// Test-only accessor for the owner display-name resolution (Refs #2865;
-/// SPEC § Province overlay content `Political` Owner row — localized
-/// `provinceOverlay_ownerUnclaimed` fallback for unowned provinces/tiles).
 @visibleForTesting
 String provinceOverlayOwnerName(
   AppLocalizations l10n,
   Game game,
   String? ownerId,
 ) =>
-    _ownerName(l10n, game, ownerId);
+    ownerNameForProvinceOverlay(l10n, game, ownerId);
 
-/// Human-readable region label for the province's `regionId`. Maps the two
-/// canonical world regions to their localized tab labels and falls back to
-/// the raw id for any other region (Refs #2865, SPEC § Province overlay
-/// content `Political / Economic / Naval`).
-@visibleForTesting
 String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   return switch (regionId) {
     kRegionOldWorld => l10n.region_oldWorld,
@@ -42,7 +44,7 @@ String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   };
 }
 
-Widget _buildPoliticalSection({
+Widget buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
   required String ownerName,
@@ -50,17 +52,8 @@ Widget _buildPoliticalSection({
   required bool isCapital,
   required int townDevelopmentLevel,
 }) {
-  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Political section body
-  // tokens). Every body row declares TextStyle.color explicitly via the
-  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme owns
-  // this surface and the section stops inheriting DefaultTextStyle /
-  // Material bodyMedium colours. The helper is shared with the Tile
-  // live-data rows (coordinates / terrain / civilian units) and the
-  // sea-zone Political display-name row so every live-data body row stays
-  // in sync with one token source. Region and Capital are always-exact
-  // political intel, shown alongside Name / Owner regardless of fog.
-  final bodyStyle = _fgBodyStyle();
-  return _buildSection(
+  final bodyStyle = overlayFgBodyStyle();
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,5 +77,5 @@ Widget _buildPoliticalSection({
   );
 }
 
-Province? _findProvince(Game game, String provinceId) =>
+Province? findProvinceForSeaZoneOverlay(Game game, String provinceId) =>
     game.worldState.allProvincesById[provinceId];

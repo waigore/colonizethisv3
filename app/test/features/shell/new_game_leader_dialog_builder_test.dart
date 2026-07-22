@@ -85,13 +85,13 @@ void main() {
     });
 
     test(
-      'dialog-builders part file neither imports nor references features/shell',
+      'lifecycle dialog-builders mixin neither imports nor references features/shell',
       () {
         final source = File(
-          'lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart',
+          'lib/core/services/app_event_handler/app_event_handler_scope_lifecycle.dart',
         ).readAsStringSync();
         final shellImports = importLinesOf(
-          'lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart',
+          'lib/core/services/app_event_handler/app_event_handler_scope_lifecycle.dart',
         ).where((l) => l.contains('features/shell/')).toList();
 
         expect(shellImports, isEmpty);

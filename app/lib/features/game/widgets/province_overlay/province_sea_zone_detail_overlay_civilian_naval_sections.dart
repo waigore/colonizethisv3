@@ -1,6 +1,17 @@
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show foreignCivilianVisibleToPlayer, homeFleetIdFor, PlayerView;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-Widget _buildCivilianSectionFiltered({
+import 'province_panel_labels.dart';
+import 'province_panel_pending_orders.dart';
+import 'province_sea_zone_detail_overlay_sections_political.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+
+Widget buildCivilianSectionFiltered({
   required AppLocalizations l10n,
   required Game game,
   required List<Unit> civilian,
@@ -18,10 +29,13 @@ Widget _buildCivilianSectionFiltered({
       )
       .toList();
   if (visible.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionCivilian, _emptyBodyDashText());
+    return buildOverlaySection(
+      l10n.provinceOverlay_sectionCivilian,
+      overlayEmptyBodyDashText(),
+    );
   }
   final workList = draftOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
-  return _buildSection(
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionCivilian,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +67,7 @@ Widget _buildCivilianSectionFiltered({
             style: TextStyle(color: EditorialMonoclePalette.fg),
           );
         }
-        final o = _ownerName(l10n, game, u.ownerId);
+        final o = ownerNameForProvinceOverlay(l10n, game, u.ownerId);
         return Text(
           l10n.provinceOverlay_foreignUnitStatus(
             o,
@@ -67,7 +81,7 @@ Widget _buildCivilianSectionFiltered({
   );
 }
 
-Widget _buildNavalSection({
+Widget buildNavalSection({
   required AppLocalizations l10n,
   required Game game,
   required List<Fleet> fleets,
@@ -84,16 +98,16 @@ Widget _buildNavalSection({
           humanPlayerId: humanPlayerId,
           l10n: l10n,
         );
-  return _buildSection(
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionNaval,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (fleets.isEmpty && pending.isEmpty) _emptyBodyDashText(),
+        if (fleets.isEmpty && pending.isEmpty) overlayEmptyBodyDashText(),
         if (fleets.isNotEmpty)
           ...fleets.map((f) {
-            final ownerName = _ownerName(l10n, game, f.ownerId);
+            final ownerName = ownerNameForProvinceOverlay(l10n, game, f.ownerId);
             final byType = <String, int>{};
             for (final s in f.ships) {
               byType[s.typeId] = (byType[s.typeId] ?? 0) + 1;

@@ -20,23 +20,6 @@ void main() {
     await setUpNinePatchAssets();
   });
 
-  testWidgets(
-    'buildMilitaryPanel hosts MilitaryUnitsPanel inside a MaterialApp scaffold',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildMilitaryPanel(
-          game: buildMilitaryPanelTestGame(),
-          humanPlayerId: kPanelTestHumanPlayerId,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byType(MaterialApp), findsOneWidget);
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(MilitaryUnitsPanel), findsOneWidget);
-    },
-  );
-
   testWidgets('pumpMilitaryPanel hosts and settles MilitaryUnitsPanel', (
     WidgetTester tester,
   ) async {

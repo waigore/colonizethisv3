@@ -38,7 +38,7 @@ Widget buildTechnologyPanel({
   if (wrapInScrollView) {
     body = SingleChildScrollView(child: body);
   }
-  return buildAppShell(child: Scaffold(body: body));
+  return buildPanelScaffoldShell(body);
 }
 
 /// Pumps [buildTechnologyPanel] (or an optional prebuilt [widget]) and settles.
@@ -55,7 +55,8 @@ Future<void> pumpTechnologyPanel(
   double? bodyWidth,
   Widget? widget,
 }) async {
-  await tester.pumpWidget(
+  await pumpSettledWidget(
+    tester,
     widget ??
         buildTechnologyPanel(
           game: game,
@@ -66,7 +67,6 @@ Future<void> pumpTechnologyPanel(
           bodyWidth: bodyWidth,
         ),
   );
-  await tester.pumpAndSettle();
 }
 
 /// Golden host for TechnologyPanel (or an injectable [child]) via [pumpGoldenHost].

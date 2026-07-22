@@ -21,23 +21,6 @@ void main() {
     await setUpNinePatchAssets();
   });
 
-  testWidgets(
-    'buildNavalPanel hosts NavalUnitsPanel inside a MaterialApp scaffold',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildNavalPanel(
-          game: buildNavalPanelTestGame(),
-          humanPlayerId: kPanelTestHumanPlayerId,
-        ),
-      );
-      await tester.pump();
-
-      expect(find.byType(MaterialApp), findsOneWidget);
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(NavalUnitsPanel), findsOneWidget);
-    },
-  );
-
   test('scenario factories cover home/peers, merge-port, empty, draft, topology', () {
     const humanId = 'gp_home_peers';
     final peers = buildNavalPanelCapitalHomeAndPeersGame(

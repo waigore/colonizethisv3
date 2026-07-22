@@ -1,8 +1,27 @@
 /// Revealed-tile body for [ProvinceSeaZoneDetailOverlay] tile section.
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        explorerConsulateGateBlocksMinorTribeProvince,
+        isProspectableTerrain,
+        isProspectableTerrainId,
+        PlayerView,
+        resourceIdVisibleInPlayerView;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-Widget _buildRevealedTileSection({
+import 'province_sea_zone_detail_overlay_designation.dart';
+import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
+import 'province_sea_zone_detail_overlay_sections_political.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
+
+Widget buildRevealedTileSection({
   required BuildContext context,
   required AppLocalizations l10n,
   required Game game,
@@ -28,12 +47,9 @@ Widget _buildRevealedTileSection({
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
   final prospected = game.worldState.playerProspectedTiles[humanPlayerId] ?? {};
-  // R13 (#3573): the Tile-section terrain row shows the canonical title-cased
-  // display name for known terrain types, never the raw enum `.name`; the
-  // string-id fallback is title-cased (camelCase spaced) via the shared helper.
   final terrainStr = cell.terrainType != null
       ? terrainDisplayName(cell.terrainType!)
-      : _economicTerrainTitle(cell.terrainTypeId ?? '—');
+      : economicTerrainTitle(cell.terrainTypeId ?? '—');
   final resourceRaw = resourceByTile[selectedTileKey] ?? cell.resourceId;
   final visLevel = playerView.visibilityForTile(selectedTileKey);
   final resourceVisible = resourceIdVisibleInPlayerView(
@@ -53,12 +69,7 @@ Widget _buildRevealedTileSection({
   final impLevel = tileState.improvementLevel(selectedTileKey);
   final roadLevel = cell.isSea ? null : tileState.roadLevel(selectedTileKey);
 
-  // Refs #3753 R4b: when the Explore/Prospect inline action is disabled solely
-  // because the issuing GP holds no Consulate with the owning Minor/Tribe, the
-  // tooltip explains the gate ("Establish a consulate before exploring or
-  // prospecting") instead of the default action hint. Mirrors the order-engine
-  // submission gate via the shared predicate.
-  final tileOwnerId = _findProvince(game, provinceId)?.ownerId;
+  final tileOwnerId = findProvinceForSeaZoneOverlay(game, provinceId)?.ownerId;
   final consulateGated = explorerConsulateGateBlocksMinorTribeProvince(
     game: game,
     playerId: humanPlayerId,
@@ -76,7 +87,7 @@ Widget _buildRevealedTileSection({
       Expanded(
         child: Text(
           l10n.provinceOverlay_tileProspected(prospectedLabel),
-          style: _fgBodyStyle(),
+          style: overlayFgBodyStyle(),
         ),
       ),
       if (showExploreActionIcon)
@@ -104,7 +115,7 @@ Widget _buildRevealedTileSection({
   final improvementRow = Row(
     children: [
       Expanded(
-        child: _buildTileImprovementLabel(
+        child: buildTileImprovementLabel(
           l10n: l10n,
           impLevel: impLevel,
           visLevel: visLevel,
@@ -127,26 +138,14 @@ Widget _buildRevealedTileSection({
     ],
   );
 
-  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
-  // tokens — live-data body rows). Every Tile row that renders exact
-  // world-state values resolves its TextStyle.color to
-  // EditorialMonoclePalette.fg via the shared `_fgBodyStyle()` helper so
-  // the editorial-monocle dark theme owns the Tile live-data surface
-  // end-to-end. Rows in scope: coordinates, terrain, civilian-units count
-  // (below), plus the Prospected, Improvement, road / railroad primary
-  // numeric line, and sea-tile no-road row (pinned in `prospectedRow`,
-  // `_buildTileImprovementLabel`, and `_buildTileRoadLabelWidgets`). The
-  // helper centralises the canonical fg token shared with Political,
-  // Tile, Economic improved-row, Military owner sub-header, Civilian
-  // own-unit, and Naval fleet-summary live-data rows.
-  final bodyStyle = _fgBodyStyle();
+  final bodyStyle = overlayFgBodyStyle();
   final designationLine = provinceOverlayTileDesignationLine(
     l10n: l10n,
     game: game,
     provinceId: provinceId,
     selectedTileKey: selectedTileKey,
   );
-  return _buildSection(
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionTile,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +155,7 @@ Widget _buildRevealedTileSection({
         Text(l10n.provinceOverlay_tileTerrain(terrainStr), style: bodyStyle),
         if (designationLine != null)
           Text(designationLine, style: bodyStyle),
-        _buildTileResourceLabelRow(
+        buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
           resourceVisible: resourceVisible,
@@ -164,7 +163,7 @@ Widget _buildRevealedTileSection({
         ),
         prospectedRow,
         improvementRow,
-        ..._buildTileRoadLabelWidgets(
+        ...buildTileRoadLabelWidgets(
           context: context,
           l10n: l10n,
           roadLevel: roadLevel,

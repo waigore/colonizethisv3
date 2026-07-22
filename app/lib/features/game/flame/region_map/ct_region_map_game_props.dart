@@ -1,7 +1,14 @@
-part of 'ct_region_map_game.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
 
-void _ctRegionMapGameUpdateProps(
-  CtRegionMapGame game, {
+import 'ct_region_map_game_mixins.dart';
+import 'region_map_component.dart';
+import 'region_map_viewport_snapshot.dart' show RegionMapViewportSnapshot;
+
+/// Updates [CtRegionMapGame] configuration without recreating the game instance.
+void ctRegionMapGameUpdateProps(
+  CtRegionMapGameFields game, {
   RegionMapViewData? region,
   bool? showPoliticalOverlay,
   bool? showProvinceOverlay,
@@ -91,7 +98,7 @@ void _ctRegionMapGameUpdateProps(
     game.onViewportSnapshotChanged = onViewportSnapshotChanged;
   }
   if (zoomMultiplier != null) {
-    game._zoomMultiplier = zoomMultiplier;
+    game.state.zoomMultiplier = zoomMultiplier;
   }
 
   assertCtMapPlayerViewRequired(
@@ -99,8 +106,8 @@ void _ctRegionMapGameUpdateProps(
     playerViewForResources: game.playerViewForResources,
   );
 
-  if (game._mapLoaded) {
-    game._mapComponent
+  if (game.state.mapLoaded) {
+    game.state.mapComponent
       ..region = game.region
       ..cellSize = game.cellSizePx
       ..showPoliticalOverlay = game.showPoliticalOverlay
@@ -117,9 +124,9 @@ void _ctRegionMapGameUpdateProps(
       ..playerViewForResources = game.playerViewForResources
       ..onFleetMarkerTapped = onFleetMarkerTapped;
     if (regionChanged || zoomMultiplier != null) {
-      game._syncCameraZoomFromMultiplier();
+      (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
     } else {
-      game._emitViewportSnapshot();
+      (game as CtRegionMapGameCamera).emitViewportSnapshot();
     }
   }
 }
