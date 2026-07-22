@@ -1,6 +1,15 @@
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-Widget _buildMilitarySectionByOwner({
+import 'province_panel_labels.dart';
+import 'province_panel_pending_orders.dart';
+import 'province_sea_zone_detail_overlay_sections_political.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+
+Widget buildMilitarySectionByOwner({
   required AppLocalizations l10n,
   required Game game,
   required List<Unit> military,
@@ -16,10 +25,13 @@ Widget _buildMilitarySectionByOwner({
     l10n: l10n,
   );
   if (military.isEmpty && pending.isEmpty) {
-    return _buildSection(l10n.provinceOverlay_sectionMilitary, _emptyBodyDashText());
+    return buildOverlaySection(
+      l10n.provinceOverlay_sectionMilitary,
+      overlayEmptyBodyDashText(),
+    );
   }
   if (military.isEmpty) {
-    return _buildSection(
+    return buildOverlaySection(
       l10n.provinceOverlay_sectionMilitary,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,9 +58,10 @@ Widget _buildMilitarySectionByOwner({
     ..sort((a, b) {
       if (a == humanPlayerId) return -1;
       if (b == humanPlayerId) return 1;
-      return _ownerName(l10n, game, a).compareTo(_ownerName(l10n, game, b));
+      return ownerNameForProvinceOverlay(l10n, game, a)
+          .compareTo(ownerNameForProvinceOverlay(l10n, game, b));
     });
-  return _buildSection(
+  return buildOverlaySection(
     l10n.provinceOverlay_sectionMilitary,
     Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +73,7 @@ Widget _buildMilitarySectionByOwner({
           for (final u in list) {
             byType[u.type] = (byType[u.type] ?? 0) + 1;
           }
-          final name = _ownerName(l10n, game, oid);
+          final name = ownerNameForProvinceOverlay(l10n, game, oid);
           return Padding(
             padding: const EdgeInsets.only(bottom: CtSpacing.m),
             child: Column(

@@ -31,7 +31,7 @@ const String _overlayRelativePath =
     'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 const List<String> _overlaySectionsPartRelativePaths = <String>[
-  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_chrome.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart',
   'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_political.dart',
   'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_economic_labels.dart',
 ];

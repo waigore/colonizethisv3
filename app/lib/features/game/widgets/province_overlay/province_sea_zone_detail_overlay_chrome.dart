@@ -1,15 +1,23 @@
 // Responsive chrome, header, and shared body text styles for the province overlay.
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_panel.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
+import 'package:flutter/material.dart';
 
-extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
+import 'province_sea_zone_detail_overlay_widget.dart';
+import 'province_sea_zone_detail_overlay_close_button.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+
+extension ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
   Widget buildResponsivePanel(
     BuildContext context,
     BoxConstraints constraints,
     bool isNarrow,
-    _OverlayContent content,
+    OverlayContent content,
   ) {
-    final maxHeight = _resolveMaxHeight(context, constraints, isNarrow);
+    final maxHeight = resolveOverlayMaxHeight(context, constraints, isNarrow);
     return Padding(
       padding: const EdgeInsets.all(CtSpacing.m),
       child: ConstrainedBox(
@@ -20,8 +28,8 @@ extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
             mainAxisSize: isNarrow ? MainAxisSize.min : MainAxisSize.max,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOverlayHeader(context),
-              Flexible(child: _buildOverlayBody(isNarrow, content)),
+              buildOverlayHeader(context),
+              Flexible(child: buildOverlayBody(isNarrow, content)),
             ],
           ),
         ),
@@ -29,14 +37,11 @@ extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
     );
   }
 
-  double _resolveMaxHeight(
+  double resolveOverlayMaxHeight(
     BuildContext context,
     BoxConstraints constraints,
     bool isNarrow,
   ) {
-    // Narrow full-width (mobile): cap at one-third screen (SPEC). Narrow
-    // side rail (width < screen): use parent height. Parent already capped
-    // to ≤ one-third (bottom slot): honor that height.
     final mqSize = MediaQuery.sizeOf(context);
     final thirdScreen = mqSize.height * 0.33;
     final isFullWidthNarrow =
@@ -56,7 +61,7 @@ extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
     return constraints.maxHeight;
   }
 
-  Widget _buildOverlayHeader(BuildContext context) {
+  Widget buildOverlayHeader(BuildContext context) {
     final l10n = appL10n(context);
     return Padding(
       padding: const EdgeInsets.only(
@@ -68,19 +73,19 @@ extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
         children: [
           Expanded(
             child: Text(
-              _isSeaZone(displayId)
+              isProvinceSeaZoneOverlaySeaZone(region, displayId)
                   ? l10n.provinceOverlay_titleSeaZone
                   : l10n.provinceOverlay_titleProvince,
-              style: _overlayTitleStyle(context),
+              style: overlayTitleStyle(context),
             ),
           ),
-          _OverlayCloseButton(onClose: onClose),
+          OverlayCloseButton(onClose: onClose),
         ],
       ),
     );
   }
 
-  Widget _buildOverlayBody(bool isNarrow, _OverlayContent content) {
+  Widget buildOverlayBody(bool isNarrow, OverlayContent content) {
     if (isNarrow) {
       return CtTabStrip(
         tabLabels: content.tabLabels,
@@ -100,51 +105,4 @@ extension _ProvinceSeaZoneDetailOverlayChrome on ProvinceSeaZoneDetailOverlay {
       child: content.sections,
     );
   }
-}
-
-/// Shared `TextStyle` for every obfuscated `???` body cell in the overlay.
-/// Renders fully-unrevealed province/sea-zone sections, partially-revealed
-/// Tile rows (`Coordinates: ???`, `Terrain: ???`, …), and the intel-gated
-/// Economic / Military / Civilian / Naval body fallbacks in the canonical
-/// hidden-information muted token so the dark editorial-monocle theme owns
-/// the obfuscation surface. See
-/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme obfuscated `???`
-/// body tokens. `EditorialMonoclePalette.muted` is a runtime OKLCH → Color
-/// getter so this style cannot be `const`.
-TextStyle _obfuscatedBodyStyle() =>
-    TextStyle(color: EditorialMonoclePalette.muted);
-
-/// Convenience widget for an obfuscated body `Text(...)` row painted in the
-/// shared muted token. Centralises every `Text(l10n.provinceOverlay_unknown)`
-/// / `Text(l10n.provinceOverlay_tile*Unknown)` call so a future change to the
-/// obfuscation token only updates `_obfuscatedBodyStyle` (and the SPEC).
-Widget _obfuscatedBodyText(String data) =>
-    Text(data, style: _obfuscatedBodyStyle());
-
-/// Shared `TextStyle` for every live-data body row in the overlay that
-/// renders exact world-state values (Political "Name" / "Owner", Tile
-/// section coordinates / terrain / civilian-units, sea-zone "Sea zone"
-/// display name). Centralises the canonical `EditorialMonoclePalette.fg`
-/// foreground token so a future change to the live-data token only updates
-/// `_fgBodyStyle` (and the SPEC). See
-/// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme Political /
-/// Tile / sea-zone Political body tokens. `EditorialMonoclePalette.fg` is
-/// a runtime OKLCH → Color getter so this style cannot be `const`.
-TextStyle _fgBodyStyle() => TextStyle(color: EditorialMonoclePalette.fg);
-
-/// Pixel-art overlay title text style (non-Material) under the dark
-/// editorial-monocle theme. Mirrors `CtTopBar` title typography: display
-/// font from `theme.textTheme.titleMedium`, `--accent` colour from
-/// [EditorialMonoclePalette], and `letterSpacing: 0.05`.
-/// See SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
-TextStyle _overlayTitleStyle(BuildContext context) {
-  final ThemeData theme = Theme.of(context);
-  final TextStyle base =
-      theme.textTheme.titleMedium ??
-      const TextStyle(fontSize: 16, fontWeight: FontWeight.bold);
-  return base.copyWith(
-    color: EditorialMonoclePalette.accent,
-    fontWeight: FontWeight.bold,
-    letterSpacing: 0.05,
-  );
 }

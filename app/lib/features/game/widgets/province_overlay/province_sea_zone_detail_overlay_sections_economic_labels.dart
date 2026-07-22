@@ -1,8 +1,17 @@
 /// Economic tile label helpers for province overlay sections.
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kProspectRequiredResourceIds, VisibilityLevel;
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+String? economicTerrainTitleForTile(RegionMapViewData region, String tk) {
   final parsed = tryParseTileKey(tk);
   if (parsed == null || parsed.regionId != region.regionId) return null;
   final x = parsed.x;
@@ -11,22 +20,15 @@ String? _economicTerrainTitleForTile(RegionMapViewData region, String tk) {
     return null;
   }
   final cell = region.cellAt(x, y);
-  // R13.4/R13.5 (#3573): known terrain types resolve through the canonical
-  // title-cased display-name helper (never the raw enum `.name`); only the
-  // unknown-id string fallback uses the underscore transform.
   final terrainType = cell.terrainType;
   if (terrainType != null) {
     return terrainDisplayName(terrainType);
   }
   final raw = cell.terrainTypeId ?? '—';
-  return _economicTerrainTitle(raw);
+  return economicTerrainTitle(raw);
 }
 
-/// Title-cases an unknown terrain-id fallback string. Splits on underscores
-/// **and** camelCase boundaries so a multi-word id such as `hardwoodForest`
-/// renders as `Hardwood Forest` — never `HardwoodForest` (#3573 R13.5). Known
-/// terrain enums bypass this and use [terrainDisplayName] directly.
-String _economicTerrainTitle(String raw) {
+String economicTerrainTitle(String raw) {
   if (raw.isEmpty || raw == '—') return raw;
   final spaced = raw
       .replaceAll('_', ' ')
@@ -38,7 +40,7 @@ String _economicTerrainTitle(String raw) {
       .join(' ');
 }
 
-Widget _economicHoverRow({
+Widget economicHoverRow({
   required String tileKey,
   required void Function(String?)? onHighlightTile,
   required Widget child,
@@ -54,7 +56,7 @@ Widget _economicHoverRow({
   );
 }
 
-String _improvementNameForResource(AppLocalizations l10n, String? resourceId) {
+String improvementNameForResource(AppLocalizations l10n, String? resourceId) {
   if (resourceId == null) return l10n.provinceOverlay_improvementGeneric;
   switch (resourceId) {
     case 'grain':
@@ -87,35 +89,33 @@ String _improvementNameForResource(AppLocalizations l10n, String? resourceId) {
   }
 }
 
-/// Test-only accessor for the resource → improvement-type name mapping
-/// (Refs #2865; SPEC § Province overlay content `Tile` improvement label).
 @visibleForTesting
 String provinceOverlayImprovementNameForResource(
   AppLocalizations l10n,
   String? resourceId,
 ) =>
-    _improvementNameForResource(l10n, resourceId);
+    improvementNameForResource(l10n, resourceId);
 
-String _improvementBaseNameForPlayer({
+String improvementBaseNameForPlayer({
   required AppLocalizations l10n,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
   if (visibleResourceId != null) {
-    return _improvementNameForResource(l10n, visibleResourceId);
+    return improvementNameForResource(l10n, visibleResourceId);
   }
   if (rawResourceId != null &&
       kProspectRequiredResourceIds.contains(rawResourceId)) {
     return l10n.provinceOverlay_improvementMine;
   }
   if (rawResourceId != null) {
-    return _improvementNameForResource(l10n, rawResourceId);
+    return improvementNameForResource(l10n, rawResourceId);
   }
   return l10n.provinceOverlay_improvementGeneric;
 }
 
-String _improvementLabelForTileDetail({
+String improvementLabelForTileDetail({
   required AppLocalizations l10n,
   required int impLevel,
   required VisibilityLevel visLevel,
@@ -125,7 +125,7 @@ String _improvementLabelForTileDetail({
   if (impLevel <= 0) {
     return '—';
   }
-  final base = _improvementBaseNameForPlayer(
+  final base = improvementBaseNameForPlayer(
     l10n: l10n,
     visLevel: visLevel,
     rawResourceId: rawResourceId,

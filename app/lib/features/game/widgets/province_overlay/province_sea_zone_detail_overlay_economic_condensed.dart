@@ -1,6 +1,18 @@
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_data/colonizethis_data.dart' show CommodityCatalog;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show ProvinceExtractionSnapshot;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-Widget _extractionAvailableSubsection({
+import '../production/commodity_ui_helpers.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+
+Widget extractionAvailableSubsection({
   required String heading,
   required Widget child,
 }) {
@@ -23,13 +35,13 @@ Widget _extractionAvailableSubsection({
   );
 }
 
-Widget _extractionCondensedLine({
+Widget extractionCondensedLine({
   required AppLocalizations l10n,
   required ProvinceExtractionSnapshot? snapshot,
   void Function(Iterable<String>?)? onHighlightTiles,
 }) {
   if (snapshot == null || snapshot.byCommodity.isEmpty) {
-    return _emptyBodyDashText();
+    return overlayEmptyBodyDashText();
   }
   final segments = <Widget>[];
   for (final commodity in CommodityCatalog.all) {
@@ -50,17 +62,15 @@ Widget _extractionCondensedLine({
       );
     }
     segments.add(
-      _commodityHoverSegment(
+      commodityHoverSegment(
         tileKeys: totals.tileKeys,
         onHighlightTiles: onHighlightTiles,
-        child: _commoditySegmentRow(
+        child: commoditySegmentRow(
           commodityId: commodity.id,
           quantityText: qtyText,
         ),
       ),
     );
-    // Capital grain bonus is a special non-tile case — muted annotation,
-    // not a hover-highlight target (Refs #4064).
     if (commodity.id == CommodityCatalog.grain.id &&
         snapshot.capitalGrainBonus > 0) {
       segments.add(
@@ -73,16 +83,16 @@ Widget _extractionCondensedLine({
       );
     }
   }
-  if (segments.isEmpty) return _emptyBodyDashText();
-  return _condensedCommodityWrap(segments);
+  if (segments.isEmpty) return overlayEmptyBodyDashText();
+  return condensedCommodityWrap(segments);
 }
 
-Widget _availableCondensedLine({
+Widget availableCondensedLine({
   required AppLocalizations l10n,
   required Map<String, ProvinceImprovableCommodityCount> availableByCommodity,
   void Function(Iterable<String>?)? onHighlightTiles,
 }) {
-  if (availableByCommodity.isEmpty) return _emptyBodyDashText();
+  if (availableByCommodity.isEmpty) return overlayEmptyBodyDashText();
   final segments = <Widget>[];
   for (final commodity in CommodityCatalog.all) {
     final entry = availableByCommodity[commodity.id];
@@ -95,22 +105,21 @@ Widget _availableCondensedLine({
       );
     }
     segments.add(
-      _commodityHoverSegment(
+      commodityHoverSegment(
         tileKeys: entry.tileKeys,
         onHighlightTiles: onHighlightTiles,
-        child: _commoditySegmentRow(
+        child: commoditySegmentRow(
           commodityId: commodity.id,
           quantityText: qtyText,
         ),
       ),
     );
   }
-  if (segments.isEmpty) return _emptyBodyDashText();
-  return _condensedCommodityWrap(segments);
+  if (segments.isEmpty) return overlayEmptyBodyDashText();
+  return condensedCommodityWrap(segments);
 }
 
-/// Wraps commodity chips to panel max width (wrap-not-truncate). Refs #4002.
-Widget _condensedCommodityWrap(List<Widget> segments) {
+Widget condensedCommodityWrap(List<Widget> segments) {
   return LayoutBuilder(
     builder: (context, constraints) {
       final maxWidth = constraints.maxWidth.isFinite
@@ -130,7 +139,7 @@ Widget _condensedCommodityWrap(List<Widget> segments) {
   );
 }
 
-Widget _commoditySegmentRow({
+Widget commoditySegmentRow({
   required String commodityId,
   required String quantityText,
 }) {
@@ -150,7 +159,7 @@ Widget _commoditySegmentRow({
   );
 }
 
-Widget _commodityHoverSegment({
+Widget commodityHoverSegment({
   required List<String> tileKeys,
   required void Function(Iterable<String>?)? onHighlightTiles,
   required Widget child,
