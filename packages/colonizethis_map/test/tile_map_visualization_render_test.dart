@@ -5,6 +5,8 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:image/image.dart' as img;
 
 import 'support/init_game_map_view_fixtures.dart';
+import 'package:colonizethis_map/src/render/tile_map_visualization_legend_layout.dart'
+    show legendHeightForLineCount;
 import 'tile_map_visualization_test_fixtures.dart';
 
 /// Sea color and plains color from tile_map_visualization (for pixel assertions).
@@ -51,11 +53,9 @@ void main() {
         expect(decoded, isNotNull);
         final mapW = visualizationResultWithTerrain.width * cellSize;
         final mapH = visualizationResultWithTerrain.height * cellSize;
-        const legendPadding = 12;
-        const legendLineHeight = 20;
         const titleLines = 2;
         final legendLines = titleLines + 1 + TerrainType.values.length;
-        final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+        final legendHeight = legendHeightForLineCount(legendLines);
         expect(decoded!.width, mapW);
         expect(decoded.height, mapH + legendHeight);
       },
@@ -168,10 +168,8 @@ void main() {
         final decoded = img.decodeImage(bytes);
         expect(decoded, isNotNull);
         final mapH = visualizationResultWithTerrain.height * cellSize;
-        const legendPadding = 12;
-        const legendLineHeight = 20;
         final legendLines = 2 + 1 + TerrainType.values.length;
-        final legendHeight = legendPadding * 2 + legendLines * legendLineHeight;
+        final legendHeight = legendHeightForLineCount(legendLines);
         expect(decoded!.height, mapH + legendHeight);
       },
     );

@@ -6,7 +6,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/package_logger.dart';
 
 import 'map_gen_pass_payloads.dart';
-import '../map_validation_exception.dart';
 import 'tile_map_gen_continent_join_pass.dart';
 import 'tile_map_gen_sea_zone_subdivide_pass.dart';
 import 'tile_map_gen_terrain_jitter_pass.dart';
@@ -15,12 +14,13 @@ import 'tile_map_generator_lakes_provinces.dart';
 import 'tile_map_generator_terrain_assign.dart';
 import 'tile_map_land_sentinel.dart';
 import 'tile_map_params.dart';
-import 'tile_map_generator_types.dart';
 import 'map_gen_stage.dart';
 import '../tile_map_grid.dart';
 import 'tile_map_grid_graph.dart';
+import 'tile_map_generator_args.dart';
 import 'topology_inference.dart';
 
+export 'tile_map_generator_lakes_test_api.dart' show fillLakesPass4ForTest;
 export 'tile_map_params.dart';
 export 'tile_map_generator_types.dart';
 
@@ -100,7 +100,7 @@ class TileMapGenerator extends _TileMapGeneratorShell {
     log.i(
       'TileMapGenerator.generate start regionId=$regionId numProvinces=$numProvinces seed=${params.seed}',
     );
-    _validateGenerateArgs(numProvinces, numContinents);
+    validateTileMapGenerateArgs(numProvinces, numContinents);
     log.i(
       'generation_params '
       'regionId=$regionId '
@@ -114,10 +114,10 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'skipFillLakes=${params.skipFillLakes} '
       'seedBeforeAssignment=${params.seedBeforeAssignment}',
     );
-    final provinceToContinent = _resolveProvinceToContinent(
-      numProvinces,
-      numContinents,
-      continentProvinceSizes,
+    final provinceToContinent = resolveProvinceToContinentForGenerate(
+      numProvinces: numProvinces,
+      numContinents: numContinents,
+      continentProvinceSizes: continentProvinceSizes,
     );
     final rnd = Random(params.seed);
 
@@ -228,38 +228,6 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       'TileMapGenerator.generate end regionId=$regionId provinces=$provincesCount continents=$continentsCount success=true',
     );
     return (result, topology);
-  }
-
-  void _validateGenerateArgs(int numProvinces, int numContinents) {
-    if (numProvinces < 1) {
-      throw MapValidationException('numProvinces must be at least 1');
-    }
-    if (numContinents < 1) {
-      throw MapValidationException('numContinents must be at least 1');
-    }
-  }
-
-  Map<String, int> _resolveProvinceToContinent(
-    int numProvinces,
-    int numContinents,
-    List<int>? continentProvinceSizes,
-  ) {
-    if (continentProvinceSizes == null) {
-      return buildProvinceToContinentMap(numProvinces, numContinents);
-    }
-    if (continentProvinceSizes.length != numContinents) {
-      throw MapValidationException(
-        'continentProvinceSizes.length (${continentProvinceSizes.length}) '
-        'must equal numContinents ($numContinents)',
-      );
-    }
-    final sum = continentProvinceSizes.fold<int>(0, (a, b) => a + b);
-    if (sum != numProvinces) {
-      throw MapValidationException(
-        'continentProvinceSizes sum ($sum) must equal numProvinces ($numProvinces)',
-      );
-    }
-    return buildProvinceToContinentMapFromCounts(continentProvinceSizes);
   }
 
   (List<List<String>>, List<(int x, int y)>, List<(int x, int y)>, List<int>)
@@ -420,30 +388,5 @@ class TileMapGenerator extends _TileMapGeneratorShell {
       ),
     );
     return newGrid;
-  }
-
-  /// Runs Pass 4 **lake fill only** on a grid at post-Pass-3 semantics (sea =
-  /// [seaZoneId], land = `_land` sentinel). Intended for **automated tests**;
-  /// production code should use [generate].
-  static List<List<String>> fillLakesPass4ForTest({
-    required TileMapParams params,
-    required List<List<String>> grid,
-    String seaZoneId = 's1',
-    required List<(int x, int y)> landSeeds,
-    required List<int> continentBySeedIndex,
-  }) {
-    final graph = TileMapGridGraph(params);
-    final continentJoinImpl = ContinentJoinPass(params, packageLogger(), graph);
-    final lakesImpl = TileMapGenLakesProvinces(
-      params,
-      graph,
-      continentJoinImpl,
-    );
-    return lakesImpl.fillLakes(
-      grid,
-      seaZoneId,
-      landSeeds,
-      continentBySeedIndex,
-    );
   }
 }
