@@ -1,15 +1,30 @@
-part of 'app_event_handler_scope.dart';
+import 'dart:async';
 
-extension _SessionDiplomacyListeners on _AppEventHandlerScopeState {
-  List<StreamSubscription<dynamic>> _diplomacySessionListeners(
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/observe_session_provider.dart';
+
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_order_helpers.dart';
+import 'app_event_handler_break_alliance_immediately.dart'
+    show applyBreakAllianceImmediately;
+import 'app_event_handler_scope_log.dart';
+import 'app_event_handler_scope_session_helpers.dart';
+
+mixin AppEventHandlerScopeSessionDiplomacyListeners
+    on AppEventHandlerScopeSessionHelpers {
+  List<StreamSubscription<dynamic>> diplomacySessionListeners(
     AppEventBus bus,
   ) {
     return [
       bus.on<AppendDiplomaticOrderRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'AppendDiplomaticOrderRequestedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -20,10 +35,10 @@ extension _SessionDiplomacyListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<RemoveDiplomaticOrderRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'RemoveDiplomaticOrderRequestedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final current = ref.read(currentOrdersProvider);
             ref
                 .read(currentOrdersProvider.notifier)
@@ -38,35 +53,34 @@ extension _SessionDiplomacyListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<BreakAllianceImmediatelyEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
-          'BreakAllianceImmediatelyEvent',
-          () {
-            if (_rejectUiMutationIfObserving()) return;
-            final current = ref.read(currentGameProvider);
-            final result = applyBreakAllianceImmediately(
-              currentGame: current,
-              event: e,
+        unlessTurnResolutionBlocksSession('BreakAllianceImmediatelyEvent', () {
+          if (rejectUiMutationIfObserving()) return;
+          final current = ref.read(currentGameProvider);
+          final result = applyBreakAllianceImmediately(
+            currentGame: current,
+            event: e,
+          );
+          final nextGame = result.game;
+          if (nextGame == null) {
+            appEventHandlerScopeLog.w(
+              result.message ?? 'Break Alliance rejected.',
             );
-            final nextGame = result.game;
-            if (nextGame == null) {
-              _logEvent.w(result.message ?? 'Break Alliance rejected.');
-              _showSnackBar(
-                ShowSnackBarEvent(
-                  message: result.message ?? 'Break Alliance rejected.',
-                ),
+            showSnackBarForEvent(
+              ShowSnackBarEvent(
+                message: result.message ?? 'Break Alliance rejected.',
+              ),
+            );
+            return;
+          }
+          ref.read(currentGameProvider.notifier).setGame(nextGame);
+          ref
+              .read(gameServiceProvider)
+              .saveGame(
+                ref
+                    .read(observeSessionProvider.notifier)
+                    .prepareGameForPersistence(nextGame),
               );
-              return;
-            }
-            ref.read(currentGameProvider.notifier).setGame(nextGame);
-            ref
-                .read(gameServiceProvider)
-                .saveGame(
-                  ref
-                      .read(observeSessionProvider.notifier)
-                      .prepareGameForPersistence(nextGame),
-                );
-          },
-        );
+        });
       }),
     ];
   }

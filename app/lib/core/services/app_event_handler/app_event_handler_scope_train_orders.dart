@@ -1,7 +1,7 @@
-part of 'app_event_handler_scope.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Applies a chosen combat mode to the current game session state.
-@visibleForTesting
 Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
   if (currentGame == null) {
     return null;
@@ -14,7 +14,7 @@ Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
 
 /// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
 /// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
-Orders _mergeTrainCivilianOrdersForPlayer({
+Orders mergeTrainCivilianOrdersForPlayer({
   required Orders current,
   required Game game,
   required String humanPlayerId,
@@ -54,7 +54,7 @@ Orders _mergeTrainCivilianOrdersForPlayer({
 
 /// Replaces pending train-at-capital military [BuildUnitOrder]s for [humanPlayerId];
 /// keeps civilian, naval, and other build orders. Matches [TrainMilitaryDialog] semantics.
-Orders _mergeTrainMilitaryOrdersForPlayer({
+Orders mergeTrainMilitaryOrdersForPlayer({
   required Orders current,
   required Game game,
   required String humanPlayerId,
@@ -97,7 +97,7 @@ Orders _mergeTrainMilitaryOrdersForPlayer({
 /// `isMilitary: false` flag with civilians, so dialog-managed orders are
 /// additionally filtered by [ShipEconomyCatalog] ship ids. Matches
 /// [TrainNavalDialog] semantics.
-Orders _mergeTrainNavalOrdersForPlayer({
+Orders mergeTrainNavalOrdersForPlayer({
   required Orders current,
   required Game game,
   required String humanPlayerId,

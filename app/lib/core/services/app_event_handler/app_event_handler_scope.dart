@@ -1,66 +1,17 @@
-import 'dart:async';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app/package_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:colonizethis_app/app.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_order_helpers.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/observe_session_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
-import '../../../features/game/widgets/shell/shell_player_context.dart';
-import '../debug/debug_command_session_handler.dart';
-import '../observe/observe_mode_session_handler.dart';
 
 import 'app_event_handler.dart';
-import '../debug/app_event_handler_debug_flip_province.dart'
-    show applyDebugFlipProvinceOwnership;
-import '../debug/app_event_handler_debug_reveal_province.dart'
-    show applyDebugRevealProvince;
-import '../debug/app_event_handler_debug_set_diplomacy.dart'
-    show applyDebugSetDiplomacyRelation;
-import 'app_event_handler_break_alliance_immediately.dart'
-    show applyBreakAllianceImmediately;
-import '../debug/app_event_handler_debug_spawn_civilian.dart'
-    show applyDebugCivilianSpawnAtCapital;
-import '../debug/app_event_handler_debug_spawn_regiment.dart'
-    show applyDebugRegimentSpawnAtCapital;
-import '../debug/app_event_handler_debug_spawn_ship.dart'
-    show applyDebugShipSpawnAtCapitalHomeFleet;
-import '../debug/app_event_handler_debug_stockpile.dart'
-    show applyDebugStockpileCredit;
-import '../debug/app_event_handler_debug_treasury.dart'
-    show applyDebugTreasuryCredit;
-import '../debug/app_event_handler_debug_worker_pool.dart'
-    show applyDebugWorkerPoolCredit;
-import '../debug/debug_command_helpers.dart' show DebugCommandResult;
+import 'app_event_handler_scope_state.dart';
+
+export 'app_event_handler_scope_session_helpers.dart'
+    show
+        civilianWorkUpsertValidationPassCountForTests,
+        resetCivilianWorkUpsertValidationPassCountForTests;
+export 'app_event_handler_scope_train_orders.dart'
+    show applyCombatModeChoiceToGame;
 
 /// [OpenDialogEvent] id for [TrainCiviliansDialog]. SPEC/program/app-ui-wiring.md.
-
-part 'app_event_handler_scope_dialog_builders.dart';
-part 'app_event_handler_scope_session_helpers.dart';
-part 'app_event_handler_scope_train_orders.dart';
-part 'app_event_handler_scope_state.dart';
-part 'app_event_handler_scope_session_subscriptions_observe.dart';
-part 'app_event_handler_scope_session_subscriptions_civilian.dart';
-part 'app_event_handler_scope_session_subscriptions_naval.dart';
-part 'app_event_handler_scope_session_subscriptions_army.dart';
-part 'app_event_handler_scope_session_subscriptions_diplomacy.dart';
-part 'app_event_handler_scope_session_subscriptions_debug.dart';
-part 'app_event_handler_scope_session_subscriptions.dart';
-
 const String trainCiviliansDialogId = 'train_civilians';
 
 /// [OpenDialogEvent] id for [TrainMilitaryDialog]. SPEC/program/app-ui-wiring.md.
@@ -99,8 +50,6 @@ const String loadGameListDialogId = 'load_game_list';
 /// SPEC/ui/settings-dialog.md, SPEC/program/app-ui-wiring.md.
 const String settingsDialogId = 'settings';
 
-final _logEvent = packageLogger('event');
-
 /// Binds [AppEventHandler] to [appNavigatorKey] for the app lifetime.
 /// SPEC/program/app-event-bus.md (handler); SPEC/program/app-ui-wiring.md (dialog registration).
 class AppEventHandlerScope extends ConsumerStatefulWidget {
@@ -124,5 +73,5 @@ class AppEventHandlerScope extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AppEventHandlerScope> createState() =>
-      _AppEventHandlerScopeState();
+      AppEventHandlerScopeState();
 }

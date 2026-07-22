@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 411 app/lib files still using part directives.
+// Generated grandfather allowlist: 399 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -7,18 +7,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes_font_preload.dart',
   'app/lib/core/services/app_event_handler/app_event_handler.dart',
   'app/lib/core/services/app_event_handler/app_event_handler_navigation.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_helpers.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_army.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_civilian.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_debug.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_diplomacy.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_naval.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_session_subscriptions_observe.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_state.dart',
-  'app/lib/core/services/app_event_handler/app_event_handler_scope_train_orders.dart',
   'app/lib/core/services/app_event_handler/app_event_handler_unit_panels.dart',
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
   'app/lib/core/services/debug/app_event_handler_debug_flip_province_resolve.dart',

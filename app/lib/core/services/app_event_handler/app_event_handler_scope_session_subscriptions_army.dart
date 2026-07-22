@@ -1,32 +1,44 @@
-part of 'app_event_handler_scope.dart';
+import 'dart:async';
 
-extension _SessionArmyListeners on _AppEventHandlerScopeState {
-  List<StreamSubscription<dynamic>> _armySessionListeners(AppEventBus bus) {
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/providers/observe_session_provider.dart';
+
+import '../../../features/game/widgets/shell/shell_player_context.dart';
+import 'app_event_handler_scope_log.dart';
+import 'app_event_handler_scope_session_helpers.dart';
+import 'app_event_handler_scope_train_orders.dart';
+
+mixin AppEventHandlerScopeSessionArmyListeners
+    on AppEventHandlerScopeSessionHelpers {
+  List<StreamSubscription<dynamic>> armySessionListeners(AppEventBus bus) {
     return [
       bus.on<LandArmiesUpdatedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('LandArmiesUpdatedEvent', () {
+        unlessTurnResolutionBlocksSession('LandArmiesUpdatedEvent', () {
           ref.read(currentGameProvider.notifier).setGame(e.game);
         });
       }),
       bus.on<ArmyCombineRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
-          'ArmyCombineRequestedEvent',
-          () {
-            if (_rejectUiMutationIfObserving()) return;
-            final g = ref.read(currentGameProvider);
-            if (g == null) return;
-            final next = applyArmyCombine(
-              game: g,
-              playerId: e.humanPlayerId,
-              armyIds: e.armyIds,
-            );
-            bus.emit(LandArmiesUpdatedEvent(game: next));
-          },
-        );
+        unlessTurnResolutionBlocksSession('ArmyCombineRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
+          final g = ref.read(currentGameProvider);
+          if (g == null) return;
+          final next = applyArmyCombine(
+            game: g,
+            playerId: e.humanPlayerId,
+            armyIds: e.armyIds,
+          );
+          bus.emit(LandArmiesUpdatedEvent(game: next));
+        });
       }),
       bus.on<ArmySplitRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('ArmySplitRequestedEvent', () {
-          if (_rejectUiMutationIfObserving()) return;
+        unlessTurnResolutionBlocksSession('ArmySplitRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
           final next = applyArmySplit(
@@ -39,8 +51,8 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
         });
       }),
       bus.on<ArmyMoveRequestedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('ArmyMoveRequestedEvent', () {
-          if (_rejectUiMutationIfObserving()) return;
+        unlessTurnResolutionBlocksSession('ArmyMoveRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
           final g = ref.read(currentGameProvider);
           if (g == null) return;
           final topo =
@@ -86,10 +98,10 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
             e.humanPlayerId,
           );
           if (!results.every((r) => r.isAccepted)) {
-            _logEvent.e(
+            appEventHandlerScopeLog.e(
               'ui: army move rejected: merged draft failed order validation',
             );
-            _showSnackBar(
+            showSnackBarForEvent(
               const ShowSnackBarEvent(
                 message: 'Could not apply army move. Orders are invalid.',
               ),
@@ -104,10 +116,10 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
         });
       }),
       bus.on<TrainMilitaryBuildOrdersCommittedEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'TrainMilitaryBuildOrdersCommittedEvent',
           () {
-            if (_rejectUiMutationIfObserving()) return;
+            if (rejectUiMutationIfObserving()) return;
             final g = ref.read(currentGameProvider);
             if (g == null) return;
             final pid = resolveShellPanelPlayerId(
@@ -118,7 +130,7 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
             ref
                 .read(currentOrdersProvider.notifier)
                 .replaceAll(
-                  _mergeTrainMilitaryOrdersForPlayer(
+                  mergeTrainMilitaryOrdersForPlayer(
                     current: o,
                     game: g,
                     humanPlayerId: pid,
@@ -129,11 +141,11 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<CombatModeChosenEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('CombatModeChosenEvent', () {
+        unlessTurnResolutionBlocksSession('CombatModeChosenEvent', () {
           final g = ref.read(currentGameProvider);
           final updated = applyCombatModeChoiceToGame(g, e.mode);
           if (updated == null) {
-            _logEvent.w(
+            appEventHandlerScopeLog.w(
               'CombatModeChosenEvent received without an active game; ignoring',
             );
             return;
@@ -149,7 +161,9 @@ extension _SessionArmyListeners on _AppEventHandlerScopeState {
                     .read(observeSessionProvider.notifier)
                     .prepareGameForPersistence(updated),
               );
-          _logEvent.i('combat: set default combat mode to ${e.mode.name}');
+          appEventHandlerScopeLog.i(
+            'combat: set default combat mode to ${e.mode.name}',
+          );
         });
       }),
     ];
