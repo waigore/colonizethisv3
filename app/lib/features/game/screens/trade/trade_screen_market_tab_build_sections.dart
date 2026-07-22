@@ -1,9 +1,20 @@
-// Market-tab section list assembly for `_MarketTabContent`.
+// Market-tab section list assembly for `MarketTabContent`.
 // Split from `trade_screen_market_tab_build.dart` (Refs #3878).
 
-part of 'trade_screen.dart';
 
-extension _MarketTabContentBuildSections on _MarketTabContent {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_tab.dart';
+import 'trade_screen_market_tab_catalog.dart';
+import 'trade_section_handlers.dart';
+
+extension MarketTabContentBuildSections on MarketTabContent {
   ({
     TextStyle nameStyle,
     TextStyle priceStyle,
@@ -34,7 +45,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
 
   List<Widget> buildMarketTabSectionWidgets({
     required AppLocalizations l10n,
-    required _SectionedTradeableCommodities sectioned,
+    required SectionedTradeableCommodities sectioned,
     required WorldMarketState market,
     required Orders orders,
     required Map<CommodityId, int> offerCap,
@@ -46,7 +57,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
     required TradeSectionHandlers sectionHandlers,
   }) {
     return <Widget>[
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionFoodKey,
         sectionLabel: l10n.production_food,
         commodities: sectioned.food,
@@ -62,7 +73,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         l10n: l10n,
       ),
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
         sectionLabel: l10n.production_rawMaterials,
         commodities: sectioned.rawMaterials,
@@ -79,7 +90,7 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
         isFirstSection: false,
         l10n: l10n,
       ),
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionManufacturedKey,
         sectionLabel: l10n.production_manufactured,
         commodities: sectioned.manufactured,

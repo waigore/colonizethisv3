@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 391 app/lib files still using part directives.
+// Generated grandfather allowlist: 370 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -134,27 +134,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/screens/technology/technology_screen.dart',
   'app/lib/features/game/screens/technology/technology_screen_body.dart',
   'app/lib/features/game/screens/technology/technology_screen_top_bar.dart',
-  'app/lib/features/game/screens/trade/trade_screen.dart',
-  'app/lib/features/game/screens/trade/trade_screen_contract_deal_book.dart',
-  'app/lib/features/game/screens/trade/trade_screen_contract_market.dart',
-  'app/lib/features/game/screens/trade/trade_screen_contract_market_rows.dart',
-  'app/lib/features/game/screens/trade/trade_screen_deal_book.dart',
-  'app/lib/features/game/screens/trade/trade_screen_deal_book_panel.dart',
-  'app/lib/features/game/screens/trade/trade_screen_deal_book_rows.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_row.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_row_controls.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_row_header.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_row_stepper.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_build.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_build_sections.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_cargo_header.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_catalog.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_order_handlers.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_order_handlers_direction.dart',
-  'app/lib/features/game/screens/trade/trade_screen_market_tab_order_handlers_quantity.dart',
-  'app/lib/features/game/screens/trade/trade_screen_tabs_body.dart',
-  'app/lib/features/game/screens/trade/trade_screen_widget.dart',
   'app/lib/features/game/widgets/dialogue/call_to_arms_call_row.dart',
   'app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
   'app/lib/features/game/widgets/dialogue/ct_dialogue_view.dart',

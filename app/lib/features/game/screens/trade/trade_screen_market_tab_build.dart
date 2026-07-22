@@ -1,10 +1,25 @@
-// Market-tab `build` implementation for `_MarketTabContent`.
+// Market-tab `build` implementation for `MarketTabContent`.
 // Split from `trade_screen_market_tab.dart` to keep each trade-screen part
 // under the repo file-size target (Refs #3878).
 
-part of 'trade_screen.dart';
 
-extension _MarketTabContentBuild on _MarketTabContent {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../providers/games_provider.dart';
+
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_tab.dart';
+import 'trade_screen_market_tab_build_sections.dart';
+import 'trade_screen_market_tab_cargo_header.dart';
+import 'trade_screen_market_tab_catalog.dart';
+import 'trade_screen_market_tab_order_handlers.dart';
+import 'trade_section_handlers.dart';
+
+extension MarketTabContentBuild on MarketTabContent {
   /// Visual dim factor applied to the Market tab body when the screen
   /// is in observe mode (`canMutateViaUi == false`). Matches the
   /// editorial-monocle conventions for read-only surfaces.
@@ -26,13 +41,13 @@ extension _MarketTabContentBuild on _MarketTabContent {
     final TextStyle cargoIndicatorStyle = styles.cargoIndicatorStyle;
     final TextStyle cargoWarningStyle = styles.cargoWarningStyle;
 
-    final _SectionedTradeableCommodities sectioned =
-        _tradeableCommoditiesByCategory();
+    final SectionedTradeableCommodities sectioned =
+        tradeableCommoditiesByCategory();
     final AppLocalizations l10n = appL10n(context);
     final WorldMarketState market = game.worldMarketState;
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
-    final int totalStagedBid = _totalStagedBidQuantity(orders, playerId);
+    final int totalStagedBid = totalStagedBidQuantity(orders, playerId);
     final int remainingCargo = tradeCargoCapacity - totalStagedBid;
     final int clampedRemaining = remainingCargo < 0 ? 0 : remainingCargo;
     final bool warningVisible =
@@ -75,7 +90,7 @@ extension _MarketTabContentBuild on _MarketTabContent {
         required TradeOrderType? next,
         required int? projectedTreasuryDelta,
       }) =>
-          _handleDirectionChanged(
+          handleDirectionChanged(
             ordersNotifier: ordersNotifier,
             orders: orders,
             productionInputConsumption: productionInputConsumption,
@@ -88,7 +103,7 @@ extension _MarketTabContentBuild on _MarketTabContent {
         required int delta,
         required int? projectedTreasuryDelta,
       }) =>
-          _handleQuantityDelta(
+          handleQuantityDelta(
             ordersNotifier: ordersNotifier,
             orders: orders,
             productionInputConsumption: productionInputConsumption,
@@ -136,7 +151,7 @@ extension _MarketTabContentBuild on _MarketTabContent {
       ),
     );
 
-    final Widget header = _MarketTabCargoHeader(
+    final Widget header = MarketTabCargoHeader(
       clampedRemaining: clampedRemaining,
       warningVisible: warningVisible,
       cargoIndicatorStyle: cargoIndicatorStyle,

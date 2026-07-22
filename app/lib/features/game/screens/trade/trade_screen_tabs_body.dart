@@ -1,7 +1,5 @@
 // Two-tab body chrome for the World Market trade screen.
 
-part of 'trade_screen.dart';
-
 /// Two-tab body for the trade screen: Market (default) + Deal Book.
 ///
 /// Hosts a [CtTabStrip] inside a [CtPanel] so the dark editorial-monocle
@@ -14,8 +12,21 @@ part of 'trade_screen.dart';
 /// two-tab structure stays as the durable wireframe so the follow-up
 /// cargo indicator + priority dropdown + Deal Book ledger slices can
 /// swap each tab body in place without remounting the strip.
-class _TradeScreenTabsBody extends StatelessWidget {
-  const _TradeScreenTabsBody({
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../widgets/ct_panel.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/ct_tab_strip.dart';
+import 'trade_screen_contract_deal_book.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_deal_book.dart';
+import 'trade_screen_market_tab.dart';
+
+class TradeScreenTabsBody extends StatelessWidget {
+  const TradeScreenTabsBody({
     super.key,
     required this.game,
     required this.playerId,
@@ -41,13 +52,13 @@ class _TradeScreenTabsBody extends StatelessWidget {
             TradeScreenDealBookKeys.dealBookTabLabel,
           ],
           tabViews: <Widget>[
-            _MarketTabContent(
+            MarketTabContent(
               key: TradeScreenMarketKeys.marketTabBodyKey,
               game: game,
               playerId: playerId,
               canEdit: canEdit,
             ),
-            _DealBookTabContent(
+            DealBookTabContent(
               key: TradeScreenDealBookKeys.dealBookTabBodyKey,
               game: game,
               playerId: playerId,
