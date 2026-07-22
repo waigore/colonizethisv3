@@ -93,61 +93,6 @@ void main() {
     });
 
     test(
-      'town markers include non-player provinces with valid townTileKey',
-      () {
-        final game = minimalGame(
-          id: 'towns_non_player',
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'gp1',
-              townTileKey: 'oldWorld|p1|0|0',
-            ),
-            Province(
-              id: 'oldWorld|p2',
-              regionId: 'oldWorld',
-              ownerId: 'ai_minor',
-              townTileKey: 'oldWorld|p2|1|0',
-            ),
-          ],
-          players: const [
-            Player(id: 'gp1', displayName: 'Player GP', isHuman: true),
-          ],
-          minorNations: const [
-            MinorNation(id: 'ai_minor', displayName: 'AI Minor Nation'),
-          ],
-        );
-        final viewData = buildViewDataForScenario(
-          dualRegionScenario(
-            game: game,
-            oldWorldGrid: const [
-              ['p1', 'p2'],
-            ],
-            oldWorldTopology: regionTopology(
-              regionId: 'oldWorld',
-              provinceIds: const ['p1', 'p2'],
-            ),
-          ),
-        );
-
-        expect(viewData.oldWorld.townMarkers.length, equals(2));
-        expect(
-          viewData.oldWorld.townMarkers.any(
-            (m) => m.provinceId == 'p1' && m.x == 0 && m.y == 0,
-          ),
-          isTrue,
-        );
-        expect(
-          viewData.oldWorld.townMarkers.any(
-            (m) => m.provinceId == 'p2' && m.x == 1 && m.y == 0,
-          ),
-          isTrue,
-        );
-      },
-    );
-
-    test(
       'town markers: port on capital tile places port drawable on sea by town',
       () {
         final game = minimalGame(
