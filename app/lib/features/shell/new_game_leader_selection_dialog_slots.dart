@@ -1,18 +1,28 @@
-part of 'new_game_leader_selection_dialog.dart';
+// Slot label chrome and shared text-style resolution for
+// [NewGameLeaderSelectionDialog] (Refs #3878 shell modularization).
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-/// Slot label chrome and shared text-style resolution for
-/// [NewGameLeaderSelectionDialog] (Refs #3878 shell modularization).
-mixin _NewGameLeaderSelectionDialogSlots
-    on State<NewGameLeaderSelectionDialog>, _NewGameLeaderSelectionDialogStateBase {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'new_game_leader_selection_dialog_slot_row_pickers.dart';
+import 'new_game_leader_selection_dialog_state_base.dart';
+import 'new_game_leader_selection_dialog_widget.dart';
+
+mixin NewGameLeaderSelectionDialogSlots
+    on State<NewGameLeaderSelectionDialog>, NewGameLeaderSelectionDialogStateBase {
   /// Slot heading row: `Slot N` plus a `YOU` tag for the human slot (0).
   /// Mirrors the mockup `.slot-label` / `.you-tag`: the literal copy stays
   /// `You` ([AppLocalizations.shell_leaderDialog_slotYouTag]) and uppercasing
   /// is applied here as presentation, matching the mockup's CSS
   /// `text-transform:uppercase`.
-  Widget _buildSlotLabel(
+  Widget buildSlotLabel(
     AppLocalizations l10n,
     int slotIndex,
-    _LeaderDialogTextStyles styles,
+    NewGameLeaderDialogTextStyles styles,
   ) {
     final bool isYou = slotIndex == 0;
     final TextStyle labelStyle = styles.slotLabel.copyWith(
@@ -40,10 +50,10 @@ mixin _NewGameLeaderSelectionDialogSlots
     );
   }
 
-  _LeaderDialogTextStyles _resolveTextStyles(ThemeData theme) {
+  NewGameLeaderDialogTextStyles resolveTextStyles(ThemeData theme) {
     final TextStyle bodySmall =
         theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return _LeaderDialogTextStyles(
+    return NewGameLeaderDialogTextStyles(
       title: (theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16))
           .copyWith(
             color: EditorialMonoclePalette.accent,

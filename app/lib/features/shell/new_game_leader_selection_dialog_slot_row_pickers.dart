@@ -1,7 +1,13 @@
-part of 'new_game_leader_selection_dialog.dart';
+// Slot pickers body for [NewGameLeaderSelectionDialog].
+// SPEC/ui/new-game-leader-selection-dialog.md.
 
-class _LeaderDialogTextStyles {
-  const _LeaderDialogTextStyles({
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+class NewGameLeaderDialogTextStyles {
+  const NewGameLeaderDialogTextStyles({
     required this.title,
     required this.intro,
     required this.fieldLabel,
@@ -28,8 +34,9 @@ class _LeaderDialogTextStyles {
 /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
 /// + Acceptance Criteria narrow-viewport stacking AC;
 /// `SPEC/ui/mobile-adaptation.md` § 4 New game leader selection.
-class _SlotPickersBody extends StatelessWidget {
-  const _SlotPickersBody({
+class NewGameLeaderSelectionDialogSlotPickersBody extends StatelessWidget {
+  const NewGameLeaderSelectionDialogSlotPickersBody({
+    super.key,
     required this.nationDropdown,
     required this.leaderDropdown,
     this.profileLine,

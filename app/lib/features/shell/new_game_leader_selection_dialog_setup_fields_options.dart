@@ -1,12 +1,27 @@
-part of 'new_game_leader_selection_dialog.dart';
+// Advanced-start, infinite-mode, and terrain fields for
+// [NewGameLeaderSelectionDialog] (Refs #3878).
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-/// Advanced-start, infinite-mode, and terrain fields for
-/// [NewGameLeaderSelectionDialog] (Refs #3878).
-mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
-    on State<NewGameLeaderSelectionDialog>, _NewGameLeaderSelectionDialogStateBase {
-  bool get _advancedStartEnabled => widget.baseConfig.isLockedFullInitProfile;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-  String _advancedStartLabel(AppLocalizations l10n, AdvancedStartType type) {
+import 'package:colonizethis_app/widgets/ct_dropdown.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
+import 'new_game_leader_selection_dialog_constants.dart';
+import 'new_game_leader_selection_dialog_slot_row_pickers.dart';
+import 'new_game_leader_selection_dialog_state_base.dart';
+import 'new_game_leader_selection_dialog_widget.dart';
+
+mixin NewGameLeaderSelectionDialogSetupFieldsOptions
+    on State<NewGameLeaderSelectionDialog>, NewGameLeaderSelectionDialogStateBase {
+  bool get advancedStartEnabled => widget.baseConfig.isLockedFullInitProfile;
+
+  String advancedStartLabel(AppLocalizations l10n, AdvancedStartType type) {
     return switch (type) {
       AdvancedStartType.none => l10n.shell_leaderDialog_advancedStartNone,
       AdvancedStartType.turns50 => l10n.shell_leaderDialog_advancedStart50,
@@ -14,10 +29,10 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
     };
   }
 
-  Widget _buildAdvancedStartField(
+  Widget buildAdvancedStartField(
     ThemeData theme,
     AppLocalizations l10n,
-    _LeaderDialogTextStyles styles,
+    NewGameLeaderDialogTextStyles styles,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -29,23 +44,23 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
         ),
         const SizedBox(height: CtSpacing.m / 2),
         AbsorbPointer(
-          absorbing: !_advancedStartEnabled,
+          absorbing: !advancedStartEnabled,
           child: Opacity(
-            opacity: _advancedStartEnabled ? 1 : 0.5,
+            opacity: advancedStartEnabled ? 1 : 0.5,
             child: CtDropdown<AdvancedStartType>(
-              value: _advancedStart,
+              value: advancedStart,
               items: AdvancedStartType.values,
-              itemLabel: (type) => _advancedStartLabel(l10n, type),
+              itemLabel: (type) => advancedStartLabel(l10n, type),
               onChanged: (value) {
                 if (value == null) {
                   return;
                 }
-                setState(() => _advancedStart = value);
+                setState(() => advancedStart = value);
               },
             ),
           ),
         ),
-        if (!_advancedStartEnabled) ...[
+        if (!advancedStartEnabled) ...[
           const SizedBox(height: CtSpacing.s),
           Text(
             l10n.shell_leaderDialog_advancedStartDisabledHelper,
@@ -56,10 +71,10 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
     );
   }
 
-  Widget _buildInfiniteModeTile(
+  Widget buildInfiniteModeTile(
     ThemeData theme,
     AppLocalizations l10n,
-    _LeaderDialogTextStyles styles,
+    NewGameLeaderDialogTextStyles styles,
   ) {
     // Mockup `.toggle-row`: CtToggleSwitch beside the label, helper text
     // indented beneath (no Material `CheckboxListTile` chrome per
@@ -74,13 +89,13 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
             Padding(
               padding: const EdgeInsets.only(top: 1),
               child: CtToggleSwitch(
-                value: _infiniteMode,
+                value: infiniteMode,
                 onChanged: (value) {
-                  setState(() => _infiniteMode = value);
+                  setState(() => infiniteMode = value);
                 },
               ),
             ),
-            const SizedBox(width: _kToggleLabelGap),
+            const SizedBox(width: kNewGameLeaderSelectionDialogToggleLabelGap),
             Expanded(
               child: Text(
                 l10n.shell_leaderDialog_infiniteModeLabel,
@@ -95,7 +110,9 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
         const SizedBox(height: CtSpacing.xs),
         Padding(
           padding: const EdgeInsets.only(
-            left: CtToggleSwitch.trackWidth + _kToggleLabelGap,
+            left:
+                CtToggleSwitch.trackWidth +
+                kNewGameLeaderSelectionDialogToggleLabelGap,
           ),
           child: Text(
             l10n.shell_leaderDialog_infiniteModeHelper,
@@ -106,13 +123,13 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
     );
   }
 
-  Widget _buildTerrainVariationField(
+  Widget buildTerrainVariationField(
     BuildContext context,
     AppLocalizations l10n, {
     required TextStyle fieldLabelStyle,
     required TextStyle helperStyle,
   }) {
-    final percent = (_terrainVariation * 100).round();
+    final percent = (terrainVariation * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -146,12 +163,12 @@ mixin _NewGameLeaderSelectionDialogSetupFieldsOptions
         ),
         const SizedBox(height: CtSpacing.s),
         CtSlider(
-          value: _terrainVariation,
+          value: terrainVariation,
           min: 0.0,
           max: 1.0,
           divisions: 20,
           onChanged: (value) {
-            setState(() => _terrainVariation = value);
+            setState(() => terrainVariation = value);
           },
         ),
         const SizedBox(height: CtSpacing.s),

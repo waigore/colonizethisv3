@@ -1,21 +1,35 @@
-part of 'new_game_leader_selection_dialog.dart';
+// Per-slot nation/leader/profile picker row and responsive layout chrome for
+// [NewGameLeaderSelectionDialog] (Refs #3878 shell modularization).
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-/// Per-slot nation/leader/profile picker row and responsive layout chrome for
-/// [NewGameLeaderSelectionDialog] (Refs #3878 shell modularization).
-mixin _NewGameLeaderSelectionDialogSlotRow
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_dropdown.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
+import 'new_game_leader_selection_dialog_constants.dart';
+import 'new_game_leader_selection_dialog_slot_row_pickers.dart';
+import 'new_game_leader_selection_dialog_slots.dart';
+import 'new_game_leader_selection_dialog_state_base.dart';
+import 'new_game_leader_selection_dialog_widget.dart';
+
+mixin NewGameLeaderSelectionDialogSlotRow
     on
         State<NewGameLeaderSelectionDialog>,
-        _NewGameLeaderSelectionDialogStateBase,
-        _NewGameLeaderSelectionDialogSlots {
-  Widget _buildSlotRow(
+        NewGameLeaderSelectionDialogStateBase,
+        NewGameLeaderSelectionDialogSlots {
+  Widget buildSlotRow(
     BuildContext context,
     int slotIndex,
     AppLocalizations l10n,
-    _LeaderDialogTextStyles styles, {
+    NewGameLeaderDialogTextStyles styles, {
     bool isDuplicate = false,
   }) {
-    final gpId = _orderedGpIdsBySlot[slotIndex];
-    final available = _availableGpIdsForSlot(slotIndex);
+    final gpId = orderedGpIdsBySlot[slotIndex];
+    final available = availableGpIdsForSlot(slotIndex);
     final effectiveGpId = available.contains(gpId) ? gpId : available.first;
     final gp = widget.naming.gpById(effectiveGpId);
     if (gp == null || gp.leaderVariants.isEmpty) {
@@ -23,7 +37,7 @@ mixin _NewGameLeaderSelectionDialogSlotRow
     }
     final variants = gp.leaderVariants;
     final currentVariantId =
-        _leaderByGpId[effectiveGpId] ?? gp.defaultLeaderVariantId;
+        leaderByGpId[effectiveGpId] ?? gp.defaultLeaderVariantId;
 
     final Widget nationDropdownCore = CtDropdown<String>(
       value: effectiveGpId,
@@ -40,8 +54,8 @@ mixin _NewGameLeaderSelectionDialogSlotRow
           return;
         }
         setState(() {
-          _orderedGpIdsBySlot[slotIndex] = value;
-          _leaderByGpId[value] = newGp.defaultLeaderVariantId;
+          orderedGpIdsBySlot[slotIndex] = value;
+          leaderByGpId[value] = newGp.defaultLeaderVariantId;
         });
       },
     );
@@ -76,7 +90,7 @@ mixin _NewGameLeaderSelectionDialogSlotRow
       itemLabel: (id) => variants.firstWhere((v) => v.id == id).name,
       onChanged: (value) {
         if (value != null) {
-          setState(() => _leaderByGpId[effectiveGpId] = value);
+          setState(() => leaderByGpId[effectiveGpId] = value);
         }
       },
     );
@@ -84,9 +98,11 @@ mixin _NewGameLeaderSelectionDialogSlotRow
     final Widget? profileDropdown = slotIndex == 0
         ? null
         : CtDropdown<String>(
-            value: _profileBySlot[slotIndex] ?? _kNormalProfileChoiceId,
+            value:
+                profileBySlot[slotIndex] ??
+                kNewGameLeaderSelectionDialogNormalProfileChoiceId,
             items: <String>[
-              _kNormalProfileChoiceId,
+              kNewGameLeaderSelectionDialogNormalProfileChoiceId,
               ...widget.blessedProfileNames,
             ],
             hint: l10n.shell_leaderDialog_aiProfileLabel,
@@ -95,9 +111,9 @@ mixin _NewGameLeaderSelectionDialogSlotRow
             onChanged: (value) {
               setState(() {
                 if (value == null || value.isEmpty) {
-                  _profileBySlot.remove(slotIndex);
+                  profileBySlot.remove(slotIndex);
                 } else {
-                  _profileBySlot[slotIndex] = value;
+                  profileBySlot[slotIndex] = value;
                 }
               });
             },
@@ -135,14 +151,14 @@ mixin _NewGameLeaderSelectionDialogSlotRow
         ),
       ),
       child: Padding(
-        padding: _kSlotRowPadding,
+        padding: kNewGameLeaderSelectionDialogSlotRowPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSlotLabel(l10n, slotIndex, styles),
+            buildSlotLabel(l10n, slotIndex, styles),
             const SizedBox(height: CtSpacing.s),
-            _SlotPickersBody(
+            NewGameLeaderSelectionDialogSlotPickersBody(
               nationDropdown: nationDropdown,
               leaderDropdown: leaderDropdown,
               profileLine: profileLine,
