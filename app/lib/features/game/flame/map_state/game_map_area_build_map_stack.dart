@@ -1,17 +1,79 @@
-part of 'game_map_area.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show InitGameMapViewData, RegionMapViewData;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import '../../../../config/constants.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../config/ui_screen_ids.dart';
+import '../../screens/game/game_screen_shared.dart';
+import '../map_area/map_area.dart'
+    show GameMapAreaBackground, GameMapCanvasStack;
+import '../controls/controls.dart';
+import '../minimap/minimap.dart';
+import '../overlays/game_map_narrow_detail_overlay.dart';
+import '../overlays/debug_console_overlay_panel.dart';
+import 'game_map_area_state_logic.dart';
+import '../overlays/next_turn_confirmation_dialog.dart';
+import '../overlays/turn_resolution_processing_dialog.dart';
+import '../overlays/turn_resolution_progress_labels.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
+import 'map_location_resolver.dart';
+import '../../widgets/dialogs/game_map_options_dialog.dart';
+import '../../widgets/shell/game_map_players_bar.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../providers/region_minimap_provider.dart';
+import '../../../../providers/treasury_summary_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
+import '../../../../providers/blessed_ai_profiles_provider.dart';
+import '../../../../providers/turn_resolution_blocking_provider.dart';
+import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../../core/services/ai/ai_profile_resolution.dart';
+import '../../../../core/services/subscription_tracker.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
+import '../region_map/region_map_viewport_snapshot.dart';
+import '../../../../providers/home_fleet_cargo_provider.dart';
+import '../../../../providers/human_draft_projected_region_provider.dart';
+
+import 'game_map_area_state_base.dart';
+import 'game_map_area_widget.dart';
+import 'game_map_area_selection.dart';
+import 'game_map_area_view.dart';
+import 'game_map_area_e2e.dart';
+import 'game_map_area_build_map_stack_chrome.dart';
 /// Map canvas stack and in-map overlay chrome (left rail, corner controls,
 /// side menu, minimap, players bar, turn feed). Split from
 /// [game_map_area_build_overlays.dart] for Phase 3 flame map modularization.
-mixin _GameMapAreaBuildMapStack
+mixin GameMapAreaBuildMapStack
     on
         ConsumerState<GameMapArea>,
-        _GameMapAreaStateBase,
-        _GameMapAreaView,
-        _GameMapAreaSelection,
-        _GameMapAreaE2e,
-        _GameMapAreaBuildMapStackChrome {
-  Widget _buildMapFocusedStack({
+        GameMapAreaStateBase,
+        GameMapAreaView,
+        GameMapAreaSelection,
+        GameMapAreaE2e,
+        GameMapAreaBuildMapStackChrome {
+  Widget buildMapFocusedStack({
     required BuildContext context,
     required bool isNarrow,
     required RegionMapViewData projectedRegion,
@@ -27,41 +89,41 @@ mixin _GameMapAreaBuildMapStack
           isNarrow: isNarrow,
           game: widget.game,
           region: projectedRegion,
-          baseLayerDisplayMode: _baseLayerDisplayMode,
-          showProvinceOverlay: _mapViewState.showProvinceOverlay,
-          showProvinceOwnershipTint: _mapViewState.showProvinceOwnershipTint,
-          showProvinceNamesLayer: _mapViewState.showProvinceNamesLayer,
+          baseLayerDisplayMode: baseLayerDisplayMode,
+          showProvinceOverlay: mapViewState.showProvinceOverlay,
+          showProvinceOwnershipTint: mapViewState.showProvinceOwnershipTint,
+          showProvinceNamesLayer: mapViewState.showProvinceNamesLayer,
           humanPlayerId: mapPlayerId,
           playerView: mapPlayerView,
           visibilityMode: shell.mapVisibilityMode,
           omniscientDetail: shell.omniscientDetail,
           canMutateViaUi: shell.canMutateViaUi,
-          workTargetSelectionCache: _workTargetSelectionCache,
-          centerOnTileKey: _centerOnTileKey,
-          validTileKeysForSelection: _validTileKeysForSelection,
-          selectedCivilianTileKey: _selectedCivilianTileKey,
-          onTileSelectedForWork: _workTargetSelection != null
-              ? _onTileSelectedForWork
+          workTargetSelectionCache: workTargetSelectionCache,
+          centerOnTileKey: centerOnTileKey,
+          validTileKeysForSelection: validTileKeysForSelection,
+          selectedCivilianTileKey: selectedCivilianTileKey,
+          onTileSelectedForWork: workTargetSelection != null
+              ? onTileSelectedForWork
               : null,
-          onWorkTargetSelectionCancelled: _workTargetSelection != null
-              ? _cancelWorkTargetSelection
+          onWorkTargetSelectionCancelled: workTargetSelection != null
+              ? cancelWorkTargetSelection
               : null,
           onCivilianTileStateChanged: (tileKey) {
             setState(() {
-              _selectedCivilianTileKey = tileKey;
+              selectedCivilianTileKey = tileKey;
             });
           },
           onCivilianTileSelectionCleared: () {
-            if (_selectedCivilianTileKey == null) return;
+            if (selectedCivilianTileKey == null) return;
             setState(() {
-              _selectedCivilianTileKey = null;
+              selectedCivilianTileKey = null;
             });
           },
           bus: ref.read(appEventBusProvider),
-          onRegionViewportSnapshot: _onRegionViewportSnapshot,
-          zoomMultiplier: _mapViewState.zoomMultiplier,
+          onRegionViewportSnapshot: onRegionViewportSnapshot,
+          zoomMultiplier: mapViewState.zoomMultiplier,
         ),
-        if (!_sideMenuOpen)
+        if (!sideMenuOpen)
           Positioned(
             left: 0,
             top: 0,
@@ -71,7 +133,7 @@ mixin _GameMapAreaBuildMapStack
               behavior: HitTestBehavior.translucent,
               onHorizontalDragUpdate: (details) {
                 if (details.delta.dx > 20) {
-                  setState(() => _sideMenuOpen = true);
+                  setState(() => sideMenuOpen = true);
                 }
               },
             ),
@@ -83,8 +145,8 @@ mixin _GameMapAreaBuildMapStack
             game: widget.game,
             humanPlayerId: mapPlayerId,
             narrow: isNarrow,
-            onIconTappedWhileSelectionMode: _workTargetSelection != null
-                ? _cancelWorkTargetSelection
+            onIconTappedWhileSelectionMode: workTargetSelection != null
+                ? cancelWorkTargetSelection
                 : null,
           ),
         ),
@@ -93,8 +155,8 @@ mixin _GameMapAreaBuildMapStack
           bottom: kMapOverlayEdgeInset,
           child: GameMapCornerControls(
             narrow: isNarrow,
-            onCycleBaseLayerDisplayMode: _cycleBaseLayerDisplayMode,
-            onCenterOnHomeCapital: _centerOnCurrentPlayerCapital,
+            onCycleBaseLayerDisplayMode: cycleBaseLayerDisplayMode,
+            onCenterOnHomeCapital: centerOnCurrentPlayerCapital,
             homeToCapitalEnabled: shell.viewingPlayerId != null,
             onOpenMapDisplayOptions: () {
               showDialog<void>(
@@ -102,27 +164,27 @@ mixin _GameMapAreaBuildMapStack
                 barrierColor: EditorialMonoclePalette.dialogScrim,
                 builder: (context) {
                   return GameMapOptionsDialog(
-                    initialState: _mapViewState,
-                    onChanged: _setMapViewState,
+                    initialState: mapViewState,
+                    onChanged: setMapViewState,
                   );
                 },
               );
             },
           ),
         ),
-        if (kCtE2EEnabled) ..._buildE2eOverlayTaps(projectedRegion),
-        if (_sideMenuOpen) ...[
+        if (kCtE2EEnabled) ...buildE2eOverlayTaps(projectedRegion),
+        if (sideMenuOpen) ...[
           Positioned.fill(
             child: GameSideMenuScrim(
-              onDismiss: () => setState(() => _sideMenuOpen = false),
+              onDismiss: () => setState(() => sideMenuOpen = false),
             ),
           ),
           GameSideMenu(
-            sideMenuOpen: _sideMenuOpen,
-            onClose: () => setState(() => _sideMenuOpen = false),
+            sideMenuOpen: sideMenuOpen,
+            onClose: () => setState(() => sideMenuOpen = false),
           ),
         ],
-        ..._buildMapStackChromeChildren(
+        ...buildMapStackChromeChildren(
           isNarrow: isNarrow,
           projectedRegion: projectedRegion,
           mapPlayerId: mapPlayerId,
