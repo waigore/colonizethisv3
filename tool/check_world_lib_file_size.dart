@@ -17,9 +17,7 @@ const String _worldLibRelativePath = 'packages/colonizethis_world/lib';
 
 /// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
 /// allowlist; remove entries as splits land.
-const List<String> worldLibFileSizeGrandfathered = <String>[
-  'packages/colonizethis_world/lib/src/world/province_lookup.dart',
-];
+const List<String> worldLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
