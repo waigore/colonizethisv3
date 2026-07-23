@@ -1,4 +1,4 @@
-part of 'naming_rules.dart';
+import 'naming_rules.dart';
 
 /// Default historically inspired naming config (program-level; current product).
 ///

@@ -1,10 +1,22 @@
-import 'combat_config.dart';
+// SPEC/game/military-units.md regiment table fixtures for combat_config_test.dart
+// (Refs #4121 slice D).
+import 'package:colonizethis_data/colonizethis_data.dart';
 
-/// Full regiment table: 29 types across 8 categories and 4 eras.
-/// SPEC/game/military-units.md.
-const List<RegimentStats> regimentCatalog = [
-  RegimentStats(
-    id: 'peasant_levies',
+/// Expected tactical row per SPEC/game/military-units.md § Regiment Table.
+typedef CombatConfigSpecRegimentRow = ({
+  int fpn,
+  int fpm,
+  int rng,
+  int def,
+  int mvr,
+  RegimentCategory category,
+  int era,
+});
+
+/// Keys: regiment id. Values: FPN, FPM, RNG, DEF, MVR, category, era.
+const combatConfigMilitaryUnitsSpecById =
+    <String, CombatConfigSpecRegimentRow>{
+  'peasant_levies': (
     fpn: 0,
     fpm: 3,
     rng: 1,
@@ -13,8 +25,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightInfantry,
     era: 1,
   ),
-  RegimentStats(
-    id: 'pikemen',
+  'pikemen': (
     fpn: 0,
     fpm: 5,
     rng: 1,
@@ -23,8 +34,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.regularInfantry,
     era: 1,
   ),
-  RegimentStats(
-    id: 'arquebusiers',
+  'arquebusiers': (
     fpn: 5,
     fpm: 1,
     rng: 3,
@@ -33,8 +43,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyInfantry,
     era: 1,
   ),
-  RegimentStats(
-    id: 'bowmen',
+  'bowmen': (
     fpn: 3,
     fpm: 1,
     rng: 4,
@@ -43,8 +52,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.bowmen,
     era: 1,
   ),
-  RegimentStats(
-    id: 'squires',
+  'squires': (
     fpn: 0,
     fpm: 4,
     rng: 1,
@@ -53,8 +61,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightCavalry,
     era: 1,
   ),
-  RegimentStats(
-    id: 'knights',
+  'knights': (
     fpn: 0,
     fpm: 6,
     rng: 1,
@@ -63,8 +70,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.spearCavalry,
     era: 1,
   ),
-  RegimentStats(
-    id: 'culverin',
+  'culverin': (
     fpn: 8,
     fpm: 1,
     rng: 5,
@@ -73,8 +79,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyArtillery,
     era: 1,
   ),
-  RegimentStats(
-    id: 'calivermen',
+  'calivermen': (
     fpn: 3,
     fpm: 2,
     rng: 5,
@@ -83,8 +88,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightInfantry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'halberdiers',
+  'halberdiers': (
     fpn: 0,
     fpm: 7,
     rng: 1,
@@ -93,8 +97,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.regularInfantry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'musketeers',
+  'musketeers': (
     fpn: 7,
     fpm: 2,
     rng: 4,
@@ -103,8 +106,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyInfantry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'cossacks',
+  'cossacks': (
     fpn: 0,
     fpm: 5,
     rng: 1,
@@ -113,8 +115,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightCavalry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'lancers',
+  'lancers': (
     fpn: 0,
     fpm: 8,
     rng: 1,
@@ -123,8 +124,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.spearCavalry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'harquebusiers',
+  'harquebusiers': (
     fpn: 2,
     fpm: 6,
     rng: 3,
@@ -133,8 +133,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyCavalry,
     era: 2,
   ),
-  RegimentStats(
-    id: 'horse_artillery',
+  'horse_artillery': (
     fpn: 5,
     fpm: 2,
     rng: 7,
@@ -143,8 +142,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightArtillery,
     era: 2,
   ),
-  RegimentStats(
-    id: 'royal_artillery',
+  'royal_artillery': (
     fpn: 9,
     fpm: 2,
     rng: 8,
@@ -153,8 +151,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyArtillery,
     era: 2,
   ),
-  RegimentStats(
-    id: 'skirmishers',
+  'skirmishers': (
     fpn: 4,
     fpm: 3,
     rng: 5,
@@ -163,8 +160,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightInfantry,
     era: 3,
   ),
-  RegimentStats(
-    id: 'regulars',
+  'regulars': (
     fpn: 7,
     fpm: 7,
     rng: 5,
@@ -173,8 +169,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.regularInfantry,
     era: 3,
   ),
-  RegimentStats(
-    id: 'grenadiers',
+  'grenadiers': (
     fpn: 10,
     fpm: 8,
     rng: 5,
@@ -183,8 +178,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyInfantry,
     era: 3,
   ),
-  RegimentStats(
-    id: 'hussars',
+  'hussars': (
     fpn: 2,
     fpm: 8,
     rng: 3,
@@ -193,8 +187,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightCavalry,
     era: 3,
   ),
-  RegimentStats(
-    id: 'cuirassiers',
+  'cuirassiers': (
     fpn: 5,
     fpm: 13,
     rng: 3,
@@ -203,8 +196,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyCavalry,
     era: 3,
   ),
-  RegimentStats(
-    id: 'light_artillery',
+  'light_artillery': (
     fpn: 8,
     fpm: 3,
     rng: 9,
@@ -213,8 +205,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightArtillery,
     era: 3,
   ),
-  RegimentStats(
-    id: 'heavy_artillery',
+  'heavy_artillery': (
     fpn: 13,
     fpm: 2,
     rng: 10,
@@ -223,8 +214,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyArtillery,
     era: 3,
   ),
-  RegimentStats(
-    id: 'sharpshooters',
+  'sharpshooters': (
     fpn: 5,
     fpm: 4,
     rng: 7,
@@ -233,8 +223,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightInfantry,
     era: 4,
   ),
-  RegimentStats(
-    id: 'rifle_infantry',
+  'rifle_infantry': (
     fpn: 9,
     fpm: 9,
     rng: 6,
@@ -243,8 +232,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.regularInfantry,
     era: 4,
   ),
-  RegimentStats(
-    id: 'guards',
+  'guards': (
     fpn: 12,
     fpm: 10,
     rng: 6,
@@ -253,8 +241,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyInfantry,
     era: 4,
   ),
-  RegimentStats(
-    id: 'scouts',
+  'scouts': (
     fpn: 5,
     fpm: 11,
     rng: 5,
@@ -263,8 +250,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightCavalry,
     era: 4,
   ),
-  RegimentStats(
-    id: 'carbine_cavalry',
+  'carbine_cavalry': (
     fpn: 7,
     fpm: 17,
     rng: 5,
@@ -273,8 +259,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyCavalry,
     era: 4,
   ),
-  RegimentStats(
-    id: 'field_artillery',
+  'field_artillery': (
     fpn: 10,
     fpm: 3,
     rng: 11,
@@ -283,8 +268,7 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.lightArtillery,
     era: 4,
   ),
-  RegimentStats(
-    id: 'siege_guns',
+  'siege_guns': (
     fpn: 17,
     fpm: 2,
     rng: 12,
@@ -293,4 +277,37 @@ const List<RegimentStats> regimentCatalog = [
     category: RegimentCategory.heavyArtillery,
     era: 4,
   ),
+};
+
+/// Table order in SPEC/game/military-units.md (must match [regimentCatalog] order).
+const combatConfigMilitaryUnitsSpecTableOrderIds = <String>[
+  'peasant_levies',
+  'pikemen',
+  'arquebusiers',
+  'bowmen',
+  'squires',
+  'knights',
+  'culverin',
+  'calivermen',
+  'halberdiers',
+  'musketeers',
+  'cossacks',
+  'lancers',
+  'harquebusiers',
+  'horse_artillery',
+  'royal_artillery',
+  'skirmishers',
+  'regulars',
+  'grenadiers',
+  'hussars',
+  'cuirassiers',
+  'light_artillery',
+  'heavy_artillery',
+  'sharpshooters',
+  'rifle_infantry',
+  'guards',
+  'scouts',
+  'carbine_cavalry',
+  'field_artillery',
+  'siege_guns',
 ];

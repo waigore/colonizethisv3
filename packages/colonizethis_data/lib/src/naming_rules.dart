@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-part 'naming_default_config.dart';
+export 'naming_default_config.dart';
 
 /// A leader variant for a Great Power. GDD 09. Each variant has distinct
 /// bonuses and optionally a distinct province pool (e.g. Prussia's two variants).

@@ -1,40 +1,42 @@
-part of 'tech_catalog.dart';
+import 'tech_catalog_cost.dart';
+import 'tech_definition.dart';
+import 'tech_ids.dart';
 
-void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
+void addTechCatalogChunk1(Map<String, TechDefinition> m) {
   // --- Gathering (26) ---
   m[kTechIdCropRotation] = TechDefinition(
     id: kTechIdCropRotation,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Crop Rotation',
   );
   m[kTechIdSawMill] = TechDefinition(
     id: kTechIdSawMill,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Saw Mill',
   );
   m[kTechIdLandEnclosure] = TechDefinition(
     id: kTechIdLandEnclosure,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Land Enclosure',
   );
   m[kTechIdMineEngineering] = TechDefinition(
     id: kTechIdMineEngineering,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Mine Engineering',
   );
   m[kTechIdIronMining] = TechDefinition(
     id: kTechIdIronMining,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Iron Mining',
     prerequisiteIds: [kTechIdMineEngineering],
   );
@@ -42,7 +44,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdCopperAndTinMining,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Copper and Tin Mining',
     prerequisiteIds: [kTechIdMineEngineering],
   );
@@ -50,7 +52,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdCoalMining,
     era: 1,
     category: 'gathering',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Coal Mining',
     prerequisiteIds: [kTechIdMineEngineering],
   );
@@ -58,7 +60,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdWindSawMill,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Wind Saw Mill',
     prerequisiteIds: [kTechIdSawMill],
   );
@@ -66,7 +68,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdSeedDrill,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Seed Drill',
     prerequisiteIds: [kTechIdLandEnclosure],
   );
@@ -74,7 +76,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdSheepRanching,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Sheep Ranching',
     prerequisiteIds: [kTechIdCropRotation],
   );
@@ -82,7 +84,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdAnimalHusbandry,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Animal Husbandry',
     prerequisiteIds: [kTechIdCropRotation],
   );
@@ -90,7 +92,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdSquareSetTimbering,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Square-set Timbering',
     prerequisiteIds: [kTechIdCoalMining],
   );
@@ -98,7 +100,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdSteamInMining,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Steam in Mining',
     prerequisiteIds: [kTechIdIronMining],
   );
@@ -106,7 +108,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdLargeCoalMines,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Coal Mines',
     prerequisiteIds: [kTechIdSquareSetTimbering, kTechIdSteamInMining],
   );
@@ -114,7 +116,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdLargeCopperAndTinMines,
     era: 2,
     category: 'gathering',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Copper and Tin Mines',
     prerequisiteIds: [kTechIdCopperAndTinMining],
   );
@@ -122,7 +124,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdCircularSaw,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Circular Saw',
     prerequisiteIds: [kTechIdWindSawMill, kTechIdUniversity],
   );
@@ -130,7 +132,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdScientificSheepBreeding,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Scientific Sheep Breeding',
     prerequisiteIds: [kTechIdSheepRanching, kTechIdUniversity],
   );
@@ -138,7 +140,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdScientificCattleBreeding,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Scientific Cattle Breeding',
     prerequisiteIds: [kTechIdAnimalHusbandry, kTechIdUniversity],
   );
@@ -146,7 +148,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdMoldboardPlow,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Moldboard Plow',
     prerequisiteIds: [kTechIdSeedDrill],
   );
@@ -154,7 +156,7 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdSafetyLamp,
     era: 4,
     category: 'gathering',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Safety Lamp',
     prerequisiteIds: [kTechIdLargeCoalMines, kTechIdDynamite],
   );
@@ -162,18 +164,18 @@ void _addTechCatalogChunk1(Map<String, TechDefinition> m) {
     id: kTechIdLargePreciousStoneMines,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Large Precious Stone Mines',
     prerequisiteIds: [kTechIdPreciousStoneMining, kTechIdUniversity],
   );
 }
 
-void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
+void addTechCatalogChunk2(Map<String, TechDefinition> m) {
   m[kTechIdExtractionOfPreciousMetals] = TechDefinition(
     id: kTechIdExtractionOfPreciousMetals,
     era: 3,
     category: 'gathering',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Extraction of Precious Metals',
     prerequisiteIds: [kTechIdPreciousMetalsMining, kTechIdUniversity],
   );
@@ -181,7 +183,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdGeologicalProspecting,
     era: 4,
     category: 'gathering',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Geological Prospecting',
     prerequisiteIds: [kTechIdLargePreciousStoneMines, kTechIdDynamite],
   );
@@ -189,7 +191,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdAmalgamationProcess,
     era: 4,
     category: 'gathering',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Amalgamation Process',
     prerequisiteIds: [kTechIdDynamite, kTechIdExtractionOfPreciousMetals],
   );
@@ -197,7 +199,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdIndustrialIronMining,
     era: 4,
     category: 'gathering',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Industrial Iron Mining',
     prerequisiteIds: [kTechIdIndustrialFundingOfResearch, kTechIdSteamInMining],
   );
@@ -205,7 +207,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdEfficientExtractionOfCopperAndTin,
     era: 4,
     category: 'gathering',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Efficient Extraction of Copper & Tin',
     prerequisiteIds: [kTechIdLargeCoalMines, kTechIdLargeCopperAndTinMines],
   );
@@ -215,7 +217,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfSugar,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Sugar',
     discoveryResourceIds: ['sugarCane'],
   );
@@ -223,7 +225,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdSugarPlanting,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Sugar Planting',
     prerequisiteIds: [kTechIdDiscoveryOfSugar],
   );
@@ -231,7 +233,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdSugarRefining,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Sugar Refining',
     prerequisiteIds: [kTechIdDiscoveryOfSugar],
   );
@@ -239,7 +241,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdLargeSugarPlantations,
     era: 2,
     category: 'new-world',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Sugar Plantations',
     prerequisiteIds: [kTechIdSugarPlanting],
   );
@@ -247,7 +249,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdSugarIndustry,
     era: 3,
     category: 'new-world',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Sugar Industry',
     prerequisiteIds: [kTechIdLargeSugarPlantations],
   );
@@ -255,7 +257,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfTobacco,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Tobacco',
     discoveryResourceIds: ['tobacco'],
   );
@@ -263,7 +265,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdTobaccoPlanting,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Tobacco Planting',
     prerequisiteIds: [kTechIdDiscoveryOfTobacco],
   );
@@ -271,7 +273,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdCigarProduction,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Cigar Production',
     prerequisiteIds: [kTechIdDiscoveryOfTobacco],
   );
@@ -279,7 +281,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdLargeTobaccoPlantations,
     era: 2,
     category: 'new-world',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Tobacco Plantations',
     prerequisiteIds: [kTechIdTobaccoPlanting, kTechIdSeedDrill],
   );
@@ -287,7 +289,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdTobaccoIndustry,
     era: 3,
     category: 'new-world',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Tobacco Industry',
     prerequisiteIds: [kTechIdEarlySteamEngine, kTechIdLargeTobaccoPlantations],
   );
@@ -295,7 +297,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfCotton,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Cotton',
     discoveryResourceIds: ['cotton'],
   );
@@ -303,7 +305,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdCottonPlanting,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Cotton Planting',
     prerequisiteIds: [kTechIdDiscoveryOfCotton],
   );
@@ -311,7 +313,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdCottonWeaving,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Cotton Weaving',
     prerequisiteIds: [kTechIdDiscoveryOfCotton],
   );
@@ -319,7 +321,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdLargeCottonPlantations,
     era: 2,
     category: 'new-world',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Cotton Plantations',
     prerequisiteIds: [kTechIdCottonPlanting],
   );
@@ -327,7 +329,7 @@ void _addTechCatalogChunk2(Map<String, TechDefinition> m) {
     id: kTechIdCottonGin,
     era: 3,
     category: 'new-world',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Cotton Gin',
     prerequisiteIds: [kTechIdLargeCottonPlantations, kTechIdTrainedJourneymen],
   );
