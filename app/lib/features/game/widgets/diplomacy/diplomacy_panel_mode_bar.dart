@@ -1,7 +1,29 @@
+// Bottom filter mode bar for DiplomacyPanel. SPEC/ui/diplomacy-panel.md.
+
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../config/routes.dart';
+import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
+import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_radius.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/relation_meter.dart';
+import 'diplomacy_order_helpers.dart';
+import 'diplomacy_panel_rows_models.dart';
+import 'fnv1a_hash_constants.dart';
+import 'relative_power_line.dart';
 // Bottom filter mode bar for DiplomacyPanel. SPEC/ui/diplomacy-panel.md
 // § Mode bar (filter).
 
-part of 'diplomacy_panel.dart';
 
 /// Bottom mode-bar filter for the Diplomacy panel.
 ///
@@ -9,8 +31,8 @@ part of 'diplomacy_panel.dart';
 /// the panel with a `--border` top divider; buttons use mono font with
 /// inactive label `--muted`, active label `--accent`, and `--accent-dim`
 /// border on the active item.
-class _DiplomacyModeBar extends StatelessWidget {
-  const _DiplomacyModeBar({required this.mode, required this.onModeChanged});
+class DiplomacyModeBar extends StatelessWidget {
+  const DiplomacyModeBar({required this.mode, required this.onModeChanged});
 
   final DiplomacyFilterMode mode;
   final ValueChanged<DiplomacyFilterMode> onModeChanged;

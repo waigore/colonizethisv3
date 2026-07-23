@@ -1,7 +1,19 @@
-part of 'diplomacy_dialogs.dart';
+// Grant/subsidy dialog amount body.
 
-class _GrantSubsidyAmountBody extends StatefulWidget {
-  const _GrantSubsidyAmountBody({
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show grantAidAmountStep, grantAidDefaultAmount;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
+import 'diplomacy_dialogs_grant_subsidy_chrome_stepper.dart';
+class GrantSubsidyAmountBody extends StatefulWidget {
+  const GrantSubsidyAmountBody({
     required this.title,
     required this.treasury,
     required this.isSubsidy,
@@ -16,11 +28,11 @@ class _GrantSubsidyAmountBody extends StatefulWidget {
   final void Function(int amount) onSubmit;
 
   @override
-  State<_GrantSubsidyAmountBody> createState() =>
-      _GrantSubsidyAmountBodyState();
+  State<GrantSubsidyAmountBody> createState() =>
+      GrantSubsidyAmountBodyState();
 }
 
-class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
+class GrantSubsidyAmountBodyState extends State<GrantSubsidyAmountBody> {
   late int _amount;
 
   int get _step =>
@@ -92,9 +104,9 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _DialogTitle(title: widget.title),
+        GrantSubsidyDialogTitle(title: widget.title),
         const SizedBox(height: 10),
-        _TreasuryRow(
+        GrantSubsidyTreasuryRow(
           // Subsidy is a treasury-independent percentage (Refs #3753 R3); show a
           // percent step line instead of the £ treasury/step copy used by grants.
           label: widget.isSubsidy
@@ -102,9 +114,9 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
               : l10n.diplomacy_treasuryStep(widget.treasury, _step),
         ),
         const SizedBox(height: 10),
-        const _ThinDivider(),
+        const GrantSubsidyThinDivider(),
         CtGap.ml,
-        _AmountStepper(
+        GrantSubsidyAmountStepper(
           amount: _amount,
           amountText: widget.isSubsidy
               ? '$_amount%'
@@ -115,7 +127,7 @@ class _GrantSubsidyAmountBodyState extends State<_GrantSubsidyAmountBody> {
         ),
         if (!canAdjust) ...[
           CtGap.m,
-          _BelowMinimumWarning(
+          GrantSubsidyBelowMinimumWarning(
             text: l10n.diplomacy_treasuryBelowMinimum(_step),
           ),
         ],

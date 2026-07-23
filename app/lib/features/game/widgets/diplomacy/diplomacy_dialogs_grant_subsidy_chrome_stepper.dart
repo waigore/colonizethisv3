@@ -1,8 +1,18 @@
-part of 'diplomacy_dialogs.dart';
+// Grant/subsidy dialog chrome widgets.
+
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
 
 /// Centered minus/amount/plus row matching `.stepper` in the DIPL20001 mockup.
-class _AmountStepper extends StatelessWidget {
-  const _AmountStepper({
+class GrantSubsidyAmountStepper extends StatelessWidget {
+  const GrantSubsidyAmountStepper({
     required this.amount,
     required this.amountText,
     required this.canAdjust,
@@ -21,7 +31,7 @@ class _AmountStepper extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _StepperButton(
+        GrantSubsidyStepperButton(
           buttonKey: const Key('diplo_amount_minus'),
           label: '\u2212',
           enabled: canAdjust,
@@ -31,9 +41,9 @@ class _AmountStepper extends StatelessWidget {
           onTap: onDecrement,
         ),
         const SizedBox(width: 14),
-        _AmountLabel(text: amountText),
+        GrantSubsidyAmountLabel(text: amountText),
         const SizedBox(width: 14),
-        _StepperButton(
+        GrantSubsidyStepperButton(
           buttonKey: const Key('diplo_amount_plus'),
           label: '+',
           enabled: canAdjust,
@@ -51,8 +61,8 @@ class _AmountStepper extends StatelessWidget {
 /// `−` / `+` glyphs (not Material icons), so a `GestureDetector` over a
 /// `DecoratedBox` reproduces the chrome with the disable opacity convention
 /// used by the rest of the dark catalog.
-class _StepperButton extends StatelessWidget {
-  const _StepperButton({
+class GrantSubsidyStepperButton extends StatelessWidget {
+  const GrantSubsidyStepperButton({
     required this.buttonKey,
     required this.label,
     required this.enabled,

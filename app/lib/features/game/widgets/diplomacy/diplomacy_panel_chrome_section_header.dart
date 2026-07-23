@@ -1,15 +1,37 @@
 // Section heading + faction type badge chrome for DiplomacyPanel.
+
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../config/routes.dart';
+import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
+import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_radius.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/relation_meter.dart';
+import 'diplomacy_order_helpers.dart';
+import 'diplomacy_panel_rows_models.dart';
+import 'fnv1a_hash_constants.dart';
+import 'relative_power_line.dart';
+// Section heading + faction type badge chrome for DiplomacyPanel.
 // SPEC/ui/diplomacy-panel.md § Section headings and § Per-faction row → Type
 // badge colors.
 
-part of 'diplomacy_panel.dart';
 
 /// Translucent overlay used as the WAR-state badge background, derived
 /// from the `--danger` hue at lightness 0.40, chroma 0.06, hue 20, alpha
 /// 0.40. SPEC/ui/diplomacy-panel.md § Relation state badge cites the
 /// mockup token `oklch(40% 0.06 20 / 0.4)` directly; this constant
 /// computes the same OKLCH sRGB approximation through [oklchToColor].
-final Color _kWarBadgeBackground = oklchToColor(
+final Color diplomacyWarBadgeBackground = oklchToColor(
   const OklchToken(0.40, 0.06, 20),
 ).withValues(alpha: 0.4);
 
@@ -17,7 +39,7 @@ final Color _kWarBadgeBackground = oklchToColor(
 /// from the `--success` hue at lightness 0.40, chroma 0.06, hue 150,
 /// alpha 0.20. SPEC/ui/diplomacy-panel.md § Relation state badge cites
 /// the mockup token `oklch(40% 0.06 150 / 0.2)`.
-final Color _kPeaceBadgeBackground = oklchToColor(
+final Color diplomacyPeaceBadgeBackground = oklchToColor(
   const OklchToken(0.40, 0.06, 150),
 ).withValues(alpha: 0.2);
 
@@ -28,8 +50,8 @@ final Color _kPeaceBadgeBackground = oklchToColor(
 /// text color, 2 px `--accent-dim` bottom border per
 /// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
 /// `.section-head`.
-class _DiplomacySectionHeader extends StatelessWidget {
-  const _DiplomacySectionHeader({required this.title, this.isFirst = false});
+class DiplomacySectionHeader extends StatelessWidget {
+  const DiplomacySectionHeader({required this.title, this.isFirst = false});
 
   final String title;
 
@@ -85,8 +107,8 @@ class _DiplomacySectionHeader extends StatelessWidget {
 /// `.f-badge` chrome (mono font, tight letter-spacing, square `1px`
 /// border-radius). All colors resolve from the canonical editorial-monocle
 /// palette — no hardcoded Material chrome.
-class _FactionKindBadge extends StatelessWidget {
-  const _FactionKindBadge({required this.kind});
+class DiplomacyFactionKindBadge extends StatelessWidget {
+  const DiplomacyFactionKindBadge({required this.kind});
 
   final FactionKind kind;
 
