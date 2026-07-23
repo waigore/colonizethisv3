@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 189 app/lib files still using part directives.
+// Generated grandfather allowlist: 185 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -44,10 +44,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_cards.dart',
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_relation.dart',
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
-  'app/lib/features/game/screens/game/game_screen.dart',
-  'app/lib/features/game/screens/game/game_screen_fallback_next_turn.dart',
-  'app/lib/features/game/screens/game/game_screen_fallback_next_turn_runner.dart',
-  'app/lib/features/game/screens/game/game_screen_overlay_stack.dart',
   'app/lib/features/game/screens/production/production_screen.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
   'app/lib/features/game/screens/technology/technology_screen.dart',

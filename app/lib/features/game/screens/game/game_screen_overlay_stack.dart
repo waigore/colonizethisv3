@@ -1,9 +1,33 @@
-part of 'game_screen.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show InitGameMapViewData;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flame/game.dart' hide Game;
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_icon_action.dart';
+import '../../../../widgets/game_to_ui_bus_listener.dart';
+import '../../flame/host/host.dart';
+import '../../flame/map_state/map_state.dart';
+import '../../flame/overlays/victory_overlay.dart';
+import '../../widgets/dialogue/call_to_arms_dialogue_overlay.dart';
+import '../../widgets/dialogue/game_start_intro_overlay.dart';
+import '../../widgets/dialogue/intervention_dialogue_overlay.dart';
+import '../../widgets/dialogue/overture_dialogue_overlay.dart';
+import '../../widgets/dialogue/tribe_first_contact_overlay.dart';
+import '../../widgets/dialogue/tribe_first_contact_sync.dart';
+import 'diplomacy_resume_helper.dart';
+import 'game_screen_fallback_next_turn.dart';
+import 'game_screen_pause_menu.dart';
 
 /// Composes the Flame canvas / map shell, pause + fallback next-turn chrome,
 /// victory overlay, and dialogue overlays (intro, tribe herald, diplomacy).
-class _GameScreenOverlayStack extends ConsumerWidget {
-  const _GameScreenOverlayStack({
+class GameScreenOverlayStack extends ConsumerWidget {
+  const GameScreenOverlayStack({
     required this.game,
     required this.mapViewData,
     required this.victory,
@@ -12,6 +36,7 @@ class _GameScreenOverlayStack extends ConsumerWidget {
     required this.pendingHerald,
     required this.pendingDiplomacy,
     required this.turnResolutionBlocking,
+    super.key,
   });
 
   final Game? game;
@@ -40,7 +65,7 @@ class _GameScreenOverlayStack extends ConsumerWidget {
               iconSize: 24,
               onPressed: turnResolutionBlocking
                   ? null
-                  : () => _showPauseMenu(ref.read(appEventBusProvider)),
+                  : () => showGameScreenPauseMenu(ref.read(appEventBusProvider)),
               enabled: !turnResolutionBlocking,
               tooltip: appL10n(context).game_pauseMenu_tooltip,
             ),
@@ -48,7 +73,7 @@ class _GameScreenOverlayStack extends ConsumerWidget {
           Positioned(
             right: 16,
             top: 16,
-            child: _FallbackNextTurnButton(
+            child: GameScreenFallbackNextTurnButton(
               game: game!,
               turnResolutionBlocking: turnResolutionBlocking,
             ),
