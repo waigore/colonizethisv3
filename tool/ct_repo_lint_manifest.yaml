@@ -770,6 +770,20 @@ rules:
     runner: dart
     script: tool/check_world_no_part_directives.dart
 
+  - rule_id: repo.colonizethis_world_lib_file_size
+    group: structure
+    title: colonizethis_world lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4125)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_lib_file_size.dart
+
+  - rule_id: repo.colonizethis_world_test_file_size
+    group: testing
+    title: colonizethis_world non-support test files must stay at or below the wave-5 400 physical-line ceiling (Refs #4125)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_world_test_file_size.dart
+
   - rule_id: repo.economy_no_part_directives
     group: structure
     title: colonizethis_economy lib must not use Dart part / part of directives (Refs #3979)
