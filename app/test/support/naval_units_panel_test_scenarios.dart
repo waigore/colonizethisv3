@@ -106,19 +106,15 @@ Game buildNavalPanelOwFleetsGame({
           ),
           treasury: treasury,
         );
-  return Game(
+  return buildPanelTestGame(
     id: gameId,
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: oldWorldProvinces),
-      newWorld: const RegionData(),
-      fleets: fleets,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-      seaZoneDisplayNameById: seaZoneDisplayNameById,
-      tileKeysByRegionAndProvince: {'oldWorld': tileKeysByProvince},
-      nextShipInstanceSeq: nextShipInstanceSeq ?? 1,
-    ),
     players: [player],
+    oldWorldProvinces: oldWorldProvinces,
+    fleets: fleets,
+    portsByProvinceSeaboard: portsByProvinceSeaboard,
+    seaZoneDisplayNameById: seaZoneDisplayNameById,
+    tileKeysByRegionAndProvince: {'oldWorld': tileKeysByProvince},
+    nextShipInstanceSeq: nextShipInstanceSeq ?? 1,
   );
 }
 

@@ -3,9 +3,34 @@
 // Split into focused modules under `panel_fixtures/`; import via
 // `panel_test_fixtures.dart` barrel (Refs #3847).
 
+import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'core.dart';
+
+/// Full-stockpile human player for production panel widget tests.
+Player productionPanelTestFullPlayer() => Player(
+      id: 'test_gp_full',
+      displayName: 'Full test',
+      isHuman: true,
+      stockpile: productionPanelTestFullStockpile,
+      workerPool: productionPanelTestFullWorkerPool,
+    );
+
+/// Partial-stockpile human player for production panel widget tests.
+Player productionPanelTestPartialPlayer() => Player(
+      id: 'test_gp_partial',
+      displayName: 'Partial test',
+      isHuman: true,
+      stockpile: productionPanelTestPartialStockpile,
+      workerPool: productionPanelTestPartialWorkerPool,
+    );
+
+/// Minimal [Game] shell wrapping a single production-panel [player].
+Game productionPanelTestGameFor(Player player) => buildPanelTestGame(
+      id: 'production-widget-test',
+      players: [player],
+    );
 
 /// Lightweight game shaped for the structural `ProductionCommodityBreakdownDialog`
 /// (PROD20001) suites that only pin **dialog chrome / table layout**

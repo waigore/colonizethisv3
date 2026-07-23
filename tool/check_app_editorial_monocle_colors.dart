@@ -235,12 +235,10 @@ const Set<String> _appEditorialMonocleColorsAllowedFiles = <String>{
   // palette reference. The editorial-monocle palette has no semantic token
   // for these compositing-only colors, analogous to the Flame renderer
   // allowlist. Collage painters moved to colonizethis_app_ui_chrome (#3942).
-  'app/lib/widgets/main_menu.dart',
-  // `part of 'main_menu.dart'` — button widgets split out under the
-  // file-size cap (SPEC/program/dart-file-non-comment-line-size.md). Carries
-  // the same hover `ColorFilter.mode(Colors.black..., BlendMode.darken)`
-  // compositing operand as `main_menu.dart`; allowlisted for the identical
-  // blend-operand rationale (category #5 above).
+  'app/lib/widgets/main_menu_widget.dart',
+  // De-parted button library — carries the same hover `ColorFilter.mode`
+  // compositing operand as `main_menu_widget.dart`; allowlisted for the
+  // identical blend-operand rationale (category #5 above).
   'app/lib/widgets/main_menu_buttons.dart',
 };
 
