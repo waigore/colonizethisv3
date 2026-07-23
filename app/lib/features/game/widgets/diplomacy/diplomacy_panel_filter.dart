@@ -1,9 +1,9 @@
 // Diplomacy panel row filter assembly. SPEC/ui/diplomacy-panel.md.
 
-part of 'diplomacy_panel.dart';
+import 'diplomacy_panel_rows.dart';
 
-class _DiplomacyPanelFilteredRows {
-  const _DiplomacyPanelFilteredRows({
+class DiplomacyPanelFilteredRows {
+  const DiplomacyPanelFilteredRows({
     required this.gps,
     required this.minors,
     required this.tribes,
@@ -22,7 +22,7 @@ class _DiplomacyPanelFilteredRows {
   final FactionKind? firstShownKind;
 }
 
-_DiplomacyPanelFilteredRows _filterDiplomacyPanelRows({
+DiplomacyPanelFilteredRows filterDiplomacyPanelRows({
   required List<DiplomacyRowData> rows,
   required DiplomacyFilterMode filterMode,
 }) {
@@ -54,7 +54,7 @@ _DiplomacyPanelFilteredRows _filterDiplomacyPanelRows({
       ? FactionKind.tribe
       : null;
 
-  return _DiplomacyPanelFilteredRows(
+  return DiplomacyPanelFilteredRows(
     gps: gps,
     minors: minors,
     tribes: tribes,

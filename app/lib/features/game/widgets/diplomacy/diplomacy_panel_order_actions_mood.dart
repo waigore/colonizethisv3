@@ -1,9 +1,14 @@
 /// Negotiation-mood emission helpers for [DiplomacyPanel] order actions.
 /// SPEC/ui/diplomacy-panel.md.
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_ai/colonizethis_ai.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-mixin _DiplomacyOrderActionsMood on State<DiplomacyPanel> {
+import 'diplomacy_panel_widget.dart';
+import 'fnv1a_hash_constants.dart';
+
+mixin DiplomacyOrderActionsMood on State<DiplomacyPanel> {
   Map<String, String> get moodByLeaderId;
   int pendingCountForTarget(String targetFactionId) {
     final list =

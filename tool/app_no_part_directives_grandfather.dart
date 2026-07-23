@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 297 app/lib files still using part directives.
+// Generated grandfather allowlist: 285 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -103,19 +103,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_body.dart',
   'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_labels.dart',
   'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_stepper.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_body.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_relation_badges.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_section_header.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_standing.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_constants.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_filter.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_order_actions.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_order_actions_mood.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_row.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_row_actions.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_panel_row_info.dart',
   'app/lib/features/game/widgets/diplomacy/diplomacy_panel_rows.dart',
   'app/lib/features/game/widgets/diplomacy/diplomacy_panel_rows_builder.dart',
   'app/lib/features/game/widgets/diplomacy/diplomacy_panel_rows_builder_helpers.dart',
