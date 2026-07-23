@@ -22,8 +22,6 @@ const List<String> diplomacyLibFileSizeGrandfathered = <String>[
   'packages/colonizethis_diplomacy/lib/src/diplomacy/intervention_resolver_call_to_arms.dart',
   'packages/colonizethis_diplomacy/lib/src/diplomacy/overture_resolver.dart',
   'packages/colonizethis_diplomacy/lib/src/diplomacy/war_resolver.dart',
-  'packages/colonizethis_diplomacy/lib/src/dossier/evidence_rules.dart',
-  'packages/colonizethis_diplomacy/lib/src/dossier/event_dialogue.dart',
 ];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
