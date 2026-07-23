@@ -1,20 +1,21 @@
-// Main-menu footer widgets, split out from `main_menu.dart` to keep the host
-// file under the repo-lint non-comment line limit per
-// `SPEC/program/dart-file-non-comment-line-size.md`.
+// Main-menu footer widgets (Refs #4117 de-part).
 //
-// All classes here are library-private (`_MainMenuFooter`,
-// `_PixelArtFooterVersion`, `_FooterQuitButton`) and consumed only by the
-// main-menu body inside the parent library.
+// SPEC/program/dart-file-non-comment-line-size.md.
 
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+
+import 'ct_nine_patch_button.dart';
+import 'main_menu_footer_quit_button.dart';
+import 'main_menu_variant.dart';
 
 /// Footer region for both variants. Renders the version text above a Quit
 /// control; in the `pixelArt` variant the Quit control is the smaller,
 /// `--muted`, border-only chip per `SPEC/ui/main-menu.md` § Variant
 /// rendering (AC 9), while the `plain` variant continues to use a regular
 /// [CtNinePatchButton] for backward compatibility.
-class _MainMenuFooter extends StatelessWidget {
-  const _MainMenuFooter({
+class MainMenuFooter extends StatelessWidget {
+  const MainMenuFooter({
     required this.variant,
     required this.version,
     required this.quitLabel,
@@ -32,9 +33,9 @@ class _MainMenuFooter extends StatelessWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _PixelArtFooterVersion(version: version),
+          MainMenuPixelArtFooterVersion(version: version),
           const SizedBox(height: 12),
-          _FooterQuitButton(label: quitLabel, onPressed: onQuit),
+          MainMenuFooterQuitButton(label: quitLabel, onPressed: onQuit),
         ],
       );
     }
@@ -60,8 +61,8 @@ class _MainMenuFooter extends StatelessWidget {
 /// var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }` and
 /// realises the `SPEC/ui/main-menu.md` § Variant rendering row "Footer
 /// version text — Monospace (`--font-mono`), `--muted` token from #2858".
-class _PixelArtFooterVersion extends StatelessWidget {
-  const _PixelArtFooterVersion({required this.version});
+class MainMenuPixelArtFooterVersion extends StatelessWidget {
+  const MainMenuPixelArtFooterVersion({required this.version});
 
   final String version;
 
@@ -76,7 +77,7 @@ class _PixelArtFooterVersion extends StatelessWidget {
         fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
         // Mirrors mockup `.version { letter-spacing: 0.08em }` at the 12 px
         // text size (~0.96 px). Kept distinct from the wood-panel button
-        // label letter-spacing constants so screen tests can assert button
+        // letter-spacing constants so screen tests can assert button
         // letter-spacing without picking up the version line.
         letterSpacing: 0.96,
       ),

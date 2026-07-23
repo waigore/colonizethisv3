@@ -1,6 +1,12 @@
-// Main-menu pixel-art logo region. Refs #3878.
+// Main-menu pixel-art logo region. Refs #3878; Refs #4117 de-part.
 
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
+
+import '../config/themes.dart';
 
 /// Dark editorial-monocle logo region for the `pixelArt` main-menu variant.
 ///
@@ -8,8 +14,8 @@ part of 'main_menu.dart';
 /// [CtCompassRose] emblem, and a title row composed of
 /// `[CtFleurDeLisOrnament] — title text — [CtFleurDeLisOrnament]`. Mirrors
 /// `SPEC/ui/main-menu.md` § Logo region.
-class _PixelArtLogoRegion extends StatelessWidget {
-  const _PixelArtLogoRegion({required this.title});
+class MainMenuPixelArtLogoRegion extends StatelessWidget {
+  const MainMenuPixelArtLogoRegion({required this.title});
 
   final String title;
 

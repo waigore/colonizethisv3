@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 316 app/lib files still using part directives.
+// Generated grandfather allowlist: 307 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -283,13 +283,4 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/widgets/ct_transfer_list_layout.dart',
   'app/lib/widgets/ct_transfer_list_mutations.dart',
   'app/lib/widgets/ct_transfer_list_side_panel.dart',
-  'app/lib/widgets/main_menu.dart',
-  'app/lib/widgets/main_menu_body.dart',
-  'app/lib/widgets/main_menu_body_content.dart',
-  'app/lib/widgets/main_menu_body_logo.dart',
-  'app/lib/widgets/main_menu_buttons.dart',
-  'app/lib/widgets/main_menu_constants.dart',
-  'app/lib/widgets/main_menu_footer.dart',
-  'app/lib/widgets/main_menu_footer_quit_button.dart',
-  'app/lib/widgets/main_menu_scroll_bracket.dart',
 ];

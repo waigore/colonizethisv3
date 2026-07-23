@@ -1,16 +1,17 @@
-// Main-menu button widgets, split out from `main_menu.dart` to keep the host
-// file under the repo-lint non-comment line limit per
-// `SPEC/program/dart-file-non-comment-line-size.md`.
+// Main-menu button widgets (Refs #4117 de-part).
 //
-// All classes here are library-private (`_MenuButton`, `_PixelArtButton`,
-// `_LoadGameButton`) and consumed only by the main-menu body inside the parent
-// library, so they keep sharing `CtMainMenu`'s constants/enums without further
-// plumbing.
+// SPEC/program/dart-file-non-comment-line-size.md.
 
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-class _MenuButton extends StatelessWidget {
-  const _MenuButton({
+import 'ct_gradients.dart';
+import 'ct_nine_patch_button.dart';
+import 'main_menu_constants.dart';
+import 'main_menu_variant.dart';
+
+class MainMenuButton extends StatelessWidget {
+  const MainMenuButton({
     required this.label,
     required this.variant,
     required this.narrow,
@@ -25,7 +26,7 @@ class _MenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (variant == MainMenuVariant.pixelArt) {
-      return _PixelArtButton(
+      return MainMenuPixelArtButton(
         label: label,
         narrow: narrow,
         onPressed: onPressed,
@@ -38,8 +39,8 @@ class _MenuButton extends StatelessWidget {
   }
 }
 
-class _PixelArtButton extends StatefulWidget {
-  const _PixelArtButton({
+class MainMenuPixelArtButton extends StatefulWidget {
+  const MainMenuPixelArtButton({
     required this.label,
     required this.onPressed,
     required this.narrow,
@@ -52,10 +53,10 @@ class _PixelArtButton extends StatefulWidget {
   final bool enabled;
 
   @override
-  State<_PixelArtButton> createState() => _PixelArtButtonState();
+  State<MainMenuPixelArtButton> createState() => _MainMenuPixelArtButtonState();
 }
 
-class _PixelArtButtonState extends State<_PixelArtButton>
+class _MainMenuPixelArtButtonState extends State<MainMenuPixelArtButton>
     with SingleTickerProviderStateMixin {
   bool _hovered = false;
   static const double _bobAmount = 2.5;
@@ -140,8 +141,8 @@ class _PixelArtButtonState extends State<_PixelArtButton>
   }
 }
 
-class _LoadGameButton extends StatelessWidget {
-  const _LoadGameButton({
+class MainMenuLoadGameButton extends StatelessWidget {
+  const MainMenuLoadGameButton({
     required this.enabled,
     required this.variant,
     required this.narrow,
@@ -159,7 +160,7 @@ class _LoadGameButton extends StatelessWidget {
     if (variant == MainMenuVariant.pixelArt) {
       return Tooltip(
         message: enabled ? '' : l10n.mainMenu_noSavesTooltip,
-        child: _PixelArtButton(
+        child: MainMenuPixelArtButton(
           label: l10n.mainMenu_loadGame,
           enabled: enabled,
           narrow: narrow,
