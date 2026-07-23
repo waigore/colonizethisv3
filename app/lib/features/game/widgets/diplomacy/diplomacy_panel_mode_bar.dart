@@ -1,7 +1,14 @@
 // Bottom filter mode bar for DiplomacyPanel. SPEC/ui/diplomacy-panel.md
 // § Mode bar (filter).
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_radius.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'diplomacy_panel_rows.dart';
 
 /// Bottom mode-bar filter for the Diplomacy panel.
 ///
@@ -9,8 +16,8 @@ part of 'diplomacy_panel.dart';
 /// the panel with a `--border` top divider; buttons use mono font with
 /// inactive label `--muted`, active label `--accent`, and `--accent-dim`
 /// border on the active item.
-class _DiplomacyModeBar extends StatelessWidget {
-  const _DiplomacyModeBar({required this.mode, required this.onModeChanged});
+class DiplomacyModeBar extends StatelessWidget {
+  const DiplomacyModeBar({required this.mode, required this.onModeChanged});
 
   final DiplomacyFilterMode mode;
   final ValueChanged<DiplomacyFilterMode> onModeChanged;
@@ -43,18 +50,18 @@ class _DiplomacyModeBar extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _DiplomacyModeButton(
+            DiplomacyModeButton(
               label: l10n.diplomacy_filter_all,
               isActive: mode == DiplomacyFilterMode.all,
               onPressed: () => onModeChanged(DiplomacyFilterMode.all),
             ),
-            _DiplomacyModeButton(
+            DiplomacyModeButton(
               label: l10n.diplomacy_filter_greatPowersOnly,
               isActive: mode == DiplomacyFilterMode.greatPowersOnly,
               onPressed: () =>
                   onModeChanged(DiplomacyFilterMode.greatPowersOnly),
             ),
-            _DiplomacyModeButton(
+            DiplomacyModeButton(
               label: l10n.diplomacy_filter_minorsOnly,
               isActive: mode == DiplomacyFilterMode.minorsOnly,
               onPressed: () => onModeChanged(DiplomacyFilterMode.minorsOnly),
@@ -66,8 +73,8 @@ class _DiplomacyModeBar extends StatelessWidget {
   }
 }
 
-class _DiplomacyModeButton extends StatelessWidget {
-  const _DiplomacyModeButton({
+class DiplomacyModeButton extends StatelessWidget {
+  const DiplomacyModeButton({
     required this.label,
     required this.isActive,
     required this.onPressed,

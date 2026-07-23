@@ -1,6 +1,9 @@
 /// Standing-chip derivation for diplomacy panel rows.
 
-part of 'diplomacy_panel_rows.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'diplomacy_panel_rows.dart';
 
 /// Display names of Great Powers the human GP boycotts through a colony Tribe
 /// it holds (Refs #3753 R12). Extracted so the standing-chip builder stays
