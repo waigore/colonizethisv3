@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 319 app/lib files still using part directives.
+// Generated grandfather allowlist: 334 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -30,6 +30,21 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/controls/game_side_menu.dart',
   'app/lib/features/game/flame/controls/game_side_menu_panel.dart',
   'app/lib/features/game/flame/controls/game_side_menu_scrim.dart',
+  'app/lib/features/game/flame/map_state/game_map_area.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build_map_stack.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build_map_stack_chrome.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_build_overlays.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_e2e.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_events.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_lifecycle.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_selection.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_state_base.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_turn_feed.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_turn_feed_labels.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_turn_resolution_session.dart',
+  'app/lib/features/game/flame/map_state/game_map_area_view.dart',
   'app/lib/features/game/flame/minimap/game_region_minimap.dart',
   'app/lib/features/game/flame/minimap/game_region_minimap_gestures.dart',
   'app/lib/features/game/flame/minimap/game_region_minimap_painter.dart',

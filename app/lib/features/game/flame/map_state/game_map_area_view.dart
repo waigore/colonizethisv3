@@ -1,70 +1,12 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
-
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/debug_console_provider.dart';
-import '../../../../core/services/game_service/game_service.dart'
-    show GameMapData, GameService;
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/observe_session_provider.dart';
-import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../providers/region_minimap_provider.dart';
-import '../../../../providers/treasury_summary_provider.dart';
-import '../../widgets/shell/shell_player_context.dart';
-import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
-import '../../../../providers/blessed_ai_profiles_provider.dart';
-import '../../../../providers/turn_resolution_blocking_provider.dart';
-import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../../../../core/services/ai/ai_profile_resolution.dart';
-import '../../../../core/services/subscription_tracker.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
-import '../region_map/region_map_viewport_snapshot.dart';
-import '../../../../providers/home_fleet_cargo_provider.dart';
-import '../../../../providers/human_draft_projected_region_provider.dart';
-
-import '../../../../config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../screens/game/game_screen_shared.dart';
-import '../map_area/map_area.dart'
-    show GameMapAreaBackground, GameMapCanvasStack;
-import '../controls/controls.dart';
-import '../minimap/minimap.dart';
-import '../overlays/game_map_narrow_detail_overlay.dart';
-import '../overlays/debug_console_overlay_panel.dart';
-import 'game_map_area_state_logic.dart';
-import '../overlays/next_turn_confirmation_dialog.dart';
-import '../overlays/turn_resolution_processing_dialog.dart';
-import '../overlays/turn_resolution_progress_labels.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
-import 'map_location_resolver.dart';
-import '../../widgets/dialogs/game_map_options_dialog.dart';
-import '../../widgets/shell/game_map_players_bar.dart';
-import '../../widgets/shell/player_turn_event_feed.dart';
-
-import 'game_map_area.dart';
-import 'game_map_area_state_base.dart';
+part of 'game_map_area.dart';
 
 /// Camera/view-state controls for [GameMapArea]: base-layer display cycling,
 /// map view state persistence, capital centering, tile locating, and region
 /// viewport snapshot handling (Refs #3699 Theme 3).
-mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
-  void cycleBaseLayerDisplayMode() {
+mixin _GameMapAreaView on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
+  void _cycleBaseLayerDisplayMode() {
     setState(() {
-      baseLayerDisplayMode = switch (baseLayerDisplayMode) {
+      _baseLayerDisplayMode = switch (_baseLayerDisplayMode) {
         BaseLayerDisplayMode.terrainOnly =>
           BaseLayerDisplayMode.terrainAndResources,
         BaseLayerDisplayMode.terrainAndResources =>
@@ -77,12 +19,12 @@ mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     });
   }
 
-  void setMapViewState(ct_models.MapViewState next) {
-    if (mapViewState == next) {
+  void _setMapViewState(ct_models.MapViewState next) {
+    if (_mapViewState == next) {
       return;
     }
     setState(() {
-      mapViewState = next;
+      _mapViewState = next;
     });
     final current = ref.read(currentGameProvider);
     if (current != null && current.id == widget.game.id) {
@@ -92,43 +34,43 @@ mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     }
   }
 
-  void togglePlayerTurnEventsFeedVisibility() {
-    setMapViewState(
-      mapViewState.copyWith(
-        showPlayerTurnEventsFeed: !mapViewState.showPlayerTurnEventsFeed,
+  void _togglePlayerTurnEventsFeedVisibility() {
+    _setMapViewState(
+      _mapViewState.copyWith(
+        showPlayerTurnEventsFeed: !_mapViewState.showPlayerTurnEventsFeed,
       ),
     );
   }
 
-  void togglePlayersBarVisibility() {
-    setMapViewState(
-      mapViewState.copyWith(showPlayersBar: !mapViewState.showPlayersBar),
+  void _togglePlayersBarVisibility() {
+    _setMapViewState(
+      _mapViewState.copyWith(showPlayersBar: !_mapViewState.showPlayersBar),
     );
   }
 
   /// Runs the one-shot shell-entry auto-center on the current player's capital.
   /// Skipped in global observe (no `viewingPlayerId`) or when the current
   /// player has no capital. SPEC/ui/empire-overview.md § Initial map viewport.
-  void maybeAutoCenterOnShellEntry() {
-    if (didAutoCenterOnEntry) {
+  void _maybeAutoCenterOnShellEntry() {
+    if (_didAutoCenterOnEntry) {
       return;
     }
-    didAutoCenterOnEntry = true;
+    _didAutoCenterOnEntry = true;
     final shell = ref.read(shellPlayerContextProvider);
-    applyCapitalCenter(shell.viewingPlayerId);
+    _applyCapitalCenter(shell.viewingPlayerId);
   }
 
   /// Manual home-to-capital action: centers on the current player's capital.
   /// SPEC/ui/empire-overview.md § Home-to-capital button.
-  void centerOnCurrentPlayerCapital() {
+  void _centerOnCurrentPlayerCapital() {
     final shell = ref.read(shellPlayerContextProvider);
-    applyCapitalCenter(shell.mapPlayerIdFor(widget.game));
+    _applyCapitalCenter(shell.mapPlayerIdFor(widget.game));
   }
 
   /// Switches the region tab, centers the camera, and sets the secondary
   /// highlight on [currentPlayerId]'s capital tile. No-op when the resolved
   /// target is null (global observe or no capital).
-  void applyCapitalCenter(String? currentPlayerId) {
+  void _applyCapitalCenter(String? currentPlayerId) {
     final target = GameMapAreaStateLogic.resolveShellEntryAutoCenter(
       game: widget.game,
       currentPlayerId: currentPlayerId,
@@ -140,64 +82,64 @@ mixin GameMapAreaView on ConsumerState<GameMapArea>, GameMapAreaStateBase {
         .read(mapProvincePanelProvider.notifier)
         .setSecondaryHighlight(target.tileKey);
     setState(() {
-      centerOnTileKey = target.tileKey;
-      regionIndex = target.regionIndex;
+      _centerOnTileKey = target.tileKey;
+      _regionIndex = target.regionIndex;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
-        centerOnTileKey = null;
+        _centerOnTileKey = null;
       });
     });
   }
 
-  void locateTile(String tileKey, String regionId) {
+  void _locateTile(String tileKey, String regionId) {
     ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(tileKey);
     setState(() {
-      centerOnTileKey = tileKey;
+      _centerOnTileKey = tileKey;
       if (regionId == kRegionNewWorld) {
-        regionIndex = 1;
+        _regionIndex = 1;
       } else if (regionId == kRegionOldWorld) {
-        regionIndex = 0;
+        _regionIndex = 0;
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => centerOnTileKey = null);
+      if (mounted) setState(() => _centerOnTileKey = null);
     });
   }
 
-  void openMapTileDetail(String tileKey) {
+  void _openMapTileDetail(String tileKey) {
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) return;
     ref.read(mapProvincePanelProvider.notifier).reportMapTileTapped(tileKey);
     setState(() {
       if (regionId == kRegionNewWorld) {
-        regionIndex = 1;
+        _regionIndex = 1;
       } else if (regionId == kRegionOldWorld) {
-        regionIndex = 0;
+        _regionIndex = 0;
       }
     });
   }
 
-  void onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
+  void _onRegionViewportSnapshot(RegionMapViewportSnapshot snapshot) {
     final clampedMultiplier = snapshot.zoomMultiplier.clamp(0.5, 8.0);
-    if ((clampedMultiplier - mapViewState.zoomMultiplier).abs() > 0.001) {
-      setMapViewState(
-        mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
+    if ((clampedMultiplier - _mapViewState.zoomMultiplier).abs() > 0.001) {
+      _setMapViewState(
+        _mapViewState.copyWith(zoomMultiplier: clampedMultiplier),
       );
     }
-    pendingRegionViewport = snapshot;
-    if (regionViewportFrameScheduled) return;
-    regionViewportFrameScheduled = true;
+    _pendingRegionViewport = snapshot;
+    if (_regionViewportFrameScheduled) return;
+    _regionViewportFrameScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      regionViewportFrameScheduled = false;
+      _regionViewportFrameScheduled = false;
       if (!mounted) return;
-      final next = pendingRegionViewport;
-      pendingRegionViewport = null;
+      final next = _pendingRegionViewport;
+      _pendingRegionViewport = null;
       if (next == null) return;
-      final cur = regionViewportSnapshot;
+      final cur = _regionViewportSnapshot;
       if (cur != null && cur.matches(next)) return;
-      setState(() => regionViewportSnapshot = next);
+      setState(() => _regionViewportSnapshot = next);
     });
   }
 }

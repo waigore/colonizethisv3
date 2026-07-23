@@ -3,7 +3,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-import 'region_map_component_render_orchestrator.dart';
+import 'region_map_component_render_core.dart';
 import 'region_map_component_shared_palette.dart';
 import 'region_map_component_support.dart';
 
@@ -143,6 +143,6 @@ class CtRegionMapComponent extends PositionComponent {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    regionMapComponentRenderRegionMap(this, canvas);
+    renderRegionMap(canvas);
   }
 }

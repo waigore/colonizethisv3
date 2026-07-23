@@ -1,78 +1,16 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
-
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import '../../../../providers/app_event_bus_provider.dart';
-import '../../../../providers/debug_console_provider.dart';
-import '../../../../core/services/game_service/game_service.dart'
-    show GameMapData, GameService;
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/observe_session_provider.dart';
-import '../../../../providers/map_province_panel_provider.dart';
-import '../../../../providers/region_minimap_provider.dart';
-import '../../../../providers/treasury_summary_provider.dart';
-import '../../widgets/shell/shell_player_context.dart';
-import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
-import '../../../../providers/blessed_ai_profiles_provider.dart';
-import '../../../../providers/turn_resolution_blocking_provider.dart';
-import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../../../../core/services/ai/ai_profile_resolution.dart';
-import '../../../../core/services/subscription_tracker.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
-import '../region_map/region_map_viewport_snapshot.dart';
-import '../../../../providers/home_fleet_cargo_provider.dart';
-import '../../../../providers/human_draft_projected_region_provider.dart';
-
-import '../../../../config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../screens/game/game_screen_shared.dart';
-import '../map_area/map_area.dart'
-    show GameMapAreaBackground, GameMapCanvasStack;
-import '../controls/controls.dart';
-import '../minimap/minimap.dart';
-import '../overlays/game_map_narrow_detail_overlay.dart';
-import '../overlays/debug_console_overlay_panel.dart';
-import 'game_map_area_state_logic.dart';
-import '../overlays/next_turn_confirmation_dialog.dart';
-import '../overlays/turn_resolution_processing_dialog.dart';
-import '../overlays/turn_resolution_progress_labels.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
-import 'map_location_resolver.dart';
-import '../../widgets/dialogs/game_map_options_dialog.dart';
-import '../../widgets/shell/game_map_players_bar.dart';
-import '../../widgets/shell/player_turn_event_feed.dart';
-
-import 'game_map_area.dart';
-import 'game_map_area_state_base.dart';
-import 'game_map_area_view.dart';
-import 'game_map_area_selection.dart';
-import 'game_map_area_e2e.dart';
-import 'game_map_area_build_map_stack.dart';
+part of 'game_map_area.dart';
 
 /// Map play-area shell (keyboard focus, debug console, narrow detail slot).
 /// Split from [game_map_area_build.dart] for Phase 3 flame map modularization.
-mixin GameMapAreaBuildOverlays
+mixin _GameMapAreaBuildOverlays
     on
         ConsumerState<GameMapArea>,
-        GameMapAreaStateBase,
-        GameMapAreaView,
-        GameMapAreaSelection,
-        GameMapAreaE2e,
-        GameMapAreaBuildMapStack {
-  Widget buildMapPlayAreaStack({
+        _GameMapAreaStateBase,
+        _GameMapAreaView,
+        _GameMapAreaSelection,
+        _GameMapAreaE2e,
+        _GameMapAreaBuildMapStack {
+  Widget _buildMapPlayAreaStack({
     required BuildContext context,
     required bool isNarrow,
     required RegionMapViewData projectedRegion,
@@ -87,25 +25,25 @@ mixin GameMapAreaBuildOverlays
       children: [
         Positioned.fill(
           child: IgnorePointer(
-            ignoring: isTurnResolving,
+            ignoring: _isTurnResolving,
             child: Focus(
               autofocus: true,
               onKeyEvent: (node, event) {
-                if (workTargetSelection != null &&
+                if (_workTargetSelection != null &&
                     event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.escape) {
-                  cancelWorkTargetSelection();
+                  _cancelWorkTargetSelection();
                   return KeyEventResult.handled;
                 }
-                if (sideMenuOpen &&
+                if (_sideMenuOpen &&
                     event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.escape) {
-                  setState(() => sideMenuOpen = false);
+                  setState(() => _sideMenuOpen = false);
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.ignored;
               },
-              child: buildMapFocusedStack(
+              child: _buildMapFocusedStack(
                 context: context,
                 isNarrow: isNarrow,
                 projectedRegion: projectedRegion,
@@ -117,13 +55,13 @@ mixin GameMapAreaBuildOverlays
             ),
           ),
         ),
-        if (debugConsoleEnabled && debugConsoleOpen)
+        if (debugConsoleEnabled && _debugConsoleOpen)
           Positioned(
             left: kEdgeSwipeStripWidth + 60,
             top: 56,
             child: DebugConsoleOverlayPanel(
               bus: ref.read(appEventBusProvider),
-              humanPlayerId: debugConsolePlayerId ?? mapPlayerId,
+              humanPlayerId: _debugConsolePlayerId ?? mapPlayerId,
               readOnlyContextProvider: () {
                 final selectedTileKey =
                     ref.read(mapProvincePanelProvider).selectedTileKey;
@@ -142,7 +80,7 @@ mixin GameMapAreaBuildOverlays
                   players: players,
                 );
               },
-              onClose: () => setState(() => debugConsoleOpen = false),
+              onClose: () => setState(() => _debugConsoleOpen = false),
             ),
           ),
         if (isNarrow)
@@ -158,7 +96,7 @@ mixin GameMapAreaBuildOverlays
                   playerView: mapPlayerView,
                   omniscientDetail: shell.omniscientDetail,
                   canMutateViaUi: shell.canMutateViaUi,
-                  workTargetSelectionCache: workTargetSelectionCache,
+                  workTargetSelectionCache: _workTargetSelectionCache,
                 ),
               ],
             ),
