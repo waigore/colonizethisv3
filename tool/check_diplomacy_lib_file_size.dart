@@ -19,8 +19,6 @@ const String _diplomacyLibRelativePath = 'packages/colonizethis_diplomacy/lib';
 /// allowlist; remove entries as splits land.
 const List<String> diplomacyLibFileSizeGrandfathered = <String>[
   'packages/colonizethis_diplomacy/lib/src/diplomacy/faction_absorption_engine.dart',
-  'packages/colonizethis_diplomacy/lib/src/diplomacy/intervention_resolver_call_to_arms.dart',
-  'packages/colonizethis_diplomacy/lib/src/diplomacy/overture_resolver.dart',
   'packages/colonizethis_diplomacy/lib/src/diplomacy/war_resolver.dart',
 ];
 
