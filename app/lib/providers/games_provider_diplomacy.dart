@@ -1,4 +1,7 @@
-part of 'games_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// At most one blocking diplomacy gate from turn resolution (overture, intervention, CTA).
 /// SPEC/ui/pending-diplomacy-state.md, SPEC/program/dialogue-system.md.
