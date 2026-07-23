@@ -1,11 +1,13 @@
-part of 'tech_catalog.dart';
+import 'tech_catalog_cost.dart';
+import 'tech_definition.dart';
+import 'tech_ids.dart';
 
-void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
+void addTechCatalogChunk3(Map<String, TechDefinition> m) {
   m[kTechIdDiscoveryOfFurs] = TechDefinition(
     id: kTechIdDiscoveryOfFurs,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Furs',
     discoveryResourceIds: ['furs'],
   );
@@ -13,7 +15,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdImprovedTrappingTechniques,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Improved Trapping Techniques',
     prerequisiteIds: [kTechIdDiscoveryOfFurs],
   );
@@ -21,7 +23,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdHatProduction,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Hat Production',
     prerequisiteIds: [kTechIdDiscoveryOfFurs],
   );
@@ -29,7 +31,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdRiverboats,
     era: 3,
     category: 'new-world',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Riverboats',
     prerequisiteIds: [
       kTechIdImprovedTrappingTechniques,
@@ -40,7 +42,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdExcessiveFurHarvesting,
     era: 4,
     category: 'new-world',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Excessive Fur Harvesting',
     prerequisiteIds: [kTechIdLaterSteamEngine, kTechIdRiverboats],
   );
@@ -48,7 +50,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfSpices,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Spices',
     discoveryResourceIds: ['spices'],
   );
@@ -56,7 +58,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdImprovedSeaRoutes,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Improved Sea Routes',
     prerequisiteIds: [kTechIdDiscoveryOfSpices],
   );
@@ -64,7 +66,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdLargeSpicePlantations,
     era: 2,
     category: 'new-world',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Spice Plantations',
     prerequisiteIds: [kTechIdSeedDrill, kTechIdImprovedSeaRoutes],
   );
@@ -72,7 +74,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdImprovedFoodPreservation,
     era: 3,
     category: 'new-world',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Improved Food Preservation',
     prerequisiteIds: [kTechIdLargeSpicePlantations],
   );
@@ -80,7 +82,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfGoldOrSilver,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Gold or Silver',
     discoveryResourceIds: ['gold', 'silver'],
   );
@@ -88,7 +90,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdPreciousMetalsMining,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Precious Metals Mining',
     prerequisiteIds: [kTechIdDiscoveryOfGoldOrSilver, kTechIdMineEngineering],
   );
@@ -96,7 +98,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdDiscoveryOfGemsOrDiamonds,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Discovery of Gems or Diamonds',
     discoveryResourceIds: ['gems', 'diamonds'],
   );
@@ -104,7 +106,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdPreciousStoneMining,
     era: 1,
     category: 'new-world',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Precious Stone Mining',
     prerequisiteIds: [kTechIdDiscoveryOfGemsOrDiamonds],
   );
@@ -114,7 +116,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdRoadConstruction,
     era: 1,
     category: 'transport',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Road Construction',
     prerequisiteIds: [kTechIdSawMill, kTechIdLandEnclosure, kTechIdIronMining],
   );
@@ -122,7 +124,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdEarlySteamEngine,
     era: 2,
     category: 'transport',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Early Steam Engine',
     prerequisiteIds: [
       kTechIdRoadConstruction,
@@ -134,7 +136,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdLaterSteamEngine,
     era: 3,
     category: 'transport',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Later Steam Engine',
     prerequisiteIds: [kTechIdEarlySteamEngine, kTechIdCrucibleProcess],
   );
@@ -142,7 +144,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdDynamite,
     era: 4,
     category: 'transport',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Dynamite',
     prerequisiteIds: [
       kTechIdLaterSteamEngine,
@@ -156,7 +158,7 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdPrintingPress,
     era: 1,
     category: 'labour',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Printing Press',
     prerequisiteIds: [kTechIdSawMill],
   );
@@ -164,18 +166,18 @@ void _addTechCatalogChunk3(Map<String, TechDefinition> m) {
     id: kTechIdApprenticeWorkers,
     era: 2,
     category: 'labour',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Apprentice Workers',
     prerequisiteIds: [kTechIdLandEnclosure, kTechIdSugarRefining],
   );
 }
 
-void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
+void addTechCatalogChunk4(Map<String, TechDefinition> m) {
   m[kTechIdTrainedJourneymen] = TechDefinition(
     id: kTechIdTrainedJourneymen,
     era: 2,
     category: 'labour',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Trained Journeymen',
     prerequisiteIds: [kTechIdCigarProduction, kTechIdPrintingPress],
   );
@@ -183,7 +185,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdMasterArtisans,
     era: 3,
     category: 'labour',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Master Artisans',
     prerequisiteIds: [
       kTechIdApprenticeWorkers,
@@ -195,7 +197,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdMoneyLending,
     era: 1,
     category: 'labour',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Money Lending',
     prerequisiteIds: [kTechIdLandEnclosure],
   );
@@ -203,7 +205,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdBanking,
     era: 3,
     category: 'labour',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Banking',
     prerequisiteIds: [kTechIdMasterArtisans, kTechIdTradeFairs],
   );
@@ -211,7 +213,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdTradeFairs,
     era: 2,
     category: 'labour',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Trade Fairs',
     prerequisiteIds: [kTechIdMerchantCompanies, kTechIdSugarRefining],
   );
@@ -219,7 +221,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdUniversity,
     era: 3,
     category: 'labour',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'University',
     prerequisiteIds: [
       kTechIdMoneyLending,
@@ -233,21 +235,21 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdDiplomaticExpertise,
     era: 1,
     category: 'diplomacy',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Diplomatic Expertise',
   );
   m[kTechIdMerchantCompanies] = TechDefinition(
     id: kTechIdMerchantCompanies,
     era: 1,
     category: 'civilian',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Merchant Companies',
   );
   m[kTechIdNationalBureaucracy] = TechDefinition(
     id: kTechIdNationalBureaucracy,
     era: 2,
     category: 'civilian',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'National Bureaucracy',
     prerequisiteIds: [
       kTechIdPrintingPress,
@@ -259,7 +261,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdPropaganda,
     era: 3,
     category: 'diplomacy',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Propaganda',
     prerequisiteIds: [kTechIdNationalBureaucracy, kTechIdUniversity],
   );
@@ -267,7 +269,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdNationalism,
     era: 3,
     category: 'diplomacy',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Nationalism',
     prerequisiteIds: [
       kTechIdPropaganda,
@@ -279,7 +281,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdEmpireBuilding,
     era: 4,
     category: 'diplomacy',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Empire Building',
     prerequisiteIds: [kTechIdNationalism, kTechIdBanking],
   );
@@ -289,7 +291,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdSuperiorHullDesign,
     era: 1,
     category: 'naval',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Superior Hull Design',
     shipUnlockIds: ['fluyte'],
   );
@@ -297,7 +299,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdImprovedSailDesign,
     era: 2,
     category: 'naval',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Improved Sail Design',
     prerequisiteIds: [kTechIdWindSawMill, kTechIdSuperiorHullDesign],
     shipUnlockIds: ['trader'],
@@ -306,7 +308,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdConvoying,
     era: 2,
     category: 'naval',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Convoying',
     prerequisiteIds: [kTechIdMerchantCompanies],
     shipUnlockIds: ['galleon'],
@@ -315,7 +317,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdNavigation,
     era: 1,
     category: 'naval',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Navigation',
     prerequisiteIds: [kTechIdSuperiorHullDesign],
     shipUnlockIds: ['sloop'],
@@ -324,7 +326,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdLargeHulls,
     era: 2,
     category: 'naval',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Large Hulls',
     prerequisiteIds: [kTechIdWindSawMill, kTechIdNavigation, kTechIdConvoying],
     shipUnlockIds: ['indiaman'],
@@ -333,7 +335,7 @@ void _addTechCatalogChunk4(Map<String, TechDefinition> m) {
     id: kTechIdClipperShips,
     era: 4,
     category: 'naval',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Clipper Ships',
     prerequisiteIds: [kTechIdCircularSaw, kTechIdAdvancedHullDesign],
     shipUnlockIds: ['clipper'],

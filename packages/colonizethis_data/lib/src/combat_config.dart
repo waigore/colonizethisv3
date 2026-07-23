@@ -2,7 +2,9 @@
 /// SPEC/game/military-units.md, SPEC/game/combat.md, SPEC/game/ruleset-config.md.
 library;
 
-part 'combat_regiment_catalog.dart';
+import 'combat_regiment_catalog.dart';
+
+export 'combat_regiment_catalog.dart';
 
 /// Regiment tactical stats (FPN, FPM, RNG, DEF, MVR) per SPEC/game/military-units.md.
 class RegimentStats {
