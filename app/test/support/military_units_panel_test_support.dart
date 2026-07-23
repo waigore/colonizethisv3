@@ -68,28 +68,6 @@ Future<void> pumpMilitaryPanel(
   );
 }
 
-/// Taps the first [ExpansionTile] in the tree (if any) and settles, expanding
-/// the first army/fleet group so its detail rows render.
-Future<void> expandFirstArmyExpansion(WidgetTester tester) async {
-  final tiles = find.byType(ExpansionTile);
-  if (tiles.evaluate().isEmpty) {
-    return;
-  }
-  await tester.tap(tiles.first);
-  await tester.pumpAndSettle();
-}
-
-/// Taps every [ExpansionTile] currently in the tree (settling after each) so
-/// all army/fleet groups expand and their detail rows render.
-Future<void> expandAllArmyExpansions(WidgetTester tester) async {
-  final finder = find.byType(ExpansionTile);
-  final n = finder.evaluate().length;
-  for (var i = 0; i < n; i++) {
-    await tester.tap(finder.at(i));
-    await tester.pumpAndSettle();
-  }
-}
-
 /// Tall viewport for army-split interaction tests ([ListView] rows need height).
 const Size kArmySplitTestViewport = Size(480, 900);
 
