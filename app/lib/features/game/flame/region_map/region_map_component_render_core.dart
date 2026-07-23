@@ -1,37 +1,47 @@
+import 'package:flutter/material.dart';
 
-part of 'region_map_component.dart';
+import '../tilesets/tilesets.dart';
+import 'region_map_component.dart';
+import 'region_map_component_render_core_base_tiles_land.dart';
+import 'region_map_component_render_core_base_tiles_sea.dart';
+import 'region_map_component_render_core_transport_feature.dart';
+import 'region_map_component_shared_visibility.dart';
 
-extension _CtRegionMapRenderCoreTiles on CtRegionMapComponent {
-  void _paintTiles(Canvas canvas) {
-    if (!terrainTilesetCache.isLoaded) {
-      return;
+void regionMapComponentPaintTiles(
+  CtRegionMapComponent component,
+  Canvas canvas,
+) {
+  if (!terrainTilesetCache.isLoaded) {
+    return;
+  }
+  regionMapComponentPaintTilesWithTilesets(component, canvas);
+}
+
+void regionMapComponentPaintTilesWithTilesets(
+  CtRegionMapComponent component,
+  Canvas canvas,
+) {
+  for (final cell in component.region.cells) {
+    if (cell.isSea) {
+      regionMapComponentPaintSeaCell(component, canvas, cell);
     }
-    _paintTilesWithTilesets(canvas);
   }
 
-  void _paintTilesWithTilesets(Canvas canvas) {
-    for (final cell in region.cells) {
-      if (cell.isSea) {
-        _paintSeaCell(canvas, cell);
-      }
+  for (final cell in component.region.cells) {
+    if (!cell.isSea) {
+      regionMapComponentPaintLandBaseCell(component, canvas, cell);
     }
+  }
 
-    for (final cell in region.cells) {
-      if (!cell.isSea) {
-        _paintLandBaseCell(canvas, cell);
-      }
-    }
+  regionMapComponentPaintTransportOverlayTiles(component, canvas);
 
-    _paintTransportOverlayTiles(canvas);
+  regionMapComponentPaintL1PlainsInteriorResourceVariantOverlays(component, canvas);
 
-    _paintL1PlainsInteriorResourceVariantOverlays(canvas);
-
-    for (final cell in region.cells) {
-      if (!cell.isSea &&
-          cell.terrainType != null &&
-          regionMapComponentIsFeatureTerrain(cell.terrainType!)) {
-        _paintFeatureCell(canvas, cell);
-      }
+  for (final cell in component.region.cells) {
+    if (!cell.isSea &&
+        cell.terrainType != null &&
+        regionMapComponentIsFeatureTerrain(cell.terrainType!)) {
+      regionMapComponentPaintFeatureCell(component, canvas, cell);
     }
   }
 }
