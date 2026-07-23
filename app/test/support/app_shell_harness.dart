@@ -123,10 +123,12 @@ Widget buildPanelScaffoldShell(
   Widget panel, {
   Size? viewport,
   List<Override> overrides = const <Override>[],
+  Iterable<LocalizationsDelegate<dynamic>>? localizationsDelegates,
 }) {
   return buildAppShell(
     viewport: viewport,
     overrides: overrides,
+    localizationsDelegates: localizationsDelegates,
     child: Scaffold(body: panel),
   );
 }

@@ -1,4 +1,4 @@
-// Shared ProductionPanel players, wrappers, and host (Refs #4013).
+// Shared ProductionPanel wrappers and host (Refs #4013).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -6,43 +6,16 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
-import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
-
-/// Players and games for production panel widget tests without debug game init.
-Player productionPanelTestFullPlayer() {
-  return Player(
-    id: 'test_gp_full',
-    displayName: 'Full test',
-    isHuman: true,
-    stockpile: productionPanelTestFullStockpile,
-    workerPool: productionPanelTestFullWorkerPool,
-  );
-}
-
-Player productionPanelTestPartialPlayer() {
-  return Player(
-    id: 'test_gp_partial',
-    displayName: 'Partial test',
-    isHuman: true,
-    stockpile: productionPanelTestPartialStockpile,
-    workerPool: productionPanelTestPartialWorkerPool,
-  );
-}
-
-Game productionPanelTestGameFor(Player player) {
-  return Game(
-    id: 'production-widget-test',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: [player],
-  );
-}
+import 'panel_fixtures/production.dart'
+    show productionPanelTestGameFor;
+export 'panel_fixtures/production.dart'
+    show
+        productionPanelTestFullPlayer,
+        productionPanelTestGameFor,
+        productionPanelTestPartialPlayer;
 
 /// Holds allocation map in state so [ProductionPanel] rebuilds after each change
 /// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
@@ -133,25 +106,23 @@ Widget buildProductionPanel({
         (netDeltasByCommodity[recipe.outputCommodityId] ?? 0) +
         (recipe.outputQuantity * entry.value);
   }
-  return buildAppShell(
-    viewport: Size(width, height),
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    child: Scaffold(
-      body: SizedBox(
-        width: width,
-        height: height,
-        child: ProductionPanelTestWrapper(
-          displayGame: displayGame,
-          player: player,
-          initialDesiredOutput: desiredOutputByRecipe,
-          netDeltasByCommodity: netDeltasByCommodity,
-          onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
-          onOpenCommodityBreakdown: onOpenCommodityBreakdown,
-          currentOrders: currentOrders,
-          labourCallbacks: labourCallbacks,
-          canEditLabour: canEditLabour,
-        ),
+  return buildPanelScaffoldShell(
+    SizedBox(
+      width: width,
+      height: height,
+      child: ProductionPanelTestWrapper(
+        displayGame: displayGame,
+        player: player,
+        initialDesiredOutput: desiredOutputByRecipe,
+        netDeltasByCommodity: netDeltasByCommodity,
+        onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
+        onOpenCommodityBreakdown: onOpenCommodityBreakdown,
+        currentOrders: currentOrders,
+        labourCallbacks: labourCallbacks,
+        canEditLabour: canEditLabour,
       ),
     ),
+    viewport: Size(width, height),
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
   );
 }
