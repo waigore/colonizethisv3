@@ -1,28 +1,86 @@
-part of 'game_map_area.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData, GameService;
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../providers/region_minimap_provider.dart';
+import '../../../../providers/treasury_summary_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
+import '../../../../providers/blessed_ai_profiles_provider.dart';
+import '../../../../providers/turn_resolution_blocking_provider.dart';
+import '../../../../providers/turn_resolution_runner_provider.dart';
+import '../../../../core/services/ai/ai_profile_resolution.dart';
+import '../../../../core/services/subscription_tracker.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
+import '../region_map/region_map_viewport_snapshot.dart';
+import '../../../../providers/home_fleet_cargo_provider.dart';
+import '../../../../providers/human_draft_projected_region_provider.dart';
+
+import '../../../../config/constants.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../screens/game/game_screen_shared.dart';
+import '../map_area/map_area.dart'
+    show GameMapAreaBackground, GameMapCanvasStack;
+import '../controls/controls.dart';
+import '../minimap/minimap.dart';
+import '../overlays/game_map_narrow_detail_overlay.dart';
+import '../overlays/debug_console_overlay_panel.dart';
+import 'game_map_area_state_logic.dart';
+import '../overlays/next_turn_confirmation_dialog.dart';
+import '../overlays/turn_resolution_processing_dialog.dart';
+import '../overlays/turn_resolution_progress_labels.dart';
+import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
+import 'map_location_resolver.dart';
+import '../../widgets/dialogs/game_map_options_dialog.dart';
+import '../../widgets/shell/game_map_players_bar.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
+
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
 
 /// Display-label and map-locate helpers for [GameMapArea] turn-event feed
 /// entries (Refs #3878 Phase 3 map_state modularization).
-mixin _GameMapAreaTurnFeedLabels
-    on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
-  String _factionLabel(String id) =>
+mixin GameMapAreaTurnFeedLabels
+    on ConsumerState<GameMapArea>, GameMapAreaStateBase {
+  String factionLabel(String id) =>
       widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) =>
+  String provinceLabel(String fullProvinceId) =>
       widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
       fullProvinceId;
 
-  String _seaZoneLabel(String seaZoneId) {
+  String seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
         seaZoneId;
   }
 
-  String _diplomacyOutcomeLine({
+  String diplomacyOutcomeLine({
     required String actorId,
     required String targetId,
     required String changeType,
   }) {
-    final actor = _factionLabel(actorId);
-    final target = _factionLabel(targetId);
+    final actor = factionLabel(actorId);
+    final target = factionLabel(targetId);
     final normalized = changeType.toLowerCase();
     return switch (normalized) {
       'declare_war' => '$actor declared war on $target!',
@@ -33,7 +91,7 @@ mixin _GameMapAreaTurnFeedLabels
     };
   }
 
-  Set<String> _seaZoneRegionCandidates(String seaZoneId) {
+  Set<String> seaZoneRegionCandidates(String seaZoneId) {
     final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
     if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
       return {regionFromPrefix};
@@ -68,8 +126,8 @@ mixin _GameMapAreaTurnFeedLabels
     return {...fromPorts, ...fromTopology};
   }
 
-  String? _tileKeyForSeaZoneEvent(String seaZoneId) {
-    final candidates = _seaZoneRegionCandidates(seaZoneId);
+  String? tileKeyForSeaZoneEvent(String seaZoneId) {
+    final candidates = seaZoneRegionCandidates(seaZoneId);
     if (candidates.length != 1) {
       return null;
     }
@@ -84,10 +142,10 @@ mixin _GameMapAreaTurnFeedLabels
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+  ct_models.Province? provinceByPrefixedId(String prefixedProvinceId) =>
       widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
-  void _emitLocateMapTile({
+  void emitLocateMapTile({
     required String tileKey,
     required String regionId,
   }) {
@@ -99,24 +157,24 @@ mixin _GameMapAreaTurnFeedLabels
         );
   }
 
-  void _locateProvinceTile(ct_models.Province province) {
+  void locateProvinceTile(ct_models.Province province) {
     final tileKey = tileKeyForProvinceLocation(widget.game, province);
     if (tileKey == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
   }
 
-  void _locateProvinceById(String provinceId) {
-    final province = _provinceByPrefixedId(provinceId);
+  void locateProvinceById(String provinceId) {
+    final province = provinceByPrefixedId(provinceId);
     if (province == null) {
       return;
     }
-    _locateProvinceTile(province);
+    locateProvinceTile(province);
   }
 
-  void _locateSeaZoneTile(String seaZoneId) {
-    final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
+  void locateSeaZoneTile(String seaZoneId) {
+    final tileKey = tileKeyForSeaZoneEvent(seaZoneId);
     if (tileKey == null) {
       return;
     }
@@ -124,14 +182,14 @@ mixin _GameMapAreaTurnFeedLabels
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
 
-  void _locateTileKey(String tileKey) {
+  void locateTileKey(String tileKey) {
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
 }
