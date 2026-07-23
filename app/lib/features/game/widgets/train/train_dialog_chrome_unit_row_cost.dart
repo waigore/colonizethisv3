@@ -1,4 +1,12 @@
-part of 'train_dialog_chrome.dart';
+// Train-dialog inline cost and locked-hint widgets.
+// SPEC/ui/components/train-dialog-chrome.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:flutter/material.dart';
+
+import '../../../../config/constants.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Inline `icon + number` cost segment in a train-dialog unit-row cost
 /// summary (treasury / peasant / commodity requirement).

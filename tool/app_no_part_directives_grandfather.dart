@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 105 app/lib files still using part directives.
+// Generated grandfather allowlist: 92 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -66,19 +66,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_bar.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_controls.dart',
-  'app/lib/features/game/widgets/train/train_civilians_dialog.dart',
-  'app/lib/features/game/widgets/train/train_civilians_dialog_unit_row.dart',
-  'app/lib/features/game/widgets/train/train_commodity_cost_dialog_base.dart',
-  'app/lib/features/game/widgets/train/train_commodity_cost_dialog_base_costs.dart',
-  'app/lib/features/game/widgets/train/train_commodity_cost_dialog_base_resource_bar.dart',
-  'app/lib/features/game/widgets/train/train_commodity_cost_dialog_base_unit_row.dart',
-  'app/lib/features/game/widgets/train/train_dialog_base.dart',
-  'app/lib/features/game/widgets/train/train_dialog_base_state.dart',
-  'app/lib/features/game/widgets/train/train_dialog_chrome.dart',
-  'app/lib/features/game/widgets/train/train_dialog_chrome_resource_bar.dart',
-  'app/lib/features/game/widgets/train/train_dialog_chrome_unit_row.dart',
-  'app/lib/features/game/widgets/train/train_dialog_chrome_unit_row_controls.dart',
-  'app/lib/features/game/widgets/train/train_dialog_chrome_unit_row_cost.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_declare_war.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_destinations.dart',

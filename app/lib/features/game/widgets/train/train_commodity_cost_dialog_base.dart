@@ -1,24 +1,19 @@
 // Shared base for the commodity-cost train-at-capital dialogs (military, naval).
 // SPEC/ui/train-military-dialog.md, SPEC/ui/train-naval-dialog.md,
 // SPEC/ui/components/train-dialog-chrome.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../core/utils/currency_format.dart';
-import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
 import '../production/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
-import 'train_dialog_chrome.dart';
-
-part 'train_commodity_cost_dialog_base_costs.dart';
-part 'train_commodity_cost_dialog_base_resource_bar.dart';
-part 'train_commodity_cost_dialog_base_unit_row.dart';
+import 'train_commodity_cost_dialog_base_resource_bar.dart';
+import 'train_commodity_cost_dialog_base_unit_row.dart';
 
 /// A single trainable entry consumed by [CommodityCostTrainDialogState].
 ///
@@ -95,11 +90,60 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
     return true;
   }
 
+  int totalTreasuryCost() {
+    var total = 0;
+    for (final e in _entries) {
+      total += (counts[e.unitTypeId] ?? 0) * e.buildTreasuryCost;
+    }
+    return total;
+  }
+
+  int totalPeasantCost() {
+    var total = 0;
+    for (final e in _entries) {
+      total += counts[e.unitTypeId] ?? 0;
+    }
+    return total;
+  }
+
+  Map<String, int> totalCommodityCosts() {
+    final totals = <String, int>{};
+    for (final e in _entries) {
+      final count = counts[e.unitTypeId] ?? 0;
+      if (count <= 0) continue;
+      for (final input in e.buildInputs.entries) {
+        totals[input.key] = (totals[input.key] ?? 0) + (input.value * count);
+      }
+    }
+    return totals;
+  }
+
+  int remainingTreasury() => treasury - totalTreasuryCost();
+
+  int remainingPeasants() => peasants - totalPeasantCost();
+
+  int remainingCommodity(String commodityId, Map<String, int> committed) =>
+      stockpileQty(commodityId) - (committed[commodityId] ?? 0);
+
+  String? commodityCostDeficitHint(AppLocalizations l10n) {
+    final deficits = <String>[];
+    if (totalTreasuryCost() > treasury) deficits.add('Treasury');
+    if (totalPeasantCost() > peasants) deficits.add('Peasants');
+    final totalComms = totalCommodityCosts();
+    for (final e in totalComms.entries) {
+      if (e.value > stockpileQty(e.key)) {
+        deficits.add(commodityDisplayName(l10n, e.key));
+      }
+    }
+    if (deficits.isEmpty) return null;
+    return deficits.map((name) => '$name low').join(', ');
+  }
+
   @override
   List<Widget> buildBody(AppLocalizations l10n) {
     return [
       const SizedBox(height: CtSpacing.ml),
-      _CommodityCostResourceBar(
+      CommodityCostTrainDialogResourceBar(
         treasury: treasury,
         remainingTreasury: remainingTreasury(),
         peasants: peasants,
@@ -138,7 +182,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
         if (!locked && remainingCommodity(input.key, committed) < input.value)
           input.key,
     };
-    return _CommodityCostUnitRow(
+    return CommodityCostTrainDialogUnitRow(
       displayName: econ.displayName,
       buildTreasuryCost: econ.buildTreasuryCost,
       buildInputs: econ.buildInputs,

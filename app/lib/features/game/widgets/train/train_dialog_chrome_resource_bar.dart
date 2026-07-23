@@ -1,4 +1,14 @@
-part of 'train_dialog_chrome.dart';
+// Train-dialog chrome resource bar widgets.
+// SPEC/ui/components/train-dialog-chrome.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_radius.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// A single label + value entry in a [TrainDialogResourceBar].
 ///
