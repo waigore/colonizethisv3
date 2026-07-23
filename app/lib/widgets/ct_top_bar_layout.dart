@@ -1,77 +1,78 @@
-part of 'ct_top_bar.dart';
+import 'package:flutter/material.dart';
 
-extension _CtTopBarLayout on CtTopBar {
-  TextStyle _titleStyle(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle base =
-        theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
-    return base.copyWith(
-      color: EditorialMonoclePalette.accent,
-      letterSpacing: 0.05,
-    );
-  }
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'ct_back_button.dart';
+import 'ct_top_bar.dart';
 
-  TextStyle _backLabelStyle(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle base =
-        theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
-    final double opacity = backButtonEnabled
-        ? 1.0
-        : CtBackButton.disabledOpacity;
-    return base.copyWith(
-      color: EditorialMonoclePalette.muted.withValues(alpha: opacity),
-    );
-  }
+TextStyle ctTopBarTitleStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  final TextStyle base =
+      theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
+  return base.copyWith(
+    color: EditorialMonoclePalette.accent,
+    letterSpacing: 0.05,
+  );
+}
 
-  CtBackButton _buildBackButton() {
-    if (backButtonSemanticLabel == null) {
-      return CtBackButton(
-        onPressed: onBackPressed,
-        enabled: backButtonEnabled,
-      );
-    }
+TextStyle ctTopBarBackLabelStyle(BuildContext context, CtTopBar bar) {
+  final ThemeData theme = Theme.of(context);
+  final TextStyle base =
+      theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
+  final double opacity =
+      bar.backButtonEnabled ? 1.0 : CtBackButton.disabledOpacity;
+  return base.copyWith(
+    color: EditorialMonoclePalette.muted.withValues(alpha: opacity),
+  );
+}
+
+CtBackButton buildCtTopBarBackButton(CtTopBar bar) {
+  if (bar.backButtonSemanticLabel == null) {
     return CtBackButton(
-      onPressed: onBackPressed,
-      enabled: backButtonEnabled,
-      semanticLabel: backButtonSemanticLabel!,
+      onPressed: bar.onBackPressed,
+      enabled: bar.backButtonEnabled,
     );
   }
+  return CtBackButton(
+    onPressed: bar.onBackPressed,
+    enabled: bar.backButtonEnabled,
+    semanticLabel: bar.backButtonSemanticLabel!,
+  );
+}
 
-  List<Widget> _buildRowChildren(BuildContext context) {
-    final List<Widget> children = <Widget>[];
-    if (showBackButton) {
-      children.add(_buildBackButton());
-      if (backButtonLabel != null) {
-        children.add(const SizedBox(width: CtTopBar.leadingGap));
-        children.add(
-          Text(
-            backButtonLabel!,
-            style: _backLabelStyle(context),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        );
-      }
+List<Widget> buildCtTopBarRowChildren(CtTopBar bar, BuildContext context) {
+  final List<Widget> children = <Widget>[];
+  if (bar.showBackButton) {
+    children.add(buildCtTopBarBackButton(bar));
+    if (bar.backButtonLabel != null) {
       children.add(const SizedBox(width: CtTopBar.leadingGap));
-    }
-    if (icon != null) {
-      children.add(icon!);
-      children.add(const SizedBox(width: CtTopBar.iconGap));
-    }
-    children.add(
-      Expanded(
-        child: Text(
-          title,
-          style: _titleStyle(context),
+      children.add(
+        Text(
+          bar.backButtonLabel!,
+          style: ctTopBarBackLabelStyle(context, bar),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-      ),
-    );
-    if (trailing != null) {
-      children.add(const SizedBox(width: CtTopBar.trailingGap));
-      children.add(trailing!);
+      );
     }
-    return children;
+    children.add(const SizedBox(width: CtTopBar.leadingGap));
   }
+  if (bar.icon != null) {
+    children.add(bar.icon!);
+    children.add(const SizedBox(width: CtTopBar.iconGap));
+  }
+  children.add(
+    Expanded(
+      child: Text(
+        bar.title,
+        style: ctTopBarTitleStyle(context),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
+  );
+  if (bar.trailing != null) {
+    children.add(const SizedBox(width: CtTopBar.trailingGap));
+    children.add(bar.trailing!);
+  }
+  return children;
 }

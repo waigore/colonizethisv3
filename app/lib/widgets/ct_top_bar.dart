@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_back_button.dart';
 import 'ct_gradients.dart';
-
-part 'ct_top_bar_layout.dart';
+import 'ct_top_bar_layout.dart';
 
 /// Pixel-art top bar for the dark editorial-monocle theme.
 ///
@@ -108,7 +107,7 @@ class CtTopBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: _buildRowChildren(context),
+            children: buildCtTopBarRowChildren(this, context),
           ),
         ),
       ),

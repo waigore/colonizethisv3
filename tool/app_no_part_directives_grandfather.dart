@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 126 app/lib files still using part directives.
+// Generated grandfather allowlist: 120 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -18,8 +18,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/tilesets/terrain_tileset_loaders.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_models.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_variant_keys.dart',
-  'app/lib/features/game/screens/production/production_screen.dart',
-  'app/lib/features/game/screens/production/production_screen_body.dart',
   'app/lib/features/game/widgets/dialogue/call_to_arms_call_row.dart',
   'app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
   'app/lib/features/game/widgets/dialogue/ct_dialogue_view.dart',
@@ -102,8 +100,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/shell/save_load/load_game_list_dialog_row.dart',
   'app/lib/features/shell/save_load/save_game_name_dialog.dart',
   'app/lib/features/shell/save_load/save_game_name_dialog_body.dart',
-  'app/lib/widgets/ct_action_text_button.dart',
-  'app/lib/widgets/ct_action_text_button_state.dart',
   'app/lib/widgets/ct_dropdown.dart',
   'app/lib/widgets/ct_dropdown_picker.dart',
   'app/lib/widgets/ct_dropdown_trigger.dart',
@@ -121,8 +117,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/widgets/ct_toggle_switch_knob.dart',
   'app/lib/widgets/ct_toggle_switch_state.dart',
   'app/lib/widgets/ct_toggle_switch_track.dart',
-  'app/lib/widgets/ct_top_bar.dart',
-  'app/lib/widgets/ct_top_bar_layout.dart',
   'app/lib/widgets/ct_transfer_list.dart',
   'app/lib/widgets/ct_transfer_list_layout.dart',
   'app/lib/widgets/ct_transfer_list_mutations.dart',

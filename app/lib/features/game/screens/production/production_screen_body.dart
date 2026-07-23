@@ -1,7 +1,25 @@
-part of 'production_screen.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class _ProductionScreenBody extends ConsumerWidget {
-  const _ProductionScreenBody({
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/production_allocation_provider.dart';
+import '../../widgets/shell/shell_player_guarded_body.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../../widgets/production/production_labour_helpers.dart';
+import '../../widgets/production/production_panel.dart';
+import 'production_screen.dart';
+
+class ProductionScreenBody extends ConsumerWidget {
+  const ProductionScreenBody({
     required this.displayGame,
     required this.screen,
   });

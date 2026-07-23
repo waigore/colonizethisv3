@@ -1,6 +1,13 @@
-part of 'ct_action_text_button.dart';
+import 'package:flutter/material.dart';
 
-class _CtActionTextButtonState extends State<CtActionTextButton>
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../config/themes.dart';
+import 'ct_gradients.dart';
+import 'ct_hover_button.dart';
+import 'ct_nine_patch_button.dart';
+import 'ct_action_text_button.dart';
+
+class CtActionTextButtonState extends State<CtActionTextButton>
     with CtHoverButtonStateMixin<CtActionTextButton> {
   @override
   bool get hoverButtonEnabled => widget.enabled;
@@ -63,13 +70,13 @@ class _CtActionTextButtonState extends State<CtActionTextButton>
         gradient: _resolvedGradient,
         border: Border.all(
           color: _resolvedBorderColor,
-          width: CtActionTextButton._borderWidth,
+          width: CtActionTextButton.layoutBorderWidth,
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: CtActionTextButton._horizontalPadding,
-          vertical: CtActionTextButton._verticalPadding,
+          horizontal: CtActionTextButton.layoutHorizontalPadding,
+          vertical: CtActionTextButton.layoutVerticalPadding,
         ),
         child: AnimatedDefaultTextStyle(
           duration: isInteractive
@@ -79,8 +86,8 @@ class _CtActionTextButtonState extends State<CtActionTextButton>
           style: TextStyle(
             color: _resolvedForeground,
             fontFamily: editorialMonocleDisplayFontFamily,
-            fontSize: CtActionTextButton._fontSize,
-            letterSpacing: CtActionTextButton._letterSpacing,
+            fontSize: CtActionTextButton.layoutFontSize,
+            letterSpacing: CtActionTextButton.layoutLetterSpacing,
             fontWeight: _resolvedFontWeight,
           ),
           child: _buildLabel(),
