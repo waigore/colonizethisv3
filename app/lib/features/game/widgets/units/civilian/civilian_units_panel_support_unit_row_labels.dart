@@ -1,9 +1,18 @@
 /// Civilian unit row location and assignment labels. SPEC/ui/civilian-units-panel.md.
+///
+/// De-parted wave-9 cluster (Refs #4117).
 
-part of 'civilian_units_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-extension _UnitRowLabels on _UnitRow {
-  String _locationLabel() {
+import '../../../../../widgets/resource_icon.dart';
+import '../shared/region_labels.dart';
+import 'civilian_units_panel_support_resolution.dart';
+import 'civilian_units_panel_support_unit_row.dart';
+
+extension CivilianUnitRowLabels on CivilianUnitRow {
+  String locationLabel() {
     final regionId = Unit.regionIdFromTileKey(projectedTileKey);
     final provinceId = Unit.provinceIdFromTileKey(projectedTileKey);
     if (regionId == null || provinceId == null) return '—';
@@ -13,12 +22,12 @@ extension _UnitRowLabels on _UnitRow {
     return '$regionLabel — $name';
   }
 
-  String _assignedToLabelNonPending(AppLocalizations l10n) {
+  String assignedToLabelNonPending(AppLocalizations l10n) {
     if (unit.status != UnitStatus.working || unit.currentWork == null) {
       return '—';
     }
     final cw = unit.currentWork!;
-    final workLabel = _workTargetLabels[cw.workTarget] ?? cw.workTarget;
+    final workLabel = civilianWorkTargetLabels[cw.workTarget] ?? cw.workTarget;
     final regionId = Unit.regionIdFromTileKey(cw.tileKey);
     final provinceId = Unit.provinceIdFromTileKey(cw.tileKey);
     var location = '';
@@ -38,10 +47,10 @@ extension _UnitRowLabels on _UnitRow {
     return '$workLabel$location — $progress';
   }
 
-  Widget _buildAssignedToSubtitle(AppLocalizations l10n) {
-    final pending = _pendingWorkOrder;
+  Widget buildAssignedToSubtitle(AppLocalizations l10n) {
+    final pending = pendingWorkOrder;
     if (pending != null) {
-      final r = _resolvePendingAssignedResolution(
+      final r = resolvePendingAssignedResolution(
         game,
         unit,
         pending,
@@ -60,8 +69,8 @@ extension _UnitRowLabels on _UnitRow {
                 spacing: 8,
                 runSpacing: 4,
                 children: [
-                  for (final e in _sortedMaterialCostEntries(r.materialCosts!))
-                    _AssignedCostChip(
+                  for (final e in sortedMaterialCostEntries(r.materialCosts!))
+                    CivilianAssignedCostChip(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -77,7 +86,7 @@ extension _UnitRowLabels on _UnitRow {
           if (r.treasuryAmount != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: _AssignedCostChip(
+              child: CivilianAssignedCostChip(
                 child: Text(
                   l10n.trainUnits_treasury(r.treasuryAmount!.toString()),
                 ),
@@ -87,7 +96,7 @@ extension _UnitRowLabels on _UnitRow {
       );
     }
     return Text(
-      l10n.civilian_units_assignedTo(_assignedToLabelNonPending(l10n)),
+      l10n.civilian_units_assignedTo(assignedToLabelNonPending(l10n)),
     );
   }
 }

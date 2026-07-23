@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 301 app/lib files still using part directives.
+// Generated grandfather allowlist: 293 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -178,14 +178,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/unit_orders/move_units_dialog_base_row.dart',
   'app/lib/features/game/widgets/unit_orders/move_units_dialog_base_scaffold.dart',
   'app/lib/features/game/widgets/unit_orders/move_units_dialog_base_styles.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_build.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_list.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_resolution.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_row_card.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
-  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_labels.dart',
   'app/lib/features/game/widgets/units/military/military_units_panel.dart',
   'app/lib/features/game/widgets/units/military/military_units_panel_build.dart',
   'app/lib/features/game/widgets/units/military/military_units_panel_dialogs.dart',
