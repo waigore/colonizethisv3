@@ -1,8 +1,16 @@
+import 'dart:math' as math;
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:flutter/material.dart';
+import '../render/gp_ownership_tint_layer.dart';
+import 'region_map_boundary_visibility.dart';
+import 'region_map_component.dart';
+import 'region_map_component_shared_palette.dart';
+import 'region_map_component_support.dart';
+import 'region_map_province_overlay_geometry.dart';
 
-part of 'region_map_component.dart';
-
-extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
-  void _paintHoveredProvinceGlow(Canvas canvas) {
+extension CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
+  void paintHoveredProvinceGlow(Canvas canvas) {
     final t = session.hoverAnimationT;
     final opacity =
         RegionMapPalette.hoveredProvinceGlowOpacityMid +
@@ -26,8 +34,8 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           if (right.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: gateMapBoundariesByVisibility,
-              visibilityA: _visibilityForTerrain(cell),
-              visibilityB: _visibilityForTerrain(right),
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, right),
             )) {
               final xEdge = verticalProvinceTopologyEdgeX(
                 left: cell,
@@ -49,8 +57,8 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           if (bottom.regionCellId != provinceId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: gateMapBoundariesByVisibility,
-              visibilityA: _visibilityForTerrain(cell),
-              visibilityB: _visibilityForTerrain(bottom),
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, bottom),
             )) {
               final yEdge = horizontalProvinceTopologyEdgeY(
                 top: cell,
@@ -71,7 +79,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
     }
   }
 
-  void _paintGreatPowerLandOwnershipTint(Canvas canvas) {
+  void paintGreatPowerLandOwnershipTint(Canvas canvas) {
     paintGreatPowerOwnershipTintLayer(
       canvas: canvas,
       region: region,
@@ -81,7 +89,7 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
     );
   }
 
-  void _paintProvinceBorders(Canvas canvas) {
+  void paintProvinceBorders(Canvas canvas) {
     final coastInset = provinceOverlayLandSeaInsetPx(
       cellSizePx: cellSize,
       topologyStrokeWidth: kProvinceOverlayTopologyStrokeWidth,
@@ -98,8 +106,8 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           if (cell.regionCellId != right.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: gateMapBoundariesByVisibility,
-              visibilityA: _visibilityForTerrain(cell),
-              visibilityB: _visibilityForTerrain(right),
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, right),
             )) {
               paint.color = _provinceBorderColor(cell, right);
               final xEdge = verticalProvinceTopologyEdgeX(
@@ -122,8 +130,8 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
           if (cell.regionCellId != bottom.regionCellId) {
             if (regionMapDrawBoundaryBetweenAdjacentCells(
               gateByUnrevealedTiles: gateMapBoundariesByVisibility,
-              visibilityA: _visibilityForTerrain(cell),
-              visibilityB: _visibilityForTerrain(bottom),
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, bottom),
             )) {
               paint.color = _provinceBorderColor(cell, bottom);
               final yEdge = horizontalProvinceTopologyEdgeY(
@@ -151,5 +159,55 @@ extension _CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {
     if (aIsSea && bIsSea) return RegionMapPalette.provinceBorderSeaZoneColor;
     if (!aIsSea && !bIsSea) return RegionMapPalette.provinceBorderLandColor;
     return RegionMapPalette.provinceBorderSeaLandColor;
+  }
+}
+
+extension CtRegionMapRenderPoliticalBordersFaction on CtRegionMapComponent {
+  void paintFactionBorders(Canvas canvas) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = kProvinceOverlayPoliticalStrokeWidth
+      ..color = RegionMapPalette.factionPoliticalBorderColor;
+    for (var y = 0; y < region.height; y++) {
+      for (var x = 0; x < region.width; x++) {
+        final cell = region.cellAt(x, y);
+        if (cell.isSea) continue;
+        final owner = cell.ownerFactionId ?? '';
+        if (x + 1 < region.width) {
+          final right = region.cellAt(x + 1, y);
+          if (!right.isSea && (right.ownerFactionId ?? '') != owner) {
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, right),
+            )) {
+              final xEdge = (x + 1) * cellSize;
+              canvas.drawLine(
+                Offset(xEdge, y * cellSize),
+                Offset(xEdge, (y + 1) * cellSize),
+                paint,
+              );
+            }
+          }
+        }
+        if (y + 1 < region.height) {
+          final bottom = region.cellAt(x, y + 1);
+          if (!bottom.isSea && (bottom.ownerFactionId ?? '') != owner) {
+            if (regionMapDrawBoundaryBetweenAdjacentCells(
+              gateByUnrevealedTiles: gateMapBoundariesByVisibility,
+              visibilityA: regionMapComponentVisibilityForTerrain(this, cell),
+              visibilityB: regionMapComponentVisibilityForTerrain(this, bottom),
+            )) {
+              final yEdge = (y + 1) * cellSize;
+              canvas.drawLine(
+                Offset(x * cellSize, yEdge),
+                Offset((x + 1) * cellSize, yEdge),
+                paint,
+              );
+            }
+          }
+        }
+      }
+    }
   }
 }
