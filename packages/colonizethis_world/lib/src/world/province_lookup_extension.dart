@@ -112,7 +112,7 @@ extension WorldStateProvinceLookup on WorldState {
 
   Province getProvince(String fullProvinceId) {
     final resolved = resolveToFullProvinceId(fullProvinceId);
-    return getProvinceByRegion(
+    return this.getProvinceByRegion(
       ProvinceId.regionIdFrom(resolved),
       ProvinceId.localIdFrom(resolved),
     );
@@ -120,7 +120,7 @@ extension WorldStateProvinceLookup on WorldState {
 
   Province? tryGetProvince(String fullProvinceId) {
     if (!ProvinceId.isPrefixed(fullProvinceId)) return null;
-    return tryGetProvinceByRegion(
+    return this.tryGetProvinceByRegion(
       ProvinceId.regionIdFrom(fullProvinceId),
       ProvinceId.localIdFrom(fullProvinceId),
     );
