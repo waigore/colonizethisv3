@@ -1,6 +1,18 @@
-part of 'game_tab_bar.dart';
+// In-game shell tab bar state. SPEC/ui/empire-overview.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-class _GameTabBarState extends State<GameTabBar> {
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
+import 'game_tab_bar.dart';
+import 'game_tab_bar_indicators.dart';
+import 'game_tab_bar_region_tabs.dart';
+
+class GameTabBarState extends State<GameTabBar> {
   static final NumberFormat _exactTreasuryFormat =
       NumberFormat.decimalPattern();
   static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
@@ -86,7 +98,7 @@ class _GameTabBarState extends State<GameTabBar> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _GameRegionTab(
+                      GameRegionTab(
                         label: widget.oldWorldLabel,
                         selected: widget.regionIndex == 0,
                         onTap: () => widget.onRegionIndexChanged(0),
@@ -95,14 +107,14 @@ class _GameTabBarState extends State<GameTabBar> {
                       if (kCtE2EEnabled)
                         KeyedSubtree(
                           key: kCtE2ERegionTabNewWorldKey,
-                          child: _GameRegionTab(
+                          child: GameRegionTab(
                             label: widget.newWorldLabel,
                             selected: widget.regionIndex == 1,
                             onTap: () => widget.onRegionIndexChanged(1),
                           ),
                         )
                       else
-                        _GameRegionTab(
+                        GameRegionTab(
                           label: widget.newWorldLabel,
                           selected: widget.regionIndex == 1,
                           onTap: () => widget.onRegionIndexChanged(1),
@@ -121,7 +133,7 @@ class _GameTabBarState extends State<GameTabBar> {
                     : () => setState(
                           () => _showExactTreasury = !_showExactTreasury,
                         ),
-                child: _TreasuryIndicator(
+                child: GameTabBarTreasuryIndicator(
                   treasuryLabel: treasuryLabel,
                   deltaLabel: deltaLabel,
                   deltaColor: deltaColor,
@@ -134,7 +146,7 @@ class _GameTabBarState extends State<GameTabBar> {
                   ),
                 ),
               ),
-              _CargoHoldIndicator(
+              GameTabBarCargoHoldIndicator(
                 cargoHoldLabel: widget.cargoHoldLabel,
                 labelStyle: monoBody.copyWith(
                   color: EditorialMonoclePalette.muted,
