@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 307 app/lib files still using part directives.
+// Generated grandfather allowlist: 301 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -191,12 +191,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/units/military/military_units_panel_dialogs.dart',
   'app/lib/features/game/widgets/units/military/military_units_panel_support_army_tile.dart',
   'app/lib/features/game/widgets/units/military/military_units_panel_support_detail_rows.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel_build.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel_list.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
-  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   'app/lib/features/game/widgets/units/shared/units_entity_action_row.dart',
   'app/lib/features/game/widgets/units/shared/units_entity_action_row_actions.dart',
   'app/lib/features/shell/new_game_leader_selection_dialog.dart',
