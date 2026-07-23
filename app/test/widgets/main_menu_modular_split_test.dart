@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/main_menu_body.dart';
 import 'package:colonizethis_app/widgets/main_menu_constants.dart';
-import 'package:colonizethis_app/widgets/main_menu_types.dart';
+import 'package:colonizethis_app/widgets/main_menu_constants.dart';
 
 /// De-parted main-menu library seam checks (Refs #4117).
 void main() {

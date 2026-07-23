@@ -10,7 +10,7 @@ import '../../../../core/services/app_event_handler/app_event_handler_scope.dart
 import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel_order_actions_mood.dart';
 import 'diplomacy_panel_rows.dart';
-import 'diplomacy_panel_widget.dart';
+import 'diplomacy_panel_state.dart';
 
 mixin DiplomacyOrderActions
     on State<DiplomacyPanel>, DiplomacyOrderActionsMood {

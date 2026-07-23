@@ -6,8 +6,20 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/ct_spacing.dart';
-import 'diplomacy_panel_chrome_colors.dart';
+import 'diplomacy_panel_constants.dart';
 import 'diplomacy_panel_rows.dart';
+
+final Color diplomacyPanelWarBadgeBackground = oklchToColor(
+  const OklchToken(0.40, 0.06, 20),
+).withValues(alpha: 0.4);
+
+final Color diplomacyPanelPeaceBadgeBackground = oklchToColor(
+  const OklchToken(0.40, 0.06, 150),
+).withValues(alpha: 0.2);
+
+final Color diplomacyPanelAllianceBadgeBackground = oklchToColor(
+  kDiplomacyAllianceBadgeBgToken,
+).withValues(alpha: kDiplomacyAllianceBadgeAlpha);
 
 /// A single diplomatic standing chip rendered in the
 /// [DiplomacyStandingChipCluster]. Mirrors the WAR/PEACE/ALLIANCE badge chrome

@@ -5,7 +5,7 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import 'diplomacy_panel_chrome_colors.dart';
+import 'diplomacy_panel_chrome_standing.dart';
 import 'diplomacy_panel_constants.dart';
 
 /// Relation state chip rendered before the one-word relation label per

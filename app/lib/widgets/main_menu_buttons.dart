@@ -8,7 +8,6 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'ct_gradients.dart';
 import 'ct_nine_patch_button.dart';
 import 'main_menu_constants.dart';
-import 'main_menu_types.dart';
 
 class MainMenuButton extends StatelessWidget {
   const MainMenuButton({

@@ -6,9 +6,9 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 
 import 'main_menu_buttons.dart';
+import 'main_menu_constants.dart';
 import 'main_menu_footer.dart';
 import 'main_menu_scroll_bracket.dart';
-import 'main_menu_types.dart';
 
 class MainMenuBodyContent extends StatelessWidget {
   const MainMenuBodyContent({
@@ -89,16 +89,7 @@ class MainMenuBodyContent extends StatelessWidget {
     ];
   }
 
-  /// Builds the buttons region (New Game → Settings) for the active variant.
-  ///
-  /// In the `pixelArt` variant the column of wood-panel buttons is wrapped in
-  /// a [PixelArtButtonsRegion] so left/right ornamental scroll brackets can
-  /// flank the panel at `kMainMenuScrollBracketGutter` outside each edge,
-  /// painted across the middle `1 - 2 * kMainMenuScrollBracketVerticalInset`
-  /// fraction of the region height (`SPEC/ui/main-menu.md` § Buttons region;
-  /// mockup `.buttons-region::before` / `::after`). In the `plain` variant
-  /// the buttons render as a plain `Column` with no scroll-bracket chrome
-  /// per the Variant rendering table.
+  /// Builds the buttons region for the active variant.
   Widget _buttonsRegion(BuildContext context) {
     final l10n = appL10n(context);
     final List<Widget> buttons = <Widget>[

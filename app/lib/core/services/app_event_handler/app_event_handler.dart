@@ -27,12 +27,39 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/turn_resolution_blocking_provider.dart';
 import '../subscription_tracker.dart';
-import 'app_event_handler_navigation.dart';
-import 'app_event_handler_state.dart';
 import 'app_event_handler_unit_panels.dart';
 
-export 'app_event_handler_state.dart'
-    show DialogBuilder, NavigatorKeyDialogBuilder, AppEventHandlerState;
+typedef DialogBuilder =
+    Widget Function(BuildContext context, Map<String, Object?>? params);
+
+/// Factory for a feature-layer [DialogBuilder] that needs the app navigator
+/// key.
+typedef NavigatorKeyDialogBuilder =
+    DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
+
+/// Mutable session fields shared by de-parted [AppEventHandler] libraries.
+class AppEventHandlerState {
+  AppEventHandlerState({
+    required this.bus,
+    required this.navigatorKey,
+    required this.dialogBuilders,
+    required this.panelBuilders,
+    this.onShowSnackBar,
+    this.onShowOverlay,
+    this.onDismissOverlay,
+    this.onNotify,
+  });
+
+  final AppEventBus bus;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Map<String, DialogBuilder> dialogBuilders;
+  final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
+      panelBuilders;
+  final void Function(ShowSnackBarEvent)? onShowSnackBar;
+  final void Function(ShowOverlayEvent)? onShowOverlay;
+  final void Function(DismissOverlayEvent)? onDismissOverlay;
+  final void Function(NotifyEvent)? onNotify;
+}
 
 final _log = packageLogger('event');
 

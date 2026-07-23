@@ -5,7 +5,7 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'diplomacy_panel_widget.dart';
+import 'diplomacy_panel_state.dart';
 import 'fnv1a_hash_constants.dart';
 
 mixin DiplomacyOrderActionsMood on State<DiplomacyPanel> {

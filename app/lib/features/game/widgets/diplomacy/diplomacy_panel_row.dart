@@ -98,18 +98,6 @@ class DiplomacyRow extends StatelessWidget {
   }
 
   Widget _buildHeaderRow(BuildContext context) {
-    // SPEC/ui/mobile-adaptation.md § 7 Minimum-viewport pin: at
-    // `kMinViewportWidth` (320 dp) the inner Row width is ~262 dp once the
-    // ListView, row padding, and chrome border are subtracted. A long
-    // faction display name (e.g. `Holy Roman Empire`) plus the
-    // `DiplomacyFactionKindBadge` chip exceeds that budget without a shrinkable
-    // child, producing the documented overflow. Wrap the name in
-    // `Flexible` + `TextOverflow.ellipsis` so the name absorbs all
-    // available width and shrinks gracefully at narrow viewports while
-    // the chip retains its natural size for legibility. The Great Power
-    // power comparison no longer lives here — it renders on the dedicated
-    // relative-power line below the header (SPEC/ui/diplomacy-panel.md
-    // § Relative power line).
     return Row(
       children: [
         Flexible(
@@ -128,10 +116,6 @@ class DiplomacyRow extends StatelessWidget {
     );
   }
 
-  /// Renders the Great Power relative-power line between the header and the
-  /// relation row per SPEC/ui/diplomacy-panel.md § Relative power line. Only
-  /// Great Power rows carry the comparison scores; Minor / Tribe rows omit
-  /// the line entirely.
   List<Widget> _buildRelativePowerLine(BuildContext context) {
     final int? gpScore = data.powerScore;
     final int? playerScore = data.playerPowerScore;
@@ -142,8 +126,6 @@ class DiplomacyRow extends StatelessWidget {
     return [const SizedBox(height: 4), RelativePowerLine(pct: pct)];
   }
 
-  /// Renders the relation summary row per SPEC/ui/diplomacy-panel.md
-  /// § Relation state badge + § Per-faction row + § Relation word styling.
   Widget _buildRelationRow(BuildContext context) {
     final TextStyle bodySmall =
         Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);

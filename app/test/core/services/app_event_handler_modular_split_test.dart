@@ -2,8 +2,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_navigation.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_state.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_unit_panels.dart';
 
 /// De-parted [AppEventHandler] library seam checks (Refs #4117).

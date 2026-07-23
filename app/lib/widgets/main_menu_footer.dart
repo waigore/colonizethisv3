@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import 'ct_nine_patch_button.dart';
+import 'main_menu_constants.dart';
 import 'main_menu_footer_quit_button.dart';
-import 'main_menu_types.dart';
 
 /// Footer region for both variants. Renders the version text above a Quit
 /// control; in the `pixelArt` variant the Quit control is the smaller,

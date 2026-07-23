@@ -1,3 +1,4 @@
+import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../config/routes.dart';
+import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
+import '../../../features/game/widgets/panels/pause_menu_panel.dart';
 import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
@@ -15,20 +20,155 @@ import '../../../features/game/widgets/units/shared/units_panel_viewport_constra
 import '../../../providers/app_event_bus_provider.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
+import '../../../widgets/ct_confirm_dialog.dart';
+import '../game_session_clear.dart';
 import 'app_event_handler.dart';
 
-/// Result of a unit-panel sheet body builder: either an early [replacement]
-/// (e.g. observe-mode sentinel) or the [panel] widget to wrap in sheet chrome.
+final _log = packageLogger('event');
+
+const _observeBlockedDialogIds = {
+  'train_civilians',
+  'train_military',
+  'grant_or_subsidy',
+};
+
+Future<void> appEventHandlerOpenDialog(
+  AppEventHandler handler,
+  OpenDialogEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) return;
+  final state = handler.state;
+  if (_observeBlockedDialogIds.contains(event.dialogId)) {
+    final ctx = nav.context;
+    final container = ProviderScope.containerOf(ctx);
+    if (!container.read(shellPlayerContextProvider).canMutateViaUi) {
+      state.onShowSnackBar?.call(
+        const ShowSnackBarEvent(
+          message: 'Observe mode: UI actions are read-only.',
+        ),
+      );
+      return;
+    }
+  }
+  final builder = state.dialogBuilders[event.dialogId];
+  if (builder == null) {
+    debugPrint('[AppEventHandler] No dialog builder for: ${event.dialogId}');
+    return;
+  }
+  await showDialog<void>(
+    context: nav.context,
+    builder: (ctx) => builder(ctx, event.params),
+  );
+}
+
+Future<bool> appEventHandlerShowConfirmDialog(
+  AppEventHandler handler,
+  ConfirmDialogEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) {
+    event.result(false);
+    return false;
+  }
+  try {
+    final confirmed = await showCtConfirmDialog(
+      nav.context,
+      title: event.title,
+      message: event.message,
+      confirmLabel: event.confirmLabel,
+      cancelLabel: event.cancelLabel,
+    );
+    event.result(confirmed);
+    return confirmed;
+  } catch (e, st) {
+    _log.e('ConfirmDialog failed', error: e, stackTrace: st);
+    event.result(false);
+    return false;
+  }
+}
+
+Future<void> appEventHandlerOpenPanel(
+  AppEventHandler handler,
+  OpenPanelEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) return;
+  final builder = handler.state.panelBuilders[event.panelId];
+  if (builder == null) {
+    debugPrint('[AppEventHandler] No panel builder for: ${event.panelId}');
+    return;
+  }
+  await showModalBottomSheet<void>(
+    context: nav.context,
+    builder: (ctx) => builder(ctx, event.params),
+  );
+}
+
+Future<void> appEventHandlerOpenPauseMenuPanel(
+  AppEventHandler handler,
+  OpenPauseMenuPanelEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) return;
+  await showDialog<void>(
+    context: nav.context,
+    useRootNavigator: true,
+    barrierColor: EditorialMonoclePalette.dialogScrim,
+    builder: (ctx) => PauseMenuPanel(bus: handler.state.bus),
+  );
+}
+
+void appEventHandlerRequestExitToMainMenuFlow(
+  AppEventHandler handler,
+  NavigatorState? nav,
+) {
+  if (nav == null) return;
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final state = handler.state.navigatorKey.currentState;
+    final ctx = state?.context;
+    if (state == null || ctx == null || !ctx.mounted) return;
+    final confirmed = await showExitToMainMenuConfirmDialog(ctx);
+    if (!confirmed) return;
+    handler.state.bus.emit(const NavigateToShellEvent());
+  });
+}
+
+void appEventHandlerNavigateToShell(
+  AppEventHandler handler,
+  NavigatorState? nav,
+) {
+  if (nav == null) return;
+  final ctx = nav.context;
+  if (ctx.mounted) {
+    try {
+      final container = ProviderScope.containerOf(ctx, listen: false);
+      clearActiveGameSession(container);
+    } catch (e, st) {
+      _log.d(
+        'navigateToShell: skipped in-memory game clear (no ProviderScope)',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+  var foundShellRoute = false;
+  nav.popUntil((route) {
+    final matches = route.settings.name == Routes.shell;
+    if (matches) {
+      foundShellRoute = true;
+    }
+    return matches;
+  });
+  if (!foundShellRoute) {
+    nav.pushNamedAndRemoveUntil(Routes.shell, (route) => false);
+  }
+}
+
+/// Result of a unit-panel sheet body builder.
 typedef UnitsPanelSheetBody = ({Widget? replacement, Widget? panel});
 
 /// Shared bottom-sheet host for civilian / military / naval unit panels.
-///
-/// Owns transparent Material chrome, [UnitsPanelSheetSurface], host
-/// [ConstrainedBox] sizing, and the [UnitsPanelClosedEvent] emission.
-/// Panel bodies (and military/naval observe-mode sentinels) are injected via
-/// [buildBody]. Civilian-only E2E height override is gated by
-/// [applyCivilianE2eHeightOverride]. Refs #4035 AC1 /
-/// SPEC/ui/components/units-panel-shell.md.
 Future<void> appEventHandlerShowUnitsPanelSheet(
   AppEventHandler handler, {
   required NavigatorState nav,
@@ -45,10 +185,6 @@ Future<void> appEventHandlerShowUnitsPanelSheet(
   await showModalBottomSheet<void>(
     context: nav.context,
     isScrollControlled: true,
-    // Transparent Material surface so UnitsPanelSheetSurface owns the
-    // mockup `.sheet` chrome (gradient + 2 px accent-dim top edge + 4 dp
-    // top radius). SPEC/ui/components/units-panel-shell.md § Bottom-sheet
-    // host chrome (#3514 owner decision #4).
     backgroundColor: Colors.transparent,
     elevation: 0,
     builder: (ctx) => Consumer(
@@ -177,8 +313,7 @@ Future<void> appEventHandlerOpenNavalUnitsPanel(
     handler,
     nav: nav,
     panelKind: 'naval',
-    // Keep the last naval snapshot after close; refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled
-    // updates it post–next-turn so fleet E2E can skip reopening the panel (Refs #2336).
+    // Keep the last naval snapshot after close for fleet E2E (Refs #2336).
     buildBody: (context, ref, game) {
       final shell = ref.read(shellPlayerContextProvider);
       final sentinel = observeNotDefinedSentinel(shell, 'Naval Units');

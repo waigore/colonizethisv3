@@ -7,10 +7,9 @@ import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
 import 'main_menu_body.dart';
 import 'main_menu_body_logo.dart';
-import 'main_menu_types.dart';
+import 'main_menu_constants.dart';
 
 export 'main_menu_constants.dart';
-export 'main_menu_types.dart';
 
 /// Main menu screen. Full-screen layout per UXD 03a wireframes.
 /// Callbacks are supplied by the shell; widget does not perform routing.

@@ -1,16 +1,57 @@
-// Diplomacy panel state. SPEC/ui/diplomacy-panel.md.
+// Diplomacy panel. SPEC/ui/diplomacy-panel.md.
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/services/subscription_tracker.dart';
+import '../panels/game_panel_contract.dart';
 import 'diplomacy_panel_body.dart';
 import 'diplomacy_panel_filter.dart';
 import 'diplomacy_panel_mode_bar.dart';
 import 'diplomacy_panel_order_actions.dart';
 import 'diplomacy_panel_order_actions_mood.dart';
 import 'diplomacy_panel_rows.dart';
-import 'diplomacy_panel_widget.dart';
+
+export 'diplomacy_panel_chrome_relation_badges.dart'
+    show DiplomacyAllianceBadge;
+export 'diplomacy_panel_chrome_standing.dart'
+    show DiplomacyStandingChipCluster;
+export 'diplomacy_panel_constants.dart';
+export 'diplomacy_panel_rows.dart';
+export 'relative_power_line.dart';
+
+/// Full-page diplomacy panel. SPEC/ui/diplomacy-panel.md.
+class DiplomacyPanel extends StatefulWidget with GamePanelMixin {
+  const DiplomacyPanel({
+    super.key,
+    required this.game,
+    required this.humanPlayerId,
+    required this.topology,
+    required this.currentOrders,
+    required this.bus,
+    this.onClose,
+    this.readOnly = false,
+  });
+
+  static const screenId = UiScreenIds.diplomacyScreen;
+
+  @override
+  final Game game;
+  @override
+  final String humanPlayerId;
+  final MapTopology topology;
+  final Orders currentOrders;
+  @override
+  final AppEventBus bus;
+  final VoidCallback? onClose;
+  @override
+  final bool readOnly;
+
+  @override
+  State<DiplomacyPanel> createState() => DiplomacyPanelState();
+}
 
 class DiplomacyPanelState extends State<DiplomacyPanel>
     with DiplomacyOrderActionsMood, DiplomacyOrderActions {

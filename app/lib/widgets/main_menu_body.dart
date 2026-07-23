@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import 'main_menu_body_content.dart';
 import 'main_menu_constants.dart';
-import 'main_menu_types.dart';
 
 class MainMenuBody extends StatelessWidget {
   const MainMenuBody({
