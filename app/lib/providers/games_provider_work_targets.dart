@@ -1,4 +1,10 @@
-part of 'games_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../features/game/widgets/shell/shell_player_context.dart';
+import 'game_service_provider.dart';
+import 'games_provider_current_game.dart';
 
 /// Sorted work target ids for one civilian unit that have ≥1 valid tile
 /// (selected-unit availability). SPEC/program/order-suggestions.md (Refs #2133).
@@ -29,7 +35,7 @@ final availableWorkTargetIdsForUnitProvider =
       ).availableWorkTargetIdsSorted();
     });
 
-/// Tile keys reserved for the human player’s Builder/Engineer/Merchant
+/// Tile keys reserved for the human player's Builder/Engineer/Merchant
 /// exclusivity (in-progress work + pending dev-exclusive work orders).
 ///
 /// **SPEC/program/order-suggestions.md** § Dev-exclusive tile reservations.

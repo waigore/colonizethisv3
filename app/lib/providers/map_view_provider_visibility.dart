@@ -1,4 +1,6 @@
-part of 'map_view_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/utils/state_toggle_notifier.dart';
 
 /// Global province/sea boundary strokes on in-game Empire overview maps.
 /// Defaults to true at app start; updated via the Map display options dialog.
