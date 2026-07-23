@@ -1,53 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
+
 import '../config/themes.dart';
 import '../config/ui_screen_ids.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_compass_rose.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_fleur_de_lis_ornament.dart';
-import 'ct_gradients.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
-import 'ct_nine_patch_button.dart';
+import 'main_menu_body.dart';
+import 'main_menu_body_logo.dart';
+import 'main_menu_types.dart';
 
-part 'main_menu_constants.dart';
-part 'main_menu_body.dart';
-part 'main_menu_body_logo.dart';
-part 'main_menu_body_content.dart';
-part 'main_menu_buttons.dart';
-part 'main_menu_footer.dart';
-part 'main_menu_footer_quit_button.dart';
-part 'main_menu_scroll_bracket.dart';
-
-/// Visual variant of the main menu. SPEC/ui/main-menu.md; UXD 03a.
-enum MainMenuVariant {
-  /// Theme-scaffold only fallback: standard Flutter widgets with the
-  /// running app theme; no SVG collage, no compass rose, no fleur-de-lis,
-  /// no brass divider, no scroll brackets, no wood-panel chrome. See
-  /// `SPEC/ui/main-menu.md` § Variant rendering.
-  plain,
-
-  /// Dark editorial-monocle layout per
-  /// `SPEC/ui/mockups/SHEL10002-main-menu.html`: [CtMainMenuCollage]
-  /// background, [CtCompassRose] above the title row, title flanked by two
-  /// [CtFleurDeLisOrnament]s, [CtBrassDivider] between the logo region and
-  /// the buttons region. Rendered under [AppThemes.editorialMonocle] and
-  /// [EditorialMonoclePalette] tokens.
-  pixelArt,
-}
-
-/// Content state of the main menu. SPEC/ui/main-menu.md; UXD 03a.
-enum MainMenuState {
-  /// Default: no subtitle; Load Game always enabled (empty dialog when no saves).
-  default_,
-
-  /// After victory: show subtitle "Congratulations, you won your last game."
-  afterVictory,
-
-  /// Legacy Widgetbook variant; Load Game remains enabled on the product path.
-  noSaves,
-}
+export 'main_menu_constants.dart';
+export 'main_menu_types.dart';
 
 /// Main menu screen. Full-screen layout per UXD 03a wireframes.
 /// Callbacks are supplied by the shell; widget does not perform routing.
@@ -87,7 +50,7 @@ class CtMainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = _MainMenuBody(
+    final content = MainMenuBody(
       variant: variant,
       showAfterVictorySubtitle: _showAfterVictorySubtitle,
       loadGameEnabled: _loadGameEnabled,
@@ -128,6 +91,6 @@ class CtMainMenu extends StatelessWidget {
         textAlign: TextAlign.center,
       );
     }
-    return _PixelArtLogoRegion(title: appL10n(context).mainMenu_title);
+    return PixelArtLogoRegion(title: appL10n(context).mainMenu_title);
   }
 }

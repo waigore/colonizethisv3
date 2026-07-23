@@ -1,4 +1,6 @@
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Narrow-viewport breakpoint for the main menu in logical pixels.
 ///
