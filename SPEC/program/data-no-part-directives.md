@@ -6,9 +6,9 @@ grandfather allowlist while wave-4 de-part slices land.
 
 ## Motivation
 
-`packages/colonizethis_data` still has residual `part of` clusters (`tech_catalog`,
-and formerly `combat_config` / `naming_rules`). Per #4121 those clusters are
-being converted into proper libraries with explicit imports. The `part of`
+`packages/colonizethis_data` had residual `part of` clusters (`tech_catalog`,
+`combat_config`, `naming_rules`). Per #4121 those clusters are being converted
+into proper libraries with explicit imports. The `part of`
 pattern couples every fragment to a single library's implicit namespace and
 makes individual helpers harder to test in isolation. This gate blocks new
 `part` directives outside the grandfather while migration completes, matching
