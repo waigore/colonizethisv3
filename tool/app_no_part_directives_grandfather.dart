@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 281 app/lib files still using part directives.
+// Generated grandfather allowlist: 275 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -42,12 +42,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution_session.dart',
   'app/lib/features/game/flame/map_state/game_map_area_view.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap_gestures.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap_painter.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap_toggle_button.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap_visible_panel.dart',
-  'app/lib/features/game/flame/minimap/game_region_minimap_zoom_controls.dart',
   'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
   'app/lib/features/game/flame/overlays/debug_console_overlay_panel_state.dart',
   'app/lib/features/game/flame/overlays/province_detail_overlay_host_support.dart',
