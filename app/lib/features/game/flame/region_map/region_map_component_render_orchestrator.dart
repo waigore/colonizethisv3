@@ -3,12 +3,7 @@ part of 'region_map_component.dart';
 
 extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
   TileVisibility _visibilityForTerrain(CellViewData cell) {
-    return visibilityForTerrainForMapCell(
-      visibilityMode: visibilityMode,
-      cell: cell,
-      fleetTileMarkers: region.fleetTileMarkers,
-      civilianTileMarkers: region.civilianTileMarkers,
-    );
+    return regionMapComponentVisibilityForTerrain(this, cell);
   }
 
   void _renderRegionMap(Canvas canvas) {
@@ -30,25 +25,29 @@ extension _CtRegionMapRenderOrchestrator on CtRegionMapComponent {
       _paintProvinceNames(canvas);
       _paintSeaZoneNames(canvas);
     }
-    _paintCapitals(canvas);
-    _paintTowns(canvas);
-    _paintWarpZones(canvas);
-    _paintCivilianTileMarkers(canvas);
-    _paintFleetTileMarkers(canvas);
+    regionMapComponentPaintCapitals(this, canvas);
+    regionMapComponentPaintTowns(this, canvas);
+    regionMapComponentPaintWarpZones(this, canvas);
+    regionMapComponentPaintCivilianTileMarkers(this, canvas);
+    regionMapComponentPaintFleetTileMarkers(this, canvas);
     if (session.hoveredTileX != null && session.hoveredTileY != null) {
-      _paintSelector(canvas);
+      regionMapComponentPaintSelector(this, canvas);
     }
     if (selectedTileKey != null) {
-      _paintSelectedTile(canvas);
+      regionMapComponentPaintSelectedTile(this, canvas);
     }
     final multiSecondary = secondaryHighlightTileKeys;
     if (multiSecondary != null && multiSecondary.isNotEmpty) {
-      _paintSecondaryHighlightTiles(canvas, multiSecondary);
+      regionMapComponentPaintSecondaryHighlightTiles(
+        this,
+        canvas,
+        multiSecondary,
+      );
     } else if (secondaryHighlightTileKey != null) {
-      _paintSecondaryHighlightTile(canvas);
+      regionMapComponentPaintSecondaryHighlightTile(this, canvas);
     }
     if (validTileKeys != null && validTileKeys!.isNotEmpty) {
-      _paintValidTilesGlow(canvas);
+      regionMapComponentPaintValidTilesGlow(this, canvas);
     }
   }
 }
