@@ -1,20 +1,25 @@
+// Turn-resolution worker session orchestration (Refs #2277).
+//
+// De-parted wave-9 cluster (Refs #4117): explicit-import libraries replace the
+// former 3-part library. Public surface: [TurnResolutionRunner] and session
+// event types re-exported from [turn_resolution_runner_types.dart].
+
 import 'dart:async';
 import 'dart:isolate';
 
 import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/ai/ai_profile_resolution.dart';
-import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'turn_resolution_result_codec.dart';
+import 'turn_resolution_runner_isolate_listener.dart';
+import 'turn_resolution_runner_logging.dart';
+import 'turn_resolution_runner_types.dart';
 import 'turn_resolution_worker_isolate.dart';
 
-part 'turn_resolution_runner_types.dart';
-part 'turn_resolution_runner_isolate_listener.dart';
-
-final _runnerLog = packageLogger('logic');
+export 'turn_resolution_runner_types.dart';
 
 class TurnResolutionRunner {
   TurnResolutionRunner({this.inspectSuccessIsolateEnvelope});
@@ -57,7 +62,7 @@ class TurnResolutionRunner {
     final topologyJson = topology.toJson();
     final tileMapJson = tileMapByRegion.map((k, v) => MapEntry(k, v.toJson()));
     final aiProfilesJson = encodeAiProfilesForIsolate(aiProfiles);
-    _runnerLog.i(
+    turnResolutionRunnerLog.i(
       'logic: turn_resolution_runner session_start sessionId=$sessionId '
       'gameId=${game.id} turnTraceEnabled=$turnTraceEnabled '
       'payloadBytes='
@@ -96,7 +101,7 @@ class TurnResolutionRunner {
 
     try {
       sub = receivePort.listen((dynamic message) {
-        _handleIsolateMessage(
+        handleTurnResolutionIsolateMessage(
           message: message,
           sessionId: sessionId,
           sessionStopwatch: sessionStopwatch,
@@ -118,13 +123,13 @@ class TurnResolutionRunner {
           })
           .then((spawned) {
             isolate = spawned;
-            _runnerLog.d(
+            turnResolutionRunnerLog.d(
               'logic: turn_resolution_runner isolate_spawned '
               'sessionId=$sessionId',
             );
           })
           .catchError((Object e, StackTrace st) async {
-            _runnerLog.e(
+            turnResolutionRunnerLog.e(
               'logic: turn_resolution_runner isolate_spawn_failed '
               'sessionId=$sessionId',
               error: e,
@@ -140,7 +145,7 @@ class TurnResolutionRunner {
             await cleanup();
           });
     } on Object catch (e, st) {
-      _runnerLog.e(
+      turnResolutionRunnerLog.e(
         'logic: turn_resolution_runner session_start_failed '
         'sessionId=$sessionId',
         error: e,
