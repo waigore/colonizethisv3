@@ -1,23 +1,20 @@
-part of 'save_game_name_dialog.dart';
+// Save-game name dialog body (Refs #4117).
 
-extension on _SaveGameNameDialogState {
-  void _persist(String saveGameId, String displayName) {
-    final game = ref.read(currentGameProvider);
-    if (game == null) return;
-    ref.read(gameServiceProvider).saveGameSession(
-      sessionGame: game,
-      saveGameId: saveGameId,
-      draftOrders: ref.read(currentOrdersProvider),
-      productionDesiredOutputByRecipe: ref.read(productionDesiredOutputProvider),
-      displayName: displayName,
-    );
-    ref.read(appEventBusProvider).emit(
-      ShowSnackBarEvent(message: appL10n(context).saveGameName_gameSaved),
-    );
-    if (mounted) Navigator.of(context).pop();
-  }
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-  Widget _actionRow({
+import 'package:colonizethis_app/widgets/ct_gap.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+import 'save_game_name_dialog_state_base.dart';
+import 'save_game_name_dialog_widget.dart';
+
+mixin SaveGameNameDialogBody
+    on ConsumerState<SaveGameNameDialog>, SaveGameNameDialogStateBase {
+  Widget actionRow({
     required Key cancelKey,
     required Key confirmKey,
     required VoidCallback onCancel,
@@ -42,7 +39,7 @@ extension on _SaveGameNameDialogState {
         ],
       );
 
-  Widget _dialogBody(AppLocalizations l10n) {
+  Widget dialogBody(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final titleStyle = (theme.textTheme.titleMedium ?? const TextStyle())
         .copyWith(
@@ -63,7 +60,7 @@ extension on _SaveGameNameDialogState {
         CtGap.ml,
         TextField(
           key: SaveGameNameDialog.nameFieldKey,
-          controller: _controller,
+          controller: nameController,
           style: bodyStyle,
           decoration: InputDecoration(
             isDense: true,
@@ -78,18 +75,20 @@ extension on _SaveGameNameDialogState {
             ),
           ),
           onChanged: (_) {
-            if (_errorText != null || _awaitingOverwrite) _setFeedback();
+            if (errorText != null || awaitingOverwrite) {
+              setFeedback();
+            }
           },
         ),
-        if (_errorText != null) ...[
+        if (errorText != null) ...[
           CtGap.m,
           Text(
-            _errorText!,
+            errorText!,
             key: SaveGameNameDialog.errorTextKey,
             style: bodyStyle.copyWith(color: EditorialMonoclePalette.danger),
           ),
         ],
-        if (_awaitingOverwrite) ...[
+        if (awaitingOverwrite) ...[
           CtGap.m,
           Text(
             l10n.saveGameName_overwriteConfirm,
@@ -97,21 +96,21 @@ extension on _SaveGameNameDialogState {
             style: bodyStyle,
           ),
           CtGap.m,
-          _actionRow(
+          actionRow(
             cancelKey: SaveGameNameDialog.overwriteCancelButtonKey,
             confirmKey: SaveGameNameDialog.overwriteConfirmButtonKey,
-            onCancel: _onOverwriteCancel,
-            onConfirm: _onOverwriteConfirm,
+            onCancel: onOverwriteCancel,
+            onConfirm: onOverwriteConfirm,
             cancelLabel: l10n.common_cancel,
             confirmLabel: l10n.saveGameName_overwrite,
           ),
         ] else ...[
           CtGap.l,
-          _actionRow(
+          actionRow(
             cancelKey: SaveGameNameDialog.cancelButtonKey,
             confirmKey: SaveGameNameDialog.saveButtonKey,
-            onCancel: _onCancel,
-            onConfirm: _onSavePressed,
+            onCancel: onCancel,
+            onConfirm: onSavePressed,
             cancelLabel: l10n.common_cancel,
             confirmLabel: l10n.saveGameName_save,
           ),

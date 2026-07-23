@@ -1,7 +1,26 @@
-part of 'load_game_list_dialog.dart';
+// Load-game list dialog list/pager body (Refs #4117).
 
-extension _LoadGameListDialogBody on _LoadGameListDialogState {
-  List<Widget> _listAndPagerChildren({
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app/widgets/ct_gap.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+import 'load_game_list_dialog_row.dart';
+import 'load_game_list_dialog_state_base.dart';
+import 'load_game_list_dialog_widget.dart';
+
+mixin LoadGameListDialogBody
+    on
+        ConsumerState<LoadGameListDialog>,
+        LoadGameListDialogStateBase,
+        LoadGameListDialogRow {
+  List<Widget> listAndPagerChildren({
     required AppLocalizations l10n,
     required TextStyle bodyStyle,
     required TextStyle mutedStyle,
@@ -55,7 +74,7 @@ extension _LoadGameListDialogBody on _LoadGameListDialogState {
                         ),
                       ),
                       const SizedBox(height: CtSpacing.s),
-                      _rowContent(
+                      rowContent(
                         l10n: l10n,
                         bodyStyle: bodyStyle,
                         mutedStyle: mutedStyle,
@@ -72,7 +91,7 @@ extension _LoadGameListDialogBody on _LoadGameListDialogState {
               ],
               for (var i = 0; i < pageManuals.length; i++) ...[
                 if (i > 0) CtGap.m,
-                _rowContent(
+                rowContent(
                   l10n: l10n,
                   bodyStyle: bodyStyle,
                   mutedStyle: mutedStyle,
@@ -91,7 +110,7 @@ extension _LoadGameListDialogBody on _LoadGameListDialogState {
               key: LoadGameListDialog.previousButtonKey,
               onPressed: pageIndex <= 0
                   ? null
-                  : () => setState(() => _manualPageIndex = pageIndex - 1),
+                  : () => setState(() => manualPageIndex = pageIndex - 1),
               child: Text(l10n.loadGameList_previous),
             ),
             Expanded(
@@ -106,7 +125,7 @@ extension _LoadGameListDialogBody on _LoadGameListDialogState {
               key: LoadGameListDialog.nextButtonKey,
               onPressed: pageIndex >= pageCount - 1
                   ? null
-                  : () => setState(() => _manualPageIndex = pageIndex + 1),
+                  : () => setState(() => manualPageIndex = pageIndex + 1),
               child: Text(l10n.loadGameList_next),
             ),
           ],

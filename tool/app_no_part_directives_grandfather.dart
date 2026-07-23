@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 82 app/lib files still using part directives.
+// Generated grandfather allowlist: 76 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -71,12 +71,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/shell/new_game_setup_flow.dart',
   'app/lib/features/shell/new_game_setup_flow_dialogs_error.dart',
   'app/lib/features/shell/new_game_setup_flow_dialogs_progress.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_body.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_confirm.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_row.dart',
-  'app/lib/features/shell/save_load/save_game_name_dialog.dart',
-  'app/lib/features/shell/save_load/save_game_name_dialog_body.dart',
   'app/lib/widgets/ct_dropdown.dart',
   'app/lib/widgets/ct_dropdown_picker.dart',
   'app/lib/widgets/ct_dropdown_trigger.dart',
