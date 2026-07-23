@@ -1202,6 +1202,13 @@ rules:
     runner: dart
     script: tool/check_data_no_part_directives.dart
 
+  - rule_id: repo.data_test_file_size
+    group: testing
+    title: colonizethis_data test files must stay at or below 500 physical lines (Refs #4121)
+    spec: SPEC/program/data-test-file-size.md
+    runner: dart
+    script: tool/check_data_test_file_size.dart
+
   - rule_id: repo.data_victory_config_registry_parity
     group: game_invariants
     title: Every ai_victory_config scalar const int/double k* has a victoryConfigParams entry (Refs #4072)
