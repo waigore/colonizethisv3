@@ -1,6 +1,16 @@
-part of 'victory_overlay.dart';
+// Victory overlay panel action row and laurel decoration.
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-extension _VictoryPanelActions on VictoryPanel {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_nine_patch_button.dart';
+import 'victory_overlay_panel.dart';
+
+extension VictoryPanelActions on VictoryPanel {
   Widget buildActionRow(
     BuildContext context,
     AppLocalizations l10n, {
@@ -53,8 +63,8 @@ extension _VictoryPanelActions on VictoryPanel {
 /// [VictoryPanel.laurelFontSizeWide] otherwise. SPEC/ui/victory-overlay.md
 /// § Narrow viewport pins both values (lower-bound of the mockup's
 /// `clamp(24px,5vw,36px)` for narrow; default for wide).
-class _VictoryLaurelRow extends StatelessWidget {
-  const _VictoryLaurelRow({required this.narrow});
+class VictoryLaurelRow extends StatelessWidget {
+  const VictoryLaurelRow({required this.narrow, super.key});
 
   final bool narrow;
 

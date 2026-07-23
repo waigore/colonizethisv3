@@ -1,14 +1,21 @@
-part of 'victory_overlay.dart';
+// Victory overlay corner-bracket ornaments.
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-enum _CornerSide { topLeft, bottomRight }
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'victory_overlay_panel.dart';
+
+enum VictoryCornerSide { topLeft, bottomRight }
 
 /// Asymmetric corner-bracket ornament drawn for the top-left and
 /// bottom-right corners of the victory panel surface. Renders a 1.5px brass
 /// L-shape at `cornerBracketAlpha` opacity.
-class _VictoryCornerBracket extends StatelessWidget {
-  const _VictoryCornerBracket({required this.corner});
+class VictoryCornerBracket extends StatelessWidget {
+  const VictoryCornerBracket({required this.corner, super.key});
 
-  final _CornerSide corner;
+  final VictoryCornerSide corner;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,7 @@ class _VictoryCornerBracketPainter extends CustomPainter {
 
   final Color color;
   final double stroke;
-  final _CornerSide corner;
+  final VictoryCornerSide corner;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -48,7 +55,7 @@ class _VictoryCornerBracketPainter extends CustomPainter {
 
     final double half = stroke / 2;
     switch (corner) {
-      case _CornerSide.topLeft:
+      case VictoryCornerSide.topLeft:
         canvas.drawLine(
           Offset(0, half),
           Offset(size.width, half),
@@ -60,7 +67,7 @@ class _VictoryCornerBracketPainter extends CustomPainter {
           paint,
         );
         break;
-      case _CornerSide.bottomRight:
+      case VictoryCornerSide.bottomRight:
         canvas.drawLine(
           Offset(0, size.height - half),
           Offset(size.width, size.height - half),

@@ -1,4 +1,19 @@
-part of 'victory_overlay.dart';
+// Victory overlay ceremonial panel.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:flutter/material.dart';
+
+import '../../../../config/constants.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'victory_overlay_panel_actions.dart';
+import 'victory_overlay_panel_corners.dart';
 
 /// Brass-bordered ceremonial panel for the military victory overlay.
 ///
@@ -58,12 +73,12 @@ class VictoryPanel extends StatelessWidget {
             const Positioned(
               top: cornerBracketInset,
               left: cornerBracketInset,
-              child: _VictoryCornerBracket(corner: _CornerSide.topLeft),
+              child: VictoryCornerBracket(corner: VictoryCornerSide.topLeft),
             ),
             const Positioned(
               bottom: cornerBracketInset,
               right: cornerBracketInset,
-              child: _VictoryCornerBracket(corner: _CornerSide.bottomRight),
+              child: VictoryCornerBracket(corner: VictoryCornerSide.bottomRight),
             ),
           ],
         ),
@@ -110,7 +125,7 @@ class VictoryPanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _VictoryLaurelRow(narrow: narrow),
+        VictoryLaurelRow(narrow: narrow),
         const SizedBox(height: 10),
         Text(
           victoryLabel.toUpperCase(),
