@@ -1,10 +1,19 @@
 /// Diplomatic order submission and negotiation-mood handlers.
 /// SPEC/ui/diplomacy-panel.md.
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-mixin _DiplomacyOrderActions
-    on State<DiplomacyPanel>, _DiplomacyOrderActionsMood {
+import '../../../../config/routes.dart';
+import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
+import 'diplomacy_order_helpers.dart';
+import 'diplomacy_panel_order_actions_mood.dart';
+import 'diplomacy_panel_rows.dart';
+import 'diplomacy_panel_state.dart';
+
+mixin DiplomacyOrderActions
+    on State<DiplomacyPanel>, DiplomacyOrderActionsMood {
   void submitOrDialog(DiplomaticOrder order) {
     final pending =
         widget.currentOrders.diplomaticOrdersByPlayerId[widget.humanPlayerId] ??

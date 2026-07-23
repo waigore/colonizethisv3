@@ -1,30 +1,33 @@
-part of 'ct_region_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _attachMinimapCameraBusSubscriptions(_CtRegionMapState state) {
-  state._subscriptions.cancelAll();
+import '../core/services/region_map/region_map_widget_bindings.dart';
+import 'ct_region_map_state.dart';
+
+void attachCtRegionMapMinimapCameraBusSubscriptions(CtRegionMapState state) {
+  state.subscriptions.cancelAll();
   final b = state.widget.bus;
   if (b == null) return;
-  state._subscriptions.track(
+  state.subscriptions.track(
     b.on<RequestRegionMapCameraCenterWorldEvent>().listen((e) {
       if (!state.mounted || e.regionId != state.widget.region.regionId) return;
-      state._game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
+      state.game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
     }),
   );
-  state._subscriptions.track(
+  state.subscriptions.track(
     b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((e) {
       if (!state.mounted || e.regionId != state.widget.region.regionId) return;
-      state._game.panCameraWorld(e.worldDx, e.worldDy);
+      state.game.panCameraWorld(e.worldDx, e.worldDy);
     }),
   );
-  state._subscriptions.track(
+  state.subscriptions.track(
     b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((e) {
       if (!state.mounted || e.regionId != state.widget.region.regionId) return;
-      state._game.setZoomMultiplierAbsolute(e.zoomMultiplier);
+      state.game.setZoomMultiplierAbsolute(e.zoomMultiplier);
     }),
   );
 }
 
-CtRegionMapGame _buildCtRegionMapGame(_CtRegionMapState state) {
+CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
   return defaultCreateCtRegionMapGame(
     region: state.widget.region,
     cellSizePx: state.widget.cellSizePx,
@@ -41,12 +44,12 @@ CtRegionMapGame _buildCtRegionMapGame(_CtRegionMapState state) {
     onRegionViewChanged: state.widget.onRegionViewChanged,
     onProvinceHovered: state.widget.onProvinceHovered,
     onTileHovered: state.widget.onTileHovered,
-    onCivilianTileTapped: (tileKey) => _handleCtRegionMapCivilianTileTapped(
+    onCivilianTileTapped: (tileKey) => handleCtRegionMapCivilianTileTapped(
       state,
       tileKey,
     ),
     onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
-        _handleCtRegionMapFleetMarkerTapped(
+        handleCtRegionMapFleetMarkerTapped(
           state,
           locationScopeKey,
           initialFleetId,
@@ -72,8 +75,8 @@ CtRegionMapGame _buildCtRegionMapGame(_CtRegionMapState state) {
   );
 }
 
-void _handleCtRegionMapCivilianTileTapped(
-  _CtRegionMapState state,
+void handleCtRegionMapCivilianTileTapped(
+  CtRegionMapState state,
   String tileKey,
 ) {
   state.widget.onCivilianTileStateChanged?.call(tileKey);
@@ -96,8 +99,8 @@ void _handleCtRegionMapCivilianTileTapped(
   );
 }
 
-void _handleCtRegionMapFleetMarkerTapped(
-  _CtRegionMapState state,
+void handleCtRegionMapFleetMarkerTapped(
+  CtRegionMapState state,
   String locationScopeKey,
   String? initialFleetId,
   String markerTileKey,

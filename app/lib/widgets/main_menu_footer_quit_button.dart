@@ -1,4 +1,10 @@
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+import '../config/themes.dart';
+import 'main_menu_constants.dart';
 
 /// Secondary footer Quit chip for the `pixelArt` variant. Implements
 /// `SPEC/ui/main-menu.md` § Variant rendering — Quit button row and AC 9
@@ -6,17 +12,17 @@ part of 'main_menu.dart';
 /// foreground, border-only chrome (`--border` top/bottom and 1px left/right
 /// edges), and no brass corner brackets. Mirrors the mockup `.quit-btn`
 /// element in `SPEC/ui/mockups/SHEL10002-main-menu.html`.
-class _FooterQuitButton extends StatefulWidget {
-  const _FooterQuitButton({required this.label, required this.onPressed});
+class FooterQuitButton extends StatefulWidget {
+  const FooterQuitButton({required this.label, required this.onPressed, super.key});
 
   final String label;
   final VoidCallback onPressed;
 
   @override
-  State<_FooterQuitButton> createState() => _FooterQuitButtonState();
+  State<FooterQuitButton> createState() => _FooterQuitButtonState();
 }
 
-class _FooterQuitButtonState extends State<_FooterQuitButton> {
+class _FooterQuitButtonState extends State<FooterQuitButton> {
   bool _hovered = false;
 
   void _setHover(bool entered) {
