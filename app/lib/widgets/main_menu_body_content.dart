@@ -1,17 +1,9 @@
-// Main-menu body content column (logo slot + buttons region). Refs #3878; #4117.
+// Main-menu body content column (logo slot + buttons region). Refs #3878.
 
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+part of 'main_menu.dart';
 
-import 'main_menu_buttons.dart';
-import 'main_menu_footer.dart';
-import 'main_menu_scroll_bracket.dart';
-import 'main_menu_variant.dart';
-
-class MainMenuBodyContent extends StatelessWidget {
-  const MainMenuBodyContent({
+class _MainMenuBodyContent extends StatelessWidget {
+  const _MainMenuBodyContent({
     required this.variant,
     required this.showAfterVictorySubtitle,
     required this.loadGameEnabled,
@@ -78,7 +70,7 @@ class MainMenuBodyContent extends StatelessWidget {
         const SizedBox(height: 32),
       _buttonsRegion(context),
       const SizedBox(height: 32),
-      MainMenuFooter(
+      _MainMenuFooter(
         variant: variant,
         version: version,
         quitLabel: l10n.mainMenu_quit,
@@ -91,8 +83,8 @@ class MainMenuBodyContent extends StatelessWidget {
   /// Builds the buttons region (New Game → Settings) for the active variant.
   ///
   /// In the `pixelArt` variant the column of wood-panel buttons is wrapped in
-  /// a [MainMenuPixelArtButtonsRegion] so left/right ornamental scroll brackets
-  /// can flank the panel at `kMainMenuScrollBracketGutter` outside each edge,
+  /// a [_PixelArtButtonsRegion] so left/right ornamental scroll brackets can
+  /// flank the panel at `kMainMenuScrollBracketGutter` outside each edge,
   /// painted across the middle `1 - 2 * kMainMenuScrollBracketVerticalInset`
   /// fraction of the region height (`SPEC/ui/main-menu.md` § Buttons region;
   /// mockup `.buttons-region::before` / `::after`). In the `plain` variant
@@ -101,7 +93,7 @@ class MainMenuBodyContent extends StatelessWidget {
   Widget _buttonsRegion(BuildContext context) {
     final l10n = appL10n(context);
     final List<Widget> buttons = <Widget>[
-      MainMenuButton(
+      _MenuButton(
         label: l10n.mainMenu_newGame,
         variant: variant,
         narrow: narrow,
@@ -109,7 +101,7 @@ class MainMenuBodyContent extends StatelessWidget {
       ),
       if (resumeGameVisible) ...[
         const SizedBox(height: 12),
-        MainMenuButton(
+        _MenuButton(
           label: l10n.mainMenu_resumeGame,
           variant: variant,
           narrow: narrow,
@@ -117,14 +109,14 @@ class MainMenuBodyContent extends StatelessWidget {
         ),
       ],
       const SizedBox(height: 12),
-      MainMenuLoadGameButton(
+      _LoadGameButton(
         enabled: loadGameEnabled,
         variant: variant,
         narrow: narrow,
         onPressed: onLoadGame,
       ),
       const SizedBox(height: 12),
-      MainMenuButton(
+      _MenuButton(
         label: l10n.mainMenu_settings,
         variant: variant,
         narrow: narrow,
@@ -136,7 +128,7 @@ class MainMenuBodyContent extends StatelessWidget {
       children: buttons,
     );
     if (variant == MainMenuVariant.pixelArt) {
-      return MainMenuPixelArtButtonsRegion(child: column);
+      return _PixelArtButtonsRegion(child: column);
     }
     return column;
   }

@@ -1,25 +1,12 @@
-// Footer actions and start confirmation for [NewGameLeaderSelectionDialog]
-// (Refs #3878).
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'new_game_leader_selection_dialog.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
-import 'new_game_leader_selection_dialog_constants.dart';
-import 'new_game_leader_selection_dialog_setup_fields_options.dart';
-import 'new_game_leader_selection_dialog_state_base.dart';
-import 'new_game_leader_selection_dialog_widget.dart';
-
-mixin NewGameLeaderSelectionDialogSetupFieldsFooter
-    on
-        State<NewGameLeaderSelectionDialog>,
-        NewGameLeaderSelectionDialogStateBase,
-        NewGameLeaderSelectionDialogSetupFieldsOptions {
-  Widget buildFooterButtons(AppLocalizations l10n, BuildContext context) {
+/// Footer actions and start confirmation for [NewGameLeaderSelectionDialog]
+/// (Refs #3878).
+mixin _NewGameLeaderSelectionDialogSetupFieldsFooter
+    on State<NewGameLeaderSelectionDialog>,
+        _NewGameLeaderSelectionDialogStateBase,
+        _NewGameLeaderSelectionDialogSetupFieldsOptions {
+  Widget _buildFooterButtons(AppLocalizations l10n, BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -29,35 +16,35 @@ mixin NewGameLeaderSelectionDialogSetupFieldsFooter
         ),
         const SizedBox(width: CtSpacing.m),
         CtNinePatchButton(
-          onPressed: startEnabled ? () => handleStartPressed(context) : null,
-          enabled: startEnabled,
+          onPressed: _startEnabled ? () => _handleStartPressed(context) : null,
+          enabled: _startEnabled,
           child: Text(l10n.common_start),
         ),
       ],
     );
   }
 
-  void handleStartPressed(BuildContext context) {
+  void _handleStartPressed(BuildContext context) {
     final seed = NewGameLeaderSelectionDialog.parseSeedInput(
-      seedController.text,
+      _seedController.text,
     );
     Navigator.of(context).pop();
     widget.onConfirmed(
-      List<String>.from(orderedGpIdsBySlot),
-      Map<String, String>.from(leaderByGpId),
+      List<String>.from(_orderedGpIdsBySlot),
+      Map<String, String>.from(_leaderByGpId),
       seed,
-      infiniteMode,
-      terrainVariation,
-      aiProfileByGpIdForCallback(),
-      advancedStartEnabled ? advancedStart : AdvancedStartType.none,
+      _infiniteMode,
+      _terrainVariation,
+      _aiProfileByGpIdForCallback(),
+      _advancedStartEnabled ? _advancedStart : AdvancedStartType.none,
     );
   }
 
-  Map<String, String?> aiProfileByGpIdForCallback() {
+  Map<String, String?> _aiProfileByGpIdForCallback() {
     final out = <String, String?>{};
-    for (var slot = 1; slot < kNewGameLeaderSelectionDialogNumSlots; slot++) {
-      final gpId = orderedGpIdsBySlot[slot];
-      final profileName = profileBySlot[slot];
+    for (var slot = 1; slot < _kNumSlots; slot++) {
+      final gpId = _orderedGpIdsBySlot[slot];
+      final profileName = _profileBySlot[slot];
       if (profileName != null && profileName.isNotEmpty) {
         out[gpId] = profileName;
       }

@@ -1,26 +1,24 @@
-import 'package:flutter/material.dart';
-
-import 'ct_nine_patch_button.dart';
+part of 'ct_nine_patch_button.dart';
 
 /// Four 10x10 L-shaped brass corner overlays positioned at each corner of
 /// the parent button surface. Painted via [CustomPaint] so the brackets
 /// stay crisp at any DPR (no rasterised asset).
-class CtNinePatchButtonBrackets extends StatelessWidget {
-  const CtNinePatchButtonBrackets({required this.color});
+class _BrassCornerBrackets extends StatelessWidget {
+  const _BrassCornerBrackets({required this.color});
 
   final Color color;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: CtNinePatchButtonBracketsPainter(color: color),
+      painter: _BrassCornerBracketsPainter(color: color),
       child: const SizedBox.expand(),
     );
   }
 }
 
-class CtNinePatchButtonBracketsPainter extends CustomPainter {
-  CtNinePatchButtonBracketsPainter({required this.color});
+class _BrassCornerBracketsPainter extends CustomPainter {
+  _BrassCornerBracketsPainter({required this.color});
 
   final Color color;
 
@@ -63,7 +61,7 @@ class CtNinePatchButtonBracketsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CtNinePatchButtonBracketsPainter oldDelegate) {
+  bool shouldRepaint(covariant _BrassCornerBracketsPainter oldDelegate) {
     return oldDelegate.color != color;
   }
 }

@@ -1,22 +1,7 @@
-// Slot card body widgets for active technology panel research slots.
-// De-parted wave-9 cluster (Refs #4117).
+part of 'technology_panel_widgets.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'research_slot_preview.dart';
-import 'research_slot_turn_preview_view.dart';
-import 'tech_ui_helpers.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_progress_bar.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import 'technology_slot_funding_toggles.dart';
-
-class TechnologySlotEmptyBody extends StatelessWidget {
-  const TechnologySlotEmptyBody({super.key});
+class _SlotEmptyBody extends StatelessWidget {
+  const _SlotEmptyBody();
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +19,8 @@ class TechnologySlotEmptyBody extends StatelessWidget {
   }
 }
 
-class TechnologySlotAssignedBody extends StatelessWidget {
-  const TechnologySlotAssignedBody({
-    super.key,
+class _SlotAssignedBody extends StatelessWidget {
+  const _SlotAssignedBody({
     required this.slotIndex,
     required this.techId,
     required this.progress,
@@ -62,7 +46,7 @@ class TechnologySlotAssignedBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        TechnologyAssignedTechRow(techId: techId),
+        _AssignedTechRow(techId: techId),
         if (onFundingChanged != null) ...[
           const SizedBox(height: 6),
           SlotFundingToggleRow(
@@ -108,8 +92,8 @@ class TechnologySlotAssignedBody extends StatelessWidget {
   }
 }
 
-class TechnologyAssignedTechRow extends StatelessWidget {
-  const TechnologyAssignedTechRow({super.key, required this.techId});
+class _AssignedTechRow extends StatelessWidget {
+  const _AssignedTechRow({required this.techId});
 
   final String techId;
 

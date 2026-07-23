@@ -1,15 +1,4 @@
-// Floating player turn event feed card on the in-game map stack.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-
-import '../../../../widgets/ct_gradients.dart';
-import '../../screens/game/game_screen_shared.dart'
-    show kGameMapWideProvinceSidePanelWidth;
-import 'player_turn_event_feed_types.dart';
+part of 'player_turn_event_feed.dart';
 
 /// Floating, scrollable news card rendered on the in-game map stack when
 /// the player toggles the newspaper button in [GameTabBar].

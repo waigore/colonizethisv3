@@ -1,13 +1,7 @@
-// In-game shell tab bar region tabs. SPEC/ui/empire-overview.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'game_tab_bar.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-class GameRegionTab extends StatelessWidget {
-  const GameRegionTab({
-    super.key,
+class _GameRegionTab extends StatelessWidget {
+  const _GameRegionTab({
     required this.label,
     required this.selected,
     required this.onTap,

@@ -1,16 +1,8 @@
 /// Pending work-order resolution helpers. SPEC/ui/civilian-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
+part of 'civilian_units_panel.dart';
 
-import '../../train/train_dialog_chrome.dart';
-import '../shared/region_labels.dart';
-
-const Map<String, String> civilianWorkTargetLabels = {
+const Map<String, String> _workTargetLabels = {
   kWorkTargetExplore: 'Explore',
   kWorkTargetProspect: 'Prospect',
   kWorkTargetBuildImprovement: 'Build improvement',
@@ -25,11 +17,13 @@ const Map<String, String> civilianWorkTargetLabels = {
 
 // Sort/partition helpers live in `civilian_units_sort.dart` (public surface):
 // `provinceNamesByPrefixedId`, `isCivilianUnit`, `civilianUnitsInRegion`, and
-// `civilianSortProvinceName`. Refs #2575 (Phase 4 testability).
+// `civilianSortProvinceName`. They are imported by the panel library root
+// (`civilian_units_panel.dart`) and visible here through the shared library
+// scope. Refs #2575 (Phase 4 testability).
 
 /// Pending assigned-to line plus optional cost strip. SPEC/ui/civilian-units-panel.md.
-class PendingAssignedResolution {
-  const PendingAssignedResolution({
+class _PendingAssignedResolution {
+  const _PendingAssignedResolution({
     required this.mainLine,
     required this.totalTurns,
     this.materialCosts,
@@ -42,13 +36,13 @@ class PendingAssignedResolution {
   final int? treasuryAmount;
 }
 
-PendingAssignedResolution resolvePendingAssignedResolution(
+_PendingAssignedResolution _resolvePendingAssignedResolution(
   Game game,
   Unit unit,
   WorkOrder order,
   Map<String, String> provinceNames,
 ) {
-  final workLabel = civilianWorkTargetLabels[order.target] ?? order.target;
+  final workLabel = _workTargetLabels[order.target] ?? order.target;
   final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
   final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
   var location = '';
@@ -67,16 +61,16 @@ PendingAssignedResolution resolvePendingAssignedResolution(
   if (order.target == kWorkTargetPurchaseLand) {
     final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
-      return PendingAssignedResolution(
+      return _PendingAssignedResolution(
         mainLine: base,
         totalTurns: totalTurns,
         treasuryAmount: purchaseLandCost(resourceId),
       );
     }
-    return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
   if (order.target == kWorkTargetCounterSpy) {
-    return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 
   final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
@@ -98,23 +92,23 @@ PendingAssignedResolution resolvePendingAssignedResolution(
     roadLevel: roadLevel,
   );
   if (costMap != null && costMap.isNotEmpty) {
-    return PendingAssignedResolution(
+    return _PendingAssignedResolution(
       mainLine: base,
       totalTurns: totalTurns,
       materialCosts: costMap,
     );
   }
-  return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+  return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
 }
 
-List<MapEntry<String, int>> sortedMaterialCostEntries(Map<String, int> m) {
+List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
   final list = m.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
   return list;
 }
 
 /// Dense chip matching train-dialog resource chips. SPEC/ui/civilian-units-panel.md.
-class CivilianAssignedCostChip extends StatelessWidget {
-  const CivilianAssignedCostChip({super.key, required this.child});
+class _AssignedCostChip extends StatelessWidget {
+  const _AssignedCostChip({required this.child});
 
   final Widget child;
 

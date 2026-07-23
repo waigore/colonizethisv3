@@ -1,10 +1,4 @@
-// Newspaper toggle glyph and unread badge for the player turn event feed.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+part of 'player_turn_event_feed.dart';
 
 /// Monochrome newspaper glyph painted as a small vector so it tints via a
 /// single `currentColor`-style [color] (mockup `.news-toggle svg`). Used
@@ -77,15 +71,8 @@ class _NewspaperGlyphPainter extends CustomPainter {
 /// [EditorialMonoclePalette.danger] token; foreground resolves to the
 /// canonical [EditorialMonoclePalette.bg] token so the chip reads as
 /// "engraved" against the dim chrome.
-class PlayerTurnEventFeedUnreadBadge extends StatelessWidget {
-  const PlayerTurnEventFeedUnreadBadge({super.key, required this.count});
-
-  /// Min height/width of the unread-count badge (sized for "99+").
-  static const double minExtent = 16;
-
-  /// Outer alpha of the badge background (so very dim chrome behind it
-  /// still reads, but the badge sits brightly forward).
-  static const double backgroundAlpha = 0.95;
+class _UnreadBadge extends StatelessWidget {
+  const _UnreadBadge({required this.count});
 
   final int count;
 
@@ -96,13 +83,13 @@ class PlayerTurnEventFeedUnreadBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(
         color: EditorialMonoclePalette.danger.withValues(
-          alpha: backgroundAlpha,
+          alpha: PlayerTurnEventsFeedToggleButton.badgeBackgroundAlpha,
         ),
         borderRadius: const BorderRadius.all(Radius.circular(10)),
       ),
       constraints: const BoxConstraints(
-        minHeight: minExtent,
-        minWidth: minExtent,
+        minHeight: PlayerTurnEventsFeedToggleButton.badgeMinExtent,
+        minWidth: PlayerTurnEventsFeedToggleButton.badgeMinExtent,
       ),
       child: Text(
         label,

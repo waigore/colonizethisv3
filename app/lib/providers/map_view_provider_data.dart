@@ -1,16 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
-import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
-import '../features/game/flame/region_map/region_map.dart'
-    show CtMapVisibilityMode;
-import '../features/game/widgets/shell/shell_player_context.dart';
-import 'game_service_provider.dart';
-import 'games_provider_current_game.dart';
-import 'map_view_provider_extraction.dart';
+part of 'map_view_provider.dart';
 
 /// Map view data for the current game with player-constrained visibility.
 /// Null when no game or loading.
@@ -68,13 +56,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       topology: topology,
     );
     final connectivityForHuman = connectivity[mapPlayer.id];
-    MapResourceExtractionMaps extractionMaps = const MapResourceExtractionMaps(
+    _MapResourceExtractionMaps extractionMaps = const _MapResourceExtractionMaps(
       unitsByTile: {},
       effectiveUnitsByTile: {},
       blockedUnitsByTile: {},
     );
     if (connectivityForHuman != null) {
-      extractionMaps = mapViewBuildResourceExtractionMaps(
+      extractionMaps = _mapViewBuildResourceExtractionMaps(
         game: game,
         mapPlayer: mapPlayer,
         tileMapByRegion: mapData.tileMapByRegion,

@@ -1,16 +1,8 @@
-// Grant/subsidy dialog chrome widgets.
+part of 'diplomacy_dialogs.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
 /// Dialog title — display font, `--accent` color, `letterSpacing = fontSize * 0.05`.
-class GrantSubsidyDialogTitle extends StatelessWidget {
-  const GrantSubsidyDialogTitle({required this.title});
+class _DialogTitle extends StatelessWidget {
+  const _DialogTitle({required this.title});
 
   final String title;
 
@@ -32,8 +24,8 @@ class GrantSubsidyDialogTitle extends StatelessWidget {
 }
 
 /// Treasury info line — body slot, `--muted` color.
-class GrantSubsidyTreasuryRow extends StatelessWidget {
-  const GrantSubsidyTreasuryRow({required this.label});
+class _TreasuryRow extends StatelessWidget {
+  const _TreasuryRow({required this.label});
 
   final String label;
 
@@ -52,8 +44,8 @@ class GrantSubsidyTreasuryRow extends StatelessWidget {
 
 /// 1 dp solid divider in `--border` between treasury row and stepper. Matches
 /// `.divider-thin` in `SPEC/ui/mockups/DIPL20001-grant-or-subsidy-dialog.html`.
-class GrantSubsidyThinDivider extends StatelessWidget {
-  const GrantSubsidyThinDivider();
+class _ThinDivider extends StatelessWidget {
+  const _ThinDivider();
 
   @override
   Widget build(BuildContext context) {
@@ -69,8 +61,8 @@ class GrantSubsidyThinDivider extends StatelessWidget {
 
 /// Amount label — display font (headlineSmall slot), `--fg` color,
 /// `letterSpacing = fontSize * 0.04`, min 80 dp content width.
-class GrantSubsidyAmountLabel extends StatelessWidget {
-  const GrantSubsidyAmountLabel({required this.text});
+class _AmountLabel extends StatelessWidget {
+  const _AmountLabel({required this.text});
 
   final String text;
 
@@ -97,8 +89,8 @@ class GrantSubsidyAmountLabel extends StatelessWidget {
 }
 
 /// Below-minimum warning — italic body slot, `--danger` color.
-class GrantSubsidyBelowMinimumWarning extends StatelessWidget {
-  const GrantSubsidyBelowMinimumWarning({required this.text});
+class _BelowMinimumWarning extends StatelessWidget {
+  const _BelowMinimumWarning({required this.text});
 
   final String text;
 

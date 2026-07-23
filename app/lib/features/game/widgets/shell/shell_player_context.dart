@@ -1,12 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
 import '../../../../core/services/game_service/game_service.dart';
 import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
-export 'shell_player_context_provider.dart' show shellPlayerContextProvider;
+part 'shell_player_context_provider.dart';
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.
 class ShellPlayerContext {
@@ -75,7 +79,7 @@ String resolveShellPanelPlayerId(ShellPlayerContext shell, Game game) =>
 /// True when P4–P17 should show the global-observe sentinel instead of GP data.
 bool shellPanelsNotDefined(ShellPlayerContext shell) => !shell.showPlayerChrome;
 
-MapTopology topologyForGame(GameService service, Game game) {
+MapTopology _topologyForGame(GameService service, Game game) {
   final mapData = tryGetGameMapData(() => service.getMapData(game.id));
   return mapData?.combinedTopology ?? const MapTopology();
 }

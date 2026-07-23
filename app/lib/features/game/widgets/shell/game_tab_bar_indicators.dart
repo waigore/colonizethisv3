@@ -1,18 +1,7 @@
-// In-game shell tab bar treasury and cargo indicators.
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'game_tab_bar.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../config/app_assets.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart' show kCargoHoldIndicatorKey;
-
-class GameTabBarTreasuryIndicator extends StatelessWidget {
-  const GameTabBarTreasuryIndicator({
-    super.key,
+class _TreasuryIndicator extends StatelessWidget {
+  const _TreasuryIndicator({
     required this.treasuryLabel,
     required this.deltaLabel,
     required this.deltaColor,
@@ -52,9 +41,8 @@ class GameTabBarTreasuryIndicator extends StatelessWidget {
   }
 }
 
-class GameTabBarCargoHoldIndicator extends StatelessWidget {
-  const GameTabBarCargoHoldIndicator({
-    super.key,
+class _CargoHoldIndicator extends StatelessWidget {
+  const _CargoHoldIndicator({
     required this.cargoHoldLabel,
     required this.labelStyle,
   });

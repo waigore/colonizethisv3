@@ -1,11 +1,4 @@
-// Editorial-monocle display font preload. SPEC/ui/pixel-art-ui-catalog.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../package_logger.dart';
+part of 'themes.dart';
 
 /// Font family applied to display / heading text styles in
 /// [AppThemes.editorialMonocle]. Matches the bundled Cinzel family name.

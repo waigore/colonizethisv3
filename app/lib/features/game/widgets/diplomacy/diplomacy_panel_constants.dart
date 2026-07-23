@@ -1,12 +1,6 @@
 // Diplomacy panel layout constants. SPEC/ui/diplomacy-panel.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/relation_meter.dart';
+part of 'diplomacy_panel.dart';
 
 /// Maximum viewport width (Flutter dp) at which the diplomacy faction-row
 /// body switches to its narrow stacked variant (info column above the

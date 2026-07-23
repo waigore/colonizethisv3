@@ -1,23 +1,9 @@
-// Treasury / peasants / commodity chip resource bar for commodity-cost train
-// dialogs. SPEC/ui/components/train-dialog-chrome.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../core/utils/currency_format.dart';
-import '../../../../widgets/resource_icon.dart';
-import '../production/commodity_ui_helpers.dart';
-import 'train_dialog_chrome.dart';
+part of 'train_commodity_cost_dialog_base.dart';
 
 /// Treasury / peasants / commodity chip resource bar shared by the military and
 /// naval train dialogs (icon chips, not the civilian label/value entry bar).
-class CommodityCostTrainDialogResourceBar extends StatelessWidget {
-  const CommodityCostTrainDialogResourceBar({
-    super.key,
+class _CommodityCostResourceBar extends StatelessWidget {
+  const _CommodityCostResourceBar({
     required this.treasury,
     required this.remainingTreasury,
     required this.peasants,

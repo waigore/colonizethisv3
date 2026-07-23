@@ -1,20 +1,10 @@
 /// Army expansion tile for the military units panel.
 /// SPEC/ui/military-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:flutter/material.dart';
+part of 'military_units_panel.dart';
 
-import '../../../../../widgets/ct_spacing.dart';
-import '../../panels/tree_builders/military_tree_builder.dart';
-import '../shared/units_entity_action_row.dart';
-import '../shared/units_entity_card.dart';
-import 'military_units_panel_support_detail_rows.dart';
-
-class MilitaryArmyExpansionTile extends StatelessWidget {
-  const MilitaryArmyExpansionTile({
-    super.key,
+class _ArmyExpansionTile extends StatelessWidget {
+  const _ArmyExpansionTile({
     required this.block,
     required this.l10n,
     required this.stationedProvinceDisplayLabel,
@@ -72,6 +62,11 @@ class MilitaryArmyExpansionTile extends StatelessWidget {
           Flexible(child: Text(_armyTitle(), overflow: TextOverflow.ellipsis)),
         ],
       ),
+      // Issue #3514: Move / Split render as mockup compact pills and the Locate
+      // control is the rightmost icon-only circular pill in the actions cluster
+      // (moved out of the title `Row` / `CtIconAction`). Locate still emits the
+      // same `LocateMapTileEvent` via [onLocate], so there is no behavioral
+      // regression.
       actions: [
         if (onMove != null)
           UnitsEntityAction(
@@ -114,12 +109,17 @@ class MilitaryArmyExpansionTile extends StatelessWidget {
   }
 
   List<Widget> _buildChildren() {
+    // Expanded content mirrors the mockup `.unit-row .u-comp-table` — the
+    // per-regiment composition rows only. Move / Split are exposed exclusively
+    // as the compact title-row pills (issue #3514 owner decision #6); the
+    // legacy `CtNinePatchButton` footer duplicate is removed so the army card
+    // carries no nine-patch row-action chrome.
     return [
       if (block.rows.isEmpty)
-        MilitaryUnitDetailRow(title: l10n.military_units_noRegimentsAssigned)
+        _UnitDetailRow(title: l10n.military_units_noRegimentsAssigned)
       else
         for (final row in block.rows)
-          MilitaryRegimentRow(row: row, l10n: l10n, onTap: null),
+          _RegimentRow(row: row, l10n: l10n, onTap: null),
     ];
   }
 }

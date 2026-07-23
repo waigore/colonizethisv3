@@ -2,22 +2,9 @@
 // Split from `overture_dialogue_overlay.dart` to keep the overlay host
 // under the repo file-size target (Refs #3878).
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/package_logger.dart';
+part of 'overture_dialogue_overlay.dart';
 
-import 'ct_dialogue_view.dart';
-import 'overture_dialogue_overlay_widget.dart';
-import 'yarn_dialogue_bootstrap.dart';
-
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
-CtDialogueView createOvertureDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
-
-const String kOvertureDialogueNode = 'DialoguePoint/overture_target_response';
-
-mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
+mixin _OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
   bool get overtureIntroDone;
   set overtureIntroDone(bool value);
   CtDialogueView? get overtureView;
@@ -33,8 +20,8 @@ mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
         bundle: bundle,
         assetPath: kDialogueOvertureAsset,
         logger: log,
-        createView: createOvertureDialogueView,
-        requiredNodes: const [kOvertureDialogueNode],
+        createView: _createOvertureDialogueView,
+        requiredNodes: const [_kOvertureNode],
       );
       final view = session.view;
       final runner = session.runner;
@@ -45,7 +32,7 @@ mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
       setState(() {
         overtureView = view;
       });
-      await runner.startDialogue(kOvertureDialogueNode);
+      await runner.startDialogue(_kOvertureNode);
       if (!mounted) return;
       setState(() => overtureIntroDone = true);
     } catch (e, st) {
@@ -58,3 +45,5 @@ mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
     }
   }
 }
+
+const String _kOvertureNode = 'DialoguePoint/overture_target_response';

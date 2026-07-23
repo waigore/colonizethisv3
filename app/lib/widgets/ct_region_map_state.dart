@@ -1,16 +1,6 @@
-// [CtRegionMap] state and bus/game bindings. SPEC/ui/map-widget.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'ct_region_map.dart';
 
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import '../core/services/region_map/region_map_widget_bindings.dart';
-import '../core/services/subscription_tracker.dart';
-import 'ct_region_map_viewport.dart';
-import 'ct_region_map_widget.dart';
-
-class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin {
+class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixin {
   late CtRegionMapGame _game;
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
   double _scaleGestureStartMultiplier = 1.0;
@@ -28,8 +18,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
   @override
   void initState() {
     super.initState();
-    _game = _buildCtRegionMapGame();
-    _attachMinimapCameraBusSubscriptions();
+    _game = _buildCtRegionMapGame(this);
+    _attachMinimapCameraBusSubscriptions(this);
   }
 
   @override
@@ -92,8 +82,15 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
             widget.validTileKeys == null && oldWidget.validTileKeys != null,
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
-        onCivilianTileTapped: _handleCivilianTileTapped,
-        onFleetMarkerTapped: _handleFleetMarkerTapped,
+        onCivilianTileTapped: (tileKey) =>
+            _handleCtRegionMapCivilianTileTapped(this, tileKey),
+        onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
+            _handleCtRegionMapFleetMarkerTapped(
+              this,
+              locationScopeKey,
+              initialFleetId,
+              markerTileKey,
+            ),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
@@ -101,7 +98,7 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
       );
     }
     if (widget.bus != oldWidget.bus) {
-      _attachMinimapCameraBusSubscriptions();
+      _attachMinimapCameraBusSubscriptions(this);
     }
     if (widget.centerOnTileKey != null &&
         widget.centerOnTileKey != oldWidget.centerOnTileKey) {
@@ -118,102 +115,5 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
       playerViewForResources: widget.playerViewForResources,
     );
     return buildRegionMapViewport();
-  }
-
-  void _attachMinimapCameraBusSubscriptions() {
-    _subscriptions.cancelAll();
-    final b = widget.bus;
-    if (b == null) return;
-    _subscriptions.track(
-      b.on<RequestRegionMapCameraCenterWorldEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.setCameraCenterWorld(e.worldCenterX, e.worldCenterY);
-      }),
-    );
-    _subscriptions.track(
-      b.on<RequestRegionMapCameraPanWorldDeltaEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.panCameraWorld(e.worldDx, e.worldDy);
-      }),
-    );
-    _subscriptions.track(
-      b.on<RequestRegionMapSetZoomMultiplierEvent>().listen((e) {
-        if (!mounted || e.regionId != widget.region.regionId) return;
-        _game.setZoomMultiplierAbsolute(e.zoomMultiplier);
-      }),
-    );
-  }
-
-  CtRegionMapGame _buildCtRegionMapGame() {
-    return defaultCreateCtRegionMapGame(
-      region: widget.region,
-      cellSizePx: widget.cellSizePx,
-      showPoliticalOverlay: widget.showPoliticalOverlay,
-      showProvinceOverlay: widget.showProvinceOverlay,
-      showProvinceOwnershipTint: widget.showProvinceOwnershipTint,
-      showProvinceNamesLayer: widget.showProvinceNamesLayer,
-      visibilityMode: widget.visibilityMode,
-      baseLayerDisplayMode:
-          widget.baseLayerDisplayMode ??
-          BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads,
-      onProvinceSelected: widget.onProvinceSelected,
-      onMapTileTappedForDetail: widget.onMapTileTappedForDetail,
-      onRegionViewChanged: widget.onRegionViewChanged,
-      onProvinceHovered: widget.onProvinceHovered,
-      onTileHovered: widget.onTileHovered,
-      onCivilianTileTapped: _handleCivilianTileTapped,
-      onFleetMarkerTapped: _handleFleetMarkerTapped,
-      onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
-      selectedTileKey: widget.selectedTileKey,
-      selectedCivilianTileKey: widget.selectedCivilianTileKey,
-      secondaryHighlightTileKey: widget.secondaryHighlightTileKey,
-      secondaryHighlightTileKeys: widget.secondaryHighlightTileKeys,
-      validTileKeys: widget.validTileKeys,
-      onTileSelected: widget.onTileSelected,
-      onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
-      onTownIconTapped: widget.bus != null
-          ? (provinceId) {
-              widget.bus!.emit(OpenProvinceDetailPanelEvent(provinceId));
-            }
-          : null,
-      playerViewForResources: widget.playerViewForResources,
-      onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
-      initialZoomMultiplier: widget.zoomMultiplier ?? 1.0,
-    );
-  }
-
-  void _handleCivilianTileTapped(String tileKey) {
-    widget.onCivilianTileStateChanged?.call(tileKey);
-    final bus = widget.bus;
-    if (bus == null) {
-      return;
-    }
-    String? initialSelectedUnitId;
-    for (final marker in widget.region.civilianTileMarkers) {
-      if (marker.tileKey == tileKey && marker.unitIds.isNotEmpty) {
-        initialSelectedUnitId = marker.unitIds.first;
-        break;
-      }
-    }
-    bus.emit(
-      OpenCivilianUnitsPanelEvent(
-        tileScopeTileKey: tileKey,
-        initialSelectedUnitId: initialSelectedUnitId,
-      ),
-    );
-  }
-
-  void _handleFleetMarkerTapped(
-    String locationScopeKey,
-    String? initialFleetId,
-    String markerTileKey,
-  ) {
-    widget.bus?.emit(
-      OpenNavalUnitsPanelEvent(
-        locationScopeKey: locationScopeKey,
-        initialSelectedFleetId: initialFleetId,
-        tileScopeTileKey: markerTileKey,
-      ),
-    );
   }
 }

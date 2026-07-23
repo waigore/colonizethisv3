@@ -1,14 +1,4 @@
-// Map corner control icon button. SPEC/ui/empire-overview.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-
-import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import 'game_map_corner_controls_widget.dart';
+part of 'game_map_corner_controls.dart';
 
 /// 32 × 32 dp dark editorial-monocle icon button used inside
 /// [GameMapCornerControls].
@@ -25,14 +15,13 @@ import 'game_map_corner_controls_widget.dart';
 /// When [onTap] is `null` the button paints at the canonical 0.4 disabled
 /// opacity (shared convention with `CtBackButton` / `CtNinePatchButton` /
 /// `CtToggleSwitch`) and ignores pointer input.
-class MapCornerIconButton extends StatefulWidget {
-  const MapCornerIconButton({
+class _MapCornerIconButton extends StatefulWidget {
+  const _MapCornerIconButton({
     required this.buttonKey,
     required this.tooltip,
     required this.onTap,
     required this.assetPath,
     this.narrow = false,
-    super.key,
   });
 
   final Key buttonKey;
@@ -45,17 +34,17 @@ class MapCornerIconButton extends StatefulWidget {
   /// Matches the `.empire-btn` 120 ms convention used by
   /// [GameMapEmpireLeftRail]; the mockup CSS specifies `0.15s` which we
   /// round to 120 ms for cross-button consistency.
-  static const Duration animationDuration = Duration(milliseconds: 120);
-  static const Curve animationCurve = Curves.easeOut;
+  static const Duration _animationDuration = Duration(milliseconds: 120);
+  static const Curve _animationCurve = Curves.easeOut;
 
   /// Disabled-state opacity shared with `CtNinePatchButton` / `CtBackButton`.
   static const double disabledOpacity = 0.4;
 
   @override
-  State<MapCornerIconButton> createState() => _MapCornerIconButtonState();
+  State<_MapCornerIconButton> createState() => _MapCornerIconButtonState();
 }
 
-class _MapCornerIconButtonState extends State<MapCornerIconButton> {
+class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -94,8 +83,8 @@ class _MapCornerIconButtonState extends State<MapCornerIconButton> {
           onTap: widget.onTap,
           onHighlightChanged: _handlePressed,
           child: AnimatedContainer(
-            duration: MapCornerIconButton.animationDuration,
-            curve: MapCornerIconButton.animationCurve,
+            duration: _MapCornerIconButton._animationDuration,
+            curve: _MapCornerIconButton._animationCurve,
             decoration: BoxDecoration(
               gradient: CtGradients.railButtonGradient,
               border: Border.all(color: _borderColor, width: 1),
@@ -124,7 +113,7 @@ class _MapCornerIconButtonState extends State<MapCornerIconButton> {
     return IgnorePointer(
       ignoring: true,
       child: Opacity(
-        opacity: MapCornerIconButton.disabledOpacity,
+        opacity: _MapCornerIconButton.disabledOpacity,
         child: tooltipped,
       ),
     );

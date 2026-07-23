@@ -1,11 +1,6 @@
-import 'package:flutter/material.dart';
+part of 'ct_nine_patch_button.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'ct_gradients.dart';
-import 'ct_nine_patch_button.dart';
-import 'ct_nine_patch_button_brackets.dart';
-
-class CtNinePatchButtonState extends State<CtNinePatchButton> {
+class _CtNinePatchButtonState extends State<CtNinePatchButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -138,7 +133,7 @@ class CtNinePatchButtonState extends State<CtNinePatchButton> {
         surface,
         Positioned.fill(
           child: IgnorePointer(
-            child: CtNinePatchButtonBrackets(color: _cornerColor),
+            child: _BrassCornerBrackets(color: _cornerColor),
           ),
         ),
       ],

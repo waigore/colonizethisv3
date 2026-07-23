@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'ct_toggle_switch_state.dart';
+
+part 'ct_toggle_switch_state.dart';
+part 'ct_toggle_switch_track.dart';
+part 'ct_toggle_switch_knob.dart';
 
 /// Two-state pixel-art toggle for the dark editorial-monocle theme.
 ///
@@ -87,5 +90,5 @@ class CtToggleSwitch extends StatefulWidget {
   static const Curve animationCurve = Curves.easeOut;
 
   @override
-  State<CtToggleSwitch> createState() => CtToggleSwitchState();
+  State<CtToggleSwitch> createState() => _CtToggleSwitchState();
 }

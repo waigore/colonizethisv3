@@ -1,34 +1,21 @@
-/// Civilian panel list assembly. SPEC/ui/civilian-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
+part of 'civilian_units_panel.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../shared/region_labels.dart';
-import '../shared/region_section_header.dart';
-import 'civilian_units_panel_support_unit_row.dart';
-import 'civilian_units_panel_widget.dart';
-
-mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
-  bool isExplorerUnit(Unit unit) {
+extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
+  bool _isExplorerUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetProspect,
         ) ??
         false;
   }
 
-  bool isBuilderUnit(Unit unit) {
+  bool _isBuilderUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetBuildImprovement,
         ) ??
         false;
   }
 
-  List<Widget> civilianListChildrenForRegion({
+  List<Widget> _civilianListChildrenForRegion({
     required String regionId,
     required List<Unit> units,
     required bool multiOwner,
@@ -50,7 +37,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     if (!multiOwner) {
       children.addAll(
         units.map(
-          (u) => unitRow(
+          (u) => _unitRow(
             unit: u,
             provinceNames: provinceNames,
             tileScopeActive: tileScopeActive,
@@ -75,7 +62,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       );
       children.addAll(
         ownerUnits.map(
-          (u) => unitRow(
+          (u) => _unitRow(
             unit: u,
             provinceNames: provinceNames,
             tileScopeActive: tileScopeActive,
@@ -88,14 +75,14 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     return children;
   }
 
-  Widget unitRow({
+  Widget _unitRow({
     required Unit unit,
     required Map<String, String> provinceNames,
     required bool tileScopeActive,
     required String? resolvedSelectedUnitId,
     required void Function(String id) onSelectUnit,
   }) {
-    return CivilianUnitRow(
+    return _UnitRow(
       game: widget.game,
       unit: unit,
       provinceNames: provinceNames,
@@ -118,7 +105,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     );
   }
 
-  List<Unit> scopedCivilianUnits(
+  List<Unit> _scopedCivilianUnits(
     List<Unit> units, {
     required String? tileScopeTileKey,
     required bool explorerOnly,
@@ -138,8 +125,8 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
                       orders: widget.currentOrders,
                     ) ==
                     tileScopeTileKey) &&
-            (!explorerOnly || isExplorerUnit(u)) &&
-            (!builderOnly || isBuilderUnit(u)))
+            (!explorerOnly || _isExplorerUnit(u)) &&
+            (!builderOnly || _isBuilderUnit(u)))
           u,
     ];
   }

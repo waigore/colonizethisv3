@@ -1,15 +1,29 @@
 // Full-screen Production screen. SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/production_allocation_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../../widgets/shell/shell_player_guarded_body.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
-import 'production_screen_body.dart';
+import '../../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../../widgets/production/production_labour_helpers.dart';
+import '../../widgets/production/production_panel.dart';
+
+part 'production_screen_body.dart';
 
 class ProductionScreen extends ConsumerWidget {
   const ProductionScreen({
@@ -73,7 +87,7 @@ class ProductionScreen extends ConsumerWidget {
         title: topBarTitle,
         iconAsset: _topBarIconAsset,
       ),
-      bodyBuilder: (context, shellRef, displayGame) => ProductionScreenBody(
+      bodyBuilder: (context, shellRef, displayGame) => _ProductionScreenBody(
         displayGame: displayGame,
         screen: this,
       ),

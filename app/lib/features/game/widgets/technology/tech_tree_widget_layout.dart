@@ -1,11 +1,16 @@
-// Tech tree layout helpers. De-parted wave-9 cluster (Refs #4117).
+// Tech tree layout helpers. Split out of `tech_tree_widget.dart` to keep the
+// host file under the repo file-size target (Refs #3878).
 
-import 'dart:math' as math;
+part of 'tech_tree_widget.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
+const double _nodeWidth = 100;
+const double _nodeHeight = 68;
+const double _layerGap = 140;
+const double _rowGap = 52;
+const double _edgeStrokeWidth = 2;
 
-import 'tech_tree_widget_constants.dart';
-import 'tech_tree_widget_models.dart';
+/// Offset from source right edge for the vertical segment so it stays in the inter-column gap (never through nodes).
+const double _edgeBendOffset = (_layerGap - _nodeWidth) / 2;
 
 Set<int> _reservedRowIndicesForTechLayer({
   required Map<String, TechDefinition> catalog,
@@ -23,43 +28,34 @@ Set<int> _reservedRowIndicesForTechLayer({
         (pr) => (layerByTech[pr] ?? -1) < layer,
       );
       if (!hasPrereqLeft) continue;
-      final rowIndex = ((pos.y - 24) / kTechTreeRowGap).round();
+      final rowIndex = ((pos.y - 24) / _rowGap).round();
       reserved.add(rowIndex);
     }
   }
   return reserved;
 }
 
-/// Layout metrics and topological placement for [TechTreeWidget].
-abstract final class TechTreeWidgetLayout {
-  static double canvasWidth(List<TechNodePosition> positions) {
-    return positions.map((p) => p.x).reduce(math.max) +
-        kTechTreeNodeWidth +
-        48;
+extension TechTreeWidgetLayout on TechTreeWidget {
+  double canvasWidth(List<TechNodePosition> positions) {
+    return positions.map((p) => p.x).reduce(math.max) + _nodeWidth + 48;
   }
 
-  static double canvasHeight(List<TechNodePosition> positions) {
-    return positions.map((p) => p.y).reduce(math.max) +
-        kTechTreeNodeHeight +
-        48;
+  double canvasHeight(List<TechNodePosition> positions) {
+    return positions.map((p) => p.y).reduce(math.max) + _nodeHeight + 48;
   }
 
-  /// Computes topological layout: each tech in a column strictly right of all
-  /// its prerequisites.
-  ///
-  /// For edges that span multiple columns, reserves a row slot in each
-  /// intermediate column for the connector (so the horizontal segment does not
-  /// pass through nodes); other techs are shifted down.
-  ///
-  /// Used by the widget and by tests (column rule: A→B→C and A→C ⇒ B occupies
-  /// column between A and C).
+  /// Computes topological layout: each tech in a column strictly right of all its prerequisites.
+  /// For edges that span multiple columns, reserves a row slot in each intermediate column for the
+  /// connector (so the horizontal segment does not pass through nodes); other techs are shifted down.
+  /// Used by the widget and by tests (column rule: A→B→C and A→C ⇒ B occupies column between A and C).
   static List<TechNodePosition> computeLayout(
     Map<String, TechDefinition> catalog,
   ) {
     if (catalog.isEmpty) return [];
 
+    // Layer: 0 = roots, 1 = one step from root, etc.
     final layerByTech = <String, int>{};
-    var maxLayer = 0;
+    int maxLayer = 0;
     void assignLayer(String techId) {
       if (layerByTech.containsKey(techId)) return;
       final tech = catalog[techId];
@@ -83,6 +79,7 @@ abstract final class TechTreeWidgetLayout {
       assignLayer(id);
     }
 
+    // Group by layer, sort within layer for stable layout.
     final byLayer = <int, List<String>>{};
     for (final e in layerByTech.entries) {
       byLayer.putIfAbsent(e.value, () => []).add(e.key);
@@ -91,10 +88,11 @@ abstract final class TechTreeWidgetLayout {
       list.sort((a, b) => a.compareTo(b));
     }
 
+    // Place layers from right to left so we know target rows when reserving connector slots.
     final positionsByLayer = <int, List<TechNodePosition>>{};
     for (var layer = maxLayer; layer >= 0; layer--) {
       final ids = byLayer[layer] ?? [];
-      final x = 24.0 + layer * kTechTreeLayerGap;
+      final x = 24.0 + layer * _layerGap;
       final list = <TechNodePosition>[];
 
       if (layer == maxLayer) {
@@ -103,12 +101,13 @@ abstract final class TechTreeWidgetLayout {
             TechNodePosition(
               techId: ids[i],
               x: x,
-              y: 24 + i * kTechTreeRowGap,
+              y: 24 + i * _rowGap,
               layer: layer,
             ),
           );
         }
       } else {
+        // Reserved row indices: rows that must be left free for connectors from left layers to right layers.
         final reserved = _reservedRowIndicesForTechLayer(
           catalog: catalog,
           layer: layer,
@@ -132,7 +131,7 @@ abstract final class TechTreeWidgetLayout {
             TechNodePosition(
               techId: ids[i],
               x: x,
-              y: 24 + rowIndex * kTechTreeRowGap,
+              y: 24 + rowIndex * _rowGap,
               layer: layer,
             ),
           );

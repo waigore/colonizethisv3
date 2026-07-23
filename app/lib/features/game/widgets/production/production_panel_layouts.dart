@@ -1,9 +1,7 @@
-import 'package:flutter/material.dart';
+part of 'production_panel.dart';
 
-import '../../../../widgets/ct_spacing.dart';
-
-class ProductionPanelNarrowLayout extends StatelessWidget {
-  const ProductionPanelNarrowLayout({
+class _ProductionPanelNarrowLayout extends StatelessWidget {
+  const _ProductionPanelNarrowLayout({
     super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,
@@ -28,8 +26,8 @@ class ProductionPanelNarrowLayout extends StatelessWidget {
   }
 }
 
-class ProductionPanelWideLayout extends StatelessWidget {
-  const ProductionPanelWideLayout({
+class _ProductionPanelWideLayout extends StatelessWidget {
+  const _ProductionPanelWideLayout({
     super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,

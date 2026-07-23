@@ -1,37 +1,25 @@
 /// Fleet combine/selection helpers. SPEC/ui/naval-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show GamePlayerLookup, homeFleetIdFor;
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
+part of 'naval_units_panel.dart';
 
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
-import '../../panels/tree_builders/naval_tree_builder.dart';
-import '../../unit_orders/transfer_to_home_fleet_dialog.dart';
-import '../shared/base_units_panel.dart';
-import 'naval_units_panel_widget.dart';
-
-mixin NavalUnitsPanelCombineSupport on BaseUnitsPanelState<NavalUnitsPanel> {
+extension _NavalUnitsPanelCombine on _NavalUnitsPanelState {
   /// Canonical fleet id for combine/split selection (Home Fleet uses [homeFleetIdFor]).
-  String selectionFleetId(FleetRow row) {
+  String _selectionFleetId(FleetRow row) {
     if (row.isHomeFleet) return homeFleetIdFor(widget.humanPlayerId);
     return row.fleetId;
   }
 
-  bool canCombineSelection(List<FleetRow> flat) {
+  bool _canCombineSelection(List<FleetRow> flat) {
     final rowsById = <String, FleetRow>{
-      for (final r in flat) selectionFleetId(r): r,
+      for (final r in flat) _selectionFleetId(r): r,
     };
     final activeIds = selection.selectedIds
         .where(rowsById.containsKey)
         .toList();
     if (activeIds.length < 2) return false;
-    final homeTransferRows = homeTransferRowsFor(flat, activeIds.toSet());
+    final homeTransferRows = _homeTransferRows(flat, activeIds.toSet());
     if (homeTransferRows != null) {
-      return isEligibleHomeTransferSource(homeTransferRows.source);
+      return _isEligibleHomeTransferSource(homeTransferRows.source);
     }
     String? locationKey;
     for (final id in activeIds) {
@@ -42,21 +30,21 @@ mixin NavalUnitsPanelCombineSupport on BaseUnitsPanelState<NavalUnitsPanel> {
     return true;
   }
 
-  String combineTargetFleetId(List<FleetRow> flat, Set<String> selected) {
+  String _combineTargetFleetId(List<FleetRow> flat, Set<String> selected) {
     for (final row in flat) {
-      final id = selectionFleetId(row);
+      final id = _selectionFleetId(row);
       if (!selected.contains(id)) continue;
       if (row.isHomeFleet) return id;
     }
     for (final row in flat) {
-      final id = selectionFleetId(row);
+      final id = _selectionFleetId(row);
       if (selected.contains(id)) return id;
     }
     throw StateError('combine target: empty selection');
   }
 
-  Fleet? fleetForRow(FleetRow row) {
-    final id = selectionFleetId(row);
+  Fleet? _fleetForRow(FleetRow row) {
+    final id = _selectionFleetId(row);
     final found = widget.game.fleetById(id);
     if (found != null) return found;
     if (row.isHomeFleet) {
@@ -74,51 +62,51 @@ mixin NavalUnitsPanelCombineSupport on BaseUnitsPanelState<NavalUnitsPanel> {
     return null;
   }
 
-  void toggleFleetSelection(FleetRow row) {
-    toggleSelection(selectionFleetId(row));
+  void _toggleFleetSelection(FleetRow row) {
+    toggleSelection(_selectionFleetId(row));
   }
 
-  Iterable<String> fleetSelectionIds(List<FleetRow> flat) =>
-      flat.map(selectionFleetId);
+  Iterable<String> _fleetSelectionIds(List<FleetRow> flat) =>
+      flat.map(_selectionFleetId);
 
   /// Select-all header: from none or partial → select every row; from all → clear.
   /// Does not rely on [Checkbox] tristate `next` (indeterminate taps may pass false).
-  void onHeaderSelectAllTapped(List<FleetRow> flat) {
-    selectAllOrClear(fleetSelectionIds(flat));
+  void _onHeaderSelectAllTapped(List<FleetRow> flat) {
+    selectAllOrClear(_fleetSelectionIds(flat));
   }
 
-  void performCombine(List<FleetRow> flat) {
-    if (!canCombineSelection(flat)) return;
+  void _performCombine(List<FleetRow> flat) {
+    if (!_canCombineSelection(flat)) return;
 
     final selected = Set<String>.from(selection.selectedIds);
-    final homeTransferRows = homeTransferRowsFor(flat, selected);
+    final homeTransferRows = _homeTransferRows(flat, selected);
     if (homeTransferRows != null &&
-        isEligibleHomeTransferSource(homeTransferRows.source)) {
-      openTransferToHomeDialog(
+        _isEligibleHomeTransferSource(homeTransferRows.source)) {
+      _openTransferToHomeDialog(
         homeRow: homeTransferRows.home,
         sourceRow: homeTransferRows.source,
       );
       return;
     }
-    final targetId = combineTargetFleetId(flat, selected);
+    final targetId = _combineTargetFleetId(flat, selected);
 
     FleetRow? targetRow;
     for (final row in flat) {
-      if (selectionFleetId(row) == targetId) {
+      if (_selectionFleetId(row) == targetId) {
         targetRow = row;
         break;
       }
     }
     if (targetRow == null) return;
 
-    final targetFleet = fleetForRow(targetRow);
+    final targetFleet = _fleetForRow(targetRow);
     if (targetFleet == null) return;
 
     final mergedShips = <ShipInstance>[...targetFleet.ships];
     for (final row in flat) {
-      final id = selectionFleetId(row);
+      final id = _selectionFleetId(row);
       if (!selected.contains(id) || id == targetId) continue;
-      final f = fleetForRow(row);
+      final f = _fleetForRow(row);
       if (f != null) mergedShips.addAll(f.ships);
     }
 
@@ -147,112 +135,5 @@ mixin NavalUnitsPanelCombineSupport on BaseUnitsPanelState<NavalUnitsPanel> {
 
     clearSelection();
     widget.bus.emit(NavalFleetsUpdatedEvent(game: newGame));
-  }
-
-  ({FleetRow home, FleetRow source})? homeTransferRowsFor(
-    List<FleetRow> flat,
-    Set<String> selectedIds,
-  ) {
-    if (selectedIds.length != 2) return null;
-    FleetRow? home;
-    FleetRow? source;
-    for (final row in flat) {
-      final id = selectionFleetId(row);
-      if (!selectedIds.contains(id)) continue;
-      if (row.isHomeFleet) {
-        home = row;
-      } else {
-        source = row;
-      }
-    }
-    if (home == null || source == null) return null;
-    return (home: home, source: source);
-  }
-
-  String? humanCapitalProvinceId() {
-    for (final p in widget.game.players) {
-      if (p.id == widget.humanPlayerId) return p.capitalProvinceId;
-    }
-    return null;
-  }
-
-  bool provinceMatchesCapital(String provinceId, String capitalProvinceId) {
-    if (provinceId == capitalProvinceId) return true;
-    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
-    return provinceId == capLocalId || provinceId == '$capRegionId|$capLocalId';
-  }
-
-  bool seaZoneAdjacentToCapital({
-    required String sourceSeaZoneId,
-    required String sourceRegionId,
-    required String capitalProvinceId,
-  }) {
-    final capRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    final capLocalId = ProvinceId.localIdFrom(capitalProvinceId);
-    final sourceSeaLocal = prefixedIdLocalSegment(sourceSeaZoneId);
-    final sourceSeaPrefixed = prefixedIdHasDelimiter(sourceSeaZoneId)
-        ? sourceSeaZoneId
-        : '$sourceRegionId|$sourceSeaZoneId';
-    final sourceSeaCandidates = <String>{
-      sourceSeaZoneId,
-      sourceSeaLocal,
-      sourceSeaPrefixed,
-    };
-    final capitalCandidates = <String>{
-      capitalProvinceId,
-      capLocalId,
-      '$capRegionId|$capLocalId',
-    };
-    for (final edge in widget.topology.edges) {
-      final a = edge.id1;
-      final b = edge.id2;
-      final aIsSea = sourceSeaCandidates.contains(a);
-      final bIsSea = sourceSeaCandidates.contains(b);
-      final aIsCap = capitalCandidates.contains(a);
-      final bIsCap = capitalCandidates.contains(b);
-      if ((aIsSea && bIsCap) || (bIsSea && aIsCap)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool isEligibleHomeTransferSource(FleetRow sourceRow) {
-    final sourceFleet = fleetForRow(sourceRow);
-    final capitalProvinceId = humanCapitalProvinceId();
-    if (sourceFleet == null || capitalProvinceId == null) return false;
-    if (sourceFleet.ownerId != widget.humanPlayerId) return false;
-    if (!sourceFleet.isAtSea) {
-      final inPortId = sourceFleet.inPortAtProvinceId;
-      if (inPortId == null) return false;
-      return provinceMatchesCapital(inPortId, capitalProvinceId);
-    }
-    final seaZoneId = sourceFleet.seaZoneId;
-    if (seaZoneId == null || seaZoneId.isEmpty) return false;
-    return seaZoneAdjacentToCapital(
-      sourceSeaZoneId: seaZoneId,
-      sourceRegionId: sourceFleet.regionId,
-      capitalProvinceId: capitalProvinceId,
-    );
-  }
-
-  void openTransferToHomeDialog({
-    required FleetRow homeRow,
-    required FleetRow sourceRow,
-  }) {
-    final homeFleet = fleetForRow(homeRow);
-    final sourceFleet = fleetForRow(sourceRow);
-    if (homeFleet == null || sourceFleet == null) return;
-    showDialog<void>(
-      context: context,
-      builder: (_) => TransferToHomeFleetDialog(
-        sourceFleet: sourceFleet,
-        homeFleet: homeFleet,
-        game: widget.game,
-        humanPlayerId: widget.humanPlayerId,
-        bus: widget.bus,
-      ),
-    );
   }
 }

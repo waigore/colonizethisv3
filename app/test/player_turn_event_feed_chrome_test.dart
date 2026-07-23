@@ -361,7 +361,7 @@ void main() {
         final BoxDecoration decoration = badge.decoration as BoxDecoration;
         final Color badgeColor = decoration.color!;
         final Color expected = EditorialMonoclePalette.danger.withValues(
-          alpha: PlayerTurnEventFeedUnreadBadge.backgroundAlpha,
+          alpha: PlayerTurnEventsFeedToggleButton.badgeBackgroundAlpha,
         );
         expect(badgeColor, equals(expected));
         // Negative regression guard: must not paint legacy redAccent.

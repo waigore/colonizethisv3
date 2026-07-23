@@ -1,12 +1,8 @@
 // Research-order mutation helpers for the technology panel.
-// De-parted wave-9 cluster (Refs #4117).
+// Split out of `technology_panel_orders.dart` to keep host files under the
+// repo file-size target (Refs #3878).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../widgets/ct_confirm_dialog.dart';
+part of 'technology_panel_orders.dart';
 
 /// Returns an `Orders` value with `slotIndex` set to [techId] for
 /// [humanPlayerId]. Funding for the slot is preserved when an order

@@ -1,30 +1,6 @@
-import 'dart:async';
+part of 'game_screen.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/services/ai/ai_profile_resolution.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
-import '../../../../providers/blessed_ai_profiles_provider.dart';
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/turn_resolution_blocking_provider.dart';
-import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../../flame/map_state/map_state.dart';
-import '../../flame/overlays/next_turn_confirmation_dialog.dart';
-import '../../flame/overlays/turn_resolution_processing_dialog.dart';
-import '../../flame/overlays/turn_resolution_progress_labels.dart';
-import 'game_screen_fallback_next_turn.dart';
-
-final _gameScreenLog = packageLogger('logic');
-
-mixin GameScreenFallbackNextTurnRunner
-    on ConsumerState<GameScreenFallbackNextTurnButton> {
+mixin _FallbackNextTurnRunner on ConsumerState<_FallbackNextTurnButton> {
   Future<void> runFlameCanvasFallbackNextTurn() async {
     final context = this.context;
     final game = widget.game;

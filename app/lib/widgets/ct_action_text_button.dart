@@ -1,15 +1,17 @@
+// Dark editorial-monocle reusable neutral action text button.
+// SPEC/ui/production-panel.md § Layout — Available subpanel header.
+// Mockup `.action-btn` in SPEC/ui/mockups/GAME20001-production-panel.html.
+
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import 'ct_gradients.dart';
+import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
-import 'ct_action_text_button_state.dart';
 
-/// Dark editorial-monocle reusable neutral action text button.
-/// SPEC/ui/production-panel.md § Layout — Available subpanel header.
-/// Mockup `.action-btn` in SPEC/ui/mockups/GAME20001-production-panel.html.
-///
+part 'ct_action_text_button_state.dart';
+
 /// Reusable small **neutral** text button used for secondary panel-header
 /// actions (e.g. the Available subpanel **Breakdown** affordance) that do not
 /// warrant the heavier [CtNinePatchButton] nine-patch chrome.
@@ -24,8 +26,8 @@ import 'ct_action_text_button_state.dart';
 /// - **Foreground:** [EditorialMonoclePalette.accentDim] (idle) lifting to
 ///   [EditorialMonoclePalette.accentBright] on pointer hover (desktop / mouse).
 /// - **Font:** Cinzel display family ([editorialMonocleDisplayFontFamily])
-///   at [layoutFontSize] (10 logical px) with [layoutLetterSpacing] (`0.04em`).
-/// - **Padding:** [layoutHorizontalPadding] × [layoutVerticalPadding] inset
+///   at [_fontSize] (10 logical px) with [_letterSpacing] (`0.04em`).
+/// - **Padding:** [_horizontalPadding] × [_verticalPadding] inset
 ///   (10 × 3 logical px, matching the mockup `padding: 3px 10px`).
 /// - **Disabled:** entire control wraps in an [Opacity] of
 ///   [CtNinePatchButton.disabledOpacity] (`0.4`) and ignores pointer events
@@ -117,15 +119,15 @@ class CtActionTextButton extends StatefulWidget {
   /// chrome so existing call sites do not change.
   final bool primary;
 
-  static const double layoutFontSize = 10;
-  static const double layoutLetterSpacing = 10 * 0.04; // .04em = 0.4 logical px
-  static const double layoutHorizontalPadding = 10;
-  static const double layoutVerticalPadding = 3;
-  static const double layoutBorderWidth = 1;
+  static const double _fontSize = 10;
+  static const double _letterSpacing = 10 * 0.04; // .04em = 0.4 logical px
+  static const double _horizontalPadding = 10;
+  static const double _verticalPadding = 3;
+  static const double _borderWidth = 1;
 
   /// Hover animation duration (shared with [CtNinePatchButton]).
   static const Duration animationDuration = CtNinePatchButton.animationDuration;
 
   @override
-  State<CtActionTextButton> createState() => CtActionTextButtonState();
+  State<CtActionTextButton> createState() => _CtActionTextButtonState();
 }

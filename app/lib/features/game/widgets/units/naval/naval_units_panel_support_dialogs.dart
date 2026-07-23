@@ -1,29 +1,14 @@
 /// Dialog openers for naval fleet actions. SPEC/ui/naval-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart' show GamePlayerLookup;
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
+part of 'naval_units_panel.dart';
 
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
-    show trainNavalDialogId;
-import '../../panels/tree_builders/naval_tree_builder.dart';
-import '../../unit_orders/move_fleet_dialog.dart';
-import '../../unit_orders/split_fleet_dialog.dart';
-import '../shared/base_units_panel.dart';
-import 'naval_units_panel_support_combine.dart';
-import 'naval_units_panel_widget.dart';
-
-mixin NavalUnitsPanelDialogs
-    on BaseUnitsPanelState<NavalUnitsPanel>, NavalUnitsPanelCombineSupport {
-  void openTrainDialog() {
+extension _NavalUnitsPanelDialogs on _NavalUnitsPanelState {
+  void _openTrainDialog() {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainNavalDialogId));
   }
 
-  void openSplitDialog(FleetRow row) {
-    final id = selectionFleetId(row);
+  void _openSplitDialog(FleetRow row) {
+    final id = _selectionFleetId(row);
     final fleet = widget.game.fleetById(id);
     if (fleet == null) return;
 
@@ -40,7 +25,7 @@ mixin NavalUnitsPanelDialogs
     );
   }
 
-  Future<void> openMoveFleetDialog(FleetRow row) async {
+  Future<void> _openMoveFleetDialog(FleetRow row) async {
     if (row.isHomeFleet) return;
     final fleet = widget.game.fleetById(row.fleetId);
     final nonNullFleet = fleet;

@@ -1,20 +1,9 @@
 /// Per-unit civilian row builder shell. SPEC/ui/civilian-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+part of 'civilian_units_panel.dart';
 
-import '../../../../../providers/games_provider.dart';
-import 'civilian_units_panel_support_row_card.dart';
-import 'civilian_units_panel_support_unit_row_actions.dart';
-import 'civilian_units_panel_support_unit_row_labels.dart';
-
-class CivilianUnitRow extends ConsumerWidget {
-  const CivilianUnitRow({
-    super.key,
+class _UnitRow extends ConsumerWidget {
+  const _UnitRow({
     required this.game,
     required this.unit,
     required this.provinceNames,
@@ -46,32 +35,32 @@ class CivilianUnitRow extends ConsumerWidget {
   final String? buildImprovementShortcutTargetTileKey;
   final bool readOnly;
 
-  List<WorkOrder> get pendingForPlayer =>
+  List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
 
-  WorkOrder? get pendingWorkOrder {
-    for (final o in pendingForPlayer) {
+  WorkOrder? get _pendingWorkOrder {
+    for (final o in _pendingForPlayer) {
       if (o.unitId == unit.id) return o;
     }
     return null;
   }
 
-  bool get hasPending => pendingWorkOrder != null;
+  bool get _hasPending => _pendingWorkOrder != null;
 
-  int? get pendingIndex {
-    final list = pendingForPlayer;
+  int? get _pendingIndex {
+    final list = _pendingForPlayer;
     for (var i = 0; i < list.length; i++) {
       if (list[i].unitId == unit.id) return i;
     }
     return null;
   }
 
-  bool get isIdleNoPending =>
+  bool get _isIdleNoPending =>
       unit.status == UnitStatus.idle &&
       unit.currentWork == null &&
-      !hasPending;
+      !_hasPending;
 
-  bool get hasWork => unit.currentWork != null || hasPending;
+  bool get _hasWork => unit.currentWork != null || _hasPending;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -93,7 +82,7 @@ class CivilianUnitRow extends ConsumerWidget {
             buildImprovementShortcutTargetTileKey!.isNotEmpty);
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
-    final rowActions = buildRowActions(
+    final rowActions = _buildRowActions(
       l10n,
       context,
       showActions: showActions,
@@ -106,15 +95,15 @@ class CivilianUnitRow extends ConsumerWidget {
     return CivilianUnitRowCard(
       key: ValueKey('civilian-unit-card-${unit.id}'),
       selected: selected,
-      onTap: handleRowTap,
+      onTap: _handleRowTap,
       details: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(unit.type, overflow: TextOverflow.ellipsis),
           Text(l10n.civilian_units_status(statusLabel)),
-          Text(l10n.civilian_units_location(locationLabel())),
-          buildAssignedToSubtitle(l10n),
+          Text(l10n.civilian_units_location(_locationLabel())),
+          _buildAssignedToSubtitle(l10n),
         ],
       ),
       actions: rowActions,

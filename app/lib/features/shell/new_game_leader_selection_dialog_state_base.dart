@@ -1,68 +1,60 @@
-// Shared mutable state for [NewGameLeaderSelectionDialog] mixins (Refs #3878).
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'new_game_leader_selection_dialog.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'new_game_leader_selection_dialog_constants.dart';
-import 'new_game_leader_selection_dialog_widget.dart';
-
-mixin NewGameLeaderSelectionDialogStateBase
+/// Shared mutable state for [NewGameLeaderSelectionDialog] part mixins (Refs #3878).
+mixin _NewGameLeaderSelectionDialogStateBase
     on State<NewGameLeaderSelectionDialog> {
-  late List<String> orderedGpIdsBySlot;
-  late Map<String, String> leaderByGpId;
-  late final TextEditingController seedController;
-  bool infiniteMode = false;
-  AdvancedStartType advancedStart = AdvancedStartType.none;
-  double terrainVariation =
+  late List<String> _orderedGpIdsBySlot;
+  late Map<String, String> _leaderByGpId;
+  late final TextEditingController _seedController;
+  bool _infiniteMode = false;
+  AdvancedStartType _advancedStart = AdvancedStartType.none;
+  double _terrainVariation =
       NewGameLeaderSelectionDialog.defaultTerrainVariation;
-  final Map<int, String?> profileBySlot = <int, String?>{};
+  final Map<int, String?> _profileBySlot = <int, String?>{};
 
-  List<String> get allGpIds =>
+  List<String> get _allGpIds =>
       widget.naming.greatPowers.map((g) => g.id).toList();
 
   @override
   void initState() {
     super.initState();
-    seedController = TextEditingController(
+    _seedController = TextEditingController(
       text: widget.baseConfig.seed.toString(),
     );
     final initial = widget.baseConfig.selectedGreatPowerIds;
-    orderedGpIdsBySlot = initial.length == kNewGameLeaderSelectionDialogNumSlots
+    _orderedGpIdsBySlot = initial.length == _kNumSlots
         ? List<String>.from(initial)
         : List<String>.from(
             GameSetupConfig.defaultConfig.selectedGreatPowerIds,
           );
-    leaderByGpId = Map<String, String>.from(widget.initialLeaderByGpId);
-    for (final id in orderedGpIdsBySlot) {
+    _leaderByGpId = Map<String, String>.from(widget.initialLeaderByGpId);
+    for (final id in _orderedGpIdsBySlot) {
       final gp = widget.naming.gpById(id);
       if (gp != null &&
           gp.leaderVariants.isNotEmpty &&
-          !leaderByGpId.containsKey(id)) {
-        leaderByGpId[id] = gp.defaultLeaderVariantId;
+          !_leaderByGpId.containsKey(id)) {
+        _leaderByGpId[id] = gp.defaultLeaderVariantId;
       }
     }
   }
 
   @override
   void dispose() {
-    seedController.dispose();
+    _seedController.dispose();
     super.dispose();
   }
 
-  Set<int> duplicateSlotIndices() {
+  Set<int> _duplicateSlotIndices() {
     final counts = <String, int>{};
-    for (final id in orderedGpIdsBySlot) {
+    for (final id in _orderedGpIdsBySlot) {
       if (id.isEmpty) {
         continue;
       }
       counts[id] = (counts[id] ?? 0) + 1;
     }
     final duplicates = <int>{};
-    for (var i = 0; i < kNewGameLeaderSelectionDialogNumSlots; i++) {
-      final id = orderedGpIdsBySlot[i];
+    for (var i = 0; i < _kNumSlots; i++) {
+      final id = _orderedGpIdsBySlot[i];
       if (id.isEmpty) {
         continue;
       }
@@ -73,19 +65,19 @@ mixin NewGameLeaderSelectionDialogStateBase
     return duplicates;
   }
 
-  List<String> availableGpIdsForSlot(int slotIndex) {
-    final current = orderedGpIdsBySlot[slotIndex];
+  List<String> _availableGpIdsForSlot(int slotIndex) {
+    final current = _orderedGpIdsBySlot[slotIndex];
     final takenElsewhere = <String>{};
-    for (var j = 0; j < kNewGameLeaderSelectionDialogNumSlots; j++) {
+    for (var j = 0; j < _kNumSlots; j++) {
       if (j != slotIndex) {
-        final id = orderedGpIdsBySlot[j];
+        final id = _orderedGpIdsBySlot[j];
         if (id.isNotEmpty) {
           takenElsewhere.add(id);
         }
       }
     }
     final out = <String>[];
-    for (final id in allGpIds) {
+    for (final id in _allGpIds) {
       if (!takenElsewhere.contains(id) || id == current) {
         out.add(id);
       }
@@ -93,10 +85,10 @@ mixin NewGameLeaderSelectionDialogStateBase
     return out;
   }
 
-  bool get startEnabled {
+  bool get _startEnabled {
     final seen = <String>{};
-    for (var i = 0; i < kNewGameLeaderSelectionDialogNumSlots; i++) {
-      final id = orderedGpIdsBySlot[i];
+    for (var i = 0; i < _kNumSlots; i++) {
+      final id = _orderedGpIdsBySlot[i];
       if (id.isEmpty) {
         return false;
       }
@@ -108,7 +100,7 @@ mixin NewGameLeaderSelectionDialogStateBase
       if (gp == null || gp.leaderVariants.isEmpty) {
         return false;
       }
-      final vid = leaderByGpId[id] ?? gp.defaultLeaderVariantId;
+      final vid = _leaderByGpId[id] ?? gp.defaultLeaderVariantId;
       if (!gp.leaderVariants.any((v) => v.id == vid)) {
         return false;
       }

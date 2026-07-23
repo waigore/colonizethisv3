@@ -1,18 +1,8 @@
-// Grant/subsidy dialog chrome widgets.
-
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
-import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
+part of 'diplomacy_dialogs.dart';
 
 /// Centered minus/amount/plus row matching `.stepper` in the DIPL20001 mockup.
-class GrantSubsidyAmountStepper extends StatelessWidget {
-  const GrantSubsidyAmountStepper({
+class _AmountStepper extends StatelessWidget {
+  const _AmountStepper({
     required this.amount,
     required this.amountText,
     required this.canAdjust,
@@ -31,7 +21,7 @@ class GrantSubsidyAmountStepper extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GrantSubsidyStepperButton(
+        _StepperButton(
           buttonKey: const Key('diplo_amount_minus'),
           label: '\u2212',
           enabled: canAdjust,
@@ -41,9 +31,9 @@ class GrantSubsidyAmountStepper extends StatelessWidget {
           onTap: onDecrement,
         ),
         const SizedBox(width: 14),
-        GrantSubsidyAmountLabel(text: amountText),
+        _AmountLabel(text: amountText),
         const SizedBox(width: 14),
-        GrantSubsidyStepperButton(
+        _StepperButton(
           buttonKey: const Key('diplo_amount_plus'),
           label: '+',
           enabled: canAdjust,
@@ -61,8 +51,8 @@ class GrantSubsidyAmountStepper extends StatelessWidget {
 /// `−` / `+` glyphs (not Material icons), so a `GestureDetector` over a
 /// `DecoratedBox` reproduces the chrome with the disable opacity convention
 /// used by the rest of the dark catalog.
-class GrantSubsidyStepperButton extends StatelessWidget {
-  const GrantSubsidyStepperButton({
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({
     required this.buttonKey,
     required this.label,
     required this.enabled,

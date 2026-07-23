@@ -1,62 +1,47 @@
-import 'dart:async';
+part of 'game_map_area.dart';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
-
-import '../../../../core/services/subscription_tracker.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
-import '../../widgets/shell/shell_player_context.dart';
-import '../region_map/region_map_component.dart' show BaseLayerDisplayMode;
-import '../region_map/region_map_viewport_snapshot.dart';
-import '../../../../providers/games_provider.dart';
-import 'game_map_area_widget.dart';
-
-/// Shared state for [GameMapArea]: every domain mixin (`GameMapAreaSelection`,
-/// `GameMapAreaView`, `GameMapAreaEvents`, …) is `on GameMapAreaStateBase`
+/// Shared state for [GameMapArea]: every domain mixin (`_GameMapAreaSelection`,
+/// `_GameMapAreaView`, `_GameMapAreaEvents`, …) is `on _GameMapAreaStateBase`
 /// so the mutable fields and pure read-only getters live in one place while the
 /// behavior is split by concern (Refs #3699 Theme 3).
-mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
-  int regionIndex = 0;
-  RegionMapViewportSnapshot? regionViewportSnapshot;
-  RegionMapViewportSnapshot? pendingRegionViewport;
-  bool regionViewportFrameScheduled = false;
-  String? centerOnTileKey;
-  String? selectedCivilianTileKey;
-  ({ct_models.Unit unit, String workTarget})? workTargetSelection;
-  Set<String>? cachedValidTileKeys;
-  final PerPlayerWorkTargetSelectionCache workTargetSelectionCache =
+mixin _GameMapAreaStateBase on ConsumerState<GameMapArea> {
+  int _regionIndex = 0;
+  RegionMapViewportSnapshot? _regionViewportSnapshot;
+  RegionMapViewportSnapshot? _pendingRegionViewport;
+  bool _regionViewportFrameScheduled = false;
+  String? _centerOnTileKey;
+  String? _selectedCivilianTileKey;
+  ({ct_models.Unit unit, String workTarget})? _workTargetSelection;
+  Set<String>? _cachedValidTileKeys;
+  final PerPlayerWorkTargetSelectionCache _workTargetSelectionCache =
       PerPlayerWorkTargetSelectionCache();
-  bool sideMenuOpen = false;
-  bool debugConsoleOpen = false;
+  bool _sideMenuOpen = false;
+  bool _debugConsoleOpen = false;
 
   /// One-shot guard so shell-entry capital auto-center runs once per mounted
   /// game. SPEC/ui/empire-overview.md § Initial map viewport (shell entry).
-  bool didAutoCenterOnEntry = false;
-  final SubscriptionTracker busSubscriptions = SubscriptionTracker();
-  ct_models.MapViewState mapViewState = ct_models.MapViewState.defaults;
-  final List<ct_models.GameToUIEvent> pendingPlayerTurnEvents = [];
-  List<ct_models.GameToUIEvent> resolvedPlayerTurnEvents = const [];
-  bool isTurnResolving = false;
-  StreamSubscription<TurnResolutionProgressEvent>? turnResolutionProgressSub;
+  bool _didAutoCenterOnEntry = false;
+  final SubscriptionTracker _busSubscriptions = SubscriptionTracker();
+  ct_models.MapViewState _mapViewState = ct_models.MapViewState.defaults;
+  final List<ct_models.GameToUIEvent> _pendingPlayerTurnEvents = [];
+  List<ct_models.GameToUIEvent> _resolvedPlayerTurnEvents = const [];
+  bool _isTurnResolving = false;
+  StreamSubscription<TurnResolutionProgressEvent>? _turnResolutionProgressSub;
 
   /// Base layer display mode for map letters. SPEC/ui/empire-overview.md § Base layer display cycle.
-  BaseLayerDisplayMode baseLayerDisplayMode =
+  BaseLayerDisplayMode _baseLayerDisplayMode =
       BaseLayerDisplayMode.terrainAndResourcesImprovementsRoads;
 
-  String get mapPlayerId =>
+  String get _mapPlayerId =>
       ref.read(shellPlayerContextProvider).mapPlayerIdFor(widget.game);
 
-  String? get debugConsolePlayerId =>
+  String? get _debugConsolePlayerId =>
       ref.read(shellPlayerContextProvider).debugCommandTargetPlayerId ??
-      mapPlayerId;
+      _mapPlayerId;
 
-  RegionMapViewData get currentRegion => regionIndex == 0
+  RegionMapViewData get _currentRegion => _regionIndex == 0
       ? widget.mapViewData.oldWorld
       : widget.mapViewData.newWorld;
 
-  Set<String>? get validTileKeysForSelection => cachedValidTileKeys;
+  Set<String>? get _validTileKeysForSelection => _cachedValidTileKeys;
 }

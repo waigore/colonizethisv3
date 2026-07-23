@@ -1,20 +1,9 @@
-// Header and seed field for [NewGameLeaderSelectionDialog] (Refs #3878).
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'new_game_leader_selection_dialog.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
-import 'new_game_leader_selection_dialog_slot_row_pickers.dart';
-import 'new_game_leader_selection_dialog_state_base.dart';
-import 'new_game_leader_selection_dialog_widget.dart';
-
-mixin NewGameLeaderSelectionDialogSetupFieldsHeader
-    on State<NewGameLeaderSelectionDialog>, NewGameLeaderSelectionDialogStateBase {
-  Widget buildHeader(AppLocalizations l10n, NewGameLeaderDialogTextStyles styles) {
+/// Header and seed field for [NewGameLeaderSelectionDialog] (Refs #3878).
+mixin _NewGameLeaderSelectionDialogSetupFieldsHeader
+    on State<NewGameLeaderSelectionDialog>, _NewGameLeaderSelectionDialogStateBase {
+  Widget _buildHeader(AppLocalizations l10n, _LeaderDialogTextStyles styles) {
     // Mockup header order (DLG10001 `.dialog-body`): centered title, centered
     // italic intro, then the brass divider beneath both.
     return Column(
@@ -42,10 +31,10 @@ mixin NewGameLeaderSelectionDialogSetupFieldsHeader
     );
   }
 
-  Widget buildSeedField(
+  Widget _buildSeedField(
     ThemeData theme,
     AppLocalizations l10n,
-    NewGameLeaderDialogTextStyles styles,
+    _LeaderDialogTextStyles styles,
   ) {
     final OutlineInputBorder idleBorder = OutlineInputBorder(
       borderRadius: BorderRadius.zero,
@@ -58,7 +47,7 @@ mixin NewGameLeaderSelectionDialogSetupFieldsHeader
         Text(l10n.shell_leaderDialog_seedLabel, style: styles.fieldLabel),
         const SizedBox(height: CtSpacing.m / 2),
         TextField(
-          controller: seedController,
+          controller: _seedController,
           keyboardType: TextInputType.number,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: EditorialMonoclePalette.fg,

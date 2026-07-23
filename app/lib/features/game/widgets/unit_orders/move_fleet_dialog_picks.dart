@@ -1,26 +1,15 @@
-// Naval move-dialog destination pick models and builder.
-// SPEC/ui/move-fleet-dialog.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'move_fleet_dialog.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-
-import '../../flame/map_state/map_location_resolver.dart';
-import '../province_overlay/sea_zone_name_resolver.dart';
-import '../units/shared/region_labels.dart';
-
-sealed class FleetMovePick {
-  const FleetMovePick();
+sealed class _MovePick {
+  const _MovePick();
 
   NavalMoveOrder toOrder(String fleetId);
   String get rowLabel;
   void emitLocate(AppEventBus bus, Game game);
 }
 
-final class FleetPickSeaZone extends FleetMovePick {
-  const FleetPickSeaZone({
+final class _PickSeaZone extends _MovePick {
+  const _PickSeaZone({
     required this.seaZoneId,
     required this.zoneRegionId,
     required this.rowLabel,
@@ -43,8 +32,8 @@ final class FleetPickSeaZone extends FleetMovePick {
   }
 }
 
-final class FleetPickPort extends FleetMovePick {
-  const FleetPickPort({
+final class _PickPort extends _MovePick {
+  const _PickPort({
     required this.fullProvinceId,
     required this.rowLabel,
     required this.provinceRegionId,
@@ -71,7 +60,7 @@ final class FleetPickPort extends FleetMovePick {
   }
 }
 
-String fleetMoveDialogTitleLabel(Fleet fleet) => 'Fleet ${fleet.id}';
+String _fleetMoveDialogTitleLabel(Fleet fleet) => 'Fleet ${fleet.id}';
 
 String _fullProvinceIdForTopologyProvince(
   String topologyProvinceId,
@@ -81,7 +70,7 @@ String _fullProvinceIdForTopologyProvince(
   return ProvinceId.full(regionId, topologyProvinceId);
 }
 
-List<FleetMovePick> buildNavalMovePicks({
+List<_MovePick> _buildNavalMovePicks({
   required Game game,
   required MapTopology topology,
   required String humanPlayerId,
@@ -89,8 +78,8 @@ List<FleetMovePick> buildNavalMovePicks({
   required String warpLinkLabel,
   required String Function(String regionLabel) warpLinkLabelForRegion,
 }) {
-  final outSea = <FleetPickSeaZone>[];
-  final outPort = <FleetPickPort>[];
+  final outSea = <_PickSeaZone>[];
+  final outPort = <_PickPort>[];
 
   final topo = navalMoveTopologyPicksForFleet(topology: topology, fleet: fleet);
   if (topo.totalCount == 0) return const [];
@@ -114,9 +103,7 @@ List<FleetMovePick> buildNavalMovePicks({
         : cross
         ? '$zoneLabel ${warpLinkLabelForRegion(regLabel)}'
         : '$zoneLabel $warpLinkLabel';
-    outSea.add(
-      FleetPickSeaZone(seaZoneId: z, zoneRegionId: zReg, rowLabel: label),
-    );
+    outSea.add(_PickSeaZone(seaZoneId: z, zoneRegionId: zReg, rowLabel: label));
   }
   outSea.sort((a, b) => a.rowLabel.compareTo(b.rowLabel));
 
@@ -135,7 +122,7 @@ List<FleetMovePick> buildNavalMovePicks({
     portRows.sort((a, b) => a.label.compareTo(b.label));
     for (final r in portRows) {
       outPort.add(
-        FleetPickPort(
+        _PickPort(
           fullProvinceId: r.fullId,
           rowLabel: r.label,
           provinceRegionId: rz,

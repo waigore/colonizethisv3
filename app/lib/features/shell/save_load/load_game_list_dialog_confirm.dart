@@ -1,26 +1,13 @@
-// Load-game list dialog confirm bodies (Refs #4117).
+part of 'load_game_list_dialog.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_app/widgets/ct_gap.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
-
-import 'load_game_list_dialog_state_base.dart';
-import 'load_game_list_dialog_widget.dart';
-
-mixin LoadGameListDialogConfirm
-    on ConsumerState<LoadGameListDialog>, LoadGameListDialogStateBase {
-  List<Widget> confirmBodyChildren({
+extension _LoadGameListDialogConfirm on _LoadGameListDialogState {
+  List<Widget> _confirmBodyChildren({
     required AppLocalizations l10n,
     required TextStyle bodyStyle,
-    required LoadableSaveEntry? pendingDeleteEntry,
-    required LoadableSaveEntry? pendingLoadEntry,
+    required LoadableSaveEntry? pendingDelete,
+    required LoadableSaveEntry? pendingLoad,
   }) {
-    if (pendingDeleteEntry != null) {
+    if (pendingDelete != null) {
       return [
         Text(
           l10n.loadGameList_deleteConfirm,
@@ -33,20 +20,20 @@ mixin LoadGameListDialogConfirm
           children: [
             CtNinePatchButton(
               key: LoadGameListDialog.deleteCancelButtonKey,
-              onPressed: onDeleteCancel,
+              onPressed: _onDeleteCancel,
               child: Text(l10n.common_cancel),
             ),
             const SizedBox(width: CtSpacing.m),
             CtNinePatchButton(
               key: LoadGameListDialog.deleteConfirmButtonKey,
-              onPressed: onDeleteConfirm,
+              onPressed: _onDeleteConfirm,
               child: Text(l10n.loadGameList_delete),
             ),
           ],
         ),
       ];
     }
-    if (pendingLoadEntry != null) {
+    if (pendingLoad != null) {
       return [
         Text(
           l10n.loadGameList_discardConfirm,
@@ -59,13 +46,13 @@ mixin LoadGameListDialogConfirm
           children: [
             CtNinePatchButton(
               key: LoadGameListDialog.discardCancelButtonKey,
-              onPressed: onDiscardCancel,
+              onPressed: _onDiscardCancel,
               child: Text(l10n.common_cancel),
             ),
             const SizedBox(width: CtSpacing.m),
             CtNinePatchButton(
               key: LoadGameListDialog.discardConfirmButtonKey,
-              onPressed: onDiscardConfirm,
+              onPressed: _onDiscardConfirm,
               child: Text(l10n.loadGameList_load),
             ),
           ],

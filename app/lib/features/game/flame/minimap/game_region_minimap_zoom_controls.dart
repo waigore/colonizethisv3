@@ -1,22 +1,9 @@
-// Region minimap zoom label + [CtSlider] row.
-// SPEC/ui/empire-overview.md § Region minimap.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../widgets/ct_slider.dart';
-import '../../screens/game/game_screen_shared.dart' show kRegionMinimapZoomSliderKey;
-import '../region_map/region_map_viewport_snapshot.dart'
-    show kRegionMapZoomMultiplierMax, kRegionMapZoomMultiplierMin;
+part of 'game_region_minimap.dart';
 
 /// Minimap zoom label + [CtSlider] (non-Material), with local value during drag so
 /// the thumb and % label track the gesture before the viewport snapshot catches up.
-class MinimapZoomControls extends StatefulWidget {
-  const MinimapZoomControls({
-    super.key,
+class _MinimapZoomControls extends StatefulWidget {
+  const _MinimapZoomControls({
     required this.regionId,
     required this.bus,
     required this.viewportMultiplier,
@@ -33,15 +20,15 @@ class MinimapZoomControls extends StatefulWidget {
   final Widget trailing;
 
   @override
-  State<MinimapZoomControls> createState() => MinimapZoomControlsState();
+  State<_MinimapZoomControls> createState() => _MinimapZoomControlsState();
 }
 
-class MinimapZoomControlsState extends State<MinimapZoomControls> {
+class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
   double? _dragMultiplier;
   bool _dragging = false;
 
   @override
-  void didUpdateWidget(covariant MinimapZoomControls oldWidget) {
+  void didUpdateWidget(covariant _MinimapZoomControls oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.regionId != widget.regionId) {
       _dragMultiplier = null;

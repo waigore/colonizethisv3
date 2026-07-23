@@ -1,21 +1,11 @@
 // Slots-tab body assembly for [TechnologyPanel].
-// De-parted wave-9 cluster (Refs #4117).
+// Split from `technology_panel.dart` to keep the host under the repo
+// file-size target (Refs #3878).
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
+part of 'technology_panel.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_gap.dart';
-import 'technology_panel_constants.dart';
-import 'technology_panel_research_slots.dart';
-import 'technology_panel_widget.dart';
-import 'technology_panel_widgets.dart';
-
-extension TechnologyPanelBody on TechnologyPanel {
-  Widget buildPanelBody({
+extension _TechnologyPanelBody on TechnologyPanel {
+  Widget _buildPanelBody({
     required BuildContext context,
     required AppLocalizations l10n,
     required List<String> researchedIds,
@@ -99,17 +89,17 @@ extension TechnologyPanelBody on TechnologyPanel {
     );
   }
 
-  List<String> sortedResearchedTechIds() {
+  List<String> _sortedResearchedTechIds() {
     final techUnlocked = player.techUnlocked ?? const <String, bool>{};
     final researchedIds = techUnlocked.entries
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .toList();
-    researchedIds.sort(sortTechIdsByEraThenName);
+    researchedIds.sort(_sortTechIdsByEraThenName);
     return researchedIds;
   }
 
-  int sortTechIdsByEraThenName(String a, String b) {
+  int _sortTechIdsByEraThenName(String a, String b) {
     final eraA = techById(a)?.era ?? 999;
     final eraB = techById(b)?.era ?? 999;
     final eraCmp = eraA.compareTo(eraB);
@@ -119,7 +109,7 @@ extension TechnologyPanelBody on TechnologyPanel {
     return techDisplayName(a).compareTo(techDisplayName(b));
   }
 
-  List<ResearchOrder> researchOrdersForPlayer(String playerId) {
+  List<ResearchOrder> _researchOrdersForPlayer(String playerId) {
     return currentOrders.researchOrdersByPlayerId[playerId] ??
         const <ResearchOrder>[];
   }

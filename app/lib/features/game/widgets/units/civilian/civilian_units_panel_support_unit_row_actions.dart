@@ -1,23 +1,9 @@
 /// Civilian unit row assign/cancel/locate actions. SPEC/ui/civilian-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'dart:async';
+part of 'civilian_units_panel.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../widgets/ct_spacing.dart';
-import '../shared/units_entity_action_row.dart';
-import 'civilian_units_panel_support_resolution.dart';
-import 'civilian_units_panel_support_unit_row.dart';
-
-extension CivilianUnitRowActions on CivilianUnitRow {
-  void showOrderMenu(
+extension _UnitRowActions on _UnitRow {
+  void _showOrderMenu(
     BuildContext context,
     List<String> availableWorkTargetIds,
   ) {
@@ -59,7 +45,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
                     vertical: CtSpacing.ml,
                   ),
                   child: Text(
-                    civilianWorkTargetLabels[target] ?? target,
+                    _workTargetLabels[target] ?? target,
                     style: TextStyle(
                       color: isAvailable
                           ? null
@@ -75,7 +61,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
     );
   }
 
-  void startShortcutAssign(List<String> availableWorkTargetIds) {
+  void _startShortcutAssign(List<String> availableWorkTargetIds) {
     final hasExploreShortcut =
         exploreShortcutTargetTileKey != null &&
         exploreShortcutTargetTileKey!.isNotEmpty;
@@ -98,7 +84,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
         : hasExploreShortcut
         ? kWorkTargetExplore
         : kWorkTargetProspect;
-    if (!isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
+    if (!_isIdleNoPending || !availableWorkTargetIds.contains(workTarget)) {
       return;
     }
     bus.closePanelThenEmit(
@@ -113,7 +99,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
     );
   }
 
-  Future<void> confirmCancel(BuildContext context) async {
+  Future<void> _confirmCancel(BuildContext context) async {
     final completer = Completer<bool>();
     bus.emit(
       ConfirmDialogEvent(
@@ -127,7 +113,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
     );
     final confirmed = await completer.future;
     if (!confirmed || !context.mounted) return;
-    final idx = pendingIndex;
+    final idx = _pendingIndex;
     if (idx != null) {
       bus.emit(
         RemovePendingWorkOrderRequestedEvent(
@@ -140,7 +126,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
     }
   }
 
-  List<UnitsEntityAction> buildRowActions(
+  List<UnitsEntityAction> _buildRowActions(
     AppLocalizations l10n,
     BuildContext context, {
     required bool showActions,
@@ -157,22 +143,22 @@ extension CivilianUnitRowActions on CivilianUnitRow {
         tileKeyForLocate.isNotEmpty &&
         regionIdForLocate != null;
     return [
-      if (showActions && isIdleNoPending)
+      if (showActions && _isIdleNoPending)
         UnitsEntityAction(
           tooltip: l10n.civilian_units_assign,
           icon: Icons.playlist_add,
           label: l10n.civilian_units_assign,
           onPressed: inExplorerShortcutMode
-              ? () => startShortcutAssign(availableWorkTargetIds)
-              : () => showOrderMenu(context, availableWorkTargetIds),
+              ? () => _startShortcutAssign(availableWorkTargetIds)
+              : () => _showOrderMenu(context, availableWorkTargetIds),
         ),
-      if (showActions && hasWork)
+      if (showActions && _hasWork)
         UnitsEntityAction(
           tooltip: l10n.common_cancel,
           icon: Icons.cancel_outlined,
           label: l10n.common_cancel,
           variant: UnitsEntityActionVariant.danger,
-          onPressed: () => confirmCancel(context),
+          onPressed: () => _confirmCancel(context),
         ),
       UnitsEntityAction(
         tooltip: l10n.common_locate,
@@ -193,7 +179,7 @@ extension CivilianUnitRowActions on CivilianUnitRow {
     ];
   }
 
-  void handleRowTap() {
+  void _handleRowTap() {
     if (isTileScope) {
       onSelectInTileScope();
       return;

@@ -1,10 +1,7 @@
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+part of 'map_view_provider.dart';
 
-class MapResourceExtractionMaps {
-  const MapResourceExtractionMaps({
+class _MapResourceExtractionMaps {
+  const _MapResourceExtractionMaps({
     required this.unitsByTile,
     required this.effectiveUnitsByTile,
     required this.blockedUnitsByTile,
@@ -15,7 +12,7 @@ class MapResourceExtractionMaps {
   final Map<String, int> blockedUnitsByTile;
 }
 
-MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
+_MapResourceExtractionMaps _mapViewBuildResourceExtractionMaps({
   required Game game,
   required Player mapPlayer,
   required Map<String, TileMapResult> tileMapByRegion,
@@ -80,7 +77,7 @@ MapResourceExtractionMaps mapViewBuildResourceExtractionMaps({
     resourceExtractionEffectiveUnitsByTile[tileKey] = effectiveUnits;
     resourceExtractionBlockedUnitsByTile[tileKey] = blockedUnits;
   }
-  return MapResourceExtractionMaps(
+  return _MapResourceExtractionMaps(
     unitsByTile: resourceExtractionUnitsByTile,
     effectiveUnitsByTile: resourceExtractionEffectiveUnitsByTile,
     blockedUnitsByTile: resourceExtractionBlockedUnitsByTile,

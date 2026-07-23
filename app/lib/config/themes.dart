@@ -1,17 +1,14 @@
-// App themes. Phase 6: pixel-art canon per UXD / SPEC/ui/pixel-art-ui-catalog.md.
-//
-// De-parted wave-9 cluster (Refs #4117): explicit-import libraries replace the
-// former 3-part library. Public surface: [AppThemes], [darkWood],
-// [editorialMonocleDisplayFontFamily], [preloadEditorialMonocleFonts].
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-export 'themes_colonial.dart' show darkWood;
-export 'themes_font_preload.dart'
-    show editorialMonocleDisplayFontFamily, preloadEditorialMonocleFonts;
+import '../package_logger.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
-import 'themes_colonial.dart';
-import 'themes_editorial_monocle.dart';
+part 'themes_colonial.dart';
+part 'themes_editorial_monocle.dart';
+part 'themes_font_preload.dart';
+
+const Color darkWood = Color(0xFF5D3A1A);
 
 /// App themes. Phase 6: pixel-art canon and styling per UXD apply to existing UIs (03a–03m).
 /// Asset pipeline: `assets/images/` (terrain, nine-patch, main menu art); `assets/icons/` (`ui_icon_*.png`); load via rootBundle or Flame cache.
@@ -25,9 +22,9 @@ class AppThemes {
 
   static ThemeData get light => ThemeData.light(useMaterial3: true);
 
-  static ThemeData get colonial => buildColonialTheme();
+  static ThemeData get colonial => _buildColonialTheme();
 
-  static ThemeData get colonialPixelArt => buildColonialPixelArtTheme();
+  static ThemeData get colonialPixelArt => _buildColonialPixelArtTheme();
 
-  static ThemeData get editorialMonocle => buildEditorialMonocleTheme();
+  static ThemeData get editorialMonocle => _buildEditorialMonocleTheme();
 }

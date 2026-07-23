@@ -1,27 +1,10 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import '../../../features/game/widgets/shell/shell_player_context.dart';
-import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
-import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
-import '../../../features/game/widgets/units/military/military_units_panel.dart';
-import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
-import '../../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
-import '../../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
-import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
-import 'app_event_handler.dart';
+part of 'app_event_handler.dart';
 
 /// Result of a unit-panel sheet body builder: either an early [replacement]
 /// (e.g. observe-mode sentinel) or the [panel] widget to wrap in sheet chrome.
-typedef UnitsPanelSheetBody = ({Widget? replacement, Widget? panel});
+typedef _UnitsPanelSheetBody = ({Widget? replacement, Widget? panel});
 
-extension AppEventHandlerUnitPanels on AppEventHandler {
+extension _AppEventHandlerUnitPanels on AppEventHandler {
   /// Shared bottom-sheet host for civilian / military / naval unit panels.
   ///
   /// Owns transparent Material chrome, [UnitsPanelSheetSurface], host
@@ -30,10 +13,10 @@ extension AppEventHandlerUnitPanels on AppEventHandler {
   /// [buildBody]. Civilian-only E2E height override is gated by
   /// [applyCivilianE2eHeightOverride]. Refs #4035 AC1 /
   /// SPEC/ui/components/units-panel-shell.md.
-  Future<void> showUnitsPanelSheet({
+  Future<void> _showUnitsPanelSheet({
     required NavigatorState nav,
     required String panelKind,
-    required UnitsPanelSheetBody Function(
+    required _UnitsPanelSheetBody Function(
       BuildContext context,
       WidgetRef ref,
       Game game,
@@ -81,16 +64,16 @@ extension AppEventHandlerUnitPanels on AppEventHandler {
       ),
     ).whenComplete(() {
       beforeClosedEvent?.call();
-      handlerBus.emit(UnitsPanelClosedEvent(panelKind));
+      _bus.emit(UnitsPanelClosedEvent(panelKind));
     });
   }
 
-  Future<void> openCivilianUnitsPanel(
+  Future<void> _openCivilianUnitsPanel(
     OpenCivilianUnitsPanelEvent event,
     NavigatorState? nav,
   ) async {
     if (nav == null) return;
-    await showUnitsPanelSheet(
+    await _showUnitsPanelSheet(
       nav: nav,
       panelKind: 'civilian',
       applyCivilianE2eHeightOverride: true,
@@ -129,12 +112,12 @@ extension AppEventHandlerUnitPanels on AppEventHandler {
     );
   }
 
-  Future<void> openMilitaryUnitsPanel(
+  Future<void> _openMilitaryUnitsPanel(
     OpenMilitaryUnitsPanelEvent event,
     NavigatorState? nav,
   ) async {
     if (nav == null) return;
-    await showUnitsPanelSheet(
+    await _showUnitsPanelSheet(
       nav: nav,
       panelKind: 'military',
       buildBody: (context, ref, game) {
@@ -163,12 +146,12 @@ extension AppEventHandlerUnitPanels on AppEventHandler {
     );
   }
 
-  Future<void> openNavalUnitsPanel(
+  Future<void> _openNavalUnitsPanel(
     OpenNavalUnitsPanelEvent event,
     NavigatorState? nav,
   ) async {
     if (nav == null) return;
-    await showUnitsPanelSheet(
+    await _showUnitsPanelSheet(
       nav: nav,
       panelKind: 'naval',
       // Keep the last naval snapshot after close; refreshCtE2eNavalPanelSnapshotAfterTurnIfEnabled

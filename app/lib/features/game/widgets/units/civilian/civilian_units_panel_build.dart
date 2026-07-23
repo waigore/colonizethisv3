@@ -1,31 +1,6 @@
-/// Civilian panel build assembly. SPEC/ui/civilian-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
+part of 'civilian_units_panel.dart';
 
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
-import '../../../../../providers/games_provider.dart';
-import '../shared/units_panel_shell.dart';
-import 'civilian_units_panel_list.dart';
-import 'civilian_units_panel_state.dart';
-import 'civilian_units_panel_widget.dart';
-import 'civilian_units_sort.dart';
-
-mixin CivilianUnitsPanelBuild
-    on
-        CivilianUnitsPanelSelection,
-        ConsumerState<CivilianUnitsPanel>,
-        CivilianUnitsPanelList {
+extension _CivilianUnitsPanelBuild on _CivilianUnitsPanelState {
   Widget buildCivilianUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
     final provinceNames = provinceNamesByPrefixedId(widget.game);
@@ -45,13 +20,13 @@ mixin CivilianUnitsPanelBuild
     );
     final scopeTileKey = widget.tileScopeTileKey;
     final tileScopeActive = scopeTileKey != null && scopeTileKey.isNotEmpty;
-    final scopedOw = scopedCivilianUnits(
+    final scopedOw = _scopedCivilianUnits(
       ow,
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
     );
-    final scopedNw = scopedCivilianUnits(
+    final scopedNw = _scopedCivilianUnits(
       nw,
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
@@ -59,11 +34,11 @@ mixin CivilianUnitsPanelBuild
     );
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];
-    final currentSelection = selectedUnitId;
+    final selectedUnitId = _selectedUnitId;
     final resolvedSelectedUnitId =
-        currentSelection != null &&
-            allScopedUnits.any((u) => u.id == currentSelection)
-        ? currentSelection
+        selectedUnitId != null &&
+            allScopedUnits.any((u) => u.id == selectedUnitId)
+        ? selectedUnitId
         : (allScopedUnits.isNotEmpty ? allScopedUnits.first.id : null);
     Unit? resolvedSelectedUnit;
     if (resolvedSelectedUnitId != null) {
@@ -122,7 +97,7 @@ mixin CivilianUnitsPanelBuild
       ],
       hasContent: hasAny,
       listChildren: [
-        ...civilianListChildrenForRegion(
+        ..._civilianListChildrenForRegion(
           regionId: kRegionOldWorld,
           units: scopedOw,
           multiOwner: multiOwner,
@@ -130,9 +105,9 @@ mixin CivilianUnitsPanelBuild
           provinceNames: provinceNames,
           tileScopeActive: tileScopeActive,
           resolvedSelectedUnitId: resolvedSelectedUnitId,
-          onSelectUnit: (id) => setState(() => this.selectedUnitId = id),
+          onSelectUnit: (id) => setState(() => _selectedUnitId = id),
         ),
-        ...civilianListChildrenForRegion(
+        ..._civilianListChildrenForRegion(
           regionId: kRegionNewWorld,
           units: scopedNw,
           multiOwner: multiOwner,
@@ -140,7 +115,7 @@ mixin CivilianUnitsPanelBuild
           provinceNames: provinceNames,
           tileScopeActive: tileScopeActive,
           resolvedSelectedUnitId: resolvedSelectedUnitId,
-          onSelectUnit: (id) => setState(() => this.selectedUnitId = id),
+          onSelectUnit: (id) => setState(() => _selectedUnitId = id),
         ),
       ],
       emptyMessage: l10n.civilian_units_empty,

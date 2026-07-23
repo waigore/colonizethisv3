@@ -1,33 +1,19 @@
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+part of 'app_event_handler.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../config/routes.dart';
-import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
-import '../../../features/game/widgets/panels/pause_menu_panel.dart';
-import '../../../features/game/widgets/shell/shell_player_context.dart';
-import '../game_session_clear.dart';
-import '../../../widgets/ct_confirm_dialog.dart';
-import 'app_event_handler.dart';
-
-final appEventHandlerNavigationLog = packageLogger('event');
-
-extension AppEventHandlerNavigation on AppEventHandler {
-  static const observeBlockedDialogIds = {
+extension _AppEventHandlerNavigation on AppEventHandler {
+  static const _observeBlockedDialogIds = {
     'train_civilians',
     'train_military',
     'grant_or_subsidy',
   };
 
-  Future<void> openDialog(OpenDialogEvent event, NavigatorState? nav) async {
+  Future<void> _openDialog(OpenDialogEvent event, NavigatorState? nav) async {
     if (nav == null) return;
-    if (observeBlockedDialogIds.contains(event.dialogId)) {
+    if (_observeBlockedDialogIds.contains(event.dialogId)) {
       final ctx = nav.context;
       final container = ProviderScope.containerOf(ctx);
       if (!container.read(shellPlayerContextProvider).canMutateViaUi) {
-        handlerOnShowSnackBar?.call(
+        _onShowSnackBar?.call(
           const ShowSnackBarEvent(
             message: 'Observe mode: UI actions are read-only.',
           ),
@@ -35,7 +21,7 @@ extension AppEventHandlerNavigation on AppEventHandler {
         return;
       }
     }
-    final builder = handlerDialogBuilders[event.dialogId];
+    final builder = _dialogBuilders[event.dialogId];
     if (builder == null) {
       debugPrint('[AppEventHandler] No dialog builder for: ${event.dialogId}');
       return;
@@ -46,7 +32,7 @@ extension AppEventHandlerNavigation on AppEventHandler {
     );
   }
 
-  Future<bool> showConfirmDialog(
+  Future<bool> _showConfirmDialog(
     ConfirmDialogEvent event,
     NavigatorState? nav,
   ) async {
@@ -65,19 +51,15 @@ extension AppEventHandlerNavigation on AppEventHandler {
       event.result(confirmed);
       return confirmed;
     } catch (e, st) {
-      appEventHandlerNavigationLog.e(
-        'ConfirmDialog failed',
-        error: e,
-        stackTrace: st,
-      );
+      _log.e('ConfirmDialog failed', error: e, stackTrace: st);
       event.result(false);
       return false;
     }
   }
 
-  Future<void> openPanel(OpenPanelEvent event, NavigatorState? nav) async {
+  Future<void> _openPanel(OpenPanelEvent event, NavigatorState? nav) async {
     if (nav == null) return;
-    final builder = handlerPanelBuilders[event.panelId];
+    final builder = _panelBuilders[event.panelId];
     if (builder == null) {
       debugPrint('[AppEventHandler] No panel builder for: ${event.panelId}');
       return;
@@ -88,7 +70,7 @@ extension AppEventHandlerNavigation on AppEventHandler {
     );
   }
 
-  Future<void> openPauseMenuPanel(
+  Future<void> _openPauseMenuPanel(
     OpenPauseMenuPanelEvent event,
     NavigatorState? nav,
   ) async {
@@ -97,7 +79,7 @@ extension AppEventHandlerNavigation on AppEventHandler {
       context: nav.context,
       useRootNavigator: true,
       barrierColor: EditorialMonoclePalette.dialogScrim,
-      builder: (ctx) => PauseMenuPanel(bus: handlerBus),
+      builder: (ctx) => PauseMenuPanel(bus: _bus),
     );
   }
 
@@ -108,19 +90,19 @@ extension AppEventHandlerNavigation on AppEventHandler {
   /// the new modal mounts (preventing the confirm dialog from being torn
   /// down with the pause sheet). SPEC: `SPEC/ui/pause-menu-panel.md`
   /// § Navigation, `SPEC/ui/in-game-shell-narrow.md` § Android back confirm.
-  void handleRequestExitToMainMenuFlow(NavigatorState? nav) {
+  void _handleRequestExitToMainMenuFlow(NavigatorState? nav) {
     if (nav == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final state = handlerNavigatorKey.currentState;
+      final state = _navigatorKey.currentState;
       final ctx = state?.context;
       if (state == null || ctx == null || !ctx.mounted) return;
       final confirmed = await showExitToMainMenuConfirmDialog(ctx);
       if (!confirmed) return;
-      handlerBus.emit(const NavigateToShellEvent());
+      _bus.emit(const NavigateToShellEvent());
     });
   }
 
-  void navigateToShell(NavigatorState? nav) {
+  void _navigateToShell(NavigatorState? nav) {
     if (nav == null) return;
     final ctx = nav.context;
     if (ctx.mounted) {
@@ -128,7 +110,7 @@ extension AppEventHandlerNavigation on AppEventHandler {
         final container = ProviderScope.containerOf(ctx, listen: false);
         clearActiveGameSession(container);
       } catch (e, st) {
-        appEventHandlerNavigationLog.d(
+        _log.d(
           'navigateToShell: skipped in-memory game clear (no ProviderScope)',
           error: e,
           stackTrace: st,

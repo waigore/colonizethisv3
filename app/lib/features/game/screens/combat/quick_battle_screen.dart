@@ -9,7 +9,8 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../widgets/combat/quick_battle_action_selector.dart';
 import '../../widgets/combat/quick_battle_deployment_view.dart';
-import 'quick_battle_screen_result.dart';
+
+part 'quick_battle_screen_result.dart';
 
 /// Quick Battle flow: deployment → rounds → result. SPEC/game/quick-battle.md.
 /// Uses default actions (Volley Fire) when run in headless/AI mode.
@@ -75,7 +76,7 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     if (_result != null) {
-      return QuickBattleScreenResultView(
+      return _ResultView(
         result: _result!,
         onDismiss: () {
           widget.onComplete(_result!);

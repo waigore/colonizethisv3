@@ -1,15 +1,11 @@
-// Main-menu body layout widgets (Refs #4117 de-part).
-//
-// SPEC/program/dart-file-non-comment-line-size.md.
+// Main-menu body layout widgets, split out from `main_menu.dart` to keep the
+// host file under the repo-lint non-comment line limit per
+// `SPEC/program/dart-file-non-comment-line-size.md`.
 
-import 'package:flutter/material.dart';
+part of 'main_menu.dart';
 
-import 'main_menu_body_content.dart';
-import 'main_menu_constants.dart';
-import 'main_menu_variant.dart';
-
-class MainMenuBody extends StatelessWidget {
-  const MainMenuBody({
+class _MainMenuBody extends StatelessWidget {
+  const _MainMenuBody({
     required this.variant,
     required this.showAfterVictorySubtitle,
     required this.loadGameEnabled,
@@ -51,7 +47,7 @@ class MainMenuBody extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: SingleChildScrollView(
-                  child: MainMenuBodyContent(
+                  child: _MainMenuBodyContent(
                     variant: variant,
                     showAfterVictorySubtitle: showAfterVictorySubtitle,
                     loadGameEnabled: loadGameEnabled,

@@ -1,16 +1,7 @@
-// Keyboard, scroll-wheel, hover, and pinch/pan input chrome for [CtRegionMap].
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
-import '../core/services/region_map/region_map_widget_bindings.dart';
-import 'ct_region_map_widget.dart';
+part of 'ct_region_map.dart';
 
 /// Keyboard, scroll-wheel, hover, and pinch/pan input chrome for [CtRegionMap].
-mixin CtRegionMapViewportMixin on State<CtRegionMap> {
+mixin _CtRegionMapViewportMixin on State<CtRegionMap> {
   CtRegionMapGame get regionMapGame;
   double get scaleGestureStartMultiplier;
   set scaleGestureStartMultiplier(double value);

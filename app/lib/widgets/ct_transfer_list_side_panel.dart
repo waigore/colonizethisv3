@@ -1,13 +1,7 @@
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:flutter/material.dart';
+part of 'ct_transfer_list.dart';
 
-import 'ct_nine_patch_button.dart';
-import 'ct_panel.dart';
-import 'ct_spacing.dart';
-import 'ct_transfer_list.dart';
-
-class CtTransferSidePanel extends StatelessWidget {
-  const CtTransferSidePanel({
+class _TransferSidePanel extends StatelessWidget {
+  const _TransferSidePanel({
     required this.title,
     required this.counts,
     required this.total,

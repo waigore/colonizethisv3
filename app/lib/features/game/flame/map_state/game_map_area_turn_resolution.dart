@@ -1,37 +1,12 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import '../../../../core/services/game_service/game_service.dart' show GameMapData;
-import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
-import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
-import '../../../../providers/blessed_ai_profiles_provider.dart';
-import '../../../../providers/game_service_provider.dart';
-import '../../../../providers/games_provider.dart';
-import '../../../../providers/turn_resolution_blocking_provider.dart';
-import '../../../../providers/turn_resolution_runner_provider.dart';
-import '../overlays/next_turn_confirmation_dialog.dart';
-import '../overlays/turn_resolution_processing_dialog.dart';
-import '../overlays/turn_resolution_progress_labels.dart';
-import 'game_map_area_logging.dart';
-import 'game_map_area_state_base.dart';
-import 'game_map_area_state_logic.dart';
-import 'game_map_area_turn_resolution_session.dart';
-import 'game_map_area_widget.dart';
+part of 'game_map_area.dart';
 
 /// Next-turn resolution flow for [GameMapArea]: confirmation, the processing
 /// dialog lifecycle, worker session orchestration, result application, and the
 /// structured `next_turn_ui_map` timing logs (Refs #3699 Theme 3).
-mixin GameMapAreaTurnResolution
-    on ConsumerState<GameMapArea>, GameMapAreaStateBase {
-  Future<void> onNextTurn() async {
-    if (isTurnResolving) {
+mixin _GameMapAreaTurnResolution
+    on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
+  Future<void> _onNextTurn() async {
+    if (_isTurnResolving) {
       return;
     }
     final game = ref.read(currentGameProvider);
@@ -63,10 +38,10 @@ mixin GameMapAreaTurnResolution
     var processingDialogOpen = true;
     final uiStopwatch = Stopwatch()..start();
     setState(() {
-      isTurnResolving = true;
+      _isTurnResolving = true;
     });
     ref.read(turnResolutionBlockingProvider.notifier).set(true);
-    gameMapNextTurnUiLog.i(
+    _gameMapNextTurnUiLog.i(
       'logic: next_turn_ui_map started gameId=${game.id} turn=$currentTurn '
       'turnTraceEnabled=${service.isTurnTraceEnabled}',
     );
@@ -85,12 +60,12 @@ mixin GameMapAreaTurnResolution
       }),
     );
     await awaitTurnResolutionProcessingDialogFirstPaint();
-    gameMapNextTurnUiLog.i(
+    _gameMapNextTurnUiLog.i(
       'logic: next_turn_ui_map processing_dialog_painted gameId=${game.id} '
       'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
     );
     try {
-      final sessionResult = await awaitGameMapAreaTurnResolutionSession(
+      final sessionResult = await _awaitGameMapAreaTurnResolutionSession(
         host: this,
         service: service,
         aiCatalog:
@@ -109,7 +84,7 @@ mixin GameMapAreaTurnResolution
         rootNavigator.pop();
         processingDialogOpen = false;
       }
-      applyGameMapAreaTurnResolutionTerminal(
+      _applyGameMapAreaTurnResolutionTerminal(
         resultApplier: ref.read(turnResolutionResultApplierProvider),
         terminal: sessionResult.terminal,
         service: service,
@@ -126,9 +101,9 @@ mixin GameMapAreaTurnResolution
       rethrow;
     } finally {
       clearTurnResolutionBlockingFlag();
-      await turnResolutionProgressSub?.cancel();
-      turnResolutionProgressSub = null;
-      gameMapNextTurnUiLog.i(
+      await _turnResolutionProgressSub?.cancel();
+      _turnResolutionProgressSub = null;
+      _gameMapNextTurnUiLog.i(
         'logic: next_turn_ui_map cleanup_complete gameId=${game.id} '
         'elapsedMs=${uiStopwatch.elapsedMilliseconds}',
       );
@@ -140,7 +115,7 @@ mixin GameMapAreaTurnResolution
       });
       if (mounted) {
         setState(() {
-          isTurnResolving = false;
+          _isTurnResolving = false;
         });
       }
     }

@@ -1,12 +1,4 @@
-// Shared move-dialog destination row chrome.
-// SPEC/ui/components/move-units-dialog-base.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../widgets/ct_spacing.dart';
+part of 'move_units_dialog_base.dart';
 
 /// Single destination row shared by the move dialogs.
 ///

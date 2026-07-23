@@ -1,15 +1,4 @@
-// Train-dialog unit-row stepper and surface widgets.
-// SPEC/ui/components/train-dialog-chrome.md.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
+part of 'train_dialog_chrome.dart';
 
 /// `[−] count [+]` stepper control shared by all three train-dialog unit rows.
 ///

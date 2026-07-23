@@ -20,15 +20,38 @@
 // To request navigation:
 //   eventBus.emit(const NavigateToRouteEvent('/game/settings'));
 
+import 'dart:async';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../features/game/widgets/shell/shell_player_context.dart';
+import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
+
+import '../../../config/routes.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import '../subscription_tracker.dart';
+import '../game_session_clear.dart';
+import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
+import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
+import '../../../features/game/widgets/units/military/military_units_panel.dart';
+import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
+import '../../../features/game/widgets/panels/pause_menu_panel.dart';
+import '../../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
+import '../../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
+import '../../../providers/app_event_bus_provider.dart';
+import '../../../providers/game_service_provider.dart';
+import '../../../providers/games_provider.dart';
 import '../../../providers/turn_resolution_blocking_provider.dart';
-import 'app_event_handler_navigation.dart';
-import 'app_event_handler_unit_panels.dart';
+import '../../../widgets/ct_confirm_dialog.dart';
+
+part 'app_event_handler_navigation.dart';
+part 'app_event_handler_unit_panels.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
@@ -99,27 +122,27 @@ class AppEventHandler {
     }
     switch (event) {
       case OpenDialogEvent():
-        openDialog(event, nav);
+        _openDialog(event, nav);
       case ConfirmDialogEvent():
-        showConfirmDialog(event, nav);
+        _showConfirmDialog(event, nav);
       case NavigateToRouteEvent():
         nav?.pushNamed(event.route, arguments: event.arguments);
       case NavigateToShellEvent():
-        navigateToShell(nav);
+        _navigateToShell(nav);
       case PopNavigationEvent():
         nav?.pop();
       case RequestExitToMainMenuFlowEvent():
-        handleRequestExitToMainMenuFlow(nav);
+        _handleRequestExitToMainMenuFlow(nav);
       case OpenPauseMenuPanelEvent():
-        openPauseMenuPanel(event, nav);
+        _openPauseMenuPanel(event, nav);
       case OpenCivilianUnitsPanelEvent():
-        openCivilianUnitsPanel(event, nav);
+        _openCivilianUnitsPanel(event, nav);
       case OpenMilitaryUnitsPanelEvent():
-        openMilitaryUnitsPanel(event, nav);
+        _openMilitaryUnitsPanel(event, nav);
       case OpenNavalUnitsPanelEvent():
-        openNavalUnitsPanel(event, nav);
+        _openNavalUnitsPanel(event, nav);
       case OpenPanelEvent():
-        openPanel(event, nav);
+        _openPanel(event, nav);
       case ClosePanelEvent():
         nav?.maybePop();
       case _:
@@ -139,19 +162,6 @@ class AppEventHandler {
         _onNotify?.call(event);
     }
   }
-
-  // Package-internal accessors for de-parted extension libraries (Refs #4117).
-  AppEventBus get handlerBus => _bus;
-
-  GlobalKey<NavigatorState> get handlerNavigatorKey => _navigatorKey;
-
-  Map<String, DialogBuilder> get handlerDialogBuilders => _dialogBuilders;
-
-  Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
-  get handlerPanelBuilders => _panelBuilders;
-
-  void Function(ShowSnackBarEvent)? get handlerOnShowSnackBar =>
-      _onShowSnackBar;
 
   /// While turn resolution blocks UI bus actions, pause open is suppressed (#3989).
   bool _shouldBlockUiActionDuringTurnResolution(

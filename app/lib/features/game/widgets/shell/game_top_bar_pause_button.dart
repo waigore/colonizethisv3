@@ -1,20 +1,8 @@
-// In-game shell top bar pause affordance.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../widgets/ct_nine_patch_button.dart';
-import 'game_top_bar.dart';
+part of 'game_top_bar.dart';
 
 /// 28 x 28 bordered pause tap target per mockup `.pause-btn-sm`.
-class GameTopBarPauseButton extends StatefulWidget {
-  const GameTopBarPauseButton({
-    super.key,
-    required this.onPressed,
-    required this.tooltip,
-  });
+class _GameTopBarPauseButton extends StatefulWidget {
+  const _GameTopBarPauseButton({required this.onPressed, required this.tooltip});
 
   final VoidCallback? onPressed;
   final String tooltip;
@@ -25,10 +13,10 @@ class GameTopBarPauseButton extends StatefulWidget {
   static const Curve _animationCurve = Curves.easeOut;
 
   @override
-  State<GameTopBarPauseButton> createState() => _GameTopBarPauseButtonState();
+  State<_GameTopBarPauseButton> createState() => _GameTopBarPauseButtonState();
 }
 
-class _GameTopBarPauseButtonState extends State<GameTopBarPauseButton> {
+class _GameTopBarPauseButtonState extends State<_GameTopBarPauseButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -55,12 +43,12 @@ class _GameTopBarPauseButtonState extends State<GameTopBarPauseButton> {
   Color get _backgroundColor {
     if (_pressed) {
       return EditorialMonoclePalette.surfaceLite.withValues(
-        alpha: GameTopBarPauseButton._pressedBackgroundAlpha,
+        alpha: _GameTopBarPauseButton._pressedBackgroundAlpha,
       );
     }
     if (_hovered) {
       return EditorialMonoclePalette.surfaceLite.withValues(
-        alpha: GameTopBarPauseButton._hoverBackgroundAlpha,
+        alpha: _GameTopBarPauseButton._hoverBackgroundAlpha,
       );
     }
     return Colors.transparent;
@@ -87,8 +75,8 @@ class _GameTopBarPauseButtonState extends State<GameTopBarPauseButton> {
                 onTap: widget.onPressed,
                 onHighlightChanged: enabled ? _handlePressed : null,
                 child: AnimatedContainer(
-                  duration: GameTopBarPauseButton._animationDuration,
-                  curve: GameTopBarPauseButton._animationCurve,
+                  duration: _GameTopBarPauseButton._animationDuration,
+                  curve: _GameTopBarPauseButton._animationCurve,
                   decoration: BoxDecoration(
                     color: _backgroundColor,
                     border: Border.all(color: _borderColor, width: 1),

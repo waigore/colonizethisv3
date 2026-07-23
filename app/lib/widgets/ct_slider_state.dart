@@ -1,9 +1,6 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
+part of 'ct_slider.dart';
 
-import 'ct_slider.dart';
-
-class CtSliderState extends State<CtSlider> {
+class _CtSliderState extends State<CtSlider> {
   static const double _trackHeight = 6;
   static const double _thumbDiameter = 14;
   static const double _hitTargetHeight = 24;

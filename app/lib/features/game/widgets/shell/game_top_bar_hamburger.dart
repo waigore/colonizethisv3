@@ -1,11 +1,4 @@
-// In-game shell top bar hamburger affordance.
-//
-// De-parted wave-9 cluster (Refs #4117).
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-import 'game_top_bar.dart';
+part of 'game_top_bar.dart';
 
 /// 28 x 28 hamburger tap target painted in the dark editorial-monocle
 /// theme. Mirrors the hover / pressed pattern used by [CtBackButton]:
@@ -16,12 +9,8 @@ import 'game_top_bar.dart';
 ///
 /// Wrapped in [MouseRegion] for cursor feedback and a [Material] / [InkWell]
 /// for accurate hit-testing inside the top bar.
-class GameTopBarHamburger extends StatefulWidget {
-  const GameTopBarHamburger({
-    super.key,
-    required this.onPressed,
-    required this.tooltip,
-  });
+class _GameTopBarHamburger extends StatefulWidget {
+  const _GameTopBarHamburger({required this.onPressed, required this.tooltip});
 
   final VoidCallback onPressed;
   final String tooltip;
@@ -32,10 +21,10 @@ class GameTopBarHamburger extends StatefulWidget {
   static const Curve _animationCurve = Curves.easeOut;
 
   @override
-  State<GameTopBarHamburger> createState() => _GameTopBarHamburgerState();
+  State<_GameTopBarHamburger> createState() => _GameTopBarHamburgerState();
 }
 
-class _GameTopBarHamburgerState extends State<GameTopBarHamburger> {
+class _GameTopBarHamburgerState extends State<_GameTopBarHamburger> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -52,12 +41,12 @@ class _GameTopBarHamburgerState extends State<GameTopBarHamburger> {
   Color get _backgroundColor {
     if (_pressed) {
       return EditorialMonoclePalette.surfaceLite.withValues(
-        alpha: GameTopBarHamburger._pressedBackgroundAlpha,
+        alpha: _GameTopBarHamburger._pressedBackgroundAlpha,
       );
     }
     if (_hovered) {
       return EditorialMonoclePalette.surfaceLite.withValues(
-        alpha: GameTopBarHamburger._hoverBackgroundAlpha,
+        alpha: _GameTopBarHamburger._hoverBackgroundAlpha,
       );
     }
     return EditorialMonoclePalette.surfaceLite.withValues(alpha: 0);
@@ -87,8 +76,8 @@ class _GameTopBarHamburgerState extends State<GameTopBarHamburger> {
               onTap: widget.onPressed,
               onHighlightChanged: _handlePressed,
               child: AnimatedContainer(
-                duration: GameTopBarHamburger._animationDuration,
-                curve: GameTopBarHamburger._animationCurve,
+                duration: _GameTopBarHamburger._animationDuration,
+                curve: _GameTopBarHamburger._animationCurve,
                 color: _backgroundColor,
                 child: Center(
                   child: Icon(

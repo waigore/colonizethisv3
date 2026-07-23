@@ -1,18 +1,7 @@
-// Slot card header row for active technology panel research slots.
-// De-parted wave-9 cluster (Refs #4117).
+part of 'technology_panel_widgets.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/constants.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'technology_panel_widgets_constants.dart';
-
-class TechnologySlotHeaderRow extends StatelessWidget {
-  const TechnologySlotHeaderRow({
-    super.key,
+class _SlotHeaderRow extends StatelessWidget {
+  const _SlotHeaderRow({
     required this.slotIndex,
     required this.canEdit,
     required this.hasTech,

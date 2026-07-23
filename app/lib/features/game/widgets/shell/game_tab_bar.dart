@@ -1,11 +1,17 @@
-// In-game shell tab bar. SPEC/ui/empire-overview.md § Region tabs.
-//
-// De-parted wave-9 cluster (Refs #4117): explicit-import libraries replace the
-// former 3-part library. Public surface: [GameTabBar].
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import 'game_tab_bar_state.dart';
+import '../../../../config/app_assets.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../screens/game/game_screen_shared.dart'
+    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
+
+part 'game_tab_bar_region_tabs.dart';
+part 'game_tab_bar_indicators.dart';
+part 'game_tab_bar_state.dart';
 
 /// In-game shell tab bar: 34 px dark editorial-monocle chrome with region
 /// tabs, treasury + cargo indicators, and a trailing news-toggle slot.
@@ -71,5 +77,5 @@ class GameTabBar extends StatefulWidget {
   static const Key surfaceKey = Key('game_tab_bar_surface');
 
   @override
-  State<GameTabBar> createState() => GameTabBarState();
+  State<GameTabBar> createState() => _GameTabBarState();
 }

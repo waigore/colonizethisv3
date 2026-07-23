@@ -1,10 +1,4 @@
-import 'dart:async';
-
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-
-import 'turn_resolution_result_codec.dart';
-import 'turn_resolution_runner.dart';
-import 'turn_resolution_runner_logging.dart';
+part of 'turn_resolution_runner.dart';
 
 List<TurnTracePhaseTrace>? _decodeTurnTracePhases(Object? phasesPayload) {
   if (phasesPayload is! List<Object?>) {
@@ -61,7 +55,7 @@ TurnResolutionTerminalComplete _decodeSuccessTerminal(
       : null;
   final exportPath = message['turnTraceExportPath'] as String?;
   if (exportPath != null) {
-    turnResolutionRunnerLog.d(
+    _runnerLog.d(
       'logic: turn_trace_exported_worker sessionId=$sessionId '
       'path=$exportPath',
     );
@@ -75,8 +69,8 @@ TurnResolutionTerminalComplete _decodeSuccessTerminal(
   );
 }
 
-extension TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
-  void handleTurnResolutionIsolateMessage({
+extension _TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
+  void _handleIsolateMessage({
     required dynamic message,
     required String sessionId,
     required Stopwatch sessionStopwatch,
@@ -91,7 +85,7 @@ extension TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
     if (kind == 'phase') {
       final phaseName = message['phase'] as String;
       final markerName = message['marker'] as String;
-      turnResolutionRunnerLog.d(
+      _runnerLog.d(
         'logic: turn_resolution_runner phase sessionId=$sessionId '
         'phase=$phaseName marker=$markerName '
         'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
@@ -118,7 +112,7 @@ extension TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
                   .difference(workerFinishedAtUtc)
                   .inMilliseconds;
         inspectSuccessIsolateEnvelope?.call(message);
-        turnResolutionRunnerLog.i(
+        _runnerLog.i(
           'logic: turn_resolution_runner session_complete sessionId=$sessionId '
           'outcome=success elapsedMs=${sessionStopwatch.elapsedMilliseconds} '
           'messageBytes=${safeTurnResolutionJsonUtf8Bytes(message)} '
@@ -132,14 +126,14 @@ extension TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
         if (!doneCompleter.isCompleted) {
           doneCompleter.complete(terminal);
         }
-        turnResolutionRunnerLog.i(
+        _runnerLog.i(
           'logic: turn_resolution_runner decode_complete sessionId=$sessionId '
           'decodeMs=${decodeStopwatch.elapsedMilliseconds} '
           'resultType=${turnResolutionResultTypeName(terminal.result)} '
           'elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
         );
       } catch (e, st) {
-        turnResolutionRunnerLog.e(
+        _runnerLog.e(
           'logic: turn_resolution_runner session_complete_decode_failed '
           'sessionId=$sessionId',
           error: e,
@@ -160,7 +154,7 @@ extension TurnResolutionRunnerIsolateListener on TurnResolutionRunner {
     if (kind == 'error') {
       final errMsg = (message['error'] as String?) ?? 'Unknown error';
       final stackStr = (message['stackTrace'] as String?) ?? '';
-      turnResolutionRunnerLog.e(
+      _runnerLog.e(
         'logic: turn_resolution_runner session_complete sessionId=$sessionId '
         'outcome=error elapsedMs=${sessionStopwatch.elapsedMilliseconds}',
         error: errMsg,

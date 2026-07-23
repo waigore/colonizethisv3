@@ -1,18 +1,6 @@
-// In-game shell top bar row layout helpers.
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'game_top_bar.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../screens/game/game_screen_shared.dart'
-    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
-import 'game_top_bar.dart';
-import 'game_top_bar_hamburger.dart';
-import 'game_top_bar_pause_button.dart';
-
-extension GameTopBarLayout on GameTopBar {
+extension _GameTopBarLayout on GameTopBar {
   Widget buildObserveBanner(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle observeStyle =
@@ -76,9 +64,9 @@ extension GameTopBarLayout on GameTopBar {
 
   List<Widget> buildNarrowRowChildren({required bool isMinViewport}) {
     return <Widget>[
-      GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
       const SizedBox(width: GameTopBar.leadingGap),
-      GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
+      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
       SizedBox(width: GameTopBar.trailingGap),
       Expanded(
         child: Align(
@@ -91,7 +79,7 @@ extension GameTopBarLayout on GameTopBar {
 
   List<Widget> buildWideRowChildren(BuildContext context) {
     return <Widget>[
-      GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
+      _GameTopBarHamburger(onPressed: onToggleSideMenu, tooltip: menuTooltip),
       const SizedBox(width: GameTopBar.leadingGap),
       if (observeBannerLabel != null) ...<Widget>[
         buildObserveBanner(context),
@@ -99,7 +87,7 @@ extension GameTopBarLayout on GameTopBar {
       ],
       Expanded(child: Center(child: buildTurnDisplay(context))),
       const SizedBox(width: GameTopBar.trailingGap),
-      GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
+      _GameTopBarPauseButton(onPressed: onPausePressed, tooltip: pauseTooltip),
       const SizedBox(width: GameTopBar.trailingGap),
       buildNextTurnButton(compactHorizontalPadding: false),
     ];

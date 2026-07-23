@@ -1,40 +1,16 @@
 // Standing-chip cluster + hover row chrome for DiplomacyPanel.
-
-import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/routes.dart';
-import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
-import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
-import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_radius.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/relation_meter.dart';
-import 'diplomacy_order_helpers.dart';
-import 'diplomacy_panel_rows_models.dart';
-import 'fnv1a_hash_constants.dart';
-import 'relative_power_line.dart';
-import 'diplomacy_panel_chrome_tokens.dart';
-import 'diplomacy_panel_constants.dart';
-// Standing-chip cluster + hover row chrome for DiplomacyPanel.
 // SPEC/ui/diplomacy-panel.md § Diplomatic standing chip cluster and
 // § Per-faction row → Row chrome.
 
+part of 'diplomacy_panel.dart';
 
 /// A single diplomatic standing chip rendered in the
 /// [DiplomacyStandingChipCluster]. Mirrors the WAR/PEACE/ALLIANCE badge chrome
 /// (mono 9 sp, 1 × 5 dp padding, square 1 dp corners) so the cluster reads as
 /// a row of compact treaty/economic markers. SPEC/ui/diplomacy-panel.md
 /// § Diplomatic standing chip cluster (Refs #3753 R12).
-class DiplomacyStandingChip extends StatelessWidget {
-  const DiplomacyStandingChip({
+class _DiplomacyStandingChip extends StatelessWidget {
+  const _DiplomacyStandingChip({
     required this.label,
     required this.background,
     required this.foreground,
@@ -94,37 +70,37 @@ class DiplomacyStandingChipCluster extends StatelessWidget {
     final List<Widget> children = <Widget>[];
     for (final String label in chips.treatyLabels) {
       children.add(
-        DiplomacyStandingChip(
+        _DiplomacyStandingChip(
           label: label,
-          background: diplomacyAllianceBadgeBackground,
+          background: _kAllianceBadgeBackground,
           foreground: EditorialMonoclePalette.accent,
         ),
       );
     }
     for (final String name in chips.boycottVsNames) {
       children.add(
-        DiplomacyStandingChip(
+        _DiplomacyStandingChip(
           label: '$kDiplomacyChipBoycottVsPrefix$name',
-          background: diplomacyWarBadgeBackground,
+          background: _kWarBadgeBackground,
           foreground: EditorialMonoclePalette.danger,
         ),
       );
     }
     for (final String name in chips.boycottedByNames) {
       children.add(
-        DiplomacyStandingChip(
+        _DiplomacyStandingChip(
           label: '$kDiplomacyChipBoycottedByPrefix$name',
-          background: diplomacyWarBadgeBackground,
+          background: _kWarBadgeBackground,
           foreground: EditorialMonoclePalette.danger,
         ),
       );
     }
     if (chips.overseasTileCount > 0) {
       children.add(
-        DiplomacyStandingChip(
+        _DiplomacyStandingChip(
           label: '$kDiplomacyChipOverseasPrefix${chips.overseasTileCount} '
               '\u00b7 ${chips.overseasSharePercent}%',
-          background: diplomacyPeaceBadgeBackground,
+          background: _kPeaceBadgeBackground,
           foreground: EditorialMonoclePalette.success,
         ),
       );
@@ -144,8 +120,8 @@ class DiplomacyStandingChipCluster extends StatelessWidget {
 /// `--border` outline, and animates the outline to `--accent-dim` while
 /// pointer-hovered. The 4 px outer bottom margin matches `.faction-row`
 /// in [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html).
-class DiplomacyRowChrome extends StatefulWidget {
-  const DiplomacyRowChrome({required this.child});
+class _DiplomacyRowChrome extends StatefulWidget {
+  const _DiplomacyRowChrome({required this.child});
 
   final Widget child;
 
@@ -163,10 +139,10 @@ class DiplomacyRowChrome extends StatefulWidget {
   );
 
   @override
-  State<DiplomacyRowChrome> createState() => DiplomacyRowChromeState();
+  State<_DiplomacyRowChrome> createState() => _DiplomacyRowChromeState();
 }
 
-class DiplomacyRowChromeState extends State<DiplomacyRowChrome> {
+class _DiplomacyRowChromeState extends State<_DiplomacyRowChrome> {
   bool _hovered = false;
 
   @override
@@ -175,7 +151,7 @@ class DiplomacyRowChromeState extends State<DiplomacyRowChrome> {
         ? EditorialMonoclePalette.accentDim
         : EditorialMonoclePalette.border;
     return Padding(
-      padding: const EdgeInsets.only(bottom: DiplomacyRowChrome.rowGap),
+      padding: const EdgeInsets.only(bottom: _DiplomacyRowChrome.rowGap),
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
@@ -184,7 +160,7 @@ class DiplomacyRowChromeState extends State<DiplomacyRowChrome> {
           curve: Curves.easeOut,
           constraints: const BoxConstraints(minHeight: 48),
           decoration: BoxDecoration(
-            gradient: DiplomacyRowChrome.rowGradient,
+            gradient: _DiplomacyRowChrome.rowGradient,
             border: Border.all(color: borderColor, width: 1),
           ),
           child: widget.child,

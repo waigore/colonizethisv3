@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_back_button.dart';
-import 'ct_icon_action_state.dart';
+
+part 'ct_icon_action_state.dart';
 
 /// Standalone pixel-art glyph-only **action affordance** for the dark
 /// editorial-monocle theme.
@@ -120,5 +121,5 @@ class CtIconAction extends StatefulWidget {
   static const double defaultHitPadding = 3;
 
   @override
-  State<CtIconAction> createState() => CtIconActionState();
+  State<CtIconAction> createState() => _CtIconActionState();
 }

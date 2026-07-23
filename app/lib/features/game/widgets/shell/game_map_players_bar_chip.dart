@@ -1,13 +1,7 @@
-// Per–Great-Power chip widget for [GameMapPlayersBar].
-//
-// De-parted wave-9 cluster (Refs #4117).
+part of 'game_map_players_bar.dart';
 
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-
-class GameMapPlayersBarChip extends StatelessWidget {
-  const GameMapPlayersBarChip({
+class _PlayerChip extends StatelessWidget {
+  const _PlayerChip({
     super.key,
     required this.name,
     required this.score,

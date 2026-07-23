@@ -1,9 +1,8 @@
 // Slots / Tree top-bar toggle chrome for [TechnologyScreen].
 
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+part of 'technology_screen.dart';
 
-import 'technology_screen_tab.dart';
+enum _TechnologyTab { slots, tree }
 
 /// Slots / Tree toggle for the trailing slot of the technology top bar.
 ///
@@ -12,19 +11,11 @@ import 'technology_screen_tab.dart';
 /// `--accent` border + accent-tinted background; unselected uses `--border`
 /// + transparent background. No Material `Chip` / `ChoiceChip` /
 /// `ToggleButtons` per the catalog ban.
-class TechnologyScreenTabToggle extends StatelessWidget {
-  const TechnologyScreenTabToggle({
-    super.key,
-    required this.slotsToggleKey,
-    required this.treeToggleKey,
-    required this.selected,
-    required this.onSelect,
-  });
+class _TechnologyTabToggle extends StatelessWidget {
+  const _TechnologyTabToggle({required this.selected, required this.onSelect});
 
-  final Key slotsToggleKey;
-  final Key treeToggleKey;
-  final TechnologyScreenTab selected;
-  final void Function(TechnologyScreenTab next) onSelect;
+  final _TechnologyTab selected;
+  final void Function(_TechnologyTab next) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +24,19 @@ class TechnologyScreenTabToggle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         _TechnologyTabChip(
-          key: slotsToggleKey,
+          key: TechnologyScreen.slotsToggleKey,
           // ignore: avoid_hardcoded_strings_in_widgets
           label: 'Slots',
-          selected: selected == TechnologyScreenTab.slots,
-          onTap: () => onSelect(TechnologyScreenTab.slots),
+          selected: selected == _TechnologyTab.slots,
+          onTap: () => onSelect(_TechnologyTab.slots),
         ),
         const SizedBox(width: 6),
         _TechnologyTabChip(
-          key: treeToggleKey,
+          key: TechnologyScreen.treeToggleKey,
           // ignore: avoid_hardcoded_strings_in_widgets
           label: 'Tree',
-          selected: selected == TechnologyScreenTab.tree,
-          onTap: () => onSelect(TechnologyScreenTab.tree),
+          selected: selected == _TechnologyTab.tree,
+          onTap: () => onSelect(_TechnologyTab.tree),
         ),
       ],
     );

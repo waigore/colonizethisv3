@@ -1,19 +1,13 @@
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+part of 'diplomacy_detail_screen.dart';
 
-import '../../../../widgets/ct_spacing.dart';
-
-/// Body of the "History" card — vertical list of [DiplomacyDetailLeftBorderTile]s,
-/// newest first, or an italic muted empty-state.
-class DiplomacyDetailHistorySection extends StatelessWidget {
-  const DiplomacyDetailHistorySection({
+/// Body of the "History" card — vertical list of [_LeftBorderTile]s, newest
+/// first, or an italic muted empty-state.
+class _HistorySection extends StatelessWidget {
+  const _HistorySection({
     required this.history,
     required this.formatYear,
     required this.formatSentence,
     required this.l10n,
-    super.key,
   });
 
   final List<DiplomaticEvent> history;
@@ -24,7 +18,7 @@ class DiplomacyDetailHistorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (history.isEmpty) {
-      return DiplomacyDetailEmptyState(text: l10n.diplomacy_detail_noEvents);
+      return _EmptyState(text: l10n.diplomacy_detail_noEvents);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -33,7 +27,7 @@ class DiplomacyDetailHistorySection extends StatelessWidget {
         for (final e in history)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: DiplomacyDetailLeftBorderTile(
+            child: _LeftBorderTile(
               label: l10n.diplomacy_detail_yearTurn(formatYear(e.turn), e.turn),
               body: formatSentence(e),
             ),
@@ -43,16 +37,15 @@ class DiplomacyDetailHistorySection extends StatelessWidget {
   }
 }
 
-/// Body of the "Dossier" card (Great Powers only). Reuses
-/// [DiplomacyDetailLeftBorderTile] chrome so dossier rows match the mockup
-/// `.dossier` rule (left border, mono turn label, body sentence).
-class DiplomacyDetailDossierSection extends StatelessWidget {
-  const DiplomacyDetailDossierSection({
+/// Body of the "Dossier" card (Great Powers only). Reuses [_LeftBorderTile]
+/// chrome so dossier rows match the mockup `.dossier` rule (left border, mono
+/// turn label, body sentence).
+class _DossierSection extends StatelessWidget {
+  const _DossierSection({
     required this.game,
     required this.observerId,
     required this.subjectId,
     required this.l10n,
-    super.key,
   });
 
   final Game game;
@@ -72,7 +65,7 @@ class DiplomacyDetailDossierSection extends StatelessWidget {
     });
 
     if (entries.isEmpty) {
-      return DiplomacyDetailEmptyState(text: l10n.diplomacy_detail_noDossier);
+      return _EmptyState(text: l10n.diplomacy_detail_noDossier);
     }
 
     return Column(
@@ -82,7 +75,7 @@ class DiplomacyDetailDossierSection extends StatelessWidget {
         for (final e in entries)
           Padding(
             padding: const EdgeInsets.only(bottom: 6),
-            child: DiplomacyDetailLeftBorderTile(
+            child: _LeftBorderTile(
               label: l10n.diplomacy_detail_turnEvidence(e.turnNumber),
               body: e.description,
             ),
@@ -95,12 +88,8 @@ class DiplomacyDetailDossierSection extends StatelessWidget {
 /// Pixel-art tile used by the history and dossier lists. Mirrors mockup
 /// `.event` / `.dossier` rules: `--surface` background, 2 px `--accent-dim`
 /// left border, monospace `--accent-dim` label, `--fg` body sentence.
-class DiplomacyDetailLeftBorderTile extends StatelessWidget {
-  const DiplomacyDetailLeftBorderTile({
-    required this.label,
-    required this.body,
-    super.key,
-  });
+class _LeftBorderTile extends StatelessWidget {
+  const _LeftBorderTile({required this.label, required this.body});
 
   final String label;
   final String body;
@@ -153,8 +142,8 @@ class DiplomacyDetailLeftBorderTile extends StatelessWidget {
 }
 
 /// Italic muted empty-state line shared by the history and dossier sections.
-class DiplomacyDetailEmptyState extends StatelessWidget {
-  const DiplomacyDetailEmptyState({required this.text, super.key});
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.text});
 
   final String text;
 

@@ -1,20 +1,10 @@
 // Research-slot card builder and occupancy reconciliation for
-// [TechnologyPanel]. De-parted wave-9 cluster (Refs #4117).
+// [TechnologyPanel]. Split from `technology_panel.dart` to keep the
+// host file under the repo file-size target (Refs #3878).
 
-import 'dart:async';
+part of 'technology_panel.dart';
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'research_slot_preview.dart';
-import 'technology_panel_constants.dart';
-import 'technology_panel_orders.dart';
-import 'technology_panel_widget.dart';
-import 'technology_panel_widgets.dart';
-
-extension TechnologyPanelResearchSlots on TechnologyPanel {
+extension _TechnologyPanelResearchSlots on TechnologyPanel {
   Widget buildResearchSlot({
     required BuildContext context,
     required AppLocalizations l10n,

@@ -1,26 +1,13 @@
 /// Dialog openers and combine mutations for military army actions.
 /// SPEC/ui/military-units-panel.md.
-///
-/// De-parted wave-9 cluster (Refs #4117).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
+part of 'military_units_panel.dart';
 
-import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
-    show trainMilitaryDialogId;
-import '../../panels/tree_builders/military_tree_builder.dart';
-import '../../unit_orders/move_army_dialog.dart';
-import '../../unit_orders/split_army_dialog.dart';
-import '../shared/base_units_panel.dart';
-import 'military_units_panel_widget.dart';
+extension _MilitaryUnitsPanelDialogs on _MilitaryUnitsPanelState {
+  Iterable<String> _armyIds(List<ArmyBlock> flat) =>
+      flat.map((b) => b.army.id);
 
-mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
-  Iterable<String> armyIds(List<ArmyBlock> flat) => flat.map((b) => b.army.id);
-
-  void performCombine(List<ArmyBlock> flat) {
+  void _performCombine(List<ArmyBlock> flat) {
     if (!canCombineArmySelection(flat, selection.selectedIds)) return;
     final ids = selection.selectedIds.toList()..sort();
     widget.bus.emit(
@@ -32,11 +19,11 @@ mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
     clearSelection();
   }
 
-  void openTrainDialog() {
+  void _openTrainDialog() {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainMilitaryDialogId));
   }
 
-  void openSplitDialog(ArmyBlock block) {
+  void _openSplitDialog(ArmyBlock block) {
     showDialog<void>(
       context: context,
       builder: (ctx) => SplitArmyDialog(
@@ -49,7 +36,7 @@ mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
     );
   }
 
-  void openMoveDialog(ArmyBlock block) {
+  void _openMoveDialog(ArmyBlock block) {
     final playerView = buildPlayerView(
       widget.game,
       widget.topology,
