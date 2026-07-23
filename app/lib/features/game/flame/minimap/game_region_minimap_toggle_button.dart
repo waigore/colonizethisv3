@@ -1,4 +1,13 @@
-part of 'game_region_minimap.dart';
+// Region minimap show/hide toggle chrome. SPEC/ui/empire-overview.md § Region minimap.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/app_assets.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../screens/game/game_screen_shared.dart' show kRegionMinimapToggleKey;
 
 /// Dark editorial-monocle 32 × 32 dp show/hide toggle for the region minimap.
 ///
@@ -11,8 +20,12 @@ part of 'game_region_minimap.dart';
 /// to `--accent-dim` (default) → `--accent-bright` (hover / pressed),
 /// outline shifting to `--accent-dim` on the same hover / pressed
 /// transition over `120 ms` (`Curves.easeOut`).
-class _MinimapToggleButton extends StatefulWidget {
-  const _MinimapToggleButton({required this.visible, required this.onTap});
+class MinimapToggleButton extends StatefulWidget {
+  const MinimapToggleButton({
+    super.key,
+    required this.visible,
+    required this.onTap,
+  });
 
   final bool visible;
   final VoidCallback onTap;
@@ -34,10 +47,10 @@ class _MinimapToggleButton extends StatefulWidget {
   static const Curve animationCurve = Curves.easeOut;
 
   @override
-  State<_MinimapToggleButton> createState() => _MinimapToggleButtonState();
+  State<MinimapToggleButton> createState() => MinimapToggleButtonState();
 }
 
-class _MinimapToggleButtonState extends State<_MinimapToggleButton> {
+class MinimapToggleButtonState extends State<MinimapToggleButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -75,16 +88,16 @@ class _MinimapToggleButtonState extends State<_MinimapToggleButton> {
           label: tooltip,
           child: SizedBox(
             key: kRegionMinimapToggleKey,
-            width: _MinimapToggleButton.buttonSize,
-            height: _MinimapToggleButton.buttonSize,
+            width: MinimapToggleButton.buttonSize,
+            height: MinimapToggleButton.buttonSize,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: widget.onTap,
                 onHighlightChanged: _setPressed,
                 child: AnimatedContainer(
-                  duration: _MinimapToggleButton.animationDuration,
-                  curve: _MinimapToggleButton.animationCurve,
+                  duration: MinimapToggleButton.animationDuration,
+                  curve: MinimapToggleButton.animationCurve,
                   decoration: BoxDecoration(
                     color: EditorialMonoclePalette.bgDeep,
                     border: Border.all(color: _borderColor, width: 1),
@@ -98,8 +111,8 @@ class _MinimapToggleButtonState extends State<_MinimapToggleButton> {
                       child: StrictAssetIcon(
                         assetPath:
                             '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
-                        width: _MinimapToggleButton.iconSize,
-                        height: _MinimapToggleButton.iconSize,
+                        width: MinimapToggleButton.iconSize,
+                        height: MinimapToggleButton.iconSize,
                       ),
                     ),
                   ),

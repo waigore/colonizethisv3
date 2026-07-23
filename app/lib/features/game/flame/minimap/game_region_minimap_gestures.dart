@@ -1,6 +1,14 @@
-part of 'game_region_minimap.dart';
+// Region minimap tap/pan bus emitters. SPEC/ui/empire-overview.md § Region minimap.
+//
+// De-parted wave-9 cluster (Refs #4117).
 
-void _gameRegionMinimapEmitTap({
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'region_minimap_math.dart';
+
+void gameRegionMinimapEmitTap({
   required RegionMapViewData region,
   required double cellSizePx,
   required AppEventBus bus,
@@ -24,7 +32,7 @@ void _gameRegionMinimapEmitTap({
   );
 }
 
-void _gameRegionMinimapEmitPan({
+void gameRegionMinimapEmitPan({
   required RegionMapViewData region,
   required double cellSizePx,
   required AppEventBus bus,

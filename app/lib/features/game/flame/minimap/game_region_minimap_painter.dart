@@ -1,4 +1,16 @@
-part of 'game_region_minimap.dart';
+// Region minimap terrain fill + viewport indicator painter.
+// SPEC/ui/empire-overview.md § Region minimap.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../region_map/region_map_viewport_snapshot.dart'
+    show RegionMapViewportSnapshot;
+import 'region_minimap_math.dart';
 
 /// Terrain base colors for the region minimap (flat fills). SPEC/ui/empire-overview.md § Region minimap.
 const Map<TerrainType, Color> kRegionMinimapTerrainColors = {
@@ -17,8 +29,8 @@ const Color kRegionMinimapSeaColor = Color(0xFF0D47A1);
 /// Opacity for fogged tiles (terrain still visible underneath per SPEC).
 const double kRegionMinimapFoggedAlpha = 0.55;
 
-class _RegionMinimapPainter extends CustomPainter {
-  _RegionMinimapPainter({
+class RegionMinimapPainter extends CustomPainter {
+  RegionMinimapPainter({
     required this.region,
     required this.cellSizePx,
     required this.viewport,
@@ -74,7 +86,7 @@ class _RegionMinimapPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RegionMinimapPainter oldDelegate) {
+  bool shouldRepaint(covariant RegionMinimapPainter oldDelegate) {
     return oldDelegate.region != region ||
         oldDelegate.cellSizePx != cellSizePx ||
         oldDelegate.viewport != viewport;
