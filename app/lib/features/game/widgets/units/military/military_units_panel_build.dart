@@ -1,6 +1,25 @@
-part of 'military_units_panel.dart';
+/// Military panel build assembly. SPEC/ui/military-units-panel.md.
+///
+/// De-parted wave-9 cluster (Refs #4117).
 
-extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../panels/tree_builders/military_tree_builder.dart';
+import '../shared/base_units_panel.dart';
+import '../shared/location_section_header.dart';
+import '../shared/region_labels.dart';
+import '../shared/region_section_header.dart';
+import 'military_units_panel_dialogs.dart';
+import 'military_units_panel_support_army_tile.dart';
+import 'military_units_panel_support_detail_rows.dart';
+import 'military_units_panel_widget.dart';
+
+mixin MilitaryUnitsPanelBuild
+    on BaseUnitsPanelState<MilitaryUnitsPanel>, MilitaryUnitsPanelDialogs {
   Widget buildMilitaryUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
@@ -10,23 +29,20 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
     final canCombine =
         !readOnly && canCombineArmySelection(flat, selection.selectedIds);
 
-    // Shared select-all + Combine cluster per SPEC/ui/military-units-panel.md
-    // § Header actions and issue #3514 owner decisions #5 / #15; the trailing
-    // Train pill follows the cluster (`BaseUnitsPanelState.buildUnitsPanel`).
     return buildUnitsPanel(
       title: l10n.military_units_title,
       showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
-      selectableIds: _armyIds(flat),
+      selectableIds: armyIds(flat),
       selectAllTooltip: l10n.military_units_selectAllArmies,
       deselectAllTooltip: l10n.military_units_deselectAllArmies,
       combineLabel: l10n.common_combine,
       canCombine: canCombine,
-      onSelectAll: () => selectAllOrClear(_armyIds(flat)),
-      onCombine: () => _performCombine(flat),
+      onSelectAll: () => selectAllOrClear(armyIds(flat)),
+      onCombine: () => performCombine(flat),
       trailingActions: [
         CtActionTextButton(
           primary: true,
-          onPressed: readOnly ? null : _openTrainDialog,
+          onPressed: readOnly ? null : openTrainDialog,
           enabled: !readOnly,
           label: l10n.common_train,
         ),
@@ -69,7 +85,7 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
   }
 
   Widget _buildArmyTile(ArmyBlock block, AppLocalizations l10n) {
-    return _ArmyExpansionTile(
+    return MilitaryArmyExpansionTile(
       block: block,
       l10n: l10n,
       stationedProvinceDisplayLabel: armyStationedProvinceDisplayLabel(
@@ -88,13 +104,13 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
       onLocate: _armyLocateCallback(block),
       onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
           ? null
-          : () => _openSplitDialog(block),
+          : () => openSplitDialog(block),
       onMove:
           widget.readOnly ||
               block.army.isHomeArmy ||
               block.army.regimentUnitIds.isEmpty
           ? null
-          : () => _openMoveDialog(block),
+          : () => openMoveDialog(block),
     );
   }
 
@@ -119,7 +135,7 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
           regionLabel: regionDisplayLabel(loc.regionId),
         ),
         for (final row in loc.rows)
-          _ShipRow(
+          MilitaryShipRow(
             row: row,
             l10n: l10n,
             onTap: row.tileKey == null

@@ -1,9 +1,21 @@
 /// Regiment/ship detail row widgets. SPEC/ui/military-units-panel.md.
+///
+/// De-parted wave-9 cluster (Refs #4117).
 
-part of 'military_units_panel.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-class _RegimentRow extends StatelessWidget {
-  const _RegimentRow({required this.row, required this.l10n, this.onTap});
+import '../../../../../widgets/ct_spacing.dart';
+import '../../panels/tree_builders/military_tree_builder.dart';
+
+class MilitaryRegimentRow extends StatelessWidget {
+  const MilitaryRegimentRow({
+    super.key,
+    required this.row,
+    required this.l10n,
+    this.onTap,
+  });
 
   final RegimentTypeRow row;
   final AppLocalizations l10n;
@@ -13,7 +25,7 @@ class _RegimentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: _UnitDetailRow(
+      child: MilitaryUnitDetailRow(
         title: l10n.military_units_typeCount(
           regimentTypeDisplayName(row.typeId),
           row.count,
@@ -28,8 +40,13 @@ class _RegimentRow extends StatelessWidget {
   }
 }
 
-class _ShipRow extends StatelessWidget {
-  const _ShipRow({required this.row, required this.l10n, this.onTap});
+class MilitaryShipRow extends StatelessWidget {
+  const MilitaryShipRow({
+    super.key,
+    required this.row,
+    required this.l10n,
+    this.onTap,
+  });
 
   final MilitarySeaShipRow row;
   final AppLocalizations l10n;
@@ -39,7 +56,7 @@ class _ShipRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: _UnitDetailRow(
+      child: MilitaryUnitDetailRow(
         title: l10n.military_units_typeCount(
           shipTypeDisplayName(row.typeId),
           row.count,
@@ -52,12 +69,14 @@ class _ShipRow extends StatelessWidget {
 }
 
 /// Dense per-type detail row (regiment / ship counts, empty-state notices)
-/// rendered without Material `ListTile` chrome (Refs #2914 S8). Title and
-/// optional subtitle resolve through the active editorial-monocle
-/// `TextTheme` slots; an optional [onTap] surfaces the same tap affordance
-/// the prior `ListTile(onTap:)` provided.
-class _UnitDetailRow extends StatelessWidget {
-  const _UnitDetailRow({required this.title, this.subtitle, this.onTap});
+/// rendered without Material `ListTile` chrome (Refs #2914 S8).
+class MilitaryUnitDetailRow extends StatelessWidget {
+  const MilitaryUnitDetailRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+  });
 
   final String title;
   final String? subtitle;
