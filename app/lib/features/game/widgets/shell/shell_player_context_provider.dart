@@ -1,9 +1,22 @@
-part of 'shell_player_context.dart';
+// Riverpod provider for [ShellPlayerContext].
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
+import 'shell_player_context.dart';
 
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
   MapTopology topologyFor(Game game) {
     try {
-      return _topologyForGame(ref.watch(gameServiceProvider), game);
+      return topologyForGame(ref.watch(gameServiceProvider), game);
     } catch (_) {
       return const MapTopology();
     }

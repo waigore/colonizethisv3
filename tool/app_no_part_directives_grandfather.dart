@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 140 app/lib files still using part directives.
+// Generated grandfather allowlist: 126 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -12,11 +12,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/debug_command_helpers_game.dart',
   'app/lib/core/services/debug/debug_command_helpers_guards.dart',
   'app/lib/core/services/debug/debug_command_helpers_messages.dart',
-  'app/lib/features/game/flame/controls/game_map_corner_controls.dart',
-  'app/lib/features/game/flame/controls/game_map_corner_controls_button.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail_button.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail_buttons.dart',
   'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
   'app/lib/features/game/flame/overlays/debug_console_overlay_panel_state.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset.dart',
@@ -69,15 +64,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/production/production_labour_section.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row_controls.dart',
-  'app/lib/features/game/widgets/shell/game_map_players_bar.dart',
-  'app/lib/features/game/widgets/shell/game_map_players_bar_chip.dart',
-  'app/lib/features/game/widgets/shell/game_map_players_bar_chip_column.dart',
-  'app/lib/features/game/widgets/shell/player_turn_event_feed.dart',
-  'app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart',
-  'app/lib/features/game/widgets/shell/player_turn_event_feed_toggle.dart',
-  'app/lib/features/game/widgets/shell/player_turn_event_feed_toggle_glyph.dart',
-  'app/lib/features/game/widgets/shell/shell_player_context.dart',
-  'app/lib/features/game/widgets/shell/shell_player_context_provider.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_bar.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart',

@@ -1,4 +1,14 @@
-part of 'game_map_empire_left_rail.dart';
+// Empire left-rail icon button. SPEC/ui/empire-buttons.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import 'game_map_empire_left_rail_widget.dart';
 
 /// 36 × 36 dp dark editorial-monocle button used inside [GameMapEmpireLeftRail].
 ///
@@ -7,13 +17,14 @@ part of 'game_map_empire_left_rail.dart';
 /// outline, and a full-colour `StrictAssetIcon` glyph at 24 × 24 dp with no
 /// `srcIn` tint. Border lifts to `--accent-dim` on hover/press; the icon
 /// colours are unchanged across interaction states.
-class _EmpireRailButton extends StatefulWidget {
-  const _EmpireRailButton({
+class EmpireRailButton extends StatefulWidget {
+  const EmpireRailButton({
     required this.buttonKey,
     required this.tooltip,
     required this.iconAsset,
     required this.onTap,
     this.narrow = false,
+    super.key,
   });
 
   final Key buttonKey;
@@ -22,14 +33,14 @@ class _EmpireRailButton extends StatefulWidget {
   final VoidCallback onTap;
   final bool narrow;
 
-  static const Duration _animationDuration = Duration(milliseconds: 120);
-  static const Curve _animationCurve = Curves.easeOut;
+  static const Duration animationDuration = Duration(milliseconds: 120);
+  static const Curve animationCurve = Curves.easeOut;
 
   @override
-  State<_EmpireRailButton> createState() => _EmpireRailButtonState();
+  State<EmpireRailButton> createState() => _EmpireRailButtonState();
 }
 
-class _EmpireRailButtonState extends State<_EmpireRailButton> {
+class _EmpireRailButtonState extends State<EmpireRailButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -65,8 +76,8 @@ class _EmpireRailButtonState extends State<_EmpireRailButton> {
           onTap: widget.onTap,
           onHighlightChanged: _handlePressed,
           child: AnimatedContainer(
-            duration: _EmpireRailButton._animationDuration,
-            curve: _EmpireRailButton._animationCurve,
+            duration: EmpireRailButton.animationDuration,
+            curve: EmpireRailButton.animationCurve,
             decoration: BoxDecoration(
               gradient: CtGradients.railButtonGradient,
               border: Border.all(color: _borderColor, width: 1),

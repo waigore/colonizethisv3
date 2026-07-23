@@ -1,4 +1,14 @@
-part of 'player_turn_event_feed.dart';
+// Newspaper toggle for the human-player turn event feed.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+
+import '../../screens/game/game_screen_shared.dart'
+    show kPlayerTurnFeedToggleButtonKey;
+import 'player_turn_event_feed_toggle_glyph.dart';
 
 /// Newspaper toggle for the human-player turn event feed; lives in the
 /// trailing slot of [GameTabBar].
@@ -48,13 +58,6 @@ class PlayerTurnEventsFeedToggleButton extends StatefulWidget {
   /// Border thickness around the toggle surface
   /// (mockup `.news-toggle { border: 1px solid var(--border) }`).
   static const double borderWidth = 1;
-
-  /// Min height/width of the unread-count badge (sized for "99+").
-  static const double badgeMinExtent = 16;
-
-  /// Outer alpha of the badge background (so very dim chrome behind it
-  /// still reads, but the badge sits brightly forward).
-  static const double badgeBackgroundAlpha = 0.95;
 
   @override
   State<PlayerTurnEventsFeedToggleButton> createState() =>
@@ -107,7 +110,9 @@ class _PlayerTurnEventsFeedToggleButtonState
                   Positioned(
                     right: -6,
                     top: -4,
-                    child: _UnreadBadge(count: widget.eventCount),
+                    child: PlayerTurnEventFeedUnreadBadge(
+                      count: widget.eventCount,
+                    ),
                   ),
                 ],
               ),
