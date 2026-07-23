@@ -43,6 +43,7 @@ Game buildPanelTestGame({
   List<MinorNation> minorNations = const [],
   List<DiplomacyRelation> diplomacyRelations = const [],
   int nextArmySeq = 1,
+  int nextShipInstanceSeq = 1,
   String id = 'panel-widget-test',
   TurnState turnState = const TurnState(
     phase: TurnPhase.orders,
@@ -69,6 +70,7 @@ Game buildPanelTestGame({
       seaZoneDisplayNameById: seaZoneDisplayNameById,
       resourceByTileKey: resourceByTileKey,
       nextArmySeq: nextArmySeq,
+      nextShipInstanceSeq: nextShipInstanceSeq,
     ),
     players: players ?? [panelTestHumanPlayer()],
     tribes: tribes,

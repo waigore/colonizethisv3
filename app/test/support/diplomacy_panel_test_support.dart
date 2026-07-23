@@ -236,15 +236,13 @@ Widget buildDiplomacyPanelShell({
   Orders currentOrders = const Orders(),
   required AppEventBus bus,
 }) {
-  return buildAppShell(
-    child: Scaffold(
-      body: DiplomacyPanel(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-        currentOrders: currentOrders,
-        bus: bus,
-      ),
+  return buildPanelScaffoldShell(
+    DiplomacyPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      topology: topology,
+      currentOrders: currentOrders,
+      bus: bus,
     ),
   );
 }
@@ -259,17 +257,15 @@ Widget wrapDiplomacyPanelAtViewport({
   AppEventBus? bus,
 }) {
   final panelBus = bus ?? AppEventBus.create();
-  return buildAppShell(
-    viewport: viewportSize,
-    child: Scaffold(
-      body: DiplomacyPanel(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        topology: topology,
-        currentOrders: currentOrders,
-        bus: panelBus,
-      ),
+  return buildPanelScaffoldShell(
+    DiplomacyPanel(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      topology: topology,
+      currentOrders: currentOrders,
+      bus: panelBus,
     ),
+    viewport: viewportSize,
   );
 }
 

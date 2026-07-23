@@ -123,6 +123,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // (Refs #3878 Phase 3).
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_dialogs.dart',
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
+  // Home-transfer dialog opener split into `naval_units_panel_support_combine.dart`
+  // during wave-9 de-part (Refs #4117). Same local-by-design rationale as
+  // `naval_units_panel_support_home_transfer.dart`.
+  'app/lib/features/game/widgets/units/naval/naval_units_panel_support_combine.dart',
   // Land armies — `SPEC/program/app-ui-wiring.md` "Land armies" paragraph
   // (split / move army; invasion confirm sub-dialog of move army).
   // Dialog openers extracted from `military_units_panel.dart` to keep panel
@@ -130,6 +134,9 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/widgets/units/military/military_units_panel_dialogs.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog.dart',
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_declare_war.dart',
+  // Declare-war confirm `showDialog` lives in state after wave-9 de-part
+  // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
+  'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate

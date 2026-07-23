@@ -80,10 +80,8 @@ RichText _findLabelRichTextFor(WidgetTester tester, String label) {
   );
 }
 
-/// Returns the `_BrassCornerBracketsPainter` instance currently driving the
-/// brass-bracket overlay of the `CtNinePatchButton` whose label is [label].
-/// The painter is private; we identify it by its `runtimeType` string so the
-/// test does not need to import the symbol.
+/// Returns the `_BrassCornerBracketsPainter` instance currently driving
+/// the brass-bracket overlay of the `CtNinePatchButton` whose label is [label].
 CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
   final Finder painters = find.descendant(
     of: _woodPanelButtonFor(label),
@@ -107,7 +105,7 @@ CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
 
 /// Reads the `color` field off the brass-bracket painter via `toString()`.
 /// The painter is private (`_BrassCornerBracketsPainter` in
-/// `ct_nine_patch_button.dart`) and exposes its color only through its
+/// `ct_nine_patch_button_brackets.dart`) and exposes its color only through its
 /// `paint(...)` call; we parse the painter's debug string which embeds the
 /// `color: Color(...)` value the painter holds. Falls back to the painted
 /// canvas only if the debug string does not encode the color.
