@@ -1,9 +1,5 @@
-part of 'region_map_component.dart';
-
-// Palette tokens: `region_map_component_shared_palette.dart`.
-// Label placement: `region_map_component_shared_label_placement.dart`.
-
-class _CornerValues {
+/// Wang corner bitmask for terrain transition tiles (Refs #4117).
+class RegionMapComponentCornerValues {
   final bool nw;
   final bool ne;
   final bool sw;
@@ -11,7 +7,7 @@ class _CornerValues {
   final bool same;
   final bool value;
 
-  _CornerValues({
+  const RegionMapComponentCornerValues({
     required this.nw,
     required this.ne,
     required this.sw,
