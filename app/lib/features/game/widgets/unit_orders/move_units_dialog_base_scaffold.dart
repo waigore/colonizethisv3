@@ -1,4 +1,15 @@
-part of 'move_units_dialog_base.dart';
+// Shared move-dialog scaffold state base.
+// SPEC/ui/components/move-units-dialog-base.md.
+//
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'move_units_dialog_base_styles.dart';
 
 /// Abstract `State` base for the in-game move dialogs.
 ///
