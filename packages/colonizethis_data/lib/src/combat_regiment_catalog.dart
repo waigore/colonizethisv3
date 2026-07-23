@@ -1,4 +1,4 @@
-part of 'combat_config.dart';
+import 'combat_config.dart';
 
 /// Full regiment table: 29 types across 8 categories and 4 eras.
 /// SPEC/game/military-units.md.

@@ -1195,6 +1195,13 @@ rules:
     script: tool/check_data_lib_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.data_no_part_directives
+    group: structure
+    title: colonizethis_data lib must not add Dart part / part of directives outside shrink-only grandfather (Refs #4121)
+    spec: SPEC/program/data-no-part-directives.md
+    runner: dart
+    script: tool/check_data_no_part_directives.dart
+
   - rule_id: repo.data_victory_config_registry_parity
     group: game_invariants
     title: Every ai_victory_config scalar const int/double k* has a victoryConfigParams entry (Refs #4072)
