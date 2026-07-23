@@ -1,30 +1,29 @@
+// Tech-tree graph node widgets and edge painter.
+// De-parted wave-9 cluster (Refs #4117).
 
-part of 'tech_tree_widget.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-class _TechNodeState {
-  const _TechNodeState({
-    required this.researched,
-    required this.inProgress,
-    required this.available,
-  });
-  final bool researched;
-  final bool inProgress;
-  final bool available;
-}
+import '../../../../widgets/strict_asset_icon.dart';
+import 'tech_gp_pennant_row.dart';
+import 'tech_tree_widget_constants.dart';
+import 'tech_tree_widget_models.dart';
 
-class _TechTreeEdgePainter extends CustomPainter {
-  _TechTreeEdgePainter({required this.positions});
+class TechTreeEdgePainter extends CustomPainter {
+  TechTreeEdgePainter({required this.positions});
 
   final List<TechNodePosition> positions;
 
-  static double get _centerY => _nodeHeight / 2;
+  static double get _centerY => kTechTreeNodeHeight / 2;
 
   @override
   void paint(Canvas canvas, Size size) {
     final posByTech = {for (final p in positions) p.techId: p};
     final paint = Paint()
       ..color = EditorialMonoclePalette.border
-      ..strokeWidth = _edgeStrokeWidth
+      ..strokeWidth = kTechTreeEdgeStrokeWidth
       ..style = PaintingStyle.stroke;
 
     for (final tech in techCatalog.values) {
@@ -35,12 +34,10 @@ class _TechTreeEdgePainter extends CustomPainter {
       for (final prereqId in tech.prerequisiteIds) {
         final fromPos = posByTech[prereqId];
         if (fromPos == null) continue;
-        final fromRightX = fromPos.x + _nodeWidth;
+        final fromRightX = fromPos.x + kTechTreeNodeWidth;
         final fromCenterY = fromPos.y + _centerY;
 
-        // Right-angled connector: horizontal into gap, vertical to target row, horizontal to target.
-        // Layout reserves a row slot in intermediate columns so this segment does not pass through nodes.
-        final bendX = fromRightX + _edgeBendOffset;
+        final bendX = fromRightX + kTechTreeEdgeBendOffset;
         final path = Path()
           ..moveTo(fromRightX, fromCenterY)
           ..lineTo(bendX, fromCenterY)
@@ -52,11 +49,12 @@ class _TechTreeEdgePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _TechTreeEdgePainter oldDelegate) => false;
+  bool shouldRepaint(covariant TechTreeEdgePainter oldDelegate) => false;
 }
 
-class _TechNode extends StatelessWidget {
-  const _TechNode({
+class TechTreeGraphNode extends StatelessWidget {
+  const TechTreeGraphNode({
+    super.key,
     required this.game,
     required this.tech,
     required this.contextPlayerId,
@@ -67,7 +65,7 @@ class _TechNode extends StatelessWidget {
   final Game game;
   final TechDefinition tech;
   final String contextPlayerId;
-  final _TechNodeState state;
+  final TechNodeState state;
   final VoidCallback onTap;
 
   @override
@@ -78,8 +76,8 @@ class _TechNode extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          width: _nodeWidth,
-          height: _nodeHeight,
+          width: kTechTreeNodeWidth,
+          height: kTechTreeNodeHeight,
           decoration: BoxDecoration(
             color: style.fillColor,
             border: Border.all(
@@ -109,11 +107,12 @@ class _TechNode extends StatelessWidget {
     );
   }
 
-  _TechNodeStyle _nodeStyle() {
-    final color = _categoryColors[tech.category] ?? EditorialMonoclePalette.muted;
+  TechTreeNodeStyle _nodeStyle() {
+    final color =
+        kTechTreeCategoryColors[tech.category] ?? EditorialMonoclePalette.muted;
     final locked = !state.researched && !state.inProgress && !state.available;
     if (state.researched) {
-      return _TechNodeStyle(
+      return TechTreeNodeStyle(
         fillColor: color,
         borderColor: color.withValues(alpha: 0.8),
         borderWidth: 2,
@@ -121,7 +120,7 @@ class _TechNode extends StatelessWidget {
       );
     }
     if (state.inProgress) {
-      return _TechNodeStyle(
+      return TechTreeNodeStyle(
         fillColor: color.withValues(alpha: 0.4),
         borderColor: color,
         borderWidth: 3,
@@ -129,14 +128,14 @@ class _TechNode extends StatelessWidget {
       );
     }
     if (state.available) {
-      return _TechNodeStyle(
+      return TechTreeNodeStyle(
         fillColor: color.withValues(alpha: 0.15),
         borderColor: color,
         borderWidth: 2,
         locked: locked,
       );
     }
-    return _TechNodeStyle(
+    return TechTreeNodeStyle(
       fillColor: EditorialMonoclePalette.surface,
       borderColor: EditorialMonoclePalette.border,
       borderWidth: 1,
@@ -148,11 +147,11 @@ class _TechNode extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_categoryIcons.containsKey(tech.category))
+        if (kTechTreeCategoryIcons.containsKey(tech.category))
           Padding(
             padding: const EdgeInsets.only(right: 3),
             child: StrictAssetIcon(
-              assetPath: _categoryIcons[tech.category]!,
+              assetPath: kTechTreeCategoryIcons[tech.category]!,
               width: 16,
               height: 16,
             ),
@@ -175,8 +174,8 @@ class _TechNode extends StatelessWidget {
   }
 }
 
-class _TechNodeStyle {
-  const _TechNodeStyle({
+class TechTreeNodeStyle {
+  const TechTreeNodeStyle({
     required this.fillColor,
     required this.borderColor,
     required this.borderWidth,

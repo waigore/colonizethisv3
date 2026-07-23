@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 293 app/lib files still using part directives.
+// Generated grandfather allowlist: 285 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -135,14 +135,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_bar.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_breakdown.dart',
   'app/lib/features/game/widgets/technology/research_slot_turn_preview_view_controls.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_canvas.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_catalog.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_dialog.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_layout.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_legend.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_legend_chips.dart',
-  'app/lib/features/game/widgets/technology/tech_tree_widget_nodes.dart',
   'app/lib/features/game/widgets/technology/technology_panel.dart',
   'app/lib/features/game/widgets/technology/technology_panel_body.dart',
   'app/lib/features/game/widgets/technology/technology_panel_choose_tech_dialog.dart',

@@ -104,7 +104,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Pin that the tech tree still mounts a `_TechTreeEdgePainter`
+      // Pin that the tech tree still mounts a [TechTreeEdgePainter]
       // under a `CustomPaint`; the painter's stroke colour is read
       // from `EditorialMonoclePalette.border` (refactored from
       // `Colors.grey.shade600`). The source-level grep in #2914 G1
@@ -113,7 +113,7 @@ void main() {
       final customPaints = find.byWidgetPredicate(
         (widget) =>
             widget is CustomPaint &&
-            widget.painter.runtimeType.toString() == '_TechTreeEdgePainter',
+            widget.painter.runtimeType.toString() == 'TechTreeEdgePainter',
       );
       expect(
         customPaints,
