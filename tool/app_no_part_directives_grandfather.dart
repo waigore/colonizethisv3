@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 185 app/lib files still using part directives.
+// Generated grandfather allowlist: 175 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -39,11 +39,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/tilesets/terrain_tileset_variant_keys.dart',
   'app/lib/features/game/screens/combat/quick_battle_screen.dart',
   'app/lib/features/game/screens/combat/quick_battle_screen_result.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_format.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_cards.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_relation.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
   'app/lib/features/game/screens/production/production_screen.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
   'app/lib/features/game/screens/technology/technology_screen.dart',
@@ -60,11 +55,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_flow.dart',
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_build.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_flow.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_phase_two.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_build.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_flow.dart',

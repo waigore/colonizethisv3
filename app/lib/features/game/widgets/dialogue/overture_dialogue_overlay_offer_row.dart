@@ -1,4 +1,8 @@
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../../widgets/ct_spacing.dart';
+import 'dialogue_tristate_decision_row.dart';
 
 /// Phase-2 offer row. Splits the offerer display name and the localized
 /// stage label into two `Text` widgets so they can paint distinct
@@ -8,8 +12,8 @@ part of 'overture_dialogue_overlay.dart';
 /// Accept / Reject affordances render as two mutually exclusive
 /// `CtToggleSwitch` controls via [DialogueTristateDecisionRow] (Refs #2867 R22,
 /// #4018). Submit stays disabled until every row has a non-null decision (R23).
-class _OvertureOfferRow extends StatelessWidget {
-  const _OvertureOfferRow({
+class OvertureOfferRow extends StatelessWidget {
+  const OvertureOfferRow({
     required this.rowIndex,
     required this.offerer,
     required this.stageLabel,
@@ -17,6 +21,7 @@ class _OvertureOfferRow extends StatelessWidget {
     required this.rejectLabel,
     required this.decision,
     required this.onDecisionChanged,
+    super.key,
   });
 
   final int rowIndex;
@@ -30,7 +35,7 @@ class _OvertureOfferRow extends StatelessWidget {
   final bool? decision;
 
   /// Reports the next tristate decision. Callers should `setState` the
-  /// owning `_accepted[i]` list slot to the passed value (including
+  /// owning `accepted[i]` list slot to the passed value (including
   /// `null` when the user reverts a previously-committed toggle).
   final ValueChanged<bool?> onDecisionChanged;
 

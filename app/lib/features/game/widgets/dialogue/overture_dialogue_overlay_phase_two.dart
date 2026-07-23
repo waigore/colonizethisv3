@@ -1,9 +1,18 @@
 // Phase-2 offer list + Submit chrome for [OvertureDialogueOverlay].
 // SPEC/ui/overture-dialogue-overlay.md § Layout / wireframe.
 
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-Widget _buildOverturePhaseTwoBody({
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'overture_dialogue_overlay_offer_row.dart';
+
+Widget buildOverturePhaseTwoBody({
   required BuildContext context,
   required AppLocalizations l10n,
   required List<OvertureOffer> offers,
@@ -15,8 +24,8 @@ Widget _buildOverturePhaseTwoBody({
   required void Function(int index, bool? next) onDecisionChanged,
 }) {
   final ThemeData theme = Theme.of(context);
-  final TextStyle titleStyle = _phaseTwoTitleStyle(theme);
-  final TextStyle introStyle = _phaseTwoIntroStyle(theme);
+  final TextStyle titleStyle = overturePhaseTwoTitleStyle(theme);
+  final TextStyle introStyle = overturePhaseTwoIntroStyle(theme);
   return Column(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,7 +51,7 @@ Widget _buildOverturePhaseTwoBody({
         itemBuilder: (context, i) {
           final offer = offers[i];
           final bool? decision = accepted[i];
-          return _OvertureOfferRow(
+          return OvertureOfferRow(
             rowIndex: i,
             offerer: offererDisplayName(offer.offererGpId),
             stageLabel: stageLabel(l10n, offer.stage),
@@ -70,7 +79,7 @@ Widget _buildOverturePhaseTwoBody({
 /// Phase-2 title style per #2867 R2 / R21: `--accent` color and a 0.05em
 /// letter-spacing computed from the resolved title `fontSize` so the
 /// canonical letter-spacing scales with theme overrides.
-TextStyle _phaseTwoTitleStyle(ThemeData theme) {
+TextStyle overturePhaseTwoTitleStyle(ThemeData theme) {
   final TextStyle base =
       theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
   final double fontSize = base.fontSize ?? 16;
@@ -81,7 +90,7 @@ TextStyle _phaseTwoTitleStyle(ThemeData theme) {
 }
 
 /// Phase-2 intro style per #2867 R5 / R21: italic body text in `--muted`.
-TextStyle _phaseTwoIntroStyle(ThemeData theme) =>
+TextStyle overturePhaseTwoIntroStyle(ThemeData theme) =>
     (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
       color: EditorialMonoclePalette.muted,
       fontStyle: FontStyle.italic,

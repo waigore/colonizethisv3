@@ -1,16 +1,34 @@
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
-  bool get _allDecided => dialogueTristateAllDecided(_accepted);
+import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../../widgets/ct_loading_indicator.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
+import 'dialogue_tristate_decision_row.dart';
+import 'overture_dialogue_overlay_flow.dart';
+import 'overture_dialogue_overlay_phase_two.dart';
+import 'overture_dialogue_overlay_widget.dart';
 
-  String _offererDisplayName(String offererGpId) {
+mixin OvertureDialogueOverlayBuild
+    on State<OvertureDialogueOverlay>, OvertureDialogueOverlayFlow {
+  List<bool?> get accepted;
+
+  void updateOvertureDecision(int index, bool? next);
+
+  bool get allOvertureDecisionsMade => dialogueTristateAllDecided(accepted);
+
+  String offererDisplayName(String offererGpId) {
     for (final p in widget.game.players) {
       if (p.id == offererGpId) return p.displayName;
     }
     return offererGpId;
   }
 
-  String _stageLabel(AppLocalizations l10n, OvertureStage stage) {
+  String overtureStageLabel(AppLocalizations l10n, OvertureStage stage) {
     switch (stage) {
       case OvertureStage.tradeConsulate:
         return l10n.turnNews_stage_tradeConsulate;
@@ -25,7 +43,7 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
     }
   }
 
-  void _submit() {
+  void submitOvertureDecisions() {
     final decisions = <OvertureDecision>[];
     for (var i = 0; i < widget.pendingOvertures.length; i++) {
       final offer = widget.pendingOvertures[i];
@@ -34,14 +52,14 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
           offererGpId: offer.offererGpId,
           targetFactionId: offer.targetFactionId,
           stage: offer.stage,
-          accepted: _accepted[i] ?? true,
+          accepted: accepted[i] ?? true,
         ),
       );
     }
     widget.onDecisions(decisions);
   }
 
-  void _submitErrorFallback() {
+  void submitOvertureErrorFallback() {
     final decisions = <OvertureDecision>[];
     for (final OvertureOffer offer in widget.pendingOvertures) {
       decisions.add(
@@ -68,7 +86,7 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
             Text(l10n.game_overture_loadError('$overtureLoadError')),
             const SizedBox(height: CtSpacing.l),
             CtNinePatchButton(
-              onPressed: _submitErrorFallback,
+              onPressed: submitOvertureErrorFallback,
               child: Text(l10n.game_intervention_continue),
             ),
           ],
@@ -94,16 +112,16 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
     return CtFullScreenDialogueShell(
       backdrop: widget.child,
       maxHeight: 500,
-      body: _buildOverturePhaseTwoBody(
+      body: buildOverturePhaseTwoBody(
         context: context,
         l10n: l10n,
         offers: widget.pendingOvertures,
-        accepted: _accepted,
-        offererDisplayName: _offererDisplayName,
-        stageLabel: _stageLabel,
-        allDecided: _allDecided,
-        onSubmit: _submit,
-        onDecisionChanged: _updateOvertureDecision,
+        accepted: accepted,
+        offererDisplayName: offererDisplayName,
+        stageLabel: overtureStageLabel,
+        allDecided: allOvertureDecisionsMade,
+        onSubmit: submitOvertureDecisions,
+        onDecisionChanged: updateOvertureDecision,
       ),
     );
   }
