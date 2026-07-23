@@ -17,5 +17,11 @@ void main() {
       expect(DiplomacyPanel.screenId, isNotEmpty);
       expect(DiplomacyAllianceBadge, isNotNull);
     });
+
+    test('rows builder and power helpers are importable', () {
+      expect(buildDiplomacyRows, isNotNull);
+      expect(powerComparisonPercent(10, 5), 100);
+      expect(diplomaticStandingChips, isNotNull);
+    });
   });
 }
