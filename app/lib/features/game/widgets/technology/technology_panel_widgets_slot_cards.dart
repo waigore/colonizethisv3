@@ -1,4 +1,13 @@
-part of 'technology_panel_widgets.dart';
+// Active research slot card for the technology panel.
+// De-parted wave-9 cluster (Refs #4117).
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'research_slot_preview.dart';
+import 'technology_panel_widgets_slot_cards_body.dart';
+import 'technology_panel_widgets_slot_cards_header.dart';
+import 'technology_panel_widgets_slot_cards_locked.dart';
 
 /// Active research slot card chrome (flat editorial-monocle surface +
 /// `Slot N` header + Cancel / Choose tech actions + progress visual).
@@ -34,12 +43,12 @@ class ResearchSlotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SlotCardChrome(
+    return TechnologySlotCardChrome(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _SlotHeaderRow(
+          TechnologySlotHeaderRow(
             slotIndex: slotIndex,
             canEdit: canEdit,
             hasTech: _hasTech,
@@ -48,9 +57,9 @@ class ResearchSlotCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           if (!_hasTech)
-            const _SlotEmptyBody()
+            const TechnologySlotEmptyBody()
           else
-            _SlotAssignedBody(
+            TechnologySlotAssignedBody(
               slotIndex: slotIndex,
               techId: techId!,
               progress: progress,

@@ -1,12 +1,18 @@
-// Choose-tech dialog widgets for the technology panel.
-// Split out of `technology_panel_orders.dart` to keep host files under the
-// repo file-size target (Refs #3878).
+// Choose-tech dialog for the technology panel.
+// De-parted wave-9 cluster (Refs #4117).
 
-part of 'technology_panel_orders.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-/// Icon size used in Choose-tech dialog rows. Mirrors the mockup
-/// `.tech-option img` width/height (22 px). Refs #2864 S4.
-const double kChooseTechDialogIconSize = 22;
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import 'technology_panel_choose_tech_dialog_rows.dart';
+import 'technology_panel_order_mutations.dart';
 
 /// Opens the dark editorial-monocle Choose-tech dialog for [slotIndex]
 /// and dispatches `onOrdersChanged` with the updated `Orders` when the
@@ -78,7 +84,7 @@ void showChooseTechDialog({
 }
 
 /// Dark editorial-monocle Choose-tech dialog body. Composes
-/// `CtDialogShell` + a vertical column of [_ChooseTechOptionRow]
+/// `CtDialogShell` + a vertical column of [ChooseTechOptionRow]
 /// entries (or the empty-state line) plus a single full-width Close
 /// `CtNinePatchButton`. Refs #2864 S4.
 @visibleForTesting
@@ -118,7 +124,7 @@ class ChooseTechDialog extends StatelessWidget {
           ),
           CtGap.m,
           if (isEmpty)
-            _ChooseTechEmptyMessage()
+            const ChooseTechEmptyMessage()
           else
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -126,7 +132,7 @@ class ChooseTechDialog extends StatelessWidget {
                 for (final tech in availableTechs)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: _ChooseTechOptionRow(
+                    child: ChooseTechOptionRow(
                       game: game,
                       contextPlayerId: contextPlayerId,
                       tech: tech,
