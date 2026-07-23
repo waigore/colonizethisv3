@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'ct_gradients.dart';
 import 'ct_spacing.dart';
-
-part 'ct_nine_patch_button_state.dart';
-part 'ct_nine_patch_button_brackets.dart';
+import 'ct_nine_patch_button_state.dart';
 
 /// Dark editorial-monocle primary/secondary/action button.
 ///
@@ -205,5 +203,5 @@ class CtNinePatchButton extends StatefulWidget {
   static const Curve animationCurve = Curves.easeOut;
 
   @override
-  State<CtNinePatchButton> createState() => _CtNinePatchButtonState();
+  State<CtNinePatchButton> createState() => CtNinePatchButtonState();
 }

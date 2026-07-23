@@ -1,7 +1,9 @@
-part of 'ct_toggle_switch.dart';
+import 'package:flutter/material.dart';
 
-class _CtToggleSwitchKnob extends StatelessWidget {
-  const _CtToggleSwitchKnob({
+import 'ct_toggle_switch.dart';
+
+class CtToggleSwitchKnob extends StatelessWidget {
+  const CtToggleSwitchKnob({
     required this.fill,
     required this.border,
     required this.glowColor,

@@ -1,7 +1,11 @@
-part of 'ct_toggle_switch.dart';
+import 'package:flutter/material.dart';
 
-class _CtToggleSwitchTrack extends StatelessWidget {
-  const _CtToggleSwitchTrack({
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'ct_toggle_switch.dart';
+import 'ct_toggle_switch_knob.dart';
+
+class CtToggleSwitchTrack extends StatelessWidget {
+  const CtToggleSwitchTrack({
     required this.value,
     required this.hovered,
     required this.animated,
@@ -78,7 +82,7 @@ class _CtToggleSwitchTrack extends StatelessWidget {
             curve: CtToggleSwitch.animationCurve,
             left: _knobLeft,
             top: knobTopInset,
-            child: _CtToggleSwitchKnob(
+            child: CtToggleSwitchKnob(
               fill: _knobFill,
               border: _knobBorder,
               glowColor: glowColor,

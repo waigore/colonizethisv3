@@ -1,25 +1,8 @@
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
-import 'ct_nine_patch_button.dart';
-import 'ct_panel.dart';
-import 'ct_spacing.dart';
+import 'ct_transfer_list_state.dart';
 
-part 'ct_transfer_list_side_panel.dart';
-part 'ct_transfer_list_mutations.dart';
-part 'ct_transfer_list_layout.dart';
-
-/// Side-by-side two-panel layout requires at least this many logical pixels of
-/// inner width (the constraint passed to [CtTransferList] by its parent shell,
-/// e.g. `CtDialogShell` body). Below this threshold the two panels stack
-/// vertically so the per-row label + transfer buttons can render without a
-/// `RenderFlex` overflow at the minimum supported viewport
-/// (`kMinViewportWidth = 320` dp). Normative narrow stacking behavior is
-/// documented in `SPEC/ui/naval-units-fleet-management.md`,
-/// `SPEC/ui/military-units-army-management.md`, and
-/// `SPEC/ui/transfer-to-home-fleet-dialog.md`.
-@visibleForTesting
-const double kCtTransferListSideBySideMinWidth = 360;
+export 'ct_transfer_list_state.dart' show kCtTransferListSideBySideMinWidth;
 
 /// Generic dual-list transfer widget for moving counted items between two sides.
 ///
@@ -81,7 +64,7 @@ class CtTransferList extends StatefulWidget {
   final String Function(int total)? totalLabelBuilder;
 
   @override
-  State<CtTransferList> createState() => _CtTransferListState();
+  State<CtTransferList> createState() => CtTransferListState();
 }
 
 /// Keys for widget tests: one control per ship type and side/direction.
@@ -97,31 +80,4 @@ abstract final class CtTransferListKeys {
 
   static Key rightMoveAll(String itemId) =>
       ValueKey<String>('ctTransfer.right.<<$itemId');
-}
-
-class _CtTransferListState extends State<CtTransferList> {
-  late Map<String, int> _leftCounts;
-  late Map<String, int> _rightCounts;
-
-  int get _leftTotal => _leftCounts.values.fold(0, (sum, count) => sum + count);
-  int get _rightTotal =>
-      _rightCounts.values.fold(0, (sum, count) => sum + count);
-
-  bool get _canConfirm {
-    final validate = widget.canConfirm;
-    if (validate == null) {
-      return _rightTotal > 0;
-    }
-    return validate(_leftCounts, _rightCounts);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _leftCounts = Map<String, int>.from(widget.initialLeftCounts);
-    _rightCounts = Map<String, int>.from(widget.initialRightCounts);
-  }
-
-  @override
-  Widget build(BuildContext context) => buildTransferListLayout(context);
 }

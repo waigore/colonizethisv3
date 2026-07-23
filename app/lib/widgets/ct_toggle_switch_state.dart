@@ -1,6 +1,10 @@
-part of 'ct_toggle_switch.dart';
+import 'package:flutter/material.dart';
 
-class _CtToggleSwitchState extends State<CtToggleSwitch> {
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'ct_toggle_switch.dart';
+import 'ct_toggle_switch_track.dart';
+
+class CtToggleSwitchState extends State<CtToggleSwitch> {
   bool _hovered = false;
 
   bool get _enabled => widget.onChanged != null;
@@ -25,7 +29,7 @@ class _CtToggleSwitchState extends State<CtToggleSwitch> {
     if (!_enabled) {
       return Opacity(
         opacity: CtToggleSwitch.disabledOpacity,
-        child: _CtToggleSwitchTrack(
+        child: CtToggleSwitchTrack(
           value: widget.value,
           hovered: false,
           animated: false,
@@ -40,7 +44,7 @@ class _CtToggleSwitchState extends State<CtToggleSwitch> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _handleTap,
-        child: _CtToggleSwitchTrack(
+        child: CtToggleSwitchTrack(
           value: widget.value,
           hovered: _hovered,
           animated: true,
