@@ -360,9 +360,6 @@ void main() {
         final String chrome = File(
           'lib/features/game/widgets/train/train_dialog_chrome.dart',
         ).readAsStringSync();
-        final String chromeUnitRow = File(
-          'lib/features/game/widgets/train/train_dialog_chrome_unit_row.dart',
-        ).readAsStringSync();
         final String chromeUnitRowCost = File(
           'lib/features/game/widgets/train/train_dialog_chrome_unit_row_cost.dart',
         ).readAsStringSync();
@@ -396,12 +393,11 @@ void main() {
         );
         expect(
           chrome.contains('class TrainDialogInlineCost') ||
-              chromeUnitRow.contains('class TrainDialogInlineCost') ||
               chromeUnitRowCost.contains('class TrainDialogInlineCost'),
           isTrue,
           reason:
               'TrainDialogInlineCost must be the single shared cost segment in '
-              'train_dialog_chrome.dart (or its unit-row part files).',
+              'train_dialog_chrome.dart (or its unit-row library files).',
         );
         expect(
           commodityCostBase.contains('TrainDialogInlineCost') ||

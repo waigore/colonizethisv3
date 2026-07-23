@@ -266,7 +266,7 @@ void main() {
                 w is CustomPaint &&
                 w.painter != null &&
                 w.painter.runtimeType.toString() ==
-                    '_BrassCornerBracketsPainter',
+                    'CtNinePatchButtonBracketsPainter',
           ),
         ),
         findsOneWidget,
