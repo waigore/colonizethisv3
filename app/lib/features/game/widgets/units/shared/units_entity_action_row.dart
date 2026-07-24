@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'units_panel_row_chrome.dart';
-
-part 'units_entity_action_row_actions.dart';
+import 'units_entity_action_row_actions.dart';
 
 /// Shared unit/fleet row layout:
 /// - details on the left
