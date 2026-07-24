@@ -1,6 +1,48 @@
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
+import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../../widgets/ct_loading_indicator.dart';
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
+import 'ct_dialogue_view.dart';
+import 'dialogue_tristate_decision_row.dart';
+import 'overture_dialogue_overlay.dart';
+import 'overture_dialogue_overlay_flow.dart';
+import 'overture_dialogue_overlay_phase_two.dart';
+
+class OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
+    with OvertureDialogueOverlayFlow {
+  @override
+  bool overtureIntroDone = false;
+  @override
+  CtDialogueView? overtureView;
+  @override
+  Object? overtureLoadError;
+
+  /// Per-offer decisions; `null` means the player has not yet tapped Accept
+  /// or Reject on that row. The Submit button stays disabled until every
+  /// entry is non-null (issue #2867 R23 / AC4).
+  late List<bool?> _accepted;
+
+  @override
+  void initState() {
+    super.initState();
+    _accepted = List<bool?>.filled(widget.pendingOvertures.length, null);
+    if (widget.skipIntroForTest) {
+      overtureIntroDone = true;
+    } else {
+      loadAndRunOvertureIntro();
+    }
+  }
+
+  void _updateOvertureDecision(int index, bool? next) {
+    setState(() => _accepted[index] = next);
+  }
+
   bool get _allDecided => dialogueTristateAllDecided(_accepted);
 
   String _offererDisplayName(String offererGpId) {
@@ -56,7 +98,8 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
     widget.onDecisions(decisions);
   }
 
-  Widget buildOvertureDialogueOverlay(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final l10n = appL10n(context);
     if (overtureLoadError != null) {
       return CtFullScreenDialogueShell(
@@ -94,7 +137,7 @@ extension _OvertureDialogueOverlayBuild on _OvertureDialogueOverlayState {
     return CtFullScreenDialogueShell(
       backdrop: widget.child,
       maxHeight: 500,
-      body: _buildOverturePhaseTwoBody(
+      body: buildOverturePhaseTwoBody(
         context: context,
         l10n: l10n,
         offers: widget.pendingOvertures,

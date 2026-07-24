@@ -2,9 +2,20 @@
 // Split from `overture_dialogue_overlay.dart` to keep the overlay host
 // under the repo file-size target (Refs #3878).
 
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-mixin _OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
+import 'ct_dialogue_view.dart';
+import 'overture_dialogue_overlay.dart';
+import 'yarn_dialogue_bootstrap.dart';
+
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
+CtDialogueView createOvertureDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
+
+mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
   bool get overtureIntroDone;
   set overtureIntroDone(bool value);
   CtDialogueView? get overtureView;
@@ -20,7 +31,7 @@ mixin _OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
         bundle: bundle,
         assetPath: kDialogueOvertureAsset,
         logger: log,
-        createView: _createOvertureDialogueView,
+        createView: createOvertureDialogueView,
         requiredNodes: const [_kOvertureNode],
       );
       final view = session.view;

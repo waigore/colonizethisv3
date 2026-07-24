@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 234 app/lib files still using part directives.
+// Generated grandfather allowlist: 229 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -58,11 +58,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_flow.dart',
   'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_build.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_flow.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
-  'app/lib/features/game/widgets/dialogue/overture_dialogue_overlay_phase_two.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_build.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_flow.dart',

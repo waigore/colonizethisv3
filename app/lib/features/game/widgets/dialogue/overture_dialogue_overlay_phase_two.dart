@@ -1,15 +1,25 @@
 // Phase-2 offer list + Submit chrome for [OvertureDialogueOverlay].
 // SPEC/ui/overture-dialogue-overlay.md § Layout / wireframe.
 
-part of 'overture_dialogue_overlay.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-Widget _buildOverturePhaseTwoBody({
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'overture_dialogue_overlay_offer_row.dart';
+
+Widget buildOverturePhaseTwoBody({
   required BuildContext context,
   required AppLocalizations l10n,
   required List<OvertureOffer> offers,
   required List<bool?> accepted,
   required String Function(String offererGpId) offererDisplayName,
-  required String Function(AppLocalizations l10n, OvertureStage stage) stageLabel,
+  required String Function(AppLocalizations l10n, OvertureStage stage)
+  stageLabel,
   required bool allDecided,
   required VoidCallback onSubmit,
   required void Function(int index, bool? next) onDecisionChanged,
@@ -42,7 +52,7 @@ Widget _buildOverturePhaseTwoBody({
         itemBuilder: (context, i) {
           final offer = offers[i];
           final bool? decision = accepted[i];
-          return _OvertureOfferRow(
+          return OvertureOfferRow(
             rowIndex: i,
             offerer: offererDisplayName(offer.offererGpId),
             stageLabel: stageLabel(l10n, offer.stage),
