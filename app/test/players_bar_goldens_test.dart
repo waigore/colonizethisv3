@@ -20,7 +20,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 import 'package:intl/intl.dart';
 
 import 'package:colonizethis_app/config/themes.dart';

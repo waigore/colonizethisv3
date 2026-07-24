@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
-import 'support/screen_spec_acceptance_test_support.dart';
+import 'screen_spec_acceptance_test_support.dart';
 
 void main() {
   suppressLogsForTests();

@@ -23,12 +23,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_section.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app_e2e_support/test_support/production_panel_e2e_expected_lines.dart';
+import 'package:colonizethis_app_e2e_support/test/production_panel_e2e_expected_lines.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
-import 'package:colonizethis_app_e2e_support/e2e_helpers.dart' show collectTextPreorder;
+import 'package:colonizethis_app_e2e_e2e_helpers.dart' show collectTextPreorder;
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 const _playerId = 'gp_labour_mirror_test';

@@ -62,8 +62,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'map_view_test_fixtures.dart';
-import 'support/min_viewport_harness.dart';
-import 'support/game_screen_test_support.dart';
+import 'min_viewport_harness.dart';
+import 'game_screen_test_support.dart';
 import 'panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md

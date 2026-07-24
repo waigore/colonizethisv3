@@ -53,7 +53,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_u
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'min_viewport_harness.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
 

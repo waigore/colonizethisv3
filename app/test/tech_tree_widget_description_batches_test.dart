@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
 
 const _fbGather = 'Improves gathering capabilities';

@@ -36,7 +36,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/tile_map_fixture.dart';
+import 'tile_map_fixture.dart';
 
 Map<String, Object> _regionShape(Map<String, dynamic> regionJson) {
   final grid = regionJson['grid'] as List<dynamic>;

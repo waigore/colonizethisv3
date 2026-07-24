@@ -4,7 +4,7 @@ import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_rev
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/debug_handler_test_fixtures.dart';
+import 'debug_handler_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

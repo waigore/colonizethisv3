@@ -8,7 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 
 import 'panel_test_fixtures.dart';
-import 'support/technology_panel_test_support.dart';
+import 'technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

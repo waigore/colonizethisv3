@@ -22,8 +22,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
-import 'support/app_shell_harness.dart';
-import 'support/map_view_fixture.dart';
+import 'app_shell_harness.dart';
+import 'map_view_fixture.dart';
 
 /// Shared by `ct_region_map_widget_part*_test.dart` (Refs #4013 / #4021).
 CtRegionMapComponent ctRegionMapComponentFromTester(WidgetTester tester) {

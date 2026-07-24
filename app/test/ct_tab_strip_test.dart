@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Widget _host(Widget child, {ThemeData? themeOverride}) {
   // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).

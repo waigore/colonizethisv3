@@ -13,7 +13,7 @@ import 'package:path/path.dart' as p;
 /// `*_goldens_test.dart` file. Canonical helpers live in
 /// `app/test/golden_capture_harness.dart` (`configureGoldenView`,
 /// `pumpForGolden`, `pumpGoldenHost`) and
-/// `app/test/support/diplomacy_panel_test_support.dart`
+/// `app/test/diplomacy_panel_test_support.dart`
 /// (`pumpDiplomacyPanelBuilt`).
 int runCheckAppTestNoDuplicateGoldenHost(
   String repoRoot, {

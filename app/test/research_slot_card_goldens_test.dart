@@ -27,7 +27,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/research_slot_
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 
 // A tier-1 tech (cost 1800 RP after the #3512 rebalance) used as the assigned
 // tech for every slot-card golden so the captures are deterministic.

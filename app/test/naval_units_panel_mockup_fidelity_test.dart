@@ -18,8 +18,8 @@ import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_entity_card.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/naval_units_panel_test_support.dart';
+import 'app_shell_harness.dart';
+import 'naval_units_panel_test_support.dart';
 
 const _humanId = 'gp_naval_fidelity';
 const _capitalLocalId = 'cap1';

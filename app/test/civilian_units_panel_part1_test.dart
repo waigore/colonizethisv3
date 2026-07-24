@@ -12,7 +12,7 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_u
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore, kWorkTargetProspect;
 
-import 'support/civilian_units_panel_test_support.dart';
+import 'civilian_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

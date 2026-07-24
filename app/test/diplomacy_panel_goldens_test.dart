@@ -37,9 +37,9 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 
-import 'support/diplomacy_panel_test_support.dart';
-import 'support/golden_capture_harness.dart';
-import 'support/yarn_test_fixtures.dart';
+import 'diplomacy_panel_test_support.dart';
+import 'golden_capture_harness.dart';
+import 'yarn_test_fixtures.dart';
 
 /// Minimal in-memory [AssetBundle] returning the supplied yarn text so the
 /// herald golden is deterministic and offline (mirrors

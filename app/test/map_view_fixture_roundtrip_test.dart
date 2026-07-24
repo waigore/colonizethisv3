@@ -34,8 +34,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/map_view_fixture.dart';
-import 'support/map_view_serialization.dart';
+import 'map_view_fixture.dart';
+import 'map_view_serialization.dart';
 
 Set<String> _cellKeyUnion(Map<String, dynamic> regionJson) {
   final cells = (regionJson['cells'] as List<dynamic>)

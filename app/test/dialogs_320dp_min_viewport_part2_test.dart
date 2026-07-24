@@ -15,7 +15,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/dialogs_320dp_min_viewport_support.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
 const _gp1 = 'gp1';
 

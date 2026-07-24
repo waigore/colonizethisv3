@@ -15,7 +15,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_lab
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_section.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 const _playerId = 'gp_labour_widget_test';

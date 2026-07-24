@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/map_view_fixture.dart';
+import 'map_view_fixture.dart';
 
 // Refs #3656: these assertions verify the Old World map-view shape. They now
 // read the committed seed-42 fixture (a cheap JSON decode) instead of paying the

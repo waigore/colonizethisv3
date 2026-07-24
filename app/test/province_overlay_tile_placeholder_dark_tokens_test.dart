@@ -16,7 +16,7 @@ import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
 import 'province_overlay_test_harness.dart';
 
 Text _tileSectionBodyText(WidgetTester tester, String data) {

@@ -2,7 +2,7 @@
 // SPEC: SPEC/ui/military-units-panel.md; SPEC/program/repo-lint.md.
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'panel_fixtures/core.dart';
-import 'support/units_panel_test_shared.dart';
+import 'units_panel_test_shared.dart';
 
 /// Minimal province + tile-key lookup (Refs #4013).
 Game buildMilitaryProvinceTileLookupGame({

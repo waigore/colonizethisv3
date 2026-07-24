@@ -17,7 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/game_screen_test_support.dart';
+import 'game_screen_test_support.dart';
 
 class _FakeOvertureRunner extends TurnResolutionRunner {
   @override

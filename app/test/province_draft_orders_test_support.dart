@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 const String kProvinceDraftOrdersRegionId = 'oldWorld';
 const String kProvinceDraftOrdersLocalProvinceId = 'pDraft';

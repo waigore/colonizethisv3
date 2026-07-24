@@ -23,7 +23,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         kWorkTargetPurchaseLand,
         kWorkTargetUpgradeTown;
 
-import 'support/civilian_units_panel_test_support.dart';
+import 'civilian_units_panel_test_support.dart';
 
 const _human = 'h1';
 const _tileKey = 'oldWorld|p1|0|0';

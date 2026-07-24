@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay;
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
 import 'province_overlay_dark_token_scenarios.dart';
 import 'province_overlay_test_harness.dart';
 

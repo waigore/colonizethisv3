@@ -12,7 +12,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-import 'support/naval_units_panel_test_support.dart';
+import 'naval_units_panel_test_support.dart';
 import 'widget_test_assets.dart';
 
 const _mergePort = 'oldWorld|mergeport';

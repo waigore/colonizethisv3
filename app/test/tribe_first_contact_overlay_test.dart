@@ -7,8 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/yarn_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'yarn_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

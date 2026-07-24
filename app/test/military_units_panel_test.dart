@@ -15,7 +15,7 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
-import 'support/military_units_panel_test_support.dart';
+import 'military_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 
 void main() {

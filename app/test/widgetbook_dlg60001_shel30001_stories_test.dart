@@ -23,8 +23,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
-import 'support/app_shell_harness.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'app_shell_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 /// Normative inventory of the new DLG60001 stories that issue #2867 S13
 /// requires. Renaming or removing one must fail the inventory test below.

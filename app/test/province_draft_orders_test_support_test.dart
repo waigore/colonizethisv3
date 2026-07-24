@@ -5,7 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/province_draft_orders_test_support.dart';
+import 'province_draft_orders_test_support.dart';
 
 void main() {
   suppressLogsForTests();

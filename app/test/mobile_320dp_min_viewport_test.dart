@@ -37,8 +37,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
-import 'support/dialogs_320dp_min_viewport_support.dart';
-import 'support/min_viewport_harness.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
+import 'min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) is the lower end

@@ -25,7 +25,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Canonical Riverpod overrides for mounting [GameScreen] with a Hive games
 /// box, current game, orders, map view, and optional chrome summaries.

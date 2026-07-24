@@ -13,7 +13,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-import 'support/naval_units_panel_test_support.dart';
+import 'naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
 

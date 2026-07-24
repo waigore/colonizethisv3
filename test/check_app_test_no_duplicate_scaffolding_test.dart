@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 import '../tool/check_app_test_no_duplicate_scaffolding.dart';
 
 const _kConsolidatedMinViewport = '''
-import 'support/min_viewport_harness.dart';
+import 'min_viewport_harness.dart';
 
 const _kMinViewport = Size(320, 640);
 
@@ -253,14 +253,14 @@ void main() {
     expect(joined, contains('AppThemes.editorialMonocle'));
   });
 
-  test('does not fire on the shared harness under app/test/support/', () {
+  test('does not fire on the shared harness under app/test/', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_app_test_no_dup_scaffolding_support_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     // The harness itself owns the viewport shell; it must never be flagged
     // even though its file name does not match the governed family.
-    File('${temp.path}/app/test/support/min_viewport_harness.dart')
+    File('${temp.path}/app/test/min_viewport_harness.dart')
       ..createSync(recursive: true)
       ..writeAsStringSync('''
 Future<void> pumpAtMinViewport(WidgetTester tester, Size size) async {
@@ -502,7 +502,7 @@ WidgetbookUseCase _useCase(
         temp,
         'naval_units_panel_mockup_fidelity_test.dart',
         '''
-import 'support/naval_units_panel_test_support.dart';
+import 'naval_units_panel_test_support.dart';
 
 Game g() => buildNavalPanelOwFleetsGame(
   gameId: 't',
@@ -577,7 +577,7 @@ Future<void> _pumpMilitary(WidgetTester tester) async {}
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'military_units_panel_display_test.dart', '''
-import 'support/military_units_panel_test_support.dart';
+import 'military_units_panel_test_support.dart';
 
 Future<void> example(WidgetTester tester) async {
   await pumpMilitaryPanel(
@@ -644,7 +644,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'technology_panel_funding_toggles_test.dart', '''
-import 'support/technology_panel_test_support.dart';
+import 'technology_panel_test_support.dart';
 
 Future<void> example(WidgetTester tester) async {
   await pumpTechnologyPanel(
@@ -705,7 +705,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'production_panel_part1_test.dart', '''
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -744,7 +744,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'civilian_units_panel_part1_test.dart', '''
-import 'support/civilian_units_panel_test_support.dart';
+import 'civilian_units_panel_test_support.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -793,7 +793,7 @@ Widget host() => MaterialApp(home: const Placeholder());
       );
       addTearDown(() => temp.deleteSync(recursive: true));
       _writeGovernedFile(temp, 'game_map_narrow_detail_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Widget host(ProviderContainer c) => buildAppShellWithContainer(
   container: c,
@@ -840,7 +840,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'production_panel_cotton_weaving_lock_test.dart',
         '''
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -883,7 +883,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'military_units_panel_display_test.dart', '''
-import 'support/military_units_panel_test_support.dart';
+import 'military_units_panel_test_support.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -924,7 +924,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'production_panel_icons_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -973,7 +973,7 @@ Widget host() => MaterialApp(home: const Placeholder());
       addTearDown(() => temp.deleteSync(recursive: true));
       for (final name in _kCatalogUnitHostSuiteNames) {
         _writeGovernedFile(temp, name, '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {

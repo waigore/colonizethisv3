@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deployment_view.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Pins SPEC/ui/quick-battle-deployment-view.md § Layout / wireframe and the
 /// dark-theme `--muted` AC added under Refs #2869 S3 R14.
