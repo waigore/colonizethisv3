@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+
 /// Tests `processBoycotts` / `autoCancelBoycottsOnWar` (Refs #3753 R6):
 /// boycott apply/revoke, subsidy cancellation on apply, and auto-cancel on war.
 /// SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).

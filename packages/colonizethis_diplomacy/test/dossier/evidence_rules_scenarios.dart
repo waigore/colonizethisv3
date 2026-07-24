@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import '../diplomacy/call_to_arms_fixtures.dart';
+
 class EvidenceRulesScenario {
   const EvidenceRulesScenario({required this.label, required this.run});
   final String label;
