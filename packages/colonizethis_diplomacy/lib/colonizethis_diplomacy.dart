@@ -16,6 +16,7 @@ export 'src/diplomacy/diplomacy_relation_upsert.dart';
 export 'src/diplomacy/diplomacy_relation_updates.dart';
 export 'src/diplomacy/diplomacy_resolver.dart';
 export 'src/diplomacy/diplomacy_shared_helpers.dart';
+export 'src/diplomacy/diplomacy_grant_aid_resolver.dart';
 export 'src/diplomacy/diplomacy_relation_modifiers_resolver.dart';
 export 'src/diplomacy/diplomacy_subsidies_resolver.dart';
 export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart';

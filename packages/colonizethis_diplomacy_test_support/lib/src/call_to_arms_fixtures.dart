@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_game_fixtures.dart';
+import 'diplomacy_relation_fixtures.dart';
 
 const _ctaFourGp = [
   Player(id: 'gp1', displayName: 'GP1', isHuman: false),
@@ -19,15 +20,15 @@ DiplomacyRelation _ctaRel(
   bool formalAlliance = false,
   int sinceTurn = 0,
 }) =>
-    DiplomacyRelation(
-      factionId1: a,
-      factionId2: b,
-      score: score,
+    peaceRelation(
+      a,
+      b,
+      score,
       level: level,
       state: state,
+      formalAlliance: formalAlliance,
       sinceTurn: sinceTurn,
       lastInteractionTurn: sinceTurn,
-      formalAlliance: formalAlliance,
     );
 
 /// Shared three-power game fixture for call-to-arms tests (Refs #3625 / #4028).
@@ -109,5 +110,28 @@ Game fourGpCallToArmsCascadeGame() => diplomacyGame(
         ),
         _ctaRel('gp1', 'gp3', score: 60, level: RelationLevel.friendly),
         _ctaRel('gp1', 'gp4', score: 60, level: RelationLevel.friendly),
+      ],
+    );
+
+/// Three-power game for isolationist evidence-rule scenarios (Refs #4130).
+Game ctaRefuseEvidenceGame({
+  required bool allyIsAi,
+  required bool atPeaceWithDefender,
+}) =>
+    diplomacyGame(
+      turnNumber: 3,
+      players: [
+        const Player(id: 'observer', displayName: 'Human', isHuman: true),
+        Player(id: 'ally', displayName: 'Ally', isHuman: !allyIsAi),
+        const Player(id: 'defender', displayName: 'Defender', isHuman: false),
+      ],
+      diplomacyRelations: [
+        peaceRelation(
+          'ally',
+          'defender',
+          50,
+          level: RelationLevel.friendly,
+          state: atPeaceWithDefender ? RelationState.atPeace : RelationState.atWar,
+        ),
       ],
     );

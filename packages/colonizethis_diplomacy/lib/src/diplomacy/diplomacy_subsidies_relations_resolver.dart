@@ -4,5 +4,6 @@
 /// split into focused modules does not break external imports.
 library;
 
+export 'diplomacy_grant_aid_resolver.dart';
 export 'diplomacy_relation_modifiers_resolver.dart';
 export 'diplomacy_subsidies_resolver.dart';
