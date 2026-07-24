@@ -1,6 +1,9 @@
-part of 'app_event_handler_debug_set_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-_DiplomacyActionOutcome _applyWar(
+import 'app_event_handler_debug_set_diplomacy_common.dart';
+
+DebugDiplomacyActionOutcome applyDebugDiplomacyWar(
   Game game,
   String factionA,
   String factionB,
@@ -11,7 +14,7 @@ _DiplomacyActionOutcome _applyWar(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: a formal alliance exists between $factionA '
+      error: '$kDebugSetDiplomacyPrefix rejected: a formal alliance exists between $factionA '
           'and $factionB. Use no_alliance before declaring war.',
     );
   }
@@ -20,7 +23,7 @@ _DiplomacyActionOutcome _applyWar(
       game: null,
       message: null,
       error:
-          '$_kPrefix rejected: $factionA and $factionB are already at war.',
+          '$kDebugSetDiplomacyPrefix rejected: $factionA and $factionB are already at war.',
     );
   }
 
@@ -33,9 +36,9 @@ _DiplomacyActionOutcome _applyWar(
             .copyWith(state: RelationState.atWar, sinceTurn: turn),
   );
 
-  final clearedOvertures = _overturesBetween(game, factionA, factionB);
+  final clearedOvertures = debugOverturesBetween(game, factionA, factionB);
   final keptOvertures = game.overtureStates
-      .where((o) => !_isBetween(o, factionA, factionB))
+      .where((o) => !debugOvertureIsBetween(o, factionA, factionB))
       .toList(growable: false);
 
   final ftpWasPresent = hasFtpPartnership(game, factionA, factionB);
@@ -50,7 +53,7 @@ _DiplomacyActionOutcome _applyWar(
     ftpPartnershipKeys: nextFtpKeys,
   );
 
-  final events = <_PendingEvent>[
+  final events = <DebugPendingDiplomacyEvent>[
     (type: DiplomaticEventType.declareWar, from: factionA, to: factionB),
     for (final _ in clearedOvertures)
       (
@@ -61,7 +64,7 @@ _DiplomacyActionOutcome _applyWar(
     if (ftpWasPresent)
       (type: DiplomaticEventType.ftpBroken, from: factionA, to: factionB),
   ];
-  nextGame = _appendEvents(nextGame, turn, events);
+  nextGame = appendDebugDiplomacyEvents(nextGame, turn, events);
 
   return (
     game: nextGame,
@@ -72,7 +75,7 @@ _DiplomacyActionOutcome _applyWar(
   );
 }
 
-_DiplomacyActionOutcome _applyPeace(
+DebugDiplomacyActionOutcome applyDebugDiplomacyPeace(
   Game game,
   String factionA,
   String factionB,
@@ -84,7 +87,7 @@ _DiplomacyActionOutcome _applyPeace(
       game: null,
       message: null,
       error:
-          '$_kPrefix rejected: $factionA and $factionB are already at peace.',
+          '$kDebugSetDiplomacyPrefix rejected: $factionA and $factionB are already at peace.',
     );
   }
   final nextRelations = upsertRelation(
@@ -95,7 +98,7 @@ _DiplomacyActionOutcome _applyPeace(
         (existing ?? DiplomacyRelation(factionId1: factionA, factionId2: factionB))
             .copyWith(state: RelationState.atPeace, sinceTurn: turn),
   );
-  final nextGame = _appendEvents(
+  final nextGame = appendDebugDiplomacyEvents(
     game.copyWith(diplomacyRelations: nextRelations),
     turn,
     [(type: DiplomaticEventType.peace, from: factionA, to: factionB)],

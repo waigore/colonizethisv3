@@ -1,4 +1,8 @@
-part of 'production_allocation_row_buttons.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/app_assets.dart';
+import 'production_allocation_row_buttons.dart';
+import 'production_allocation_row_buttons_surface.dart';
 
 /// Single tap (maximize / clear) icon control.
 class ProductionAllocationActionIconButton extends StatelessWidget {

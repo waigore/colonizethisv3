@@ -1,6 +1,9 @@
-part of 'app_event_handler_debug_set_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-_DiplomacyActionOutcome _applyAlliance(
+import 'app_event_handler_debug_set_diplomacy_common.dart';
+
+DebugDiplomacyActionOutcome applyDebugDiplomacyAlliance(
   Game game,
   String factionA,
   String factionB,
@@ -10,7 +13,7 @@ _DiplomacyActionOutcome _applyAlliance(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: alliance requires both factions to be '
+      error: '$kDebugSetDiplomacyPrefix rejected: alliance requires both factions to be '
           'Great Powers.',
     );
   }
@@ -19,7 +22,7 @@ _DiplomacyActionOutcome _applyAlliance(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: cannot form an alliance while $factionA and '
+      error: '$kDebugSetDiplomacyPrefix rejected: cannot form an alliance while $factionA and '
           '$factionB are at war.',
     );
   }
@@ -31,7 +34,7 @@ _DiplomacyActionOutcome _applyAlliance(
         (existing ?? DiplomacyRelation(factionId1: factionA, factionId2: factionB))
             .copyWith(formalAlliance: true, sinceTurn: turn),
   );
-  final nextGame = _appendEvents(
+  final nextGame = appendDebugDiplomacyEvents(
     game.copyWith(diplomacyRelations: nextRelations),
     turn,
     [(type: DiplomaticEventType.allianceFormed, from: factionA, to: factionB)],
@@ -43,7 +46,7 @@ _DiplomacyActionOutcome _applyAlliance(
   );
 }
 
-_DiplomacyActionOutcome _applyNoAlliance(
+DebugDiplomacyActionOutcome applyDebugDiplomacyNoAlliance(
   Game game,
   String factionA,
   String factionB,
@@ -64,7 +67,7 @@ _DiplomacyActionOutcome _applyNoAlliance(
     factionB,
     (existing) => existing!.copyWith(formalAlliance: false, sinceTurn: turn),
   );
-  final nextGame = _appendEvents(
+  final nextGame = appendDebugDiplomacyEvents(
     game.copyWith(diplomacyRelations: nextRelations),
     turn,
     [(type: DiplomaticEventType.allianceBroken, from: factionA, to: factionB)],

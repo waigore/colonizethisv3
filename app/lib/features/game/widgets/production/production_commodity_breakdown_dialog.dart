@@ -12,15 +12,10 @@ import '../../../../providers/production_allocation_provider.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
-import 'commodity_ui_helpers.dart';
+import 'production_commodity_breakdown_dialog_layout.dart';
+import 'production_commodity_breakdown_dialog_table.dart';
 
-part 'production_commodity_breakdown_dialog_layout.dart';
-part 'production_commodity_breakdown_dialog_table_cells.dart';
-part 'production_commodity_breakdown_dialog_table.dart';
-part 'production_commodity_breakdown_dialog_table_data.dart';
+export 'production_commodity_breakdown_dialog_layout.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
 class ProductionCommodityBreakdownDialog extends ConsumerStatefulWidget {

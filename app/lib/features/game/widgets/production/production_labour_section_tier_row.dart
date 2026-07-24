@@ -3,13 +3,20 @@
 // Extracted from `production_labour_section.dart` to keep the host file
 // under the repo code-review physical-line limit.
 
-part of 'production_labour_section.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-const _uiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';
-const _uiIconLabourDecrement = 'ui_icon_production_alloc_decrement.png';
+import '../../../../widgets/ct_spacing.dart';
+import 'production_labour_helpers.dart';
+import 'production_labour_section_tier_row_controls.dart';
 
-class _ProductionLabourTierRow extends StatelessWidget {
-  const _ProductionLabourTierRow({
+const kUiIconLabourIncrement = 'ui_icon_production_alloc_increment.png';
+const kUiIconLabourDecrement = 'ui_icon_production_alloc_decrement.png';
+
+class ProductionLabourTierRow extends StatelessWidget {
+  const ProductionLabourTierRow({
+    super.key,
     required this.data,
     required this.callbacks,
     required this.canEdit,
@@ -67,22 +74,22 @@ class _ProductionLabourTierRow extends StatelessWidget {
   List<Widget> _buildEditActions(String tierName) {
     final disbandLabel = l10n.production_labourDisband;
     return [
-      _LabourIconButton(
+      ProductionLabourIconButton(
         enabled: data.canPop,
         semanticLabel: l10n.production_labourDequeueTier(tierName),
         tooltip: l10n.production_labourDequeueTier(tierName),
-        assetFileName: _uiIconLabourDecrement,
+        assetFileName: kUiIconLabourDecrement,
         onPressed: () => callbacks.onPopLastRecruitOrder(data.tier),
       ),
-      _LabourIconButton(
+      ProductionLabourIconButton(
         enabled: data.canAppend,
         semanticLabel: _appendTooltip(),
         tooltip: _appendTooltip(),
-        assetFileName: _uiIconLabourIncrement,
+        assetFileName: kUiIconLabourIncrement,
         onPressed: () => callbacks.onAppendRecruitOrder(data.tier),
       ),
       if (data.tier != WorkerTier.peasant)
-        _DisbandTierButton(
+        ProductionLabourDisbandTierButton(
           tier: data.tier,
           enabled: data.canDisband,
           disbandLabel: disbandLabel,
@@ -94,7 +101,7 @@ class _ProductionLabourTierRow extends StatelessWidget {
         // same trailing slot width as trained rows so −/+ align across
         // all tier rows. SPEC/ui/production-panel.md § Labour Controls
         // (12-A) > Trailing alignment. Refs #2862 S8a / C4 / G5.
-        _DisbandReservedSlot(label: disbandLabel),
+        ProductionLabourDisbandReservedSlot(label: disbandLabel),
     ];
   }
 

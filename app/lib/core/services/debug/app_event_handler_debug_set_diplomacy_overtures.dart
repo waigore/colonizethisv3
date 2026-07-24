@@ -1,6 +1,9 @@
-part of 'app_event_handler_debug_set_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-_DiplomacyActionOutcome _applyOverture(
+import 'app_event_handler_debug_set_diplomacy_common.dart';
+
+DebugDiplomacyActionOutcome applyDebugDiplomacyOverture(
   Game game,
   String factionA,
   String factionB,
@@ -12,7 +15,7 @@ _DiplomacyActionOutcome _applyOverture(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: cannot set an overture while $factionA and '
+      error: '$kDebugSetDiplomacyPrefix rejected: cannot set an overture while $factionA and '
           '$factionB are at war.',
     );
   }
@@ -44,7 +47,7 @@ _DiplomacyActionOutcome _applyOverture(
   );
 }
 
-_DiplomacyActionOutcome _applyClearOverture(
+DebugDiplomacyActionOutcome applyDebugDiplomacyClearOverture(
   Game game,
   String factionA,
   String factionB,

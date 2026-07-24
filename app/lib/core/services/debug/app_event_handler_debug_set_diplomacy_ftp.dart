@@ -1,6 +1,9 @@
-part of 'app_event_handler_debug_set_diplomacy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-_DiplomacyActionOutcome _applyFtp(
+import 'app_event_handler_debug_set_diplomacy_common.dart';
+
+DebugDiplomacyActionOutcome applyDebugDiplomacyFtp(
   Game game,
   String factionA,
   String factionB,
@@ -11,7 +14,7 @@ _DiplomacyActionOutcome _applyFtp(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: cannot establish FTP while $factionA and '
+      error: '$kDebugSetDiplomacyPrefix rejected: cannot establish FTP while $factionA and '
           '$factionB are at war.',
     );
   }
@@ -21,7 +24,7 @@ _DiplomacyActionOutcome _applyFtp(
     return (
       game: null,
       message: null,
-      error: '$_kPrefix rejected: FTP requires a mutual embassy-tier overture '
+      error: '$kDebugSetDiplomacyPrefix rejected: FTP requires a mutual embassy-tier overture '
           'between $factionA and $factionB.',
     );
   }
@@ -35,7 +38,7 @@ _DiplomacyActionOutcome _applyFtp(
   }
   final nextFtpKeys = Set<String>.from(game.ftpPartnershipKeys)
     ..add(pairKey(factionA, factionB));
-  final nextGame = _appendEvents(
+  final nextGame = appendDebugDiplomacyEvents(
     game.copyWith(ftpPartnershipKeys: nextFtpKeys),
     turn,
     [(type: DiplomaticEventType.ftpFormed, from: factionA, to: factionB)],
@@ -47,7 +50,7 @@ _DiplomacyActionOutcome _applyFtp(
   );
 }
 
-_DiplomacyActionOutcome _applyNoFtp(
+DebugDiplomacyActionOutcome applyDebugDiplomacyNoFtp(
   Game game,
   String factionA,
   String factionB,
@@ -62,7 +65,7 @@ _DiplomacyActionOutcome _applyNoFtp(
   }
   final nextFtpKeys = Set<String>.from(game.ftpPartnershipKeys)
     ..remove(pairKey(factionA, factionB));
-  final nextGame = _appendEvents(
+  final nextGame = appendDebugDiplomacyEvents(
     game.copyWith(ftpPartnershipKeys: nextFtpKeys),
     turn,
     [(type: DiplomaticEventType.ftpBroken, from: factionA, to: factionB)],

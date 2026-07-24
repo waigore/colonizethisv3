@@ -3,20 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../widgets/ct_slider.dart';
 import 'production_recipe_affordance.dart';
-import 'production_allocation_mutations.dart';
-import 'production_allocation_row_buttons.dart';
-
-part 'production_allocation_row_slider.dart';
-part 'production_allocation_row_controls.dart';
-
-const _uiIconProductionAllocDecrement =
-    'ui_icon_production_alloc_decrement.png';
-const _uiIconProductionAllocIncrement =
-    'ui_icon_production_alloc_increment.png';
-const _uiIconProductionAllocMaximize = 'ui_icon_production_alloc_maximize.png';
-const _uiIconProductionAllocClear = 'ui_icon_production_alloc_clear.png';
+import 'production_allocation_row_controls.dart';
 
 /// Opacity applied to a tech-locked recipe row's slider sub-row (slider plus
 /// the four step/action controls) so it reads as grayed/disabled per

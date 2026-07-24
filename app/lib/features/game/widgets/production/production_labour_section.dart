@@ -2,20 +2,12 @@
 // immediate disband). SPEC/ui/production-panel.md § Labour Controls,
 // SPEC/game/workers-and-population.md.
 
-library;
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/app_assets.dart';
-import '../../../../widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'production_allocation_row_buttons.dart';
 import 'production_labour_helpers.dart';
-
-part 'production_labour_section_tier_row.dart';
-part 'production_labour_section_tier_row_controls.dart';
+import 'production_labour_section_tier_row.dart';
 
 /// Labour controls section appended to the Workers section of the
 /// Available subpanel. Renders one row per worker tier with recruit/train
@@ -51,7 +43,7 @@ class ProductionLabourSection extends StatelessWidget {
           Padding(
             key: ValueKey<String>('production_labour_row_${row.tier.id}'),
             padding: const EdgeInsets.only(top: 4),
-            child: _ProductionLabourTierRow(
+            child: ProductionLabourTierRow(
               data: row,
               callbacks: callbacks,
               canEdit: canEdit,

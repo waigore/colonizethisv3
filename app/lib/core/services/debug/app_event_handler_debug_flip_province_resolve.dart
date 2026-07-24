@@ -1,6 +1,11 @@
-part of 'app_event_handler_debug_flip_province.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-({Province? province, String? failureMessage}) _resolveFlipTarget(
+import 'debug_command_helpers.dart';
+
+({Province? province, String? failureMessage}) resolveDebugFlipTarget(
   Game game,
   FlipDebugProvinceOwnershipEvent event,
 ) {
@@ -60,7 +65,7 @@ part of 'app_event_handler_debug_flip_province.dart';
   return (province: matched.single, failureMessage: null);
 }
 
-bool _isProvinceKnownToPlayer({
+bool isDebugFlipProvinceKnownToPlayer({
   required Game game,
   required String playerId,
   required Province province,
@@ -84,7 +89,7 @@ bool _isProvinceKnownToPlayer({
   return false;
 }
 
-String? _capitalProvinceIdForFaction(Game game, String factionId) {
+String? debugCapitalProvinceIdForFaction(Game game, String factionId) {
   final player = findPlayerById(game, factionId);
   if (player != null) return player.capitalProvinceId;
   for (final minor in game.minorNations) {
@@ -96,7 +101,7 @@ String? _capitalProvinceIdForFaction(Game game, String factionId) {
   return null;
 }
 
-int _countNewlyVisibleTiles({
+int countDebugFlipNewlyVisibleTiles({
   required Map<String, Map<String, String>> before,
   required Map<String, Map<String, String>> after,
 }) {

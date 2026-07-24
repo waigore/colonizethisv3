@@ -2,9 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'app_event_handler_debug_flip_province_resolve.dart';
 import 'debug_command_helpers.dart';
-
-part 'app_event_handler_debug_flip_province_resolve.dart';
 
 const _kFlipProvinceRejectAlreadyHumanOwned =
     'Debug flip_province rejected: target province is already human-owned.';
@@ -28,7 +27,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
   guard as DebugGuardPass;
   final game = guard.game;
 
-  final resolved = _resolveFlipTarget(game, event);
+  final resolved = resolveDebugFlipTarget(game, event);
   final failure = resolved.failureMessage;
   if (failure != null) {
     return (game: null, message: failure);
@@ -52,7 +51,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
     return (game: null, message: _kFlipProvinceRejectAlreadyHumanOwned);
   }
 
-  if (!_isProvinceKnownToPlayer(
+  if (!isDebugFlipProvinceKnownToPlayer(
     game: game,
     playerId: event.humanPlayerId,
     province: province,
@@ -76,7 +75,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
     final previousCapitalByTribe = {
       for (final tribe in game.tribes) tribe.id: tribe.capitalProvinceId,
     };
-    final priorOwnerCapitalProvinceId = _capitalProvinceIdForFaction(
+    final priorOwnerCapitalProvinceId = debugCapitalProvinceIdForFaction(
       game,
       oldOwnerId,
     );
@@ -132,7 +131,7 @@ DebugCommandResult applyDebugFlipProvinceOwnership({
       combinedTopology,
       topologyByRegion: topologyByRegion,
     );
-    final coastalUpdatedTiles = _countNewlyVisibleTiles(
+    final coastalUpdatedTiles = countDebugFlipNewlyVisibleTiles(
       before: visibilityBeforeCoastal,
       after: visibilityAfterCoastal,
     );
