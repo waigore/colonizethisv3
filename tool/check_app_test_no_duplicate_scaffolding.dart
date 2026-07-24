@@ -178,7 +178,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
     'Scaffold(body: Center(child: …))). '
     'Widgetbook: use findWidgetbookUseCase from '
-    'app/test/support/widgetbook_test_harness.dart. '
+    'app/test/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
     'app/test/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
