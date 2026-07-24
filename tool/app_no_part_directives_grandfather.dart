@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 44 app/lib files still using part directives.
+// Generated grandfather allowlist: 35 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -12,11 +12,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/tilesets/terrain_tileset_loaders.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_models.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_variant_keys.dart',
-  'app/lib/features/game/widgets/dialogue/call_to_arms_call_row.dart',
-  'app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/ct_dialogue_view.dart',
-  'app/lib/features/game/widgets/dialogue/ct_dialogue_view_collapsible.dart',
-  'app/lib/features/game/widgets/dialogue/ct_dialogue_view_jenny.dart',
   'app/lib/features/game/widgets/production/production_allocation_row.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons_action.dart',
@@ -35,10 +30,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/production/production_labour_section.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row_controls.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_body.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_confirm.dart',
-  'app/lib/features/shell/save_load/load_game_list_dialog_row.dart',
   'app/lib/widgets/ct_dropdown.dart',
   'app/lib/widgets/ct_dropdown_picker.dart',
   'app/lib/widgets/ct_dropdown_trigger.dart',
