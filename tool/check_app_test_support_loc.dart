@@ -13,9 +13,9 @@ import 'package:path/path.dart' as p;
 const String appTestSupportRelativeDir = 'app/test/support';
 
 /// Post-#4035 densify support-tree ceiling (physical LOC).
-/// Ratcheted after wave-9 slice G map-view + nine-patch asset fixtures relocate
-/// outside support tree (Refs #4117).
-const int appTestSupportLocCeiling = 2833;
+/// Ratcheted after wave-9 slice F game-screen / draft-orders / yarn /
+/// state-logic fixture relocate outside support tree (Refs #4117).
+const int appTestSupportLocCeiling = 2261;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countAppTestSupportPhysicalLoc(Directory dir) {
