@@ -9,22 +9,5 @@
 // `SPEC/ui/technology-panel.md` § Choose-tech dialog and
 // `SPEC/ui/pixel-art-ui-catalog.md` § Dialog scrim.
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_confirm_dialog.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import 'tech_ui_helpers.dart';
-import 'tech_gp_pennant_row.dart';
-
-part 'technology_panel_choose_tech_dialog.dart';
-part 'technology_panel_choose_tech_dialog_rows.dart';
-part 'technology_panel_order_mutations.dart';
+export 'technology_panel_choose_tech_dialog.dart';
+export 'technology_panel_order_mutations.dart';

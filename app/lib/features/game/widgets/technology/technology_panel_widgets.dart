@@ -1,49 +1,18 @@
 library;
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/constants.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/themes.dart';
-import 'research_slot_preview.dart';
-import 'tech_ui_helpers.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_progress_bar.dart';
-import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'research_slot_turn_preview_view.dart';
-import 'technology_slot_funding_toggles.dart';
+import 'tech_ui_helpers.dart';
+import 'technology_panel_gradients.dart';
 
-part 'technology_panel_widgets_slot_cards.dart';
-part 'technology_panel_widgets_slot_cards_header.dart';
-part 'technology_panel_widgets_slot_cards_body.dart';
-part 'technology_panel_widgets_slot_cards_locked.dart';
-
-/// Opacity applied to the locked fourth-slot card body when
-/// `player.researchSlots < 4`.
-///
-/// SPEC/ui/technology-panel.md § Slot behaviour > Locked slot 4
-/// (University). Refs #2864 S0/S3.
-const double kTechnologyLockedSlotOpacity = 0.45;
-
-/// Viewport width (logical px) below which the compact slot action controls
-/// (`CtActionTextButton` / `CtDangerTextButton`) guarantee a
-/// [kMinTouchTargetSize] (44 dp) tap target in both dimensions.
-///
-/// Mirrors the in-game shell narrow breakpoint (`< 600 dp`) in
-/// `SPEC/ui/mobile-adaptation.md` § 4. At or above this width the slot action
-/// controls render at their compact mockup size
-/// (`SPEC/ui/mockups/GAME40001-technology-panel.html` `.slot-actions button`);
-/// below it the controls expand so they satisfy the mobile minimum
-/// touch-target rule (§ 1). SPEC/ui/technology-panel.md § Slot behaviour.
-/// Refs #3510.
-const double kTechnologySlotActionTouchTargetBreakpoint = 600;
+export 'technology_panel_constants.dart';
+export 'technology_panel_widgets_slot_cards.dart' show ResearchSlotCard;
+export 'technology_panel_widgets_slot_cards_locked.dart'
+    show LockedResearchSlotCard;
 
 /// Read-only researched-tech chip rendered in the Slots tab grid.
 ///
@@ -65,7 +34,7 @@ class ResearchedTechChip extends StatelessWidget {
     final iconPath = techCategoryIconAssetPath(tech?.category);
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: _technologyDarkSurfaceGradient(),
+        gradient: technologyDarkSurfaceGradient(),
         border: Border.all(
           color: EditorialMonoclePalette.border,
           width: 1,
@@ -92,23 +61,6 @@ class ResearchedTechChip extends StatelessWidget {
       ),
     );
   }
-}
-
-// Vertical `--bg-deep` → `--surface` gradient shared by the researched
-// tech chip body and the slot card chrome. Mirrors the mockup
-// `linear-gradient(180deg,var(--bg-deep),var(--surface))` and is the
-// single source so future palette tweaks stay aligned across both
-// surfaces (SPEC/ui/technology-panel.md § Layout / wireframe + mockup
-// `.tech-chip` and `.slot-card`). Refs #2864 S2/S3.
-LinearGradient _technologyDarkSurfaceGradient() {
-  return LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: <Color>[
-      EditorialMonoclePalette.bgDeep,
-      EditorialMonoclePalette.surface,
-    ],
-  );
 }
 
 /// Mockup-faithful section heading for the Slots-tab canonical sections

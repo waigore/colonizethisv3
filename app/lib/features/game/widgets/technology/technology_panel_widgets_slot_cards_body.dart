@@ -1,7 +1,19 @@
-part of 'technology_panel_widgets.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-class _SlotEmptyBody extends StatelessWidget {
-  const _SlotEmptyBody();
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_progress_bar.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import 'research_slot_preview.dart';
+import 'research_slot_turn_preview_view.dart';
+import 'tech_ui_helpers.dart';
+import 'technology_slot_funding_toggles.dart';
+
+class TechnologyPanelSlotEmptyBody extends StatelessWidget {
+  const TechnologyPanelSlotEmptyBody({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +31,9 @@ class _SlotEmptyBody extends StatelessWidget {
   }
 }
 
-class _SlotAssignedBody extends StatelessWidget {
-  const _SlotAssignedBody({
+class TechnologyPanelSlotAssignedBody extends StatelessWidget {
+  const TechnologyPanelSlotAssignedBody({
+    super.key,
     required this.slotIndex,
     required this.techId,
     required this.progress,
@@ -46,7 +59,7 @@ class _SlotAssignedBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _AssignedTechRow(techId: techId),
+        TechnologyPanelAssignedTechRow(techId: techId),
         if (onFundingChanged != null) ...[
           const SizedBox(height: 6),
           SlotFundingToggleRow(
@@ -92,8 +105,8 @@ class _SlotAssignedBody extends StatelessWidget {
   }
 }
 
-class _AssignedTechRow extends StatelessWidget {
-  const _AssignedTechRow({required this.techId});
+class TechnologyPanelAssignedTechRow extends StatelessWidget {
+  const TechnologyPanelAssignedTechRow({super.key, required this.techId});
 
   final String techId;
 
