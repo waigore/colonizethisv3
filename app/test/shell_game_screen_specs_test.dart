@@ -25,7 +25,7 @@ import 'package:hive/hive.dart';
 
 import 'support/app_shell_harness.dart';
 import 'support/game_screen_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 class _StubBox implements Box<dynamic> {
   @override

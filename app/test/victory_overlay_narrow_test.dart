@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 Widget _wrapPanel({
   required ct_models.Game game,

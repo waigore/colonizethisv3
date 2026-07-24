@@ -10,13 +10,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'panel_fixtures/core.dart';
+import '../panel_fixtures/core.dart';
 
 export 'diplomacy_panel_test_support.dart'
     show
         CivilianPanelBusDialogHost,
         buildCivilianPanel;
-export 'panel_fixtures/civilian.dart' show buildCivilianPanelTestGame;
+export '../panel_fixtures/civilian.dart' show buildCivilianPanelTestGame;
 
 /// Idle civilian [Unit] at [tileKey] in [provinceId].
 Unit civilianIdleUnit({

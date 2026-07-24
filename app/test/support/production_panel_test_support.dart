@@ -9,9 +9,9 @@ import 'package:colonizethis_app/features/game/widgets/production/production_pan
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
-import 'panel_fixtures/production.dart'
+import '../panel_fixtures/production.dart'
     show productionPanelTestGameFor;
-export 'panel_fixtures/production.dart'
+export '../panel_fixtures/production.dart'
     show
         productionPanelTestFullPlayer,
         productionPanelTestGameFor,

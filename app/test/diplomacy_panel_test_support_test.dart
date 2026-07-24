@@ -10,7 +10,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 
 import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

@@ -27,7 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 import 'min_viewport_harness.dart';
-import 'panel_fixtures/trade.dart';
+import '../panel_fixtures/trade.dart';
 
 /// Canonical human GP id used by Market-tab / Deal Book / E8 standalone hosts.
 const String kTradeTestHumanPlayerId = 'gp_h';

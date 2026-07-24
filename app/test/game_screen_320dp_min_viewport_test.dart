@@ -64,7 +64,7 @@ import 'package:hive/hive.dart';
 import 'support/map_view_test_fixtures.dart';
 import 'support/min_viewport_harness.dart';
 import 'support/game_screen_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the

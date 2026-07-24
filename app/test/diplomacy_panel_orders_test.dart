@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
 const _humanId = kPanelTestHumanPlayerId;

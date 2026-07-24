@@ -26,7 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_confirm_dialog.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/technology_panel_test_support.dart';
 
 // Three prerequisite-free tier-1 techs occupy slots 0-2, mirroring the

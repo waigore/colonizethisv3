@@ -11,7 +11,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
 import 'support/diplomacy_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
 void main() {

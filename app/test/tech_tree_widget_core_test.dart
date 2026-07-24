@@ -17,7 +17,7 @@ import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 Player _dummyPlayer() =>
     Player(id: 'dummy', displayName: 'Dummy', isHuman: true);

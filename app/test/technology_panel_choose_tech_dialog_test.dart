@@ -14,7 +14,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/technology_panel_test_support.dart';
 
 void main() {

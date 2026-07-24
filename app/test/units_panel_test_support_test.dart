@@ -12,7 +12,7 @@ import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_p
 
 import 'support/military_units_panel_test_support.dart';
 import 'support/naval_units_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/widget_test_assets.dart';
 
 void main() {

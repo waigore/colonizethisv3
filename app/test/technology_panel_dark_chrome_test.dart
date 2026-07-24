@@ -25,7 +25,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_progress_bar.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/technology_panel_test_support.dart';
 
 void main() {

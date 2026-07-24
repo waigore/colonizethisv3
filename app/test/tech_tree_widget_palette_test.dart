@@ -17,7 +17,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
