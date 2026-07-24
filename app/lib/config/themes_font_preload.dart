@@ -1,4 +1,7 @@
-part of 'themes.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../package_logger.dart';
 
 /// Font family applied to display / heading text styles in
 /// [AppThemes.editorialMonocle]. Matches the bundled Cinzel family name.
