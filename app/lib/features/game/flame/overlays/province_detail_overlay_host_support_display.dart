@@ -1,7 +1,4 @@
-import 'package:colonizethis_map/colonizethis_map.dart';
-
-import '../../../../providers/map_province_panel_provider.dart'
-    show displayProvinceOrSeaIdFromTileKey;
+part of 'province_detail_overlay_host_support.dart';
 
 /// Resolves the overlay `displayId` from a selected tile key.
 ///
