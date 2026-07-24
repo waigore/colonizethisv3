@@ -1,12 +1,11 @@
-// Table-driven call-to-arms scenarios (Refs #3837).
+// Table-driven call-to-arms scenarios (Refs #3837 / #4130).
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'call_to_arms_fixtures.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
-/// One call-to-arms integration row with preserved [label].
 class CallToArmsScenario {
   const CallToArmsScenario({required this.label, required this.run});
 

@@ -1,13 +1,12 @@
-// Table-driven reactive event dialogue scenarios (Refs #3837 / #4028).
+// Table-driven reactive event dialogue scenarios (Refs #3837 / #4028 / #4130).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'diplomacy_game_fixtures_base.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
-/// One reactive dialogue test row with preserved [label].
 class EventDialogueReactiveScenario {
   const EventDialogueReactiveScenario({required this.label, required this.run});
 
