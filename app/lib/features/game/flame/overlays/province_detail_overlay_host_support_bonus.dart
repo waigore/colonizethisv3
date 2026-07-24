@@ -1,4 +1,14 @@
-part of 'province_detail_overlay_host_support.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show
+        ProvinceImprovableCommodityCount,
+        previewTownManufacturingBonusByProvince,
+        projectProvinceExtraction,
+        provinceImprovableResourceTileCounts,
+        WorldStateProvinceLookup;
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData;
 
 /// Town manufacturing bonus preview for the province overlay Economic section.
 ///
