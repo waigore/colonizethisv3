@@ -1,6 +1,6 @@
 // Shared MilitaryUnitsPanel widget-test scaffolding (Refs #3730, #4021, #4048).
 // Host, ExpansionTile helpers, and ArmySplit bus harness.
-// Scenario Games: military_units_panel_test_scenarios.dart.
+// Scenario Games: ../military_units_panel_test_scenarios.dart (outside support LOC tree).
 // SPEC: SPEC/ui/military-units-panel.md; SPEC/program/repo-lint.md.
 
 import 'dart:async';
@@ -16,7 +16,7 @@ import 'package:colonizethis_app/features/game/widgets/units/military/military_u
 
 import 'app_shell_harness.dart';
 
-export 'military_units_panel_test_scenarios.dart';
+export '../military_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
 
 /// Builds the canonical [MilitaryUnitsPanel] host used across the panel's
