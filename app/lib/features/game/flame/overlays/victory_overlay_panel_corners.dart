@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-
-import 'victory_overlay_panel_layout.dart';
+part of 'victory_overlay.dart';
 
 enum _CornerSide { topLeft, bottomRight }
 
@@ -17,14 +13,14 @@ class _VictoryCornerBracket extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: VictoryPanelLayout.cornerBracketWidth,
-      height: VictoryPanelLayout.cornerBracketHeight,
+      width: VictoryPanel.cornerBracketWidth,
+      height: VictoryPanel.cornerBracketHeight,
       child: CustomPaint(
         painter: _VictoryCornerBracketPainter(
           color: EditorialMonoclePalette.accent.withValues(
-            alpha: VictoryPanelLayout.cornerBracketAlpha,
+            alpha: VictoryPanel.cornerBracketAlpha,
           ),
-          stroke: VictoryPanelLayout.cornerBracketStroke,
+          stroke: VictoryPanel.cornerBracketStroke,
           corner: corner,
         ),
       ),
@@ -85,14 +81,4 @@ class _VictoryCornerBracketPainter extends CustomPainter {
         oldDelegate.stroke != stroke ||
         oldDelegate.corner != corner;
   }
-}
-
-/// Top-left corner bracket for [VictoryPanel].
-Widget victoryPanelTopLeftCornerBracket() {
-  return const _VictoryCornerBracket(corner: _CornerSide.topLeft);
-}
-
-/// Bottom-right corner bracket for [VictoryPanel].
-Widget victoryPanelBottomRightCornerBracket() {
-  return const _VictoryCornerBracket(corner: _CornerSide.bottomRight);
 }
