@@ -172,7 +172,8 @@ int runCheckAppTestNoDuplicateScaffolding(
   }
   logE(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
-    'app/test/support/min_viewport_harness.dart. '
+    'app/test/min_viewport_harness.dart (re-exported from '
+    'app/test/support/min_viewport_harness.dart). '
     '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
     'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
     'Scaffold(body: Center(child: …))). '
