@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 206 app/lib files still using part directives.
+// Generated grandfather allowlist: 198 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
