@@ -1,20 +1,33 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+
+import 'game_map_area_state_logic.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
 
 /// Civilian work-target tile selection for [GameMapArea]: maintaining the
 /// per-player valid-tile cache, starting/cancelling a selection, and committing
 /// the resulting work order (Refs #3699 Theme 3).
-mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
-  void _refreshWorkTargetSelectionCache(ct_models.Game game) {
+mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
+  void refreshWorkTargetSelectionCache(ct_models.Game game) {
     final view = buildPlayerView(
       game,
       widget.mapViewData.combinedTopology,
-      _mapPlayerId,
+      mapPlayerId,
     );
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
-    _workTargetSelectionCache.refresh(
+    workTargetSelectionCache.refresh(
       WorkTargetSelectionSnapshot(
         game: game,
-        playerId: _mapPlayerId,
+        playerId: mapPlayerId,
         playerView: view,
         topology: widget.mapViewData.combinedTopology,
         currentOrders: const ct_models.Orders(),
@@ -23,11 +36,11 @@ mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase
     );
   }
 
-  int? _preferredRegionIndexForValidSelection(Set<String> validTileKeys) {
+  int? preferredRegionIndexForValidSelection(Set<String> validTileKeys) {
     if (validTileKeys.isEmpty) {
       return null;
     }
-    final currentRegionId = _currentRegion.regionId;
+    final currentRegionId = currentRegion.regionId;
     final hasCurrent = validTileKeys.any(
       (tileKey) => tileKey.startsWith('$currentRegionId|'),
     );
@@ -49,27 +62,27 @@ mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase
     return null;
   }
 
-  void _computeValidTileKeysForSelection() {
-    if (_workTargetSelection == null) {
-      _cachedValidTileKeys = null;
+  void computeValidTileKeysForSelection() {
+    if (workTargetSelection == null) {
+      cachedValidTileKeys = null;
       return;
     }
     final game = ref.read(currentGameProvider);
     if (game == null) {
-      _cachedValidTileKeys = null;
+      cachedValidTileKeys = null;
       return;
     }
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     final topology = mapData?.combinedTopology ?? const MapTopology();
-    final view = buildPlayerView(game, topology, _mapPlayerId);
-    final workTarget = _workTargetSelection!.workTarget;
-    _cachedValidTileKeys =
+    final view = buildPlayerView(game, topology, mapPlayerId);
+    final workTarget = workTargetSelection!.workTarget;
+    cachedValidTileKeys =
         GameMapAreaStateLogic.resolveValidTileKeysForCivilianWorkSelection(
           workTarget: workTarget,
-          workTargetSelectionCache: _workTargetSelectionCache,
-          humanPlayerId: _mapPlayerId,
-          selectedUnitId: _workTargetSelection!.unit.id,
+          workTargetSelectionCache: workTargetSelectionCache,
+          humanPlayerId: mapPlayerId,
+          selectedUnitId: workTargetSelection!.unit.id,
           game: game,
           currentOrders: orders,
           playerView: view,
@@ -78,7 +91,7 @@ mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase
         );
   }
 
-  ct_models.Unit? _findUnitById(String unitId) {
+  ct_models.Unit? findUnitById(String unitId) {
     for (final unit in widget.game.worldState.oldWorld.units) {
       if (unit.id == unitId) return unit;
     }
@@ -88,39 +101,39 @@ mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase
     return null;
   }
 
-  void _startWorkTargetSelection(String unitId, String workTarget) {
-    final unit = _findUnitById(unitId);
+  void startWorkTargetSelection(String unitId, String workTarget) {
+    final unit = findUnitById(unitId);
     if (unit == null) return;
     setState(() {
-      _workTargetSelection = (unit: unit, workTarget: workTarget);
-      _computeValidTileKeysForSelection();
-      final validTileKeys = _cachedValidTileKeys;
+      workTargetSelection = (unit: unit, workTarget: workTarget);
+      computeValidTileKeysForSelection();
+      final validTileKeys = cachedValidTileKeys;
       if (validTileKeys != null) {
-        final preferredRegionIndex = _preferredRegionIndexForValidSelection(
+        final preferredRegionIndex = preferredRegionIndexForValidSelection(
           validTileKeys,
         );
         if (preferredRegionIndex != null) {
-          _regionIndex = preferredRegionIndex;
+          regionIndex = preferredRegionIndex;
         }
       }
     });
   }
 
-  void _cancelWorkTargetSelection() {
-    if (_workTargetSelection == null) {
+  void cancelWorkTargetSelection() {
+    if (workTargetSelection == null) {
       return;
     }
     setState(() {
-      _workTargetSelection = null;
-      _cachedValidTileKeys = null;
+      workTargetSelection = null;
+      cachedValidTileKeys = null;
     });
   }
 
-  void _onTileSelectedForWork(String tileKey) {
+  void onTileSelectedForWork(String tileKey) {
     if (!ref.read(shellPlayerContextProvider).canMutateViaUi) {
       return;
     }
-    final sel = _workTargetSelection;
+    final sel = workTargetSelection;
     if (sel == null) return;
     final target = sel.workTarget;
     final targetTileKey = GameMapAreaStateLogic.translateWorkTargetTileKey(
@@ -138,18 +151,18 @@ mixin _GameMapAreaSelection on ConsumerState<GameMapArea>, _GameMapAreaStateBase
         .replaceAll(
           GameMapAreaStateLogic.addHumanWorkOrder(
             orders: orders,
-            humanPlayerId: _mapPlayerId,
+            humanPlayerId: mapPlayerId,
             workOrder: workOrder,
           ),
         );
     setState(() {
-      _selectedCivilianTileKey =
+      selectedCivilianTileKey =
           GameMapAreaStateLogic.selectionAfterWorkAssignment(
-            currentSelectedCivilianTileKey: _selectedCivilianTileKey,
+            currentSelectedCivilianTileKey: selectedCivilianTileKey,
             assignedTileKey: targetTileKey,
           );
-      _workTargetSelection = null;
-      _cachedValidTileKeys = null;
+      workTargetSelection = null;
+      cachedValidTileKeys = null;
     });
   }
 }

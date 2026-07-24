@@ -1,28 +1,41 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
+
+import 'map_location_resolver.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
 
 /// Display-label and map-locate helpers for [GameMapArea] turn-event feed
 /// entries (Refs #3878 Phase 3 map_state modularization).
-mixin _GameMapAreaTurnFeedLabels
-    on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
-  String _factionLabel(String id) =>
+mixin GameMapAreaTurnFeedLabels
+    on ConsumerState<GameMapArea>, GameMapAreaStateBase {
+  String factionLabel(String id) =>
       widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) =>
+  String provinceLabel(String fullProvinceId) =>
       widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
       fullProvinceId;
 
-  String _seaZoneLabel(String seaZoneId) {
+  String seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
         seaZoneId;
   }
 
-  String _diplomacyOutcomeLine({
+  String diplomacyOutcomeLine({
     required String actorId,
     required String targetId,
     required String changeType,
   }) {
-    final actor = _factionLabel(actorId);
-    final target = _factionLabel(targetId);
+    final actor = factionLabel(actorId);
+    final target = factionLabel(targetId);
     final normalized = changeType.toLowerCase();
     return switch (normalized) {
       'declare_war' => '$actor declared war on $target!',
@@ -33,7 +46,7 @@ mixin _GameMapAreaTurnFeedLabels
     };
   }
 
-  Set<String> _seaZoneRegionCandidates(String seaZoneId) {
+  Set<String> seaZoneRegionCandidates(String seaZoneId) {
     final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
     if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
       return {regionFromPrefix};
@@ -68,8 +81,8 @@ mixin _GameMapAreaTurnFeedLabels
     return {...fromPorts, ...fromTopology};
   }
 
-  String? _tileKeyForSeaZoneEvent(String seaZoneId) {
-    final candidates = _seaZoneRegionCandidates(seaZoneId);
+  String? tileKeyForSeaZoneEvent(String seaZoneId) {
+    final candidates = seaZoneRegionCandidates(seaZoneId);
     if (candidates.length != 1) {
       return null;
     }
@@ -84,10 +97,10 @@ mixin _GameMapAreaTurnFeedLabels
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+  ct_models.Province? provinceByPrefixedId(String prefixedProvinceId) =>
       widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
-  void _emitLocateMapTile({
+  void emitLocateMapTile({
     required String tileKey,
     required String regionId,
   }) {
@@ -99,24 +112,24 @@ mixin _GameMapAreaTurnFeedLabels
         );
   }
 
-  void _locateProvinceTile(ct_models.Province province) {
+  void locateProvinceTile(ct_models.Province province) {
     final tileKey = tileKeyForProvinceLocation(widget.game, province);
     if (tileKey == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
   }
 
-  void _locateProvinceById(String provinceId) {
-    final province = _provinceByPrefixedId(provinceId);
+  void locateProvinceById(String provinceId) {
+    final province = provinceByPrefixedId(provinceId);
     if (province == null) {
       return;
     }
-    _locateProvinceTile(province);
+    locateProvinceTile(province);
   }
 
-  void _locateSeaZoneTile(String seaZoneId) {
-    final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
+  void locateSeaZoneTile(String seaZoneId) {
+    final tileKey = tileKeyForSeaZoneEvent(seaZoneId);
     if (tileKey == null) {
       return;
     }
@@ -124,14 +137,14 @@ mixin _GameMapAreaTurnFeedLabels
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
 
-  void _locateTileKey(String tileKey) {
+  void locateTileKey(String tileKey) {
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
 }
