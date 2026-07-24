@@ -3,21 +3,19 @@
 import 'dart:async';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
-import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../../providers/games_provider.dart';
-import '../../../../../widgets/ct_spacing.dart';
 import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
 import '../shared/units_entity_action_row.dart';
 import 'civilian_units_panel_support_resolution.dart';
 import 'civilian_units_panel_support_row_card.dart';
+import 'civilian_units_panel_support_unit_row_actions.dart';
 
 class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   const CivilianUnitsPanelUnitRow({
@@ -219,64 +217,6 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     );
   }
 
-  void _showOrderMenu(
-    BuildContext context,
-    List<String> availableWorkTargetIds,
-  ) {
-    final allowed = workOrderTargetsByUnitType[unit.type];
-    if (allowed == null || allowed.isEmpty) {
-      return;
-    }
-    final available = availableWorkTargetIds;
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(CtSpacing.ml),
-              child: Text(
-                appL10n(context).civilian_assignWorkTitle(unit.type),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-            ),
-            ...allowed.map((target) {
-              final isAvailable = available.contains(target);
-              return InkWell(
-                onTap: isAvailable
-                    ? () {
-                        Navigator.of(ctx).pop();
-                        bus.closePanelThenEmit(
-                          StartCivilianWorkTargetSelectionEvent(
-                            unitId: unit.id,
-                            workTarget: target,
-                          ),
-                        );
-                      }
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: CtSpacing.l,
-                    vertical: CtSpacing.ml,
-                  ),
-                  child: Text(
-                    civilianUnitsPanelWorkTargetLabels[target] ?? target,
-                    style: TextStyle(
-                      color: isAvailable
-                          ? null
-                          : Theme.of(context).disabledColor,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _startShortcutAssign(List<String> availableWorkTargetIds) {
     final hasExploreShortcut =
         exploreShortcutTargetTileKey != null &&
@@ -366,7 +306,12 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           label: l10n.civilian_units_assign,
           onPressed: inExplorerShortcutMode
               ? () => _startShortcutAssign(availableWorkTargetIds)
-              : () => _showOrderMenu(context, availableWorkTargetIds),
+              : () => showCivilianUnitsPanelOrderMenu(
+                  context,
+                  bus: bus,
+                  unit: unit,
+                  availableWorkTargetIds: availableWorkTargetIds,
+                ),
         ),
       if (showActions && _hasWork)
         UnitsEntityAction(
