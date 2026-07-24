@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 136 app/lib files still using part directives.
+// Generated grandfather allowlist: 122 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -23,10 +23,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_cards.dart',
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_relation.dart',
   'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
-  'app/lib/features/game/screens/game/game_screen.dart',
-  'app/lib/features/game/screens/game/game_screen_fallback_next_turn.dart',
-  'app/lib/features/game/screens/game/game_screen_fallback_next_turn_runner.dart',
-  'app/lib/features/game/screens/game/game_screen_overlay_stack.dart',
   'app/lib/features/game/screens/production/production_screen.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
   'app/lib/features/game/screens/technology/technology_screen.dart',
@@ -53,15 +49,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/panels/fleet_expansion_tile.dart',
   'app/lib/features/game/widgets/panels/fleet_expansion_tile_expanded.dart',
   'app/lib/features/game/widgets/panels/fleet_expansion_tile_title.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/military_tree_builder.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/military_tree_builder_assembly.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/military_tree_builder_assembly_province.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/military_tree_builder_assembly_sea.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/naval_tree_builder.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/naval_tree_builder_models.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/naval_tree_builder_support_group.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/naval_tree_builder_support_rows.dart',
-  'app/lib/features/game/widgets/panels/tree_builders/naval_tree_builder_support_scope.dart',
   'app/lib/features/game/widgets/production/production_allocation_row.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons_action.dart',

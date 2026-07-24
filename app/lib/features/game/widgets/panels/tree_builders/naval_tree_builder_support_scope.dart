@@ -1,4 +1,8 @@
-part of 'naval_tree_builder.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show regionIdForSeaZone, WorldStateProvinceLookup;
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 ({
   Map<String, int> shipCounts,
@@ -8,7 +12,7 @@ part of 'naval_tree_builder.dart';
   int cargoCapacity,
   double strength,
 })
-_navalFleetShipAggregates(Fleet fleet) {
+navalTreeFleetShipAggregates(Fleet fleet) {
   final shipCounts = <String, int>{};
   var totalShips = 0;
   var warships = 0;
@@ -37,7 +41,7 @@ _navalFleetShipAggregates(Fleet fleet) {
   );
 }
 
-({String? regionId, String? localId}) _capitalTileRegionParts(
+({String? regionId, String? localId}) navalTreeCapitalTileRegionParts(
   CapitalTile? tile,
 ) {
   if (tile == null) return (regionId: null, localId: null);
@@ -54,14 +58,14 @@ _navalFleetShipAggregates(Fleet fleet) {
   return (regionId: regionPart, localId: localProv);
 }
 
-String _navalNormalizedPortScopeForProvince(Province province) {
+String navalTreeNormalizedPortScopeForProvince(Province province) {
   final localProvinceId = ProvinceId.isPrefixed(province.id)
       ? ProvinceId.localIdFrom(province.id)
       : province.id;
   return 'port:${province.regionId}|$localProvinceId';
 }
 
-String _navalResolveSeaZoneRegionId(
+String navalTreeResolveSeaZoneRegionId(
   MapTopology topology,
   String seaZoneId,
   String fallbackRegionId,
@@ -79,12 +83,12 @@ String _navalResolveSeaZoneRegionId(
   return fallbackRegionId;
 }
 
-String _navalNormalizedSeaScope(
+String navalTreeNormalizedSeaScope(
   MapTopology topology,
   String seaZoneId,
   String fallbackRegionId,
 ) {
-  final regionId = _navalResolveSeaZoneRegionId(
+  final regionId = navalTreeResolveSeaZoneRegionId(
     topology,
     seaZoneId,
     fallbackRegionId,
@@ -93,7 +97,7 @@ String _navalNormalizedSeaScope(
   return 'sea:$regionId|$local';
 }
 
-String? _navalRegionIdFromScopeKey(String? scopeKey) {
+String? navalTreeRegionIdFromScopeKey(String? scopeKey) {
   if (scopeKey == null || scopeKey.isEmpty) return null;
   final colon = scopeKey.indexOf(':');
   if (colon == -1 || colon >= scopeKey.length - 1) return null;
@@ -101,7 +105,7 @@ String? _navalRegionIdFromScopeKey(String? scopeKey) {
   return prefixedIdRegionSegment(payload);
 }
 
-String? _navalProjectedLocationScopeForFleet({
+String? navalTreeProjectedLocationScopeForFleet({
   required Game game,
   required MapTopology topology,
   required Fleet fleet,
@@ -113,23 +117,23 @@ String? _navalProjectedLocationScopeForFleet({
       final pid = move.destinationPortProvinceId!;
       final province = game.worldState.tryGetProvince(pid);
       if (province != null) {
-        return _navalNormalizedPortScopeForProvince(province);
+        return navalTreeNormalizedPortScopeForProvince(province);
       }
       return 'port:$pid';
     }
-    return _navalNormalizedSeaScope(
+    return navalTreeNormalizedSeaScope(
       topology,
       move.destinationSeaZoneId!,
       fleet.regionId,
     );
   }
   if (fleet.isAtSea && fleet.seaZoneId != null) {
-    return _navalNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
+    return navalTreeNormalizedSeaScope(topology, fleet.seaZoneId!, fleet.regionId);
   }
   if (fleet.inPortAtProvinceId != null) {
     final province = game.worldState.tryGetProvince(fleet.inPortAtProvinceId!);
     if (province != null) {
-      return _navalNormalizedPortScopeForProvince(province);
+      return navalTreeNormalizedPortScopeForProvince(province);
     }
     return 'port:${fleet.inPortAtProvinceId!}';
   }

@@ -1,8 +1,19 @@
-part of 'game_screen.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../flame/map_state/map_state.dart';
+import 'game_screen_fallback_next_turn_runner.dart';
+import 'game_screen_shared.dart'
+    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
 
 /// Flame-canvas fallback Next-turn button (used when `mapViewDataProvider == null`).
-class _FallbackNextTurnButton extends ConsumerStatefulWidget {
-  const _FallbackNextTurnButton({
+class GameScreenFallbackNextTurnButton extends ConsumerStatefulWidget {
+  const GameScreenFallbackNextTurnButton({
+    super.key,
     required this.game,
     required this.turnResolutionBlocking,
   });
@@ -11,12 +22,13 @@ class _FallbackNextTurnButton extends ConsumerStatefulWidget {
   final bool turnResolutionBlocking;
 
   @override
-  ConsumerState<_FallbackNextTurnButton> createState() =>
-      _FallbackNextTurnButtonState();
+  ConsumerState<GameScreenFallbackNextTurnButton> createState() =>
+      _GameScreenFallbackNextTurnButtonState();
 }
 
-class _FallbackNextTurnButtonState extends ConsumerState<_FallbackNextTurnButton>
-    with _FallbackNextTurnRunner {
+class _GameScreenFallbackNextTurnButtonState
+    extends ConsumerState<GameScreenFallbackNextTurnButton>
+    with GameScreenFallbackNextTurnRunner {
   @override
   Widget build(BuildContext context) {
     final bool nextTurnEnabled = !widget.turnResolutionBlocking &&
