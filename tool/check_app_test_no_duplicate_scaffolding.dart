@@ -195,7 +195,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'buildMilitaryPanel / buildTechnologyPanel / '
     'buildAppShell (no inline MaterialApp). '
     'Debug handler suites: use buildDebugHandler* from '
-    'app/test/support/debug_handler_test_fixtures.dart '
+    'app/test/debug_handler_test_fixtures.dart '
     '(no private _gameWithCapital / _gameWithPlayer / _gameWith / _buildGame).',
   );
   return 1;
@@ -969,7 +969,7 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
 
 /// Flags private capital/empty Game factory reintroductions in debug-handler
 /// suites (Refs #4048). Canonical APIs live in
-/// `app/test/support/debug_handler_test_fixtures.dart`.
+/// `app/test/debug_handler_test_fixtures.dart`.
 class _DebugHandlerLocalGameFactoryVisitor extends RecursiveAstVisitor<void> {
   _DebugHandlerLocalGameFactoryVisitor({
     required this.relativePath,
