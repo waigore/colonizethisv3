@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'app_event_handler_debug_flip_province_resolve.dart';
+import 'debug_flip_province_resolve.dart';
 import 'debug_command_helpers.dart';
 
 const _kFlipProvinceRejectAlreadyHumanOwned =

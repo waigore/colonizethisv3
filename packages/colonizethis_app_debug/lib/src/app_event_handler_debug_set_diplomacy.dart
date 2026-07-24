@@ -1,11 +1,15 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'app_event_handler_debug_set_diplomacy_common.dart';
 import 'app_event_handler_debug_set_diplomacy_alliance.dart';
+import 'app_event_handler_debug_set_diplomacy_clear_overture.dart';
 import 'app_event_handler_debug_set_diplomacy_ftp.dart';
+import 'app_event_handler_debug_set_diplomacy_no_alliance.dart';
+import 'app_event_handler_debug_set_diplomacy_no_ftp.dart';
 import 'app_event_handler_debug_set_diplomacy_overtures.dart';
+import 'app_event_handler_debug_set_diplomacy_peace.dart';
 import 'app_event_handler_debug_set_diplomacy_war_peace.dart';
+import 'debug_set_diplomacy_common.dart';
 import 'debug_command_helpers.dart';
 
 /// Applies an immediate, direct diplomacy-relation mutation between two factions
