@@ -6,19 +6,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../core/utils/currency_format.dart';
-import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
-import '../production/commodity_ui_helpers.dart';
 import 'train_dialog_base.dart';
-import 'train_dialog_chrome.dart';
-
-part 'train_commodity_cost_dialog_base_costs.dart';
-part 'train_commodity_cost_dialog_base_resource_bar.dart';
-part 'train_commodity_cost_dialog_base_unit_row.dart';
+import 'train_commodity_cost_dialog_base_costs.dart';
+import 'train_commodity_cost_dialog_base_resource_bar.dart';
+import 'train_commodity_cost_dialog_base_unit_row.dart';
 
 /// A single trainable entry consumed by [CommodityCostTrainDialogState].
 ///
@@ -99,7 +92,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
   List<Widget> buildBody(AppLocalizations l10n) {
     return [
       const SizedBox(height: CtSpacing.ml),
-      _CommodityCostResourceBar(
+      CommodityCostTrainDialogResourceBar(
         treasury: treasury,
         remainingTreasury: remainingTreasury(),
         peasants: peasants,
@@ -138,7 +131,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
         if (!locked && remainingCommodity(input.key, committed) < input.value)
           input.key,
     };
-    return _CommodityCostUnitRow(
+    return CommodityCostTrainDialogUnitRow(
       displayName: econ.displayName,
       buildTreasuryCost: econ.buildTreasuryCost,
       buildInputs: econ.buildInputs,
