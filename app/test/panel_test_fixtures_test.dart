@@ -2,7 +2,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'panel_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 void main() {
   group('buildPanelTestGame', () {
     test('defaults to a single human player and empty regions', () {

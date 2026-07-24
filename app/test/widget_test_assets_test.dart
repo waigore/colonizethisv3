@@ -14,7 +14,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'widget_test_assets.dart';
+import 'support/widget_test_assets.dart';
 
 void main() {
   suppressLogsForTests();
