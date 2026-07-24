@@ -1,16 +1,9 @@
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_app/widgets/ct_icon_action.dart';
-import 'package:colonizethis_app/widgets/ct_radius.dart';
-import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'debug_console_controller.dart';
-
-part 'debug_console_overlay_panel_state.dart';
+import 'debug_console_overlay_panel_state.dart';
 
 /// `SYS20001` Debug console overlay panel.
 ///
@@ -57,5 +50,5 @@ class DebugConsoleOverlayPanel extends StatefulWidget {
 
   @override
   State<DebugConsoleOverlayPanel> createState() =>
-      _DebugConsoleOverlayPanelState();
+      DebugConsoleOverlayPanelState();
 }
