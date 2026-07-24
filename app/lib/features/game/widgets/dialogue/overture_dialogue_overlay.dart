@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:colonizethis_app/package_logger.dart';
+import '../../../../../widgets/ct_loading_indicator.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 import 'overture_dialogue_overlay_state.dart';
@@ -21,7 +22,11 @@ Widget _overtureDialogueBodyAdoptionAnchor(
   CtDialogueView view,
   String continueLabel,
 ) =>
-    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
+    CtDialogueLineChoiceBody(
+      view: view,
+      continueLabel: continueLabel,
+      loading: const CtLoadingIndicator(),
+    );
 
 /// Modal overture dialogue: Jenny-driven intro line then Accept/Reject per offer
 /// and Submit. SPEC/ui/dialogue-presentation.md, SPEC/ai/dialogue-content-and-yarn.md.

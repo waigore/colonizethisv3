@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:colonizethis_app/package_logger.dart';
+import '../../../../../widgets/ct_loading_indicator.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
 import 'intervention_dialogue_overlay_state.dart';
@@ -27,7 +28,14 @@ Widget _interventionDialogueBodyAdoptionAnchor(
   CtDialogueView view,
   String continueLabel,
 ) =>
-    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
+    CtDialogueLineChoiceBody(
+      view: view,
+      continueLabel: continueLabel,
+      loading: const Align(
+        alignment: Alignment.center,
+        child: CtLoadingIndicator(),
+      ),
+    );
 
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
 /// SPEC/ui/screens/pending-intervention-overlay.md, SPEC/ai/dialogue-content-and-yarn.md.

@@ -21,7 +21,11 @@ Widget _gameStartIntroDialogueBodyAdoptionAnchor(
   CtDialogueView view,
   String continueLabel,
 ) =>
-    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
+    CtDialogueLineChoiceBody(
+      view: view,
+      continueLabel: continueLabel,
+      loading: const GameStartIntroLoadingIndicator(),
+    );
 
 /// Spinner while intro dialogue lines are not yet available.
 ///

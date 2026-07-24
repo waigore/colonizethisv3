@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
+import 'game_start_intro_overlay.dart';
 import 'tribe_first_contact_overlay_state.dart';
 
 export 'tribe_first_contact_overlay_state.dart';
@@ -18,7 +19,11 @@ Widget _tribeFirstContactDialogueBodyAdoptionAnchor(
   CtDialogueView view,
   String continueLabel,
 ) =>
-    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
+    CtDialogueLineChoiceBody(
+      view: view,
+      continueLabel: continueLabel,
+      loading: const GameStartIntroLoadingIndicator(),
+    );
 
 /// Blocking herald when the human GP first discovers a Tribe faction.
 /// SPEC/ui/tribe-first-contact-overlay.md (OVL80001).
