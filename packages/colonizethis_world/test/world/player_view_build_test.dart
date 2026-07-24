@@ -5,22 +5,17 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
-import '../world_test_support/world_test_support.dart';
+import '../world_test_support/player_view_test_support.dart';
 
 /// Coverage uplift for `colonizethis_world` (Refs #3290 Phase 1 follow-up):
-/// buildPlayerView / hasRevealedResourceForPlayer / panel intel gate. See
-/// SPEC/program/player-view.md, SPEC/program/fog-and-exploration-resolution.md.
-const _topology = kEmptyMapTopology;
-
-Unit _spy({required String id, required String ownerId, required String loc}) =>
-    Unit(id: id, type: kUnitTypeSpy, ownerId: ownerId, locationProvinceId: loc);
-
+/// buildPlayerView / hasRevealedResourceForPlayer. See SPEC/program/player-view.md,
+/// SPEC/program/fog-and-exploration-resolution.md.
 void main() {
   group('buildPlayerView', () {
     test('throws when the player is not present in the game', () {
       final game = TestFixtures.minimalGame();
       expect(
-        () => buildPlayerView(game, _topology, 'ghost'),
+        () => buildPlayerView(game, playerViewTestTopology, 'ghost'),
         throwsA(isA<LogicValidationException>()),
       );
     });
@@ -56,7 +51,7 @@ void main() {
         ],
       );
 
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
 
       expect(view.playerId, 'p1');
       expect(view.ownUnitsById.keys, ['mine']);
@@ -64,7 +59,6 @@ void main() {
         view.provincesById.keys,
         containsAll(['oldWorld|a', 'oldWorld|b']),
       );
-      // Relation indexed by the OTHER faction id even when p1 is factionId2.
       expect(view.relationWith('p2'), isNotNull);
     });
 
@@ -80,7 +74,7 @@ void main() {
         },
       );
 
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
 
       expect(view.visibilityForTile('t_full'), VisibilityLevel.fullyVisible);
       expect(view.visibilityForTile('t_fog'), VisibilityLevel.fogged);
@@ -97,7 +91,7 @@ void main() {
           provinces: const [
             Province(id: 'oldWorld|enemy', regionId: 'oldWorld', ownerId: 'p2'),
           ],
-          units: [_spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|enemy')],
+          units: [playerViewSpy(id: 's1', ownerId: 'p1', loc: 'oldWorld|enemy')],
         ),
         tileKeysByRegionAndProvince: const {
           'oldWorld': {
@@ -106,7 +100,7 @@ void main() {
         },
       );
 
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
       expect(view.visibilityForTile('enemyTile'), VisibilityLevel.fullyVisible);
     });
 
@@ -138,7 +132,7 @@ void main() {
         ],
       );
 
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
       expect(view.visibilityForTile('borderTile'), VisibilityLevel.fogged);
     });
 
@@ -166,7 +160,7 @@ void main() {
         ],
       );
 
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
       expect(view.visibilityForTile('borderTile'), VisibilityLevel.unknown);
     });
 
@@ -177,7 +171,7 @@ void main() {
           'p1': {'tA', 'tB'},
         },
       );
-      final view = buildPlayerView(game, _topology, 'p1');
+      final view = buildPlayerView(game, playerViewTestTopology, 'p1');
       expect(view.tileIsProspected('tA'), isTrue);
       expect(view.tileIsProspected('tC'), isFalse);
     });
@@ -223,169 +217,6 @@ void main() {
         },
       );
       expect(hasRevealedResourceForPlayer(prospected, 'p1', 'gold'), isTrue);
-    });
-  });
-
-  group('provincePanelShowsFullTileDerivedIntel', () {
-    PlayerView viewWith({
-      Map<String, Province> provincesById = const {},
-      List<Unit> ownUnits = const [],
-      Map<String, VisibilityLevel> visibilityByTile = const {},
-    }) {
-      return PlayerView(
-        playerId: 'p1',
-        player: const Player(id: 'p1', displayName: 'P1', isHuman: true),
-        ownUnitsById: {for (final u in ownUnits) u.id: u},
-        provincesById: provincesById,
-        visibilityByTile: visibilityByTile,
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
-    }
-
-    test('own province always shows full intel', () {
-      final game = TestFixtures.minimalGame();
-      final view = viewWith(
-        provincesById: const {
-          'oldWorld|a': Province(
-            id: 'oldWorld|a',
-            regionId: 'oldWorld',
-            ownerId: 'p1',
-          ),
-        },
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: view,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|a',
-          provinceTileKeys: const ['t1'],
-        ),
-        isTrue,
-      );
-    });
-
-    test('foreign province with own spy present shows full intel', () {
-      final game = TestFixtures.minimalGame();
-      final view = viewWith(
-        provincesById: const {
-          'oldWorld|e': Province(
-            id: 'oldWorld|e',
-            regionId: 'oldWorld',
-            ownerId: 'p2',
-          ),
-        },
-        ownUnits: [_spy(id: 's1', ownerId: 'p1', loc: 'oldWorld|e')],
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: view,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|e',
-          provinceTileKeys: const ['t1'],
-        ),
-        isTrue,
-      );
-    });
-
-    test(
-      'foreign province with an active spy-reveal timer shows full intel',
-      () {
-        final game = TestFixtures.minimalGame(
-          players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-          spyRevealTurnsByPlayer: const {
-            'p1': {'oldWorld|e': 2},
-          },
-        );
-        final view = viewWith(
-          provincesById: const {
-            'oldWorld|e': Province(
-              id: 'oldWorld|e',
-              regionId: 'oldWorld',
-              ownerId: 'p2',
-            ),
-          },
-        );
-        expect(
-          provincePanelShowsFullTileDerivedIntel(
-            game: game,
-            view: view,
-            humanPlayerId: 'p1',
-            provinceId: 'oldWorld|e',
-            provinceTileKeys: const ['t1'],
-          ),
-          isTrue,
-        );
-      },
-    );
-
-    test('foreign province is full only when every tile is fully visible', () {
-      final game = TestFixtures.minimalGame();
-      final province = const Province(
-        id: 'oldWorld|e',
-        regionId: 'oldWorld',
-        ownerId: 'p2',
-      );
-      final fullView = viewWith(
-        provincesById: {'oldWorld|e': province},
-        visibilityByTile: const {
-          't1': VisibilityLevel.fullyVisible,
-          't2': VisibilityLevel.fullyVisible,
-        },
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: fullView,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|e',
-          provinceTileKeys: const ['t1', 't2'],
-        ),
-        isTrue,
-      );
-
-      final partialView = viewWith(
-        provincesById: {'oldWorld|e': province},
-        visibilityByTile: const {
-          't1': VisibilityLevel.fullyVisible,
-          't2': VisibilityLevel.fogged,
-        },
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: partialView,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|e',
-          provinceTileKeys: const ['t1', 't2'],
-        ),
-        isFalse,
-      );
-    });
-
-    test('foreign province with no known tiles is not full intel', () {
-      final game = TestFixtures.minimalGame();
-      final view = viewWith(
-        provincesById: const {
-          'oldWorld|e': Province(
-            id: 'oldWorld|e',
-            regionId: 'oldWorld',
-            ownerId: 'p2',
-          ),
-        },
-      );
-      expect(
-        provincePanelShowsFullTileDerivedIntel(
-          game: game,
-          view: view,
-          humanPlayerId: 'p1',
-          provinceId: 'oldWorld|e',
-          provinceTileKeys: const [],
-        ),
-        isFalse,
-      );
     });
   });
 }

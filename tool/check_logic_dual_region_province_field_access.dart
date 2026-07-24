@@ -2,10 +2,14 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Canonical dual-region province iteration lives here; all other world `lib/src`
-/// code should prefer `allProvinces` / `WorldState.allProvinces()` (GitHub #2071).
-const _canonicalProvinceRelativePath =
-    'packages/colonizethis_world/lib/src/world/province_lookup.dart';
+/// Canonical dual-region province iteration lives in the province lookup modules;
+/// all other world `lib/src` code should prefer `allProvinces` /
+/// `WorldState.allProvinces()` (GitHub #2071; wave-5 split Refs #4125).
+const _canonicalProvinceRelativePaths = <String>[
+  'packages/colonizethis_world/lib/src/world/province_lookup.dart',
+  'packages/colonizethis_world/lib/src/world/province_lookup_extension.dart',
+  'packages/colonizethis_world/lib/src/world/province_lookup_indexes.dart',
+];
 const _canonicalUnitRelativePath =
     'packages/colonizethis_world/lib/src/world/unit_lookup.dart';
 
@@ -72,7 +76,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
     if (_generatedSuffix.hasMatch(fullPath)) continue;
     final relative = p.relative(fullPath, from: root);
     final normalizedRelative = p.normalize(relative);
-    if (normalizedRelative == _canonicalProvinceRelativePath ||
+    if (_canonicalProvinceRelativePaths.contains(normalizedRelative) ||
         normalizedRelative == _canonicalUnitRelativePath) {
       continue;
     }
@@ -95,7 +99,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
     logI(
       'World dual-region province field access check passed '
       '(${hits.length}/$_maxMatchingLinesOutsideCanonical lines outside '
-      '$_canonicalProvinceRelativePath and $_canonicalUnitRelativePath).',
+      '$_canonicalProvinceRelativePaths and $_canonicalUnitRelativePath).',
     );
     return 0;
   }
@@ -103,7 +107,7 @@ int runCheckLogicDualRegionProvinceFieldAccess(
   logE(
     'ERROR: Too many direct oldWorld/newWorld region-field references '
     '(provinces/units/manual regionId branching/copyWith oldWorld-newWorld) outside '
-    '$_canonicalProvinceRelativePath and '
+    '$_canonicalProvinceRelativePaths and '
     '$_canonicalUnitRelativePath '
     '(${hits.length} > $_maxMatchingLinesOutsideCanonical). '
     'Prefer allProvinces(world), WorldState.allProvinces(), allUnits(world), '

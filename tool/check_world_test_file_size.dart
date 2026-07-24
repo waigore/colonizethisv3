@@ -17,10 +17,7 @@ const String _worldTestSupportPrefix =
     'packages/colonizethis_world/test/world_test_support/';
 
 /// Near-cap suites grandfathered during Slice E densify. Shrink-only allowlist.
-const List<String> worldTestFileSizeGrandfathered = <String>[
-  'packages/colonizethis_world/test/world/province_traversal_region_access_test.dart',
-  'packages/colonizethis_world/test/world/player_view_build_test.dart',
-];
+const List<String> worldTestFileSizeGrandfathered = <String>[];
 
 int runCheckWorldTestFileSize(
   String repoRoot, {
