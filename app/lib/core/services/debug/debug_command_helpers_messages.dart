@@ -1,4 +1,4 @@
-part of 'debug_command_helpers.dart';
+import 'debug_command_helpers_types.dart';
 
 /// Canonical `Debug <label>` message prefix shared by all debug handlers.
 String debugCommandPrefix(String label) => 'Debug $label';

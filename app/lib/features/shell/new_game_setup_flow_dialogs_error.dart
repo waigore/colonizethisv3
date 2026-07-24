@@ -1,6 +1,12 @@
-part of 'new_game_setup_flow.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-Future<bool> _showNewGameErrorDialog({
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+
+Future<bool> showNewGameSetupErrorDialog({
   required GlobalKey<NavigatorState> navigatorKey,
   required Object error,
 }) async {
@@ -36,7 +42,7 @@ Future<bool> _showNewGameErrorDialog({
 /// The card is decoupled from any `Navigator` so Widgetbook and widget tests
 /// can compose it directly without driving a `showDialog` flow. The shell
 /// flow wires [onClose] / [onRetry] to `Navigator.pop(false / true)` so the
-/// existing `Future<bool>` retry contract in [_showNewGameErrorDialog]
+/// existing `Future<bool>` retry contract in [showNewGameSetupErrorDialog]
 /// remains unchanged.
 class NewGameErrorCard extends StatelessWidget {
   const NewGameErrorCard({

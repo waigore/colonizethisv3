@@ -1,27 +1,13 @@
-import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:jenny/jenny.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/services.dart';
 
+import 'package:colonizethis_app/package_logger.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';
-import '../../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../../widgets/ct_spacing.dart';
-import 'ct_dialogue_line_choice_body.dart';
-import 'ct_dialogue_view.dart';
-import 'yarn_dialogue_bootstrap.dart';
-import 'titled_dialogue_chrome.dart';
+import 'game_start_intro_overlay_state.dart';
 
-part 'game_start_intro_overlay_flow.dart';
-part 'game_start_intro_overlay_build.dart';
-
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
-CtDialogueView _createGameStartIntroDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
+export 'game_start_intro_overlay_state.dart';
 
 /// Spinner while intro dialogue lines are not yet available.
 ///
@@ -64,22 +50,5 @@ class GameStartIntroOverlay extends StatefulWidget {
   final AssetBundle? assetBundle;
 
   @override
-  State<GameStartIntroOverlay> createState() => _GameStartIntroOverlayState();
-}
-
-class _GameStartIntroOverlayState extends State<GameStartIntroOverlay> {
-  CtDialogueView? _view;
-  DialogueRunner? _runner;
-  Object? _loadError;
-  bool _dialogueFinished = false;
-  bool _loggedFirstLine = false;
-
-  @override
-  void initState() {
-    super.initState();
-    loadAndRunIntro();
-  }
-
-  @override
-  Widget build(BuildContext context) => buildIntroOverlay(context);
+  State<GameStartIntroOverlay> createState() => GameStartIntroOverlayState();
 }

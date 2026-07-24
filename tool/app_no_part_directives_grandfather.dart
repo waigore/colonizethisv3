@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 60 app/lib files still using part directives.
+// Generated grandfather allowlist: 44 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -8,10 +8,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_set_diplomacy_ftp.dart',
   'app/lib/core/services/debug/app_event_handler_debug_set_diplomacy_overtures.dart',
   'app/lib/core/services/debug/app_event_handler_debug_set_diplomacy_war_peace.dart',
-  'app/lib/core/services/debug/debug_command_helpers.dart',
-  'app/lib/core/services/debug/debug_command_helpers_game.dart',
-  'app/lib/core/services/debug/debug_command_helpers_guards.dart',
-  'app/lib/core/services/debug/debug_command_helpers_messages.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_loaders.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_models.dart',
@@ -21,15 +17,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/dialogue/ct_dialogue_view.dart',
   'app/lib/features/game/widgets/dialogue/ct_dialogue_view_collapsible.dart',
   'app/lib/features/game/widgets/dialogue/ct_dialogue_view_jenny.dart',
-  'app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/game_start_intro_overlay_build.dart',
-  'app/lib/features/game/widgets/dialogue/game_start_intro_overlay_flow.dart',
-  'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_flow.dart',
-  'app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart',
-  'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart',
-  'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_build.dart',
-  'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_flow.dart',
   'app/lib/features/game/widgets/production/production_allocation_row.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons.dart',
   'app/lib/features/game/widgets/production/production_allocation_row_buttons_action.dart',
@@ -48,9 +35,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/production/production_labour_section.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row_controls.dart',
-  'app/lib/features/shell/new_game_setup_flow.dart',
-  'app/lib/features/shell/new_game_setup_flow_dialogs_error.dart',
-  'app/lib/features/shell/new_game_setup_flow_dialogs_progress.dart',
   'app/lib/features/shell/save_load/load_game_list_dialog.dart',
   'app/lib/features/shell/save_load/load_game_list_dialog_body.dart',
   'app/lib/features/shell/save_load/load_game_list_dialog_confirm.dart',

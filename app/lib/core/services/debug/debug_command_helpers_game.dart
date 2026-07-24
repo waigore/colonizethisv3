@@ -1,4 +1,5 @@
-part of 'debug_command_helpers.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show kRegionNewWorld;
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Returns a copy of [game] with the player matching [playerId] replaced by
 /// `mutate(player)`. Non-matching players are preserved in order.

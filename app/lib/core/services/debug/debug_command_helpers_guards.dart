@@ -1,4 +1,9 @@
-part of 'debug_command_helpers.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart' show TurnPhase;
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'debug_command_helpers_types.dart';
+import 'debug_command_helpers_game.dart';
+import 'debug_command_helpers_messages.dart';
 
 /// Outcome of the shared debug guard preamble: either a short-circuit
 /// [DebugCommandResult] failure, or the resolved `(game, player)` context.

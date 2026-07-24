@@ -1,7 +1,32 @@
-part of 'game_start_intro_overlay.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:jenny/jenny.dart';
 
-extension _GameStartIntroOverlayFlow on _GameStartIntroOverlayState {
-  static const String kIntroNode = 'game_start_intro';
+import 'ct_dialogue_view.dart';
+import 'game_start_intro_overlay.dart';
+import 'yarn_dialogue_bootstrap.dart';
+
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
+CtDialogueView createGameStartIntroDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
+
+/// Yarn node id for the game-start intro dialogue asset.
+const String kGameStartIntroNode = 'game_start_intro';
+
+mixin GameStartIntroOverlayFlow on State<GameStartIntroOverlay> {
+  CtDialogueView? get introView;
+  set introView(CtDialogueView? value);
+  DialogueRunner? get introRunner;
+  set introRunner(DialogueRunner? value);
+  Object? get introLoadError;
+  set introLoadError(Object? value);
+  bool get introDialogueFinished;
+  set introDialogueFinished(bool value);
+  bool get introLoggedFirstLine;
+  set introLoggedFirstLine(bool value);
 
   Future<void> loadAndRunIntro() async {
     final log = widget.logger ?? packageLogger('dialogue');
@@ -17,14 +42,14 @@ extension _GameStartIntroOverlayFlow on _GameStartIntroOverlayState {
         assetPath: kDialogueGameIntroAsset,
         yarnSource: text,
         logger: log,
-        createView: _createGameStartIntroDialogueView,
-        requiredNodes: const [kIntroNode],
+        createView: createGameStartIntroDialogueView,
+        requiredNodes: const [kGameStartIntroNode],
       );
       final view = session.view;
       final runner = session.runner;
       view.onStateChanged = (line, choice) {
-        if (!_loggedFirstLine && line != null) {
-          _loggedFirstLine = true;
+        if (!introLoggedFirstLine && line != null) {
+          introLoggedFirstLine = true;
           ctAppPerfInstant('intro.first_line');
           log.i('game_intro first_line_shown');
         }
@@ -32,14 +57,14 @@ extension _GameStartIntroOverlayFlow on _GameStartIntroOverlayState {
       };
       if (!mounted) return;
       setState(() {
-        _view = view;
-        _runner = runner;
+        introView = view;
+        introRunner = runner;
       });
       ctAppPerfInstant('intro.dialogue_begin');
-      log.i('game_intro dialogue_begin node=$kIntroNode');
-      await runner.startDialogue(kIntroNode);
+      log.i('game_intro dialogue_begin node=$kGameStartIntroNode');
+      await runner.startDialogue(kGameStartIntroNode);
       if (!mounted) return;
-      setState(() => _dialogueFinished = true);
+      setState(() => introDialogueFinished = true);
       widget.onDismissed();
     } catch (e, st) {
       log.e(
@@ -48,7 +73,7 @@ extension _GameStartIntroOverlayFlow on _GameStartIntroOverlayState {
         stackTrace: st,
       );
       if (mounted) {
-        setState(() => _loadError = e);
+        setState(() => introLoadError = e);
       }
     }
   }
