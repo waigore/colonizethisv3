@@ -1,18 +1,3 @@
-// Shared opener for move_dialogs_specs_part*_test (Refs #4013, #4035).
-import 'package:flutter/material.dart';
-
-import 'app_shell_harness.dart';
-
-/// Scaffold + "open" button; [builder] receives ambient [BuildContext].
-Widget moveDialogsSpecsFrameWithOpener(
-  VoidCallback Function(BuildContext) builder,
-) {
-  return buildAppShell(
-    child: Scaffold(
-      body: Builder(
-        builder: (context) =>
-            TextButton(onPressed: builder(context), child: const Text('open')),
-      ),
-    ),
-  );
-}
+// Re-export: canonical move-dialogs specs harness lives outside the support LOC tree
+// (Refs #4117 slice F).
+export '../move_dialogs_specs_test_support.dart';
