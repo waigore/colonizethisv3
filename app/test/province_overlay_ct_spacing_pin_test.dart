@@ -29,8 +29,9 @@ void main() {
     });
 
     test('sections layer uses CtSpacing for section stack and hover rows', () {
+      // Section stack chrome moved to support.dart during #4117 de-part.
       final chromeSource = File(
-        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_sections_chrome.dart',
+        'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart',
       ).readAsStringSync();
       expect(chromeSource, contains('bottom: CtSpacing.ml'));
       expect(

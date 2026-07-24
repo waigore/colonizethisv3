@@ -387,14 +387,18 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/flame/overlays/victory_overlay.dart',
   'lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
   'lib/features/game/screens/technology/technology_screen.dart',
-  'lib/features/game/screens/trade/trade_screen.dart',
+  // trade_screen.dart is a de-parted barrel (Refs #4117); token callsites live
+  // in the tabs body module.
+  'lib/features/game/screens/trade/trade_screen_tabs_body.dart',
   'lib/features/game/screens/trade/trade_screen_deal_book_panel.dart',
   'lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
   // civilian_units_panel_support.dart was split into part files; the
   // token-eligible `EdgeInsets` callsites live in the unit-row actions part.
   'lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
-  'lib/features/game/widgets/diplomacy/diplomacy_panel.dart',
+  // diplomacy_panel.dart is a de-parted barrel (Refs #4117); list body owns the
+  // panel-wide symmetric padding.
+  'lib/features/game/widgets/diplomacy/diplomacy_panel_body.dart',
   // diplomacy_panel_chrome_badges.dart split: section header keeps CtSpacing;
   // relation/alliance badge chips use fixed 5×1 px padding (out of token set).
   'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_section_header.dart',
@@ -416,7 +420,10 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
   'lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart',
   'lib/features/game/widgets/production/production_panel.dart',
-  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart',
+  // province_sea_zone_detail_overlay.dart is a de-parted barrel (Refs #4117);
+  // header chrome and section stack helpers own the migrated insets.
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_chrome.dart',
+  'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_support.dart',
   // split_army_dialog.dart / split_fleet_dialog.dart dropped from the adoption
   // list: #3594 (PR #3600) extracted the shared SplitEntityDialog base, which
   // now owns the `Padding(EdgeInsets.all(CtSpacing.l))` body. Both dialogs
@@ -447,6 +454,7 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/shell/new_game_setup_flow.dart',
   'lib/features/debug_log/debug_log_viewer_screen.dart',
   // Top-level shell screen widgets (`CtMainMenu`) under `lib/widgets/`.
-  // Part of the per-screen padding-token adoption surface (Refs #2914 S5).
-  'lib/widgets/main_menu.dart',
+  // main_menu.dart delegates layout padding to main_menu_constants.dart
+  // (Refs #4117 de-part).
+  'lib/widgets/main_menu_constants.dart',
 ];
