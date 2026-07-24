@@ -1,9 +1,18 @@
 /// Regiment/ship detail row widgets. SPEC/ui/military-units-panel.md.
 
-part of 'military_units_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:flutter/material.dart';
 
-class _RegimentRow extends StatelessWidget {
-  const _RegimentRow({required this.row, required this.l10n, this.onTap});
+import '../../../../../widgets/ct_spacing.dart';
+import '../../panels/tree_builders/military_tree_builder.dart';
+
+class MilitaryRegimentDetailRow extends StatelessWidget {
+  const MilitaryRegimentDetailRow({
+    required this.row,
+    required this.l10n,
+    this.onTap,
+  });
 
   final RegimentTypeRow row;
   final AppLocalizations l10n;
@@ -13,7 +22,7 @@ class _RegimentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: _UnitDetailRow(
+      child: MilitaryUnitDetailRow(
         title: l10n.military_units_typeCount(
           regimentTypeDisplayName(row.typeId),
           row.count,
@@ -28,8 +37,12 @@ class _RegimentRow extends StatelessWidget {
   }
 }
 
-class _ShipRow extends StatelessWidget {
-  const _ShipRow({required this.row, required this.l10n, this.onTap});
+class MilitaryShipDetailRow extends StatelessWidget {
+  const MilitaryShipDetailRow({
+    required this.row,
+    required this.l10n,
+    this.onTap,
+  });
 
   final MilitarySeaShipRow row;
   final AppLocalizations l10n;
@@ -39,7 +52,7 @@ class _ShipRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: CtSpacing.m),
-      child: _UnitDetailRow(
+      child: MilitaryUnitDetailRow(
         title: l10n.military_units_typeCount(
           shipTypeDisplayName(row.typeId),
           row.count,
@@ -56,8 +69,12 @@ class _ShipRow extends StatelessWidget {
 /// optional subtitle resolve through the active editorial-monocle
 /// `TextTheme` slots; an optional [onTap] surfaces the same tap affordance
 /// the prior `ListTile(onTap:)` provided.
-class _UnitDetailRow extends StatelessWidget {
-  const _UnitDetailRow({required this.title, this.subtitle, this.onTap});
+class MilitaryUnitDetailRow extends StatelessWidget {
+  const MilitaryUnitDetailRow({
+    required this.title,
+    this.subtitle,
+    this.onTap,
+  });
 
   final String title;
   final String? subtitle;
