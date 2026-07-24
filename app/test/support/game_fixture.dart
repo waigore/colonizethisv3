@@ -1,10 +1,3 @@
-// Loader for the committed seed-42 game fixture (Refs #3656).
-//
-// Re-exports the lib implementation so tests keep `import 'support/game_fixture.dart'`.
-
-export 'package:colonizethis_app_fixtures/test_support/seed42_fixture_loader.dart'
-    show
-        kSeed42GameFixtureRepoPath,
-        loadSeed42Game,
-        readSeed42GameFixtureJson,
-        seed42GameFixtureFile;
+// Re-export: canonical seed-42 game fixture loader lives outside the support LOC tree
+// (Refs #4117 slice F).
+export '../game_fixture.dart';
