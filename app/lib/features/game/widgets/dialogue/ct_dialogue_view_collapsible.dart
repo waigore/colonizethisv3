@@ -1,13 +1,24 @@
 // Collapsible single-option line scan for [CtDialogueView].
 // Split from `ct_dialogue_view.dart` to keep the host under the repo
-// file-size target (Refs #3878).
+// file-size target (Refs #3878, #4117 de-part).
 
-part of 'ct_dialogue_view.dart';
+import 'package:jenny/jenny.dart';
 
-extension _CtDialogueViewCollapsible on CtDialogueView {
+import 'ct_dialogue_view_base.dart';
+
+/// Collapsible line+option scan for [CtDialogueView] (Refs #4117 de-part).
+mixin CtDialogueViewCollapsible on CtDialogueViewBase {
+  /// Narrative lines (by identity) in the current node that are *immediately*
+  /// followed by a [DialogueChoice] with exactly one option, mapped to that
+  /// option's evaluated label via [collapsibleLabels] at the same index.
+  final List<DialogueLine> collapsibleLines = [];
+
+  /// Evaluated single-option labels parallel to [collapsibleLines].
+  final List<String> collapsibleLabels = [];
+
   void rebuildCollapsibleLinesForNode(Node node) {
-    _collapsibleLines.clear();
-    _collapsibleLabels.clear();
+    collapsibleLines.clear();
+    collapsibleLabels.clear();
     final entries = node.toList(growable: false);
     for (var i = 0; i + 1 < entries.length; i++) {
       final entry = entries[i];
@@ -20,18 +31,18 @@ extension _CtDialogueViewCollapsible on CtDialogueView {
         // this introduces no failure mode the node would not already hit.
         final option = next.options.first;
         option.evaluate();
-        _collapsibleLines.add(entry);
-        _collapsibleLabels.add(option.text);
+        collapsibleLines.add(entry);
+        collapsibleLabels.add(option.text);
       }
     }
   }
 
   /// Returns the evaluated single-option label for [line] when it is
   /// immediately followed by a single-option choice in the current node
-  /// (identity match against [_collapsibleLines]); otherwise `null`.
+  /// (identity match against [collapsibleLines]); otherwise `null`.
   String? collapsedLabelFor(DialogueLine line) {
-    for (var i = 0; i < _collapsibleLines.length; i++) {
-      if (identical(_collapsibleLines[i], line)) return _collapsibleLabels[i];
+    for (var i = 0; i < collapsibleLines.length; i++) {
+      if (identical(collapsibleLines[i], line)) return collapsibleLabels[i];
     }
     return null;
   }

@@ -12,10 +12,19 @@ int runCheckDebugHandlerOnePerFile(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final servicesDir = Directory(
-    p.join(repoRoot, 'app', 'lib', 'core', 'services', 'debug'),
+    p.join(
+      repoRoot,
+      'packages',
+      'colonizethis_app_debug',
+      'lib',
+      'src',
+    ),
   );
   if (!servicesDir.existsSync()) {
-    logE('check_debug_handler_one_per_file: app/lib/core/services/debug not found.');
+    logE(
+      'check_debug_handler_one_per_file: '
+      'packages/colonizethis_app_debug/lib/src not found.',
+    );
     return 1;
   }
 

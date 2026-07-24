@@ -1,4 +1,9 @@
-part of 'technology_panel_widgets.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'technology_panel_constants.dart';
+import 'technology_panel_slot_card_chrome.dart';
 
 /// Locked fourth-slot placeholder card rendered when
 /// `player.researchSlots < 4`.
@@ -15,7 +20,7 @@ class LockedResearchSlotCard extends StatelessWidget {
     final l10n = appL10n(context);
     return Opacity(
       opacity: kTechnologyLockedSlotOpacity,
-      child: _SlotCardChrome(
+      child: TechnologyPanelSlotCardChrome(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -41,32 +46,6 @@ class LockedResearchSlotCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SlotCardChrome extends StatelessWidget {
-  const _SlotCardChrome({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: _technologyDarkSurfaceGradient(),
-        border: Border.all(
-          color: EditorialMonoclePalette.border,
-          width: 1,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: CtSpacing.m,
-        ),
-        child: child,
       ),
     );
   }

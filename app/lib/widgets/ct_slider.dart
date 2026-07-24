@@ -1,7 +1,7 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-part 'ct_slider_state.dart';
+import 'ct_slider_state.dart';
 
 /// Pixel-art friendly slider for integer or continuous values (`divisions: 0`).
 /// Replaces Material [Slider] in production allocation and region minimap zoom.
@@ -45,5 +45,5 @@ class CtSlider extends StatefulWidget {
   final Color? comfortHeadroomColor;
 
   @override
-  State<CtSlider> createState() => _CtSliderState();
+  State<CtSlider> createState() => CtSliderState();
 }

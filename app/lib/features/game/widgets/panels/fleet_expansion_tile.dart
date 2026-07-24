@@ -1,16 +1,12 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'tree_builders/naval_tree_builder.dart';
 import '../units/shared/units_entity_action_row.dart';
 import '../units/shared/units_entity_card.dart';
-
-part 'fleet_expansion_tile_expanded.dart';
-part 'fleet_expansion_tile_title.dart';
+import 'fleet_expansion_tile_expanded.dart';
+import 'fleet_expansion_tile_title.dart';
 
 /// Naval-units fleet row.
 ///
@@ -92,7 +88,7 @@ class FleetExpansionTile extends StatelessWidget {
           CtSpacing.l,
           CtSpacing.m,
         ),
-        child: _FleetExpandedContent(row: row, l10n: l10n),
+        child: FleetExpandedContent(row: row, l10n: l10n),
       ),
     ];
   }

@@ -1,9 +1,20 @@
-/// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
+// Row label for tech tree legend samples (maps to [AppLocalizations] state strings).
 
-part of 'tech_tree_widget.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-class _TechTreeLegend extends StatelessWidget {
-  const _TechTreeLegend({required this.game, required this.l10n});
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/gp_nation_color_pennant.dart';
+import 'tech_gp_researchers.dart';
+import 'tech_tree_widget_constants.dart';
+import 'tech_tree_widget_legend_chips.dart';
+import 'tech_tree_widget_nodes.dart';
+import 'tech_ui_helpers.dart';
+
+class TechTreeLegend extends StatelessWidget {
+  const TechTreeLegend({required this.game, required this.l10n, super.key});
 
   final Game game;
   final AppLocalizations l10n;
@@ -48,9 +59,9 @@ class _TechTreeLegend extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 4,
-      children: _categoryColors.entries
+      children: kTechTreeCategoryColors.entries
           .map(
-            (e) => _LegendChip(
+            (e) => TechTreeLegendChip(
               color: e.value,
               label: techCategoryLabelL10n(l10n, e.key),
             ),
@@ -65,37 +76,37 @@ class _TechTreeLegend extends StatelessWidget {
 
   List<Widget> _stateLegendSamples() {
     return [
-      _StateLegendSample(
+      TechTreeStateLegendSample(
         game: game,
-        kind: _TechLegendStateKind.researched,
-        state: const _TechNodeState(
+        kind: TechLegendStateKind.researched,
+        state: const TechTreeNodeState(
           researched: true,
           inProgress: false,
           available: false,
         ),
       ),
-      _StateLegendSample(
+      TechTreeStateLegendSample(
         game: game,
-        kind: _TechLegendStateKind.inProgress,
-        state: const _TechNodeState(
+        kind: TechLegendStateKind.inProgress,
+        state: const TechTreeNodeState(
           researched: false,
           inProgress: true,
           available: false,
         ),
       ),
-      _StateLegendSample(
+      TechTreeStateLegendSample(
         game: game,
-        kind: _TechLegendStateKind.available,
-        state: const _TechNodeState(
+        kind: TechLegendStateKind.available,
+        state: const TechTreeNodeState(
           researched: false,
           inProgress: false,
           available: true,
         ),
       ),
-      _StateLegendSample(
+      TechTreeStateLegendSample(
         game: game,
-        kind: _TechLegendStateKind.locked,
-        state: const _TechNodeState(
+        kind: TechLegendStateKind.locked,
+        state: const TechTreeNodeState(
           researched: false,
           inProgress: false,
           available: false,

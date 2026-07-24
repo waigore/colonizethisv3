@@ -355,10 +355,16 @@ void main() {
 /// `CtSpacing.<token>` reference invariants are covered there; this list
 /// adds only the no-raw-`SizedBox`-token-gap invariant.
 const List<String> _sizedBoxMigratedFiles = <String>[
-  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  // game_start_intro_overlay.dart is a de-parted barrel (Refs #4117); build mixin
+  // owns the SizedBox gap spacers.
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay_build.dart',
   'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
-  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  // intervention_dialogue_overlay.dart is a de-parted barrel; state module owns
+  // the SizedBox gap spacers.
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_state.dart',
+  // overture_dialogue_overlay.dart is a de-parted barrel; state module owns the
+  // SizedBox gap spacers.
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_state.dart',
   'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
   'lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart',
 ];
@@ -375,27 +381,40 @@ const List<String> _sizedBoxMigratedFiles = <String>[
 /// arg literal for the same token set.
 const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/combat/quick_battle_deployment_view.dart',
-  'lib/features/game/widgets/dialogue/game_start_intro_overlay.dart',
+  // game_start_intro_overlay.dart is a de-parted barrel (Refs #4117); build mixin
+  // owns the migrated insets.
+  'lib/features/game/widgets/dialogue/game_start_intro_overlay_build.dart',
   'lib/features/game/widgets/dialogue/intervention_choice_buttons.dart',
-  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart',
-  'lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart',
+  // intervention_dialogue_overlay.dart is a de-parted barrel; shell + state
+  // modules own the migrated insets.
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart',
+  'lib/features/game/widgets/dialogue/intervention_dialogue_overlay_state.dart',
+  // overture_dialogue_overlay.dart is a de-parted barrel; state module owns the
+  // migrated insets.
+  'lib/features/game/widgets/dialogue/overture_dialogue_overlay_state.dart',
   'lib/features/game/widgets/dialogue/overture_dialogue_overlay_offer_row.dart',
   // CtSpacing callsites moved to the extracted selection-prompt widget.
   'lib/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart',
-  'lib/features/game/flame/controls/game_side_menu.dart',
+  // game_side_menu.dart is a de-parted barrel; panel module owns the inset.
+  'lib/features/game/flame/controls/game_side_menu_panel.dart',
   'lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart',
-  'lib/features/game/flame/overlays/victory_overlay.dart',
-  'lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
-  'lib/features/game/screens/technology/technology_screen.dart',
+  // victory_overlay.dart is a de-parted barrel; panel module owns the inset.
+  'lib/features/game/flame/overlays/victory_overlay_panel.dart',
+  // diplomacy_detail_screen.dart is a de-parted barrel; sections module owns the
+  // symmetric padding.
+  'lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
+  // technology_screen.dart is a de-parted barrel; body module owns the inset.
+  'lib/features/game/screens/technology/technology_screen_body.dart',
   // trade_screen.dart is a de-parted barrel (Refs #4117); token callsites live
   // in the tabs body module.
   'lib/features/game/screens/trade/trade_screen_tabs_body.dart',
   'lib/features/game/screens/trade/trade_screen_deal_book_panel.dart',
-  'lib/features/game/widgets/units/civilian/civilian_units_panel.dart',
-  // civilian_units_panel_support.dart was split into part files; the
-  // token-eligible `EdgeInsets` callsites live in the unit-row actions part.
+  // civilian_units_panel.dart is a de-parted barrel; unit-row actions module
+  // owns the token-eligible insets.
   'lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
-  'lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
+  // diplomacy_dialogs.dart is a de-parted barrel; grant/subsidy stepper owns the
+  // symmetric padding.
+  'lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_stepper.dart',
   // diplomacy_panel.dart is a de-parted barrel (Refs #4117); list body owns the
   // panel-wide symmetric padding.
   'lib/features/game/widgets/diplomacy/diplomacy_panel_body.dart',
@@ -405,9 +424,15 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/diplomacy/diplomacy_panel_chrome_standing.dart',
   'lib/features/game/widgets/diplomacy/diplomacy_panel_mode_bar.dart',
   'lib/features/game/widgets/panels/fleet_expansion_tile.dart',
-  'lib/features/game/widgets/shell/game_tab_bar.dart',
-  'lib/features/game/widgets/units/military/military_units_panel.dart',
-  'lib/features/game/widgets/unit_orders/move_army_dialog.dart',
+  // game_tab_bar.dart is a de-parted barrel; indicators module owns the symmetric
+  // padding.
+  'lib/features/game/widgets/shell/game_tab_bar_indicators.dart',
+  // military_units_panel.dart is a de-parted barrel; detail-rows module owns the
+  // token-eligible insets.
+  'lib/features/game/widgets/units/military/military_units_panel_support_detail_rows.dart',
+  // move_army_dialog.dart is a de-parted barrel; shared row scaffold owns the
+  // token-eligible symmetric padding.
+  'lib/features/game/widgets/unit_orders/move_units_dialog_base_row.dart',
   'lib/features/game/widgets/unit_orders/move_fleet_dialog.dart',
   // naval_units_panel.dart dropped from the adoption list: #3523 replaced its
   // only CtSpacing callsite (the header button's vertical: CtSpacing.s padding)
@@ -418,8 +443,12 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart',
   'lib/features/game/widgets/panels/pause_menu_panel.dart',
   'lib/features/game/widgets/production/production_allocation_row_chrome.dart',
-  'lib/features/game/widgets/production/production_commodity_breakdown_dialog.dart',
-  'lib/features/game/widgets/production/production_panel.dart',
+  // production_commodity_breakdown_dialog.dart is a de-parted barrel; table cells
+  // module owns the token-eligible inset.
+  'lib/features/game/widgets/production/production_commodity_breakdown_dialog_table_cells.dart',
+  // production_panel.dart is a de-parted barrel; layout helpers own the body
+  // padding.
+  'lib/features/game/widgets/production/production_panel_layouts.dart',
   // province_sea_zone_detail_overlay.dart is a de-parted barrel (Refs #4117);
   // header chrome and section stack helpers own the migrated insets.
   'lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_chrome.dart',
@@ -433,7 +462,9 @@ const List<String> _migratedFeatureFiles = <String>[
   'lib/features/game/widgets/unit_orders/split_entity_dialog.dart',
   'lib/features/game/widgets/technology/tech_tree_widget.dart',
   'lib/features/game/widgets/technology/technology_panel.dart',
-  'lib/features/game/widgets/technology/technology_panel_orders.dart',
+  // technology_panel_orders.dart is a de-parted barrel; choose-tech rows own the
+  // token-eligible insets.
+  'lib/features/game/widgets/technology/technology_panel_choose_tech_dialog_rows.dart',
   // train_civilians_dialog.dart / train_military_dialog.dart dropped from the
   // adoption list: #3594 extracted the shared TrainDialogBase state, which now
   // owns the `EdgeInsets.fromLTRB(CtSpacing.l, CtSpacing.ml, ...)`
@@ -441,17 +472,21 @@ const List<String> _migratedFeatureFiles = <String>[
   // train_naval_dialog.dart, which was never token-eligible) delegate that
   // wrapper to the base and no longer contain token-eligible
   // `EdgeInsets`/`CtSpacing` spacing, so the import and token-reference
-  // invariants moved to train_dialog_base.dart below.
-  'lib/features/game/widgets/train/train_dialog_base.dart',
+  // invariants moved to train_dialog_base_state.dart below.
+  'lib/features/game/widgets/train/train_dialog_base_state.dart',
   'lib/features/game/widgets/train/train_dialog_chrome.dart',
   'lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart',
   'lib/features/game/widgets/dialogs/turn_news_dialog.dart',
   'lib/features/game/widgets/units/shared/location_section_header.dart',
   'lib/features/game/widgets/units/shared/region_section_header.dart',
-  'lib/features/game/widgets/units/shared/units_entity_action_row.dart',
+  // units_entity_action_row.dart is a de-parted barrel; actions module owns the
+  // symmetric padding.
+  'lib/features/game/widgets/units/shared/units_entity_action_row_actions.dart',
   'lib/features/game/widgets/units/shared/units_panel_row_chrome.dart',
   'lib/features/game/widgets/units/shared/units_panel_shell.dart',
-  'lib/features/shell/new_game_setup_flow.dart',
+  // new_game_setup_flow.dart is a de-parted barrel; error dialog module owns the
+  // token-eligible inset.
+  'lib/features/shell/new_game_setup_flow_dialogs_error.dart',
   'lib/features/debug_log/debug_log_viewer_screen.dart',
   // Top-level shell screen widgets (`CtMainMenu`) under `lib/widgets/`.
   // main_menu.dart delegates layout padding to main_menu_constants.dart

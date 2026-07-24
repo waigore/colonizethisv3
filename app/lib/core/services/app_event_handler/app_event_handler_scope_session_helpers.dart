@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/game/widgets/shell/shell_player_context.dart';
 import '../debug/debug_command_session_handler.dart';
-import '../debug/debug_command_helpers.dart' show DebugCommandResult;
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart' show DebugCommandResult;
 import '../observe/observe_mode_session_handler.dart' as observe_session;
 import 'app_event_handler_scope.dart';
 

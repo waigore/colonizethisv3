@@ -1,4 +1,9 @@
-part of 'player_turn_event_feed.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../screens/game/game_screen_shared.dart'
+    show kPlayerTurnFeedToggleButtonKey;
+import 'player_turn_event_feed_toggle_glyph.dart';
 
 /// Newspaper toggle for the human-player turn event feed; lives in the
 /// trailing slot of [GameTabBar].
@@ -107,7 +112,9 @@ class _PlayerTurnEventsFeedToggleButtonState
                   Positioned(
                     right: -6,
                     top: -4,
-                    child: _UnreadBadge(count: widget.eventCount),
+                    child: PlayerTurnEventFeedUnreadBadge(
+                      count: widget.eventCount,
+                    ),
                   ),
                 ],
               ),

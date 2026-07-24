@@ -1,10 +1,20 @@
-part of 'move_army_dialog.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _MoveArmyDialogDestinations on _MoveArmyDialogState {
-  Widget _buildMoveDialogDestinationsBody(BuildContext context) {
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_section_label.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'move_army_dialog.dart';
+import 'move_army_dialog_state_logic.dart';
+import 'move_units_dialog_base.dart';
+
+mixin MoveArmyDialogDestinations
+    on MoveUnitsDialogState<MoveArmyDialog>, MoveArmyDialogStateLogic {
+  Widget buildMoveDialogDestinationsBody(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
-    final entries = _destinationEntries();
+    final entries = destinationEntries();
     final owned = entries.where((e) => e.isPlayerOwned).toList();
     final invasion = entries.where((e) => !e.isPlayerOwned).toList();
 
@@ -16,7 +26,7 @@ extension _MoveArmyDialogDestinations on _MoveArmyDialogState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: sectionEntries
             .map(
-              (entry) => _buildDestinationRow(
+              (entry) => buildDestinationRow(
                 theme,
                 l10n,
                 entry,
@@ -49,16 +59,16 @@ extension _MoveArmyDialogDestinations on _MoveArmyDialogState {
   /// Builds a single army destination row over the shared
   /// [MoveDialogDestinationRow] chrome. Invasion rows append a
   /// `declare war on …` trigger in `--danger` italic body style (#2867 R8).
-  Widget _buildDestinationRow(
+  Widget buildDestinationRow(
     ThemeData theme,
     AppLocalizations l10n,
     ArmyMovePickerDestination entry, {
     required bool showDeclareWarTrigger,
   }) {
-    final bool selected = _selected == entry.fullProvinceId;
+    final bool isSelected = armySelectedDestination == entry.fullProvinceId;
     final TextStyle labelStyle = moveDialogRowLabelStyle(
       theme,
-      selected: selected,
+      selected: isSelected,
     );
     final String? triggerLabel =
         showDeclareWarTrigger && entry.requiresDeclareWarOnConfirm
@@ -75,9 +85,9 @@ extension _MoveArmyDialogDestinations on _MoveArmyDialogState {
           );
 
     return MoveDialogDestinationRow(
-      selected: selected,
+      selected: isSelected,
       semanticsLabel: entry.provinceLabel,
-      onTap: () => setState(() => _selected = entry.fullProvinceId),
+      onTap: () => setState(() => armySelectedDestination = entry.fullProvinceId),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

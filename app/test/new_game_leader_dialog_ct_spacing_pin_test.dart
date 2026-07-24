@@ -67,11 +67,17 @@ void main() {
       expect(source, isNot(contains('SizedBox(width: 8)')));
     });
 
-    test('slot list inter-row gap uses CtSpacing.s via _kSlotListGap', () {
+    test('slot list inter-row gap uses CtSpacing.s via layout constant', () {
       final source = _leaderDialogClusterSource();
       // Mockup `.slots-list{gap:6px}` — column gaps, not per-row bottom padding.
-      expect(source, contains('const double _kSlotListGap = CtSpacing.s'));
-      expect(source, contains('const SizedBox(height: _kSlotListGap)'));
+      expect(
+        source,
+        contains('const double kNewGameLeaderSelectionSlotListGap = CtSpacing.s'),
+      );
+      expect(
+        source,
+        contains('const SizedBox(height: kNewGameLeaderSelectionSlotListGap)'),
+      );
       expect(source, isNot(contains('EdgeInsets.only(bottom: 12)')));
     });
 

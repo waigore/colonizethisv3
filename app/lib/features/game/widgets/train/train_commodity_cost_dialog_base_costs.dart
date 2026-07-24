@@ -1,9 +1,12 @@
-part of 'train_commodity_cost_dialog_base.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
+import '../production/commodity_ui_helpers.dart';
+import 'train_commodity_cost_dialog_base.dart';
+
+extension CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
   int totalTreasuryCost() {
     var total = 0;
-    for (final e in _entries) {
+    for (final e in commodityCostEntries) {
       total += (counts[e.unitTypeId] ?? 0) * e.buildTreasuryCost;
     }
     return total;
@@ -11,7 +14,7 @@ extension _CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
 
   int totalPeasantCost() {
     var total = 0;
-    for (final e in _entries) {
+    for (final e in commodityCostEntries) {
       total += counts[e.unitTypeId] ?? 0;
     }
     return total;
@@ -19,7 +22,7 @@ extension _CommodityCostTrainDialogCosts on CommodityCostTrainDialogState {
 
   Map<String, int> totalCommodityCosts() {
     final totals = <String, int>{};
-    for (final e in _entries) {
+    for (final e in commodityCostEntries) {
       final count = counts[e.unitTypeId] ?? 0;
       if (count <= 0) continue;
       for (final input in e.buildInputs.entries) {

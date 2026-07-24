@@ -16,7 +16,7 @@ void main() {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final servicesDir = Directory(
-      '${temp.path}/app/lib/core/services/debug',
+      '${temp.path}/packages/colonizethis_app_debug/lib/src',
     )..createSync(recursive: true);
 
     File(
@@ -48,7 +48,7 @@ DebugCommandResult applyDebugOffender({Object? currentGame}) {
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     final servicesDir = Directory(
-      '${temp.path}/app/lib/core/services/debug',
+      '${temp.path}/packages/colonizethis_app_debug/lib/src',
     )..createSync(recursive: true);
 
     File(

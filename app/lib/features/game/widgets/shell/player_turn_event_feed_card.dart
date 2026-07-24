@@ -1,4 +1,10 @@
-part of 'player_turn_event_feed.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_gradients.dart';
+import '../../screens/game/game_screen_shared.dart'
+    show kGameMapWideProvinceSidePanelWidth;
+import 'player_turn_event_feed.dart';
 
 /// Floating, scrollable news card rendered on the in-game map stack when
 /// the player toggles the newspaper button in [GameTabBar].
@@ -47,7 +53,7 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
   final bool narrow;
 
   /// Card border thickness (brass strip width). Matches the 1 dp border
-  /// used by `GameMapPlayersBar._PlayerChip` for visual cohesion.
+  /// used by [GameMapPlayersBarChip] for visual cohesion.
   static const double borderWidth = 1;
 
   /// Outer padding inside the card frame (mockup parity with the legacy

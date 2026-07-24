@@ -1,21 +1,15 @@
-// Slots / Tree top-bar toggle chrome for [TechnologyScreen].
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-part of 'technology_screen.dart';
-
-enum _TechnologyTab { slots, tree }
+import 'technology_screen.dart';
+import 'technology_screen_tab.dart';
 
 /// Slots / Tree toggle for the trailing slot of the technology top bar.
-///
-/// Implements the mockup `.tab-row` rule with two non-Material chip buttons
-/// painted in the dark editorial-monocle palette. Selected chip uses
-/// `--accent` border + accent-tinted background; unselected uses `--border`
-/// + transparent background. No Material `Chip` / `ChoiceChip` /
-/// `ToggleButtons` per the catalog ban.
-class _TechnologyTabToggle extends StatelessWidget {
-  const _TechnologyTabToggle({required this.selected, required this.onSelect});
+class TechnologyTabToggle extends StatelessWidget {
+  const TechnologyTabToggle({super.key, required this.selected, required this.onSelect});
 
-  final _TechnologyTab selected;
-  final void Function(_TechnologyTab next) onSelect;
+  final TechnologyScreenTab selected;
+  final void Function(TechnologyScreenTab next) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -23,28 +17,28 @@ class _TechnologyTabToggle extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        _TechnologyTabChip(
+        TechnologyTabChip(
           key: TechnologyScreen.slotsToggleKey,
           // ignore: avoid_hardcoded_strings_in_widgets
           label: 'Slots',
-          selected: selected == _TechnologyTab.slots,
-          onTap: () => onSelect(_TechnologyTab.slots),
+          selected: selected == TechnologyScreenTab.slots,
+          onTap: () => onSelect(TechnologyScreenTab.slots),
         ),
         const SizedBox(width: 6),
-        _TechnologyTabChip(
+        TechnologyTabChip(
           key: TechnologyScreen.treeToggleKey,
           // ignore: avoid_hardcoded_strings_in_widgets
           label: 'Tree',
-          selected: selected == _TechnologyTab.tree,
-          onTap: () => onSelect(_TechnologyTab.tree),
+          selected: selected == TechnologyScreenTab.tree,
+          onTap: () => onSelect(TechnologyScreenTab.tree),
         ),
       ],
     );
   }
 }
 
-class _TechnologyTabChip extends StatelessWidget {
-  const _TechnologyTabChip({
+class TechnologyTabChip extends StatelessWidget {
+  const TechnologyTabChip({
     super.key,
     required this.label,
     required this.selected,

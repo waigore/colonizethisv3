@@ -1,7 +1,14 @@
-part of 'game_tab_bar.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-class _TreasuryIndicator extends StatelessWidget {
-  const _TreasuryIndicator({
+import '../../../../config/app_assets.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../screens/game/game_screen_shared.dart' show kCargoHoldIndicatorKey;
+
+class GameTabBarTreasuryIndicator extends StatelessWidget {
+  const GameTabBarTreasuryIndicator({
+    super.key,
     required this.treasuryLabel,
     required this.deltaLabel,
     required this.deltaColor,
@@ -41,8 +48,9 @@ class _TreasuryIndicator extends StatelessWidget {
   }
 }
 
-class _CargoHoldIndicator extends StatelessWidget {
-  const _CargoHoldIndicator({
+class GameTabBarCargoHoldIndicator extends StatelessWidget {
+  const GameTabBarCargoHoldIndicator({
+    super.key,
     required this.cargoHoldLabel,
     required this.labelStyle,
   });

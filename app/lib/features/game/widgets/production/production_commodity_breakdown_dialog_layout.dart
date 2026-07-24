@@ -1,5 +1,3 @@
-part of 'production_commodity_breakdown_dialog.dart';
-
 /// Minimum viewport width at which the breakdown dialog drops the
 /// trailing horizontal `Scrollbar` + `SingleChildScrollView` and lets the
 /// 7-column `DataTable` lay out without horizontal scroll.
@@ -47,10 +45,8 @@ const double kProductionBreakdownDialogNarrowMaxWidth = 720;
 /// equal to the budget. A non-positive or unbounded [availableWidth] falls back
 /// to equal, non-negative widths so the caller never forces a negative
 /// `SizedBox` width.
-///
 /// SPEC/ui/production-commodity-breakdown-dialog.md § Layout (wide-path
 /// full-width column distribution). Refs #3509.
-@visibleForTesting
 List<double> productionBreakdownWideColumnContentWidths({
   required double availableWidth,
   required int phaseColumnCount,

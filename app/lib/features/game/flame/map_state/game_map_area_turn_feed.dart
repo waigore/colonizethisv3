@@ -1,14 +1,23 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+
+import '../../widgets/shell/player_turn_event_feed.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'game_map_area_turn_feed_labels.dart';
 
 /// Player turn-event feed for [GameMapArea]: turning resolved `GameToUIEvent`s
 /// into tappable feed entries (Refs #3699 Theme 3).
-mixin _GameMapAreaTurnFeed
+mixin GameMapAreaTurnFeed
     on
         ConsumerState<GameMapArea>,
-        _GameMapAreaStateBase,
-        _GameMapAreaTurnFeedLabels {
-  List<PlayerTurnEventFeedEntry> _feedEntries() {
-    return _resolvedPlayerTurnEvents
+        GameMapAreaStateBase,
+        GameMapAreaTurnFeedLabels {
+  List<PlayerTurnEventFeedEntry> buildFeedEntries() {
+    return resolvedPlayerTurnEvents
         .map((event) {
           return switch (event) {
             ct_models.AppCombatResultEvent(
@@ -19,8 +28,8 @@ mixin _GameMapAreaTurnFeed
             ) =>
               PlayerTurnEventFeedEntry(
                 text:
-                    '${_provinceLabel(provinceId)} battle resolved! ${_factionLabel(winnerId)} defeated ${_factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
-                onTap: () => _locateProvinceById(provinceId),
+                    '${provinceLabel(provinceId)} battle resolved! ${factionLabel(winnerId)} defeated ${factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
+                onTap: () => locateProvinceById(provinceId),
               ),
             ct_models.AppProvinceCapturedEvent(
               :final provinceId,
@@ -28,8 +37,8 @@ mixin _GameMapAreaTurnFeed
             ) =>
               PlayerTurnEventFeedEntry(
                 text:
-                    '${_provinceLabel(provinceId)} captured! ${_factionLabel(newOwnerId)} now controls it!',
-                onTap: () => _locateProvinceById(provinceId),
+                    '${provinceLabel(provinceId)} captured! ${factionLabel(newOwnerId)} now controls it!',
+                onTap: () => locateProvinceById(provinceId),
               ),
             ct_models.AppNavalCombatResultEvent(
               :final seaZoneId,
@@ -37,8 +46,8 @@ mixin _GameMapAreaTurnFeed
             ) =>
               PlayerTurnEventFeedEntry(
                 text:
-                    '${_seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
-                onTap: () => _locateSeaZoneTile(seaZoneId),
+                    '${seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
+                onTap: () => locateSeaZoneTile(seaZoneId),
               ),
             ct_models.AppDiplomacyChangeEvent(
               :final actorId,
@@ -46,7 +55,7 @@ mixin _GameMapAreaTurnFeed
               :final changeType,
             ) =>
               PlayerTurnEventFeedEntry(
-                text: _diplomacyOutcomeLine(
+                text: diplomacyOutcomeLine(
                   actorId: actorId,
                   targetId: targetId,
                   changeType: changeType,
@@ -67,18 +76,18 @@ mixin _GameMapAreaTurnFeed
             ) =>
               PlayerTurnEventFeedEntry(
                 text:
-                    '${_provinceLabel(provinceId)} work completed! ${workTarget.toUpperCase()} finished!',
-                onTap: () => _locateTileKey(targetTileKey),
+                    '${provinceLabel(provinceId)} work completed! ${workTarget.toUpperCase()} finished!',
+                onTap: () => locateTileKey(targetTileKey),
               ),
             ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
               PlayerTurnEventFeedEntry(
-                text: '${_provinceLabel(provinceId)} discovered!',
-                onTap: () => _locateProvinceById(provinceId),
+                text: '${provinceLabel(provinceId)} discovered!',
+                onTap: () => locateProvinceById(provinceId),
               ),
             ct_models.AppPlayerSeaZoneDiscoveredEvent(:final seaZoneId) =>
               PlayerTurnEventFeedEntry(
-                text: '${_seaZoneLabel(seaZoneId)} discovered!',
-                onTap: () => _locateSeaZoneTile(seaZoneId),
+                text: '${seaZoneLabel(seaZoneId)} discovered!',
+                onTap: () => locateSeaZoneTile(seaZoneId),
               ),
             ct_models.AppOvertureAdvancedEvent(
               :final offererGpId,
@@ -87,7 +96,7 @@ mixin _GameMapAreaTurnFeed
             ) =>
               PlayerTurnEventFeedEntry(
                 text:
-                    'Overture advanced! ${_factionLabel(offererGpId)} with ${_factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
+                    'Overture advanced! ${factionLabel(offererGpId)} with ${factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
               ),
             ct_models.AppSpyCaughtEvent(
               :final provinceId,
@@ -95,10 +104,10 @@ mixin _GameMapAreaTurnFeed
               :final territoryOwnerId,
             ) =>
               PlayerTurnEventFeedEntry(
-                text: _mapPlayerId == territoryOwnerId
-                    ? '${_provinceLabel(provinceId)} — enemy spy from ${_factionLabel(spyOwnerId)} caught and eliminated!'
-                    : 'Spy caught in ${_provinceLabel(provinceId)}! ${_factionLabel(territoryOwnerId)} eliminated your agent!',
-                onTap: () => _locateProvinceById(provinceId),
+                text: mapPlayerId == territoryOwnerId
+                    ? '${provinceLabel(provinceId)} — enemy spy from ${factionLabel(spyOwnerId)} caught and eliminated!'
+                    : 'Spy caught in ${provinceLabel(provinceId)}! ${factionLabel(territoryOwnerId)} eliminated your agent!',
+                onTap: () => locateProvinceById(provinceId),
               ),
             ct_models.AppSpyDefectedEvent(
               :final provinceId,
@@ -106,10 +115,10 @@ mixin _GameMapAreaTurnFeed
               :final newOwnerId,
             ) =>
               PlayerTurnEventFeedEntry(
-                text: _mapPlayerId == newOwnerId
-                    ? '${_provinceLabel(provinceId)} — enemy spy from ${_factionLabel(previousOwnerId)} defected to your side!'
-                    : 'Spy defected in ${_provinceLabel(provinceId)}! Agent joined ${_factionLabel(newOwnerId)}!',
-                onTap: () => _locateProvinceById(provinceId),
+                text: mapPlayerId == newOwnerId
+                    ? '${provinceLabel(provinceId)} — enemy spy from ${factionLabel(previousOwnerId)} defected to your side!'
+                    : 'Spy defected in ${provinceLabel(provinceId)}! Agent joined ${factionLabel(newOwnerId)}!',
+                onTap: () => locateProvinceById(provinceId),
               ),
             _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
           };

@@ -67,6 +67,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Same local-by-design rationale as the parent panel —
   // `SPEC/program/app-ui-wiring.md` § "Local by design" (Refs #3878 Phase 3).
   'app/lib/features/game/widgets/units/civilian/civilian_units_panel_support_unit_row_actions.dart',
+  // Work-target assignment bottom sheet moved into `civilian_units_panel_unit_row.dart`
+  // during wave-9 de-part (Refs #4117). Same local-by-design rationale as
+  // `civilian_units_panel_support_unit_row_actions.dart`.
+  'app/lib/features/game/widgets/units/civilian/civilian_units_panel_unit_row.dart',
   // Next-turn processing dialog (`_onNextTurn`) and the map display-options
   // dialog (`build`) — the two `showDialog` sites kept after the #3699 Theme 3
   // domain re-split of `game_map_area` (formerly game_map_area_part1/part2).

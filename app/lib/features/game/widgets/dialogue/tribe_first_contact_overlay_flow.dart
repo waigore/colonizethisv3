@@ -1,7 +1,25 @@
-part of 'tribe_first_contact_overlay.dart';
+import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:jenny/jenny.dart';
 
-extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
-  static const String kNode = 'tribe_first_contact';
+import 'ct_dialogue_view.dart';
+import 'tribe_first_contact_overlay.dart';
+import 'yarn_dialogue_bootstrap.dart';
+
+/// Yarn node id for the tribe-first-contact herald asset.
+const String kTribeFirstContactNode = 'tribe_first_contact';
+
+mixin TribeFirstContactOverlayFlow on State<TribeFirstContactOverlay> {
+  CtDialogueView? get tribeContactView;
+  set tribeContactView(CtDialogueView? value);
+  DialogueRunner? get tribeContactRunner;
+  set tribeContactRunner(DialogueRunner? value);
+  Object? get tribeContactLoadError;
+  set tribeContactLoadError(Object? value);
+  bool get tribeContactDialogueFinished;
+  set tribeContactDialogueFinished(bool value);
 
   Future<void> loadAndRunTribeFirstContact() async {
     final log = widget.logger ?? packageLogger('dialogue');
@@ -12,12 +30,12 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
         bundle: bundle,
         assetPath: kDialogueTribeFirstContactAsset,
         logger: log,
-        createView: _createTribeFirstContactDialogueView,
+        createView: createTribeFirstContactDialogueView,
         beforeParse: (project) {
           project.variables.setVariable(r'$tribeName', widget.tribeName);
           project.variables.setVariable(r'$capitalName', widget.capitalName);
         },
-        requiredNodes: const [kNode],
+        requiredNodes: const [kTribeFirstContactNode],
       );
       final view = session.view;
       final runner = session.runner;
@@ -26,12 +44,12 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
       };
       if (!mounted) return;
       setState(() {
-        _view = view;
-        _runner = runner;
+        tribeContactView = view;
+        tribeContactRunner = runner;
       });
-      await runner.startDialogue(kNode);
+      await runner.startDialogue(kTribeFirstContactNode);
       if (!mounted) return;
-      setState(() => _dialogueFinished = true);
+      setState(() => tribeContactDialogueFinished = true);
       widget.onDismissed();
     } catch (e, st) {
       log.e(
@@ -39,7 +57,7 @@ extension _TribeFirstContactOverlayFlow on _TribeFirstContactOverlayState {
         error: e,
         stackTrace: st,
       );
-      if (mounted) setState(() => _loadError = e);
+      if (mounted) setState(() => tribeContactLoadError = e);
     }
   }
 }

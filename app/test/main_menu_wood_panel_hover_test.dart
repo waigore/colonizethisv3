@@ -80,7 +80,7 @@ RichText _findLabelRichTextFor(WidgetTester tester, String label) {
   );
 }
 
-/// Returns the `_BrassCornerBracketsPainter` instance currently driving
+/// Returns the `CtNinePatchButtonBracketsPainter` instance currently driving
 /// the brass-bracket overlay of the `CtNinePatchButton` whose label is [label].
 CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
   final Finder painters = find.descendant(
@@ -89,7 +89,7 @@ CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
       (Widget w) =>
           w is CustomPaint &&
           w.painter != null &&
-          w.painter.runtimeType.toString() == '_BrassCornerBracketsPainter',
+          w.painter.runtimeType.toString() == 'CtNinePatchButtonBracketsPainter',
     ),
   );
   expect(
@@ -97,14 +97,14 @@ CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
     findsOneWidget,
     reason:
         'Wood-panel button "$label" must paint a single brass-corner-brackets '
-        'overlay (CustomPaint with _BrassCornerBracketsPainter).',
+        'overlay (CustomPaint with CtNinePatchButtonBracketsPainter).',
   );
   final CustomPaint paint = tester.widget<CustomPaint>(painters);
   return paint.painter!;
 }
 
 /// Reads the `color` field off the brass-bracket painter via `toString()`.
-/// The painter is private (`_BrassCornerBracketsPainter` in
+/// The painter is private (`CtNinePatchButtonBracketsPainter` in
 /// `ct_nine_patch_button_brackets.dart`) and exposes its color only through its
 /// `paint(...)` call; we parse the painter's debug string which embeds the
 /// `color: Color(...)` value the painter holds. Falls back to the painted
@@ -115,7 +115,7 @@ CustomPainter _findBrassPainterFor(WidgetTester tester, String label) {
 Color? _brassColorFromPainter(CustomPainter painter) {
   // The painter's runtimeType already pins the class identity above; we now
   // inspect the painter's `toString()` debug representation, which Dart
-  // generates from the class name. Since `_BrassCornerBracketsPainter`
+  // generates from the class name. Since `CtNinePatchButtonBracketsPainter`
   // overrides `shouldRepaint` but not `toString`, the default representation
   // is just the class name — which means we cannot extract the color this
   // way. Instead, paint into a recording canvas and capture the first paint
@@ -126,7 +126,7 @@ Color? _brassColorFromPainter(CustomPainter painter) {
 }
 
 /// Minimal `Canvas` shim that records the color of the first `drawRect`
-/// invocation. Sufficient for `_BrassCornerBracketsPainter.paint`, which
+/// invocation. Sufficient for `CtNinePatchButtonBracketsPainter.paint`, which
 /// uses a single `Paint` instance for every rect.
 class _ColorRecordingCanvas implements Canvas {
   Color? firstColor;

@@ -1,10 +1,17 @@
 /// Army expansion tile for the military units panel.
 /// SPEC/ui/military-units-panel.md.
 
-part of 'military_units_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-class _ArmyExpansionTile extends StatelessWidget {
-  const _ArmyExpansionTile({
+import '../../../../../widgets/ct_spacing.dart';
+import '../../panels/tree_builders/military_tree_builder.dart';
+import '../shared/units_entity_action_row.dart';
+import '../shared/units_entity_card.dart';
+import 'military_units_panel_support_detail_rows.dart';
+
+class MilitaryArmyExpansionTile extends StatelessWidget {
+  const MilitaryArmyExpansionTile({
     required this.block,
     required this.l10n,
     required this.stationedProvinceDisplayLabel,
@@ -116,10 +123,10 @@ class _ArmyExpansionTile extends StatelessWidget {
     // carries no nine-patch row-action chrome.
     return [
       if (block.rows.isEmpty)
-        _UnitDetailRow(title: l10n.military_units_noRegimentsAssigned)
+        MilitaryUnitDetailRow(title: l10n.military_units_noRegimentsAssigned)
       else
         for (final row in block.rows)
-          _RegimentRow(row: row, l10n: l10n, onTap: null),
+          MilitaryRegimentDetailRow(row: row, l10n: l10n, onTap: null),
     ];
   }
 }

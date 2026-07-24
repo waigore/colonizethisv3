@@ -1,84 +1,91 @@
-part of 'move_army_dialog.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _MoveArmyDialogStateLogic on _MoveArmyDialogState {
-  void _syncSharedValidatorAndDestinations({bool rebuildValidator = false}) {
-    final view = widget.playerView;
-    if (view == null) {
-      _sharedCandidateValidator = null;
-      _cachedDestinations = null;
-      _cachedDestinationsOrders = null;
-      _cachedDestinationsArmyId = null;
-      return;
+import 'move_army_dialog.dart';
+import 'move_army_dialog_declare_war.dart';
+import 'move_army_dialog_destinations.dart';
+import 'move_army_dialog_state_logic.dart';
+import 'move_units_dialog_base.dart';
+
+/// Stateful implementation for [MoveArmyDialog] (Refs #4117 de-part).
+class MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog>
+    with
+        MoveArmyDialogStateLogic,
+        MoveArmyDialogDestinations,
+        MoveArmyDialogDeclareWar {
+  @override
+  String? armySelectedDestination;
+
+  @override
+  IncrementalCandidateValidator? armySharedCandidateValidator;
+
+  @override
+  List<ArmyMovePickerDestination>? armyCachedDestinations;
+
+  @override
+  Orders? armyCachedDestinationsOrders;
+
+  @override
+  String? armyCachedDestinationsArmyId;
+
+  @override
+  void initState() {
+    super.initState();
+    syncSharedValidatorAndDestinations();
+    final entries = destinationEntries();
+    if (entries.isNotEmpty) {
+      armySelectedDestination = entries.first.fullProvinceId;
     }
-    final orders = widget.draftOrders;
-    if (rebuildValidator || _sharedCandidateValidator == null) {
-      _sharedCandidateValidator = IncrementalCandidateValidator.forPlayer(
-        game: widget.game,
-        topology: widget.topology,
-        playerId: widget.humanPlayerId,
-        basePrefix: orders,
-        resolution: orderResolutionContextFromView(view, widget.game),
+  }
+
+  @override
+  void didUpdateWidget(MoveArmyDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.draftOrders != widget.draftOrders ||
+        oldWidget.game != widget.game ||
+        oldWidget.army != widget.army ||
+        oldWidget.playerView != widget.playerView) {
+      syncSharedValidatorAndDestinations(
+        rebuildValidator:
+            oldWidget.game != widget.game ||
+            oldWidget.playerView != widget.playerView,
       );
-    } else {
-      _sharedCandidateValidator = _sharedCandidateValidator!.forBasePrefix(
-        orders,
-      );
-    }
-    final armyId = widget.army.id;
-    if (_cachedDestinationsOrders != orders ||
-        _cachedDestinationsArmyId != armyId) {
-      _cachedDestinations = armyMovePickerDestinations(
-        game: widget.game,
-        topology: widget.topology,
-        playerId: widget.humanPlayerId,
-        army: widget.army,
-        currentOrders: orders,
-        sharedCandidateValidator: _sharedCandidateValidator,
-      );
-      _cachedDestinationsOrders = orders;
-      _cachedDestinationsArmyId = armyId;
+      final entries = destinationEntries();
+      if (armySelectedDestination == null ||
+          !entries.any((e) => e.fullProvinceId == armySelectedDestination)) {
+        armySelectedDestination =
+            entries.isEmpty ? null : entries.first.fullProvinceId;
+      }
     }
   }
 
-  List<ArmyMovePickerDestination> _destinationEntries() {
-    final view = widget.playerView;
-    if (view != null) {
-      _syncSharedValidatorAndDestinations();
-      return _cachedDestinations!;
-    }
-    return armyMovePickerDestinations(
-      game: widget.game,
-      topology: widget.topology,
-      playerId: widget.humanPlayerId,
-      army: widget.army,
-      currentOrders: widget.draftOrders,
-    );
+  @override
+  String get moveDialogTitle => appL10n(context).moveArmy_title(widget.army.id);
+
+  @override
+  bool get moveDialogHasDestinations => destinationEntries().isNotEmpty;
+
+  @override
+  String get moveDialogEmptyText =>
+      appL10n(context).moveArmy_noValidDestinations;
+
+  @override
+  bool get moveDialogCanConfirm => armySelectedDestination != null;
+
+  @override
+  void onMoveDialogConfirm() {
+    onConfirmPressed();
   }
 
-  ArmyMovePickerDestination? _selectedEntry(
-    List<ArmyMovePickerDestination> entries,
-  ) {
-    final id = _selected;
-    if (id == null) return null;
-    for (final e in entries) {
-      if (e.fullProvinceId == id) return e;
-    }
-    return null;
-  }
+  @override
+  void onMoveDialogCancel() => Navigator.of(context).pop();
 
-  void _emitAndClose(ArmyMovePickerDestination entry) {
-    widget.bus.emit(
-      ArmyMoveRequestedEvent(
-        humanPlayerId: widget.humanPlayerId,
-        moveOrder: ArmyMoveOrder(
-          armyId: widget.army.id,
-          destinationProvinceId: entry.fullProvinceId,
-        ),
-        declareWarTargetFactionId: entry.requiresDeclareWarOnConfirm
-            ? entry.ownerFactionId
-            : null,
-      ),
-    );
-    Navigator.of(context).pop();
-  }
+  @override
+  Widget buildMoveDialogDestinations(BuildContext context) =>
+      buildMoveDialogDestinationsBody(context);
+
+  @override
+  Widget build(BuildContext context) => buildMoveDialogScaffold(context);
 }

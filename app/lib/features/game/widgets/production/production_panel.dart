@@ -5,32 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_panel.dart';
-import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_section_label.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'commodity_ui_helpers.dart';
-import 'production_allocation_row.dart';
-import 'production_allocation_row_chrome.dart';
-import 'production_available_grid.dart';
 import 'production_labour_helpers.dart';
-import 'production_labour_section.dart';
+import 'production_panel_constants.dart';
+import 'production_panel_layouts.dart';
+import 'production_panel_support_allocation.dart';
+import 'production_panel_support_available.dart';
 
-part 'production_panel_constants.dart';
-part 'production_panel_layouts.dart';
-part 'production_panel_support_available.dart';
-part 'production_panel_support_available_sections.dart';
-part 'production_panel_support_allocation.dart';
-part 'production_panel_support_allocation_rows.dart';
-part 'production_panel_support_allocation_summary.dart';
+export 'production_panel_constants.dart';
 
+/// Production screen panel: Available stockpile + Allocation recipe rows.
+/// SPEC/ui/production-panel.md.
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
     super.key,
@@ -101,7 +86,7 @@ class ProductionPanel extends StatelessWidget {
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-    final availableSubpanel = _AvailableSubpanel(
+    final availableSubpanel = ProductionPanelAvailableSubpanel(
       game: game,
       player: player,
       effectiveLabour: effectiveLabour,
@@ -114,7 +99,7 @@ class ProductionPanel extends StatelessWidget {
       labourCallbacks: labourCallbacks,
       canEditLabour: canEditLabour,
     );
-    final allocationSubpanel = _AllocationSubpanel(
+    final allocationSubpanel = ProductionPanelAllocationSubpanel(
       player: player,
       effectiveLabour: effectiveLabour,
       desiredOutputByRecipe: desiredOutputByRecipe,
@@ -123,14 +108,14 @@ class ProductionPanel extends StatelessWidget {
     );
 
     if (isNarrow) {
-      return _ProductionPanelNarrowLayout(
+      return ProductionPanelNarrowLayout(
         key: kProductionPanelNarrowLayoutKey,
         availableSubpanel: availableSubpanel,
         allocationSubpanel: allocationSubpanel,
       );
     }
 
-    return _ProductionPanelWideLayout(
+    return ProductionPanelWideLayout(
       key: kProductionPanelWideLayoutKey,
       availableSubpanel: availableSubpanel,
       allocationSubpanel: allocationSubpanel,

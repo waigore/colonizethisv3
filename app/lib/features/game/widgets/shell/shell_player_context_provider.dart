@@ -1,5 +1,21 @@
-part of 'shell_player_context.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/game_service/game_service.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
+import 'shell_player_context.dart';
+
+MapTopology _topologyForGame(GameService service, Game game) {
+  final mapData = tryGetGameMapData(() => service.getMapData(game.id));
+  return mapData?.combinedTopology ?? const MapTopology();
+}
+
+/// Riverpod provider for [ShellPlayerContext] (Refs #4117 de-part).
 final shellPlayerContextProvider = Provider<ShellPlayerContext>((ref) {
   MapTopology topologyFor(Game game) {
     try {

@@ -1,4 +1,5 @@
-part of 'move_units_dialog_base.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
 /// Title text style shared by the move dialogs — dark-theme `titleMedium`
 /// in `--accent` with 0.05em letter spacing (#2867 R2/R5).

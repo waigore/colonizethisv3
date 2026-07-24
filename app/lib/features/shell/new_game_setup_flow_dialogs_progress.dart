@@ -1,6 +1,21 @@
-part of 'new_game_setup_flow.dart';
+import 'dart:async';
 
-Future<_NewGameOutcome?> _showNewGameProgressDialog({
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/package_logger.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'new_game_setup_flow_outcome.dart';
+
+final newGameSetupProgressLog = packageLogger('shell');
+
+Future<NewGameSetupOutcome?> showNewGameSetupProgressDialog({
   required GlobalKey<NavigatorState> navigatorKey,
   required GameSetupConfig config,
   required GameService service,
@@ -9,16 +24,16 @@ Future<_NewGameOutcome?> _showNewGameProgressDialog({
   if (ctx == null) {
     return null;
   }
-  return showDialog<_NewGameOutcome>(
+  return showDialog<NewGameSetupOutcome>(
     context: ctx,
     barrierDismissible: false,
     useRootNavigator: true,
     builder: (dialogCtx) =>
-        _NewGameSetupProgressDialog(config: config, service: service),
+        NewGameSetupProgressDialog(config: config, service: service),
   );
 }
 
-String _stepLabel(BuildContext context, int stepIndex) {
+String newGameSetupStepLabel(BuildContext context, int stepIndex) {
   final l10n = appL10n(context);
   switch (stepIndex) {
     case 0:
@@ -46,13 +61,13 @@ String _stepLabel(BuildContext context, int stepIndex) {
 /// This widget is intentionally synchronous and side-effect free so it can
 /// be composed by Widgetbook stories and widget tests without driving the
 /// `GameService` setup pipeline. The shell dialog
-/// ([_NewGameSetupProgressDialog]) wraps this view in `PopScope(canPop:
+/// ([NewGameSetupProgressDialog]) wraps this view in `PopScope(canPop:
 /// false)` and drives [stepIndex] from the live `onProgress` callback.
 class NewGameSetupProgressView extends StatelessWidget {
   const NewGameSetupProgressView({super.key, required this.stepIndex});
 
   /// Index of the current coarse setup phase (`0..4`); values outside that
-  /// range fall back to the generic progress title per [_stepLabel].
+  /// range fall back to the generic progress title per [newGameSetupStepLabel].
   final int stepIndex;
 
   @override
@@ -78,15 +93,16 @@ class NewGameSetupProgressView extends StatelessWidget {
             center: false,
           ),
           const SizedBox(height: 16),
-          Text(_stepLabel(context, stepIndex), textAlign: TextAlign.center),
+          Text(newGameSetupStepLabel(context, stepIndex), textAlign: TextAlign.center),
         ],
       ),
     );
   }
 }
 
-class _NewGameSetupProgressDialog extends StatefulWidget {
-  const _NewGameSetupProgressDialog({
+class NewGameSetupProgressDialog extends StatefulWidget {
+  const NewGameSetupProgressDialog({
+    super.key,
     required this.config,
     required this.service,
   });
@@ -95,12 +111,11 @@ class _NewGameSetupProgressDialog extends StatefulWidget {
   final GameService service;
 
   @override
-  State<_NewGameSetupProgressDialog> createState() =>
+  State<NewGameSetupProgressDialog> createState() =>
       _NewGameSetupProgressDialogState();
 }
 
-class _NewGameSetupProgressDialogState
-    extends State<_NewGameSetupProgressDialog> {
+class _NewGameSetupProgressDialogState extends State<NewGameSetupProgressDialog> {
   var _stepIndex = 0;
 
   @override
@@ -128,13 +143,13 @@ class _NewGameSetupProgressDialogState
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop(_NewGameOutcomeSuccess(game));
+      Navigator.of(context).pop(NewGameSetupOutcomeSuccess(game));
     } catch (e, st) {
-      _log.e('new game setup failed', error: e, stackTrace: st);
+      newGameSetupProgressLog.e('new game setup failed', error: e, stackTrace: st);
       if (!mounted) {
         return;
       }
-      Navigator.of(context).pop(_NewGameOutcomeFailure(e));
+      Navigator.of(context).pop(NewGameSetupOutcomeFailure(e));
     }
   }
 

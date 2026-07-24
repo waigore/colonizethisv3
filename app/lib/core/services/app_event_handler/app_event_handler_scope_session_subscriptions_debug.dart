@@ -4,24 +4,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'app_event_handler_scope_session_helpers.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
-import '../debug/app_event_handler_debug_flip_province.dart'
-    show applyDebugFlipProvinceOwnership;
-import '../debug/app_event_handler_debug_reveal_province.dart'
-    show applyDebugRevealProvince;
-import '../debug/app_event_handler_debug_set_diplomacy.dart'
-    show applyDebugSetDiplomacyRelation;
-import '../debug/app_event_handler_debug_spawn_civilian.dart'
-    show applyDebugCivilianSpawnAtCapital;
-import '../debug/app_event_handler_debug_spawn_regiment.dart'
-    show applyDebugRegimentSpawnAtCapital;
-import '../debug/app_event_handler_debug_spawn_ship.dart'
-    show applyDebugShipSpawnAtCapitalHomeFleet;
-import '../debug/app_event_handler_debug_stockpile.dart'
-    show applyDebugStockpileCredit;
-import '../debug/app_event_handler_debug_treasury.dart'
-    show applyDebugTreasuryCredit;
-import '../debug/app_event_handler_debug_worker_pool.dart'
-    show applyDebugWorkerPoolCredit;
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart'
+    show
+        applyDebugCivilianSpawnAtCapital,
+        applyDebugFlipProvinceOwnership,
+        applyDebugRegimentSpawnAtCapital,
+        applyDebugRevealProvince,
+        applyDebugSetDiplomacyRelation,
+        applyDebugShipSpawnAtCapitalHomeFleet,
+        applyDebugStockpileCredit,
+        applyDebugTreasuryCredit,
+        applyDebugWorkerPoolCredit;
 
 mixin AppEventHandlerScopeSessionDebugListeners
     on AppEventHandlerScopeSessionHelpers {

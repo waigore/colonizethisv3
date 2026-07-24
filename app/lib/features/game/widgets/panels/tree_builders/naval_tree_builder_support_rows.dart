@@ -1,6 +1,17 @@
-part of 'naval_tree_builder.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-void _appendNavalAtSeaFleetRow({
+import '../../../flame/map_state/map_location_resolver.dart';
+import '../../province_overlay/sea_zone_name_resolver.dart';
+import '../../units/shared/region_labels.dart';
+import 'fleet_mission_label.dart';
+import 'naval_tree_builder_models.dart';
+import 'naval_tree_builder_support_scope.dart';
+
+void navalTreeAppendAtSeaFleetRow({
   required Game game,
   required MapTopology topology,
   required AppLocalizations l10n,
@@ -77,7 +88,7 @@ void _appendNavalAtSeaFleetRow({
   seas.putIfAbsent(zoneKey, () => []).add(row);
 }
 
-void _appendNavalInPortFleetRow({
+void navalTreeAppendInPortFleetRow({
   required Game game,
   required MapTopology topology,
   required AppLocalizations l10n,
@@ -114,7 +125,7 @@ void _appendNavalInPortFleetRow({
       provinceMap[effectivePortId];
   if (province == null) return;
 
-  final locationKey = _navalNormalizedPortScopeForProvince(province);
+  final locationKey = navalTreeNormalizedPortScopeForProvince(province);
   final tileKey = tileKeyForProvinceLocation(game, province);
   final locationLabel =
       '${regionDisplayLabel(rowRegionId)} — ${province.displayName ?? province.id} ${l10n.naval_units_locInPort}';
