@@ -1,5 +1,5 @@
-import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_set_diplomacy.dart';
-import 'package:colonizethis_app/core/services/debug/debug_command_helpers.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;

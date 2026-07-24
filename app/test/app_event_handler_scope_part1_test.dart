@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_spawn_civilian.dart';
-import 'package:colonizethis_app/core/services/debug/app_event_handler_debug_spawn_regiment.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';

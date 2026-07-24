@@ -87,7 +87,13 @@ int f() {
       final temp = Directory.systemTemp.createTempSync('fn-size-app-debug-');
       try {
         final handlerDir = Directory(
-          p.join(temp.path, 'app', 'lib', 'core', 'services', 'debug'),
+          p.join(
+            temp.path,
+            'packages',
+            'colonizethis_app_debug',
+            'lib',
+            'src',
+          ),
         )..createSync(recursive: true);
         File(
           p.join(
@@ -106,7 +112,7 @@ int f() {
         expect(
           errors.join('\n'),
           contains(
-            'app/lib/core/services/debug/app_event_handler_debug_spawn_civilian.dart',
+            'packages/colonizethis_app_debug/lib/src/app_event_handler_debug_spawn_civilian.dart',
           ),
         );
       } finally {

@@ -29,6 +29,8 @@ dependencies:
   colonizethis_setup:
   colonizethis_ai:
   colonizethis_debug_console:
+  colonizethis_app_debug:
+    path: ../packages/colonizethis_app_debug
   colonizethis_app_l10n:
     path: ../packages/colonizethis_app_l10n
   colonizethis_app_fixtures:
