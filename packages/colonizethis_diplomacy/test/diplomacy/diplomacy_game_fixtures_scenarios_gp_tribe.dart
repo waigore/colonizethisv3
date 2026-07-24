@@ -1,8 +1,10 @@
+// GP–tribe and related diplomacy fixture scenarios (Refs #4130 wave-5 densify).
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'diplomacy_game_fixtures_base.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
 const _ow = 'oldWorld';
 const _nw = 'newWorld';

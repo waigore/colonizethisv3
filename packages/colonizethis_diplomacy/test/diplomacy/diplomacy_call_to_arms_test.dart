@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
+import 'call_to_arms_scenarios.dart';
 
 void main() {
   group('call to arms (alliance mutual defence)', () {

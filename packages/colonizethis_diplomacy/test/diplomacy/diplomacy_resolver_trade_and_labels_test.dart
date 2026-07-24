@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdTradeFairs;
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios_gp_tribe.dart';
+
 void main() {
   group('tradeSlotsForGp', () {
     test('returns 0 without embassy', () {

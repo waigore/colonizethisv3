@@ -5,6 +5,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios_gp_tribe.dart';
+
 void main() {
   suppressLogsForTests();
 
