@@ -1,6 +1,11 @@
-part of 'ct_icon_action.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-class _CtIconActionState extends State<CtIconAction> {
+import 'ct_back_button.dart';
+import 'ct_icon_action.dart';
+
+/// Stateful implementation for [CtIconAction] (Refs #4117 de-part).
+class CtIconActionState extends State<CtIconAction> {
   bool _hovered = false;
   bool _pressed = false;
 

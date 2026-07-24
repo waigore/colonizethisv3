@@ -1,9 +1,16 @@
-part of 'diplomacy_detail_screen.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/relation_meter.dart';
+import '../../widgets/diplomacy/diplomacy_panel.dart';
 
 /// Body of the "Current relation" card. Renders a one-line summary with a
 /// War/Peace state (colored badge label) and the one-word relation label.
-class _RelationSummary extends StatelessWidget {
-  const _RelationSummary({
+class DiplomacyDetailRelationSummary extends StatelessWidget {
+  const DiplomacyDetailRelationSummary({
     required this.relation,
     required this.l10n,
     this.standingChips = const DiplomaticStandingChips(),
@@ -22,12 +29,15 @@ class _RelationSummary extends StatelessWidget {
     if (rel == null) {
       return Text(
         '—',
-        style: _relationSummaryDisplayStyle(context).copyWith(
+        style: diplomacyDetailRelationSummaryDisplayStyle(context).copyWith(
           color: EditorialMonoclePalette.muted,
         ),
       );
     }
-    final Widget summaryRow = _RelationSummaryRow(relation: rel, l10n: l10n);
+    final Widget summaryRow = DiplomacyDetailRelationSummaryRow(
+      relation: rel,
+      l10n: l10n,
+    );
     if (standingChips.isEmpty) {
       return summaryRow;
     }
@@ -44,10 +54,12 @@ class _RelationSummary extends StatelessWidget {
 }
 
 /// One-line War/Peace state, relation meter, one-word ladder label, and the
-/// optional formal-alliance badge. Extracted from [_RelationSummary] to keep
-/// each `build` body within the widget-size lint budget.
-class _RelationSummaryRow extends StatelessWidget {
-  const _RelationSummaryRow({required this.relation, required this.l10n});
+/// optional formal-alliance badge.
+class DiplomacyDetailRelationSummaryRow extends StatelessWidget {
+  const DiplomacyDetailRelationSummaryRow({
+    required this.relation,
+    required this.l10n,
+  });
 
   final DiplomacyRelation relation;
   final AppLocalizations l10n;
@@ -76,7 +88,7 @@ class _RelationSummaryRow extends StatelessWidget {
       children: <Widget>[
         Text(
           stateLabel,
-          style: _relationSummaryDisplayStyle(context).copyWith(
+          style: diplomacyDetailRelationSummaryDisplayStyle(context).copyWith(
             color: stateColor,
             fontWeight: FontWeight.w600,
           ),
@@ -89,7 +101,7 @@ class _RelationSummaryRow extends StatelessWidget {
         if (relationLabel.isNotEmpty)
           Text(
             relationLabel,
-            style: _relationSummaryDisplayStyle(context).copyWith(
+            style: diplomacyDetailRelationSummaryDisplayStyle(context).copyWith(
               color: relationMeterStepColor(
                 relationScoreToMeterStep(relation.score),
               ),
@@ -101,7 +113,7 @@ class _RelationSummaryRow extends StatelessWidget {
   }
 }
 
-TextStyle _relationSummaryDisplayStyle(BuildContext context) {
+TextStyle diplomacyDetailRelationSummaryDisplayStyle(BuildContext context) {
   final ThemeData theme = Theme.of(context);
   return (theme.textTheme.titleSmall ?? const TextStyle(fontSize: 14))
       .copyWith(letterSpacing: 0.02);

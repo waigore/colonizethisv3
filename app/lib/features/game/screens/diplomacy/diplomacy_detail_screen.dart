@@ -14,11 +14,12 @@ import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_top_bar.dart';
 import '../../../../widgets/relation_meter.dart';
 import '../../widgets/diplomacy/diplomacy_panel.dart';
+import 'diplomacy_detail_screen_format.dart';
+import 'diplomacy_detail_screen_widgets_cards.dart';
+import 'diplomacy_detail_screen_widgets_relation.dart';
+import 'diplomacy_detail_screen_widgets_sections.dart';
 
-part 'diplomacy_detail_screen_format.dart';
-part 'diplomacy_detail_screen_widgets_cards.dart';
-part 'diplomacy_detail_screen_widgets_relation.dart';
-part 'diplomacy_detail_screen_widgets_sections.dart';
+export 'diplomacy_detail_screen_format.dart';
 
 /// Full-screen diplomacy detail. Dark editorial-monocle chrome per
 /// `SPEC/ui/diplomacy-detail-screen.md` and `SPEC/ui/mockups/GAME30002-…html`.
@@ -98,7 +99,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                 vertical: contentPadding,
               ),
               children: <Widget>[
-                _DetailCard(
+                DiplomacyDetailCard(
                   title: l10n.diplomacy_detail_currentRelation,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -108,7 +109,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                         RelativePowerLine(pct: relativePowerPct),
                         const SizedBox(height: 8),
                       ],
-                      _RelationSummary(
+                      DiplomacyDetailRelationSummary(
                         relation: relation,
                         l10n: l10n,
                         standingChips: standingChips,
@@ -117,9 +118,9 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: cardSpacing),
-                _DetailCard(
+                DiplomacyDetailCard(
                   title: l10n.diplomacy_detail_historyTitle,
-                  child: _HistorySection(
+                  child: DiplomacyDetailHistorySection(
                     history: history,
                     formatYear: year,
                     formatSentence: (e) =>
@@ -129,9 +130,9 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                 ),
                 if (kind == FactionKind.greatPower) ...<Widget>[
                   const SizedBox(height: cardSpacing),
-                  _DetailCard(
+                  DiplomacyDetailCard(
                     title: l10n.diplomacy_detail_dossierTitle,
-                    child: _DossierSection(
+                    child: DiplomacyDetailDossierSection(
                       game: game,
                       observerId: humanPlayerId,
                       subjectId: factionId,

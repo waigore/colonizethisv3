@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 109 app/lib files still using part directives.
+// Generated grandfather allowlist: 92 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -18,11 +18,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/tilesets/terrain_tileset_variant_keys.dart',
   'app/lib/features/game/screens/combat/quick_battle_screen.dart',
   'app/lib/features/game/screens/combat/quick_battle_screen_result.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_format.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_cards.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_relation.dart',
-  'app/lib/features/game/screens/diplomacy/diplomacy_detail_screen_widgets_sections.dart',
   'app/lib/features/game/screens/production/production_screen.dart',
   'app/lib/features/game/screens/production/production_screen_body.dart',
   'app/lib/features/game/screens/technology/technology_screen.dart',
@@ -42,10 +37,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_build.dart',
   'app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay_flow.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_body.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_labels.dart',
-  'app/lib/features/game/widgets/diplomacy/diplomacy_dialogs_grant_subsidy_chrome_stepper.dart',
   'app/lib/features/game/widgets/panels/fleet_expansion_tile.dart',
   'app/lib/features/game/widgets/panels/fleet_expansion_tile_expanded.dart',
   'app/lib/features/game/widgets/panels/fleet_expansion_tile_title.dart',
@@ -96,18 +87,10 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/shell/save_load/load_game_list_dialog_body.dart',
   'app/lib/features/shell/save_load/load_game_list_dialog_confirm.dart',
   'app/lib/features/shell/save_load/load_game_list_dialog_row.dart',
-  'app/lib/features/shell/save_load/save_game_name_dialog.dart',
-  'app/lib/features/shell/save_load/save_game_name_dialog_body.dart',
-  'app/lib/widgets/ct_action_text_button.dart',
-  'app/lib/widgets/ct_action_text_button_state.dart',
   'app/lib/widgets/ct_dropdown.dart',
   'app/lib/widgets/ct_dropdown_picker.dart',
   'app/lib/widgets/ct_dropdown_trigger.dart',
-  'app/lib/widgets/ct_icon_action.dart',
-  'app/lib/widgets/ct_icon_action_state.dart',
   'app/lib/widgets/ct_resource_cell.dart',
   'app/lib/widgets/ct_resource_cell_format.dart',
   'app/lib/widgets/ct_resource_cell_trailing.dart',
-  'app/lib/widgets/ct_slider.dart',
-  'app/lib/widgets/ct_slider_state.dart',
 ];
