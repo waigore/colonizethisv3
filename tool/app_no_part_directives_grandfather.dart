@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 122 app/lib files still using part directives.
+// Generated grandfather allowlist: 109 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -105,22 +105,9 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/widgets/ct_dropdown_trigger.dart',
   'app/lib/widgets/ct_icon_action.dart',
   'app/lib/widgets/ct_icon_action_state.dart',
-  'app/lib/widgets/ct_nine_patch_button.dart',
-  'app/lib/widgets/ct_nine_patch_button_brackets.dart',
-  'app/lib/widgets/ct_nine_patch_button_state.dart',
   'app/lib/widgets/ct_resource_cell.dart',
   'app/lib/widgets/ct_resource_cell_format.dart',
   'app/lib/widgets/ct_resource_cell_trailing.dart',
   'app/lib/widgets/ct_slider.dart',
   'app/lib/widgets/ct_slider_state.dart',
-  'app/lib/widgets/ct_toggle_switch.dart',
-  'app/lib/widgets/ct_toggle_switch_knob.dart',
-  'app/lib/widgets/ct_toggle_switch_state.dart',
-  'app/lib/widgets/ct_toggle_switch_track.dart',
-  'app/lib/widgets/ct_top_bar.dart',
-  'app/lib/widgets/ct_top_bar_layout.dart',
-  'app/lib/widgets/ct_transfer_list.dart',
-  'app/lib/widgets/ct_transfer_list_layout.dart',
-  'app/lib/widgets/ct_transfer_list_mutations.dart',
-  'app/lib/widgets/ct_transfer_list_side_panel.dart',
 ];
