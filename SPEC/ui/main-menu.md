@@ -99,7 +99,7 @@ Variant rendering (mockup-aligned dark editorial-monocle):
 
 **Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
-**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_part1_test.dart` (visibility, Load Game state/tooltip, Resume, navigation) and `app/test/screen_spec_acceptance_part2_test.dart` (pixelArt chrome, scroll brackets, ≤430 dp responsive) assert the acceptance criteria above. Shared frames live in `app/test/support/screen_spec_acceptance_test_support.dart`. Run: `flutter test test/screen_spec_acceptance_part1_test.dart test/screen_spec_acceptance_part2_test.dart` from the app package.
+**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_part1_test.dart` (visibility, Load Game state/tooltip, Resume, navigation) and `app/test/screen_spec_acceptance_part2_test.dart` (pixelArt chrome, scroll brackets, ≤430 dp responsive) assert the acceptance criteria above. Shared frames live in `app/test/screen_spec_acceptance_test_support.dart` (re-exported from `app/test/support/screen_spec_acceptance_test_support.dart`). Run: `flutter test test/screen_spec_acceptance_part1_test.dart test/screen_spec_acceptance_part2_test.dart` from the app package.
 
 ---
 
