@@ -42,13 +42,16 @@ void main() {
         'EditorialMonoclePalette.dialogScrim and not Colors.black54', () {
       const String relativePath =
           'lib/features/game/flame/overlays/debug_console_overlay_panel.dart';
+      const String statePath =
+          'lib/features/game/flame/overlays/debug_console_overlay_panel_state.dart';
       final File file = File(relativePath);
       expect(
         file.existsSync(),
         isTrue,
         reason: 'fixture file must exist at $relativePath',
       );
-      final String source = _libraryUnitSource(relativePath);
+      final String source =
+          '${_libraryUnitSource(relativePath)}\n${File(statePath).readAsStringSync()}';
 
       expect(
         source.contains('EditorialMonoclePalette.dialogScrim'),

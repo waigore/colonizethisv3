@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 236 app/lib files still using part directives.
+// Generated grandfather allowlist: 234 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -27,8 +27,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart',
   'app/lib/features/game/flame/map_state/game_map_area_turn_resolution_session.dart',
   'app/lib/features/game/flame/map_state/game_map_area_view.dart',
-  'app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart',
-  'app/lib/features/game/flame/overlays/debug_console_overlay_panel_state.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_loaders.dart',
   'app/lib/features/game/flame/tilesets/terrain_tileset_models.dart',
