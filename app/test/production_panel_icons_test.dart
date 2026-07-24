@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app/widgets/strict_asset_icon.dart';
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 void main() {

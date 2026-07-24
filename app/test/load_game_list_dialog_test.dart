@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 class _LoadDialogGameService extends GameService {
   _LoadDialogGameService(super.box, super.adapter);

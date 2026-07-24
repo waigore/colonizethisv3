@@ -15,7 +15,7 @@ import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
-import 'support/new_game_leader_selection_dialog_test_support.dart';
+import 'new_game_leader_selection_dialog_test_support.dart';
 
 const _largeViewport = Size(900, 2000);
 const _duplicateSurface = Size(900, 1600);

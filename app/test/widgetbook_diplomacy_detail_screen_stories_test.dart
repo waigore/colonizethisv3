@@ -18,9 +18,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 const String _kFolder = 'Diplomacy Detail Screen';
 

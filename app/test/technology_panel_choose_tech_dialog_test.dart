@@ -15,7 +15,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'panel_test_fixtures.dart';
-import 'support/technology_panel_test_support.dart';
+import 'technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

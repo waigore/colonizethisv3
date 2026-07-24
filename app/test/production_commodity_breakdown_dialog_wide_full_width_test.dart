@@ -22,7 +22,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_com
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
 
 void main() {

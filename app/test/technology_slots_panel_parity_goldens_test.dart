@@ -22,7 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'panel_test_fixtures.dart';
-import 'support/technology_panel_test_support.dart';
+import 'technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

@@ -12,7 +12,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 
 import 'panel_test_fixtures.dart';
-import 'support/technology_panel_test_support.dart';
+import 'technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

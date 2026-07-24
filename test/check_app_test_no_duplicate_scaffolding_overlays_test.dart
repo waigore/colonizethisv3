@@ -561,7 +561,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'transfer_to_home_fleet_dialog_spec_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -573,7 +573,7 @@ void main() {
 ''',
       );
       _writeGovernedFile(temp, 'move_dialogs_specs_part2_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -584,7 +584,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'game_map_options_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -595,7 +595,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'next_turn_confirmation_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -606,7 +606,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'pause_menu_side_menu_specs_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -617,7 +617,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'save_game_name_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -628,7 +628,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'load_game_list_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -639,7 +639,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'exit_confirm_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -650,7 +650,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'turn_resolution_processing_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -661,7 +661,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'diplomacy_dialogs_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -672,7 +672,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'tribe_first_contact_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -686,7 +686,7 @@ void main() {
         temp,
         'call_to_arms_dialogue_overlay_dark_chrome_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -698,7 +698,7 @@ void main() {
 ''',
       );
       _writeGovernedFile(temp, 'overture_dialogue_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -709,7 +709,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'overture_dialogue_intro_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -720,7 +720,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'intervention_dialogue_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -731,7 +731,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'dialogue_overlays_specs_part2_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -742,7 +742,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'victory_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -753,7 +753,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'victory_overlay_narrow_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -764,7 +764,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'debug_console_overlay_panel_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -775,7 +775,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'province_overlay_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -786,7 +786,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'province_overlay_header_l10n_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -800,7 +800,7 @@ void main() {
         temp,
         'province_overlay_consulate_gate_tooltip_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -815,7 +815,7 @@ void main() {
         temp,
         'province_overlay_fully_unrevealed_sea_zone_structure_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -830,7 +830,7 @@ void main() {
         temp,
         'province_overlay_tile_inline_action_non_clickable_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -845,7 +845,7 @@ void main() {
         temp,
         'province_overlay_section_label_material_fallback_guard_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -857,7 +857,7 @@ void main() {
 ''',
       );
       _writeGovernedFile(temp, 'province_overlay_tile_designation_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -953,7 +953,7 @@ void main() {
         temp,
         'province_overlay_narrow_side_rail_height_pin_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -969,7 +969,7 @@ void main() {
         temp,
         'province_overlay_tile_resource_row_label_inline_dark_token_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {

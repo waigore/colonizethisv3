@@ -15,7 +15,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/providers/production_allocation_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
 
 class _SeededProductionDesiredOutputNotifier

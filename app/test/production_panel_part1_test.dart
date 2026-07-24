@@ -16,7 +16,7 @@ import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

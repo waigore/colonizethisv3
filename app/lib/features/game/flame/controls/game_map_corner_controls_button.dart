@@ -1,4 +1,10 @@
-part of 'game_map_corner_controls.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+
+import 'game_map_corner_controls.dart';
 
 /// 32 × 32 dp dark editorial-monocle icon button used inside
 /// [GameMapCornerControls].
@@ -15,13 +21,14 @@ part of 'game_map_corner_controls.dart';
 /// When [onTap] is `null` the button paints at the canonical 0.4 disabled
 /// opacity (shared convention with `CtBackButton` / `CtNinePatchButton` /
 /// `CtToggleSwitch`) and ignores pointer input.
-class _MapCornerIconButton extends StatefulWidget {
-  const _MapCornerIconButton({
+class MapCornerIconButton extends StatefulWidget {
+  const MapCornerIconButton({
     required this.buttonKey,
     required this.tooltip,
     required this.onTap,
     required this.assetPath,
     this.narrow = false,
+    super.key,
   });
 
   final Key buttonKey;
@@ -41,10 +48,10 @@ class _MapCornerIconButton extends StatefulWidget {
   static const double disabledOpacity = 0.4;
 
   @override
-  State<_MapCornerIconButton> createState() => _MapCornerIconButtonState();
+  State<MapCornerIconButton> createState() => _MapCornerIconButtonState();
 }
 
-class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
+class _MapCornerIconButtonState extends State<MapCornerIconButton> {
   bool _hovered = false;
   bool _pressed = false;
 
@@ -83,8 +90,8 @@ class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
           onTap: widget.onTap,
           onHighlightChanged: _handlePressed,
           child: AnimatedContainer(
-            duration: _MapCornerIconButton._animationDuration,
-            curve: _MapCornerIconButton._animationCurve,
+            duration: MapCornerIconButton._animationDuration,
+            curve: MapCornerIconButton._animationCurve,
             decoration: BoxDecoration(
               gradient: CtGradients.railButtonGradient,
               border: Border.all(color: _borderColor, width: 1),
@@ -113,7 +120,7 @@ class _MapCornerIconButtonState extends State<_MapCornerIconButton> {
     return IgnorePointer(
       ignoring: true,
       child: Opacity(
-        opacity: _MapCornerIconButton.disabledOpacity,
+        opacity: MapCornerIconButton.disabledOpacity,
         child: tooltipped,
       ),
     );

@@ -6,7 +6,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/game_screen_test_support.dart';
+import 'game_screen_test_support.dart';
 import 'panel_test_fixtures.dart';
 
 void main() {

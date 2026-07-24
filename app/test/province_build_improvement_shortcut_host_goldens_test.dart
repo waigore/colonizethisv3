@@ -28,7 +28,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 
 final MapTopology _goldenCombinedTopology = MapTopology(
   nodes: const [

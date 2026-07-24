@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_panel_slide_transition.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();

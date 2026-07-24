@@ -13,7 +13,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
 
 Widget _wrapPanel({

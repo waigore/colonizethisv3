@@ -1,4 +1,4 @@
-// Shared combat_ui_specs_part* frames (Refs #4013, #4035).
+// Shared combat_ui_specs_part* frames (Refs #4013, #4035 / #4117 slice F).
 
 import 'package:flutter/material.dart';
 

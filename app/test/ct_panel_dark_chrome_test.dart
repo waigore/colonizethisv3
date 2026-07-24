@@ -13,7 +13,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Widget _hostedPanel({
   Widget child = const SizedBox.shrink(),

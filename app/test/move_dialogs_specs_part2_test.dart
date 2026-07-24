@@ -17,7 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
-import 'support/move_dialogs_specs_test_support.dart';
+import 'move_dialogs_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();

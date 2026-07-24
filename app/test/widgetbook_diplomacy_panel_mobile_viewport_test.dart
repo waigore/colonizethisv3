@@ -28,7 +28,7 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
 import 'widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Representative Available 3-column cell width (~800 dp wide Production
 /// with side-by-side subpanels → ~120–130 dp slots).

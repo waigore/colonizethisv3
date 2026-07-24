@@ -28,8 +28,8 @@ import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/diplomacy_panel_test_support.dart';
+import 'app_shell_harness.dart';
+import 'diplomacy_panel_test_support.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 

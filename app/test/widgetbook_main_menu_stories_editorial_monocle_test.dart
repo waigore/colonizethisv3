@@ -18,9 +18,9 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_main_menu_collage.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 /// Normative inventory for issue #2860 S6 — renaming or removing a story
 /// must fail this list before reviewers lose a state × variant combination.

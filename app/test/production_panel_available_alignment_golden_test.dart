@@ -19,8 +19,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/production_panel_test_support.dart';
-import 'support/golden_capture_harness.dart';
+import 'production_panel_test_support.dart';
+import 'golden_capture_harness.dart';
 import 'widget_test_pumps.dart';
 
 Widget _tinyIcon(BuildContext context) => const SizedBox(

@@ -27,7 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 class _UiPathGameService extends GameService {
   _UiPathGameService(super.box, super.adapter);

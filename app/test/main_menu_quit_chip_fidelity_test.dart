@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 class _NoSavesGameService extends GameService {
   _NoSavesGameService(super.box, super.adapter);

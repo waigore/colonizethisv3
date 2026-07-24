@@ -1,4 +1,4 @@
-// Shared 320 dp dialog pump harness (Refs #4013 / #4058).
+// Shared 320 dp dialog pump harness (Refs #4013 / #4058 / #4117 slice F).
 // SPEC: SPEC/ui/mobile-adaptation.md § 7; SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_app/config/constants.dart';

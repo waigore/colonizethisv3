@@ -54,9 +54,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/game_fixture.dart';
-import 'support/golden_capture_harness.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
+import 'game_fixture.dart';
+import 'golden_capture_harness.dart';
 
 /// Canonical golden host viewport for the train dialogs (tall enough to render
 /// the header, resource bar, and the first unit rows without the scroll body

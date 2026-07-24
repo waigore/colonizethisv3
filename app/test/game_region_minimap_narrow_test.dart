@@ -30,7 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 const _kRegionMinimapIconAssetPath =
     'assets/icons/32/ui_icon_region_minimap.png';

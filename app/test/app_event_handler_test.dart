@@ -14,7 +14,7 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_resul
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/providers/turn_resolution_blocking_provider.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();

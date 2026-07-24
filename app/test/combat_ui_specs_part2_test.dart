@@ -14,7 +14,7 @@ import 'package:colonizethis_app/features/game/screens/combat/quick_battle_scree
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/combat_ui_specs_test_support.dart';
+import 'combat_ui_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();

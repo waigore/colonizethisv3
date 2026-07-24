@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_preview.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/research_slot_turn_preview_view.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Player _player({int treasury = 0, Map<String, bool>? techUnlocked}) {
   return Player(

@@ -31,8 +31,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/golden_capture_harness.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
+import 'golden_capture_harness.dart';
 
 void _noop() {}
 

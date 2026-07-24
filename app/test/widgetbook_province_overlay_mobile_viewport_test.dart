@@ -25,9 +25,9 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

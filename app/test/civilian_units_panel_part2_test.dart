@@ -13,8 +13,8 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_u
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show kWorkTargetBuildImprovement, kWorkTargetExplore;
 
-import 'support/app_shell_harness.dart';
-import 'support/civilian_units_panel_test_support.dart';
+import 'app_shell_harness.dart';
+import 'civilian_units_panel_test_support.dart';
 
 Unit? _firstIdleCivilian(Game game, String humanId) {
   final units = [

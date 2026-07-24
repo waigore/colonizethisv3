@@ -34,8 +34,8 @@ import 'package:colonizethis_app/features/game/widgets/dialogue/tribe_first_cont
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/golden_capture_harness.dart';
-import 'support/yarn_test_fixtures.dart';
+import 'golden_capture_harness.dart';
+import 'yarn_test_fixtures.dart';
 
 /// Minimal [Game] with two GPs and one minor nation, sufficient to drive the
 /// overture / intervention overlays through their phase-1 Yarn intro.

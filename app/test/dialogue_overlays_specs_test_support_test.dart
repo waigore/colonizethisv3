@@ -4,7 +4,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/dialogue_overlays_specs_test_support.dart';
+import 'dialogue_overlays_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -19,7 +19,7 @@ void main() {
 
   test('dialogueOverlaysLibraryUnitSource reads this support library', () {
     final source = dialogueOverlaysLibraryUnitSource(
-      'test/support/dialogue_overlays_specs_test_support.dart',
+      'test/dialogue_overlays_specs_test_support.dart',
     );
     expect(source, contains('wrapGameStartIntroOverlay'));
   });

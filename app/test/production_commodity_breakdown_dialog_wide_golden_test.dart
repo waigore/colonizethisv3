@@ -19,10 +19,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 
-import 'support/game_fixture.dart';
-import 'support/golden_capture_harness.dart';
-import 'support/map_view_fixture.dart';
-import 'support/tile_map_fixture.dart';
+import 'game_fixture.dart';
+import 'golden_capture_harness.dart';
+import 'map_view_fixture.dart';
+import 'tile_map_fixture.dart';
 
 void main() {
   suppressLogsForTests();

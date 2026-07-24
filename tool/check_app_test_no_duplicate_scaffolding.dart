@@ -12,7 +12,7 @@ import 'package:path/path.dart' as p;
 /// re-declared an identical private `_pump<Thing>AtSize(...)` helper that
 /// repeated the same `setSurfaceSize` + `MaterialApp(theme:
 /// AppThemes.editorialMonocle, home: MediaQuery(...))` viewport shell. That
-/// boilerplate now lives once in `app/test/support/min_viewport_harness.dart`
+/// boilerplate now lives once in `app/test/min_viewport_harness.dart`
 /// (`pumpAtMinViewport` / `buildMinViewportApp`). This gate keeps the
 /// duplication from creeping back into that family.
 ///
@@ -21,7 +21,9 @@ import 'package:path/path.dart' as p;
 /// distinct helpers elsewhere in `app/test/` (golden capture, mockup-fidelity,
 /// widgetbook viewport stories, main-menu responsive `pumpAtSize`, etc.) that
 /// also force a surface size and/or use the editorial theme for unrelated
-/// reasons. The shared harness under `app/test/support/` is always exempt.
+/// reasons. Canonical harness modules under `app/test/` (see
+/// `SPEC/program/repo-lint.md` § Approved app test harness modules) are exempt
+/// when scanned as governed families; `app/test/support/` holds JSON fixtures only.
 ///
 /// **Violations.** Inside a governed file, any of the following is flagged
 /// because it indicates a re-introduced bespoke viewport shell instead of the
@@ -173,12 +175,11 @@ int runCheckAppTestNoDuplicateScaffolding(
   logE(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
     'app/test/min_viewport_harness.dart (re-exported from '
-    'app/test/support/min_viewport_harness.dart). '
+    'app/test/min_viewport_harness.dart). '
     '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
-    'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
-    'Scaffold(body: Center(child: …))). '
+    'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart. '
     'Widgetbook: use findWidgetbookUseCase from '
-    'app/test/support/widgetbook_test_harness.dart. '
+    'app/test/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
     'app/test/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
@@ -673,7 +674,7 @@ class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
           _report(
             node.offset,
             'Scaffold(body: Center(...)) dialog-host clone; use '
-            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
           );
         }
       }
@@ -692,7 +693,7 @@ class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
           _report(
             node.methodName.offset,
             'Scaffold(body: Center(...)) dialog-host clone; use '
-            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
           );
         }
       }
@@ -947,7 +948,7 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
         'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
         'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer / '
         'buildAppShellMaterialApp / ctRegionMapTestHarness '
-        'from app/test/support/ (or app/test/ct_region_map_test_support.dart)',
+        'from app/test/ (or app/test/ct_region_map_test_support.dart)',
       );
     }
   }

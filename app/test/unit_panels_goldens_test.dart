@@ -28,10 +28,10 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/game_fixture.dart';
-import 'support/golden_capture_harness.dart';
-import 'support/map_view_fixture.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
+import 'game_fixture.dart';
+import 'golden_capture_harness.dart';
+import 'map_view_fixture.dart';
 
 /// Canonical golden host viewport for the unit panels (wide enough for the
 /// mockup row chrome without horizontal overflow at the panel constraint).

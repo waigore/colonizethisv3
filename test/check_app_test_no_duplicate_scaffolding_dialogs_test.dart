@@ -114,7 +114,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'production_labour_section_step_surface_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -226,7 +226,7 @@ Widget host() => MaterialApp(home: const Placeholder());
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(temp, 'train_naval_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -366,7 +366,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'production_commodity_breakdown_dialog_spec_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -819,7 +819,7 @@ Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
       temp,
       'choose_tech_dialog_320dp_min_viewport_test.dart',
       '''
-import 'support/dialogs_320dp_min_viewport_support.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
