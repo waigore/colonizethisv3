@@ -9,11 +9,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'turn_resolution_result_codec.dart';
-import 'turn_resolution_runner_isolate_listener.dart';
-import 'turn_resolution_runner_types.dart';
 import 'turn_resolution_worker_isolate.dart';
 
-export 'turn_resolution_runner_types.dart';
+part 'turn_resolution_runner_types.dart';
+part 'turn_resolution_runner_isolate_listener.dart';
 
 final _runnerLog = packageLogger('logic');
 
@@ -97,14 +96,13 @@ class TurnResolutionRunner {
 
     try {
       sub = receivePort.listen((dynamic message) {
-        handleTurnResolutionIsolateMessage(
+        _handleIsolateMessage(
           message: message,
           sessionId: sessionId,
           sessionStopwatch: sessionStopwatch,
           progressController: progressController,
           doneCompleter: doneCompleter,
           scheduleTearDownAfterPortMessage: scheduleTearDownAfterPortMessage,
-          inspectSuccessIsolateEnvelope: inspectSuccessIsolateEnvelope,
         );
       });
 

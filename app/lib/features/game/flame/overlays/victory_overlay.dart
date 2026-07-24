@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import '../../../../config/constants.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import '../../../../widgets/ct_gradients.dart';
 import '../../../../widgets/ct_full_screen_dialogue_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 
-import 'victory_overlay_panel.dart';
-
-export 'victory_overlay_panel.dart';
+part 'victory_overlay_panel.dart';
+part 'victory_overlay_panel_actions.dart';
+part 'victory_overlay_panel_corners.dart';
 
 /// Stateful overlay so "View final state" can hide the panel without a route (SPEC/game/victory.md).
 ///
