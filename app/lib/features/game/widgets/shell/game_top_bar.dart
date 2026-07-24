@@ -1,16 +1,9 @@
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../screens/game/game_screen_shared.dart'
-    show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
-
-part 'game_top_bar_hamburger.dart';
-part 'game_top_bar_layout.dart';
-part 'game_top_bar_pause_button.dart';
+import 'game_top_bar_layout.dart';
 
 /// In-game shell top bar: 36 px dark editorial-monocle chrome with a
 /// 3-line hamburger, centered turn display, optional observe banner,

@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 159 app/lib files still using part directives.
+// Generated grandfather allowlist: 151 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -83,14 +83,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/shell/game_map_players_bar.dart',
   'app/lib/features/game/widgets/shell/game_map_players_bar_chip.dart',
   'app/lib/features/game/widgets/shell/game_map_players_bar_chip_column.dart',
-  'app/lib/features/game/widgets/shell/game_tab_bar.dart',
-  'app/lib/features/game/widgets/shell/game_tab_bar_indicators.dart',
-  'app/lib/features/game/widgets/shell/game_tab_bar_region_tabs.dart',
-  'app/lib/features/game/widgets/shell/game_tab_bar_state.dart',
-  'app/lib/features/game/widgets/shell/game_top_bar.dart',
-  'app/lib/features/game/widgets/shell/game_top_bar_hamburger.dart',
-  'app/lib/features/game/widgets/shell/game_top_bar_layout.dart',
-  'app/lib/features/game/widgets/shell/game_top_bar_pause_button.dart',
   'app/lib/features/game/widgets/shell/player_turn_event_feed.dart',
   'app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart',
   'app/lib/features/game/widgets/shell/player_turn_event_feed_toggle.dart',
