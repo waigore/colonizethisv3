@@ -16,9 +16,7 @@ const String _diplomacyTestSupportLibRelativePath =
 
 /// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
 /// allowlist; remove entries as densify slices land.
-const List<String> diplomacyTestSupportFileSizeGrandfathered = <String>[
-  'packages/colonizethis_diplomacy_test_support/lib/src/evidence_rules_scenarios.dart',
-];
+const List<String> diplomacyTestSupportFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 

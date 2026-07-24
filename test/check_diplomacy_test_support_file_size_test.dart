@@ -40,7 +40,7 @@ void main() {
       expect(errors.join('\n'), contains('fat.dart'));
     });
 
-    test('ignores generated files and grandfathered hot files', () {
+    test('ignores generated files', () {
       final root = Directory.systemTemp.createTempSync(
         'diplomacy_support_size_gen',
       );
@@ -52,11 +52,6 @@ void main() {
       );
       _writeFile(
         root,
-        'packages/colonizethis_diplomacy_test_support/lib/src/evidence_rules_scenarios.dart',
-        List.generate(12, (i) => '// grandfathered $i').join('\n'),
-      );
-      _writeFile(
-        root,
         'packages/colonizethis_diplomacy_test_support/lib/src/ok.dart',
         '// small\n',
       );
@@ -65,9 +60,7 @@ void main() {
       final code = runCheckDiplomacyTestSupportFileSize(
         root.path,
         ceiling: 10,
-        grandfatheredPaths: const [
-          'packages/colonizethis_diplomacy_test_support/lib/src/evidence_rules_scenarios.dart',
-        ],
+        grandfatheredPaths: const [],
         info: logs.add,
         err: logs.add,
       );
