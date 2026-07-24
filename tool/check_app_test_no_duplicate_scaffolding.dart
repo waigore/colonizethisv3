@@ -179,7 +179,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/support/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
-    'app/test/support/trade_screen_test_support.dart. '
+    'app/test/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
     'civilian_units_panel_test_support.dart / '
     'military_units_panel_test_support.dart / '

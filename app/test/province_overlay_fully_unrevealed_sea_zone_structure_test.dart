@@ -30,7 +30,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Builds a fresh [RegionMapViewData] derived from [demoRegionForOverlay]
 /// with every sea cell forced to [TileVisibility.unrevealed] so the

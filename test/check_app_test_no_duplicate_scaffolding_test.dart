@@ -46,7 +46,7 @@ Future<void> _pumpFooScreenAtSize(WidgetTester tester, Size size) async {
 ''';
 
 const _kConsolidatedTradeHost = '''
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 void main() {
   testWidgets('renders trade', (tester) async {

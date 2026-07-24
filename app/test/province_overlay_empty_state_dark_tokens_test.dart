@@ -15,7 +15,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'province_overlay_dark_token_scenarios.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 List<Text> _emptyDashTextWidgets(WidgetTester tester) {
   return tester

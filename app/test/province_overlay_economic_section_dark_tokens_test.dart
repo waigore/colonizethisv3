@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 import 'province_overlay_dark_token_scenarios.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
 const _localProvinceId = 'pEconDarkTokens';

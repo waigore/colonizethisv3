@@ -31,7 +31,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Editorial shell via [buildProvinceOverlayDarkThemeShell] (Refs #4035 —
 /// no inline MaterialApp).

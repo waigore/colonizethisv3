@@ -23,7 +23,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
-import 'app_shell_harness.dart';
+import 'support/app_shell_harness.dart';
 
 /// Returns a province id (`regionId|localId`) owned by [ownerId] in the demo
 /// Old World. Province ids in the debug-init game are already prefixed.

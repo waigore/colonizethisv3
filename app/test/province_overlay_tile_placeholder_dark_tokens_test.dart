@@ -17,7 +17,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Text _tileSectionBodyText(WidgetTester tester, String data) {
   final tileLabel = find.byWidgetPredicate(

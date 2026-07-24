@@ -33,7 +33,7 @@ import 'package:hive/hive.dart';
 
 import 'support/app_shell_harness.dart';
 import 'panel_fixtures/trade.dart';
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 import 'trade_screen_e8_test_helpers.dart';
 import 'widget_test_pumps.dart';
 

@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay;
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Finder _textWhere(bool Function(String data) predicate) =>
     find.byWidgetPredicate((Widget w) => w is Text && predicate(w.data ?? ''));

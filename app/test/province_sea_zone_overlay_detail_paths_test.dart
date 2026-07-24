@@ -15,7 +15,7 @@ import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
 import 'support/game_fixture.dart';
 import 'support/map_view_fixture.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

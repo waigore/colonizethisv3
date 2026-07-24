@@ -20,7 +20,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
 import 'province_overlay_dark_token_scenarios.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Widget _overlay({
   required ThemeData theme,

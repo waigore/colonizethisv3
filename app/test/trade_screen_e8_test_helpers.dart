@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 const String kTradeE8HumanPlayerId = kTradeTestHumanPlayerId;
 
