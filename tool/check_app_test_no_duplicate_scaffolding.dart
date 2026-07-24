@@ -175,8 +175,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'app/test/min_viewport_harness.dart (re-exported from '
     'app/test/support/min_viewport_harness.dart). '
     '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
-    'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
-    'Scaffold(body: Center(child: …))). '
+    'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart. '
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
@@ -673,7 +672,7 @@ class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
           _report(
             node.offset,
             'Scaffold(body: Center(...)) dialog-host clone; use '
-            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
           );
         }
       }
@@ -692,7 +691,7 @@ class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
           _report(
             node.methodName.offset,
             'Scaffold(body: Center(...)) dialog-host clone; use '
-            'pumpDialogs320At from dialogs_320dp_min_viewport_support.dart',
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
           );
         }
       }
