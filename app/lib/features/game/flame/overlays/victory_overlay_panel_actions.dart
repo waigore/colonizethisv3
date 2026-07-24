@@ -1,49 +1,56 @@
-part of 'victory_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _VictoryPanelActions on VictoryPanel {
-  Widget buildActionRow(
-    BuildContext context,
-    AppLocalizations l10n, {
-    required bool narrow,
-  }) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle? secondaryButtonStyle = theme.textTheme.titleSmall?.copyWith(
-      color: EditorialMonoclePalette.muted,
-    );
-    final Widget primary = CtNinePatchButton(
-      onPressed: () => bus.emit(const ct_models.NavigateToShellEvent()),
-      child: Text(l10n.victory_returnToMainMenu),
-    );
-    final Widget secondary = CtNinePatchButton(
-      onPressed: () {
-        onViewFinalState?.call();
-      },
-      child: Text(
-        l10n.victory_viewFinalState,
-        style: secondaryButtonStyle,
-      ),
-    );
-    if (narrow) {
-      // SPEC/ui/victory-overlay.md § Narrow viewport: stacked vertical Column
-      // mirroring the mockup's `flex-wrap:wrap` + `min-width:clamp(120,...)`
-      // collapse to a single column at narrow widths.
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          primary,
-          const SizedBox(height: 8),
-          secondary,
-        ],
-      );
-    }
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 12,
-      runSpacing: 8,
-      children: <Widget>[primary, secondary],
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+
+import 'victory_overlay_panel.dart';
+
+Widget buildVictoryPanelActionRow(
+  VictoryPanel panel,
+  BuildContext context,
+  AppLocalizations l10n, {
+  required bool narrow,
+}) {
+  final ThemeData theme = Theme.of(context);
+  final TextStyle? secondaryButtonStyle = theme.textTheme.titleSmall?.copyWith(
+    color: EditorialMonoclePalette.muted,
+  );
+  final Widget primary = CtNinePatchButton(
+    onPressed: () => panel.bus.emit(const ct_models.NavigateToShellEvent()),
+    child: Text(l10n.victory_returnToMainMenu),
+  );
+  final Widget secondary = CtNinePatchButton(
+    onPressed: () {
+      panel.onViewFinalState?.call();
+    },
+    child: Text(
+      l10n.victory_viewFinalState,
+      style: secondaryButtonStyle,
+    ),
+  );
+  if (narrow) {
+    // SPEC/ui/victory-overlay.md § Narrow viewport: stacked vertical Column
+    // mirroring the mockup's `flex-wrap:wrap` + `min-width:clamp(120,...)`
+    // collapse to a single column at narrow widths.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        primary,
+        const SizedBox(height: 8),
+        secondary,
+      ],
     );
   }
+  return Wrap(
+    alignment: WrapAlignment.center,
+    spacing: 12,
+    runSpacing: 8,
+    children: <Widget>[primary, secondary],
+  );
 }
 
 /// Three-glyph laurel decoration sitting above the victory-type label. Uses
@@ -53,8 +60,8 @@ extension _VictoryPanelActions on VictoryPanel {
 /// [VictoryPanel.laurelFontSizeWide] otherwise. SPEC/ui/victory-overlay.md
 /// § Narrow viewport pins both values (lower-bound of the mockup's
 /// `clamp(24px,5vw,36px)` for narrow; default for wide).
-class _VictoryLaurelRow extends StatelessWidget {
-  const _VictoryLaurelRow({required this.narrow});
+class VictoryLaurelRow extends StatelessWidget {
+  const VictoryLaurelRow({required this.narrow, super.key});
 
   final bool narrow;
 
