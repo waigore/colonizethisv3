@@ -16,11 +16,8 @@ const int diplomacyLibFileSizeCeiling = 400;
 const String _diplomacyLibRelativePath = 'packages/colonizethis_diplomacy/lib';
 
 /// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land.
-const List<String> diplomacyLibFileSizeGrandfathered = <String>[
-  'packages/colonizethis_diplomacy/lib/src/diplomacy/faction_absorption_engine.dart',
-  'packages/colonizethis_diplomacy/lib/src/diplomacy/war_resolver.dart',
-];
+/// allowlist; remove entries as splits land. Cleared after slice F (#4130).
+const List<String> diplomacyLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
