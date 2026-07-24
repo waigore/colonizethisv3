@@ -1,7 +1,5 @@
 // Move fleet dialog. SPEC/ui/move-fleet-dialog.md, SPEC/program/app-ui-wiring.md.
 
-library;
-
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -15,12 +13,8 @@ import '../../../../config/ui_screen_ids.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
-import '../../flame/map_state/map_location_resolver.dart';
-import '../province_overlay/sea_zone_name_resolver.dart';
-import '../units/shared/region_labels.dart';
+import 'move_fleet_dialog_picks.dart';
 import 'move_units_dialog_base.dart';
-
-part 'move_fleet_dialog_picks.dart';
 
 class MoveFleetDialog extends StatefulWidget {
   const MoveFleetDialog({
@@ -46,8 +40,8 @@ class MoveFleetDialog extends StatefulWidget {
 }
 
 class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
-  late final List<_MovePick> _picks;
-  _MovePick? _selected;
+  late final List<MoveFleetPick> _picks;
+  MoveFleetPick? _selected;
   var _picksInitialized = false;
 
   @override
@@ -55,7 +49,7 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
     super.didChangeDependencies();
     if (_picksInitialized) return;
     final l10n = appL10n(context);
-    _picks = _buildNavalMovePicks(
+    _picks = buildNavalMovePicks(
       game: widget.game,
       topology: widget.topology,
       humanPlayerId: widget.humanPlayerId,
@@ -69,7 +63,7 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
   @override
   String get moveDialogTitle {
     final l10n = appL10n(context);
-    final fleetLabel = _fleetMoveDialogTitleLabel(widget.fleet);
+    final fleetLabel = fleetMoveDialogTitleLabel(widget.fleet);
     return _picks.isEmpty
         ? l10n.moveFleet_title(fleetLabel)
         : l10n.moveFleet_titleWithDestinations(fleetLabel, _picks.length);
@@ -107,8 +101,8 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
   @override
   Widget buildMoveDialogDestinations(BuildContext context) {
     final l10n = appL10n(context);
-    final seaPicks = _picks.whereType<_PickSeaZone>().toList();
-    final portPicks = _picks.whereType<_PickPort>().toList();
+    final seaPicks = _picks.whereType<MoveFleetPickSeaZone>().toList();
+    final portPicks = _picks.whereType<MoveFleetPickPort>().toList();
 
     final moveColumns = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -139,7 +133,7 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
         : moveColumns;
   }
 
-  Widget _row(_MovePick pick, int index) {
+  Widget _row(MoveFleetPick pick, int index) {
     final bool selected = identical(pick, _selected);
     final row = MoveDialogDestinationRow(
       // Deterministic per-row key (CT_E2E only) so fleet-reach e2e helpers can
@@ -165,7 +159,7 @@ class _MoveFleetDialogState extends MoveUnitsDialogState<MoveFleetDialog> {
     // progress toward the New World warp rather than the alphabetically-first
     // row. Wrapping in a `KeyedSubtree` keeps the inner row's positional key
     // (and rendered chrome) unchanged (Refs #2336 AC6/AC7).
-    if (kCtE2EEnabled && pick is _PickSeaZone) {
+    if (kCtE2EEnabled && pick is MoveFleetPickSeaZone) {
       return KeyedSubtree(
         key: kCtE2EMoveFleetDestinationSeaZoneRowKey(pick.seaZoneId),
         child: row,
