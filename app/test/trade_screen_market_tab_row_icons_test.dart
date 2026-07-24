@@ -38,7 +38,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 void main() {
   suppressLogsForTests();

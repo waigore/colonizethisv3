@@ -5,7 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'golden_capture_harness.dart';
+import 'support/golden_capture_harness.dart';
 
 void main() {
   suppressLogsForTests();

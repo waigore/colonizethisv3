@@ -26,7 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Returns the `Text` widget whose `data` starts with [prefix] (e.g.
 /// `Coordinates: `, `Terrain: `, `Civilian units (province): `). The Tile

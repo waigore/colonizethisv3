@@ -40,7 +40,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 
 import 'support/min_viewport_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 const Map<String, List<int>> _kPennantGoldenColorOverride = {
   'gp1': [200, 40, 40],

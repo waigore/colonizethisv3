@@ -20,7 +20,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
     show kProvinceOverlayTileInlineActionDisabledAlpha;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Color _expectedDisabledIconColor() {
   return EditorialMonoclePalette.muted.withValues(

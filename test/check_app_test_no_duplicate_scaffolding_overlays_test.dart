@@ -871,7 +871,7 @@ void main() {
         temp,
         'province_overlay_sea_zone_political_dark_tokens_test.dart',
         '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -889,7 +889,7 @@ void main() {
         temp,
         'province_overlay_obfuscated_body_dark_tokens_test.dart',
         '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -907,7 +907,7 @@ void main() {
         temp,
         'province_overlay_economic_row_order_coords_test.dart',
         '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -922,7 +922,7 @@ void main() {
 ''',
       );
       _writeGovernedFile(temp, 'province_overlay_economic_hover_test.dart', '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -936,7 +936,7 @@ void main() {
 }
 ''');
       _writeGovernedFile(temp, 'province_overlay_road_rail_transport_test.dart', '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -984,7 +984,7 @@ void main() {
         temp,
         'province_sea_zone_overlay_detail_paths_test.dart',
         '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -1002,7 +1002,7 @@ void main() {
         temp,
         'province_sea_zone_overlay_naval_port_pending_omission_test.dart',
         '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -1017,7 +1017,7 @@ void main() {
 ''',
       );
       _writeGovernedFile(temp, 'province_sea_zone_resource_labels_test.dart', '''
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {

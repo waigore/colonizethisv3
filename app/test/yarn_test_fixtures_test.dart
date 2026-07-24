@@ -3,7 +3,7 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'yarn_test_fixtures.dart';
+import 'support/yarn_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

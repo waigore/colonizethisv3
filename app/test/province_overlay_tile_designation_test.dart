@@ -37,7 +37,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Sentinel capital tile that never coincides with a real demo tile, used to
 /// force every faction's capital away from the tile under test so the town /

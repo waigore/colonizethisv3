@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 
-import 'new_game_leader_selection_dialog_test_support.dart';
+import 'support/new_game_leader_selection_dialog_test_support.dart';
 
 void main() {
   suppressLogsForTests();

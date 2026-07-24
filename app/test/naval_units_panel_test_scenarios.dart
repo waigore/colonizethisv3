@@ -1,5 +1,6 @@
-// Naval units-panel scenario Game factories and fleet topology helpers (Refs #4048).
-// Host/pump/wire helpers stay in naval_units_panel_test_support.dart.
+// Naval units-panel scenario Game factories and fleet topology helpers (Refs #4048, #4117).
+// Lives outside `app/test/support/` so scenario tables do not count toward the
+// support LOC ratchet. Host/pump/wire helpers stay in naval_units_panel_test_support.dart.
 // SPEC: SPEC/ui/naval-units-panel.md; SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart'

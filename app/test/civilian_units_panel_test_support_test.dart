@@ -5,8 +5,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'civilian_units_panel_test_support.dart';
-import 'units_panel_test_shared.dart';
+import 'support/civilian_units_panel_test_support.dart';
+import 'support/units_panel_test_shared.dart';
 
 void main() {
   test('buildCivilianExplorerBuilderShortcutGame places explorer+builder', () {

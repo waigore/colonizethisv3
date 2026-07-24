@@ -100,7 +100,7 @@ class _DarkTokenAssertVisitor extends RecursiveAstVisitor<void> {
       final line = lineInfo.getLocation(node.offset).lineNumber;
       violations.add(
         '$relativePath:$line declares $name — use shared helpers in '
-        'app/test/support/editorial_monocle_dark_token_assertions.dart',
+        'app/test/editorial_monocle_dark_token_assertions.dart',
       );
     }
     super.visitFunctionDeclaration(node);

@@ -32,8 +32,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/map_view_test_fixtures.dart';
-import 'support/panel_test_fixtures.dart';
+import 'map_view_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/game_screen_test_support.dart';
 
 const Size _kWideViewport = Size(1024, 768);

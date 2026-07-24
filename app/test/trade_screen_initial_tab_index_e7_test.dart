@@ -28,7 +28,7 @@ import 'package:widgetbook/widgetbook.dart'
     show WidgetbookFolder, WidgetbookUseCase;
 
 import 'support/app_shell_harness.dart';
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 void main() {
   suppressLogsForTests();

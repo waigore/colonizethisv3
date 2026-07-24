@@ -172,14 +172,15 @@ int runCheckAppTestNoDuplicateScaffolding(
   }
   logE(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
-    'app/test/support/min_viewport_harness.dart. '
+    'app/test/min_viewport_harness.dart (re-exported from '
+    'app/test/support/min_viewport_harness.dart). '
     '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
     'dialogs_320dp_min_viewport_support.dart (do not reintroduce '
     'Scaffold(body: Center(child: …))). '
     'Widgetbook: use findWidgetbookUseCase from '
     'app/test/support/widgetbook_test_harness.dart. '
     'Trade: use buildTradeTestGame / pumpTradeScreen* from '
-    'app/test/support/trade_screen_test_support.dart. '
+    'app/test/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
     'civilian_units_panel_test_support.dart / '
     'military_units_panel_test_support.dart / '
@@ -195,7 +196,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'buildMilitaryPanel / buildTechnologyPanel / '
     'buildAppShell (no inline MaterialApp). '
     'Debug handler suites: use buildDebugHandler* from '
-    'app/test/support/debug_handler_test_fixtures.dart '
+    'app/test/debug_handler_test_fixtures.dart '
     '(no private _gameWithCapital / _gameWithPlayer / _gameWith / _buildGame).',
   );
   return 1;
@@ -969,7 +970,7 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
 
 /// Flags private capital/empty Game factory reintroductions in debug-handler
 /// suites (Refs #4048). Canonical APIs live in
-/// `app/test/support/debug_handler_test_fixtures.dart`.
+/// `app/test/debug_handler_test_fixtures.dart`.
 class _DebugHandlerLocalGameFactoryVisitor extends RecursiveAstVisitor<void> {
   _DebugHandlerLocalGameFactoryVisitor({
     required this.relativePath,

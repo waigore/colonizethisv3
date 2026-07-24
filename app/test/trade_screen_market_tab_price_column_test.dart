@@ -13,7 +13,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 const Size _kMinViewport = Size(kMinViewportWidth, 640);
 

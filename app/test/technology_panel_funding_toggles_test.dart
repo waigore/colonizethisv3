@@ -11,7 +11,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_slot_funding_toggles.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 import 'support/technology_panel_test_support.dart';
 
 void main() {

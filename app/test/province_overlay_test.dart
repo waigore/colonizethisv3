@@ -18,7 +18,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 CellViewData _copyCell(
   CellViewData c, {

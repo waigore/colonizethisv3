@@ -26,7 +26,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Builds the overlay with the Tile section inline actions shown and a
 /// configurable enabled state plus tap-recording callbacks. Editorial shell

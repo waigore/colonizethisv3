@@ -10,7 +10,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widg
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 const _fbGather = 'Improves gathering capabilities';
 const _fbLabourEcon = 'Improves labour and economy output';

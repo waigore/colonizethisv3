@@ -11,7 +11,7 @@ import 'package:path/path.dart' as p;
 /// Surface sizing (`tester.view.physicalSize = …`) and private `_pumpBuilt`
 /// bounded-flush helpers previously reappeared in every `*golden*_test.dart` /
 /// `*_goldens_test.dart` file. Canonical helpers live in
-/// `app/test/support/golden_capture_harness.dart` (`configureGoldenView`,
+/// `app/test/golden_capture_harness.dart` (`configureGoldenView`,
 /// `pumpForGolden`, `pumpGoldenHost`) and
 /// `app/test/support/diplomacy_panel_test_support.dart`
 /// (`pumpDiplomacyPanelBuilt`).
@@ -72,7 +72,7 @@ int runCheckAppTestNoDuplicateGoldenHost(
   }
   logE(
     '   Use configureGoldenView / pumpGoldenHost / pumpForGolden from '
-    'app/test/support/golden_capture_harness.dart (or '
+    'app/test/golden_capture_harness.dart (or '
     'pumpDiplomacyPanelBuilt for diplomacy bounded flushes).',
   );
   return 1;
