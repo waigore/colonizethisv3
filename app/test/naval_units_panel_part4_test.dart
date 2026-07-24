@@ -18,7 +18,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'support/app_shell_harness.dart';
 import 'support/naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 (AppEventBus bus, List<ClosePanelEvent> events) _wireCloseCapture() {
   final events = <ClosePanelEvent>[];

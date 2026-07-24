@@ -54,7 +54,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/min_viewport_harness.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the

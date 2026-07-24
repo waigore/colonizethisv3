@@ -47,7 +47,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'support/production_panel_test_support.dart';
 import 'support/min_viewport_harness.dart';
 import 'panel_test_fixtures.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the

@@ -5,7 +5,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/naval_units_panel_test_support.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 void main() {
   suppressLogsForTests();

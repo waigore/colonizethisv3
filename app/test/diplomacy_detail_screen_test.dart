@@ -18,7 +18,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/app_shell_harness.dart';
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 
 const _humanId = 'gp1';
 const _otherId = 'gp2';

@@ -28,7 +28,7 @@ import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
-import 'support/widget_test_assets.dart';
+import 'widget_test_assets.dart';
 import 'support/widgetbook_test_harness.dart';
 
 
