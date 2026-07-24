@@ -8,10 +8,6 @@ import 'ct_dialogue_view.dart';
 import 'tribe_first_contact_overlay.dart';
 import 'yarn_dialogue_bootstrap.dart';
 
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
-CtDialogueView createTribeFirstContactDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
-
 /// Yarn node id for the tribe-first-contact herald asset.
 const String kTribeFirstContactNode = 'tribe_first_contact';
 

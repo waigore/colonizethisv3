@@ -9,10 +9,6 @@ import 'ct_dialogue_view.dart';
 import 'game_start_intro_overlay.dart';
 import 'yarn_dialogue_bootstrap.dart';
 
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
-CtDialogueView createGameStartIntroDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
-
 /// Yarn node id for the game-start intro dialogue asset.
 const String kGameStartIntroNode = 'game_start_intro';
 

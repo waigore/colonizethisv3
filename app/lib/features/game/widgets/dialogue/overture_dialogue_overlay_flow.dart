@@ -11,10 +11,6 @@ import 'ct_dialogue_view.dart';
 import 'overture_dialogue_overlay.dart';
 import 'yarn_dialogue_bootstrap.dart';
 
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
-CtDialogueView createOvertureDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
-
 mixin OvertureDialogueOverlayFlow on State<OvertureDialogueOverlay> {
   bool get overtureIntroDone;
   set overtureIntroDone(bool value);

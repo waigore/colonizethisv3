@@ -5,9 +5,23 @@ import 'package:flutter/services.dart';
 
 import 'package:colonizethis_app/package_logger.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';
+import 'ct_dialogue_line_choice_body.dart';
+import 'ct_dialogue_view.dart';
 import 'game_start_intro_overlay_state.dart';
 
 export 'game_start_intro_overlay_state.dart';
+
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878, #4013).
+CtDialogueView createGameStartIntroDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
+
+// Static adoption anchor for `repo.dialogue_blocking_combined_step` (Refs #3628):
+// real line/choice rendering delegates via [GameStartIntroOverlayBuild].
+Widget _gameStartIntroDialogueBodyAdoptionAnchor(
+  CtDialogueView view,
+  String continueLabel,
+) =>
+    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
 
 /// Spinner while intro dialogue lines are not yet available.
 ///

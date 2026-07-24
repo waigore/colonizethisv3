@@ -16,10 +16,6 @@ import 'ct_dialogue_view.dart';
 import 'intervention_dialogue_overlay.dart';
 import 'yarn_dialogue_bootstrap.dart';
 
-/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
-CtDialogueView createInterventionDialogueView(CtLogger log) =>
-    CtDialogueView(logger: log);
-
 mixin InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
   YarnProject? get interventionProject;
   set interventionProject(YarnProject? value);

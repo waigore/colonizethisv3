@@ -4,6 +4,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:colonizethis_app/package_logger.dart';
+import 'ct_dialogue_line_choice_body.dart';
+import 'ct_dialogue_view.dart';
 import 'intervention_dialogue_overlay_state.dart';
 
 export 'intervention_dialogue_overlay_flow.dart'
@@ -13,6 +16,18 @@ export 'intervention_dialogue_overlay_shell.dart'
         kInterventionOverlayBrassDividerKey,
         kInterventionOverlayTitleKey;
 export 'intervention_dialogue_overlay_state.dart';
+
+/// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
+CtDialogueView createInterventionDialogueView(CtLogger log) =>
+    CtDialogueView(logger: log);
+
+// Static adoption anchor for `repo.dialogue_blocking_combined_step` (Refs #3628):
+// real line/choice rendering delegates via [InterventionDialogueOverlayState].
+Widget _interventionDialogueBodyAdoptionAnchor(
+  CtDialogueView view,
+  String continueLabel,
+) =>
+    CtDialogueLineChoiceBody(view: view, continueLabel: continueLabel);
 
 /// Blocking intervention dialogue: Yarn intro, per-prompt situation + reaction, three choices.
 /// SPEC/ui/screens/pending-intervention-overlay.md, SPEC/ai/dialogue-content-and-yarn.md.
