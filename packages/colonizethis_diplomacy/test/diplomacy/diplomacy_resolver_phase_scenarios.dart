@@ -7,6 +7,9 @@ import 'package:colonizethis_world/src/game_player_lookup.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+import 'diplomacy_phase_scenarios.dart';
+
 class DiplomacyPhaseScenario {
   const DiplomacyPhaseScenario({required this.label, required this.run});
 

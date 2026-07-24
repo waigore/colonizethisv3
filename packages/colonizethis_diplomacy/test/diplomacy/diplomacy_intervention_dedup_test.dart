@@ -4,6 +4,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+
 /// Regression coverage for the O(1) intervention-choice lookup (Refs #3419 step
 /// 6). When one aggressor declares war on two Minors in the same turn and an AI
 /// GP is invested in both, that GP must record exactly one intervention choice
