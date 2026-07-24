@@ -1,4 +1,13 @@
-part of 'province_detail_overlay_host_support.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../core/services/game_service/game_service.dart'
+    show GameMapData;
+import '../../../../core/services/game_service/try_get_game_map_data.dart'
+    show tryGetGameMapData;
+import '../../../../providers/map_province_panel_provider.dart'
+    show MapProvincePanelNotifier;
+import 'province_detail_overlay_host_support_types.dart'
+    show ProvinceDetailHostOverlayArgs;
 
 /// Shared map-data load + highlight/close/bus args for both province-detail
 /// hosts (wide side panel and narrow bottom sheet).
