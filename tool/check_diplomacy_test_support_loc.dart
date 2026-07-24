@@ -12,7 +12,7 @@ const String diplomacyTestSupportRelativeDir =
 
 /// Ratchet ceiling for support physical LOC. Wave-5 densify (Refs #4130)
 /// measured post-slice-E total.
-const int diplomacyTestSupportLocCeiling = 2324;
+const int diplomacyTestSupportLocCeiling = 1084;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countDiplomacyTestSupportPhysicalLoc(Directory dir) {

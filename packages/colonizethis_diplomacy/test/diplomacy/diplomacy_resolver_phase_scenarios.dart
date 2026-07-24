@@ -1,15 +1,12 @@
-// Table-driven resolveDiplomacyPhase scenarios (Refs #3837 / #4028).
+// Table-driven resolveDiplomacyPhase scenarios (Refs #3837 / #4028 / #4130).
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/src/game_player_lookup.dart';
 
-import 'diplomacy_game_fixtures.dart';
-import 'diplomacy_phase_scenarios.dart';
-import 'diplomacy_resolver_phase_test_support.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
-/// One phase-resolver integration row with preserved [label].
 class DiplomacyPhaseScenario {
   const DiplomacyPhaseScenario({required this.label, required this.run});
 
