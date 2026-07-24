@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 198 app/lib files still using part directives.
+// Generated grandfather allowlist: 190 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -80,14 +80,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/production/production_labour_section.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row.dart',
   'app/lib/features/game/widgets/production/production_labour_section_tier_row_controls.dart',
-  'app/lib/features/game/widgets/production/production_panel.dart',
-  'app/lib/features/game/widgets/production/production_panel_constants.dart',
-  'app/lib/features/game/widgets/production/production_panel_layouts.dart',
-  'app/lib/features/game/widgets/production/production_panel_support_allocation.dart',
-  'app/lib/features/game/widgets/production/production_panel_support_allocation_rows.dart',
-  'app/lib/features/game/widgets/production/production_panel_support_allocation_summary.dart',
-  'app/lib/features/game/widgets/production/production_panel_support_available.dart',
-  'app/lib/features/game/widgets/production/production_panel_support_available_sections.dart',
   'app/lib/features/game/widgets/shell/game_map_players_bar.dart',
   'app/lib/features/game/widgets/shell/game_map_players_bar_chip.dart',
   'app/lib/features/game/widgets/shell/game_map_players_bar_chip_column.dart',
