@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 256 app/lib files still using part directives.
+// Generated grandfather allowlist: 248 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -12,14 +12,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/debug_command_helpers_game.dart',
   'app/lib/core/services/debug/debug_command_helpers_guards.dart',
   'app/lib/core/services/debug/debug_command_helpers_messages.dart',
-  'app/lib/features/game/flame/controls/game_map_corner_controls.dart',
-  'app/lib/features/game/flame/controls/game_map_corner_controls_button.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail_button.dart',
-  'app/lib/features/game/flame/controls/game_map_empire_left_rail_buttons.dart',
-  'app/lib/features/game/flame/controls/game_side_menu.dart',
-  'app/lib/features/game/flame/controls/game_side_menu_panel.dart',
-  'app/lib/features/game/flame/controls/game_side_menu_scrim.dart',
   'app/lib/features/game/flame/map_state/game_map_area.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build.dart',
   'app/lib/features/game/flame/map_state/game_map_area_build_map_stack.dart',

@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/app_assets.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/strict_asset_icon.dart';
 import '../../screens/game/game_screen_shared.dart';
 
-part 'game_map_corner_controls_button.dart';
+import 'game_map_corner_controls_button.dart';
 
 /// Bottom-left horizontal row of map tool buttons for the in-game map.
 ///
@@ -75,7 +72,7 @@ class GameMapCornerControls extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MapCornerIconButton(
+        MapCornerIconButton(
           buttonKey: kBaseLayerCycleButtonKey,
           tooltip: l10n.mapCorner_tooltipBaseLayer,
           onTap: onCycleBaseLayerDisplayMode,
@@ -83,7 +80,7 @@ class GameMapCornerControls extends StatelessWidget {
           narrow: narrow,
         ),
         SizedBox(width: gapWidth),
-        _MapCornerIconButton(
+        MapCornerIconButton(
           buttonKey: kHomeToCapitalButtonKey,
           tooltip: l10n.mapCorner_tooltipCenterCapital,
           onTap: homeToCapitalEnabled ? onCenterOnHomeCapital : null,
@@ -91,7 +88,7 @@ class GameMapCornerControls extends StatelessWidget {
           narrow: narrow,
         ),
         SizedBox(width: gapWidth),
-        _MapCornerIconButton(
+        MapCornerIconButton(
           buttonKey: kMapDisplayOptionsButtonKey,
           tooltip: l10n.mapCorner_tooltipMapDisplayOptions,
           onTap: onOpenMapDisplayOptions,
