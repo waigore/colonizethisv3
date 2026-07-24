@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 267 app/lib files still using part directives.
+// Generated grandfather allowlist: 264 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/config/themes.dart',
@@ -16,9 +16,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/debug_command_helpers_game.dart',
   'app/lib/core/services/debug/debug_command_helpers_guards.dart',
   'app/lib/core/services/debug/debug_command_helpers_messages.dart',
-  'app/lib/core/services/turn_resolution/turn_resolution_runner.dart',
-  'app/lib/core/services/turn_resolution/turn_resolution_runner_isolate_listener.dart',
-  'app/lib/core/services/turn_resolution/turn_resolution_runner_types.dart',
   'app/lib/features/game/flame/controls/game_map_corner_controls.dart',
   'app/lib/features/game/flame/controls/game_map_corner_controls_button.dart',
   'app/lib/features/game/flame/controls/game_map_empire_left_rail.dart',
