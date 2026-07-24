@@ -1,4 +1,4 @@
-// Generated grandfather allowlist: 214 app/lib files still using part directives.
+// Generated grandfather allowlist: 206 app/lib files still using part directives.
 // Shrink-only: remove entries as de-part slices land (Refs #4117).
 const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/core/services/debug/app_event_handler_debug_flip_province.dart',
@@ -165,14 +165,6 @@ const List<String> appNoPartDirectivesGrandfatheredForTests = <String>[
   'app/lib/features/game/widgets/units/naval/naval_units_panel_support_home_transfer.dart',
   'app/lib/features/game/widgets/units/shared/units_entity_action_row.dart',
   'app/lib/features/game/widgets/units/shared/units_entity_action_row_actions.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_setup_fields_footer.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_setup_fields_header.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_setup_fields_options.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_slot_row.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_slot_row_pickers.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_slots.dart',
-  'app/lib/features/shell/new_game_leader_selection_dialog_state_base.dart',
   'app/lib/features/shell/new_game_setup_flow.dart',
   'app/lib/features/shell/new_game_setup_flow_dialogs_error.dart',
   'app/lib/features/shell/new_game_setup_flow_dialogs_progress.dart',
