@@ -1,6 +1,6 @@
 // Shared widget-test scaffolding for the `NavalUnitsPanel` test family
 // (Refs #3730, #4048). Host, pump, wire, and locate helpers.
-// Scenario Games: naval_units_panel_test_scenarios.dart.
+// Scenario Games: ../naval_units_panel_test_scenarios.dart (outside support LOC tree).
 //
 // SPEC: SPEC/ui/naval-units-panel.md; SPEC/program/repo-lint.md.
 
@@ -21,7 +21,7 @@ import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_p
 
 import 'app_shell_harness.dart';
 
-export 'naval_units_panel_test_scenarios.dart';
+export '../naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
 
 /// Mirrors the running shell's handling of [NavalSplitFleetRequestedEvent] for

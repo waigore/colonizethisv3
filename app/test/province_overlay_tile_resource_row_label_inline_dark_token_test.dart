@@ -13,7 +13,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/province_overlay_dark_token_scenarios.dart';
+import 'province_overlay_dark_token_scenarios.dart';
 import 'support/app_shell_harness.dart';
 import 'support/province_overlay_test_harness.dart';
 

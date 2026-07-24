@@ -1,5 +1,6 @@
-// Naval units-panel scenario Game factories and fleet topology helpers (Refs #4048).
-// Host/pump/wire helpers stay in naval_units_panel_test_support.dart.
+// Naval units-panel scenario Game factories and fleet topology helpers (Refs #4048, #4117).
+// Lives outside `app/test/support/` so scenario tables do not count toward the
+// support LOC ratchet. Host/pump/wire helpers stay in naval_units_panel_test_support.dart.
 // SPEC: SPEC/ui/naval-units-panel.md; SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart'
@@ -7,7 +8,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'panel_test_fixtures.dart';
+import 'support/panel_test_fixtures.dart';
 
 /// Home-fleet-only game for part1 default assertions (single Split tooltip).
 /// Refs #3656: lightweight fixture replaces procedural map generation.

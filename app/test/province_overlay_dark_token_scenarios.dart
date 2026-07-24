@@ -1,5 +1,7 @@
 // Shared Game / RegionMapViewData scenario mutators for ProvinceSeaZoneDetailOverlay
-// dark-token suites. Refs #4013.
+// dark-token suites (Refs #4013, #4117).
+// Lives outside `app/test/support/` so scenario tables do not count toward the
+// support LOC ratchet.
 
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;

@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/province_overlay_dark_token_scenarios.dart';
+import 'province_overlay_dark_token_scenarios.dart';
 import 'support/province_overlay_test_harness.dart';
 
 const _regionId = 'oldWorld';
