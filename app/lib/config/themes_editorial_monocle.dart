@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-
-import 'themes_font_preload.dart';
+part of 'themes.dart';
 
 /// Editorial-monocle dark theme: SPEC/ui/pixel-art-ui-catalog.md
 /// § Editorial-monocle palette. Tokens resolve via
@@ -20,7 +16,7 @@ import 'themes_font_preload.dart';
 /// font bytes are verified and registered once at app startup via
 /// [preloadEditorialMonocleFonts]; production bootstrap awaits that call
 /// and hard-errors when bundled Cinzel cannot be loaded.
-ThemeData buildEditorialMonocleTheme() {
+ThemeData _buildEditorialMonocleTheme() {
   final Color bg = EditorialMonoclePalette.bg;
   final Color surface = EditorialMonoclePalette.surface;
   final Color surfaceLite = EditorialMonoclePalette.surfaceLite;

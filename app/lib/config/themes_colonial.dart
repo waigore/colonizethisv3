@@ -1,12 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-const Color darkWood = Color(0xFF5D3A1A);
+part of 'themes.dart';
 
 /// Colonial theme per UXD 02: parchment, colonial brown, dark wood, gold/brass, iron.
 /// Used for main menu mockups and Widgetbook. Uses platform text theme with colonial
 /// colors.
-ThemeData buildColonialTheme() {
+ThemeData _buildColonialTheme() {
   const Color parchment = Color(0xFFF5F5DC);
   const Color colonialBrown = Color(0xFF8B4513);
   const Color goldBrass = Color(0xFFC9A227);
@@ -59,8 +56,8 @@ ThemeData buildColonialTheme() {
 
 /// Colonial theme with serif font (Cinzel) for pixel-art main menu. SPEC/ui/main-menu.md.
 /// Pixel font to be defined later; serif keeps basic colonial theme.
-ThemeData buildColonialPixelArtTheme() {
-  final ThemeData base = buildColonialTheme();
+ThemeData _buildColonialPixelArtTheme() {
+  final ThemeData base = _buildColonialTheme();
   final TextTheme baseText = base.textTheme;
   return base.copyWith(
     textTheme: baseText.copyWith(
