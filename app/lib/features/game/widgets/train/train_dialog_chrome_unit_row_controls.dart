@@ -1,4 +1,10 @@
-part of 'train_dialog_chrome.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
 
 /// `[−] count [+]` stepper control shared by all three train-dialog unit rows.
 ///

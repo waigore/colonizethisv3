@@ -1,4 +1,7 @@
-part of 'player_turn_event_feed.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'player_turn_event_feed_toggle.dart';
 
 /// Monochrome newspaper glyph painted as a small vector so it tints via a
 /// single `currentColor`-style [color] (mockup `.news-toggle svg`). Used
@@ -71,8 +74,8 @@ class _NewspaperGlyphPainter extends CustomPainter {
 /// [EditorialMonoclePalette.danger] token; foreground resolves to the
 /// canonical [EditorialMonoclePalette.bg] token so the chip reads as
 /// "engraved" against the dim chrome.
-class _UnreadBadge extends StatelessWidget {
-  const _UnreadBadge({required this.count});
+class PlayerTurnEventFeedUnreadBadge extends StatelessWidget {
+  const PlayerTurnEventFeedUnreadBadge({super.key, required this.count});
 
   final int count;
 
