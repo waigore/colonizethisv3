@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'call_to_arms_fixtures.dart';
+
 void main() {
   group('call to arms (formal alliance gating)', () {
     // AC1 (negative): informal Allied relation band (score >= 76) with NO formal

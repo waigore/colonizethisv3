@@ -1,7 +1,7 @@
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'diplomacy_game_fixtures.dart';
-import 'diplomacy_resolver_phase_test_support.dart';
+import 'diplomacy_game_fixtures_scenarios.dart';
 
 /// Phase resolver base game with gp1 embassy to minor1 and a neutral relation.
 Game gpMinorEmbassyNeutralPhaseGame({

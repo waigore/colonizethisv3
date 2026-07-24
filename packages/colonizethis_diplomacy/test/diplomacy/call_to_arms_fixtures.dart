@@ -1,8 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
-import 'diplomacy_game_fixtures.dart';
-import 'diplomacy_relation_fixtures.dart';
 
 const _ctaFourGp = [
   Player(id: 'gp1', displayName: 'GP1', isHuman: false),

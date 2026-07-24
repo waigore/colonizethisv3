@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+
 void main() {
   group('applyRelationModifiersAndUpdateScores', () {
     test('GrantAid deducts payer treasury using stable player row index', () {

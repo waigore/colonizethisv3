@@ -6,6 +6,8 @@ import 'package:colonizethis_test/test.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'call_to_arms_fixtures.dart';
+
 class CallToArmsScenario {
   const CallToArmsScenario({required this.label, required this.run});
 
