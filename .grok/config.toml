@@ -2,16 +2,16 @@
 # Thin skill shims live in .grok/skills/ and delegate to the source of truth
 # under .cursor/skills/. No extra paths or disables are required for normal use.
 #
-# MCP: dart/flutter also configured in ~/.grok/config.toml (user scope, absolute
-# dart path). Project entry below pins the same server for this repo; same name
-# replaces the user entry while working here.
+# MCP: dart/flutter. Set FLUTTER_ROOT to your SDK install (Grok expands ${VAR}
+# in command/args). Same server name in ~/.grok/config.toml is replaced while
+# working in this repo.
 
 [mcp_servers.dart]
-command = "/Users/waigore/Documents/SDKs/flutter/bin/dart"
+command = "${FLUTTER_ROOT}/bin/dart"
 args = [
     "mcp-server",
     "--flutter-sdk",
-    "/Users/waigore/Documents/SDKs/flutter",
+    "${FLUTTER_ROOT}",
     "--force-roots-fallback",
 ]
 enabled = true
