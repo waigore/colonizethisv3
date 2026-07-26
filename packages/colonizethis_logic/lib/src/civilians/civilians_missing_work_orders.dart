@@ -110,8 +110,10 @@ bool _isCivilianUnit(Unit unit) {
 
 Map<String, String> _provinceNamesByPrefixedId(Game game) {
   final out = <String, String>{};
-  for (final p in game.worldState.allProvinces()) {
-    out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+  for (final regionId in [kRegionOldWorld, kRegionNewWorld]) {
+    for (final p in game.worldState.provincesForRegion(regionId)) {
+      out['${p.regionId}|${p.id}'] = p.displayName ?? p.id;
+    }
   }
   return out;
 }
