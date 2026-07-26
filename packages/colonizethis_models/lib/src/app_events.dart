@@ -14,7 +14,7 @@
 //
 // Concrete event types live under `app_events/` as first-class libraries
 // (Refs #4068 Slice C): `ui_action_events.dart` (UIActionEvent),
-// `session_command_events.dart` (SessionCommandEvent),
+// `session_command_events.dart` barrel (SessionCommandEvent + domain partitions),
 // `ui_system_events.dart` (UISystemEvent), and `game_to_ui_events.dart`
 // (GameToUIEvent + app-prefixed GameEvent mirrors).
 
