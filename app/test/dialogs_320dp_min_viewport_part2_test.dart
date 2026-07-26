@@ -5,7 +5,8 @@
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
-import 'package:colonizethis_app/features/game/turn_resolution/civilians_missing_work_orders.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show CivilianMissingWorkOrderEntry;
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_dialog.dart';

@@ -88,7 +88,7 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 - Map next turn: `_onNextTurn` in `app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart` uses `TurnResolutionRunner` and `confirmNextTurnWithIdleCivilianWarning`.
 - Flame canvas next turn: `game_screen.dart` uses the same runner, confirmation flow, and `TurnResolutionProcessingDialog` pattern.
-- Idle-civilian detection: `app/lib/features/game/turn_resolution/civilians_missing_work_orders.dart` (same idle/no-pending rule as `UNIT10001`).
+- Idle-civilian detection: `packages/colonizethis_logic/lib/src/civilians/civilians_missing_work_orders.dart` (same idle/no-pending rule as `UNIT10001`).
 - Settings preference: Hive key `ux.warnIdleCiviliansOnEndTurn` (default `true` when missing); toggle in `DLG90001`.
 - Confirmation uses `showDialog<bool>` with `CtDialogShell` (same pattern as `_confirmCancel` in civilian_units_panel.dart).
 - The existing turn number should be shown in the confirmation dialog body text.

@@ -1,7 +1,8 @@
 // SPEC/ui/next-turn-confirmation.md — warning variant for idle civilians.
 
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
-import 'package:colonizethis_app/features/game/turn_resolution/civilians_missing_work_orders.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show CivilianMissingWorkOrderEntry;
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';

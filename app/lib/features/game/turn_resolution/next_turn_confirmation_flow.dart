@@ -1,8 +1,9 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show CivilianMissingWorkOrderEntry, findCiviliansMissingWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../flame/overlays/next_turn_confirmation_dialog.dart';
-import 'civilians_missing_work_orders.dart';
 
 /// Shared end-turn confirmation for map and Flame-canvas entry points.
 ///
