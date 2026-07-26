@@ -205,6 +205,11 @@ domain packages and complementary to `repo.models_file_size` (500 NCL).
 - **Slice B:** `session_command_events.dart` partitioned into domain libraries under
   `lib/src/app_events/session_*` (civilian work, naval, army, train, debug, observe,
   diplomatic order) with a thin barrel re-export; grandfather cleared.
+- **Slice C:** `orders_serialization.dart` extracted from `orders.dart`; `game_equality.dart`
+  extracted from `game.dart`; `quick_battle/` cluster split (`types.dart`, `deployment.dart`,
+  `result.dart`) with thin `quick_battle.dart` barrel re-export.
+- **Slice D:** `orders_test.dart` densified via `test/support/orders_fixtures.dart` table-driven
+  cases (210 physical lines, durable headroom under the 400 test gate).
 
 ### Acceptance criteria
 
