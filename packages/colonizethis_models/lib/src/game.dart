@@ -2,11 +2,11 @@ import 'advanced_start_type.dart';
 import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
+import 'game_equality.dart';
 import 'game_serialization.dart';
 import 'general.dart';
 import 'map_view_state.dart';
 import 'minor_nation.dart';
-import 'model_collection_equality.dart';
 import 'player.dart';
 import 'tribe.dart';
 import 'turn_time_mapping.dart';
@@ -273,115 +273,8 @@ class Game {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Game &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          worldState == other.worldState &&
-          modelListEquals(players, other.players) &&
-          modelListEquals(minorNations, other.minorNations) &&
-          modelListEquals(tribes, other.tribes) &&
-          modelListEquals(generals, other.generals) &&
-          turnTimeMapping == other.turnTimeMapping &&
-          defaultCombatMode == other.defaultCombatMode &&
-          modelMapEquals(
-            combatModeByProvinceId,
-            other.combatModeByProvinceId,
-          ) &&
-          modelListEquals(diplomacyRelations, other.diplomacyRelations) &&
-          modelListEquals(overtureStates, other.overtureStates) &&
-          modelListEquals(subsidyStates, other.subsidyStates) &&
-          modelListEquals(colonyStates, other.colonyStates) &&
-          modelListEquals(boycottStates, other.boycottStates) &&
-          modelListEquals(
-            allianceBreakCooldowns,
-            other.allianceBreakCooldowns,
-          ) &&
-          modelMapEquals(aiControlByGpId, other.aiControlByGpId) &&
-          modelMapEquals(aiSeedByGpId, other.aiSeedByGpId) &&
-          modelMapEquals(aiProfileByGpId, other.aiProfileByGpId) &&
-          modelMapEquals(hiddenAgendaByGpId, other.hiddenAgendaByGpId) &&
-          modelListEquals(
-            dossierEvidenceEntries,
-            other.dossierEvidenceEntries,
-          ) &&
-          modelListEquals(
-            diplomaticHistoryEvents,
-            other.diplomaticHistoryEvents,
-          ) &&
-          globalGameSeed == other.globalGameSeed &&
-          modelNullableMapOfListEquals(
-            greatPowerColorOverride,
-            other.greatPowerColorOverride,
-          ) &&
-          victory == other.victory &&
-          calendarCampaignHalted == other.calendarCampaignHalted &&
-          infiniteMode == other.infiniteMode &&
-          richesCashMultiplier == other.richesCashMultiplier &&
-          capitalTileGrainBonusPerTurn == other.capitalTileGrainBonusPerTurn &&
-          modelMapEquals(
-            politicalGlyphByPlayerId,
-            other.politicalGlyphByPlayerId,
-          ) &&
-          lastHumanCompletedResearchCategory ==
-              other.lastHumanCompletedResearchCategory &&
-          lastHumanResearchCategoryCompletionTurn ==
-              other.lastHumanResearchCategoryCompletionTurn &&
-          mapViewState == other.mapViewState &&
-          worldMarketState == other.worldMarketState &&
-          modelSetEquals(ftpPartnershipKeys, other.ftpPartnershipKeys) &&
-          modelSetEquals(
-            debugDiplomacyUsedPairKeys,
-            other.debugDiplomacyUsedPairKeys,
-          ) &&
-          advancedStartType == other.advancedStartType;
+  bool operator ==(Object other) => gameEquals(this, other);
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    worldState,
-    Object.hashAll(players),
-    Object.hashAll(minorNations),
-    Object.hashAll(tribes),
-    Object.hashAll(generals),
-    turnTimeMapping,
-    defaultCombatMode,
-    Object.hashAll(combatModeByProvinceId.entries),
-    Object.hashAll(diplomacyRelations),
-    Object.hashAll(overtureStates),
-    Object.hash(
-      Object.hashAll(subsidyStates),
-      Object.hashAll(colonyStates),
-      Object.hashAll(boycottStates),
-      Object.hashAll(allianceBreakCooldowns),
-    ),
-    Object.hashAll(aiControlByGpId.entries),
-    Object.hashAll(aiSeedByGpId.entries),
-    Object.hashAll(aiProfileByGpId.entries),
-    Object.hashAll(hiddenAgendaByGpId.entries),
-    Object.hash(
-      Object.hashAll(dossierEvidenceEntries),
-      Object.hashAll(diplomaticHistoryEvents),
-    ),
-    globalGameSeed,
-    greatPowerColorOverride != null
-        ? Object.hashAll(greatPowerColorOverride!.entries)
-        : null,
-    Object.hash(
-      victory,
-      calendarCampaignHalted,
-      infiniteMode,
-      richesCashMultiplier,
-      capitalTileGrainBonusPerTurn,
-      Object.hashAll(politicalGlyphByPlayerId.entries),
-      lastHumanCompletedResearchCategory,
-      lastHumanResearchCategoryCompletionTurn,
-      mapViewState,
-      worldMarketState,
-      Object.hashAll(ftpPartnershipKeys),
-      Object.hashAll(debugDiplomacyUsedPairKeys),
-      advancedStartType,
-    ),
-  );
+  int get hashCode => gameHashCode(this);
 }
