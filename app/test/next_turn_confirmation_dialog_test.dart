@@ -115,9 +115,9 @@ void main() {
   );
 
   testWidgets(
-    'Given the dialog is shown When the user taps Yes Then it returns true',
+    'Given the dialog is shown When the user taps Yes Then it returns confirmed',
     (WidgetTester tester) async {
-      bool? result;
+      NextTurnConfirmationResult? result;
       await tester.pumpWidget(
         hostApp(
           onOpen: (ctx) async {
@@ -133,14 +133,14 @@ void main() {
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
 
-      expect(result, isTrue);
+      expect(result?.confirmed, isTrue);
     },
   );
 
   testWidgets(
-    'Given the dialog is shown When the user taps No Then it returns false',
+    'Given the dialog is shown When the user taps No Then it returns not confirmed',
     (WidgetTester tester) async {
-      bool? result;
+      NextTurnConfirmationResult? result;
       await tester.pumpWidget(
         hostApp(
           onOpen: (ctx) async {
@@ -156,7 +156,7 @@ void main() {
       await tester.tap(find.text('No'));
       await tester.pumpAndSettle();
 
-      expect(result, isFalse);
+      expect(result?.confirmed, isFalse);
     },
   );
 }

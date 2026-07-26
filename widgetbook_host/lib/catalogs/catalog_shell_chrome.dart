@@ -281,9 +281,13 @@ class _CtIconActionStoryState extends State<_CtIconActionStory> {
 /// pre-resolution baseline turn number and a mid-game turn number to cover
 /// the body interpolation contract.
 class _NextTurnConfirmationDialogStoryHost extends StatelessWidget {
-  const _NextTurnConfirmationDialogStoryHost({required this.currentTurn});
+  const _NextTurnConfirmationDialogStoryHost({
+    required this.currentTurn,
+    this.civiliansMissingWork = const [],
+  });
 
   final int currentTurn;
+  final List<CivilianMissingWorkOrderEntry> civiliansMissingWork;
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +296,10 @@ class _NextTurnConfirmationDialogStoryHost extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       scaffoldBackgroundColor: EditorialMonoclePalette.dialogScrim,
       child: Center(
-        child: NextTurnConfirmationDialog(currentTurn: currentTurn),
+        child: NextTurnConfirmationDialog(
+          currentTurn: currentTurn,
+          civiliansMissingWork: civiliansMissingWork,
+        ),
       ),
     );
   }
@@ -313,6 +320,28 @@ List<WidgetbookNode> get nextTurnConfirmationDialogDirectories => [
         name: 'Mid-game — turn 42',
         builder: (context) =>
             const _NextTurnConfirmationDialogStoryHost(currentTurn: 42),
+      ),
+      WidgetbookUseCase(
+        name: 'Warning — idle civilians',
+        builder: (context) => const _NextTurnConfirmationDialogStoryHost(
+          currentTurn: 7,
+          civiliansMissingWork: [
+            CivilianMissingWorkOrderEntry(
+              unitId: 'e1',
+              type: 'explorer',
+              tileKey: 'oldWorld|p1|0|0',
+              regionId: 'oldWorld',
+              locationLabel: 'Old World — Alpha',
+            ),
+            CivilianMissingWorkOrderEntry(
+              unitId: 'b1',
+              type: 'builder',
+              tileKey: 'oldWorld|p2|1|1',
+              regionId: 'oldWorld',
+              locationLabel: 'Old World — Beta',
+            ),
+          ],
+        ),
       ),
     ],
   ),

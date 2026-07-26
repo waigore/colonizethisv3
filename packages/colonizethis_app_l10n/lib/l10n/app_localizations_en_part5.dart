@@ -492,6 +492,16 @@ mixin _AppLocalizationsEnStrings5 on AppLocalizations {
   String get settingsDialog_title => 'Settings';
 
   @override
+  String get settingsDialog_section_gameplay => 'Gameplay';
+
+  @override
+  String get settingsDialog_warnIdleCiviliansOnEndTurn =>
+      'Warn when civilians have no work order on end turn';
+
+  @override
+  String get settingsDialog_section_themes => 'Map themes';
+
+  @override
   String get settingsDialog_restartHint =>
       'Theme changes take effect after restart.';
 

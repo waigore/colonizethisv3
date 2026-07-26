@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,14 +9,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/ai/ai_profile_resolution.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
+import '../../../../config/ux_settings_keys.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/blessed_ai_profiles_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../../../providers/settings_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
+import '../../widgets/shell/shell_player_context.dart';
 import '../../flame/map_state/map_state.dart';
-import '../../flame/overlays/next_turn_confirmation_dialog.dart';
+import '../../turn_resolution/next_turn_confirmation_flow.dart';
 import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
 import 'game_screen_fallback_next_turn.dart';
@@ -33,11 +36,26 @@ mixin GameScreenFallbackNextTurnRunner
       return;
     }
     final currentTurn = game.worldState.turnState.turnNumber;
-    final ok = await showNextTurnConfirmationDialog(
-      context,
+    final shell = ref.read(shellPlayerContextProvider);
+    final humanPlayerId = shell.mapPlayerIdFor(game);
+    final orders = ref.read(currentOrdersProvider);
+    final settings = ref.read(settingsProvider);
+    final warnIdleCiviliansEnabled =
+        settings[UxSettingsKeys.warnIdleCiviliansOnEndTurn] as bool? ?? true;
+    final bus = ref.read(appEventBusProvider);
+    final ok = await confirmNextTurnWithIdleCivilianWarning(
+      context: context,
+      game: game,
       currentTurn: currentTurn,
+      humanPlayerId: humanPlayerId,
+      orders: orders,
+      warnIdleCiviliansEnabled: warnIdleCiviliansEnabled,
+      bus: bus,
+      onDisableIdleCivilianWarning: () => ref
+          .read(settingsProvider.notifier)
+          .setValue(UxSettingsKeys.warnIdleCiviliansOnEndTurn, false),
     );
-    if (ok != true || !context.mounted) {
+    if (!ok || !context.mounted) {
       return;
     }
 
@@ -46,7 +64,6 @@ mixin GameScreenFallbackNextTurnRunner
     final failureMessage = appL10n(context).game_turnResolutionFailedMessage;
     final messenger = ScaffoldMessenger.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
-    final orders = ref.read(currentOrdersProvider);
     final mapData = service.getMapData(game.id);
     if (mapData == null) {
       throw StateError('Missing required map data for gameId=${game.id}');

@@ -1,0 +1,1 @@
+../../../.cursor/skills/suggest-player-ux-improvements/SKILL.md

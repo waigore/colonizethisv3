@@ -80,6 +80,18 @@
   "@settingsDialog_title": {
     "description": "Title of the app Settings dialog (DLG90001)."
   },
+  "settingsDialog_section_gameplay": "Gameplay",
+  "@settingsDialog_section_gameplay": {
+    "description": "Section header for immediate-apply gameplay preferences in Settings."
+  },
+  "settingsDialog_warnIdleCiviliansOnEndTurn": "Warn when civilians have no work order on end turn",
+  "@settingsDialog_warnIdleCiviliansOnEndTurn": {
+    "description": "Toggle label for the idle-civilian end-turn warning preference."
+  },
+  "settingsDialog_section_themes": "Map themes",
+  "@settingsDialog_section_themes": {
+    "description": "Section header for map theme pickers in Settings."
+  },
   "settingsDialog_restartHint": "Theme changes take effect after restart.",
   "@settingsDialog_restartHint": {
     "description": "Hint that map theme pickers apply on next app start."
@@ -303,6 +315,18 @@
         "description": "Current turn number."
       }
     }
+  },
+  "game_nextTurnConfirm_idleCiviliansSection": "These civilians have no work order for the next turn:",
+  "@game_nextTurnConfirm_idleCiviliansSection": {
+    "description": "Section header in the end-turn warning variant listing idle civilians without work orders."
+  },
+  "game_nextTurnConfirm_noWorkOrder": "No work order",
+  "@game_nextTurnConfirm_noWorkOrder": {
+    "description": "Per-row label in the end-turn idle-civilian warning list."
+  },
+  "game_nextTurnConfirm_dontShowAgain": "Don't show this warning again",
+  "@game_nextTurnConfirm_dontShowAgain": {
+    "description": "Toggle label in the end-turn idle-civilian warning variant."
   },
   "game_turnResolutionFailedMessage": "Turn resolution failed.",
   "@game_turnResolutionFailedMessage": {

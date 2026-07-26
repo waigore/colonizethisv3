@@ -31,6 +31,7 @@ import 'widgetbook_test_harness.dart';
 const List<String> kNextTurnConfirmationUseCaseNames = <String>[
   'Default — turn 1',
   'Mid-game — turn 42',
+  'Warning — idle civilians',
 ];
 
 /// Normative inventory of the new SHEL30001 stories that issue #2867 S13

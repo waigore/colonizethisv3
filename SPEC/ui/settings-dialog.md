@@ -1,7 +1,7 @@
 # Settings Dialog
 
 **Screen ID:** `DLG90001` — stable; do not reassign.
-**SPEC/ui** — App-global Settings modal for map theme pickers (persisted in Hive `settings`; apply on restart). Implementation: `app/lib/features/shell/settings/settings_dialog.dart`. Theme catalog: [`../program/map-theme-catalog.md`](../program/map-theme-catalog.md).
+**SPEC/ui** — App-global Settings modal for gameplay preferences (immediate apply) and map theme pickers (persisted in Hive `settings`; themes apply on restart). Implementation: `app/lib/features/shell/settings/settings_dialog.dart`. Theme catalog: [`../program/map-theme-catalog.md`](../program/map-theme-catalog.md).
 **Widgetbook:** `Settings Dialog` → `widgetbook_host/lib/catalogs/catalog_dialogs.dart`.
 
 ## Widget contract
@@ -20,7 +20,8 @@
 ```text
 CtDialogShell
   title_region          Text (settingsDialog_title)
-  hint_region           Text (settingsDialog_restartHint)
+  gameplay_region       label + CtToggleSwitch (ux.warnIdleCiviliansOnEndTurn)
+  themes_region         label + hint (settingsDialog_restartHint)
   pickers_region        scroll Column
     for each multi-theme group:
       label             Text (group label)
@@ -44,6 +45,7 @@ Single-theme groups: pickers **hidden** (not shown).
 
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
+| Idle-civilian warn `CtToggleSwitch` | Always | `settingsProvider.setValue('ux.warnIdleCiviliansOnEndTurn', bool)` | Hive persist; **immediate** apply on next end-turn confirm |
 | Theme `CtDropdown` | Always when catalog loaded | `settingsProvider.setValue(groupKey, themeId)` | Hive persist; **no** cache reload |
 | Close | Always | `Navigator.pop` | Dismiss dialog |
 
@@ -65,6 +67,7 @@ Folder `Settings Dialog`; use cases: `Default (multi-theme pickers)`, `Default (
 ## Acceptance criteria
 
 - Given the Settings dialog is open from the main menu and the catalog is loaded, when the player selects terrain theme `sepia` and closes, then Hive `settings` stores `mapTheme.terrain` = `sepia`.
+- Given Settings is open, when the player turns the idle-civilian end-turn warning **on**, then Hive stores `ux.warnIdleCiviliansOnEndTurn = true` and the next end-turn with matching civilians shows the warning **without** app restart.
 - Given Settings is open, when the catalog lists only `default` for town icons, then no town-icons picker is shown.
 - Given the pause menu during turn resolution, when Settings is tapped, then the button is disabled and no `OpenDialogEvent('settings')` is emitted.
 - Given Settings outside turn resolution, when Settings is tapped, then `OpenDialogEvent` with id `settings` is emitted.
