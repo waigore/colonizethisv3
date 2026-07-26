@@ -17,7 +17,7 @@ import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../providers/turn_resolution_runner_provider.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_blocking_service.dart';
 import '../../flame/map_state/map_state.dart';
-import '../../flame/overlays/next_turn_confirmation_dialog.dart';
+import '../../turn_resolution/next_turn_confirmation_flow.dart';
 import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
 import 'game_screen_fallback_next_turn.dart';
@@ -33,11 +33,13 @@ mixin GameScreenFallbackNextTurnRunner
       return;
     }
     final currentTurn = game.worldState.turnState.turnNumber;
-    final ok = await showNextTurnConfirmationDialog(
-      context,
+    final ok = await confirmNextTurnWithIdleCivilianWarning(
+      context: context,
+      ref: ref,
+      game: game,
       currentTurn: currentTurn,
     );
-    if (ok != true || !context.mounted) {
+    if (!ok || !context.mounted) {
       return;
     }
 

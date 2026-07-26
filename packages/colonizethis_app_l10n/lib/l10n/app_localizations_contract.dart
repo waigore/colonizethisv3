@@ -161,6 +161,15 @@ abstract class AppLocalizations {
   /// Body text of the end-turn confirmation dialog.
   String game_nextTurnConfirm_body(int turn);
 
+  /// Section header in the end-turn warning variant listing idle civilians.
+  String get game_nextTurnConfirm_idleCiviliansSection;
+
+  /// Per-row label in the end-turn idle-civilian warning list.
+  String get game_nextTurnConfirm_noWorkOrder;
+
+  /// Toggle label in the end-turn idle-civilian warning variant.
+  String get game_nextTurnConfirm_dontShowAgain;
+
   /// Title of the modal shown while next-turn resolution runs.
   String get game_turnResolutionProcessingTitle;
 
@@ -2551,6 +2560,15 @@ abstract class AppLocalizations {
 
   /// Title of the app Settings dialog (DLG90001).
   String get settingsDialog_title;
+
+  /// Section header for immediate-apply gameplay preferences in Settings.
+  String get settingsDialog_section_gameplay;
+
+  /// Toggle label for the idle-civilian end-turn warning preference.
+  String get settingsDialog_warnIdleCiviliansOnEndTurn;
+
+  /// Section header for map theme pickers in Settings.
+  String get settingsDialog_section_themes;
 
   /// Hint that map theme changes apply after restart.
   String get settingsDialog_restartHint;

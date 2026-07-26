@@ -20,7 +20,7 @@ import '../../../../core/services/turn_resolution/turn_resolution_blocking_servi
 import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 
 import 'game_map_area_state_logic.dart';
-import '../overlays/next_turn_confirmation_dialog.dart';
+import '../../turn_resolution/next_turn_confirmation_flow.dart';
 import '../overlays/turn_resolution_processing_dialog.dart';
 import '../overlays/turn_resolution_progress_labels.dart';
 import '../../../../core/services/turn_resolution/turn_resolution_result_applier.dart';
@@ -44,11 +44,13 @@ mixin GameMapAreaTurnResolution
     }
 
     final currentTurn = game.worldState.turnState.turnNumber;
-    final ok = await showNextTurnConfirmationDialog(
-      context,
+    final ok = await confirmNextTurnWithIdleCivilianWarning(
+      context: context,
+      ref: ref,
+      game: game,
       currentTurn: currentTurn,
     );
-    if (ok != true) return;
+    if (!ok) return;
     if (!mounted) return;
 
     final service = ref.read(gameServiceProvider);

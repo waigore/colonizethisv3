@@ -5,7 +5,9 @@ import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog
 import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
 import 'package:colonizethis_app/features/shell/settings/settings_dialog.dart';
 import 'package:colonizethis_app/providers/settings_provider.dart';
+import 'package:colonizethis_app/config/ux_settings_keys.dart';
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
+import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +39,8 @@ void main() {
     await tester.pump();
 
     expect(find.byKey(SettingsDialog.titleKey), findsOneWidget);
+    expect(find.byKey(SettingsDialog.warnIdleCiviliansToggleKey), findsOneWidget);
+    expect(find.byType(CtToggleSwitch), findsOneWidget);
     expect(find.byType(CtDropdown<String>), findsNWidgets(2));
     expect(
       find.byKey(SettingsDialog.groupDropdownKey(MapThemeGroupId.terrain)),
@@ -53,6 +57,31 @@ void main() {
       findsNothing,
     );
   });
+
+  test(
+    'settingsProvider setValue persists warnIdleCiviliansOnEndTurn in Hive',
+    () async {
+      final dir = await Directory.systemTemp.createTemp('ct_settings_warn_');
+      Hive.init(dir.path);
+      final box = await Hive.openBox<dynamic>(HiveBoxNames.settings);
+      addTearDown(() async {
+        await box.close();
+        await Hive.deleteBoxFromDisk(HiveBoxNames.settings);
+        await dir.delete(recursive: true);
+      });
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      container
+          .read(settingsProvider.notifier)
+          .setValue(UxSettingsKeys.warnIdleCiviliansOnEndTurn, false);
+      expect(
+        container.read(settingsProvider)[UxSettingsKeys.warnIdleCiviliansOnEndTurn],
+        isFalse,
+      );
+      expect(box.get(UxSettingsKeys.warnIdleCiviliansOnEndTurn), isFalse);
+    },
+  );
 
   test(
     'settingsProvider setValue persists mapTheme.terrain in Hive',
