@@ -1,5 +1,5 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show CivilianMissingWorkOrderEntry, findCiviliansMissingWorkOrders;
+    show findCiviliansMissingWorkOrders;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
