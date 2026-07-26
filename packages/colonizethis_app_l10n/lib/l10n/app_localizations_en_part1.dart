@@ -162,6 +162,17 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String get game_nextTurnConfirm_idleCiviliansSection =>
+      'These civilians have no work order for the next turn:';
+
+  @override
+  String get game_nextTurnConfirm_noWorkOrder => 'No work order';
+
+  @override
+  String get game_nextTurnConfirm_dontShowAgain =>
+      "Don't show this warning again";
+
+  @override
   String get game_turnResolutionProcessingTitle => 'Processing Turn';
 
   @override
