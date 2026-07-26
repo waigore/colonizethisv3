@@ -164,6 +164,63 @@ lines) for the split domain packages.
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
 
+## colonizethis_models 400 physical-line lib gate (Refs #4136)
+
+`colonizethis_models` is the shared leaf value-model package consumed by every
+domain package and the app. Wave 2 adds a **stricter 400 physical-line cap** on
+`packages/colonizethis_models/lib/**` under `repo.models_lib_physical_file_size`,
+tighter than `repo.domain_package_source_file_size` (500 physical) for split
+domain packages and complementary to `repo.models_file_size` (500 NCL).
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_models_lib_physical_file_size.dart` | Walker, physical line counter, CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.models_lib_physical_file_size` |
+
+### Scan scope and measurement
+
+- The checker walks `packages/colonizethis_models/lib/**` recursively and
+  considers only `*.dart` files, skipping generated suffixes (`.g.dart`,
+  `.freezed.dart`, `.mocks.dart`, `.gen.dart`).
+- **Failure threshold:** strictly **greater than 400** physical lines fails the
+  file (400 inclusive passes), counting every line in the file (including
+  comments and blanks).
+- **Shrink-only grandfather:** during wave-2 aggregate splits, over-cap files
+  may appear in `modelsLibPhysicalFileSizeGrandfatheredForTests` until their
+  slice lands. The checker fails when a grandfather entry names a missing file or
+  a file that is now at or below 400 physical lines (must remove from allowlist).
+
+### Relationship to other gates
+
+- `repo.models_file_size` (500 NCL) remains the historical models soft-structure
+  gate; a file may pass NCL while failing physical 400 when comment/blank density
+  is low.
+- `repo.domain_package_source_file_size` (500 physical) does not apply to
+  `colonizethis_models` because it is not one of the eight split domain packages.
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits zero because every
+  non-grandfathered `colonizethis_models/lib` Dart file is at or below 400
+  physical lines.
+
+- Given a temporary workspace whose only models source file is a hand-written
+  `packages/colonizethis_models/lib/src/huge.dart` with more than 400 physical
+  lines and an empty grandfather list, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits non-zero and names
+  `huge.dart` with a count strictly greater than 400.
+
+- Given a temporary workspace whose over-cap models file is listed in the
+  shrink-only grandfather allowlist, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits zero and does not
+  list that file.
+
+- Given a grandfather allowlist entry for a file that is now at or below 400
+  physical lines, when the System runs `runCheckModelsLibPhysicalFileSize`, then
+  the checker exits non-zero and reports that the entry must be removed from the
+  allowlist.
+
 ## colonizethis_data 500 non-comment-line gate (Refs #4072)
 
 `colonizethis_data` holds ruleset constants and catalogs consumed by logic and

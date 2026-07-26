@@ -855,6 +855,14 @@ rules:
     runner: dart
     script: tool/check_models_test_file_size.dart
 
+  - rule_id: repo.models_lib_physical_file_size
+    group: structure
+    title: colonizethis_models lib files must stay at or below 400 physical lines (Refs #4136)
+    spec: SPEC/program/dart-file-non-comment-line-size.md
+    runner: dart
+    script: tool/check_models_lib_physical_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.world_topology_identity_home
     group: structure
     title: topology identity helpers must live in topology_identity.dart not naval.dart (Refs #3968)
