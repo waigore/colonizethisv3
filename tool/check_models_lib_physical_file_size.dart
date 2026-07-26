@@ -17,10 +17,8 @@ const int modelsLibPhysicalFileSizeCeiling = 400;
 const String _modelsLibRelativePath = 'packages/colonizethis_models/lib';
 
 /// Hot files still above the wave-2 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land.
-const List<String> modelsLibPhysicalFileSizeGrandfatheredForTests = <String>[
-  'packages/colonizethis_models/lib/src/app_events/session_command_events.dart',
-];
+/// allowlist; remove entries as splits land. Empty after Slice B (#4136).
+const List<String> modelsLibPhysicalFileSizeGrandfatheredForTests = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 

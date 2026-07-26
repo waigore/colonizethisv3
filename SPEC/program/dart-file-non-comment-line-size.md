@@ -198,6 +198,14 @@ domain packages and complementary to `repo.models_file_size` (500 NCL).
 - `repo.domain_package_source_file_size` (500 physical) does not apply to
   `colonizethis_models` because it is not one of the eight split domain packages.
 
+### Wave-2 slice progress (Refs #4136)
+
+- **Slice A:** `world_state_serialization.dart` extracted from `world_state.dart`;
+  physical ratchet registered with shrink-only grandfather for remaining offenders.
+- **Slice B:** `session_command_events.dart` partitioned into domain libraries under
+  `lib/src/app_events/session_*` (civilian work, naval, army, train, debug, observe,
+  diplomatic order) with a thin barrel re-export; grandfather cleared.
+
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
