@@ -3,7 +3,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import '../../../../config/ui_screen_ids.dart';
-import '../../../../widgets/civilian_unit_type_icon.dart';
+import '../../widgets/civilian/civilian_unit_type_icon.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
