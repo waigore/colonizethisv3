@@ -1,5 +1,7 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kRegionNewWorld, kRegionOldWorld;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -117,10 +119,10 @@ RegionMapViewData? buildVictoryOldWorldMapViewData({
   required Map<String, MapTopology> topologyByRegion,
   int cellSize = 8,
 }) {
-  final owTileMap = tileMapByRegion['oldWorld'];
-  final nwTileMap = tileMapByRegion['newWorld'];
-  final owTopology = topologyByRegion['oldWorld'];
-  final nwTopology = topologyByRegion['newWorld'];
+  final owTileMap = tileMapByRegion[kRegionOldWorld];
+  final nwTileMap = tileMapByRegion[kRegionNewWorld];
+  final owTopology = topologyByRegion[kRegionOldWorld];
+  final nwTopology = topologyByRegion[kRegionNewWorld];
   if (owTileMap == null ||
       nwTileMap == null ||
       owTopology == null ||
@@ -130,12 +132,12 @@ RegionMapViewData? buildVictoryOldWorldMapViewData({
   return buildInitGameMapViewData(
     game: game,
     tileMapByRegion: {
-      'oldWorld': owTileMap,
-      'newWorld': nwTileMap,
+      kRegionOldWorld: owTileMap,
+      kRegionNewWorld: nwTileMap,
     },
     topologyByRegion: {
-      'oldWorld': owTopology,
-      'newWorld': nwTopology,
+      kRegionOldWorld: owTopology,
+      kRegionNewWorld: nwTopology,
     },
     cellSize: cellSize,
   ).oldWorld;
