@@ -10,7 +10,7 @@
 //         infinite-mode bypass variant)
 //  - AC-3  GP standings sorted by OW count with human row emphasis
 //  - AC-4  expandable power-score breakdown (expanded row)
-//  - AC-7  military-victory end-state banner
+//  - AC-7  end-state banners (military victory, calendar declared winner, tie)
 //  - AC-5  political minimap ownership colours
 //  - AC-6  minimap origin/capture inspect line
 //
@@ -230,6 +230,72 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/victory_panel_military_end.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: calendar halt declared-winner banner (Refs #4165 AC-7)',
+    (WidgetTester tester) async {
+      const boundaryKey =
+          ValueKey<String>('victoryPanelCalendarWinnerGolden');
+      final game = buildPanelTestGame(
+        players: [
+          panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
+          const Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+          Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp1'),
+          Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp1'),
+          Province(id: 'oldWorld|p4', regionId: 'oldWorld', ownerId: 'gp2'),
+        ],
+      ).copyWith(calendarCampaignHalted: true);
+      await _pumpVictoryBodyGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: game,
+      );
+
+      expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
+      expect(
+        find.textContaining('Declared winner by power score: England'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/victory_panel_calendar_winner.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: calendar halt tie banner (Refs #4165 AC-7)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('victoryPanelCalendarTieGolden');
+      final game = buildPanelTestGame(
+        players: [
+          panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
+          const Player(id: 'gp2', displayName: 'France', isHuman: false),
+        ],
+        oldWorldProvinces: const [
+          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+          Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+        ],
+      ).copyWith(calendarCampaignHalted: true);
+      await _pumpVictoryBodyGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: game,
+      );
+
+      expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
+      expect(find.textContaining('no declared winner'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/victory_panel_calendar_tie.png'),
       );
     },
   );
