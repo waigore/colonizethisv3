@@ -30,6 +30,7 @@ Efficiency is about 2 RP per gold except Maximum (~2.5). Some military/naval tec
 - **Choose tech** on an empty or reassigned slot lists only **researchable** techs (all prerequisites unlocked). A tech cannot start the same turn its prerequisite finishes.
 - **Cancel** clears the slot; **all progress on that tech is forfeited** (confirm when progress > 0).
 - Slot assignments persist across turns until unlock or cancel. An optional **goal** highlight may sort the Tree for you — it is UI-only and is **not** part of the research order payload.
+- **Empty seats and funding None are legal.** You may leave a slot empty or set funding to **None** when gold is needed for builds, recruits, diplomacy, or the market. That is a treasury choice, not a failed order. Ending the turn does **not** warn about unused research seats the way it may list idle civilians — review slots on `GAME40001` when you mean to invest again.
 
 ### Eight branches (categories)
 
@@ -53,9 +54,11 @@ Spies idle or on counter-spy in a rival Great Power who already unlocked your ac
 
 ## Counsel
 
-**Counsel.** Hark, my liege: three slots at None are three empty thrones — fund what you assign, or clear the slot for a rival’s fear to grow.
+**Counsel.** Hark, my liege: gold spent on research is gold not spent on timber, regiments, or quiet gifts. When the purse is thin, empty seats or funding at **None** are thrift, not shame — but do not sleep forever while rivals climb the tree.
 
 **Tip.** Extraction-cap techs multiply every improved tile you already paid for. Pair Chapter 6 builds with Gathering research.
+
+**Tip.** After a technology completes, open `GAME40001` **Slots** when you next mean to spend; the court will not interrupt **Next turn** to fill seats for you.
 
 **Warning.** Cancel is permanent for that progress. Re-choosing the same tech starts from zero.
 
@@ -68,6 +71,7 @@ AI research planners fill slots toward military, naval, or economic unlocks matc
 - Neglecting research freezes extraction caps at defaults while rivals dig deeper on the same terrain.
 - Spreading Maximum funding across empty prerequisites wastes gold; deep-funding one critical unlock often wins the decade.
 - University’s fourth slot is a force multiplier once the tree fans out — plan labour/economy techs before the mid-game sprawl.
+- Pausing research to protect treasury is valid; long pauses still cede relative tech position to rivals who keep funding.
 
 ## Acceptance criteria for this chapter
 
@@ -75,6 +79,7 @@ AI research planners fill slots toward military, naval, or economic unlocks matc
 - [ ] Explains prerequisite DAG, researchable-only choose list, and RP cost tiers at player level.
 - [ ] Summarizes eight category branches and New World discovery prerequisites.
 - [ ] Notes goal slot is UI-only; mentions spy RP boost briefly.
+- [ ] States that empty seats / funding None are legal strategic thrift and that end-turn does not warn about unused research capacity.
 - [ ] Sources match the chapter coverage map.
 
 ## Sources
@@ -94,5 +99,7 @@ AI research planners fill slots toward military, naval, or economic unlocks matc
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/ui/technology-panel.md`
 - `SPEC/ui/tech-tree-widget.md`
+- `SPEC/ui/next-turn-confirmation.md`
+- `SPEC/ui/ux-design-decisions.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/growth-stage-planner.md`

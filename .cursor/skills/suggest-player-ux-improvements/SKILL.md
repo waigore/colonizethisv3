@@ -42,28 +42,30 @@ If the user asks to implement, file an issue, or update specs, stop following th
 | Game rules / decisions | `SPEC/game/` (GDD) |
 | Architecture / wiring | `SPEC/program/` (esp. app UI wiring, event bus, turn resolution) |
 | Player-app screens | `SPEC/ui/`, `SPEC/ui/screen-registry.md`, `app/lib/config/ui_screen_ids.dart` |
+| **UX product decisions (must consult)** | [`SPEC/ui/ux-design-decisions.md`](../../../SPEC/ui/ux-design-decisions.md) |
 | Player-facing how-to | `docs/manual/` (actions appendix + domain chapters) |
 | UI structure (after implementation) | `document-app-ui` + `colonizethis-ui-documentation.mdc` |
 | Feature issue filing | `plan-feature` or `create-github-issue` (user-initiated next step) |
 
 Read [`.cursor/skills/suggest-player-ux-improvements/references/sources.md`](references/sources.md) for domain → SPEC/manual/screen maps.  
-Read [`.cursor/skills/suggest-player-ux-improvements/references/player-lenses.md`](references/player-lenses.md) for decision-support, shortcut, **declutter**, and **clarity** checklists.
+Read [`.cursor/skills/suggest-player-ux-improvements/references/player-lenses.md`](references/player-lenses.md) for decision-support, shortcut, **declutter**, and **clarity** checklists.  
+**Every run:** read [`SPEC/ui/ux-design-decisions.md`](../../../SPEC/ui/ux-design-decisions.md) and treat `rejected` decisions as hard non-goals (do not re-propose).
 
 ## Workflow
 
 ```
 Task progress:
 - [ ] 1. Capture ask / optional clarify
-- [ ] 2. Locate and lock one domain (heuristics)
-- [ ] 3. Load player model (GDD + manual + actions)
-- [ ] 4. Inventory current UI for that domain
-- [ ] 5. Walk player journeys (decision, shortcut, declutter, clarity)
-- [ ] 6. Data availability analysis
-- [ ] 7. De-duplicate against open issues (light)
-- [ ] 8. Pick exactly one improvement
-- [ ] 9. Deliver chat brief (player first, engineer second)
+- [ ] 2. Load UX design decisions (rejected = hard non-goals)
+- [ ] 3. Locate and lock one domain (heuristics)
+- [ ] 4. Load player model (GDD + manual + actions)
+- [ ] 5. Inventory current UI for that domain
+- [ ] 6. Walk player journeys (decision, shortcut, declutter, clarity)
+- [ ] 7. Data availability analysis
+- [ ] 8. De-duplicate against open issues + design decisions
+- [ ] 9. Pick exactly one improvement
+- [ ] 10. Deliver chat brief (player first, engineer second)
 ```
-
 ### 1. Capture the ask
 
 From the user message, note:
@@ -77,7 +79,21 @@ From the user message, note:
 
 If the ask is ambiguous **and** heuristics cannot pick a domain with confidence, ask **one short clarification** (options preferred). Do not deep-scan the whole app first.
 
-### 2. Locate and lock one domain (heuristics)
+### 2. Load UX design decisions (required)
+
+**Before** domain heuristics or deep analysis, open and read:
+
+[`SPEC/ui/ux-design-decisions.md`](../../../SPEC/ui/ux-design-decisions.md)
+
+| Status | Skill obligation |
+|--------|------------------|
+| `rejected` | **Hard non-goal.** Do not recommend that improvement (or a thinly renamed equivalent). If the user named that exact topic, explain the binding decision (cite `UXD-NNN`) and either stop or pick a **different** improvement in an allowed domain. |
+| `accepted` | Prefer designs consistent with it; do not contradict without flagging SPEC impact. Includes standing **Principles** (e.g. **P1** free-capacity reminders). |
+| `superseded` | Ignore for selection; follow the superseding ID. |
+
+When scoring **idle / readiness** ideas, apply **P1** first: only propose “unused capacity” reminders when using that capacity has **no meaningful cost**; free examples (spies) may score; costly examples (research funding) must not unless a later decision supersedes. Record matching IDs/principles in **Evidence**. Do **not** invent new decision rows while running this skill (read-only); if product direction changes, the user updates `ux-design-decisions.md` outside this skill.
+
+### 3. Locate and lock one domain (heuristics)
 
 Pick **exactly one** domain from this catalog (or a user-named subset that fits):
 
@@ -101,10 +117,10 @@ Pick **exactly one** domain from this catalog (or a user-named subset that fits)
 3. **Decision without data at commit point** — order/confirm UI that GDD says needs facts (cost, gates, force, relations) which the screen spec does not surface.
 4. **Post-resolution blindness** — outcomes that resolve in a turn phase but lack a clear player report (turn news / event feed / domain screen).
 5. **Incomplete shortcut coverage** — one surface has map/context shortcuts for some related actions but not siblings in the same appendix table.
-6. **Idle / readiness friction** — player can waste a turn (empty research, idle civilians, no orders) without shell feedback (`turn-shell` bias).
+6. **Idle / readiness friction** — player can waste a turn without shell feedback where the product **intends** a pre-commit warn. Apply **P1** in `SPEC/ui/ux-design-decisions.md`: remind only when **using** the capacity is free (e.g. unassigned spies); do **not** nag when use costs scarce resources (e.g. research funding — **UXD-001**). Today’s idle-civilian warn on `DLG60001` is the existing shell case; do not invent new checklists that violate P1.
 7. **Dense / overloaded default surface** — a primary panel or dialog dumps many secondary facts, tables, or jargon at once with no progressive disclosure (province overlay tabs, production/trade tables, multi-section unit panels are common suspects).
 8. **Manual-dependent labels** — default UI shows facts or terms that a new player cannot interpret without `docs/manual/` (internal names, bare numbers, unexplained phase jargon).
-9. **Default if still tied:** `turn-shell` (affects every session).
+9. **Default if still tied:** `turn-shell` (affects every session), excluding any shell checklist covered by a `rejected` UX decision.
 
 **Lock the domain in writing** before deep analysis:
 
@@ -118,7 +134,7 @@ Pick **exactly one** domain from this catalog (or a user-named subset that fits)
 
 If two domains are equally strong, prefer the one the user can act on this week (smaller surface) **or** ask the user to choose between the two options.
 
-### 3. Load player model (read-only)
+### 4. Load player model (read-only)
 
 Within the locked domain only:
 
@@ -128,7 +144,7 @@ Within the locked domain only:
 
 Do not invent new game rules. UI may **expose** existing rules and state; flag any desire that would require GDD changes as **SPEC impact: GDD**.
 
-### 4. Inventory current UI
+### 5. Inventory current UI
 
 For each in-scope screen/dialog (registry + `SPEC/ui/<screen>.md` + implementation path if needed):
 
@@ -142,7 +158,7 @@ For each in-scope screen/dialog (registry + `SPEC/ui/<screen>.md` + implementati
 
 Stay factual; cite screen IDs and spec paths.
 
-### 5. Walk player journeys
+### 6. Walk player journeys
 
 Use the lenses in [`.cursor/skills/suggest-player-ux-improvements/references/player-lenses.md`](references/player-lenses.md):
 
@@ -157,7 +173,7 @@ Build a short journey table (3–8 rows is enough). Mark each gap as `decision` 
 
 **Manual as answer key, not product solution:** use `docs/manual/` and GDD to know what the player *should* understand; if the UI only makes sense after reading the manual, that is a **clarity** (or declutter+clarity) gap—recommend UI that teaches in place, not “link to manual chapter” as the primary fix.
 
-### 6. Data availability analysis (required)
+### 7. Data availability analysis (required)
 
 For the candidate improvement(s) you are considering, determine whether the UI can be fed today:
 
@@ -181,16 +197,17 @@ Record a compact **data table** in the final brief. Prefer improvements where da
 - Narrow to an **expose-existing-data** slice, or
 - Make the single recommendation a **SPEC+UI** paired issue set (still one improvement theme).
 
-### 7. Light de-duplication
+### 8. Light de-duplication
 
 Before locking the recommendation:
 
+- **Design decisions (required):** re-check `SPEC/ui/ux-design-decisions.md`. Drop any candidate whose player-visible intent matches a `rejected` decision’s non-goals (including renames that keep the same end-turn / shell nag semantics).
 - Skim open issues when `gh` works: `gh issue list --state open --limit 100` and/or search by domain keywords / screen IDs.
 - If the same improvement is already open, **do not re-propose it as new work** — cite the issue and either refine the angle (strictly different) or pick the next-best gap in the **same domain**.
 
 If `gh` is unavailable, note that and proceed with SPEC/code evidence only.
 
-### 8. Pick exactly one improvement
+### 9. Pick exactly one improvement
 
 Selection rules:
 
@@ -206,6 +223,8 @@ Selection rules:
 
 **Reject** (for this run’s recommendation):
 
+- Anything covered by a **`rejected`** entry in `SPEC/ui/ux-design-decisions.md` (e.g. **UXD-001**: end-turn unused-research warnings)
+- End-turn / shell “unused capacity” nags that violate **P1** (use costs treasury/materials or other scarce spend)
 - Pure visual polish / pixel-art / theming (→ design rules, not this skill)
 - ctdev/debug-only surfaces
 - Multi-domain epics (“overhaul economy + war + trade”)
@@ -213,9 +232,9 @@ Selection rules:
 - “Add more numbers for power users” with no hierarchy (worsens density)
 - “Player should read the manual” as the primary remedy for unclear UI
 
-List **at most two** runner-up titles in one line each (no full write-ups) so the user can request another run later.
+List **at most two** runner-up titles in one line each (no full write-ups) so the user can request another run later. Do not list a `rejected` decision as a runner-up.
 
-### 9. Deliver chat brief (mandatory template)
+### 10. Deliver chat brief (mandatory template)
 
 Use this structure. **Player sections first.** Do not file issues.
 
@@ -255,6 +274,7 @@ Use this structure. **Player sections first.** Do not file issues.
 - …
 
 ## Evidence
+- UX design decisions consulted: <P1 / UXD-NNN statuses / none matched>
 - Manual: …
 - GDD: …
 - UI specs / IDs: …
@@ -312,6 +332,7 @@ Chat-only complete. To proceed: ask to **plan-feature** / **file an issue** for 
 ## Anti-patterns
 
 - Filing GitHub issues or editing SPEC in this skill
+- Skipping `SPEC/ui/ux-design-decisions.md` or re-proposing a `rejected` UX decision
 - Proposing new combat/economy rules disguised as “UI”
 - Recommending five small unrelated tweaks “for completeness”
 - Skipping data availability

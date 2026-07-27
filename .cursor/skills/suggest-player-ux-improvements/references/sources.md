@@ -6,6 +6,7 @@ Pointers for `suggest-player-ux-improvements`. Always re-read current files; thi
 
 | Resource | Path |
 |----------|------|
+| **UX design decisions (required every run)** | `SPEC/ui/ux-design-decisions.md` — **P1** free-vs-costly capacity; `rejected` UXD rows = hard non-goals |
 | Screen registry | `SPEC/ui/screen-registry.md` |
 | Screen IDs in code | `app/lib/config/ui_screen_ids.dart` |
 | Actions appendix (decree → UI entry → result phase) | `docs/manual/16-appendix-actions.md` |
@@ -52,6 +53,8 @@ These surfaces often pack many facts; audit primary vs secondary carefully:
 
 ## Out of scope for this skill’s recommendations
 
+- Anything listed under a **`rejected`** decision in `SPEC/ui/ux-design-decisions.md` (currently includes **UXD-001**: end-turn unused research capacity warnings)
+- Pre-commit nags for **costly** unused capacity that violate **P1** (remind only when using the capacity is free—e.g. spies; not research funding)
 - `SYS*` debug surfaces
 - ctdev-only tools (`SPEC/program/ctdev-app.md`)
 - Pure asset/style work (`colonizethis-ui-design.mdc`, pixel catalog)
