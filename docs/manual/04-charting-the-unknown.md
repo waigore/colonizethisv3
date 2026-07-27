@@ -20,6 +20,12 @@ Political ownership on the map remains authoritative even when a province is fog
 
 **Setup defaults:** Old World fogged (owned tiles fully visible); New World unknown. Sea zones adjacent to coasts you **fully own** become fully visible at setup and again each end of turn.
 
+### Bootstrap prospecting (advanced start)
+
+**turns50** and **turns100** presets run a **setup-only** prospecting pass on **owned** provinces before the first Orders phase — separate from Explorer **prospect** work below. Setup marks a tier fraction of prospect-required minerals in your combined owned pool (50% OW-only at 50-turn; 75% OW+NW after 100-turn colonization). Minor OW minerals receive the same fraction and are recorded in buyer Great Power prospected sets.
+
+That bootstrap step is **not** NW flood-fill **reveal** and **not** in-game Explorer labor. Chapter 2 **Founding Your Reign** documents tier fractions, OW vs NW scope, and the prospect-before-development bootstrap order.
+
 ### Explorer work: explore and prospect
 
 Use `UNIT10001` **Civilian units panel** (or tile shortcuts on `MAP20001` **Province / sea-zone detail overlay**) with an **Explorer**:
@@ -67,6 +73,7 @@ Rival courts race the same fog. AI civilian planners score Explorer **explore** 
 ## Acceptance criteria for this chapter
 
 - [ ] Documents unknown / fogged / fully visible and own-province never-decay rule.
+- [ ] Documents bootstrap prospecting on advanced starts vs in-game Explorer `prospect` (cross-ref Ch. 2).
 - [ ] Documents Explorer `explore` (partial-reveal gate, free, ≤3 turns, province reveal on complete) and `prospect` (eligible terrain, free, 1 turn, completion-only).
 - [ ] Documents Consulate gate for Minor/Tribe explore/prospect.
 - [ ] Documents fleet enter → coastal/sea reveal and end-of-turn re-fog conditions.
@@ -75,6 +82,7 @@ Rival courts race the same fog. AI civilian planners score Explorer **explore** 
 
 ## Sources
 
+- `SPEC/game/advanced-starts.md`
 - `SPEC/game/fog-and-exploration.md`
 - `SPEC/game/civilian-units.md`
 - `SPEC/game/ships-and-naval.md`
