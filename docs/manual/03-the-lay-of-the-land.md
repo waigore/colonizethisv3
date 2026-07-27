@@ -32,6 +32,15 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 - **Connectivity** from the capital (roads/rails and town rules) decides which owned tiles contribute to your extraction network. Land-locked holdings without a path to the capital do not feed the stockpile the way connected tiles do.
 - Ports on seaboards matter for overseas links; capital setup places capital ports and initial roads so your first coast is usable.
 
+### Extraction discs on `MAP10001`
+
+When resource icons are visible on the empire map (`MAP10001`), small coloured **extraction discs** may appear beside the icon on your owned improved tiles:
+
+- **Gold discs** — effective yield transported toward the capital (**E**). These units count toward your stockpile path.
+- **Brown discs** — blocked yield (**B**). Either the tile is **not capital-connected** (nothing reaches the stockpile from that tile) or a **connected** tile is path- or transport-capped below its full production.
+
+A disconnected improved tile with a visible resource icon shows **0 gold + F brown** discs (where **F** is full tile production under current rules) — not silence. That is your cue that the improvement looks productive but extraction is stranded until you restore capital link (roads, towns, ports) toward your capital.
+
 ### Why province identity matters in the UI
 
 Every province and sea zone is identified as **`regionId|localId`** (never a bare local id alone). The overlay and orders use that full identity so Old World `P3` and New World `P3` never collide. When a dialog lists a destination or a report names a province, read the **region** as part of the name of the place — it is not decorative.
@@ -52,6 +61,7 @@ AI courts value capital-connected extraction and contested border provinces when
 
 - Misreading adjacency wastes move orders and leaves armies unable to reach the province you meant.
 - Building improvements on disconnected tiles spends treasury for little extraction.
+- An improved tile may show a resource icon and brown extraction discs even when nothing reaches your stockpile — read gold vs brown on `MAP10001` before you assume the tile is paying its way.
 - Ignoring New World vs Old World resource tables sends explorers and colonists to barren expectations.
 - Confusing local ids across regions creates “wrong province” mistakes in army and work targeting.
 
@@ -61,6 +71,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - [ ] Documents map selection → `MAP20001` overlay and points to town/port and terrain rendering specs.
 - [ ] Summarizes region resource rules and prospect-required minerals (detail deferred to Ch. 4/6 as appropriate).
 - [ ] Explains capital connectivity’s effect on extraction usefulness.
+- [ ] Explains gold vs brown extraction discs on `MAP10001` and ties brown discs on disconnected improved tiles to capital connectivity.
 - [ ] Explains prefixed province identity (`regionId|localId`) as the UI naming contract.
 - [ ] Sources match the chapter coverage map.
 
