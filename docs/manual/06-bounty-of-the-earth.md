@@ -13,7 +13,18 @@ Tiles feed the realm only when civilians improve them, bind them with roads and 
 3. Confirm the assignment in the Orders phase. Materials and treasury affordability are checked **at assign**; for most builds, stockpile materials are reserved/deducted when Build/work applies the order. Rejected assigns surface messages such as **Insufficient treasury** or **Insufficient materials**.
 4. The unit may need to **move** to the work tile in **Movement**; work then ticks in **Build/work**. New extraction yields appear in later turns’ **Extraction** phase once improvements exist and connectivity allows.
 
-`GAME20001` **Production** can preview pending material costs for queued work; Extraction/Available rows on `MAP20001` summarize what a province can pull after resolution (see `SPEC/ui/province-economic-extraction-available.md`).
+`GAME20001` **Production** shows your empire stockpile, queued recipes, and pending material costs for work you have staged. **`MAP20001` Economic** **Extraction** and **Available** rows are different: they **project** what this province would yield from the **current post-resolution world state** — visible immediately on a new game (including bootstrap grain farms), not only after an Extraction phase has run. Staging improve, road, or town draft orders mid-turn does **not** change Extraction or Available until turn resolution applies them. Display-only: your stockpile still receives commodities when the Extraction phase runs (see `SPEC/ui/province-economic-extraction-available.md`).
+
+### Reading Extraction on `MAP20001`
+
+When Economic full intel is available on `MAP20001`, the **Extraction** condensed line lists projected commodity yields in fixed catalog order (icons + quantities). **Available** below it counts improvable resource tiles in that province — not the same as transported yield or empire stockpile totals on `GAME20001`.
+
+- **Full yield** — a commodity shows a single number (e.g. `5 Grain`) when effective extraction equals full tile production under current rules.
+- **Partial yield** — when path or connectivity caps effective below full production, the quantity shows **`effective (full)`** brackets (e.g. `1 (5) Grain`). Hover a segment to highlight its contributing tiles on `MAP10001`.
+- **Partial-yield reason** — when **any** commodity is partial, one **muted reason line** appears immediately under the Extraction line: improved tiles are not linked to your capital, or the road/port path is too weak. This is a connectivity and transport cue — not a tech-cap bug. When all commodities are full-yield or Extraction is empty (`—`), no reason line appears.
+- **Capital grain bonus** — when configured, grain may include a separate muted `incl. +N capital grain bonus` annotation; that bonus is not tile extraction and does not trigger the partial-yield reason by itself.
+
+Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** on `MAP10001` are Chapter 3 as well.
 
 ### Work targets by unit
 
@@ -55,6 +66,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - Ignoring exclusivity and one-work-per-unit rules floods the panel with rejected orders.
 - Purchasing land without embassy or while at war fails at assign; waiting until completion to check treasury causes surprise shortfalls if you spend elsewhere the same turn.
 - Disconnecting improved tiles from the capital starves Extraction even when the map looks developed.
+- Partial Extraction brackets with a reason line under `MAP20001` mean improved tiles exist but capital link or road/port transport limits block full yield toward your stockpile — build connectivity before you blame the tech cap.
 
 ## Acceptance criteria for this chapter
 
@@ -63,6 +75,9 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - [ ] States assign-time Insufficient treasury/materials checks and one-order / per-tile exclusivity.
 - [ ] Documents cancel without material refund; purchase_land debit-at-completion.
 - [ ] Explains extraction caps / tech caps and connectivity dependency at player level.
+- [ ] Explains `MAP20001` Extraction/Available as post-resolution projection from current world state (new-game visibility, mid-turn draft orders unchanged until resolution).
+- [ ] Distinguishes province-overlay Extraction/Available from stockpile-centric `GAME20001` Production.
+- [ ] Explains `MAP20001` Extraction `effective (full)` brackets, capital grain bonus annotation, and the muted partial-yield reason line when connectivity or path limits apply (cross-ref Chapter 3).
 - [ ] Notes current-product deferral of `national_bureaucracy` for `upgrade_town`.
 - [ ] Sources match the chapter coverage map.
 

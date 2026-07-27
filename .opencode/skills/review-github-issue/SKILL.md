@@ -73,6 +73,7 @@ Identify **how** the issue says the purpose should be achieved:
 - **Alignment**: Does each major part of the proposed method **contribute** to the stated purpose? Flag **out-of-scope**, **under-specified**, or **misaligned** pieces.
 - **Internal contradictions**: Title vs body; AC vs proposed fix; scope vs labels/milestone; duplicate or conflicting requirements.
 - **Thin issues**: If purpose is somewhat clear but **how** is missing or self-contradictory, **flag that as the main finding**—do **not** substitute a full repository audit for missing method text.
+- **Player manual deliverables**: When the issue changes **player UX or gameplay** (what the player can do, see, or be told), flag missing **Manual follow-up** subtasks/ACs or unjustified omission per `.cursor/rules/colonizethis-game-manual.mdc` (parallel to `document-app-ui` for new screens).
 
 ### 5. Conditional deep trace (code, SPEC, tests)
 

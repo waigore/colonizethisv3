@@ -1,6 +1,6 @@
 ---
 name: update-game-manual
-description: Updates the ColonizeThis player game manual under docs/manual/ after SPEC or UI changes—maps affected chapters via Sources footers, preserves vizier tone and player-angle framing, enforces chapter template and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change, or when the user asks to refresh the game manual.
+description: Updates the ColonizeThis player game manual under docs/manual/ when player UX or gameplay changes—maps affected chapters via Sources footers, preserves vizier tone and player-angle framing, enforces chapter template and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change; when create-github-issue/plan-feature issues include manual ACs; or when the user asks to refresh the game manual.
 ---
 
 # Update the player game manual (ColonizeThis)
@@ -15,7 +15,8 @@ description: Updates the ColonizeThis player game manual under docs/manual/ afte
 ## When to use
 
 - A PR or task changes `SPEC/game/**`, `SPEC/ui/**`, or allowlisted `SPEC/program/` files (`orders.md`, `turn-resolution-phases.md`, `turn-resolution-phase-details.md`, `order-engine.md`).
-- New/changed player-facing orders, validation, screens, or victory/diplomacy/economy rules.
+- New/changed player-facing orders, validation, screens, map affordances, or visible outcomes.
+- An issue filed via **`create-github-issue`** or **`plan-feature`** includes a **Manual** subtask or AC (policy: `.cursor/rules/colonizethis-game-manual.mdc`).
 - User asks to update, refresh, or align the **game manual** (not the codebase course).
 
 Skip pure internal `SPEC/program/**` paths outside the allowlist unless the author judges the change affects what the player can do, see, or be told (advisory).
