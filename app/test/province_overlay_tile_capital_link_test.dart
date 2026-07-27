@@ -420,6 +420,34 @@ void main() {
           findsOneWidget);
     });
 
+    testWidgets('shows Connected and E equals F for fully yielding tile', (
+      WidgetTester tester,
+    ) async {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 2,
+        remoteRoadLevel: 4,
+      );
+      const preview = ProvinceTileConnectivityDisplay(
+        capitalConnected: true,
+        pathTransportLevel: 4,
+        extractionEffective: 1,
+        extractionFull: 1,
+      );
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: regionForGame(game),
+        selectedTileKey: capitalTile,
+        humanPlayerId: humanId,
+        playerView: demoOverlayPlayerView(game),
+        tileConnectivity: preview,
+      );
+      expect(find.textContaining('Capital link: Connected'), findsOneWidget);
+      expect(find.textContaining('Extraction from this tile: 1 of 1'),
+          findsOneWidget);
+    });
+
     testWidgets('shows path-capped E of F for connected tile', (
       WidgetTester tester,
     ) async {
