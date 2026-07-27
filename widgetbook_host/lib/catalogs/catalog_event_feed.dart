@@ -19,6 +19,23 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
     name: 'Player Turn Event Feed Card',
     children: [
       WidgetbookUseCase(
+        name: 'Research complete — tappable link to Technology',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Research complete: Crop Rotation unlocked',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Populated — three entries (top entry tappable)',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(
