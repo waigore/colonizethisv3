@@ -220,6 +220,43 @@ void main() {
       expect(preview.extractionFull, 1);
     });
 
+    test('path-capped connected tile reports E less than F', () {
+      final base = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 4,
+      );
+      final game = base.copyWith(
+        worldState: base.worldState.copyWith(
+          tileState: TileMapState()
+              .setImprovement(capitalTile, 3)
+              .setRoadLevel(capitalTile, 4)
+              .setImprovement(remoteTile, 3)
+              .setRoadLevel(remoteTile, 4),
+        ),
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: provinceId,
+        selectedTileKey: capitalTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: false,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+          pathTransportCap: {capitalTile: 1},
+          connectedByRoadRule: {capitalTile},
+        ),
+      );
+      expect(preview, isNotNull);
+      expect(preview!.capitalConnected, isTrue);
+      expect(preview.showExtractionRow, isTrue);
+      expect(preview.extractionFull, 3);
+      expect(preview.extractionEffective, 1);
+      expect(preview.extractionEffective! < preview.extractionFull!, isTrue);
+    });
+
     test('returns null for foreign-owned province', () {
       final game = gameWithRemoteImprovedTile(
         remoteImprovementLevel: 2,
@@ -289,6 +326,34 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('Extraction from this tile: 0 of 3'),
+          findsOneWidget);
+    });
+
+    testWidgets('shows path-capped E of F for connected tile', (
+      WidgetTester tester,
+    ) async {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 4,
+      );
+      const preview = ProvinceTileConnectivityDisplay(
+        capitalConnected: true,
+        pathTransportLevel: 1,
+        extractionEffective: 1,
+        extractionFull: 3,
+      );
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: regionForGame(game),
+        selectedTileKey: capitalTile,
+        humanPlayerId: humanId,
+        playerView: demoOverlayPlayerView(game),
+        tileConnectivity: preview,
+      );
+      expect(find.textContaining('Capital link: Connected'), findsOneWidget);
+      expect(find.textContaining('Extraction from this tile: 1 of 3'),
           findsOneWidget);
     });
 
