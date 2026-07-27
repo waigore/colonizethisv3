@@ -1,18 +1,19 @@
-// Caps colonizethis_app `by_package_role.main` at 60_550 lines per
+// Caps colonizethis_app `by_package_role.main` at 60_900 lines per
 // `pytool/project_stats.py`. Refs #3942 headroom (was 60_000 under #3878);
 // raised for named save/load dialogs (Refs #3959); raised again for load-game
 // list paging/delete/metadata UI (Refs #3985); raised for full game-session
 // clear API + pause-disable-while-resolving wiring (Refs #3989); raised for
 // session-clear isolation test hooks on GameService (Refs #3989 assurance);
 // raised for province Economic Extraction/Available condensed UI (Refs #4002);
-// raised for bundled map theme catalog + Settings dialog (Refs #4088).
+// raised for bundled map theme catalog + Settings dialog (Refs #4088);
+// raised for turn-feed research deep link + diplomacy/work/combat row routing (Refs #4144, #4145).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 60550;
+const _maxMainLines = 60900;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
