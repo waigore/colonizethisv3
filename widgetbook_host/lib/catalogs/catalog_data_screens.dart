@@ -586,7 +586,7 @@ Game _victoryScreenStoryGame() {
     ),
     players: const [
       Player(id: 'gp1', displayName: 'England', isHuman: true),
-      Player(id: 'gp2', displayName: 'France'),
+      Player(id: 'gp2', displayName: 'France', isHuman: false),
     ],
   );
 }
