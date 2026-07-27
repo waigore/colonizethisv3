@@ -49,6 +49,8 @@ Both auto-resolve and quick battle apply the same lookup for attacker and defend
 
 After provinces are assigned, each Great Power receives an **auto-chosen capital**: a **sea-bound** province plus capital tile, with capital ports and initial roads placed per capital rules. **Current product:** there is **no** in-game UI to confirm or override that choice after setup. Minor Nations and Tribes get capitals at setup without player choice. Province and capital **names** come from the naming ruleset.
 
+Setup places each capital tile on **plains** when the selection rules allow it — within each candidate class, plains tiles are preferred before other terrain. If the winning site is not plains (including when no plains exists among eligible candidates), setup **converts that selected tile to plains** and clears any resource or extraction improvement on it. The same plains preference and convert-if-needed rule applies to every province **town** tile (including neutral provinces without an owner): towns anchor on arable ground so roads and early extraction can grow from a predictable spine.
+
 ### Naming and identity
 
 Places you will see in the UI are named during setup, but their **identity** remains region-scoped (`regionId|localId`). Chapter 3 explains why that matters when the overlay titles a province.
@@ -56,6 +58,8 @@ Places you will see in the UI are named during setup, but their **identity** rem
 ## Counsel
 
 **Counsel.** Hark, my liege: pick a leader for the wars you expect, not for vanity — the bonus never feeds your stockpile.
+
+**Counsel.** Hark, my liege: capitals and towns are rooted on **plains** — arable ground where grain, roads, and your first extraction spine can take hold. A fortress on barren rock is a crown without a harvest.
 
 **Tip.** If you want a longer campaign past 1800, enable Infinite mode here; you cannot flip it mid-reign.
 
@@ -70,6 +74,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 - A strong combat leader shortens some land wars and does nothing for fleets or factories.
 - Advanced start compresses early exploration and tech catch-up; rivals begin closer to mid-game posture.
 - Auto-chosen capitals fix your first ports and road spine — connectivity strategy starts from that seed, not from a blank map.
+- Capitals and province towns sit on **plains** tiles at setup; a converted site may have lost a surface resource that once sat on that tile.
 
 ## Acceptance criteria for this chapter
 
@@ -78,6 +83,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 - [ ] Covers leader combat bonuses (Napoleon / Frederick / none).
 - [ ] Covers advanced start presets and when the control is disabled.
 - [ ] States capital is auto-chosen (sea-bound) with no post-setup override UI.
+- [ ] Explains capital and province town plains placement (prefer plains; convert selected tile and clear resource if needed).
 - [ ] Documents `SHEL30001` Game initializing as a real non-interactive wait-gate (no draft marker).
 - [ ] Sources match the chapter coverage map.
 
@@ -88,6 +94,7 @@ AI Great Powers receive leaders and optional blessed profiles from the same dial
 - `SPEC/game/leader-bonuses.md`
 - `SPEC/game/advanced-starts.md`
 - `SPEC/game/capital-choice-phase.md`
+- `SPEC/game/capital-and-connectivity.md`
 - `SPEC/game/naming.md`
 - `SPEC/ui/main-menu.md`
 - `SPEC/ui/shell-screen.md`
