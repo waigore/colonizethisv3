@@ -9,7 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
         TopologyNodeType,
         kTechIdMoldboardPlow;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveConnectivity;
+    show ConnectivityResult, resolveConnectivity;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
@@ -131,6 +131,36 @@ void main() {
       expect(maps.unitsByTile[_disconnectedTile], 2);
       expect(maps.effectiveUnitsByTile[_disconnectedTile], 0);
       expect(maps.blockedUnitsByTile[_disconnectedTile], 2);
+    });
+
+    test('disconnected tile switches to E=F when connectivity includes tile', () {
+      final game = _gameWithImprovedTile(
+        improvedTileKey: _disconnectedTile,
+        improvementLevel: 2,
+      );
+      final player = game.players.first;
+      final tileMapByRegion = _tileMapByRegion();
+      final disconnected = mapViewBuildResourceExtractionMaps(
+        game: game,
+        mapPlayer: player,
+        tileMapByRegion: tileMapByRegion,
+        connectivityForHuman: const ConnectivityResult(connected: {}),
+      );
+      expect(disconnected.effectiveUnitsByTile[_disconnectedTile], 0);
+      expect(disconnected.blockedUnitsByTile[_disconnectedTile], 2);
+
+      final connected = mapViewBuildResourceExtractionMaps(
+        game: game,
+        mapPlayer: player,
+        tileMapByRegion: tileMapByRegion,
+        connectivityForHuman: ConnectivityResult(
+          connected: {_disconnectedTile},
+          pathTransportCap: {_disconnectedTile: 4},
+          connectedByRoadRule: {_disconnectedTile},
+        ),
+      );
+      expect(connected.effectiveUnitsByTile[_disconnectedTile], 2);
+      expect(connected.blockedUnitsByTile[_disconnectedTile], 0);
     });
 
     test('capital-connected improved tile keeps effective discs', () {
