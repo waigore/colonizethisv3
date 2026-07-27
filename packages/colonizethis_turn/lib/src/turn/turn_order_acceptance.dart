@@ -44,6 +44,7 @@ Orders filterAcceptedOrdersForAllPlayers({
   final original = engine.orders;
   final moveByPlayer = <String, List<MoveOrder>>{};
   final armyMoveByPlayer = <String, List<ArmyMoveOrder>>{};
+  final recruitByPlayer = <String, List<RecruitWorkerOrder>>{};
   final buildByPlayer = <String, List<BuildUnitOrder>>{};
   final workByPlayer = <String, List<WorkOrder>>{};
   final diploByPlayer = <String, List<DiplomaticOrder>>{};
@@ -51,6 +52,7 @@ Orders filterAcceptedOrdersForAllPlayers({
   final playerIds = <String>{
     ...original.moveOrdersByPlayerId.keys,
     ...original.armyMoveOrdersByPlayerId.keys,
+    ...original.recruitWorkerOrdersByPlayerId.keys,
     ...original.buildUnitOrdersByPlayerId.keys,
     ...original.workOrdersByPlayerId.keys,
     ...original.diplomaticOrdersByPlayerId.keys,
@@ -59,6 +61,8 @@ Orders filterAcceptedOrdersForAllPlayers({
   for (final playerId in playerIds) {
     final moves = original.moveOrdersByPlayerId[playerId] ?? const [];
     final armyMoves = original.armyMoveOrdersByPlayerId[playerId] ?? const [];
+    final recruits =
+        original.recruitWorkerOrdersByPlayerId[playerId] ?? const [];
     final builds = original.buildUnitOrdersByPlayerId[playerId] ?? const [];
     final works = original.workOrdersByPlayerId[playerId] ?? const [];
     final diplo =
@@ -67,6 +71,7 @@ Orders filterAcceptedOrdersForAllPlayers({
 
     if (moves.isEmpty &&
         armyMoves.isEmpty &&
+        recruits.isEmpty &&
         builds.isEmpty &&
         works.isEmpty &&
         diplo.isEmpty) {
@@ -102,6 +107,17 @@ Orders filterAcceptedOrdersForAllPlayers({
       OrderKind.armyMove,
       sink,
     );
+    filterOrderList<RecruitWorkerOrder>(
+      playerId,
+      recruits,
+      results,
+      idxBox,
+      (pid, r) =>
+          recruitByPlayer.putIfAbsent(pid, () => <RecruitWorkerOrder>[]).add(r),
+      (r) => 'Recruit worker: ${r.targetTier.id}',
+      OrderKind.recruitWorker,
+      sink,
+    );
     filterOrderList<BuildUnitOrder>(
       playerId,
       builds,
@@ -123,10 +139,17 @@ Orders filterAcceptedOrdersForAllPlayers({
       OrderKind.work,
       sink,
     );
-
-    if (diplo.isNotEmpty) {
-      diploByPlayer[playerId] = List<DiplomaticOrder>.from(diplo);
-    }
+    filterOrderList<DiplomaticOrder>(
+      playerId,
+      diplo,
+      results,
+      idxBox,
+      (pid, d) =>
+          diploByPlayer.putIfAbsent(pid, () => <DiplomaticOrder>[]).add(d),
+      (d) => 'Diplomatic order: ${d.type.name} -> ${d.targetFactionId}',
+      OrderKind.diplomacy,
+      sink,
+    );
   }
 
   // Research, naval, and mission orders are not filtered here; shallow-copying
@@ -138,6 +161,7 @@ Orders filterAcceptedOrdersForAllPlayers({
   return Orders(
     moveOrdersByPlayerId: moveByPlayer,
     armyMoveOrdersByPlayerId: armyMoveByPlayer,
+    recruitWorkerOrdersByPlayerId: recruitByPlayer,
     buildUnitOrdersByPlayerId: buildByPlayer,
     workOrdersByPlayerId: workByPlayer,
     diplomaticOrdersByPlayerId: diploByPlayer,
