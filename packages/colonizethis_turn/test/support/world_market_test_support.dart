@@ -7,13 +7,14 @@ import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
 import 'turn_phase_test_harness.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 export 'world_market_pipeline_game_fixtures.dart';
 export 'world_market_trade_scenario_fixtures.dart';
 
 const kEmptyTopology = MapTopology(nodes: [], edges: []);
 
-const frrCreditTestOw = 'oldWorld';
+const frrCreditTestOw = kRegionOldWorld;
 const frrCreditTestMinorProvinceId = '$frrCreditTestOw|M1';
 const frrCreditTestTileKey = '$frrCreditTestOw|M1|0|0';
 

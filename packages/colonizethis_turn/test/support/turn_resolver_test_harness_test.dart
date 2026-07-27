@@ -90,6 +90,22 @@ void main() {
       expect(game.worldState.armies, isNotEmpty);
     });
 
+    test('turnTestOwTileKey builds 1x1 OW tile keys', () {
+      expect(turnTestOwTileKey('P2'), 'oldWorld|P2|0|0');
+      expect(turnTestNwTileKey('N1'), 'newWorld|N1|0|0');
+    });
+
+    test('turnTestCarrackFleet builds standard naval fixture', () {
+      final fleet = turnTestCarrackFleet(
+        seaZoneId: null,
+        inPortAtProvinceId: 'oldWorld|P1',
+        shipTypeIds: const ['fluyte'],
+      );
+      expect(fleet.shipTypeIds, ['fluyte']);
+      expect(fleet.inPortAtProvinceId, 'oldWorld|P1');
+      expect(fleet.seaZoneId, isNull);
+    });
+
     test('resolveTurnComplete advances turn with minimal move order', () {
       const ow = turnTestOldWorldRegionId;
       final topology = twoAdjacentOldWorldProvinceTopology();

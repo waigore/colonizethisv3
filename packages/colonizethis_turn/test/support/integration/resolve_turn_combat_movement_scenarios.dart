@@ -161,7 +161,7 @@ void registerCombatMovementTests() {
             game: game,
             topology: topology,
             orders: orders,
-            tileMapByRegion: {'oldWorld': tileMap},
+            tileMapByRegion: {kRegionOldWorld: tileMap},
           );
           expect(next.worldState.turnState.turnNumber, 1);
           final p2Province = next.worldState.oldWorld.provinces

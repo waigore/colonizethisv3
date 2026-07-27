@@ -9,6 +9,13 @@ import 'package:path/path.dart' as p;
 
 const _maxPhysicalLines = 400;
 
+/// Test subtrees governed by package-specific support LOC / file-size gates
+/// instead of this cross-domain 400-line cap (mirrors `check_turn_test_file_size`
+/// support exclusion and `repo.turn_test_support_loc`).
+const List<String> _excludedRelativePathPrefixes = [
+  'packages/colonizethis_turn/test/support/',
+];
+
 /// Domain packages whose migrated test suites must stay within the shared cap.
 const List<String> domainPackageTestFileSizeDomainsForTests = [
   'world',
@@ -51,7 +58,12 @@ int runCheckDomainPackageTestFileSize(
     );
     for (final filePath in filesToCheck) {
       final file = File(filePath);
-      final relativePath = p.relative(file.path, from: repoRoot);
+      final relativePath = p
+          .relative(file.path, from: repoRoot)
+          .replaceAll('\\', '/');
+      if (_excludedRelativePathPrefixes.any(relativePath.startsWith)) {
+        continue;
+      }
       final physicalLines = const LineSplitter()
           .convert(file.readAsStringSync())
           .length;

@@ -105,7 +105,7 @@ void registerDiplomacyVictoryOverturesTests() {
       test(
         'endOfTurn phase leaves game unchanged when victory already set',
         () {
-          const ow = 'oldWorld';
+          const ow = kRegionOldWorld;
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -133,7 +133,7 @@ void registerDiplomacyVictoryOverturesTests() {
               nodes: const [
                 TopologyNode(
                   id: 'P1',
-                  regionId: 'oldWorld',
+                  regionId: kRegionOldWorld,
                   type: TopologyNodeType.province,
                 ),
               ],
