@@ -153,9 +153,11 @@ Rules:
 
 Plus **all** of `SPEC/game/**` and `SPEC/ui/**`.
 
-**Advisory only** (no mandatory review): every other `SPEC/program/**` path. Authors may still update the manual if the change affects what the player can do, see, or be told.
+**Advisory only** (no mandatory path trigger): every other `SPEC/program/**` path.
 
-PRs that hit a required-review path must update affected chapters (via Sources footers) **or** explicitly justify why no manual change is needed.
+**Player UX / gameplay impact** (authoritative): update the manual whenever work changes what the player can do, see, or be told — even when no required-review path changed. Policy: `.cursor/rules/colonizethis-game-manual.mdc`. Planning skills (`create-github-issue`, `plan-feature`) must capture manual deliverables in issues when applicable.
+
+PRs that hit a required-review path or player UX/gameplay impact must update affected chapters (via Sources footers) **or** explicitly justify why no manual change is needed.
 
 ## Honesty and non-goals
 

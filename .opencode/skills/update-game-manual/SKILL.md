@@ -1,6 +1,6 @@
 ---
 name: update-game-manual
-description: Updates the ColonizeThis player game manual under docs/manual/ after SPEC or UI changes—maps affected chapters via Sources footers, preserves vizier tone and player-angle framing, enforces chapter template and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change, or when the user asks to refresh the game manual.
+description: Updates the ColonizeThis player game manual under docs/manual/ when player UX or gameplay changes—maps affected chapters via Sources footers, preserves vizier tone and player-angle framing, enforces chapter template and draft-marking. Use when SPEC/game, SPEC/ui, allowlisted SPEC/program files, orders, screens, or manual chapters change; when create-github-issue/plan-feature issues include manual ACs; or when the user asks to refresh the game manual.
 ---
 
 # Update the player game manual (ColonizeThis)
@@ -13,7 +13,8 @@ Cursor copy: [`.cursor/skills/update-game-manual/SKILL.md`](../../../.cursor/ski
 
 ## When to use
 
-- SPEC/game, SPEC/ui, or allowlisted SPEC/program changes that affect what the player can do, see, or be told.
+- SPEC/game, SPEC/ui, allowlisted SPEC/program changes, or player UX/gameplay changes that affect what the player can do, see, or be told.
+- Issues filed via **`create-github-issue`** or **`plan-feature`** with manual ACs (policy: `colonizethis-game-manual.mdc`).
 - User asks to update or align the **player game manual**.
 
 ## Workflow
