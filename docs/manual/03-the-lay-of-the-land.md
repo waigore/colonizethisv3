@@ -16,7 +16,7 @@ Your decrees land on **provinces**, **sea zones**, and **tiles**. Reading the ma
 
 1. On `GAME10001` / `MAP10001`, select a land province or sea zone.
 2. `MAP20001` **Province / sea-zone detail overlay** shows the place’s display name, ownership, and local details (economic and military cues as implemented there).
-3. Town and port icons on the map mark development and seaboard access (`SPEC/ui/town-port-icons.md`). Layered terrain rendering paints the tile art beneath political ownership (`SPEC/ui/layered-terrain-rendering.md`).
+3. Town and port icons on the map mark development and seaboard access (`SPEC/ui/town-port-icons.md`). Expect those town sites to sit on **plains** terrain at setup — setup prefers plains among eligible candidates and converts the chosen town tile to plains (clearing any surface resource) when no natural plains exists. Layered terrain rendering paints the tile art beneath political ownership (`SPEC/ui/layered-terrain-rendering.md`).
 4. Political ownership glyphs and GP tinting (when present on the game) help you see who holds which province at a glance.
 
 ### Terrain, resources, and what is hidden
@@ -28,9 +28,10 @@ Tiles carry **terrain** and optional **resources**. Extraction only happens wher
 
 ### Capital and connectivity
 
-- Your **capital province** and **capital tile** are fixed at setup (Chapter 2). Great Power capital provinces start at high town development.
+- Your **capital province** and **capital tile** are fixed at setup (Chapter 2). Great Power capital provinces start at high town development. The capital tile is on **plains** — preferred among Class A/B/C candidates when possible, or converted to plains after selection if the winning site was another terrain (any resource on that tile is cleared).
+- Every province has exactly one **town** tile: the capital tile in a capital province, or a separate town site elsewhere. Neutral (ownerless) provinces receive a town tile under the same **plains-first** rule and convert-if-needed behavior. On `MAP10001`, town and port icons mark those sites on the plains beneath them.
 - **Connectivity** from the capital (roads/rails and town rules) decides which owned tiles contribute to your extraction network. Land-locked holdings without a path to the capital do not feed the stockpile the way connected tiles do.
-- Ports on seaboards matter for overseas links; capital setup places capital ports and initial roads so your first coast is usable.
+- Ports on seaboards matter for overseas links; capital setup places capital ports and initial roads so your first coast is usable. An overseas port tile chosen as a town site follows the same convert-to-plains rule when it is not already plains.
 
 ### Extraction discs on `MAP10001`
 
@@ -63,6 +64,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - Building improvements on disconnected tiles spends treasury for little extraction.
 - An improved tile may show a resource icon and brown extraction discs even when nothing reaches your stockpile — read gold vs brown on `MAP10001` before you assume the tile is paying its way.
 - Ignoring New World vs Old World resource tables sends explorers and colonists to barren expectations.
+- A capital or town tile converted to plains at setup may no longer show the resource that generation placed there — the settlement spine takes priority over that surface deposit.
 - Confusing local ids across regions creates “wrong province” mistakes in army and work targeting.
 
 ## Acceptance criteria for this chapter
@@ -71,6 +73,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - [ ] Documents map selection → `MAP20001` overlay and points to town/port and terrain rendering specs.
 - [ ] Summarizes region resource rules and prospect-required minerals (detail deferred to Ch. 4/6 as appropriate).
 - [ ] Explains capital connectivity’s effect on extraction usefulness.
+- [ ] Documents plains placement for capitals and per-province town tiles (including neutral provinces; prefer plains, convert-if-needed).
 - [ ] Explains gold vs brown extraction discs on `MAP10001` and ties brown discs on disconnected improved tiles to capital connectivity.
 - [ ] Explains prefixed province identity (`regionId|localId`) as the UI naming contract.
 - [ ] Sources match the chapter coverage map.
@@ -83,6 +86,7 @@ AI courts value capital-connected extraction and contested border provinces when
 - `SPEC/game/tile-map-and-generation.md`
 - `SPEC/game/resource-terrain-region-rules.md`
 - `SPEC/game/capital-and-connectivity.md`
+- `SPEC/game/capital-choice-phase.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/empire-overview.md`
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
