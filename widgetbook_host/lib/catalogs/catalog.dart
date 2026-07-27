@@ -58,7 +58,6 @@ import 'package:colonizethis_app/features/game/widgets/production/production_lab
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
