@@ -1,213 +1,18 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kPlayerTurnFeedToggleButtonKey;
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/debug_console_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show kTechIdCropRotation, kWorkTargetBuildRoad, techDisplayName;
+    show kTechIdCropRotation, kWorkTargetExplore, techDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
-import 'map_view_test_fixtures.dart';
-import 'panel_test_fixtures.dart';
-
-class _MapAreaHost extends StatefulWidget {
-  const _MapAreaHost({required this.game, required this.mapViewData});
-
-  final Game game;
-  final InitGameMapViewData mapViewData;
-
-  @override
-  State<_MapAreaHost> createState() => _MapAreaHostState();
-}
-
-class _MapAreaHostState extends State<_MapAreaHost> {
-  bool _showMapArea = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          TextButton(
-            onPressed: () => setState(() => _showMapArea = false),
-            child: const Text('dispose-map-area'),
-          ),
-          Expanded(
-            child: _showMapArea
-                ? GameMapArea(
-                    game: widget.game,
-                    mapViewData: widget.mapViewData,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EventFeedHarness {
-  _EventFeedHarness(this.game, this.mapViewData, this.bus)
-    : humanId = game.players.firstWhere((p) => p.isHuman).id {
-    opponentId = game.players.firstWhere((p) => p.id != humanId).id;
-  }
-
-  final Game game;
-  final InitGameMapViewData mapViewData;
-  final AppEventBus bus;
-  final String humanId;
-  late final String opponentId;
-
-  String get playerDisplayName =>
-      game.players.firstWhere((p) => p.id == humanId).displayName;
-
-  String get opponentDisplayName =>
-      game.players.firstWhere((p) => p.id == opponentId).displayName;
-}
-
-_EventFeedHarness _newHarness({bool disposeBus = true}) {
-  final harness = _EventFeedHarness(
-    buildMapAreaEventFeedTestGame(),
-    buildLightweightMapViewData(),
-    AppEventBus.create(),
-  );
-  if (disposeBus) {
-    addTearDown(harness.bus.dispose);
-  }
-  return harness;
-}
-
-Future<void> _pumpMapArea(
-  WidgetTester tester, {
-  required Box<dynamic> gamesBox,
-  required _EventFeedHarness harness,
-  Widget? home,
-  bool debugConsoleEnabled = false,
-  Size? mediaQuerySize,
-}) async {
-  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-  await tester.pumpWidget(
-    buildAppShell(
-      overrides: [
-        appEventBusProvider.overrideWith((ref) => harness.bus),
-        currentGameProvider.overrideWith(
-          () => CurrentGameNotifier(harness.game),
-        ),
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => harness.mapViewData),
-        if (debugConsoleEnabled)
-          debugConsoleEnabledProvider.overrideWithValue(true),
-      ],
-      viewport: mediaQuerySize,
-      child:
-          home ??
-          Scaffold(
-            body: GameMapArea(
-              game: harness.game,
-              mapViewData: harness.mapViewData,
-            ),
-          ),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-Future<void> _commitTurnEvents(
-  WidgetTester tester,
-  _EventFeedHarness harness,
-  List<AppEvent> events, {
-  required int turnNumber,
-  bool openFeed = true,
-}) async {
-  for (final event in events) {
-    harness.bus.emit(event);
-  }
-  harness.bus.emit(
-    TurnResolutionCompleteEvent(
-      gameId: harness.game.id,
-      turnNumber: turnNumber,
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-  if (openFeed) {
-    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-    await tester.pump();
-  }
-}
-
-List<LocateMapTileEvent> _listenLocateEvents(_EventFeedHarness harness) {
-  final locateEvents = <LocateMapTileEvent>[];
-  final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
-  addTearDown(() async {
-    await sub.cancel();
-    harness.bus.dispose();
-  });
-  return locateEvents;
-}
-
-List<NavigateToRouteEvent> _listenNavigateEvents(_EventFeedHarness harness) {
-  final navigateEvents = <NavigateToRouteEvent>[];
-  final sub = harness.bus.on<NavigateToRouteEvent>().listen(navigateEvents.add);
-  addTearDown(() async {
-    await sub.cancel();
-    harness.bus.dispose();
-  });
-  return navigateEvents;
-}
-
-List<OpenMapTileDetailEvent> _listenOpenMapTileDetailEvents(
-  _EventFeedHarness harness,
-) {
-  final events = <OpenMapTileDetailEvent>[];
-  final sub = harness.bus.on<OpenMapTileDetailEvent>().listen(events.add);
-  addTearDown(() async {
-    await sub.cancel();
-    harness.bus.dispose();
-  });
-  return events;
-}
-
-List<OpenCivilianUnitsPanelEvent> _listenOpenCivilianPanelEvents(
-  _EventFeedHarness harness,
-) {
-  final events = <OpenCivilianUnitsPanelEvent>[];
-  final sub = harness.bus.on<OpenCivilianUnitsPanelEvent>().listen(events.add);
-  addTearDown(() async {
-    await sub.cancel();
-    harness.bus.dispose();
-  });
-  return events;
-}
-
-Future<void> _openFeedToggle(WidgetTester tester) async {
-  await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
+import 'game_map_area_event_feed_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -222,18 +27,18 @@ void main() {
   testWidgets('GameMapArea dispose cancels AppEventBus subscriptions', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness(disposeBus: false);
+    final harness = newEventFeedHarness(disposeBus: false);
     final sampleUnitId = harness.game.worldState.oldWorld.units.isNotEmpty
         ? harness.game.worldState.oldWorld.units.first.id
         : harness.game.worldState.newWorld.units.isNotEmpty
         ? harness.game.worldState.newWorld.units.first.id
         : 'missing-unit-id';
 
-    await _pumpMapArea(
+    await pumpEventFeedMapArea(
       tester,
       gamesBox: gamesBox,
       harness: harness,
-      home: _MapAreaHost(game: harness.game, mapViewData: harness.mapViewData),
+      home: MapAreaHost(game: harness.game, mapViewData: harness.mapViewData),
     );
 
     await tester.tap(find.text('dispose-map-area'));
@@ -262,8 +67,8 @@ void main() {
   testWidgets('debug console overlay toggles when feature is enabled', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(
       tester,
       gamesBox: gamesBox,
       harness: harness,
@@ -284,9 +89,9 @@ void main() {
   testWidgets('Player turn event feed commits batch on turn complete', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await _commitTurnEvents(tester, harness, [
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await commitEventFeedTurnEvents(tester, harness, [
       AppResearchCompleteEvent(
         playerId: harness.humanId,
         techId: kTechIdCropRotation,
@@ -307,11 +112,11 @@ void main() {
   testWidgets(
     'Player turn event feed research line emits NavigateToRouteEvent on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppResearchCompleteEvent(
           playerId: harness.humanId,
           techId: kTechIdCropRotation,
@@ -336,11 +141,11 @@ void main() {
   testWidgets(
     'Player turn event feed unknown research tech is non-tappable',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppResearchCompleteEvent(
           playerId: harness.humanId,
           techId: 'agri_1',
@@ -362,15 +167,15 @@ void main() {
   testWidgets(
     'Player turn event feed naval line emits locate and overlay on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
+      final harness = newEventFeedHarness(disposeBus: false);
       final seaKey = harness.game.worldState.portsByProvinceSeaboard.keys.first;
       final seaParts = seaKey.split('|');
       final seaZoneId = '${seaParts.first}|${seaParts.last}';
-      final locateEvents = _listenLocateEvents(harness);
-      final overlayEvents = _listenOpenMapTileDetailEvents(harness);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: seaZoneId,
           side1OwnerId: harness.humanId,
@@ -394,11 +199,11 @@ void main() {
   testWidgets(
     'Player turn event feed unresolved naval anchor is non-tappable',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: 'missing_zone_anchor',
           side1OwnerId: harness.humanId,
@@ -420,12 +225,12 @@ void main() {
   testWidgets(
     'Player turn event feed renders work completion and opens civilian panel',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
-      final panelEvents = _listenOpenCivilianPanelEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final panelEvents = listenEventFeedOpenCivilianPanelEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppWorkOrderCompletedEvent(
           playerId: harness.humanId,
           unitId: 'civ_explorer',
@@ -453,11 +258,11 @@ void main() {
   testWidgets(
     'Player turn event feed diplomacy line opens diplomacy detail on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppDiplomacyChangeEvent(
           actorId: harness.humanId,
           targetId: harness.opponentId,
@@ -483,11 +288,11 @@ void main() {
   testWidgets(
     'Player turn event feed overture line opens diplomacy detail on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppOvertureAdvancedEvent(
           offererGpId: harness.humanId,
           targetFactionId: harness.opponentId,
@@ -514,11 +319,11 @@ void main() {
   testWidgets(
     'Player turn event feed spy caught line opens diplomacy detail on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppSpyCaughtEvent(
           unitId: 'spy_1',
           spyOwnerId: harness.opponentId,
@@ -544,11 +349,11 @@ void main() {
   testWidgets(
     'Player turn event feed spy defected line opens diplomacy detail on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppSpyDefectedEvent(
           unitId: 'spy_1',
           previousOwnerId: harness.opponentId,
@@ -574,11 +379,11 @@ void main() {
   testWidgets(
     'Player turn event feed unresolved spy counterpart is non-tappable',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppSpyCaughtEvent(
           unitId: 'spy_1',
           spyOwnerId: 'unknown_spy_owner',
@@ -600,12 +405,12 @@ void main() {
   testWidgets(
     'Player turn event feed land combat line emits locate and overlay on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
-      final overlayEvents = _listenOpenMapTileDetailEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppCombatResultEvent(
           provinceId: 'oldWorld|cap',
           attackerId: harness.humanId,
@@ -630,12 +435,12 @@ void main() {
   testWidgets(
     'Player turn event feed province captured line emits locate and overlay on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
-      final overlayEvents = _listenOpenMapTileDetailEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppProvinceCapturedEvent(
           provinceId: 'oldWorld|cap',
           previousOwnerId: harness.opponentId,
@@ -658,9 +463,9 @@ void main() {
   testWidgets('Player turn event feed renders diplomacy/discovery/overture copy', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await _commitTurnEvents(tester, harness, [
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await commitEventFeedTurnEvents(tester, harness, [
       AppDiplomacyChangeEvent(
         actorId: harness.humanId,
         targetId: harness.opponentId,
@@ -696,13 +501,13 @@ void main() {
   testWidgets(
     'Player turn event feed toggles visibility and replaces prior turn batch',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final civilianEvents = _listenOpenCivilianPanelEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final civilianEvents = listenEventFeedOpenCivilianPanelEvents(harness);
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
         harness.bus.dispose();
       });
-      await _pumpMapArea(
+      await pumpEventFeedMapArea(
         tester,
         gamesBox: gamesBox,
         harness: harness,
@@ -712,7 +517,7 @@ void main() {
           'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
       final researchFinder = find.textContaining(researchLine);
 
-      await _commitTurnEvents(
+      await commitEventFeedTurnEvents(
         tester,
         harness,
         [
@@ -731,14 +536,14 @@ void main() {
       expect(researchFinder, findsNothing);
       expect(find.text('Events'), findsNothing);
 
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(researchFinder, findsOneWidget);
       expect(find.text('Events'), findsNothing);
 
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(researchFinder, findsNothing);
 
-      await _commitTurnEvents(
+      await commitEventFeedTurnEvents(
         tester,
         harness,
         [
@@ -753,7 +558,7 @@ void main() {
         openFeed: false,
       );
       expect(researchFinder, findsNothing);
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(
         find.textContaining('Order rejected: insufficient treasury.'),
         findsOneWidget,
@@ -770,11 +575,11 @@ void main() {
   testWidgets(
     'Player turn event feed rejected research order opens technology on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppOrderRejectedEvent(
           playerId: harness.humanId,
           orderKind: OrderKind.research,
@@ -797,11 +602,11 @@ void main() {
   testWidgets(
     'Player turn event feed rejected trade order opens trade screen on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final navigateEvents = _listenNavigateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppOrderRejectedEvent(
           playerId: harness.humanId,
           orderKind: OrderKind.trade,
