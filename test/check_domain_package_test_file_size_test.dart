@@ -51,6 +51,28 @@ void main() {
     expect(logs.join('\n'), contains('401 physical lines > 400'));
   });
 
+  test('skips colonizethis_turn test/support governed by turn support LOC gate', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_domain_package_test_file_size_turn_support_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+
+    for (final domain in domainPackageTestFileSizeDomainsForTests) {
+      Directory(
+        '${temp.path}/packages/colonizethis_$domain/test',
+      ).createSync(recursive: true);
+    }
+
+    final largeSupportHarness = File(
+      '${temp.path}/packages/colonizethis_turn/test/support/huge_harness.dart',
+    )..createSync(recursive: true);
+    largeSupportHarness.writeAsStringSync(List.filled(401, '// line').join('\n'));
+
+    final code = runCheckDomainPackageTestFileSize(temp.path);
+
+    expect(code, 0);
+  });
+
   test('fails when a domain-package test directory is missing', () {
     final temp = Directory.systemTemp.createTempSync(
       'check_domain_package_test_file_size_no_dir_',
