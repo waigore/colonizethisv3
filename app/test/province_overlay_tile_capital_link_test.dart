@@ -6,6 +6,7 @@ import 'package:colonizethis_app/features/game/flame/overlays/province_detail_ov
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         MapTopology,
@@ -14,7 +15,8 @@ import 'package:colonizethis_data/colonizethis_data.dart'
         TopologyNode,
         TopologyNodeType,
         kTechIdMoldboardPlow;
-import 'package:colonizethis_logic/colonizethis_logic.dart' show ConnectivityResult;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ConnectivityResult, buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -23,6 +25,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'golden_capture_harness.dart';
 import 'province_overlay_test_harness.dart';
 
 void main() {
@@ -257,6 +260,94 @@ void main() {
       expect(preview.extractionEffective! < preview.extractionFull!, isTrue);
     });
 
+    test('unimproved disconnected tile omits extraction row', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 0,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: false,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNotNull);
+      expect(preview!.capitalConnected, isFalse);
+      expect(preview.showExtractionRow, isFalse);
+      expect(preview.extractionEffective, isNull);
+      expect(preview.extractionFull, isNull);
+    });
+
+    test('returns null for sea-zone context', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: true,
+        tileIsSea: false,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
+    test('returns null for unrevealed tile', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: false,
+        tileRevealed: false,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
+    test('returns null for sea tile', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: true,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
     test('returns null for foreign-owned province', () {
       final game = gameWithRemoteImprovedTile(
         remoteImprovementLevel: 2,
@@ -329,6 +420,34 @@ void main() {
           findsOneWidget);
     });
 
+    testWidgets('shows Connected and E equals F for fully yielding tile', (
+      WidgetTester tester,
+    ) async {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 2,
+        remoteRoadLevel: 4,
+      );
+      const preview = ProvinceTileConnectivityDisplay(
+        capitalConnected: true,
+        pathTransportLevel: 4,
+        extractionEffective: 1,
+        extractionFull: 1,
+      );
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: regionForGame(game),
+        selectedTileKey: capitalTile,
+        humanPlayerId: humanId,
+        playerView: demoOverlayPlayerView(game),
+        tileConnectivity: preview,
+      );
+      expect(find.textContaining('Capital link: Connected'), findsOneWidget);
+      expect(find.textContaining('Extraction from this tile: 1 of 1'),
+          findsOneWidget);
+    });
+
     testWidgets('shows path-capped E of F for connected tile', (
       WidgetTester tester,
     ) async {
@@ -357,6 +476,33 @@ void main() {
           findsOneWidget);
     });
 
+    testWidgets('omits extraction row when F is zero', (
+      WidgetTester tester,
+    ) async {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 0,
+        remoteRoadLevel: 0,
+      );
+      const preview = ProvinceTileConnectivityDisplay(
+        capitalConnected: false,
+      );
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: remoteProvinceId,
+        region: regionForGame(game),
+        selectedTileKey: remoteTile,
+        humanPlayerId: humanId,
+        playerView: demoOverlayPlayerView(game),
+        tileConnectivity: preview,
+      );
+      expect(
+        find.textContaining('Capital link: Not connected'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Extraction from this tile:'), findsNothing);
+    });
+
     testWidgets('omits rows when tileConnectivity is null', (
       WidgetTester tester,
     ) async {
@@ -375,6 +521,120 @@ void main() {
       );
       expect(find.textContaining('Capital link:'), findsNothing);
       expect(find.textContaining('Extraction from this tile:'), findsNothing);
+    });
+  });
+
+  group('ProvinceSeaZoneDetailOverlay tile capital-link goldens (Refs #4149)', () {
+    Future<void> pumpTileConnectivityGolden(
+      WidgetTester tester, {
+      required Key boundaryKey,
+      required Game game,
+      required String displayId,
+      required String selectedTileKey,
+      required ProvinceTileConnectivityDisplay tileConnectivity,
+    }) async {
+      await configureGoldenSurface(tester, size: const Size(600, 1000));
+      configureGoldenView(
+        tester,
+        physicalSize: const Size(600, 1000),
+        devicePixelRatio: 1.0,
+      );
+      final playerView = buildPlayerView(
+        game,
+        const MapTopology(),
+        humanId,
+      );
+      await tester.pumpWidget(
+        wrapGoldenBoundary(
+          boundaryKey: boundaryKey,
+          includeLocalizations: true,
+          child: SizedBox(
+            width: 460,
+            height: 900,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: regionForGame(game),
+              displayId: displayId,
+              selectedTileKey: selectedTileKey,
+              humanPlayerId: humanId,
+              playerView: playerView,
+              draftOrders: const Orders(),
+              tileConnectivity: tileConnectivity,
+            ),
+          ),
+        ),
+      );
+      await pumpForGolden(tester);
+    }
+
+    testWidgets('golden: disconnected tile shows capital link and 0 of F', (
+      WidgetTester tester,
+    ) async {
+      const boundaryKey = ValueKey<String>(
+        'province_overlay_tile_capital_link_disconnected_golden',
+      );
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      await pumpTileConnectivityGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: game,
+        displayId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        tileConnectivity: const ProvinceTileConnectivityDisplay(
+          capitalConnected: false,
+          extractionEffective: 0,
+          extractionFull: 3,
+        ),
+      );
+      expect(
+        find.textContaining('Capital link: Not connected'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Extraction from this tile: 0 of 3'),
+          findsOneWidget);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/province_overlay_tile_capital_link_disconnected.png',
+        ),
+      );
+    });
+
+    testWidgets('golden: connected tile shows capital link and E of F', (
+      WidgetTester tester,
+    ) async {
+      const boundaryKey = ValueKey<String>(
+        'province_overlay_tile_capital_link_connected_golden',
+      );
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 4,
+      );
+      await pumpTileConnectivityGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: game,
+        displayId: provinceId,
+        selectedTileKey: capitalTile,
+        tileConnectivity: const ProvinceTileConnectivityDisplay(
+          capitalConnected: true,
+          pathTransportLevel: 2,
+          extractionEffective: 2,
+          extractionFull: 3,
+        ),
+      );
+      expect(find.textContaining('Capital link: Connected'), findsOneWidget);
+      expect(find.textContaining('Extraction from this tile: 2 of 3'),
+          findsOneWidget);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile(
+          'goldens/province_overlay_tile_capital_link_connected.png',
+        ),
+      );
     });
   });
 
