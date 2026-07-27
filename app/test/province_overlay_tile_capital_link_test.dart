@@ -285,6 +285,69 @@ void main() {
       expect(preview.extractionFull, isNull);
     });
 
+    test('returns null for sea-zone context', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: true,
+        tileIsSea: false,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
+    test('returns null for unrevealed tile', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: false,
+        tileRevealed: false,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
+    test('returns null for sea tile', () {
+      final game = gameWithRemoteImprovedTile(
+        remoteImprovementLevel: 3,
+        remoteRoadLevel: 0,
+      );
+      final preview = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanId,
+        provinceId: remoteProvinceId,
+        selectedTileKey: remoteTile,
+        mapData: mapDataForTwoTileProvince(),
+        isSeaZoneContext: false,
+        tileIsSea: true,
+        tileRevealed: true,
+        connectivityForHuman: const ConnectivityResult(
+          connected: {capitalTile},
+        ),
+      );
+      expect(preview, isNull);
+    });
+
     test('returns null for foreign-owned province', () {
       final game = gameWithRemoteImprovedTile(
         remoteImprovementLevel: 2,
