@@ -6,7 +6,7 @@ import 'package:colonizethis_turn/src/turn/naval_resolution.dart';
 
 /// Shared New World coastal/inland + seaOrigin/seaDest ids for ship-reveal tests.
 abstract final class NwShipRevealCoastalIds {
-  static const regionId = 'newWorld';
+  static const regionId = kRegionNewWorld;
   static const fullProvinceId = '$regionId|provA';
   static const localProvinceBucket = 'provA';
   static const localSeaDest = 'seaDest';

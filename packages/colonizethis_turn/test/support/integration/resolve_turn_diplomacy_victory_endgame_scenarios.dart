@@ -16,14 +16,14 @@ void registerDiplomacyVictoryEndgameTests() {
             nodes: const [
               TopologyNode(
                 id: 'P1',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 type: TopologyNodeType.province,
               ),
             ],
             edges: const [],
           );
 
-          const ow = 'oldWorld';
+          const ow = kRegionOldWorld;
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -96,14 +96,14 @@ void registerDiplomacyVictoryEndgameTests() {
             nodes: const [
               TopologyNode(
                 id: 'P1',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 type: TopologyNodeType.province,
               ),
             ],
             edges: const [],
           );
 
-          const ow = 'oldWorld';
+          const ow = kRegionOldWorld;
           final game = Game(
             id: 'g1',
             worldState: WorldState(

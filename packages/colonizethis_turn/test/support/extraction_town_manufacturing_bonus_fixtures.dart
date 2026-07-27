@@ -1,11 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 /// Shared fixtures for town manufacturing bonus extraction-phase integration
 /// tests (Refs #3872 AC matrix).
 
-const _ow = 'oldWorld';
+const _ow = kRegionOldWorld;
 const _playerId = 'pl1';
 
 MapTopology twoProvinceOldWorldTopology() {

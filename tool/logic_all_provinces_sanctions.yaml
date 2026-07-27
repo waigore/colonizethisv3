@@ -3,15 +3,15 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 88
-    rationale: Turn news digest summarizes changes across all provinces.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest_discovery.dart
+    line: 16
+    rationale: Turn news digest province-discovery lines scan all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 198
-    rationale: Turn news digest second pass over all provinces.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest_terrestrial.dart
+    line: 11
+    rationale: Turn news digest province-capture lines scan all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 

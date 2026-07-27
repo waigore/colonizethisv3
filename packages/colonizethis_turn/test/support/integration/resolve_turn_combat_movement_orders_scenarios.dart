@@ -8,56 +8,19 @@ void registerCombatMovementOrdersTests() {
   group('combat movement', () {
     group('combat movement orders', () {
       test('naval move order targeting home fleet does not move it', () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'sea2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
-        );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'fleet_p1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: 'oldWorld',
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-        );
-        final orders = Orders(
-          navalMoveOrdersByPlayerId: {
-            'p1': [
-              const NavalMoveOrder(
-                fleetId: 'fleet_p1',
-                destinationSeaZoneId: 'sea2',
-              ),
-            ],
-          },
-        );
-
         final next = resolveTurnComplete(
-          game: game,
-          topology: topology,
-          orders: orders,
-          extractedByPlayerId: const {},
-          defaultAssignments: const [],
+          game: turnTestFleetsOnlyGame(fleets: [turnTestCarrackFleet(id: 'fleet_p1')]),
+          topology: turnTestOwTwoLinkedSeaZonesTopology(),
+          orders: Orders(
+            navalMoveOrdersByPlayerId: {
+              'p1': [
+                const NavalMoveOrder(
+                  fleetId: 'fleet_p1',
+                  destinationSeaZoneId: 'sea2',
+                ),
+              ],
+            },
+          ),
         );
         expect(next.worldState.fleets.single.seaZoneId, 'sea1');
         expect(next.worldState.turnState.turnNumber, 1);
@@ -66,62 +29,20 @@ void registerCombatMovementOrdersTests() {
       test(
         'dock at capital merges sea-going fleet into home fleet and reveals port tiles',
         () {
-          const ow = 'oldWorld';
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'sea1',
-                regionId: ow,
-                type: TopologyNodeType.seaZone,
-              ),
-              TopologyNode(
-                id: 'P1',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [TopologyEdge(id1: 'sea1', id2: 'P1')],
-          );
+          const ow = kRegionOldWorld;
           const tileKey = '$ow|P1|0|0';
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
+          final game = turnTestOwGame(
+            provinces: [
+              Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
+            ],
+            fleets: [
+              turnTestCarrackFleet(
+                id: 'fleet_p1',
+                seaZoneId: null,
+                inPortAtProvinceId: '$ow|P1',
               ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                ],
-              ),
-              newWorld: const RegionData(),
-              tileKeysByRegionAndProvince: {
-                ow: {
-                  '$ow|P1': [tileKey],
-                },
-              },
-              playerVisibilityByTile: {
-                'p1': {tileKey: 'fogged'},
-              },
-              fleets: [
-                Fleet(
-                  id: 'fleet_p1',
-                  ownerId: 'p1',
-                  seaZoneId: null,
-                  inPortAtProvinceId: '$ow|P1',
-                  regionId: ow,
-                  shipTypeIds: const ['carrack'],
-                ),
-                Fleet(
-                  id: 'f2',
-                  ownerId: 'p1',
-                  seaZoneId: 'sea1',
-                  regionId: ow,
-                  shipTypeIds: const ['frigate'],
-                ),
-              ],
-            ),
+              turnTestCarrackFleet(id: 'f2', shipTypeIds: const ['frigate']),
+            ],
             players: const [
               Player(
                 id: 'p1',
@@ -131,22 +52,28 @@ void registerCombatMovementOrdersTests() {
               ),
             ],
           );
-          final orders = Orders(
-            navalMoveOrdersByPlayerId: {
-              'p1': [
-                NavalMoveOrder(
-                  fleetId: 'f2',
-                  destinationPortProvinceId: '$ow|P1',
-                ),
-              ],
-            },
-          );
           final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
+            game: game.copyWith(
+              worldState: game.worldState.copyWith(
+                tileKeysByRegionAndProvince: {
+                  ow: {'$ow|P1': [tileKey]},
+                },
+                playerVisibilityByTile: {
+                  'p1': {tileKey: 'fogged'},
+                },
+              ),
+            ),
+            topology: turnTestOwSeaProvinceTopology(),
+            orders: Orders(
+              navalMoveOrdersByPlayerId: {
+                'p1': [
+                  NavalMoveOrder(
+                    fleetId: 'f2',
+                    destinationPortProvinceId: '$ow|P1',
+                  ),
+                ],
+              },
+            ),
           );
           expect(next.worldState.fleets.length, 1);
           final home = next.worldState.fleets.single;
@@ -161,53 +88,18 @@ void registerCombatMovementOrdersTests() {
       );
 
       test('naval move clears mission on fleet', () {
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'sea1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-            TopologyNode(
-              id: 'sea2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.seaZone,
-            ),
-          ],
-          edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
-        );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: 'oldWorld',
-                shipTypeIds: const ['carrack'],
-                mission: FleetMission.patrol,
-              ),
-            ],
-          ),
-          players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-        );
-        final orders = Orders(
-          navalMoveOrdersByPlayerId: {
-            'p1': [
-              const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
-            ],
-          },
-        );
         final next = resolveTurnComplete(
-          game: game,
-          topology: topology,
-          orders: orders,
-          extractedByPlayerId: const {},
-          defaultAssignments: const [],
+          game: turnTestFleetsOnlyGame(
+            fleets: [turnTestCarrackFleet(mission: FleetMission.patrol)],
+          ),
+          topology: turnTestOwTwoLinkedSeaZonesTopology(),
+          orders: Orders(
+            navalMoveOrdersByPlayerId: {
+              'p1': [
+                const NavalMoveOrder(fleetId: 'f1', destinationSeaZoneId: 'sea2'),
+              ],
+            },
+          ),
         );
         expect(next.worldState.fleets.single.mission, FleetMission.none);
       });
@@ -215,62 +107,22 @@ void registerCombatMovementOrdersTests() {
       test(
         'naval mission order skipped when naval move targets same fleet',
         () {
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'sea1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.seaZone,
-              ),
-              TopologyNode(
-                id: 'sea2',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.seaZone,
-              ),
-            ],
-            edges: const [TopologyEdge(id1: 'sea1', id2: 'sea2')],
-          );
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: const RegionData(),
-              newWorld: const RegionData(),
-              fleets: [
-                Fleet(
-                  id: 'f1',
-                  ownerId: 'p1',
-                  seaZoneId: 'sea1',
-                  regionId: 'oldWorld',
-                  shipTypeIds: const ['carrack'],
-                  mission: FleetMission.none,
-                ),
-              ],
-            ),
-            players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-          );
-          final orders = Orders(
-            navalMoveOrdersByPlayerId: {
-              'p1': [
-                const NavalMoveOrder(
-                  fleetId: 'f1',
-                  destinationSeaZoneId: 'sea2',
-                ),
-              ],
-            },
-            navalMissionOrdersByPlayerId: {
-              'p1': [NavalMissionOrder(fleetId: 'f1', mission: 'patrol')],
-            },
-          );
           final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
+            game: turnTestFleetsOnlyGame(fleets: [turnTestCarrackFleet()]),
+            topology: turnTestOwTwoLinkedSeaZonesTopology(),
+            orders: Orders(
+              navalMoveOrdersByPlayerId: {
+                'p1': [
+                  const NavalMoveOrder(
+                    fleetId: 'f1',
+                    destinationSeaZoneId: 'sea2',
+                  ),
+                ],
+              },
+              navalMissionOrdersByPlayerId: {
+                'p1': [NavalMissionOrder(fleetId: 'f1', mission: 'patrol')],
+              },
+            ),
           );
           expect(next.worldState.fleets.single.seaZoneId, 'sea2');
           expect(next.worldState.fleets.single.mission, FleetMission.none);
