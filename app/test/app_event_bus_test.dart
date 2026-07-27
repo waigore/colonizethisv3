@@ -473,11 +473,13 @@ void main() {
       expect(
         const AppOrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.work,
           orderSummary: 'Build road',
           reasonCode: 'insufficient_treasury',
         ),
         const AppOrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.work,
           orderSummary: 'Build road',
           reasonCode: 'insufficient_treasury',
         ),

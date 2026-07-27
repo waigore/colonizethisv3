@@ -3,6 +3,7 @@ library colonizethis_world;
 
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
+export 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
 export 'src/game_player_lookup.dart';
 export 'src/logic_validation_exception.dart';
 export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart';

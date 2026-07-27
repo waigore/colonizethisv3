@@ -434,6 +434,7 @@ void main() {
         [
           AppOrderRejectedEvent(
             playerId: harness.humanId,
+            orderKind: OrderKind.work,
             orderSummary: 'Build road',
             reasonCode: 'insufficient_treasury',
           ),

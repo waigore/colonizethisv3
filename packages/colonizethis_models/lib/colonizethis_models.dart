@@ -19,6 +19,7 @@ export 'src/general.dart';
 export 'src/minor_nation.dart';
 export 'src/tribe.dart';
 export 'src/orders.dart';
+export 'src/order_kind.dart';
 export 'src/stockpile.dart';
 export 'src/player.dart';
 export 'src/tile_map_state.dart';

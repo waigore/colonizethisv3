@@ -13,6 +13,7 @@ void filterOrderList<T>(
   List<int> idxBox,
   void Function(String playerId, T order) addAccepted,
   String Function(T order) orderSummary,
+  OrderKind orderKind,
   TurnEventSink sink,
 ) {
   for (final order in orders) {
@@ -24,6 +25,7 @@ void filterOrderList<T>(
     } else if (r.reason != null) {
       final event = OrderRejectedEvent(
         playerId: playerId,
+        orderKind: orderKind,
         orderSummary: orderSummary(order),
         reasonCode: r.reason!,
       );
@@ -86,6 +88,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, m) => moveByPlayer.putIfAbsent(pid, () => <MoveOrder>[]).add(m),
       (m) => 'Move order: ${m.unitId} -> ${m.destinationTileKey}',
+      OrderKind.move,
       sink,
     );
     filterOrderList<ArmyMoveOrder>(
@@ -96,6 +99,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       (pid, m) =>
           armyMoveByPlayer.putIfAbsent(pid, () => <ArmyMoveOrder>[]).add(m),
       (m) => 'Army move: ${m.armyId} -> ${m.destinationProvinceId}',
+      OrderKind.armyMove,
       sink,
     );
     filterOrderList<BuildUnitOrder>(
@@ -106,6 +110,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       (pid, b) =>
           buildByPlayer.putIfAbsent(pid, () => <BuildUnitOrder>[]).add(b),
       (b) => 'Build unit: ${b.unitType}',
+      OrderKind.buildUnit,
       sink,
     );
     filterOrderList<WorkOrder>(
@@ -115,6 +120,7 @@ Orders filterAcceptedOrdersForAllPlayers({
       idxBox,
       (pid, w) => workByPlayer.putIfAbsent(pid, () => <WorkOrder>[]).add(w),
       (w) => 'Work order: ${w.target}',
+      OrderKind.work,
       sink,
     );
 
