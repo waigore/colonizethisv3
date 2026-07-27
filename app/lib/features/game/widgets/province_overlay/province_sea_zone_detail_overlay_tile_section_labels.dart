@@ -1,5 +1,7 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
 
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show VisibilityLevel;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -153,4 +155,63 @@ List<Widget> buildTileRoadLabelWidgets({
     if (roadLevel == 1)
       Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
   ];
+}
+
+String tileCapitalLinkLine(
+  AppLocalizations l10n,
+  ProvinceTileConnectivityDisplay display,
+) {
+  if (display.capitalConnected) {
+    final pathLevel = display.pathTransportLevel;
+    if (pathLevel != null) {
+      return l10n.provinceOverlay_tileCapitalLinkConnectedWithPath(pathLevel);
+    }
+    return l10n.provinceOverlay_tileCapitalLinkConnected;
+  }
+  return l10n.provinceOverlay_tileCapitalLinkNotConnected;
+}
+
+@visibleForTesting
+List<String> tileConnectivityDetailLinesForTests({
+  required AppLocalizations l10n,
+  required ProvinceTileConnectivityDisplay? tileConnectivity,
+}) {
+  if (tileConnectivity == null) {
+    return const [];
+  }
+  final lines = <String>[tileCapitalLinkLine(l10n, tileConnectivity)];
+  if (tileConnectivity.showExtractionRow) {
+    lines.add(
+      l10n.provinceOverlay_tileExtractionFromTile(
+        tileConnectivity.extractionEffective!,
+        tileConnectivity.extractionFull!,
+      ),
+    );
+  }
+  return lines;
+}
+
+List<Widget> buildTileConnectivityLabelWidgets({
+  required AppLocalizations l10n,
+  required ProvinceTileConnectivityDisplay? tileConnectivity,
+}) {
+  if (tileConnectivity == null) {
+    return const [];
+  }
+  final bodyStyle = overlayFgBodyStyle();
+  final widgets = <Widget>[
+    Text(tileCapitalLinkLine(l10n, tileConnectivity), style: bodyStyle),
+  ];
+  if (tileConnectivity.showExtractionRow) {
+    widgets.add(
+      Text(
+        l10n.provinceOverlay_tileExtractionFromTile(
+          tileConnectivity.extractionEffective!,
+          tileConnectivity.extractionFull!,
+        ),
+        style: bodyStyle,
+      ),
+    );
+  }
+  return widgets;
 }

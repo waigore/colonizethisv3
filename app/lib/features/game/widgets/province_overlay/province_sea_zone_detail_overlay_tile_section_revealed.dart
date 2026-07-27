@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
+        ProvinceTileCapitalLinkPreview,
         explorerConsulateGateBlocksMinorTribeProvince,
         isProspectableTerrain,
         isProspectableTerrainId,
@@ -10,6 +11,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
         resourceIdVisibleInPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -43,6 +46,7 @@ Widget buildRevealedTileSection({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
@@ -167,6 +171,10 @@ Widget buildRevealedTileSection({
           context: context,
           l10n: l10n,
           roadLevel: roadLevel,
+        ),
+        ...buildTileConnectivityLabelWidgets(
+          l10n: l10n,
+          tileConnectivity: tileConnectivity,
         ),
         Text(
           l10n.provinceOverlay_tileCivilianUnits(civilianCount),
