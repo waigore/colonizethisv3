@@ -4,7 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'support/economy_stockpile_preview_test_support.dart';
 import 'support/economy_stockpile_preview_pending_work_scenarios.dart';
-import 'package:colonizethis_test/game_test_fixtures.dart';
+
+import 'economy_stockpile_preview_cases.dart';
 
 /// Stockpile preview for production panel. SPEC/ui/production-panel.md,
 /// SPEC/game/stockpiles-and-production.md.
@@ -13,13 +14,9 @@ void main() {
 
   group('previewStockpilePhaseDeltasByCommodityForPlayer', () {
     test('unknown player yields empty maps per phase', () {
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: const Stockpile(),
+      final game = economyPreviewSinglePlayerGame(
+        economyPreviewSinglePlayer(),
       );
-      final game = TestFixtures.singlePlayerGame(player);
       final phases = previewStockpilePhaseDeltasByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -33,13 +30,9 @@ void main() {
 
   group('previewStockpileNetDeltaByCommodityForPlayer', () {
     test('extraction only: delta matches injected extraction totals', () {
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: const Stockpile(),
+      final game = economyPreviewSinglePlayerGame(
+        economyPreviewSinglePlayer(),
       );
-      final game = TestFixtures.singlePlayerGame(player);
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -64,13 +57,11 @@ void main() {
     test(
       'riches only: riches commodities removed, no production assignments',
       () {
-        final player = Player(
-          id: 'p1',
-          displayName: 'A',
-          isHuman: true,
-          stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
+        final game = economyPreviewSinglePlayerGame(
+          economyPreviewSinglePlayer(
+            stockpile: const Stockpile().applyDelta(CommodityCatalog.gold.id, 2),
+          ),
         );
-        final game = TestFixtures.singlePlayerGame(player);
         final delta = previewStockpileNetDeltaByCommodityForPlayer(
           game: game,
           topology: const MapTopology(),
@@ -92,26 +83,7 @@ void main() {
     );
 
     test('consumption only: military food reduces grain', () {
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: const Stockpile().applyDelta(CommodityCatalog.grain.id, 10),
-      );
-      final game = TestFixtures.minimalGame(
-        id: 't',
-        players: [player],
-        oldWorld: RegionData(
-          units: [
-            Unit(
-              id: 'u1',
-              type: 'peasant_levies',
-              ownerId: 'p1',
-              locationProvinceId: 'ow|p1',
-            ),
-          ],
-        ),
-      );
+      final game = economyPreviewMilitaryConsumptionGame();
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -122,19 +94,7 @@ void main() {
     });
 
     test('production only: net reflects recipe IO after consumption', () {
-      final stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 50)
-          .applyDelta(CommodityCatalog.meat.id, 50)
-          .applyDelta(CommodityCatalog.timber.id, 20);
-      const workers = WorkerPool(peasants: 10);
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: stockpile,
-        workerPool: workers,
-      );
-      final game = TestFixtures.singlePlayerGame(player);
+      final game = economyPreviewProductionGame();
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
@@ -162,10 +122,7 @@ void main() {
     });
 
     test('pending build orders are included before economy phases', () {
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
+      final player = economyPreviewSinglePlayer(
         stockpile: const Stockpile()
             .applyDelta(CommodityCatalog.paper.id, 6)
             .applyDelta(CommodityCatalog.grain.id, 50)
@@ -173,7 +130,7 @@ void main() {
         workerPool: const WorkerPool(peasants: 2),
         treasury: 5000,
       );
-      final game = TestFixtures.singlePlayerGame(player);
+      final game = economyPreviewSinglePlayerGame(player);
       const currentOrders = Orders(
         buildUnitOrdersByPlayerId: {
           'p1': [
@@ -239,33 +196,7 @@ void main() {
     });
 
     test('combined: extraction + riches + consumption + production', () {
-      final stockpile = const Stockpile()
-          .applyDelta(CommodityCatalog.grain.id, 100)
-          .applyDelta(CommodityCatalog.meat.id, 100)
-          .applyDelta(CommodityCatalog.timber.id, 20)
-          .applyDelta(CommodityCatalog.gems.id, 1);
-      const workers = WorkerPool(peasants: 2);
-      final player = Player(
-        id: 'p1',
-        displayName: 'A',
-        isHuman: true,
-        stockpile: stockpile,
-        workerPool: workers,
-      );
-      final game = TestFixtures.minimalGame(
-        id: 't',
-        players: [player],
-        oldWorld: RegionData(
-          units: [
-            Unit(
-              id: 'u1',
-              type: 'peasant_levies',
-              ownerId: 'p1',
-              locationProvinceId: 'ow|p1',
-            ),
-          ],
-        ),
-      );
+      final game = economyPreviewCombinedScenarioGame();
       final delta = previewStockpileNetDeltaByCommodityForPlayer(
         game: game,
         topology: const MapTopology(),
