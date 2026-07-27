@@ -28,7 +28,7 @@ The game completes its phases in a fixed order. You see their combined consequen
 
 A completed turn’s principal report appears in `DLG50001` **Turn news dialog**, unless victory takes precedence. It lists major events from the resolved turn; if none qualify, it plainly says so. Close the report, inspect the map and your empire screens, and prepare the next turn.
 
-On the map chrome, the news toggle opens `OVL70001` **Player turn event feed** — a compact, human-scoped card of outcomes over the map. It replaces its entries each resolved turn and can be shown or hidden without leaving `GAME10001`. Use it with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. When a technology finishes researching, its feed line shows the tech by name; tap that line to open `GAME40001` **Technology** on the Slots tab and choose your next project.
+On the map chrome, the news toggle opens `OVL70001` **Player turn event feed** — a compact, human-scoped card of outcomes over the map. It replaces its entries each resolved turn and can be shown or hidden without leaving `GAME10001`. Use it with turn news: the dialog is the formal summary; the feed keeps relevant lines on the map while you inspect. When a technology finishes researching, its feed line shows the tech by name; tap that line to open `GAME40001` **Technology** on the Slots tab and choose your next project. Diplomacy, overture, and spy lines open the counterpart faction's `GAME30002` **Diplomacy detail** screen; completed work orders open `UNIT10001` **Civilian units** focused on the builder; land combat and province capture lines open the province overlay on the map.
 
 ### Pausing, saving, and loading
 
