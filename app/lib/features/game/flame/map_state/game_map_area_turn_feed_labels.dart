@@ -341,4 +341,55 @@ mixin GameMapAreaTurnFeedLabels
           );
     };
   }
+
+  void Function()? orderRejectedTapForKind(ct_models.OrderKind orderKind) {
+    final orders = ref.read(currentOrdersProvider);
+    final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
+    switch (orderKind) {
+      case ct_models.OrderKind.work:
+      case ct_models.OrderKind.recruitWorker:
+        return () => ref.read(appEventBusProvider).emit(
+              const ct_models.OpenCivilianUnitsPanelEvent(),
+            );
+      case ct_models.OrderKind.move:
+      case ct_models.OrderKind.armyMove:
+        return () => ref.read(appEventBusProvider).emit(
+              const ct_models.OpenMilitaryUnitsPanelEvent(),
+            );
+      case ct_models.OrderKind.navalMove:
+      case ct_models.OrderKind.navalMission:
+        return () => ref.read(appEventBusProvider).emit(
+              const ct_models.OpenNavalUnitsPanelEvent(),
+            );
+      case ct_models.OrderKind.buildUnit:
+        return () => ref.read(appEventBusProvider).emit(
+              ct_models.NavigateToRouteEvent(Routes.production, {
+                'game': widget.game,
+                'humanPlayerId': mapPlayerId,
+              }),
+            );
+      case ct_models.OrderKind.trade:
+        return () => ref.read(appEventBusProvider).emit(
+              ct_models.NavigateToRouteEvent(Routes.trade, {
+                'game': widget.game,
+                'humanPlayerId': mapPlayerId,
+              }),
+            );
+      case ct_models.OrderKind.research:
+        return navigateToTechnologyScreen;
+      case ct_models.OrderKind.diplomacy:
+        final topology = mapData?.combinedTopology;
+        if (topology == null) {
+          return null;
+        }
+        return () => ref.read(appEventBusProvider).emit(
+              ct_models.NavigateToRouteEvent(Routes.diplomacy, {
+                'game': widget.game,
+                'humanPlayerId': mapPlayerId,
+                'topology': topology,
+                'currentOrders': orders,
+              }),
+            );
+    }
+  }
 }

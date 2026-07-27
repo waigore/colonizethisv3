@@ -12,7 +12,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 60550;
+const _maxMainLines = 60650;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

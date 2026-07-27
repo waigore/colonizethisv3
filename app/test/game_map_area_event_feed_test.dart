@@ -697,6 +697,7 @@ void main() {
     'Player turn event feed toggles visibility and replaces prior turn batch',
     (WidgetTester tester) async {
       final harness = _newHarness(disposeBus: false);
+      final civilianEvents = _listenOpenCivilianPanelEvents(harness);
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
         harness.bus.dispose();
@@ -757,6 +758,64 @@ void main() {
         find.textContaining('Order rejected: insufficient treasury.'),
         findsOneWidget,
       );
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(
+        find.textContaining('Order rejected: insufficient treasury.'),
+      );
+      await tester.pump();
+      expect(civilianEvents, hasLength(1));
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed rejected research order opens technology on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppOrderRejectedEvent(
+          playerId: harness.humanId,
+          orderKind: OrderKind.research,
+          orderSummary: 'Research cotton',
+          reasonCode: 'insufficient_treasury',
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('Order rejected: insufficient treasury.');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.technology);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed rejected trade order opens trade screen on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppOrderRejectedEvent(
+          playerId: harness.humanId,
+          orderKind: OrderKind.trade,
+          orderSummary: 'Buy grain',
+          reasonCode: 'insufficient_treasury',
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('Order rejected: insufficient treasury.');
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.trade);
     },
   );
 }
