@@ -123,6 +123,22 @@ List<Widget> buildEmpireRailButtons({
         );
       },
     ),
+    SizedBox(height: gapHeight),
+    EmpireRailButton(
+      buttonKey: kEmpireVictoryButtonKey,
+      tooltip: 'Victory',
+      iconAsset: '${kAppIconAssetPrefix}ui_icon_victory.png',
+      narrow: narrow,
+      onTap: () {
+        onIconTappedWhileSelectionMode?.call();
+        bus.emit(
+          ct_models.NavigateToRouteEvent(Routes.victory, {
+            'game': game,
+            'humanPlayerId': humanPlayerId,
+          }),
+        );
+      },
+    ),
   ];
   if (debugConsoleEnabled) {
     buttons.addAll(<Widget>[

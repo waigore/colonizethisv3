@@ -100,6 +100,7 @@ void main() {
     kEmpireNavalUnitsButtonKey,
     kEmpireDiplomacyButtonKey,
     kEmpireTechnologyButtonKey,
+    kEmpireVictoryButtonKey,
   ];
 
   testWidgets('Rail buttons paint a 36 x 36 dp surface', (
@@ -328,6 +329,7 @@ void main() {
         kEmpireNavalUnitsButtonKey: 'Naval Units',
         kEmpireDiplomacyButtonKey: 'Diplomacy',
         kEmpireTechnologyButtonKey: 'Technology',
+        kEmpireVictoryButtonKey: 'Victory',
       };
 
       for (final entry in expectedLabels.entries) {
