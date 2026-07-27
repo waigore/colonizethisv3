@@ -40,6 +40,9 @@ Evaluate these criteria in order:
    - Are user-facing surfaces free of Material chrome (no `ElevatedButton`, `AlertDialog`, `Card`, `ChoiceChip`, etc. per `SPEC/ui/pixel-art-ui-catalog.md` § Material design ban) and built only from the Ct-* catalog?
    - Do color values match the canonical editorial-monocle palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette — no hardcoded light-theme colors (parchment `#F5F5DC`, raw Material primaries) sneaking into theme/widget code?
    - Per-screen visual polish (washed-out text, contrast tuning, residual parchment-colored regions inside a specific widget) is **tracked in sibling per-screen alignment issues** and is **not** a blocker on this criterion; only crashes, functional regressions, Material-chrome violations, and hardcoded light-theme colors are.
+6. **Player manual** (apply when the PR or linked issue changes player UX or gameplay per `.cursor/rules/colonizethis-game-manual.mdc`)
+   - Are affected `docs/manual/` chapters updated on the PR branch, or does the PR body justify non-update for exempt work (ctdev-only, zero player-visible delta, etc.)?
+   - If the linked issue includes a manual AC, is it satisfied?
 
 ## Review workflow
 
@@ -58,6 +61,7 @@ Evaluate these criteria in order:
    - For criteria eligible for conditional handling (`Alignment with issue`, `AC coverage`, and `UI visual fidelity` for deferred per-screen polish only), upgrade `NO` to `CONDITIONAL YES` only if the PR discussion explicitly and concretely documents the gap and follow-up.
    - Never apply conditional handling to `Architecture` or `Linting compliance`. For `UI visual fidelity`, never apply conditional handling to Material-chrome violations or hardcoded light-theme colors.
    - If the PR does **not** touch app UI, mark `UI visual fidelity` as `N/A` and explain briefly.
+   - If the PR does **not** change player UX/gameplay, mark `Player manual` as `N/A` and explain briefly.
 
 4. **Explain failures precisely**
    - For every `NO` or `CONDITIONAL YES`, list concrete evidence:
@@ -95,6 +99,8 @@ Checklist:
   - Evidence: <lint status and confirmation no allowlist changes>
 - UI visual fidelity: YES | CONDITIONAL YES | NO | N/A
   - Evidence: <dark-theme adherence, Ct-* catalog use, palette match against `SPEC/ui/pixel-art-ui-catalog.md`, or `N/A: non-UI PR`>
+- Player manual: YES | CONDITIONAL YES | NO | N/A
+  - Evidence: <manual chapters updated, non-update justification, or `N/A: no player UX/gameplay change`>
 
 Violations / Gaps:
 - <clear, specific item>

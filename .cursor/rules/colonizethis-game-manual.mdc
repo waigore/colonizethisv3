@@ -1,5 +1,5 @@
 ---
-description: Player game manual — SPEC-derived docs under docs/manual/; required review on player-facing SPEC changes; tone, template, Sources footers
+description: Player game manual — required when player UX/gameplay changes; issue planning, implementation, PR review; tone, template, Sources footers
 globs: "docs/manual/**,SPEC/game/**,SPEC/ui/**,SPEC/program/orders.md,SPEC/program/turn-resolution-phases.md,SPEC/program/turn-resolution-phase-details.md,SPEC/program/order-engine.md"
 alwaysApply: false
 ---
@@ -10,12 +10,31 @@ Authoritative player handbook lives under **`docs/manual/`**. GDD/TDD/UI/AI SPEC
 
 Normative writing conventions: [`docs/manual/STYLE_GUIDE.md`](../../docs/manual/STYLE_GUIDE.md). ToC: [`docs/manual/index.md`](../../docs/manual/index.md). Updater workflow: `.cursor/skills/update-game-manual/SKILL.md`.
 
-## When this rule applies
+## Player UX / gameplay impact (authoritative trigger)
+
+Update the manual whenever work changes what the player can **do**, **see**, or be **told** — including map affordances, screen copy, order availability, visible outcomes, mechanic teachability, and decision-support cues — even when the change is “only UI” or “only a bug fix.”
+
+**Exempt (manual update not required):** ctdev-only surfaces (`SPEC/program/ctdev-app.md` and siblings), pure internal refactors with **zero** player-visible delta, tooling/CI, and performance work that preserves identical player-visible behavior.
+
+When exempt, record a one-line **manual non-update justification** in the issue or PR body.
+
+## Lifecycle obligations (all agents)
+
+| Phase | Skill / gate | Requirement |
+|-------|----------------|-------------|
+| Issue filing | `create-github-issue`, `plan-feature` | If player UX/gameplay is impacted: name target manual chapter(s), add a **Manual follow-up** subtask, and include a testable AC for `docs/manual/` update (or explicit justified non-update). |
+| Implementation | `implement-github-issue` | Run **`update-game-manual`** before opening/updating the PR when the issue touches player UX/gameplay. |
+| PR review | `review-pr` | Player-impacting PRs must update affected manual chapters **or** justify non-update in the PR body. |
+| Verification | `verify-github-issue` | Check manual AC / chapter updates on merged `dev` when the issue is player-facing. |
+
+Identify affected chapters by **exact string match** of changed SPEC paths against each chapter’s `## Sources` bullets (see style guide). When no Sources match yet, use the ToC coverage map in `docs/manual/index.md`.
+
+## When this rule applies (file globs)
 
 - Editing any file under `docs/manual/**`.
 - Editing `SPEC/game/**`, `SPEC/ui/**`, or an allowlisted `SPEC/program/` file (below).
 
-## Required-review trigger
+## Required-review trigger (PRs)
 
 A PR **must** review affected manual chapters (update them, or explicitly justify no update) when it modifies:
 
@@ -27,11 +46,7 @@ A PR **must** review affected manual chapters (update them, or explicitly justif
   - `SPEC/program/turn-resolution-phase-details.md`
   - `SPEC/program/order-engine.md`
 
-**Advisory only** (no mandatory review): every other `SPEC/program/**` path. Authors may still update the manual if the change affects what the player can do, see, or be told.
-
-Do **not** reintroduce a subjective “behavior-relevant” qualifier — use this allowlist only.
-
-Identify affected chapters by **exact string match** of changed SPEC paths against each chapter’s `## Sources` bullets (see style guide).
+**Advisory only** (no mandatory path trigger): every other `SPEC/program/**` path. Authors must still update the manual when the change affects what the player can do, see, or be told (see **Player UX / gameplay impact** above).
 
 ## Manual update principles
 
@@ -45,7 +60,8 @@ Identify affected chapters by **exact string match** of changed SPEC paths again
 
 ## PR checklist (manual-impacting)
 
-- [ ] Required-review paths listed above were checked against chapter `## Sources` footers.
+- [ ] Player UX/gameplay impact assessed; exempt cases justified when applicable.
+- [ ] Required-review paths (if any) checked against chapter `## Sources` footers.
 - [ ] Affected chapters updated **or** PR body justifies non-update.
 - [ ] Player-angle framing preserved; tone contract respected.
 - [ ] Draft citations use `**[DRAFT]** \`SCREENID\`` or are omitted.

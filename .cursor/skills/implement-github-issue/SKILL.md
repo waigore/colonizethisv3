@@ -49,10 +49,10 @@ If the issue implies **very large** change (rule of thumb: **about 20+ files** t
 2. **Run the issue quality gate** — Record gaps; update **SPEC** (and ACs) first; align issue discussion if helpful.
 3. **Map ACs → tests** — For each AC: planned **positive** test(s) and **negative** / regression test(s) where meaningful.
 4. **Branch** — For the **current** open PR, use **one** branch from up-to-date **`dev`** (naming per team habit; e.g. `fix/issue-123-short-slug` or `feat/issue-456-slug`). Reuse that branch for every subsequent slice **until that PR merges**. After an early merge with remaining scope, create a **new** branch from **`dev`** for the follow-up PR (same or adjusted slug per team habit); avoid having two open PRs for the same issue.
-5. **Implement** — Minimal, SPEC-authorized changes; reuse existing patterns; no drive-by refactors. **For UI changes:** confirm the implementation matches the canonical editorial-monocle palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette (and any per-screen mockup if one exists under `SPEC/ui/mockups/`) in dark-theme palette, font stacks, layout proportions, Ct-* catalog adherence, and pixel-art asset usage. Hard-coded light-theme colors (e.g. parchment `#F5F5DC`, raw Material primaries) are treated as regressions.
+5. **Implement** — Minimal, SPEC-authorized changes; reuse existing patterns; no drive-by refactors. **For UI changes:** confirm the implementation matches the canonical editorial-monocle palette in `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette (and any per-screen mockup if one exists under `SPEC/ui/mockups/`) in dark-theme palette, font stacks, layout proportions, Ct-* catalog adherence, and pixel-art asset usage. Hard-coded light-theme colors (e.g. parchment `#F5F5DC`, raw Material primaries) are treated as regressions. **For player UX/gameplay changes:** run **`update-game-manual`** when the issue changes what the player can do, see, or be told (policy: `.cursor/rules/colonizethis-game-manual.mdc`); include manual chapter updates in the PR or justify non-update in the PR body.
 6. **Tests** — Add or update tests so each targeted AC is covered; run impacted packages and relevant **`melos`** / **`flutter test`** commands until green.
-7. **Pre-PR checklist** — CONTRIBUTING items (logging annexes if logging changed, formatting, coverage). **Visual check:** If the change touches UI, the screens/dialogs render against `AppThemes.editorialMonocle` (the running app default), use only Ct-* catalog widgets, and contain no hardcoded light-theme colors.
-8. **Push and open/update PR** — Base **`dev`**. If **no open PR** exists for this issue (first slice, or prior PR already merged), open **one** PR with a **conventional-prefix title** (see non-negotiables) and body including **`Refs #N`** (no closing keywords before `#N`). If an **open** PR already exists, **push new commits to its branch** and refresh the description as scope advances. Summarize SPEC updates, tests run, and any **deferred** items still planned on that open PR.
+7. **Pre-PR checklist** — CONTRIBUTING items (logging annexes if logging changed, formatting, coverage). **Visual check:** If the change touches UI, the screens/dialogs render against `AppThemes.editorialMonocle` (the running app default), use only Ct-* catalog widgets, and contain no hardcoded light-theme colors. **Manual check:** If player UX/gameplay changed, `docs/manual/` is updated or non-update is justified.
+8. **Push and open/update PR** — Base **`dev`**. If **no open PR** exists for this issue (first slice, or prior PR already merged), open **one** PR with a **conventional-prefix title** (see non-negotiables) and body including **`Refs #N`** (no closing keywords before `#N`). If an **open** PR already exists, **push new commits to its branch** and refresh the description as scope advances. Summarize SPEC updates, tests run, manual updates (or justification), and any **deferred** items still planned on that open PR.
 
 ## Output to the user
 
@@ -66,6 +66,8 @@ Issue readiness: <pass | gaps addressed via SPEC/comment>
 Scope: <full slice | partial; what was deferred>
 
 SPEC: <files/sections touched>
+
+Manual: <chapters updated | N/A — justification>
 
 Implementation: <high-level>
 
