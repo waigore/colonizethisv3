@@ -7,14 +7,15 @@
 // raised for province Economic Extraction/Available condensed UI (Refs #4002);
 // raised for bundled map theme catalog + Settings dialog (Refs #4088);
 // raised for MAP20001 tile capital-link + partial-yield reason UI (Refs #4149, #4150);
-// raised for disconnected-tile blocked extraction map discs (Refs #4151).
+// raised for disconnected-tile blocked extraction map discs (Refs #4151);
+// raised for GAME70001 Victory panel route, standings, conditions, OW map (Refs #4165).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 60950;
+const _maxMainLines = 61800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
