@@ -6,7 +6,8 @@
 // fixtures, and `AppThemes.editorialMonocle` dark-theme chrome.
 //
 // Golden mapping:
-//  - AC-2  conditions block (31 OW military threshold + calendar copy)
+//  - AC-2  conditions block (31 OW military threshold + calendar copy;
+//         infinite-mode bypass variant)
 //  - AC-3  GP standings sorted by OW count with human row emphasis
 //  - AC-4  expandable power-score breakdown (expanded row)
 //  - AC-7  military-victory end-state banner
@@ -146,6 +147,30 @@ void main() {
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/victory_panel_default.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: infinite-mode conditions variant (Refs #4165 AC-2)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('victoryPanelInfiniteGolden');
+      await _pumpVictoryBodyGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        game: _standingsGoldenGame().copyWith(infiniteMode: true),
+      );
+
+      expect(find.byKey(VictoryScreenKeys.conditionsSectionKey), findsOneWidget);
+      expect(find.textContaining('Infinite mode is on'), findsOneWidget);
+      expect(
+        find.textContaining('calendar halt is bypassed'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/victory_panel_infinite_mode.png'),
       );
     },
   );
