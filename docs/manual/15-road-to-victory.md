@@ -8,7 +8,8 @@ The campaign may also reach its calendar end without a military victor. In that 
 
 ## How it is done
 
-1. Build and protect an Old World position, then take or absorb enough Old World territory to own **at least 31 provinces**. The condition is checked after all turn phases have resolved. If more than one Great Power reaches 31 in the same turn, the Great Power with the alphabetically earliest player identity wins.
+1. Open **Victory** (`GAME70001`) from the left empire rail (last button, after Technology) at any time during a campaign to read victory conditions and Great Power standings. The panel shows each Great Power's Old World province count toward the military threshold of **31**, with power-score breakdown available on expand for calendar-end comparison only. When map data is loaded, a political Old World minimap shows who holds each province; hover or tap a province to see whether it is still its founding owner's or was captured.
+2. Build and protect an Old World position, then take or absorb enough Old World territory to own **at least 31 provinces**. The condition is checked after all turn phases have resolved. If more than one Great Power reaches 31 in the same turn, the Great Power with the alphabetically earliest player identity wins.
 2. Do not confuse conquest with colonial growth. Minor Nation provinces in the Old World count once they are yours; Tribe provinces in the New World do not.
 3. In a standard campaign, the final full turn begins in **1800**—turn **201** under the default calendar. If no military victory has occurred by its end, no further turns may be resolved.
 4. At that calendar end, a declared winner is the Great Power with the strictly highest power score: owned provinces in both worlds, regiment strength, and ships all contribute. A tie produces no declared winner.
@@ -42,6 +43,7 @@ The AI does not receive a separate secret victory rule, but a realm approaching 
 ## Acceptance criteria for this chapter
 
 - [ ] States that military victory requires a Great Power to control 31 or more Old World provinces, including Minor Nation provinces.
+- [ ] Documents the `GAME70001` Victory panel (left-rail entry, OW standings, expandable power-score breakdown, political OW minimap with origin inspect when available, conditions including infinite mode).
 - [ ] States that New World and Tribe provinces do not count toward the military threshold.
 - [ ] Explains the default 1800 calendar cap, its turn-201 default mapping, and the declared-winner power-score outcome, including ties.
 - [ ] Explains infinite mode as a new-campaign choice that bypasses the calendar halt while retaining military victory.
@@ -54,6 +56,7 @@ The AI does not receive a separate secret victory rule, but a realm approaching 
 - `SPEC/game/victory.md`
 - `SPEC/game/turn-time-mapping.md`
 - `SPEC/game/diplomacy.md`
+- `SPEC/ui/victory-panel.md`
 - `SPEC/ui/victory-overlay.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/growth-stage-planner.md`

@@ -23,6 +23,7 @@ const Key kEmpireMilitaryUnitsButtonKey = Key('empire_rail_military_units');
 const Key kEmpireNavalUnitsButtonKey = Key('empire_rail_naval_units');
 const Key kEmpireDiplomacyButtonKey = Key('empire_rail_diplomacy');
 const Key kEmpireTechnologyButtonKey = Key('empire_rail_technology');
+const Key kEmpireVictoryButtonKey = Key('empire_rail_victory');
 const Key kEmpireDebugConsoleButtonKey = Key('empire_rail_debug_console');
 
 /// Key for the cargo hold indicator row item. SPEC/ui/empire-overview.md.

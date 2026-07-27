@@ -1324,6 +1324,32 @@
   "@victory_viewFinalState": {
     "description": "Victory overlay button label."
   },
+  "victory_conditionsMilitaryThreshold": "Military victory: control {threshold} or more Old World provinces.",
+  "@victory_conditionsMilitaryThreshold": {
+    "description": "Victory panel: military victory condition summary.",
+    "placeholders": {
+      "threshold": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_conditionsCalendarEnd": "Calendar campaign end: without military victory, the campaign can halt near 1800 (turn 201 under the default calendar). The declared winner is the Great Power with the strictly highest power score, or no-one on a tie. This is not a military victory.",
+  "@victory_conditionsCalendarEnd": {
+    "description": "Victory panel: calendar campaign end condition copy."
+  },
+  "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only military victory or leaving the campaign ends play.",
+  "@victory_conditionsInfiniteMode": {
+    "description": "Victory panel: infinite mode condition note."
+  },
+  "victory_standingOwCount": "{count} OW",
+  "@victory_standingOwCount": {
+    "description": "Victory standings row: Old World province count suffix.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "moveArmy_groupYourProvinces": "Your provinces",
   "@moveArmy_groupYourProvinces": {
     "description": "Header label for player-owned province destinations in move army dialog."

@@ -67,6 +67,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/victory/victory_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -308,6 +309,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameMapNarrowDetailOverlaySlotDirectories,
   ...diplomacyDetailScreenDirectories,
   ...tradeScreenDirectories,
+  ...victoryScreenDirectories,
   ...debugLogViewerDirectories,
   ...ctDarkThemePrimitiveDirectories,
 ];

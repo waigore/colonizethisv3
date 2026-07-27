@@ -233,6 +233,26 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get victory_viewFinalState => 'View final state';
 
   @override
+  String victory_conditionsMilitaryThreshold(int threshold) {
+    return 'Military victory: control $threshold or more Old World provinces.';
+  }
+
+  @override
+  String get victory_conditionsCalendarEnd =>
+      'Calendar campaign end: without military victory, the campaign can '
+      'halt near 1800 (turn 201 under the default calendar). The declared '
+      'winner is the Great Power with the strictly highest power score, or '
+      'no-one on a tie. This is not a military victory.';
+
+  @override
+  String get victory_conditionsInfiniteMode =>
+      'Infinite mode is on: the calendar halt is bypassed. Only military '
+      'victory or leaving the campaign ends play.';
+
+  @override
+  String victory_standingOwCount(int count) => '$count OW';
+
+  @override
   String get moveArmy_groupYourProvinces => 'Your provinces';
 
   @override

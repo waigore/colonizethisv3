@@ -570,6 +570,55 @@ List<WidgetbookNode> get tradeScreenDirectories => [
   ),
 ];
 
+Game _victoryScreenStoryGame() {
+  return Game(
+    id: 'wb_victory_screen',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 12),
+      oldWorld: RegionData(
+        provinces: [
+          const Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+          const Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+          const Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp2'),
+        ],
+      ),
+      newWorld: const RegionData(),
+    ),
+    players: const [
+      Player(id: 'gp1', displayName: 'England', isHuman: true),
+      Player(id: 'gp2', displayName: 'France', isHuman: false),
+    ],
+  );
+}
+
+Widget _victoryScreenDefaultStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: VictoryScreen(game: game, humanPlayerId: 'gp1'),
+  );
+}
+
+/// Victory screen stories. SPEC/ui/victory-panel.md.
+List<WidgetbookNode> get victoryScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Victory Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Scaffold (default)',
+        builder: (context) => _victoryScreenDefaultStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _victoryScreenDefaultStory()),
+      ),
+    ],
+  ),
+];
+
 /// Story for [CtFullScreenDialogueShell] (issue #2914 S2).
 ///
 /// Demonstrates the reusable scrim + centered [CtDialogShell] shell that
