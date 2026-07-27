@@ -65,6 +65,73 @@ void main() {
       );
     }
 
+    RegionMapViewData oneCellDisconnectedBlockedExtractionRegion() {
+      return RegionMapViewData(
+        regionId: 'goldenDisconnectedExtractionRegion',
+        width: 1,
+        height: 1,
+        cellSize: 64,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: 'pDisc',
+            isSea: false,
+            terrainType: TerrainType.plains,
+            resourceId: 'grain',
+            resourceExtractionEffectiveUnits: 0,
+            resourceExtractionBlockedUnits: 2,
+            provinceDisplayName: 'Disc',
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        townMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {},
+        terrainColors: const {TerrainType.plains: (120, 160, 90)},
+        warpMarkers: const [],
+      );
+    }
+
+    testWidgets(
+      'terrainAndResources: disconnected improved E=0 B=2 golden (Refs #4151)',
+      (WidgetTester tester) async {
+        final region = oneCellDisconnectedBlockedExtractionRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            width: 96,
+            height: 64,
+            cellSizePx: 64,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'region_map_disconnected_extraction_discs_golden',
+            ),
+          ),
+        );
+
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+
+        await expectLater(
+          find.byKey(
+            const ValueKey('region_map_disconnected_extraction_discs_golden'),
+          ),
+          matchesGoldenFile(
+            'goldens/region_map_disconnected_extraction_discs_grain_64.png',
+          ),
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
     testWidgets(
       'terrainAndResources: copper + E=2 B=1 golden (disc markers; Refs #1847)',
       (WidgetTester tester) async {
