@@ -1,5 +1,4 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
@@ -293,46 +292,65 @@ class _StandingRow extends StatelessWidget {
           ),
         ),
         if (expanded)
-          Padding(
+          _VictoryPowerBreakdown(
             key: VictoryScreenKeys.powerBreakdownKey(row.playerId),
-            padding: const EdgeInsets.only(left: 20, bottom: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Power score ${breakdown.totalScore} (comparison / calendar '
-                  'declared winner only — not the military victory meter).',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.muted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Provinces (all worlds): ${breakdown.totalProvinces} × '
-                  '$powerScoreProvinceWeight = ${breakdown.provincePoints}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.fg,
-                  ),
-                ),
-                Text(
-                  'Regiment strength: ${breakdown.regimentStrength} × '
-                  '$powerScoreRegimentWeight = ${breakdown.regimentPoints}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.fg,
-                  ),
-                ),
-                Text(
-                  'Ships: ${breakdown.shipCount} × $powerScoreShipWeight = '
-                  '${breakdown.shipPoints}',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.fg,
-                  ),
-                ),
-              ],
-            ),
+            breakdown: breakdown,
+            textTheme: textTheme,
           ),
         Divider(height: 1, color: EditorialMonoclePalette.border),
       ],
+    );
+  }
+}
+
+class _VictoryPowerBreakdown extends StatelessWidget {
+  const _VictoryPowerBreakdown({
+    super.key,
+    required this.breakdown,
+    required this.textTheme,
+  });
+
+  final VictoryPowerScoreBreakdown breakdown;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Power score ${breakdown.totalScore} (comparison / calendar '
+            'declared winner only — not the military victory meter).',
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Provinces (all worlds): ${breakdown.totalProvinces} × '
+            '$powerScoreProvinceWeight = ${breakdown.provincePoints}',
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.fg,
+            ),
+          ),
+          Text(
+            'Regiment strength: ${breakdown.regimentStrength} × '
+            '$powerScoreRegimentWeight = ${breakdown.regimentPoints}',
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.fg,
+            ),
+          ),
+          Text(
+            'Ships: ${breakdown.shipCount} × $powerScoreShipWeight = '
+            '${breakdown.shipPoints}',
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.fg,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
