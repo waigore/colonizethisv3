@@ -3,6 +3,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
+        ProvinceTileCapitalLinkPreview,
         explorerConsulateGateBlocksMinorTribeProvince,
         isProspectableTerrain,
         isProspectableTerrainId,

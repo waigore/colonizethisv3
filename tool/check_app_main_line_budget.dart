@@ -6,7 +6,7 @@
 // session-clear isolation test hooks on GameService (Refs #3989 assurance);
 // raised for province Economic Extraction/Available condensed UI (Refs #4002);
 // raised for bundled map theme catalog + Settings dialog (Refs #4088);
-// raised for MAP20001 tile capital-link + extraction E-of-F UI (Refs #4149).
+// raised for MAP20001 tile capital-link + partial-yield reason UI (Refs #4149, #4150).
 import 'dart:convert';
 import 'dart:io';
 

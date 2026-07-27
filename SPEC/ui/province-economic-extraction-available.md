@@ -25,6 +25,7 @@ Existing improved/improvable tile rows remain; these subsections are additive.
 - Extraction full: `N Name`. Partial when province effective < full: `effective (full) Name`.
 - Available: tile counts (`3 Grain`), not yields.
 - Empty projection (no extractable contribution and no capital bonus) → heading + muted `—` (same token as Town production empty).
+- When **any** commodity has `effective < full`, render **one** muted reason line immediately under the Extraction condensed line (plain language; localized ARB). Omit when all commodities are full-yield or Extraction is empty `—`.
 - Live data text uses `EditorialMonoclePalette.fg`; empty `—` uses `muted`.
 
 ### Capital grain bonus indication
@@ -56,9 +57,11 @@ Use case **Standalone — extraction & available** with partial-bracket fixture,
 - Given intel gate fails and not observe/omniscient, when Economic renders, then the body is `???` with no Extraction/Available quantities.
 - Given a new game after setup with bootstrap improved grain in the capital province, when Economic full intel is shown for that province, then Extraction shows projected grain quantities (not `—`).
 - Given projection grain effective 1 full 5 and iron 5/5, when Extraction renders, then the line shows partial grain and full iron in catalog order with icons.
+- Given any commodity has effective < full, when Extraction renders, then exactly one muted reason line appears under the Extraction condensed line.
+- Given all commodities have effective == full (and Extraction is non-empty), when Extraction renders, then no reason line appears.
 - Given capital grain bonus B > 0 included in grain totals, when Extraction renders, then the UI shows a muted capital-grain-bonus annotation distinct from tile extraction.
 - Given capital grain bonus with tile grain keys, when the player hovers the grain segment then the bonus annotation, then map multi-highlight uses only farm tile keys for grain hover and does not invent tiles for the bonus annotation.
-- Given zero extractable contribution and zero capital bonus, when Extraction renders, then heading + muted `—`.
+- Given zero extractable contribution and zero capital bonus, when Extraction renders, then heading + muted `—` and no reason line.
 - Given Available counts for grain and timber, when Available renders, then counts show in catalog order with icons.
 - Given a commodity segment with tile keys, when the pointer enters then exits that segment, then the map secondary-highlights all those keys then clears.
 - Given many commodities on a narrow panel, when the line lays out, then segments wrap and none are ellipsized.

@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         PlayerView,
         ProvinceImprovableCommodityCount,
+        ProvinceTileCapitalLinkPreview,
         fleetsInPortAtProvince,
         kRegionNewWorld,
         provincePanelShowsFullTileDerivedIntel;
