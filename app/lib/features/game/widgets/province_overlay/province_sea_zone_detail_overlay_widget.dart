@@ -15,6 +15,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../config/constants.dart';
 import '../../../../config/ui_screen_ids.dart';
+import '../../flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
@@ -48,6 +50,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
     this.availableByCommodity = const {},
+    this.tileConnectivity,
     this.onHighlightTiles,
   });
 
@@ -74,6 +77,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
   final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
+  final ProvinceTileConnectivityDisplay? tileConnectivity;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +125,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      tileConnectivity: tileConnectivity,
       onHighlightTiles: onHighlightTiles,
     );
   }

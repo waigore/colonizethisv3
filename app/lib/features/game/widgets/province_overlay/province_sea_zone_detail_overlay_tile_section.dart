@@ -3,6 +3,8 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +32,7 @@ Widget buildTileSection({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   if (selectedTileKey == null) {
     return buildOverlaySection(
@@ -95,5 +98,6 @@ Widget buildTileSection({
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
     onBuildImprovementTap: onBuildImprovementTap,
+    tileConnectivity: tileConnectivity,
   );
 }

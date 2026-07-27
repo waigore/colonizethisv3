@@ -21,6 +21,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
 import 'app_shell_harness.dart';
@@ -91,6 +93,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
+  ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
 }) {
@@ -118,6 +121,7 @@ Widget buildProvinceOverlayDarkThemeShell({
     townProductionBonusByCommodity: townProductionBonusByCommodity,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
+    tileConnectivity: tileConnectivity,
   );
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
@@ -161,6 +165,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
+  ProvinceTileConnectivityDisplay? tileConnectivity,
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
   ThemeData? shellTheme,
 }) async {
@@ -190,6 +195,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      tileConnectivity: tileConnectivity,
       shellTheme: shellTheme,
     ),
   );
