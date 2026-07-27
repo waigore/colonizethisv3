@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
@@ -195,6 +196,7 @@ class _ConditionsBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final threshold = victoryPanelMilitaryOwThreshold;
     final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
       color: EditorialMonoclePalette.fg,
@@ -206,7 +208,7 @@ class _ConditionsBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Military victory: control $threshold or more Old World provinces.',
+          l10n.victory_conditionsMilitaryThreshold(threshold),
           style: bodyStyle?.copyWith(
             color: EditorialMonoclePalette.accentBright,
             fontWeight: FontWeight.w600,
@@ -214,17 +216,13 @@ class _ConditionsBlock extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Calendar campaign end: without military victory, the campaign can '
-          'halt near 1800 (turn 201 under the default calendar). The declared '
-          'winner is the Great Power with the strictly highest power score, or '
-          'no-one on a tie. This is not a military victory.',
+          l10n.victory_conditionsCalendarEnd,
           style: mutedStyle,
         ),
         if (game.infiniteMode) ...[
           const SizedBox(height: 8),
           Text(
-            'Infinite mode is on: the calendar halt is bypassed. Only military '
-            'victory or leaving the campaign ends play.',
+            l10n.victory_conditionsInfiniteMode,
             style: mutedStyle,
           ),
         ],
@@ -253,6 +251,7 @@ class _StandingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final titleStyle = textTheme.bodyLarge?.copyWith(
       color: isHuman
           ? EditorialMonoclePalette.accentBright
@@ -276,7 +275,7 @@ class _StandingRow extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(child: Text(row.displayName, style: titleStyle)),
                 Text(
-                  '${row.owProvinceCount} OW',
+                  l10n.victory_standingOwCount(row.owProvinceCount),
                   style: textTheme.bodyMedium?.copyWith(
                     color: EditorialMonoclePalette.fg,
                   ),

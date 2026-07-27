@@ -753,6 +753,18 @@ abstract class AppLocalizations {
   /// Victory overlay button label.
   String get victory_viewFinalState;
 
+  /// Victory panel: military victory condition summary.
+  String victory_conditionsMilitaryThreshold(int threshold);
+
+  /// Victory panel: calendar campaign end condition copy.
+  String get victory_conditionsCalendarEnd;
+
+  /// Victory panel: infinite mode condition note.
+  String get victory_conditionsInfiniteMode;
+
+  /// Victory standings row: Old World province count suffix.
+  String victory_standingOwCount(int count);
+
   /// Header label for player-owned province destinations in move army dialog.
   String get moveArmy_groupYourProvinces;
 
