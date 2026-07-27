@@ -2,12 +2,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show TopologyNodeType, techById, techDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
+import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
 
 import 'map_location_resolver.dart';
 import 'game_map_area.dart';
@@ -146,5 +149,25 @@ mixin GameMapAreaTurnFeedLabels
       return;
     }
     emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+  }
+
+  bool isCatalogTech(String techId) => techById(techId) != null;
+
+  String researchCompleteLine(String techId) {
+    if (!isCatalogTech(techId)) {
+      return 'Research complete — technology unlocked!';
+    }
+    return 'Research complete: ${techDisplayName(techId)} unlocked';
+  }
+
+  void navigateToTechnologyScreen() {
+    final orders = ref.read(currentOrdersProvider);
+    ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.technology, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+            'currentOrders': orders,
+          }),
+        );
   }
 }

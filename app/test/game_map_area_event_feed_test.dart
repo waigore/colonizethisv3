@@ -1,4 +1,5 @@
 import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
@@ -10,6 +11,8 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kTechIdCropRotation, techDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -166,6 +169,16 @@ List<LocateMapTileEvent> _listenLocateEvents(_EventFeedHarness harness) {
   return locateEvents;
 }
 
+List<NavigateToRouteEvent> _listenNavigateEvents(_EventFeedHarness harness) {
+  final navigateEvents = <NavigateToRouteEvent>[];
+  final sub = harness.bus.on<NavigateToRouteEvent>().listen(navigateEvents.add);
+  addTearDown(() async {
+    await sub.cancel();
+    harness.bus.dispose();
+  });
+  return navigateEvents;
+}
+
 Future<void> _openFeedToggle(WidgetTester tester) async {
   await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
   await tester.pump();
@@ -252,16 +265,75 @@ void main() {
     await _commitTurnEvents(tester, harness, [
       AppResearchCompleteEvent(
         playerId: harness.humanId,
-        techId: 'agri_1',
+        techId: kTechIdCropRotation,
         turnNumber: 1,
       ),
     ], turnNumber: 2);
 
     expect(
-      find.textContaining('Research complete! agri_1 unlocked!'),
+      find.text(
+        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
+      ),
       findsOneWidget,
     );
+    expect(find.textContaining(kTechIdCropRotation), findsNothing);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
   });
+
+  testWidgets(
+    'Player turn event feed research line emits NavigateToRouteEvent on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppResearchCompleteEvent(
+          playerId: harness.humanId,
+          techId: kTechIdCropRotation,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final researchLine = find.text(
+        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
+      );
+      expect(researchLine, findsOneWidget);
+      await tester.tap(researchLine);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.technology);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed unknown research tech is non-tappable',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppResearchCompleteEvent(
+          playerId: harness.humanId,
+          techId: 'agri_1',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const fallbackLine = 'Research complete — technology unlocked!';
+      expect(find.text(fallbackLine), findsOneWidget);
+      expect(find.textContaining('agri_1'), findsNothing);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+
+      await tester.tap(find.text(fallbackLine));
+      await tester.pump();
+      expect(navigateEvents, isEmpty);
+    },
+  );
 
   testWidgets(
     'Player turn event feed naval line emits LocateMapTileEvent on tap',
@@ -399,7 +471,8 @@ void main() {
         harness: harness,
         mediaQuerySize: const Size(500, 900),
       );
-      const researchLine = 'Research complete! agri_1 unlocked!';
+      final researchLine =
+          'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
       final researchFinder = find.textContaining(researchLine);
 
       await _commitTurnEvents(
@@ -408,7 +481,7 @@ void main() {
         [
           AppResearchCompleteEvent(
             playerId: harness.humanId,
-            techId: 'agri_1',
+            techId: kTechIdCropRotation,
             turnNumber: 1,
           ),
         ],
