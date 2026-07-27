@@ -480,6 +480,181 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Player turn event feed overture line opens diplomacy detail on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppOvertureAdvancedEvent(
+          offererGpId: harness.humanId,
+          targetFactionId: harness.opponentId,
+          newStage: 'embassy',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('Overture advanced!');
+      expect(line, findsOneWidget);
+      expect(find.textContaining(': Embassy!'), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.diplomacyDetail);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['factionId'], harness.opponentId);
+      expect(args['humanPlayerId'], harness.humanId);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed spy caught line opens diplomacy detail on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppSpyCaughtEvent(
+          unitId: 'spy_1',
+          spyOwnerId: harness.opponentId,
+          territoryOwnerId: harness.humanId,
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('enemy spy from');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.diplomacyDetail);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['factionId'], harness.opponentId);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed spy defected line opens diplomacy detail on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppSpyDefectedEvent(
+          unitId: 'spy_1',
+          previousOwnerId: harness.opponentId,
+          newOwnerId: harness.humanId,
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('defected to your side');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.diplomacyDetail);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['factionId'], harness.opponentId);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed unresolved spy counterpart is non-tappable',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final navigateEvents = _listenNavigateEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppSpyCaughtEvent(
+          unitId: 'spy_1',
+          spyOwnerId: 'unknown_spy_owner',
+          territoryOwnerId: harness.humanId,
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('enemy spy from');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      await tester.tap(line);
+      await tester.pump();
+      expect(navigateEvents, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed land combat line emits locate and overlay on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final locateEvents = _listenLocateEvents(harness);
+      final overlayEvents = _listenOpenMapTileDetailEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppCombatResultEvent(
+          provinceId: 'oldWorld|cap',
+          attackerId: harness.humanId,
+          defenderId: harness.opponentId,
+          winnerId: harness.humanId,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('battle resolved!');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(overlayEvents, hasLength(1));
+      expect(overlayEvents.single.tileKey, locateEvents.single.tileKey);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed province captured line emits locate and overlay on tap',
+    (WidgetTester tester) async {
+      final harness = _newHarness(disposeBus: false);
+      final locateEvents = _listenLocateEvents(harness);
+      final overlayEvents = _listenOpenMapTileDetailEvents(harness);
+
+      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await _commitTurnEvents(tester, harness, [
+        AppProvinceCapturedEvent(
+          provinceId: 'oldWorld|cap',
+          previousOwnerId: harness.opponentId,
+          newOwnerId: harness.humanId,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('captured!');
+      expect(line, findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(overlayEvents, hasLength(1));
+      expect(overlayEvents.single.tileKey, locateEvents.single.tileKey);
+    },
+  );
+
   testWidgets('Player turn event feed renders diplomacy/discovery/overture copy', (
     WidgetTester tester,
   ) async {
