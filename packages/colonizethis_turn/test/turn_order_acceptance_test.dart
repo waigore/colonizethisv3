@@ -1,3 +1,4 @@
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
@@ -15,7 +16,7 @@ void main() {
       const orders = [
         WorkOrder(
           unitId: 'u1',
-          target: 'build_road',
+          target: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|p1|0|0',
         ),
       ];
@@ -35,7 +36,7 @@ void main() {
       expect(rejected, hasLength(1));
       expect(rejected.single.orderKind, OrderKind.work);
       expect(rejected.single.reasonCode, 'unit_not_found');
-      expect(rejected.single.orderSummary, 'Work order: build_road');
+      expect(rejected.single.orderSummary, 'Work order: $kWorkTargetBuildRoad');
     });
   });
 }
