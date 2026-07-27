@@ -11,8 +11,8 @@ void registerSpyFogEndOfTurnVisibilityTests() {
         'Spy leaving other-faction province fogs immediately at end-of-turn',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP1 = 'oldWorld|P1|0|0';
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP1 = turnTestOwTileKey('P1');
+          final tileKeyP2 = turnTestOwTileKey('P2');
 
           final topology = twoAdjacentOldWorldProvinceTopology();
 
@@ -29,10 +29,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
                 tileKey: tileKeyP1,
               ),
             ],
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {tileKeyP1: 'fullyVisible', tileKeyP2: 'fogged'},
             },
-            tileKeysByRegionAndProvince: const {
+            tileKeysByRegionAndProvince: {
               ow: {
                 '$ow|P1': [tileKeyP1],
                 '$ow|P2': [tileKeyP2],
@@ -47,7 +47,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
           final moveOrders = Orders(
             moveOrdersByPlayerId: {
               'p1': [
-                MoveOrder(unitId: 'spy1', destinationTileKey: '$ow|P2|0|0'),
+                MoveOrder(
+                  unitId: 'spy1',
+                  destinationTileKey: turnTestOwTileKey('P2'),
+                ),
               ],
             },
           );
@@ -56,8 +59,6 @@ void registerSpyFogEndOfTurnVisibilityTests() {
             game: game,
             topology: topology,
             orders: moveOrders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
           );
 
           expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
@@ -72,8 +73,8 @@ void registerSpyFogEndOfTurnVisibilityTests() {
         'Spy leaving own province does not start fog decay timer and own tiles remain fully visible',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP1 = 'oldWorld|P1|0|0';
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP1 = turnTestOwTileKey('P1');
+          final tileKeyP2 = turnTestOwTileKey('P2');
 
           final topology = twoAdjacentOldWorldProvinceTopology();
 
@@ -90,10 +91,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
                 tileKey: tileKeyP1,
               ),
             ],
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {tileKeyP1: 'fullyVisible', tileKeyP2: 'fullyVisible'},
             },
-            tileKeysByRegionAndProvince: const {
+            tileKeysByRegionAndProvince: {
               ow: {
                 '$ow|P1': [tileKeyP1],
                 '$ow|P2': [tileKeyP2],
@@ -105,7 +106,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
           final moveOrders = Orders(
             moveOrdersByPlayerId: {
               'p1': [
-                MoveOrder(unitId: 'spy1', destinationTileKey: '$ow|P2|0|0'),
+                MoveOrder(
+                  unitId: 'spy1',
+                  destinationTileKey: turnTestOwTileKey('P2'),
+                ),
               ],
             },
           );
@@ -114,8 +118,6 @@ void registerSpyFogEndOfTurnVisibilityTests() {
             game: game,
             topology: topology,
             orders: moveOrders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
           );
 
           expect(next.worldState.spyRevealTurnsByPlayer['p1'], isNull);
@@ -130,56 +132,37 @@ void registerSpyFogEndOfTurnVisibilityTests() {
         'Spy timers for own provinces do not affect visibility at end-of-turn',
         () {
           const ow = kRegionOldWorld;
-          const tileKeyP1 = 'oldWorld|P1|0|0';
+          final tileKeyP1 = turnTestOwTileKey('P1');
+          final base = turnTestOwSingleProvinceGame();
 
-          final game = Game(
-            id: 'g1',
+          final game = base.copyWith(
             globalGameSeed: turnTestSpyFogGameSeed,
-            worldState: WorldState(
+            worldState: base.worldState.copyWith(
               turnState: const TurnState(
                 phase: TurnPhase.endOfTurn,
                 turnNumber: 1,
               ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                ],
-                units: [],
-              ),
-              newWorld: const RegionData(),
-              playerVisibilityByTile: const {
+              playerVisibilityByTile: {
                 'p1': {tileKeyP1: 'fullyVisible'},
               },
-              tileKeysByRegionAndProvince: const {
+              tileKeysByRegionAndProvince: {
                 ow: {
                   '$ow|P1': [tileKeyP1],
                 },
               },
-              // Erroneous timer pointing at own province; should be ignored and cleared.
               spyRevealTurnsByPlayer: const {
                 'p1': {'$ow|P1': 1},
               },
             ),
-            players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
           );
 
           final next = resolveTurnComplete(
             game: game,
-            topology: MapTopology(
-              nodes: const [
-                TopologyNode(
-                  id: 'P1',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: const [],
-            ),
+            topology: turnTestOwSingleProvinceTopology(),
             orders: const Orders(),
             startFromPhase: TurnPhase.endOfTurn,
           );
 
-          // Legacy timer entry may persist; own province visibility unchanged.
           expect(
             next.worldState.playerVisibilityByTile['p1']?[tileKeyP1],
             VisibilityLevel.fullyVisible.name,
@@ -191,8 +174,8 @@ void registerSpyFogEndOfTurnVisibilityTests() {
         'one spy leaving foreign province retains visibility while another remains',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP1 = 'oldWorld|P1|0|0';
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP1 = turnTestOwTileKey('P1');
+          final tileKeyP2 = turnTestOwTileKey('P2');
 
           final topology = twoAdjacentOldWorldProvinceTopology();
 
@@ -216,10 +199,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
                 tileKey: tileKeyP1,
               ),
             ],
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {tileKeyP1: 'fullyVisible', tileKeyP2: 'fogged'},
             },
-            tileKeysByRegionAndProvince: const {
+            tileKeysByRegionAndProvince: {
               ow: {
                 '$ow|P1': [tileKeyP1],
                 '$ow|P2': [tileKeyP2],
@@ -234,7 +217,10 @@ void registerSpyFogEndOfTurnVisibilityTests() {
           final moveOrders = Orders(
             moveOrdersByPlayerId: {
               'p1': [
-                MoveOrder(unitId: 'spy_a', destinationTileKey: '$ow|P2|0|0'),
+                MoveOrder(
+                  unitId: 'spy_a',
+                  destinationTileKey: turnTestOwTileKey('P2'),
+                ),
               ],
             },
           );
@@ -243,8 +229,6 @@ void registerSpyFogEndOfTurnVisibilityTests() {
             game: game,
             topology: topology,
             orders: moveOrders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
           );
 
           expect(

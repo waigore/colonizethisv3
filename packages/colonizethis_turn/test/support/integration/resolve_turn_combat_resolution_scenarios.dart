@@ -214,14 +214,10 @@ void registerCombatResolutionTests() {
           final next = resolveTurnComplete(
             game: turnTestOwGame(
               provinces: const [],
-              fleets: [
-                Fleet(
-                  id: 'f1',
-                  ownerId: 'p1',
-                  seaZoneId: 'sea1',
-                  regionId: kRegionOldWorld,
-                  shipTypeIds: ['carrack', 'carrack'],
-                ),
+            fleets: [
+              turnTestCarrackFleet(
+                shipTypeIds: const ['carrack', 'carrack'],
+              ),
                 Fleet(
                   id: 'f2',
                   ownerId: 'p2',

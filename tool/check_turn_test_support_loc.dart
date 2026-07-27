@@ -15,8 +15,8 @@ const String turnTestSupportRelativeDir =
     'packages/colonizethis_turn/test/support';
 
 /// Post-#4039 densify support-tree ceiling (physical LOC) with headroom.
-/// Wave 4 (#4113) **5800**; wave 5 slice A (#4168) **5610** (shrink-only).
-const int turnTestSupportLocCeiling = 5610;
+/// Wave 4 (#4113) **5800**; wave 5 slice A (#4168) **5675** (shrink-only).
+const int turnTestSupportLocCeiling = 5675;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countTurnTestSupportPhysicalLoc(Directory dir) {

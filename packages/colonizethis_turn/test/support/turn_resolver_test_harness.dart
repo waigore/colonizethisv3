@@ -5,6 +5,35 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 /// Old World region id for two-province integration setups in turn tests.
 const turnTestOldWorldRegionId = kRegionOldWorld;
 
+/// 1×1 tile key in Old World for [localProvinceId] (e.g. `P2` → `oldWorld|P2|0|0`).
+String turnTestOwTileKey(String localProvinceId) =>
+    '${turnTestOldWorldRegionId}|$localProvinceId|0|0';
+
+/// 1×1 tile key in New World for [localProvinceId].
+String turnTestNwTileKey(String localProvinceId) =>
+    '${kRegionNewWorld}|$localProvinceId|0|0';
+
+/// Standard carrack [Fleet] for naval integration scenarios.
+Fleet turnTestCarrackFleet({
+  String id = 'f1',
+  String ownerId = 'p1',
+  String? seaZoneId = 'sea1',
+  String? inPortAtProvinceId,
+  String regionId = kRegionOldWorld,
+  FleetMission mission = FleetMission.none,
+  List<String> shipTypeIds = const ['carrack'],
+}) {
+  return Fleet(
+    id: id,
+    ownerId: ownerId,
+    seaZoneId: seaZoneId,
+    inPortAtProvinceId: inPortAtProvinceId,
+    regionId: regionId,
+    shipTypeIds: shipTypeIds,
+    mission: mission,
+  );
+}
+
 /// Fixed [Game.globalGameSeed] for spy/fog integration tests so spy-resolution
 /// kill rolls stay deterministic (unset seed uses [Random] per
 /// [spyPhaseRandom]).
@@ -397,6 +426,176 @@ Game turnTestOwNwCrossRegionGame({
       tileKeysByRegionAndProvince: tileKeysByRegionAndProvince ?? const {},
     ),
     players: [Player(id: ownerId, displayName: 'A', isHuman: true)],
+  );
+}
+
+/// OW+NW [Game] with same local id `P1` in both regions for spy/fog decay tests.
+Game turnTestSpyFogOwNwSameLocalIdGame({
+  int turnNumber = 1,
+  TurnPhase phase = TurnPhase.endOfTurn,
+  List<Unit> owUnits = const [],
+}) {
+  const ow = kRegionOldWorld;
+  const nw = kRegionNewWorld;
+  const tileKeyOwP1 = 'oldWorld|P1|0|0';
+  const tileKeyNwP1 = 'newWorld|P1|0|0';
+  return Game(
+    id: 'g1',
+    globalGameSeed: turnTestSpyFogGameSeed,
+    worldState: WorldState(
+      turnState: TurnState(phase: phase, turnNumber: turnNumber),
+      oldWorld: RegionData(
+        provinces: [
+          Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
+          Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
+        ],
+        units: owUnits,
+      ),
+      newWorld: RegionData(
+        provinces: [
+          Province(id: '$nw|P1', regionId: nw, ownerId: 'p2'),
+        ],
+      ),
+      playerVisibilityByTile: {
+        'p1': {
+          tileKeyOwP1: VisibilityLevel.fullyVisible.name,
+          tileKeyNwP1: VisibilityLevel.fullyVisible.name,
+        },
+        'p2': {},
+      },
+      tileKeysByRegionAndProvince: {
+        ow: {
+          'P1': [tileKeyOwP1],
+          'P2': ['oldWorld|P2|0|0'],
+        },
+        nw: {
+          'P1': [tileKeyNwP1],
+        },
+      },
+    ),
+    players: const [
+      Player(id: 'p1', displayName: 'P1', isHuman: true),
+      Player(id: 'p2', displayName: 'P2', isHuman: false),
+    ],
+  );
+}
+
+/// Topology for [turnTestSpyFogOwNwSameLocalIdGame] (three provinces, no edges).
+MapTopology turnTestSpyFogOwNwSameLocalIdTopology() {
+  const ow = kRegionOldWorld;
+  const nw = kRegionNewWorld;
+  return MapTopology(
+    nodes: const [
+      TopologyNode(id: 'P1', regionId: ow, type: TopologyNodeType.province),
+      TopologyNode(id: 'P2', regionId: ow, type: TopologyNodeType.province),
+      TopologyNode(id: 'P1', regionId: nw, type: TopologyNodeType.province),
+    ],
+    edges: const [],
+  );
+}
+
+/// OW minor + NW tribe combat [Game] for reactive dialogue integration tests.
+Game turnTestOwNwMinorTribeAttackGame() {
+  const ow = kRegionOldWorld;
+  const nw = kRegionNewWorld;
+  return ensureMilitaryArmiesForGame(
+    Game(
+      id: 'g1',
+      globalGameSeed: 99,
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+        oldWorld: RegionData(
+          provinces: const [
+            Province(id: '$ow|P1', regionId: ow, ownerId: 'human'),
+            Province(id: '$ow|P2', regionId: ow, ownerId: 'mn1'),
+          ],
+          units: [
+            Unit(
+              id: 'u1',
+              type: 'grenadiers',
+              ownerId: 'human',
+              locationProvinceId: '$ow|P1',
+            ),
+            Unit(
+              id: 'm1',
+              type: 'peasant_levies',
+              ownerId: 'mn1',
+              locationProvinceId: '$ow|P2',
+            ),
+          ],
+        ),
+        newWorld: RegionData(
+          provinces: const [
+            Province(id: '$nw|N1', regionId: nw, ownerId: 'human'),
+            Province(id: '$nw|N2', regionId: nw, ownerId: 'tr1'),
+          ],
+          units: [
+            Unit(
+              id: 'u2',
+              type: 'grenadiers',
+              ownerId: 'human',
+              locationProvinceId: '$nw|N1',
+            ),
+            Unit(
+              id: 't1',
+              type: 'peasant_levies',
+              ownerId: 'tr1',
+              locationProvinceId: '$nw|N2',
+            ),
+          ],
+        ),
+      ),
+      players: const [
+        Player(id: 'human', displayName: 'Human', isHuman: true),
+        Player(id: 'ai1', displayName: 'AI', isHuman: false),
+      ],
+      minorNations: const [MinorNation(id: 'mn1')],
+      tribes: const [Tribe(id: 'tr1')],
+      overtureStates: const [
+        OvertureState(
+          gpId: 'ai1',
+          targetId: 'mn1',
+          stage: OvertureStage.embassy,
+        ),
+        OvertureState(
+          gpId: 'ai1',
+          targetId: 'tr1',
+          stage: OvertureStage.embassy,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Topology for [turnTestOwNwMinorTribeAttackGame].
+MapTopology turnTestOwNwMinorTribeAttackTopology() {
+  return MapTopology(
+    nodes: const [
+      TopologyNode(
+        id: 'P1',
+        regionId: kRegionOldWorld,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'P2',
+        regionId: kRegionOldWorld,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'N1',
+        regionId: kRegionNewWorld,
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'N2',
+        regionId: kRegionNewWorld,
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'P1', id2: 'P2'),
+      TopologyEdge(id1: 'N1', id2: 'N2'),
+    ],
   );
 }
 

@@ -102,110 +102,13 @@ void registerCombatMovementDialogueTests() {
       test(
         'combat emits attack_on_minor and attack_on_tribe reactive dialogue',
         () {
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'P1',
-                regionId: kRegionOldWorld,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'P2',
-                regionId: kRegionOldWorld,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'N1',
-                regionId: kRegionNewWorld,
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'N2',
-                regionId: kRegionNewWorld,
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [
-              TopologyEdge(id1: 'P1', id2: 'P2'),
-              TopologyEdge(id1: 'N1', id2: 'N2'),
-            ],
-          );
           const ow = kRegionOldWorld;
           const nw = kRegionNewWorld;
-          final game = ensureMilitaryArmiesForGame(
-            Game(
-              id: 'g1',
-              globalGameSeed: 99,
-              worldState: WorldState(
-                turnState: const TurnState(
-                  phase: TurnPhase.orders,
-                  turnNumber: 0,
-                ),
-                oldWorld: RegionData(
-                  provinces: const [
-                    Province(id: '$ow|P1', regionId: ow, ownerId: 'human'),
-                    Province(id: '$ow|P2', regionId: ow, ownerId: 'mn1'),
-                  ],
-                  units: [
-                    Unit(
-                      id: 'u1',
-                      type: 'grenadiers',
-                      ownerId: 'human',
-                      locationProvinceId: '$ow|P1',
-                    ),
-                    Unit(
-                      id: 'm1',
-                      type: 'peasant_levies',
-                      ownerId: 'mn1',
-                      locationProvinceId: '$ow|P2',
-                    ),
-                  ],
-                ),
-                newWorld: RegionData(
-                  provinces: const [
-                    Province(id: '$nw|N1', regionId: nw, ownerId: 'human'),
-                    Province(id: '$nw|N2', regionId: nw, ownerId: 'tr1'),
-                  ],
-                  units: [
-                    Unit(
-                      id: 'u2',
-                      type: 'grenadiers',
-                      ownerId: 'human',
-                      locationProvinceId: '$nw|N1',
-                    ),
-                    Unit(
-                      id: 't1',
-                      type: 'peasant_levies',
-                      ownerId: 'tr1',
-                      locationProvinceId: '$nw|N2',
-                    ),
-                  ],
-                ),
-              ),
-              players: const [
-                Player(id: 'human', displayName: 'Human', isHuman: true),
-                Player(id: 'ai1', displayName: 'AI', isHuman: false),
-              ],
-              minorNations: const [MinorNation(id: 'mn1')],
-              tribes: const [Tribe(id: 'tr1')],
-              overtureStates: const [
-                OvertureState(
-                  gpId: 'ai1',
-                  targetId: 'mn1',
-                  stage: OvertureStage.embassy,
-                ),
-                OvertureState(
-                  gpId: 'ai1',
-                  targetId: 'tr1',
-                  stage: OvertureStage.embassy,
-                ),
-              ],
-            ),
-          );
+          final game = turnTestOwNwMinorTribeAttackGame();
           final dialogueEvents = <DialogueEvent>[];
           resolveTurnComplete(
             game: game,
-            topology: topology,
+            topology: turnTestOwNwMinorTribeAttackTopology(),
             orders: Orders(
               armyMoveOrdersByPlayerId: {
                 'human': [

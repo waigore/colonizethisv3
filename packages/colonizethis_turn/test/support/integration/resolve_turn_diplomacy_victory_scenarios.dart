@@ -12,20 +12,15 @@ void registerDiplomacyVictoryCoreTests() {
         () {
           final topology = turnTestOwSeaProvinceTopology();
           final capitalId = turnTestOwProvinceId('P1');
-          final homeFleet = Fleet(
+          final homeFleet = turnTestCarrackFleet(
             id: 'fleet_p1',
-            ownerId: 'p1',
             seaZoneId: null,
             inPortAtProvinceId: capitalId,
-            regionId: kRegionOldWorld,
-            shipTypeIds: const ['carrack'],
           );
-          final otherFleet = Fleet(
+          final otherFleet = turnTestCarrackFleet(
             id: 'f2',
-            ownerId: 'p1',
             seaZoneId: null,
             inPortAtProvinceId: capitalId,
-            regionId: kRegionOldWorld,
             shipTypeIds: const ['fluyte'],
           );
           final game = turnTestOwGame(
@@ -82,15 +77,7 @@ void registerDiplomacyVictoryCoreTests() {
           final topology = turnTestOwSeaZoneTopology();
           final game = turnTestOwGame(
             provinces: turnTestOwP1P2Provinces(),
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: kRegionOldWorld,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
+            fleets: [turnTestCarrackFleet()],
             diplomacyRelations: [
               DiplomacyRelation(
                 factionId1: 'p1',

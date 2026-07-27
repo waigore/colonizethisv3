@@ -9,17 +9,7 @@ void registerCombatMovementOrdersTests() {
     group('combat movement orders', () {
       test('naval move order targeting home fleet does not move it', () {
         final next = resolveTurnComplete(
-          game: turnTestFleetsOnlyGame(
-            fleets: [
-              Fleet(
-                id: 'fleet_p1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: kRegionOldWorld,
-                shipTypeIds: const ['carrack'],
-              ),
-            ],
-          ),
+          game: turnTestFleetsOnlyGame(fleets: [turnTestCarrackFleet(id: 'fleet_p1')]),
           topology: turnTestOwTwoLinkedSeaZonesTopology(),
           orders: Orders(
             navalMoveOrdersByPlayerId: {
@@ -46,21 +36,12 @@ void registerCombatMovementOrdersTests() {
               Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
             ],
             fleets: [
-              Fleet(
+              turnTestCarrackFleet(
                 id: 'fleet_p1',
-                ownerId: 'p1',
                 seaZoneId: null,
                 inPortAtProvinceId: '$ow|P1',
-                regionId: ow,
-                shipTypeIds: const ['carrack'],
               ),
-              Fleet(
-                id: 'f2',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: ow,
-                shipTypeIds: const ['frigate'],
-              ),
+              turnTestCarrackFleet(id: 'f2', shipTypeIds: const ['frigate']),
             ],
             players: const [
               Player(
@@ -109,16 +90,7 @@ void registerCombatMovementOrdersTests() {
       test('naval move clears mission on fleet', () {
         final next = resolveTurnComplete(
           game: turnTestFleetsOnlyGame(
-            fleets: [
-              Fleet(
-                id: 'f1',
-                ownerId: 'p1',
-                seaZoneId: 'sea1',
-                regionId: kRegionOldWorld,
-                shipTypeIds: const ['carrack'],
-                mission: FleetMission.patrol,
-              ),
-            ],
+            fleets: [turnTestCarrackFleet(mission: FleetMission.patrol)],
           ),
           topology: turnTestOwTwoLinkedSeaZonesTopology(),
           orders: Orders(
@@ -136,17 +108,7 @@ void registerCombatMovementOrdersTests() {
         'naval mission order skipped when naval move targets same fleet',
         () {
           final next = resolveTurnComplete(
-            game: turnTestFleetsOnlyGame(
-              fleets: [
-                Fleet(
-                  id: 'f1',
-                  ownerId: 'p1',
-                  seaZoneId: 'sea1',
-                  regionId: kRegionOldWorld,
-                  shipTypeIds: const ['carrack'],
-                ),
-              ],
-            ),
+            game: turnTestFleetsOnlyGame(fleets: [turnTestCarrackFleet()]),
             topology: turnTestOwTwoLinkedSeaZonesTopology(),
             orders: Orders(
               navalMoveOrdersByPlayerId: {
