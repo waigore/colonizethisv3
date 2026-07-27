@@ -71,6 +71,10 @@ class ProvinceExtractionSnapshot {
   /// SPEC/ui/province-economic-extraction-available.md capital-bonus indication.
   final int capitalGrainBonus;
 
+  /// True when any commodity has effective yield below production full (Refs #4150).
+  bool get hasPartialYield =>
+      byCommodity.values.any((t) => t.effective < t.full);
+
   Map<String, dynamic> toJson() => {
     'ownerId': ownerId,
     'byCommodity': {

@@ -2596,6 +2596,35 @@
   "@provinceOverlay_tileRoadNone": {
     "description": "Tile section road/rail row when not applicable."
   },
+  "provinceOverlay_tileCapitalLinkConnected": "Capital link: Connected",
+  "@provinceOverlay_tileCapitalLinkConnected": {
+    "description": "Tile section capital-link row when the selected human-owned tile is capital-connected (Refs #4149)."
+  },
+  "provinceOverlay_tileCapitalLinkConnectedWithPath": "Capital link: Connected (path transport level {level})",
+  "@provinceOverlay_tileCapitalLinkConnectedWithPath": {
+    "description": "Tile section capital-link row when connected with a recorded path transport cap (Refs #4149).",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalLinkNotConnected": "Capital link: Not connected — will not extract",
+  "@provinceOverlay_tileCapitalLinkNotConnected": {
+    "description": "Tile section capital-link row when the selected human-owned tile is not capital-connected (Refs #4149)."
+  },
+  "provinceOverlay_tileExtractionFromTile": "Extraction from this tile: {effective} of {full}",
+  "@provinceOverlay_tileExtractionFromTile": {
+    "description": "Tile section per-tile effective vs full extraction when production F > 0 (Refs #4149).",
+    "placeholders": {
+      "effective": {
+        "type": "int"
+      },
+      "full": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_tileRoadTransportLevel": "Road / railroad: transport level {level}",
   "@provinceOverlay_tileRoadTransportLevel": {
     "description": "Tile section road/rail primary numeric line on land tiles.",
@@ -2849,6 +2878,10 @@
         "type": "int"
       }
     }
+  },
+  "provinceOverlay_extractionPartialReason": "Some improved tiles are not linked to your capital, or the road/port path is too weak.",
+  "@provinceOverlay_extractionPartialReason": {
+    "description": "Muted reason line under Extraction when any commodity effective is below full (Refs #4150)."
   },
   "provinceOverlay_availableTileCount": "{count} {name}",
   "@provinceOverlay_availableTileCount": {

@@ -418,6 +418,24 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileRoadNone => 'Road / railroad: -';
 
   @override
+  String get provinceOverlay_tileCapitalLinkConnected =>
+      'Capital link: Connected';
+
+  @override
+  String provinceOverlay_tileCapitalLinkConnectedWithPath(int level) {
+    return 'Capital link: Connected (path transport level $level)';
+  }
+
+  @override
+  String get provinceOverlay_tileCapitalLinkNotConnected =>
+      'Capital link: Not connected — will not extract';
+
+  @override
+  String provinceOverlay_tileExtractionFromTile(int effective, int full) {
+    return 'Extraction from this tile: $effective of $full';
+  }
+
+  @override
   String provinceOverlay_tileRoadTransportLevel(int level) {
     return 'Road / railroad: transport level $level';
   }
@@ -575,6 +593,10 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
     return ' (incl. +$bonus capital grain bonus)';
   }
+
+  @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
 
   @override
   String provinceOverlay_availableTileCount(int count, String name) {

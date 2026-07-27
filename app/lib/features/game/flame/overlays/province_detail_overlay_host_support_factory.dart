@@ -8,9 +8,14 @@ import '../../../../core/services/game_service/game_service.dart'
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
+    show isProvinceSeaZoneOverlaySeaZone;
+import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_labels.dart'
+    show tryParseProvinceOverlayTileCoords;
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
+import 'province_detail_overlay_host_support_tile_connectivity.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
 /// narrow panel hosts. Hosts own layout / E2E only. Refs #4018.
@@ -76,6 +81,34 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     provinceId: displayId,
     mapData: mapData,
   );
+  ProvinceTileConnectivityDisplay? tileConnectivity;
+  if (selectedTileKey != null) {
+    final coords = tryParseProvinceOverlayTileCoords(
+      regionId: region.regionId,
+      regionWidth: region.width,
+      regionHeight: region.height,
+      selectedTileKey: selectedTileKey,
+    );
+    if (coords != null) {
+      final cell = region.cellAt(coords.x, coords.y);
+      final connectivityForHuman = humanConnectivityPreview(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        mapData: mapData,
+      );
+      tileConnectivity = provinceTileConnectivityDisplayPreview(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: displayId,
+        selectedTileKey: selectedTileKey,
+        mapData: mapData,
+        isSeaZoneContext: isProvinceSeaZoneOverlaySeaZone(region, displayId),
+        tileIsSea: cell.isSea,
+        tileRevealed: cell.visibility != TileVisibility.unrevealed,
+        connectivityForHuman: connectivityForHuman,
+      );
+    }
+  }
   return ProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
@@ -87,6 +120,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     townProductionBonusByCommodity: townProductionBonus,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
+    tileConnectivity: tileConnectivity,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
     onClose: onClose,

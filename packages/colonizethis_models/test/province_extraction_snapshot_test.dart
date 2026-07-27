@@ -20,6 +20,23 @@ void main() {
       expect(restored.capitalGrainBonus, 2);
     });
 
+    test('hasPartialYield when any commodity effective < full (Refs #4150)', () {
+      const partial = ProvinceExtractionSnapshot(
+        ownerId: 'gp1',
+        byCommodity: {
+          'grain': ProvinceExtractionCommodityTotals(effective: 1, full: 5),
+        },
+      );
+      expect(partial.hasPartialYield, isTrue);
+      const full = ProvinceExtractionSnapshot(
+        ownerId: 'gp1',
+        byCommodity: {
+          'grain': ProvinceExtractionCommodityTotals(effective: 5, full: 5),
+        },
+      );
+      expect(full.hasPartialYield, isFalse);
+    });
+
     test('provinceExtractionSnapshotForDisplay ownership gate', () {
       const snap = ProvinceExtractionSnapshot(
         ownerId: 'gp1',

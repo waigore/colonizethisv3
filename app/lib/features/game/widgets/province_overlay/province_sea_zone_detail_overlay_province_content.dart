@@ -5,6 +5,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         PlayerView,
         ProvinceImprovableCommodityCount,
+        ProvinceTileCapitalLinkPreview,
         fleetsInPortAtProvince,
         kRegionNewWorld,
         provincePanelShowsFullTileDerivedIntel;
@@ -15,6 +16,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 
 import 'province_overlay_unit_partition.dart';
@@ -54,6 +57,7 @@ OverlayContent provinceContent({
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
       const {},
   void Function(Iterable<String>?)? onHighlightTiles,
+  ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
@@ -125,6 +129,7 @@ OverlayContent provinceContent({
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
     onBuildImprovementTap: onBuildImprovementTap,
+    tileConnectivity: tileConnectivity,
   );
   final political = buildPoliticalSection(
     l10n: l10n,
