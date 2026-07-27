@@ -19,6 +19,7 @@ import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
@@ -48,6 +49,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
     this.availableByCommodity = const {},
+    this.tileCapitalLinkPreview,
     this.onHighlightTiles,
   });
 
@@ -74,6 +76,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
   final Map<String, ProvinceImprovableCommodityCount> availableByCommodity;
+  final ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +124,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      tileCapitalLinkPreview: tileCapitalLinkPreview,
       onHighlightTiles: onHighlightTiles,
     );
   }

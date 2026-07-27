@@ -19,6 +19,7 @@ import 'province_sea_zone_detail_overlay_designation.dart';
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 
 Widget buildRevealedTileSection({
@@ -43,6 +44,7 @@ Widget buildRevealedTileSection({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview,
 }) {
   final tileState = game.worldState.tileState;
   final resourceByTile = game.worldState.resourceByTileKey;
@@ -168,6 +170,15 @@ Widget buildRevealedTileSection({
           l10n: l10n,
           roadLevel: roadLevel,
         ),
+        if (tileCapitalLinkPreview != null) ...[
+          Text(
+            tileCapitalLinkLine(l10n, tileCapitalLinkPreview),
+            style: bodyStyle,
+          ),
+          if (tileExtractionFromTileLine(l10n, tileCapitalLinkPreview)
+              case final extractionLine?)
+            Text(extractionLine, style: bodyStyle),
+        ],
         Text(
           l10n.provinceOverlay_tileCivilianUnits(civilianCount),
           style: bodyStyle,

@@ -8,6 +8,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'province_sea_zone_detail_overlay_tile_section_revealed.dart';
 
@@ -30,6 +31,7 @@ Widget buildTileSection({
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
   VoidCallback? onBuildImprovementTap,
+  ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview,
 }) {
   if (selectedTileKey == null) {
     return buildOverlaySection(
@@ -95,5 +97,6 @@ Widget buildTileSection({
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
     onBuildImprovementTap: onBuildImprovementTap,
+    tileCapitalLinkPreview: tileCapitalLinkPreview,
   );
 }

@@ -22,6 +22,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 
 import 'app_shell_harness.dart';
 
@@ -92,6 +93,7 @@ Widget buildProvinceOverlayDarkThemeShell({
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview,
   ThemeData? shellTheme,
 }) {
   final overlay = ProvinceSeaZoneDetailOverlay(
@@ -118,6 +120,7 @@ Widget buildProvinceOverlayDarkThemeShell({
     townProductionBonusByCommodity: townProductionBonusByCommodity,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
+    tileCapitalLinkPreview: tileCapitalLinkPreview,
   );
   final body = shellWidth != null
       ? SizedBox(width: shellWidth, child: overlay)
@@ -162,6 +165,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity = const {},
   void Function(Iterable<String>? tileKeys)? onHighlightTiles,
+  ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview,
   ThemeData? shellTheme,
 }) async {
   await tester.pumpWidget(
@@ -190,6 +194,7 @@ Future<void> pumpProvinceOverlayAtDarkTheme(
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
       availableByCommodity: availableByCommodity,
+      tileCapitalLinkPreview: tileCapitalLinkPreview,
       shellTheme: shellTheme,
     ),
   );

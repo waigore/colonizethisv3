@@ -1478,6 +1478,18 @@ abstract class AppLocalizations {
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
 
+  /// Tile section capital-link row when the tile is connected to the human capital.
+  String get provinceOverlay_tileCapitalLinkConnected;
+
+  /// Tile section capital-link row when connected with a path transport cap.
+  String provinceOverlay_tileCapitalLinkConnectedWithTransport(int level);
+
+  /// Tile section capital-link row when the tile is not capital-connected.
+  String get provinceOverlay_tileCapitalLinkNotConnected;
+
+  /// Tile section per-tile effective vs full extraction yield.
+  String provinceOverlay_tileExtractionFromTile(int effective, int full);
+
   /// Tile section road/rail primary numeric line on land tiles.
   String provinceOverlay_tileRoadTransportLevel(int level);
 

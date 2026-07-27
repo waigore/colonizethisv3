@@ -11,6 +11,7 @@ import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
+import 'province_detail_overlay_host_support_tile_capital_link.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
 /// narrow panel hosts. Hosts own layout / E2E only. Refs #4018.
@@ -76,6 +77,15 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     provinceId: displayId,
     mapData: mapData,
   );
+  final isLandTile = selectedTileKey != null &&
+      !cellAtTileKeyIsSea(region: region, tileKey: selectedTileKey);
+  final tileCapitalLinkPreview = provinceTileCapitalLinkPreview(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    selectedTileKey: selectedTileKey,
+    isLandTile: isLandTile,
+    mapData: mapData,
+  );
   return ProvinceSeaZoneDetailOverlay(
     game: game,
     region: region,
@@ -87,6 +97,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     townProductionBonusByCommodity: townProductionBonus,
     extractionSnapshot: extractionSnapshot,
     availableByCommodity: availableByCommodity,
+    tileCapitalLinkPreview: tileCapitalLinkPreview,
     onHighlightTile: onHighlightTile,
     onHighlightTiles: onHighlightTiles,
     onClose: onClose,

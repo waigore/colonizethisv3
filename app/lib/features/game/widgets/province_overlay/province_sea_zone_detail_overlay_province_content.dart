@@ -26,6 +26,7 @@ import 'province_sea_zone_detail_overlay_province_content_intel.dart';
 import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
 
 OverlayContent provinceContent({
@@ -54,6 +55,7 @@ OverlayContent provinceContent({
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
       const {},
   void Function(Iterable<String>?)? onHighlightTiles,
+  ProvinceTileCapitalLinkPreview? tileCapitalLinkPreview,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
@@ -125,6 +127,7 @@ OverlayContent provinceContent({
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
     onBuildImprovementTap: onBuildImprovementTap,
+    tileCapitalLinkPreview: tileCapitalLinkPreview,
   );
   final political = buildPoliticalSection(
     l10n: l10n,

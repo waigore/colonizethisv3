@@ -105,6 +105,31 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Tile — disconnected capital link',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          return SizedBox(
+            width: 320,
+            height: 420,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              tileCapitalLinkPreview: const ProvinceTileCapitalLinkPreview(
+                isCapitalConnected: false,
+                extractionEffective: 0,
+                extractionFull: 2,
+              ),
+              onClose: () {},
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — sea zone',
         builder: (context) {
           final game = demoGameForOverlay;
