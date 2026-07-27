@@ -1,6 +1,7 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../config/constants.dart';
 import '../../../../widgets/ct_gradients.dart';
 import '../../screens/game/game_screen_shared.dart'
     show kGameMapWideProvinceSidePanelWidth;
@@ -86,6 +87,10 @@ class PlayerTurnEventFeedCard extends StatelessWidget {
   /// `50vw` term).
   static const double narrowViewportFraction = 0.5;
 
+  /// Minimum tap-target height for tappable rows on narrow viewports
+  /// (`SPEC/ui/mobile-adaptation.md` § 1).
+  static const double narrowTappableRowMinHeight = 44;
+
   /// Stable key consumers / tests can use to find the framed surface
   /// inside the floating card (parity with sibling chrome keys such as
   /// `GameTabBar.surfaceKey`).
@@ -150,6 +155,8 @@ class _FeedEntriesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool narrowViewport =
+        MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     return ListView.separated(
       shrinkWrap: true,
       itemCount: entries.length,
@@ -158,9 +165,39 @@ class _FeedEntriesList extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         final PlayerTurnEventFeedEntry entry = entries[index];
         final Widget text = Text(entry.text, style: bodyStyle);
+        final Widget rowContent = entry.linkAffordance
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(child: text),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: EditorialMonoclePalette.accentDim,
+                  ),
+                ],
+              )
+            : text;
         if (entry.onTap == null) {
-          return text;
+          return rowContent;
         }
+        final Widget tappableChild = Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: PlayerTurnEventFeedCard.tappableRowVerticalPadding,
+          ),
+          child: rowContent,
+        );
+        final Widget inkChild = narrowViewport
+            ? ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: PlayerTurnEventFeedCard.narrowTappableRowMinHeight,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: tappableChild,
+                ),
+              )
+            : tappableChild;
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -168,12 +205,7 @@ class _FeedEntriesList extends StatelessWidget {
             splashColor: EditorialMonoclePalette.surfaceLite,
             highlightColor: EditorialMonoclePalette.surfaceLite,
             hoverColor: EditorialMonoclePalette.surfaceLite,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: PlayerTurnEventFeedCard.tappableRowVerticalPadding,
-              ),
-              child: text,
-            ),
+            child: inkChild,
           ),
         );
       },

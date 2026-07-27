@@ -41,8 +41,9 @@
 - Work-order completion lines tap-focus the target tile.
 - Province-discovery lines tap-focus the discovered province.
 - Sea-discovery lines tap-focus a sea-zone anchor tile.
+- Research-complete lines for catalog-known techs show the tech display name, a trailing chevron link affordance, and open `GAME40001` **Technology** on the Slots tab via `NavigateToRouteEvent(Routes.technology, …)` (same args as the empire left-rail Technology button).
 - Other lines are non-tappable in v1.
-- Fallback: if no valid map anchor can be resolved for a tappable row, render it non-tappable and keep app stable.
+- Fallback: if no valid map anchor can be resolved for a tappable row, or the research event tech id is absent from the catalog, render it non-tappable with safe copy and keep app stable.
 
 ---
 
@@ -86,6 +87,10 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a tappable province-scoped line whose province anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
 - Given a tappable naval-combat line whose sea-zone anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
 - Given a non-tappable line or unresolved anchor, when the user taps the row, then no map-focus event is emitted and the app remains stable.
+- Given a human `AppResearchCompleteEvent` for a catalog-known tech, when the feed renders, then the row shows the tech display name (never the raw tech id), a trailing chevron link affordance, and is tappable.
+- Given a catalog-known research-complete row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.technology` with the same route args as the empire left-rail Technology button.
+- Given a research-complete event whose tech id is not in the catalog, when the feed renders, then the row is non-tappable with safe fallback copy and no raw tech id appears.
+- Given a narrow-layout (`< 600` dp host width) map shell with a tappable research-complete row, when the row builds, then its tap target is at least 44 dp tall.
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.
 - Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.

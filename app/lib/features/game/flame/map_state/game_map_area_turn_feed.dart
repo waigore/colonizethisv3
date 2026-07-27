@@ -62,9 +62,15 @@ mixin GameMapAreaTurnFeed
                 ),
               ),
             ct_models.AppResearchCompleteEvent(:final techId) =>
-              PlayerTurnEventFeedEntry(
-                text: 'Research complete! $techId unlocked!',
-              ),
+              isCatalogTech(techId)
+                  ? PlayerTurnEventFeedEntry(
+                      text: researchCompleteLine(techId),
+                      linkAffordance: true,
+                      onTap: navigateToTechnologyScreen,
+                    )
+                  : PlayerTurnEventFeedEntry(
+                      text: researchCompleteLine(techId),
+                    ),
             ct_models.AppOrderRejectedEvent(:final reasonCode) =>
               PlayerTurnEventFeedEntry(
                 text: 'Order rejected! Reason: $reasonCode!',
