@@ -16,7 +16,8 @@
 | 4 | naval_units | Naval Units | Opens Naval Units panel |
 | 5 | diplomacy | Diplomacy | Opens Diplomacy screen |
 | 6 | technology | Technology | Opens Technology screen |
-| 7 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
+| 7 | victory | Victory | Opens Victory screen (`GAME70001`) |
+| 8 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
 
 Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32 source; display at 24×24 inside the 36×36 dp wide-layout rail button per § Styling below, narrow rail measurements per [mobile-adaptation.md](mobile-adaptation.md)). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 

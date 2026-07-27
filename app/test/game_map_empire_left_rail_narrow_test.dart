@@ -109,6 +109,7 @@ void main() {
     kEmpireNavalUnitsButtonKey,
     kEmpireDiplomacyButtonKey,
     kEmpireTechnologyButtonKey,
+    kEmpireVictoryButtonKey,
   ];
 
   group(
@@ -226,6 +227,7 @@ void main() {
             kEmpireNavalUnitsButtonKey: 'Naval Units',
             kEmpireDiplomacyButtonKey: 'Diplomacy',
             kEmpireTechnologyButtonKey: 'Technology',
+            kEmpireVictoryButtonKey: 'Victory',
           };
 
           for (final entry in expectedLabels.entries) {

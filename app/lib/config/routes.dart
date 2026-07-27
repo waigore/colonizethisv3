@@ -9,6 +9,7 @@ import '../features/game/screens/diplomacy/diplomacy_screen.dart';
 import '../features/game/screens/production/production_screen.dart';
 import '../features/game/screens/technology/technology_screen.dart';
 import '../features/game/screens/trade/trade_screen.dart';
+import '../features/game/screens/victory/victory_screen.dart';
 import '../features/shell/shell_screen.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -24,6 +25,7 @@ class Routes {
   static const String diplomacyDetail = RoutePaths.diplomacyDetail;
   static const String technology = RoutePaths.technology;
   static const String trade = RoutePaths.trade;
+  static const String victory = RoutePaths.victory;
 
   static Route<dynamic>? generate(RouteSettings settings) {
     switch (settings.name) {
@@ -47,6 +49,7 @@ class Routes {
       case RoutePaths.diplomacyDetail:
       case RoutePaths.technology:
       case RoutePaths.trade:
+      case RoutePaths.victory:
         return _buildGameRoute(settings);
       default:
         return null;
@@ -96,6 +99,12 @@ class Routes {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => TradeScreen(game: game, player: player),
+        );
+      case RoutePaths.victory:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) =>
+              VictoryScreen(game: game, humanPlayerId: humanPlayerId),
         );
       default:
         return null;

@@ -75,6 +75,7 @@ assignInitialOwnership({
             id: ProvinceId.full(kRegionOldWorld, e.key),
             regionId: kRegionOldWorld,
             ownerId: e.value,
+            originalOwnerId: e.value,
           ),
         )
         .toList(),
@@ -84,6 +85,7 @@ assignInitialOwnership({
             id: ProvinceId.full(kRegionNewWorld, e.key),
             regionId: kRegionNewWorld,
             ownerId: e.value,
+            originalOwnerId: e.value,
           ),
         )
         .toList(),
