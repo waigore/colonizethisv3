@@ -36,6 +36,23 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Diplomacy declare war — tappable link to detail',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Castile declared war on France!',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Populated — three entries (top entry tappable)',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(

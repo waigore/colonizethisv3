@@ -26,36 +26,40 @@ mixin GameMapAreaTurnFeed
               :final attackerId,
               :final defenderId,
             ) =>
-              PlayerTurnEventFeedEntry(
+              _feedEntry(
                 text:
                     '${provinceLabel(provinceId)} battle resolved! ${factionLabel(winnerId)} defeated ${factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
-                onTap: () => locateProvinceById(provinceId),
+                onTap: provinceOverlayTapForProvince(provinceId),
               ),
             ct_models.AppProvinceCapturedEvent(
               :final provinceId,
               :final newOwnerId,
             ) =>
-              PlayerTurnEventFeedEntry(
+              _feedEntry(
                 text:
                     '${provinceLabel(provinceId)} captured! ${factionLabel(newOwnerId)} now controls it!',
-                onTap: () => locateProvinceById(provinceId),
+                onTap: provinceOverlayTapForProvince(provinceId),
               ),
             ct_models.AppNavalCombatResultEvent(
               :final seaZoneId,
               :final outcomeName,
             ) =>
-              PlayerTurnEventFeedEntry(
+              _feedEntry(
                 text:
                     '${seaZoneLabel(seaZoneId)} naval battle resolved! Outcome: $outcomeName!',
-                onTap: () => locateSeaZoneTile(seaZoneId),
+                onTap: navalCombatTapForSeaZone(seaZoneId),
               ),
             ct_models.AppDiplomacyChangeEvent(
               :final actorId,
               :final targetId,
               :final changeType,
             ) =>
-              PlayerTurnEventFeedEntry(
-                text: diplomacyOutcomeLine(
+              _diplomacyFeedEntry(
+                counterpartFactionId(
+                  actorId: actorId,
+                  targetId: targetId,
+                ),
+                diplomacyOutcomeLine(
                   actorId: actorId,
                   targetId: targetId,
                   changeType: changeType,
@@ -72,18 +76,18 @@ mixin GameMapAreaTurnFeed
                       text: researchCompleteLine(techId),
                     ),
             ct_models.AppOrderRejectedEvent(:final reasonCode) =>
-              PlayerTurnEventFeedEntry(
-                text: 'Order rejected! Reason: $reasonCode!',
-              ),
+              PlayerTurnEventFeedEntry(text: orderRejectedLine(reasonCode)),
             ct_models.AppWorkOrderCompletedEvent(
               :final workTarget,
               :final targetTileKey,
               :final provinceId,
+              :final unitId,
             ) =>
-              PlayerTurnEventFeedEntry(
+              _workOrderFeedEntry(
+                unitId: unitId,
+                targetTileKey: targetTileKey,
                 text:
-                    '${provinceLabel(provinceId)} work completed! ${workTarget.toUpperCase()} finished!',
-                onTap: () => locateTileKey(targetTileKey),
+                    '${provinceLabel(provinceId)} work completed! ${workTargetLabel(workTarget)} finished!',
               ),
             ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
               PlayerTurnEventFeedEntry(
@@ -100,35 +104,80 @@ mixin GameMapAreaTurnFeed
               :final targetFactionId,
               :final newStage,
             ) =>
-              PlayerTurnEventFeedEntry(
-                text:
-                    'Overture advanced! ${factionLabel(offererGpId)} with ${factionLabel(targetFactionId)}: ${newStage.toUpperCase()}!',
+              _diplomacyFeedEntry(
+                overtureCounterpartFactionId(
+                  offererGpId: offererGpId,
+                  targetFactionId: targetFactionId,
+                ),
+                'Overture advanced! ${factionLabel(offererGpId)} with ${factionLabel(targetFactionId)}: ${overtureStageLabel(newStage)}!',
               ),
             ct_models.AppSpyCaughtEvent(
               :final provinceId,
               :final spyOwnerId,
               :final territoryOwnerId,
             ) =>
-              PlayerTurnEventFeedEntry(
-                text: mapPlayerId == territoryOwnerId
+              _diplomacyFeedEntry(
+                spyCounterpartFactionId(
+                  spyOwnerId: spyOwnerId,
+                  territoryOwnerId: territoryOwnerId,
+                ),
+                mapPlayerId == territoryOwnerId
                     ? '${provinceLabel(provinceId)} — enemy spy from ${factionLabel(spyOwnerId)} caught and eliminated!'
                     : 'Spy caught in ${provinceLabel(provinceId)}! ${factionLabel(territoryOwnerId)} eliminated your agent!',
-                onTap: () => locateProvinceById(provinceId),
               ),
             ct_models.AppSpyDefectedEvent(
               :final provinceId,
               :final previousOwnerId,
               :final newOwnerId,
             ) =>
-              PlayerTurnEventFeedEntry(
-                text: mapPlayerId == newOwnerId
+              _diplomacyFeedEntry(
+                mapPlayerId == newOwnerId
+                    ? previousOwnerId
+                    : newOwnerId,
+                mapPlayerId == newOwnerId
                     ? '${provinceLabel(provinceId)} — enemy spy from ${factionLabel(previousOwnerId)} defected to your side!'
                     : 'Spy defected in ${provinceLabel(provinceId)}! Agent joined ${factionLabel(newOwnerId)}!',
-                onTap: () => locateProvinceById(provinceId),
               ),
             _ => const PlayerTurnEventFeedEntry(text: 'Event resolved!'),
           };
         })
         .toList(growable: false);
+  }
+
+  PlayerTurnEventFeedEntry _feedEntry({
+    required String text,
+    void Function()? onTap,
+  }) {
+    return PlayerTurnEventFeedEntry(text: text, onTap: onTap);
+  }
+
+  PlayerTurnEventFeedEntry _diplomacyFeedEntry(
+    String? factionId,
+    String text,
+  ) {
+    final onTap = factionId == null
+        ? null
+        : diplomacyDetailTapForFaction(factionId);
+    return PlayerTurnEventFeedEntry(
+      text: text,
+      linkAffordance: onTap != null,
+      onTap: onTap,
+    );
+  }
+
+  PlayerTurnEventFeedEntry _workOrderFeedEntry({
+    required String unitId,
+    required String targetTileKey,
+    required String text,
+  }) {
+    final onTap = workOrderCompletedTap(
+      unitId: unitId,
+      targetTileKey: targetTileKey,
+    );
+    return PlayerTurnEventFeedEntry(
+      text: text,
+      linkAffordance: onTap != null,
+      onTap: onTap,
+    );
   }
 }
