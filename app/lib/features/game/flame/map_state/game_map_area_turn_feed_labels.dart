@@ -1,4 +1,5 @@
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
@@ -11,6 +12,10 @@ import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
+import '../../widgets/diplomacy/diplomacy_order_helpers.dart';
+import '../../widgets/diplomacy/diplomacy_panel_rows.dart';
+import '../../widgets/diplomacy/diplomacy_panel_rows_builder_helpers.dart';
+import '../../widgets/units/civilian/civilian_units_panel_support_resolution.dart';
 
 import 'map_location_resolver.dart';
 import 'game_map_area.dart';
@@ -169,5 +174,171 @@ mixin GameMapAreaTurnFeedLabels
             'currentOrders': orders,
           }),
         );
+  }
+
+  String workTargetLabel(String workTarget) =>
+      civilianUnitsPanelWorkTargetLabels[workTarget] ?? workTarget;
+
+  String overtureStageLabel(String stage) {
+    for (final value in ct_models.OvertureStage.values) {
+      if (value.name == stage) {
+        return diplomacyOvertureStageShortLabel(value);
+      }
+    }
+    return stage.replaceAll('_', ' ');
+  }
+
+  String orderRejectedReasonLabel(String reasonCode) =>
+      CtEventFeedText.orderRejectedReasonLabel(reasonCode);
+
+  String orderRejectedLine(String reasonCode) =>
+      CtEventFeedText.orderRejectedLine(reasonCode);
+
+  bool canResolveFaction(String factionId) =>
+      widget.game.playerById(factionId) != null ||
+      widget.game.minorNations.any((m) => m.id == factionId) ||
+      widget.game.tribes.any((t) => t.id == factionId);
+
+  FactionKind? factionKindForId(String factionId) {
+    if (widget.game.playerById(factionId) != null) {
+      return FactionKind.greatPower;
+    }
+    if (widget.game.minorNations.any((m) => m.id == factionId)) {
+      return FactionKind.minor;
+    }
+    if (widget.game.tribes.any((t) => t.id == factionId)) {
+      return FactionKind.tribe;
+    }
+    return null;
+  }
+
+  String? counterpartFactionId({
+    required String actorId,
+    required String targetId,
+  }) {
+    if (actorId == mapPlayerId) {
+      return targetId;
+    }
+    if (targetId == mapPlayerId) {
+      return actorId;
+    }
+    return null;
+  }
+
+  String? overtureCounterpartFactionId({
+    required String offererGpId,
+    required String targetFactionId,
+  }) {
+    if (offererGpId == mapPlayerId) {
+      return targetFactionId;
+    }
+    if (targetFactionId == mapPlayerId) {
+      return offererGpId;
+    }
+    return null;
+  }
+
+  String? spyCounterpartFactionId({
+    required String spyOwnerId,
+    required String territoryOwnerId,
+  }) {
+    if (mapPlayerId == territoryOwnerId) {
+      return spyOwnerId;
+    }
+    if (mapPlayerId == spyOwnerId) {
+      return territoryOwnerId;
+    }
+    return null;
+  }
+
+  bool unitExists(String unitId) =>
+      widget.game.worldState.allUnitsById.containsKey(unitId);
+
+  void navigateToDiplomacyDetail(String factionId) {
+    final kind = factionKindForId(factionId);
+    if (kind == null) {
+      return;
+    }
+    final relation =
+        getRelation(widget.game, mapPlayerId, factionId) ??
+        defaultFirstContactRelation(
+          mapPlayerId,
+          factionId,
+          widget.game.worldState.turnState.turnNumber,
+        );
+    ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.diplomacyDetail, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+            'factionId': factionId,
+            'factionDisplayName': displayNameForFaction(widget.game, factionId),
+            'kind': kind,
+            'relation': relation,
+          }),
+        );
+  }
+
+  void Function()? diplomacyDetailTapForFaction(String factionId) {
+    if (!canResolveFaction(factionId)) {
+      return null;
+    }
+    return () => navigateToDiplomacyDetail(factionId);
+  }
+
+  void locateAndOpenProvinceOverlay(String provinceId) {
+    final province = provinceByPrefixedId(provinceId);
+    if (province == null) {
+      return;
+    }
+    final tileKey = tileKeyForProvinceLocation(widget.game, province);
+    if (tileKey == null) {
+      return;
+    }
+    locateProvinceTile(province);
+    ref.read(appEventBusProvider).emit(
+          ct_models.OpenMapTileDetailEvent(tileKey: tileKey),
+        );
+  }
+
+  void Function()? provinceOverlayTapForProvince(String provinceId) {
+    final province = provinceByPrefixedId(provinceId);
+    if (province == null) {
+      return null;
+    }
+    final tileKey = tileKeyForProvinceLocation(widget.game, province);
+    if (tileKey == null) {
+      return null;
+    }
+    return () => locateAndOpenProvinceOverlay(provinceId);
+  }
+
+  void Function()? navalCombatTapForSeaZone(String seaZoneId) {
+    final tileKey = tileKeyForSeaZoneEvent(seaZoneId);
+    if (tileKey == null) {
+      return null;
+    }
+    return () {
+      locateSeaZoneTile(seaZoneId);
+      ref.read(appEventBusProvider).emit(
+            ct_models.OpenMapTileDetailEvent(tileKey: tileKey),
+          );
+    };
+  }
+
+  void Function()? workOrderCompletedTap({
+    required String unitId,
+    required String targetTileKey,
+  }) {
+    if (!unitExists(unitId)) {
+      return null;
+    }
+    return () {
+      locateTileKey(targetTileKey);
+      ref.read(appEventBusProvider).emit(
+            ct_models.OpenCivilianUnitsPanelEvent(
+              initialSelectedUnitId: unitId,
+            ),
+          );
+    };
   }
 }
