@@ -84,7 +84,20 @@ Widget extractionCondensedLine({
     }
   }
   if (segments.isEmpty) return overlayEmptyBodyDashText();
-  return condensedCommodityWrap(segments);
+  final condensed = condensedCommodityWrap(segments);
+  return snapshot.hasPartialYield
+      ? Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            condensed,
+            Text(
+              l10n.provinceOverlay_extractionPartialReason,
+              style: TextStyle(color: EditorialMonoclePalette.muted),
+            ),
+          ],
+        )
+      : condensed;
 }
 
 Widget availableCondensedLine({

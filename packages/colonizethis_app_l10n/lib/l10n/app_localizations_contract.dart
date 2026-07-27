@@ -1616,6 +1616,9 @@ abstract class AppLocalizations {
   /// Muted capital grain bonus annotation on the Extraction line.
   String provinceOverlay_extractionCapitalGrainBonus(int bonus);
 
+  /// Muted reason when any Extraction commodity is below full yield (Refs #4150).
+  String get provinceOverlay_extractionPartialReason;
+
   /// Available improvable tile-count commodity segment text.
   String provinceOverlay_availableTileCount(int count, String name);
 

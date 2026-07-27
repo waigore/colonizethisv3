@@ -6,6 +6,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         PlayerView,
         ProvinceImprovableCommodityCount,
+        ProvinceTileCapitalLinkPreview,
         VisibilityLevel,
         buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';

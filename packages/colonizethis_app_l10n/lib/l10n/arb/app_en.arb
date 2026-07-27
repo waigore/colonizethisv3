@@ -2879,6 +2879,10 @@
       }
     }
   },
+  "provinceOverlay_extractionPartialReason": "Some improved tiles are not linked to your capital, or the road/port path is too weak.",
+  "@provinceOverlay_extractionPartialReason": {
+    "description": "Muted reason line under Extraction when any commodity effective is below full (Refs #4150)."
+  },
   "provinceOverlay_availableTileCount": "{count} {name}",
   "@provinceOverlay_availableTileCount": {
     "description": "Available improvable resource tile count commodity segment.",

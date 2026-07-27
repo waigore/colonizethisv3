@@ -106,7 +106,79 @@ void main() {
   );
 
   testWidgets(
-    'empty Extraction/Available show dash placeholders (Refs #4002)',
+    'partial Extraction shows muted reason line under condensed line (Refs #4150)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(humanId),
+        availableByCommodity: _sampleAvailable,
+      );
+
+      expect(
+        find.text(
+          'Some improved tiles are not linked to your capital, or the road/port path is too weak.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'full-yield Extraction omits partial reason line (Refs #4150)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: ProvinceExtractionSnapshot(
+          ownerId: humanId,
+          byCommodity: {
+            'grain': const ProvinceExtractionCommodityTotals(
+              effective: 5,
+              full: 5,
+              tileKeys: ['oldWorld|p1|0|0'],
+            ),
+          },
+        ),
+      );
+
+      expect(
+        find.text(
+          'Some improved tiles are not linked to your capital, or the road/port path is too weak.',
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'empty Extraction shows dash placeholders (Refs #4002)',
     (tester) async {
       final game = demoGameForOverlay;
       final humanId = game.players.first.id;
