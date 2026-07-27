@@ -71,6 +71,7 @@ Output a **concrete but unapplied** plan:
 - **Files / areas** likely to change (paths, not patches)
 - **SPEC impact:** none, clarification only, or new/extended spec required before implementation (per project SPEC-first policy)
 - **UI documentation follow-up:** If the fix adds or changes a player-app screen/dialog/overlay, note that implementation must use **`document-app-ui`** (`.cursor/skills/document-app-ui/SKILL.md`; OpenCode: `.opencode/skills/document-app-ui/SKILL.md`) for registry ID, `SPEC/ui/<screen>.md`, `UiScreenIds`, and Widgetbook—include as subtask or acceptance criterion; do not edit those artifacts in this read-only skill.
+- **Manual follow-up:** If the fix changes **player UX or gameplay** (what the player can do, see, or be told)—including map affordances, visible outcomes, copy, order availability, or mechanic teachability—note that implementation must run **`update-game-manual`** (`.cursor/skills/update-game-manual/SKILL.md`; policy: `.cursor/rules/colonizethis-game-manual.mdc`). In the issue: name likely chapter(s) from `docs/manual/index.md` or `## Sources` footers; add a **Manual follow-up** subtask; include a testable AC for `docs/manual/` update **or** an explicit justified non-update (ctdev-only, zero player-visible delta, etc.). Do not edit manual files in this read-only skill.
 - **Risks / edge cases**
 - **Suggested acceptance criteria** (testable bullets the implementer can paste into the issue)
 
@@ -103,9 +104,11 @@ Prepare a concise **title** (<=~80 chars, imperative or clear symptom) and **bod
 ## Proposed fix (not implemented)
 - ...
 - SPEC/tests follow-up: ...
+- Manual follow-up: [chapter(s) or N/A with justification]
 
 ## Suggested acceptance criteria
 - [ ] ...
+- [ ] Manual: Given player-visible behavior changes, when implementation merges, then `docs/manual/` chapter(s) [list] are updated (or non-update is justified in the PR).
 ```
 
 **Labels / milestones:** Add with `gh` only if the user asked or labels are obvious (`--label`); otherwise omit or suggest in chat after success.
@@ -144,4 +147,5 @@ Always preserve the complete draft on fallback; it is the backup deliverable.
 
 - For **verifying** an existing issue: see [.cursor/skills/verify-github-issue/SKILL.md](../verify-github-issue/SKILL.md).
 - For **player-app UI** spec/registry/Widgetbook work during implementation: [.cursor/skills/document-app-ui/SKILL.md](../document-app-ui/SKILL.md) (OpenCode: `.opencode/skills/document-app-ui/SKILL.md`).
+- For **player manual** updates when UX/gameplay changes: [.cursor/skills/update-game-manual/SKILL.md](../update-game-manual/SKILL.md); policy: [`.cursor/rules/colonizethis-game-manual.mdc`](../../.cursor/rules/colonizethis-game-manual.mdc).
 - For **implementation** after the issue exists: **AGENTS.md**, **CONTRIBUTING.md**, and `.cursor/rules/` (testing, SPEC-required, etc.).
