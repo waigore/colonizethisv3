@@ -15,6 +15,17 @@ Tiles feed the realm only when civilians improve them, bind them with roads and 
 
 `GAME20001` **Production** can preview pending material costs for queued work; Extraction/Available rows on `MAP20001` summarize what a province can pull after resolution (see `SPEC/ui/province-economic-extraction-available.md`).
 
+### Reading Extraction on `MAP20001`
+
+When Economic full intel is available on `MAP20001`, the **Extraction** condensed line lists projected commodity yields in catalog order (icons + quantities). **Available** below it counts improvable resource tiles — not the same as transported yield.
+
+- **Full yield** — a commodity shows a single number (e.g. `5 Grain`) when effective extraction equals full tile production under current rules.
+- **Partial yield** — when path or connectivity caps effective below full production, the quantity shows **`effective (full)`** brackets (e.g. `1 (5) Grain`). Hover a segment to highlight its contributing tiles on `MAP10001`.
+- **Partial-yield reason** — when **any** commodity is partial, one **muted reason line** appears immediately under the Extraction line: improved tiles are not linked to your capital, or the road/port path is too weak. This is a connectivity and transport cue — not a tech-cap bug. When all commodities are full-yield or Extraction is empty (`—`), no reason line appears.
+- **Capital grain bonus** — when configured, grain may include a separate muted `incl. +N capital grain bonus` annotation; that bonus is not tile extraction and does not trigger the partial-yield reason by itself.
+
+Capital link, roads, rails, ports, and town rules that decide connectivity are Chapter 3; map **gold vs brown extraction discs** on `MAP10001` are Chapter 3 as well.
+
 ### Work targets by unit
 
 | Target | Unit | Player notes |
@@ -55,6 +66,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - Ignoring exclusivity and one-work-per-unit rules floods the panel with rejected orders.
 - Purchasing land without embassy or while at war fails at assign; waiting until completion to check treasury causes surprise shortfalls if you spend elsewhere the same turn.
 - Disconnecting improved tiles from the capital starves Extraction even when the map looks developed.
+- Partial Extraction brackets with a reason line under `MAP20001` mean improved tiles exist but capital link or road/port transport limits block full yield toward your stockpile — build connectivity before you blame the tech cap.
 
 ## Acceptance criteria for this chapter
 
@@ -63,6 +75,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - [ ] States assign-time Insufficient treasury/materials checks and one-order / per-tile exclusivity.
 - [ ] Documents cancel without material refund; purchase_land debit-at-completion.
 - [ ] Explains extraction caps / tech caps and connectivity dependency at player level.
+- [ ] Explains `MAP20001` Extraction `effective (full)` brackets and the muted partial-yield reason line when connectivity or path limits apply (cross-ref Chapter 3).
 - [ ] Notes current-product deferral of `national_bureaucracy` for `upgrade_town`.
 - [ ] Sources match the chapter coverage map.
 
