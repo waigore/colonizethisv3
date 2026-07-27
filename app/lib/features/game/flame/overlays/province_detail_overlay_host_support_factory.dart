@@ -1,4 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show PlayerView, provinceTileCapitalLinkPreview;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
@@ -11,7 +12,6 @@ import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
-import 'province_detail_overlay_host_support_tile_capital_link.dart';
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
 /// narrow panel hosts. Hosts own layout / E2E only. Refs #4018.
@@ -84,7 +84,8 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     humanPlayerId: humanPlayerId,
     selectedTileKey: selectedTileKey,
     isLandTile: isLandTile,
-    mapData: mapData,
+    tileMapByRegion: mapData?.tileMapByRegion,
+    topology: mapData?.combinedTopology,
   );
   return ProvinceSeaZoneDetailOverlay(
     game: game,

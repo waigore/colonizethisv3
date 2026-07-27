@@ -1,23 +1,11 @@
-/// Tile-level capital-link and extraction preview for MAP20001 (Refs #4149).
+/// Localized copy for MAP20001 Tile capital-link and E-of-F rows (Refs #4149).
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ProvinceTileCapitalLinkPreview;
 
-/// Cached display data for the Tile section capital-link and E-of-F rows.
-class ProvinceTileCapitalLinkPreview {
-  const ProvinceTileCapitalLinkPreview({
-    required this.isCapitalConnected,
-    this.pathTransportLevel,
-    this.extractionEffective,
-    required this.extractionFull,
-  });
-
-  final bool isCapitalConnected;
-  final int? pathTransportLevel;
-  final int? extractionEffective;
-  final int extractionFull;
-
-  bool get showExtraction => extractionFull > 0;
-}
+export 'package:colonizethis_logic/colonizethis_logic.dart'
+    show ProvinceTileCapitalLinkPreview;
 
 String tileCapitalLinkLine(
   AppLocalizations l10n,

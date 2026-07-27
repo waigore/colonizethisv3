@@ -1,6 +1,7 @@
 // Tile capital-link and per-tile extraction preview pins (Refs #4149).
 
-import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show provinceTileCapitalLinkPreview;
 import 'package:colonizethis_data/colonizethis_data.dart'
     show
         MapTopology,
@@ -116,7 +117,8 @@ void main() {
         humanPlayerId: _ownerId,
         selectedTileKey: _disconnectedTile,
         isLandTile: true,
-        mapData: _mapData(),
+        tileMapByRegion: _mapData().tileMapByRegion,
+        topology: _mapData().combinedTopology,
       );
       expect(preview, isNotNull);
       expect(preview!.isCapitalConnected, isFalse);
@@ -200,7 +202,8 @@ void main() {
         humanPlayerId: _ownerId,
         selectedTileKey: tk,
         isLandTile: true,
-        mapData: mapData,
+        tileMapByRegion: mapData.tileMapByRegion,
+        topology: mapData.combinedTopology,
       );
       expect(preview, isNotNull);
       expect(preview!.isCapitalConnected, isTrue);
@@ -218,7 +221,8 @@ void main() {
         humanPlayerId: _ownerId,
         selectedTileKey: _connectedTile,
         isLandTile: true,
-        mapData: _mapData(),
+        tileMapByRegion: _mapData().tileMapByRegion,
+        topology: _mapData().combinedTopology,
       );
       expect(preview, isNull);
     });
@@ -233,7 +237,8 @@ void main() {
         humanPlayerId: _ownerId,
         selectedTileKey: _connectedTile,
         isLandTile: false,
-        mapData: _mapData(),
+        tileMapByRegion: _mapData().tileMapByRegion,
+        topology: _mapData().combinedTopology,
       );
       expect(preview, isNull);
     });
@@ -249,7 +254,8 @@ void main() {
         humanPlayerId: _ownerId,
         selectedTileKey: _connectedTile,
         isLandTile: true,
-        mapData: _mapData(),
+        tileMapByRegion: _mapData().tileMapByRegion,
+        topology: _mapData().combinedTopology,
       );
       expect(preview, isNotNull);
       expect(preview!.isCapitalConnected, isTrue);

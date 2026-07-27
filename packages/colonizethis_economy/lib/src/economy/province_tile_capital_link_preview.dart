@@ -1,39 +1,55 @@
-import 'package:colonizethis_data/colonizethis_data.dart'
-    show extractionCapForUnlocked;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        GamePlayerLookup,
-        WorldStateProvinceLookup,
-        collectPortTileKeys,
-        computeTileExtractionDisplayContribution,
-        kMineralResourceIds,
-        resolveConnectivity;
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+/// Tile-level capital-link and extraction preview for MAP20001 (Refs #4149).
+///
+/// SPEC: SPEC/ui/province-sea-zone-detail-overlay.md (Tile section).
+library;
 
-import '../../../../core/services/game_service/game_service.dart'
-    show GameMapData;
-import '../../../../core/utils/prefixed_id.dart';
-import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_capital_link_preview.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show MapTopology, TileMapResult, extractionCapForUnlocked;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'economy_resource_constants.dart';
+import 'game_lookup_helpers.dart';
+import 'province_extraction_snapshot_builder.dart';
+
+/// Cached display data for the Tile section capital-link and E-of-F rows.
+class ProvinceTileCapitalLinkPreview {
+  const ProvinceTileCapitalLinkPreview({
+    required this.isCapitalConnected,
+    this.pathTransportLevel,
+    this.extractionEffective,
+    required this.extractionFull,
+  });
+
+  final bool isCapitalConnected;
+  final int? pathTransportLevel;
+  final int? extractionEffective;
+  final int extractionFull;
+
+  bool get showExtraction => extractionFull > 0;
+}
 
 /// Display-only preview from post-resolution connectivity and extraction rules.
 ///
 /// Returns null when map data is missing, the tile is not human-owned land, or
-/// the tile is a sea cell (province overlay passes [isLandTile] false for sea).
+/// the tile is a sea cell ([isLandTile] false).
 ProvinceTileCapitalLinkPreview? provinceTileCapitalLinkPreview({
-  required ct_models.Game game,
+  required Game game,
   required String humanPlayerId,
   required String? selectedTileKey,
   required bool isLandTile,
-  required GameMapData? mapData,
+  required Map<String, TileMapResult>? tileMapByRegion,
+  required MapTopology? topology,
 }) {
   if (selectedTileKey == null || !isLandTile) {
     return null;
   }
-  final tileMapByRegion = mapData?.tileMapByRegion;
-  if (tileMapByRegion == null || tileMapByRegion.isEmpty) {
+  if (tileMapByRegion == null ||
+      tileMapByRegion.isEmpty ||
+      topology == null) {
     return null;
   }
-  final parsed = tryParseTileKey(selectedTileKey);
+  final parsed = parseTileKeyCoordinates(selectedTileKey);
   if (parsed == null) {
     return null;
   }
@@ -50,7 +66,7 @@ ProvinceTileCapitalLinkPreview? provinceTileCapitalLinkPreview({
   final connectivity = resolveConnectivity(
     game: game,
     tileMapByRegion: tileMapByRegion,
-    topology: mapData!.combinedTopology,
+    topology: topology,
   );
   final cr = connectivity[humanPlayerId];
   if (cr == null) {
