@@ -6,6 +6,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_test/game_test_fixtures.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 Game gameWithPurchasedGoldTile({
   required int gpATreasury,
@@ -27,7 +28,7 @@ Game gameWithPurchasedTileResource({
   required int gpAStockpileGold,
   double richesCashMultiplier = 1.0,
 }) {
-  const ow = 'oldWorld';
+  const ow = kRegionOldWorld;
   const minorProvinceId = '$ow|M1';
   const tileKey = '$ow|M1|0|0';
   TileMapState tileState = const TileMapState();
@@ -68,7 +69,7 @@ Game gameWithPurchasedTileResource({
 
 Map<String, TileMapResult> tileMapByRegionForResource(Resource resource) {
   return {
-    'oldWorld': TileMapResult(
+    kRegionOldWorld: TileMapResult(
       width: 1,
       height: 1,
       grid: [

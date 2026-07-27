@@ -10,37 +10,22 @@ void registerCombatMovementDialogueTests() {
       test(
         'endOfTurn era transition invokes onDialogue with event era_change',
         () {
-          // Turn 100 → year 1698 (earlyModern); turn 101 → 1700 (imperial). SPEC/ai/dialogue-and-mood.md.
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'P1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [],
-          );
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 100,
-              ),
-              oldWorld: const RegionData(),
-              newWorld: const RegionData(),
-            ),
-            players: const [
-              Player(id: 'gp1', displayName: 'AI One', isHuman: false),
-              Player(id: 'gp2', displayName: 'AI Two', isHuman: false),
-            ],
-            turnTimeMapping: TurnTimeMapping.gdd01,
-          );
           final dialogueEvents = <DialogueEvent>[];
           final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
+            game: Game(
+              id: 'g1',
+              worldState: const WorldState(
+                turnState: TurnState(phase: TurnPhase.orders, turnNumber: 100),
+                oldWorld: RegionData(),
+                newWorld: RegionData(),
+              ),
+              players: const [
+                Player(id: 'gp1', displayName: 'AI One', isHuman: false),
+                Player(id: 'gp2', displayName: 'AI Two', isHuman: false),
+              ],
+              turnTimeMapping: TurnTimeMapping.gdd01,
+            ),
+            topology: turnTestOwSingleProvinceTopology(),
             orders: const Orders(),
             eventSink: TurnEventSink(onDialogue: dialogueEvents.add),
           );
@@ -121,22 +106,22 @@ void registerCombatMovementDialogueTests() {
             nodes: const [
               TopologyNode(
                 id: 'P1',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 type: TopologyNodeType.province,
               ),
               TopologyNode(
                 id: 'P2',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 type: TopologyNodeType.province,
               ),
               TopologyNode(
                 id: 'N1',
-                regionId: 'newWorld',
+                regionId: kRegionNewWorld,
                 type: TopologyNodeType.province,
               ),
               TopologyNode(
                 id: 'N2',
-                regionId: 'newWorld',
+                regionId: kRegionNewWorld,
                 type: TopologyNodeType.province,
               ),
             ],
@@ -145,8 +130,8 @@ void registerCombatMovementDialogueTests() {
               TopologyEdge(id1: 'N1', id2: 'N2'),
             ],
           );
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
+          const ow = kRegionOldWorld;
+          const nw = kRegionNewWorld;
           final game = ensureMilitaryArmiesForGame(
             Game(
               id: 'g1',

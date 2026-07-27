@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 /// Matches [_runExtractionPhase] interception seed for the first player with
 /// non-empty overseas allocation on turn [turnNumber].
@@ -22,22 +23,22 @@ MapTopology crossRegionSeaTopologyForExtractionTests() {
     nodes: const [
       TopologyNode(
         id: 'p1',
-        regionId: 'oldWorld',
+        regionId: kRegionOldWorld,
         type: TopologyNodeType.province,
       ),
       TopologyNode(
         id: 'n1',
-        regionId: 'newWorld',
+        regionId: kRegionNewWorld,
         type: TopologyNodeType.province,
       ),
       TopologyNode(
         id: 'sea1',
-        regionId: 'oldWorld',
+        regionId: kRegionOldWorld,
         type: TopologyNodeType.seaZone,
       ),
       TopologyNode(
         id: 'sea2',
-        regionId: 'newWorld',
+        regionId: kRegionNewWorld,
         type: TopologyNodeType.seaZone,
       ),
     ],
@@ -84,7 +85,7 @@ extractionAutoTransportFixture({
   RelationState relationWithP2 = RelationState.atPeace,
   Map<String, bool> techUnlocked = const {},
 }) {
-  const ow = 'oldWorld', nw = 'newWorld';
+  const ow = kRegionOldWorld, nw = kRegionNewWorld;
   final tileMapNw = TileMapResult(
     width: 2,
     height: 2,
@@ -182,6 +183,6 @@ extractionAutoTransportFixture({
 
   return (
     game: game,
-    tileMapByRegion: {'oldWorld': tileMapOldWorldGrain, 'newWorld': tileMapNw},
+    tileMapByRegion: {kRegionOldWorld: tileMapOldWorldGrain, kRegionNewWorld: tileMapNw},
   );
 }

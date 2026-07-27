@@ -62,7 +62,7 @@ void registerCombatResolutionContinuedTests() {
           nodes: const [
             TopologyNode(
               id: 'sea1',
-              regionId: 'oldWorld',
+              regionId: kRegionOldWorld,
               type: TopologyNodeType.seaZone,
             ),
           ],
@@ -79,7 +79,7 @@ void registerCombatResolutionContinuedTests() {
                 id: 'f1',
                 ownerId: 'p1',
                 seaZoneId: 'sea1',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 shipTypeIds: ['carrack'],
                 mission: FleetMission.none,
               ),
@@ -113,12 +113,12 @@ void registerCombatResolutionContinuedTests() {
           nodes: const [
             TopologyNode(
               id: 'sea1',
-              regionId: 'oldWorld',
+              regionId: kRegionOldWorld,
               type: TopologyNodeType.seaZone,
             ),
             TopologyNode(
               id: 'sea2',
-              regionId: 'oldWorld',
+              regionId: kRegionOldWorld,
               type: TopologyNodeType.seaZone,
             ),
           ],
@@ -135,7 +135,7 @@ void registerCombatResolutionContinuedTests() {
                 id: 'f1',
                 ownerId: 'p1',
                 seaZoneId: 'sea1',
-                regionId: 'oldWorld',
+                regionId: kRegionOldWorld,
                 shipTypeIds: ['carrack'],
               ),
             ],
@@ -159,7 +159,7 @@ void registerCombatResolutionContinuedTests() {
       });
 
       test('dock order moves fleet from sea to port at owned province', () {
-        const ow = 'oldWorld';
+        const ow = kRegionOldWorld;
         final topology = MapTopology(
           nodes: const [
             TopologyNode(
@@ -220,7 +220,7 @@ void registerCombatResolutionContinuedTests() {
       });
 
       test('naval move order undocks fleet from port to adjacent sea zone', () {
-        const ow = 'oldWorld';
+        const ow = kRegionOldWorld;
         final topology = MapTopology(
           nodes: const [
             TopologyNode(

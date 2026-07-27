@@ -129,7 +129,7 @@ void registerSpyFogEndOfTurnVisibilityTests() {
       test(
         'Spy timers for own provinces do not affect visibility at end-of-turn',
         () {
-          const ow = 'oldWorld';
+          const ow = kRegionOldWorld;
           const tileKeyP1 = 'oldWorld|P1|0|0';
 
           final game = Game(

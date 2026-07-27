@@ -55,8 +55,8 @@ void registerSpyFogEndOfTurnTests() {
       test(
         'endOfTurn fog decay uses full province id: same local id in two regions',
         () {
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
+          const ow = kRegionOldWorld;
+          const nw = kRegionNewWorld;
           const tileKeyOwP1 = 'oldWorld|P1|0|0';
           const tileKeyNwP1 = 'newWorld|P1|0|0';
           final game = Game(
