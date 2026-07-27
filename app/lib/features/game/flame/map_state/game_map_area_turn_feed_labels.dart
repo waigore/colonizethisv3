@@ -1,4 +1,5 @@
 
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
@@ -19,14 +20,6 @@ import '../../widgets/units/civilian/civilian_units_panel_support_resolution.dar
 import 'map_location_resolver.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
-
-const Map<String, String> _orderRejectedReasonLabels = {
-  'insufficient_treasury': 'insufficient treasury',
-  'invalid_destination': 'invalid destination',
-  'insufficient_resources': 'insufficient resources',
-  'insufficient_materials': 'insufficient materials',
-  'invalid_order': 'invalid order',
-};
 
 /// Display-label and map-locate helpers for [GameMapArea] turn-event feed
 /// entries (Refs #3878 Phase 3 map_state modularization).
@@ -195,19 +188,11 @@ mixin GameMapAreaTurnFeedLabels
     return stage.replaceAll('_', ' ');
   }
 
-  String orderRejectedReasonLabel(String reasonCode) {
-    final mapped = _orderRejectedReasonLabels[reasonCode];
-    if (mapped != null) {
-      return mapped;
-    }
-    if (reasonCode.contains(' ')) {
-      return reasonCode;
-    }
-    return reasonCode.replaceAll('_', ' ');
-  }
+  String orderRejectedReasonLabel(String reasonCode) =>
+      CtEventFeedText.orderRejectedReasonLabel(reasonCode);
 
   String orderRejectedLine(String reasonCode) =>
-      'Order rejected: ${orderRejectedReasonLabel(reasonCode)}.';
+      CtEventFeedText.orderRejectedLine(reasonCode);
 
   bool canResolveFaction(String factionId) =>
       widget.game.playerById(factionId) != null ||
