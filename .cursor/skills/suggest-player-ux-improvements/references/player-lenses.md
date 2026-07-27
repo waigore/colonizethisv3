@@ -55,7 +55,7 @@ High friction ≈ high frequency × hop count × context loss.
 
 - **Map/context actions** on province/tile selection (extend `MAP20001`-style shortcuts).
 - **Filtered panel open** via bus event with preselected unit/tile (already used for civilian work).
-- **Turn-shell checklist** before Next Turn (idle units, empty research, pending threats)—informational, not auto-orders.
+- **Turn-shell checklist** before Next Turn—informational, not auto-orders. Only for **free** unused capacity per **P1** in `SPEC/ui/ux-design-decisions.md` (e.g. unassigned spies in principle; idle civilians today). **Not** costly capacity such as empty/unfunded research seats (**UXD-001**).
 - **Deep link from report → domain screen** (turn news line opens the relevant panel with context).
 - **Defaults** that match last legal choice when safe; never silent rule changes.
 

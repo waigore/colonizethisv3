@@ -11,7 +11,7 @@ The campaign calendar advances with the turn. By default, turn 1 is 1500; turns 
 ### Ending a turn
 
 1. On `GAME10001` **Game screen**, finish the orders and immediate actions you mean to give this turn, then use **Next turn** in the top bar.
-2. Confirm in `DLG60001` **Next turn confirmation** (“End turn?”). If any of your civilians have no work order queued, the dialog may list them so you can locate each unit before committing. Choose **Yes** to commit the displayed turn, or **No** to abort and keep planning. You can turn this warning off in `DLG90001` **Settings** (or dismiss it for future turns from the dialog).
+2. Confirm in `DLG60001` **Next turn confirmation** (“End turn?”). If any of your civilians have no work order queued, the dialog may list them so you can locate each unit before committing. Choose **Yes** to commit the displayed turn, or **No** to abort and keep planning. You can turn this warning off in `DLG90001` **Settings** (or dismiss it for future turns from the dialog). Empty research seats or funding set to **None** are **not** listed here: holding gold back from research is a normal strategic choice, so the court does not nag at end-turn about unused research capacity (review `GAME40001` **Technology** only when you mean to).
 3. Once resolution begins, the game blocks map interaction and further Next turn requests while it processes the turn. The hamburger side menu remains available, but changes that would alter the resolving turn must wait.
 4. Resolution may pause for a decision when diplomacy requires your answer: for example, an overture, intervention, or call to arms. Give that answer before the remaining phases can continue.
 
@@ -48,6 +48,8 @@ The `GAME50001` **Game side menu** is separate from the pause menu. It offers re
 
 **Tip.** Name manual saves for a decision you may wish to revisit—before a war, great purchase, or expedition—rather than trusting memory alone.
 
+**Tip.** Idle civilians may be named at end-turn so you can assign them; research seats will not. If you paused funding to spare gold, that silence is intentional—not an oversight by the dialog.
+
 ## The other courts
 
 Every AI-controlled Great Power plans during the turn before its orders are merged with yours. Its court observes only what it can legitimately know, chooses goals according to personality and circumstances, and makes economic, military, diplomatic, and research plans under the same rules that govern your realm.
@@ -64,6 +66,7 @@ Their choices are deterministic for the same world state and seeds, but they are
 ## Acceptance criteria for this chapter
 
 - [ ] Explains ending a turn via operable `DLG60001` Next turn confirmation, and resolution blocking.
+- [ ] States that `DLG60001` may warn about idle civilians but does **not** warn about empty or unfunded research seats.
 - [ ] Summarizes the player-visible resolution sequence and states that results appear after resolution, including possible diplomacy decisions that suspend it.
 - [ ] Documents `DLG50001` Turn news, its empty state, and victory precedence; documents operable `OVL70001` Player turn event feed (news toggle).
 - [ ] Documents `SHEL40001` pause actions plus `DLG70001` saving, `DLG80001` loading, and `DLG90001` settings.
@@ -75,6 +78,7 @@ Their choices are deterministic for the same world state and seeds, but they are
 - `SPEC/game/turn-time-mapping.md`
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/ui/next-turn-confirmation.md`
+- `SPEC/ui/ux-design-decisions.md`
 - `SPEC/ui/turn-news-dialog.md`
 - `SPEC/ui/player-turn-event-feed.md`
 - `SPEC/ui/save-game-name-dialog.md`

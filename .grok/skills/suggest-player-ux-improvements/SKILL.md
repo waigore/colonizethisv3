@@ -20,5 +20,6 @@ Source of truth: `.cursor/skills/suggest-player-ux-improvements/SKILL.md`
 Also read when executing:
 - `.cursor/skills/suggest-player-ux-improvements/references/player-lenses.md`
 - `.cursor/skills/suggest-player-ux-improvements/references/sources.md`
+- `SPEC/ui/ux-design-decisions.md` (**required** — `rejected` decisions are hard non-goals; do not re-propose)
 
-Follow domain lock, single-improvement, data-availability, declutter/clarity lenses, chat-only delivery, and the mandatory brief template exactly. Do not file issues or edit the repo while executing this skill.
+Follow domain lock, design-decision gates, single-improvement, data-availability, declutter/clarity lenses, chat-only delivery, and the mandatory brief template exactly. Do not file issues or edit the repo while executing this skill.
