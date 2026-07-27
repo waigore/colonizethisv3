@@ -17,4 +17,13 @@ abstract final class VictoryScreenKeys {
 
   static Key powerBreakdownKey(String playerId) =>
       ValueKey<String>('victoryPowerBreakdown_$playerId');
+
+  static const Key politicalMinimapSectionKey =
+      ValueKey<String>('victoryPoliticalMinimapSection');
+  static const Key politicalMinimapGestureKey =
+      ValueKey<String>('victoryPoliticalMinimapGesture');
+  static const Key politicalMinimapPaintKey =
+      ValueKey<String>('victoryPoliticalMinimapPaint');
+  static const Key politicalMinimapInspectKey =
+      ValueKey<String>('victoryPoliticalMinimapInspect');
 }

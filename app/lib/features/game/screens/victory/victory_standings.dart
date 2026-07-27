@@ -91,5 +91,8 @@ List<VictoryStandingRow> buildVictoryStandings(Game game) {
 String displayNameForVictoryFaction(Game game, String id) {
   final player = game.playerById(id);
   if (player != null) return player.displayName;
+  for (final minor in game.minorNations) {
+    if (minor.id == id) return minor.displayName ?? id;
+  }
   return id;
 }

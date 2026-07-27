@@ -20,6 +20,7 @@ class Province {
     required this.id,
     required this.regionId,
     this.ownerId,
+    this.originalOwnerId,
     this.displayName,
     this.fortLevel = 0,
     this.terrain = 'plains',
@@ -30,6 +31,10 @@ class Province {
   final String id;
   final String regionId;
   final String? ownerId;
+
+  /// Faction id that owned this province at game setup. Preserved across
+  /// capture; null on legacy saves without origin data. SPEC/game/world-model.md.
+  final String? originalOwnerId;
 
   /// Optional human-readable name (from ruleset naming config).
   final String? displayName;
@@ -50,6 +55,7 @@ class Province {
     'id': id,
     'regionId': regionId,
     'ownerId': ownerId,
+    if (originalOwnerId != null) 'originalOwnerId': originalOwnerId,
     if (displayName != null) 'displayName': displayName,
     if (fortLevel != 0) 'fortLevel': fortLevel,
     if (terrain != 'plains') 'terrain': terrain,
@@ -67,6 +73,7 @@ class Province {
       id: provinceId,
       regionId: json['regionId'] as String,
       ownerId: json['ownerId'] as String?,
+      originalOwnerId: json['originalOwnerId'] as String?,
       displayName: json['displayName'] as String?,
       fortLevel: (json['fortLevel'] as int?) ?? 0,
       terrain: json['terrain'] as String? ?? 'plains',
@@ -81,6 +88,7 @@ class Province {
     String? id,
     String? regionId,
     String? ownerId,
+    String? originalOwnerId,
     String? displayName,
     int? fortLevel,
     String? terrain,
@@ -91,6 +99,7 @@ class Province {
       id: id ?? this.id,
       regionId: regionId ?? this.regionId,
       ownerId: ownerId ?? this.ownerId,
+      originalOwnerId: originalOwnerId ?? this.originalOwnerId,
       displayName: displayName ?? this.displayName,
       fortLevel: fortLevel ?? this.fortLevel,
       terrain: terrain ?? this.terrain,
@@ -107,6 +116,7 @@ class Province {
           id == other.id &&
           regionId == other.regionId &&
           ownerId == other.ownerId &&
+          originalOwnerId == other.originalOwnerId &&
           displayName == other.displayName &&
           fortLevel == other.fortLevel &&
           terrain == other.terrain &&
@@ -118,6 +128,7 @@ class Province {
     id,
     regionId,
     ownerId,
+    originalOwnerId,
     displayName,
     fortLevel,
     terrain,

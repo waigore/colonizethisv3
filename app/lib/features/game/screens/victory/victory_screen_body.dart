@@ -1,14 +1,19 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/game_service_provider.dart';
+import 'victory_political_minimap.dart';
 import 'victory_screen_keys.dart';
 import 'victory_standings.dart';
 
-class VictoryScreenBody extends StatefulWidget {
+class VictoryScreenBody extends ConsumerStatefulWidget {
   const VictoryScreenBody({
     super.key,
     required this.game,
@@ -19,10 +24,10 @@ class VictoryScreenBody extends StatefulWidget {
   final String humanPlayerId;
 
   @override
-  State<VictoryScreenBody> createState() => _VictoryScreenBodyState();
+  ConsumerState<VictoryScreenBody> createState() => _VictoryScreenBodyState();
 }
 
-class _VictoryScreenBodyState extends State<VictoryScreenBody> {
+class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
   final Set<String> _expandedPlayerIds = <String>{};
 
   @override
@@ -32,6 +37,16 @@ class _VictoryScreenBodyState extends State<VictoryScreenBody> {
     final ownershipColors = factionOwnershipColorMapForOldWorld(game);
     final endState = _resolveEndState(game);
     final textTheme = Theme.of(context).textTheme;
+    final mapData = tryGetGameMapData(
+      () => ref.read(gameServiceProvider).getMapData(game.id),
+    );
+    final owRegion = mapData == null
+        ? null
+        : buildVictoryOldWorldMapViewData(
+            game: game,
+            tileMapByRegion: mapData.tileMapByRegion,
+            topologyByRegion: mapData.topologyByRegion,
+          );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -75,6 +90,14 @@ class _VictoryScreenBodyState extends State<VictoryScreenBody> {
               ],
             ),
           ),
+          if (owRegion != null) ...[
+            const SizedBox(height: 12),
+            _SectionCard(
+              key: VictoryScreenKeys.politicalMinimapSectionKey,
+              title: 'Old World political map',
+              child: VictoryPoliticalMinimap(game: game, region: owRegion),
+            ),
+          ],
         ],
       ),
     );
