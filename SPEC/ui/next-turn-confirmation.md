@@ -84,6 +84,19 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 
 ---
 
+## Product non-goals (design decisions)
+
+Per [ux-design-decisions.md](ux-design-decisions.md) **P1** (remind unused capacity only when using it is free) and **UXD-001** (`rejected`):
+
+- This dialog **must not** warn, list, or require action for empty research slots, unassigned research seats, or research funding set to **None** (using research costs treasury).
+- Leaving research unfunded or unassigned is a valid strategic treasury choice; end-turn must not treat it as an error equivalent to idle civilians.
+- Do not add a Settings toggle for “warn unused research on end turn” while UXD-001 holds.
+- Future free-capacity reminders (e.g. unassigned spies under **P1**) are separate product work; they are not implied by the civilian warn alone.
+
+Idle-civilian warnings remain in scope; research capacity review stays on `GAME40001` Technology when the player chooses.
+
+---
+
 ## Implementation notes
 
 - Map next turn: `_onNextTurn` in `app/lib/features/game/flame/map_state/game_map_area_turn_resolution.dart` uses `TurnResolutionRunner` and `confirmNextTurnWithIdleCivilianWarning`.
@@ -92,3 +105,4 @@ When the player clicks the "Next turn" button in the top bar, a confirmation dia
 - Settings preference: Hive key `ux.warnIdleCiviliansOnEndTurn` (default `true` when missing); toggle in `DLG90001`.
 - Confirmation uses `showDialog<bool>` with `CtDialogShell` (same pattern as `_confirmCancel` in civilian_units_panel.dart).
 - The existing turn number should be shown in the confirmation dialog body text.
+- Research end-turn readiness: out of scope per **UXD-001** ([ux-design-decisions.md](ux-design-decisions.md)).
