@@ -7,3 +7,4 @@ export 'province_detail_overlay_host_support_display.dart';
 export 'province_detail_overlay_host_support_factory.dart';
 export 'province_detail_overlay_host_support_map_data.dart';
 export 'province_detail_overlay_host_support_shortcuts.dart';
+export 'province_detail_overlay_host_support_tile_connectivity.dart';
