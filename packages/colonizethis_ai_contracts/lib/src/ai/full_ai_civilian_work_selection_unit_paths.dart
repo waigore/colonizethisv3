@@ -12,6 +12,7 @@ import 'full_ai_civilian_work_selection_rail.dart';
 import 'full_ai_civilian_work_selection_shared.dart';
 import 'full_ai_civilian_work_selection_spy.dart';
 import 'full_ai_civilian_work_selection_upgrade_town.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 
 // Per-unit civilian-work path selection: the Builder / Merchant / Explorer /
 // lexicographic appenders and the per-unit dispatcher that routes each unit's
@@ -29,6 +30,7 @@ void _appendBuilderPathResult({
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final chosen =
       bestBuilderRow(
@@ -40,6 +42,7 @@ void _appendBuilderPathResult({
             growthStageFabricFeedstockResourceIds,
         growthStageInfraFeedstockResourceIds:
             growthStageInfraFeedstockResourceIds,
+        connectivityDev: connectivityDev,
       ) ??
       pickLexicographic(w);
   if (chosen != null) {
@@ -175,6 +178,7 @@ void appendSelectionForUnitId({
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
   OwFeedstockReservation reservation = OwFeedstockReservation.none,
   bool spyDevelopPhase = false,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final W = List<WorkOrder>.from(byUnit[unitId] ?? const <WorkOrder>[]);
   sortWorkOrdersLex(W);
@@ -226,6 +230,7 @@ void appendSelectionForUnitId({
           growthStageFabricFeedstockResourceIds,
       growthStageInfraFeedstockResourceIds:
           growthStageInfraFeedstockResourceIds,
+      connectivityDev: connectivityDev,
     );
     return;
   }
@@ -238,6 +243,7 @@ void appendSelectionForUnitId({
       playerId: view.playerId,
       workOrders: workOrders,
       idleEvents: idleEvents,
+      connectivityDev: connectivityDev,
     );
     return;
   }
@@ -250,6 +256,7 @@ void appendSelectionForUnitId({
       playerId: view.playerId,
       workOrders: workOrders,
       idleEvents: idleEvents,
+      connectivityDev: connectivityDev,
     );
     return;
   }

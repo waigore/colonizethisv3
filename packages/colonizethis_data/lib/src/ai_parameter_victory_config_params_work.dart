@@ -364,4 +364,29 @@ final List<AiParameter> victoryConfigParamsWork = <AiParameter>[
     kSpyPhaseCounterSpyBonus,
     'Phase bonus added to Spy counter_spy scores in the DEVELOP phase.',
   ),
+  victoryConfigIntParam(
+    'kEngineerFrontierRoadExtensionBonus',
+    kEngineerFrontierRoadExtensionBonus,
+    'Extra Engineer build_road score for frontier network extension.',
+  ),
+  victoryConfigIntParam(
+    'kBuildImprovementConnectedBonus',
+    kBuildImprovementConnectedBonus,
+    'Extra build_improvement score on capital-connected tiles.',
+  ),
+  victoryConfigIntParam(
+    'kBuildImprovementAdjacentToConnectedBonus',
+    kBuildImprovementAdjacentToConnectedBonus,
+    'Extra build_improvement score on tiles adjacent to the connected set.',
+  ),
+  victoryConfigIntParam(
+    'kBuildRailBottleneckYieldBonus',
+    kBuildRailBottleneckYieldBonus,
+    'Extra build_rail score on connected bottleneck path tiles.',
+  ),
+  victoryConfigIntParam(
+    'kEngineerPortOverseasLinkageBonus',
+    kEngineerPortOverseasLinkageBonus,
+    'Extra build_port score for overseas dev-target linkage.',
+  ),
 ];

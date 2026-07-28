@@ -253,6 +253,7 @@ EconomyDomainPlannersResult runEconomyDomainPlanners({
       view: ctx.view,
       game: ctx.game,
       tileMapByRegion: tileMapByRegion,
+      topology: ctx.topology,
       growthStageFabricFeedstockResourceIds:
           feedstockPreference.fabricFeedstockResourceIds,
       growthStageInfraFeedstockResourceIds:

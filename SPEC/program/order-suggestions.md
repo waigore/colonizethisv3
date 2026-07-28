@@ -252,6 +252,31 @@ This ordering change is **gated**: for every ordinary player the feedstock set i
 
 ---
 
+## Connectivity-aware development target ordering (Refs #4176)
+
+When `suggestWorkOrders` is called with non-null `tileMapByRegion`, the pass builds one `ConnectivityDevSnapshot` per player (`buildConnectivityDevSnapshot` in `colonizethis_orders`) from `resolveConnectivity(game, tileMapByRegion, topology)` plus an owned-land multi-source BFS toward unconnected resource/improved tiles. The snapshot is shared by all worker units in that pass.
+
+Candidate lists for `build_road`, `build_rail`, `build_improvement`, and `build_port` are **stable-partitioned** by connectivity tier before the worker probe loop (feedstock `build_improvement` partitioning from § Feedstock-extraction priority runs first and keeps precedence). When no unconnected dev targets exist, ordering is unchanged (negative control).
+
+| Target | Promotion rule | Demotion rule |
+|--------|----------------|---------------|
+| `build_road` | Tiles in `frontierExtensionTiles` (4-adjacent to connected set), ascending extension distance | Non-frontier candidates sort after every frontier candidate |
+| `build_rail` | Connected `bottleneckRailTiles` | Disconnected candidates sort last |
+| `build_improvement` | Connected → adjacent-to-connected → far | Never hard-forbidden |
+| `build_port` | Coastal tiles in provinces with unconnected dev targets and capital-reachable sea zones | Sea-unreachable or no-unconnected-resource provinces sort last |
+
+Human suggestion passes using the same pure helpers (`applyConnectivityDevTargetOrdering`) when `tileMapByRegion` is supplied. Selection-layer scoring mirrors are normative in `SPEC/ai/civilian-work-planner.md` § Connectivity-aware development targets.
+
+**Acceptance criteria (connectivity-aware ordering)**
+
+- Given unconnected dev targets and `build_road` candidates `R1` (frontier-extending) and `R2` (not adjacent to the connected set), when candidate ordering runs, then `R1` sorts before `R2` regardless of lexicographic order.
+- Given two frontier `build_road` candidates at extension distances 1 and 3 from their nearest unconnected target, when ordering runs, then the distance-1 candidate sorts first.
+- Given no unconnected resource/improved tiles, when ordering runs for any of the four targets, then the candidate order equals the pre-change deterministic order.
+- Given unimproved resource tiles `C` (connected), `A` (adjacent to connected), and `F` (far), when `build_improvement` ordering runs, then `C` sorts before `A` before `F`.
+- Given an active feedstock-extraction gate, an unconnected unimproved feedstock tile, and a connected non-feedstock tile, when `build_improvement` ordering runs, then the feedstock tile still sorts first (no regression of #2847 H8).
+
+---
+
 ## Mineral feedstock prospecting priority (Refs #2847 H8-extraction mineral feedstock prospecting)
 
 `build_improvement` on a **mineral** resource tile (resource id in `kMineralResourceIds`, e.g. `iron`, `coal`) is rejected by `precheckBuildImprovement` (`work_order_target_prechecks.dart`) with `Mineral tile must be prospected first` until the tile is in the player's `playerProspectedTiles` set. Prospecting is an **Explorer** target (`prospect`), while `build_improvement` is a **Builder** target (`workOrderTargetsByUnitType`). The Builder feedstock-extraction boost (§ economy-planner.md H8-extraction) therefore cannot extract a mineral feedstock until a separate Explorer prospects it. On seed 42 this is the binding `castIron` co-availability blocker: a supplier freely improves its **surface** `timber` tile (no prospecting needed) but never prospects its `iron` mineral tile, so `iron` stays `0`, the `castIron_from_iron` recipe never becomes feasible, and the conquest economy never recovers.

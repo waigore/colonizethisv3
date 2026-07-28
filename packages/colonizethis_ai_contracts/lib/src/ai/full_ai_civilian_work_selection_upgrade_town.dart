@@ -2,6 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../constants.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'full_ai_civilian_work_selection_build_purchase.dart';
 
 // Builder `upgrade_town` candidate scoring / row selection. Adds the
@@ -109,6 +110,7 @@ WorkOrder? bestBuilderRow(
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final improvement = bestBuildImprovementRow(
     candidates,
@@ -117,6 +119,7 @@ WorkOrder? bestBuilderRow(
     feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     growthStageFabricFeedstockResourceIds: growthStageFabricFeedstockResourceIds,
     growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
+    connectivityDev: connectivityDev,
   );
   final upgrade = _bestUpgradeTownRow(candidates, game, playerId: playerId);
   if (improvement == null) return upgrade;
@@ -128,6 +131,7 @@ WorkOrder? bestBuilderRow(
     feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     growthStageFabricFeedstockResourceIds: growthStageFabricFeedstockResourceIds,
     growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
+    connectivityDev: connectivityDev,
   );
   final uScore = _upgradeTownWorkScore(upgrade, game, playerId: playerId);
   if (uScore > iScore) return upgrade;
