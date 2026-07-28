@@ -57,6 +57,22 @@ List<Widget> buildEmpireRailButtons({
     ),
     SizedBox(height: gapHeight),
     EmpireRailButton(
+      buttonKey: kEmpireDevelopmentButtonKey,
+      tooltip: 'Development',
+      iconAsset: '${kAppIconAssetPrefix}ui_icon_development.png',
+      narrow: narrow,
+      onTap: () {
+        onIconTappedWhileSelectionMode?.call();
+        bus.emit(
+          ct_models.NavigateToRouteEvent(Routes.development, {
+            'game': game,
+            'humanPlayerId': humanPlayerId,
+          }),
+        );
+      },
+    ),
+    SizedBox(height: gapHeight),
+    EmpireRailButton(
       buttonKey: kEmpireCivilianUnitsButtonKey,
       tooltip: 'Civilian Units',
       iconAsset: '${kAppIconAssetPrefix}ui_icon_civilian_units.png',

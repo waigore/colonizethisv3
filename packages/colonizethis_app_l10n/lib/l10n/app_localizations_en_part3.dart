@@ -2,6 +2,45 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
+  String get development_purchasedLand => 'Purchased land';
+
+  @override
+  String get development_noImprovableResources => 'No improvable resources';
+
+  @override
+  String get development_materialsShortageForAssign =>
+      'Materials shortage for assign:';
+
+  @override
+  String development_idleCivilians(int builders, int engineers) {
+    return 'Idle Builders: $builders · Idle Engineers: $engineers';
+  }
+
+  @override
+  String get development_mapDataUnavailable => 'Map data unavailable';
+
+  @override
+  String get development_disconnectedTitle => 'Not connected to capital';
+
+  @override
+  String get development_disconnectedBody =>
+      'The chosen tile is not linked to your capital. Improve anyway, build a road step toward the capital first, or cancel.';
+
+  @override
+  String get development_roadFirst => 'Road first';
+
+  @override
+  String get development_improveAnyway => 'Improve anyway';
+
+  @override
+  String get development_show => 'Show';
+
+  @override
+  String development_improvableCount(int count, String name) {
+    return '$count $name';
+  }
+
+  @override
   String get production_breakdown_title => 'Commodity breakdown';
 
   @override

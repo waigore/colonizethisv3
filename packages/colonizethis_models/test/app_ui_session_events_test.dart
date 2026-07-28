@@ -42,6 +42,18 @@ void main() {
       expect(answer, isTrue);
     });
 
+    test('DevelopmentDisconnectedAssignDialogEvent invokes its result callback',
+        () {
+      DevelopmentDisconnectedAssignChoice? answer;
+      final event = DevelopmentDisconnectedAssignDialogEvent(
+        roadFirstEnabled: true,
+        onResult: (v) => answer = v,
+      );
+      expect(event.roadFirstEnabled, isTrue);
+      event.result(DevelopmentDisconnectedAssignChoice.roadFirst);
+      expect(answer, DevelopmentDisconnectedAssignChoice.roadFirst);
+    });
+
     test('CombatModeChosenEvent retains chosen mode', () {
       const event = CombatModeChosenEvent(CombatMode.quickBattle);
       expect(event.mode, CombatMode.quickBattle);

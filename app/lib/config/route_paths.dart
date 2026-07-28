@@ -12,4 +12,5 @@ abstract final class RoutePaths {
   static const String technology = '/game/technology';
   static const String trade = '/game/trade';
   static const String victory = '/game/victory';
+  static const String development = '/game/development';
 }
