@@ -57,8 +57,8 @@ for pkg_dir in "${tasks[@]}"; do
   pkg_short="${pkg_dir##*/}"
   pkg_concurrency="$TEST_CONCURRENCY"
   # Coverage collection under -j4 can dispose VM service connections on CI
-  # runners when loading heavy suggestion suites (colonizethis_orders).
-  if [ "$pkg_short" = "colonizethis_orders" ]; then
+  # runners when loading heavy suites (colonizethis_orders, colonizethis_turn).
+  if [ "$pkg_short" = "colonizethis_orders" ] || [ "$pkg_short" = "colonizethis_turn" ]; then
     pkg_concurrency=2
   fi
 
