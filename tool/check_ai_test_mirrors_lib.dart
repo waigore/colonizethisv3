@@ -45,6 +45,8 @@ const Set<String> aiTestMirrorsLibAllowlist = <String>{
   'seed42_observer_colonial_regression_test.dart',
   'seed42_observer_connectivity_dev_closure_test.dart',
   'seed42_observer_connectivity_dev_heartland_baseline_test.dart',
+  'connectivity_dev_multi_turn_chain_test.dart',
+  'connectivity_dev_reconquest_test.dart',
   'seed42_observer_conquest_regression_test.dart',
   'seed42_observer_conquest_s7d_conquest_geography_diagnostic_test.dart',
   'seed42_observer_conquest_s7d_diagnostic_test.dart',
