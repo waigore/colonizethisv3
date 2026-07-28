@@ -181,4 +181,28 @@ void main() {
       },
     ),
   ], runRunnableScenario);
+
+  runLabeledScenarioGroup('Town-rule awareness (AC-F7)', [
+    rs('town-connected resource tile is not a frontier extension target', () {
+      const townResourceTile = 'oldWorld|p1|2|2';
+      const frontierTile = 'oldWorld|p1|3|2';
+      final snapshot = ConnectivityDevSnapshot(
+        connected: {townResourceTile, 'oldWorld|p1|0|0'},
+        pathTransportCap: const {},
+        extensionDistanceByTile: const {frontierTile: 1},
+        seaZonesReachableFromCapital: const {},
+        provincesWithUnconnectedDevTargets: const {'oldWorld|p1'},
+        hasUnconnectedDevTargets: true,
+        frontierExtensionTiles: {frontierTile},
+        bottleneckRailTiles: const {},
+        adjacentToConnectedTiles: {frontierTile},
+      );
+      expect(snapshot.frontierExtensionTiles, isNot(contains(townResourceTile)));
+      final ordered = prioritizeBuildRoadCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: [townResourceTile, frontierTile],
+      );
+      expect(ordered.first, frontierTile);
+    }),
+  ], runRunnableScenario);
 }
