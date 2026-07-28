@@ -19,6 +19,7 @@ export 'src/economy/non_gp_auto_offers.dart';
 export 'src/economy/non_gp_extraction.dart';
 export 'src/economy/province_extraction_snapshot_builder.dart';
 export 'src/economy/province_improvable_resource_counts.dart';
+export 'src/economy/development_panel_read_model.dart';
 export 'src/economy/projected_cost_engine.dart';
 export 'src/economy/resource_extractor.dart';
 export 'src/economy/sea_transport.dart';
