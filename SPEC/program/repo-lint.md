@@ -359,9 +359,9 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 | Family | Parts | Stay-split reason (wave-7 re-measure, Refs #4048) |
 |--------|-------|-------------------|
-| `naval_units_panel_test` | 5 | Combined physical lines ~2675 ≫1000 |
+| `naval_units_panel_test` | 5 | Combined physical lines ~1487 ≫1000 (wave-10 Slice E densify, Refs #4183; baseline ~2216) |
 | `ct_region_map_widget_test` | 4 | Combined physical lines ~1824 ≫1000 (local `_pump*` wrappers folded into `pumpCtRegionMapTest` on `ct_region_map_test_support.dart`) |
-| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~2002 ≫1000 |
+| `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1699 ≫1000 |
 | `military_units_panel_test` | army/display/split siblings | Combined physical lines ~1091 ≫1000 |
 | `civilian_units_panel_test` | 3 | Combined physical lines ~1660 ≫1000 |
 
