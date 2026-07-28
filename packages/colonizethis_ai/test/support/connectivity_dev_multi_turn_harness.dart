@@ -8,6 +8,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
+
 import 'connectivity_dev_chain_fixture.dart';
 
 FullAiCivilianWorkSelectionResult selectConnectivityDevCivilianWork({
@@ -34,9 +36,20 @@ FullAiCivilianWorkSelectionResult selectConnectivityDevCivilianWork({
 }
 
 WorkOrder? engineerBuildRoadOrder(FullAiCivilianWorkSelectionResult selection) {
+  return engineerWorkOrderForTarget(selection, kWorkTargetBuildRoad);
+}
+
+WorkOrder? engineerBuildPortOrder(FullAiCivilianWorkSelectionResult selection) {
+  return engineerWorkOrderForTarget(selection, kWorkTargetBuildPort);
+}
+
+WorkOrder? engineerWorkOrderForTarget(
+  FullAiCivilianWorkSelectionResult selection,
+  String target, {
+  String engineerId = kConnectivityDevChainEngineerId,
+}) {
   for (final order in selection.workOrders) {
-    if (order.unitId == kConnectivityDevChainEngineerId &&
-        order.target == kWorkTargetBuildRoad) {
+    if (order.unitId == engineerId && order.target == target) {
       return order;
     }
   }
