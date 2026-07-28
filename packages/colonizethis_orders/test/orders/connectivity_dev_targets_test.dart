@@ -2,8 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_targets.dart';
+import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'support/suggestion/order_suggestion_work_feedstock_priority_fixtures.dart';
 
 ConnectivityDevSnapshot _snapshot({
   Set<String> connected = const {},
@@ -76,6 +79,237 @@ void main() {
         sortedVisible: ['f', 'a', 'c'],
       );
       expect(ordered, ['c', 'a', 'f']);
+    });
+  });
+
+  group('applyBuildImprovementConnectivityPreservingFeedstock', () {
+    test('AC-C3 feedstock tile precedes connected non-feedstock tile', () {
+      final game = feedstockPriorityGame();
+      expect(
+        feedstockExtractionResourceIdsForPlayer(
+          game,
+          feedstockPrioritySupplierId,
+        ),
+        contains('iron'),
+      );
+      final snapshot = _snapshot(
+        connected: {feedstockPrioritySupplierGrainTile},
+        adjacent: const {},
+      );
+      final ordered = applyBuildImprovementConnectivityPreservingFeedstock(
+        game: game,
+        playerId: feedstockPrioritySupplierId,
+        sortedVisible: [
+          feedstockPrioritySupplierGrainTile,
+          feedstockPrioritySupplierIronTile,
+        ],
+        snapshot: snapshot,
+      );
+      expect(ordered.first, feedstockPrioritySupplierIronTile);
+    });
+  });
+
+  group('prioritizeBuildRailCandidatesByConnectivity', () {
+    test('AC-B1 bottleneck promotion', () {
+      final snapshot = _snapshot(
+        connected: {'bottleneck', 'plain'},
+        bottleneck: {'bottleneck'},
+      );
+      final ordered = prioritizeBuildRailCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: ['plain', 'bottleneck'],
+      );
+      expect(ordered.first, 'bottleneck');
+    });
+
+    test('AC-B2 no-yield-gain demotion', () {
+      final snapshot = _snapshot(
+        connected: {'bottleneck', 'satisfied'},
+        bottleneck: {'bottleneck'},
+      );
+      final ordered = prioritizeBuildRailCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: ['satisfied', 'bottleneck'],
+      );
+      expect(ordered.first, 'bottleneck');
+    });
+  });
+
+  group('prioritizeBuildPortCandidatesByConnectivity', () {
+    test('AC-D1 overseas resource province promotion', () {
+      const ow = 'oldWorld';
+      const provinceId = '$ow|nw1';
+      const linkedPort = '$provinceId|0|0';
+      const plainPort = 'oldWorld|ow1|0|0';
+      final snapshot = ConnectivityDevSnapshot(
+        connected: const {},
+        pathTransportCap: const {},
+        extensionDistanceByTile: const {},
+        seaZonesReachableFromCapital: {'$ow|sea1'},
+        provincesWithUnconnectedDevTargets: {provinceId},
+        hasUnconnectedDevTargets: true,
+        frontierExtensionTiles: const {},
+        bottleneckRailTiles: const {},
+        adjacentToConnectedTiles: const {},
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: 'oldWorld|ow1', regionId: ow, ownerId: 'gp1'),
+              Province(id: provinceId, regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP',
+            isHuman: false,
+            capitalProvinceId: 'oldWorld|ow1',
+            capitalTile: CapitalTile(
+              regionId: ow,
+              provinceId: 'oldWorld|ow1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'oldWorld|ow1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: provinceId,
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: '$ow|sea1',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(
+            id1: 'oldWorld|ow1',
+            id2: '$ow|sea1',
+          ),
+          TopologyEdge(
+            id1: provinceId,
+            id2: '$ow|sea1',
+          ),
+        ],
+      );
+      final ordered = prioritizeBuildPortCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: [plainPort, linkedPort],
+        game: game,
+        topology: topology,
+      );
+      expect(ordered.first, linkedPort);
+    });
+
+    test('AC-D2 sea-unreachable demotion', () {
+      const ow = 'oldWorld';
+      const reachableProvince = '$ow|nwReach';
+      const unreachableProvince = '$ow|nwBlock';
+      const reachablePort = '$reachableProvince|0|0';
+      const unreachablePort = '$unreachableProvince|0|0';
+      final snapshot = ConnectivityDevSnapshot(
+        connected: const {},
+        pathTransportCap: const {},
+        extensionDistanceByTile: const {},
+        seaZonesReachableFromCapital: {'$ow|seaReach'},
+        provincesWithUnconnectedDevTargets: {
+          reachableProvince,
+          unreachableProvince,
+        },
+        hasUnconnectedDevTargets: true,
+        frontierExtensionTiles: const {},
+        bottleneckRailTiles: const {},
+        adjacentToConnectedTiles: const {},
+      );
+      final game = Game(
+        id: 'g',
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: [
+              Province(
+                id: 'oldWorld|ow1',
+                regionId: ow,
+                ownerId: 'gp1',
+              ),
+              Province(id: reachableProvince, regionId: ow, ownerId: 'gp1'),
+              Province(id: unreachableProvince, regionId: ow, ownerId: 'gp1'),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP',
+            isHuman: false,
+            capitalProvinceId: 'oldWorld|ow1',
+            capitalTile: CapitalTile(
+              regionId: ow,
+              provinceId: 'oldWorld|ow1',
+              x: 0,
+              y: 0,
+            ),
+          ),
+        ],
+      );
+      const topology = MapTopology(
+        nodes: [
+          TopologyNode(
+            id: 'oldWorld|ow1',
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: reachableProvince,
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: unreachableProvince,
+            regionId: ow,
+            type: TopologyNodeType.province,
+          ),
+          TopologyNode(
+            id: '$ow|seaReach',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
+          TopologyNode(
+            id: '$ow|seaBlock',
+            regionId: ow,
+            type: TopologyNodeType.seaZone,
+          ),
+        ],
+        edges: [
+          TopologyEdge(id1: 'oldWorld|ow1', id2: '$ow|seaReach'),
+          TopologyEdge(id1: reachableProvince, id2: '$ow|seaReach'),
+          TopologyEdge(id1: unreachableProvince, id2: '$ow|seaBlock'),
+        ],
+      );
+      final ordered = prioritizeBuildPortCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: [unreachablePort, reachablePort],
+        game: game,
+        topology: topology,
+      );
+      expect(ordered.first, reachablePort);
     });
   });
 

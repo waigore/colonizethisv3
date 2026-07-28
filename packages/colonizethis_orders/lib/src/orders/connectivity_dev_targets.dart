@@ -3,6 +3,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'connectivity_dev_snapshot.dart';
+import 'feedstock_extraction_targets.dart'
+    show feedstockExtractionResourceIdsForPlayer;
 import 'order_work_constants.dart';
 
 /// Stable-partitions [sortedVisible] by connectivity tier without crossing
@@ -72,6 +74,52 @@ List<String> prioritizeBuildImprovementCandidatesByConnectivity({
       return 2;
     },
   );
+}
+
+/// Applies connectivity tiers to `build_improvement` candidates without crossing
+/// the feedstock-extraction front/back partition (Refs #4176 AC-C3, #2847 H8).
+List<String> applyBuildImprovementConnectivityPreservingFeedstock({
+  required Game game,
+  required String playerId,
+  required List<String> sortedVisible,
+  required ConnectivityDevSnapshot snapshot,
+}) {
+  final feedstockIds = feedstockExtractionResourceIdsForPlayer(game, playerId);
+  if (feedstockIds.isEmpty) {
+    return prioritizeBuildImprovementCandidatesByConnectivity(
+      snapshot: snapshot,
+      sortedVisible: sortedVisible,
+    );
+  }
+  final resourceByTile = game.worldState.resourceByTileKey;
+  final tileState = game.worldState.tileState;
+  final front = <String>[];
+  final back = <String>[];
+  for (final tileKey in sortedVisible) {
+    final resourceId = resourceByTile[tileKey];
+    if (resourceId != null &&
+        feedstockIds.contains(resourceId) &&
+        tileState.improvementLevel(tileKey) < 1) {
+      front.add(tileKey);
+    } else {
+      back.add(tileKey);
+    }
+  }
+  if (front.isEmpty) {
+    return prioritizeBuildImprovementCandidatesByConnectivity(
+      snapshot: snapshot,
+      sortedVisible: sortedVisible,
+    );
+  }
+  final orderedFront = prioritizeBuildImprovementCandidatesByConnectivity(
+    snapshot: snapshot,
+    sortedVisible: front,
+  );
+  final orderedBack = prioritizeBuildImprovementCandidatesByConnectivity(
+    snapshot: snapshot,
+    sortedVisible: back,
+  );
+  return <String>[...orderedFront, ...orderedBack];
 }
 
 List<String> prioritizeBuildPortCandidatesByConnectivity({

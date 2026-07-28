@@ -56,8 +56,15 @@ void addWorkerSuggestionsForUnit({
             playerId: playerId,
             sortedVisible: visible,
           );
-        }
-        if (connectivityDev != null && tileMapByRegion != null) {
+          if (connectivityDev != null && tileMapByRegion != null) {
+            visible = applyBuildImprovementConnectivityPreservingFeedstock(
+              game: game,
+              playerId: playerId,
+              sortedVisible: visible,
+              snapshot: connectivityDev,
+            );
+          }
+        } else if (connectivityDev != null && tileMapByRegion != null) {
           visible = applyConnectivityDevTargetOrdering(
             workTarget: target,
             sortedVisible: visible,

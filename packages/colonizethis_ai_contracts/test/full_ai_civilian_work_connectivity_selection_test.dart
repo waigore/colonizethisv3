@@ -1,5 +1,6 @@
 import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection.dart';
 import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection_engineer.dart';
+import 'package:colonizethis_ai_contracts/src/ai/full_ai_civilian_work_selection_build_purchase.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
@@ -71,5 +72,89 @@ void main() {
     );
     expect(workOrders.single.target, kWorkTargetBuildRoad);
     expect(workOrders.single.targetTileKey, roadTile);
+  });
+
+  test('AC-C4 selection mirror prefers connected > adjacent > far', () {
+    const connectedTile = 'oldWorld|p1|c';
+    const adjacentTile = 'oldWorld|p1|a';
+    const farTile = 'oldWorld|p1|f';
+    final game = Game(
+      id: 'g',
+      worldState: WorldState(
+        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+        oldWorld: const RegionData(),
+        newWorld: const RegionData(),
+        resourceByTileKey: {
+          connectedTile: 'grain',
+          adjacentTile: 'grain',
+          farTile: 'grain',
+        },
+      ),
+      players: [
+        Player(
+          id: playerId,
+          displayName: 'GP',
+          isHuman: false,
+          capitalProvinceId: 'oldWorld|p1',
+        ),
+      ],
+    );
+    final snapshot = ConnectivityDevSnapshot(
+      connected: {connectedTile},
+      pathTransportCap: const {},
+      extensionDistanceByTile: const {},
+      seaZonesReachableFromCapital: const {},
+      provincesWithUnconnectedDevTargets: {adjacentTile, farTile},
+      hasUnconnectedDevTargets: true,
+      frontierExtensionTiles: const {},
+      bottleneckRailTiles: const {},
+      adjacentToConnectedTiles: {adjacentTile},
+    );
+    final selected = bestBuildImprovementRow(
+      [
+        WorkOrder(
+          unitId: 'b1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: farTile,
+        ),
+        WorkOrder(
+          unitId: 'b1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: adjacentTile,
+        ),
+        WorkOrder(
+          unitId: 'b1',
+          target: kWorkTargetBuildImprovement,
+          targetTileKey: connectedTile,
+        ),
+      ],
+      game,
+      playerId: playerId,
+      connectivityDev: snapshot,
+    );
+    expect(selected?.targetTileKey, connectedTile);
+  });
+
+  group('Connectivity GA tunability (AC-G1)', () {
+    test('connectivity scoring constants are registered in the registry', () {
+      for (final name in const [
+        'kEngineerFrontierRoadExtensionBonus',
+        'kBuildImprovementConnectedBonus',
+        'kBuildImprovementAdjacentToConnectedBonus',
+        'kBuildRailBottleneckYieldBonus',
+        'kEngineerPortOverseasLinkageBonus',
+      ]) {
+        final p = AiParameterRegistry.byName(name);
+        expect(p, isNotNull, reason: name);
+        expect(p!.category, AiParameterCategory.victoryConfig, reason: name);
+        expect(p.isInteger, isTrue, reason: name);
+        expect(p.minValue, 0, reason: name);
+        expect(
+          p.maxValue,
+          greaterThanOrEqualTo(2000),
+          reason: name,
+        );
+      }
+    });
   });
 }
