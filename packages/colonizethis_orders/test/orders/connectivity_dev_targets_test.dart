@@ -32,6 +32,18 @@ ConnectivityDevSnapshot _snapshot({
 
 void main() {
   runLabeledScenarioGroup('prioritizeBuildRoadCandidatesByConnectivity', [
+    rs('AC-A1 frontier extension promotion', () {
+      final snapshot = _snapshot(
+        frontier: {'oldWorld|p1|0|1'},
+        extensionDistance: {'oldWorld|p1|0|1': 2},
+      );
+      final ordered = prioritizeBuildRoadCandidatesByConnectivity(
+        snapshot: snapshot,
+        sortedVisible: ['oldWorld|p1|9|9', 'oldWorld|p1|0|1'],
+      );
+      expect(ordered.first, 'oldWorld|p1|0|1');
+      expect(ordered.last, 'oldWorld|p1|9|9');
+    }),
     rs('AC-A2 frontier hard demotion', () {
       final snapshot = _snapshot(
         frontier: {'oldWorld|p1|0|1'},
