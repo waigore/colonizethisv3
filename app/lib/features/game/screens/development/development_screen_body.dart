@@ -60,6 +60,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
       topology: mapData.combinedTopology,
     )[humanPlayerId];
     final connectedTileKeys = connectivity?.connected ?? const <String>{};
+    final bus = ref.read(appEventBusProvider);
 
     return Padding(
       padding: const EdgeInsets.all(CtSpacing.l),
@@ -81,7 +82,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               canEdit: canEdit,
               onAssign: (candidate) => _handleDevelopmentAssign(
                 context: context,
-                ref: ref,
+                bus: bus,
                 game: game,
                 humanPlayerId: humanPlayerId,
                 canEdit: canEdit,
@@ -104,7 +105,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               canEdit: canEdit,
               onAssign: (candidate) => _handleDevelopmentAssign(
                 context: context,
-                ref: ref,
+                bus: bus,
                 game: game,
                 humanPlayerId: humanPlayerId,
                 canEdit: canEdit,
@@ -124,7 +125,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
 
 Future<void> _handleDevelopmentAssign({
   required BuildContext context,
-  required WidgetRef ref,
+  required AppEventBus bus,
   required Game game,
   required String humanPlayerId,
   required bool canEdit,
@@ -147,7 +148,7 @@ Future<void> _handleDevelopmentAssign({
       connectedTileKeys: connectedTileKeys,
     );
     final completer = Completer<DevelopmentDisconnectedAssignChoice>();
-    ref.read(appEventBusProvider).emit(
+    bus.emit(
       DevelopmentDisconnectedAssignDialogEvent(
         roadFirstEnabled: roadFirstState.enabled,
         roadFirstDisabledReason: roadFirstState.disabledReason,
@@ -163,7 +164,7 @@ Future<void> _handleDevelopmentAssign({
       case DevelopmentDisconnectedAssignChoice.roadFirst:
         final roadCandidate = roadFirstState.candidate;
         if (roadCandidate == null) return;
-        ref.read(appEventBusProvider).emit(
+        bus.emit(
           UpsertPendingCivilianWorkOrderRequestedEvent(
             playerId: humanPlayerId,
             workOrder: roadCandidate.toWorkOrder(),
@@ -173,7 +174,7 @@ Future<void> _handleDevelopmentAssign({
     }
   }
 
-  ref.read(appEventBusProvider).emit(
+  bus.emit(
     UpsertPendingCivilianWorkOrderRequestedEvent(
       playerId: humanPlayerId,
       workOrder: candidate.toWorkOrder(),
