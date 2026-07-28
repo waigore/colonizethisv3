@@ -19,29 +19,39 @@ Iterable<String> improvedResourceTilesForPlayer(Game game, String playerId) sync
   for (final regionEntry in ws.tileKeysByRegionAndProvince.entries) {
     final regionId = regionEntry.key;
     for (final provinceEntry in regionEntry.value.entries) {
-      final localProvinceId = provinceEntry.key;
-      final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
-      final provinceOwner = provinceOwnerById[fullProvinceId];
-      for (final tileKey in provinceEntry.value) {
-        if (seen.contains(tileKey)) continue;
-        if (!_playerControlsTile(
-          tileKey: tileKey,
-          playerId: playerId,
-          provinceOwner: provinceOwner,
-          purchasedBy: ws.purchasedTilesByTileKey[tileKey],
-        )) {
-          continue;
-        }
-        final resourceId = ws.resourceByTileKey[tileKey];
-        final level = ws.tileState.improvementLevel(tileKey);
-        if (resourceId != null &&
-            resourceId.isNotEmpty &&
-            level >= 1 &&
-            seen.add(tileKey)) {
-          yield tileKey;
-        }
-      }
+      final fullProvinceId = ProvinceId.full(regionId, provinceEntry.key);
+      yield* _improvedResourceTilesInProvince(
+        ws: ws,
+        playerId: playerId,
+        provinceOwner: provinceOwnerById[fullProvinceId],
+        tileKeys: provinceEntry.value,
+        seen: seen,
+      );
     }
+  }
+}
+
+Iterable<String> _improvedResourceTilesInProvince({
+  required WorldState ws,
+  required String playerId,
+  required String? provinceOwner,
+  required Iterable<String> tileKeys,
+  required Set<String> seen,
+}) sync* {
+  for (final tileKey in tileKeys) {
+    if (seen.contains(tileKey)) continue;
+    if (!_playerControlsTile(
+      tileKey: tileKey,
+      playerId: playerId,
+      provinceOwner: provinceOwner,
+      purchasedBy: ws.purchasedTilesByTileKey[tileKey],
+    )) {
+      continue;
+    }
+    final resourceId = ws.resourceByTileKey[tileKey];
+    final level = ws.tileState.improvementLevel(tileKey);
+    if (resourceId == null || resourceId.isEmpty || level < 1) continue;
+    if (seen.add(tileKey)) yield tileKey;
   }
 }
 
