@@ -169,6 +169,36 @@ void main() {
   );
 
   testWidgets(
+    'DiplomacyPanel confirm body includes first-order preview lines',
+    (WidgetTester tester) async {
+      final game = buildDiplomacyPanelTestGame().copyWith(
+        diplomacyRelations: [
+          const DiplomacyRelation(
+            factionId1: 'gp1',
+            factionId2: 'gp2',
+            score: 90,
+            formalAlliance: true,
+          ),
+        ],
+      );
+      final humanId = game.players.firstWhere((p) => p.isHuman).id;
+      final bus = AppEventBus.create();
+      final confirmFuture = bus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+
+      await _pumpOrders(tester, game: game, humanId: humanId, bus: bus);
+      await _tapVisible(tester, find.text('Break Alliance'));
+
+      final confirm = await confirmFuture;
+      expect(confirm.message, contains('When:'));
+      expect(confirm.message.toLowerCase(), contains('immediately'));
+      expect(confirm.message, isNot(contains('Confirm Break Alliance against')));
+    },
+  );
+
+  testWidgets(
     'DiplomacyPanel Break Alliance confirm emits BreakAllianceImmediatelyEvent',
     (WidgetTester tester) async {
       final game = buildDiplomacyPanelTestGame().copyWith(

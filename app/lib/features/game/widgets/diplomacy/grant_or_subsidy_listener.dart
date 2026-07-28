@@ -56,26 +56,28 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
         widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
         final targetName = _targetName(event.targetFactionId);
         final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
-        // Subsidies are a percentage (Refs #3753 R3); grants are a £ amount.
-        final amountText =
-            event.isSubsidy ? '${event.amount}%' : '£${event.amount}';
+        final order = DiplomaticOrder(
+          type: event.isSubsidy
+              ? DiplomaticOrderType.setSubsidy
+              : DiplomaticOrderType.grantAid,
+          targetFactionId: event.targetFactionId,
+          amount: event.amount,
+        );
         widget.bus.emit(
           ConfirmDialogEvent(
             title: actionName,
-            message: '$actionName of $amountText to $targetName?',
+            message: buildDiplomacyConfirmPreviewMessage(
+              order: order,
+              game: widget.game,
+              humanPlayerId: widget.humanPlayerId,
+              targetDisplayName: targetName,
+            ),
             onResult: (confirmed) {
               if (confirmed) {
-                final orderType = event.isSubsidy
-                    ? DiplomaticOrderType.setSubsidy
-                    : DiplomaticOrderType.grantAid;
                 widget.bus.emit(
                   AppendDiplomaticOrderRequestedEvent(
                     playerId: widget.humanPlayerId,
-                    order: DiplomaticOrder(
-                      type: orderType,
-                      targetFactionId: event.targetFactionId,
-                      amount: event.amount,
-                    ),
+                    order: order,
                   ),
                 );
                 final turn = widget.game.worldState.turnState.turnNumber;
