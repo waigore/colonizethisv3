@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -34,7 +35,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     if (mapData == null) {
-      return const Center(child: Text('Map data unavailable'));
+      return Center(child: Text(appL10n(context).development_mapDataUnavailable));
     }
 
     final orders = ref.watch(currentOrdersProvider);
@@ -61,6 +62,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
     )[humanPlayerId];
     final connectedTileKeys = connectivity?.connected ?? const <String>{};
     final bus = ref.read(appEventBusProvider);
+    final l10n = appL10n(context);
 
     return Padding(
       padding: const EdgeInsets.all(CtSpacing.l),
@@ -68,7 +70,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
         padding: const EdgeInsets.all(CtSpacing.l),
         child: CtTabStrip(
           key: DevelopmentPanelKeys.tabsBodyKey,
-          tabLabels: const ['Old World', 'New World'],
+          tabLabels: [l10n.region_oldWorld, l10n.region_newWorld],
           tabViews: [
             _DevelopmentRegionTab(
               game: game,

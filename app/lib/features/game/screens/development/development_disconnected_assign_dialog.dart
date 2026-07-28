@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -26,6 +27,7 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final textTheme = Theme.of(context).textTheme;
     return CtDialogShell(
       child: Column(
@@ -33,7 +35,7 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Not connected to capital',
+            l10n.development_disconnectedTitle,
             style: textTheme.titleMedium?.copyWith(
               color: EditorialMonoclePalette.accent,
               fontWeight: FontWeight.w700,
@@ -41,8 +43,7 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
           ),
           const SizedBox(height: CtSpacing.m),
           Text(
-            'The chosen tile is not linked to your capital. Improve anyway, '
-            'build a road step toward the capital first, or cancel.',
+            l10n.development_disconnectedBody,
             style: textTheme.bodyMedium?.copyWith(
               color: EditorialMonoclePalette.fg,
             ),
@@ -62,6 +63,7 @@ class _DisconnectedAssignActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final roadFirstTooltip = roadFirstState.enabled
         ? null
         : roadFirstState.disabledReason;
@@ -73,7 +75,7 @@ class _DisconnectedAssignActions extends StatelessWidget {
               context,
             ).pop(DevelopmentDisconnectedAssignChoice.roadFirst)
           : null,
-      child: const Text('Road first'),
+      child: Text(l10n.development_roadFirst),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -83,7 +85,7 @@ class _DisconnectedAssignActions extends StatelessWidget {
           onPressed: () => Navigator.of(
             context,
           ).pop(DevelopmentDisconnectedAssignChoice.improveAnyway),
-          child: const Text('Improve anyway'),
+          child: Text(l10n.development_improveAnyway),
         ),
         const SizedBox(height: CtSpacing.s),
         if (roadFirstTooltip != null)
@@ -97,7 +99,7 @@ class _DisconnectedAssignActions extends StatelessWidget {
           onPressed: () => Navigator.of(
             context,
           ).pop(DevelopmentDisconnectedAssignChoice.cancel),
-          child: const Text('Cancel'),
+          child: Text(l10n.common_cancel),
         ),
       ],
     );

@@ -1,8 +1,9 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../widgets/commodity_display_name.dart';
 import '../../../../widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../widgets/units/shared/region_section_header.dart';
@@ -29,14 +30,16 @@ class DevelopmentPanelScopeList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return ListView(
       children: [
-        const RegionSectionHeader(
-          label: 'Your provinces',
+        RegionSectionHeader(
+          label: l10n.moveArmy_groupYourProvinces,
           variant: RegionHeaderVariant.bottomBorderMuted,
         ),
         ...regionModel.ownedScopes.map(
           (scope) => _ScopeCard(
+            l10n: l10n,
             scope: scope,
             onShowTiles: onShowTiles,
             assignRowStateFor: assignRowStateFor,
@@ -44,9 +47,9 @@ class DevelopmentPanelScopeList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: CtSpacing.m),
-        const RegionSectionHeader(
+        RegionSectionHeader(
           key: DevelopmentPanelKeys.purchasedSectionKey,
-          label: 'Purchased land',
+          label: l10n.development_purchasedLand,
           variant: RegionHeaderVariant.bottomBorderMuted,
         ),
         if (regionModel.purchasedScopes.isEmpty)
@@ -62,6 +65,7 @@ class DevelopmentPanelScopeList extends StatelessWidget {
         else
           ...regionModel.purchasedScopes.map(
             (scope) => _ScopeCard(
+              l10n: l10n,
               scope: scope,
               onShowTiles: onShowTiles,
               assignRowStateFor: assignRowStateFor,
@@ -75,11 +79,14 @@ class DevelopmentPanelScopeList extends StatelessWidget {
 
 class _ScopeCard extends StatelessWidget {
   const _ScopeCard({
+    required this.l10n,
     required this.scope,
     required this.onShowTiles,
     required this.assignRowStateFor,
     required this.onAssign,
   });
+
+  final AppLocalizations l10n;
 
   final DevelopmentPanelScopeRow scope;
   final void Function(Set<String> tileKeys) onShowTiles;
@@ -107,7 +114,7 @@ class _ScopeCard extends StatelessWidget {
           ),
           if (scope.isPurchasedLand && scope.provinceOwnerDisplayName != null)
             Text(
-              'Owner: ${scope.provinceOwnerDisplayName}',
+              l10n.provinceOverlay_owner(scope.provinceOwnerDisplayName!),
               style: textTheme.bodySmall?.copyWith(
                 color: EditorialMonoclePalette.muted,
               ),
@@ -115,7 +122,7 @@ class _ScopeCard extends StatelessWidget {
           const SizedBox(height: 4),
           if (!scope.hasImprovableResources)
             Text(
-              'No improvable resources',
+              l10n.development_noImprovableResources,
               style: textTheme.bodySmall?.copyWith(
                 color: EditorialMonoclePalette.muted,
               ),
@@ -123,6 +130,7 @@ class _ScopeCard extends StatelessWidget {
           else
             ...scope.improvableCommodities.map(
               (row) => _ImprovableCommodityRow(
+                l10n: l10n,
                 scopeKey: scope.scopeKey,
                 row: row,
                 textTheme: textTheme,
@@ -139,6 +147,7 @@ class _ScopeCard extends StatelessWidget {
 
 class _ImprovableCommodityRow extends StatelessWidget {
   const _ImprovableCommodityRow({
+    required this.l10n,
     required this.scopeKey,
     required this.row,
     required this.textTheme,
@@ -146,6 +155,8 @@ class _ImprovableCommodityRow extends StatelessWidget {
     required this.onShowTiles,
     required this.onAssign,
   });
+
+  final AppLocalizations l10n;
 
   final String scopeKey;
   final DevelopmentImprovableCommodityRow row;
@@ -160,17 +171,13 @@ class _ImprovableCommodityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName =
-        CommodityCatalog.all
-            .firstWhere((c) => c.id == row.commodityId)
-            .displayName ??
-        row.commodityId;
+    final displayName = commodityDisplayName(l10n, row.commodityId);
     final tileKeys = row.tileKeys.toSet();
     final assignState = assignRowStateFor(row.commodityId, tileKeys);
     final assignTooltip = assignState.disabledReason;
     final assignButton = CtActionTextButton(
       key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
-      label: 'Assign',
+      label: l10n.civilian_units_assign,
       onPressed: assignState.enabled && assignState.candidate != null
           ? () => onAssign(assignState.candidate!)
           : null,
@@ -181,13 +188,13 @@ class _ImprovableCommodityRow extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              '${row.count} $displayName',
+              l10n.development_improvableCount(row.count, displayName),
               style: textTheme.bodySmall,
             ),
           ),
           CtActionTextButton(
             key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
-            label: 'Show',
+            label: l10n.development_show,
             onPressed: () => onShowTiles(tileKeys),
           ),
           const SizedBox(width: CtSpacing.s),

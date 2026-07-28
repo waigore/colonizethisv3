@@ -1,8 +1,10 @@
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../widgets/commodity_display_name.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
@@ -20,25 +22,30 @@ class DevelopmentPanelOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CtSectionLabel('Extraction'),
+        CtSectionLabel(l10n.provinceOverlay_extractionHeading),
         const SizedBox(height: 4),
         _ExtractionStrip(
+          l10n: l10n,
           textTheme: textTheme,
           landExtractionByCommodity: regionModel.landExtractionByCommodity,
         ),
         if (materialShortageCommodityIds.isNotEmpty)
           _ShortageWarning(
+            l10n: l10n,
             textTheme: textTheme,
             materialShortageCommodityIds: materialShortageCommodityIds,
           ),
         const SizedBox(height: CtSpacing.m),
         Text(
-          'Idle Builders: ${regionModel.idleBuilderCount} · '
-          'Idle Engineers: ${regionModel.idleEngineerCount}',
+          l10n.development_idleCivilians(
+            regionModel.idleBuilderCount,
+            regionModel.idleEngineerCount,
+          ),
           style: textTheme.bodySmall?.copyWith(
             color: EditorialMonoclePalette.muted,
           ),
@@ -50,10 +57,12 @@ class DevelopmentPanelOverview extends StatelessWidget {
 
 class _ExtractionStrip extends StatelessWidget {
   const _ExtractionStrip({
+    required this.l10n,
     required this.textTheme,
     required this.landExtractionByCommodity,
   });
 
+  final AppLocalizations l10n;
   final TextTheme textTheme;
   final Map<String, int> landExtractionByCommodity;
 
@@ -72,7 +81,10 @@ class _ExtractionStrip extends StatelessWidget {
               ResourceIcon(commodityId: commodity.id, size: 14),
               const SizedBox(width: 4),
               Text(
-                '$qty ${commodity.displayName}',
+                l10n.provinceOverlay_extractionQuantity(
+                  qty,
+                  commodityDisplayName(l10n, commodity.id),
+                ),
                 style: textTheme.bodySmall?.copyWith(
                   color: EditorialMonoclePalette.fg,
                 ),
@@ -96,10 +108,12 @@ class _ExtractionStrip extends StatelessWidget {
 
 class _ShortageWarning extends StatelessWidget {
   const _ShortageWarning({
+    required this.l10n,
     required this.textTheme,
     required this.materialShortageCommodityIds,
   });
 
+  final AppLocalizations l10n;
   final TextTheme textTheme;
   final Set<String> materialShortageCommodityIds;
 
@@ -117,7 +131,7 @@ class _ShortageWarning extends StatelessWidget {
               ResourceIcon(commodityId: commodity.id, size: 14),
               const SizedBox(width: 4),
               Text(
-                commodity.displayName ?? commodity.id,
+                commodityDisplayName(l10n, commodity.id),
                 style: textTheme.bodySmall?.copyWith(
                   color: EditorialMonoclePalette.accent,
                 ),
@@ -132,7 +146,7 @@ class _ShortageWarning extends StatelessWidget {
       children: [
         const SizedBox(height: CtSpacing.s),
         Text(
-          'Materials shortage for assign:',
+          l10n.development_materialsShortageForAssign,
           style: textTheme.bodySmall?.copyWith(
             color: EditorialMonoclePalette.accent,
           ),
