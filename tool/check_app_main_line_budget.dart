@@ -8,16 +8,16 @@
 // raised for bundled map theme catalog + Settings dialog (Refs #4088);
 // raised for MAP20001 tile capital-link + partial-yield reason UI (Refs #4149, #4150);
 // raised for disconnected-tile blocked extraction map discs (Refs #4151);
-// raised for GAME70001 Victory panel route, standings, conditions, OW map (Refs #4165);
 // raised for order-rejected feed deep-link routing (Refs #4146);
-// raised for GAME60001 Market bid-goods indicator and bid-type cap gate (Refs #4170).
+// raised for GAME60001 Market bid-goods indicator and bid-type cap gate (Refs #4170);
+// raised for GAME80001 Development panel shell, read model, and map (Slice A Refs #4175).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 62200;
+const _maxMainLines = 62650;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
