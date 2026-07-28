@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -41,7 +43,7 @@ DevelopmentPanelModel _modelWithPendingWorkOrders() {
       'pl1': [
         WorkOrder(
           unitId: 'b1',
-          target: 'build_improvement',
+          target: kWorkTargetBuildImprovement,
           targetTileKey: 'oldWorld|p1|0|0',
         ),
       ],
