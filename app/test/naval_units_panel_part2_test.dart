@@ -1,6 +1,5 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -15,134 +14,6 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 import 'naval_units_panel_test_support.dart';
 import 'widget_test_assets.dart';
 
-const _mergePort = 'oldWorld|mergeport';
-const _capProvince = 'oldWorld|cap1';
-
-Province _owProvince(String localId, String humanId, String displayName) {
-  return Province(
-    id: localId,
-    regionId: 'oldWorld',
-    ownerId: humanId,
-    displayName: displayName,
-  );
-}
-
-Fleet _portShipFleet({
-  required String id,
-  required String humanId,
-  required String port,
-  required String shipId,
-  String typeId = 'carrack',
-}) {
-  return Fleet(
-    id: id,
-    ownerId: humanId,
-    regionId: 'oldWorld',
-    inPortAtProvinceId: port,
-    ships: [ShipInstance(id: shipId, typeId: typeId)],
-  );
-}
-
-Fleet _seaShipFleet({
-  required String id,
-  required String humanId,
-  required String seaZoneId,
-  required String shipId,
-  String typeId = 'carrack',
-}) {
-  return Fleet(
-    id: id,
-    ownerId: humanId,
-    regionId: 'oldWorld',
-    seaZoneId: seaZoneId,
-    inPortAtProvinceId: null,
-    ships: [ShipInstance(id: shipId, typeId: typeId)],
-  );
-}
-
-typedef _PortShipSpec = ({String id, String shipId, String typeId});
-
-Game _mergePortFleetsGame({
-  required String humanId,
-  required String gameId,
-  required String displayName,
-  required List<_PortShipSpec> fleets,
-  int? nextShipInstanceSeq,
-}) {
-  return buildNavalPanelCapitalMergePortFleetsGame(
-    humanId: humanId,
-    gameId: gameId,
-    displayName: displayName,
-    includeMergePortTileKeys: false,
-    nextShipInstanceSeq: nextShipInstanceSeq ?? fleets.length + 1,
-    fleets: [
-      for (final f in fleets)
-        _portShipFleet(
-          id: f.id,
-          humanId: humanId,
-          port: _mergePort,
-          shipId: f.shipId,
-          typeId: f.typeId,
-        ),
-    ],
-  );
-}
-
-(AppEventBus, NavalFleetsUpdatedEvent? Function()) _wireFleetsUpdated() {
-  NavalFleetsUpdatedEvent? updated;
-  final bus = AppEventBus.create();
-  final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) => updated = e);
-  addTearDown(sub.cancel);
-  return (bus, () => updated);
-}
-
-Future<void> _tapFleetCheckboxes(
-  WidgetTester tester,
-  Iterable<String> fleetLabels,
-) async {
-  for (final label in fleetLabels) {
-    final tile = find.widgetWithText(ExpansionTile, label);
-    expect(tile, findsOneWidget);
-    final cb = find.descendant(of: tile, matching: find.byType(Checkbox));
-    await tester.ensureVisible(cb);
-    await tester.tap(cb);
-    await tester.pumpAndSettle();
-  }
-}
-
-Future<void> _expectCombineEnabled(
-  WidgetTester tester, {
-  required bool enabled,
-}) async {
-  final combineBtn = tester.widget<CtActionTextButton>(
-    find.widgetWithText(CtActionTextButton, 'Combine'),
-  );
-  expect(combineBtn.enabled, enabled);
-}
-
-Future<void> _tapCombine(WidgetTester tester, {bool scroll = false}) async {
-  final combineFinder = find.widgetWithText(CtActionTextButton, 'Combine');
-  if (scroll) {
-    await tester.scrollUntilVisible(combineFinder, 120);
-    await tester.pumpAndSettle();
-  } else {
-    await tester.ensureVisible(combineFinder);
-  }
-  await tester.tap(combineFinder);
-  await tester.pumpAndSettle();
-}
-
-Future<void> _pumpCheckCombineDisabled(
-  WidgetTester tester, {
-  required Game game,
-  required String humanId,
-  required List<String> fleetLabels,
-}) async {
-  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
-  await _tapFleetCheckboxes(tester, fleetLabels);
-  await _expectCombineEnabled(tester, enabled: false);
-}
-
 void main() {
   suppressLogsForTests();
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -156,7 +27,7 @@ void main() {
       'AC: Header checkbox selects all fleets then second interaction clears',
       (WidgetTester tester) async {
         const humanId = 'gp_select_all';
-        final selectAllGame = _mergePortFleetsGame(
+        final selectAllGame = buildNavalPanelMergePortFleetsFromSpecs(
           humanId: humanId,
           gameId: 'g_select_all',
           displayName: 'Select-all tester',
@@ -203,7 +74,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const humanId = 'gp_combine_count';
-      final combineGame = _mergePortFleetsGame(
+      final combineGame = buildNavalPanelMergePortFleetsFromSpecs(
         humanId: humanId,
         gameId: 'g_combine_count',
         displayName: 'Combine tester',
@@ -213,18 +84,18 @@ void main() {
         ],
       );
 
-      final (bus, updated) = _wireFleetsUpdated();
+      final (bus, updated) = wireNavalFleetsUpdatedCapture();
       await pumpNavalPanel(
         tester,
         game: combineGame,
         humanPlayerId: humanId,
         bus: bus,
       );
-      await _tapFleetCheckboxes(tester, [
+      await tapNavalFleetCheckboxes(tester, [
         'Fleet test_fleet_1',
         'Fleet test_fleet_2',
       ]);
-      await _tapCombine(tester);
+      await tapNavalCombine(tester);
 
       expect(updated(), isNotNull);
       final fleetsAfter = updated()!.game.worldState.fleets;
@@ -234,143 +105,9 @@ void main() {
       expect(fleetsAfter.any((f) => f.id == 'test_fleet_2'), isFalse);
     });
 
-    for (final case_
-        in <
-          ({
-            String name,
-            String humanId,
-            Game Function() build,
-            List<String> labels,
-          })
-        >[
-          (
-            name:
-                'AC: Fleets at different locations keep Combine disabled when both checked',
-            humanId: 'gp_diff_loc',
-            build: () {
-              const humanId = 'gp_diff_loc';
-              return buildNavalPanelOwFleetsGame(
-                gameId: 'g_diff_loc',
-                humanId: humanId,
-                displayName: 'Diff-loc tester',
-                capitalProvinceId: _capProvince,
-                oldWorldProvinces: [
-                  _owProvince('cap1', humanId, 'Capital'),
-                  _owProvince('port_a', humanId, 'Port A'),
-                  _owProvince('port_b', humanId, 'Port B'),
-                ],
-                fleets: [
-                  _portShipFleet(
-                    id: 'fa',
-                    humanId: humanId,
-                    port: 'oldWorld|port_a',
-                    shipId: 'ship_1',
-                  ),
-                  _portShipFleet(
-                    id: 'fb',
-                    humanId: humanId,
-                    port: 'oldWorld|port_b',
-                    shipId: 'ship_2',
-                    typeId: 'fluyte',
-                  ),
-                ],
-                tileKeysByProvince: {
-                  _capProvince: ['oldWorld|cap1|0|0'],
-                },
-                nextShipInstanceSeq: 3,
-              );
-            },
-            labels: const ['Fleet fa', 'Fleet fb'],
-          ),
-          (
-            name:
-                'AC: Fleets in different sea zones keep Combine disabled when both checked',
-            humanId: 'gp_two_seas',
-            build: () {
-              const humanId = 'gp_two_seas';
-              return buildNavalPanelOwFleetsGame(
-                gameId: 'g_two_seas',
-                humanId: humanId,
-                displayName: 'Two seas tester',
-                capitalProvinceId: _capProvince,
-                oldWorldProvinces: [
-                  _owProvince('coast', humanId, 'Coast'),
-                  _owProvince('cap1', humanId, 'Capital'),
-                ],
-                fleets: [
-                  _seaShipFleet(
-                    id: 'sea_a',
-                    humanId: humanId,
-                    seaZoneId: 'zone_alpha',
-                    shipId: 'a1',
-                  ),
-                  _seaShipFleet(
-                    id: 'sea_b',
-                    humanId: humanId,
-                    seaZoneId: 'zone_beta',
-                    shipId: 'b1',
-                    typeId: 'fluyte',
-                  ),
-                ],
-                portsByProvinceSeaboard: {
-                  'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-                  'oldWorld|coast|zone_beta': 'oldWorld|coast|1|0',
-                },
-                tileKeysByProvince: {
-                  _capProvince: ['oldWorld|cap1|0|0'],
-                  'oldWorld|coast': ['oldWorld|coast|0|0'],
-                },
-                nextShipInstanceSeq: 2,
-              );
-            },
-            labels: const ['Fleet sea_a', 'Fleet sea_b'],
-          ),
-          (
-            name:
-                'AC: Fleet at sea and fleet in port keep Combine disabled when both checked',
-            humanId: 'gp_sea_port',
-            build: () {
-              const humanId = 'gp_sea_port';
-              return buildNavalPanelOwFleetsGame(
-                gameId: 'g_sea_port',
-                humanId: humanId,
-                displayName: 'Sea-port tester',
-                capitalProvinceId: _capProvince,
-                oldWorldProvinces: [
-                  _owProvince('cap1', humanId, 'Capital'),
-                  _owProvince('mergeport', humanId, 'Merge Port'),
-                  _owProvince('coast', humanId, 'Coast'),
-                ],
-                fleets: [
-                  _seaShipFleet(
-                    id: 'at_sea',
-                    humanId: humanId,
-                    seaZoneId: 'zone_alpha',
-                    shipId: 's_sea',
-                  ),
-                  _portShipFleet(
-                    id: 'in_port',
-                    humanId: humanId,
-                    port: _mergePort,
-                    shipId: 's_port',
-                    typeId: 'fluyte',
-                  ),
-                ],
-                portsByProvinceSeaboard: {
-                  'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-                },
-                tileKeysByProvince: {
-                  _capProvince: ['oldWorld|cap1|0|0'],
-                  'oldWorld|coast': ['oldWorld|coast|0|0'],
-                },
-                nextShipInstanceSeq: 3,
-              );
-            },
-            labels: const ['Fleet at_sea', 'Fleet in_port'],
-          ),
-        ]) {
+    for (final case_ in navalPanelCombineDisabledCases()) {
       testWidgets(case_.name, (WidgetTester tester) async {
-        await _pumpCheckCombineDisabled(
+        await pumpNavalCheckCombineDisabled(
           tester,
           game: case_.build(),
           humanId: case_.humanId,
@@ -393,17 +130,17 @@ void main() {
           homeShips: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
           nextShipInstanceSeq: 3,
           peerFleets: [
-            _portShipFleet(
+            navalPanelPortShipFleet(
               id: 'at_capital',
               humanId: humanId,
-              port: _capProvince,
+              port: kNavalPanelCapProvince,
               shipId: 'ship_v',
               typeId: 'fluyte',
             ),
           ],
         );
 
-        final (bus, updated) = _wireFleetsUpdated();
+        final (bus, updated) = wireNavalFleetsUpdatedCapture();
         final subTransfer = wireNavalTransferForWidgetTest(
           bus: bus,
           gameSnapshot: () => homeCombineGame,
@@ -417,8 +154,8 @@ void main() {
           bus: bus,
         );
 
-        await _tapFleetCheckboxes(tester, ['Home Fleet', 'Fleet at_capital']);
-        await _tapCombine(tester);
+        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet at_capital']);
+        await tapNavalCombine(tester);
         expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
         await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll('fluyte')));
         await tester.pumpAndSettle();
@@ -450,7 +187,7 @@ void main() {
       'AC: Combining three fleets at same port merges all ships into first in panel order',
       (WidgetTester tester) async {
         const humanId = 'gp_three_combine';
-        final threeGame = _mergePortFleetsGame(
+        final threeGame = buildNavalPanelMergePortFleetsFromSpecs(
           humanId: humanId,
           gameId: 'g_three_combine',
           displayName: 'Three combine tester',
@@ -461,15 +198,15 @@ void main() {
           ],
         );
 
-        final (bus, updated) = _wireFleetsUpdated();
+        final (bus, updated) = wireNavalFleetsUpdatedCapture();
         await pumpNavalPanel(
           tester,
           game: threeGame,
           humanPlayerId: humanId,
           bus: bus,
         );
-        await _tapFleetCheckboxes(tester, ['Fleet c1', 'Fleet c2', 'Fleet c3']);
-        await _tapCombine(tester, scroll: true);
+        await tapNavalFleetCheckboxes(tester, ['Fleet c1', 'Fleet c2', 'Fleet c3']);
+        await tapNavalCombine(tester, scroll: true);
 
         expect(updated(), isNotNull);
         final fleetsAfter = updated()!.game.worldState.fleets;
@@ -511,9 +248,9 @@ void main() {
           topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
         );
 
-        await _tapFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
-        await _expectCombineEnabled(tester, enabled: true);
-        await _tapCombine(tester);
+        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+        expectNavalCombineEnabled(tester, enabled: true);
+        await tapNavalCombine(tester);
         expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
       },
     );

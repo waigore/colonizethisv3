@@ -1,8 +1,11 @@
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart'
+    show
+        createGameFromGeneratedMaps,
+        GameSetupResult,
+        SetupTopologyDataException;
 
 import 'game_service_map_cache.dart';
 import 'game_service_new_game_setup_maps.dart';

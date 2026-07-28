@@ -2,6 +2,9 @@
 // Lives outside `app/test/support/` so state-logic expectation helpers do not
 // count toward `repo.app_test_support_loc`. Re-exported from
 // `app/test/support/game_map_area_state_logic_test_support.dart` (Refs #4013).
+// Scenario fixtures: game_map_area_state_logic_test_scenarios.dart (Refs #4183).
+
+export 'game_map_area_state_logic_test_scenarios.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'

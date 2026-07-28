@@ -25,8 +25,10 @@ dependencies:
   colonizethis_data:
   colonizethis_save:
   colonizethis_logic:
+  colonizethis_orders:
   colonizethis_turn:
   colonizethis_setup:
+  colonizethis_world:
   colonizethis_ai:
   colonizethis_debug_console:
   colonizethis_app_debug:
