@@ -40,6 +40,10 @@ extension MarketTabContentBuild on MarketTabContent {
     final TextStyle quantityStyle = styles.quantityStyle;
     final TextStyle cargoIndicatorStyle = styles.cargoIndicatorStyle;
     final TextStyle cargoWarningStyle = styles.cargoWarningStyle;
+    final TextStyle bidGoodsIndicatorStyle = styles.bidGoodsIndicatorStyle;
+    final TextStyle bidTypeWarningStyle = styles.bidTypeWarningStyle;
+    final TextStyle whyToggleStyle = styles.whyToggleStyle;
+    final TextStyle whyBodyStyle = styles.whyBodyStyle;
 
     final SectionedTradeableCommodities sectioned =
         tradeableCommoditiesByCategory();
@@ -48,6 +52,9 @@ extension MarketTabContentBuild on MarketTabContent {
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
     final int totalStagedBid = totalStagedBidQuantity(orders, playerId);
+    final int stagedDistinctBidCount =
+        stagedDistinctBidCommodityCount(orders, playerId);
+    final int bidTypeCap = worldMarketBidTypeCap(game, playerId);
     final int remainingCargo = tradeCargoCapacity - totalStagedBid;
     final int clampedRemaining = remainingCargo < 0 ? 0 : remainingCargo;
     final bool warningVisible =
@@ -134,6 +141,7 @@ extension MarketTabContentBuild on MarketTabContent {
       orders: orders,
       offerCap: offerCap,
       stagedOffers: stagedOffers,
+      bidTypeCap: bidTypeCap,
       nameStyle: nameStyle,
       priceStyle: priceStyle,
       volumeStyle: volumeStyle,
@@ -151,11 +159,17 @@ extension MarketTabContentBuild on MarketTabContent {
       ),
     );
 
-    final Widget header = MarketTabCargoHeader(
+    final Widget header = MarketTabHeaderStrip(
+      stagedDistinctBidCount: stagedDistinctBidCount,
+      bidTypeCap: bidTypeCap,
       clampedRemaining: clampedRemaining,
-      warningVisible: warningVisible,
+      cargoWarningVisible: warningVisible,
+      bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
+      bidTypeWarningStyle: bidTypeWarningStyle,
       cargoIndicatorStyle: cargoIndicatorStyle,
       cargoWarningStyle: cargoWarningStyle,
+      whyToggleStyle: whyToggleStyle,
+      whyBodyStyle: whyBodyStyle,
     );
 
     final Widget body = Column(
@@ -173,8 +187,8 @@ extension MarketTabContentBuild on MarketTabContent {
 
     // Observe-mode (canMutateViaUi == false): wrap the **interactive**
     // list in IgnorePointer + Opacity so the chips and stepper read as
-    // read-only, but leave the cargo indicator + warning header live
-    // (they're read-only telemetry that should still surface state).
+    // read-only, but leave the bid-goods + cargo header live (they're
+    // read-only telemetry that should still surface state).
     if (!canEdit) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

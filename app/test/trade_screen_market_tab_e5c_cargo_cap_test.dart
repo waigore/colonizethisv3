@@ -319,6 +319,13 @@ void main() {
           id: 'test_trade_screen_e5c',
           treasury: 100000,
           tradeCargoCapacityOverride: 10,
+          overtureStates: const <OvertureState>[
+            OvertureState(
+              gpId: _humanPlayerId,
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
         ),
         initialOrders: _orders(<TradeOrder>[
           _bid(_timber, 9),

@@ -75,6 +75,8 @@ class CtDropdownSelectedRowStoryState
 Game _tradeScreenStoryGame({
   int treasury = 500,
   Map<CommodityId, int>? stockpile,
+  List<OvertureState> overtureStates = const <OvertureState>[],
+  Map<String, bool>? techUnlocked,
 }) {
   const humanId = 'gp_human';
   // Seed the world market state so the Refs #2993 E5a read-only
@@ -112,11 +114,13 @@ Game _tradeScreenStoryGame({
         displayName: 'England',
         isHuman: true,
         treasury: treasury,
+        techUnlocked: techUnlocked,
         stockpile: Stockpile(
           quantities: stockpile ?? const <CommodityId, int>{},
         ),
       ),
     ],
+    overtureStates: overtureStates,
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],
@@ -156,8 +160,15 @@ Widget _tradeScreenDefaultStory({
   Orders? initialOrders,
   int treasury = 500,
   Map<CommodityId, int>? stockpile,
+  List<OvertureState> overtureStates = const <OvertureState>[],
+  Map<String, bool>? techUnlocked,
 }) {
-  final game = _tradeScreenStoryGame(treasury: treasury, stockpile: stockpile);
+  final game = _tradeScreenStoryGame(
+    treasury: treasury,
+    stockpile: stockpile,
+    overtureStates: overtureStates,
+    techUnlocked: techUnlocked,
+  );
   final player = game.players.first;
   return _tradeScreenProviderScope(
     initialOrders: initialOrders,
@@ -245,6 +256,25 @@ Orders _tradeScreenStoryTreasuryBidCapOrders() {
           commodityId: 'timber',
           type: TradeOrderType.bid,
           quantity: 3,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
+/// Pre-staged Orders for the "Market tab — bid-type saturated (Refs
+/// #4170)" use case: cap `1` with a single timber bid so reviewers see
+/// `Bid goods: 1 of 1`, the danger warning, and disabled fresh Bid
+/// chips on other commodities.
+Orders _tradeScreenStoryBidTypeSaturatedOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 2,
           priority: 1,
         ),
       ],
@@ -543,6 +573,37 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         builder: (context) => _tradeScreenDefaultStory(
           treasury: 100,
           initialOrders: _tradeScreenStoryTreasuryBidCapOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — bid-type saturated (Refs #4170)',
+        builder: (context) => _tradeScreenDefaultStory(
+          initialOrders: _tradeScreenStoryBidTypeSaturatedOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — bid-type cap 3 embassy (Refs #4170)',
+        builder: (context) => _tradeScreenDefaultStory(
+          overtureStates: const <OvertureState>[
+            OvertureState(
+              gpId: 'gp_human',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — bid-type cap 6 Trade Fairs (Refs #4170)',
+        builder: (context) => _tradeScreenDefaultStory(
+          overtureStates: const <OvertureState>[
+            OvertureState(
+              gpId: 'gp_human',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
+          techUnlocked: const <String, bool>{kTechIdTradeFairs: true},
         ),
       ),
       WidgetbookUseCase(

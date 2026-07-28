@@ -72,6 +72,8 @@ Game buildTradeTestGame({
   RegionData oldWorld = const RegionData(),
   RegionData newWorld = const RegionData(),
   WorldMarketState? worldMarketState,
+  List<OvertureState> overtureStates = const <OvertureState>[],
+  Map<String, bool>? techUnlocked,
   /// When `10`, seeds a galleon+fluyte home fleet (cargoHold 6+4). Other
   /// values throw — only the E5c / E8 cargo-cap mapping is supported.
   int? tradeCargoCapacityOverride,
@@ -138,11 +140,13 @@ Game buildTradeTestGame({
             displayName: displayName,
             isHuman: true,
             treasury: treasury,
+            techUnlocked: techUnlocked,
             stockpile: Stockpile(
               quantities: stockpile ?? const <CommodityId, int>{},
             ),
           ),
         ],
+    overtureStates: overtureStates,
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
     dossierEvidenceEntries: const [],

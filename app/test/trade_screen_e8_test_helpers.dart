@@ -89,6 +89,7 @@ Future<ProviderContainer> tradeE8PumpMarket(
   Orders initialOrders = const Orders(),
   bool canMutateViaUi = true,
   int treasury = 500,
+  List<OvertureState> overtureStates = const <OvertureState>[],
 }) =>
     pumpTradeScreenWithContainer(
       tester,
@@ -98,6 +99,7 @@ Future<ProviderContainer> tradeE8PumpMarket(
         stockpile: tradeableStockpileFilled(99),
         worldMarketState: worldMarketState,
         tradeCargoCapacityOverride: tradeCargoCapacityOverride,
+        overtureStates: overtureStates,
       ),
       initialOrders: initialOrders,
       canMutateViaUi: canMutateViaUi,

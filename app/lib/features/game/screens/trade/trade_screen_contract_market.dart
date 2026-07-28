@@ -220,6 +220,31 @@ abstract final class TradeScreenMarketKeys {
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String marketRowQuantityIdleGlyph = '—';
 
+  /// Stable widget key for the distinct-commodity bid-type indicator
+  /// rendered above the cargo indicator (Refs #4170). Renders
+  /// `Bid goods: U of C` where `U` is the count of distinct staged
+  /// `TradeOrderType.bid` commodities and `C` is
+  /// `worldMarketBidTypeCap(game, playerId)`.
+  static const Key marketBidGoodsIndicatorKey =
+      ValueKey<String>('tradeScreenMarketBidGoodsIndicator');
+
+  /// Stable widget key for the bid-type saturation warning row rendered
+  /// below the bid-goods indicator when `U >= C` and `C > 0` (Refs
+  /// #4170). Absent otherwise.
+  static const Key marketBidTypeWarningKey =
+      ValueKey<String>('tradeScreenMarketBidTypeWarning');
+
+  /// Stable widget key for the optional **Why this limit?** disclosure
+  /// toggle below the bid-type warnings (Refs #4170).
+  static const Key marketBidTypeWhyToggleKey =
+      ValueKey<String>('tradeScreenMarketBidTypeWhyToggle');
+
+  /// Stable widget key for the expanded plain-language bid-type cap
+  /// explanation body (Refs #4170). Mounted only while the disclosure
+  /// is expanded.
+  static const Key marketBidTypeWhyBodyKey =
+      ValueKey<String>('tradeScreenMarketBidTypeWhyBody');
+
   /// Stable widget key for the cross-commodity cargo indicator header
   /// rendered above the Market tab commodity list (Refs #2993 E5c).
   /// The widget at this key renders `Cargo remaining: X` where
@@ -234,6 +259,54 @@ abstract final class TradeScreenMarketKeys {
   /// in the steady non-saturated state.
   static const Key marketCargoWarningKey =
       ValueKey<String>('tradeScreenMarketCargoWarning');
+
+  /// Bid-goods indicator prefix (Refs #4170). Renders as
+  /// `Bid goods: U of C` where offers never increment `U`.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidGoodsIndicatorPrefix = 'Bid goods:';
+
+  /// Bid-type saturation warning copy (Refs #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeLimitWarningText =
+      'Bid commodity limit reached — set a bid to None, or raise your '
+      'limit with an embassy or Trade Fairs.';
+
+  /// Progressive-disclosure toggle label for bid-type cap help (Refs
+  /// #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeLimitWhyToggleLabel = 'Why this limit?';
+
+  /// Semantic label for a disabled Bid chip when the bid-type cap is
+  /// saturated on a fresh commodity (Refs #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidChipBidTypeCapSemanticLabel =
+      'Bid disabled — commodity limit reached';
+
+  /// Plain-language bid-type cap explanation for cap `1` (Refs #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeWhyLimitCopyCap1 =
+      'Basic market access lets you bid on one distinct commodity per '
+      'turn. Hold an embassy with any court to raise the limit.';
+
+  /// Plain-language bid-type cap explanation for cap `3` (Refs #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeWhyLimitCopyCap3 =
+      'Your embassy raises the limit to three distinct bid commodities. '
+      'Unlock Trade Fairs to reach six.';
+
+  /// Plain-language bid-type cap explanation for cap `6` (Refs #4170).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeWhyLimitCopyCap6 =
+      'Embassy and Trade Fairs together allow up to six distinct bid '
+      'commodities in one turn.';
+
+  /// Returns the **Why this limit?** body copy for [cap] per
+  /// `worldMarketBidTypeCap` semantics (Refs #4170).
+  static String bidTypeWhyLimitCopyForCap(int cap) {
+    if (cap >= 6) return bidTypeWhyLimitCopyCap6;
+    if (cap >= 3) return bidTypeWhyLimitCopyCap3;
+    return bidTypeWhyLimitCopyCap1;
+  }
 
   /// Localized cargo indicator prefix. SPEC/ui/trade-screen.md §
   /// Cargo indicator pins the literal `"Cargo remaining:"` so widget

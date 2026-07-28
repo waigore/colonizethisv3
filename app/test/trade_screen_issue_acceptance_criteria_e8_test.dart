@@ -356,6 +356,13 @@ void main() {
           tester,
           treasury: 100000,
           tradeCargoCapacityOverride: 10,
+          overtureStates: const <OvertureState>[
+            OvertureState(
+              gpId: kTradeE8HumanPlayerId,
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+            ),
+          ],
           initialOrders: tradeE8OrdersWith(<TradeOrder>[
             tradeE8Bid(kTradeE8Timber, 9),
             tradeE8Offer(kTradeE8Fabric, 5),
