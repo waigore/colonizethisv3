@@ -18,8 +18,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 import 'app_shell_harness.dart';
+import 'naval_units_panel_test_scenarios.dart';
 
 export 'naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
@@ -252,5 +256,416 @@ Widget buildNavalPanelWithFleetCountWatcher({
       ),
     ),
   );
+}
+
+/// ExpansionTile finder for a fleet row label.
+Finder navalFleetTileFinder(String label) =>
+    find.widgetWithText(ExpansionTile, label);
+
+Future<void> expandNavalFleetTile(
+  WidgetTester tester,
+  Finder fleetFinder,
+) async {
+  await tester.ensureVisible(fleetFinder);
+  await tester.tap(fleetFinder);
+  await tester.pumpAndSettle();
+}
+
+/// Wired locate bus + captured [LocateMapTileEvent] list (Refs #4021 densify).
+(AppEventBus bus, List<LocateMapTileEvent> events) wireNavalLocateCaptureBus() {
+  final events = <LocateMapTileEvent>[];
+  final bus = AppEventBus.create();
+  bus.on<LocateMapTileEvent>().listen(events.add);
+  return (bus, events);
+}
+
+Future<bool> tapLocateOnNavalFleetTile(
+  WidgetTester tester,
+  Finder fleetTile,
+) async {
+  await tester.ensureVisible(fleetTile);
+  final locateFinder = find.descendant(
+    of: fleetTile,
+    matching: find.byTooltip('Locate fleet'),
+  );
+  if (locateFinder.evaluate().isEmpty) return false;
+  await tester.ensureVisible(locateFinder.first);
+  await tester.tap(locateFinder.first, warnIfMissed: false);
+  await tester.pumpAndSettle();
+  return true;
+}
+
+Future<void> expandAndTapNavalSplit(
+  WidgetTester tester,
+  Finder fleetFinder,
+) async {
+  await expandNavalFleetTile(tester, fleetFinder);
+  final splitButton = find.descendant(
+    of: fleetFinder,
+    matching: find.byTooltip('Split'),
+  );
+  expect(splitButton, findsOneWidget);
+  await tester.tap(splitButton);
+  await tester.pumpAndSettle();
+}
+
+Future<void> expandAndExpectNavalSplit(
+  WidgetTester tester,
+  Finder fleetFinder,
+) async {
+  await expandNavalFleetTile(tester, fleetFinder);
+  expect(
+    find.descendant(of: fleetFinder, matching: find.byTooltip('Split')),
+    findsOneWidget,
+  );
+}
+
+Future<void> confirmNavalSplitMovingFirstShip(
+  WidgetTester tester,
+  Fleet targetFleet,
+) async {
+  final moveTypeId = targetFleet.ships.first.typeId;
+  await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne(moveTypeId)));
+  await tester.pumpAndSettle();
+  final confirmSplit = find.text('Confirm Split');
+  expect(confirmSplit, findsOneWidget);
+  await tester.tap(confirmSplit);
+  await tester.pumpAndSettle();
+}
+
+(AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalSplitUpdatedBus({
+  required Game Function() gameSnapshot,
+}) {
+  NavalFleetsUpdatedEvent? fleetEvent;
+  final bus = AppEventBus.create();
+  addTearDown(
+    bus.on<NavalFleetsUpdatedEvent>().listen((e) => fleetEvent = e).cancel,
+  );
+  addTearDown(
+    wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot).cancel,
+  );
+  return (bus, () => fleetEvent);
+}
+
+(AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalFleetsUpdatedCapture() {
+  NavalFleetsUpdatedEvent? updated;
+  final bus = AppEventBus.create();
+  final sub = bus.on<NavalFleetsUpdatedEvent>().listen((e) => updated = e);
+  addTearDown(sub.cancel);
+  return (bus, () => updated);
+}
+
+Future<void> tapNavalFleetCheckboxes(
+  WidgetTester tester,
+  Iterable<String> fleetLabels, {
+  bool scroll = false,
+}) async {
+  for (final label in fleetLabels) {
+    late final Finder cb;
+    if (scroll) {
+      final title = find.text(label);
+      await tester.scrollUntilVisible(title, 120);
+      await tester.pumpAndSettle();
+      final tile = find.ancestor(
+        of: title,
+        matching: find.byType(ExpansionTile),
+      );
+      cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+      await tester.scrollUntilVisible(cb, 120);
+      await tester.pumpAndSettle();
+    } else {
+      final tile = find.widgetWithText(ExpansionTile, label);
+      expect(tile, findsOneWidget);
+      cb = find.descendant(of: tile, matching: find.byType(Checkbox));
+    }
+    await tester.ensureVisible(cb);
+    await tester.tap(cb);
+    await tester.pumpAndSettle();
+  }
+}
+
+void expectNavalCombineEnabled(
+  WidgetTester tester, {
+  required bool enabled,
+}) {
+  expect(
+    tester
+        .widget<CtActionTextButton>(
+          find.widgetWithText(CtActionTextButton, 'Combine'),
+        )
+        .enabled,
+    enabled,
+  );
+}
+
+Future<void> tapNavalCombine(
+  WidgetTester tester, {
+  bool scroll = false,
+}) async {
+  final combineFinder = find.widgetWithText(CtActionTextButton, 'Combine');
+  if (scroll) {
+    await tester.scrollUntilVisible(combineFinder, 120);
+    await tester.pumpAndSettle();
+  } else {
+    await tester.ensureVisible(combineFinder);
+  }
+  await tester.tap(combineFinder);
+  await tester.pumpAndSettle();
+}
+
+Future<void> pumpNavalCheckCombineDisabled(
+  WidgetTester tester, {
+  required Game game,
+  required String humanId,
+  required List<String> fleetLabels,
+}) async {
+  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
+  await tapNavalFleetCheckboxes(tester, fleetLabels);
+  expectNavalCombineEnabled(tester, enabled: false);
+}
+
+Future<NavalFleetsUpdatedEvent?> pumpNavalTapCheckCombine(
+  WidgetTester tester, {
+  required Game game,
+  required String humanId,
+  required List<String> labels,
+  bool scroll = false,
+  bool? expectCombineEnabled,
+}) async {
+  final (bus, latest) = wireNavalFleetsUpdatedCapture();
+  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId, bus: bus);
+  await tapNavalFleetCheckboxes(tester, labels, scroll: scroll);
+  if (expectCombineEnabled != null) {
+    expectNavalCombineEnabled(tester, enabled: expectCombineEnabled);
+  }
+  await tapNavalCombine(tester, scroll: scroll);
+  return latest();
+}
+
+(AppEventBus bus, List<ClosePanelEvent> events) wireNavalClosePanelCapture() {
+  final events = <ClosePanelEvent>[];
+  final bus = AppEventBus.create();
+  final sub = bus.on<ClosePanelEvent>().listen(events.add);
+  addTearDown(sub.cancel);
+  return (bus, events);
+}
+
+Future<void> pumpNavalScopedHarness(
+  WidgetTester tester, {
+  required Game game,
+  required String humanPlayerId,
+  required AppEventBus bus,
+  required MapTopology topology,
+  required String? locationScopeKey,
+  bool removeFleetOnNextFrame = false,
+}) async {
+  await tester.pumpWidget(
+    ScopedNavalPanelHarness(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      bus: bus,
+      topology: topology,
+      locationScopeKey: locationScopeKey,
+      removeFleetOnNextFrame: removeFleetOnNextFrame,
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> emitNavalScopedMove(
+  WidgetTester tester,
+  AppEventBus bus,
+  String humanId,
+) async {
+  bus.emit(
+    NavalMoveFleetRequestedEvent(
+      humanPlayerId: humanId,
+      moveOrder: const NavalMoveOrder(
+        fleetId: 'f1',
+        destinationSeaZoneId: 'oldWorld|s2',
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<(AppEventBus, List<ClosePanelEvent>)> pumpNavalAutocloseCase(
+  WidgetTester tester, {
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  String? locationScopeKey = 'sea:oldWorld|s1',
+  MapTopology? topology,
+  bool removeFleetOnNextFrame = false,
+}) async {
+  final (bus, closeEvents) = wireNavalClosePanelCapture();
+  await pumpNavalScopedHarness(
+    tester,
+    game: buildNavalPanelSingleSeaFleetGame(
+      humanId: humanId,
+      gameId: gameId,
+      displayName: displayName,
+    ),
+    humanPlayerId: humanId,
+    bus: bus,
+    topology: topology ?? buildNavalTwoSeaZonesTopology(),
+    locationScopeKey: locationScopeKey,
+    removeFleetOnNextFrame: removeFleetOnNextFrame,
+  );
+  return (bus, closeEvents);
+}
+
+List<Fleet> navalNonHomeFleetsWithShips(Game game, String humanId) {
+  return game.worldState.fleets
+      .where(
+        (f) =>
+            f.ownerId == humanId &&
+            f.shipTypeIds.isNotEmpty &&
+            f.id != homeFleetIdFor(humanId),
+      )
+      .toList();
+}
+
+Fleet navalPanelPortPeer({
+  required String id,
+  required String humanId,
+  required List<ShipInstance> ships,
+  String port = kNavalPanelCapProvince,
+}) => Fleet(
+  id: id,
+  ownerId: humanId,
+  regionId: 'oldWorld',
+  inPortAtProvinceId: port,
+  ships: ships,
+);
+
+Game navalPanelCapPeersGame({
+  required String humanId,
+  required String gameId,
+  required String displayName,
+  required List<Fleet> peerFleets,
+  List<ShipInstance> homeShips = const [
+    ShipInstance(id: 'ship_h', typeId: 'carrack'),
+  ],
+  int? nextShipInstanceSeq,
+}) => buildNavalPanelCapitalHomeAndPeersGame(
+  humanId: humanId,
+  gameId: gameId,
+  displayName: displayName,
+  nextShipInstanceSeq: nextShipInstanceSeq,
+  homeShips: homeShips,
+  peerFleets: peerFleets,
+);
+
+(AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalFleetBusWithWire({
+  required StreamSubscription<dynamic> Function(AppEventBus bus) wire,
+}) {
+  NavalFleetsUpdatedEvent? updated;
+  final bus = AppEventBus.create();
+  addTearDown(
+    bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+      updated = e;
+    }).cancel,
+  );
+  addTearDown(wire(bus).cancel);
+  return (bus, () => updated);
+}
+
+Future<void> tapNavalFleetCheckboxFinders(
+  WidgetTester tester,
+  List<Finder> tiles,
+) async {
+  for (final tile in tiles) {
+    await tester.tap(
+      find.descendant(of: tile, matching: find.byType(Checkbox)),
+    );
+    await tester.pumpAndSettle();
+  }
+}
+
+/// Stateful host for location-scope / draft-move naval panel pins.
+class ScopedNavalPanelHarness extends StatefulWidget {
+  const ScopedNavalPanelHarness({
+    required this.game,
+    required this.humanPlayerId,
+    required this.bus,
+    required this.topology,
+    required this.locationScopeKey,
+    this.removeFleetOnNextFrame = false,
+    super.key,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+  final AppEventBus bus;
+  final MapTopology topology;
+  final String? locationScopeKey;
+  final bool removeFleetOnNextFrame;
+
+  @override
+  State<ScopedNavalPanelHarness> createState() =>
+      _ScopedNavalPanelHarnessState();
+}
+
+class _ScopedNavalPanelHarnessState extends State<ScopedNavalPanelHarness> {
+  late Orders _draftOrders;
+  late Game _game;
+  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _draftOrders = const Orders();
+    _game = widget.game;
+    _moveSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((event) {
+      if (!mounted) return;
+      setState(() {
+        _draftOrders = Orders(
+          navalMoveOrdersByPlayerId: {
+            event.humanPlayerId: [
+              NavalMoveOrder(
+                fleetId: event.moveOrder.fleetId,
+                destinationSeaZoneId: event.moveOrder.destinationSeaZoneId,
+                destinationPortProvinceId:
+                    event.moveOrder.destinationPortProvinceId,
+              ),
+            ],
+          },
+        );
+      });
+    });
+    if (widget.removeFleetOnNextFrame) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _game = _game.copyWith(
+            worldState: _game.worldState.copyWith(fleets: const []),
+          );
+        });
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _moveSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return buildAppShell(
+      child: Scaffold(
+        body: NavalUnitsPanel(
+          game: _game,
+          humanPlayerId: widget.humanPlayerId,
+          bus: widget.bus,
+          topology: widget.topology,
+          draftOrders: _draftOrders,
+          locationScopeKey: widget.locationScopeKey,
+        ),
+      ),
+    );
+  }
 }
 

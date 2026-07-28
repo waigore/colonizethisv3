@@ -625,7 +625,9 @@ class Clean extends StatelessWidget {
       const skipped = <String>[
         'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
         'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
-        'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_selection.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_settlements.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_units.dart',
         'app/lib/features/game/flame/minimap/game_region_minimap.dart',
         'app/lib/features/game/flame/render/resource_icon_disc_palette.dart',
       ];

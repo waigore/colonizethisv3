@@ -11,219 +11,13 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
+import 'game_map_area_state_logic_test_support.dart';
+
 void main() {
   suppressLogsForTests();
 
-  const humanPlayerId = 'gp1';
-  const explorerId = 'u_explorer';
-
-  RegionMapViewData baseRegion(
-    String regionId, {
-    List<CivilianTileMarkerView> markers = const [],
-    List<CellViewData>? cells,
-  }) {
-    return RegionMapViewData(
-      regionId: regionId,
-      width: 2,
-      height: 1,
-      cellSize: 16,
-      cells:
-          cells ??
-          const [
-            CellViewData(x: 0, y: 0, regionCellId: 'p1', isSea: false),
-            CellViewData(x: 1, y: 0, regionCellId: 'p1', isSea: false),
-          ],
-      capitalMarkers: const [],
-      portMarkers: const [],
-      factionColors: const {},
-      greatPowerFactionIds: const {},
-      terrainColors: const {},
-      unitMarkers: const [],
-      civilianTileMarkers: markers,
-    );
-  }
-
-  CivilianTileMarkerView civilianMarker({
-    required String tileKey,
-    required String unitId,
-    required String unitType,
-    int x = 0,
-    int y = 0,
-    String localProvinceId = 'p1',
-  }) {
-    return CivilianTileMarkerView(
-      tileKey: tileKey,
-      x: x,
-      y: y,
-      localProvinceId: localProvinceId,
-      unitIds: [unitId],
-      unitTypes: {unitId: unitType},
-      representativeUnitType: unitType,
-      stackCount: 1,
-      representativeIsAssigned: false,
-    );
-  }
-
-  ct_models.Province prov(String regionId, String localId) =>
-      ct_models.Province(id: '$regionId|$localId', regionId: regionId);
-
-  ct_models.Unit unit({
-    required String id,
-    required String type,
-    required String provinceId,
-    required String tileKey,
-  }) => ct_models.Unit(
-    id: id,
-    type: type,
-    ownerId: humanPlayerId,
-    locationProvinceId: provinceId,
-    tileKey: tileKey,
-    status: ct_models.UnitStatus.idle,
-  );
-
-  ct_models.WorkOrder workOrder({
-    required String unitId,
-    required String target,
-    required String targetTileKey,
-  }) => ct_models.WorkOrder(
-    unitId: unitId,
-    target: target,
-    targetTileKey: targetTileKey,
-  );
-
-  ct_models.Game humanGame({
-    ct_models.RegionData? oldWorld,
-    ct_models.RegionData? newWorld,
-    Map<String, Map<String, String>>? playerVisibilityByTile,
-  }) {
-    return ct_models.Game(
-      id: 'g',
-      worldState: ct_models.WorldState(
-        turnState: const ct_models.TurnState(
-          phase: ct_models.TurnPhase.orders,
-          turnNumber: 1,
-        ),
-        oldWorld:
-            oldWorld ?? const ct_models.RegionData(provinces: [], units: []),
-        newWorld:
-            newWorld ?? const ct_models.RegionData(provinces: [], units: []),
-        playerVisibilityByTile: playerVisibilityByTile ?? const {},
-      ),
-      players: const [
-        ct_models.Player(
-          id: humanPlayerId,
-          displayName: 'Human',
-          isHuman: true,
-        ),
-      ],
-      minorNations: const [],
-      tribes: const [],
-    );
-  }
-
-  ct_models.Game gameExplorerOldToNew({required String sourceTile}) {
-    return humanGame(
-      oldWorld: ct_models.RegionData(
-        provinces: [prov('oldWorld', 'p1'), prov('oldWorld', 'pA')],
-        units: [
-          unit(
-            id: explorerId,
-            type: ct_models.kUnitTypeExplorer,
-            provinceId: 'oldWorld|p1',
-            tileKey: sourceTile,
-          ),
-        ],
-      ),
-      newWorld: ct_models.RegionData(
-        provinces: [
-          prov('newWorld', 'p1'),
-          prov('newWorld', 'pA'),
-          prov('newWorld', 'pB'),
-        ],
-        units: const [],
-      ),
-    );
-  }
-
-  ct_models.Game gameExplorerNewToOld({required String sourceTile}) {
-    return humanGame(
-      oldWorld: ct_models.RegionData(
-        provinces: [prov('oldWorld', 'p1')],
-        units: const [],
-      ),
-      newWorld: ct_models.RegionData(
-        provinces: [prov('newWorld', 'p1')],
-        units: [
-          unit(
-            id: explorerId,
-            type: ct_models.kUnitTypeExplorer,
-            provinceId: 'newWorld|p1',
-            tileKey: sourceTile,
-          ),
-        ],
-      ),
-    );
-  }
-
-  ct_models.Orders prospectOrder(String targetTile) => ct_models.Orders(
-    workOrdersByPlayerId: {
-      humanPlayerId: [
-        workOrder(
-          unitId: explorerId,
-          target: kWorkTargetProspect,
-          targetTileKey: targetTile,
-        ),
-      ],
-    },
-  );
-
-  RegionMapViewData projectDraft({
-    required RegionMapViewData region,
-    required ct_models.Game game,
-    required ct_models.Orders orders,
-  }) => GameMapAreaStateLogic.projectCivilianMarkersForHumanDraft(
-    region: region,
-    game: game,
-    orders: orders,
-    humanPlayerId: humanPlayerId,
-  );
-
-  RegionMapViewData regionWithExplorerMarker(
-    String regionId,
-    String sourceTile,
-  ) => baseRegion(
-    regionId,
-    markers: [
-      civilianMarker(
-        tileKey: sourceTile,
-        unitId: explorerId,
-        unitType: ct_models.kUnitTypeExplorer,
-      ),
-    ],
-  );
-
-  void expectSingleProjectedTile({
-    required RegionMapViewData region,
-    required ct_models.Game game,
-    required ct_models.Orders orders,
-    required String tileKey,
-  }) {
-    final projected = projectDraft(region: region, game: game, orders: orders);
-    expect(projected.civilianTileMarkers, hasLength(1));
-    expect(projected.civilianTileMarkers.single.tileKey, tileKey);
-  }
-
-  void expectEmptyProjection({
-    required RegionMapViewData region,
-    required ct_models.Game game,
-    required ct_models.Orders orders,
-  }) {
-    expect(
-      projectDraft(region: region, game: game, orders: orders)
-          .civilianTileMarkers,
-      isEmpty,
-    );
-  }
+  const humanPlayerId = kStateLogicHumanPlayerId;
+  const explorerId = kStateLogicExplorerId;
 
   group('GameMapAreaStateLogic', () {
     test(
@@ -233,21 +27,21 @@ void main() {
         const targetTile = 'oldWorld|p1|1|0';
         const unitId = 'u_builder';
 
-        final region = baseRegion(
+        final region = stateLogicBaseRegion(
           'oldWorld',
           markers: [
-            civilianMarker(
+            stateLogicCivilianMarker(
               tileKey: sourceTile,
               unitId: unitId,
               unitType: ct_models.kUnitTypeBuilder,
             ),
           ],
         );
-        final game = humanGame(
+        final game = stateLogicHumanGame(
           oldWorld: ct_models.RegionData(
-            provinces: [prov('oldWorld', 'p1')],
+            provinces: [stateLogicProv('oldWorld', 'p1')],
             units: [
-              unit(
+              stateLogicUnit(
                 id: unitId,
                 type: ct_models.kUnitTypeBuilder,
                 provinceId: 'oldWorld|p1',
@@ -262,7 +56,7 @@ void main() {
         final orders = ct_models.Orders(
           workOrdersByPlayerId: {
             humanPlayerId: [
-              workOrder(
+              stateLogicWorkOrder(
                 unitId: unitId,
                 target: kWorkTargetBuildImprovement,
                 targetTileKey: targetTile,
@@ -271,7 +65,7 @@ void main() {
           },
         );
 
-        final projected = projectDraft(
+        final projected = stateLogicProjectDraft(
           region: region,
           game: game,
           orders: orders,
@@ -306,26 +100,26 @@ void main() {
               target: 'newWorld|p1|1|0',
               sourceRegion: 'oldWorld',
               destRegion: 'newWorld',
-              gameAt: (s) => gameExplorerOldToNew(sourceTile: s),
+              gameAt: (s) => stateLogicGameExplorerOldToNew(sourceTile: s),
             ),
             (
               source: 'newWorld|p1|0|0',
               target: 'oldWorld|p1|1|0',
               sourceRegion: 'newWorld',
               destRegion: 'oldWorld',
-              gameAt: (s) => gameExplorerNewToOld(sourceTile: s),
+              gameAt: (s) => stateLogicGameExplorerNewToOld(sourceTile: s),
             ),
           ]) {
             final game = case_.gameAt(case_.source);
-            final orders = prospectOrder(case_.target);
-            expectSingleProjectedTile(
-              region: baseRegion(case_.destRegion),
+            final orders = stateLogicProspectOrder(case_.target);
+            expectStateLogicSingleProjectedTile(
+              region: stateLogicBaseRegion(case_.destRegion),
               game: game,
               orders: orders,
               tileKey: case_.target,
             );
-            expectEmptyProjection(
-              region: regionWithExplorerMarker(
+            expectStateLogicEmptyProjection(
+              region: stateLogicRegionWithExplorerMarker(
                 case_.sourceRegion,
                 case_.source,
               ),
@@ -337,11 +131,11 @@ void main() {
           // OW→NW also pins local province + unit id on the destination marker.
           const owSource = 'oldWorld|p1|0|0';
           const nwTarget = 'newWorld|p1|1|0';
-          final owGame = gameExplorerOldToNew(sourceTile: owSource);
-          final nwMarker = projectDraft(
-            region: baseRegion('newWorld'),
+          final owGame = stateLogicGameExplorerOldToNew(sourceTile: owSource);
+          final nwMarker = stateLogicProjectDraft(
+            region: stateLogicBaseRegion('newWorld'),
             game: owGame,
-            orders: prospectOrder(nwTarget),
+            orders: stateLogicProspectOrder(nwTarget),
           ).civilianTileMarkers.single;
           expect(nwMarker.localProvinceId, 'p1');
           expect(nwMarker.unitIds, contains(explorerId));
@@ -354,12 +148,15 @@ void main() {
           const targetA = 'newWorld|pA|1|0';
           const targetB = 'newWorld|pB|0|0';
           const merchantId = 'u_merchant';
-          final game = gameExplorerOldToNew(sourceTile: sourceTile);
-          final oldRegion = regionWithExplorerMarker('oldWorld', sourceTile);
-          final newRegion = baseRegion('newWorld');
-          final ordersDraft = prospectOrder(targetTile);
+          final game = stateLogicGameExplorerOldToNew(sourceTile: sourceTile);
+          final oldRegion = stateLogicRegionWithExplorerMarker(
+            'oldWorld',
+            sourceTile,
+          );
+          final newRegion = stateLogicBaseRegion('newWorld');
+          final ordersDraft = stateLogicProspectOrder(targetTile);
 
-          final projectedNw = projectDraft(
+          final projectedNw = stateLogicProjectDraft(
             region: newRegion,
             game: game,
             orders: ordersDraft,
@@ -370,44 +167,44 @@ void main() {
             isNot(startsWith('oldWorld|')),
           );
 
-          expectEmptyProjection(
+          expectStateLogicEmptyProjection(
             region: newRegion,
             game: game,
             orders: const ct_models.Orders(),
           );
-          expectSingleProjectedTile(
+          expectStateLogicSingleProjectedTile(
             region: oldRegion,
             game: game,
             orders: const ct_models.Orders(),
             tileKey: sourceTile,
           );
 
-          final retargetRegion = baseRegion(
+          final retargetRegion = stateLogicBaseRegion(
             'newWorld',
             cells: const [
               CellViewData(x: 0, y: 0, regionCellId: 'pB', isSea: false),
               CellViewData(x: 1, y: 0, regionCellId: 'pA', isSea: false),
             ],
           );
-          expectSingleProjectedTile(
+          expectStateLogicSingleProjectedTile(
             region: retargetRegion,
             game: game,
-            orders: prospectOrder(targetA),
+            orders: stateLogicProspectOrder(targetA),
             tileKey: targetA,
           );
-          final markerB = projectDraft(
+          final markerB = stateLogicProjectDraft(
             region: retargetRegion,
             game: game,
-            orders: prospectOrder(targetB),
+            orders: stateLogicProspectOrder(targetB),
           ).civilianTileMarkers.single;
           expect(markerB.tileKey, targetB);
           expect(markerB.localProvinceId, 'pB');
 
-          final stackGame = humanGame(
+          final stackGame = stateLogicHumanGame(
             oldWorld: ct_models.RegionData(
-              provinces: [prov('oldWorld', 'p1')],
+              provinces: [stateLogicProv('oldWorld', 'p1')],
               units: [
-                unit(
+                stateLogicUnit(
                   id: explorerId,
                   type: ct_models.kUnitTypeExplorer,
                   provinceId: 'oldWorld|p1',
@@ -416,9 +213,9 @@ void main() {
               ],
             ),
             newWorld: ct_models.RegionData(
-              provinces: [prov('newWorld', 'p1')],
+              provinces: [stateLogicProv('newWorld', 'p1')],
               units: [
-                unit(
+                stateLogicUnit(
                   id: merchantId,
                   type: ct_models.kUnitTypeMerchant,
                   provinceId: 'newWorld|p1',
@@ -427,10 +224,10 @@ void main() {
               ],
             ),
           );
-          final stackRegion = baseRegion(
+          final stackRegion = stateLogicBaseRegion(
             'newWorld',
             markers: [
-              civilianMarker(
+              stateLogicCivilianMarker(
                 tileKey: targetTile,
                 unitId: merchantId,
                 unitType: ct_models.kUnitTypeMerchant,
@@ -438,16 +235,16 @@ void main() {
               ),
             ],
           );
-          final stackOrders = prospectOrder(targetTile);
-          final stacked = projectDraft(
+          final stackOrders = stateLogicProspectOrder(targetTile);
+          final stacked = stateLogicProjectDraft(
             region: stackRegion,
             game: stackGame,
             orders: stackOrders,
           ).civilianTileMarkers.single;
           expect(stacked.tileKey, targetTile);
           expect(stacked.unitIds, containsAll([explorerId, merchantId]));
-          expectEmptyProjection(
-            region: regionWithExplorerMarker('oldWorld', sourceTile),
+          expectStateLogicEmptyProjection(
+            region: stateLogicRegionWithExplorerMarker('oldWorld', sourceTile),
             game: stackGame,
             orders: stackOrders,
           );

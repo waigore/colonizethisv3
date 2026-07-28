@@ -1,7 +1,5 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -15,148 +13,9 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-import 'app_shell_harness.dart';
 import 'naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
-
-(AppEventBus bus, List<ClosePanelEvent> events) _wireCloseCapture() {
-  final events = <ClosePanelEvent>[];
-  final bus = AppEventBus.create();
-  final sub = bus.on<ClosePanelEvent>().listen(events.add);
-  addTearDown(sub.cancel);
-  return (bus, events);
-}
-
-Future<void> _pumpScopedHarness(
-  WidgetTester tester, {
-  required Game game,
-  required String humanPlayerId,
-  required AppEventBus bus,
-  required MapTopology topology,
-  required String? locationScopeKey,
-  bool removeFleetOnNextFrame = false,
-}) async {
-  await tester.pumpWidget(
-    _ScopedNavalPanelHarness(
-      game: game,
-      humanPlayerId: humanPlayerId,
-      bus: bus,
-      topology: topology,
-      locationScopeKey: locationScopeKey,
-      removeFleetOnNextFrame: removeFleetOnNextFrame,
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
-Future<void> _emitScopedMove(
-  WidgetTester tester,
-  AppEventBus bus,
-  String humanId,
-) async {
-  bus.emit(
-    NavalMoveFleetRequestedEvent(
-      humanPlayerId: humanId,
-      moveOrder: const NavalMoveOrder(
-        fleetId: 'f1',
-        destinationSeaZoneId: 'oldWorld|s2',
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
-
-Future<(AppEventBus, List<ClosePanelEvent>)> _pumpAutocloseCase(
-  WidgetTester tester, {
-  required String humanId,
-  required String gameId,
-  required String displayName,
-  String? locationScopeKey = 'sea:oldWorld|s1',
-  MapTopology? topology,
-  bool removeFleetOnNextFrame = false,
-}) async {
-  final (bus, closeEvents) = _wireCloseCapture();
-  await _pumpScopedHarness(
-    tester,
-    game: buildNavalPanelSingleSeaFleetGame(
-      humanId: humanId,
-      gameId: gameId,
-      displayName: displayName,
-    ),
-    humanPlayerId: humanId,
-    bus: bus,
-    topology: topology ?? buildNavalTwoSeaZonesTopology(),
-    locationScopeKey: locationScopeKey,
-    removeFleetOnNextFrame: removeFleetOnNextFrame,
-  );
-  return (bus, closeEvents);
-}
-
-List<Fleet> _nonHomeFleetsWithShips(Game game, String humanId) {
-  return game.worldState.fleets
-      .where(
-        (f) =>
-            f.ownerId == humanId &&
-            f.shipTypeIds.isNotEmpty &&
-            f.id != homeFleetIdFor(humanId),
-      )
-      .toList();
-}
-
-Fleet _portPeer({
-  required String id,
-  required String humanId,
-  required List<ShipInstance> ships,
-  String port = 'oldWorld|cap1',
-}) => Fleet(
-  id: id,
-  ownerId: humanId,
-  regionId: 'oldWorld',
-  inPortAtProvinceId: port,
-  ships: ships,
-);
-
-Game _capPeers({
-  required String humanId,
-  required String gameId,
-  required String displayName,
-  required List<Fleet> peerFleets,
-  List<ShipInstance> homeShips = const [
-    ShipInstance(id: 'ship_h', typeId: 'carrack'),
-  ],
-  int? nextShipInstanceSeq,
-}) => buildNavalPanelCapitalHomeAndPeersGame(
-  humanId: humanId,
-  gameId: gameId,
-  displayName: displayName,
-  nextShipInstanceSeq: nextShipInstanceSeq,
-  homeShips: homeShips,
-  peerFleets: peerFleets,
-);
-
-(AppEventBus, NavalFleetsUpdatedEvent? Function()) _wireFleetBus({
-  required StreamSubscription<dynamic> Function(AppEventBus bus) wire,
-}) {
-  NavalFleetsUpdatedEvent? updated;
-  final bus = AppEventBus.create();
-  addTearDown(
-    bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-      updated = e;
-    }).cancel,
-  );
-  addTearDown(wire(bus).cancel);
-  return (bus, () => updated);
-}
-
-Future<void> _tapCbs(WidgetTester tester, List<Finder> tiles) async {
-  for (final tile in tiles) {
-    await tester.tap(
-      find.descendant(of: tile, matching: find.byType(Checkbox)),
-    );
-    await tester.pumpAndSettle();
-  }
-}
 
 void main() {
   suppressLogsForTests();
@@ -284,7 +143,7 @@ void main() {
         bool expectFleetRow = false,
         required int closeCount,
       }) async {
-        final (bus, closeEvents) = await _pumpAutocloseCase(
+        final (bus, closeEvents) = await pumpNavalAutocloseCase(
           tester,
           humanId: humanId,
           gameId: gameId,
@@ -296,7 +155,7 @@ void main() {
         if (expectFleetRow) {
           expect(find.textContaining('Fleet f1'), findsOneWidget);
         }
-        if (emitMove) await _emitScopedMove(tester, bus, humanId);
+        if (emitMove) await emitNavalScopedMove(tester, bus, humanId);
         expect(closeEvents.length, closeCount);
       }
 
@@ -332,7 +191,7 @@ void main() {
         const homeId = 'gp_move_home';
         await pumpNavalPanel(
           tester,
-          game: _capPeers(
+          game: navalPanelCapPeersGame(
             humanId: homeId,
             gameId: 'g_move_home',
             displayName: 'Move Home Test',
@@ -350,7 +209,7 @@ void main() {
         );
 
         final humanId = humanPlayerIdWithFleets;
-        final nonHomeFleets = _nonHomeFleetsWithShips(game, humanId);
+        final nonHomeFleets = navalNonHomeFleetsWithShips(game, humanId);
         if (nonHomeFleets.isEmpty) return;
         final fleetTile = find.widgetWithText(
           ExpansionTile,
@@ -398,25 +257,25 @@ void main() {
       (WidgetTester tester) async {
         const humanId = 'gp_home_never_deleted';
         final homeId = homeFleetIdFor(humanId);
-        final g = _capPeers(
+        final g = navalPanelCapPeersGame(
           humanId: humanId,
           gameId: 'g_home_never_deleted',
           displayName: 'Home never deleted tester',
           nextShipInstanceSeq: 3,
           peerFleets: [
-            _portPeer(
+            navalPanelPortPeer(
               id: 'donor',
               humanId: humanId,
               ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
             ),
           ],
         );
-        final (bus, updated) = _wireFleetBus(
+        final (bus, updated) = wireNavalFleetBusWithWire(
           wire: (b) =>
               wireNavalTransferForWidgetTest(bus: b, gameSnapshot: () => g),
         );
         await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
-        await _tapCbs(tester, [
+        await tapNavalFleetCheckboxFinders(tester, [
           find.widgetWithText(ExpansionTile, 'Home Fleet'),
           find.widgetWithText(ExpansionTile, 'Fleet donor'),
         ]);
@@ -446,20 +305,20 @@ void main() {
       'AC: Non-Home fleet split cannot empty original (Confirm Split disabled)',
       (WidgetTester tester) async {
         const humanId = 'gp_nonhome_removed';
-        final g = _capPeers(
+        final g = navalPanelCapPeersGame(
           humanId: humanId,
           gameId: 'g_nonhome_removed',
           displayName: 'Non-home removed tester',
           nextShipInstanceSeq: 3,
           peerFleets: [
-            _portPeer(
+            navalPanelPortPeer(
               id: 'split_me',
               humanId: humanId,
               ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
             ),
           ],
         );
-        final (bus, updated) = _wireFleetBus(
+        final (bus, updated) = wireNavalFleetBusWithWire(
           wire: (b) =>
               wireNavalSplitForWidgetTest(bus: b, gameSnapshot: () => g),
         );
@@ -494,88 +353,4 @@ void main() {
       },
     );
   });
-}
-
-class _ScopedNavalPanelHarness extends StatefulWidget {
-  const _ScopedNavalPanelHarness({
-    required this.game,
-    required this.humanPlayerId,
-    required this.bus,
-    required this.topology,
-    required this.locationScopeKey,
-    this.removeFleetOnNextFrame = false,
-  });
-
-  final Game game;
-  final String humanPlayerId;
-  final AppEventBus bus;
-  final MapTopology topology;
-  final String? locationScopeKey;
-  final bool removeFleetOnNextFrame;
-
-  @override
-  State<_ScopedNavalPanelHarness> createState() =>
-      _ScopedNavalPanelHarnessState();
-}
-
-class _ScopedNavalPanelHarnessState extends State<_ScopedNavalPanelHarness> {
-  late Orders _draftOrders;
-  late Game _game;
-  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _draftOrders = const Orders();
-    _game = widget.game;
-    _moveSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((event) {
-      if (!mounted) return;
-      setState(() {
-        _draftOrders = Orders(
-          navalMoveOrdersByPlayerId: {
-            event.humanPlayerId: [
-              NavalMoveOrder(
-                fleetId: event.moveOrder.fleetId,
-                destinationSeaZoneId: event.moveOrder.destinationSeaZoneId,
-                destinationPortProvinceId:
-                    event.moveOrder.destinationPortProvinceId,
-              ),
-            ],
-          },
-        );
-      });
-    });
-    if (widget.removeFleetOnNextFrame) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _game = _game.copyWith(
-            worldState: _game.worldState.copyWith(fleets: const []),
-          );
-        });
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _moveSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return buildAppShell(
-      child: Scaffold(
-        body: NavalUnitsPanel(
-          game: _game,
-          humanPlayerId: widget.humanPlayerId,
-          bus: widget.bus,
-          topology: widget.topology,
-          draftOrders: _draftOrders,
-          locationScopeKey: widget.locationScopeKey,
-        ),
-      ),
-    );
-  }
 }
