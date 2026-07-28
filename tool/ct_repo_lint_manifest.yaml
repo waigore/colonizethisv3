@@ -574,6 +574,14 @@ rules:
     script: tool/check_app_flame_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_flame_lib_physical_file_size
+    group: structure
+    title: app/lib/features/game/flame files must stay at or below 400 physical lines (shrink-only grandfather)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_app_flame_lib_physical_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
