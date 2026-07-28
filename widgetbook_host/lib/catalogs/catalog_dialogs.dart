@@ -1017,3 +1017,41 @@ List<WidgetbookNode> get settingsDialogDirectories => [
     ],
   ),
 ];
+
+/// Development disconnected-assign warn dialog. SPEC/ui/development-panel.md.
+List<WidgetbookNode> get developmentDisconnectedAssignDialogDirectories => [
+  WidgetbookFolder(
+    name: 'Development Disconnected Assign Dialog',
+    children: [
+      WidgetbookUseCase(
+        name: 'Road first enabled',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: Center(
+            child: DevelopmentDisconnectedAssignDialog(
+              roadFirstState: DevelopmentRoadFirstState(
+                enabled: true,
+                candidate: DevelopmentRoadFirstCandidate(
+                  engineerUnitId: 'e1',
+                  targetTileKey: 'oldWorld|p1|1|0',
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Road first disabled — no Engineers',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: Center(
+            child: DevelopmentDisconnectedAssignDialog(
+              roadFirstState: const DevelopmentRoadFirstState(
+                enabled: false,
+                disabledReason: 'No idle Engineers',
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+];

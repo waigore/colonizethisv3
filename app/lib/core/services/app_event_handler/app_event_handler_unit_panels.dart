@@ -1,5 +1,6 @@
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../config/routes.dart';
+import '../../../features/game/screens/development/development_disconnected_assign_dialog.dart';
 import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
 import '../../../features/game/widgets/panels/pause_menu_panel.dart';
 import '../../../features/game/widgets/shell/shell_player_context.dart';
@@ -85,6 +87,34 @@ Future<bool> appEventHandlerShowConfirmDialog(
     _log.e('ConfirmDialog failed', error: e, stackTrace: st);
     event.result(false);
     return false;
+  }
+}
+
+Future<void> appEventHandlerShowDevelopmentDisconnectedAssignDialog(
+  AppEventHandler handler,
+  DevelopmentDisconnectedAssignDialogEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) {
+    event.result(DevelopmentDisconnectedAssignChoice.cancel);
+    return;
+  }
+  try {
+    final choice = await showDialog<DevelopmentDisconnectedAssignChoice>(
+      context: nav.context,
+      barrierDismissible: true,
+      barrierColor: EditorialMonoclePalette.dialogScrim,
+      builder: (ctx) => DevelopmentDisconnectedAssignDialog(
+        roadFirstState: DevelopmentRoadFirstState(
+          enabled: event.roadFirstEnabled,
+          disabledReason: event.roadFirstDisabledReason,
+        ),
+      ),
+    );
+    event.result(choice ?? DevelopmentDisconnectedAssignChoice.cancel);
+  } catch (e, st) {
+    _log.e('DevelopmentDisconnectedAssignDialog failed', error: e, stackTrace: st);
+    event.result(DevelopmentDisconnectedAssignChoice.cancel);
   }
 }
 

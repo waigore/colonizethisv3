@@ -2010,6 +2010,66 @@
   "@civilian_units_assign": {
     "description": "Assign action button in civilian units panel."
   },
+  "development_purchasedLand": "Purchased land",
+  "@development_purchasedLand": {
+    "description": "Section header for purchased-land scopes in the Development panel."
+  },
+  "development_noImprovableResources": "No improvable resources",
+  "@development_noImprovableResources": {
+    "description": "Empty improvable row under a province scope in the Development panel."
+  },
+  "development_materialsShortageForAssign": "Materials shortage for assign:",
+  "@development_materialsShortageForAssign": {
+    "description": "Overview warning when assign-time material costs cannot be met."
+  },
+  "development_idleCivilians": "Idle Builders: {builders} · Idle Engineers: {engineers}",
+  "@development_idleCivilians": {
+    "description": "Overview idle civilian counts in the Development panel.",
+    "placeholders": {
+      "builders": {
+        "type": "int"
+      },
+      "engineers": {
+        "type": "int"
+      }
+    }
+  },
+  "development_mapDataUnavailable": "Map data unavailable",
+  "@development_mapDataUnavailable": {
+    "description": "Fallback when Development panel map data cannot be loaded."
+  },
+  "development_disconnectedTitle": "Not connected to capital",
+  "@development_disconnectedTitle": {
+    "description": "Disconnected-assign warn dialog title in the Development panel."
+  },
+  "development_disconnectedBody": "The chosen tile is not linked to your capital. Improve anyway, build a road step toward the capital first, or cancel.",
+  "@development_disconnectedBody": {
+    "description": "Disconnected-assign warn dialog body in the Development panel."
+  },
+  "development_roadFirst": "Road first",
+  "@development_roadFirst": {
+    "description": "Road-first action in the Development disconnected-assign dialog."
+  },
+  "development_improveAnyway": "Improve anyway",
+  "@development_improveAnyway": {
+    "description": "Improve-anyway action in the Development disconnected-assign dialog."
+  },
+  "development_show": "Show",
+  "@development_show": {
+    "description": "Show-on-map action for an improvable commodity row in the Development panel."
+  },
+  "development_improvableCount": "{count} {name}",
+  "@development_improvableCount": {
+    "description": "Improvable commodity count label in the Development panel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "production_breakdown_title": "Commodity breakdown",
   "@production_breakdown_title": {
     "description": "Production commodity breakdown dialog title."

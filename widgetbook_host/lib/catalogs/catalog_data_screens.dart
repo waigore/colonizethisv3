@@ -741,6 +741,235 @@ Widget _victoryScreenAnnotatedMinimapStory() {
   );
 }
 
+const String _kDevelopmentPanelStoryGameId = 'wb_development_panel';
+
+Game _developmentPanelStoryGame() {
+  const human = 'gp1';
+  const p1 = 'oldWorld|p1';
+  const p2 = 'oldWorld|p2';
+  const tileA = 'oldWorld|p1|0|0';
+  const tileB = 'oldWorld|p1|1|0';
+  const tileP2 = 'oldWorld|p2|0|1';
+
+  return Game(
+    id: _kDevelopmentPanelStoryGameId,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: p1,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Avalon',
+            townTileKey: tileA,
+          ),
+          Province(
+            id: p2,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Barren',
+            townTileKey: tileP2,
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'b1',
+            type: kUnitTypeBuilder,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+          Unit(
+            id: 'e1',
+            type: kUnitTypeEngineer,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          p1: [tileA, tileB],
+          p2: [tileP2],
+        },
+      },
+      resourceByTileKey: {
+        tileA: 'grain',
+        tileB: 'grain',
+      },
+      tileState: const TileMapState(
+        improvementByTile: {
+          tileA: 0,
+          tileB: 0,
+        },
+      ),
+      playerVisibilityByTile: {
+        human: {
+          tileA: 'fullyVisible',
+          tileB: 'fullyVisible',
+          tileP2: 'fullyVisible',
+        },
+      },
+    ),
+    players: const [
+      Player(
+        id: human,
+        displayName: 'England',
+        isHuman: true,
+        capitalProvinceId: p1,
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'p1',
+          x: 0,
+          y: 0,
+        ),
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+        techUnlocked: {kTechIdCircularSaw: true},
+      ),
+    ],
+  );
+}
+
+class _DevelopmentPanelStoryGameService extends StoryStubGameService {
+  static final Map<String, MapTopology> _topologyByRegion = {
+    'oldWorld': MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'p2',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
+    ),
+    'newWorld': const MapTopology(nodes: [], edges: []),
+  };
+
+  static final Map<String, TileMapResult> _tileMapByRegion = {
+    'oldWorld': TileMapResult(
+      width: 2,
+      height: 2,
+      grid: const [
+        ['p1', 'p1'],
+        ['p2', 'p2'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains, TerrainType.plains],
+        [TerrainType.plains, TerrainType.plains],
+      ],
+      resourceGrid: [
+        [Resource.grain, Resource.grain],
+        [null, null],
+      ],
+    ),
+    'newWorld': TileMapResult(
+      width: 1,
+      height: 1,
+      grid: const [
+        ['nw1'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains],
+      ],
+    ),
+  };
+
+  static final MapTopology _combinedTopology = MapTopology(
+    nodes: const [
+      TopologyNode(
+        id: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'oldWorld|p2',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+    ],
+  );
+
+  @override
+  GameMapData? getMapData(String gameId) {
+    if (gameId != _kDevelopmentPanelStoryGameId) return null;
+    return (
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+      warpLinks: null,
+    );
+  }
+}
+
+Widget _developmentPanelStoryHost({required Widget child}) {
+  final game = _developmentPanelStoryGame();
+  return ProviderScope(
+    overrides: [
+      appEventBusProvider.overrideWith((ref) {
+        final bus = AppEventBus.create();
+        ref.onDispose(bus.dispose);
+        return bus;
+      }),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      gameServiceProvider.overrideWith(
+        (ref) => _DevelopmentPanelStoryGameService(),
+      ),
+    ],
+    child: widgetbookEditorialMonocleApp(
+      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      useScaffold: false,
+      child: child,
+    ),
+  );
+}
+
+Widget _developmentPanelDefaultStory() {
+  final game = _developmentPanelStoryGame();
+  return _developmentPanelStoryHost(
+    child: DevelopmentScreen(game: game, humanPlayerId: 'gp1'),
+  );
+}
+
+/// Development screen stories. SPEC/ui/development-panel.md.
+List<WidgetbookNode> get developmentScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Development Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Default — Old World',
+        builder: (context) => _developmentPanelDefaultStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Default — Old World (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _developmentPanelDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Default — Old World (wide)',
+        builder: (context) =>
+            wideViewport(context, _developmentPanelDefaultStory()),
+      ),
+    ],
+  ),
+];
+
 /// Victory screen stories. SPEC/ui/victory-panel.md.
 List<WidgetbookNode> get victoryScreenDirectories => [
   WidgetbookFolder(

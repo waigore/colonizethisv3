@@ -95,6 +95,7 @@ void main() {
   const List<Key> railButtonKeys = <Key>[
     kEmpireProductionButtonKey,
     kEmpireTradeButtonKey,
+    kEmpireDevelopmentButtonKey,
     kEmpireCivilianUnitsButtonKey,
     kEmpireMilitaryUnitsButtonKey,
     kEmpireNavalUnitsButtonKey,
@@ -324,6 +325,7 @@ void main() {
       final Map<Key, String> expectedLabels = <Key, String>{
         kEmpireProductionButtonKey: 'Production',
         kEmpireTradeButtonKey: 'Trade',
+        kEmpireDevelopmentButtonKey: 'Development',
         kEmpireCivilianUnitsButtonKey: 'Civilian Units',
         kEmpireMilitaryUnitsButtonKey: 'Military Units',
         kEmpireNavalUnitsButtonKey: 'Naval Units',

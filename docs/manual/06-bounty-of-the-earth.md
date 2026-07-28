@@ -8,12 +8,12 @@ Tiles feed the realm only when civilians improve them, bind them with roads and 
 
 ### Where you assign work
 
-1. Open `UNIT10001` **Civilian units panel** and select a civilian, **or** select a province on `MAP10001` / `MAP20001` and use Economic / tile shortcuts (e.g. **Build improvement**).
+1. Open `UNIT10001` **Civilian units panel** and select a civilian, **or** select a province on `MAP10001` / `MAP20001` and use Economic / tile shortcuts (e.g. **Build improvement**), **or** open `GAME80001` **Development** from the empire rail for empire-wide improvable tiles and one-tap **Assign**.
 2. Choose a work target; the map highlights valid tiles (flashing selection affordances on `MAP10001`).
 3. Confirm the assignment in the Orders phase. Materials and treasury affordability are checked **at assign**; for most builds, stockpile materials are reserved/deducted when Build/work applies the order. Rejected assigns surface messages such as **Insufficient treasury** or **Insufficient materials**.
 4. The unit may need to **move** to the work tile in **Movement**; work then ticks in **Build/work**. New extraction yields appear in later turns’ **Extraction** phase once improvements exist and connectivity allows.
 
-`GAME20001` **Production** shows your empire stockpile, queued recipes, and pending material costs for work you have staged. **`MAP20001` Economic** **Extraction** and **Available** rows are different: they **project** what this province would yield from the **current post-resolution world state** — visible immediately on a new game (including bootstrap grain farms), not only after an Extraction phase has run. Staging improve, road, or town draft orders mid-turn does **not** change Extraction or Available until turn resolution applies them. Display-only: your stockpile still receives commodities when the Extraction phase runs (see `SPEC/ui/province-economic-extraction-available.md`).
+`GAME20001` **Production** shows your empire stockpile, queued recipes, and pending material costs for work you have staged. **`GAME80001` Development** lists improvable resource tiles across your owned provinces and purchased land (Old World / New World tabs), with an extraction overview and idle Builder/Engineer counts. **Assign** commits a pending `build_improvement` on the best eligible tile (connected tiles preferred). When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway**, **Road first** (commits one Engineer `build_road` step toward the capital — no automatic improve), or **Cancel**. **`MAP20001` Economic** **Extraction** and **Available** rows are different: they **project** what this province would yield from the **current post-resolution world state** — visible immediately on a new game (including bootstrap grain farms), not only after an Extraction phase has run. Staging improve, road, or town draft orders mid-turn does **not** change Extraction or Available until turn resolution applies them. Display-only: your stockpile still receives commodities when the Extraction phase runs (see `SPEC/ui/province-economic-extraction-available.md`).
 
 ### Reading Extraction on `MAP20001`
 
@@ -70,7 +70,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 
 ## Acceptance criteria for this chapter
 
-- [ ] Documents assign flows via `UNIT10001` and `MAP20001` / `MAP10001`.
+- [ ] Documents assign flows via `UNIT10001`, `MAP20001` / `MAP10001`, and `GAME80001` Development.
 - [ ] Covers work targets: improvement, town, road, port, fort, rail, purchase_land (explore/prospect cross-ref Ch. 4).
 - [ ] States assign-time Insufficient treasury/materials checks and one-order / per-tile exclusivity.
 - [ ] Documents cancel without material refund; purchase_land debit-at-completion.
@@ -96,6 +96,7 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - `SPEC/ui/province-sea-zone-detail-overlay.md`
 - `SPEC/ui/province-economic-extraction-available.md`
 - `SPEC/ui/map-widget.md`
+- `SPEC/ui/development-panel.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/civilian-work-planner.md`

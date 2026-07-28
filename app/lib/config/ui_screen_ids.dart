@@ -19,6 +19,7 @@ abstract final class UiScreenIds {
   static const String gameSideMenu = 'GAME50001';
   static const String tradeScreen = 'GAME60001';
   static const String victoryScreen = 'GAME70001';
+  static const String developmentScreen = 'GAME80001';
 
   // MAP — map surfaces
   static const String empireOverviewMapArea = 'MAP10001';

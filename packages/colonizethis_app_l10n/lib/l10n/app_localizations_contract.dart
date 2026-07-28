@@ -1136,6 +1136,39 @@ abstract class AppLocalizations {
   /// Assign action button in civilian units panel.
   String get civilian_units_assign;
 
+  /// Section header for purchased-land scopes in the Development panel.
+  String get development_purchasedLand;
+
+  /// Empty improvable row under a province scope in the Development panel.
+  String get development_noImprovableResources;
+
+  /// Overview warning when assign-time material costs cannot be met.
+  String get development_materialsShortageForAssign;
+
+  /// Overview idle civilian counts in the Development panel.
+  String development_idleCivilians(int builders, int engineers);
+
+  /// Fallback when Development panel map data cannot be loaded.
+  String get development_mapDataUnavailable;
+
+  /// Disconnected-assign warn dialog title in the Development panel.
+  String get development_disconnectedTitle;
+
+  /// Disconnected-assign warn dialog body in the Development panel.
+  String get development_disconnectedBody;
+
+  /// Road-first action in the Development disconnected-assign dialog.
+  String get development_roadFirst;
+
+  /// Improve-anyway action in the Development disconnected-assign dialog.
+  String get development_improveAnyway;
+
+  /// Show-on-map action for an improvable commodity row in the Development panel.
+  String get development_show;
+
+  /// Improvable commodity count label in the Development panel.
+  String development_improvableCount(int count, String name);
+
   /// Production commodity breakdown dialog title.
   String get production_breakdown_title;
 
