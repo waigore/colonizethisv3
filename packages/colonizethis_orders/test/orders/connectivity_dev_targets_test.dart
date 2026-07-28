@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_targets.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 ConnectivityDevSnapshot _snapshot({
   Set<String> connected = const {},

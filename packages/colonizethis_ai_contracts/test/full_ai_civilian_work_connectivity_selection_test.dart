@@ -4,7 +4,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
-import 'package:test/test.dart';
+import 'package:colonizethis_test/test.dart';
 
 /// Connectivity-aware Engineer selection mirrors (Refs #4176 AC-E1).
 void main() {
