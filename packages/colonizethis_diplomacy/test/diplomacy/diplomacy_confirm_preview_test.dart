@@ -120,6 +120,208 @@ void main() {
     expect(body, isNot(contains('£')));
   });
 
+  test('offer peace states conditional peace without timing line', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: targetGp,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Spain',
+    );
+    final body = lines.join('\n');
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+    expect(body.toLowerCase(), contains('peace'));
+    expect(body.toLowerCase(), contains('accept'));
+  });
+
+  test('alliance states free cost and mutual-defence offer', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: targetGp,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Spain',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('No treasury charge'));
+    expect(body.toLowerCase(), contains('treaty'));
+    expect(body.toLowerCase(), contains('allied'));
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+  });
+
+  test('embassy overture shows single treasury cost', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.embassy,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Bavaria',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('£$overtureEmbassyCost'));
+    expect('£'.allMatches(body).length, 1);
+    expect(body, contains('only on acceptance'));
+  });
+
+  test('nap overture states free cost and pact offer', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.nap,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Bavaria',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('No treasury charge'));
+    expect(body, contains('Non-Aggression Pact'));
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+  });
+
+  test('establish ftp states free cost and favoured-trading terms', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.establishFtp,
+        targetFactionId: targetGp,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Spain',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('No treasury charge'));
+    expect(body.toLowerCase(), contains('favoured-trading-partner'));
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+  });
+
+  test('boycott states colony trade embargo', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: targetGp,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Spain',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('No treasury charge'));
+    expect(body.toLowerCase(), contains('colonies'));
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+  });
+
+  test('revoke boycott ends trade embargo copy', () {
+    final lines = buildDiplomacyConfirmPreviewLines(
+      order: const DiplomaticOrder(
+        type: DiplomaticOrderType.revokeBoycott,
+        targetFactionId: targetGp,
+      ),
+      game: baseGame(),
+      humanPlayerId: humanId,
+      targetDisplayName: 'Spain',
+    );
+    final body = lines.join('\n');
+    expect(body, contains('No treasury charge'));
+    expect(body.toLowerCase(), contains('embargo'));
+    expect(lines.any((l) => l.startsWith('When:')), isFalse);
+  });
+
+  test('preview lines stay short structured labels without prose wall', () {
+    final orders = <DiplomaticOrder>[
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.declareWar,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.offerPeace,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.alliance,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.breakAlliance,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishFtp,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.boycott,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.revokeBoycott,
+        targetFactionId: targetGp,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.grantAid,
+        targetFactionId: minorId,
+        amount: 1000,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.setSubsidy,
+        targetFactionId: minorId,
+        amount: 10,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.tradeConsulate,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.embassy,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.nap,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: minorId,
+        overtureStage: OvertureStage.joinEmpire,
+      ),
+      const DiplomaticOrder(
+        type: DiplomaticOrderType.establishOverture,
+        targetFactionId: targetGp,
+        overtureStage: OvertureStage.joinEmpire,
+      ),
+    ];
+    for (final order in orders) {
+      final lines = buildDiplomacyConfirmPreviewLines(
+        order: order,
+        game: baseGame(),
+        humanPlayerId: humanId,
+        targetDisplayName: 'Spain',
+      );
+      expect(lines, isNotEmpty);
+      expect(lines.length, lessThanOrEqualTo(4));
+      for (final line in lines) {
+        expect(
+          line.startsWith('Cost:') ||
+              line.startsWith('Effect:') ||
+              line.startsWith('When:'),
+          isTrue,
+          reason: 'Unexpected line prefix in $order: $line',
+        );
+      }
+    }
+  });
+
   test('grant aid and subsidy preview lines', () {
     final grant = buildDiplomacyConfirmPreviewLines(
       order: const DiplomaticOrder(

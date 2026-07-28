@@ -1,6 +1,7 @@
 // Diplomacy confirm dialog first-order preview pins (Refs #4181).
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -128,6 +129,64 @@ Game _gpJoinEmpireConfirmGame() {
         stage: OvertureStage.nap,
       ),
     ],
+  );
+}
+
+Game _minorEmbassyOvertureConfirmGame() {
+  return _minorConsulateConfirmGame().copyWith(
+    overtureStates: const [
+      OvertureState(
+        gpId: diplomacyOrdersHumanId,
+        targetId: diplomacyOrdersMinorId,
+        stage: OvertureStage.tradeConsulate,
+      ),
+    ],
+  );
+}
+
+Game _minorNapOvertureConfirmGame() {
+  return _minorConsulateConfirmGame().copyWith(
+    overtureStates: const [
+      OvertureState(
+        gpId: diplomacyOrdersHumanId,
+        targetId: diplomacyOrdersMinorId,
+        stage: OvertureStage.embassy,
+      ),
+    ],
+  );
+}
+
+Game _ftpConfirmGame() {
+  return buildDiplomacyPanelTestGame().copyWith(
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: diplomacyOrdersHumanId,
+        factionId2: diplomacyOrdersGp2,
+        state: RelationState.atPeace,
+        score: relationScoreMinFtp,
+      ),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: diplomacyOrdersHumanId,
+        targetId: diplomacyOrdersGp2,
+        stage: OvertureStage.embassy,
+      ),
+    ],
+  );
+}
+
+Game _colonyBoycottConfirmGame({List<BoycottState> boycotts = const []}) {
+  return buildDiplomacyPanelTestGame().copyWith(
+    colonyStates: const [
+      ColonyState(
+        tribeId: 't1',
+        colonyOfGpId: diplomacyOrdersHumanId,
+        sinceTurn: 1,
+      ),
+    ],
+    tribes: const [Tribe(id: 't1', displayName: 'Aztec')],
+    boycottStates: boycotts,
   );
 }
 
@@ -314,6 +373,153 @@ void main() {
       expect(body.toLowerCase(), contains('absorbed'));
       expect(body, isNot(contains('Confirm Join Empire against')));
       expect(body, isNot(contains('£')));
+    },
+  );
+
+  for (final c in <({
+    String name,
+    Game Function() game,
+    Finder Function() actionFinder,
+    bool minorsTab,
+    void Function(String body) assertBody,
+  })>[
+    (
+      name: 'Offer Peace confirm includes conditional peace preview (Refs #4181)',
+      game: buildDiplomacyRichPanelTestGame,
+      actionFinder: () {
+        final gp3Row = find.byKey(
+          const ValueKey('${kDiplomacyRowBodyKeyPrefix}gp3'),
+        );
+        return find.descendant(of: gp3Row, matching: find.text('Offer Peace'));
+      },
+      minorsTab: false,
+      assertBody: (body) {
+        expect(body.toLowerCase(), contains('peace'));
+        expect(body.toLowerCase(), contains('accept'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+    (
+      name: 'Alliance confirm includes treaty preview (Refs #4181)',
+      game: buildDiplomacyPanelTestGame,
+      actionFinder: () => find.text('Alliance'),
+      minorsTab: false,
+      assertBody: (body) {
+        expect(body, contains('No treasury charge'));
+        expect(body.toLowerCase(), contains('treaty'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+    (
+      name: 'Embassy confirm shows paid overture preview (Refs #4181)',
+      game: _minorEmbassyOvertureConfirmGame,
+      actionFinder: () => find.descendant(
+        of: diplomacyMinorRow(),
+        matching: find.text('Embassy'),
+      ),
+      minorsTab: true,
+      assertBody: (body) {
+        expect(body, contains('£$overtureEmbassyCost'));
+        expect(body, contains('only on acceptance'));
+      },
+    ),
+    (
+      name: 'NAP confirm shows free pact preview (Refs #4181)',
+      game: _minorNapOvertureConfirmGame,
+      actionFinder: () => find.descendant(
+        of: diplomacyMinorRow(),
+        matching: find.text('NAP'),
+      ),
+      minorsTab: true,
+      assertBody: (body) {
+        expect(body, contains('No treasury charge'));
+        expect(body, contains('Non-Aggression Pact'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+    (
+      name: 'Establish FTP confirm shows favoured-trading preview (Refs #4181)',
+      game: _ftpConfirmGame,
+      actionFinder: () => find.text('Establish FTP'),
+      minorsTab: false,
+      assertBody: (body) {
+        expect(body, contains('No treasury charge'));
+        expect(body.toLowerCase(), contains('favoured-trading-partner'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+    (
+      name: 'Boycott confirm shows colony embargo preview (Refs #4181)',
+      game: _colonyBoycottConfirmGame,
+      actionFinder: () => find.text('Boycott'),
+      minorsTab: false,
+      assertBody: (body) {
+        expect(body.toLowerCase(), contains('colonies'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+    (
+      name: 'Revoke Boycott confirm ends embargo preview (Refs #4181)',
+      game: () => _colonyBoycottConfirmGame(
+        boycotts: const [
+          BoycottState(
+            gpId: diplomacyOrdersHumanId,
+            targetGpId: diplomacyOrdersGp2,
+            sinceTurn: 1,
+          ),
+        ],
+      ),
+      actionFinder: () => find.text('Revoke Boycott'),
+      minorsTab: false,
+      assertBody: (body) {
+        expect(body.toLowerCase(), contains('embargo'));
+        expect(body, isNot(contains('When:')));
+      },
+    ),
+  ]) {
+    testWidgets(c.name, (WidgetTester tester) async {
+      final eventBus = AppEventBus.create();
+      final confirmFuture = eventBus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+      await pumpDiplomacyOrdersPanel(
+        tester,
+        game: c.game(),
+        bus: eventBus,
+        minorsTab: c.minorsTab,
+        tall: true,
+      );
+      await tapVisibleDiplomacy(tester, c.actionFinder());
+      final confirm = await confirmFuture;
+      c.assertBody(confirm.message);
+      expect(confirm.message, isNot(startsWith('Confirm ')));
+    });
+  }
+
+  testWidgets(
+    'Non-goal: disabled action matrix unchanged on GP row (Refs #4181)',
+    (WidgetTester tester) async {
+      final game = buildDiplomacyPanelTestGame();
+      final rows = buildDiplomacyRows(
+        game,
+        const MapTopology(),
+        diplomacyOrdersHumanId,
+        const Orders(),
+      );
+      final gpRow = rows.firstWhere((r) => r.factionId == diplomacyOrdersGp2);
+      final offerPeace = gpRow.actions.firstWhere(
+        (a) => a.order.type == DiplomaticOrderType.offerPeace,
+      );
+      expect(offerPeace.enabled, isFalse);
+      expect(offerPeace.rejectionReason, isNotEmpty);
+
+      await pumpDiplomacyOrdersPanel(tester, game: game, tall: true);
+      final offerPeaceButton = find.widgetWithText(
+        CtNinePatchButton,
+        'Offer Peace',
+      );
+      expect(tester.widget<CtNinePatchButton>(offerPeaceButton).enabled, isFalse);
     },
   );
 }
