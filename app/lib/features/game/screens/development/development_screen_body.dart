@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -12,7 +14,6 @@ import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_tab_strip.dart';
 import '../../widgets/shell/shell_player_context.dart';
-import 'development_disconnected_assign_dialog.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_map_panel.dart';
 import 'development_panel_overview.dart';
@@ -145,10 +146,15 @@ Future<void> _handleDevelopmentAssign({
       improveTargetTileKey: candidate.targetTileKey,
       connectedTileKeys: connectedTileKeys,
     );
-    final choice = await showDevelopmentDisconnectedAssignDialog(
-      context,
-      roadFirstState: roadFirstState,
+    final completer = Completer<DevelopmentDisconnectedAssignChoice>();
+    ref.read(appEventBusProvider).emit(
+      DevelopmentDisconnectedAssignDialogEvent(
+        roadFirstEnabled: roadFirstState.enabled,
+        roadFirstDisabledReason: roadFirstState.disabledReason,
+        onResult: completer.complete,
+      ),
     );
+    final choice = await completer.future;
     switch (choice) {
       case DevelopmentDisconnectedAssignChoice.cancel:
         return;
