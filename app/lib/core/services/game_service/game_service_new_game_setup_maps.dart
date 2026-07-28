@@ -1,8 +1,12 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_setup/colonizethis_setup.dart';
+import 'package:colonizethis_setup/colonizethis_setup.dart'
+    show
+        GameSetupResult,
+        generateWarpZones,
+        kDefaultSeaFraction;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'game_service.dart';
 import 'game_service_map_cache.dart';
