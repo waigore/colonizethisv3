@@ -61,6 +61,8 @@ abstract final class RegionMapPalette {
   static const double extractionIndicatorOverlapFactor = 0.45;
   static const double extractionIndicatorStartInsetXPx = 2.0;
   static const Color extractionDiscBlockedBrown = Color(0xFF5C4033);
+  static const Color extractionDiscStrokeColor = Color(0xFF1A120C);
+  static const double extractionDiscStrokeWidthPx = 1.25;
   static const Color factionPoliticalBorderColor = Color(0xFF1A237E);
   static const double provinceLabelMaxWidthPx = 120;
   static const double provinceLabelFontSizePx = 11;
