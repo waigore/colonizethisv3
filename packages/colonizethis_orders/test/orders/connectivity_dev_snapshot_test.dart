@@ -6,10 +6,12 @@ import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_orders/src/orders/work_suggestion_pipeline.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/scenario_runner.dart';
+
 /// ConnectivityDevSnapshot builder pins (Refs #4176 AC-A5, AC-A7).
 void main() {
-  group('buildConnectivityDevSnapshot', () {
-    test('AC-A5 owned-land traversal only for extension distances', () {
+  runLabeledScenarioGroup('buildConnectivityDevSnapshot', [
+    rs('AC-A5 owned-land traversal only for extension distances', () {
       const ow = 'oldWorld';
       const pCapital = '$ow|pCap';
       const pForeign = '$ow|pFor';
@@ -107,73 +109,76 @@ void main() {
         reason: 'foreign-province barrier must block owned-land extension '
             'distance toward the isolated resource province',
       );
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('build_road connectivity ordering with probe cap', () {
-    test('AC-A7 frontier tile is first accepted despite lex-smaller non-frontier', () {
-      const frontierTile = 'oldWorld|p1|2|4';
-      final lexSorted = <String>[
-        for (var y = 0; y < 5; y++)
-          for (var x = 0; x < 5; x++) 'oldWorld|p1|$x|$y',
-      ];
-      final snapshot = ConnectivityDevSnapshot(
-        connected: {'oldWorld|p1|4|4', 'oldWorld|p1|3|4', 'oldWorld|p1|4|3'},
-        pathTransportCap: const {},
-        extensionDistanceByTile: {
-          frontierTile: 6,
-          'oldWorld|p1|3|3': 6,
-          'oldWorld|p1|4|2': 6,
-        },
-        seaZonesReachableFromCapital: const {},
-        provincesWithUnconnectedDevTargets: {'oldWorld|p1'},
-        hasUnconnectedDevTargets: true,
-        frontierExtensionTiles: {
-          frontierTile,
-          'oldWorld|p1|3|3',
-          'oldWorld|p1|4|2',
-        },
-        bottleneckRailTiles: const {},
-        adjacentToConnectedTiles: {
-          frontierTile,
-          'oldWorld|p1|3|3',
-          'oldWorld|p1|4|2',
-        },
-      );
-      final ordered = prioritizeBuildRoadCandidatesByConnectivity(
-        snapshot: snapshot,
-        sortedVisible: lexSorted,
-      );
-      expect(ordered.first, frontierTile);
+  runLabeledScenarioGroup('build_road connectivity ordering with probe cap', [
+    rs(
+      'AC-A7 frontier tile is first accepted despite lex-smaller non-frontier',
+      () {
+        const frontierTile = 'oldWorld|p1|2|4';
+        final lexSorted = <String>[
+          for (var y = 0; y < 5; y++)
+            for (var x = 0; x < 5; x++) 'oldWorld|p1|$x|$y',
+        ];
+        final snapshot = ConnectivityDevSnapshot(
+          connected: {'oldWorld|p1|4|4', 'oldWorld|p1|3|4', 'oldWorld|p1|4|3'},
+          pathTransportCap: const {},
+          extensionDistanceByTile: {
+            frontierTile: 6,
+            'oldWorld|p1|3|3': 6,
+            'oldWorld|p1|4|2': 6,
+          },
+          seaZonesReachableFromCapital: const {},
+          provincesWithUnconnectedDevTargets: {'oldWorld|p1'},
+          hasUnconnectedDevTargets: true,
+          frontierExtensionTiles: {
+            frontierTile,
+            'oldWorld|p1|3|3',
+            'oldWorld|p1|4|2',
+          },
+          bottleneckRailTiles: const {},
+          adjacentToConnectedTiles: {
+            frontierTile,
+            'oldWorld|p1|3|3',
+            'oldWorld|p1|4|2',
+          },
+        );
+        final ordered = prioritizeBuildRoadCandidatesByConnectivity(
+          snapshot: snapshot,
+          sortedVisible: lexSorted,
+        );
+        expect(ordered.first, frontierTile);
 
-      final unit = Unit(
-        id: 'e1',
-        type: kUnitTypeEngineer,
-        ownerId: 'gp1',
-        locationProvinceId: 'oldWorld|p1',
-      );
-      final suggestions = <WorkOrder>[];
-      WorkSuggestionPipeline.run(
-        unit: unit,
-        unitType: unit.type,
-        unitRegionId: 'oldWorld',
-        atProvinceId: 'oldWorld|p1',
-        workTarget: kWorkTargetBuildRoad,
-        existingTargetsByUnit: {},
-        suggestions: suggestions,
-        candidatesProvider: () sync* {
-          for (final tileKey in ordered) {
-            yield WorkOrder(
-              unitId: unit.id,
-              target: kWorkTargetBuildRoad,
-              targetTileKey: tileKey,
-            );
-          }
-        },
-        candidateAcceptor: (_) => true,
-        noCandidateReason: 'no_valid_tile',
-      );
-      expect(suggestions.single.targetTileKey, frontierTile);
-    });
-  });
+        final unit = Unit(
+          id: 'e1',
+          type: kUnitTypeEngineer,
+          ownerId: 'gp1',
+          locationProvinceId: 'oldWorld|p1',
+        );
+        final suggestions = <WorkOrder>[];
+        WorkSuggestionPipeline.run(
+          unit: unit,
+          unitType: unit.type,
+          unitRegionId: 'oldWorld',
+          atProvinceId: 'oldWorld|p1',
+          workTarget: kWorkTargetBuildRoad,
+          existingTargetsByUnit: {},
+          suggestions: suggestions,
+          candidatesProvider: () sync* {
+            for (final tileKey in ordered) {
+              yield WorkOrder(
+                unitId: unit.id,
+                target: kWorkTargetBuildRoad,
+                targetTileKey: tileKey,
+              );
+            }
+          },
+          candidateAcceptor: (_) => true,
+          noCandidateReason: 'no_valid_tile',
+        );
+        expect(suggestions.single.targetTileKey, frontierTile);
+      },
+    ),
+  ], runRunnableScenario);
 }

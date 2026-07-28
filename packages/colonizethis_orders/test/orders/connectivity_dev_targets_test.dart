@@ -6,6 +6,7 @@ import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/scenario_runner.dart';
 import 'support/suggestion/order_suggestion_work_feedstock_priority_fixtures.dart';
 
 ConnectivityDevSnapshot _snapshot({
@@ -30,8 +31,8 @@ ConnectivityDevSnapshot _snapshot({
 }
 
 void main() {
-  group('prioritizeBuildRoadCandidatesByConnectivity', () {
-    test('AC-A2 frontier hard demotion', () {
+  runLabeledScenarioGroup('prioritizeBuildRoadCandidatesByConnectivity', [
+    rs('AC-A2 frontier hard demotion', () {
       final snapshot = _snapshot(
         frontier: {'oldWorld|p1|0|1'},
         extensionDistance: {'oldWorld|p1|0|1': 2},
@@ -41,9 +42,8 @@ void main() {
         sortedVisible: ['oldWorld|p1|9|9', 'oldWorld|p1|0|1'],
       );
       expect(ordered.first, 'oldWorld|p1|0|1');
-    });
-
-    test('AC-A3 nearest-target-first within frontier', () {
+    }),
+    rs('AC-A3 nearest-target-first within frontier', () {
       final snapshot = _snapshot(
         frontier: {'oldWorld|p1|0|1', 'oldWorld|p1|0|3'},
         extensionDistance: {'oldWorld|p1|0|1': 1, 'oldWorld|p1|0|3': 3},
@@ -53,9 +53,8 @@ void main() {
         sortedVisible: ['oldWorld|p1|0|3', 'oldWorld|p1|0|1'],
       );
       expect(ordered, ['oldWorld|p1|0|1', 'oldWorld|p1|0|3']);
-    });
-
-    test('AC-A4 baseline when no unconnected targets', () {
+    }),
+    rs('AC-A4 baseline when no unconnected targets', () {
       final snapshot = _snapshot(hasTargets: false);
       const input = ['oldWorld|p1|9|9', 'oldWorld|p1|0|1'];
       expect(
@@ -65,11 +64,11 @@ void main() {
         ),
         input,
       );
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('prioritizeBuildImprovementCandidatesByConnectivity', () {
-    test('AC-C1 connected > adjacent > far', () {
+  runLabeledScenarioGroup('prioritizeBuildImprovementCandidatesByConnectivity', [
+    rs('AC-C1 connected > adjacent > far', () {
       final snapshot = _snapshot(
         connected: {'c'},
         adjacent: {'a'},
@@ -79,38 +78,42 @@ void main() {
         sortedVisible: ['f', 'a', 'c'],
       );
       expect(ordered, ['c', 'a', 'f']);
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('applyBuildImprovementConnectivityPreservingFeedstock', () {
-    test('AC-C3 feedstock tile precedes connected non-feedstock tile', () {
-      final game = feedstockPriorityGame();
-      expect(
-        feedstockExtractionResourceIdsForPlayer(
-          game,
-          feedstockPrioritySupplierId,
-        ),
-        contains('iron'),
-      );
-      final snapshot = _snapshot(
-        connected: {feedstockPrioritySupplierGrainTile},
-        adjacent: const {},
-      );
-      final ordered = applyBuildImprovementConnectivityPreservingFeedstock(
-        game: game,
-        playerId: feedstockPrioritySupplierId,
-        sortedVisible: [
-          feedstockPrioritySupplierGrainTile,
-          feedstockPrioritySupplierIronTile,
-        ],
-        snapshot: snapshot,
-      );
-      expect(ordered.first, feedstockPrioritySupplierIronTile);
-    });
-  });
+  runLabeledScenarioGroup(
+    'applyBuildImprovementConnectivityPreservingFeedstock',
+    [
+      rs('AC-C3 feedstock tile precedes connected non-feedstock tile', () {
+        final game = feedstockPriorityGame();
+        expect(
+          feedstockExtractionResourceIdsForPlayer(
+            game,
+            feedstockPrioritySupplierId,
+          ),
+          contains('iron'),
+        );
+        final snapshot = _snapshot(
+          connected: {feedstockPrioritySupplierGrainTile},
+          adjacent: const {},
+        );
+        final ordered = applyBuildImprovementConnectivityPreservingFeedstock(
+          game: game,
+          playerId: feedstockPrioritySupplierId,
+          sortedVisible: [
+            feedstockPrioritySupplierGrainTile,
+            feedstockPrioritySupplierIronTile,
+          ],
+          snapshot: snapshot,
+        );
+        expect(ordered.first, feedstockPrioritySupplierIronTile);
+      }),
+    ],
+    runRunnableScenario,
+  );
 
-  group('prioritizeBuildRailCandidatesByConnectivity', () {
-    test('AC-B1 bottleneck promotion', () {
+  runLabeledScenarioGroup('prioritizeBuildRailCandidatesByConnectivity', [
+    rs('AC-B1 bottleneck promotion', () {
       final snapshot = _snapshot(
         connected: {'bottleneck', 'plain'},
         bottleneck: {'bottleneck'},
@@ -120,9 +123,8 @@ void main() {
         sortedVisible: ['plain', 'bottleneck'],
       );
       expect(ordered.first, 'bottleneck');
-    });
-
-    test('AC-B2 no-yield-gain demotion', () {
+    }),
+    rs('AC-B2 no-yield-gain demotion', () {
       final snapshot = _snapshot(
         connected: {'bottleneck', 'satisfied'},
         bottleneck: {'bottleneck'},
@@ -132,11 +134,11 @@ void main() {
         sortedVisible: ['satisfied', 'bottleneck'],
       );
       expect(ordered.first, 'bottleneck');
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('prioritizeBuildPortCandidatesByConnectivity', () {
-    test('AC-D1 overseas resource province promotion', () {
+  runLabeledScenarioGroup('prioritizeBuildPortCandidatesByConnectivity', [
+    rs('AC-D1 overseas resource province promotion', () {
       const ow = 'oldWorld';
       const provinceId = '$ow|nw1';
       const linkedPort = '$provinceId|0|0';
@@ -215,9 +217,8 @@ void main() {
         topology: topology,
       );
       expect(ordered.first, linkedPort);
-    });
-
-    test('AC-D2 sea-unreachable demotion', () {
+    }),
+    rs('AC-D2 sea-unreachable demotion', () {
       const ow = 'oldWorld';
       const reachableProvince = '$ow|nwReach';
       const unreachableProvince = '$ow|nwBlock';
@@ -310,21 +311,21 @@ void main() {
         topology: topology,
       );
       expect(ordered.first, reachablePort);
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('stablePartitionByConnectivityTier', () {
-    test('preserves relative order within tier', () {
+  runLabeledScenarioGroup('stablePartitionByConnectivityTier', [
+    rs('preserves relative order within tier', () {
       final ordered = stablePartitionByConnectivityTier(
         ['b2', 'a2', 'b1', 'a1'],
         (k) => k.endsWith('1') ? 0 : 1,
       );
       expect(ordered, ['b1', 'a1', 'b2', 'a2']);
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('applyConnectivityDevTargetOrdering', () {
-    test('unknown target unchanged', () {
+  runLabeledScenarioGroup('applyConnectivityDevTargetOrdering', [
+    rs('unknown target unchanged', () {
       final snapshot = _snapshot();
       const input = ['t1', 't2'];
       expect(
@@ -346,6 +347,6 @@ void main() {
         ),
         input,
       );
-    });
-  });
+    }),
+  ], runRunnableScenario);
 }
