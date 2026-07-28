@@ -149,6 +149,7 @@ void main() {
       bus.publish(
         OrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.work,
           orderSummary: 'Build road',
           reasonCode: 'insufficient_treasury',
         ),
@@ -237,6 +238,7 @@ void main() {
       bus.publish(
         OrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.move,
           orderSummary: longSummary,
           reasonCode: 'invalid_order',
         ),

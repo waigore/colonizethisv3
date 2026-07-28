@@ -40,7 +40,7 @@ class GameEventLogger {
       VictorySetEvent e =>
         'turn=${e.turnNumber} winnerPlayerId=${e.winnerPlayerId} victoryType=${e.victoryType}',
       OrderRejectedEvent e =>
-        'playerId=${e.playerId} reasonCode=${e.reasonCode} orderSummary=${e.orderSummary}',
+        'playerId=${e.playerId} orderKind=${e.orderKind.name} reasonCode=${e.reasonCode} orderSummary=${e.orderSummary}',
       WorkOrderCompletedEvent e =>
         'turn=${e.turnNumber} playerId=${e.playerId} unitId=${e.unitId} '
             'workTarget=${e.workTarget} targetTileKey=${e.targetTileKey} provinceId=${e.provinceId}',

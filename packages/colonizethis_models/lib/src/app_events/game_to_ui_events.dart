@@ -1,6 +1,7 @@
 /// App event types. First-class library (Refs #4068 Slice C).
 
 import '../app_events.dart';
+import '../order_kind.dart';
 import '../turn_news_digest.dart';
 
 // ---------------------------------------------------------------------------
@@ -159,10 +160,12 @@ class AppVictorySetEvent extends GameToUIEvent {
 class AppOrderRejectedEvent extends GameToUIEvent {
   const AppOrderRejectedEvent({
     required this.playerId,
+    required this.orderKind,
     required this.orderSummary,
     required this.reasonCode,
   });
   final String playerId;
+  final OrderKind orderKind;
   final String orderSummary;
   final String reasonCode;
 }
