@@ -4,6 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/scenario_runner.dart';
 import 'support/suggestion/order_suggestion_core_fixtures.dart';
 
 TileMapResult _threeTileRowMap() => TileMapResult(
@@ -18,33 +19,35 @@ TileMapResult _threeTileRowMap() => TileMapResult(
 );
 
 void main() {
-  group('development panel road first (Refs #4175 Slice C)', () {
-    test('shortestOwnedTilePathToConnectedNetwork finds path on owned tiles', () {
-      final tile0 = OscIds.tile('p1', 0, 0);
-      final tile1 = OscIds.tile('p1', 1, 0);
-      final tile2 = OscIds.tile('p1', 2, 0);
-      final game = oscGame(
-        worldState: oscWorld(
-          oldWorld: RegionData(
-            provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+  runLabeledScenarioGroup('development panel road first (Refs #4175 Slice C)', [
+    rs(
+      'shortestOwnedTilePathToConnectedNetwork finds path on owned tiles',
+      () {
+        final tile0 = OscIds.tile('p1', 0, 0);
+        final tile1 = OscIds.tile('p1', 1, 0);
+        final tile2 = OscIds.tile('p1', 2, 0);
+        final game = oscGame(
+          worldState: oscWorld(
+            oldWorld: RegionData(
+              provinces: [oscProvince('p1', ownerId: OscIds.playerId)],
+            ),
+            tileKeysByRegionAndProvince: oscTilesByProvince({
+              'p1': [tile0, tile1, tile2],
+            }),
           ),
-          tileKeysByRegionAndProvince: oscTilesByProvince({
-            'p1': [tile0, tile1, tile2],
-          }),
-        ),
-      );
-      final path = shortestOwnedTilePathToConnectedNetwork(
-        game: game,
-        playerId: OscIds.playerId,
-        startTileKey: tile2,
-        connectedTileKeys: {tile0},
-        tileMapByRegion: {'oldWorld': _threeTileRowMap()},
-        topology: oscProvinceTopology(['p1']),
-      );
-      expect(path, [tile2, tile1, tile0]);
-    });
-
-    test('resolveDevelopmentRoadFirstState disables without idle Engineers', () {
+        );
+        final path = shortestOwnedTilePathToConnectedNetwork(
+          game: game,
+          playerId: OscIds.playerId,
+          startTileKey: tile2,
+          connectedTileKeys: {tile0},
+          tileMapByRegion: {'oldWorld': _threeTileRowMap()},
+          topology: oscProvinceTopology(['p1']),
+        );
+        expect(path, [tile2, tile1, tile0]);
+      },
+    ),
+    rs('resolveDevelopmentRoadFirstState disables without idle Engineers', () {
       final tile0 = OscIds.tile('p1', 0, 0);
       final tile2 = OscIds.tile('p1', 2, 0);
       final game = oscGame(
@@ -69,9 +72,8 @@ void main() {
       );
       expect(state.enabled, isFalse);
       expect(state.disabledReason, 'No idle Engineers');
-    });
-
-    test('resolveDevelopmentRoadFirstState enables with engineer and materials', () {
+    }),
+    rs('resolveDevelopmentRoadFirstState enables with engineer and materials', () {
       final tile0 = OscIds.tile('p1', 0, 0);
       final tile1 = OscIds.tile('p1', 1, 0);
       final tile2 = OscIds.tile('p1', 2, 0);
@@ -113,6 +115,6 @@ void main() {
       expect(state.enabled, isTrue);
       expect(state.candidate?.engineerUnitId, 'e1');
       expect(state.candidate?.targetTileKey, tile1);
-    });
-  });
+    }),
+  ], runRunnableScenario);
 }
