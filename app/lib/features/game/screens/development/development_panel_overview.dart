@@ -21,11 +21,49 @@ class DevelopmentPanelOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final extractionParts = <Widget>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const CtSectionLabel('Extraction'),
+        const SizedBox(height: 4),
+        _ExtractionStrip(
+          textTheme: textTheme,
+          landExtractionByCommodity: regionModel.landExtractionByCommodity,
+        ),
+        if (materialShortageCommodityIds.isNotEmpty)
+          _ShortageWarning(
+            textTheme: textTheme,
+            materialShortageCommodityIds: materialShortageCommodityIds,
+          ),
+        const SizedBox(height: CtSpacing.m),
+        Text(
+          'Idle Builders: ${regionModel.idleBuilderCount} · '
+          'Idle Engineers: ${regionModel.idleEngineerCount}',
+          style: textTheme.bodySmall?.copyWith(
+            color: EditorialMonoclePalette.muted,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExtractionStrip extends StatelessWidget {
+  const _ExtractionStrip({
+    required this.textTheme,
+    required this.landExtractionByCommodity,
+  });
+
+  final TextTheme textTheme;
+  final Map<String, int> landExtractionByCommodity;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <Widget>[];
     for (final commodity in CommodityCatalog.all) {
-      final qty = regionModel.landExtractionByCommodity[commodity.id];
+      final qty = landExtractionByCommodity[commodity.id];
       if (qty == null || qty <= 0) continue;
-      extractionParts.add(
+      parts.add(
         Padding(
           padding: const EdgeInsets.only(right: CtSpacing.s),
           child: Row(
@@ -44,11 +82,33 @@ class DevelopmentPanelOverview extends StatelessWidget {
         ),
       );
     }
+    if (parts.isEmpty) {
+      return Text(
+        '—',
+        style: textTheme.bodySmall?.copyWith(
+          color: EditorialMonoclePalette.muted,
+        ),
+      );
+    }
+    return Wrap(children: parts);
+  }
+}
 
-    final shortageParts = <Widget>[];
+class _ShortageWarning extends StatelessWidget {
+  const _ShortageWarning({
+    required this.textTheme,
+    required this.materialShortageCommodityIds,
+  });
+
+  final TextTheme textTheme;
+  final Set<String> materialShortageCommodityIds;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = <Widget>[];
     for (final commodity in CommodityCatalog.all) {
       if (!materialShortageCommodityIds.contains(commodity.id)) continue;
-      shortageParts.add(
+      parts.add(
         Padding(
           padding: const EdgeInsets.only(right: CtSpacing.s),
           child: Row(
@@ -67,39 +127,18 @@ class DevelopmentPanelOverview extends StatelessWidget {
         ),
       );
     }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CtSectionLabel('Extraction'),
-        const SizedBox(height: 4),
-        extractionParts.isEmpty
-            ? Text(
-                '—',
-                style: textTheme.bodySmall?.copyWith(
-                  color: EditorialMonoclePalette.muted,
-                ),
-              )
-            : Wrap(children: extractionParts),
-        if (shortageParts.isNotEmpty) ...[
-          const SizedBox(height: CtSpacing.s),
-          Text(
-            'Materials shortage for assign:',
-            style: textTheme.bodySmall?.copyWith(
-              color: EditorialMonoclePalette.accent,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Wrap(children: shortageParts),
-        ],
-        const SizedBox(height: CtSpacing.m),
+        const SizedBox(height: CtSpacing.s),
         Text(
-          'Idle Builders: ${regionModel.idleBuilderCount} · '
-          'Idle Engineers: ${regionModel.idleEngineerCount}',
+          'Materials shortage for assign:',
           style: textTheme.bodySmall?.copyWith(
-            color: EditorialMonoclePalette.muted,
+            color: EditorialMonoclePalette.accent,
           ),
         ),
+        const SizedBox(height: 4),
+        Wrap(children: parts),
       ],
     );
   }

@@ -33,21 +33,6 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final roadFirstTooltip = roadFirstState.enabled
-        ? null
-        : roadFirstState.disabledReason;
-
-    final roadFirstButton = CtNinePatchButton(
-      key: const ValueKey<String>(kDevelopmentRoadFirstButtonKey),
-      mutedVariant: true,
-      onPressed: roadFirstState.enabled
-          ? () => Navigator.of(
-              context,
-            ).pop(DevelopmentDisconnectedAssignChoice.roadFirst)
-          : null,
-      child: const Text('Road first'),
-    );
-
     return CtDialogShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -69,29 +54,58 @@ class DevelopmentDisconnectedAssignDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: CtSpacing.l),
-          CtNinePatchButton(
-            key: const ValueKey<String>(kDevelopmentImproveAnywayButtonKey),
-            onPressed: () => Navigator.of(
-              context,
-            ).pop(DevelopmentDisconnectedAssignChoice.improveAnyway),
-            child: const Text('Improve anyway'),
-          ),
-          const SizedBox(height: CtSpacing.s),
-          if (roadFirstTooltip != null)
-            Tooltip(message: roadFirstTooltip, child: roadFirstButton)
-          else
-            roadFirstButton,
-          const SizedBox(height: CtSpacing.s),
-          CtNinePatchButton(
-            key: const ValueKey<String>(kDevelopmentDisconnectedCancelButtonKey),
-            mutedVariant: true,
-            onPressed: () => Navigator.of(
-              context,
-            ).pop(DevelopmentDisconnectedAssignChoice.cancel),
-            child: const Text('Cancel'),
-          ),
+          _DisconnectedAssignActions(roadFirstState: roadFirstState),
         ],
       ),
+    );
+  }
+}
+
+class _DisconnectedAssignActions extends StatelessWidget {
+  const _DisconnectedAssignActions({required this.roadFirstState});
+
+  final DevelopmentRoadFirstState roadFirstState;
+
+  @override
+  Widget build(BuildContext context) {
+    final roadFirstTooltip = roadFirstState.enabled
+        ? null
+        : roadFirstState.disabledReason;
+    final roadFirstButton = CtNinePatchButton(
+      key: const ValueKey<String>(kDevelopmentRoadFirstButtonKey),
+      mutedVariant: true,
+      onPressed: roadFirstState.enabled
+          ? () => Navigator.of(
+              context,
+            ).pop(DevelopmentDisconnectedAssignChoice.roadFirst)
+          : null,
+      child: const Text('Road first'),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CtNinePatchButton(
+          key: const ValueKey<String>(kDevelopmentImproveAnywayButtonKey),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(DevelopmentDisconnectedAssignChoice.improveAnyway),
+          child: const Text('Improve anyway'),
+        ),
+        const SizedBox(height: CtSpacing.s),
+        if (roadFirstTooltip != null)
+          Tooltip(message: roadFirstTooltip, child: roadFirstButton)
+        else
+          roadFirstButton,
+        const SizedBox(height: CtSpacing.s),
+        CtNinePatchButton(
+          key: const ValueKey<String>(kDevelopmentDisconnectedCancelButtonKey),
+          mutedVariant: true,
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(DevelopmentDisconnectedAssignChoice.cancel),
+          child: const Text('Cancel'),
+        ),
+      ],
     );
   }
 }

@@ -121,53 +121,80 @@ class _ScopeCard extends StatelessWidget {
               ),
             )
           else
-            ...scope.improvableCommodities.map((row) {
-              final displayName = CommodityCatalog.all
-                  .firstWhere((c) => c.id == row.commodityId)
-                  .displayName ?? row.commodityId;
-              final tileKeys = row.tileKeys.toSet();
-              final assignState = assignRowStateFor(row.commodityId, tileKeys);
-              final assignTooltip = assignState.disabledReason;
-              final assignButton = CtActionTextButton(
-                key: DevelopmentPanelKeys.assignButtonKey(
-                  scope.scopeKey,
-                  row.commodityId,
-                ),
-                label: 'Assign',
-                onPressed: assignState.enabled && assignState.candidate != null
-                    ? () => onAssign(assignState.candidate!)
-                    : null,
-              );
-              return Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${row.count} $displayName',
-                        style: textTheme.bodySmall,
-                      ),
-                    ),
-                    CtActionTextButton(
-                      key: DevelopmentPanelKeys.showButtonKey(
-                        scope.scopeKey,
-                        row.commodityId,
-                      ),
-                      label: 'Show',
-                      onPressed: () => onShowTiles(tileKeys),
-                    ),
-                    const SizedBox(width: CtSpacing.s),
-                    if (assignTooltip != null && !assignState.enabled)
-                      Tooltip(
-                        message: assignTooltip,
-                        child: assignButton,
-                      )
-                    else
-                      assignButton,
-                  ],
-                ),
-              );
-            }),
+            ...scope.improvableCommodities.map(
+              (row) => _ImprovableCommodityRow(
+                scopeKey: scope.scopeKey,
+                row: row,
+                textTheme: textTheme,
+                assignRowStateFor: assignRowStateFor,
+                onShowTiles: onShowTiles,
+                onAssign: onAssign,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImprovableCommodityRow extends StatelessWidget {
+  const _ImprovableCommodityRow({
+    required this.scopeKey,
+    required this.row,
+    required this.textTheme,
+    required this.assignRowStateFor,
+    required this.onShowTiles,
+    required this.onAssign,
+  });
+
+  final String scopeKey;
+  final DevelopmentImprovableCommodityRow row;
+  final TextTheme textTheme;
+  final DevelopmentAssignRowState Function(
+    String commodityId,
+    Set<String> tileKeys,
+  )
+  assignRowStateFor;
+  final void Function(Set<String> tileKeys) onShowTiles;
+  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName =
+        CommodityCatalog.all
+            .firstWhere((c) => c.id == row.commodityId)
+            .displayName ??
+        row.commodityId;
+    final tileKeys = row.tileKeys.toSet();
+    final assignState = assignRowStateFor(row.commodityId, tileKeys);
+    final assignTooltip = assignState.disabledReason;
+    final assignButton = CtActionTextButton(
+      key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
+      label: 'Assign',
+      onPressed: assignState.enabled && assignState.candidate != null
+          ? () => onAssign(assignState.candidate!)
+          : null,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${row.count} $displayName',
+              style: textTheme.bodySmall,
+            ),
+          ),
+          CtActionTextButton(
+            key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
+            label: 'Show',
+            onPressed: () => onShowTiles(tileKeys),
+          ),
+          const SizedBox(width: CtSpacing.s),
+          if (assignTooltip != null && !assignState.enabled)
+            Tooltip(message: assignTooltip, child: assignButton)
+          else
+            assignButton,
         ],
       ),
     );
