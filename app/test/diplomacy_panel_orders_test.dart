@@ -5,6 +5,7 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -39,6 +40,135 @@ Game _minorEmbassyGame({List<SubsidyState> subsidies = const []}) {
     ],
     subsidyStates: subsidies,
   );
+}
+
+Game _minorConsulateConfirmGame() {
+  const ow = 'oldWorld';
+  return buildPanelTestGame(
+    id: 'diplomacy-consulate-confirm-test',
+    players: const [
+      Player(
+        id: _humanId,
+        displayName: 'Test Human',
+        isHuman: true,
+        treasury: 5000,
+        techUnlocked: {kTechIdDiplomaticExpertise: true},
+      ),
+    ],
+    minorNations: const [MinorNation(id: _minorId, displayName: 'Free City')],
+    oldWorldProvinces: [
+      Province(id: '$ow|p1', regionId: ow, ownerId: _humanId),
+      Province(id: '$ow|m1', regionId: ow, ownerId: _minorId),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: _minorId,
+        state: RelationState.atPeace,
+        score: 50,
+      ),
+    ],
+  );
+}
+
+Game _minorJoinEmpireConfirmGame() {
+  return buildDiplomacyRichPanelTestGame().copyWith(
+    diplomacyRelations: [
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 'gp2',
+        state: RelationState.atPeace,
+        score: 50,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 'gp3',
+        state: RelationState.atWar,
+        score: 20,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: _minorId,
+        state: RelationState.atPeace,
+        score: relationScoreMinFriendly,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 't1',
+        state: RelationState.atPeace,
+        score: 50,
+      ),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: _humanId,
+        targetId: _minorId,
+        stage: OvertureStage.nap,
+      ),
+    ],
+  );
+}
+
+Game _tribeJoinEmpireConfirmGame() {
+  return buildDiplomacyRichPanelTestGame().copyWith(
+    diplomacyRelations: [
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 'gp2',
+        state: RelationState.atPeace,
+        score: 50,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 'gp3',
+        state: RelationState.atWar,
+        score: 20,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: _minorId,
+        state: RelationState.atPeace,
+        score: 50,
+      ),
+      const DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: 't1',
+        state: RelationState.atPeace,
+        score: relationScoreMinFriendly,
+      ),
+    ],
+    overtureStates: const [
+      OvertureState(
+        gpId: _humanId,
+        targetId: 't1',
+        stage: OvertureStage.nap,
+      ),
+    ],
+  );
+}
+
+Future<ConfirmDialogEvent> _awaitConfirmOnActionTap(
+  WidgetTester tester, {
+  required Game game,
+  required Finder actionFinder,
+  AppEventBus? bus,
+  bool minorsTab = false,
+  bool tall = false,
+}) async {
+  final eventBus = bus ?? AppEventBus.create();
+  final confirmFuture = eventBus
+      .on<ConfirmDialogEvent>()
+      .first
+      .timeout(const Duration(seconds: 2));
+  await _pumpOrders(
+    tester,
+    game: game,
+    bus: eventBus,
+    minorsTab: minorsTab,
+    tall: tall,
+  );
+  await _tapVisible(tester, actionFinder);
+  return await confirmFuture;
 }
 
 Orders _pendingOrders(DiplomaticOrder order) {
@@ -195,6 +325,81 @@ void main() {
       expect(confirm.message, contains('When:'));
       expect(confirm.message.toLowerCase(), contains('immediately'));
       expect(confirm.message, isNot(contains('Confirm Break Alliance against')));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Declare War confirm includes first-order preview (Refs #4181)',
+    (WidgetTester tester) async {
+      final confirm = await _awaitConfirmOnActionTap(
+        tester,
+        game: buildDiplomacyPanelTestGame(),
+        actionFinder: find.text('Declare War'),
+        tall: true,
+      );
+      final body = confirm.message;
+      expect(body.toLowerCase(), contains('war'));
+      expect(body.toLowerCase(), contains('overtures'));
+      expect(body, isNot(contains('When:')));
+      expect(body, isNot(contains('Confirm Declare War against')));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Consulate confirm shows paid overture preview (Refs #4181)',
+    (WidgetTester tester) async {
+      final eventBus = AppEventBus.create();
+      final confirmFuture = eventBus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+      await _pumpOrders(
+        tester,
+        game: _minorConsulateConfirmGame(),
+        bus: eventBus,
+        minorsTab: true,
+        tall: true,
+      );
+      final consulateInMinorRow = find.descendant(
+        of: _minorRow(),
+        matching: find.text('Consulate'),
+      );
+      await _tapVisible(tester, consulateInMinorRow);
+      final confirm = await confirmFuture;
+      final body = confirm.message;
+      expect(body, contains('£$overtureConsulateCost'));
+      expect(body, contains('only on acceptance'));
+      expect(body, isNot(contains('Confirm Consulate against')));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Join Empire minor confirm shows absorb preview (Refs #4181)',
+    (WidgetTester tester) async {
+      final confirm = await _awaitConfirmOnActionTap(
+        tester,
+        game: _minorJoinEmpireConfirmGame(),
+        actionFinder: find.text('Join Empire').first,
+        minorsTab: true,
+        tall: true,
+      );
+      final body = confirm.message.toLowerCase();
+      expect(body, contains('join your realm'));
+      expect(body, isNot(contains('province')));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Join Empire tribe confirm shows colony preview (Refs #4181)',
+    (WidgetTester tester) async {
+      final confirm = await _awaitConfirmOnActionTap(
+        tester,
+        game: _tribeJoinEmpireConfirmGame(),
+        actionFinder: find.text('Join Empire').last,
+        tall: true,
+      );
+      expect(confirm.message.toLowerCase(), contains('colony'));
+      expect(confirm.message, isNot(contains('Confirm Join Empire against')));
     },
   );
 
