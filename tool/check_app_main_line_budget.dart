@@ -1,4 +1,4 @@
-// Caps colonizethis_app `by_package_role.main` at 60_950 lines per
+// Caps colonizethis_app `by_package_role.main` at 61_000 lines per
 // `pytool/project_stats.py`. Refs #3942 headroom (was 60_000 under #3878);
 // raised for named save/load dialogs (Refs #3959); raised again for load-game
 // list paging/delete/metadata UI (Refs #3985); raised for full game-session
@@ -8,7 +8,8 @@
 // raised for bundled map theme catalog + Settings dialog (Refs #4088);
 // raised for MAP20001 tile capital-link + partial-yield reason UI (Refs #4149, #4150);
 // raised for disconnected-tile blocked extraction map discs (Refs #4151);
-// raised for GAME70001 Victory panel route, standings, conditions, OW map (Refs #4165).
+// raised for GAME70001 Victory panel route, standings, conditions, OW map (Refs #4165);
+// raised for order-rejected feed deep-link routing (Refs #4146).
 import 'dart:convert';
 import 'dart:io';
 

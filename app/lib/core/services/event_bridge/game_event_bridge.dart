@@ -90,6 +90,7 @@ class GameEventBridge {
         _appBus.emit(
           AppOrderRejectedEvent(
             playerId: event.playerId,
+            orderKind: event.orderKind,
             orderSummary: event.orderSummary,
             reasonCode: event.reasonCode,
           ),

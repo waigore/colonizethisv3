@@ -26,6 +26,7 @@ class CtTurnFeedEntryContext {
     required this.provinceOverlayTapForProvince,
     required this.navalCombatTapForSeaZone,
     required this.workOrderCompletedTap,
+    required this.orderRejectedTapForKind,
   });
 
   final String mapPlayerId;
@@ -63,6 +64,8 @@ class CtTurnFeedEntryContext {
     required String unitId,
     required String targetTileKey,
   }) workOrderCompletedTap;
+  final VoidCallback? Function(ct_models.OrderKind orderKind)
+      orderRejectedTapForKind;
 }
 
 /// Maps resolved player turn events into scrollable feed rows.
@@ -130,8 +133,13 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
                     onTap: context.navigateToTechnologyScreen,
                   )
                 : CtEventFeedEntry(text: context.researchCompleteLine(techId)),
-          ct_models.AppOrderRejectedEvent(:final reasonCode) =>
-            CtEventFeedEntry(
+          ct_models.AppOrderRejectedEvent(
+            :final reasonCode,
+            :final orderKind,
+          ) =>
+            _orderRejectedFeedEntry(
+              context: context,
+              orderKind: orderKind,
               text: CtEventFeedText.orderRejectedLine(reasonCode),
             ),
           ct_models.AppWorkOrderCompletedEvent(
@@ -241,6 +249,19 @@ CtEventFeedEntry _workOrderFeedEntry({
     unitId: unitId,
     targetTileKey: targetTileKey,
   );
+  return CtEventFeedEntry(
+    text: text,
+    linkAffordance: onTap != null,
+    onTap: onTap,
+  );
+}
+
+CtEventFeedEntry _orderRejectedFeedEntry({
+  required CtTurnFeedEntryContext context,
+  required ct_models.OrderKind orderKind,
+  required String text,
+}) {
+  final VoidCallback? onTap = context.orderRejectedTapForKind(orderKind);
   return CtEventFeedEntry(
     text: text,
     linkAffordance: onTap != null,

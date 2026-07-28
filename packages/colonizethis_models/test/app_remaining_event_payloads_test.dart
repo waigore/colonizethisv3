@@ -135,6 +135,7 @@ void main() {
       expect(
         const AppOrderRejectedEvent(
           playerId: 'A',
+          orderKind: OrderKind.move,
           orderSummary: 'move u1',
           reasonCode: 'no_path',
         ).reasonCode,

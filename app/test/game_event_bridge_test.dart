@@ -197,6 +197,7 @@ void main() {
       logicBus.publish(
         OrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.work,
           orderSummary: 'Build road',
           reasonCode: 'insufficient_treasury',
         ),
@@ -206,6 +207,7 @@ void main() {
       expect(received, hasLength(1));
       final evt = received.first;
       expect(evt.playerId, 'gp1');
+      expect(evt.orderKind, OrderKind.work);
       expect(evt.orderSummary, 'Build road');
       expect(evt.reasonCode, 'insufficient_treasury');
     });

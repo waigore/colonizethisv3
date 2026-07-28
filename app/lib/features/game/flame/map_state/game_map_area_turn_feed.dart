@@ -37,6 +37,7 @@ mixin GameMapAreaTurnFeed
         provinceOverlayTapForProvince: provinceOverlayTapForProvince,
         navalCombatTapForSeaZone: navalCombatTapForSeaZone,
         workOrderCompletedTap: workOrderCompletedTap,
+        orderRejectedTapForKind: orderRejectedTapForKind,
       ),
     )
         .map(

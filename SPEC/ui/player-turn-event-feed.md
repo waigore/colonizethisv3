@@ -43,7 +43,7 @@
 - Sea-discovery lines tap-focus a sea-zone anchor tile.
 - Research-complete lines for catalog-known techs show the tech display name, a trailing chevron link affordance, and open `GAME40001` **Technology** on the Slots tab via `NavigateToRouteEvent(Routes.technology, …)` (same args as the empire left-rail Technology button).
 - Diplomacy-change, overture-advanced, spy-caught, and spy-defected lines show a trailing chevron when tappable and open `GAME30002` **Diplomacy detail** for the counterpart faction via `NavigateToRouteEvent(Routes.diplomacyDetail, …)` (same args as the diplomacy panel row detail action).
-- Order-rejected lines use plain-language reason copy and remain non-tappable in this slice.
+- Order-rejected lines use plain-language reason copy. When `orderKind` is present on `AppOrderRejectedEvent`, the row shows a trailing chevron and opens the owning panel or screen: work and recruit-worker → `UNIT10001` **Civilian units**; move and army-move → military units panel; naval move and naval mission → naval units panel; build-unit → `GAME20001` **Production**; trade → `GAME60001` **Trade**; research → `GAME40001` **Technology**; diplomacy → `GAME30001` **Diplomacy** list (requires resolvable topology). When topology cannot be resolved for diplomacy rejections, the row is non-tappable.
 - Other lines are non-tappable in v1.
 - Fallback: if no valid map anchor can be resolved for a tappable row, the counterpart faction cannot be resolved, the completing civilian unit no longer exists, or the research event tech id is absent from the catalog, render it non-tappable with safe copy and keep app stable.
 
@@ -98,7 +98,9 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given an overture-advanced feed line, when the feed renders, then the stage label is human-readable (never raw `STAGE!` shouting); when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the other party's faction id.
 - Given a spy-caught or spy-defected feed line whose counterpart faction resolves, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the non-human faction id; given the counterpart cannot be resolved, then the row is non-tappable and stable.
 - Given a work-order-completed feed line whose unit still exists, when the feed renders, then the work target uses the localized civilian-panel label (never raw `WORKTARGET!` shouting); when the user taps it, then the app emits `LocateMapTileEvent` and `OpenCivilianUnitsPanelEvent` with `initialSelectedUnitId` set to the completing unit.
-- Given an order-rejected feed line, when the feed renders, then the reason is phrased in plain language and the row is non-tappable.
+- Given an order-rejected feed line, when the feed renders, then the reason is phrased in plain language.
+- Given an order-rejected feed line whose `orderKind` maps to a known owning surface, when the user taps it, then the app emits the same bus event or `NavigateToRouteEvent` as the empire left-rail button for that order family (civilian, military, naval, production, trade, technology, or diplomacy list).
+- Given an order-rejected diplomacy line when combined topology cannot be resolved, when the feed renders, then the row is non-tappable and stable.
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.
 - Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.

@@ -1,6 +1,8 @@
 // Game events: shared event stream for game occurrences.
 // SPEC/program/game-events.md
 
+import 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
+
 /// Base event type for game occurrences.
 sealed class GameEvent {
   const GameEvent();
@@ -125,11 +127,13 @@ class VictorySetEvent extends GameEvent {
 class OrderRejectedEvent extends GameEvent {
   const OrderRejectedEvent({
     required this.playerId,
+    required this.orderKind,
     required this.orderSummary,
     required this.reasonCode,
   });
 
   final String playerId;
+  final OrderKind orderKind;
   final String orderSummary;
   final String
   reasonCode; // 'insufficient_treasury', 'invalid_destination', etc.
