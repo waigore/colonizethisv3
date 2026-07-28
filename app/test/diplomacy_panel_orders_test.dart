@@ -109,6 +109,47 @@ Game _minorJoinEmpireConfirmGame() {
   );
 }
 
+Game _gpJoinEmpireConfirmGame() {
+  const ow = 'oldWorld';
+  const rivalCapital = '$ow|cap2';
+  const rivalProv1 = '$ow|p2a';
+  return buildPanelTestGame(
+    id: 'diplomacy-gp-join-empire-confirm-test',
+    players: const [
+      Player(
+        id: _humanId,
+        displayName: 'Test Human',
+        isHuman: true,
+        treasury: 5000,
+        techUnlocked: {kTechIdEmpireBuilding: true},
+      ),
+      Player(
+        id: _gp2,
+        displayName: 'Rival Power',
+        isHuman: false,
+        capitalProvinceId: rivalCapital,
+      ),
+    ],
+    oldWorldProvinces: [
+      Province(id: '$ow|p1', regionId: ow, ownerId: _humanId),
+      Province(id: rivalCapital, regionId: ow, ownerId: _humanId),
+      Province(id: rivalProv1, regionId: ow, ownerId: _gp2),
+    ],
+    diplomacyRelations: const [
+      DiplomacyRelation(
+        factionId1: _humanId,
+        factionId2: _gp2,
+        state: RelationState.atPeace,
+        score: relationScoreMinFriendly,
+      ),
+    ],
+  ).copyWith(
+    overtureStates: const [
+      OvertureState(gpId: _humanId, targetId: _gp2, stage: OvertureStage.nap),
+    ],
+  );
+}
+
 Game _tribeJoinEmpireConfirmGame() {
   return buildDiplomacyRichPanelTestGame().copyWith(
     diplomacyRelations: [
@@ -400,6 +441,35 @@ void main() {
       );
       expect(confirm.message.toLowerCase(), contains('colony'));
       expect(confirm.message, isNot(contains('Confirm Join Empire against')));
+    },
+  );
+
+  testWidgets(
+    'DiplomacyPanel Join Empire GP confirm shows absorption preview (Refs #4181)',
+    (WidgetTester tester) async {
+      final eventBus = AppEventBus.create();
+      final confirmFuture = eventBus
+          .on<ConfirmDialogEvent>()
+          .first
+          .timeout(const Duration(seconds: 2));
+      await _pumpOrders(
+        tester,
+        game: _gpJoinEmpireConfirmGame(),
+        bus: eventBus,
+        tall: true,
+      );
+      final gpRow = find.byKey(ValueKey('$kDiplomacyRowBodyKeyPrefix$_gp2'));
+      final joinEmpireInGpRow = find.descendant(
+        of: gpRow,
+        matching: find.text('Join Empire'),
+      );
+      await _tapVisible(tester, joinEmpireInGpRow);
+      final confirm = await confirmFuture;
+      final body = confirm.message;
+      expect(body.toLowerCase(), contains('nearly defeated'));
+      expect(body.toLowerCase(), contains('absorbed'));
+      expect(body, isNot(contains('Confirm Join Empire against')));
+      expect(body, isNot(contains('£')));
     },
   );
 
