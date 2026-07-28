@@ -158,3 +158,23 @@ const int kSpyCounterSpyBorderBonus = 90;
 /// Phase bonus added to Spy `counter_spy` scores in the DEVELOP phase
 /// (Refs #3794 § Spy, AC24; steal_tech retired Refs #3834).
 const int kSpyPhaseCounterSpyBonus = 2000;
+
+/// Extra Engineer `build_road` score when the tile extends the connected
+/// network frontier toward an unconnected dev target (Refs #4176).
+const int kEngineerFrontierRoadExtensionBonus = 280;
+
+/// Extra `build_improvement` score when the target tile is capital-connected
+/// (Refs #4176).
+const int kBuildImprovementConnectedBonus = 240;
+
+/// Extra `build_improvement` score when the target tile is unconnected but
+/// 4-adjacent to the connected set (Refs #4176).
+const int kBuildImprovementAdjacentToConnectedBonus = 80;
+
+/// Extra Rail Builder `build_rail` score on a connected bottleneck path tile
+/// (Refs #4176).
+const int kBuildRailBottleneckYieldBonus = 260;
+
+/// Extra Engineer `build_port` score in a province with unconnected dev targets
+/// and a capital-reachable sea zone (Refs #4176).
+const int kEngineerPortOverseasLinkageBonus = 220;

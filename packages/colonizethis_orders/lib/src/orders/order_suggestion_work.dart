@@ -12,6 +12,7 @@ import 'order_suggestion_work_explorer.dart';
 import 'order_suggestion_work_merchant.dart';
 import 'order_suggestion_work_spy.dart';
 import 'order_suggestion_work_worker.dart';
+import 'connectivity_dev_snapshot.dart';
 import 'order_visibility.dart';
 import 'work_suggestion_pipeline.dart';
 import 'partial_province_reveal.dart';
@@ -151,6 +152,13 @@ List<WorkOrder> suggestWorkOrders(
 
   final workProbeBudget = WorkSuggestionProbeBudget();
 
+  final connectivityDev = buildConnectivityDevSnapshot(
+    game: game,
+    playerId: playerId,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+  );
+
   for (final unit in view.ownUnits) {
     _addWorkSuggestionsForUnit(
       view: view,
@@ -173,6 +181,7 @@ List<WorkOrder> suggestWorkOrders(
       candidateValidator: candidateValidator,
       factionMembership: factionMembership,
       workProbeBudget: workProbeBudget,
+      connectivityDev: connectivityDev,
     );
   }
 
@@ -241,6 +250,7 @@ void _addWorkSuggestionsForUnit({
   required DiplomacyFactionMembership factionMembership,
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   if (unit.currentWork != null) return;
 
@@ -299,6 +309,7 @@ void _addWorkSuggestionsForUnit({
       tileMapByRegion: tileMapByRegion,
       factionMembership: factionMembership,
       workProbeBudget: workProbeBudget,
+      connectivityDev: connectivityDev,
     );
   }
 

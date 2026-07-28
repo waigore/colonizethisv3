@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 
 import '../constants.dart';
 import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
@@ -28,6 +29,7 @@ int _buildRailWorkScore(
   WorkOrder w,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   if (w.target != kWorkTargetBuildRail) return 0;
   var score = kBuildRailBaseWorkScore;
@@ -44,6 +46,11 @@ int _buildRailWorkScore(
   }
   if (Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId) {
     score += kBuildRailNewWorldBonus;
+  }
+  if (connectivityDev != null &&
+      connectivityDev.hasUnconnectedDevTargets &&
+      connectivityDev.bottleneckRailTiles.contains(w.targetTileKey)) {
+    score += kBuildRailBottleneckYieldBonus;
   }
   return score;
 }
@@ -64,16 +71,27 @@ WorkOrder? _bestBuildRailRow(
   List<WorkOrder> candidates,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final rails = candidates
       .where((w) => w.target == kWorkTargetBuildRail)
       .toList();
   if (rails.isEmpty) return null;
   var best = rails.first;
-  var bestScore = _buildRailWorkScore(best, game, playerId: playerId);
+  var bestScore = _buildRailWorkScore(
+    best,
+    game,
+    playerId: playerId,
+    connectivityDev: connectivityDev,
+  );
   for (var i = 1; i < rails.length; i++) {
     final w = rails[i];
-    final s = _buildRailWorkScore(w, game, playerId: playerId);
+    final s = _buildRailWorkScore(
+      w,
+      game,
+      playerId: playerId,
+      connectivityDev: connectivityDev,
+    );
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -93,9 +111,16 @@ void appendRailBuilderPathResult({
   required String playerId,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final chosen =
-      _bestBuildRailRow(w, game, playerId: playerId) ?? pickLexicographic(w);
+      _bestBuildRailRow(
+        w,
+        game,
+        playerId: playerId,
+        connectivityDev: connectivityDev,
+      ) ??
+      pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;

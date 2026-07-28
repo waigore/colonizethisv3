@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -27,6 +28,7 @@ int buildImprovementWorkScore(
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   if (w.target != kWorkTargetBuildImprovement) return 0;
   final level = game.worldState.tileState.improvementLevel(w.targetTileKey);
@@ -34,6 +36,15 @@ int buildImprovementWorkScore(
   final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
   if (resourceId == null || resourceId.isEmpty) return 2;
   var score = kBuildImprovementExtractableResourceScore;
+  if (connectivityDev != null && connectivityDev.hasUnconnectedDevTargets) {
+    if (connectivityDev.connected.contains(w.targetTileKey)) {
+      score += kBuildImprovementConnectedBonus;
+    } else if (connectivityDev.adjacentToConnectedTiles.contains(
+      w.targetTileKey,
+    )) {
+      score += kBuildImprovementAdjacentToConnectedBonus;
+    }
+  }
   if (Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId) {
     score += kBuildImprovementNewWorldResourceBonus;
     final provId = Unit.provinceIdFromTileKey(w.targetTileKey);
@@ -148,6 +159,7 @@ WorkOrder? bestBuildImprovementRow(
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final improvements = candidates
       .where((w) => w.target == kWorkTargetBuildImprovement)
@@ -162,6 +174,7 @@ WorkOrder? bestBuildImprovementRow(
     growthStageFabricFeedstockResourceIds:
         growthStageFabricFeedstockResourceIds,
     growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
+    connectivityDev: connectivityDev,
   );
   for (var i = 1; i < improvements.length; i++) {
     final w = improvements[i];
@@ -174,6 +187,7 @@ WorkOrder? bestBuildImprovementRow(
           growthStageFabricFeedstockResourceIds,
       growthStageInfraFeedstockResourceIds:
           growthStageInfraFeedstockResourceIds,
+      connectivityDev: connectivityDev,
     );
     if (s > bestScore) {
       bestScore = s;
