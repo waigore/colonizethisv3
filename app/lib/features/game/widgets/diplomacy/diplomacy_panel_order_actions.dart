@@ -45,11 +45,16 @@ mixin DiplomacyOrderActions
 
   void showConfirmDialog(DiplomaticOrder order) {
     final actionLabel = diplomacyActionLabel(order);
+    final target = targetName(order.targetFactionId);
     widget.bus.emit(
       ConfirmDialogEvent(
         title: actionLabel,
-        message:
-            'Confirm $actionLabel against ${targetName(order.targetFactionId)}?',
+        message: buildDiplomacyConfirmPreviewMessage(
+          order: order,
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          targetDisplayName: target,
+        ),
         onResult: (confirmed) {
           if (confirmed) {
             if (order.type == DiplomaticOrderType.breakAlliance) {
