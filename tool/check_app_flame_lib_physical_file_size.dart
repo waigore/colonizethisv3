@@ -19,7 +19,6 @@ const String _flameLibRelativePath = 'app/lib/features/game/flame';
 const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests = <String>[
   'app/lib/features/game/flame/map_state/game_map_area_province_action_states.dart',
   'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
   'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
   'app/lib/features/game/flame/region_map/region_map_component_shared_visibility.dart',
 ];
