@@ -662,6 +662,85 @@ Widget _victoryScreenDefaultStory() {
   );
 }
 
+RegionMapViewData _victoryScreenAnnotatedMinimapRegion() {
+  return RegionMapViewData(
+    regionId: 'oldWorld',
+    width: 2,
+    height: 2,
+    cellSize: 8,
+    cells: [
+      const CellViewData(
+        x: 0,
+        y: 0,
+        regionCellId: 'p1',
+        isSea: false,
+        ownerFactionId: 'gp1',
+        provinceDisplayName: 'London',
+      ),
+      const CellViewData(
+        x: 1,
+        y: 0,
+        regionCellId: 'p1',
+        isSea: false,
+        ownerFactionId: 'gp1',
+        provinceDisplayName: 'London',
+      ),
+      const CellViewData(x: 0, y: 1, regionCellId: 'sea1', isSea: true),
+      const CellViewData(
+        x: 1,
+        y: 1,
+        regionCellId: 'p2',
+        isSea: false,
+        ownerFactionId: 'gp2',
+        provinceDisplayName: 'Paris',
+      ),
+    ],
+    capitalMarkers: const [
+      CapitalMarkerView(
+        factionId: 'gp1',
+        displayName: 'England',
+        x: 0,
+        y: 0,
+      ),
+    ],
+    portMarkers: const [],
+    factionColors: const {
+      'gp1': (180, 80, 80),
+      'gp2': (80, 80, 180),
+    },
+    greatPowerFactionIds: {'gp1', 'gp2'},
+    terrainColors: const {},
+    townMarkers: const [
+      TownMarkerView(
+        x: 1,
+        y: 1,
+        provinceId: 'p2',
+        isCoastal: false,
+        isPort: false,
+        touchesSea: false,
+        townDevelopmentLevel: 1,
+        townIconStyle: 'euro',
+      ),
+    ],
+  );
+}
+
+Widget _victoryScreenAnnotatedMinimapStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: VictoryPoliticalMinimap(
+        game: game,
+        region: _victoryScreenAnnotatedMinimapRegion(),
+      ),
+    ),
+  );
+}
+
 /// Victory screen stories. SPEC/ui/victory-panel.md.
 List<WidgetbookNode> get victoryScreenDirectories => [
   WidgetbookFolder(
@@ -675,6 +754,14 @@ List<WidgetbookNode> get victoryScreenDirectories => [
         name: 'Scaffold (mobile)',
         builder: (context) =>
             mobileViewport(context, _victoryScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (wide side-by-side)',
+        builder: (context) => wideViewport(context, _victoryScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Political minimap (annotated)',
+        builder: (context) => _victoryScreenAnnotatedMinimapStory(),
       ),
     ],
   ),
