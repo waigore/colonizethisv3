@@ -159,17 +159,20 @@ extension MarketTabContentBuild on MarketTabContent {
       ),
     );
 
-    final Widget header = MarketTabHeaderStrip(
-      stagedDistinctBidCount: stagedDistinctBidCount,
-      bidTypeCap: bidTypeCap,
-      clampedRemaining: clampedRemaining,
-      cargoWarningVisible: warningVisible,
-      bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
-      bidTypeWarningStyle: bidTypeWarningStyle,
-      cargoIndicatorStyle: cargoIndicatorStyle,
-      cargoWarningStyle: cargoWarningStyle,
-      whyToggleStyle: whyToggleStyle,
-      whyBodyStyle: whyBodyStyle,
+    final Widget header = RepaintBoundary(
+      key: TradeScreenMarketKeys.marketBidTypeCapGoldenKey,
+      child: MarketTabHeaderStrip(
+        stagedDistinctBidCount: stagedDistinctBidCount,
+        bidTypeCap: bidTypeCap,
+        clampedRemaining: clampedRemaining,
+        cargoWarningVisible: warningVisible,
+        bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
+        bidTypeWarningStyle: bidTypeWarningStyle,
+        cargoIndicatorStyle: cargoIndicatorStyle,
+        cargoWarningStyle: cargoWarningStyle,
+        whyToggleStyle: whyToggleStyle,
+        whyBodyStyle: whyBodyStyle,
+      ),
     );
 
     final Widget body = Column(

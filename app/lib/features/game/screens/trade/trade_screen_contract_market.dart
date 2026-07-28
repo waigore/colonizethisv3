@@ -245,6 +245,12 @@ abstract final class TradeScreenMarketKeys {
   static const Key marketBidTypeWhyBodyKey =
       ValueKey<String>('tradeScreenMarketBidTypeWhyBody');
 
+  /// [RepaintBoundary] key for widget golden captures of the Market
+  /// header strip (bid-goods indicator, warnings, cargo telemetry —
+  /// Refs #4170).
+  static const Key marketBidTypeCapGoldenKey =
+      ValueKey<String>('tradeScreenMarketBidTypeCapGolden');
+
   /// Stable widget key for the cross-commodity cargo indicator header
   /// rendered above the Market tab commodity list (Refs #2993 E5c).
   /// The widget at this key renders `Cargo remaining: X` where
