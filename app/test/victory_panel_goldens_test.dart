@@ -11,74 +11,35 @@
 //  - AC-3  GP standings sorted by OW count with human row emphasis
 //  - AC-4  expandable power-score breakdown (expanded row)
 //  - AC-7  end-state banners (military victory, calendar declared winner, tie)
-//  - AC-5  political minimap ownership colours
-//  - AC-6  minimap origin/capture inspect line
+//  - AC-12 wide side-by-side layout (standings + minimap)
+//  - AC-14–AC-16 annotated minimap (province names, capital border, towns)
 //
 // SPEC: SPEC/ui/victory-panel.md § Acceptance criteria.
 
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_body.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen_keys.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 
+import 'app_shell_harness.dart';
 import 'golden_capture_harness.dart';
 import 'panel_fixtures/core.dart';
+import 'victory_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
 const Size _kVictoryDesktopViewport = Size(900, 760);
 
-RegionMapViewData _sampleOldWorldRegion() {
-  return RegionMapViewData(
-    regionId: 'oldWorld',
-    width: 2,
-    height: 2,
-    cellSize: 8,
-    cells: [
-      CellViewData(
-        x: 0,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        ownerFactionId: 'gp1',
-      ),
-      CellViewData(
-        x: 1,
-        y: 0,
-        regionCellId: 'p1',
-        isSea: false,
-        ownerFactionId: 'gp1',
-      ),
-      CellViewData(x: 0, y: 1, regionCellId: 'sea1', isSea: true),
-      CellViewData(
-        x: 1,
-        y: 1,
-        regionCellId: 'p2',
-        isSea: false,
-        ownerFactionId: 'gp2',
-      ),
-    ],
-    capitalMarkers: const [],
-    portMarkers: const [],
-    factionColors: {
-      'gp1': (180, 80, 80),
-      'gp2': (80, 80, 180),
-    },
-    greatPowerFactionIds: {'gp1', 'gp2'},
-    terrainColors: const {},
-    unitMarkers: const [],
-    civilianTileMarkers: const [],
-    fleetTileMarkers: const [],
-    warpMarkers: const [],
-    townMarkers: const [],
-    provinceUnitPresenceByProvinceId: const {},
-    provincePoliticalOwnerByPrefixedProvinceId: const {},
-    seaZoneDisplayNameByPrefixedId: const {},
-  );
-}
+late Box<dynamic> _victoryGoldenGamesBox;
+
+RegionMapViewData _sampleOldWorldRegion() => sampleVictoryAnnotatedOldWorldRegion();
 
 Game _standingsGoldenGame() {
   return buildPanelTestGame(
@@ -129,6 +90,14 @@ Future<void> _pumpVictoryBodyGolden(
 
 void main() {
   suppressLogsForTests();
+
+  setUpAll(() async {
+    _victoryGoldenGamesBox = await openVictoryPanelTestHiveBox();
+  });
+
+  tearDownAll(() async {
+    await _victoryGoldenGamesBox.close();
+  });
 
   testWidgets(
     'golden: conditions and GP standings default (Refs #4165 AC-2/AC-3)',
@@ -301,7 +270,46 @@ void main() {
   );
 
   testWidgets(
-    'golden: political minimap ownership colours (Refs #4165 AC-5)',
+    'golden: wide side-by-side standings and minimap (Refs #4165 AC-12)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('victoryPanelWideLayoutGolden');
+      await pumpGoldenHost(
+        tester,
+        boundaryKey: boundaryKey,
+        physicalSize: const Size(kNarrowBreakpoint, 700),
+        includeLocalizations: true,
+        wrapInProviderScope: true,
+        center: false,
+        overrides: [
+          gameServiceProvider.overrideWith(
+            (ref) => VictoryPanelMapGameService(
+              _victoryGoldenGamesBox,
+              GameSaveAdapter(),
+            ),
+          ),
+        ],
+        child: SizedBox(
+          width: kNarrowBreakpoint,
+          height: 700,
+          child: VictoryScreenBody(
+            game: buildVictoryPanelMapTestGame(),
+            humanPlayerId: kPanelTestHumanPlayerId,
+          ),
+        ),
+      );
+
+      expect(find.byKey(VictoryScreenKeys.standingsMinimapWideRowKey), findsOneWidget);
+      expect(find.byKey(VictoryScreenKeys.politicalMinimapSectionKey), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/victory_panel_wide_layout.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: political minimap ownership colours (Refs #4165 AC-5/AC-14–AC-16)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('victoryPoliticalMinimapGolden');
       final game = buildPanelTestGame(

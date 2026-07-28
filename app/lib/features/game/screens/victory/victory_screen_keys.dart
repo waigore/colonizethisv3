@@ -26,4 +26,8 @@ abstract final class VictoryScreenKeys {
       ValueKey<String>('victoryPoliticalMinimapPaint');
   static const Key politicalMinimapInspectKey =
       ValueKey<String>('victoryPoliticalMinimapInspect');
+  static const Key standingsMinimapWideRowKey =
+      ValueKey<String>('victoryStandingsMinimapWideRow');
+  static const Key standingsMinimapNarrowColumnKey =
+      ValueKey<String>('victoryStandingsMinimapNarrowColumn');
 }

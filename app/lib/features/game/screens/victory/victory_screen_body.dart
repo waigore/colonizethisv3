@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/constants.dart';
 import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/game_service_provider.dart';
 import 'victory_political_minimap.dart';
@@ -49,7 +50,7 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
           );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -63,41 +64,48 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
             title: 'Victory conditions',
             child: _ConditionsBlock(game: game),
           ),
-          const SizedBox(height: 12),
-          _SectionCard(
-            key: VictoryScreenKeys.standingsSectionKey,
-            title: 'Great Power standings',
-            child: Column(
-              children: [
-                for (final row in standings)
-                  _StandingRow(
-                    key: VictoryScreenKeys.standingRowKey(row.playerId),
-                    row: row,
-                    isHuman: row.playerId == widget.humanPlayerId,
-                    color: _swatchColorFor(ownershipColors, row.playerId),
-                    expanded: _expandedPlayerIds.contains(row.playerId),
-                    onToggle: () {
-                      setState(() {
-                        if (_expandedPlayerIds.contains(row.playerId)) {
-                          _expandedPlayerIds.remove(row.playerId);
-                        } else {
-                          _expandedPlayerIds.add(row.playerId);
-                        }
-                      });
-                    },
-                    textTheme: textTheme,
+          const SizedBox(height: 8),
+          _VictoryStandingsMinimapLayout(
+            isWide:
+                MediaQuery.sizeOf(context).width >= kNarrowBreakpoint &&
+                owRegion != null,
+            standings: _SectionCard(
+              key: VictoryScreenKeys.standingsSectionKey,
+              title: 'Great Power standings',
+              child: Column(
+                children: [
+                  for (final row in standings)
+                    _StandingRow(
+                      key: VictoryScreenKeys.standingRowKey(row.playerId),
+                      row: row,
+                      isHuman: row.playerId == widget.humanPlayerId,
+                      color: _swatchColorFor(ownershipColors, row.playerId),
+                      expanded: _expandedPlayerIds.contains(row.playerId),
+                      onToggle: () {
+                        setState(() {
+                          if (_expandedPlayerIds.contains(row.playerId)) {
+                            _expandedPlayerIds.remove(row.playerId);
+                          } else {
+                            _expandedPlayerIds.add(row.playerId);
+                          }
+                        });
+                      },
+                      textTheme: textTheme,
+                    ),
+                ],
+              ),
+            ),
+            minimap: owRegion == null
+                ? null
+                : _SectionCard(
+                    key: VictoryScreenKeys.politicalMinimapSectionKey,
+                    title: 'Old World political map',
+                    child: VictoryPoliticalMinimap(
+                      game: game,
+                      region: owRegion,
+                    ),
                   ),
-              ],
-            ),
           ),
-          if (owRegion != null) ...[
-            const SizedBox(height: 12),
-            _SectionCard(
-              key: VictoryScreenKeys.politicalMinimapSectionKey,
-              title: 'Old World political map',
-              child: VictoryPoliticalMinimap(game: game, region: owRegion),
-            ),
-          ],
         ],
       ),
     );
@@ -132,7 +140,7 @@ class _EndStateBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: EditorialMonoclePalette.surface,
@@ -170,7 +178,7 @@ class _SectionCard extends StatelessWidget {
         border: Border.all(color: EditorialMonoclePalette.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -363,4 +371,45 @@ Color _swatchColorFor(
     return EditorialMonoclePalette.muted;
   }
   return Color.fromRGBO(tuple.$1, tuple.$2, tuple.$3, 1.0);
+}
+
+/// Side-by-side standings + minimap on wide viewports when map data exists.
+class _VictoryStandingsMinimapLayout extends StatelessWidget {
+  const _VictoryStandingsMinimapLayout({
+    required this.isWide,
+    required this.standings,
+    required this.minimap,
+  });
+
+  final bool isWide;
+  final Widget standings;
+  final Widget? minimap;
+
+  @override
+  Widget build(BuildContext context) {
+    final map = minimap;
+    if (map == null) {
+      return standings;
+    }
+    if (isWide) {
+      return Row(
+        key: VictoryScreenKeys.standingsMinimapWideRowKey,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: standings),
+          const SizedBox(width: 8),
+          Expanded(child: map),
+        ],
+      );
+    }
+    return Column(
+      key: VictoryScreenKeys.standingsMinimapNarrowColumnKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        standings,
+        const SizedBox(height: 8),
+        map,
+      ],
+    );
+  }
 }
