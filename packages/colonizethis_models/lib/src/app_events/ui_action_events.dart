@@ -264,6 +264,31 @@ class CombatModeChosenEvent extends UIActionEvent {
   final CombatMode mode;
 }
 
+/// Player choice from the Development panel disconnected-improve warn dialog.
+/// SPEC/ui/development-panel.md — disconnected warn dialog.
+enum DevelopmentDisconnectedAssignChoice {
+  improveAnyway,
+  roadFirst,
+  cancel,
+}
+
+/// Request the disconnected-improve warn dialog; returns choice via callback.
+/// Handled by the shell-level event handler (app layer).
+class DevelopmentDisconnectedAssignDialogEvent extends UIActionEvent {
+  const DevelopmentDisconnectedAssignDialogEvent({
+    required this.roadFirstEnabled,
+    this.roadFirstDisabledReason,
+    void Function(DevelopmentDisconnectedAssignChoice)? onResult,
+  }) : _onResult = onResult;
+
+  final bool roadFirstEnabled;
+  final String? roadFirstDisabledReason;
+  final void Function(DevelopmentDisconnectedAssignChoice)? _onResult;
+
+  void result(DevelopmentDisconnectedAssignChoice choice) =>
+      _onResult?.call(choice);
+}
+
 /// Request to open the province/sea zone detail overlay for [provinceId].
 /// Emitted by the map widget when user taps a town or port icon.
 /// SPEC/ui/town-port-icons.md.

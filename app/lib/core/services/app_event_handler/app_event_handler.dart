@@ -117,6 +117,8 @@ class AppEventHandler {
         appEventHandlerOpenDialog(this, event, nav);
       case ConfirmDialogEvent():
         appEventHandlerShowConfirmDialog(this, event, nav);
+      case DevelopmentDisconnectedAssignDialogEvent():
+        appEventHandlerShowDevelopmentDisconnectedAssignDialog(this, event, nav);
       case NavigateToRouteEvent():
         nav?.pushNamed(event.route, arguments: event.arguments);
       case NavigateToShellEvent():
