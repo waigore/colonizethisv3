@@ -33,4 +33,13 @@ Purchased land: per purchased tile key owned by the player, same cap/prospect ru
 - Idle Builder: `status == idle`, no `currentWork`, no pending `WorkOrder` for that unit; first by stable unit id.
 - Tile priority among valid targets for the commodity: capital-connected first, then lower `improvementLevel`, then stable tile key.
 - Materials: affordability uses stockpile after deducting other pending material work orders (same order as economy preview).
-- Disconnected-only targets: Assign disabled until Slice C dialog (`allowDisconnectedAssign` flag).
+- Disconnected targets: Assign enabled when improve is otherwise valid; warn dialog on commit (Slice C).
+
+## Road first (Slice C)
+
+`resolveDevelopmentRoadFirstState` / `selectDevelopmentRoadFirstCandidate` in `colonizethis_orders`:
+
+- Idle Engineer: same idle/pending rules as Builder; first by stable unit id.
+- Path: shortest owned-tile BFS from improve target to any capital-connected tile; neighbor expansion sorted by tile key.
+- Road tile: first legal `build_road` candidate along the path from the connected endpoint back toward the improve target.
+- Materials: same pending-work stockpile projection as improve assign.

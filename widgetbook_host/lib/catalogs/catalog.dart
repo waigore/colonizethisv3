@@ -65,6 +65,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
@@ -297,6 +298,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...moveFleetDialogDirectories,
   ...transferToHomeFleetDialogDirectories,
   ...productionCommodityBreakdownDialogDirectories,
+  ...developmentDisconnectedAssignDialogDirectories,
   ...grantOrSubsidyDialogDirectories,
   ...newGameLeaderSelectionDialogDirectories,
   ...shellScreenDirectories,

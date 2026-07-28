@@ -109,7 +109,7 @@ void main() {
     });
 
     test(
-      'resolveDevelopmentAssignRowState disables disconnected-only commodity until Slice C',
+      'resolveDevelopmentAssignRowState enables disconnected commodity when materials allow',
       () {
         final setup = OscDualBuilderGrainTiles();
         final state = resolveDevelopmentAssignRowState(
@@ -121,8 +121,9 @@ void main() {
           commodityTileKeys: {setup.tileA},
           connectedTileKeys: const {},
         );
-        expect(state.enabled, isFalse);
-        expect(state.disabledReason, 'Not connected to capital');
+        expect(state.enabled, isTrue);
+        expect(state.candidate?.targetTileKey, setup.tileA);
+        expect(state.candidate?.isCapitalConnected, isFalse);
       },
     );
 

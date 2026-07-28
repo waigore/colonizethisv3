@@ -12,6 +12,7 @@ import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_tab_strip.dart';
 import '../../widgets/shell/shell_player_context.dart';
+import 'development_disconnected_assign_dialog.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_map_panel.dart';
 import 'development_panel_overview.dart';
@@ -38,7 +39,6 @@ class DevelopmentScreenBody extends ConsumerWidget {
     final orders = ref.watch(currentOrdersProvider);
     final shell = ref.watch(shellPlayerContextProvider);
     final canEdit = shell.canMutateViaUi;
-    final bus = ref.read(appEventBusProvider);
     final provinceNames = <String, String>{};
     for (final province in game.worldState.allProvinces()) {
       provinceNames[province.id] = province.displayName ?? province.id;
@@ -78,15 +78,18 @@ class DevelopmentScreenBody extends ConsumerWidget {
               currentOrders: orders,
               connectedTileKeys: connectedTileKeys,
               canEdit: canEdit,
-              onAssign: (candidate) {
-                if (!canEdit) return;
-                bus.emit(
-                  UpsertPendingCivilianWorkOrderRequestedEvent(
-                    playerId: humanPlayerId,
-                    workOrder: candidate.toWorkOrder(),
-                  ),
-                );
-              },
+              onAssign: (candidate) => _handleDevelopmentAssign(
+                context: context,
+                ref: ref,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                canEdit: canEdit,
+                topology: mapData.combinedTopology,
+                tileMapByRegion: mapData.tileMapByRegion,
+                orders: orders,
+                connectedTileKeys: connectedTileKeys,
+                candidate: candidate,
+              ),
             ),
             _DevelopmentRegionTab(
               game: game,
@@ -98,21 +101,78 @@ class DevelopmentScreenBody extends ConsumerWidget {
               currentOrders: orders,
               connectedTileKeys: connectedTileKeys,
               canEdit: canEdit,
-              onAssign: (candidate) {
-                if (!canEdit) return;
-                bus.emit(
-                  UpsertPendingCivilianWorkOrderRequestedEvent(
-                    playerId: humanPlayerId,
-                    workOrder: candidate.toWorkOrder(),
-                  ),
-                );
-              },
+              onAssign: (candidate) => _handleDevelopmentAssign(
+                context: context,
+                ref: ref,
+                game: game,
+                humanPlayerId: humanPlayerId,
+                canEdit: canEdit,
+                topology: mapData.combinedTopology,
+                tileMapByRegion: mapData.tileMapByRegion,
+                orders: orders,
+                connectedTileKeys: connectedTileKeys,
+                candidate: candidate,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+Future<void> _handleDevelopmentAssign({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Game game,
+  required String humanPlayerId,
+  required bool canEdit,
+  required MapTopology topology,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Orders orders,
+  required Set<String> connectedTileKeys,
+  required DevelopmentImproveAssignCandidate candidate,
+}) async {
+  if (!canEdit) return;
+
+  if (!candidate.isCapitalConnected) {
+    final roadFirstState = resolveDevelopmentRoadFirstState(
+      game: game,
+      playerId: humanPlayerId,
+      currentOrders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+      improveTargetTileKey: candidate.targetTileKey,
+      connectedTileKeys: connectedTileKeys,
+    );
+    final choice = await showDevelopmentDisconnectedAssignDialog(
+      context,
+      roadFirstState: roadFirstState,
+    );
+    switch (choice) {
+      case DevelopmentDisconnectedAssignChoice.cancel:
+        return;
+      case DevelopmentDisconnectedAssignChoice.improveAnyway:
+        break;
+      case DevelopmentDisconnectedAssignChoice.roadFirst:
+        final roadCandidate = roadFirstState.candidate;
+        if (roadCandidate == null) return;
+        ref.read(appEventBusProvider).emit(
+          UpsertPendingCivilianWorkOrderRequestedEvent(
+            playerId: humanPlayerId,
+            workOrder: roadCandidate.toWorkOrder(),
+          ),
+        );
+        return;
+    }
+  }
+
+  ref.read(appEventBusProvider).emit(
+    UpsertPendingCivilianWorkOrderRequestedEvent(
+      playerId: humanPlayerId,
+      workOrder: candidate.toWorkOrder(),
+    ),
+  );
 }
 
 class _DevelopmentRegionTab extends StatefulWidget {

@@ -220,7 +220,7 @@ bool _canAffordDevelopmentImproveAssign({
   final player = game.playerById(playerId);
   if (player == null) return false;
 
-  final stockpile = _effectiveStockpileAfterPendingMaterialWorkOrders(
+  final stockpile = effectiveStockpileAfterPendingDevelopmentMaterialWork(
     game: game,
     playerId: playerId,
     currentOrders: currentOrders,
@@ -249,7 +249,6 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
   required Map<String, TileMapResult> tileMapByRegion,
   required Set<String> commodityTileKeys,
   required Set<String> connectedTileKeys,
-  bool allowDisconnectedAssign = false,
 }) {
   if (commodityTileKeys.isEmpty) {
     return const DevelopmentAssignRowState(
@@ -280,13 +279,6 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
     connectedTileKeys: connectedTileKeys,
   );
   if (candidate != null) {
-    if (!candidate.isCapitalConnected && !allowDisconnectedAssign) {
-      return DevelopmentAssignRowState(
-        enabled: false,
-        disabledReason: 'Not connected to capital',
-        candidate: candidate,
-      );
-    }
     if (!_canAffordDevelopmentImproveAssign(
       game: game,
       playerId: playerId,
@@ -313,14 +305,6 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
     return const DevelopmentAssignRowState(
       enabled: false,
       disabledReason: 'No valid assign target',
-    );
-  }
-
-  if (!hypothetical.isCapitalConnected && !allowDisconnectedAssign) {
-    return DevelopmentAssignRowState(
-      enabled: false,
-      disabledReason: 'Not connected to capital',
-      candidate: hypothetical,
     );
   }
 
@@ -371,7 +355,9 @@ Set<String> developmentPanelMaterialShortageCommodityIds({
   return shortages;
 }
 
-Stockpile _effectiveStockpileAfterPendingMaterialWorkOrders({
+/// Effective stockpile after deducting pending material work orders for
+/// Development panel affordability checks (Slice B/C).
+Stockpile effectiveStockpileAfterPendingDevelopmentMaterialWork({
   required Game game,
   required String playerId,
   required Orders currentOrders,
