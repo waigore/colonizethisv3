@@ -19,15 +19,33 @@
 
 ## Layout / wireframe
 
+### Narrow (`< kNarrowBreakpoint`, 600 dp)
+
 ```
 CtDarkScaffold
   CtTopBar (← Map, victory icon, "Victory")
-  SingleChildScrollView
-    [optional] end-state banner (military winner / calendar declared winner)
-    conditions card (31 OW military rule prominent; calendar / infinite lines)
-    standings card (GP rows: swatch, name, OW count; expand for power breakdown)
-    political minimap card (OW ownership fill; hover/tap origin inspect)
+  SingleChildScrollView (compact padding)
+    [optional] end-state banner
+    conditions card
+    Column
+      standings card
+      political minimap card (when map data available)
 ```
+
+### Wide (`≥ kNarrowBreakpoint`, 600 dp, map data available)
+
+```
+CtDarkScaffold
+  CtTopBar
+  SingleChildScrollView (compact padding)
+    [optional] end-state banner
+    conditions card
+    Row (standings left, minimap right, equal flex)
+      standings card
+      political minimap card
+```
+
+When map data is unavailable, standings render full width at all breakpoints.
 
 ## Behavior
 
@@ -50,6 +68,7 @@ CtDarkScaffold
 
 - **Scope:** Old World only; one cell per map tile painted with owning faction colour from `factionOwnershipColorMapForOldWorld` (minor nations use grey palette entries).
 - **Data:** Built from persisted tile map + topology via `buildVictoryOldWorldMapViewData`; section hidden when map data is unavailable (e.g. lightweight widget-test fixtures).
+- **Annotations:** Each land province shows its display name at the tile-centroid (ellipsized when the footprint is small). Provinces containing a faction's **current** capital (`capitalMarkers`) render a bright province-outline border. Each province town (`townMarkers` from `Province.townTileKey`) renders a simplified editorial-monocle marker dot.
 - **Inspect:** Hover (pointer) or tap selects a land province and shows whether it is still the **original** owner's province or was **captured**, naming the founding owner when `Province.originalOwnerId` is present; legacy saves without origin show **Origin unavailable** copy (no invented capture history).
 
 ## States and variants
@@ -60,6 +79,8 @@ CtDarkScaffold
 | `GAME70001` | military complete | `Game.victory != null` | end-state banner names military winner |
 | `GAME70001` | calendar halt | `calendarCampaignHalted` | end-state banner names declared power-score winner or tie |
 | `GAME70001` | infinite mode | `Game.infiniteMode` | conditions include infinite bypass line |
+| `GAME70001a` | wide side-by-side | viewport ≥ 600 dp + map data | standings and minimap in one row below conditions |
+| `GAME70001b` | annotated minimap | map data with naming / capitals / towns | province labels, capital borders, town dots on minimap |
 
 ## Acceptance criteria
 
@@ -69,6 +90,9 @@ CtDarkScaffold
 - **Given** a GP row is collapsed, **when** shown, **then** power score is hidden; **when** expanded, **then** total power score and province / regiment / ship breakdown appear with copy distinguishing power score from the OW military meter.
 - **Given** the political minimap is shown, **when** Old World provinces render, **then** each province uses the owning GP's colour and Minor-owned provinces use grey, in chrome consistent with the editorial-monocle L&F.
 - **Given** `originalOwnerId` is present, **when** the player hovers or taps a province on the political minimap, **then** the UI states whether it is still the original owner's province or was captured, naming the founding owner; **given** legacy data without origin, **when** inspect is used, **then** the UI shows origin-unavailable copy without inventing capture history.
+- **Given** viewport width is at least `kNarrowBreakpoint` (600 dp) and map data is available, **when** the Victory panel renders, **then** Great Power standings and the political minimap appear side-by-side below the conditions block with compact section spacing.
+- **Given** viewport width is below 600 dp, **when** the Victory panel renders, **then** conditions, standings, and minimap remain stacked vertically in that order.
+- **Given** the political minimap is shown with naming data, **when** Old World land provinces render, **then** each province's display name appears at its centroid (readable or ellipsized when the footprint is small), capital provinces are outlined, and town markers appear at each `townTileKey`.
 
 ## References
 
@@ -76,4 +100,5 @@ CtDarkScaffold
 - `SPEC/game/turn-time-mapping.md`
 - `SPEC/game/diplomacy.md` § Great Power power score
 - `SPEC/ui/empire-buttons.md`
+- `SPEC/ui/mobile-adaptation.md`
 - `SPEC/ui/victory-overlay.md` (`OVL20001` post-military overlay unchanged)

@@ -7,7 +7,8 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
     show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
@@ -67,6 +68,7 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
@@ -226,6 +228,16 @@ void bootstrapWidgetbook() {
 Widget mobileViewport(BuildContext context, Widget child) {
   const double width = 360;
   const double height = 640;
+  return MediaQuery(
+    data: MediaQuery.of(context).copyWith(size: Size(width, height)),
+    child: SizedBox(width: width, height: height, child: child),
+  );
+}
+
+/// Simulated wide viewport (900×760 dp) for layout verification. SPEC/ui/mobile-adaptation.md.
+Widget wideViewport(BuildContext context, Widget child) {
+  const double width = 900;
+  const double height = 760;
   return MediaQuery(
     data: MediaQuery.of(context).copyWith(size: Size(width, height)),
     child: SizedBox(width: width, height: height, child: child),
