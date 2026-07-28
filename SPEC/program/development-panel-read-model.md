@@ -25,3 +25,12 @@ Purchased land: per purchased tile key owned by the player, same cap/prospect ru
 - Given purchased tile T in foreign province P owned by GP B, when the read model builds, then a purchased scope under P lists owner display name for B and improvable commodities for T only.
 - Given connected improved grain tiles in region R, when the read model builds extraction for R, then grain effective totals match per-tile extraction projection for tiles in R.
 - Given two idle Builders and one with a pending work order, when idle counts compute, then `idleBuilderCount == 1`.
+
+## Assign selection (Slice B)
+
+`resolveDevelopmentAssignRowState` / `selectDevelopmentImproveAssignCandidate` in `colonizethis_orders`:
+
+- Idle Builder: `status == idle`, no `currentWork`, no pending `WorkOrder` for that unit; first by stable unit id.
+- Tile priority among valid targets for the commodity: capital-connected first, then lower `improvementLevel`, then stable tile key.
+- Materials: affordability uses stockpile after deducting other pending material work orders (same order as economy preview).
+- Disconnected-only targets: Assign disabled until Slice C dialog (`allowDisconnectedAssign` flag).

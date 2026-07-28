@@ -30,7 +30,7 @@ CtGameFeatureScreenShell
 
 1. **Your provinces** — `RegionSectionHeader`; one card per owned province (never hidden).
 2. **Purchased land** — separate section; rows grouped by source province with **Owner:** label.
-3. Per scope: province name; improvable commodity rows (icon, count, **Show**, **Assign** disabled until Slice B) or muted **No improvable resources**.
+3. Per scope: province name; improvable commodity rows (icon, count, **Show**, **Assign**) or muted **No improvable resources**.
 
 ### Panel map
 
@@ -43,10 +43,10 @@ CtGameFeatureScreenShell
 | Control | Outcome |
 |---------|---------|
 | Show | Highlights commodity improvable tiles on panel map. |
-| Assign | Slice B — pending `build_improvement` (disabled in Slice A with reason). |
+| Assign | Commits pending `build_improvement` for first idle Builder (stable unit id) on the priority tile (connected → lower level → tile key). Disabled when no Builder, invalid target, disconnected-only (Slice C dialog), or insufficient materials. |
 | Region tab | Switches list + map region. |
 
-Read model: `SPEC/program/development-panel-read-model.md`.
+Read model: `SPEC/program/development-panel-read-model.md`. Assign selection: `development_panel_assign.dart` in `colonizethis_orders`.
 
 ---
 
@@ -59,10 +59,13 @@ Read model: `SPEC/program/development-panel-read-model.md`.
 
 ---
 
-## Acceptance criteria (Slice A)
+## Acceptance criteria (Slice A + B)
 
 - Given the in-game shell, when the player opens **Development** from the empire rail, then `GAME80001` opens with OW/NW tabs and `← Map`.
 - Given owned provinces in a region, when the tab renders, then **Your provinces** lists every owned province; empty improvable shows **No improvable resources**.
 - Given purchased tiles, when the tab renders, then **Purchased land** groups under source province with owner name.
 - Given improvable commodities, when a row renders, then counts match the read model and **Show** highlights tiles on the panel map.
 - Given post-resolution state, when the overview renders, then Extraction shows effective per-commodity projection for the active region.
+- Given two idle Builders and a valid improvable row, when the player taps **Assign**, then a pending `build_improvement` is committed for the first eligible Builder by unit id and the tile priority policy.
+- Given insufficient materials for a would-be improve assign, when the panel updates, then affected **Assign** controls are disabled and the overview shows a shortage warning; when materials become sufficient, controls update live.
+- Given no idle Builder, when a row would Assign, then **Assign** is disabled with a plain-language reason.

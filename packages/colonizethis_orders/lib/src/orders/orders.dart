@@ -10,6 +10,7 @@ export 'diplomatic_access_helpers.dart'
     show
         explorerConsulateGateBlocksMinorTribeProvince,
         kReasonConsulateRequiredForExplore;
+export 'development_panel_assign.dart';
 export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
 export 'order_effects_projector.dart';

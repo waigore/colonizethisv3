@@ -1,14 +1,17 @@
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_tab_strip.dart';
+import '../../widgets/shell/shell_player_context.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_map_panel.dart';
 import 'development_panel_overview.dart';
@@ -33,6 +36,9 @@ class DevelopmentScreenBody extends ConsumerWidget {
     }
 
     final orders = ref.watch(currentOrdersProvider);
+    final shell = ref.watch(shellPlayerContextProvider);
+    final canEdit = shell.canMutateViaUi;
+    final bus = ref.read(appEventBusProvider);
     final provinceNames = <String, String>{};
     for (final province in game.worldState.allProvinces()) {
       provinceNames[province.id] = province.displayName ?? province.id;
@@ -47,6 +53,12 @@ class DevelopmentScreenBody extends ConsumerWidget {
       provinceDisplayNamesById: provinceNames,
       playerDisplayNamesById: playerNames,
     );
+    final connectivity = resolveConnectivity(
+      game: game,
+      tileMapByRegion: mapData.tileMapByRegion,
+      topology: mapData.combinedTopology,
+    )[humanPlayerId];
+    final connectedTileKeys = connectivity?.connected ?? const <String>{};
 
     return Padding(
       padding: const EdgeInsets.all(CtSpacing.l),
@@ -58,13 +70,43 @@ class DevelopmentScreenBody extends ConsumerWidget {
           tabViews: [
             _DevelopmentRegionTab(
               game: game,
+              humanPlayerId: humanPlayerId,
               regionId: kRegionOldWorld,
               regionModel: model.oldWorld,
+              topology: mapData.combinedTopology,
+              tileMapByRegion: mapData.tileMapByRegion,
+              currentOrders: orders,
+              connectedTileKeys: connectedTileKeys,
+              canEdit: canEdit,
+              onAssign: (candidate) {
+                if (!canEdit) return;
+                bus.emit(
+                  UpsertPendingCivilianWorkOrderRequestedEvent(
+                    playerId: humanPlayerId,
+                    workOrder: candidate.toWorkOrder(),
+                  ),
+                );
+              },
             ),
             _DevelopmentRegionTab(
               game: game,
+              humanPlayerId: humanPlayerId,
               regionId: kRegionNewWorld,
               regionModel: model.newWorld,
+              topology: mapData.combinedTopology,
+              tileMapByRegion: mapData.tileMapByRegion,
+              currentOrders: orders,
+              connectedTileKeys: connectedTileKeys,
+              canEdit: canEdit,
+              onAssign: (candidate) {
+                if (!canEdit) return;
+                bus.emit(
+                  UpsertPendingCivilianWorkOrderRequestedEvent(
+                    playerId: humanPlayerId,
+                    workOrder: candidate.toWorkOrder(),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -76,13 +118,27 @@ class DevelopmentScreenBody extends ConsumerWidget {
 class _DevelopmentRegionTab extends StatefulWidget {
   const _DevelopmentRegionTab({
     required this.game,
+    required this.humanPlayerId,
     required this.regionId,
     required this.regionModel,
+    required this.topology,
+    required this.tileMapByRegion,
+    required this.currentOrders,
+    required this.connectedTileKeys,
+    required this.canEdit,
+    required this.onAssign,
   });
 
   final Game game;
+  final String humanPlayerId;
   final String regionId;
   final DevelopmentPanelRegionModel regionModel;
+  final MapTopology topology;
+  final Map<String, TileMapResult> tileMapByRegion;
+  final Orders currentOrders;
+  final Set<String> connectedTileKeys;
+  final bool canEdit;
+  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
 
   @override
   State<_DevelopmentRegionTab> createState() => _DevelopmentRegionTabState();
@@ -91,15 +147,59 @@ class _DevelopmentRegionTab extends StatefulWidget {
 class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
   Set<String>? _highlightTileKeys;
 
+  Iterable<({String commodityId, Set<String> tileKeys})>
+  get _improvableRows sync* {
+    for (final scope in [
+      ...widget.regionModel.ownedScopes,
+      ...widget.regionModel.purchasedScopes,
+    ]) {
+      for (final row in scope.improvableCommodities) {
+        yield (commodityId: row.commodityId, tileKeys: row.tileKeys.toSet());
+      }
+    }
+  }
+
+  DevelopmentAssignRowState _assignRowStateFor(
+    String commodityId,
+    Set<String> tileKeys,
+  ) {
+    if (!widget.canEdit) {
+      return const DevelopmentAssignRowState(
+        enabled: false,
+        disabledReason: 'Orders are read-only',
+      );
+    }
+    return resolveDevelopmentAssignRowState(
+      game: widget.game,
+      playerId: widget.humanPlayerId,
+      currentOrders: widget.currentOrders,
+      topology: widget.topology,
+      tileMapByRegion: widget.tileMapByRegion,
+      commodityTileKeys: tileKeys,
+      connectedTileKeys: widget.connectedTileKeys,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= kNarrowBreakpoint;
+    final materialShortages = developmentPanelMaterialShortageCommodityIds(
+      game: widget.game,
+      playerId: widget.humanPlayerId,
+      currentOrders: widget.currentOrders,
+      topology: widget.topology,
+      tileMapByRegion: widget.tileMapByRegion,
+      improvableRows: _improvableRows,
+      connectedTileKeys: widget.connectedTileKeys,
+    );
     final list = DevelopmentPanelScopeList(
       key: DevelopmentPanelKeys.scopeListKey,
       regionModel: widget.regionModel,
       onShowTiles: (keys) => setState(() {
         _highlightTileKeys = Set<String>.from(keys);
       }),
+      assignRowStateFor: _assignRowStateFor,
+      onAssign: widget.onAssign,
     );
     final mapPanel = DevelopmentPanelMapPanel(
       key: DevelopmentPanelKeys.panelMapKey,
@@ -114,6 +214,7 @@ class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
         DevelopmentPanelOverview(
           key: DevelopmentPanelKeys.overviewKey,
           regionModel: widget.regionModel,
+          materialShortageCommodityIds: materialShortages,
         ),
         const SizedBox(height: CtSpacing.m),
         Expanded(

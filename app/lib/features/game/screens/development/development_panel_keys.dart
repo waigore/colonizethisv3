@@ -17,4 +17,7 @@ abstract final class DevelopmentPanelKeys {
 
   static Key showButtonKey(String scopeKey, String commodityId) =>
       Key('development_panel_show:$scopeKey:$commodityId');
+
+  static Key assignButtonKey(String scopeKey, String commodityId) =>
+      Key('development_panel_assign:$scopeKey:$commodityId');
 }

@@ -14,10 +14,18 @@ class DevelopmentPanelScopeList extends StatelessWidget {
     super.key,
     required this.regionModel,
     required this.onShowTiles,
+    required this.assignRowStateFor,
+    required this.onAssign,
   });
 
   final DevelopmentPanelRegionModel regionModel;
   final void Function(Set<String> tileKeys) onShowTiles;
+  final DevelopmentAssignRowState Function(
+    String commodityId,
+    Set<String> tileKeys,
+  )
+  assignRowStateFor;
+  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +39,8 @@ class DevelopmentPanelScopeList extends StatelessWidget {
           (scope) => _ScopeCard(
             scope: scope,
             onShowTiles: onShowTiles,
+            assignRowStateFor: assignRowStateFor,
+            onAssign: onAssign,
           ),
         ),
         const SizedBox(height: CtSpacing.m),
@@ -54,6 +64,8 @@ class DevelopmentPanelScopeList extends StatelessWidget {
             (scope) => _ScopeCard(
               scope: scope,
               onShowTiles: onShowTiles,
+              assignRowStateFor: assignRowStateFor,
+              onAssign: onAssign,
             ),
           ),
       ],
@@ -65,10 +77,18 @@ class _ScopeCard extends StatelessWidget {
   const _ScopeCard({
     required this.scope,
     required this.onShowTiles,
+    required this.assignRowStateFor,
+    required this.onAssign,
   });
 
   final DevelopmentPanelScopeRow scope;
   final void Function(Set<String> tileKeys) onShowTiles;
+  final DevelopmentAssignRowState Function(
+    String commodityId,
+    Set<String> tileKeys,
+  )
+  assignRowStateFor;
+  final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +125,19 @@ class _ScopeCard extends StatelessWidget {
               final displayName = CommodityCatalog.all
                   .firstWhere((c) => c.id == row.commodityId)
                   .displayName ?? row.commodityId;
+              final tileKeys = row.tileKeys.toSet();
+              final assignState = assignRowStateFor(row.commodityId, tileKeys);
+              final assignTooltip = assignState.disabledReason;
+              final assignButton = CtActionTextButton(
+                key: DevelopmentPanelKeys.assignButtonKey(
+                  scope.scopeKey,
+                  row.commodityId,
+                ),
+                label: 'Assign',
+                onPressed: assignState.enabled && assignState.candidate != null
+                    ? () => onAssign(assignState.candidate!)
+                    : null,
+              );
               return Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(
@@ -121,13 +154,16 @@ class _ScopeCard extends StatelessWidget {
                         row.commodityId,
                       ),
                       label: 'Show',
-                      onPressed: () => onShowTiles(row.tileKeys.toSet()),
+                      onPressed: () => onShowTiles(tileKeys),
                     ),
                     const SizedBox(width: CtSpacing.s),
-                    CtActionTextButton(
-                      label: 'Assign',
-                      onPressed: null,
-                    ),
+                    if (assignTooltip != null && !assignState.enabled)
+                      Tooltip(
+                        message: assignTooltip,
+                        child: assignButton,
+                      )
+                    else
+                      assignButton,
                   ],
                 ),
               );
