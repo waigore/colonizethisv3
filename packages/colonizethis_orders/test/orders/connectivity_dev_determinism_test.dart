@@ -4,40 +4,44 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/scenario_runner.dart';
 import 'support/suggestion/order_suggestion_work_feedstock_priority_fixtures.dart';
 
 /// Determinism pin for connectivity-aware work suggestions (Refs #4176 AC-F4).
 void main() {
-  test('suggestWorkOrders is byte-identical across two passes (AC-F4)', () {
-    final game = feedstockPriorityGame();
-    final topology = feedstockPriorityTopology(game);
-    final view = buildPlayerView(game, topology, feedstockPrioritySupplierId);
-    final tileMapByRegion = <String, TileMapResult>{
-      for (final regionEntry
-          in game.worldState.tileKeysByRegionAndProvince.entries)
-        regionEntry.key: _tileMapForRegion(regionEntry.key, regionEntry.value),
-    };
+  runLabeledScenarioGroup('suggestWorkOrders determinism (AC-F4)', [
+    rs('byte-identical across two passes', () {
+      final game = feedstockPriorityGame();
+      final topology = feedstockPriorityTopology(game);
+      final view = buildPlayerView(game, topology, feedstockPrioritySupplierId);
+      final tileMapByRegion = <String, TileMapResult>{
+        for (final regionEntry
+            in game.worldState.tileKeysByRegionAndProvince.entries)
+          regionEntry.key:
+              _tileMapForRegion(regionEntry.key, regionEntry.value),
+      };
 
-    final first = suggestWorkOrders(
-      view,
-      game,
-      topology,
-      const Orders(),
-      tileMapByRegion: tileMapByRegion,
-    );
-    final second = suggestWorkOrders(
-      view,
-      game,
-      topology,
-      const Orders(),
-      tileMapByRegion: tileMapByRegion,
-    );
+      final first = suggestWorkOrders(
+        view,
+        game,
+        topology,
+        const Orders(),
+        tileMapByRegion: tileMapByRegion,
+      );
+      final second = suggestWorkOrders(
+        view,
+        game,
+        topology,
+        const Orders(),
+        tileMapByRegion: tileMapByRegion,
+      );
 
-    expect(
-      second.map((o) => (o.unitId, o.target, o.targetTileKey)).toList(),
-      first.map((o) => (o.unitId, o.target, o.targetTileKey)).toList(),
-    );
-  });
+      expect(
+        second.map((o) => (o.unitId, o.target, o.targetTileKey)).toList(),
+        first.map((o) => (o.unitId, o.target, o.targetTileKey)).toList(),
+      );
+    }),
+  ], runRunnableScenario);
 }
 
 TileMapResult _tileMapForRegion(
