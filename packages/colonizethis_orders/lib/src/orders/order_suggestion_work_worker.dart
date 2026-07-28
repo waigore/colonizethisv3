@@ -2,6 +2,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'connectivity_dev_snapshot.dart';
+import 'connectivity_dev_targets.dart';
 import 'feedstock_extraction_targets.dart'
     show feedstockExtractionResourceIdsForPlayer;
 import 'incremental_candidate_validator.dart';
@@ -30,6 +32,7 @@ void addWorkerSuggestionsForUnit({
   required DiplomacyFactionMembership factionMembership,
   required WorkSuggestionProbeBudget workProbeBudget,
   Map<String, TileMapResult>? tileMapByRegion,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final allowedTargets = workOrderTargetsByUnitType[type];
   if (allowedTargets == null) return;
@@ -46,12 +49,22 @@ void addWorkerSuggestionsForUnit({
           playerOwnedProvinceIds: playerOwnedProvinceIds,
           factionMembership: factionMembership,
         );
-        final visible = sortedVisibleWorkTargetCandidates(view, raw);
+        var visible = sortedVisibleWorkTargetCandidates(view, raw);
         if (target == kWorkTargetBuildImprovement) {
-          return _prioritizeFeedstockBuildImprovementCandidates(
+          visible = _prioritizeFeedstockBuildImprovementCandidates(
             game: game,
             playerId: playerId,
             sortedVisible: visible,
+          );
+        }
+        if (connectivityDev != null && tileMapByRegion != null) {
+          visible = applyConnectivityDevTargetOrdering(
+            workTarget: target,
+            sortedVisible: visible,
+            snapshot: connectivityDev,
+            game: game,
+            topology: topology,
+            tileMapByRegion: tileMapByRegion,
           );
         }
         return visible;

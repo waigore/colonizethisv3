@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -40,6 +41,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   required PlayerView view,
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
+  MapTopology? topology,
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
   bool spyDevelopPhase = false,
@@ -70,6 +72,14 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
     game,
     feedstockExtractionResourceIds,
   );
+  final connectivityDev = topology == null
+      ? null
+      : buildConnectivityDevSnapshot(
+          game: game,
+          playerId: view.playerId,
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
 
   for (final unitId in allUnitIds) {
     appendSelectionForUnitId(
@@ -88,6 +98,7 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
           growthStageInfraFeedstockResourceIds,
       reservation: reservation,
       spyDevelopPhase: spyDevelopPhase,
+      connectivityDev: connectivityDev,
     );
   }
 
