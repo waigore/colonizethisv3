@@ -10,6 +10,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'development_panel_assign_affordance.dart';
 import 'development_panel_assign.dart';
 import 'incremental_candidate_validator.dart';
 import 'order_resolution_context.dart';
