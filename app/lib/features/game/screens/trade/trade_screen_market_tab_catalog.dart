@@ -15,6 +15,7 @@ import '../../widgets/production/commodity_ui_helpers.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_row.dart';
 import 'trade_screen_market_tab.dart';
+import 'trade_screen_market_tab_order_handlers.dart';
 
 extension MarketTabContentCatalog on MarketTabContent {
   /// Builds the widget list that renders one Market commodity category
@@ -35,6 +36,7 @@ extension MarketTabContentCatalog on MarketTabContent {
     required List<Commodity> commodities,
     required Map<CommodityId, int> offerCap,
     required Map<CommodityId, int> stagedOffers,
+    required int bidTypeCap,
     required WorldMarketState market,
     required Orders orders,
     required TextStyle nameStyle,
@@ -79,6 +81,12 @@ extension MarketTabContentCatalog on MarketTabContent {
               commodityId: commodities[index].id,
             ),
             offerCap: offerCap[commodities[index].id] ?? 0,
+            canSelectBid: canStageBidOnCommodity(
+              orders: orders,
+              playerId: playerId,
+              commodityId: commodities[index].id,
+              bidTypeCap: bidTypeCap,
+            ),
             nameStyle: nameStyle,
             priceStyle: priceStyle,
             volumeStyle: volumeStyle,

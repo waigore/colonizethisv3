@@ -45,6 +45,38 @@ int totalStagedBidQuantity(Orders orders, String playerId) {
   return total;
 }
 
+/// Returns the count of distinct commodities with a staged
+/// `TradeOrderType.bid` for [playerId] (Refs #4170). Offers are
+/// excluded; repeat bids on the same commodity count once.
+int stagedDistinctBidCommodityCount(Orders orders, String playerId) {
+  final List<TradeOrder>? list = orders.tradeOrdersByPlayerId[playerId];
+  if (list == null || list.isEmpty) return 0;
+  final Set<CommodityId> distinct = <CommodityId>{};
+  for (final TradeOrder o in list) {
+    if (o.type == TradeOrderType.bid) distinct.add(o.commodityId);
+  }
+  return distinct.length;
+}
+
+/// True when the player may stage (or re-stage) a `Bid` on
+/// [commodityId] without exceeding `worldMarketBidTypeCap` (Refs
+/// #4170). Replacing an existing bid on the same commodity never
+/// consumes an additional slot.
+bool canStageBidOnCommodity({
+  required Orders orders,
+  required String playerId,
+  required CommodityId commodityId,
+  required int bidTypeCap,
+}) {
+  final TradeOrder? prior = tradeOrderForPlayerCommodity(
+    orders,
+    playerId,
+    commodityId,
+  );
+  if (prior?.type == TradeOrderType.bid) return true;
+  return stagedDistinctBidCommodityCount(orders, playerId) < bidTypeCap;
+}
+
 extension MarketTabContentDirectionHandlers on MarketTabContent {
   void handleDirectionChanged({
     required CurrentOrdersNotifier ordersNotifier,
@@ -75,6 +107,17 @@ extension MarketTabContentDirectionHandlers on MarketTabContent {
 
     int quantity = desiredQuantity;
     if (next == TradeOrderType.bid) {
+      // Refs #4170 — bid-type cap (distinct commodities). Refuse a fresh
+      // bid on a commodity that is not already staged as a bid when the
+      // player's distinct-bid count has reached `worldMarketBidTypeCap`.
+      if (!canStageBidOnCommodity(
+        orders: orders,
+        playerId: playerId,
+        commodityId: commodityId,
+        bidTypeCap: worldMarketBidTypeCap(game, playerId),
+      )) {
+        return;
+      }
       // Refs #2993 E5c: clamp the staged bid quantity so the
       // cross-commodity bid total never exceeds the player's
       // tradeCargoCapacity. The row's own prior bid contribution (if

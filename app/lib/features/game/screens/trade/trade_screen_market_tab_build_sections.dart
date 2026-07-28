@@ -22,6 +22,10 @@ extension MarketTabContentBuildSections on MarketTabContent {
     TextStyle quantityStyle,
     TextStyle cargoIndicatorStyle,
     TextStyle cargoWarningStyle,
+    TextStyle bidGoodsIndicatorStyle,
+    TextStyle bidTypeWarningStyle,
+    TextStyle whyToggleStyle,
+    TextStyle whyBodyStyle,
   })
   marketTabTextStyles(ThemeData theme) {
     return (
@@ -40,6 +44,16 @@ extension MarketTabContentBuildSections on MarketTabContent {
       cargoWarningStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.danger),
+      bidGoodsIndicatorStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(color: EditorialMonoclePalette.accent),
+      bidTypeWarningStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(color: EditorialMonoclePalette.danger),
+      whyToggleStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(color: EditorialMonoclePalette.muted),
+      whyBodyStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+          .copyWith(color: EditorialMonoclePalette.muted),
     );
   }
 
@@ -50,6 +64,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
     required Orders orders,
     required Map<CommodityId, int> offerCap,
     required Map<CommodityId, int> stagedOffers,
+    required int bidTypeCap,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
@@ -63,6 +78,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         commodities: sectioned.food,
         offerCap: offerCap,
         stagedOffers: stagedOffers,
+        bidTypeCap: bidTypeCap,
         market: market,
         orders: orders,
         nameStyle: nameStyle,
@@ -79,6 +95,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         commodities: sectioned.rawMaterials,
         offerCap: offerCap,
         stagedOffers: stagedOffers,
+        bidTypeCap: bidTypeCap,
         market: market,
         orders: orders,
         nameStyle: nameStyle,
@@ -96,6 +113,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         commodities: sectioned.manufactured,
         offerCap: offerCap,
         stagedOffers: stagedOffers,
+        bidTypeCap: bidTypeCap,
         market: market,
         orders: orders,
         nameStyle: nameStyle,

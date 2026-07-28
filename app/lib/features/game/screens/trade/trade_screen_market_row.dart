@@ -32,6 +32,7 @@ class MarketCommodityRow extends StatelessWidget {
     required this.stagedOrder,
     required this.sellableHeadroom,
     required this.offerCap,
+    required this.canSelectBid,
     required this.nameStyle,
     required this.priceStyle,
     required this.volumeStyle,
@@ -57,6 +58,12 @@ class MarketCommodityRow extends StatelessWidget {
   /// the Offer chip and offer-side `+` button so they read as
   /// disabled when the cap is `0`.
   final int offerCap;
+
+  /// Refs #4170 — bid-type cap slice. When `false` the Bid chip reads as
+  /// disabled so the player cannot stage a bid on a fresh commodity when
+  /// the distinct-bid count has reached `worldMarketBidTypeCap`. Rows that
+  /// already stage a bid remain editable.
+  final bool canSelectBid;
 
   final TextStyle nameStyle;
   final TextStyle priceStyle;
@@ -123,6 +130,7 @@ class MarketCommodityRow extends StatelessWidget {
           canDecrement: _canDecrement,
           canIncrement: _canIncrement,
           canSelectOffer: _canSelectOffer,
+          canSelectBid: canSelectBid,
           onDirectionChanged: onDirectionChanged,
           onIncrement: onIncrement,
           onDecrement: onDecrement,

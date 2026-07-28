@@ -24,6 +24,7 @@ class MarketCommodityRowControls extends StatelessWidget {
     required this.canDecrement,
     required this.canIncrement,
     required this.canSelectOffer,
+    required this.canSelectBid,
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
@@ -42,6 +43,10 @@ class MarketCommodityRowControls extends StatelessWidget {
   /// `0`. Offers already staged on the row remain interactive (the
   /// player can decrement / drop them) regardless of this gate.
   final bool canSelectOffer;
+
+  /// Refs #4170 — bid-type cap slice. When `false` the Bid chip reads as
+  /// disabled (no `onSelected` handler).
+  final bool canSelectBid;
 
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
@@ -63,8 +68,15 @@ class MarketCommodityRowControls extends StatelessWidget {
         CtChoiceChip(
           key: TradeScreenMarketKeys.marketRowBidChipKey(commodityId),
           selected: stagedType == TradeOrderType.bid,
-          onSelected: (_) => onDirectionChanged(TradeOrderType.bid),
-          label: const Text(MarketTabContent.bidChipLabel),
+          onSelected: canSelectBid
+              ? (_) => onDirectionChanged(TradeOrderType.bid)
+              : null,
+          label: Semantics(
+            label: canSelectBid
+                ? MarketTabContent.bidChipLabel
+                : TradeScreenMarketKeys.bidChipBidTypeCapSemanticLabel,
+            child: const Text(MarketTabContent.bidChipLabel),
+          ),
         ),
         CtChoiceChip(
           key: TradeScreenMarketKeys.marketRowOfferChipKey(commodityId),
