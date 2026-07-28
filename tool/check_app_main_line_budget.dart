@@ -11,14 +11,15 @@
 // raised for order-rejected feed deep-link routing (Refs #4146);
 // raised for GAME60001 Market bid-goods indicator and bid-type cap gate (Refs #4170);
 // raised for GAME70001 Victory panel compact wide layout + minimap annotations (Refs #4165);
-// raised for GAME80001 Development panel shell, read model, and map (Slice A Refs #4175).
+// raised for GAME80001 Development panel shell, read model, and map (Slice A Refs #4175);
+// raised for GAME80001 Assign improve, disconnected dialog, and Road first (Slices B–C Refs #4175).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 63050;
+const _maxMainLines = 63500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
