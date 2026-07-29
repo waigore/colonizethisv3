@@ -26,6 +26,8 @@ extension MarketTabContentBuildSections on MarketTabContent {
     TextStyle bidTypeWarningStyle,
     TextStyle whyToggleStyle,
     TextStyle whyBodyStyle,
+    TextStyle bidBudgetIndicatorStyle,
+    TextStyle bidBudgetWarningStyle,
   })
   marketTabTextStyles(ThemeData theme) {
     return (
@@ -48,6 +50,12 @@ extension MarketTabContentBuildSections on MarketTabContent {
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.accent),
       bidTypeWarningStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(color: EditorialMonoclePalette.danger),
+      bidBudgetIndicatorStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(color: EditorialMonoclePalette.accent),
+      bidBudgetWarningStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.danger),
       whyToggleStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))

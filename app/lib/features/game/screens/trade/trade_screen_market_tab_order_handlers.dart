@@ -31,6 +31,44 @@ int projectedNonBidTreasuryDelta(
   return projectedDelta + stagedBidSpend;
 }
 
+/// Live Market-header bid-budget telemetry (Refs #4186). Uses the same
+/// helpers and projection path as the Bid clamp in
+/// `handleDirectionChanged` / `handleQuantityDelta`.
+({
+  int budgetTotal,
+  int budgetRemaining,
+  bool warningVisible,
+}) marketTabBidBudgetHeaderState({
+  required Game game,
+  required String playerId,
+  required Orders orders,
+  required int? projectedTreasuryDelta,
+}) {
+  final int stagedBidSpend = stagedBidTotalSpendByPlayer(
+    orders: orders,
+    playerId: playerId,
+    game: game,
+    resourceRules: ResourceRules.defaultRules,
+  );
+  final int budgetTotal = treasuryAvailableForBidsByPlayer(
+    game: game,
+    playerId: playerId,
+    projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta(
+      projectedTreasuryDelta,
+      stagedBidSpend,
+    ),
+  );
+  final int rawRemaining = budgetTotal - stagedBidSpend;
+  final int budgetRemaining = rawRemaining < 0 ? 0 : rawRemaining;
+  final bool warningVisible =
+      budgetRemaining == 0 && (stagedBidSpend > 0 || budgetTotal == 0);
+  return (
+    budgetTotal: budgetTotal,
+    budgetRemaining: budgetRemaining,
+    warningVisible: warningVisible,
+  );
+}
+
 /// Returns the sum of `TradeOrder.quantity` across all staged
 /// `TradeOrderType.bid` orders for [playerId] in [orders]. Offers do
 /// not consume cargo (per `#2988` § Cargo Constraint Model) and are

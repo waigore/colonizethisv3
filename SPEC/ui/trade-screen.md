@@ -45,6 +45,10 @@
 - `TradeScreenMarketKeys.marketBidTypeWhyBodyKey` — `ValueKey<String>('tradeScreenMarketBidTypeWhyBody')` (expanded plain-language bid-type cap copy; mounted only while the disclosure is open — Refs `#4170`).
 - `TradeScreenMarketKeys.marketCargoIndicatorKey` — `ValueKey<String>('tradeScreenMarketCargoIndicator')` (persistent header strip above the commodity list; renders the `Cargo remaining: X` text where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)` for the human player — Refs `#2993` E5c).
 - `TradeScreenMarketKeys.marketCargoWarningKey` — `ValueKey<String>('tradeScreenMarketCargoWarning')` (per-screen warning row rendered immediately below the cargo indicator when `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent otherwise — Refs `#2993` E5c).
+- `TradeScreenMarketKeys.marketBidBudgetIndicatorKey` — `ValueKey<String>('tradeScreenMarketBidBudgetIndicator')` (persistent header strip below the cargo indicator; renders `Bid budget: R of B` where `B = treasuryAvailableForBidsByPlayer(...)` and `R = max(0, B − stagedBidTotalSpendByPlayer(...))` — Refs `#4186`).
+- `TradeScreenMarketKeys.marketBidBudgetWarningKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWarning')` (danger warning row below the bid-budget indicator when `R == 0` and (`S > 0` or `B == 0`); absent otherwise — Refs `#4186`).
+- `TradeScreenMarketKeys.marketBidBudgetWhyToggleKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWhyToggle')` (optional **Why this limit?** disclosure toggle for the treasury bid budget — Refs `#4186`).
+- `TradeScreenMarketKeys.marketBidBudgetWhyBodyKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWhyBody')` (expanded plain-language treasury bid-budget copy; mounted only while the disclosure is open — Refs `#4186`).
 - `TradeScreenDealBookKeys.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label; key remained stable when `#2993` E6 swapped the placeholder for the live ledger).
 - `TradeScreenDealBookKeys.dealBookContentKey` — `ValueKey<String>('tradeScreenDealBookContent')` (root of the live Deal Book two-panel ledger content sitting directly under `dealBookTabBodyKey` — Refs `#2993` E6).
 - `TradeScreenDealBookKeys.dealBookBidsPanelKey` — `ValueKey<String>('tradeScreenDealBookBidsPanel')` (left/top container for the player's previous-turn buying activity panel; always mounted under the live ledger root — Refs `#2993` E6).
@@ -280,6 +284,22 @@ UI surface:
 - **Unpriced commodities (`rowPrice == null`):** when the row has no effective per-unit price (manufactured commodity whose first market price is discovered in-game and no catalog default — the row's price text reads as the em-dash), the treasury clamp is **skipped** so the cargo cap from E5c remains the only constraint on the row's Bid toggle / `+` increment. `TradeOrderValidator` rule 5 prices unpriced bids at `0` spend (`effectiveMarketPriceForCommodityId` returns `null` for missing-from-both-sides commodity ids), so a quantity that survives the cargo cap is admitted at submission — this is the documented defensive behaviour for tradeable ids that ship without a catalog default, not a treasury-bypass loophole (every tradeable commodity in the current catalog publishes a non-null default per `SPEC/game/commodity-catalog.md` § Manufactured base prices).
 - The cargo cap from E5c continues to apply unchanged — both caps are checked and the **stricter** of the two governs the row's increment / toggle outcome. Offers do not consume treasury and are not gated by this cap.
 
+### Market tab — treasury bid budget indicator (`#4186` slice)
+
+The Market header strip surfaces the player's remaining **treasury bid budget** so staged bid spend is glanceable before the player taps Bid / `+`. The indicator uses the same helpers and projection path as the treasury bid clamp in [§ Market tab — treasury bid cap (`#3093` slice)](#market-tab--treasury-bid-cap-3093-slice):
+
+- `B = treasuryAvailableForBidsByPlayer(game, playerId, projectedNonBidTreasuryDelta: D)` where `D = treasurySummaryProvider.projectedDelta + stagedBidTotalSpendByPlayer(...)` (or `D = 0` when `projectedDelta == null`).
+- `S = stagedBidTotalSpendByPlayer(orders, playerId, game, resourceRules)`.
+- `R = max(0, B − S)`.
+
+UI surface:
+
+- **Bid budget indicator** (`marketBidBudgetIndicatorKey`): always mounted; literal `Bid budget: R of B`; updates live as bid quantities/directions change and when non-bid staged orders change the projected treasury delta.
+- **Saturation warning** (`marketBidBudgetWarningKey`): mounts when `R == 0` and (`S > 0` or `B == 0`); plain-language copy directs the player to free treasury or reduce other spending before bidding more.
+- **Why this limit?** (`marketBidBudgetWhyToggleKey` / `marketBidBudgetWhyBodyKey`): optional progressive disclosure; body copy states that bids spend from treasury after other staged orders, expected income does not raise the budget, and offers do not consume the budget.
+- **Observe mode:** bid-budget indicator + disclosure remain live; row chips stay under `IgnorePointer` (non-mutating).
+- Existing silent Bid/`+` treasury clamps are unchanged; this slice does not redesign per-row disabled chips.
+
 ### Market tab — bid-type cap (`#4170` slice)
 
 The Market header strip surfaces and enforces the distinct-commodity **bid type cap** (`1` baseline / `3` with any embassy / `6` with embassy + Trade Fairs) per [`world-market.md`](../game/world-market.md) § Bid type cap. `C = worldMarketBidTypeCap(game, playerId)`; `U` counts distinct commodities with a staged `TradeOrderType.bid` (offers never increment `U`). UI helpers live in `trade_screen_market_tab_order_handlers.dart` (`stagedDistinctBidCommodityCount`, `canStageBidOnCommodity`).
@@ -493,6 +513,17 @@ Follow-up E5b cont. slices append `Market tab — priority dropdown` as the prio
 - **Given** the player has `Player.treasury == 100`, market price `timber: 30`, no staged trade orders, and `treasurySummaryProvider.projectedDelta == -40` (the player has non-bid orders such as build / recruit / civilian / subsidy commitments projected to debit 40 treasury this turn; with no staged bids, `D = -40 + 0 = -40` matches the projected non-bid delta), **when** the user taps `marketRowBidChipKey('timber')`, **then** the bid budget resolves to `max(0, 100 − 40) == 60` and the staged `TradeOrder` is `(type: bid, quantity: min(marketRowQuantityDefault, 60 ~/ 30) == 1)`. Repeatedly tapping `marketRowIncrementKey('timber')` grows the staged quantity to `2` (spend `60`); the next `+` tap is a silent no-op because `(2 + 1) × 30 == 90` exceeds the bid budget `60`.
 - **Given** the player has `Player.treasury == 50` and `treasurySummaryProvider.projectedDelta == -60` (projected end-of-turn treasury would be `-10` before any bids), **when** the user taps `marketRowBidChipKey('timber')` with `Game.worldMarketState.prices == {timber: 30}`, **then** the bid budget resolves to `max(0, 50 − 60) == 0`; the toggle is a silent no-op (no bid is staged, the row stays `None`) and the cargo indicator is unaffected.
 - **Given** the player has `Player.treasury == 100` and `treasurySummaryProvider.projectedDelta == 25` (the player's non-bid orders are projected to **add** 25 treasury this turn — e.g. extraction sales), **when** the user taps `marketRowBidChipKey('iron')` with `Game.worldMarketState.prices == {iron: 80}`, **then** the bid budget resolves to `100` (net non-bid income does not raise the budget — the helper clamps `projectedNonBidTreasuryDelta` deficits to 0 only) and the staged `TradeOrder` is `(type: bid, quantity: 1)`. The clamp stays conservative: future projection refinements may credit income separately, but this slice's UI never lets the player commit treasury they only project to earn.
+
+### Market tab — treasury bid budget indicator (`#4186` slice)
+
+- **Given** the Market tab is open with bid budget `B` and staged bid spend `S`, **when** the header renders, **then** the widget keyed `TradeScreenMarketKeys.marketBidBudgetIndicatorKey` renders `Bid budget: R of B` where `R = max(0, B − S)`.
+- **Given** `R == 0` and (`S > 0` or `B == 0`), **when** the Market tab renders, **then** the widget keyed `TradeScreenMarketKeys.marketBidBudgetWarningKey` is mounted with the treasury bid-limit warning copy; **given** `R > 0`, **then** that warning key resolves to zero widgets.
+- **Given** projected non-bid treasury deficit reduces `B` below raw treasury, **when** bids are staged, **then** the header `B` matches `treasuryAvailableForBidsByPlayer` with the same `projectedNonBidTreasuryDelta` reconstruction as the Bid clamp (not raw treasury alone when `treasurySummaryProvider.projectedDelta` is available).
+- **Given** only offers are staged (`S == 0`), **when** the header renders, **then** the indicator reads `Bid budget: B of B` (remaining equals the full bid budget).
+- **Given** the player changes bid quantity/direction or non-bid orders that affect `treasurySummaryProvider.projectedDelta`, **when** the Market tab rebuilds, **then** the bid-budget line updates without leaving the screen.
+- **Given** `shellPlayerContextProvider.canMutateViaUi == false`, **when** the Market tab renders, **then** the bid-budget indicator and (when applicable) warning remain mounted with the same values as in the editable case.
+- **Given** the player taps `TradeScreenMarketKeys.marketBidBudgetWhyToggleKey`, **when** the disclosure expands, **then** the widget keyed `TradeScreenMarketKeys.marketBidBudgetWhyBodyKey` mounts with plain copy stating that bids spend from treasury after other staged orders, expected income does not raise the budget, and offers do not consume the budget.
+- **Given** a Bid/`+` tap would exceed the treasury budget, **when** the player taps, **then** the existing silent no-op clamp behaviour from the `#3093` treasury bid cap slice remains unchanged.
 
 ### Market tab — bid-type cap (`#4170` slice)
 
