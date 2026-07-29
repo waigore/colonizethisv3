@@ -33,7 +33,7 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 ### Where you act in the UI
 
 1. From `GAME10001`, tap **Trade** on the left empire rail (or open route `/game/trade`) to reach `GAME60001` **Trade screen**.
-2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Bid goods: U of C** (distinct bid commodities vs your cap) and **Cargo remaining**. Bid and offer are mutually exclusive per commodity; staged bids respect bid-type, cargo, and treasury caps from the rules above. Riches never appear as trade rows.
+2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Bid goods: U of C** (distinct bid commodities vs your cap), **Cargo remaining**, and **Bid budget: R of B** (treasury headroom for bids after other pending costs). Bid and offer are mutually exclusive per commodity; staged bids respect bid-type, cargo, and treasury caps from the rules above. Riches never appear as trade rows.
 3. **Deal Book** tab: review last-turn filled buys/sales and any carry-forward unfilled orders for your court.
 4. Production (`GAME20001`) shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
 5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, turn news, and market activity.
@@ -43,6 +43,8 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 **Counsel.** Hark, my liege: a bid without cargo is a promise the fleet cannot keep — leave holds for extraction first, then for the market.
 
 **Tip.** Embassy and `trade_fairs` multiply how many commodities you may chase in one turn. The Market header shows **Bid goods: U of C** so you see the limit before you end the turn — diplomacy is market infrastructure.
+
+**Tip.** **Bid budget: R of B** shows how much treasury you can still commit to bids this turn after other staged spending. When the treasury bid limit is reached, free gold or trim other orders before bidding more; tap **Why this limit?** under the budget line for a short explanation.
 
 **Tip.** A per-row priority dropdown is not yet on the Market tab; staged orders use the default priority until that control ships.
 

@@ -251,6 +251,28 @@ abstract final class TradeScreenMarketKeys {
   static const Key marketBidTypeCapGoldenKey =
       ValueKey<String>('tradeScreenMarketBidTypeCapGolden');
 
+  /// Stable widget key for the treasury bid-budget indicator rendered in
+  /// the Market header strip (Refs #4186). Renders `Bid budget: R of B`
+  /// where `B` is `treasuryAvailableForBidsByPlayer` and `R` is
+  /// `max(0, B − stagedBidTotalSpendByPlayer)`.
+  static const Key marketBidBudgetIndicatorKey =
+      ValueKey<String>('tradeScreenMarketBidBudgetIndicator');
+
+  /// Stable widget key for the treasury bid-budget saturation warning row
+  /// (Refs #4186). Mounted when `R == 0` and (`S > 0` or `B == 0`).
+  static const Key marketBidBudgetWarningKey =
+      ValueKey<String>('tradeScreenMarketBidBudgetWarning');
+
+  /// Stable widget key for the optional **Why this limit?** disclosure
+  /// toggle for the treasury bid budget (Refs #4186).
+  static const Key marketBidBudgetWhyToggleKey =
+      ValueKey<String>('tradeScreenMarketBidBudgetWhyToggle');
+
+  /// Stable widget key for the expanded treasury bid-budget explanation
+  /// body (Refs #4186). Mounted only while the disclosure is open.
+  static const Key marketBidBudgetWhyBodyKey =
+      ValueKey<String>('tradeScreenMarketBidBudgetWhyBody');
+
   /// Stable widget key for the cross-commodity cargo indicator header
   /// rendered above the Market tab commodity list (Refs #2993 E5c).
   /// The widget at this key renders `Cargo remaining: X` where
@@ -327,6 +349,30 @@ abstract final class TradeScreenMarketKeys {
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String cargoLimitWarningText =
       'Cargo limit reached — increase your fleet capacity or reduce bids.';
+
+  /// Bid-budget indicator prefix (Refs #4186). Renders as
+  /// `Bid budget: R of B` where `R` is remaining treasury headroom for
+  /// bids and `B` is the total bid budget this turn.
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidBudgetIndicatorPrefix = 'Bid budget:';
+
+  /// Treasury bid-budget saturation warning copy (Refs #4186).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidBudgetLimitWarningText =
+      'Treasury bid limit reached — free gold or reduce other spending '
+      'before bidding more.';
+
+  /// Progressive-disclosure toggle label for treasury bid-budget help
+  /// (Refs #4186).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidBudgetLimitWhyToggleLabel = 'Why this limit?';
+
+  /// Plain-language treasury bid-budget explanation (Refs #4186).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidBudgetWhyLimitCopy =
+      'Your bids spend from treasury after other orders you have already '
+      'staged this turn. Expected income does not increase this budget. '
+      'Offers do not use this budget.';
 
   /// Tab label for the Market tab (default selection). SPEC §
   /// Layout / wireframe pins the literal `"Market"` so widget tests can

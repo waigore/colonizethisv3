@@ -6,6 +6,8 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -42,6 +44,8 @@ extension MarketTabContentBuild on MarketTabContent {
     final TextStyle cargoWarningStyle = styles.cargoWarningStyle;
     final TextStyle bidGoodsIndicatorStyle = styles.bidGoodsIndicatorStyle;
     final TextStyle bidTypeWarningStyle = styles.bidTypeWarningStyle;
+    final TextStyle bidBudgetIndicatorStyle = styles.bidBudgetIndicatorStyle;
+    final TextStyle bidBudgetWarningStyle = styles.bidBudgetWarningStyle;
     final TextStyle whyToggleStyle = styles.whyToggleStyle;
     final TextStyle whyBodyStyle = styles.whyBodyStyle;
 
@@ -59,6 +63,18 @@ extension MarketTabContentBuild on MarketTabContent {
     final int clampedRemaining = remainingCargo < 0 ? 0 : remainingCargo;
     final bool warningVisible =
         clampedRemaining == 0 && totalStagedBid > 0;
+
+    final ({
+      int budgetTotal,
+      int budgetRemaining,
+      bool warningVisible,
+    }) bidBudgetHeader = marketTabBidBudgetHeaderState(
+      game: game,
+      playerId: playerId,
+      orders: orders,
+      projectedTreasuryDelta: readProjectedTreasuryDelta(),
+      resourceRules: ResourceRules.defaultRules,
+    );
 
     // Refs #3093 — sellable clamp slice. Compute the per-commodity offer
     // cap and the player's already-staged offer quantities once per
@@ -166,10 +182,15 @@ extension MarketTabContentBuild on MarketTabContent {
         bidTypeCap: bidTypeCap,
         clampedRemaining: clampedRemaining,
         cargoWarningVisible: warningVisible,
+        bidBudgetTotal: bidBudgetHeader.budgetTotal,
+        bidBudgetRemaining: bidBudgetHeader.budgetRemaining,
+        bidBudgetWarningVisible: bidBudgetHeader.warningVisible,
         bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
         bidTypeWarningStyle: bidTypeWarningStyle,
         cargoIndicatorStyle: cargoIndicatorStyle,
         cargoWarningStyle: cargoWarningStyle,
+        bidBudgetIndicatorStyle: bidBudgetIndicatorStyle,
+        bidBudgetWarningStyle: bidBudgetWarningStyle,
         whyToggleStyle: whyToggleStyle,
         whyBodyStyle: whyBodyStyle,
       ),
