@@ -10,10 +10,13 @@
 /// (rule 5).
 library;
 
+import 'package:colonizethis_data/colonizethis_data.dart' as data;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart'
     show GamePlayerLookup;
+
+import 'treasury_bid_spend.dart' show stagedBidTotalSpendByPlayer;
 
 /// Treasury budget [playerId] may commit to bids this turn.
 ///
@@ -70,4 +73,49 @@ int treasuryAvailableForBidsByPlayer({
       : 0;
   final int budget = treasury - pendingDeficit;
   return budget < 0 ? 0 : budget;
+}
+
+/// Reconstructs the non-bid treasury delta from [projectedDelta] (signed
+/// `projectOrderEffects` net change including bids) and [stagedBidSpend].
+/// Returns `0` when [projectedDelta] is unavailable.
+int projectedNonBidTreasuryDelta(int? projectedDelta, int stagedBidSpend) {
+  if (projectedDelta == null) return 0;
+  return projectedDelta + stagedBidSpend;
+}
+
+/// Live Market-header bid-budget telemetry (Refs #4186).
+({
+  int budgetTotal,
+  int budgetRemaining,
+  bool warningVisible,
+}) marketTabBidBudgetHeaderState({
+  required Game game,
+  required String playerId,
+  required Orders orders,
+  required int? projectedTreasuryDelta,
+  required data.ResourceRules resourceRules,
+}) {
+  final int stagedBidSpend = stagedBidTotalSpendByPlayer(
+    orders: orders,
+    playerId: playerId,
+    game: game,
+    resourceRules: resourceRules,
+  );
+  final int budgetTotal = treasuryAvailableForBidsByPlayer(
+    game: game,
+    playerId: playerId,
+    projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta(
+      projectedTreasuryDelta,
+      stagedBidSpend,
+    ),
+  );
+  final int rawRemaining = budgetTotal - stagedBidSpend;
+  final int budgetRemaining = rawRemaining < 0 ? 0 : rawRemaining;
+  final bool warningVisible =
+      budgetRemaining == 0 && (stagedBidSpend > 0 || budgetTotal == 0);
+  return (
+    budgetTotal: budgetTotal,
+    budgetRemaining: budgetRemaining,
+    warningVisible: warningVisible,
+  );
 }

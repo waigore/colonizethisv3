@@ -1,73 +1,13 @@
 // Shared bid-total helpers for Market tab order-mutation handler parts.
 
-/// Projected treasury change this turn from the player's **non-bid**
-/// staged orders (build / recruit / civilian / subsidy commitments).
-///
-/// Reads [projectedDelta], which is the signed treasury delta from
-/// `projectOrderEffects` over the **current** `Orders` (which already
-/// includes the player's staged bids). Adding the player's running bid
-/// spend back nets the bid contribution out of the projection so the
-/// helper passes a non-bid-only delta into
-/// `treasuryAvailableForBidsByPlayer` per `SPEC/ui/trade-screen.md` §
-/// Market tab — treasury bid cap.
-///
-/// Returns `0` when [projectedDelta] is `null` — typical for Widgetbook
-/// stories and isolated widget tests that run without `gameServiceProvider`
-/// map data.
-
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../providers/games_provider.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
-
-int projectedNonBidTreasuryDelta(
-  int? projectedDelta,
-  int stagedBidSpend,
-) {
-  if (projectedDelta == null) return 0;
-  return projectedDelta + stagedBidSpend;
-}
-
-/// Live Market-header bid-budget telemetry (Refs #4186). Uses the same
-/// helpers and projection path as the Bid clamp in
-/// `handleDirectionChanged` / `handleQuantityDelta`.
-({
-  int budgetTotal,
-  int budgetRemaining,
-  bool warningVisible,
-}) marketTabBidBudgetHeaderState({
-  required Game game,
-  required String playerId,
-  required Orders orders,
-  required int? projectedTreasuryDelta,
-}) {
-  final int stagedBidSpend = stagedBidTotalSpendByPlayer(
-    orders: orders,
-    playerId: playerId,
-    game: game,
-    resourceRules: ResourceRules.defaultRules,
-  );
-  final int budgetTotal = treasuryAvailableForBidsByPlayer(
-    game: game,
-    playerId: playerId,
-    projectedNonBidTreasuryDelta: projectedNonBidTreasuryDelta(
-      projectedTreasuryDelta,
-      stagedBidSpend,
-    ),
-  );
-  final int rawRemaining = budgetTotal - stagedBidSpend;
-  final int budgetRemaining = rawRemaining < 0 ? 0 : rawRemaining;
-  final bool warningVisible =
-      budgetRemaining == 0 && (stagedBidSpend > 0 || budgetTotal == 0);
-  return (
-    budgetTotal: budgetTotal,
-    budgetRemaining: budgetRemaining,
-    warningVisible: warningVisible,
-  );
-}
 
 /// Returns the sum of `TradeOrder.quantity` across all staged
 /// `TradeOrderType.bid` orders for [playerId] in [orders]. Offers do
