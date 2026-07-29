@@ -263,6 +263,25 @@ Orders _tradeScreenStoryTreasuryBidCapOrders() {
   );
 }
 
+/// Pre-staged Orders for the "Market tab — bid budget saturated (Refs
+/// #4186)" use case: treasury 90 with a timber bid consuming the full
+/// budget so reviewers see `Bid budget: 0 of 90` and the treasury
+/// bid-limit warning — mirrors the widget test pin.
+Orders _tradeScreenStoryBidBudgetSaturatedOrders() {
+  return Orders(
+    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
+      'gp_human': <TradeOrder>[
+        TradeOrder(
+          commodityId: 'timber',
+          type: TradeOrderType.bid,
+          quantity: 3,
+          priority: 1,
+        ),
+      ],
+    },
+  );
+}
+
 /// Pre-staged Orders for the "Market tab — bid-type saturated (Refs
 /// #4170)" use case: cap `1` with a single timber bid so reviewers see
 /// `Bid goods: 1 of 1`, the danger warning, and disabled fresh Bid
@@ -573,6 +592,13 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         builder: (context) => _tradeScreenDefaultStory(
           treasury: 100,
           initialOrders: _tradeScreenStoryTreasuryBidCapOrders(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — bid budget saturated (Refs #4186)',
+        builder: (context) => _tradeScreenDefaultStory(
+          treasury: 90,
+          initialOrders: _tradeScreenStoryBidBudgetSaturatedOrders(),
         ),
       ),
       WidgetbookUseCase(

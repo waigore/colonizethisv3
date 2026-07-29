@@ -162,6 +162,7 @@ void main() {
         'Market tab — sectioned grouping (Refs #3093)',
         'Market tab — sellable clamp (Refs #3093)',
         'Market tab — treasury bid cap (Refs #3093)',
+        'Market tab — bid budget saturated (Refs #4186)',
         'Market tab — bid-type saturated (Refs #4170)',
         'Market tab — bid-type cap 3 embassy (Refs #4170)',
         'Market tab — bid-type cap 6 Trade Fairs (Refs #4170)',
