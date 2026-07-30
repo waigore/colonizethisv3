@@ -32,7 +32,25 @@ Copy the VM service URI from the console (`ws://127.0.0.1:…/ws`) after `flutte
 |-------|-----------------|
 | **Cursor** | Project `.cursor/mcp.json` (`marionette` server) |
 | **Grok** | Project `.grok/config.toml` (`[mcp_servers.marionette]`) |
-| **OpenCode** | User-global MCP only — add the same `marionette_mcp` command to your user `opencode.json` |
+| **OpenCode** | User-global MCP only — merge into your user `opencode.json` (see below) |
+
+### OpenCode user-global MCP (copy-paste)
+
+OpenCode has no project-scoped MCP in this repo. Add Marionette to your **user** config (path varies by install; often `~/.config/opencode/opencode.json`):
+
+```json
+{
+  "mcp": {
+    "marionette": {
+      "type": "stdio",
+      "command": "marionette_mcp",
+      "args": []
+    }
+  }
+}
+```
+
+After `dart pub global activate marionette_mcp`, verify `marionette_mcp` is on `PATH`, restart OpenCode, and confirm the `marionette` server appears in the MCP tool list.
 
 Connect Marionette to the VM service URI from the running debug session, then use `get_interactive_elements`, `tap`, `enter_text`, and `take_screenshots`.
 
