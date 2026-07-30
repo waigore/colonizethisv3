@@ -12,7 +12,10 @@ import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
-IndustryCounselRecommendation _produceRecommendation(String recipeId) {
+IndustryCounselRecommendation _produceRecommendation(
+  String recipeId, {
+  int suggestedDesiredOutput = 2,
+}) {
   return IndustryCounselRecommendation(
     recommendationId: 'produce:$recipeId',
     kind: IndustryCounselRecommendationKind.produceRecipe,
@@ -20,9 +23,15 @@ IndustryCounselRecommendation _produceRecommendation(String recipeId) {
     briefReasonKey: IndustryCounselReasonKey.outputShortage,
     detailReasonKeys: const [IndustryCounselReasonKey.outputShortage],
     recipeId: recipeId,
-    suggestedDesiredOutput: 2,
+    suggestedDesiredOutput: suggestedDesiredOutput,
   );
 }
+
+const _threeStarRecipeIds = [
+  'lumber_from_timber',
+  'paper_from_timber',
+  'cigars_from_tobacco',
+];
 
 void main() {
   suppressLogsForTests();
@@ -69,6 +78,33 @@ void main() {
       await pumpSettleCapped(tester);
 
       expect(find.byType(ProductionIndustryCounselStar), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('production_alloc_row_chrome_castIron_from_iron'),
+          ),
+          matching: find.byType(ProductionIndustryCounselStar),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('shows exactly three stars when three produce recipes ranked', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: fullPlayer,
+          starredProduceRecommendationsByRecipeId: {
+            for (final recipeId in _threeStarRecipeIds)
+              recipeId: _produceRecommendation(recipeId),
+          },
+          onOpenCounsel: ({String? highlightRecommendationId}) {},
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.byType(ProductionIndustryCounselStar), findsNWidgets(3));
     });
 
     testWidgets('star tap forwards highlight recommendation id', (
@@ -156,6 +192,81 @@ void main() {
         semantics.label,
         contains('Your stocks of this output are low'),
       );
+    });
+
+    testWidgets('star tooltip shows localized brief reason', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: fullPlayer,
+          starredProduceRecommendationsByRecipeId: {
+            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
+          },
+          onOpenCounsel: ({String? highlightRecommendationId}) {},
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      final tooltip = tester.widget<Tooltip>(
+        find.descendant(
+          of: find.byType(ProductionIndustryCounselStar),
+          matching: find.byType(Tooltip),
+        ),
+      );
+      expect(tooltip.message, startsWith('Your stocks of this output are low'));
+    });
+
+    testWidgets('star remains when player allocation already matches AI plan', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: fullPlayer,
+          desiredOutputByRecipe: const {'lumber_from_timber': 2},
+          starredProduceRecommendationsByRecipeId: {
+            'lumber_from_timber': _produceRecommendation(
+              'lumber_from_timber',
+              suggestedDesiredOutput: 2,
+            ),
+          },
+          onOpenCounsel: ({String? highlightRecommendationId}) {},
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.byType(ProductionIndustryCounselStar), findsOneWidget);
+    });
+
+    testWidgets('read-only allocation keeps stars and counsel navigation', (
+      WidgetTester tester,
+    ) async {
+      String? openedHighlightId;
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: fullPlayer,
+          canEditLabour: false,
+          starredProduceRecommendationsByRecipeId: {
+            'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
+          },
+          onOpenCounsel: ({String? highlightRecommendationId}) {
+            openedHighlightId = highlightRecommendationId;
+          },
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.byType(ProductionIndustryCounselStar), findsOneWidget);
+
+      await tester.tap(find.byType(ProductionIndustryCounselStar));
+      await pumpSettleCapped(tester);
+      expect(openedHighlightId, 'produce:lumber_from_timber');
+
+      await tester.tap(
+        find.widgetWithText(CtActionTextButton, 'Counsel'),
+      );
+      await pumpSettleCapped(tester);
+      expect(openedHighlightId, isNull);
     });
   });
 }
