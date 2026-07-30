@@ -7,24 +7,11 @@ import 'package:colonizethis_test/test.dart';
 import 'quick_battle_emplaced_guns_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle emplaced-gun scenario table.
-class QuickBattleEmplacedGunScenario implements LabeledScenario {
-  const QuickBattleEmplacedGunScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [MutableEmplacedGun.fromInput].
-List<QuickBattleEmplacedGunScenario> mutableEmplacedGunFromInputScenarios() => [
-  QuickBattleEmplacedGunScenario(
+List<RunnableScenario> mutableEmplacedGunFromInputScenarios() => [
+  RunnableScenario(
     scenarioId: 'meg-from-input',
     label: 'copies all fields from immutable input gun',
     run: () {
@@ -49,8 +36,8 @@ List<QuickBattleEmplacedGunScenario> mutableEmplacedGunFromInputScenarios() => [
 ];
 
 /// Scenarios for [aliveGunStrengthSum].
-List<QuickBattleEmplacedGunScenario> aliveGunStrengthSumScenarios() => [
-  QuickBattleEmplacedGunScenario(
+List<RunnableScenario> aliveGunStrengthSumScenarios() => [
+  RunnableScenario(
     scenarioId: 'ags-sum-alive',
     label: 'sums attack+defense over alive guns and skips dead',
     run: () {
@@ -59,7 +46,7 @@ List<QuickBattleEmplacedGunScenario> aliveGunStrengthSumScenarios() => [
       expect(aliveGunStrengthSum(guns), closeTo(10.0, 1e-9));
     },
   ),
-  QuickBattleEmplacedGunScenario(
+  RunnableScenario(
     scenarioId: 'ags-empty',
     label: 'empty list yields 0.0',
     run: () {
@@ -69,8 +56,8 @@ List<QuickBattleEmplacedGunScenario> aliveGunStrengthSumScenarios() => [
 ];
 
 /// Scenarios for [sumAliveGunHp].
-List<QuickBattleEmplacedGunScenario> sumAliveGunHpScenarios() => [
-  QuickBattleEmplacedGunScenario(
+List<RunnableScenario> sumAliveGunHpScenarios() => [
+  RunnableScenario(
     scenarioId: 'sah-sum-hp',
     label: 'sums hp over alive guns only',
     run: () {
@@ -82,8 +69,8 @@ List<QuickBattleEmplacedGunScenario> sumAliveGunHpScenarios() => [
 ];
 
 /// Scenarios for [applyRoundRobinGunHpDamage].
-List<QuickBattleEmplacedGunScenario> applyRoundRobinGunHpDamageScenarios() => [
-  QuickBattleEmplacedGunScenario(
+List<RunnableScenario> applyRoundRobinGunHpDamageScenarios() => [
+  RunnableScenario(
     scenarioId: 'rrd-noop',
     label: 'non-positive amount is a no-op',
     run: () {
@@ -95,7 +82,7 @@ List<QuickBattleEmplacedGunScenario> applyRoundRobinGunHpDamageScenarios() => [
       expect(guns.map((g) => g.hp), [4, 4]);
     },
   ),
-  QuickBattleEmplacedGunScenario(
+  RunnableScenario(
     scenarioId: 'rrd-round-robin',
     label: 'distributes damage round-robin by id order',
     run: () {
@@ -109,7 +96,7 @@ List<QuickBattleEmplacedGunScenario> applyRoundRobinGunHpDamageScenarios() => [
       expect(byId['b'], 3);
     },
   ),
-  QuickBattleEmplacedGunScenario(
+  RunnableScenario(
     scenarioId: 'rrd-skip-dead',
     label: 'skips fully destroyed guns and keeps damaging survivors',
     run: () {
@@ -123,7 +110,7 @@ List<QuickBattleEmplacedGunScenario> applyRoundRobinGunHpDamageScenarios() => [
       expect(byId['b'], 1);
     },
   ),
-  QuickBattleEmplacedGunScenario(
+  RunnableScenario(
     scenarioId: 'rrd-overkill',
     label: 'damage exceeding total HP drives all guns to zero',
     run: () {

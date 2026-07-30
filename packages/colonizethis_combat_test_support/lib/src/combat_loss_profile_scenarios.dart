@@ -3,21 +3,10 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-class CombatLossProfileScenario implements LabeledScenario {
-  const CombatLossProfileScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
-List<CombatLossProfileScenario> combatLossProfileForStrengthRatioScenarios() =>
+List<RunnableScenario> combatLossProfileForStrengthRatioScenarios() =>
     [
-      CombatLossProfileScenario(
+      RunnableScenario(
         scenarioId: 'clp-low-morale-blunt',
         label: 'blunts strong attacker victory when attacker morale is lower',
         run: () {
@@ -34,7 +23,7 @@ List<CombatLossProfileScenario> combatLossProfileForStrengthRatioScenarios() =>
           );
         },
       ),
-      CombatLossProfileScenario(
+      RunnableScenario(
         scenarioId: 'clp-blunt-upper-bound',
         label: 'uses decisive attacker band at the blunt upper bound',
         run: () {
@@ -51,7 +40,7 @@ List<CombatLossProfileScenario> combatLossProfileForStrengthRatioScenarios() =>
           );
         },
       ),
-      CombatLossProfileScenario(
+      RunnableScenario(
         scenarioId: 'clp-exact-thresholds',
         label: 'keeps exact ratio thresholds in the documented bands',
         run: () {
@@ -75,7 +64,7 @@ List<CombatLossProfileScenario> combatLossProfileForStrengthRatioScenarios() =>
           expect(strongDefender.defenderLossFraction, 0.15);
         },
       ),
-      CombatLossProfileScenario(
+      RunnableScenario(
         scenarioId: 'clp-close-fight',
         label: 'uses default close-fight profile below attacker edge',
         run: () {
@@ -93,8 +82,8 @@ List<CombatLossProfileScenario> combatLossProfileForStrengthRatioScenarios() =>
         },
       ),
     ];
-List<CombatLossProfileScenario> classifyCombatStrengthRatioBandScenarios() => [
-  CombatLossProfileScenario(
+List<RunnableScenario> classifyCombatStrengthRatioBandScenarios() => [
+  RunnableScenario(
     scenarioId: 'clp-strong-striker',
     label: 'classifies at and above the strong-striker threshold',
     run: () {
@@ -108,7 +97,7 @@ List<CombatLossProfileScenario> classifyCombatStrengthRatioBandScenarios() => [
       );
     },
   ),
-  CombatLossProfileScenario(
+  RunnableScenario(
     scenarioId: 'clp-strong-target',
     label: 'classifies at and below the strong-target threshold',
     run: () {
@@ -122,7 +111,7 @@ List<CombatLossProfileScenario> classifyCombatStrengthRatioBandScenarios() => [
       );
     },
   ),
-  CombatLossProfileScenario(
+  RunnableScenario(
     scenarioId: 'clp-even',
     label: 'classifies the open interval between thresholds as even',
     run: () {
@@ -140,7 +129,7 @@ List<CombatLossProfileScenario> classifyCombatStrengthRatioBandScenarios() => [
       );
     },
   ),
-  CombatLossProfileScenario(
+  RunnableScenario(
     scenarioId: 'clp-breakpoints',
     label: 'exposes the canonical breakpoint values',
     run: () {
@@ -149,8 +138,8 @@ List<CombatLossProfileScenario> classifyCombatStrengthRatioBandScenarios() => [
     },
   ),
 ];
-List<CombatLossProfileScenario> combatCasualtyCountScenarios() => [
-  CombatLossProfileScenario(
+List<RunnableScenario> combatCasualtyCountScenarios() => [
+  RunnableScenario(
     scenarioId: 'clp-casualty-round-clamp',
     label: 'rounds fractional losses up and clamps to available units',
     run: () {

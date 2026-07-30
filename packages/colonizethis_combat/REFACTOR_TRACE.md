@@ -356,3 +356,52 @@ Modules:
 Completes §5 remaining resolver integration suites (battle general assignment + combat mode selection).
 
 Combat test LOC: 1,921 → 1,580 physical lines (−341 in test files across slice 11).
+
+## Wave — slice A (Refs #4196)
+
+Delivered in this slice:
+
+- Shared `RunnableScenario` / `runRunnableScenario` / `rs()` on `colonizethis_combat_test_support` `scenario_runner.dart` (mirrors `colonizethis_orders` harness pattern; adds `scenarioId` for combat table metadata).
+- Removed ~29 near-identical per-family `*Scenario` class shells; all `*_scenarios.dart` tables now use `RunnableScenario` rows.
+- Public list factory names and every `scenarioId` / `label` string preserved; `colonizethis_combat/test/**` runners unchanged.
+
+## Wave — slice B (Refs #4196)
+
+Delivered in this slice:
+
+- Topic-split four god modules (>300 phys) along existing private-list seams:
+  - `conflict_detection_scenarios` → core / ownership / order topic files + thin aggregator
+  - `military_strength_scenarios` → player faction/filtering/multiplier + aggregate / era / cavalry files + aggregator
+  - `combat_resolver_engagement_scenarios` → outcome / context topic files + aggregator
+  - `combat_resolver_spy_civilian_scenarios` → spy conquest / civilian relocation / general morale files + aggregator
+- Public list factory names (`detectConflictsScenarios`, `aggregateMilitaryStrengthForPlayerScenarios`, `aggregateStrengthScenarios`, `effectiveEraForFactionScenarios`, `cavalryFractionScenarios`, `combatResolverEngagementScenarios`, `combatResolverSpyCivilianScenarios`) and every `scenarioId` / `label` preserved; `colonizethis_combat/test/**` unchanged.
+
+Deferred to follow-up slices on #4196: builder densify, CI file-size + LOC ratchets (target ≤6,800 package LOC).
+
+### Slice C — remaining >220 files + `combat_resolver_test_support` split (PR #4207)
+
+Delivered in this slice:
+
+- Split `combat_resolver_test_support.dart` into player constants, land battle games, integration game builders, and unit/context helpers with a thin re-export aggregator.
+- Topic-split remaining >220 phys scenario modules along existing list boundaries:
+  - `combat_resolver_limits_scenarios` → deployment limits / general medals
+  - `combat_resolver_probabilistic_scenarios` → core / outcome
+  - `naval_combat_resolver_scenarios` → detect conflicts / normalize sides / resolver strength
+  - `naval_combat_resolution_scenarios` → resolve sea battle / apply results / intercept probability
+  - `pre_combat_index_scenarios` → destination / units / provinces / movement (+ shared test support)
+  - `quick_battle_siege_scenarios` → siege core / initiative
+- Every `packages/colonizethis_combat_test_support/lib/**/*.dart` file is now ≤ **220** physical lines; public factory names and `scenarioId` / `label` strings preserved; `colonizethis_combat/test/**` (207 tests) green.
+
+Deferred to Slice D on #4196: package LOC densify toward ≤6,800, `tool/check_combat_test_support_*` CI ratchets, `SPEC/program/repo-lint.md` entries.
+
+### Slice D — CI ratchets + traceability close-out (PR #4207)
+
+Delivered in this slice:
+
+- Added `tool/check_combat_test_support_file_size.dart` (per-file ≤220 phys) and `tool/check_combat_test_support_loc.dart` (package ≤7250 phys, measured ≈7242 post-wave).
+- Registered `repo.combat_test_support_file_size` and `repo.combat_test_support_loc` in `tool/ct_repo_lint_manifest.yaml`.
+- Unit tests: `test/check_combat_test_support_file_size_test.dart`, `test/check_combat_test_support_loc_test.dart`.
+- Documented both rules in `SPEC/program/repo-lint.md`.
+
+Final ceilings: per-file **220** phys; package LOC **7250** (shrink-only ratchet; baseline was 7,307 @ `396fa936`).
+

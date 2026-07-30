@@ -7,19 +7,6 @@ import 'package:colonizethis_test/test.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle perf-invariant scenario table.
-class QuickBattlePerfInvariantScenario implements LabeledScenario {
-  const QuickBattlePerfInvariantScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 void _expectEmplacedGunOutcomesMatch(
@@ -38,8 +25,8 @@ void _expectEmplacedGunOutcomesMatch(
 }
 
 /// Scenarios for round-robin gun HP and effective-strength caching invariants.
-List<QuickBattlePerfInvariantScenario> quickBattlePerfInvariantScenarios() => [
-  QuickBattlePerfInvariantScenario(
+List<RunnableScenario> quickBattlePerfInvariantScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbpi-three-guns-sorted-id-parity',
     label:
         'three small guns drained over multiple rounds keep sorted-id parity',
@@ -69,7 +56,7 @@ List<QuickBattlePerfInvariantScenario> quickBattlePerfInvariantScenarios() => [
       );
     },
   ),
-  QuickBattlePerfInvariantScenario(
+  RunnableScenario(
     scenarioId: 'qbpi-asymmetric-gun-hp-round-robin',
     label:
         'asymmetric gun HP still allocates damage in sorted-id round-robin order',
@@ -96,7 +83,7 @@ List<QuickBattlePerfInvariantScenario> quickBattlePerfInvariantScenarios() => [
       );
     },
   ),
-  QuickBattlePerfInvariantScenario(
+  RunnableScenario(
     scenarioId: 'qbpi-attacker-first-cache-bit-identical',
     label: 'attacker-acts-first siege duplicate runs are bit-identical',
     run: () {
@@ -122,7 +109,7 @@ List<QuickBattlePerfInvariantScenario> quickBattlePerfInvariantScenarios() => [
       _expectEmplacedGunOutcomesMatch(r1, r2);
     },
   ),
-  QuickBattlePerfInvariantScenario(
+  RunnableScenario(
     scenarioId: 'qbpi-defender-first-cache-bit-identical',
     label: 'defender-acts-first siege duplicate runs are bit-identical',
     run: () {
@@ -145,7 +132,7 @@ List<QuickBattlePerfInvariantScenario> quickBattlePerfInvariantScenarios() => [
       _expectEmplacedGunOutcomesMatch(r1, r2);
     },
   ),
-  QuickBattlePerfInvariantScenario(
+  RunnableScenario(
     scenarioId: 'qbpi-non-siege-initiative-ordering',
     label:
         'non-siege battle outcomes are unchanged across initiative orderings',
