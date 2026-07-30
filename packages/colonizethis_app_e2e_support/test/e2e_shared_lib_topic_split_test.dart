@@ -112,5 +112,45 @@ void main() {
         expect(lines, lessThanOrEqualTo(400), reason: '$name still over slice-A cap');
       }
     });
+
+    test('slice B residual lib files stay under 400 physical lines (Refs #4195)', () {
+      for (final name in <String>[
+        'e2e_test_shared.dart',
+        'e2e_test_shared_adaptive_polling.dart',
+        'e2e_test_shared_explore_assign.dart',
+        'e2e_test_shared_explore_assign_sweep.dart',
+        'e2e_test_shared_explore_assign_bundled.dart',
+        'test_support/civilian_units_panel_e2e_expected_lines.dart',
+        'test_support/civilian_units_panel_e2e_expected_lines_assigned.dart',
+        'test_support/civilian_units_panel_e2e_expected_lines_rows.dart',
+      ]) {
+        final file = File(p.join(libDir.path, name));
+        expect(file.existsSync(), isTrue, reason: '$name missing');
+        final lines = file.readAsLinesSync().length;
+        expect(lines, lessThanOrEqualTo(400), reason: '$name still over slice-B cap');
+      }
+    });
+
+    test('explore assign topic split exports sibling modules (Refs #4195 slice B)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared_explore_assign.dart'),
+      ).readAsStringSync();
+      for (final export in <String>[
+        "export 'e2e_test_shared_explore_assign_sweep.dart';",
+        "export 'e2e_test_shared_explore_assign_bundled.dart';",
+      ]) {
+        expect(barrel, contains(export));
+      }
+    });
+
+    test('shared umbrella exports adaptive polling sibling (Refs #4195 slice B)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared.dart'),
+      ).readAsStringSync();
+      expect(
+        barrel,
+        contains("export 'e2e_test_shared_adaptive_polling.dart';"),
+      );
+    });
   });
 }
