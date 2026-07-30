@@ -8,6 +8,8 @@ cd "$ROOT"
 
 FAIL=0
 LOGIC_PUBSPEC="packages/colonizethis_logic/pubspec.yaml"
+ECONOMY_PUBSPEC="packages/colonizethis_economy/pubspec.yaml"
+ORDERS_PUBSPEC="packages/colonizethis_orders/pubspec.yaml"
 AI_LIB_DIR="packages/colonizethis_ai/lib"
 LOGIC_TEST_DIR="packages/colonizethis_logic/test"
 LOGIC_BARREL="packages/colonizethis_logic/lib/colonizethis_logic.dart"
@@ -40,11 +42,13 @@ search_lines() {
   fi
 }
 
-# 1) logic package must not depend on ai package (including dev_dependencies).
-if search_has_match "^[[:space:]]*colonizethis_ai[[:space:]]*:" "$LOGIC_PUBSPEC"; then
-  echo "ERROR: $LOGIC_PUBSPEC must not contain colonizethis_ai in dependencies/dev_dependencies."
-  FAIL=1
-fi
+# 1) logic/economy/orders packages must not depend on ai (including dev_dependencies).
+for pubspec in "$LOGIC_PUBSPEC" "$ECONOMY_PUBSPEC" "$ORDERS_PUBSPEC"; do
+  if search_has_match "^[[:space:]]*colonizethis_ai[[:space:]]*:" "$pubspec"; then
+    echo "ERROR: $pubspec must not contain colonizethis_ai in dependencies/dev_dependencies."
+    FAIL=1
+  fi
+done
 
 # 2) AI must not import broad logic barrel.
 if search_has_match "package:colonizethis_logic/colonizethis_logic\\.dart" "$AI_LIB_DIR"; then

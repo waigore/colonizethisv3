@@ -27,3 +27,5 @@ When no AI-only boost wrappers are active (H8 regiment boost, feedstock reserve,
 `recruitment_planner_candidates_ledger.dart` luxury helpers (`softLuxuryCapDeficitLimit`, `sustainableTrainedCounts`, `projectedLuxuryOutput`, `totalAssignedLabourInEconomyPlan`) delegate to the matching `colonizethis_economy` industry counsel modules so AI recruitment soft-cap math stays aligned with counsel ranking.
 
 `growth_stage.dart` `categoryPriorityForOutput` and `prospectedImprovedFeedstockTileCount` delegate to the matching `colonizethis_economy` industry counsel growth-stage helpers; `GrowthStage.compute` keeps AI-only `AIWorldSnapshot` war overrides.
+
+`tool/check_logic_ai_decoupling.sh` rejects `colonizethis_ai` in `colonizethis_logic`, `colonizethis_economy`, and `colonizethis_orders` pubspecs (Refs #4189 package-DAG AC).
