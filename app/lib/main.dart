@@ -10,6 +10,7 @@ import 'package:session_log_buffer/session_log_buffer.dart';
 
 import 'app.dart';
 import 'config/constants.dart';
+import 'config/marionette_app_binding.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import 'config/themes.dart';
@@ -122,7 +123,7 @@ void main() {
   runZonedGuarded(
     () async {
       await bootstrapApp(
-        ensureBindingInitialized: WidgetsFlutterBinding.ensureInitialized,
+        ensureBindingInitialized: ensureColonizeThisAppBinding,
         initSessionLogBuffer: SessionLogBuffer.init,
         ensureMapTerrainLoaded: () => MapTerrainConfig.ensureLoaded(
           assetPath: ActiveMapTheme.current.terrainTilesetConfigPath,

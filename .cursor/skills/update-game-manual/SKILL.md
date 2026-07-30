@@ -73,7 +73,12 @@ Ensure `## Sources` is the last `##` section; one backtick-wrapped path per bull
 
 Report: SPEC paths considered, chapters updated (or justify non-update), any pending chapter gaps, checklist result.
 
+## After authoring updates
+
+When chapter files under `docs/manual/[0-9][0-9]-*.md` change, run **`export-player-manual`** so playtest agents read a fresh player export at `docs/manual/player-export/`. See `SPEC/program/player-manual-export.md`.
+
 ## Related
 
+- `export-player-manual` — regenerate self-contained player handbook (run after this skill)
 - `document-app-ui` — screen specs/IDs (manual cites IDs; does not assign them)
 - `implement-github-issue` — when manual work is part of a tracked issue
