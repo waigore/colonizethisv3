@@ -141,6 +141,21 @@ void main() {
       );
       expect(find.text('Agree'), findsOneWidget);
     });
+
+    testWidgets('empty state shows no pressing advice copy', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTab(recommendations: const [], callbacks: stubCallbacks),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(
+        find.text('No pressing industry advice this turn.'),
+        findsOneWidget,
+      );
+      expect(find.byType(CtNinePatchButton), findsNothing);
+    });
   });
 }
 

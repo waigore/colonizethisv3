@@ -56,6 +56,7 @@ Read-only while turn resolution blocking (`canMutateViaUi == false`): no primary
 - `Counsel Industry (default)` — full-availability demo player; live ranking.
 - `Counsel Industry (highlight)` — same with `highlightRecommendationId` for first produce rec when present.
 - `Counsel Industry (empty)` — player with no feasible industry advice fixture.
+- `Counsel Industry (narrow 360)` — mobile viewport (`360×640` dp) with live ranking.
 
 ## Acceptance criteria
 
