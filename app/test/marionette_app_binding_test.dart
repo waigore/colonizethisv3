@@ -1,5 +1,5 @@
 import 'package:colonizethis_app/config/marionette_app_binding.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:colonizethis_test/test.dart';
 
 void main() {
   group('marionetteBindingEnabled', () {

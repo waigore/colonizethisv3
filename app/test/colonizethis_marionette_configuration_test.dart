@@ -1,3 +1,4 @@
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/config/colonizethis_marionette_configuration.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  suppressLogsForTests();
   group('colonizethisCtWidgetIsInteractive', () {
     test('recognises primary Ct-* types', () {
       expect(colonizethisCtWidgetIsInteractive(CtNinePatchButton), isTrue);
