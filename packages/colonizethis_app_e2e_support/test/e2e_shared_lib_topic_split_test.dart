@@ -47,7 +47,7 @@ void main() {
           continue;
         }
         final lines = file.readAsLinesSync().length;
-        if (lines > 1000) {
+        if (lines > 400) {
           oversized.add('$name ($lines)');
         }
       }
