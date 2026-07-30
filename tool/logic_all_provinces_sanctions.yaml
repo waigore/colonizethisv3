@@ -32,9 +32,3 @@ sanctions:
     rationale: Per-player province discovery events scan all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
-
-  - path: packages/colonizethis_orders/lib/src/orders/industry_counsel_ranking.dart
-    line: 330
-    rationale: Feedstock unblock deep-link scans all owned provinces for improvable feedstock tiles (unified dual-region iteration).
-    spec: SPEC/program/logic-dual-region-province-access.md
-    issue: https://github.com/waigore/colonizethisv3/issues/4190
