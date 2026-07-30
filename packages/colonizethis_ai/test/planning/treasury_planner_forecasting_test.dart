@@ -286,8 +286,8 @@ void main() {
 
     test(
       'affluent treasury without embassy with no prior market activity '
-      'emits exactly one speculative bid for the first eligible food '
-      'commodity (deterministic fallback; Refs #2924 F10)',
+      'emits speculative bids for each eligible food commodity up to the '
+      'baseline bid-type cap (Refs #2924 F10, #4186 embassy-free cap)',
       () {
         final affluent = treasuryAffluenceThreshold();
         final stockpile = stockpileWellStockedExcept(const ['grain', 'meat'])
@@ -308,27 +308,31 @@ void main() {
             .toList();
         expect(
           bids,
-          hasLength(1),
+          hasLength(2),
           reason:
-              'Speculative pass adds at most one synthetic need entry to '
-              'concentrate the single baseline-cap bid slot.',
-        );
-        final bid = bids.single;
-        expect(bid.quantity, kSpeculativeBidStockpileTarget);
-        expect(richesCommodityIds.contains(bid.commodityId), isFalse);
-        expect(
-          bid.commodityId,
-          isNot('timber'),
-          reason: 'Available-side timber is excluded from speculative bids.',
+              'Grain and meat are the only food commodities below the '
+              'speculative target; baseline cap (3) allows both.',
         );
         expect(
-          CommodityCatalog.byId[bid.commodityId]?.category,
-          CommodityCategory.food,
+          bids.map((b) => b.commodityId).toList(),
+          ['grain', 'meat'],
           reason:
-              'Without prior MarketActivity, the speculative pass falls '
-              'back to a food commodity that the F1-F5 deficit pass also '
-              'has reason to bid for.',
+              'Without prior MarketActivity, speculative bids fill '
+              'alphabetical food commodities below target.',
         );
+        for (final bid in bids) {
+          expect(bid.quantity, kSpeculativeBidStockpileTarget);
+          expect(richesCommodityIds.contains(bid.commodityId), isFalse);
+          expect(
+            bid.commodityId,
+            isNot('timber'),
+            reason: 'Available-side timber is excluded from speculative bids.',
+          );
+          expect(
+            CommodityCatalog.byId[bid.commodityId]?.category,
+            CommodityCategory.food,
+          );
+        }
       },
     );
 
