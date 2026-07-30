@@ -44,7 +44,7 @@ Full Flame map/tile Semantics may still need a follow-up slice if map clicks are
 
 ## Player handbook
 
-Playtest agents read the derived export at `docs/manual/player-export/` (regenerate via `export-player-manual` / `python3 pytool/export_player_manual.py`). Authoring manual with Sources remains at `docs/manual/`.
+Playtest agents read the derived export at `docs/manual/player-export/` (regenerate via `export-player-manual` / `python3 pytool/export_player_manual.py`), then run **`player-playthrough`** (modes A–E). Authoring manual with Sources remains at `docs/manual/`.
 
 ## Related
 

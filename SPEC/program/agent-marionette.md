@@ -19,7 +19,7 @@ Implementation: `app/lib/config/marionette_app_binding.dart`; production `main()
 
 ## Out of scope (this slice)
 
-- `player-playthrough` skill (WS3)
+- `player-playthrough` skill (WS3) — `.cursor/skills/player-playthrough/SKILL.md`
 - Full Flame map/tile Semantics catalog (follow-up under #4199 discoverability)
 
 ## Player handbook export (WS2)

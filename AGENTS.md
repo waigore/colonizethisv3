@@ -78,6 +78,7 @@ Skills live under `.cursor/skills/<name>/SKILL.md` (source of truth for all agen
 | `document-app-ui` | Document player-app screens/UI changes per `colonizethis-ui-documentation.mdc` (stable 8-char IDs, layout/behavior/variants, Widgetbook, registry, `UiScreenIds`). OpenCode: `.opencode/skills/document-app-ui/`. |
 | `update-game-manual` | Update `docs/manual/` when player UX or gameplay changes: map chapters via `## Sources` footers, preserve vizier tone and player-angle framing, enforce template and draft marking. Policy: `colonizethis-game-manual.mdc`. OpenCode: `.opencode/skills/update-game-manual/`. |
 | `export-player-manual` | Regenerate self-contained player handbook at `docs/manual/player-export/` from authoring chapters (strip Sources/ACs, SPEC citations, screen IDs, order class names). Run after `update-game-manual` and before `player-playthrough`. OpenCode: `.opencode/skills/export-player-manual/`. |
+| `player-playthrough` | Bounded agent playtests (modes A–E) via Marionette + player export only; structured playthrough report (gameplay/UX/AI/handbook gaps); no auto GitHub issues. Run after `export-player-manual`. OpenCode: `.opencode/skills/player-playthrough/`. |
 
 ## Contributing
 
