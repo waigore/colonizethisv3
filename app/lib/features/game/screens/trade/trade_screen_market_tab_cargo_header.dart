@@ -58,66 +58,85 @@ class MarketTabHeaderStrip extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _limitLine(
-          indicatorKey: TradeScreenMarketKeys.marketBidGoodsIndicatorKey,
-          tooltipKey: TradeScreenMarketKeys.marketBidGoodsTooltipKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          indicatorText:
-              '${TradeScreenMarketKeys.bidGoodsIndicatorPrefix} '
-              '$stagedDistinctBidCount of $bidTypeCap',
-          indicatorStyle: bidGoodsIndicatorStyle,
-          tooltipMessage:
-              TradeScreenMarketKeys.bidTypeLimitTooltipForCap(bidTypeCap),
-        ),
-        if (_bidTypeWarningVisible) ...<Widget>[
-          const SizedBox(height: 4),
-          Text(
-            TradeScreenMarketKeys.bidTypeLimitWarningText,
-            key: TradeScreenMarketKeys.marketBidTypeWarningKey,
-            style: bidTypeWarningStyle,
-          ),
-        ],
-        const SizedBox(height: 4),
-        _limitLine(
-          indicatorKey: TradeScreenMarketKeys.marketCargoIndicatorKey,
-          tooltipKey: TradeScreenMarketKeys.marketCargoTooltipKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          indicatorText:
-              '${TradeScreenMarketKeys.cargoIndicatorPrefix} '
-              '$clampedRemaining',
-          indicatorStyle: cargoIndicatorStyle,
-          tooltipMessage: TradeScreenMarketKeys.cargoLimitTooltipCopy,
-        ),
-        if (cargoWarningVisible) ...<Widget>[
-          const SizedBox(height: 4),
-          Text(
-            TradeScreenMarketKeys.cargoLimitWarningText,
-            key: TradeScreenMarketKeys.marketCargoWarningKey,
-            style: cargoWarningStyle,
-          ),
-        ],
-        const SizedBox(height: 4),
-        _limitLine(
-          indicatorKey: TradeScreenMarketKeys.marketBidBudgetIndicatorKey,
-          tooltipKey: TradeScreenMarketKeys.marketBidBudgetTooltipKey,
-          // ignore: avoid_hardcoded_strings_in_widgets
-          indicatorText:
-              '${TradeScreenMarketKeys.bidBudgetIndicatorPrefix} '
-              '$bidBudgetRemaining of $bidBudgetTotal',
-          indicatorStyle: bidBudgetIndicatorStyle,
-          tooltipMessage: TradeScreenMarketKeys.bidBudgetLimitTooltipCopy,
-        ),
-        if (bidBudgetWarningVisible) ...<Widget>[
-          const SizedBox(height: 4),
-          Text(
-            TradeScreenMarketKeys.bidBudgetLimitWarningText,
-            key: TradeScreenMarketKeys.marketBidBudgetWarningKey,
-            style: bidBudgetWarningStyle,
-          ),
-        ],
+        ..._bidGoodsBlock(),
+        ..._cargoBlock(),
+        ..._bidBudgetBlock(),
         const SizedBox(height: 8),
       ],
     );
+  }
+
+  List<Widget> _bidGoodsBlock() {
+    return <Widget>[
+      _limitLine(
+        indicatorKey: TradeScreenMarketKeys.marketBidGoodsIndicatorKey,
+        tooltipKey: TradeScreenMarketKeys.marketBidGoodsTooltipKey,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        indicatorText:
+            '${TradeScreenMarketKeys.bidGoodsIndicatorPrefix} '
+            '$stagedDistinctBidCount of $bidTypeCap',
+        indicatorStyle: bidGoodsIndicatorStyle,
+        tooltipMessage: TradeScreenMarketKeys.bidTypeLimitTooltipForCap(
+          bidTypeCap,
+        ),
+      ),
+      if (_bidTypeWarningVisible) ...<Widget>[
+        const SizedBox(height: 4),
+        Text(
+          TradeScreenMarketKeys.bidTypeLimitWarningText,
+          key: TradeScreenMarketKeys.marketBidTypeWarningKey,
+          style: bidTypeWarningStyle,
+        ),
+      ],
+      const SizedBox(height: 4),
+    ];
+  }
+
+  List<Widget> _cargoBlock() {
+    return <Widget>[
+      _limitLine(
+        indicatorKey: TradeScreenMarketKeys.marketCargoIndicatorKey,
+        tooltipKey: TradeScreenMarketKeys.marketCargoTooltipKey,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        indicatorText:
+            '${TradeScreenMarketKeys.cargoIndicatorPrefix} '
+            '$clampedRemaining',
+        indicatorStyle: cargoIndicatorStyle,
+        tooltipMessage: TradeScreenMarketKeys.cargoLimitTooltipCopy,
+      ),
+      if (cargoWarningVisible) ...<Widget>[
+        const SizedBox(height: 4),
+        Text(
+          TradeScreenMarketKeys.cargoLimitWarningText,
+          key: TradeScreenMarketKeys.marketCargoWarningKey,
+          style: cargoWarningStyle,
+        ),
+      ],
+      const SizedBox(height: 4),
+    ];
+  }
+
+  List<Widget> _bidBudgetBlock() {
+    return <Widget>[
+      _limitLine(
+        indicatorKey: TradeScreenMarketKeys.marketBidBudgetIndicatorKey,
+        tooltipKey: TradeScreenMarketKeys.marketBidBudgetTooltipKey,
+        // ignore: avoid_hardcoded_strings_in_widgets
+        indicatorText:
+            '${TradeScreenMarketKeys.bidBudgetIndicatorPrefix} '
+            '$bidBudgetRemaining of $bidBudgetTotal',
+        indicatorStyle: bidBudgetIndicatorStyle,
+        tooltipMessage: TradeScreenMarketKeys.bidBudgetLimitTooltipCopy,
+      ),
+      if (bidBudgetWarningVisible) ...<Widget>[
+        const SizedBox(height: 4),
+        Text(
+          TradeScreenMarketKeys.bidBudgetLimitWarningText,
+          key: TradeScreenMarketKeys.marketBidBudgetWarningKey,
+          style: bidBudgetWarningStyle,
+        ),
+      ],
+    ];
   }
 
   Widget _limitLine({
