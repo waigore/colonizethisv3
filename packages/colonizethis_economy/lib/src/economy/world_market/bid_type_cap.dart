@@ -14,26 +14,23 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
     show GamePlayerLookup;
 
-/// Baseline distinct-commodity bid cap for a known player with no embassy.
+/// Baseline distinct-commodity bid cap for a known Great Power without
+/// [kTechIdTradeFairs].
 ///
-/// Authorizes basic participation in the single global world market for every
-/// Great Power, including EXPAND-phase GPs that are structurally blocked from
-/// emitting `establishOverture` orders. Refs #2924; SPEC/game/world-market.md
-/// § Bid type cap and SPEC/program/world-market-resolution.md § Bid type cap
-/// helper.
-const int kWorldMarketBaselineBidTypeCap = 1;
+/// Authorizes participation in the single global world market for every Great
+/// Power, including EXPAND-phase GPs that are structurally blocked from
+/// emitting `establishOverture` orders. Refs #2924, #4186;
+/// SPEC/game/world-market.md § Bid type cap and
+/// SPEC/program/world-market-resolution.md § Bid type cap helper.
+const int kWorldMarketBaselineBidTypeCap = 3;
 
 /// World-market bid-type cap (distinct bid commodities per turn).
 ///
-/// Semantics aggregate across **all** of the player's embassies because the
-/// market is global, not per-target. Returns:
+/// Embassy presence does **not** affect this cap (Refs #4186). Returns:
 ///
-/// - [kWorldMarketBaselineBidTypeCap] (1) when the player has no embassy-tier
-///   overture ([OvertureState.hasEmbassy]) with any target.
-/// - `3` when the player has at least one embassy-tier overture and has not
+/// - [kWorldMarketBaselineBidTypeCap] (3) when the player exists and has not
 ///   unlocked [kTechIdTradeFairs].
-/// - `6` when the player has at least one embassy-tier overture and has
-///   unlocked [kTechIdTradeFairs].
+/// - `6` when the player has unlocked [kTechIdTradeFairs].
 ///
 /// Source of truth: SPEC/program/world-market-resolution.md § Bid type cap
 /// helper. Per-target trade-agreement slots remain governed by `tradeSlotsForGp`
@@ -41,10 +38,6 @@ const int kWorldMarketBaselineBidTypeCap = 1;
 int worldMarketBidTypeCap(Game game, String playerId) {
   final p = game.playerById(playerId);
   if (p == null) return 0;
-  final hasAnyEmbassy = game.overtureStates.any(
-    (o) => o.gpId == playerId && o.hasEmbassy,
-  );
-  if (!hasAnyEmbassy) return kWorldMarketBaselineBidTypeCap;
   final u = p.techUnlocked ?? const <String, bool>{};
-  return u[kTechIdTradeFairs] == true ? 6 : 3;
+  return u[kTechIdTradeFairs] == true ? 6 : kWorldMarketBaselineBidTypeCap;
 }
