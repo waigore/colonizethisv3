@@ -376,5 +376,21 @@ Delivered in this slice:
   - `combat_resolver_spy_civilian_scenarios` → spy conquest / civilian relocation / general morale files + aggregator
 - Public list factory names (`detectConflictsScenarios`, `aggregateMilitaryStrengthForPlayerScenarios`, `aggregateStrengthScenarios`, `effectiveEraForFactionScenarios`, `cavalryFractionScenarios`, `combatResolverEngagementScenarios`, `combatResolverSpyCivilianScenarios`) and every `scenarioId` / `label` preserved; `colonizethis_combat/test/**` unchanged.
 
-Deferred to follow-up slices on #4196: remaining >220 phys files, `combat_resolver_test_support` builder split, builder densify, CI file-size + LOC ratchets (target ≤6,800 package LOC).
+Deferred to follow-up slices on #4196: builder densify, CI file-size + LOC ratchets (target ≤6,800 package LOC).
+
+### Slice C — remaining >220 files + `combat_resolver_test_support` split (PR #4207)
+
+Delivered in this slice:
+
+- Split `combat_resolver_test_support.dart` into player constants, land battle games, integration game builders, and unit/context helpers with a thin re-export aggregator.
+- Topic-split remaining >220 phys scenario modules along existing list boundaries:
+  - `combat_resolver_limits_scenarios` → deployment limits / general medals
+  - `combat_resolver_probabilistic_scenarios` → core / outcome
+  - `naval_combat_resolver_scenarios` → detect conflicts / normalize sides / resolver strength
+  - `naval_combat_resolution_scenarios` → resolve sea battle / apply results / intercept probability
+  - `pre_combat_index_scenarios` → destination / units / provinces / movement (+ shared test support)
+  - `quick_battle_siege_scenarios` → siege core / initiative
+- Every `packages/colonizethis_combat_test_support/lib/**/*.dart` file is now ≤ **220** physical lines; public factory names and `scenarioId` / `label` strings preserved; `colonizethis_combat/test/**` (207 tests) green.
+
+Deferred to Slice D on #4196: package LOC densify toward ≤6,800, `tool/check_combat_test_support_*` CI ratchets, `SPEC/program/repo-lint.md` entries.
 
