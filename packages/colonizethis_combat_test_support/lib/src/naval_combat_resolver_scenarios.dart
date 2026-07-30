@@ -8,23 +8,10 @@ import 'package:colonizethis_test/test.dart';
 import 'naval_combat_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a naval combat resolver scenario table.
-class NavalCombatResolverScenario implements LabeledScenario {
-  const NavalCombatResolverScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<NavalCombatResolverScenario> detectNavalConflictsScenarios() => [
-  NavalCombatResolverScenario(
+List<RunnableScenario> detectNavalConflictsScenarios() => [
+  RunnableScenario(
     scenarioId: 'ncr-empty-fleets',
     label: 'returns empty when no fleets',
     run: () {
@@ -34,7 +21,7 @@ List<NavalCombatResolverScenario> detectNavalConflictsScenarios() => [
       expect(detectNavalConflicts(game), isEmpty);
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'ncr-peace-same-zone',
     label: 'returns empty when two factions in same zone but at peace',
     run: () {
@@ -60,7 +47,7 @@ List<NavalCombatResolverScenario> detectNavalConflictsScenarios() => [
       expect(detectNavalConflicts(game), isEmpty);
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'ncr-at-war-battle',
     label: 'returns one BattleContextSea when two at-war factions in same zone',
     run: () {
@@ -96,8 +83,8 @@ List<NavalCombatResolverScenario> detectNavalConflictsScenarios() => [
   ),
 ];
 
-List<NavalCombatResolverScenario> normalizeNavalBattleSidesScenarios() => [
-  NavalCombatResolverScenario(
+List<RunnableScenario> normalizeNavalBattleSidesScenarios() => [
+  RunnableScenario(
     scenarioId: 'nbs-mover-attacker',
     label: 'only mover is attacker when the other is not Patrol or Blockade',
     run: () {
@@ -137,7 +124,7 @@ List<NavalCombatResolverScenario> normalizeNavalBattleSidesScenarios() => [
       expect(n.side2.ownerId, 'p2');
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'nbs-interceptor-attacker',
     label: 'interceptor is attacker when the other faction moved',
     run: () {
@@ -177,7 +164,7 @@ List<NavalCombatResolverScenario> normalizeNavalBattleSidesScenarios() => [
       expect(n.side2.ownerId, 'p1');
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'nbs-lex-neither-moved',
     label: 'neither moved: lexicographically smaller ownerId is attacker',
     run: () {
@@ -213,7 +200,7 @@ List<NavalCombatResolverScenario> normalizeNavalBattleSidesScenarios() => [
       expect(n.side2.ownerId, 'p2');
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'nbs-lex-both-moved',
     label: 'both moved: lexicographically smaller ownerId is attacker',
     run: () {
@@ -255,15 +242,15 @@ List<NavalCombatResolverScenario> normalizeNavalBattleSidesScenarios() => [
   ),
 ];
 
-List<NavalCombatResolverScenario> navalStrengthScenarios() => [
-  NavalCombatResolverScenario(
+List<RunnableScenario> navalStrengthScenarios() => [
+  RunnableScenario(
     scenarioId: 'ns-empty',
     label: 'returns 0 for empty list',
     run: () {
       expect(navalStrength([]), 0.0);
     },
   ),
-  NavalCombatResolverScenario(
+  RunnableScenario(
     scenarioId: 'ns-weighted-formula',
     label: 'uses configured weighted formula including durability',
     run: () {

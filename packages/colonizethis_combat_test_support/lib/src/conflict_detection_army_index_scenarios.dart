@@ -5,21 +5,10 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-class ConflictDetectionArmyIndexScenario implements LabeledScenario {
-  const ConflictDetectionArmyIndexScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
-List<ConflictDetectionArmyIndexScenario>
+List<RunnableScenario>
 conflictDetectionArmyIndexScenarios() => [
-  ConflictDetectionArmyIndexScenario(
+  RunnableScenario(
     scenarioId: 'cdai-local-defender-army',
     label:
         'defender army selection ignores unrelated armies in other provinces',

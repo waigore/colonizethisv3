@@ -8,33 +8,20 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a spy/civilian combat conquest scenario table.
-class CombatResolverSpyCivilianScenario implements LabeledScenario {
-  const CombatResolverSpyCivilianScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 const _ow = 'oldWorld';
 
 /// Scenarios for spy timers, purchased land, and civilian relocation.
-List<CombatResolverSpyCivilianScenario> combatResolverSpyCivilianScenarios() =>
+List<RunnableScenario> combatResolverSpyCivilianScenarios() =>
     [
       ..._combatResolverSpyConquestScenarios(),
       ..._combatResolverCivilianRelocationScenarios(),
       ..._combatResolverGeneralMoraleAuraScenarios(),
     ];
 
-List<CombatResolverSpyCivilianScenario>
+List<RunnableScenario>
 _combatResolverSpyConquestScenarios() => [
-  CombatResolverSpyCivilianScenario(
+  RunnableScenario(
     scenarioId: 'crsc-spy-timer-cleared',
     label: 'combat conquest clears Spy timer for new owner province',
     run: () {
@@ -96,7 +83,7 @@ _combatResolverSpyConquestScenarios() => [
       );
     },
   ),
-  CombatResolverSpyCivilianScenario(
+  RunnableScenario(
     scenarioId: 'crsc-purchased-land-cleared',
     label: 'combat conquest clears purchased land for conquered province',
     run: () {
@@ -156,9 +143,9 @@ _combatResolverSpyConquestScenarios() => [
   ),
 ];
 
-List<CombatResolverSpyCivilianScenario>
+List<RunnableScenario>
 _combatResolverCivilianRelocationScenarios() => [
-  CombatResolverSpyCivilianScenario(
+  RunnableScenario(
     scenarioId: 'crsc-relocate-working-civilian',
     label:
         'combat conquest relocates illegal foreign civilian in changed province to owner capital',
@@ -247,7 +234,7 @@ _combatResolverCivilianRelocationScenarios() => [
       expect(relocated.assignedTileKey, isNull);
     },
   ),
-  CombatResolverSpyCivilianScenario(
+  RunnableScenario(
     scenarioId: 'crsc-relocate-idle-civilian',
     label:
         'combat conquest relocates idle foreign civilian with stale assignment tracking but no currentWork to owner capital',
@@ -332,9 +319,9 @@ _combatResolverCivilianRelocationScenarios() => [
   ),
 ];
 
-List<CombatResolverSpyCivilianScenario>
+List<RunnableScenario>
 _combatResolverGeneralMoraleAuraScenarios() => [
-  CombatResolverSpyCivilianScenario(
+  RunnableScenario(
     scenarioId: 'crsc-general-medal-morale-aura',
     label: 'general medals provide morale aura bonus (5% per medal, max 20%)',
     run: () {

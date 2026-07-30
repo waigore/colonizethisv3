@@ -8,30 +8,17 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a land resolver limits scenario table.
-class CombatResolverLimitsScenario implements LabeledScenario {
-  const CombatResolverLimitsScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Deployment limits and general-medal scenarios (part 1 limits).
-List<CombatResolverLimitsScenario> combatResolverLimitsScenarios() => [
+List<RunnableScenario> combatResolverLimitsScenarios() => [
   ..._combatResolverDeploymentLimitScenarios(),
   ..._combatResolverGeneralMedalScenarios(),
 ];
 
-List<CombatResolverLimitsScenario> _combatResolverDeploymentLimitScenarios() =>
+List<RunnableScenario> _combatResolverDeploymentLimitScenarios() =>
     [
-  CombatResolverLimitsScenario(
+  RunnableScenario(
     scenarioId: 'crl-deployment-cap-base-10',
     label:
         'deployment limit caps participating regiments per side (base 10, no Nationalism)',
@@ -94,7 +81,7 @@ List<CombatResolverLimitsScenario> _combatResolverDeploymentLimitScenarios() =>
       );
     },
   ),
-  CombatResolverLimitsScenario(
+  RunnableScenario(
     scenarioId: 'crl-deployment-cap-nationalism-12',
     label:
         'deployment limit with Nationalism tech is 12 (attacker has 13 units, ≥1 does not participate)',
@@ -158,8 +145,8 @@ List<CombatResolverLimitsScenario> _combatResolverDeploymentLimitScenarios() =>
   ),
 ];
 
-List<CombatResolverLimitsScenario> _combatResolverGeneralMedalScenarios() => [
-  CombatResolverLimitsScenario(
+List<RunnableScenario> _combatResolverGeneralMedalScenarios() => [
+  RunnableScenario(
     scenarioId: 'crl-winning-general-medal',
     label: 'assigned winning general gains +1 medal immediately and persists',
     run: () {
@@ -210,7 +197,7 @@ List<CombatResolverLimitsScenario> _combatResolverGeneralMedalScenarios() => [
       expect(updatedGeneral.medals, 2);
     },
   ),
-  CombatResolverLimitsScenario(
+  RunnableScenario(
     scenarioId: 'crl-leader-fallback-no-general',
     label: 'leader fallback medals apply when no uncommitted general exists',
     run: () {
@@ -256,7 +243,7 @@ List<CombatResolverLimitsScenario> _combatResolverGeneralMedalScenarios() => [
       expect(after.generals, isEmpty);
     },
   ),
-  CombatResolverLimitsScenario(
+  RunnableScenario(
     scenarioId: 'crl-general-medal-cap-4',
     label: 'general medals are capped at 4 on immediate engagement win',
     run: () {

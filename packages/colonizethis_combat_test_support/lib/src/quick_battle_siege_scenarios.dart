@@ -9,24 +9,11 @@ import 'quick_battle_input_test_support.dart';
 import 'quick_battle_siege_pipeline_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle siege scenario table.
-class QuickBattleSiegeScenario implements LabeledScenario {
-  const QuickBattleSiegeScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Emplaced-gun siege scenarios for [resolveQuickBattle].
-List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
-  QuickBattleSiegeScenario(
+List<RunnableScenario> quickBattleSiegeScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbs-conquest-fort-downgrade',
     label:
         'Scenario: concentrated fire destroys battery before garrison — conquest + fort downgrade',
@@ -48,7 +35,7 @@ List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
       expect(result.emplacedGunOutcomes.single.hp, 0);
     },
   ),
-  QuickBattleSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbs-battery-absorbs-volleys',
     label: 'Scenario: battery absorbs volleys — partial HP loss, fort stands',
     run: () {
@@ -69,7 +56,7 @@ List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
       expect(result.fortDowngradeFromDestroyedEmplaced, isFalse);
     },
   ),
-  QuickBattleSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbs-two-gun-round-robin',
     label: 'Scenario: two-gun battery — round-robin damage (sorted by id)',
     run: () {
@@ -101,7 +88,7 @@ List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
       );
     },
   ),
-  QuickBattleSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbs-triple-battery',
     label: 'Scenario: triple battery (fort 3) — each piece tracked independently',
     run: () {
@@ -130,7 +117,7 @@ List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
       );
     },
   ),
-  QuickBattleSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbs-no-virtual-guns',
     label:
         'Scenario: no virtual guns — legacy aggregate emplaced lump still applies',
@@ -148,7 +135,7 @@ List<QuickBattleSiegeScenario> quickBattleSiegeScenarios() => [
       expect(result.winner, isNotNull);
     },
   ),
-  QuickBattleSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbs-pipeline-build-apply',
     label:
         'Scenario: pipeline buildQuickBattleInput → resolve → apply reduces fort on conquest',
@@ -193,8 +180,8 @@ const _assaultVolleyRounds = [
 ];
 
 /// Cavalry initiative scenarios (assault vs volley trade).
-List<QuickBattleSiegeScenario> quickBattleInitiativeScenarios() => [
-  QuickBattleSiegeScenario(
+List<RunnableScenario> quickBattleInitiativeScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbi-cavalry-attacker-first',
     label:
         'Scenario: cavalry-heavy attacker gains first action and trades better',

@@ -5,18 +5,6 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-class PreCombatIndexScenario implements LabeledScenario {
-  const PreCombatIndexScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 const _ow = 'oldWorld';
 
@@ -43,9 +31,9 @@ Game _game({
   RegionData? oldWorld,
 }) => preCombatIndexGame(players: players, armies: armies, oldWorld: oldWorld);
 
-List<PreCombatIndexScenario>
+List<RunnableScenario>
 resolveArmyMoveDestinationProvinceIdScenarios() => [
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-prefixed-destination',
     label: 'passes through an already-prefixed destination unchanged',
     run: () {
@@ -57,7 +45,7 @@ resolveArmyMoveDestinationProvinceIdScenarios() => [
       expect(resolveArmyMoveDestinationProvinceId(army, order), '$_ow|p2');
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-qualifies-local-destination',
     label: 'qualifies a bare local id with the army stationed region',
     run: () {
@@ -68,8 +56,8 @@ resolveArmyMoveDestinationProvinceIdScenarios() => [
   ),
 ];
 
-List<PreCombatIndexScenario> unitsByProvinceIndexScenarios() => [
-  PreCombatIndexScenario(
+List<RunnableScenario> unitsByProvinceIndexScenarios() => [
+  RunnableScenario(
     scenarioId: 'pci-units-grouped-ordered',
     label: 'groups combat units by province, preserving region.units order',
     run: () {
@@ -101,15 +89,15 @@ List<PreCombatIndexScenario> unitsByProvinceIndexScenarios() => [
       expect(index['$_ow|b']!.map((u) => u.id).toList(), ['u2']);
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-units-empty',
     label: 'returns an empty map for a region without units',
     run: () => expect(unitsByProvinceIndex(const RegionData()), isEmpty),
   ),
 ];
 
-List<PreCombatIndexScenario> provincesByIdIndexScenarios() => [
-  PreCombatIndexScenario(
+List<RunnableScenario> provincesByIdIndexScenarios() => [
+  RunnableScenario(
     scenarioId: 'pci-provinces-by-id',
     label: 'maps each province id to its province',
     run: () {
@@ -126,8 +114,8 @@ List<PreCombatIndexScenario> provincesByIdIndexScenarios() => [
   ),
 ];
 
-List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
-  PreCombatIndexScenario(
+List<RunnableScenario> preCombatMovementIndexBuildScenarios() => [
+  RunnableScenario(
     scenarioId: 'pci-build-players-armies',
     label: 'greatPowerIds contains every player id and armiesById every army',
     run: () {
@@ -143,7 +131,7 @@ List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
       expect(index.armiesById['a1']!.ownerId, 'p1');
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-build-move-order',
     label:
         'includes Great Power army moves with destinations resolved in order',
@@ -173,7 +161,7 @@ List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
       );
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-build-skip-non-gp',
     label: 'skips moves from factions that are not Great Powers',
     run: () {
@@ -194,7 +182,7 @@ List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
       );
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-build-skip-home',
     label: 'skips home armies',
     run: () {
@@ -212,7 +200,7 @@ List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
       );
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-build-skip-unknown',
     label: 'skips orders for unknown army ids',
     run: () {
@@ -230,7 +218,7 @@ List<PreCombatIndexScenario> preCombatMovementIndexBuildScenarios() => [
       );
     },
   ),
-  PreCombatIndexScenario(
+  RunnableScenario(
     scenarioId: 'pci-build-skip-owner-mismatch',
     label: 'skips orders whose army owner differs from the ordering faction',
     run: () {

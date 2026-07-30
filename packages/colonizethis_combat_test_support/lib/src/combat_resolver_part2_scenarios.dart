@@ -8,24 +8,11 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a land resolver part-2 scenario table.
-class CombatResolverPart2Scenario implements LabeledScenario {
-  const CombatResolverPart2Scenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for tie-break determinism and garrison recovery (part 2).
-List<CombatResolverPart2Scenario> combatResolverPart2Scenarios() => [
-      CombatResolverPart2Scenario(
+List<RunnableScenario> combatResolverPart2Scenarios() => [
+      RunnableScenario(
         scenarioId: 'crp2-tie-break-deterministic',
         label: 'battle tie-break is deterministic for same seed and context',
         run: () {
@@ -53,7 +40,7 @@ List<CombatResolverPart2Scenario> combatResolverPart2Scenarios() => [
           expect(r1.generals, r2.generals);
         },
       ),
-      CombatResolverPart2Scenario(
+      RunnableScenario(
         scenarioId: 'crp2-gp-garrison-recovery-era4',
         label:
             'great power defender: recovered regiments match most-advanced infantry era 4',
@@ -109,7 +96,7 @@ List<CombatResolverPart2Scenario> combatResolverPart2Scenarios() => [
           }
         },
       ),
-      CombatResolverPart2Scenario(
+      RunnableScenario(
         scenarioId: 'crp2-minor-garrison-recovery-era3',
         label: 'minor nation effective era 3: recovered regiments are grenadiers',
         run: () {
@@ -167,7 +154,7 @@ List<CombatResolverPart2Scenario> combatResolverPart2Scenarios() => [
           }
         },
       ),
-      CombatResolverPart2Scenario(
+      RunnableScenario(
         scenarioId: 'crp2-tribe-garrison-recovery-era1',
         label: 'tribe effective era 1: recovered regiments are arquebusiers',
         run: () {

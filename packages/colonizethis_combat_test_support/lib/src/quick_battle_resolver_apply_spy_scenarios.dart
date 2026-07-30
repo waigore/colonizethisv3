@@ -5,21 +5,10 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-class QuickBattleResolverApplySpyScenario implements LabeledScenario {
-  const QuickBattleResolverApplySpyScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
-List<QuickBattleResolverApplySpyScenario>
+List<RunnableScenario>
 quickBattleResolverApplySpyScenarios() => [
-  QuickBattleResolverApplySpyScenario(
+  RunnableScenario(
     scenarioId: 'qbras-old-world-clear',
     label: 'quick battle conquest clears Spy timer for new owner province',
     run: () {
@@ -94,7 +83,7 @@ quickBattleResolverApplySpyScenarios() => [
       );
     },
   ),
-  QuickBattleResolverApplySpyScenario(
+  RunnableScenario(
     scenarioId: 'qbras-new-world-clear',
     label: 'quick battle conquest in newWorld region also clears Spy timer',
     run: () {

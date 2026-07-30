@@ -356,3 +356,14 @@ Modules:
 Completes §5 remaining resolver integration suites (battle general assignment + combat mode selection).
 
 Combat test LOC: 1,921 → 1,580 physical lines (−341 in test files across slice 11).
+
+## Wave — slice A (Refs #4196)
+
+Delivered in this slice:
+
+- Shared `RunnableScenario` / `runRunnableScenario` / `rs()` on `colonizethis_combat_test_support` `scenario_runner.dart` (mirrors `colonizethis_orders` harness pattern; adds `scenarioId` for combat table metadata).
+- Removed ~29 near-identical per-family `*Scenario` class shells; all `*_scenarios.dart` tables now use `RunnableScenario` rows.
+- Public list factory names and every `scenarioId` / `label` string preserved; `colonizethis_combat/test/**` runners unchanged.
+
+Deferred to follow-up slices on #4196: god-module topic splits (>220 phys), `combat_resolver_test_support` builder split, builder densify, CI file-size + LOC ratchets.
+

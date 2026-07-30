@@ -10,24 +10,11 @@ import 'quick_battle_build_test_support.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle build/siege scenario table.
-class QuickBattleBuildSiegeScenario implements LabeledScenario {
-  const QuickBattleBuildSiegeScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [buildQuickBattleInput], emplaced guns, and apply paths.
-List<QuickBattleBuildSiegeScenario> quickBattleBuildSiegeScenarios() => [
-  QuickBattleBuildSiegeScenario(
+List<RunnableScenario> quickBattleBuildSiegeScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbbs-build-from-context',
     label: 'builds input from BattleContext',
     run: () {
@@ -43,7 +30,7 @@ List<QuickBattleBuildSiegeScenario> quickBattleBuildSiegeScenarios() => [
       expect(input.defenderGeneralMedals, 0);
     },
   ),
-  QuickBattleBuildSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbbs-napoleon-bonus',
     label:
         'attacker with napoleon bonus wins more often than with reserve (same seed)',
@@ -70,7 +57,7 @@ List<QuickBattleBuildSiegeScenario> quickBattleBuildSiegeScenarios() => [
       );
     },
   ),
-  QuickBattleBuildSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbbs-spawn-guns-fort-level',
     label: 'buildQuickBattleInput spawns guns by fort level and stable ids',
     run: () {
@@ -89,7 +76,7 @@ List<QuickBattleBuildSiegeScenario> quickBattleBuildSiegeScenarios() => [
       );
     },
   ),
-  QuickBattleBuildSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbbs-resolve-duplicate-emplaced',
     label: 'resolveQuickBattle duplicate runs match emplaced outcomes',
     run: () {
@@ -122,7 +109,7 @@ List<QuickBattleBuildSiegeScenario> quickBattleBuildSiegeScenarios() => [
       expect(r1.attackerCasualties, r2.attackerCasualties);
     },
   ),
-  QuickBattleBuildSiegeScenario(
+  RunnableScenario(
     scenarioId: 'qbbs-apply-fort-downgrade',
     label:
         'applyQuickBattleResultToGame downgrades fort when flag set without flip',

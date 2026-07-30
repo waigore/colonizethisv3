@@ -7,29 +7,16 @@ import 'package:colonizethis_test/test.dart';
 import 'conflict_detection_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a land conflict-detection scenario table.
-class ConflictDetectionScenario implements LabeledScenario {
-  const ConflictDetectionScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<ConflictDetectionScenario> detectConflictsScenarios() => [
+List<RunnableScenario> detectConflictsScenarios() => [
   ..._detectConflictsCoreScenarios(),
   ..._detectConflictsOwnershipScenarios(),
   ..._detectConflictsOrderScenarios(),
 ];
 
-List<ConflictDetectionScenario> _detectConflictsCoreScenarios() => [
-  ConflictDetectionScenario(
+List<RunnableScenario> _detectConflictsCoreScenarios() => [
+  RunnableScenario(
     scenarioId: 'cd-two-factions-same-province',
     label: 'returns one battle when two factions in same province',
     run: () {
@@ -78,7 +65,7 @@ List<ConflictDetectionScenario> _detectConflictsCoreScenarios() => [
       expect(battles[0].attackers[0].unitIds, ['u1']);
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-new-world-conflict',
     label: 'detects conflict in newWorld when two factions and move order',
     run: () {
@@ -117,7 +104,7 @@ List<ConflictDetectionScenario> _detectConflictsCoreScenarios() => [
       expect(battles[0].provinceId, '$nw|N1');
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-single-faction',
     label: 'returns no battle when only one faction in province',
     run: () {
@@ -145,7 +132,7 @@ List<ConflictDetectionScenario> _detectConflictsCoreScenarios() => [
       expect(battles, isEmpty);
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-multiple-provinces',
     label: 'multiple provinces with conflicts return multiple battles',
     run: () {
@@ -217,8 +204,8 @@ List<ConflictDetectionScenario> _detectConflictsCoreScenarios() => [
   ),
 ];
 
-List<ConflictDetectionScenario> _detectConflictsOwnershipScenarios() => [
-  ConflictDetectionScenario(
+List<RunnableScenario> _detectConflictsOwnershipScenarios() => [
+  RunnableScenario(
     scenarioId: 'cd-civilians-no-battle',
     label: 'civilians alone do not trigger battles',
     run: () {
@@ -259,7 +246,7 @@ List<ConflictDetectionScenario> _detectConflictsOwnershipScenarios() => [
       expect(battles, isEmpty);
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-unowned-non-mover-defender',
     label: 'unowned province: defender is non-mover when two factions present',
     run: () {
@@ -299,7 +286,7 @@ List<ConflictDetectionScenario> _detectConflictsOwnershipScenarios() => [
       expect(battles[0].attackers[0].factionId, 'p1');
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-unowned-lex-first-defender',
     label: 'unowned province: defender is lexicographically first when all moved in',
     run: () {
@@ -340,8 +327,8 @@ List<ConflictDetectionScenario> _detectConflictsOwnershipScenarios() => [
   ),
 ];
 
-List<ConflictDetectionScenario> _detectConflictsOrderScenarios() => [
-  ConflictDetectionScenario(
+List<RunnableScenario> _detectConflictsOrderScenarios() => [
+  RunnableScenario(
     scenarioId: 'cd-new-world-only-units',
     label: 'returns no battles when oldWorld has no units',
     run: () {
@@ -379,7 +366,7 @@ List<ConflictDetectionScenario> _detectConflictsOrderScenarios() => [
       expect(battles[0].regionId, nw);
     },
   ),
-  ConflictDetectionScenario(
+  RunnableScenario(
     scenarioId: 'cd-army-move-attacker',
     label: 'army move order contributes moved-in attacker detection',
     run: () {

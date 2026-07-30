@@ -7,23 +7,10 @@ import 'package:colonizethis_test/test.dart';
 import 'naval_combat_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a naval battle resolution scenario table.
-class NavalCombatResolutionScenario implements LabeledScenario {
-  const NavalCombatResolutionScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
-  NavalCombatResolutionScenario(
+List<RunnableScenario> resolveSeaBattleScenarios() => [
+  RunnableScenario(
     scenarioId: 'rsb-strength-ratio',
     label: 'returns surviving ships with casualties by strength ratio',
     run: () {
@@ -47,7 +34,7 @@ List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
       );
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'rsb-zero-strength',
     label: 'returns all ships when total strength is zero',
     run: () {
@@ -61,7 +48,7 @@ List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
       expect(result.survivingShipsSide2, isEmpty);
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'rsb-feeding-morale',
     label: 'feeding coverage multiplies raw naval strength like land combat morale',
     run: () {
@@ -71,7 +58,7 @@ List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
       expect(raw * moraleMultiplierForFeedingCoverage(0.0), raw * 0.5);
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'rsb-no-retreat',
     label: 'does not retreat when retreat is disallowed by topology/relation gate',
     run: () {
@@ -100,8 +87,8 @@ List<NavalCombatResolutionScenario> resolveSeaBattleScenarios() => [
   ),
 ];
 
-List<NavalCombatResolutionScenario> applyNavalBattleResultsScenarios() => [
-  NavalCombatResolutionScenario(
+List<RunnableScenario> applyNavalBattleResultsScenarios() => [
+  RunnableScenario(
     scenarioId: 'anbr-replace-fleets',
     label: 'replaces fleets in zone with surviving sides',
     run: () {
@@ -145,7 +132,7 @@ List<NavalCombatResolutionScenario> applyNavalBattleResultsScenarios() => [
       expect(updated.worldState.fleets.single.mission, FleetMission.none);
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'anbr-preserve-mission',
     label: 'preserves mission on recreated surviving fleets',
     run: () {
@@ -195,8 +182,8 @@ List<NavalCombatResolutionScenario> applyNavalBattleResultsScenarios() => [
   ),
 ];
 
-List<NavalCombatResolutionScenario> navalInterceptProbabilityScenarios() => [
-  NavalCombatResolutionScenario(
+List<RunnableScenario> navalInterceptProbabilityScenarios() => [
+  RunnableScenario(
     scenarioId: 'nip-patrol',
     label: 'Patrol uses mission-factor * ratio',
     run: () {
@@ -210,7 +197,7 @@ List<NavalCombatResolutionScenario> navalInterceptProbabilityScenarios() => [
       );
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'nip-blockade',
     label: 'Blockade uses mission-factor * ratio',
     run: () {
@@ -224,7 +211,7 @@ List<NavalCombatResolutionScenario> navalInterceptProbabilityScenarios() => [
       );
     },
   ),
-  NavalCombatResolutionScenario(
+  RunnableScenario(
     scenarioId: 'nip-clamped',
     label: 'result is clamped 0.05-0.85',
     run: () {

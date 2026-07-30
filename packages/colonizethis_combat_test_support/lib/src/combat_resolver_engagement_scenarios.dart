@@ -7,31 +7,18 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a land resolver engagement scenario table.
-class CombatResolverEngagementScenario implements LabeledScenario {
-  const CombatResolverEngagementScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [resolveEngagement] and [resolveBattleContext] (part 1).
-List<CombatResolverEngagementScenario> combatResolverEngagementScenarios() =>
+List<RunnableScenario> combatResolverEngagementScenarios() =>
     [
       ..._combatResolverEngagementOutcomeScenarios(),
       ..._combatResolverEngagementContextScenarios(),
     ];
 
-List<CombatResolverEngagementScenario>
+List<RunnableScenario>
     _combatResolverEngagementOutcomeScenarios() => [
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-attacker-wins-decisively',
         label: 'attacker wins decisively when much stronger',
         run: () {
@@ -72,7 +59,7 @@ List<CombatResolverEngagementScenario>
           expect(outcome.defenderCasualties, contains('d1'));
         },
       ),
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-defender-wins',
         label: 'defender wins when much stronger',
         run: () {
@@ -113,7 +100,7 @@ List<CombatResolverEngagementScenario>
           expect(outcome.attackerCasualties, contains('a1'));
         },
       ),
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-siege-modifiers',
         label: 'siege modifiers apply when fortLevel >= 1',
         run: () {
@@ -158,9 +145,9 @@ List<CombatResolverEngagementScenario>
       ),
     ];
 
-List<CombatResolverEngagementScenario>
+List<RunnableScenario>
     _combatResolverEngagementContextScenarios() => [
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-feeding-morale-penalty',
         label:
             'low attacker feeding coverage penalises strength via morale multiplier',
@@ -211,7 +198,7 @@ List<CombatResolverEngagementScenario>
           );
         },
       ),
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-leader-keys-resolve-path',
         label:
             'leader keys from Game produce correct multipliers in resolveEngagement path',
@@ -265,7 +252,7 @@ List<CombatResolverEngagementScenario>
           expect(result.worldState.oldWorld.provinces.single.id, 'p');
         },
       ),
-      CombatResolverEngagementScenario(
+      RunnableScenario(
         scenarioId: 'cre-new-world-context',
         label: 'resolveBattleContext updates newWorld when regionId is newWorld',
         run: () {

@@ -6,31 +6,18 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a probabilistic engagement scenario table.
-class CombatResolverProbabilisticScenario implements LabeledScenario {
-  const CombatResolverProbabilisticScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [resolveEngagementProbabilistic].
-List<CombatResolverProbabilisticScenario>
+List<RunnableScenario>
     combatResolverProbabilisticScenarios() => [
           ..._combatResolverProbabilisticCoreScenarios(),
           ..._combatResolverProbabilisticOutcomeScenarios(),
         ];
 
-List<CombatResolverProbabilisticScenario>
+List<RunnableScenario>
     _combatResolverProbabilisticCoreScenarios() => [
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-same-seed-identical',
             label: 'same seed produces identical outcome',
             run: () {
@@ -86,7 +73,7 @@ List<CombatResolverProbabilisticScenario>
               }
             },
           ),
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-rounds-bounded',
             label: 'rounds bounded by maxCombatRounds',
             run: () {
@@ -118,7 +105,7 @@ List<CombatResolverProbabilisticScenario>
               expect(outcome.rounds.length, lessThanOrEqualTo(maxCombatRounds));
             },
           ),
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-strong-attacker-wins-majority',
             label: 'strong attacker tends to win over many trials',
             run: () {
@@ -162,9 +149,9 @@ List<CombatResolverProbabilisticScenario>
           ),
         ];
 
-List<CombatResolverProbabilisticScenario>
+List<RunnableScenario>
     _combatResolverProbabilisticOutcomeScenarios() => [
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-per-round-details',
             label: 'outcome includes per-round details',
             run: () {
@@ -200,7 +187,7 @@ List<CombatResolverProbabilisticScenario>
               }
             },
           ),
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-mutual-annihilation-possible',
             label:
                 'can produce mutualAnnihilation when both sides eliminated',
@@ -242,7 +229,7 @@ List<CombatResolverProbabilisticScenario>
               );
             },
           ),
-          CombatResolverProbabilisticScenario(
+          RunnableScenario(
             scenarioId: 'crp-stalemate-possible',
             label:
                 'can produce stalemate when rounds end with both sides remaining',

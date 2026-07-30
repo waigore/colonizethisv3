@@ -6,25 +6,14 @@ import 'combat_resolver_test_support.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
 
-class QuickBattleInputBuilderScenario implements LabeledScenario {
-  const QuickBattleInputBuilderScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
-List<QuickBattleInputBuilderScenario> quickBattleInputBuilderScenarios() => [
+List<RunnableScenario> quickBattleInputBuilderScenarios() => [
   ..._quickBattleInputBuilderCoreScenarios(),
   ..._quickBattleInputBuilderRegionAndMedalScenarios(),
 ];
 
-List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() => [
-  QuickBattleInputBuilderScenario(
+List<RunnableScenario> _quickBattleInputBuilderCoreScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbib-groups',
     label: 'produces QuickBattleInput with defender and attacker groups',
     run: () {
@@ -63,7 +52,7 @@ List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() =>
       expect(input.attackerDeployment.groups.first.line, QuickBattleLine.front);
     },
   ),
-  QuickBattleInputBuilderScenario(
+  RunnableScenario(
     scenarioId: 'qbib-filter-missing',
     label: 'filters out unit ids not present in region',
     run: () {
@@ -93,7 +82,7 @@ List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() =>
       expect(input.attackerDeployment.groups.first.unitIds, isEmpty);
     },
   ),
-  QuickBattleInputBuilderScenario(
+  RunnableScenario(
     scenarioId: 'qbib-leader-multipliers',
     label:
         'supplies leader multipliers from Game players (napoleon 1.25, frederick 1.15)',
@@ -123,7 +112,7 @@ List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() =>
       expect(input.defenderLeaderMultiplier, 1.15);
     },
   ),
-  QuickBattleInputBuilderScenario(
+  RunnableScenario(
     scenarioId: 'qbib-default-multipliers',
     label: 'leader multipliers default to 1.0 when players have no leaderKey',
     run: () {
@@ -153,9 +142,9 @@ List<QuickBattleInputBuilderScenario> _quickBattleInputBuilderCoreScenarios() =>
   ),
 ];
 
-List<QuickBattleInputBuilderScenario>
+List<RunnableScenario>
 _quickBattleInputBuilderRegionAndMedalScenarios() => [
-  QuickBattleInputBuilderScenario(
+  RunnableScenario(
     scenarioId: 'qbib-new-world',
     label: 'builds input from newWorld BattleContext',
     run: () {
@@ -187,7 +176,7 @@ _quickBattleInputBuilderRegionAndMedalScenarios() => [
       expect(input.attackerDeployment.groups.first.unitIds, ['u1']);
     },
   ),
-  QuickBattleInputBuilderScenario(
+  RunnableScenario(
     scenarioId: 'qbib-assignment-medals',
     label: 'passes attacker and defender medals from battle assignment',
     run: () {

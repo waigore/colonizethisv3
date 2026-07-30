@@ -7,31 +7,18 @@ import 'package:colonizethis_test/test.dart';
 import 'military_strength_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a military-strength scenario table.
-class MilitaryStrengthScenario implements LabeledScenario {
-  const MilitaryStrengthScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [aggregateMilitaryStrengthForPlayer].
-List<MilitaryStrengthScenario> aggregateMilitaryStrengthForPlayerScenarios() => [
+List<RunnableScenario> aggregateMilitaryStrengthForPlayerScenarios() => [
   ..._aggregateMilitaryStrengthForPlayerFactionScenarios(),
   ..._aggregateMilitaryStrengthForPlayerFilteringScenarios(),
   ..._aggregateMilitaryStrengthForPlayerMultiplierScenarios(),
 ];
 
-List<MilitaryStrengthScenario>
+List<RunnableScenario>
 _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-empty-army',
     label: 'returns 0 for empty army',
     run: () {
@@ -43,7 +30,7 @@ _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
       expect(strength, equals(0.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-gp-medals',
     label: 'calculates strength for Great Power units with medals',
     run: () {
@@ -59,7 +46,7 @@ _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
       expect(strength, closeTo(30.6, 0.1));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-minor-era',
     label: 'uses effective military level for Minor Nation',
     run: () {
@@ -85,7 +72,7 @@ _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
       expect(strength, equals(3.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-tribe-era',
     label: 'uses effective military level for Tribe',
     run: () {
@@ -111,7 +98,7 @@ _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
       expect(strength, greaterThan(0.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-gp-era4',
     label: 'Great Power uses era 4 (does not downgrade era 3 units)',
     run: () {
@@ -128,9 +115,9 @@ _aggregateMilitaryStrengthForPlayerFactionScenarios() => [
   ),
 ];
 
-List<MilitaryStrengthScenario>
+List<RunnableScenario>
 _aggregateMilitaryStrengthForPlayerFilteringScenarios() => [
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-unknown-regiment',
     label: 'skips units with unknown regiment types',
     run: () {
@@ -146,7 +133,7 @@ _aggregateMilitaryStrengthForPlayerFilteringScenarios() => [
       expect(strength, equals(9.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-ow-nw',
     label: 'aggregates units from both Old World and New World',
     run: () {
@@ -168,7 +155,7 @@ _aggregateMilitaryStrengthForPlayerFilteringScenarios() => [
       expect(strength, equals(18.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-owner-filter',
     label: 'only includes units owned by the specified player',
     run: () {
@@ -200,9 +187,9 @@ _aggregateMilitaryStrengthForPlayerFilteringScenarios() => [
   ),
 ];
 
-List<MilitaryStrengthScenario>
+List<RunnableScenario>
 _aggregateMilitaryStrengthForPlayerMultiplierScenarios() => [
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-medal-multipliers',
     label: 'applies medal multiplier correctly (0-4 medals)',
     run: () {
@@ -247,7 +234,7 @@ _aggregateMilitaryStrengthForPlayerMultiplierScenarios() => [
       expect(strength, closeTo(66.6, 0.1));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-deterministic',
     label: 'is deterministic - same inputs produce same output',
     run: () {
@@ -266,7 +253,7 @@ _aggregateMilitaryStrengthForPlayerMultiplierScenarios() => [
       expect(strength2, equals(strength3));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ms-non-negative',
     label: 'returns non-negative value',
     run: () {
@@ -281,8 +268,8 @@ _aggregateMilitaryStrengthForPlayerMultiplierScenarios() => [
 ];
 
 /// Scenarios for [aggregateStrength].
-List<MilitaryStrengthScenario> aggregateStrengthScenarios() => [
-  MilitaryStrengthScenario(
+List<RunnableScenario> aggregateStrengthScenarios() => [
+  RunnableScenario(
     scenarioId: 'as-list-units',
     label: 'aggregates strength for a list of units',
     run: () {
@@ -295,7 +282,7 @@ List<MilitaryStrengthScenario> aggregateStrengthScenarios() => [
       expect(strength, equals(27.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'as-era-downgrade',
     label: 'downgrades units when era exceeds effective era',
     run: () {
@@ -310,8 +297,8 @@ List<MilitaryStrengthScenario> aggregateStrengthScenarios() => [
 ];
 
 /// Scenarios for [effectiveEraForFaction].
-List<MilitaryStrengthScenario> effectiveEraForFactionScenarios() => [
-  MilitaryStrengthScenario(
+List<RunnableScenario> effectiveEraForFactionScenarios() => [
+  RunnableScenario(
     scenarioId: 'eef-gp',
     label: 'returns 4 for Great Power',
     run: () {
@@ -322,7 +309,7 @@ List<MilitaryStrengthScenario> effectiveEraForFactionScenarios() => [
       expect(effectiveEraForFaction(game, 'france'), equals(4));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'eef-minor',
     label: 'returns effectiveMilitaryLevel for Minor Nation',
     run: () {
@@ -339,7 +326,7 @@ List<MilitaryStrengthScenario> effectiveEraForFactionScenarios() => [
       expect(effectiveEraForFaction(game, 'minor1'), equals(2));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'eef-tribe',
     label: 'returns effectiveMilitaryLevel for Tribe (capped at 1 in-game)',
     run: () {
@@ -356,7 +343,7 @@ List<MilitaryStrengthScenario> effectiveEraForFactionScenarios() => [
       expect(effectiveEraForFaction(game, 'tribe1'), equals(1));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'eef-unknown',
     label: 'returns 4 for unknown faction',
     run: () {
@@ -368,15 +355,15 @@ List<MilitaryStrengthScenario> effectiveEraForFactionScenarios() => [
 ];
 
 /// Scenarios for [cavalryFraction].
-List<MilitaryStrengthScenario> cavalryFractionScenarios() => [
-  MilitaryStrengthScenario(
+List<RunnableScenario> cavalryFractionScenarios() => [
+  RunnableScenario(
     scenarioId: 'cf-empty',
     label: 'returns 0 when unit list is empty',
     run: () {
       expect(cavalryFraction([], {}), equals(0.0));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'cf-share',
     label: 'counts cavalry share over all unit ids',
     run: () {
@@ -388,7 +375,7 @@ List<MilitaryStrengthScenario> cavalryFractionScenarios() => [
       expect(cavalryFraction(['u1', 'u2'], unitsById), equals(0.5));
     },
   ),
-  MilitaryStrengthScenario(
+  RunnableScenario(
     scenarioId: 'cf-missing-denominator',
     label: 'missing units still count toward denominator',
     run: () {
