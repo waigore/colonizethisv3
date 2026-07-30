@@ -283,8 +283,8 @@ Orders _tradeScreenStoryBidBudgetSaturatedOrders() {
 }
 
 /// Pre-staged Orders for the "Market tab — bid-type saturated (Refs
-/// #4170)" use case: cap `1` with a single timber bid so reviewers see
-/// `Bid goods: 1 of 1`, the danger warning, and disabled fresh Bid
+/// #4170)" use case: cap `3` with three distinct bids so reviewers see
+/// `Bid goods: 3 of 3`, the neutral warning, and disabled fresh Bid
 /// chips on other commodities.
 Orders _tradeScreenStoryBidTypeSaturatedOrders() {
   return Orders(
@@ -294,6 +294,18 @@ Orders _tradeScreenStoryBidTypeSaturatedOrders() {
           commodityId: 'timber',
           type: TradeOrderType.bid,
           quantity: 2,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'iron',
+          type: TradeOrderType.bid,
+          quantity: 1,
+          priority: 1,
+        ),
+        TradeOrder(
+          commodityId: 'grain',
+          type: TradeOrderType.bid,
+          quantity: 1,
           priority: 1,
         ),
       ],
@@ -608,27 +620,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — bid-type cap 3 embassy (Refs #4170)',
-        builder: (context) => _tradeScreenDefaultStory(
-          overtureStates: const <OvertureState>[
-            OvertureState(
-              gpId: 'gp_human',
-              targetId: 'minor1',
-              stage: OvertureStage.embassy,
-            ),
-          ],
-        ),
+        name: 'Market tab — bid-type cap 3 baseline (Refs #4170, #4186)',
+        builder: (context) => _tradeScreenDefaultStory(),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — bid-type cap 6 Trade Fairs (Refs #4170)',
+        name: 'Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)',
         builder: (context) => _tradeScreenDefaultStory(
-          overtureStates: const <OvertureState>[
-            OvertureState(
-              gpId: 'gp_human',
-              targetId: 'minor1',
-              stage: OvertureStage.embassy,
-            ),
-          ],
           techUnlocked: const <String, bool>{kTechIdTradeFairs: true},
         ),
       ),
