@@ -58,6 +58,21 @@ Open `GAME20001` **Production screen** and issue a `WorkOrder`.
     assert "civilian work decree" in result
 
 
+def test_transform_chapter_replaces_bold_wrapped_screen_id() -> None:
+    """Authoring **`SCREENID` label** must not leave duplicate bold fragments."""
+    source = """# Example
+
+## How it is done
+
+**`GAME80001` Development** lists improvable tiles.
+"""
+    titles = {"GAME80001": "Development screen"}
+    result = transform_chapter(source, titles)
+    assert "GAME80001" not in result
+    assert result.count("**Development screen**") == 1
+    assert "****" not in result
+
+
 def test_transform_chapter_removes_spec_parenthetical() -> None:
     source = """# Example
 

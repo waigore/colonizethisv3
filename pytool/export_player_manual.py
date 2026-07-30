@@ -158,6 +158,12 @@ def replace_screen_ids(content: str, titles: dict[str, str]) -> str:
     for screen_id, title in sorted(titles.items(), key=lambda item: len(item[0]), reverse=True):
         bold_title = f"**{title}**"
 
+        # Authoring pattern: **`SCREENID` short label** (bold wraps backticked id + label).
+        content = re.sub(
+            rf"\*\*`{re.escape(screen_id)}`\s+([^*]+)\*\*",
+            bold_title,
+            content,
+        )
         content = re.sub(
             rf"`{re.escape(screen_id)}`\s*\*\*([^*]+)\*\*",
             bold_title,
