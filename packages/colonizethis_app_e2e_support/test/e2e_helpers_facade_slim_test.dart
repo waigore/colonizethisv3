@@ -31,8 +31,8 @@ void main() {
       final lines = File(
         p.join(libDir.path, 'e2e_helpers.dart'),
       ).readAsLinesSync().length;
-      // Pre-slim size was 1007 physical lines.
-      expect(lines, lessThanOrEqualTo(700));
+      // Pre-slim size was 1007 physical lines; post-#4195 lib cap is 400.
+      expect(lines, lessThanOrEqualTo(400));
     });
 
     test('negative: no helpers alias file re-absorbs the pre-slim size', () {
@@ -43,7 +43,7 @@ void main() {
           continue;
         }
         final lines = file.readAsLinesSync().length;
-        if (lines > 700) {
+        if (lines > 400) {
           oversized.add('$name ($lines)');
         }
       }

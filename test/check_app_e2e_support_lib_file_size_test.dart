@@ -50,7 +50,7 @@ void main() {
         '${temp.path}/packages/colonizethis_app_e2e_support/lib/huge.dart',
       )
       ..createSync()
-      ..writeAsStringSync(List.filled(701, '// line').join('\n'));
+      ..writeAsStringSync(List.filled(401, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppE2eSupportLibFileSize(
