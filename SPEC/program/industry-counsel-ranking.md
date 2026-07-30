@@ -21,3 +21,5 @@
 ## AI alignment
 
 `colonizethis_ai` `recipe_scoring.dart` delegates core math to `colonizethis_economy` industry counsel modules.
+
+When no AI-only boost wrappers are active (H8 regiment boost, feedstock reserve, military-rebuild crisis, supplier release, castIron fabric pre-pass), `economy_planner_labour.dart` `allocateLabour` delegates to `industryCounselAllocateLabourCore` with the same stockpile, labour, tech, agenda, and growth-stage inputs.
