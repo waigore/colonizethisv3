@@ -36,7 +36,7 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
     final game = widget.game;
     final standings = buildVictoryStandings(game);
     final ownershipColors = factionOwnershipColorMapForOldWorld(game);
-    final endState = _resolveEndState(game);
+    final endState = _resolveEndState(game, appL10n(context));
     final textTheme = Theme.of(context).textTheme;
     final mapData = tryGetGameMapData(
       () => ref.read(gameServiceProvider).getMapData(game.id),
@@ -111,22 +111,25 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
     );
   }
 
-  String? _resolveEndState(Game game) {
+  String? _resolveEndState(Game game, AppLocalizations l10n) {
     final victory = game.victory;
     if (victory != null) {
       final winnerName = displayNameForVictoryFaction(
         game,
         victory.winnerPlayerId,
       );
-      return 'Military victory: $winnerName won on turn ${victory.turnNumber}.';
+      return l10n.victory_endProvinceCountWin(
+        winnerName,
+        victory.turnNumber,
+      );
     }
     if (game.calendarCampaignHalted) {
       final declaredId = pickUniqueGreatPowerLeaderByPowerScore(game);
       if (declaredId == null) {
-        return 'Calendar campaign ended with no declared winner (tie or no scorer).';
+        return l10n.victory_endCalendarNoWinner;
       }
       final name = displayNameForVictoryFaction(game, declaredId);
-      return 'Calendar campaign ended. Declared winner by power score: $name.';
+      return l10n.victory_endCalendarDeclaredWinner(name);
     }
     return null;
   }
@@ -322,36 +325,39 @@ class _VictoryPowerBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     return Padding(
       padding: const EdgeInsets.only(left: 20, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Power score ${breakdown.totalScore} (comparison / calendar '
-            'declared winner only — not the military victory meter).',
+            l10n.victory_powerBreakdownIntro,
             style: textTheme.bodySmall?.copyWith(
               color: EditorialMonoclePalette.muted,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Provinces (all worlds): ${breakdown.totalProvinces} × '
-            '$powerScoreProvinceWeight = ${breakdown.provincePoints}',
+            l10n.victory_powerBreakdownProvinces(breakdown.totalProvinces),
             style: textTheme.bodySmall?.copyWith(
               color: EditorialMonoclePalette.fg,
             ),
           ),
           Text(
-            'Regiment strength: ${breakdown.regimentStrength} × '
-            '$powerScoreRegimentWeight = ${breakdown.regimentPoints}',
+            l10n.victory_powerBreakdownRegiments(breakdown.regimentStrength),
             style: textTheme.bodySmall?.copyWith(
               color: EditorialMonoclePalette.fg,
             ),
           ),
           Text(
-            'Ships: ${breakdown.shipCount} × $powerScoreShipWeight = '
-            '${breakdown.shipPoints}',
+            l10n.victory_powerBreakdownShips(breakdown.shipCount),
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.fg,
+            ),
+          ),
+          Text(
+            l10n.victory_powerBreakdownTotal(breakdown.totalScore),
             style: textTheme.bodySmall?.copyWith(
               color: EditorialMonoclePalette.fg,
             ),

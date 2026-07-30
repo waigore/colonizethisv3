@@ -753,7 +753,7 @@ abstract class AppLocalizations {
   /// Victory overlay button label.
   String get victory_viewFinalState;
 
-  /// Victory panel: military victory condition summary.
+  /// Victory panel: Old World province count win condition.
   String victory_conditionsMilitaryThreshold(int threshold);
 
   /// Victory panel: calendar campaign end condition copy.
@@ -761,6 +761,30 @@ abstract class AppLocalizations {
 
   /// Victory panel: infinite mode condition note.
   String get victory_conditionsInfiniteMode;
+
+  /// Victory panel end banner when a province-count winner is set.
+  String victory_endProvinceCountWin(String winner, int turn);
+
+  /// Victory panel end banner when calendar halt names a declared winner.
+  String victory_endCalendarDeclaredWinner(String winner);
+
+  /// Victory panel end banner when calendar halt ties declared winner.
+  String get victory_endCalendarNoWinner;
+
+  /// Victory panel expanded row: calendar-end comparison intro.
+  String get victory_powerBreakdownIntro;
+
+  /// Victory panel expanded row: province component total.
+  String victory_powerBreakdownProvinces(int count);
+
+  /// Victory panel expanded row: regiment component total.
+  String victory_powerBreakdownRegiments(int strength);
+
+  /// Victory panel expanded row: ship component total.
+  String victory_powerBreakdownShips(int count);
+
+  /// Victory panel expanded row: combined calendar-end total.
+  String victory_powerBreakdownTotal(int total);
 
   /// Victory standings row: Old World province count suffix.
   String victory_standingOwCount(int count);

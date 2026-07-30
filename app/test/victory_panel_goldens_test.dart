@@ -112,6 +112,7 @@ void main() {
       expect(find.byKey(VictoryScreenKeys.conditionsSectionKey), findsOneWidget);
       expect(find.byKey(VictoryScreenKeys.standingsSectionKey), findsOneWidget);
       expect(find.textContaining('31 or more Old World provinces'), findsOneWidget);
+      expect(find.textContaining('military victory'), findsNothing);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -162,9 +163,10 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.textContaining('not the military victory meter'),
+        find.textContaining('calendar end without a province-count winner'),
         findsOneWidget,
       );
+      expect(find.textContaining('×'), findsNothing);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -174,7 +176,7 @@ void main() {
   );
 
   testWidgets(
-    'golden: military victory end-state banner (Refs #4165 AC-7)',
+    'golden: province-count win end-state banner (Refs #4165 AC-7, #4198)',
     (WidgetTester tester) async {
       const boundaryKey = ValueKey<String>('victoryPanelMilitaryEndGolden');
       final game = _standingsGoldenGame().copyWith(
@@ -192,9 +194,12 @@ void main() {
 
       expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
       expect(
-        find.textContaining('Military victory: England won on turn 42'),
+        find.textContaining(
+          'England won on turn 42 by controlling enough Old World provinces',
+        ),
         findsOneWidget,
       );
+      expect(find.textContaining('military victory'), findsNothing);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),
@@ -228,7 +233,7 @@ void main() {
 
       expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
       expect(
-        find.textContaining('Declared winner by power score: England'),
+        find.textContaining('strongest overall realm when play stopped'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -260,7 +265,7 @@ void main() {
       );
 
       expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
-      expect(find.textContaining('no declared winner'), findsOneWidget);
+      expect(find.textContaining('tied overall strength'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(boundaryKey),

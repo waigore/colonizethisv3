@@ -1324,22 +1324,87 @@
   "@victory_viewFinalState": {
     "description": "Victory overlay button label."
   },
-  "victory_conditionsMilitaryThreshold": "Military victory: control {threshold} or more Old World provinces.",
+  "victory_conditionsMilitaryThreshold": "Control {threshold} or more Old World provinces to win.",
   "@victory_conditionsMilitaryThreshold": {
-    "description": "Victory panel: military victory condition summary.",
+    "description": "Victory panel: Old World province count win condition.",
     "placeholders": {
       "threshold": {
         "type": "int"
       }
     }
   },
-  "victory_conditionsCalendarEnd": "Calendar campaign end: without military victory, the campaign can halt near 1800 (turn 201 under the default calendar). The declared winner is the Great Power with the strictly highest power score, or no-one on a tie. This is not a military victory.",
+  "victory_conditionsCalendarEnd": "If no one wins by province count, the campaign can halt near 1800 (turn 201 under the default calendar). The Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
   "@victory_conditionsCalendarEnd": {
     "description": "Victory panel: calendar campaign end condition copy."
   },
-  "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only military victory or leaving the campaign ends play.",
+  "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only reaching the province win or leaving the campaign ends play.",
   "@victory_conditionsInfiniteMode": {
     "description": "Victory panel: infinite mode condition note."
+  },
+  "victory_endProvinceCountWin": "{winner} won on turn {turn} by controlling enough Old World provinces.",
+  "@victory_endProvinceCountWin": {
+    "description": "Victory panel end banner when a province-count winner is set.",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_endCalendarDeclaredWinner": "Calendar campaign ended. {winner} had the strongest overall realm when play stopped.",
+  "@victory_endCalendarDeclaredWinner": {
+    "description": "Victory panel end banner when calendar halt names a declared winner.",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "victory_endCalendarNoWinner": "Calendar campaign ended with no declared winner (tied overall strength).",
+  "@victory_endCalendarNoWinner": {
+    "description": "Victory panel end banner when calendar halt ties declared winner."
+  },
+  "victory_powerBreakdownIntro": "These totals matter only if the campaign runs to the calendar end without a province-count winner.",
+  "@victory_powerBreakdownIntro": {
+    "description": "Victory panel expanded row: calendar-end comparison intro."
+  },
+  "victory_powerBreakdownProvinces": "Provinces (all worlds): {count}",
+  "@victory_powerBreakdownProvinces": {
+    "description": "Victory panel expanded row: province component total.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownRegiments": "Regiment strength: {strength}",
+  "@victory_powerBreakdownRegiments": {
+    "description": "Victory panel expanded row: regiment component total.",
+    "placeholders": {
+      "strength": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownShips": "Ships: {count}",
+  "@victory_powerBreakdownShips": {
+    "description": "Victory panel expanded row: ship component total.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownTotal": "Overall strength total: {total}",
+  "@victory_powerBreakdownTotal": {
+    "description": "Victory panel expanded row: combined calendar-end total.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
   },
   "victory_standingOwCount": "{count} OW",
   "@victory_standingOwCount": {
