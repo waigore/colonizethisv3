@@ -7,6 +7,22 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 // dart format off
+Game _growthStageFixtureGame() => TestFixtures.minimalGame(
+  players: [
+    Player(
+      id: 'gp1',
+      displayName: 'GP',
+      isHuman: true,
+      stockpile: Stockpile().applyDelta(CommodityCatalog.fabric.id, 30).applyDelta(CommodityCatalog.lumber.id, 30).applyDelta(CommodityCatalog.castIron.id, 30),
+      workerPool: const WorkerPool(peasants: 8),
+    ),
+  ],
+  resourceByTileKey: const {'oldWorld|p1|0|0': 'timber'},
+  tileState: const TileMapState(improvementByTile: {'oldWorld|p1|0|0': 1}),
+  oldWorld: const RegionData(provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1')]),
+  tileKeysByRegionAndProvince: const {'oldWorld': {'p1': ['oldWorld|p1|0|0']}},
+);
+
 void main() {
   final lumberRecipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
   final fabricRecipe = ProductionRecipesCatalog.byId['fabric_from_wool']!;
@@ -98,21 +114,7 @@ void main() {
       expect(stage.infrastructurePriority, 0);
     });
     test('computes priorities from player state', () {
-      final game = TestFixtures.minimalGame(
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'GP',
-            isHuman: true,
-            stockpile: Stockpile().applyDelta(CommodityCatalog.fabric.id, 30).applyDelta(CommodityCatalog.lumber.id, 30).applyDelta(CommodityCatalog.castIron.id, 30),
-            workerPool: const WorkerPool(peasants: 8),
-          ),
-        ],
-        resourceByTileKey: const {'oldWorld|p1|0|0': 'timber'},
-        tileState: const TileMapState(improvementByTile: {'oldWorld|p1|0|0': 1}),
-        oldWorld: const RegionData(provinces: [Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1')]),
-        tileKeysByRegionAndProvince: const {'oldWorld': {'p1': ['oldWorld|p1|0|0']}},
-      );
+      final game = _growthStageFixtureGame();
       final stage = IndustryCounselGrowthStage.compute(game, 'gp1');
       expect(stage.workerGrowthPriority, lessThan(1));
       expect(stage.resourceProductionPriority, greaterThanOrEqualTo(0));
