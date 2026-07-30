@@ -56,16 +56,13 @@ void main() {
   });
 
   group('e2e_test_shared_panels topic split (Refs #4075 AC1 / AC2)', () {
-    test(
-      'panels umbrella exports production/fleet/explore topic libraries',
-      () {
+    test('panels umbrella exports production/fleet/explore topic libraries', () {
         final barrel = File(
           p.join(libDir.path, 'e2e_test_shared_panels.dart'),
         ).readAsStringSync();
         for (final export in <String>[
           "export 'e2e_test_shared_production_panel.dart';",
           "export 'e2e_test_shared_split_home_fleet.dart';",
-          "export 'e2e_test_shared_naval_move.dart';",
           "export 'e2e_test_shared_explore_assign.dart';",
         ]) {
           expect(barrel, contains(export));
@@ -85,12 +82,34 @@ void main() {
       for (final name in <String>[
         'e2e_test_shared_production_panel.dart',
         'e2e_test_shared_split_home_fleet.dart',
-        'e2e_test_shared_naval_move.dart',
         'e2e_test_shared_explore_assign.dart',
       ]) {
         final file = File(p.join(libDir.path, name));
         expect(file.existsSync(), isTrue, reason: '$name missing');
         expect(file.readAsLinesSync(), isNotEmpty);
+      }
+    });
+
+    test('naval move topic split exports sibling modules (Refs #4195)', () {
+      final barrel = File(
+        p.join(libDir.path, 'e2e_test_shared_naval_move.dart'),
+      ).readAsStringSync();
+      for (final export in <String>[
+        "export 'e2e_test_shared_naval_move_tap.dart';",
+        "export 'e2e_test_shared_naval_move_pick.dart';",
+        "export 'e2e_test_shared_naval_move_segment.dart';",
+      ]) {
+        expect(barrel, contains(export));
+      }
+      for (final name in <String>[
+        'e2e_test_shared_naval_move_tap.dart',
+        'e2e_test_shared_naval_move_pick.dart',
+        'e2e_test_shared_naval_move_segment.dart',
+      ]) {
+        final file = File(p.join(libDir.path, name));
+        expect(file.existsSync(), isTrue, reason: '$name missing');
+        final lines = file.readAsLinesSync().length;
+        expect(lines, lessThanOrEqualTo(400), reason: '$name still over slice-A cap');
       }
     });
   });
