@@ -19,10 +19,14 @@ class VictoryScreenBody extends ConsumerStatefulWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.initialSelectedPlayerId,
   });
 
   final Game game;
   final String humanPlayerId;
+
+  /// Widgetbook / tests: pre-select a GP other than [humanPlayerId]. Defaults to human on open.
+  final String? initialSelectedPlayerId;
 
   @override
   ConsumerState<VictoryScreenBody> createState() => _VictoryScreenBodyState();
@@ -30,6 +34,19 @@ class VictoryScreenBody extends ConsumerStatefulWidget {
 
 class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
   final Set<String> _expandedPlayerIds = <String>{};
+  late String _selectedPlayerId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPlayerId =
+        widget.initialSelectedPlayerId ?? widget.humanPlayerId;
+  }
+
+  void _selectPlayer(String playerId) {
+    if (_selectedPlayerId == playerId) return;
+    setState(() => _selectedPlayerId = playerId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,31 +86,23 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
             isWide:
                 MediaQuery.sizeOf(context).width >= kNarrowBreakpoint &&
                 owRegion != null,
-            standings: _SectionCard(
-              key: VictoryScreenKeys.standingsSectionKey,
-              title: 'Great Power standings',
-              child: Column(
-                children: [
-                  for (final row in standings)
-                    _StandingRow(
-                      key: VictoryScreenKeys.standingRowKey(row.playerId),
-                      row: row,
-                      isHuman: row.playerId == widget.humanPlayerId,
-                      color: _swatchColorFor(ownershipColors, row.playerId),
-                      expanded: _expandedPlayerIds.contains(row.playerId),
-                      onToggle: () {
-                        setState(() {
-                          if (_expandedPlayerIds.contains(row.playerId)) {
-                            _expandedPlayerIds.remove(row.playerId);
-                          } else {
-                            _expandedPlayerIds.add(row.playerId);
-                          }
-                        });
-                      },
-                      textTheme: textTheme,
-                    ),
-                ],
-              ),
+            standings: _VictoryStandingsSection(
+              standings: standings,
+              humanPlayerId: widget.humanPlayerId,
+              selectedPlayerId: _selectedPlayerId,
+              ownershipColors: ownershipColors,
+              expandedPlayerIds: _expandedPlayerIds,
+              textTheme: textTheme,
+              onSelectPlayer: _selectPlayer,
+              onToggleExpand: (playerId) {
+                setState(() {
+                  if (_expandedPlayerIds.contains(playerId)) {
+                    _expandedPlayerIds.remove(playerId);
+                  } else {
+                    _expandedPlayerIds.add(playerId);
+                  }
+                });
+              },
             ),
             minimap: owRegion == null
                 ? null
@@ -103,6 +112,8 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
                     child: VictoryPoliticalMinimap(
                       game: game,
                       region: owRegion,
+                      selectedPlayerId: _selectedPlayerId,
+                      onGreatPowerOwnerSelected: _selectPlayer,
                     ),
                   ),
           ),
@@ -200,6 +211,62 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _VictoryStandingsSection extends StatelessWidget {
+  const _VictoryStandingsSection({
+    required this.standings,
+    required this.humanPlayerId,
+    required this.selectedPlayerId,
+    required this.ownershipColors,
+    required this.expandedPlayerIds,
+    required this.textTheme,
+    required this.onSelectPlayer,
+    required this.onToggleExpand,
+  });
+
+  final List<VictoryStandingRow> standings;
+  final String humanPlayerId;
+  final String selectedPlayerId;
+  final Map<String, (int r, int g, int b)> ownershipColors;
+  final Set<String> expandedPlayerIds;
+  final TextTheme textTheme;
+  final void Function(String playerId) onSelectPlayer;
+  final void Function(String playerId) onToggleExpand;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      key: VictoryScreenKeys.standingsSectionKey,
+      title: 'Great Power standings',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            key: VictoryScreenKeys.standingsHelperKey,
+            appL10n(context).victory_standingsHelper,
+            style: textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final row in standings)
+            _StandingRow(
+              key: VictoryScreenKeys.standingRowKey(row.playerId),
+              row: row,
+              isHuman: row.playerId == humanPlayerId,
+              isSelected: row.playerId == selectedPlayerId,
+              color: _swatchColorFor(ownershipColors, row.playerId),
+              threshold: victoryPanelMilitaryOwThreshold,
+              expanded: expandedPlayerIds.contains(row.playerId),
+              onSelect: () => onSelectPlayer(row.playerId),
+              onToggleExpand: () => onToggleExpand(row.playerId),
+              textTheme: textTheme,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ConditionsBlock extends StatelessWidget {
   const _ConditionsBlock({required this.game});
 
@@ -247,59 +314,44 @@ class _StandingRow extends StatelessWidget {
     super.key,
     required this.row,
     required this.isHuman,
+    required this.isSelected,
     required this.color,
+    required this.threshold,
     required this.expanded,
-    required this.onToggle,
+    required this.onSelect,
+    required this.onToggleExpand,
     required this.textTheme,
   });
 
   final VictoryStandingRow row;
   final bool isHuman;
+  final bool isSelected;
   final Color color;
+  final int threshold;
   final bool expanded;
-  final VoidCallback onToggle;
+  final VoidCallback onSelect;
+  final VoidCallback onToggleExpand;
   final TextTheme textTheme;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final titleStyle = textTheme.bodyLarge?.copyWith(
-      color: isHuman
-          ? EditorialMonoclePalette.accentBright
-          : EditorialMonoclePalette.fg,
-      fontWeight: isHuman ? FontWeight.w700 : FontWeight.w500,
-    );
     final breakdown = row.powerBreakdown;
+    final progress = threshold <= 0
+        ? 0.0
+        : (row.owProvinceCount / threshold).clamp(0.0, 1.0);
     return Column(
       children: [
-        InkWell(
-          onTap: onToggle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  color: color,
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: Text(row.displayName, style: titleStyle)),
-                Text(
-                  l10n.victory_standingOwCount(row.owProvinceCount),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: EditorialMonoclePalette.fg,
-                  ),
-                ),
-                Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
-                  key: VictoryScreenKeys.standingExpandKey(row.playerId),
-                  color: EditorialMonoclePalette.muted,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
+        _StandingRowHeader(
+          row: row,
+          isHuman: isHuman,
+          isSelected: isSelected,
+          color: color,
+          threshold: threshold,
+          progress: progress,
+          expanded: expanded,
+          onSelect: onSelect,
+          onToggleExpand: onToggleExpand,
+          textTheme: textTheme,
         ),
         if (expanded)
           _VictoryPowerBreakdown(
@@ -309,6 +361,192 @@ class _StandingRow extends StatelessWidget {
           ),
         Divider(height: 1, color: EditorialMonoclePalette.border),
       ],
+    );
+  }
+}
+
+class _StandingRowHeader extends StatelessWidget {
+  const _StandingRowHeader({
+    required this.row,
+    required this.isHuman,
+    required this.isSelected,
+    required this.color,
+    required this.threshold,
+    required this.progress,
+    required this.expanded,
+    required this.onSelect,
+    required this.onToggleExpand,
+    required this.textTheme,
+  });
+
+  final VictoryStandingRow row;
+  final bool isHuman;
+  final bool isSelected;
+  final Color color;
+  final int threshold;
+  final double progress;
+  final bool expanded;
+  final VoidCallback onSelect;
+  final VoidCallback onToggleExpand;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: isSelected
+            ? EditorialMonoclePalette.surfaceLite.withValues(alpha: 0.35)
+            : null,
+        border: isSelected
+            ? Border.all(color: EditorialMonoclePalette.accentDim)
+            : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: _StandingRowSelectPanel(
+              row: row,
+              isHuman: isHuman,
+              isSelected: isSelected,
+              color: color,
+              threshold: threshold,
+              progress: progress,
+              onSelect: onSelect,
+              textTheme: textTheme,
+            ),
+          ),
+          InkWell(
+            key: VictoryScreenKeys.standingExpandKey(row.playerId),
+            onTap: onToggleExpand,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+              child: Icon(
+                expanded ? Icons.expand_less : Icons.expand_more,
+                color: EditorialMonoclePalette.muted,
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StandingRowSelectPanel extends StatelessWidget {
+  const _StandingRowSelectPanel({
+    required this.row,
+    required this.isHuman,
+    required this.isSelected,
+    required this.color,
+    required this.threshold,
+    required this.progress,
+    required this.onSelect,
+    required this.textTheme,
+  });
+
+  final VictoryStandingRow row;
+  final bool isHuman;
+  final bool isSelected;
+  final Color color;
+  final int threshold;
+  final double progress;
+  final VoidCallback onSelect;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final titleStyle = textTheme.bodyLarge?.copyWith(
+      color: isHuman || isSelected
+          ? EditorialMonoclePalette.accentBright
+          : EditorialMonoclePalette.fg,
+      fontWeight: isHuman || isSelected ? FontWeight.w700 : FontWeight.w500,
+    );
+    return InkWell(
+      key: VictoryScreenKeys.standingSelectKey(row.playerId),
+      onTap: onSelect,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 8,
+          horizontal: 4,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              margin: const EdgeInsets.only(top: 4),
+              color: color,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(row.displayName, style: titleStyle),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.victory_standingOwProgress(
+                      row.owProvinceCount,
+                      threshold,
+                    ),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: EditorialMonoclePalette.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _VictoryOwProgressBar(
+                    key: VictoryScreenKeys.standingProgressKey(row.playerId),
+                    progress: progress,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VictoryOwProgressBar extends StatelessWidget {
+  const _VictoryOwProgressBar({
+    super.key,
+    required this.progress,
+  });
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth * progress;
+        return SizedBox(
+          height: 6,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: EditorialMonoclePalette.bgDeep,
+              border: Border.all(color: EditorialMonoclePalette.border),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: width,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: EditorialMonoclePalette.accentBright
+                        .withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

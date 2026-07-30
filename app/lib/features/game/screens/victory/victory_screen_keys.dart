@@ -15,6 +15,15 @@ abstract final class VictoryScreenKeys {
   static Key standingExpandKey(String playerId) =>
       ValueKey<String>('victoryStandingExpand_$playerId');
 
+  static Key standingSelectKey(String playerId) =>
+      ValueKey<String>('victoryStandingSelect_$playerId');
+
+  static Key standingProgressKey(String playerId) =>
+      ValueKey<String>('victoryStandingProgress_$playerId');
+
+  static const Key standingsHelperKey =
+      ValueKey<String>('victoryStandingsHelper');
+
   static Key powerBreakdownKey(String playerId) =>
       ValueKey<String>('victoryPowerBreakdown_$playerId');
 

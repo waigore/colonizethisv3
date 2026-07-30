@@ -1415,6 +1415,22 @@
       }
     }
   },
+  "victory_standingOwProgress": "{count} / {threshold} Old World provinces",
+  "@victory_standingOwProgress": {
+    "description": "Victory standings row: progress label toward military OW threshold.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "threshold": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_standingsHelper": "Colours match the map. Select a Great Power to see their Old World lands.",
+  "@victory_standingsHelper": {
+    "description": "Victory standings section helper linking colours to minimap selection."
+  },
   "moveArmy_groupYourProvinces": "Your provinces",
   "@moveArmy_groupYourProvinces": {
     "description": "Header label for player-owned province destinations in move army dialog."

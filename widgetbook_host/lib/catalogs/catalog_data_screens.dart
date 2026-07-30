@@ -685,6 +685,20 @@ Widget _victoryScreenDefaultStory() {
   );
 }
 
+Widget _victoryScreenRivalSelectedStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: VictoryScreen(
+      game: game,
+      humanPlayerId: 'gp1',
+      initialSelectedPlayerId: 'gp2',
+    ),
+  );
+}
+
 RegionMapViewData _victoryScreenAnnotatedMinimapRegion() {
   return RegionMapViewData(
     regionId: 'oldWorld',
@@ -759,6 +773,7 @@ Widget _victoryScreenAnnotatedMinimapStory() {
       child: VictoryPoliticalMinimap(
         game: game,
         region: _victoryScreenAnnotatedMinimapRegion(),
+        selectedPlayerId: 'gp2',
       ),
     ),
   );
@@ -1010,6 +1025,15 @@ List<WidgetbookNode> get victoryScreenDirectories => [
       WidgetbookUseCase(
         name: 'Scaffold (wide side-by-side)',
         builder: (context) => wideViewport(context, _victoryScreenDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (rival GP selected)',
+        builder: (context) => _victoryScreenRivalSelectedStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Scaffold (rival GP selected, wide)',
+        builder: (context) =>
+            wideViewport(context, _victoryScreenRivalSelectedStory()),
       ),
       WidgetbookUseCase(
         name: 'Political minimap (annotated)',

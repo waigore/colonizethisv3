@@ -11,10 +11,12 @@ class VictoryPoliticalMinimapPainter extends CustomPainter {
   VictoryPoliticalMinimapPainter({
     required this.region,
     this.highlightedProvinceLocalId,
+    this.selectedFactionId,
   });
 
   final RegionMapViewData region;
   final String? highlightedProvinceLocalId;
+  final String? selectedFactionId;
 
   static const double _kSmallProvinceCellThreshold = 4;
   static const double _kLabelFontSize = 9;
@@ -62,7 +64,14 @@ class VictoryPoliticalMinimapPainter extends CustomPainter {
     }
     final rgb =
         region.factionColors[cell.ownerFactionId ?? ''] ?? (128, 128, 128);
-    return Color.fromRGBO(rgb.$1, rgb.$2, rgb.$3, 1.0);
+    final base = Color.fromRGBO(rgb.$1, rgb.$2, rgb.$3, 1.0);
+    final selected = selectedFactionId;
+    if (selected == null) return base;
+    final owner = cell.ownerFactionId;
+    if (owner == selected) {
+      return base;
+    }
+    return base.withValues(alpha: 0.28);
   }
 
   void _drawHighlightIfSelected(
@@ -259,6 +268,7 @@ class VictoryPoliticalMinimapPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant VictoryPoliticalMinimapPainter oldDelegate) {
     return oldDelegate.region != region ||
-        oldDelegate.highlightedProvinceLocalId != highlightedProvinceLocalId;
+        oldDelegate.highlightedProvinceLocalId != highlightedProvinceLocalId ||
+        oldDelegate.selectedFactionId != selectedFactionId;
   }
 }
