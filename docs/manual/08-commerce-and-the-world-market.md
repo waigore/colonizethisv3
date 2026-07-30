@@ -15,7 +15,7 @@ When your warehouse overflows with timber or starves for coal, the **world marke
 ### Caps and rules that protect the realm
 
 - **Mutual exclusion:** for a given commodity in one turn you may bid **or** offer, not both.
-- **Bid-type cap:** by default **1** distinct commodity bid; **3** with at least one embassy; **6** with embassy and `trade_fairs`. Offers are uncapped by that rule.
+- **Bid-type cap:** by default **3** distinct commodity bids; **6** when you research **Trade Fairs**. Embassy presence does not change this cap. Offers are uncapped by that rule.
 - **Quantity:** bids limited by remaining **trade cargo**; offers limited by projected stockpile after industry reservations.
 - **Treasury bid budget:** total bid spend (`quantity × current integer price`) cannot exceed treasury after other pending costs (builds, recruits, work, subsidies). Over-budget bids are rejected.
 - Unfilled bids/offers may **carry forward** when stockpile/cargo still cover them; minor auto-offers do not carry.
@@ -63,7 +63,7 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 ## Acceptance criteria for this chapter
 
 - [ ] Explains global market, tradeable vs riches, TradeOrder bid/offer, Phase 13 timing.
-- [ ] Documents mutual exclusion, bid-type caps (1/3/6), cargo and treasury caps, carry-forward.
+- [ ] Documents mutual exclusion, bid-type caps (3/6), cargo and treasury caps, carry-forward.
 - [ ] Covers first right of refusal / overseas profit / FTP at player level.
 - [ ] Documents operable `GAME60001` Trade (left-rail / route entry, Market + Deal Book, caps) without a draft-screen marker; notes any deferred control separately.
 - [ ] Notes Production sellable headroom linkage.
