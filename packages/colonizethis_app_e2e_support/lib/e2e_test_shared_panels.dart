@@ -9,7 +9,6 @@ export 'e2e_test_shared_fleet_reach_loop.dart';
 export 'e2e_test_shared_panel_text_assertions.dart';
 export 'e2e_test_shared_production_panel.dart';
 export 'e2e_test_shared_split_home_fleet.dart';
-export 'e2e_test_shared_naval_move.dart';
 export 'e2e_test_shared_explore_assign.dart';
 
 // `_e2eTapFirstEnabledTransferButtonInSplitDialog` previously lived here as a

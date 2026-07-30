@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart'
     show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
@@ -57,6 +58,7 @@ import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_f
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel_support_allocation.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
@@ -65,6 +67,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/development/development_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
@@ -277,6 +280,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...mapWidgetDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,
+  ...counselPanelDirectories,
   ...civilianUnitsPanelDirectories,
   ...trainCiviliansDialogDirectories,
   ...trainMilitaryDialogDirectories,

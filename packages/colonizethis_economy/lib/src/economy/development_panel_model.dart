@@ -42,6 +42,27 @@ class DevelopmentPanelScopeRow {
   bool get hasImprovableResources => improvableCommodities.isNotEmpty;
 }
 
+/// Builder/Engineer with pending or in-progress work in the active region.
+class DevelopmentAssignedCivilianRow {
+  const DevelopmentAssignedCivilianRow({
+    required this.unitId,
+    required this.unitType,
+    required this.workTarget,
+    required this.targetTileKey,
+    required this.isPending,
+    this.remainingTurns,
+    this.totalTurns,
+  });
+
+  final String unitId;
+  final String unitType;
+  final String workTarget;
+  final String targetTileKey;
+  final bool isPending;
+  final int? remainingTurns;
+  final int? totalTurns;
+}
+
 /// Per-region Development panel projection.
 class DevelopmentPanelRegionModel {
   const DevelopmentPanelRegionModel({
@@ -51,6 +72,7 @@ class DevelopmentPanelRegionModel {
     required this.landExtractionByCommodity,
     required this.idleBuilderCount,
     required this.idleEngineerCount,
+    this.assignedCivilians = const [],
   });
 
   final String regionId;
@@ -59,6 +81,7 @@ class DevelopmentPanelRegionModel {
   final Map<String, int> landExtractionByCommodity;
   final int idleBuilderCount;
   final int idleEngineerCount;
+  final List<DevelopmentAssignedCivilianRow> assignedCivilians;
 }
 
 /// Full Development panel read model (both regions).

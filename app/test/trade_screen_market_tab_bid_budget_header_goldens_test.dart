@@ -4,8 +4,8 @@
 //
 // Golden mapping:
 //  - AC1  header `Bid budget: R of B` indicator (saturated variant)
-//  - AC2  treasury bid-limit danger warning when R == 0
-//  - AC7  **Why this limit?** progressive disclosure (bid-budget copy)
+//  - AC2  treasury bid-limit warning when R == 0 (neutral body colour)
+//  - AC7  inline question-icon tooltip beside bid-budget line
 //
 // SPEC: SPEC/ui/trade-screen.md § Market tab — treasury bid budget indicator.
 
@@ -30,13 +30,12 @@ Future<void> _pumpMarketBidBudgetHeaderGolden(
   required Key boundaryKey,
   required Game game,
   int stagedDistinctBidCount = 1,
-  int bidTypeCap = 1,
+  int bidTypeCap = 3,
   int clampedRemaining = 9,
   bool cargoWarningVisible = false,
   required int bidBudgetTotal,
   required int bidBudgetRemaining,
   required bool bidBudgetWarningVisible,
-  bool expandBidBudgetWhyLimit = false,
   Size viewport = const Size(480, 280),
 }) async {
   final MarketTabContent content = MarketTabContent(
@@ -69,20 +68,11 @@ Future<void> _pumpMarketBidBudgetHeaderGolden(
             cargoWarningStyle: styles.cargoWarningStyle,
             bidBudgetIndicatorStyle: styles.bidBudgetIndicatorStyle,
             bidBudgetWarningStyle: styles.bidBudgetWarningStyle,
-            whyToggleStyle: styles.whyToggleStyle,
-            whyBodyStyle: styles.whyBodyStyle,
           ),
         );
       },
     ),
   );
-
-  if (expandBidBudgetWhyLimit) {
-    await tester.tap(
-      find.byKey(TradeScreenMarketKeys.marketBidBudgetWhyToggleKey),
-    );
-    await tester.pump();
-  }
 }
 
 void main() {
@@ -90,7 +80,7 @@ void main() {
 
   group('TradeScreen Market tab bid-budget header goldens (Refs #4186)', () {
     testWidgets(
-      'golden: treasury bid budget saturated with danger warning (AC1/AC2)',
+      'golden: treasury bid budget saturated with warning (AC1/AC2)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidBudgetSaturatedGolden',
@@ -120,7 +110,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: bid-budget Why this limit? expanded copy (AC7)',
+      'golden: bid-budget inline help tooltip (AC7)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidBudgetWhyExpandedGolden',
@@ -133,17 +123,12 @@ void main() {
           bidBudgetTotal: 100,
           bidBudgetRemaining: 70,
           bidBudgetWarningVisible: false,
-          expandBidBudgetWhyLimit: true,
-          viewport: const Size(480, 320),
+          viewport: const Size(480, 220),
         );
 
         expect(tester.takeException(), isNull);
         expect(
-          find.byKey(TradeScreenMarketKeys.marketBidBudgetWhyBodyKey),
-          findsOneWidget,
-        );
-        expect(
-          find.text(TradeScreenMarketKeys.bidBudgetWhyLimitCopy),
+          find.byKey(TradeScreenMarketKeys.marketBidBudgetTooltipKey),
           findsOneWidget,
         );
 

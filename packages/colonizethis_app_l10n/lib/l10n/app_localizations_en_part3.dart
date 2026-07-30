@@ -17,6 +17,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get development_assignedCiviliansHeading => 'Assigned civilians';
+
+  @override
   String get development_mapDataUnavailable => 'Map data unavailable';
 
   @override
@@ -68,6 +71,98 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get production_breakdown => 'Breakdown';
+
+  @override
+  String get production_counsel => 'Counsel';
+
+  @override
+  String production_industryCounselStarSemantic(String brief) {
+    return 'Industry counsel: $brief';
+  }
+
+  @override
+  String get industryCounsel_tabIndustry => 'Industry';
+
+  @override
+  String get industryCounsel_empty => 'No pressing industry advice this turn.';
+
+  @override
+  String get industryCounsel_title_produce => 'Produce goods';
+
+  @override
+  String industryCounsel_title_produceRecipe(String commodity) {
+    return 'Produce $commodity';
+  }
+
+  @override
+  String get industryCounsel_title_train => 'Train workers';
+
+  @override
+  String industryCounsel_title_trainWorker(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String get industryCounsel_title_feedstock => 'Unblock feedstock';
+
+  @override
+  String industryCounsel_title_unblockFeedstock(String commodity) {
+    return 'Improve $commodity extraction';
+  }
+
+  @override
+  String get industryCounsel_reason_outputShortage_brief =>
+      'Your stocks of this output are low — the plan favours producing it now.';
+
+  @override
+  String get industryCounsel_reason_outputShortage_detail =>
+      'Short output stocks raise the priority of this recipe in the neutral industry plan.';
+
+  @override
+  String get industryCounsel_reason_chainLuxury_brief =>
+      'This output feeds training or downstream industry — worth prioritising.';
+
+  @override
+  String get industryCounsel_reason_chainLuxury_detail =>
+      'Chain outputs and worker luxuries score higher when your workforce can use them.';
+
+  @override
+  String get industryCounsel_reason_labourDeficit_brief =>
+      'Recruit peasants — planned labour exceeds effective workers.';
+
+  @override
+  String get industryCounsel_reason_labourDeficit_detail =>
+      'The core allocation assigns more labour than your effective pool can supply this turn.';
+
+  @override
+  String get industryCounsel_reason_luxuryShortage_brief =>
+      'Train this tier — luxury goods for them are scarce.';
+
+  @override
+  String get industryCounsel_reason_luxuryShortage_detail =>
+      'Soft luxury caps favour training when refined luxuries are below sustainable levels.';
+
+  @override
+  String get industryCounsel_reason_feedstockBlocked_brief =>
+      'Improve feedstock tiles to unblock starred production inputs.';
+
+  @override
+  String get industryCounsel_reason_feedstockBlocked_detail =>
+      'Production is input-starved while improvable tiles can raise the blocking commodity.';
+
+  @override
+  String get industryCounsel_action_applyProduceAllocation =>
+      'Apply recommended industry allocation';
+
+  @override
+  String get industryCounsel_action_agreeTrain => 'Agree';
+
+  @override
+  String get industryCounsel_action_openDevelopment => 'Open Development';
+
+  @override
+  String get industryCounsel_trainAgreeFailed =>
+      'Cannot train that worker tier right now — check stockpile and queued orders.';
 
   @override
   String get production_available => 'Available';

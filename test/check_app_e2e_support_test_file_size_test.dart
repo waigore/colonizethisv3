@@ -54,7 +54,7 @@ void main() {
         '${temp.path}/packages/colonizethis_app_e2e_support/test/huge_test.dart',
       )
       ..createSync()
-      ..writeAsStringSync(List.filled(801, '// line').join('\n'));
+      ..writeAsStringSync(List.filled(501, '// line').join('\n'));
 
     final logs = <String>[];
     final code = runCheckAppE2eSupportTestFileSize(

@@ -16,7 +16,7 @@
 ## Trigger conditions
 
 - **Toolbar:** In-game toolbar opens production as full-page route (`Routes.production` / production screen).
-- **Turn resolution:** Panel read-only or disabled while `turnResolutionBlockingProvider` when applicable.
+- **Turn resolution:** Panel read-only or disabled while `turnResolutionBlockingProvider` when applicable. Allocation sliders, Reset, Breakdown, and Labour controls are non-interactive; **Industry counsel stars** and the Allocation header **Counsel** button remain openable so the player can read advice on `GAME90001`.
 
 ---
 
@@ -80,6 +80,8 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 | Recipe sliders / ± / max / clear | `canEdit` | Updates `productionDesiredOutputProvider` | Recalculates affordance and net-change preview. |
 | Reset | Always | Clears all recipe allocations | — |
 | Breakdown | Always | Opens [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md) | Read-only dialog. |
+| Allocation **Counsel** | Ranking available | `NavigateToRouteEvent(Routes.counsel, …)` without `highlightRecommendationId` | Opens [counsel-panel.md](counsel-panel.md) Industry tab. |
+| Recipe counsel star | Starred produce row | `NavigateToRouteEvent(Routes.counsel, …)` with `highlightRecommendationId` | Opens Counsel with that recommendation highlighted. |
 | Labour ± / disband | Human GP, editable | Updates recruit/train/disband draft orders | See **Labour Controls**. |
 | Next turn (host) | Outside panel | Passes assignments to turn resolver | Per **Behaviour** closing bullets. |
 
@@ -98,6 +100,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - **Comfort headroom (slider track):** On each recipe slider, the track segment from the **thumb to the max** end may use a **deeper purple** than the filled (0→thumb) segment. This is a **comfort signal** only (colour cue; no extra icon). It is **on** when all of the following hold: (1) **desired output < max** for that row (including **desired = 0** when **max > 0**); (2) **strict slack** on **labour** available to this row after other recipes: `remainingLabour > desired × labourPerOutput`; (3) **strict slack** on **every recipe input**: for each input commodity, `remainingStock (after other recipes) > desired × inputPerOutput`. If any check fails, the thumb→max segment uses the default unfilled track styling. Recalculates whenever allocations or stock change. **Colours:** Filled segment = existing primary (semi-transparent); comfort segment = **deeper purple** than the filled segment (fixed UI purple, not theme primary).
 - When the player advances the turn, the app passes the current allocation as production assignments for the human player to the turn resolver (`defaultAssignmentsByPlayerId`). Desired-output allocations round-trip with named saves and auto-save via the v2 envelope field `productionDesiredOutputByRecipe` ([save-load.md](../program/save-load.md)); on load the app restores `productionDesiredOutputProvider`.
 - The turn resolver still runs as many complete recipe runs as inputs and labour allow (per production-recipes.md).
+- **Industry counsel stars (Allocation rows):** When `rankIndustryCounselRecommendations` returns produce-recipe recommendations for the human GP, each **unlocked** Allocation row whose `recipeId` appears in that ranked produce set shows a single `ProductionIndustryCounselStar` (`★` glyph in `--accent-bright`) between the recipe label and the `max · bottleneck` readout. At most **three** stars empire-wide (one per starred recipe row). **Locked** recipe rows never show a star even if the ranker would recommend them. Hover (desktop) / long-press (mobile) on the star shows the localized **brief** reason (`industryCounsel.reason.<key>.brief`); the star's `Semantics.label` includes the same brief text. Tapping the star navigates to `GAME90001` Counsel with `highlightRecommendationId` set to the recommendation's stable id (`produce:<recipeId>`). Stars reflect the AI-core ranker snapshot even when the player's desired-output map already matches the recommendation. The Allocation header adds a neutral `CtActionTextButton` labelled **Counsel** (`production_counsel`) beside **Reset**; it opens Counsel without a forced highlight. Agree/apply actions live on the Counsel screen (#4191).
 
 ---
 
@@ -115,9 +118,9 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
 - `CtSlider`, `CtNinePatchButton`, `CtActionTextButton`, `CtDangerTextButton`, `ProductionAllocationStepButton`, `ResourceIcon`, `StrictAssetIcon` — `app/lib/features/game/widgets/` (`CtActionTextButton` is the neutral panel-header text button used by the Available header **Breakdown** affordance per **C11** / S10b; `CtDangerTextButton` is the danger-coloured secondary text button shared by labour Disband rows and the Allocation header Reset affordance, Refs #2862 S8d).
 - `CtSectionLabel`, `CtResourceCell`, `CtBrassDivider`, `CtGradients` — `app/lib/widgets/` (Available subpanel headings/cells; Allocation row chrome dividers and gradient palette; see `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette and `Refs #2859` S8/S10/R10 for the dark-theme catalog contracts).
 - `ProductionAllocationRowChrome` — `app/lib/features/game/widgets/` (Allocation row wrapper that paints `CtGradients.rowGradient` inside a 1 px `--accent-dim` border per Behaviour § Allocation row chrome).
+- `ProductionIndustryCounselStar` — `app/lib/features/game/widgets/production/production_industry_counsel_star.dart` (Allocation row counsel star affordance).
 - [production-commodity-breakdown-dialog.md](production-commodity-breakdown-dialog.md).
-
----
+- [counsel-panel.md](counsel-panel.md) — deep-link target for stars and header **Counsel**.
 
 ## Widgetbook
 
@@ -131,6 +134,8 @@ Required use cases (each one builder closure under the `Production Panel` folder
 - `Partial availability (mobile)` — same builder as `Partial availability`, wrapped in the same `mobileViewport` helper.
 - `Cotton weaving locked` — full-availability player whose `techUnlocked` omits `cotton_weaving` (`cottonWeavingLockedProductionPlayer()`), so the `fabric_from_cotton` Allocation row renders visible-but-grayed with the `(locked)` marker per § Tech-gated recipe rows.
 - `Cotton weaving unlocked` — full-availability player with `cotton_weaving` unlocked (`cottonWeavingUnlockedProductionPlayer()`), so the `fabric_from_cotton` row renders normally and interactive.
+- `Industry counsel stars` — full-availability player with two starred produce recipes (`lumber_from_timber`, `paper_from_timber`) and a no-op `onOpenCounsel` callback so reviewers can see Allocation stars and the header **Counsel** button.
+- `Industry counsel stars (mobile)` — same starred scenario wrapped in `mobileViewport`.
 
 Every production use case MUST host the panel inside a `ProviderScope` (no overrides required for the default state) so the panel reads/writes `productionDesiredOutputProvider`, MUST wrap the resulting subtree in `widgetbookEditorialMonocleApp(child: …)` so the dark theme is applied and the Navigator pushes the live Breakdown dialog onto the same overlay the in-app `ProductionScreen` uses, and MUST pass a non-null `onOpenCommodityBreakdown` callback that calls `showDialog<void>(builder: (_) => ProductionCommodityBreakdownDialog(…))` so the Available **Breakdown** `CtNinePatchButton` is visible and tapping it opens the live dialog. The story's `netDeltasByCommodity` MUST come from `previewStockpileNetDeltaByCommodityForPlayer` (same preview helper as the running app) so signed deltas on Available cells track slider / stepper changes; passing `const {}` is a regression because it decouples the story from the SPEC § Net Changes pipeline. Refs #2862 S6.
 

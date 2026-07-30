@@ -1,5 +1,24 @@
 part of 'catalog.dart';
 
+Map<String, IndustryCounselRecommendation> _demoStarredProduceRecommendations() {
+  IndustryCounselRecommendation rec(String recipeId) {
+    return IndustryCounselRecommendation(
+      recommendationId: 'produce:$recipeId',
+      kind: IndustryCounselRecommendationKind.produceRecipe,
+      rankScore: 20,
+      briefReasonKey: IndustryCounselReasonKey.outputShortage,
+      detailReasonKeys: const [IndustryCounselReasonKey.outputShortage],
+      recipeId: recipeId,
+      suggestedDesiredOutput: 2,
+    );
+  }
+
+  return {
+    'lumber_from_timber': rec('lumber_from_timber'),
+    'paper_from_timber': rec('paper_from_timber'),
+  };
+}
+
 /// Production Panel stories. SPEC/ui/production-panel.md.
 List<WidgetbookNode> get productionPanelDirectories => [
   WidgetbookFolder(
@@ -49,6 +68,101 @@ List<WidgetbookNode> get productionPanelDirectories => [
         name: 'Cotton weaving unlocked',
         builder: (context) => ProductionPanelStory(
           playerOverride: cottonWeavingUnlockedProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Industry counsel stars',
+        builder: (context) => ProductionPanelStory(
+          starredProduceRecommendationsByRecipeId:
+              _demoStarredProduceRecommendations(),
+          onOpenCounsel: ({String? highlightRecommendationId}) {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Industry counsel stars (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            starredProduceRecommendationsByRecipeId:
+                _demoStarredProduceRecommendations(),
+            onOpenCounsel: ({String? highlightRecommendationId}) {},
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+/// Minimal game fixture with no industry counsel recommendations.
+Game _counselEmptyAdviceGame() {
+  const playerId = 'counsel_empty_gp';
+  return const Game(
+    id: 'counsel_empty_advice',
+    players: [
+      Player(
+        id: playerId,
+        displayName: 'Empty counsel GP',
+        isHuman: true,
+      ),
+    ],
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+  );
+}
+
+Widget _counselIndustryStory(
+  BuildContext context, {
+  required Game game,
+  String? highlightRecommendationId,
+  bool narrowViewport = false,
+}) {
+  final screen = CounselScreen(
+    game: game,
+    humanPlayerId: game.players.first.id,
+    highlightRecommendationId: highlightRecommendationId,
+  );
+  final child = ProviderScope(
+    child: widgetbookEditorialMonocleApp(child: screen),
+  );
+  return narrowViewport ? mobileViewport(context, child) : child;
+}
+
+/// Counsel Panel stories. SPEC/ui/counsel-panel.md.
+List<WidgetbookNode> get counselPanelDirectories => [
+  WidgetbookFolder(
+    name: 'Counsel Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Counsel Industry (default)',
+        builder: (context) => _counselIndustryStory(
+          context,
+          game: demoGameForOverlay,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Industry (highlight)',
+        builder: (context) => _counselIndustryStory(
+          context,
+          game: demoGameForOverlay,
+          highlightRecommendationId: 'produce:lumber_from_timber',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Industry (empty)',
+        builder: (context) {
+          final game = _counselEmptyAdviceGame();
+          return _counselIndustryStory(context, game: game);
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Industry (narrow 360)',
+        builder: (context) => _counselIndustryStory(
+          context,
+          game: demoGameForOverlay,
+          narrowViewport: true,
         ),
       ),
     ],

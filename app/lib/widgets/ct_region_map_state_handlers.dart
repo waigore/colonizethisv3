@@ -72,6 +72,8 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
     playerViewForResources: state.widget.playerViewForResources,
     onViewportSnapshotChanged: state.widget.onViewportSnapshotChanged,
     initialZoomMultiplier: state.widget.zoomMultiplier ?? 1.0,
+    showPlayerTerritoryOutline: state.widget.showPlayerTerritoryOutline,
+    playerTerritoryTileKeys: state.widget.playerTerritoryTileKeys,
   );
 }
 

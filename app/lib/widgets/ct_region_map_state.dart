@@ -60,6 +60,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
         widget.playerViewForResources != oldWidget.playerViewForResources ||
+        widget.showPlayerTerritoryOutline != oldWidget.showPlayerTerritoryOutline ||
+        widget.playerTerritoryTileKeys != oldWidget.playerTerritoryTileKeys ||
         widget.onViewportSnapshotChanged !=
             oldWidget.onViewportSnapshotChanged ||
         widget.zoomMultiplier != oldWidget.zoomMultiplier) {
@@ -101,6 +103,8 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
         zoomMultiplier: widget.zoomMultiplier,
+        showPlayerTerritoryOutline: widget.showPlayerTerritoryOutline,
+        playerTerritoryTileKeys: widget.playerTerritoryTileKeys,
       );
     }
     if (widget.bus != oldWidget.bus) {

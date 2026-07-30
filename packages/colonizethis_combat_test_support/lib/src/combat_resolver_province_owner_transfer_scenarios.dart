@@ -5,21 +5,10 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-class CombatResolverProvinceOwnerTransferScenario implements LabeledScenario {
-  const CombatResolverProvinceOwnerTransferScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
-List<CombatResolverProvinceOwnerTransferScenario>
+List<RunnableScenario>
 combatResolverProvinceOwnerTransferScenarios() => [
-  CombatResolverProvinceOwnerTransferScenario(
+  RunnableScenario(
     scenarioId: 'crpot-owner-not-defender',
     label:
         'transfers from province owner when battle defender is another occupant',

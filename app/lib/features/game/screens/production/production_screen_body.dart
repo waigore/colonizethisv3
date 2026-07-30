@@ -1,3 +1,4 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -7,6 +8,8 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../core/services/game_service/try_get_game_map_data.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
@@ -72,6 +75,30 @@ class ProductionScreenBody extends ConsumerWidget {
       ),
     );
     final canEdit = shell.canMutateViaUi;
+    final bus = shellRef.read(appEventBusProvider);
+    final industryCounselRecommendations = rankIndustryCounselRecommendations(
+      game: displayGame,
+      playerId: displayPlayer.id,
+      currentOrders: currentOrders,
+      topology: panelTopology,
+      tileMapByRegion: panelTileMaps ?? const {},
+    );
+    final starredProduceRecommendationsByRecipeId = {
+      for (final recommendation in industryCounselRecommendations)
+        if (recommendation.kind ==
+                IndustryCounselRecommendationKind.produceRecipe &&
+            recommendation.recipeId != null)
+          recommendation.recipeId!: recommendation,
+    };
+    void openCounsel({String? highlightRecommendationId}) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.counsel, {
+          'game': displayGame,
+          'humanPlayerId': displayPlayer.id,
+          'highlightRecommendationId': highlightRecommendationId,
+        }),
+      );
+    }
     final labourCallbacks = ProductionLabourCallbacks(
       onAppendRecruitOrder: (tier) {
         if (!canEdit) return;
@@ -129,9 +156,10 @@ class ProductionScreenBody extends ConsumerWidget {
         if (!canEdit) return;
         shellRef.read(productionDesiredOutputProvider.notifier).replaceAll(next);
       },
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: openCounsel,
     );
-    final panel =
-        canEdit ? productionPanel : IgnorePointer(child: productionPanel);
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
         CtE2eProductionPanelSnapshot(
@@ -145,8 +173,8 @@ class ProductionScreenBody extends ConsumerWidget {
           tileMapByRegion: panelTileMaps,
         ),
       );
-      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: panel);
+      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: productionPanel);
     }
-    return panel;
+    return productionPanel;
   }
 }
