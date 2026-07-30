@@ -14,6 +14,7 @@
 // raised for GAME80001 Development panel shell, read model, and map (Slice A Refs #4175);
 // raised for GAME80001 Assign improve, disconnected dialog, and Road first (Slices B–C Refs #4175);
 // raised for GAME90001 Counsel screen + GAME20001 industry counsel stars (Refs #4190);
+// raised for GAME20001 turn-resolution read-only counsel navigation (Refs #4190);
 // raised for Marionette debug binding + Ct discoverability (Refs #4199).
 import 'dart:convert';
 import 'dart:io';
