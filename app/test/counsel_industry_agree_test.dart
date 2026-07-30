@@ -36,6 +36,17 @@ IndustryCounselRecommendation _trainRec(WorkerTier tier) {
   );
 }
 
+IndustryCounselRecommendation _feedstockRec() {
+  return IndustryCounselRecommendation(
+    recommendationId: 'unblock:timber',
+    kind: IndustryCounselRecommendationKind.unblockFeedstock,
+    rankScore: 12,
+    briefReasonKey: IndustryCounselReasonKey.feedstockBlocked,
+    detailReasonKeys: const [IndustryCounselReasonKey.feedstockBlocked],
+    feedstockDeepLink: const UnblockFeedstockDeepLink(commodityId: 'timber'),
+  );
+}
+
 void main() {
   suppressLogsForTests();
 
@@ -140,6 +151,29 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Agree'), findsOneWidget);
+    });
+
+    testWidgets('feedstock card Open Development invokes callback', (
+      WidgetTester tester,
+    ) async {
+      var opened = false;
+      await tester.pumpWidget(
+        buildTab(
+          recommendations: [_feedstockRec()],
+          callbacks: CounselIndustryCallbacks(
+            onOpenDevelopment: () => opened = true,
+          ),
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('counsel_open_development')),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(opened, isTrue);
+      expect(find.text('Open Development'), findsOneWidget);
     });
 
     testWidgets('empty state shows no pressing advice copy', (
