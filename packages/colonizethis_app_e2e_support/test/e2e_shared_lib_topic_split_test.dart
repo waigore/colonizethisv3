@@ -36,7 +36,7 @@ void main() {
       ).readAsLinesSync().length;
       // Pre-split size was 1456 physical lines; topic extraction must leave a
       // thin barrel + pump/perf core well under that ceiling.
-      expect(lines, lessThanOrEqualTo(700));
+      expect(lines, lessThanOrEqualTo(400));
     });
 
     test('negative: no shared topic library re-absorbs the pre-split size', () {
@@ -75,7 +75,7 @@ void main() {
         p.join(libDir.path, 'e2e_test_shared_panels.dart'),
       ).readAsLinesSync().length;
       // Pre-split size was 1379 physical lines.
-      expect(lines, lessThanOrEqualTo(700));
+      expect(lines, lessThanOrEqualTo(400));
     });
 
     test('negative: panels topic libraries exist as distinct files', () {
@@ -151,6 +151,19 @@ void main() {
         barrel,
         contains("export 'e2e_test_shared_adaptive_polling.dart';"),
       );
+    });
+
+    test('slice D test mirror files stay under 500 physical lines (Refs #4195)', () {
+      final testDir = Directory(p.join(e2eSupportPackageRoot().path, 'test'));
+      final oversized = <String>[];
+      for (final file in testDir.listSync(recursive: true).whereType<File>()) {
+        if (!file.path.endsWith('.dart')) continue;
+        final lines = file.readAsLinesSync().length;
+        if (lines > 500) {
+          oversized.add('${p.relative(file.path, from: testDir.path)} ($lines)');
+        }
+      }
+      expect(oversized, isEmpty, reason: 'All test files must be ≤500 lines');
     });
   });
 }

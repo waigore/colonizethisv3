@@ -561,14 +561,14 @@ rules:
 
   - rule_id: repo.app_e2e_support_lib_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/lib files must stay at or below 700 physical lines (shrink-only allowlist; Refs #4075)"
+    title: "colonizethis_app_e2e_support/lib files must stay at or below 400 physical lines (shrink-only allowlist; Refs #4075, #4195)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_lib_file_size.dart
 
   - rule_id: repo.app_e2e_support_test_file_size
     group: testing
-    title: "colonizethis_app_e2e_support/test files must stay at or below 800 physical lines (shrink-only allowlist; Refs #4075)"
+    title: "colonizethis_app_e2e_support/test files must stay at or below 500 physical lines (shrink-only allowlist; Refs #4075, #4195)"
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_app_e2e_support_test_file_size.dart
