@@ -15,14 +15,15 @@
 // raised for GAME80001 Assign improve, disconnected dialog, and Road first (Slices B–C Refs #4175);
 // raised for GAME90001 Counsel screen + GAME20001 industry counsel stars (Refs #4190);
 // raised for GAME20001 turn-resolution read-only counsel navigation (Refs #4190);
-// raised for Marionette debug binding + Ct discoverability (Refs #4199).
+// raised for Marionette debug binding + Ct discoverability (Refs #4199);
+// raised for GAME70001 Victory standings↔minimap selection + OW progress bars (Refs #4197).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 64800;
+const _maxMainLines = 65100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
