@@ -39,6 +39,9 @@ void ctRegionMapGameUpdateProps(
   required PlayerView? playerViewForResources,
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   double? zoomMultiplier,
+  bool? showPlayerTerritoryOutline,
+  Set<String>? playerTerritoryTileKeys,
+  bool clearPlayerTerritoryTileKeys = false,
 }) {
   var regionChanged = false;
   if (region != null) {
@@ -100,6 +103,14 @@ void ctRegionMapGameUpdateProps(
   if (zoomMultiplier != null) {
     game.state.zoomMultiplier = zoomMultiplier;
   }
+  if (showPlayerTerritoryOutline != null) {
+    game.showPlayerTerritoryOutline = showPlayerTerritoryOutline;
+  }
+  if (clearPlayerTerritoryTileKeys) {
+    game.playerTerritoryTileKeys = null;
+  } else if (playerTerritoryTileKeys != null) {
+    game.playerTerritoryTileKeys = playerTerritoryTileKeys;
+  }
 
   assertCtMapPlayerViewRequired(
     visibilityMode: game.visibilityMode,
@@ -122,6 +133,8 @@ void ctRegionMapGameUpdateProps(
       ..secondaryHighlightTileKeys = game.secondaryHighlightTileKeys
       ..validTileKeys = game.validTileKeys
       ..playerViewForResources = game.playerViewForResources
+      ..showPlayerTerritoryOutline = game.showPlayerTerritoryOutline
+      ..playerTerritoryTileKeys = game.playerTerritoryTileKeys
       ..onFleetMarkerTapped = onFleetMarkerTapped;
     if (regionChanged || zoomMultiplier != null) {
       (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();

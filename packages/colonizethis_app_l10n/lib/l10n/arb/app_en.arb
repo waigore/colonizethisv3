@@ -2034,6 +2034,10 @@
       }
     }
   },
+  "development_assignedCiviliansHeading": "Assigned civilians",
+  "@development_assignedCiviliansHeading": {
+    "description": "Overview section heading for Builders/Engineers with pending or in-progress work."
+  },
   "development_mapDataUnavailable": "Map data unavailable",
   "@development_mapDataUnavailable": {
     "description": "Fallback when Development panel map data cannot be loaded."

@@ -12,6 +12,7 @@
 | `purchasedScopes` | Purchased tiles grouped by source province; includes `provinceOwnerDisplayName` for the province owner. |
 | `landExtractionByCommodity` | Post-resolution **effective** extraction projection for connected tiles in the region (same tile-yield math as Extraction phase; no stockpile net / Production Δ). |
 | `idleBuilderCount` / `idleEngineerCount` | Civilians with `status == idle`, no `currentWork`, and no pending `WorkOrder` in `currentOrders`. |
+| `assignedCivilians` | Per active region: Builders/Engineers owned by the human player with a pending `WorkOrder` or in-progress `currentWork` (`status == working`), sorted by stable unit id. Each row carries `unitId`, `unitType`, `workTarget`, `targetTileKey`, `isPending`, and turn fields for UI copy. |
 
 ## Improvable (definition A)
 
@@ -19,12 +20,22 @@ Owned provinces: `provinceImprovableResourceTileCounts` for `(provinceId, ownerI
 
 Purchased land: per purchased tile key owned by the player, same cap/prospect rules as Available; grouped under source province from tile key `region|localId|x|y`.
 
+## Visibility filter (Slice D)
+
+When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commodity `tileKeys` include only tiles whose `PlayerView.visibilityForTile` is `fullyVisible` or `fogged` (exclude `unknown` / unrevealed). Scope rows remain listed; commodities with no visibility-known improvable tiles contribute nothing (UI shows **No improvable resources**).
+
+## Assigned civilians (Slice D)
+
+`buildDevelopmentAssignedCiviliansForRegion` scans `oldWorld.units` / `newWorld.units` for `kUnitTypeBuilder` and `kUnitTypeEngineer` owned by the player in the active region. Include a unit when it has a pending `WorkOrder` in `currentOrders` for that unit id, or `status == working` with non-null `currentWork`. Pending takes precedence over in-progress when both exist.
+
 ## Acceptance criteria
 
 - Given owned province P with three improvable grain tiles, when the read model builds, then P’s owned scope lists grain count 3 with sorted tile keys.
 - Given purchased tile T in foreign province P owned by GP B, when the read model builds, then a purchased scope under P lists owner display name for B and improvable commodities for T only.
 - Given connected improved grain tiles in region R, when the read model builds extraction for R, then grain effective totals match per-tile extraction projection for tiles in R.
 - Given two idle Builders and one with a pending work order, when idle counts compute, then `idleBuilderCount == 1`.
+- Given improvable grain on tiles `t_visible` (fullyVisible) and `t_hidden` (unknown) in the same owned scope, when the read model builds with `playerView`, then only `t_visible` contributes to the grain count and tile key set.
+- Given a Builder with pending improve and an Engineer with in-progress road work in region R, when assigned civilians build for R, then both units appear sorted by unit id with correct `workTarget` and `targetTileKey`.
 
 ## Assign selection (Slice B)
 

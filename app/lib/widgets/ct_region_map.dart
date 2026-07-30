@@ -37,6 +37,8 @@ class CtRegionMap extends StatefulWidget {
     this.playerViewForResources,
     this.onViewportSnapshotChanged,
     this.zoomMultiplier,
+    this.showPlayerTerritoryOutline = false,
+    this.playerTerritoryTileKeys,
   });
 
   final RegionMapViewData region;
@@ -76,6 +78,8 @@ class CtRegionMap extends StatefulWidget {
   final void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged;
   final double? zoomMultiplier;
+  final bool showPlayerTerritoryOutline;
+  final Set<String>? playerTerritoryTileKeys;
 
   @override
   State<CtRegionMap> createState() => CtRegionMapState();

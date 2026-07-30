@@ -51,6 +51,8 @@ mixin CtRegionMapGameFields on FlameGame {
   void Function(String provinceId)? onTownIconTapped;
   PlayerView? playerViewForResources;
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged;
+  bool showPlayerTerritoryOutline = false;
+  Set<String>? playerTerritoryTileKeys;
 
   @visibleForTesting
   CtRegionMapComponent get debugMapComponentForTest => state.mapComponent;
@@ -229,6 +231,8 @@ mixin CtRegionMapGameLifecycle on CtRegionMapGameFields, CtRegionMapGameCamera {
       validTileKeys: validTileKeys,
       onTownIconTapped: onTownIconTapped,
       playerViewForResources: playerViewForResources,
+      showPlayerTerritoryOutline: showPlayerTerritoryOutline,
+      playerTerritoryTileKeys: playerTerritoryTileKeys,
     )..position = Vector2.zero();
     await world.add(state.mapComponent);
     state.mapLoaded = true;

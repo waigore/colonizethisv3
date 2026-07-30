@@ -34,7 +34,11 @@ CtGameFeatureScreenShell
 
 ### Panel map
 
-`CtRegionMap` for active region; **Show** sets `secondaryHighlightTileKeys` to improvable tile keys; pan/zoom enabled.
+`CtRegionMap` for active region in **player-constrained** visibility (`CtMapVisibilityMode.playerConstrained` + `playerViewForResources`); **province overlay** strokes enabled with standard edge-gating; **player-territory perimeter** outline (light stroke on outer land boundary, not internal province borders between own provinces). **Show** sets `secondaryHighlightTileKeys` to improvable tile keys; pan/zoom enabled.
+
+### Overview — assigned civilians (Slice D)
+
+Below idle Builder/Engineer counts, when the active region has Builders or Engineers with pending `WorkOrder` or in-progress `currentWork`, list each unit with work type, target location, and turn progress (same semantics as `civilian-units-panel.md` **Assigned to**).
 
 ---
 
@@ -86,3 +90,12 @@ Road-step selection: BFS on owned land tiles from the improve target toward any 
 - Given a legal Engineer road step and idle Engineer with materials, when **Road first** is chosen, then only a pending `build_road` WorkOrder is committed.
 - Given **Road first** is impossible, when the dialog opens, then **Road first** is disabled with a plain reason; **Cancel** leaves no new order.
 - Given no idle Builder, when a row would Assign, then **Assign** is disabled with a plain-language reason.
+
+## Acceptance criteria (Slice D)
+
+- Given the panel map renders for a region with `unrevealed`, `fogged`, and `visible` tiles in `PlayerView`, when the map draws, then unrevealed cells are solid black, fogged cells are muted per `map-widget.md`, and visible cells show full terrain detail.
+- Given an owned province with improvable tiles only on `unrevealed` cells, when the scope row renders, then it shows **No improvable resources** and offers no Assign/Show for hidden commodities.
+- Given improvable tiles on both `fogged` and `visible` cells, when counts render, then only visibility-known tiles contribute to commodity counts and Show/Assign candidate sets.
+- Given the human player owns contiguous land in the active region, when the panel map renders, then a light border outlines the outer perimeter of player-owned land cells (not internal borders between own provinces).
+- Given a Builder with pending `build_improvement` and an Engineer with in-progress `build_road` in the active region, when the overview renders, then both appear in the assigned-civilians list with work type, target location, and turn progress per `civilian-units-panel.md`.
+- Given the player assigns or cancels work from the panel, when drafts change, then assigned-civilian rows and idle counts update immediately without ending the turn.

@@ -13,8 +13,10 @@ import 'package:colonizethis_models/colonizethis_models.dart'
         UnitStatus;
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'development_panel_assigned_civilians.dart';
 import 'development_panel_model.dart';
 import 'development_panel_read_model_scopes.dart';
+import 'development_panel_visibility.dart';
 import 'game_lookup_helpers.dart';
 import 'province_improvable_resource_counts.dart';
 
@@ -29,6 +31,7 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
   required Orders currentOrders,
   required Map<String, String> provinceDisplayNamesById,
   required Map<String, String> playerDisplayNamesById,
+  PlayerView? playerView,
 }) {
   final connectivity = resolveConnectivity(
     game: game,
@@ -62,6 +65,8 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
       provinceDisplayNamesById: provinceDisplayNamesById,
       playerDisplayNamesById: playerDisplayNamesById,
       ownerCache: ownerCache,
+      currentOrders: currentOrders,
+      playerView: playerView,
     ),
     newWorld: _buildRegionModel(
       game: game,
@@ -80,6 +85,8 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
       provinceDisplayNamesById: provinceDisplayNamesById,
       playerDisplayNamesById: playerDisplayNamesById,
       ownerCache: ownerCache,
+      currentOrders: currentOrders,
+      playerView: playerView,
     ),
   );
 }
@@ -95,6 +102,8 @@ DevelopmentPanelRegionModel _buildRegionModel({
   required Map<String, String> provinceDisplayNamesById,
   required Map<String, String> playerDisplayNamesById,
   required ProvinceOwnerCache ownerCache,
+  required Orders currentOrders,
+  PlayerView? playerView,
 }) {
   final ownedProvinces =
       ownerCache.provincesOwnedByInRegion(playerId, regionId);
@@ -107,6 +116,7 @@ DevelopmentPanelRegionModel _buildRegionModel({
         ownerId: playerId,
         tileMapByRegion: tileMapByRegion,
       ),
+      playerView: playerView,
     );
     ownedScopes.add(
       DevelopmentPanelScopeRow(
@@ -127,6 +137,7 @@ DevelopmentPanelRegionModel _buildRegionModel({
     provinceDisplayNamesById: provinceDisplayNamesById,
     playerDisplayNamesById: playerDisplayNamesById,
     ownerCache: ownerCache,
+    playerView: playerView,
   );
 
   return DevelopmentPanelRegionModel(
@@ -136,6 +147,12 @@ DevelopmentPanelRegionModel _buildRegionModel({
     landExtractionByCommodity: landExtractionByCommodity,
     idleBuilderCount: idleBuilderCount,
     idleEngineerCount: idleEngineerCount,
+    assignedCivilians: buildDevelopmentAssignedCiviliansForRegion(
+      game: game,
+      playerId: playerId,
+      regionId: regionId,
+      currentOrders: currentOrders,
+    ),
   );
 }
 

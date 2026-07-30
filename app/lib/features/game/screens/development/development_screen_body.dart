@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,6 +48,11 @@ class DevelopmentScreenBody extends ConsumerWidget {
       provinceNames[province.id] = province.displayName ?? province.id;
     }
     final playerNames = {for (final p in game.players) p.id: p.displayName};
+    final playerView = buildPlayerView(
+      game,
+      mapData.combinedTopology,
+      humanPlayerId,
+    );
     final model = buildDevelopmentPanelModel(
       game: game,
       playerId: humanPlayerId,
@@ -54,6 +61,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
       currentOrders: orders,
       provinceDisplayNamesById: provinceNames,
       playerDisplayNamesById: playerNames,
+      playerView: playerView,
     );
     final connectivity = resolveConnectivity(
       game: game,
@@ -81,6 +89,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               tileMapByRegion: mapData.tileMapByRegion,
               currentOrders: orders,
               connectedTileKeys: connectedTileKeys,
+              provinceDisplayNamesById: provinceNames,
               canEdit: canEdit,
               onAssign: (candidate) => _handleDevelopmentAssign(
                 context: context,
@@ -104,6 +113,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               tileMapByRegion: mapData.tileMapByRegion,
               currentOrders: orders,
               connectedTileKeys: connectedTileKeys,
+              provinceDisplayNamesById: provinceNames,
               canEdit: canEdit,
               onAssign: (candidate) => _handleDevelopmentAssign(
                 context: context,
@@ -194,6 +204,7 @@ class _DevelopmentRegionTab extends StatefulWidget {
     required this.tileMapByRegion,
     required this.currentOrders,
     required this.connectedTileKeys,
+    required this.provinceDisplayNamesById,
     required this.canEdit,
     required this.onAssign,
   });
@@ -206,6 +217,7 @@ class _DevelopmentRegionTab extends StatefulWidget {
   final Map<String, TileMapResult> tileMapByRegion;
   final Orders currentOrders;
   final Set<String> connectedTileKeys;
+  final Map<String, String> provinceDisplayNamesById;
   final bool canEdit;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
 
@@ -273,6 +285,7 @@ class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
     final mapPanel = DevelopmentPanelMapPanel(
       key: DevelopmentPanelKeys.panelMapKey,
       game: widget.game,
+      humanPlayerId: widget.humanPlayerId,
       regionId: widget.regionId,
       highlightTileKeys: _highlightTileKeys,
     );
@@ -284,6 +297,10 @@ class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
           key: DevelopmentPanelKeys.overviewKey,
           regionModel: widget.regionModel,
           materialShortageCommodityIds: materialShortages,
+          provinceDisplayNamesById: widget.provinceDisplayNamesById,
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          currentOrders: widget.currentOrders,
         ),
         const SizedBox(height: CtSpacing.m),
         Expanded(
