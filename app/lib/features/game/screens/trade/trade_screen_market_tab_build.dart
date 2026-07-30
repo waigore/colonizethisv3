@@ -46,9 +46,6 @@ extension MarketTabContentBuild on MarketTabContent {
     final TextStyle bidTypeWarningStyle = styles.bidTypeWarningStyle;
     final TextStyle bidBudgetIndicatorStyle = styles.bidBudgetIndicatorStyle;
     final TextStyle bidBudgetWarningStyle = styles.bidBudgetWarningStyle;
-    final TextStyle whyToggleStyle = styles.whyToggleStyle;
-    final TextStyle whyBodyStyle = styles.whyBodyStyle;
-
     final SectionedTradeableCommodities sectioned =
         tradeableCommoditiesByCategory();
     final AppLocalizations l10n = appL10n(context);
@@ -191,8 +188,6 @@ extension MarketTabContentBuild on MarketTabContent {
         cargoWarningStyle: cargoWarningStyle,
         bidBudgetIndicatorStyle: bidBudgetIndicatorStyle,
         bidBudgetWarningStyle: bidBudgetWarningStyle,
-        whyToggleStyle: whyToggleStyle,
-        whyBodyStyle: whyBodyStyle,
       ),
     );
 
