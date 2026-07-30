@@ -19,8 +19,12 @@ Implementation: `app/lib/config/marionette_app_binding.dart`; production `main()
 
 ## Out of scope (this slice)
 
-- `export-player-manual` / `player-playthrough` skills (WS2–WS3)
+- `player-playthrough` skill (WS3)
 - Full Flame map/tile Semantics catalog (follow-up under #4199 discoverability)
+
+## Player handbook export (WS2)
+
+See `SPEC/program/player-manual-export.md`. Playtest agents consume `docs/manual/player-export/` only.
 
 ## Ct-* discoverability
 

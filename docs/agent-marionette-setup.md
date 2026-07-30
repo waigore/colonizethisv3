@@ -42,6 +42,10 @@ Connect Marionette to the VM service URI from the running debug session, then us
 
 Full Flame map/tile Semantics may still need a follow-up slice if map clicks are required beyond panel/rail flows.
 
+## Player handbook
+
+Playtest agents read the derived export at `docs/manual/player-export/` (regenerate via `export-player-manual` / `python3 pytool/export_player_manual.py`). Authoring manual with Sources remains at `docs/manual/`.
+
 ## Related
 
 - Binding gate: `app/lib/config/marionette_app_binding.dart`
