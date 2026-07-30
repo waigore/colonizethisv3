@@ -4481,5 +4481,105 @@
   "techEffectSummary_wind_saw_mill_1": "Unlocks: Circular Saw",
   "@techEffectSummary_wind_saw_mill_1": {
     "description": "Tech tree dialog effect line (techEffectSummary_wind_saw_mill_1)."
+  },
+  "production_counsel": "Counsel",
+  "@production_counsel": {
+    "description": "Production Allocation header button to open Industry Counsel."
+  },
+  "production_industryCounselStarSemantic": "Industry counsel: {brief}",
+  "@production_industryCounselStarSemantic": {
+    "description": "Accessibility label for allocation row counsel star.",
+    "placeholders": {
+      "brief": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_tabIndustry": "Industry",
+  "@industryCounsel_tabIndustry": {
+    "description": "Counsel screen Industry tab label."
+  },
+  "industryCounsel_empty": "No pressing industry advice this turn.",
+  "@industryCounsel_empty": {
+    "description": "Counsel Industry tab empty state."
+  },
+  "industryCounsel_title_produce": "Produce goods",
+  "@industryCounsel_title_produce": {
+    "description": "Fallback title for produce counsel card."
+  },
+  "industryCounsel_title_produceRecipe": "Produce {commodity}",
+  "@industryCounsel_title_produceRecipe": {
+    "description": "Title for produce recipe counsel card.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_title_train": "Train workers",
+  "@industryCounsel_title_train": {
+    "description": "Fallback title for train counsel card."
+  },
+  "industryCounsel_title_trainWorker": "Train {tier}",
+  "@industryCounsel_title_trainWorker": {
+    "description": "Title for train worker counsel card.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_title_feedstock": "Unblock feedstock",
+  "@industryCounsel_title_feedstock": {
+    "description": "Fallback title for feedstock counsel card."
+  },
+  "industryCounsel_title_unblockFeedstock": "Improve {commodity} extraction",
+  "@industryCounsel_title_unblockFeedstock": {
+    "description": "Title for feedstock unblock counsel card.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_reason_outputShortage_brief": "Your stocks of this output are low — the plan favours producing it now.",
+  "@industryCounsel_reason_outputShortage_brief": {
+    "description": "Brief industry counsel reason for output shortage."
+  },
+  "industryCounsel_reason_outputShortage_detail": "Short output stocks raise the priority of this recipe in the neutral industry plan.",
+  "@industryCounsel_reason_outputShortage_detail": {
+    "description": "Detail industry counsel reason for output shortage."
+  },
+  "industryCounsel_reason_chainLuxury_brief": "This output feeds training or downstream industry — worth prioritising.",
+  "@industryCounsel_reason_chainLuxury_brief": {
+    "description": "Brief industry counsel reason for chain/luxury value."
+  },
+  "industryCounsel_reason_chainLuxury_detail": "Chain outputs and worker luxuries score higher when your workforce can use them.",
+  "@industryCounsel_reason_chainLuxury_detail": {
+    "description": "Detail industry counsel reason for chain/luxury value."
+  },
+  "industryCounsel_reason_labourDeficit_brief": "Recruit peasants — planned labour exceeds effective workers.",
+  "@industryCounsel_reason_labourDeficit_brief": {
+    "description": "Brief industry counsel reason for labour deficit."
+  },
+  "industryCounsel_reason_labourDeficit_detail": "The core allocation assigns more labour than your effective pool can supply this turn.",
+  "@industryCounsel_reason_labourDeficit_detail": {
+    "description": "Detail industry counsel reason for labour deficit."
+  },
+  "industryCounsel_reason_luxuryShortage_brief": "Train this tier — luxury goods for them are scarce.",
+  "@industryCounsel_reason_luxuryShortage_brief": {
+    "description": "Brief industry counsel reason for luxury shortage."
+  },
+  "industryCounsel_reason_luxuryShortage_detail": "Soft luxury caps favour training when refined luxuries are below sustainable levels.",
+  "@industryCounsel_reason_luxuryShortage_detail": {
+    "description": "Detail industry counsel reason for luxury shortage."
+  },
+  "industryCounsel_reason_feedstockBlocked_brief": "Improve feedstock tiles to unblock starred production inputs.",
+  "@industryCounsel_reason_feedstockBlocked_brief": {
+    "description": "Brief industry counsel reason for feedstock blocked."
+  },
+  "industryCounsel_reason_feedstockBlocked_detail": "Production is input-starved while improvable tiles can raise the blocking commodity.",
+  "@industryCounsel_reason_feedstockBlocked_detail": {
+    "description": "Detail industry counsel reason for feedstock blocked."
   }
 }

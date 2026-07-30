@@ -1196,6 +1196,66 @@ abstract class AppLocalizations {
   /// Button label to open production commodity breakdown.
   String get production_breakdown;
 
+  /// Production Allocation header button to open Industry Counsel.
+  String get production_counsel;
+
+  /// Accessibility label for allocation row counsel star.
+  String production_industryCounselStarSemantic(String brief);
+
+  /// Counsel screen Industry tab label.
+  String get industryCounsel_tabIndustry;
+
+  /// Counsel Industry tab empty state.
+  String get industryCounsel_empty;
+
+  /// Fallback title for produce counsel card.
+  String get industryCounsel_title_produce;
+
+  /// Title for produce recipe counsel card.
+  String industryCounsel_title_produceRecipe(String commodity);
+
+  /// Fallback title for train counsel card.
+  String get industryCounsel_title_train;
+
+  /// Title for train worker counsel card.
+  String industryCounsel_title_trainWorker(String tier);
+
+  /// Fallback title for feedstock counsel card.
+  String get industryCounsel_title_feedstock;
+
+  /// Title for feedstock unblock counsel card.
+  String industryCounsel_title_unblockFeedstock(String commodity);
+
+  /// Brief industry counsel reason for output shortage.
+  String get industryCounsel_reason_outputShortage_brief;
+
+  /// Detail industry counsel reason for output shortage.
+  String get industryCounsel_reason_outputShortage_detail;
+
+  /// Brief industry counsel reason for chain/luxury value.
+  String get industryCounsel_reason_chainLuxury_brief;
+
+  /// Detail industry counsel reason for chain/luxury value.
+  String get industryCounsel_reason_chainLuxury_detail;
+
+  /// Brief industry counsel reason for labour deficit.
+  String get industryCounsel_reason_labourDeficit_brief;
+
+  /// Detail industry counsel reason for labour deficit.
+  String get industryCounsel_reason_labourDeficit_detail;
+
+  /// Brief industry counsel reason for luxury shortage.
+  String get industryCounsel_reason_luxuryShortage_brief;
+
+  /// Detail industry counsel reason for luxury shortage.
+  String get industryCounsel_reason_luxuryShortage_detail;
+
+  /// Brief industry counsel reason for feedstock blocked.
+  String get industryCounsel_reason_feedstockBlocked_brief;
+
+  /// Detail industry counsel reason for feedstock blocked.
+  String get industryCounsel_reason_feedstockBlocked_detail;
+
   /// Production panel subheader for available resources.
   String get production_available;
 
