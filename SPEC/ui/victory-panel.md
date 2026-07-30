@@ -61,8 +61,26 @@ When map data is unavailable, standings render full width at all breakpoints.
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
 | ← Map | always | `Navigator.pop` via `CtTopBar` | returns to map |
-| GP row tap | always | local expand/collapse | reveals power-score breakdown |
-| Political minimap hover/tap | map data available | local highlight + inspect line | shows original vs captured copy per `originalOwnerId` |
+| GP row body tap | always | local `selectedPlayerId` | highlights faction OW provinces on minimap; emphasizes standings row |
+| GP expand chevron | always | local expand/collapse | reveals power-score breakdown only |
+| Political minimap hover/tap | map data available | local highlight + inspect line | shows origin inspect; GP-owned province tap also selects owning GP row |
+
+### Open default
+
+- On first build, `selectedPlayerId` is the human Great Power (`humanPlayerId` route arg).
+- Minimap de-emphasizes non-selected owners; selected faction provinces render at full ownership colour.
+
+### Standings progress
+
+- Each GP row shows `{count} / {threshold} Old World provinces` and a progress bar scaled 0…threshold (fill caps at full when count ≥ threshold).
+- Standings sort by OW count descending, display-name ascending on ties (unchanged ranking key).
+
+### Selection linkage
+
+- **Standings → map:** row body selects GP; expand chevron toggles breakdown only.
+- **Map → standings:** GP-owned province tap selects that GP row while retaining inspect text.
+- **Minor / unowned:** inspect still works; last GP selection is retained.
+- **Narrow layout:** selection is stateful in `VictoryScreenBody` and applies to both stacked standings and minimap when scrolled.
 
 ## Political minimap
 
@@ -81,13 +99,17 @@ When map data is unavailable, standings render full width at all breakpoints.
 | `GAME70001` | infinite mode | `Game.infiniteMode` | conditions include infinite bypass line |
 | `GAME70001a` | wide side-by-side | viewport ≥ 600 dp + map data | standings and minimap in one row below conditions |
 | `GAME70001b` | annotated minimap | map data with naming / capitals / towns | province labels, capital borders, town dots on minimap |
+| `GAME70001c` | rival GP selected | non-human GP selected on standings / minimap | selected faction highlighted; human row emphasized but not selected |
 
 ## Acceptance criteria
 
 - **Given** the map shell is visible, **when** the player inspects the left rail, **then** a Victory control is present as the **last** core empire button and opens `GAME70001` with `← Map` return.
 - **Given** the Victory panel is open, **when** the conditions section renders, **then** winning by controlling **31 or more Old World provinces** is stated in plain language (no “military victory” type label), calendar-end rules are stated in plain language, and infinite-mode bypass copy appears when `infiniteMode` is true.
-- **Given** multiple Great Powers, **when** standings render, **then** only GPs appear sorted by OW count descending with display-name tie-break, each showing OW count, and the human row is emphasized.
-- **Given** a GP row is collapsed, **when** shown, **then** calendar-end comparison totals are hidden; **when** expanded, **then** province / regiment / ship component totals and an overall strength total appear with copy explaining they matter only for calendar-end comparison, not the Old World province race. No weighted `× weight =` formula lines appear.
+- **Given** multiple Great Powers, **when** standings render, **then** only GPs appear sorted by OW count descending with display-name tie-break, each showing OW progress (`count / threshold Old World provinces`) with a progress bar, and the human row is emphasized; on open the human GP is selected by default.
+- **Given** a GP row is collapsed, **when** shown, **then** calendar-end comparison totals are hidden; **when** the expand chevron is used, **then** province / regiment / ship component totals and an overall strength total appear with copy explaining they matter only for calendar-end comparison, not the Old World province race; **when** the row body is tapped, **then** map selection updates without requiring expand. No weighted `× weight =` formula lines appear.
+- **Given** a GP is selected on standings or minimap, **when** the minimap renders, **then** that faction's Old World provinces are shown at full colour and other owners are de-emphasized.
+- **Given** a GP-owned province is tapped on the minimap, **when** inspect runs, **then** that GP's standings row is selected and inspect text still appears.
+- **Given** standings section renders, **when** the header area is shown, **then** helper copy explains colour/map linkage.
 - **Given** the political minimap is shown, **when** Old World provinces render, **then** each province uses the owning GP's colour and Minor-owned provinces use grey, in chrome consistent with the editorial-monocle L&F.
 - **Given** `originalOwnerId` is present, **when** the player hovers or taps a province on the political minimap, **then** the UI states whether it is still the founding owner's province or was captured, naming the founding owner; **given** legacy data without origin, **when** inspect is used, **then** the UI shows founding-owner-unknown copy without inventing capture history.
 - **Given** `GAME70001` mid-campaign or end-state variants, **when** the player reads default-visible and expanded copy, **then** the string “military victory” (any casing) does not appear in player-facing Victory panel UI.

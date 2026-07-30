@@ -110,4 +110,50 @@ void main() {
     );
     expect(find.textContaining('captured from England'), findsOneWidget);
   });
+
+  testWidgets('tap GP-owned province selects owning Great Power', (tester) async {
+    String? selectedId;
+    final game = buildPanelTestGame(
+      players: [
+        panelTestHumanPlayer(id: 'gp1', displayName: 'England'),
+        const Player(id: 'gp2', displayName: 'France', isHuman: false),
+      ],
+      oldWorldProvinces: const [
+        Province(
+          id: 'oldWorld|p2',
+          regionId: 'oldWorld',
+          ownerId: 'gp2',
+          originalOwnerId: 'gp1',
+          displayName: 'Yorkshire',
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      buildAppShell(
+        child: Scaffold(
+          body: SizedBox(
+            width: 120,
+            height: 280,
+            child: VictoryPoliticalMinimap(
+              game: game,
+              region: _sampleRegion(),
+              selectedPlayerId: 'gp1',
+              onGreatPowerOwnerSelected: (id) => selectedId = id,
+            ),
+          ),
+        ),
+      ),
+    );
+    await pumpSettleCapped(tester);
+
+    final gesture = find.byKey(VictoryScreenKeys.politicalMinimapGestureKey);
+    final topLeft = tester.getTopLeft(gesture);
+    final size = tester.getSize(gesture);
+    await tester.tapAt(
+      topLeft + Offset(size.width * 0.75, size.height * 0.75),
+    );
+    await pumpSyncFrames(tester);
+
+    expect(selectedId, 'gp2');
+  });
 }

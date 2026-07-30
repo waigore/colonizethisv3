@@ -16,10 +16,14 @@ class VictoryPoliticalMinimap extends StatefulWidget {
     super.key,
     required this.game,
     required this.region,
+    this.selectedPlayerId,
+    this.onGreatPowerOwnerSelected,
   });
 
   final Game game;
   final RegionMapViewData region;
+  final String? selectedPlayerId;
+  final ValueChanged<String>? onGreatPowerOwnerSelected;
 
   @override
   State<VictoryPoliticalMinimap> createState() => _VictoryPoliticalMinimapState();
@@ -60,10 +64,16 @@ class _VictoryPoliticalMinimapState extends State<VictoryPoliticalMinimap> {
       });
       return;
     }
+    final ownerId = province.ownerId;
+    final ownerIsGp =
+        ownerId != null && widget.game.players.any((p) => p.id == ownerId);
     setState(() {
       _highlightedProvinceLocalId = ProvinceId.localIdFrom(province.id);
       _inspectLabel = victoryProvinceInspectLabel(widget.game, province);
     });
+    if (ownerIsGp) {
+      widget.onGreatPowerOwnerSelected?.call(ownerId!);
+    }
   }
 
   @override
@@ -89,6 +99,7 @@ class _VictoryPoliticalMinimapState extends State<VictoryPoliticalMinimap> {
                     painter: VictoryPoliticalMinimapPainter(
                       region: widget.region,
                       highlightedProvinceLocalId: _highlightedProvinceLocalId,
+                      selectedFactionId: widget.selectedPlayerId,
                     ),
                     child: const SizedBox.expand(),
                   ),

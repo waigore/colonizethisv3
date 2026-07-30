@@ -18,6 +18,7 @@ class VictoryScreen extends ConsumerWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.initialSelectedPlayerId,
   });
 
   /// SPEC/ui/victory-panel.md — [UiScreenIds.victoryScreen].
@@ -31,6 +32,9 @@ class VictoryScreen extends ConsumerWidget {
 
   final Game game;
   final String humanPlayerId;
+
+  /// Widgetbook / tests: pre-select a GP other than [humanPlayerId].
+  final String? initialSelectedPlayerId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,6 +52,7 @@ class VictoryScreen extends ConsumerWidget {
         return VictoryScreenBody(
           game: displayGame,
           humanPlayerId: humanPlayerId,
+          initialSelectedPlayerId: initialSelectedPlayerId,
         );
       },
     );

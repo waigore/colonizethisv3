@@ -110,6 +110,51 @@ void main() {
     );
   });
 
+  testWidgets('standings show helper and OW progress labels', (tester) async {
+    final game = buildPanelTestGame(
+      players: [
+        panelTestHumanPlayer(displayName: 'England'),
+        const Player(id: 'gp2', displayName: 'France', isHuman: false),
+      ],
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+        Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+      ],
+    );
+    await tester.pumpWidget(buildBody(game));
+    await pumpSettleCapped(tester);
+
+    expect(find.byKey(VictoryScreenKeys.standingsHelperKey), findsOneWidget);
+    expect(find.textContaining('/ 31 Old World provinces'), findsWidgets);
+    expect(
+      find.byKey(VictoryScreenKeys.standingProgressKey('gp1')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('row body select does not expand power breakdown', (tester) async {
+    final game = buildPanelTestGame(
+      players: [
+        panelTestHumanPlayer(displayName: 'England'),
+        const Player(id: 'gp2', displayName: 'France', isHuman: false),
+      ],
+      oldWorldProvinces: const [
+        Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+        Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+      ],
+    );
+    await tester.pumpWidget(buildBody(game));
+    await pumpSettleCapped(tester);
+
+    await tester.tap(find.byKey(VictoryScreenKeys.standingSelectKey('gp2')));
+    await pumpSyncFrames(tester);
+
+    expect(
+      find.byKey(VictoryScreenKeys.powerBreakdownKey('gp2')),
+      findsNothing,
+    );
+  });
+
   testWidgets('expanding a GP row reveals power-score breakdown', (
     tester,
   ) async {

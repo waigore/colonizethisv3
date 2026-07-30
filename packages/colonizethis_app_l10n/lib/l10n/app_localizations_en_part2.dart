@@ -288,6 +288,14 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String victory_standingOwCount(int count) => '$count OW';
 
   @override
+  String victory_standingOwProgress(int count, int threshold) =>
+      '$count / $threshold Old World provinces';
+
+  @override
+  String get victory_standingsHelper =>
+      'Colours match the map. Select a Great Power to see their Old World lands.';
+
+  @override
   String get moveArmy_groupYourProvinces => 'Your provinces';
 
   @override

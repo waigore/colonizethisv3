@@ -789,6 +789,12 @@ abstract class AppLocalizations {
   /// Victory standings row: Old World province count suffix.
   String victory_standingOwCount(int count);
 
+  /// Victory standings row: progress label toward military OW threshold.
+  String victory_standingOwProgress(int count, int threshold);
+
+  /// Victory standings section helper linking colours to minimap selection.
+  String get victory_standingsHelper;
+
   /// Header label for player-owned province destinations in move army dialog.
   String get moveArmy_groupYourProvinces;
 
