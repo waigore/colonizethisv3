@@ -25,3 +25,5 @@
 When no AI-only boost wrappers are active (H8 regiment boost, feedstock reserve, military-rebuild crisis, supplier release, castIron fabric pre-pass), `economy_planner_labour.dart` `allocateLabour` delegates to `industryCounselAllocateLabourCore` with the same stockpile, labour, tech, agenda, and growth-stage inputs.
 
 `recruitment_planner_candidates_ledger.dart` luxury helpers (`softLuxuryCapDeficitLimit`, `sustainableTrainedCounts`, `projectedLuxuryOutput`, `totalAssignedLabourInEconomyPlan`) delegate to the matching `colonizethis_economy` industry counsel modules so AI recruitment soft-cap math stays aligned with counsel ranking.
+
+`growth_stage.dart` `categoryPriorityForOutput` and `prospectedImprovedFeedstockTileCount` delegate to the matching `colonizethis_economy` industry counsel growth-stage helpers; `GrowthStage.compute` keeps AI-only `AIWorldSnapshot` war overrides.
