@@ -5,6 +5,7 @@
 
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_choice_chip.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -64,14 +65,14 @@ void main() {
 
   group('TradeScreen Market tab bid-type cap (Refs #4170)', () {
     testWidgets(
-      'no embassy (cap 1) with zero staged bids → indicator reads Bid goods: 0 of 1',
+      'no embassy (cap 3) with zero staged bids → indicator reads Bid goods: 0 of 3',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
           game: buildTradeTestGame(prices: const {_timber: 30}),
         );
 
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 3');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidTypeWarningKey),
           findsNothing,
@@ -80,16 +81,21 @@ void main() {
     );
 
     testWidgets(
-      'cap 1 with staged bid on timber → indicator reads Bid goods: 1 of 1 '
-      'and warning mounts',
+      'cap 3 saturated → indicator reads Bid goods: 3 of 3 and warning mounts',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
-          game: buildTradeTestGame(prices: const {_timber: 30}),
-          initialOrders: _orders([_bid(_timber, 1)]),
+          game: buildTradeTestGame(
+            prices: const {_timber: 30, _iron: 80, _grain: 50},
+          ),
+          initialOrders: _orders([
+            _bid(_timber, 1),
+            _bid(_iron, 1),
+            _bid(_grain, 1),
+          ]),
         );
 
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 1 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 3 of 3');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidTypeWarningKey),
           findsOneWidget,
@@ -98,32 +104,37 @@ void main() {
     );
 
     testWidgets(
-      'cap 1 saturated → fresh iron Bid is a silent no-op and chip is disabled',
+      'cap 3 saturated → fresh commodity Bid is a silent no-op when 3 slots used',
       (tester) async {
         final ProviderContainer container = await pumpTradeScreenWithContainer(
           tester,
           game: buildTradeTestGame(
-            prices: const {_timber: 30, _iron: 80},
+            prices: const {_timber: 30, _iron: 80, _grain: 50},
             stockpile: tradeableStockpileFilled(50),
           ),
-          initialOrders: _orders([_bid(_timber, 1)]),
+          initialOrders: _orders([
+            _bid(_timber, 1),
+            _bid(_iron, 1),
+            _bid(_grain, 1),
+          ]),
         );
 
-        final CtChoiceChip ironBidChip = tester.widget<CtChoiceChip>(
-          _bidChip(_iron),
+        const CommodityId wool = 'wool';
+        final CtChoiceChip woolBidChip = tester.widget<CtChoiceChip>(
+          _bidChip(wool),
         );
-        expect(ironBidChip.onSelected, isNull);
+        expect(woolBidChip.onSelected, isNull);
 
-        await tester.tap(_bidChip(_iron));
+        await tester.tap(_bidChip(wool));
         await tester.pump();
 
-        expect(_stagedOrder(container, _iron), isNull);
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 1 of 1');
+        expect(_stagedOrder(container, wool), isNull);
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 3 of 3');
       },
     );
 
     testWidgets(
-      'cap 1 saturated → timber bid row stays editable (increment allowed)',
+      'cap 3 with one staged bid → timber bid row stays editable (increment allowed)',
       (tester) async {
         final ProviderContainer container = await pumpTradeScreenWithContainer(
           tester,
@@ -167,7 +178,7 @@ void main() {
           ]),
         );
 
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 3');
       },
     );
 
@@ -180,7 +191,7 @@ void main() {
           initialOrders: _orders([_bid(_timber, 1)]),
         );
 
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 1 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 1 of 3');
 
         await tester.tap(
           find.byKey(TradeScreenMarketKeys.marketRowNoneChipKey(_timber)),
@@ -188,7 +199,7 @@ void main() {
         await tester.pump();
 
         expect(_stagedOrder(container, _timber), isNull);
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 3');
         expect(
           find.byKey(TradeScreenMarketKeys.marketBidTypeWarningKey),
           findsNothing,
@@ -197,7 +208,7 @@ void main() {
     );
 
     testWidgets(
-      'embassy without Trade Fairs → cap 3 reflected in indicator',
+      'embassy without Trade Fairs → cap remains 3 on indicator',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
@@ -222,19 +233,12 @@ void main() {
     );
 
     testWidgets(
-      'embassy + Trade Fairs → cap 6 reflected in indicator',
+      'Trade Fairs unlocked → cap 6 reflected in indicator',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
           game: buildTradeTestGame(
             techUnlocked: const <String, bool>{kTechIdTradeFairs: true},
-            overtureStates: const <OvertureState>[
-              OvertureState(
-                gpId: _humanPlayerId,
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-              ),
-            ],
           ),
         );
 
@@ -243,7 +247,7 @@ void main() {
     );
 
     testWidgets(
-      'Why this limit? expands plain-language copy for cap 1',
+      'inline help tooltips mount beside each limit line',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
@@ -251,22 +255,25 @@ void main() {
         );
 
         expect(
-          find.byKey(TradeScreenMarketKeys.marketBidTypeWhyBodyKey),
-          findsNothing,
-        );
-
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketBidTypeWhyToggleKey),
-        );
-        await tester.pump();
-
-        expect(
-          find.byKey(TradeScreenMarketKeys.marketBidTypeWhyBodyKey),
+          find.byKey(TradeScreenMarketKeys.marketBidGoodsTooltipKey),
           findsOneWidget,
         );
         expect(
-          find.text(TradeScreenMarketKeys.bidTypeWhyLimitCopyCap1),
+          find.byKey(TradeScreenMarketKeys.marketCargoTooltipKey),
           findsOneWidget,
+        );
+        expect(
+          find.byKey(TradeScreenMarketKeys.marketBidBudgetTooltipKey),
+          findsOneWidget,
+        );
+        expect(find.text('Why this limit?'), findsNothing);
+
+        final CtIconAction bidGoodsHelp = tester.widget<CtIconAction>(
+          find.byKey(TradeScreenMarketKeys.marketBidGoodsTooltipKey),
+        );
+        expect(
+          bidGoodsHelp.tooltip,
+          TradeScreenMarketKeys.bidTypeLimitTooltipCopyCap3,
         );
       },
     );
@@ -280,7 +287,7 @@ void main() {
           canMutateViaUi: false,
         );
 
-        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 1');
+        expect(_bidGoodsIndicatorText(tester), 'Bid goods: 0 of 3');
 
         await tester.tap(_bidChip(_timber));
         await tester.pump();

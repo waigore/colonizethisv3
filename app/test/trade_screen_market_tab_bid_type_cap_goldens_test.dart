@@ -1,11 +1,11 @@
 // Widget goldens for the Trade Market tab bid-type slot indicator and gate
-// (Refs #4170). Pixel baselines under `app/test/goldens/` close the
+// (Refs #4170, #4186). Pixel baselines under `app/test/goldens/` close the
 // verify-github-issue UI proof gap flagged on issue #4170.
 //
 // Golden mapping:
-//  - AC1  header `Bid goods: U of C` indicator (cap 1 / 3 / 6 variants)
+//  - AC1  header `Bid goods: U of C` indicator (cap 3 / 6 variants)
 //  - AC2  saturation warning when U >= C
-//  - AC6  **Why this limit?** progressive disclosure (cap 1 copy)
+//  - AC6  inline question-icon tooltips beside each limit line
 //
 // SPEC: SPEC/ui/trade-screen.md § Market tab — bid-type cap.
 
@@ -36,7 +36,6 @@ Future<void> _pumpMarketBidTypeCapHeaderGolden(
   int bidBudgetTotal = 100,
   int bidBudgetRemaining = 100,
   bool bidBudgetWarningVisible = false,
-  bool expandWhyLimit = false,
   Size viewport = const Size(480, 240),
 }) async {
   final MarketTabContent content = MarketTabContent(
@@ -69,28 +68,19 @@ Future<void> _pumpMarketBidTypeCapHeaderGolden(
             cargoWarningStyle: styles.cargoWarningStyle,
             bidBudgetIndicatorStyle: styles.bidBudgetIndicatorStyle,
             bidBudgetWarningStyle: styles.bidBudgetWarningStyle,
-            whyToggleStyle: styles.whyToggleStyle,
-            whyBodyStyle: styles.whyBodyStyle,
           ),
         );
       },
     ),
   );
-
-  if (expandWhyLimit) {
-    await tester.tap(
-      find.byKey(TradeScreenMarketKeys.marketBidTypeWhyToggleKey),
-    );
-    await tester.pump();
-  }
 }
 
 void main() {
   suppressLogsForTests();
 
-  group('TradeScreen Market tab bid-type cap goldens (Refs #4170)', () {
+  group('TradeScreen Market tab bid-type cap goldens (Refs #4170, #4186)', () {
     testWidgets(
-      'golden: cap 1 saturated with bid-goods warning (AC1/AC2)',
+      'golden: cap 3 saturated with bid-goods warning (AC1/AC2)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidTypeCapSaturatedGolden',
@@ -100,8 +90,8 @@ void main() {
           tester,
           boundaryKey: boundaryKey,
           game: buildTradeTestGame(),
-          stagedDistinctBidCount: 1,
-          bidTypeCap: 1,
+          stagedDistinctBidCount: 3,
+          bidTypeCap: 3,
           clampedRemaining: 9,
         );
 
@@ -119,7 +109,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: embassy cap 3 indicator (AC1/AC5)',
+      'golden: default cap 3 indicator (AC1)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidTypeCapEmbassy3Golden',
@@ -128,15 +118,7 @@ void main() {
         await _pumpMarketBidTypeCapHeaderGolden(
           tester,
           boundaryKey: boundaryKey,
-          game: buildTradeTestGame(
-            overtureStates: const <OvertureState>[
-              OvertureState(
-                gpId: _humanPlayerId,
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-              ),
-            ],
-          ),
+          game: buildTradeTestGame(),
           stagedDistinctBidCount: 0,
           bidTypeCap: 3,
         );
@@ -152,7 +134,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: embassy + Trade Fairs cap 6 indicator (AC1/AC5)',
+      'golden: Trade Fairs cap 6 indicator (AC1)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidTypeCapTradeFairs6Golden',
@@ -163,13 +145,6 @@ void main() {
           boundaryKey: boundaryKey,
           game: buildTradeTestGame(
             techUnlocked: const <String, bool>{kTechIdTradeFairs: true},
-            overtureStates: const <OvertureState>[
-              OvertureState(
-                gpId: _humanPlayerId,
-                targetId: 'minor1',
-                stage: OvertureStage.embassy,
-              ),
-            ],
           ),
           stagedDistinctBidCount: 0,
           bidTypeCap: 6,
@@ -188,7 +163,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: Why this limit? expanded copy for cap 1 (AC6)',
+      'golden: inline limit tooltips beside each header line (AC6)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'tradeMarketBidTypeCapWhyExpandedGolden',
@@ -199,18 +174,21 @@ void main() {
           boundaryKey: boundaryKey,
           game: buildTradeTestGame(),
           stagedDistinctBidCount: 0,
-          bidTypeCap: 1,
-          expandWhyLimit: true,
-          viewport: const Size(480, 220),
+          bidTypeCap: 3,
+          viewport: const Size(480, 200),
         );
 
         expect(tester.takeException(), isNull);
         expect(
-          find.byKey(TradeScreenMarketKeys.marketBidTypeWhyBodyKey),
+          find.byKey(TradeScreenMarketKeys.marketBidGoodsTooltipKey),
           findsOneWidget,
         );
         expect(
-          find.text(TradeScreenMarketKeys.bidTypeWhyLimitCopyCap1),
+          find.byKey(TradeScreenMarketKeys.marketCargoTooltipKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(TradeScreenMarketKeys.marketBidBudgetTooltipKey),
           findsOneWidget,
         );
 

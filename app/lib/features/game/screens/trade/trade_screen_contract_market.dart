@@ -234,16 +234,10 @@ abstract final class TradeScreenMarketKeys {
   static const Key marketBidTypeWarningKey =
       ValueKey<String>('tradeScreenMarketBidTypeWarning');
 
-  /// Stable widget key for the optional **Why this limit?** disclosure
-  /// toggle below the bid-type warnings (Refs #4170).
-  static const Key marketBidTypeWhyToggleKey =
-      ValueKey<String>('tradeScreenMarketBidTypeWhyToggle');
-
-  /// Stable widget key for the expanded plain-language bid-type cap
-  /// explanation body (Refs #4170). Mounted only while the disclosure
-  /// is expanded.
-  static const Key marketBidTypeWhyBodyKey =
-      ValueKey<String>('tradeScreenMarketBidTypeWhyBody');
+  /// Stable widget key for the bid-goods limit inline-help [CtIconAction]
+  /// (Refs #4186).
+  static const Key marketBidGoodsTooltipKey =
+      ValueKey<String>('tradeScreenMarketBidGoodsTooltip');
 
   /// [RepaintBoundary] key for widget golden captures of the Market
   /// header strip (bid-goods indicator, warnings, cargo telemetry —
@@ -263,15 +257,10 @@ abstract final class TradeScreenMarketKeys {
   static const Key marketBidBudgetWarningKey =
       ValueKey<String>('tradeScreenMarketBidBudgetWarning');
 
-  /// Stable widget key for the optional **Why this limit?** disclosure
-  /// toggle for the treasury bid budget (Refs #4186).
-  static const Key marketBidBudgetWhyToggleKey =
-      ValueKey<String>('tradeScreenMarketBidBudgetWhyToggle');
-
-  /// Stable widget key for the expanded treasury bid-budget explanation
-  /// body (Refs #4186). Mounted only while the disclosure is open.
-  static const Key marketBidBudgetWhyBodyKey =
-      ValueKey<String>('tradeScreenMarketBidBudgetWhyBody');
+  /// Stable widget key for the treasury bid-budget limit inline-help
+  /// [CtIconAction] (Refs #4186).
+  static const Key marketBidBudgetTooltipKey =
+      ValueKey<String>('tradeScreenMarketBidBudgetTooltip');
 
   /// Stable widget key for the cross-commodity cargo indicator header
   /// rendered above the Market tab commodity list (Refs #2993 E5c).
@@ -288,53 +277,51 @@ abstract final class TradeScreenMarketKeys {
   static const Key marketCargoWarningKey =
       ValueKey<String>('tradeScreenMarketCargoWarning');
 
+  /// Stable widget key for the cargo limit inline-help [CtIconAction]
+  /// (Refs #4186).
+  static const Key marketCargoTooltipKey =
+      ValueKey<String>('tradeScreenMarketCargoTooltip');
+
   /// Bid-goods indicator prefix (Refs #4170). Renders as
   /// `Bid goods: U of C` where offers never increment `U`.
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String bidGoodsIndicatorPrefix = 'Bid goods:';
 
-  /// Bid-type saturation warning copy (Refs #4170).
+  /// Bid-type saturation warning copy (Refs #4170, #4186).
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String bidTypeLimitWarningText =
-      'Bid commodity limit reached — set a bid to None, or raise your '
-      'limit with an embassy or Trade Fairs.';
+      'Bid commodity limit reached — remove a bid, or research Trade Fairs '
+      'to raise your limit.';
 
-  /// Progressive-disclosure toggle label for bid-type cap help (Refs
-  /// #4170).
+  /// Inline tooltip for bid-goods cap `3` (Refs #4186).
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidTypeLimitWhyToggleLabel = 'Why this limit?';
+  static const String bidTypeLimitTooltipCopyCap3 =
+      'You may bid on up to three distinct commodities each turn; research '
+      'Trade Fairs to raise the limit to six.';
+
+  /// Inline tooltip for bid-goods cap `6` (Refs #4186).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String bidTypeLimitTooltipCopyCap6 =
+      'Trade Fairs lets you bid on up to six distinct commodities each turn.';
+
+  /// Returns the bid-goods inline tooltip for [cap] per
+  /// `worldMarketBidTypeCap` semantics (Refs #4186).
+  static String bidTypeLimitTooltipForCap(int cap) {
+    if (cap >= 6) return bidTypeLimitTooltipCopyCap6;
+    return bidTypeLimitTooltipCopyCap3;
+  }
+
+  /// Inline tooltip for the cargo remaining limit (Refs #4186).
+  // ignore: avoid_hardcoded_strings_in_widgets
+  static const String cargoLimitTooltipCopy =
+      'Staged bids share your trade cargo capacity and cannot exceed your '
+      'remaining cargo this turn.';
 
   /// Semantic label for a disabled Bid chip when the bid-type cap is
   /// saturated on a fresh commodity (Refs #4170).
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String bidChipBidTypeCapSemanticLabel =
       'Bid disabled — commodity limit reached';
-
-  /// Plain-language bid-type cap explanation for cap `1` (Refs #4170).
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidTypeWhyLimitCopyCap1 =
-      'Basic market access lets you bid on one distinct commodity per '
-      'turn. Hold an embassy with any court to raise the limit.';
-
-  /// Plain-language bid-type cap explanation for cap `3` (Refs #4170).
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidTypeWhyLimitCopyCap3 =
-      'Your embassy raises the limit to three distinct bid commodities. '
-      'Unlock Trade Fairs to reach six.';
-
-  /// Plain-language bid-type cap explanation for cap `6` (Refs #4170).
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidTypeWhyLimitCopyCap6 =
-      'Embassy and Trade Fairs together allow up to six distinct bid '
-      'commodities in one turn.';
-
-  /// Returns the **Why this limit?** body copy for [cap] per
-  /// `worldMarketBidTypeCap` semantics (Refs #4170).
-  static String bidTypeWhyLimitCopyForCap(int cap) {
-    if (cap >= 6) return bidTypeWhyLimitCopyCap6;
-    if (cap >= 3) return bidTypeWhyLimitCopyCap3;
-    return bidTypeWhyLimitCopyCap1;
-  }
 
   /// Localized cargo indicator prefix. SPEC/ui/trade-screen.md §
   /// Cargo indicator pins the literal `"Cargo remaining:"` so widget
@@ -362,17 +349,11 @@ abstract final class TradeScreenMarketKeys {
       'Treasury bid limit reached — free gold or reduce other spending '
       'before bidding more.';
 
-  /// Progressive-disclosure toggle label for treasury bid-budget help
-  /// (Refs #4186).
+  /// Inline tooltip for the treasury bid-budget limit (Refs #4186).
   // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidBudgetLimitWhyToggleLabel = 'Why this limit?';
-
-  /// Plain-language treasury bid-budget explanation (Refs #4186).
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String bidBudgetWhyLimitCopy =
-      'Your bids spend from treasury after other orders you have already '
-      'staged this turn. Expected income does not increase this budget. '
-      'Offers do not use this budget.';
+  static const String bidBudgetLimitTooltipCopy =
+      'Bids spend from treasury after other staged orders; expected income '
+      'does not increase this budget.';
 
   /// Tab label for the Market tab (default selection). SPEC §
   /// Layout / wireframe pins the literal `"Market"` so widget tests can
