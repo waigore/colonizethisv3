@@ -61,6 +61,12 @@ Scores are combined (e.g. weighted sum). Exact weights and thresholds are implem
 - **No feasible recipe** (missing inputs for all) → empty assignments.
 - **Luxury shortage** — Effective labour already reflects this; planner does not double-penalize.
 
+### Shared industry counsel core (Refs #4189)
+
+Pure recipe scoring, growth-stage scaling, soft-luxury math, and greedy labour allocation live in **`colonizethis_economy`** (`industry_counsel/`). Human Industry Counsel ranking composes those modules via **`colonizethis_orders`**; see [industry-counsel-ranking.md](../program/industry-counsel-ranking.md).
+
+When no AI-only boost wrappers are active (H8 regiment boost, feedstock reserve, military-rebuild crisis, supplier release, castIron fabric pre-pass), `allocateLabour` delegates to `industryCounselAllocateLabourCore` with the same stockpile, labour, tech, agenda, and growth-stage inputs. H8 / lock-recovery / crisis-only boosts remain **AI-only wrappers** in `colonizethis_ai`.
+
 ---
 
 ## Cargo capacity preference
