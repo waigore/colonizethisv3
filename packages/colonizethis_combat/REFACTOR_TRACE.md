@@ -365,5 +365,16 @@ Delivered in this slice:
 - Removed ~29 near-identical per-family `*Scenario` class shells; all `*_scenarios.dart` tables now use `RunnableScenario` rows.
 - Public list factory names and every `scenarioId` / `label` string preserved; `colonizethis_combat/test/**` runners unchanged.
 
-Deferred to follow-up slices on #4196: god-module topic splits (>220 phys), `combat_resolver_test_support` builder split, builder densify, CI file-size + LOC ratchets.
+## Wave — slice B (Refs #4196)
+
+Delivered in this slice:
+
+- Topic-split four god modules (>300 phys) along existing private-list seams:
+  - `conflict_detection_scenarios` → core / ownership / order topic files + thin aggregator
+  - `military_strength_scenarios` → player faction/filtering/multiplier + aggregate / era / cavalry files + aggregator
+  - `combat_resolver_engagement_scenarios` → outcome / context topic files + aggregator
+  - `combat_resolver_spy_civilian_scenarios` → spy conquest / civilian relocation / general morale files + aggregator
+- Public list factory names (`detectConflictsScenarios`, `aggregateMilitaryStrengthForPlayerScenarios`, `aggregateStrengthScenarios`, `effectiveEraForFactionScenarios`, `cavalryFractionScenarios`, `combatResolverEngagementScenarios`, `combatResolverSpyCivilianScenarios`) and every `scenarioId` / `label` preserved; `colonizethis_combat/test/**` unchanged.
+
+Deferred to follow-up slices on #4196: remaining >220 phys files, `combat_resolver_test_support` builder split, builder densify, CI file-size + LOC ratchets (target ≤6,800 package LOC).
 
