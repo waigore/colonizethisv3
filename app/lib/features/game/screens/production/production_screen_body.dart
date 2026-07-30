@@ -137,6 +137,7 @@ class ProductionScreenBody extends ConsumerWidget {
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: canEdit,
+      canEditAllocation: canEdit,
       onOpenCommodityBreakdown: canEdit
           ? () {
               showDialog<void>(
@@ -160,8 +161,7 @@ class ProductionScreenBody extends ConsumerWidget {
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: openCounsel,
     );
-    final panel =
-        canEdit ? productionPanel : IgnorePointer(child: productionPanel);
+    final panel = productionPanel;
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
         CtE2eProductionPanelSnapshot(

@@ -28,6 +28,7 @@ class ProductionAllocationRow extends StatelessWidget {
     required this.l10n,
     required this.theme,
     this.locked = false,
+    this.canEditAllocation = true,
     this.counselStar,
   });
 
@@ -44,6 +45,10 @@ class ProductionAllocationRow extends StatelessWidget {
   /// so the row renders visible-but-grayed and the slider/steppers are
   /// non-interactive per `SPEC/ui/production-panel.md` § Tech-gated recipe rows.
   final bool locked;
+
+  /// When false, slider/steppers are non-interactive but [counselStar] stays
+  /// tappable (turn-resolution read-only mode).
+  final bool canEditAllocation;
 
   /// Optional industry counsel star for this recipe row.
   final ProductionIndustryCounselStar? counselStar;
@@ -115,10 +120,10 @@ class ProductionAllocationRow extends StatelessWidget {
           maxAchievable,
           headerCounselStar: counselStar,
         ),
-        if (locked)
+        if (locked || !canEditAllocation)
           IgnorePointer(
             child: Opacity(
-              opacity: kProductionRecipeLockedOpacity,
+              opacity: locked ? kProductionRecipeLockedOpacity : 1,
               child: sliderRow,
             ),
           )

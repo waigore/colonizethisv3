@@ -33,6 +33,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.canEditAllocation = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
   });
@@ -46,6 +47,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final Orders? currentOrders;
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
+  final bool canEditAllocation;
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
@@ -82,6 +84,7 @@ class _ProductionPanelTestWrapperState
       currentOrders: widget.currentOrders,
       labourCallbacks: widget.labourCallbacks,
       canEditLabour: widget.canEditLabour,
+      canEditAllocation: widget.canEditAllocation,
       starredProduceRecommendationsByRecipeId:
           widget.starredProduceRecommendationsByRecipeId,
       onOpenCounsel: widget.onOpenCounsel,
@@ -100,6 +103,7 @@ Widget buildProductionPanel({
   Orders? currentOrders,
   ProductionLabourCallbacks? labourCallbacks,
   bool canEditLabour = false,
+  bool canEditAllocation = true,
   Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId = const {},
   ProductionOpenCounselCallback? onOpenCounsel,
@@ -133,6 +137,7 @@ Widget buildProductionPanel({
         currentOrders: currentOrders,
         labourCallbacks: labourCallbacks,
         canEditLabour: canEditLabour,
+        canEditAllocation: canEditAllocation,
         starredProduceRecommendationsByRecipeId:
             starredProduceRecommendationsByRecipeId,
         onOpenCounsel: onOpenCounsel,

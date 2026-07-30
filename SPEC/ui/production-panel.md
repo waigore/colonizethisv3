@@ -16,7 +16,7 @@
 ## Trigger conditions
 
 - **Toolbar:** In-game toolbar opens production as full-page route (`Routes.production` / production screen).
-- **Turn resolution:** Panel read-only or disabled while `turnResolutionBlockingProvider` when applicable.
+- **Turn resolution:** Panel read-only or disabled while `turnResolutionBlockingProvider` when applicable. Allocation sliders, Reset, Breakdown, and Labour controls are non-interactive; **Industry counsel stars** and the Allocation header **Counsel** button remain openable so the player can read advice on `GAME90001`.
 
 ---
 
