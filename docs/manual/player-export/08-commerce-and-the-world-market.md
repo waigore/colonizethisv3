@@ -15,7 +15,7 @@ When your warehouse overflows with timber or starves for coal, the **world marke
 ### Caps and rules that protect the realm
 
 - **Mutual exclusion:** for a given commodity in one turn you may bid **or** offer, not both.
-- **Bid-type cap:** by default **1** distinct commodity bid; **3** with at least one embassy; **6** with embassy and `trade_fairs`. Offers are uncapped by that rule.
+- **Bid-type cap:** by default **3** distinct commodity bids; **6** when you research **Trade Fairs**. Embassy presence does not change this cap. Offers are uncapped by that rule.
 - **Quantity:** bids limited by remaining **trade cargo**; offers limited by projected stockpile after industry reservations.
 - **Treasury bid budget:** total bid spend (`quantity × current integer price`) cannot exceed treasury after other pending costs (builds, recruits, work, subsidies). Over-budget bids are rejected.
 - Unfilled bids/offers may **carry forward** when stockpile/cargo still cover them; minor auto-offers do not carry.
@@ -42,9 +42,9 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 
 **Counsel.** Hark, my liege: a bid without cargo is a promise the fleet cannot keep — leave holds for extraction first, then for the market.
 
-**Tip.** Embassy and `trade_fairs` multiply how many commodities you may chase in one turn. The Market header shows **Bid goods: U of C** so you see the limit before you end the turn — diplomacy is market infrastructure.
+**Tip.** You may bid on up to **three** distinct commodities each turn by default; research **Trade Fairs** to raise the limit to six. The Market header shows **Bid goods: U of C** and a **?** beside each limit line for a short explanation.
 
-**Tip.** **Bid budget: R of B** shows how much treasury you can still commit to bids this turn after other staged spending. When the treasury bid limit is reached, free gold or trim other orders before bidding more; tap **Why this limit?** under the budget line for a short explanation.
+**Tip.** **Bid budget: R of B** shows how much treasury you can still commit to bids this turn after other staged spending. When the treasury bid limit is reached, free gold or trim other orders before bidding more; tap the **?** beside the budget line for a short explanation.
 
 **Tip.** A per-row priority dropdown is not yet on the Market tab; staged orders use the default priority until that control ships.
 
