@@ -67,6 +67,15 @@ class CtDropdown<T> extends StatefulWidget {
   /// value is selected and in each picker row when non-null.
   final Widget? Function(BuildContext context, T value)? itemLeading;
 
+  /// Player-visible label for Marionette / accessibility probes (Refs #4199).
+  String? get marionetteVisibleLabel {
+    final T? selected = value;
+    if (selected != null) {
+      return itemLabel != null ? itemLabel!(selected) : selected.toString();
+    }
+    return hint;
+  }
+
   /// Test hook (debug-only): the [Key] of the [AnimatedRotation] driving the
   /// trigger chevron animation. Tests can locate the chevron via this key to
   /// assert turn counts and durations without depending on widget tree order.
