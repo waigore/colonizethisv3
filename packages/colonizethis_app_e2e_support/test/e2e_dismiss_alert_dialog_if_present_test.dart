@@ -12,6 +12,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/dismiss_alert_dialog_counter_group.dart';
+import 'support/dismiss_alert_dialog_perf_attribution_group.dart';
 import 'support/dismiss_widget_tester_harness.dart';
 
 void main() {
@@ -89,34 +91,15 @@ void main() {
     testWidgets('taps Close first when both Close and OK are hit-testable', (
       WidgetTester tester,
     ) async {
-      var closeTaps = 0;
-      var okTaps = 0;
-      await tester.pumpWidget(
-        wrapDismissMaterial(
-          DismissPostFrameDialogHost(
-            dialogBuilder: (context) => AlertDialog(
-              title: const Text('priority-pin'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    okTaps++;
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    closeTaps++;
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Close'),
-                ),
-              ],
-            ),
-          ),
+      final tapCounts = <String, int>{};
+      await pumpDismissPostFrameAlertDialog(
+        tester,
+        (context) => labelledActionAlertDialog(
+          title: 'priority-pin',
+          labels: const ['OK', 'Close'],
+          tapCounts: tapCounts,
         ),
       );
-      await pumpDismissOverlaySettle(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
 
       final dismissed = await e2eDismissAlertDialogIfPresent(tester);
@@ -130,7 +113,7 @@ void main() {
             'AlertDialog.',
       );
       expect(
-        closeTaps,
+        tapCounts['Close'],
         1,
         reason:
             'Close must be tapped first when both Close and OK are '
@@ -138,55 +121,36 @@ void main() {
             'dismiss would still succeed but with the wrong action '
             'semantic.',
       );
-      expect(okTaps, 0);
+      expect(tapCounts['OK'] ?? 0, 0);
       expect(find.byType(AlertDialog), findsNothing);
     });
 
     testWidgets(
       'taps OK when Close is absent and OK + Cancel are hit-testable',
       (WidgetTester tester) async {
-        var okTaps = 0;
-        var cancelTaps = 0;
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => AlertDialog(
-                title: const Text('ok-priority-pin'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      cancelTaps++;
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      okTaps++;
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-            ),
+        final tapCounts = <String, int>{};
+        await pumpDismissPostFrameAlertDialog(
+          tester,
+          (context) => labelledActionAlertDialog(
+            title: 'ok-priority-pin',
+            labels: const ['Cancel', 'OK'],
+            tapCounts: tapCounts,
           ),
         );
-        await pumpDismissOverlaySettle(tester);
 
         final dismissed = await e2eDismissAlertDialogIfPresent(tester);
         await pumpDismissPostTapSettle(tester);
 
         expect(dismissed, isTrue);
         expect(
-          okTaps,
+          tapCounts['OK'],
           1,
           reason:
               'OK must take precedence over Cancel when Close is absent — '
               'a reorder that put Cancel first would silently dismiss '
               'via the wrong action.',
         );
-        expect(cancelTaps, 0);
+        expect(tapCounts['Cancel'] ?? 0, 0);
         expect(find.byType(AlertDialog), findsNothing);
       },
     );
@@ -194,32 +158,21 @@ void main() {
     testWidgets('taps Yes when only Yes is present (last-priority label)', (
       WidgetTester tester,
     ) async {
-      var yesTaps = 0;
-      await tester.pumpWidget(
-        wrapDismissMaterial(
-          DismissPostFrameDialogHost(
-            dialogBuilder: (context) => AlertDialog(
-              title: const Text('yes-only-pin'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    yesTaps++;
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Yes'),
-                ),
-              ],
-            ),
-          ),
+      final tapCounts = <String, int>{};
+      await pumpDismissPostFrameAlertDialog(
+        tester,
+        (context) => labelledActionAlertDialog(
+          title: 'yes-only-pin',
+          labels: const ['Yes'],
+          tapCounts: tapCounts,
         ),
       );
-      await pumpDismissOverlaySettle(tester);
 
       final dismissed = await e2eDismissAlertDialogIfPresent(tester);
       await pumpDismissPostTapSettle(tester);
 
       expect(dismissed, isTrue);
-      expect(yesTaps, 1);
+      expect(tapCounts['Yes'], 1);
       expect(find.byType(AlertDialog), findsNothing);
     });
   });
@@ -375,411 +328,6 @@ void main() {
     );
   });
 
-  group('e2eDismissAlertDialogIfPresent — perf counter bump pin', () {
-    testWidgets(
-      'emits exactly one E2E_COUNTER dismiss_alert_dialog_calls bump on '
-      'labelled-tap success',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_perf_pin');
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => AlertDialog(
-                title: const Text('counter-success'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        late bool dismissed;
-        final lines = await captureE2eDebugPrints(() async {
-          dismissed = await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        expect(dismissed, isTrue);
-        expect(
-          hasE2eCounterLine(lines, test: 'alert_dialog_perf_pin', name: 'dismiss_alert_dialog_calls', expectedValue: 1),
-          isTrue,
-          reason:
-              'Labelled-tap success must emit exactly one '
-              'E2E_COUNTER|...|name=dismiss_alert_dialog_calls|value=1 '
-              'marker so observer dashboards can attribute the cost of '
-              'stray AlertDialogs per scenario. Captured lines: $lines',
-        );
-        final bumpCount = lines
-            .where(
-              (line) => line.startsWith(
-                'E2E_COUNTER|test=alert_dialog_perf_pin|'
-                'name=dismiss_alert_dialog_calls|',
-              ),
-            )
-            .length;
-        expect(
-          bumpCount,
-          1,
-          reason:
-              'Success path must bump dismiss_alert_dialog_calls exactly '
-              'once; a regression that double-bumped would inflate '
-              'downstream counter aggregations. Captured lines: $lines',
-        );
-      },
-    );
-
-    testWidgets(
-      'emits a single bump on handlePopRoute fallback (any successful '
-      'dismissal attempt counts)',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_fallback_perf_pin');
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => const AlertDialog(
-                title: Text('counter-fallback'),
-                content: Text('No labelled actions'),
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        expect(
-          hasE2eCounterLine(lines, test: 'alert_dialog_fallback_perf_pin', name: 'dismiss_alert_dialog_calls', expectedValue: 1),
-          isTrue,
-          reason:
-              'handlePopRoute fallback must also count as a successful '
-              'dismissal attempt — the counter measures "stray AlertDialogs '
-              'observed", not "labelled-button taps". Captured lines: $lines',
-        );
-      },
-    );
-
-    testWidgets(
-      'does not emit dismiss_alert_dialog_calls when no AlertDialog is mounted',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_perf_no_dialog_pin');
-        await pumpDismissMaterial(
-          tester,
-          const Scaffold(body: SizedBox()),
-        );
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-
-        expect(
-          hasAnyE2eCounterLine(
-            lines,
-            test: 'alert_dialog_perf_no_dialog_pin',
-            name: 'dismiss_alert_dialog_calls',
-          ),
-          isFalse,
-          reason:
-              'No-AlertDialog short-circuit must not emit the counter '
-              'marker (the helper returned false without tapping or '
-              'popping). Captured lines: $lines',
-        );
-      },
-    );
-  });
-
-  // The following group pins the inner-helper perf attribution surface added
-  // alongside the dispatcher-level [e2eDismissTransientUi] result-tag
-  // taxonomy (Refs GitHub #2336 AC8 baseline timing). The integration suite
-  // cannot validate the inner-helper attribution directly today
-  // (`app_e2e_linux` is a no-op per `SPEC/program/e2e-integration-tests.md` §
-  // CI), so this widget-test layer is the only per-PR pin for the new
-  // inner-helper markers and their `result=...` taxonomy.
-  group('e2eDismissAlertDialogIfPresent perf attribution', () {
-    test(
-      'phase constant matches the documented `dismiss_alert_dialog` label',
-      () {
-        expect(
-          kE2eDefaultDismissAlertDialogPhase,
-          'dismiss_alert_dialog',
-          reason:
-              'Phase constant must stay byte-equivalent so the AC8 baseline '
-              'timing pipeline can key on the same phase=... label as the '
-              'docs in `SPEC/program/e2e-integration-tests.md` § Determinism '
-              '(Dismiss-alert-dialog inner perf attribution bullet).',
-        );
-      },
-    );
-
-    testWidgets(
-      'emits result=not_present without the dispatcher counter when no '
-      'AlertDialog is mounted',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_phase_not_present_pin');
-        await pumpDismissMaterial(
-          tester,
-          const Scaffold(body: SizedBox()),
-        );
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-
-        final timing = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          timing,
-          hasLength(1),
-          reason:
-              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
-              'emitted on the no-AlertDialog short-circuit. Captured: $lines',
-        );
-        expect(
-          timing.single,
-          contains('|meta=result=not_present'),
-          reason:
-              'Empty-tree dismissal must report `result=not_present` so the '
-              'AC8 timing pipeline can separate cheap no-op short-circuits '
-              'from real dismissals.',
-        );
-        expect(
-          hasAnyE2eCounterLine(
-            lines,
-            test: 'alert_dialog_phase_not_present_pin',
-            name: 'dismiss_alert_dialog_calls',
-          ),
-          isFalse,
-          reason:
-              'No-AlertDialog short-circuit must not bump '
-              '`dismiss_alert_dialog_calls` (the helper returned false '
-              'without tapping or popping). Captured: $lines',
-        );
-      },
-    );
-
-    testWidgets(
-      'emits result=labelled_tap alongside the dispatcher counter when a '
-      'labelled action is dispatched',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_phase_labelled_tap_pin');
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => AlertDialog(
-                title: const Text('phase-labelled-tap'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        late bool dismissed;
-        final lines = await captureE2eDebugPrints(() async {
-          dismissed = await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        expect(dismissed, isTrue);
-        final timing = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          timing,
-          hasLength(1),
-          reason:
-              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
-              'emitted on the labelled-tap success path. Captured: $lines',
-        );
-        expect(
-          timing.single,
-          contains('|meta=result=labelled_tap'),
-          reason:
-              'A successful labelled dismissal must report '
-              '`result=labelled_tap` so the AC8 timing pipeline can '
-              'separate the labelled-tap arm from the handlePopRoute '
-              'fallback arm.',
-        );
-      },
-    );
-
-    testWidgets(
-      'emits result=pop_route_fallback alongside the dispatcher counter '
-      'when no labelled button is hit-testable',
-      (WidgetTester tester) async {
-        final perf = E2ePerfLog('alert_dialog_phase_fallback_pin');
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => const AlertDialog(
-                title: Text('phase-fallback'),
-                content: Text('No labelled actions'),
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(tester, perf: perf);
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        final timing = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase') &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          timing,
-          hasLength(1),
-          reason:
-              'Exactly one inner-helper `E2E_TIMING|phase=...` line must be '
-              'emitted on the handlePopRoute fallback path. Captured: '
-              '$lines',
-        );
-        expect(
-          timing.single,
-          contains('|meta=result=pop_route_fallback'),
-          reason:
-              'A handlePopRoute-fallback dismissal must report '
-              '`result=pop_route_fallback` so the AC8 timing pipeline can '
-              'separate this last-resort arm from real labelled taps. A '
-              'silent regression that never tagged the fallback would '
-              'mask growing pop-route usage in CI runs.',
-        );
-      },
-    );
-
-    testWidgets(
-      'no perf line emitted when perf is null (default opt-out contract)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => AlertDialog(
-                title: const Text('phase-quiet'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(tester);
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        final phaseLines = lines
-            .where(
-              (line) =>
-                  line.startsWith('E2E_TIMING|') &&
-                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase'),
-            )
-            .toList();
-        expect(
-          phaseLines,
-          isEmpty,
-          reason:
-              'Default `perf: null` must preserve the byte-quiet contract: '
-              'no `E2E_TIMING|phase=dismiss_alert_dialog` line should be '
-              'emitted for opt-out callers. Captured: $lines',
-        );
-      },
-    );
-
-    testWidgets(
-      'custom phaseName reaches the inner-helper emission and does NOT also '
-      'emit under the default label',
-      (WidgetTester tester) async {
-        const customPhase = 'alert_dialog_custom_phase_label';
-        final perf = E2ePerfLog('alert_dialog_custom_phase_pin');
-        await tester.pumpWidget(
-          wrapDismissMaterial(
-            DismissPostFrameDialogHost(
-              dialogBuilder: (context) => AlertDialog(
-                title: const Text('phase-custom'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-        await pumpDismissOverlaySettle(tester);
-
-        final lines = await captureE2eDebugPrints(() async {
-          await e2eDismissAlertDialogIfPresent(
-            tester,
-            perf: perf,
-            phaseName: customPhase,
-          );
-        });
-        await pumpDismissPostTapSettle(tester);
-
-        final customTiming = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$customPhase|') &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          customTiming,
-          hasLength(1),
-          reason:
-              'Custom phaseName must be threaded through to the inner-helper '
-              'E2E_TIMING emission so distinct dispatch sites can stay '
-              'separable in perf-timing dumps. Captured: $lines',
-        );
-        final defaultTiming = lines
-            .where(
-              (line) =>
-                  line.contains('phase=$kE2eDefaultDismissAlertDialogPhase|') &&
-                  line.startsWith('E2E_TIMING|'),
-            )
-            .toList();
-        expect(
-          defaultTiming,
-          isEmpty,
-          reason:
-              'A custom phaseName must NOT also surface under the default '
-              'phase label; otherwise scrapers that aggregate by the default '
-              'phase would double-count custom-labelled calls.',
-        );
-      },
-    );
-  });
+  registerDismissAlertDialogCounterGroup();
+  registerDismissAlertDialogPerfAttributionGroup();
 }

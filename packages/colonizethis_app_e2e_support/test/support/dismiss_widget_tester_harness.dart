@@ -101,6 +101,47 @@ Future<void> pumpDismissPostTapSettle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 50));
 }
 
+/// Post-frame [AlertDialog] host with overlay settle — common dismiss-suite pump.
+Future<void> pumpDismissPostFrameAlertDialog(
+  WidgetTester tester,
+  WidgetBuilder dialogBuilder, {
+  bool barrierDismissible = false,
+}) async {
+  await pumpDismissMaterial(
+    tester,
+    DismissPostFrameDialogHost(
+      dialogBuilder: dialogBuilder,
+      barrierDismissible: barrierDismissible,
+    ),
+  );
+  await pumpDismissOverlaySettle(tester);
+}
+
+/// [AlertDialog] with labelled [TextButton] actions and per-label tap counters.
+Widget labelledActionAlertDialog({
+  required String title,
+  required List<String> labels,
+  required Map<String, int> tapCounts,
+}) {
+  return Builder(
+    builder: (context) {
+      return AlertDialog(
+        title: Text(title),
+        actions: [
+          for (final label in labels)
+            TextButton(
+              onPressed: () {
+                tapCounts[label] = (tapCounts[label] ?? 0) + 1;
+                Navigator.of(context).pop();
+              },
+              child: Text(label),
+            ),
+        ],
+      );
+    },
+  );
+}
+
 /// Surfaces a route via `showDialog` once after the first frame so test
 /// bodies can assert against a steady dialog without driving `showDialog`
 /// from a stateless [Widget.build].
