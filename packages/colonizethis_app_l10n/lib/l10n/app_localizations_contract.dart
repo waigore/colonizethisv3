@@ -1256,6 +1256,18 @@ abstract class AppLocalizations {
   /// Detail industry counsel reason for feedstock blocked.
   String get industryCounsel_reason_feedstockBlocked_detail;
 
+  /// Primary action on produce counsel cards.
+  String get industryCounsel_action_applyProduceAllocation;
+
+  /// Primary action on train counsel cards.
+  String get industryCounsel_action_agreeTrain;
+
+  /// Primary action on feedstock unblock counsel cards.
+  String get industryCounsel_action_openDevelopment;
+
+  /// Shown when train Agree fails re-validation.
+  String get industryCounsel_trainAgreeFailed;
+
   /// Production panel subheader for available resources.
   String get production_available;
 

@@ -148,6 +148,20 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Production is input-starved while improvable tiles can raise the blocking commodity.';
 
   @override
+  String get industryCounsel_action_applyProduceAllocation =>
+      'Apply recommended industry allocation';
+
+  @override
+  String get industryCounsel_action_agreeTrain => 'Agree';
+
+  @override
+  String get industryCounsel_action_openDevelopment => 'Open Development';
+
+  @override
+  String get industryCounsel_trainAgreeFailed =>
+      'Cannot train that worker tier right now — check stockpile and queued orders.';
+
+  @override
   String get production_available => 'Available';
 
   @override

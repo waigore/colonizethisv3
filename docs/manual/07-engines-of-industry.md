@@ -19,6 +19,15 @@ Extraction fills your warehouse only with raw plenty. **Production** turns timbe
 3. **Allocation** (right / below): one row per recipe. Set **desired output** with the slider or − / + / maximize / clear. The row shows inputs in parentheses, `max · bottleneck`, and labour warnings when idle labour or materials cannot cover the ask.
 4. Desired output is converted to labour assignments for the resolver (`desired × labour per unit`). **Reset** clears allocations. While turn resolution is blocking, treat the panel as read-only.
 
+### Industry Counsel (`GAME90001`)
+
+1. From Production Allocation, tap **Counsel** in the header or a starred row’s counsel star to open `GAME90001` **Counsel** with the Industry tab.
+2. The vizier lists up to three ranked recommendations (produce, train workers, or unblock feedstock) using the same **core** industry signals as AI planners — without crisis-only boosts.
+3. **Apply recommended industry allocation** on a produce card writes the ranker’s full core assignment snapshot to your desired outputs (recipes outside that snapshot keep their current sliders).
+4. **Agree** on a train card queues one recruit order for that tier when still affordable; Labour Controls shows the pending count.
+5. **Open Development** on a feedstock card navigates to `GAME80001` — it does not auto-assign improve work.
+6. Empty counsel: “No pressing industry advice this turn.” Agree actions are hidden while turn resolution blocks edits, same as Production.
+
 ### Recipes you can run (current product)
 
 | Output | Typical inputs | Labour / unit | Notes |
@@ -36,7 +45,7 @@ Whole runs only — if materials or labour run short, industry completes as many
 
 ## Counsel
 
-**Counsel.** Hark, my liege: lumber without timber is a decree written on water — improve and connect feedstock tiles before you crank the Allocation sliders to the stop.
+**Counsel.** Hark, my liege: when the stars gleam on Allocation, the Industry Counsel speaks — heed the ranked advice, then **Agree** only when you mean to queue labour or train workers; the sliders obey your hand afterward.
 
 **Tip.** Read the Available deltas after you set Allocation. If Consumption will eat your food, Production labour collapses next turn even when the warehouse looks full today.
 
@@ -56,6 +65,7 @@ Rival Great Powers run an **economy planner** that assigns labour to feasible re
 
 - [ ] Explains central unbounded stockpile and Extraction → Riches → Consumption → Production order.
 - [ ] Documents `GAME20001` / `PROD20001` flows: Available, Allocation, desired output, bottleneck, Reset.
+- [ ] Documents `GAME90001` Counsel Industry tab: stars entry, Agree apply, Development deep-link.
 - [ ] Lists current-product recipes with tech gate on cotton fabric.
 - [ ] States whole-run rule and labour tiers without WorkerPool headcount drain.
 - [ ] Sources match the chapter coverage map.
@@ -72,6 +82,7 @@ Rival Great Powers run an **economy planner** that assigns labour to feasible re
 - `SPEC/program/order-projections.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/production-commodity-breakdown-dialog.md`
+- `SPEC/ui/counsel-panel.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/economy-planner.md`
 - `SPEC/ai/growth-stage-planner.md`

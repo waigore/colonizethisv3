@@ -16,6 +16,7 @@
 - Global top ≤3 among produce + train + optional feedstock unblock.
 - Cross-kind sort: descending `rankScore`, then kind precedence `produceRecipe` < `trainWorker` < `unblockFeedstock`, then stable id.
 - Stable ids: `produce:<recipeId>`, `train:<WorkerTier.name>`, `feedstock:<commodityId>`.
+- **Agree apply:** `industryCounselCoreDesiredOutputByRecipe` supplies the full core assignment snapshot for produce Agree; `mergeIndustryCounselCoreDesiredOutput` preserves recipes outside the snapshot (Refs #4191).
 
 ## AI alignment
 
