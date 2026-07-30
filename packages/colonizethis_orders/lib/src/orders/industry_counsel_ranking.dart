@@ -327,8 +327,7 @@ String? _smallestOwnedImprovableTileKey({
 }) {
   final ownerCache = ProvinceOwnerCache.of(game.worldState);
   String? best;
-  for (final province in game.worldState.allProvinces()) {
-    if (ownerCache.ownerOf(province.id) != playerId) continue;
+  for (final province in ownerCache.provincesOwnedBy(playerId)) {
     final counts = provinceImprovableResourceTileCounts(
       game: game,
       provinceId: province.id,
