@@ -30,6 +30,18 @@ class VictoryScreenBody extends ConsumerStatefulWidget {
 
 class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
   final Set<String> _expandedPlayerIds = <String>{};
+  late String _selectedPlayerId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPlayerId = widget.humanPlayerId;
+  }
+
+  void _selectPlayer(String playerId) {
+    if (_selectedPlayerId == playerId) return;
+    setState(() => _selectedPlayerId = playerId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,15 +85,27 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
               key: VictoryScreenKeys.standingsSectionKey,
               title: 'Great Power standings',
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Text(
+                    key: VictoryScreenKeys.standingsHelperKey,
+                    appL10n(context).victory_standingsHelper,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: EditorialMonoclePalette.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   for (final row in standings)
                     _StandingRow(
                       key: VictoryScreenKeys.standingRowKey(row.playerId),
                       row: row,
                       isHuman: row.playerId == widget.humanPlayerId,
+                      isSelected: row.playerId == _selectedPlayerId,
                       color: _swatchColorFor(ownershipColors, row.playerId),
+                      threshold: victoryPanelMilitaryOwThreshold,
                       expanded: _expandedPlayerIds.contains(row.playerId),
-                      onToggle: () {
+                      onSelect: () => _selectPlayer(row.playerId),
+                      onToggleExpand: () {
                         setState(() {
                           if (_expandedPlayerIds.contains(row.playerId)) {
                             _expandedPlayerIds.remove(row.playerId);
@@ -103,6 +127,8 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
                     child: VictoryPoliticalMinimap(
                       game: game,
                       region: owRegion,
+                      selectedPlayerId: _selectedPlayerId,
+                      onGreatPowerOwnerSelected: _selectPlayer,
                     ),
                   ),
           ),
@@ -247,58 +273,114 @@ class _StandingRow extends StatelessWidget {
     super.key,
     required this.row,
     required this.isHuman,
+    required this.isSelected,
     required this.color,
+    required this.threshold,
     required this.expanded,
-    required this.onToggle,
+    required this.onSelect,
+    required this.onToggleExpand,
     required this.textTheme,
   });
 
   final VictoryStandingRow row;
   final bool isHuman;
+  final bool isSelected;
   final Color color;
+  final int threshold;
   final bool expanded;
-  final VoidCallback onToggle;
+  final VoidCallback onSelect;
+  final VoidCallback onToggleExpand;
   final TextTheme textTheme;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final titleStyle = textTheme.bodyLarge?.copyWith(
-      color: isHuman
+      color: isHuman || isSelected
           ? EditorialMonoclePalette.accentBright
           : EditorialMonoclePalette.fg,
-      fontWeight: isHuman ? FontWeight.w700 : FontWeight.w500,
+      fontWeight: isHuman || isSelected ? FontWeight.w700 : FontWeight.w500,
     );
     final breakdown = row.powerBreakdown;
+    final progress = threshold <= 0
+        ? 0.0
+        : (row.owProvinceCount / threshold).clamp(0.0, 1.0);
     return Column(
       children: [
-        InkWell(
-          onTap: onToggle,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  color: color,
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: Text(row.displayName, style: titleStyle)),
-                Text(
-                  l10n.victory_standingOwCount(row.owProvinceCount),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: EditorialMonoclePalette.fg,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: isSelected
+                ? EditorialMonoclePalette.surfaceLite.withValues(alpha: 0.35)
+                : null,
+            border: isSelected
+                ? Border.all(color: EditorialMonoclePalette.accentDim)
+                : null,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: InkWell(
+                  key: VictoryScreenKeys.standingSelectKey(row.playerId),
+                  onTap: onSelect,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 4,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          margin: const EdgeInsets.only(top: 4),
+                          color: color,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(row.displayName, style: titleStyle),
+                              const SizedBox(height: 4),
+                              Text(
+                                l10n.victory_standingOwProgress(
+                                  row.owProvinceCount,
+                                  threshold,
+                                ),
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: EditorialMonoclePalette.muted,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              _VictoryOwProgressBar(
+                                key: VictoryScreenKeys.standingProgressKey(
+                                  row.playerId,
+                                ),
+                                progress: progress,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
-                  key: VictoryScreenKeys.standingExpandKey(row.playerId),
-                  color: EditorialMonoclePalette.muted,
-                  size: 20,
+              ),
+              InkWell(
+                key: VictoryScreenKeys.standingExpandKey(row.playerId),
+                onTap: onToggleExpand,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+                  child: Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    color: EditorialMonoclePalette.muted,
+                    size: 20,
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         if (expanded)
@@ -309,6 +391,45 @@ class _StandingRow extends StatelessWidget {
           ),
         Divider(height: 1, color: EditorialMonoclePalette.border),
       ],
+    );
+  }
+}
+
+class _VictoryOwProgressBar extends StatelessWidget {
+  const _VictoryOwProgressBar({
+    super.key,
+    required this.progress,
+  });
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth * progress;
+        return SizedBox(
+          height: 6,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: EditorialMonoclePalette.bgDeep,
+              border: Border.all(color: EditorialMonoclePalette.border),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: width,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: EditorialMonoclePalette.accentBright
+                        .withValues(alpha: 0.85),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
