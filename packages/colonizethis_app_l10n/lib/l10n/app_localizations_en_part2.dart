@@ -234,20 +234,55 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String victory_conditionsMilitaryThreshold(int threshold) {
-    return 'Military victory: control $threshold or more Old World provinces.';
+    return 'Control $threshold or more Old World provinces to win.';
   }
 
   @override
   String get victory_conditionsCalendarEnd =>
-      'Calendar campaign end: without military victory, the campaign can '
-      'halt near 1800 (turn 201 under the default calendar). The declared '
-      'winner is the Great Power with the strictly highest power score, or '
-      'no-one on a tie. This is not a military victory.';
+      'If no one wins by province count, the campaign can halt near 1800 '
+      '(turn 201 under the default calendar). The Great Power with the '
+      'strongest overall realm may be named the declared winner; a tie names '
+      'no one.';
 
   @override
   String get victory_conditionsInfiniteMode =>
-      'Infinite mode is on: the calendar halt is bypassed. Only military '
-      'victory or leaving the campaign ends play.';
+      'Infinite mode is on: the calendar halt is bypassed. Only reaching the '
+      'province win or leaving the campaign ends play.';
+
+  @override
+  String victory_endProvinceCountWin(String winner, int turn) {
+    return '$winner won on turn $turn by controlling enough Old World provinces.';
+  }
+
+  @override
+  String victory_endCalendarDeclaredWinner(String winner) {
+    return 'Calendar campaign ended. $winner had the strongest overall realm '
+        'when play stopped.';
+  }
+
+  @override
+  String get victory_endCalendarNoWinner =>
+      'Calendar campaign ended with no declared winner (tied overall strength).';
+
+  @override
+  String get victory_powerBreakdownIntro =>
+      'These totals matter only if the campaign runs to the calendar end '
+      'without a province-count winner.';
+
+  @override
+  String victory_powerBreakdownProvinces(int count) =>
+      'Provinces (all worlds): $count';
+
+  @override
+  String victory_powerBreakdownRegiments(int strength) =>
+      'Regiment strength: $strength';
+
+  @override
+  String victory_powerBreakdownShips(int count) => 'Ships: $count';
+
+  @override
+  String victory_powerBreakdownTotal(int total) =>
+      'Overall strength total: $total';
 
   @override
   String victory_standingOwCount(int count) => '$count OW';
