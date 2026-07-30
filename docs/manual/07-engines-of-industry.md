@@ -65,7 +65,7 @@ Rival Great Powers run an **economy planner** that assigns labour to feasible re
 
 - [ ] Explains central unbounded stockpile and Extraction → Riches → Consumption → Production order.
 - [ ] Documents `GAME20001` / `PROD20001` flows: Available, Allocation, desired output, bottleneck, Reset.
-- [ ] Documents `GAME90001` Counsel Industry tab: stars entry, Agree apply, Development deep-link.
+- [x] Documents `GAME90001` Counsel Industry tab: stars entry, Agree apply, Development deep-link.
 - [ ] Lists current-product recipes with tech gate on cotton fabric.
 - [ ] States whole-run rule and labour tiers without WorkerPool headcount drain.
 - [ ] Sources match the chapter coverage map.
