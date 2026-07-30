@@ -20,7 +20,15 @@ Implementation: `app/lib/config/marionette_app_binding.dart`; production `main()
 ## Out of scope (this slice)
 
 - `export-player-manual` / `player-playthrough` skills (WS2–WS3)
-- Full Ct* / Flame map Semantics catalog (follow-up under #4199 discoverability)
+- Full Flame map/tile Semantics catalog (follow-up under #4199 discoverability)
+
+## Ct-* discoverability
+
+`app/lib/config/colonizethis_marionette_configuration.dart` registers primary
+editorial-monocle Ct-* controls (`CtNinePatchButton`, text/icon buttons,
+`CtBackButton`, `CtToggleSwitch`, `CtSlider`, `CtDropdown`) with
+`MarionetteConfiguration` so Marionette lists one element per control with
+player-visible label text.
 
 ## Acceptance (WS1 subset)
 

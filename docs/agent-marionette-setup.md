@@ -38,9 +38,12 @@ Connect Marionette to the VM service URI from the running debug session, then us
 
 ## Custom Ct* widgets
 
-v1 relies on Marionette defaults (Material recognizers). Primary chrome (left rail, Next turn, dialogs) may need `MarionetteConfiguration` in a follow-up slice if elements are not listed — see #4199 WS1 discoverability AC.
+`colonizethisMarionetteConfiguration` (`app/lib/config/colonizethis_marionette_configuration.dart`) marks primary Ct-* chrome as Marionette interaction targets and extracts player-visible labels (button text, tooltips, dropdown selection). Extend that file when new Ct-* controls must be agent-tappable in modes A–B.
+
+Full Flame map/tile Semantics may still need a follow-up slice if map clicks are required beyond panel/rail flows.
 
 ## Related
 
 - Binding gate: `app/lib/config/marionette_app_binding.dart`
+- Ct-* Marionette config: `app/lib/config/colonizethis_marionette_configuration.dart`
 - SPEC: `SPEC/program/agent-marionette.md`

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
+import 'colonizethis_marionette_configuration.dart';
+
 /// Whether [MarionetteBinding] should replace [WidgetsFlutterBinding] in this
 /// process. Debug agent playtests only — never under `flutter test`,
 /// `integration_test`, or CT_E2E builds (single-binding rule).
@@ -24,7 +26,7 @@ void ensureColonizeThisAppBinding() {
     flutterTest: const bool.fromEnvironment('FLUTTER_TEST'),
     ctE2eEnabled: kCtE2EEnabled,
   )) {
-    MarionetteBinding.ensureInitialized();
+    MarionetteBinding.ensureInitialized(colonizethisMarionetteConfiguration);
     return;
   }
   WidgetsFlutterBinding.ensureInitialized();
