@@ -23,7 +23,7 @@ accepts and debits treasury by the amount
 accepts apprentice train when tech unlocked, deducts 200 ducats, 2 paper, 1 peasant; increments apprentices
 accepts build_rail on plains with Early Steam and road 1
 accepts Builder when treasury and paper sufficient
-accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)
+accepts first bid when player has no embassy (baseline bid type cap 3 per Refs #4186; SPEC/game/world-market.md § Bid type cap)
 accepts initial scrub timber improvement (level 0 -> 1)
 accepts journeyman train and applies 500 ducat + 5 paper cost
 accepts known GP target identically with and without snapshot
@@ -393,7 +393,7 @@ rejects purchase_land when mineral tile not prospected
 rejects purchase_land when no embassy with Minor
 rejects purchase_land when tile already owned by same player
 rejects purchase_land when tile has no resource
-rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)
+rejects fourth distinct-commodity bid when no embassy (baseline bid type cap == 3 exhausted; Refs #4186)
 rejects second pending work order for same unit in one turn
 rejects join empire toward GP without Empire Building tech (negative)
 rejects unknown unit type
