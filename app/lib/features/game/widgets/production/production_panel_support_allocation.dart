@@ -152,7 +152,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
       final counselRecommendation =
           starredProduceRecommendationsByRecipeId[recipe.id];
       ProductionIndustryCounselStar? counselStar;
-      if (counselRecommendation != null && onOpenCounsel != null) {
+      if (counselRecommendation != null && onOpenCounsel != null && !locked) {
         final brief = industryCounselBriefForReason(
           l10n,
           counselRecommendation.briefReasonKey,

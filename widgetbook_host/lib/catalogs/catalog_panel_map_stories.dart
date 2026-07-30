@@ -195,6 +195,8 @@ class ProductionPanelStory extends StatelessWidget {
     super.key,
     this.playerOverride,
     this.useFullAvailability = true,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   /// When set, used instead of the full/partial demo player.
@@ -202,6 +204,11 @@ class ProductionPanelStory extends StatelessWidget {
 
   /// When true, use full-availability demo player; when false, partial.
   final bool useFullAvailability;
+
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +225,9 @@ class ProductionPanelStory extends StatelessWidget {
             child: ProductionPanelStoryBody(
               playerOverride: playerOverride,
               useFullAvailability: useFullAvailability,
+              starredProduceRecommendationsByRecipeId:
+                  starredProduceRecommendationsByRecipeId,
+              onOpenCounsel: onOpenCounsel,
             ),
           ),
         ),
@@ -241,10 +251,15 @@ class ProductionPanelStoryBody extends ConsumerWidget {
     super.key,
     this.playerOverride,
     this.useFullAvailability = true,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   final Player? playerOverride;
   final bool useFullAvailability;
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -322,6 +337,9 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       onDesiredOutputChanged: (next) {
         ref.read(productionDesiredOutputProvider.notifier).replaceAll(next);
       },
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: onOpenCounsel,
     );
   }
 }

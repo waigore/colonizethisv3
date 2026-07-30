@@ -13,7 +13,7 @@ Major flows only; keep this table small.
 | Code | Flow | Sub-flow digits (4th char) |
 |------|------|----------------------------|
 | `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
-| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route, `7` victory route |
+| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route, `7` victory route, `9` counsel route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
@@ -45,6 +45,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | active |
 | `GAME70001` | Victory screen | [victory-panel.md](victory-panel.md) | `app/lib/features/game/screens/victory/victory_screen.dart` | Victory Screen | active |
 | `GAME80001` | Development screen | [development-panel.md](development-panel.md) | `app/lib/features/game/screens/development/development_screen.dart` | Development Panel | active |
+| `GAME90001` | Counsel screen | [counsel-panel.md](counsel-panel.md) | `app/lib/features/game/screens/counsel/counsel_screen.dart` | Counsel Panel | draft |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart` | Civilian Units Panel | active |
