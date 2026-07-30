@@ -4581,5 +4581,21 @@
   "industryCounsel_reason_feedstockBlocked_detail": "Production is input-starved while improvable tiles can raise the blocking commodity.",
   "@industryCounsel_reason_feedstockBlocked_detail": {
     "description": "Detail industry counsel reason for feedstock blocked."
+  },
+  "industryCounsel_action_applyProduceAllocation": "Apply recommended industry allocation",
+  "@industryCounsel_action_applyProduceAllocation": {
+    "description": "Primary action on produce counsel cards — applies full core assignment snapshot."
+  },
+  "industryCounsel_action_agreeTrain": "Agree",
+  "@industryCounsel_action_agreeTrain": {
+    "description": "Primary action on train counsel cards — queues one recruit order."
+  },
+  "industryCounsel_action_openDevelopment": "Open Development",
+  "@industryCounsel_action_openDevelopment": {
+    "description": "Primary action on feedstock unblock counsel cards."
+  },
+  "industryCounsel_trainAgreeFailed": "Cannot train that worker tier right now — check stockpile and queued orders.",
+  "@industryCounsel_trainAgreeFailed": {
+    "description": "Shown when train Agree fails re-validation."
   }
 }

@@ -17,6 +17,8 @@ CtGameFeatureScreenShell
 └── Column
     ├── Industry tab label (titleSmall)
     └── CounselIndustryTabBody (scrollable list or empty state)
+        └── CounselIndustryRecommendationCard (per rec)
+            └── CtNinePatchButton primary action when editable
 ```
 
 ## Behavior
@@ -33,9 +35,11 @@ CtGameFeatureScreenShell
 | Control | When enabled | Emits / calls | Side effects |
 |---------|--------------|---------------|--------------|
 | ← Map | Always | `Navigator.maybePop()` | Returns to prior route. |
-| Recommendation card | Read-only v1 | — | Highlight + detail copy only. |
+| **Apply recommended industry allocation** | Produce rec + `canMutateViaUi` | — | Merges `industryCounselCoreDesiredOutputByRecipe` into `productionDesiredOutputProvider`; recipes outside snapshot unchanged. |
+| **Agree** (train) | Train rec + editable | — | Appends one `RecruitWorkerOrder` when `suggestRecruitWorkerOrders` still accepts tier; else `ShowSnackBarEvent` with failure copy. |
+| **Open Development** | Feedstock unblock rec + editable | `NavigateToRouteEvent(Routes.development, …)` | Opens `GAME80001`; no auto-improve order. |
 
-Agree / apply actions: sibling issue #4191.
+Read-only while turn resolution blocking (`canMutateViaUi == false`): no primary actions.
 
 ## Industry tab
 
@@ -52,8 +56,13 @@ Agree / apply actions: sibling issue #4191.
 - `Counsel Industry (default)` — full-availability demo player; live ranking.
 - `Counsel Industry (highlight)` — same with `highlightRecommendationId` for first produce rec when present.
 - `Counsel Industry (empty)` — player with no feasible industry advice fixture.
+- `Counsel Industry (narrow 360)` — mobile viewport (`360×640` dp) with live ranking.
 
 ## Acceptance criteria
 
 - Given the human opens Counsel from Production, when the screen builds, then title is **Counsel** and the Industry tab lists ≤3 recommendations or the empty-state copy.
 - Given navigation with `highlightRecommendationId`, when the Industry tab opens, then that card is visually emphasized and detail copy is visible.
+- Given a produce recommendation and editable state, when the player taps **Apply recommended industry allocation**, then all recipe desired outputs from the core assignment snapshot are written to `productionDesiredOutputProvider` and recipes outside the snapshot are unchanged.
+- Given a train recommendation still affordable, when the player taps **Agree**, then one `RecruitWorkerOrder` for that tier is queued.
+- Given a train recommendation no longer affordable, when the player taps **Agree**, then no order is queued and a plain-language snackbar is shown.
+- Given unblock feedstock rec, when the player taps **Open Development**, then Development opens and no produce/train order is auto-committed.
