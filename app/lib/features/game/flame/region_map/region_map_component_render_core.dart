@@ -14,6 +14,7 @@ import 'region_map_component_render_core_overlays.dart';
 import 'region_map_component_render_markers_selection.dart';
 import 'region_map_component_render_markers_settlements.dart';
 import 'region_map_component_render_markers_units.dart';
+import 'region_map_component_render_player_territory_outline.dart';
 import 'region_map_component_render_political.dart';
 import 'region_map_component_render_political_borders.dart';
 import 'region_map_component_shared_palette.dart';
@@ -47,6 +48,9 @@ extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
     paintOverlay(canvas);
     if (showProvinceOverlay) {
       paintProvinceBorders(canvas);
+    }
+    if (showPlayerTerritoryOutline) {
+      paintPlayerTerritoryOutline(canvas);
     }
     if (session.hoveredProvinceId != null) {
       paintHoveredProvinceGlow(canvas);

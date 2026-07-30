@@ -56,6 +56,8 @@ class CtRegionMapGame extends FlameGame
     PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
     double initialZoomMultiplier = 1.0,
+    bool showPlayerTerritoryOutline = false,
+    Set<String>? playerTerritoryTileKeys,
   }) {
     this.region = region;
     this.cellSizePx = cellSizePx;
@@ -83,6 +85,8 @@ class CtRegionMapGame extends FlameGame
     this.onTownIconTapped = onTownIconTapped;
     this.playerViewForResources = playerViewForResources;
     this.onViewportSnapshotChanged = onViewportSnapshotChanged;
+    this.showPlayerTerritoryOutline = showPlayerTerritoryOutline;
+    this.playerTerritoryTileKeys = playerTerritoryTileKeys;
     state.zoomMultiplier = initialZoomMultiplier;
   }
 
@@ -129,6 +133,9 @@ class CtRegionMapGame extends FlameGame
     required PlayerView? playerViewForResources,
     void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
     double? zoomMultiplier,
+    bool? showPlayerTerritoryOutline,
+    Set<String>? playerTerritoryTileKeys,
+    bool clearPlayerTerritoryTileKeys = false,
   }) =>
       ctRegionMapGameUpdateProps(
         this,
@@ -157,6 +164,9 @@ class CtRegionMapGame extends FlameGame
         playerViewForResources: playerViewForResources,
         onViewportSnapshotChanged: onViewportSnapshotChanged,
         zoomMultiplier: zoomMultiplier,
+        showPlayerTerritoryOutline: showPlayerTerritoryOutline,
+        playerTerritoryTileKeys: playerTerritoryTileKeys,
+        clearPlayerTerritoryTileKeys: clearPlayerTerritoryTileKeys,
       );
 
   void setCameraCenterWorld(double x, double y) =>

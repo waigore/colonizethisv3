@@ -19,6 +19,8 @@ export 'src/core_economy_test_support.dart';
 export 'src/economy_extraction_scenarios.dart';
 export 'src/economy_riches_to_treasury_scenarios.dart';
 export 'src/economy_production_scenarios.dart';
+export 'src/development_panel_read_model_expectations.dart';
+export 'src/development_panel_read_model_scenarios.dart';
 export 'src/deal_matcher_scenarios/deal_matcher_scenarios.dart';
 export 'src/frr_scenarios/frr_scenarios.dart';
 export 'src/game_lookup_helpers_expectations.dart';

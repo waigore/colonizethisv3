@@ -49,6 +49,8 @@ typedef CreateCtRegionMapGame = CtRegionMapGame Function({
   required void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged,
   required double initialZoomMultiplier,
+  bool showPlayerTerritoryOutline,
+  Set<String>? playerTerritoryTileKeys,
 });
 
 CtRegionMapGame defaultCreateCtRegionMapGame({
@@ -85,6 +87,8 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged,
   required double initialZoomMultiplier,
+  bool showPlayerTerritoryOutline = false,
+  Set<String>? playerTerritoryTileKeys,
 }) {
   return CtRegionMapGame(
     region: region,
@@ -114,6 +118,8 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     playerViewForResources: playerViewForResources,
     onViewportSnapshotChanged: onViewportSnapshotChanged,
     initialZoomMultiplier: initialZoomMultiplier,
+    showPlayerTerritoryOutline: showPlayerTerritoryOutline,
+    playerTerritoryTileKeys: playerTerritoryTileKeys,
   );
 }
 

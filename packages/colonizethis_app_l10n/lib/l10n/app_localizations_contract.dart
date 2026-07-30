@@ -1148,6 +1148,9 @@ abstract class AppLocalizations {
   /// Overview idle civilian counts in the Development panel.
   String development_idleCivilians(int builders, int engineers);
 
+  /// Overview section heading for Builders/Engineers with pending or in-progress work.
+  String get development_assignedCiviliansHeading;
+
   /// Fallback when Development panel map data cannot be loaded.
   String get development_mapDataUnavailable;
 
