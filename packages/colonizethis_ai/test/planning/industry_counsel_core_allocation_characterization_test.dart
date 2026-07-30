@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_ai/src/planning/economy_planner_labour.dart';
+import 'package:colonizethis_ai/src/planning/growth_stage.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -101,6 +102,61 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('matches core allocator with growth stage scoring path', () {
+      final stockpile = Stockpile()
+          .applyDelta(CommodityCatalog.timber.id, 10)
+          .applyDelta(CommodityCatalog.wool.id, 10);
+      const workers = WorkerPool(peasants: 6);
+      const effectiveLabour = 12;
+      const techUnlocked = {'lumber_from_timber': true, 'fabric_from_wool': true};
+      final game = Game(
+        id: 'g-growth-stage',
+        players: [
+          Player(
+            id: 'gp1',
+            displayName: 'GP',
+            isHuman: true,
+            stockpile: stockpile,
+            workerPool: workers,
+            techUnlocked: techUnlocked,
+          ),
+        ],
+        worldState: WorldState(
+          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
+          oldWorld: const RegionData(),
+          newWorld: const RegionData(),
+        ),
+      );
+      final growthStage = GrowthStage.compute(game, 'gp1');
+      final aiAssignments = allocateLabour(
+        LabourAllocationInput(
+          stockpile: stockpile,
+          workers: workers,
+          effectiveLabour: effectiveLabour,
+          config: _coreOnlyConfig,
+          seeds: _coreOnlySeeds,
+          techUnlocked: techUnlocked,
+          growthStage: growthStage,
+        ),
+      );
+      final coreAssignments = industryCounselAllocateLabourCore(
+        stockpile: stockpile,
+        workers: workers,
+        effectiveLabour: effectiveLabour,
+        techUnlocked: techUnlocked,
+        agendaId: kIndustryCounselNeutralAgendaId,
+        growthStage: IndustryCounselGrowthStage(
+          workerGrowthPriority: growthStage.workerGrowthPriority,
+          infrastructurePriority: growthStage.infrastructurePriority,
+          resourceProductionPriority: growthStage.resourceProductionPriority,
+          militaryPriority: growthStage.militaryPriority,
+        ),
+        growthStagePlannerEnabled: true,
+      );
+
+      _expectSameAssignments(aiAssignments, coreAssignments);
     });
 
     test('H8 regiment boost diverges from core but counsel uses core scores', () {
