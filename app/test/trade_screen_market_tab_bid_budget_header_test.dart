@@ -10,6 +10,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -227,7 +228,7 @@ void main() {
     );
 
     testWidgets(
-      'Why this limit? expands treasury bid-budget copy',
+      'bid-budget inline help tooltip mounts beside budget line',
       (tester) async {
         await pumpTradeScreenWithContainer(
           tester,
@@ -235,22 +236,17 @@ void main() {
         );
 
         expect(
-          find.byKey(TradeScreenMarketKeys.marketBidBudgetWhyBodyKey),
-          findsNothing,
-        );
-
-        await tester.tap(
-          find.byKey(TradeScreenMarketKeys.marketBidBudgetWhyToggleKey),
-        );
-        await tester.pump();
-
-        expect(
-          find.byKey(TradeScreenMarketKeys.marketBidBudgetWhyBodyKey),
+          find.byKey(TradeScreenMarketKeys.marketBidBudgetTooltipKey),
           findsOneWidget,
         );
+        expect(find.text('Why this limit?'), findsNothing);
+
+        final CtIconAction budgetHelp = tester.widget<CtIconAction>(
+          find.byKey(TradeScreenMarketKeys.marketBidBudgetTooltipKey),
+        );
         expect(
-          find.text(TradeScreenMarketKeys.bidBudgetWhyLimitCopy),
-          findsOneWidget,
+          budgetHelp.tooltip,
+          TradeScreenMarketKeys.bidBudgetLimitTooltipCopy,
         );
       },
     );

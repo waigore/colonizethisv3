@@ -24,8 +24,6 @@ extension MarketTabContentBuildSections on MarketTabContent {
     TextStyle cargoWarningStyle,
     TextStyle bidGoodsIndicatorStyle,
     TextStyle bidTypeWarningStyle,
-    TextStyle whyToggleStyle,
-    TextStyle whyBodyStyle,
     TextStyle bidBudgetIndicatorStyle,
     TextStyle bidBudgetWarningStyle,
   })
@@ -44,24 +42,17 @@ extension MarketTabContentBuildSections on MarketTabContent {
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.accent),
       cargoWarningStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.danger),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
       bidGoodsIndicatorStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.accent),
       bidTypeWarningStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.danger),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
       bidBudgetIndicatorStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.accent),
       bidBudgetWarningStyle:
-          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.danger),
-      whyToggleStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(color: EditorialMonoclePalette.muted),
-      whyBodyStyle: (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-          .copyWith(color: EditorialMonoclePalette.muted),
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
     );
   }
 

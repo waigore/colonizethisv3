@@ -160,8 +160,6 @@ class ProductionScreenBody extends ConsumerWidget {
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: openCounsel,
     );
-    final panel =
-        canEdit ? productionPanel : IgnorePointer(child: productionPanel);
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
         CtE2eProductionPanelSnapshot(
@@ -175,8 +173,8 @@ class ProductionScreenBody extends ConsumerWidget {
           tileMapByRegion: panelTileMaps,
         ),
       );
-      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: panel);
+      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: productionPanel);
     }
-    return panel;
+    return productionPanel;
   }
 }

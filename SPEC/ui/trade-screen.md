@@ -40,15 +40,14 @@
 - `TradeScreenMarketKeys.marketRowResourceIconKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:resourceIcon')` (per-row leading `ResourceIcon` paint at `marketRowResourceIconSize` (20 dp) immediately before the commodity display name on line 1 — Refs `#3093` row-icons slice). Mounted exactly once per row.
 - `TradeScreenMarketKeys.marketRowPriceCoinIconKey(CommodityId)` — `ValueKey<String>('tradeScreenMarketRow:<id>:priceCoin')` (per-row trailing treasury-coin `StrictAssetIcon` paint at `marketRowPriceCoinIconSize` (14 dp) immediately before the integer price text on line 1 — Refs `#3093` row-icons slice). Always mounted regardless of whether the row resolves to an integer price or the em-dash fallback so the coin acts as a visual currency cue rather than a price-availability flag. Asset: `marketRowPriceCoinAssetPath == 'assets/icons/32/ui_icon_treasury_coin.png'`.
 - `TradeScreenMarketKeys.marketBidGoodsIndicatorKey` — `ValueKey<String>('tradeScreenMarketBidGoodsIndicator')` (persistent header strip above the cargo indicator; renders `Bid goods: U of C` where `U` is the count of distinct staged `TradeOrderType.bid` commodities and `C` is `worldMarketBidTypeCap(game, playerId)` — Refs `#4170`).
-- `TradeScreenMarketKeys.marketBidTypeWarningKey` — `ValueKey<String>('tradeScreenMarketBidTypeWarning')` (danger warning row below the bid-goods indicator when `U >= C` and `C > 0`; absent otherwise — Refs `#4170`).
-- `TradeScreenMarketKeys.marketBidTypeWhyToggleKey` — `ValueKey<String>('tradeScreenMarketBidTypeWhyToggle')` (optional **Why this limit?** disclosure toggle — Refs `#4170`).
-- `TradeScreenMarketKeys.marketBidTypeWhyBodyKey` — `ValueKey<String>('tradeScreenMarketBidTypeWhyBody')` (expanded plain-language bid-type cap copy; mounted only while the disclosure is open — Refs `#4170`).
+- `TradeScreenMarketKeys.marketBidTypeWarningKey` — `ValueKey<String>('tradeScreenMarketBidTypeWarning')` (warning row below the bid-goods indicator when `U >= C` and `C > 0`; default body colour — Refs `#4170`, `#4186`).
+- `TradeScreenMarketKeys.marketBidGoodsTooltipKey` — `ValueKey<String>('tradeScreenMarketBidGoodsTooltip')` (inline `CtIconAction` + `Tooltip` beside the bid-goods line — Refs `#4186`).
 - `TradeScreenMarketKeys.marketCargoIndicatorKey` — `ValueKey<String>('tradeScreenMarketCargoIndicator')` (persistent header strip above the commodity list; renders the `Cargo remaining: X` text where `X = max(0, tradeCargoCapacity − totalStagedBidQuantity)` for the human player — Refs `#2993` E5c).
 - `TradeScreenMarketKeys.marketCargoWarningKey` — `ValueKey<String>('tradeScreenMarketCargoWarning')` (per-screen warning row rendered immediately below the cargo indicator when `remainingCargo == 0` AND `totalStagedBidQuantity > 0`; absent otherwise — Refs `#2993` E5c).
+- `TradeScreenMarketKeys.marketCargoTooltipKey` — `ValueKey<String>('tradeScreenMarketCargoTooltip')` (inline `CtIconAction` + `Tooltip` beside the cargo line — Refs `#4186`).
 - `TradeScreenMarketKeys.marketBidBudgetIndicatorKey` — `ValueKey<String>('tradeScreenMarketBidBudgetIndicator')` (persistent header strip below the cargo indicator; renders `Bid budget: R of B` where `B = treasuryAvailableForBidsByPlayer(...)` and `R = max(0, B − stagedBidTotalSpendByPlayer(...))` — Refs `#4186`).
-- `TradeScreenMarketKeys.marketBidBudgetWarningKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWarning')` (danger warning row below the bid-budget indicator when `R == 0` and (`S > 0` or `B == 0`); absent otherwise — Refs `#4186`).
-- `TradeScreenMarketKeys.marketBidBudgetWhyToggleKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWhyToggle')` (optional **Why this limit?** disclosure toggle for the treasury bid budget — Refs `#4186`).
-- `TradeScreenMarketKeys.marketBidBudgetWhyBodyKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWhyBody')` (expanded plain-language treasury bid-budget copy; mounted only while the disclosure is open — Refs `#4186`).
+- `TradeScreenMarketKeys.marketBidBudgetWarningKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWarning')` (warning row below the bid-budget indicator when `R == 0` and (`S > 0` or `B == 0`); absent otherwise; default body colour — Refs `#4186`).
+- `TradeScreenMarketKeys.marketBidBudgetTooltipKey` — `ValueKey<String>('tradeScreenMarketBidBudgetTooltip')` (inline `CtIconAction` + `Tooltip` beside the bid-budget line — Refs `#4186`).
 - `TradeScreenDealBookKeys.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label; key remained stable when `#2993` E6 swapped the placeholder for the live ledger).
 - `TradeScreenDealBookKeys.dealBookContentKey` — `ValueKey<String>('tradeScreenDealBookContent')` (root of the live Deal Book two-panel ledger content sitting directly under `dealBookTabBodyKey` — Refs `#2993` E6).
 - `TradeScreenDealBookKeys.dealBookBidsPanelKey` — `ValueKey<String>('tradeScreenDealBookBidsPanel')` (left/top container for the player's previous-turn buying activity panel; always mounted under the live ledger root — Refs `#2993` E6).
@@ -295,22 +294,22 @@ The Market header strip surfaces the player's remaining **treasury bid budget** 
 UI surface:
 
 - **Bid budget indicator** (`marketBidBudgetIndicatorKey`): always mounted; literal `Bid budget: R of B`; updates live as bid quantities/directions change and when non-bid staged orders change the projected treasury delta.
-- **Saturation warning** (`marketBidBudgetWarningKey`): mounts when `R == 0` and (`S > 0` or `B == 0`); plain-language copy directs the player to free treasury or reduce other spending before bidding more.
-- **Why this limit?** (`marketBidBudgetWhyToggleKey` / `marketBidBudgetWhyBodyKey`): optional progressive disclosure; body copy states that bids spend from treasury after other staged orders, expected income does not raise the budget, and offers do not consume the budget.
-- **Observe mode:** bid-budget indicator + disclosure remain live; row chips stay under `IgnorePointer` (non-mutating).
+- **Saturation warning** (`marketBidBudgetWarningKey`): mounts when `R == 0` and (`S > 0` or `B == 0`); plain-language copy in default body colour directs the player to free treasury or reduce other spending before bidding more.
+- **Inline help** (`marketBidBudgetTooltipKey`): `CtIconAction` with `Tooltip` beside the bid-budget line; message literal `bidBudgetLimitTooltipCopy` in `trade_screen_contract_market.dart`.
+- **Observe mode:** bid-budget indicator + inline help remain live; row chips stay under `IgnorePointer` (non-mutating).
 - Existing silent Bid/`+` treasury clamps are unchanged; this slice does not redesign per-row disabled chips.
 
 ### Market tab — bid-type cap (`#4170` slice)
 
-The Market header strip surfaces and enforces the distinct-commodity **bid type cap** (`1` baseline / `3` with any embassy / `6` with embassy + Trade Fairs) per [`world-market.md`](../game/world-market.md) § Bid type cap. `C = worldMarketBidTypeCap(game, playerId)`; `U` counts distinct commodities with a staged `TradeOrderType.bid` (offers never increment `U`). UI helpers live in `trade_screen_market_tab_order_handlers.dart` (`stagedDistinctBidCommodityCount`, `canStageBidOnCommodity`).
+The Market header strip surfaces and enforces the distinct-commodity **bid type cap** (`3` baseline / `6` with Trade Fairs; embassy-free per Refs `#4186`) per [`world-market.md`](../game/world-market.md) § Bid type cap. `C = worldMarketBidTypeCap(game, playerId)`; `U` counts distinct commodities with a staged `TradeOrderType.bid` (offers never increment `U`). UI helpers live in `trade_screen_market_tab_order_handlers.dart` (`stagedDistinctBidCommodityCount`, `canStageBidOnCommodity`).
 
 UI surface:
 
 - **Bid goods indicator** (`marketBidGoodsIndicatorKey`): always mounted; literal `Bid goods: U of C`; updates live as bids are staged or cleared.
-- **Saturation warning** (`marketBidTypeWarningKey`): mounts when `U >= C` and `C > 0`; plain-language copy directs the player to free a bid via **None** or raise the limit via embassy / Trade Fairs.
-- **Why this limit?** (`marketBidTypeWhyToggleKey` / `marketBidTypeWhyBodyKey`): optional progressive disclosure; body copy matches cap `1`, `3`, or `6` without internal tech ids as primary labels.
+- **Saturation warning** (`marketBidTypeWarningKey`): mounts when `U >= C` and `C > 0`; plain-language copy in default body colour directs the player to remove a bid or research Trade Fairs.
+- **Inline help** (`marketBidGoodsTooltipKey`, `marketCargoTooltipKey`): `CtIconAction` + `Tooltip` beside each limit line; bid-goods tooltip selects `bidTypeLimitTooltipCopyCap3` or `bidTypeLimitTooltipCopyCap6` per `C`.
 - **Bid chip gate:** when `U >= C` and the row does not already stage a bid on that commodity, `marketRowBidChipKey` renders disabled (`onSelected == null`) and `handleDirectionChanged` is a silent no-op. Rows that already stage a bid remain editable under cargo/treasury rules. **None** frees a slot immediately on the indicator.
-- **Observe mode:** bid-goods indicator + disclosure remain live; row chips stay under `IgnorePointer` (non-mutating).
+- **Observe mode:** bid-goods indicator + inline help remain live; row chips stay under `IgnorePointer` (non-mutating).
 
 ### Market tab — row icons (`#3093` slice)
 

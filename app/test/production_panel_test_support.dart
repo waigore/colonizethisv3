@@ -32,7 +32,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     this.onOpenCommodityBreakdown,
     this.currentOrders,
     this.labourCallbacks,
-    this.canEditLabour = false,
+    this.canEditLabour = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
   });
@@ -99,7 +99,7 @@ Widget buildProductionPanel({
   VoidCallback? onOpenCommodityBreakdown,
   Orders? currentOrders,
   ProductionLabourCallbacks? labourCallbacks,
-  bool canEditLabour = false,
+  bool canEditLabour = true,
   Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId = const {},
   ProductionOpenCounselCallback? onOpenCounsel,
