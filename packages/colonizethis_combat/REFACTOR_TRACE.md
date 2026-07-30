@@ -394,3 +394,14 @@ Delivered in this slice:
 
 Deferred to Slice D on #4196: package LOC densify toward ≤6,800, `tool/check_combat_test_support_*` CI ratchets, `SPEC/program/repo-lint.md` entries.
 
+### Slice D — CI ratchets + traceability close-out (PR #4207)
+
+Delivered in this slice:
+
+- Added `tool/check_combat_test_support_file_size.dart` (per-file ≤220 phys) and `tool/check_combat_test_support_loc.dart` (package ≤7250 phys, measured ≈7242 post-wave).
+- Registered `repo.combat_test_support_file_size` and `repo.combat_test_support_loc` in `tool/ct_repo_lint_manifest.yaml`.
+- Unit tests: `test/check_combat_test_support_file_size_test.dart`, `test/check_combat_test_support_loc_test.dart`.
+- Documented both rules in `SPEC/program/repo-lint.md`.
+
+Final ceilings: per-file **220** phys; package LOC **7250** (shrink-only ratchet; baseline was 7,307 @ `396fa936`).
+
