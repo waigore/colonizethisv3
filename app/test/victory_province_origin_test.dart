@@ -24,7 +24,7 @@ void main() {
         game,
         game.worldState.oldWorld.provinces.single,
       );
-      expect(label, contains('still held by original owner'));
+      expect(label, contains('still held by its founding power'));
       expect(label, contains('London'));
     });
 
@@ -66,7 +66,7 @@ void main() {
         game,
         game.worldState.oldWorld.provinces.single,
       );
-      expect(label, 'Origin unavailable for this province.');
+      expect(label, 'p1 — founding owner unknown for this province.');
     });
   });
 }

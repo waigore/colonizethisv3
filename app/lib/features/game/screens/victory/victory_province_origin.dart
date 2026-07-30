@@ -6,15 +6,15 @@ import 'victory_standings.dart';
 /// SPEC/ui/victory-panel.md § Political minimap inspect.
 String victoryProvinceInspectLabel(Game game, Province province) {
   final originalId = province.originalOwnerId;
-  if (originalId == null || originalId.isEmpty) {
-    return 'Origin unavailable for this province.';
-  }
-  final originalName = displayNameForVictoryFaction(game, originalId);
   final localName =
       province.displayName ?? ProvinceId.localIdFrom(province.id);
+  if (originalId == null || originalId.isEmpty) {
+    return '$localName — founding owner unknown for this province.';
+  }
+  final originalName = displayNameForVictoryFaction(game, originalId);
   final currentOwner = province.ownerId;
   if (currentOwner == originalId) {
-    return '$localName — still held by original owner $originalName.';
+    return '$localName — still held by its founding power, $originalName.';
   }
   final currentLabel = currentOwner == null || currentOwner.isEmpty
       ? 'unowned'

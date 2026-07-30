@@ -42,7 +42,7 @@ void main() {
     );
   });
 
-  testWidgets('shows military victory end-state banner', (tester) async {
+  testWidgets('shows province-count win end-state banner', (tester) async {
     final game = buildPanelTestGame(
       players: [panelTestHumanPlayer(displayName: 'England')],
     ).copyWith(
@@ -57,9 +57,12 @@ void main() {
 
     expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
     expect(
-      find.textContaining('Military victory: England won on turn 42'),
+      find.textContaining(
+        'England won on turn 42 by controlling enough Old World provinces',
+      ),
       findsOneWidget,
     );
+    expect(find.textContaining('military victory'), findsNothing);
   });
 
   testWidgets('shows calendar halt declared-winner banner', (tester) async {
@@ -80,7 +83,7 @@ void main() {
 
     expect(find.byKey(VictoryScreenKeys.endStateBannerKey), findsOneWidget);
     expect(
-      find.textContaining('Declared winner by power score: England'),
+      find.textContaining('strongest overall realm when play stopped'),
       findsOneWidget,
     );
   });
@@ -102,7 +105,7 @@ void main() {
     await pumpSettleCapped(tester);
 
     expect(
-      find.textContaining('no declared winner'),
+      find.textContaining('tied overall strength'),
       findsOneWidget,
     );
   });
@@ -135,8 +138,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.textContaining('not the military victory meter'),
+      find.textContaining('calendar end without a province-count winner'),
       findsOneWidget,
     );
+    expect(find.textContaining('×'), findsNothing);
   });
 }
