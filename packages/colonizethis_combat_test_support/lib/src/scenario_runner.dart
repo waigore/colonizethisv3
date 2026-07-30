@@ -13,6 +13,43 @@ abstract class RefsScenario implements LabeledScenario {
   String? get refs;
 }
 
+/// Shared tear-off scenario row (scenarioId + label + run [+ optional refs]).
+///
+/// Prefer this over per-family scenario classes when the row only carries a
+/// `void Function()` body (Refs #4196 slice A).
+class RunnableScenario implements RefsScenario {
+  const RunnableScenario({
+    required this.scenarioId,
+    required this.label,
+    required this.run,
+    this.refs,
+  });
+
+  final String scenarioId;
+  @override
+  final String label;
+  final void Function() run;
+  @override
+  final String? refs;
+}
+
+/// Compact [RunnableScenario] constructor for densified scenario tables.
+RunnableScenario rs({
+  required String scenarioId,
+  required String label,
+  required void Function() run,
+  String? refs,
+}) =>
+    RunnableScenario(
+      scenarioId: scenarioId,
+      label: label,
+      run: run,
+      refs: refs,
+    );
+
+/// Invokes [RunnableScenario.run] (canonical runner for shared rows).
+void runRunnableScenario(RunnableScenario scenario) => scenario.run();
+
 /// Registers one labeled test case (canonical wrapper over bare `test()`).
 void runLabeledScenario(String label, void Function() body) {
   test(label, body);

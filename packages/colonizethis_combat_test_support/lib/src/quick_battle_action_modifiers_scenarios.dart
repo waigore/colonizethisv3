@@ -5,24 +5,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle action-modifier scenario table.
-class QuickBattleActionModifierScenario implements LabeledScenario {
-  const QuickBattleActionModifierScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [aggregateActionModifiers].
-List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
-  QuickBattleActionModifierScenario(
+List<RunnableScenario> aggregateActionModifiersScenarios() => [
+  RunnableScenario(
     scenarioId: 'qam-neutral',
     label: 'no actions yields neutral 1.0 modifiers',
     run: () {
@@ -33,7 +20,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesTakenModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-volley',
     label: 'volleyFire raises casualties dealt only',
     run: () {
@@ -44,7 +31,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesTakenModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-entrench',
     label: 'defendEntrench lowers casualties taken only',
     run: () {
@@ -57,7 +44,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesDealtModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-maneuver',
     label: 'maneuver raises offense only',
     run: () {
@@ -68,7 +55,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesTakenModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-fallback',
     label: 'fallBackRefuseFlank lowers offense and casualties taken',
     run: () {
@@ -81,7 +68,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesDealtModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-assault',
     label: 'assaultCharge raises offense and casualties taken',
     run: () {
@@ -94,7 +81,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesDealtModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-combined',
     label: 'combined actions sum deltas in order',
     run: () {
@@ -108,7 +95,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.casualtiesTakenModifier, 1.0);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-assault-clamp-high',
     label: 'repeated assaultCharge clamps offense to 1.5 upper bound',
     run: () {
@@ -121,7 +108,7 @@ List<QuickBattleActionModifierScenario> aggregateActionModifiersScenarios() => [
       expect(m.offenseModifier, 1.5);
     },
   ),
-  QuickBattleActionModifierScenario(
+  RunnableScenario(
     scenarioId: 'qam-fallback-clamp-low',
     label: 'repeated fallBackRefuseFlank clamps casualties taken to 0.5 floor',
     run: () {

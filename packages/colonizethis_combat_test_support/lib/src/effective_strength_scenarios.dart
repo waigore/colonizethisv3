@@ -4,24 +4,11 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-/// One row in an effective-strength scenario table.
-class EffectiveStrengthScenario implements LabeledScenario {
-  const EffectiveStrengthScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Attacker-side effective-strength scenarios for [combatEffectiveAttackerStrength].
-List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [
-  EffectiveStrengthScenario(
+List<RunnableScenario> combatEffectiveAttackerStrengthScenarios() => [
+  RunnableScenario(
     scenarioId: 'att-all-factors-no-fort',
     label: 'multiplies base by all factors when no fort applies',
     run: () {
@@ -36,7 +23,7 @@ List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [
       expect(eff, equals(10.0 * 1.1 * 1.05 * 0.9));
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'att-omitted-factors-identity',
     label: 'omitted factors are the identity (bit-exact)',
     run: () {
@@ -56,7 +43,7 @@ List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [
       expect(partial, equals(full));
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'att-fort-damage-reduction',
     label: 'applies fort damage reduction inside the siege range',
     run: () {
@@ -70,7 +57,7 @@ List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [
       expect(eff, equals(10.0 * 2.0 * (1.0 - 0.45)));
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'att-fort-outside-range',
     label: 'does not apply reduction outside the siege range',
     run: () {
@@ -86,8 +73,8 @@ List<EffectiveStrengthScenario> combatEffectiveAttackerStrengthScenarios() => [
 ];
 
 /// Defender-side effective-strength scenarios for [combatEffectiveDefenderStrength].
-List<EffectiveStrengthScenario> combatEffectiveDefenderStrengthScenarios() => [
-  EffectiveStrengthScenario(
+List<RunnableScenario> combatEffectiveDefenderStrengthScenarios() => [
+  RunnableScenario(
     scenarioId: 'def-ignores-emplaced-without-fort',
     label: 'multiplies base by factors and ignores emplaced without fort',
     run: () {
@@ -101,7 +88,7 @@ List<EffectiveStrengthScenario> combatEffectiveDefenderStrengthScenarios() => [
       expect(eff, equals(8.0 * 1.2));
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'def-adds-emplaced-in-siege',
     label: 'adds emplaced strength inside the siege range',
     run: () {
@@ -118,8 +105,8 @@ List<EffectiveStrengthScenario> combatEffectiveDefenderStrengthScenarios() => [
 ];
 
 /// Ratio-side scenarios for [combatEffectiveAttackForRatio].
-List<EffectiveStrengthScenario> combatEffectiveAttackForRatioScenarios() => [
-  EffectiveStrengthScenario(
+List<RunnableScenario> combatEffectiveAttackForRatioScenarios() => [
+  RunnableScenario(
     scenarioId: 'ratio-outside-siege-range',
     label: 'returns effAtt unchanged outside the siege range',
     run: () {
@@ -129,7 +116,7 @@ List<EffectiveStrengthScenario> combatEffectiveAttackForRatioScenarios() => [
       );
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ratio-subtracts-wall-hp',
     label: 'subtracts wall HP inside the siege range',
     run: () {
@@ -140,7 +127,7 @@ List<EffectiveStrengthScenario> combatEffectiveAttackForRatioScenarios() => [
       );
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'ratio-clamps-zero',
     label: 'clamps to zero when wall HP exceeds effAtt',
     run: () {
@@ -154,8 +141,8 @@ List<EffectiveStrengthScenario> combatEffectiveAttackForRatioScenarios() => [
 ];
 
 /// Default emplaced-gun scenarios for [combatDefaultEmplacedStrength].
-List<EffectiveStrengthScenario> combatDefaultEmplacedStrengthScenarios() => [
-  EffectiveStrengthScenario(
+List<RunnableScenario> combatDefaultEmplacedStrengthScenarios() => [
+  RunnableScenario(
     scenarioId: 'emplaced-outside-range',
     label: 'returns 0 outside the siege range',
     run: () {
@@ -163,7 +150,7 @@ List<EffectiveStrengthScenario> combatDefaultEmplacedStrengthScenarios() => [
       expect(combatDefaultEmplacedStrength(4), equals(0.0));
     },
   ),
-  EffectiveStrengthScenario(
+  RunnableScenario(
     scenarioId: 'emplaced-gun-count-times-strength',
     label: 'returns gunCount * emplacedStrength inside the siege range',
     run: () {

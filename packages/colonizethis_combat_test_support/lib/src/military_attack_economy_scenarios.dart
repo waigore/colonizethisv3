@@ -6,17 +6,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-class MilitaryAttackEconomyScenario implements LabeledScenario {
-  const MilitaryAttackEconomyScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 BattleContext _context(List<AttackingSide> attackers) => BattleContext(
   regionId: kRegionOldWorld,
@@ -29,9 +18,9 @@ BattleContext _context(List<AttackingSide> attackers) => BattleContext(
   defenderGeneralId: null,
   defenderGeneralMedals: 0,
 );
-List<MilitaryAttackEconomyScenario>
+List<RunnableScenario>
 landBattleAttackTreasuryCostForPlayerScenarios() => [
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-base-cost',
     label: 'base cost 100 without military tech discounts',
     run: () => expect(
@@ -41,7 +30,7 @@ landBattleAttackTreasuryCostForPlayerScenarios() => [
       100,
     ),
   ),
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-tech-discounts',
     label: 'applies multiplicative discounts for machinery and modern funding',
     run: () {
@@ -61,9 +50,9 @@ landBattleAttackTreasuryCostForPlayerScenarios() => [
     },
   ),
 ];
-List<MilitaryAttackEconomyScenario>
+List<RunnableScenario>
 applyLandBattleAttackTreasuryCostsScenarios() => [
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-deducts-one',
     label: 'deducts per attacker Great Power once per battle context',
     run: () {
@@ -88,7 +77,7 @@ applyLandBattleAttackTreasuryCostsScenarios() => [
       );
     },
   ),
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-deducts-nonfirst',
     label: 'deducts treasury when attacker is not first in players list order',
     run: () {
@@ -114,7 +103,7 @@ applyLandBattleAttackTreasuryCostsScenarios() => [
       );
     },
   ),
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-deducts-distinct',
     label: 'deducts treasury for each distinct Great Power attacker side',
     run: () {
@@ -136,7 +125,7 @@ applyLandBattleAttackTreasuryCostsScenarios() => [
       expect(after.playerById('a2')!.treasury, 300);
     },
   ),
-  MilitaryAttackEconomyScenario(
+  RunnableScenario(
     scenarioId: 'mae-skip-minor',
     label: 'does not deduct treasury when attacker is not a Great Power',
     run: () {
