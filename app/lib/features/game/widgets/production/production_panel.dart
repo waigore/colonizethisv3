@@ -28,6 +28,8 @@ class ProductionPanel extends StatelessWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
@@ -54,6 +56,11 @@ class ProductionPanel extends StatelessWidget {
   /// True when the viewed player may mutate orders or pool via the Labour
   /// controls. Combined with [labourCallbacks] presence to gate buttons.
   final bool canEditLabour;
+
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -105,6 +112,9 @@ class ProductionPanel extends StatelessWidget {
       desiredOutputByRecipe: desiredOutputByRecipe,
       onDesiredOutputChanged: onDesiredOutputChanged,
       l10n: l10n,
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: onOpenCounsel,
     );
 
     if (isNarrow) {

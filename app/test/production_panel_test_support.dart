@@ -1,11 +1,13 @@
 // Shared ProductionPanel wrappers and host (Refs #4013).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel_support_allocation.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
@@ -31,6 +33,8 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   final Game displayGame;
@@ -42,6 +46,9 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final Orders? currentOrders;
   final ProductionLabourCallbacks? labourCallbacks;
   final bool canEditLabour;
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   @override
   State<ProductionPanelTestWrapper> createState() =>
@@ -75,6 +82,9 @@ class _ProductionPanelTestWrapperState
       currentOrders: widget.currentOrders,
       labourCallbacks: widget.labourCallbacks,
       canEditLabour: widget.canEditLabour,
+      starredProduceRecommendationsByRecipeId:
+          widget.starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: widget.onOpenCounsel,
     );
   }
 }
@@ -90,6 +100,9 @@ Widget buildProductionPanel({
   Orders? currentOrders,
   ProductionLabourCallbacks? labourCallbacks,
   bool canEditLabour = false,
+  Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId = const {},
+  ProductionOpenCounselCallback? onOpenCounsel,
   double width = 800,
   double height = 500,
 }) {
@@ -120,6 +133,9 @@ Widget buildProductionPanel({
         currentOrders: currentOrders,
         labourCallbacks: labourCallbacks,
         canEditLabour: canEditLabour,
+        starredProduceRecommendationsByRecipeId:
+            starredProduceRecommendationsByRecipeId,
+        onOpenCounsel: onOpenCounsel,
       ),
     ),
     viewport: Size(width, height),

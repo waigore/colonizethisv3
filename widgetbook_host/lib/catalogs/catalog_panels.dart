@@ -1,5 +1,24 @@
 part of 'catalog.dart';
 
+Map<String, IndustryCounselRecommendation> _demoStarredProduceRecommendations() {
+  IndustryCounselRecommendation rec(String recipeId) {
+    return IndustryCounselRecommendation(
+      recommendationId: 'produce:$recipeId',
+      kind: IndustryCounselRecommendationKind.produceRecipe,
+      rankScore: 20,
+      briefReasonKey: IndustryCounselReasonKey.outputShortage,
+      detailReasonKeys: const [IndustryCounselReasonKey.outputShortage],
+      recipeId: recipeId,
+      suggestedDesiredOutput: 2,
+    );
+  }
+
+  return {
+    'lumber_from_timber': rec('lumber_from_timber'),
+    'paper_from_timber': rec('paper_from_timber'),
+  };
+}
+
 /// Production Panel stories. SPEC/ui/production-panel.md.
 List<WidgetbookNode> get productionPanelDirectories => [
   WidgetbookFolder(
@@ -49,6 +68,57 @@ List<WidgetbookNode> get productionPanelDirectories => [
         name: 'Cotton weaving unlocked',
         builder: (context) => ProductionPanelStory(
           playerOverride: cottonWeavingUnlockedProductionPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Industry counsel stars',
+        builder: (context) => ProductionPanelStory(
+          starredProduceRecommendationsByRecipeId:
+              _demoStarredProduceRecommendations(),
+          onOpenCounsel: ({String? highlightRecommendationId}) {},
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Industry counsel stars (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            starredProduceRecommendationsByRecipeId:
+                _demoStarredProduceRecommendations(),
+            onOpenCounsel: ({String? highlightRecommendationId}) {},
+          ),
+        ),
+      ),
+    ],
+  ),
+];
+
+/// Counsel Panel stories. SPEC/ui/counsel-panel.md.
+List<WidgetbookNode> get counselPanelDirectories => [
+  WidgetbookFolder(
+    name: 'Counsel Panel',
+    children: [
+      WidgetbookUseCase(
+        name: 'Counsel Industry (default)',
+        builder: (context) => ProviderScope(
+          child: widgetbookEditorialMonocleApp(
+            child: CounselScreen(
+              game: demoGameForOverlay,
+              humanPlayerId: demoGameForOverlay.players.first.id,
+            ),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Industry (highlight)',
+        builder: (context) => ProviderScope(
+          child: widgetbookEditorialMonocleApp(
+            child: CounselScreen(
+              game: demoGameForOverlay,
+              humanPlayerId: demoGameForOverlay.players.first.id,
+              highlightRecommendationId: 'produce:lumber_from_timber',
+            ),
+          ),
         ),
       ),
     ],

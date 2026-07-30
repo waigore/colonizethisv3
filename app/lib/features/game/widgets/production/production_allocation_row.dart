@@ -5,6 +5,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'production_recipe_affordance.dart';
 import 'production_allocation_row_controls.dart';
+import 'production_industry_counsel_star.dart';
 
 /// Opacity applied to a tech-locked recipe row's slider sub-row (slider plus
 /// the four step/action controls) so it reads as grayed/disabled per
@@ -27,6 +28,7 @@ class ProductionAllocationRow extends StatelessWidget {
     required this.l10n,
     required this.theme,
     this.locked = false,
+    this.counselStar,
   });
 
   final ProductionRecipe recipe;
@@ -42,6 +44,9 @@ class ProductionAllocationRow extends StatelessWidget {
   /// so the row renders visible-but-grayed and the slider/steppers are
   /// non-interactive per `SPEC/ui/production-panel.md` § Tech-gated recipe rows.
   final bool locked;
+
+  /// Optional industry counsel star for this recipe row.
+  final ProductionIndustryCounselStar? counselStar;
 
   int get desiredOutput => desiredOutputByRecipe[recipe.id] ?? 0;
 
@@ -62,11 +67,16 @@ class ProductionAllocationRow extends StatelessWidget {
     effectiveLabour: effectiveLabour,
   );
 
-  Widget buildHeader(RecipeAffordance rowAffordance, int maxAchievable) {
+  Widget buildHeader(
+    RecipeAffordance rowAffordance,
+    int maxAchievable, {
+    ProductionIndustryCounselStar? headerCounselStar,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(flex: 2, child: buildRecipeLabel(recipe, locked)),
+        if (headerCounselStar != null) headerCounselStar,
         Expanded(
           flex: 1,
           child: Text(
@@ -100,7 +110,11 @@ class ProductionAllocationRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        buildHeader(rowAffordance, maxAchievable),
+        buildHeader(
+          rowAffordance,
+          maxAchievable,
+          headerCounselStar: counselStar,
+        ),
         if (locked)
           IgnorePointer(
             child: Opacity(
