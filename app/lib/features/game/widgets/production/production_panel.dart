@@ -28,7 +28,6 @@ class ProductionPanel extends StatelessWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
-    this.canEditAllocation = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
   });
@@ -54,14 +53,9 @@ class ProductionPanel extends StatelessWidget {
   /// controls render in read-only mode (no +/-/Disband buttons).
   final ProductionLabourCallbacks? labourCallbacks;
 
-  /// True when the viewed player may mutate orders or pool via the Labour
-  /// controls. Combined with [labourCallbacks] presence to gate buttons.
+  /// True when Labour and Allocation controls may mutate state; counsel stars
+  /// stay tappable when false (turn-resolution read-only).
   final bool canEditLabour;
-
-  /// True when Allocation sliders, Reset, and Breakdown may mutate state.
-  /// When false (turn resolution blocking), counsel stars and header
-  /// **Counsel** remain openable for read-only advice.
-  final bool canEditAllocation;
 
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
@@ -118,7 +112,7 @@ class ProductionPanel extends StatelessWidget {
       desiredOutputByRecipe: desiredOutputByRecipe,
       onDesiredOutputChanged: onDesiredOutputChanged,
       l10n: l10n,
-      canEditAllocation: canEditAllocation,
+      canEditLabour: canEditLabour,
       starredProduceRecommendationsByRecipeId:
           starredProduceRecommendationsByRecipeId,
       onOpenCounsel: onOpenCounsel,

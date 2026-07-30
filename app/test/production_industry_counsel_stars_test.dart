@@ -245,7 +245,7 @@ void main() {
       await tester.pumpWidget(
         buildProductionPanel(
           player: fullPlayer,
-          canEditAllocation: false,
+          canEditLabour: false,
           starredProduceRecommendationsByRecipeId: {
             'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
           },

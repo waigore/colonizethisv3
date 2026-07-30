@@ -30,7 +30,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
     required this.desiredOutputByRecipe,
     required this.onDesiredOutputChanged,
     required this.l10n,
-    this.canEditAllocation = true,
+    this.canEditLabour = true,
     this.starredProduceRecommendationsByRecipeId = const {},
     this.onOpenCounsel,
     super.key,
@@ -41,7 +41,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
   final Map<String, int> desiredOutputByRecipe;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final AppLocalizations l10n;
-  final bool canEditAllocation;
+  final bool canEditLabour;
   final Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId;
   final ProductionOpenCounselCallback? onOpenCounsel;
@@ -74,7 +74,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
           ),
         CtDangerTextButton(
           key: const ValueKey<String>('production_allocation_reset_button'),
-          onPressed: canEditAllocation ? () => onDesiredOutputChanged({}) : null,
+          onPressed: canEditLabour ? () => onDesiredOutputChanged({}) : null,
           label: l10n.common_reset,
           tooltip: l10n.common_reset,
         ),
@@ -182,7 +182,7 @@ class ProductionPanelAllocationSubpanel extends StatelessWidget {
             l10n: l10n,
             theme: theme,
             locked: locked,
-            canEditAllocation: canEditAllocation,
+            canEditLabour: canEditLabour,
             counselStar: counselStar,
           ),
         ),
