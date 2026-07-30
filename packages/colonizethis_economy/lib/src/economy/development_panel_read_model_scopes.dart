@@ -9,6 +9,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'commodity_totals.dart';
 import 'development_panel_model.dart';
+import 'development_panel_visibility.dart';
 import 'economy_resource_constants.dart';
 import 'game_lookup_helpers.dart';
 import 'province_improvable_resource_counts.dart';
@@ -23,6 +24,7 @@ List<DevelopmentPanelScopeRow> buildDevelopmentPurchasedScopes({
   required Map<String, String> provinceDisplayNamesById,
   required Map<String, String> playerDisplayNamesById,
   required ProvinceOwnerCache ownerCache,
+  PlayerView? playerView,
 }) {
   final bySourceProvince = <String, List<String>>{};
   for (final entry in game.worldState.purchasedTilesByTileKey.entries) {
@@ -43,6 +45,7 @@ List<DevelopmentPanelScopeRow> buildDevelopmentPurchasedScopes({
       playerId: playerId,
       tileKeys: tileKeys,
       tileMapByRegion: tileMapByRegion,
+      playerView: playerView,
     );
     final ownerId = ownerCache.ownerOf(provinceId);
     scopes.add(
@@ -64,16 +67,22 @@ List<DevelopmentPanelScopeRow> buildDevelopmentPurchasedScopes({
 }
 
 List<DevelopmentImprovableCommodityRow> developmentImprovableRowsFromCounts(
-  Map<String, ProvinceImprovableCommodityCount> counts,
-) {
+  Map<String, ProvinceImprovableCommodityCount> counts, {
+  PlayerView? playerView,
+}) {
   final rows = <DevelopmentImprovableCommodityRow>[];
   for (final commodity in CommodityCatalog.all) {
     final entry = counts[commodity.id];
     if (entry == null || entry.count <= 0) continue;
+    var tileKeys = entry.tileKeys;
+    if (playerView != null) {
+      tileKeys = developmentFilterVisibilityKnownTileKeys(playerView, tileKeys);
+    }
+    if (tileKeys.isEmpty) continue;
     rows.add(
       DevelopmentImprovableCommodityRow(
         commodityId: commodity.id,
-        tileKeys: List<String>.from(entry.tileKeys),
+        tileKeys: List<String>.from(tileKeys),
       ),
     );
   }
@@ -85,6 +94,7 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
   required String playerId,
   required List<String> tileKeys,
   required Map<String, TileMapResult> tileMapByRegion,
+  PlayerView? playerView,
 }) {
   final techUnlocked =
       game.playerById(playerId)?.techUnlocked ?? const <String, bool>{};
@@ -123,11 +133,16 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
   for (final commodity in CommodityCatalog.all) {
     final keys = acc[commodity.id];
     if (keys == null || keys.isEmpty) continue;
-    keys.sort();
+    var filteredKeys = keys;
+    if (playerView != null) {
+      filteredKeys = developmentFilterVisibilityKnownTileKeys(playerView, keys);
+    }
+    if (filteredKeys.isEmpty) continue;
+    filteredKeys.sort();
     rows.add(
       DevelopmentImprovableCommodityRow(
         commodityId: commodity.id,
-        tileKeys: List<String>.from(keys),
+        tileKeys: List<String>.from(filteredKeys),
       ),
     );
   }

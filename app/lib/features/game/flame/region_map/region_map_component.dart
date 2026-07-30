@@ -68,6 +68,8 @@ class CtRegionMapComponent extends PositionComponent {
     this.validTileKeys,
     this.onTownIconTapped,
     this.playerViewForResources,
+    this.showPlayerTerritoryOutline = false,
+    this.playerTerritoryTileKeys,
   });
 
   RegionMapViewData region;
@@ -82,6 +84,10 @@ class CtRegionMapComponent extends PositionComponent {
   /// resource icons by fog + prospecting (SPEC/game/fog-and-exploration.md).
   /// Must be non-null in that mode; see [assertCtMapPlayerViewRequired].
   PlayerView? playerViewForResources;
+
+  /// Light outer-perimeter stroke for player-owned land (panel maps). Refs #4175.
+  bool showPlayerTerritoryOutline;
+  Set<String>? playerTerritoryTileKeys;
 
   /// Camera zoom from Flame viewfinder; used to keep label size constant on screen.
   double cameraZoom = 1.0;

@@ -17,6 +17,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get development_assignedCiviliansHeading => 'Assigned civilians';
+
+  @override
   String get development_mapDataUnavailable => 'Map data unavailable';
 
   @override
