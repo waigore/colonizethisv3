@@ -387,13 +387,6 @@ class _StandingRowHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = appL10n(context);
-    final titleStyle = textTheme.bodyLarge?.copyWith(
-      color: isHuman || isSelected
-          ? EditorialMonoclePalette.accentBright
-          : EditorialMonoclePalette.fg,
-      fontWeight: isHuman || isSelected ? FontWeight.w700 : FontWeight.w500,
-    );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: isSelected
@@ -407,52 +400,15 @@ class _StandingRowHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: InkWell(
-              key: VictoryScreenKeys.standingSelectKey(row.playerId),
-              onTap: onSelect,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 4,
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      margin: const EdgeInsets.only(top: 4),
-                      color: color,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(row.displayName, style: titleStyle),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.victory_standingOwProgress(
-                              row.owProvinceCount,
-                              threshold,
-                            ),
-                            style: textTheme.bodySmall?.copyWith(
-                              color: EditorialMonoclePalette.muted,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          _VictoryOwProgressBar(
-                            key: VictoryScreenKeys.standingProgressKey(
-                              row.playerId,
-                            ),
-                            progress: progress,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            child: _StandingRowSelectPanel(
+              row: row,
+              isHuman: isHuman,
+              isSelected: isSelected,
+              color: color,
+              threshold: threshold,
+              progress: progress,
+              onSelect: onSelect,
+              textTheme: textTheme,
             ),
           ),
           InkWell(
@@ -468,6 +424,84 @@ class _StandingRowHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StandingRowSelectPanel extends StatelessWidget {
+  const _StandingRowSelectPanel({
+    required this.row,
+    required this.isHuman,
+    required this.isSelected,
+    required this.color,
+    required this.threshold,
+    required this.progress,
+    required this.onSelect,
+    required this.textTheme,
+  });
+
+  final VictoryStandingRow row;
+  final bool isHuman;
+  final bool isSelected;
+  final Color color;
+  final int threshold;
+  final double progress;
+  final VoidCallback onSelect;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final titleStyle = textTheme.bodyLarge?.copyWith(
+      color: isHuman || isSelected
+          ? EditorialMonoclePalette.accentBright
+          : EditorialMonoclePalette.fg,
+      fontWeight: isHuman || isSelected ? FontWeight.w700 : FontWeight.w500,
+    );
+    return InkWell(
+      key: VictoryScreenKeys.standingSelectKey(row.playerId),
+      onTap: onSelect,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: 8,
+          horizontal: 4,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              margin: const EdgeInsets.only(top: 4),
+              color: color,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(row.displayName, style: titleStyle),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.victory_standingOwProgress(
+                      row.owProvinceCount,
+                      threshold,
+                    ),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: EditorialMonoclePalette.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _VictoryOwProgressBar(
+                    key: VictoryScreenKeys.standingProgressKey(row.playerId),
+                    progress: progress,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
