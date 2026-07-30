@@ -19,10 +19,14 @@ class VictoryScreenBody extends ConsumerStatefulWidget {
     super.key,
     required this.game,
     required this.humanPlayerId,
+    this.initialSelectedPlayerId,
   });
 
   final Game game;
   final String humanPlayerId;
+
+  /// Widgetbook / tests: pre-select a GP other than [humanPlayerId]. Defaults to human on open.
+  final String? initialSelectedPlayerId;
 
   @override
   ConsumerState<VictoryScreenBody> createState() => _VictoryScreenBodyState();
@@ -35,7 +39,8 @@ class _VictoryScreenBodyState extends ConsumerState<VictoryScreenBody> {
   @override
   void initState() {
     super.initState();
-    _selectedPlayerId = widget.humanPlayerId;
+    _selectedPlayerId =
+        widget.initialSelectedPlayerId ?? widget.humanPlayerId;
   }
 
   void _selectPlayer(String playerId) {

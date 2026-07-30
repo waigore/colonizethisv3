@@ -99,6 +99,7 @@ When map data is unavailable, standings render full width at all breakpoints.
 | `GAME70001` | infinite mode | `Game.infiniteMode` | conditions include infinite bypass line |
 | `GAME70001a` | wide side-by-side | viewport ≥ 600 dp + map data | standings and minimap in one row below conditions |
 | `GAME70001b` | annotated minimap | map data with naming / capitals / towns | province labels, capital borders, town dots on minimap |
+| `GAME70001c` | rival GP selected | non-human GP selected on standings / minimap | selected faction highlighted; human row emphasized but not selected |
 
 ## Acceptance criteria
 
