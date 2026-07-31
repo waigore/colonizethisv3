@@ -5,7 +5,10 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
+import '../province_overlay/province_panel_labels.dart';
 import 'move_army_dialog.dart';
+import 'move_army_invasion_intel.dart';
+import 'move_army_invasion_intel_labels.dart';
 import 'move_army_dialog_state_logic.dart';
 import 'move_units_dialog_base.dart';
 
@@ -31,16 +34,25 @@ mixin MoveArmyDialogDestinations
                 l10n,
                 entry,
                 showDeclareWarTrigger: showDeclareWarTrigger,
+                showInvasionIntel: showDeclareWarTrigger,
               ),
             )
             .toList(),
       );
     }
 
+    final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.muted);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        Text(
+          l10n.moveArmy_yourArmyRegiments(moveArmyOwnRegimentCount(widget.army)),
+          style: intelMutedStyle,
+        ),
+        const SizedBox(height: CtSpacing.ml),
         if (owned.isNotEmpty) ...[
           CtSectionLabel(l10n.moveArmy_groupYourProvinces),
           const SizedBox(height: CtSpacing.s),
@@ -64,12 +76,15 @@ mixin MoveArmyDialogDestinations
     AppLocalizations l10n,
     ArmyMovePickerDestination entry, {
     required bool showDeclareWarTrigger,
+    required bool showInvasionIntel,
   }) {
     final bool isSelected = armySelectedDestination == entry.fullProvinceId;
     final TextStyle labelStyle = moveDialogRowLabelStyle(
       theme,
       selected: isSelected,
     );
+    final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
+        .copyWith(color: EditorialMonoclePalette.muted);
     final String? triggerLabel =
         showDeclareWarTrigger && entry.requiresDeclareWarOnConfirm
         ? l10n.moveArmy_declareWarOnTrigger(
@@ -84,6 +99,30 @@ mixin MoveArmyDialogDestinations
             fontWeight: FontWeight.w600,
           );
 
+    final invasionIntelSummary = showInvasionIntel
+        ? computeMoveArmyInvasionIntelSummary(
+            game: widget.game,
+            playerView: widget.playerView,
+            humanPlayerId: widget.humanPlayerId,
+            destinationProvinceId: entry.fullProvinceId,
+          )
+        : null;
+    final invasionIntelLines = invasionIntelSummary == null
+        ? const <String>[]
+        : moveArmyInvasionIntelSummaryLines(l10n, invasionIntelSummary);
+    final invasionDetailLines =
+        showInvasionIntel && isSelected && invasionIntelSummary != null
+        ? moveArmyInvasionIntelDetailTypeLines(
+            l10n: l10n,
+            summary: invasionIntelSummary,
+            ownTypesByRegimentId: moveArmyOwnRegimentTypesById(
+              army: widget.army,
+              game: widget.game,
+            ),
+            regimentLabel: (id) => regimentTypeDisplayLabel(l10n, id),
+          )
+        : const <String>[];
+
     return MoveDialogDestinationRow(
       selected: isSelected,
       semanticsLabel: entry.provinceLabel,
@@ -93,6 +132,10 @@ mixin MoveArmyDialogDestinations
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(entry.provinceLabel, style: labelStyle),
+          for (final line in invasionIntelLines)
+            Text(line, style: intelMutedStyle),
+          for (final line in invasionDetailLines)
+            Text(line, style: intelMutedStyle),
           if (triggerLabel != null && triggerStyle != null)
             Text(triggerLabel, style: triggerStyle),
         ],

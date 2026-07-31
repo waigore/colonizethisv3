@@ -157,6 +157,7 @@ part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_dialogs.dart';
+part 'catalog_dialogs_move_army_invasion_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
