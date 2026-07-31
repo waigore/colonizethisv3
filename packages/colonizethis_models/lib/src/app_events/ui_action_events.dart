@@ -246,6 +246,14 @@ class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {
   final String workTarget;
 }
 
+/// Request to start Spy relocate destination selection from the units panel.
+/// Emit [ClosePanelEvent] first when the civilian units sheet should close.
+class StartCivilianRelocateSelectionEvent extends UIActionEvent {
+  const StartCivilianRelocateSelectionEvent({required this.unitId});
+
+  final String unitId;
+}
+
 /// Emitted when a typed units panel route is dismissed.
 class UnitsPanelClosedEvent extends UIActionEvent {
   const UnitsPanelClosedEvent(this.panel);

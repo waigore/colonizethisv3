@@ -17,4 +17,9 @@ void main() {
     draftOrdersTradeMutationScenarios(),
     runRunnableScenario,
   );
+  runLabeledScenarioGroup(
+    'applyCivilianMoveOrderForPlayer (Refs #4219)',
+    draftOrdersCivilianMoveMutationScenarios(),
+    runRunnableScenario,
+  );
 }

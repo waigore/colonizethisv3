@@ -93,6 +93,7 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Row tap (full list) | Full-list mode | `ClosePanelEvent` + `LocateMapTileEvent` | Panel closes; map pans. |
 | Locate icon | Always in scoped mode | `LocateMapTileEvent` | Panel stays open. |
 | Assign | Idle, no pending work | Work-target selection or shortcut commit | Per row rules in **Per-unit row content**. |
+| Relocate (Spy only) | Idle Spy, no pending work | `StartCivilianRelocateSelectionEvent` → map tile pick → `CivilianMoveRequestedEvent` | Stages `MoveOrder`; leave-intel soft warn when last Spy vacates foreign province. |
 
 ---
 
@@ -103,6 +104,9 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Full list | Default toolbar open | All human civilians by region. |
 | Tile-scoped | Map marker tap | Units on one tile only. |
 | Explorer / Builder shortcut | Province tile actions | Filtered + direct assign. |
+| Spy relocate eligible (Refs #4219) | Idle Spy, no pending work or `MoveOrder` | **Relocate** + **Assign**; status **Reserve** (owned land) or **Holding intel: {province}** (foreign). |
+| Spy counter-espionage (Refs #4219) | Pending or in-progress `counter_spy` | Status **Counter-espionage**; **Relocate** hidden. |
+| Spy pending relocate (Refs #4219) | Pending draft `MoveOrder` for Spy | **Relocating to:** destination copy on assigned-to line; **Relocate** hidden until move clears or is cancelled. |
 
 ---
 
@@ -125,7 +129,7 @@ For each civilian unit, the panel shows:
 
 | Field        | Source | Notes |
 |-------------|--------|--------|
-| **Status**  | `Unit.status` | One of: `idle`, `working`. Display as short label (e.g. "Idle", "Working"). |
+| **Status**  | `Unit.status` (+ Spy overrides) | Default: `idle` / `working` as short labels. **Spy-only** plain-language overrides (Refs #4219, **UXD-002**): foreign idle presence → **Holding intel: {province}**; pending/active `counter_spy` → **Counter-espionage**; owned-land idle reserve → **Reserve**; pending `MoveOrder` destination row uses pending-relocate assigned-to copy (status may show generic Idle until move resolves). |
 | **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
 | **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If pending or in-progress: show work target, target location, and localized inline turn counter on the first line (e.g. `X turns`), where pending uses assign-time `totalTurns` and in-progress uses `remainingTurns/totalTurns`. **Pending cost preview (this turn only):** when the pending order has a **stockpile material** cost per `WorkOrderCostCalculator(game).calculateCost(...)` (same inputs as order validation: `target`, `targetTileKey`, `improvementLevel` from tile state for `build_improvement` only, `fortLevel` / `roadLevel` from game state), show a second line (below "Assigned to") of **dense chips**: each commodity as **`ResourceIcon` + required quantity** (canonical pattern; align with training / production panels, `app/lib/widgets/resource_icon.dart`). **Pending `purchase_land` (Merchant):** show **treasury** cost via `purchaseLandCost(resourceId)` with `resourceId` from `game.worldState.resourceByTileKey[order.targetTileKey]`, using the same **treasury chip/string** pattern as military training (`trainUnits_treasury` / `train_military_dialog.dart`) — **not** a commodity `ResourceIcon` for cash. **No literal ` (pending)` suffix is shown for any pending target.** **No affordability UI** on this panel: show required amounts only; do not compare to stockpile/treasury or use deficit/error styling. |
 
@@ -207,6 +211,18 @@ For each civilian unit, the panel shows:
 - **Given** the panel is displayed, **when** there are civilian units in more than one region, **then** the UI layer groups units by region with a region heading for each group and lists units within each group in a stable order (e.g. by province name, then unit type, then unit id).
 
 - **Given** the user opens the Civilian Units panel, **when** the panel is displayed, **then** the UI layer presents it as a **bottom sheet** that appears from the bottom edge (slides up), so the map remains visible above; on narrow viewports layout and touch targets follow [mobile-adaptation.md](mobile-adaptation.md).
+
+- **Given** an idle Spy with no pending work or move order, **when** `UNIT10001` renders that row, **then** the UI layer shows **Relocate** (and **Assign** still offers `counter_spy` only on owned targets per game rules).
+
+- **Given** the user taps **Relocate** on an eligible Spy row, **when** the tap is handled, **then** the UI layer emits `StartCivilianRelocateSelectionEvent(unitId)` and enters map relocate selection mode (orange hover, valid-tile highlights, relocate prompt copy).
+
+- **Given** a Spy is idle in a non-owned province, **when** the row renders, **then** the status line shows **Holding intel: {province display name}** (not bare Idle alone).
+
+- **Given** a Spy has pending or in-progress `counter_spy`, **when** the row renders, **then** the status line shows **Counter-espionage** and **Relocate** is hidden.
+
+- **Given** a Spy is idle in an owned province with no mission, **when** the row renders, **then** the status line shows **Reserve**.
+
+- **Given** Relocate would leave a foreign province with zero projected own Spies (per `spyLeaveIntelWarningNeeded` in logic), **when** the player selects a destination tile, **then** the UI layer shows a soft confirm warning that full intel there will fog after end of turn and still allows confirm.
 
 - **Given** the Civilian Units panel is open and a unit has `Unit.status == idle` and no pending work order for the human player this turn, **when** the user views that unit's row, **then** the UI layer shows an **Assign** button (or equivalent control).
 
@@ -308,3 +324,20 @@ For each civilian unit, the panel shows:
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "Standalone" use case, **then** the UI layer displays only the Civilian Units panel (no map) with demo data, so that layout and row content (status, location as province name + region, assigned-to) can be verified.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the map above and the Civilian Units panel **at the bottom** (bottom placement like province overlay), built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work, and cancel work so that the full flow is demonstrable.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "As bottom sheet" use case and taps the button, **then** the panel opens as a bottom sheet that slides up from the bottom edge.
+
+---
+
+## Tests
+
+Spy relocate and UXD-002 idle exclusion (Refs #4219):
+
+- `app/test/civilian_units_panel_spy_relocate_test.dart` — Relocate row action, Spy status labels, relocate bus event, pending-move row copy.
+- `app/test/civilian_units_panel_spy_relocate_golden_test.dart` — UNIT10001 Spy **Reserve** and **Holding intel** relocate row goldens (`unit_panel_civilian_spy_reserve.png`, `unit_panel_civilian_spy_holding_intel.png`).
+- `app/test/app_event_handler_scope_civilian_work_test.dart` — `CivilianMoveRequestedEvent` stages validated Spy `MoveOrder`; move/work xor clears counter-spy.
+- `app/test/next_turn_confirmation_spy_exclusion_test.dart` — `DLG60001` idle-civilian list excludes all Spies.
+- `app/test/game_map_area_spy_relocate_leave_intel_test.dart` — map relocate leave-intel `ConfirmDialogEvent` emit, cancel, and accept → `CivilianMoveRequestedEvent`.
+- `packages/colonizethis_logic/test/spy_relocate_intel_test.dart` — `spyLeaveIntelWarningNeeded` projected-count rules.
+- `packages/colonizethis_logic/test/civilians_missing_work_orders_test.dart` — Spy exclusion from idle-civilian detection.
+- `packages/colonizethis_orders/test/orders/civilian_projected_tile_test.dart` — `projectedCivilianTileKey` prefers pending `MoveOrder` destination.
+
+Map relocate selection and leave-intel confirm dialog: `app/lib/features/game/flame/map_state/game_map_area_relocate_selection.dart`; widget coverage in `app/test/game_map_area_spy_relocate_leave_intel_test.dart` (confirm emit, cancel, accept → `CivilianMoveRequestedEvent`).

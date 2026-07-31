@@ -1,5 +1,6 @@
 // Table-driven draft-order mutation scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart';
 import 'package:colonizethis_test/test.dart';
@@ -28,6 +29,12 @@ void domRunRemoveTradeOrderForPlayerNoOpEmpty() {const orders = Orders(); expect
 
 void domRunRemoveTradeOrderForPlayerNoOpMissingCommodity() {final orders = Orders(tradeOrdersByPlayerId: <String,List<TradeOrder>>{'gp1': <TradeOrder>[draftOrdersTimberBid],},); expect(identical(removeTradeOrderForPlayer(orders: orders,playerId: 'gp1',commodityId: 'iron',),orders,),isTrue,);}
 
+void domRunApplyCivilianMoveOrderForPlayerAdds() {const orders = Orders(); const move = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p1|0|0',); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',move); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[move]);}
+
+void domRunApplyCivilianMoveOrderForPlayerReplacesPriorMove() {const prior = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p1|0|0',); const next = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p2|1|0',); final orders = Orders(moveOrdersByPlayerId: {'gp1': [prior]},); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',next); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[next]);}
+
+void domRunApplyCivilianMoveOrderForPlayerClearsConflictingWorkOrder() {const work = WorkOrder(unitId: 'spy1',target: kWorkTargetCounterSpy,targetTileKey: 'oldWorld|p1|0|0',); const move = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p2|1|0',); final orders = Orders(workOrdersByPlayerId: {'gp1': [work]},); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',move); expect(out.workOrdersByPlayerId['gp1'],isEmpty); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[move]);}
+
 /// One row in draft-order mutation scenario tables.
 
 /// Scenarios for removePendingWorkOrderAt.
@@ -46,4 +53,11 @@ List<RunnableScenario> draftOrdersTradeMutationScenarios() => [
   rs('removeTradeOrderForPlayer deletes the matching staged order', domRunRemoveTradeOrderForPlayerDeletes, '#2993 E5b'),
   rs('removeTradeOrderForPlayer is a no-op (returns same instance) when ' 'the player has no staged orders',domRunRemoveTradeOrderForPlayerNoOpEmpty,'#2993 E5b'),
   rs('removeTradeOrderForPlayer is a no-op (returns same instance) when ' 'the commodity is not present in the staged list',domRunRemoveTradeOrderForPlayerNoOpMissingCommodity,'#2993 E5b'),
+];
+
+/// Scenarios for civilian move draft helpers (Refs #4219).
+List<RunnableScenario> draftOrdersCivilianMoveMutationScenarios() => [
+  rs('applyCivilianMoveOrderForPlayer adds when no prior move exists', domRunApplyCivilianMoveOrderForPlayerAdds, '#4219'),
+  rs('applyCivilianMoveOrderForPlayer replaces prior move for same unit', domRunApplyCivilianMoveOrderForPlayerReplacesPriorMove, '#4219'),
+  rs('applyCivilianMoveOrderForPlayer clears conflicting work order', domRunApplyCivilianMoveOrderForPlayerClearsConflictingWorkOrder, '#4219'),
 ];

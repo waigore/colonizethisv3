@@ -15,12 +15,14 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
     required this.isNarrow,
     required this.overlayOpen,
     required this.onCancel,
+    this.usesRelocateCopy = false,
     super.key,
   });
 
   final bool isNarrow;
   final bool overlayOpen;
   final VoidCallback? onCancel;
+  final bool usesRelocateCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +52,9 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  l10n.map_selectionMode_prompt,
+                  usesRelocateCopy
+                      ? l10n.map_selectionMode_relocatePrompt
+                      : l10n.map_selectionMode_prompt,
                   style: TextStyle(
                     color: EditorialMonoclePalette.fg,
                     fontSize: 14,

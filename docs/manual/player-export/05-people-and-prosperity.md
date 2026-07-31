@@ -50,7 +50,9 @@ Civilians are map units. Open **Civilian units panel** from the left empire rail
 | Explorer, Builder, Engineer | £1000 + 2 paper | Available from the start |
 | Spy, Merchant, Rail Builder | £2000 + 4 paper | Spy/Merchant/Rail Builder need their starting or tech unlocks (e.g. Merchant Companies, Early Steam Engine) |
 
-Training queues a build decree. Units appear at the **capital tile** after **Build/work** resolves (after recruit/train workers in that phase). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or move them.
+Training queues a build decree. Units appear at the **capital tile** after **Build/work** resolves (after recruit/train workers in that phase). Use the panel thereafter to select units, assign work (Chapters 4 and 6), or relocate Spies.
+
+**Spies — station and relocate.** On **Civilian units panel**, an idle Spy shows **Relocate** to pick a legal foreign (or own) land tile on the map; **Assign** still offers **counter-espionage** on owned provinces only. While a Spy holds a foreign province, status reads **Holding intel**; leaving when yours is the last Spy there warns that full intel will fog after the turn ends. End-turn confirmation does **not** nag idle Spies — stationing is strategic portfolio, not wasted capacity.
 
 ## Counsel
 

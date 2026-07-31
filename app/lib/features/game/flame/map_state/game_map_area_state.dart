@@ -8,6 +8,7 @@ import 'game_map_area_build_overlays.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_events.dart';
 import 'game_map_area_lifecycle.dart';
+import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_selection.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed.dart';
@@ -20,6 +21,7 @@ class GameMapAreaState extends ConsumerState<GameMapArea>
     with
         GameMapAreaStateBase,
         GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
         GameMapAreaView,
         GameMapAreaTurnResolution,
         GameMapAreaTurnFeedLabels,
@@ -29,5 +31,6 @@ class GameMapAreaState extends ConsumerState<GameMapArea>
         GameMapAreaLifecycle,
         GameMapAreaBuildMapStackChrome,
         GameMapAreaBuildMapStack,
+        GameMapAreaRelocateSelection,
         GameMapAreaBuildOverlays,
         GameMapAreaBuild {}

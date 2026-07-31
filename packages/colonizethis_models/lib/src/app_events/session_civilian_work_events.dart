@@ -35,3 +35,26 @@ class UpsertPendingCivilianWorkOrderRequestedEvent extends SessionCommandEvent {
   final String playerId;
   final WorkOrder workOrder;
 }
+
+/// Spy relocate confirm: merges [moveOrder] into current-turn draft orders.
+/// Clears conflicting pending work for the same unit (move xor work draft rule).
+class CivilianMoveRequestedEvent extends SessionCommandEvent {
+  CivilianMoveRequestedEvent({
+    required this.humanPlayerId,
+    required this.moveOrder,
+  });
+
+  final String humanPlayerId;
+  final MoveOrder moveOrder;
+}
+
+/// Remove pending civilian [MoveOrder] for [unitId] from the turn draft.
+class RemovePendingCivilianMoveRequestedEvent extends SessionCommandEvent {
+  RemovePendingCivilianMoveRequestedEvent({
+    required this.playerId,
+    required this.unitId,
+  });
+
+  final String playerId;
+  final String unitId;
+}

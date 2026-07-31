@@ -42,7 +42,7 @@ Keep **`showDialog` / `showModalBottomSheet` / `Navigator.pop`** **inside one fe
 |--------|----------|
 | **`WidgetRef` passed into widgets** across panels or `features/...` subtrees to trigger another area | **Potential smell** — prefer bus events, notifiers, or data. |
 | **Panel A** calls **panel B’s `onXxx`** to open B’s UI or mutate B | **Definite smell — disallowed.** Emit a typed **`AppEvent`**. |
-| Typed bus event payload (`LocateMapTileEvent`, `StartCivilianWorkTargetSelectionEvent`) | **Preferred** — avoid callback threading for cross-panel intent. |
+| Typed bus event payload (`LocateMapTileEvent`, `StartCivilianWorkTargetSelectionEvent`, `StartCivilianRelocateSelectionEvent`, `CivilianMoveRequestedEvent`) | **Preferred** — avoid callback threading for cross-panel intent. |
 
 ---
 

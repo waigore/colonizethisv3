@@ -469,6 +469,56 @@
   "@map_selectionMode_cancel": {
     "description": "Lowercase inline cancel action label in the map work-target selection prompt overlay."
   },
+  "map_selectionMode_relocatePrompt": "Select a destination for your Spy, or click cancel",
+  "@map_selectionMode_relocatePrompt": {
+    "description": "Prompt overlay when the human player is choosing a Spy relocate destination on the map."
+  },
+  "map_relocate_leaveIntel_title": "Leave intel?",
+  "@map_relocate_leaveIntel_title": {
+    "description": "Confirm dialog title when relocating the last Spy out of a foreign province."
+  },
+  "map_relocate_leaveIntel_message": "This is the last Spy holding intel in this province. Full intel there will fog after end of turn.",
+  "@map_relocate_leaveIntel_message": {
+    "description": "Confirm dialog body when relocating the last Spy out of a foreign province."
+  },
+  "map_relocate_leaveIntel_confirm": "Relocate anyway",
+  "@map_relocate_leaveIntel_confirm": {
+    "description": "Confirm button on leave-intel Spy relocate warning."
+  },
+  "map_relocate_leaveIntel_cancel": "Stay",
+  "@map_relocate_leaveIntel_cancel": {
+    "description": "Cancel button on leave-intel Spy relocate warning."
+  },
+  "civilian_units_relocate": "Relocate",
+  "@civilian_units_relocate": {
+    "description": "Relocate action for idle Spy units in the civilian units panel."
+  },
+  "civilian_units_spyStatus_holdingIntel": "Holding intel: {province}",
+  "@civilian_units_spyStatus_holdingIntel": {
+    "description": "Spy status when idle in a foreign province holding presence intel.",
+    "placeholders": {
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_spyStatus_counterEspionage": "Counter-espionage",
+  "@civilian_units_spyStatus_counterEspionage": {
+    "description": "Spy status when assigned or working counter-spy."
+  },
+  "civilian_units_spyStatus_reserve": "Reserve",
+  "@civilian_units_spyStatus_reserve": {
+    "description": "Spy status when idle on owned land with no mission."
+  },
+  "civilian_units_pendingRelocate": "Relocating to: {location}",
+  "@civilian_units_pendingRelocate": {
+    "description": "Pending Spy move order destination on the civilian units panel.",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
+  },
   "common_start": "Start",
   "@common_start": {
     "description": "Generic Start button label used when beginning a flow."

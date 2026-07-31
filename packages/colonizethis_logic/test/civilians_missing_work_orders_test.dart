@@ -116,5 +116,29 @@ void main() {
       );
       expect(missing, isEmpty);
     });
+    test('excludes idle Spies per UXD-002', () {
+      final game = _gameWithUnits([
+        Unit(
+          id: 's1',
+          type: kUnitTypeSpy,
+          ownerId: humanId,
+          locationProvinceId: 'oldWorld|p1',
+          tileKey: 'oldWorld|p1|0|0',
+        ),
+        Unit(
+          id: 'e1',
+          type: kUnitTypeExplorer,
+          ownerId: humanId,
+          locationProvinceId: 'oldWorld|p1',
+          tileKey: 'oldWorld|p1|1|0',
+        ),
+      ]);
+      final missing = findCiviliansMissingWorkOrders(
+        game: game,
+        orders: const Orders(),
+        humanPlayerId: humanId,
+      );
+      expect(missing.map((e) => e.unitId), ['e1']);
+    });
   });
 }

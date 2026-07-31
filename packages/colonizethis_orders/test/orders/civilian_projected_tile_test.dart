@@ -4,11 +4,18 @@
 
 import 'support/scenario_runner.dart';
 import 'support/application/civilian_projected_tile_scenarios.dart';
+import 'support/application/civilian_projected_tile_move_scenarios.dart';
 
 void main() {
   runLabeledScenarioGroup(
     'projectedCivilianTileKey',
-    civilianProjectedTileScenarios(),
+    [
+      ...civilianProjectedTileScenarios(),
+      rs(
+        'prefers pending move destination over work and tile',
+        cptmRunPrefersPendingMoveDestination,
+      ),
+    ],
     runRunnableScenario,
   );
 }

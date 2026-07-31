@@ -23,6 +23,7 @@ import 'game_map_area_view.dart';
 import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack_chrome.dart';
+import 'game_map_area_relocate_selection.dart';
 
 /// Map canvas stack and in-map overlay chrome (left rail, corner controls,
 /// side menu, minimap, players bar, turn feed). Split from
@@ -33,6 +34,7 @@ mixin GameMapAreaBuildMapStack
         GameMapAreaStateBase,
         GameMapAreaView,
         GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
         GameMapAreaE2e,
         GameMapAreaBuildMapStackChrome {
   Widget buildMapFocusedStack({
@@ -66,10 +68,13 @@ mixin GameMapAreaBuildMapStack
           selectedCivilianTileKey: selectedCivilianTileKey,
           onTileSelectedForWork: workTargetSelection != null
               ? onTileSelectedForWork
+              : civilianRelocateSelection != null
+              ? onTileSelectedForRelocate
               : null,
-          onWorkTargetSelectionCancelled: workTargetSelection != null
-              ? cancelWorkTargetSelection
+          onWorkTargetSelectionCancelled: inMapTileSelectionMode
+              ? cancelAnyMapTileSelection
               : null,
+          selectionPromptUsesRelocateCopy: civilianRelocateSelection != null,
           onCivilianTileStateChanged: (tileKey) {
             setState(() {
               selectedCivilianTileKey = tileKey;
@@ -107,8 +112,8 @@ mixin GameMapAreaBuildMapStack
             game: widget.game,
             humanPlayerId: mapPlayerId,
             narrow: isNarrow,
-            onIconTappedWhileSelectionMode: workTargetSelection != null
-                ? cancelWorkTargetSelection
+            onIconTappedWhileSelectionMode: inMapTileSelectionMode
+                ? cancelAnyMapTileSelection
                 : null,
           ),
         ),
