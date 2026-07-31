@@ -280,6 +280,18 @@ abstract class AppLocalizations {
   /// Prompt overlay when choosing a Spy relocate destination on the map.
   String get map_selectionMode_relocatePrompt;
 
+  /// Confirm dialog title when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_title;
+
+  /// Confirm dialog body when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_message;
+
+  /// Confirm button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_confirm;
+
+  /// Cancel button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_cancel;
+
   /// Generic Start button label used when beginning a flow.
   String get common_start;
 

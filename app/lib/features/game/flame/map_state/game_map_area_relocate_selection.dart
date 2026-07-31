@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
@@ -99,14 +100,14 @@ mixin GameMapAreaRelocateSelection
       newDestinationTileKey: tileKey,
     );
     if (needsWarning) {
+      final l10n = appL10n(context);
       final completer = Completer<bool>();
       bus.emit(
         ct_models.ConfirmDialogEvent(
-          title: 'Leave intel?',
-          message:
-              'This is the last Spy holding intel in this province. Full intel there will fog after end of turn.',
-          confirmLabel: 'Relocate anyway',
-          cancelLabel: 'Stay',
+          title: l10n.map_relocate_leaveIntel_title,
+          message: l10n.map_relocate_leaveIntel_message,
+          confirmLabel: l10n.map_relocate_leaveIntel_confirm,
+          cancelLabel: l10n.map_relocate_leaveIntel_cancel,
           onResult: completer.complete,
         ),
       );

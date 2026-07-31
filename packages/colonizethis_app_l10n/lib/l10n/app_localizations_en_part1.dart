@@ -283,6 +283,19 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
       'Select a destination for your Spy, or click cancel';
 
   @override
+  String get map_relocate_leaveIntel_title => 'Leave intel?';
+
+  @override
+  String get map_relocate_leaveIntel_message =>
+      'This is the last Spy holding intel in this province. Full intel there will fog after end of turn.';
+
+  @override
+  String get map_relocate_leaveIntel_confirm => 'Relocate anyway';
+
+  @override
+  String get map_relocate_leaveIntel_cancel => 'Stay';
+
+  @override
   String get common_start => 'Start';
 
   @override
