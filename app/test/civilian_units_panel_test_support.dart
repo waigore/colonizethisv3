@@ -7,7 +7,7 @@
 // SPEC: SPEC/ui/civilian-units-panel.md, SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildImprovement;
+    show kUnitTypeSpy, kWorkTargetBuildImprovement, kWorkTargetCounterSpy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'panel_fixtures/core.dart';
@@ -182,6 +182,64 @@ Orders civilianSinglePendingWorkOrder({
         targetTileKey: targetTileKey,
       ),
     ],
+  );
+}
+
+/// Human Spy on owned or foreign OW province (Refs #4219).
+Game buildCivilianSpyFixtureGame({
+  required String id,
+  String humanId = 'h1',
+  String rivalId = 'gp2',
+  String spyId = 'spy1',
+  bool foreignStation = false,
+  String homeTileKey = 'oldWorld|p1|0|0',
+  String foreignTileKey = 'oldWorld|p2|0|0',
+}) {
+  final tileKey = foreignStation ? foreignTileKey : homeTileKey;
+  final provinceId = foreignStation ? 'oldWorld|p2' : 'oldWorld|p1';
+  return buildPanelTestGame(
+    id: id,
+    players: [
+      Player(id: humanId, displayName: 'Human', isHuman: true),
+      Player(id: rivalId, displayName: 'Rival', isHuman: false),
+    ],
+    oldWorldProvinces: [
+      Province(
+        id: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        displayName: 'Home',
+        ownerId: humanId,
+      ),
+      Province(
+        id: 'oldWorld|p2',
+        regionId: 'oldWorld',
+        displayName: 'Rival Land',
+        ownerId: rivalId,
+      ),
+    ],
+    oldWorldUnits: [
+      Unit(
+        id: spyId,
+        type: kUnitTypeSpy,
+        ownerId: humanId,
+        locationProvinceId: provinceId,
+        tileKey: tileKey,
+      ),
+    ],
+  );
+}
+
+/// Pending counter-spy [WorkOrder] for [spyId].
+Orders civilianSpyPendingCounterSpyOrder({
+  required String humanId,
+  required String spyId,
+  required String targetTileKey,
+}) {
+  return civilianSinglePendingWorkOrder(
+    humanId: humanId,
+    unitId: spyId,
+    target: kWorkTargetCounterSpy,
+    targetTileKey: targetTileKey,
   );
 }
 

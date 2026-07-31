@@ -126,7 +126,7 @@ For each civilian unit, the panel shows:
 
 | Field        | Source | Notes |
 |-------------|--------|--------|
-| **Status**  | `Unit.status` | One of: `idle`, `working`. Display as short label (e.g. "Idle", "Working"). |
+| **Status**  | `Unit.status` (+ Spy overrides) | Default: `idle` / `working` as short labels. **Spy-only** plain-language overrides (Refs #4219, **UXD-002**): foreign idle presence → **Holding intel: {province}**; pending/active `counter_spy` → **Counter-espionage**; owned-land idle reserve → **Reserve**; pending `MoveOrder` destination row uses pending-relocate assigned-to copy (status may show generic Idle until move resolves). |
 | **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
 | **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If pending or in-progress: show work target, target location, and localized inline turn counter on the first line (e.g. `X turns`), where pending uses assign-time `totalTurns` and in-progress uses `remainingTurns/totalTurns`. **Pending cost preview (this turn only):** when the pending order has a **stockpile material** cost per `WorkOrderCostCalculator(game).calculateCost(...)` (same inputs as order validation: `target`, `targetTileKey`, `improvementLevel` from tile state for `build_improvement` only, `fortLevel` / `roadLevel` from game state), show a second line (below "Assigned to") of **dense chips**: each commodity as **`ResourceIcon` + required quantity** (canonical pattern; align with training / production panels, `app/lib/widgets/resource_icon.dart`). **Pending `purchase_land` (Merchant):** show **treasury** cost via `purchaseLandCost(resourceId)` with `resourceId` from `game.worldState.resourceByTileKey[order.targetTileKey]`, using the same **treasury chip/string** pattern as military training (`trainUnits_treasury` / `train_military_dialog.dart`) — **not** a commodity `ResourceIcon` for cash. **No literal ` (pending)` suffix is shown for any pending target.** **No affordability UI** on this panel: show required amounts only; do not compare to stockpile/treasury or use deficit/error styling. |
 
@@ -208,6 +208,18 @@ For each civilian unit, the panel shows:
 - **Given** the panel is displayed, **when** there are civilian units in more than one region, **then** the UI layer groups units by region with a region heading for each group and lists units within each group in a stable order (e.g. by province name, then unit type, then unit id).
 
 - **Given** the user opens the Civilian Units panel, **when** the panel is displayed, **then** the UI layer presents it as a **bottom sheet** that appears from the bottom edge (slides up), so the map remains visible above; on narrow viewports layout and touch targets follow [mobile-adaptation.md](mobile-adaptation.md).
+
+- **Given** an idle Spy with no pending work or move order, **when** `UNIT10001` renders that row, **then** the UI layer shows **Relocate** (and **Assign** still offers `counter_spy` only on owned targets per game rules).
+
+- **Given** the user taps **Relocate** on an eligible Spy row, **when** the tap is handled, **then** the UI layer emits `StartCivilianRelocateSelectionEvent(unitId)` and enters map relocate selection mode (orange hover, valid-tile highlights, relocate prompt copy).
+
+- **Given** a Spy is idle in a non-owned province, **when** the row renders, **then** the status line shows **Holding intel: {province display name}** (not bare Idle alone).
+
+- **Given** a Spy has pending or in-progress `counter_spy`, **when** the row renders, **then** the status line shows **Counter-espionage** and **Relocate** is hidden.
+
+- **Given** a Spy is idle in an owned province with no mission, **when** the row renders, **then** the status line shows **Reserve**.
+
+- **Given** Relocate would leave a foreign province with zero projected own Spies (per `spyLeaveIntelWarningNeeded` in logic), **when** the player selects a destination tile, **then** the UI layer shows a soft confirm warning that full intel there will fog after end of turn and still allows confirm.
 
 - **Given** the Civilian Units panel is open and a unit has `Unit.status == idle` and no pending work order for the human player this turn, **when** the user views that unit's row, **then** the UI layer shows an **Assign** button (or equivalent control).
 

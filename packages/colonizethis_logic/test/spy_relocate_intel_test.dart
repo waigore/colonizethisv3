@@ -42,6 +42,32 @@ Game _twoProvinceSpyGame() {
 }
 
 void main() {
+  group('isForeignProvinceForPlayer', () {
+    test('returns true for rival-owned province', () {
+      final game = _twoProvinceSpyGame();
+      expect(
+        isForeignProvinceForPlayer(
+          game: game,
+          prefixedProvinceId: 'oldWorld|p2',
+          humanPlayerId: 'h1',
+        ),
+        isTrue,
+      );
+    });
+
+    test('returns false for human-owned province', () {
+      final game = _twoProvinceSpyGame();
+      expect(
+        isForeignProvinceForPlayer(
+          game: game,
+          prefixedProvinceId: 'oldWorld|p1',
+          humanPlayerId: 'h1',
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('spyLeaveIntelWarningNeeded', () {
     const humanId = 'h1';
 
