@@ -98,6 +98,8 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   'app/lib/features/game/widgets/technology/tech_tree_widget.dart',
   // Tech detail dialog split from `tech_tree_widget.dart` (Refs #3878).
   'app/lib/features/game/widgets/technology/tech_tree_widget_dialog.dart',
+  // Shared Tree/Choose-tech detail dialog extracted for #4222 (Refs #4222).
+  'app/lib/features/game/widgets/technology/tech_definition_detail_dialog.dart',
   // GP researchers list modal split from tech pennant row / tree surfaces
   // (Refs #3862). Same local-by-design rationale as tech detail in
   // `tech_tree_widget.dart` — `SPEC/program/app-ui-wiring.md` § "Local by design".
