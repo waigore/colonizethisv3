@@ -1,5 +1,6 @@
 // Naval mission assign dialog widget tests (Refs #4213 slice B).
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -13,6 +14,7 @@ import 'naval_units_panel_test_scenarios.dart';
 import 'naval_units_panel_test_support.dart';
 
 void main() {
+  suppressLogsForTests();
   group('Naval mission assign UI', () {
     testWidgets('panel Mission action stages patrol draft', (tester) async {
       final game = buildNavalPanelNamedSeaZoneGame();
