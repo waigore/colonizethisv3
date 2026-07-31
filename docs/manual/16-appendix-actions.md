@@ -19,7 +19,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | Build regiment (`BuildUnitOrder`) | `UNIT20001` → **Train** → `UNIT50001` **Train Military**. | Treasury, materials, one reserved peasant, and regiment technology. | **Build / work**; joins Home Army. | Ch. 11 |
 | Build ship (`BuildUnitOrder`) | `UNIT30001` → **Train** → `UNIT60001` **Train Naval**. | Treasury, materials, one reserved peasant, and ship technology where required. | **Build / work**; joins Home Fleet. | Ch. 13 |
 | Fleet move (`NavalMoveOrder`) | `UNIT30001` → **Move** on a sea-going fleet → `DLG30001` **Move Fleet** → legal destination. | Free. Home Fleet cannot move; only one adjacent sea/port step; ports must be yours. Replaces that fleet’s pending mission. | **Movement** | Ch. 13 |
-| Fleet mission (`NavalMissionOrder`) | `UNIT30001` fleet controls: **Patrol**, **Blockade**, **Beachhead**, **Defend**, or **Join Home Fleet** where offered. | Free. Patrol/blockade/beachhead/defend require a sea-going fleet at sea; Join Home Fleet requires capital port. A fleet moves or takes one mission, never both. | Assignment: **Movement**; interceptions: **Naval Interception & Naval Combat**. | Ch. 13 |
+| Fleet mission (`NavalMissionOrder`) | **Map:** tap human fleet marker (`MAP10001`) → `DLG31003` (if needed) → `DLG31001` **Assign mission** → `DLG31002` for Blockade/Beachhead targets. **Panel:** `UNIT30001` → **Mission** on an at-sea sea-going fleet (same flow). **Cancel pending mission** clears a staged mission. | Free. Patrol/Blockade/Beachhead/Defend require a sea-going fleet at sea; Blockade/Beachhead need an adjacent at-war province target. A fleet moves or takes one mission, never both. Join Home Fleet: dock at capital or `DLG40001` transfer — not the mission menu. | Assignment: **Movement**; interceptions: **Naval Interception & Naval Combat**. | Ch. 13 |
 | Trade bid / offer (`TradeOrder`) | Left-rail **Trade** → `GAME60001` **Trade screen** → **Market** (bid/offer/none + quantity) or **Deal Book** (last-turn fills / carry-forwards). | Bid/offer are mutually exclusive per commodity; quantity, cargo, treasury, stockpile, and bid-type caps apply; riches cannot trade. | **World Market** | Ch. 8 |
 
 ### Work targets
@@ -104,3 +104,6 @@ Other Great Powers submit comparable decrees under the same validation and phase
 - `SPEC/ui/civilian-units-panel.md`
 - `SPEC/ui/military-units-army-management.md`
 - `SPEC/ui/naval-units-fleet-management.md`
+- `SPEC/ui/naval-mission-menu-dialog.md`
+- `SPEC/ui/naval-mission-target-dialog.md`
+- `SPEC/ui/map-widget.md`

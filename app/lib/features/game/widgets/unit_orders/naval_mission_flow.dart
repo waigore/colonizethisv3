@@ -127,7 +127,7 @@ final class NavalMissionMenuChoiceCancelPending extends NavalMissionMenuChoice {
   const NavalMissionMenuChoiceCancelPending();
 }
 
-/// Screen id for mission menu dialog host (Slice B; full spec in Slice C).
+/// Screen ids for naval mission dialog hosts (Refs #4213).
 abstract final class NavalMissionDialogIds {
   static const menuDialog = UiScreenIds.navalMissionMenuDialog;
   static const targetDialog = UiScreenIds.navalMissionTargetDialog;

@@ -101,6 +101,7 @@ Bottom-sheet panel (CtPanel) over the map; scrollable fleet tree grouped by regi
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
 | Move | Sea-going fleet | Opens [move-fleet-dialog.md](move-fleet-dialog.md) | `NavalMoveFleetRequestedEvent` on confirm. |
+| Mission | Sea-going fleet **at sea** (not Home Fleet) | Opens `showNavalMissionFlow` → [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md) (+ target / fleet-picker steps) | `NavalMissionRequestedEvent` or `NavalMissionCancelRequestedEvent` on confirm. Replaces pending move for that fleet. |
 | Transfer to Home Fleet | At capital port | Opens [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | Transfer event on confirm. |
 | Locate | Row action | `LocateMapTileEvent` | Map centers on fleet. |
 | Split / Combine | Per fleet management spec | Bus events | See [naval-units-fleet-management.md](naval-units-fleet-management.md). |
@@ -120,7 +121,7 @@ Bottom-sheet panel (CtPanel) over the map; scrollable fleet tree grouped by regi
 
 ## Components
 
-- `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
+- `NavalUnitsPanel`, [move-fleet-dialog.md](move-fleet-dialog.md), [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md), [naval-mission-target-dialog.md](naval-mission-target-dialog.md), [naval-mission-fleet-picker-dialog.md](naval-mission-fleet-picker-dialog.md), [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md).
 - `RegionSectionHeader` (`app/lib/features/game/widgets/units/shared/region_section_header.dart`) — rendered with the `RegionHeaderVariant.leftBar` chrome on this panel (Refs #3514); see § Region / location header chrome.
 - `LocationSectionHeader` (`app/lib/features/game/widgets/units/shared/location_section_header.dart`) — location (Home Fleet / port / sea-zone) sub-header; see § Region / location header chrome.
 
@@ -166,7 +167,7 @@ For every fleet (including the Home Fleet), the collapsed row shows:
 |-------------------|------------------------------------------|-------|
 | **Fleet name**    | Fleet id or display name                | For Home Fleet, label is “Home Fleet” followed by a compact uppercase **`HOME`** chip (mockup `.home-tag`). For other fleets, use a human-readable label (e.g. “Fleet #3”, “Atlantic Squadron” if available; otherwise a stable fallback) and **no** `HOME` chip. See [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29). |
 | **Location**      | `inPortAtProvinceId` or `seaZoneId`     | Display as `Region — Province (in port)` for in-port fleets (province display name + localised `(in port)` qualifier per `AppLocalizations.naval_units_locInPort`) or `Region — Sea zone (at sea)` for at-sea fleets (`naval_units_locAtSea`). Region label uses same mapping as Military Units panel. The qualifier is appended by `naval_tree_builder.dart` so both the collapsed subtitle and any snapshot view reading `FleetRow.locationLabel` see the same suffix. |
-| **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). |
+| **Mission**       | `Fleet.mission`                         | Enum mapped to user labels: None, Patrol, Blockade, Beachhead, Defend. For Home Fleet, always shown as “None”. When the shell’s draft **`Orders`** contains a **naval move** for this fleet, show **Moving to:** \<display name of destination sea zone or dock province\> (dock targets may suffix **(dock)** in UI copy). When draft **`Orders`** contains a **naval mission** for this fleet, show a pending line (`naval_mission_pendingLine` or `naval_mission_pendingLineWithTarget`) below the mission field. |
 | **Inline actions** | Fleet action availability rules | `Split` is always visible. `Move` is visible for sea-going fleets and hidden for Home Fleet. `Locate` is always visible and is rendered **icon-only** at the **right end** of the actions cluster. Fleet rows render via the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with `dense: true` so Move/Split render as **compact inline pills** (mockup `.f-actions button`) on a single horizontal row; narrow layouts switch row actions to icon-only while keeping controls tappable. See [Naval mockup fidelity (R25–R29)](#naval-mockup-fidelity-r25r29). |
 
 Collapsed row content stays compact and focused on: location, mission (and draft move line when present), and inline actions.
@@ -299,6 +300,12 @@ The first implementation pass for [#2866](https://github.com/) (PR #2906 + #2919
 - **Given** the Move dialog is open with at least one destination, **when** the user selects a destination and taps **Confirm**, **then** the UI layer emits **`NavalMoveFleetRequestedEvent`** with a **naval move** order matching the selection (sea zone id or dock province id per `NavalMoveOrder`) and closes the dialog.
 
 - **Given** the Move dialog is open, **when** the user taps **Cancel**, **then** the UI layer closes the dialog without emitting **`NavalMoveFleetRequestedEvent`**.
+
+- **Given** a sea-going at-sea non-Home fleet row, **when** the user taps **Mission**, **then** the UI layer opens `showNavalMissionFlow` and, on Patrol selection, emits **`NavalMissionRequestedEvent`** with the correct `NavalMissionOrder` and shows a pending mission line on the fleet row.
+
+- **Given** a pending naval mission for a fleet, **when** the user chooses **Cancel pending** in the mission menu, **then** the UI layer emits **`NavalMissionCancelRequestedEvent`** and removes the pending mission line.
+
+- **Given** a Home Fleet row or a fleet **in port**, **when** the user views row actions, **then** the UI layer does **not** show the **Mission** action.
 
 - **Given** the Naval Units panel is opened with `locationScopeKey` and currently shows at least one scoped fleet row, **when** the user confirms a fleet move from that panel and the projected scoped list becomes empty after draft-order application, **then** the UI layer emits **`ClosePanelEvent`** and the naval panel dismisses automatically.
 

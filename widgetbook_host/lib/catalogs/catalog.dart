@@ -78,7 +78,7 @@ import 'package:colonizethis_app/features/game/screens/victory/victory_screen.da
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show CivilianMissingWorkOrderEntry;
+    show CivilianMissingWorkOrderEntry, navalMissionAvailabilityForFleet;
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
@@ -98,6 +98,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
@@ -301,6 +303,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...combatUiDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,
+  ...navalMissionDialogDirectories,
   ...transferToHomeFleetDialogDirectories,
   ...productionCommodityBreakdownDialogDirectories,
   ...developmentDisconnectedAssignDialogDirectories,
