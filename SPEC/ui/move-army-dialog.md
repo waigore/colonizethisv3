@@ -2,7 +2,7 @@
 
 **Screen ID:** `DLG20001` — stable; do not reassign.
 **SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart`.
-**Widgetbook:** `Move Army Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `Move Army Dialog` → `widgetbook_host/lib/catalogs/catalog_dialogs.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG20001-move-army-dialog.html](mockups/DLG20001-move-army-dialog.html)
 ---
@@ -154,8 +154,10 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 ## Widgetbook
 
-Catalog folder: **Move Army Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use case:
+Catalog folder: **Move Army Dialog** (registered in `widgetbook_host/lib/catalogs/catalog_dialogs.dart`). Use cases:
 
-1. **Default — grouped destinations:** Minimal `Game`, `MapTopology`, and `Army` fixture wired so the dialog shows both `Your provinces` and `Invasion targets` sections with at least one invasion destination, plus an empty `Orders()` draft and a fresh `AppEventBus`.
+1. **Default — grouped destinations:** Minimal `Game`, `MapTopology`, and `Army` fixture wired so the dialog shows both `Your provinces` and `Invasion targets` sections with at least one invasion destination, plus an empty `Orders()` draft and a fresh `AppEventBus` (no `playerView` — invasion rows omit intel lines).
+2. **Invasion intel — full visibility (#4216):** Fixture with fully visible invasion tiles, two combat-capable defenders, stone fort (level 2), and `playerView` from `buildPlayerView` so rows show defender totals, fort/siege label, and own-army line.
+3. **Invasion intel — defenders unknown (#4216):** Same fixture with fogged invasion tiles and `playerView` so invasion rows show `moveArmy_defendersUnknown` only.
 
 Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).
