@@ -243,6 +243,21 @@ Orders civilianSpyPendingCounterSpyOrder({
   );
 }
 
+/// Pending civilian [MoveOrder] for Spy [spyId] (Refs #4219).
+Orders civilianSpyPendingMoveOrder({
+  required String humanId,
+  required String spyId,
+  required String destinationTileKey,
+}) {
+  return Orders(
+    moveOrdersByPlayerId: {
+      humanId: [
+        MoveOrder(unitId: spyId, destinationTileKey: destinationTileKey),
+      ],
+    },
+  );
+}
+
 /// In-progress builder row (no pending cost icons).
 Game buildCivilianWorkingBuilderGame({
   String id = 'g_civ_working',

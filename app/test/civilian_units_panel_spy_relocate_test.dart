@@ -102,6 +102,33 @@ void main() {
       },
     );
 
+    testWidgets(
+      'Spy with pending MoveOrder shows relocating destination row copy',
+      (WidgetTester tester) async {
+        const spyId = 'spy1';
+        const destTile = 'oldWorld|p1|1|0';
+        final game = buildCivilianSpyFixtureGame(id: 'g_spy_pending_move');
+        final orders = civilianSpyPendingMoveOrder(
+          humanId: _human,
+          spyId: spyId,
+          destinationTileKey: destTile,
+        );
+        await tester.pumpWidget(
+          buildCivilianPanel(
+            game: game,
+            humanPlayerId: _human,
+            currentOrders: orders,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.textContaining('Relocating to: Old World — Home'),
+          findsOneWidget,
+        );
+      },
+    );
+
     testWidgets('idle Explorer shows Assign but not Relocate', (
       WidgetTester tester,
     ) async {
