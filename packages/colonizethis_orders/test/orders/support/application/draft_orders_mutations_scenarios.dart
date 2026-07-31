@@ -1,5 +1,6 @@
 // Table-driven draft-order mutation scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart';
 import 'package:colonizethis_test/test.dart';
@@ -32,7 +33,7 @@ void domRunApplyCivilianMoveOrderForPlayerAdds() {const orders = Orders(); const
 
 void domRunApplyCivilianMoveOrderForPlayerReplacesPriorMove() {const prior = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p1|0|0',); const next = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p2|1|0',); final orders = Orders(moveOrdersByPlayerId: {'gp1': [prior]},); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',next); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[next]);}
 
-void domRunApplyCivilianMoveOrderForPlayerClearsConflictingWorkOrder() {const work = WorkOrder(unitId: 'spy1',target: 'counter_spy',targetTileKey: 'oldWorld|p1|0|0',); const move = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p2|1|0',); final orders = Orders(workOrdersByPlayerId: {'gp1': [work]},); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',move); expect(out.workOrdersByPlayerId['gp1'],isEmpty); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[move]);}
+void domRunApplyCivilianMoveOrderForPlayerClearsConflictingWorkOrder() {const work = WorkOrder(unitId: 'spy1',target: kWorkTargetCounterSpy,targetTileKey: 'oldWorld|p1|0|0',); const move = MoveOrder(unitId: 'spy1',destinationTileKey: 'oldWorld|p2|1|0',); final orders = Orders(workOrdersByPlayerId: {'gp1': [work]},); final out = applyCivilianMoveOrderForPlayer(orders,'gp1',move); expect(out.workOrdersByPlayerId['gp1'],isEmpty); expect(out.moveOrdersByPlayerId['gp1'],<MoveOrder>[move]);}
 
 /// One row in draft-order mutation scenario tables.
 

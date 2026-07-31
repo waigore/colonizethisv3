@@ -148,9 +148,9 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   String? _spyStatusLabel(AppLocalizations l10n) {
     if (!_isSpy) return null;
     final pendingWork = _pendingWorkOrder;
-    if (pendingWork?.target == 'counter_spy' ||
+    if (pendingWork?.target == kWorkTargetCounterSpy ||
         (unit.status == UnitStatus.working &&
-            unit.currentWork?.workTarget == 'counter_spy')) {
+            unit.currentWork?.workTarget == kWorkTargetCounterSpy)) {
       return l10n.civilian_units_spyStatus_counterEspionage;
     }
     if (_pendingMoveOrder != null) {
