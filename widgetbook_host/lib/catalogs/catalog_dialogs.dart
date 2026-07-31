@@ -532,6 +532,7 @@ List<WidgetbookNode> get moveArmyDialogDirectories => [
           );
         },
       ),
+      ...moveArmyInvasionIntelDialogUseCases,
     ],
   ),
 ];

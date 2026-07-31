@@ -2,7 +2,7 @@
 
 **Screen ID:** `DLG20001` — stable; do not reassign.
 **SPEC/ui** — Modal that lets the human player move a non-Home army to a legal destination province from the [military-units-panel.md](military-units-panel.md). Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart`.
-**Widgetbook:** `Move Army Dialog` → `app/lib/widgetbook/catalog.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
+**Widgetbook:** `Move Army Dialog` → `widgetbook_host/lib/catalogs/catalog_dialogs.dart`. Game model: [military-armies.md](../game/military-armies.md), [world-model.md](../game/world-model.md). Orders: [orders.md](../program/orders.md). Order suggestions: [order-suggestions.md](../program/order-suggestions.md). App wiring: [app-ui-wiring.md](../program/app-ui-wiring.md), [app-event-bus.md](../program/app-event-bus.md).
 
 **Mockup:** [mockups/DLG20001-move-army-dialog.html](mockups/DLG20001-move-army-dialog.html)
 ---
@@ -32,8 +32,11 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart
 | |                                              | |
 | |  INVASION TARGETS                            | |  CtSectionLabel
 | |  +----------------------------------------+  | |
-| |  | ( ) Invade Dest   declare war on Rival |  | |  selected = 2 px --accent + dot;
-| |  +----------------------------------------+  | |  trigger = --danger italic body
+| |  | ( ) Invade Dest                          |  | |  selected = 2 px --accent + dot;
+| |  |     Defenders: N regiments / Unopposed   |  | |  invasion intel summary (--muted)
+| |  |     Open field / Wood fort siege …       |  | |  fort label when full intel
+| |  |     declare war on Rival                 |  | |  trigger = --danger italic body
+| |  +----------------------------------------+  | |
 | |                                              | |
 | | +--------------------------------------------+|
 | | |   [ Cancel ]              [ Confirm ]    | |  CtNinePatchButton row
@@ -42,9 +45,10 @@ Implementation: `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart
 ```
 
 - Title: `moveArmy_title(armyId)` → `Move army — Army <armyId>`. Rendered with the dark-theme `titleMedium` style in `--accent` color and `letter-spacing: 0.05em` per #2867 R2/R5.
+- **Own army line:** when at least one destination exists, body shows `moveArmy_yourArmyRegiments(count)` (`Your army: N regiments`) in `--muted` body-small style above the destination sections (#4216).
 - Empty state: `moveArmy_noValidDestinations` replaces the destination columns; Confirm stays disabled (`onPressed: null`, button paints at `CtNinePatchButton.disabledOpacity = 0.4`).
 - Body: `CtDialogShell` body is a `Column(mainAxisSize: min)` with up to two sections separated by a 12 dp gap when both render. Section headers use `CtSectionLabel` (post-#2859 S10) carrying `moveArmy_groupYourProvinces` and `moveArmy_groupInvasionTargets`.
-- Rows: each destination renders as a shared `MoveDialogDestinationRow` ([`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)) — a tappable `GestureDetector` over a `Container` painted with a 1 px `EditorialMonoclePalette.border` outline; the selected row uses a 2 px `EditorialMonoclePalette.accent` outline and a filled `--accent` dot in its leading radio slot. Row title is `entry.provinceLabel`. Invasion-section rows with `requiresDeclareWarOnConfirm == true` append `moveArmy_declareWarOnTrigger(ownerLabel)` in `--danger` italic body style per #2867 R8 — the trigger label is derived from `theme.textTheme.bodySmall.copyWith(color: --danger, fontStyle: italic, fontWeight: w600)` and MUST inherit the body font stack so italic glyphs render (the editorial-monocle display family `editorialMonocleDisplayFontFamily` = `Cinzel` is display-only and has no italic variant, so widgets MUST NOT pin the trigger label to that family). The trigger label renders **below** the destination title inside the same outlined row container (the row body is a `Row` of [radio dot, `SizedBox(width: 10)`, `Expanded(Column([title, trigger]))`]) so the trigger never has to fit on the same physical line as the title at narrow widths (Refs #2870 S8/S10). No `RadioListTile` / Material `Radio` widgets appear in the rendered tree.
+- Rows: each destination renders as a shared `MoveDialogDestinationRow` ([`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)) — a tappable `GestureDetector` over a `Container` painted with a 1 px `EditorialMonoclePalette.border` outline; the selected row uses a 2 px `EditorialMonoclePalette.accent` outline and a filled `--accent` dot in its leading radio slot. Row title is `entry.provinceLabel`. **Invasion-section rows** append fog-respecting military intel below the title when `playerView` is supplied (#4216): full military intel (same gate as `MAP20001` Military / `provincePanelShowsFullTileDerivedIntel`) shows `moveArmy_defendersRegiments`, `moveArmy_unopposedCapture`, or fort labels (`moveArmy_fortOpenField` / `moveArmy_fortWoodSiege` / `moveArmy_fortStoneSiege` / `moveArmy_fortModernSiege`); without full intel shows `moveArmy_defendersUnknown`. Selected invasion rows additionally show regiment-type breakdown lines (own army + known defenders) using `provinceOverlay_indentedCount` with `regimentTypeDisplayLabel` names. Owned-province rows never show invasion intel lines. Invasion-section rows with `requiresDeclareWarOnConfirm == true` append `moveArmy_declareWarOnTrigger(ownerLabel)` in `--danger` italic body style per #2867 R8 — the trigger label is derived from `theme.textTheme.bodySmall.copyWith(color: --danger, fontStyle: italic, fontWeight: w600)` and MUST inherit the body font stack so italic glyphs render (the editorial-monocle display family `editorialMonocleDisplayFontFamily` = `Cinzel` is display-only and has no italic variant, so widgets MUST NOT pin the trigger label to that family). The trigger label renders **below** the destination title inside the same outlined row container (the row body is a `Row` of [radio dot, `SizedBox(width: 10)`, `Expanded(Column([title, intel lines, trigger]))`]) so the trigger never has to fit on the same physical line as the title at narrow widths (Refs #2870 S8/S10). No `RadioListTile` / Material `Radio` widgets appear in the rendered tree.
 - Action row: two `CtNinePatchButton`s — Confirm (primary) and Cancel (secondary) — laid out inside a trailing **`Wrap(alignment: end, spacing: 8, runSpacing: 8)`** so the buttons flow onto a second run rather than overflowing the `CtDialogShell` content column at narrow viewports (Refs #2870 S8/S10). Confirm is disabled (`onPressed: null`) until `_selected != null`; Cancel is always enabled. The war-confirmation sub-dialog (Invade-confirm variant) uses the same `Wrap` for its Cancel / `moveArmy_declareWarAndMove` action row.
 - Initial selection: first destination in `armyMovePickerDestinations` order (player-owned group is emitted first).
 - Sort order within each section follows `armyMovePickerDestinations` source order.
@@ -100,7 +104,7 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 - `CtNinePatchButton` (dark editorial-monocle action button; SPEC: `SPEC/ui/buttons-nine-patch.md` + `pixel-art-ui-catalog.md` § *CtNinePatchButton*).
 - `MoveUnitsDialogState` / `MoveDialogDestinationRow` / `MoveDialogRadioDot` (shared move-dialog scaffold + radio row; SPEC: [`components/move-units-dialog-base.md`](components/move-units-dialog-base.md)). `_MoveArmyDialogState` extends `MoveUnitsDialogState` and supplies the owned/invasion groups; each destination renders via `MoveDialogDestinationRow` with `content` = `Column([province label, optional `--danger` italic invasion trigger])` over the canonical 1 px / 2 px `--border` / `--accent` outline contract.
 - Forbidden in this surface (regression guard): Material `AlertDialog`, `DropdownButtonFormField`, `RadioListTile`, `Radio`, `TextButton`.
-- Localized keys (`appL10n(context)`): `moveArmy_title`, `moveArmy_groupYourProvinces`, `moveArmy_groupInvasionTargets`, `moveArmy_declareWarOnTrigger`, `moveArmy_noValidDestinations`, `moveArmy_groupUnowned`, `moveArmy_invadeProvinceTitle`, `moveArmy_invadeProvinceBody`, `moveArmy_declareWarAndMove`, `common_cancel`, `common_confirm`.
+- Localized keys (`appL10n(context)`): `moveArmy_title`, `moveArmy_yourArmyRegiments`, `moveArmy_defendersRegiments`, `moveArmy_unopposedCapture`, `moveArmy_defendersUnknown`, `moveArmy_fortOpenField`, `moveArmy_fortWoodSiege`, `moveArmy_fortStoneSiege`, `moveArmy_fortModernSiege`, `moveArmy_groupYourProvinces`, `moveArmy_groupInvasionTargets`, `moveArmy_declareWarOnTrigger`, `moveArmy_noValidDestinations`, `moveArmy_groupUnowned`, `moveArmy_invadeProvinceTitle`, `moveArmy_invadeProvinceBody`, `moveArmy_declareWarAndMove`, `common_cancel`, `common_confirm`.
 
 ---
 
@@ -132,12 +136,28 @@ The dialog **does not** mutate game state. All state changes flow through the bu
 
 - Given the viewport width is exactly `kMinViewportWidth` (320 dp) and the height is at least 640 dp, when `MoveArmyDialog` is rendered with a non-Home army (`isHomeArmy: false`) and a topology offering exactly one player-owned and one rival-owned adjacent province, then `WidgetTester.takeException()` returns `null`, the `Move army — Army <id>` title renders, both `YOUR PROVINCES` and `INVASION TARGETS` section labels render, and both `Cancel` and `Confirm` `CtNinePatchButton` labels render (the per-invasion-row `declare war on <faction>` trigger label stacks below the destination name inside the same outlined row container, and the trailing `Wrap`-based Cancel / Confirm action row flows onto a second run when the two buttons cannot fit side-by-side per `SPEC/ui/mobile-adaptation.md` § 7 — Refs #2870 S8/S10).
 
+- Given `MoveArmyDialog` is open for a non-Home army with at least one destination, when the dialog body renders, then the UI layer shows `moveArmy_yourArmyRegiments(N)` where `N` equals that army’s regiment count (#4216).
+
+- Given an invasion destination with full military intel (`provincePanelShowsFullTileDerivedIntel`) and a positive combat-capable defender count, when the invasion row renders, then the default summary includes `moveArmy_defendersRegiments(count)` with plain-language regiment totals—not raw unit type ids (#4216).
+
+- Given full military intel and zero combat-capable defending units in the province, when the invasion row renders, then it shows `moveArmy_unopposedCapture`, even when `requiresDeclareWarOnConfirm` is true (#4216).
+
+- Given full military intel and fort levels 0–3, when the invasion row renders, then fort risk uses `moveArmy_fortOpenField`, `moveArmy_fortWoodSiege`, `moveArmy_fortStoneSiege`, or `moveArmy_fortModernSiege` respectively—not a bare fort integer (#4216).
+
+- Given an invasion destination without full military intel, when the row renders, then it shows `moveArmy_defendersUnknown` and does not show unopposed, empty, or defender-count claims (#4216).
+
+- Given full military intel and a selected invasion row with mixed regiment types, when the row renders, then type breakdown lines use `regimentTypeDisplayLabel` display names via `provinceOverlay_indentedCount`; when intel is not full, no fabricated type breakdown appears (#4216).
+
+- Given a player-owned relocation destination, when the row renders, then it does not show invasion defender/unopposed/fort summary lines (#4216).
+
 ---
 
 ## Widgetbook
 
-Catalog folder: **Move Army Dialog** (registered in `app/lib/widgetbook/catalog.dart`). Use case:
+Catalog folder: **Move Army Dialog** (registered in `widgetbook_host/lib/catalogs/catalog_dialogs.dart`). Use cases:
 
-1. **Default — grouped destinations:** Minimal `Game`, `MapTopology`, and `Army` fixture wired so the dialog shows both `Your provinces` and `Invasion targets` sections with at least one invasion destination, plus an empty `Orders()` draft and a fresh `AppEventBus`.
+1. **Default — grouped destinations:** Minimal `Game`, `MapTopology`, and `Army` fixture wired so the dialog shows both `Your provinces` and `Invasion targets` sections with at least one invasion destination, plus an empty `Orders()` draft and a fresh `AppEventBus` (no `playerView` — invasion rows omit intel lines).
+2. **Invasion intel — full visibility (#4216):** Fixture with fully visible invasion tiles, two combat-capable defenders, stone fort (level 2), and `playerView` from `buildPlayerView` so rows show defender totals, fort/siege label, and own-army line.
+3. **Invasion intel — defenders unknown (#4216):** Same fixture with fogged invasion tiles and `playerView` so invasion rows show `moveArmy_defendersUnknown` only.
 
-Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`).
+Automated widget tests: `app/test/move_dialogs_specs_part1_test.dart` (army pins; fleet pins in `move_dialogs_specs_part2_test.dart`); invasion intel pins in `app/test/move_army_invasion_intel_test.dart` (#4216).

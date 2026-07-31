@@ -17,14 +17,15 @@
 // raised for GAME20001 turn-resolution read-only counsel navigation (Refs #4190);
 // raised for Marionette debug binding + Ct discoverability (Refs #4199);
 // raised for GAME70001 Victory standings↔minimap selection + OW progress bars (Refs #4197);
-// raised for DLG31001–DLG31003 naval mission assign + UNIT30001/map menu (Refs #4213).
+// raised for DLG31001–DLG31003 naval mission assign + UNIT30001/map menu (Refs #4213);
+// raised for DLG20001 invasion intel summaries on move army dialog (Refs #4216).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 65600;
+const _maxMainLines = 65800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
