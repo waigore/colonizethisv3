@@ -120,7 +120,13 @@ void nvExpectBlockadeMission({
       fleets: [Fleet(id: 'f1', ownerId: _nvP1, seaZoneId: 'sea1', regionId: _nvOw, shipTypeIds: const ['carrack'])],
       diplomacyRelations: [DiplomacyRelation(factionId1: _nvP1, factionId2: _nvP2, state: relationState)],
     ),
-    const MapTopology(nodes: [TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone)], edges: []),
+    MapTopology(
+      nodes: [
+        TopologyNode(id: 'P2', regionId: _nvOw, type: TopologyNodeType.province),
+        TopologyNode(id: 'sea1', regionId: _nvOw, type: TopologyNodeType.seaZone),
+      ],
+      edges: [TopologyEdge(id1: 'P2', id2: 'sea1')],
+    ),
     _nvP1,
     NavalMissionOrder(fleetId: 'f1', mission: FleetMission.blockade.name, targetProvinceId: '$_nvOw|P2'),
   );

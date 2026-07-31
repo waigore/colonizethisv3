@@ -50,6 +50,17 @@ extension FleetExpansionTileTitle on FleetExpansionTile {
         ),
       );
     }
+    if (onAssignMission != null) {
+      actions.add(
+        UnitsEntityAction(
+          tooltip: l10n.naval_mission_assign,
+          icon: Icons.flag,
+          label: l10n.naval_mission_assign,
+          onPressed: onAssignMission,
+          buttonKey: kCtE2EFleetMissionActionKey,
+        ),
+      );
+    }
     if (isSplitAllowed) {
       actions.add(
         UnitsEntityAction(
@@ -82,6 +93,7 @@ extension FleetExpansionTileTitle on FleetExpansionTile {
         Text(row.locationLabel),
         Text(l10n.naval_units_mission(row.missionLabel)),
         if (row.draftNavalMoveLine != null) Text(row.draftNavalMoveLine!),
+        if (row.draftNavalMissionLine != null) Text(row.draftNavalMissionLine!),
       ],
     );
   }

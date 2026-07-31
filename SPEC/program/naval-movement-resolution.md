@@ -82,7 +82,7 @@ This movement-order contract is distinct from the immediate UI fleet-management 
 
 BuildUnitOrder for naval type; spawns in home fleet (in port at capital). Costs from colonizethis_data ship economy catalog.
 
-**Orders draft (human):** Submitting a **naval move** for fleet **F** replaces any prior **naval move** for **F** and removes any **naval mission** order for **F** from the current-turn draft. During turn resolution, if fleet **F** has a **naval move** order, **naval mission** orders for **F** are not applied that turn (move takes precedence if both appear after merge).
+**Orders draft (human):** Submitting a **naval move** for fleet **F** replaces any prior **naval move** for **F** and removes any **naval mission** order for **F** from the current-turn draft. Submitting a **naval mission** for fleet **F** replaces any prior **naval mission** for **F** and removes any **naval move** order for **F** from the current-turn draft (move xor mission per fleet). During turn resolution, if fleet **F** has a **naval move** order, **naval mission** orders for **F** are not applied that turn (move takes precedence if both appear after merge).
 
 ## Integration
 

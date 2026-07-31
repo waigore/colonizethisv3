@@ -7,6 +7,7 @@ import '../../../../../core/services/app_event_handler/app_event_handler_scope.d
     show trainNavalDialogId;
 import '../../panels/tree_builders/naval_tree_builder.dart';
 import '../../unit_orders/move_fleet_dialog.dart';
+import '../../unit_orders/naval_mission_flow.dart';
 import '../../unit_orders/split_fleet_dialog.dart';
 import '../shared/base_units_panel.dart';
 import 'naval_units_panel.dart';
@@ -54,6 +55,20 @@ mixin NavalUnitsPanelDialogs
         fleet: nonNullFleet,
         bus: widget.bus,
       ),
+    );
+  }
+
+  Future<void> openNavalMissionDialog(FleetRow row) async {
+    if (row.isHomeFleet || !row.isAtSea) return;
+    await showNavalMissionFlow(
+      context: context,
+      game: widget.game,
+      topology: widget.topology,
+      humanPlayerId: widget.humanPlayerId,
+      draftOrders: widget.draftOrders,
+      bus: widget.bus,
+      fleetIds: [row.fleetId],
+      preselectedFleetId: row.fleetId,
     );
   }
 }

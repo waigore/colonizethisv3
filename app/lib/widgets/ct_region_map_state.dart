@@ -92,11 +92,11 @@ class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin 
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         onCivilianTileTapped: (tileKey) =>
             handleCtRegionMapCivilianTileTapped(this, tileKey),
-        onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
+        onFleetMarkerTapped: (locationScopeKey, fleetIds, markerTileKey) =>
             handleCtRegionMapFleetMarkerTapped(
               this,
               locationScopeKey,
-              initialFleetId,
+              fleetIds,
               markerTileKey,
             ),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,

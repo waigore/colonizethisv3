@@ -161,7 +161,7 @@ void ctRegionMapComponentHandleTapAtWorld(
   if (tappedFleet != null) {
     component.onFleetMarkerTapped?.call(
       tappedFleet.locationScopeKey,
-      tappedFleet.fleetIds.isNotEmpty ? tappedFleet.fleetIds.first : null,
+      tappedFleet.fleetIds,
       tappedFleet.tileKey,
     );
     return;

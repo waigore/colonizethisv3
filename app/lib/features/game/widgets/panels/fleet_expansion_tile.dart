@@ -14,7 +14,7 @@ import 'fleet_expansion_tile_title.dart';
 /// `SPEC/ui/naval-units-panel.md` § *Naval mockup fidelity (R25–R29)* and
 /// `SPEC/ui/mockups/UNIT30001-naval-units-panel.html`):
 /// - R25 — actions render through [UnitsEntityActionRow] with
-///   `dense: true`, so Move / Split / Locate stay on a single inline row
+///   `dense: true`, so Move / Mission / Split / Locate stay on a single inline row
 ///   at the default panel width.
 /// - R26 — when [FleetRow.isHomeFleet] is `true`, the title appends a
 ///   compact uppercase `HOME` chip styled with `--accent-dim` / `--bg-deep`
@@ -54,6 +54,7 @@ class FleetExpansionTile extends StatelessWidget {
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
     this.onMoveFleet,
+    this.onAssignMission,
     this.isSplitAllowed = false,
   });
 
@@ -65,6 +66,7 @@ class FleetExpansionTile extends StatelessWidget {
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
   final VoidCallback? onMoveFleet;
+  final VoidCallback? onAssignMission;
   final bool isSplitAllowed;
 
   @override

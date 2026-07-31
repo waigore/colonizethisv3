@@ -458,6 +458,43 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String get naval_mission_assign => 'Mission';
+
+  @override
+  String naval_mission_menuTitle(String fleet) {
+    return 'Assign mission — $fleet';
+  }
+
+  @override
+  String get naval_mission_selectFleetTitle => 'Select fleet';
+
+  @override
+  String get naval_mission_cancelPending => 'Cancel pending mission';
+
+  @override
+  String naval_mission_pendingLine(String mission) {
+    return 'On mission: $mission';
+  }
+
+  @override
+  String naval_mission_pendingLineWithTarget(String mission, String target) {
+    return 'On mission: $mission → $target';
+  }
+
+  @override
+  String naval_mission_selectTargetTitle(String mission) {
+    return 'Select target — $mission';
+  }
+
+  @override
+  String get naval_mission_noMissionsAvailable =>
+      'No missions available for this fleet.';
+
+  @override
+  String get naval_mission_noTargetsAvailable =>
+      'No legal targets for this mission.';
+
+  @override
   String get naval_units_noShipsInFleet => 'No ships in this fleet';
 
   @override

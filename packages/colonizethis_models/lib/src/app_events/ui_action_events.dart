@@ -147,6 +147,21 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
   final String? tileScopeTileKey;
 }
 
+/// Map fleet-marker shortcut: mission assign context menu (Refs #4213).
+class OpenNavalMissionMenuEvent extends UIActionEvent {
+  const OpenNavalMissionMenuEvent({
+    required this.locationScopeKey,
+    required this.fleetIds,
+    this.initialSelectedFleetId,
+    this.tileScopeTileKey,
+  });
+
+  final String locationScopeKey;
+  final List<String> fleetIds;
+  final String? initialSelectedFleetId;
+  final String? tileScopeTileKey;
+}
+
 /// Toggle in-map debug console overlay panel.
 class ToggleDebugConsolePanelEvent extends UIActionEvent {
   const ToggleDebugConsolePanelEvent();

@@ -48,11 +48,11 @@ CtRegionMapGame buildCtRegionMapGame(CtRegionMapState state) {
       state,
       tileKey,
     ),
-    onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
+    onFleetMarkerTapped: (locationScopeKey, fleetIds, markerTileKey) =>
         handleCtRegionMapFleetMarkerTapped(
           state,
           locationScopeKey,
-          initialFleetId,
+          fleetIds,
           markerTileKey,
         ),
     onCivilianTileSelectionCleared: state.widget.onCivilianTileSelectionCleared,
@@ -104,13 +104,15 @@ void handleCtRegionMapCivilianTileTapped(
 void handleCtRegionMapFleetMarkerTapped(
   CtRegionMapState state,
   String locationScopeKey,
-  String? initialFleetId,
+  List<String> fleetIds,
   String markerTileKey,
 ) {
+  if (fleetIds.isEmpty) return;
   state.widget.bus?.emit(
-    OpenNavalUnitsPanelEvent(
+    OpenNavalMissionMenuEvent(
       locationScopeKey: locationScopeKey,
-      initialSelectedFleetId: initialFleetId,
+      fleetIds: fleetIds,
+      initialSelectedFleetId: fleetIds.first,
       tileScopeTileKey: markerTileKey,
     ),
   );

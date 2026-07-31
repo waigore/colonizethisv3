@@ -21,6 +21,8 @@ export 'development_panel/material_affordance.dart'
     show canAffordDevelopmentWorkOrder;
 export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
+export 'naval_mission_availability.dart';
+export 'naval_mission_targets.dart';
 export 'order_effects_projector.dart';
 export 'order_engine.dart';
 export 'order_merge.dart';
