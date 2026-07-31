@@ -91,9 +91,9 @@ Per [ux-design-decisions.md](ux-design-decisions.md) **P1** (remind unused capac
 - This dialog **must not** warn, list, or require action for empty research slots, unassigned research seats, or research funding set to **None** (using research costs treasury).
 - Leaving research unfunded or unassigned is a valid strategic treasury choice; end-turn must not treat it as an error equivalent to idle civilians.
 - Do not add a Settings toggle for “warn unused research on end turn” while UXD-001 holds.
-- Future free-capacity reminders (e.g. unassigned spies under **P1**) are separate product work; they are not implied by the civilian warn alone.
+- **Spy readiness at Next turn is a non-goal** while [ux-design-decisions.md](ux-design-decisions.md) **UXD-002** holds: do **not** list or warn about idle / unassigned Spies. Spy posts are a strategic portfolio (foreign intel fog when the last Spy leaves, research presence, home counter-spy, capital reserve); shell nags treat deliberate placement as mistakes. Spy relocate / hold-leave decision support belongs on `UNIT10001` (and related map flows), not on this dialog.
 
-Idle-civilian warnings remain in scope; research capacity review stays on `GAME40001` Technology when the player chooses.
+Idle-civilian warnings remain in scope for **work-order** civilians (not Spy portfolio nags); research capacity review stays on `GAME40001` Technology when the player chooses.
 
 ---
 
