@@ -4,6 +4,7 @@ import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'support/scenario_runner.dart';
 import 'support/validators/naval_order_validator_fixtures.dart';
 import 'support/validators/naval_order_validator_test_support.dart';
 
@@ -26,8 +27,8 @@ Game _missionGame({
 }
 
 void main() {
-  group('naval mission draft mutations', () {
-    test('applyNavalMissionOrderForPlayer replaces prior mission for fleet', () {
+  runLabeledScenarioGroup('naval mission draft mutations', [
+    rs('applyNavalMissionOrderForPlayer replaces prior mission for fleet', () {
       final after = applyNavalMissionOrderForPlayer(
         Orders(
           navalMissionOrdersByPlayerId: {
@@ -54,9 +55,8 @@ void main() {
           ),
         ]),
       );
-    });
-
-    test('applyNavalMissionOrderForPlayer removes naval move for same fleet', () {
+    }),
+    rs('applyNavalMissionOrderForPlayer removes naval move for same fleet', () {
       final after = applyNavalMissionOrderForPlayer(
         Orders(
           navalMoveOrdersByPlayerId: {
@@ -87,9 +87,8 @@ void main() {
         after.navalMissionOrdersByPlayerId[_gp1]!.map((o) => o.fleetId).toList(),
         equals(['f2', 'f1']),
       );
-    });
-
-    test('removeNavalMissionOrderForPlayer drops pending mission only', () {
+    }),
+    rs('removeNavalMissionOrderForPlayer drops pending mission only', () {
       final after = removeNavalMissionOrderForPlayer(
         Orders(
           navalMissionOrdersByPlayerId: {
@@ -112,13 +111,12 @@ void main() {
         after.navalMissionOrdersByPlayerId[_gp1]!.single.fleetId,
         'f2',
       );
-    });
-  });
+    }),
+  ], runRunnableScenario);
 
-  group('navalMissionAvailabilityForFleet', () {
-    final topology = novSeaProvinceAdjacent(provinceLocalId: 'P1');
-
-    test('at-sea non-home fleet offers patrol and defend', () {
+  runLabeledScenarioGroup('navalMissionAvailabilityForFleet', [
+    rs('at-sea non-home fleet offers patrol and defend', () {
+      final topology = novSeaProvinceAdjacent(provinceLocalId: 'P1');
       final game = _missionGame(
         provinces: [navalOrderValidatorTestOwnedProvince('P1')],
         fleets: [navalOrderValidatorTestFleetAtSea()],
@@ -141,9 +139,8 @@ void main() {
           FleetMission.defend,
         ]),
       );
-    });
-
-    test('blockade and beachhead enabled when adjacent war enemy exists', () {
+    }),
+    rs('blockade and beachhead enabled when adjacent war enemy exists', () {
       final game = _missionGame(
         provinces: [
           navalOrderValidatorTestOwnedProvince('P1'),
@@ -187,9 +184,9 @@ void main() {
           FleetMission.beachhead,
         ]),
       );
-    });
-
-    test('home fleet and in-port fleets have no assignable missions', () {
+    }),
+    rs('home fleet and in-port fleets have no assignable missions', () {
+      final topology = novSeaProvinceAdjacent(provinceLocalId: 'P1');
       final game = _missionGame(
         provinces: [navalOrderValidatorTestOwnedProvince('P1')],
         fleets: [
@@ -210,6 +207,6 @@ void main() {
         expect(availability.baseGatesPass, isFalse);
         expect(availability.missions, isEmpty);
       }
-    });
-  });
+    }),
+  ], runRunnableScenario);
 }
