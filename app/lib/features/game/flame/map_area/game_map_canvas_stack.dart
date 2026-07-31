@@ -49,6 +49,7 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
+    this.selectionPromptUsesRelocateCopy = false,
     required this.onCivilianTileStateChanged,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
@@ -75,6 +76,7 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
+  final bool selectionPromptUsesRelocateCopy;
   final String? selectedCivilianTileKey;
   final void Function(String tileKey)? onCivilianTileStateChanged;
   final VoidCallback? onCivilianTileSelectionCleared;
@@ -164,6 +166,7 @@ class GameMapCanvasStack extends ConsumerWidget {
                   isNarrow: isNarrow,
                   overlayOpen: overlayOpen,
                   onCancel: onWorkTargetSelectionCancelled,
+                  usesRelocateCopy: selectionPromptUsesRelocateCopy,
                 );
               },
             ),

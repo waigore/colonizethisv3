@@ -22,6 +22,7 @@ import 'game_map_area_view.dart';
 import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack.dart';
+import 'game_map_area_relocate_selection.dart';
 
 /// Map play-area shell (keyboard focus, debug console, narrow detail slot).
 /// Split from [game_map_area_build.dart] for Phase 3 flame map modularization.
@@ -31,6 +32,7 @@ mixin GameMapAreaBuildOverlays
         GameMapAreaStateBase,
         GameMapAreaView,
         GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
         GameMapAreaE2e,
         GameMapAreaBuildMapStack {
   Widget buildMapPlayAreaStack({
@@ -52,10 +54,10 @@ mixin GameMapAreaBuildOverlays
             child: Focus(
               autofocus: true,
               onKeyEvent: (node, event) {
-                if (workTargetSelection != null &&
+                if (inMapTileSelectionMode &&
                     event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.escape) {
-                  cancelWorkTargetSelection();
+                  cancelAnyMapTileSelection();
                   return KeyEventResult.handled;
                 }
                 if (sideMenuOpen &&

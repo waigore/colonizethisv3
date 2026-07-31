@@ -27,6 +27,7 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   String? centerOnTileKey;
   String? selectedCivilianTileKey;
   ({ct_models.Unit unit, String workTarget})? workTargetSelection;
+  ct_models.Unit? civilianRelocateSelection;
   Set<String>? cachedValidTileKeys;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache =
       PerPlayerWorkTargetSelectionCache();
@@ -59,4 +60,7 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
       : widget.mapViewData.newWorld;
 
   Set<String>? get validTileKeysForSelection => cachedValidTileKeys;
+
+  bool get inMapTileSelectionMode =>
+      workTargetSelection != null || civilianRelocateSelection != null;
 }

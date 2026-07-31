@@ -279,6 +279,10 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   String get map_selectionMode_cancel => 'cancel';
 
   @override
+  String get map_selectionMode_relocatePrompt =>
+      'Select a destination for your Spy, or click cancel';
+
+  @override
   String get common_start => 'Start';
 
   @override

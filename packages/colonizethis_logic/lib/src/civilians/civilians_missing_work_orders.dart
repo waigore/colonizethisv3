@@ -1,6 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
     show UnitRole, unitRoleForType;
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show Game, Orders, Unit, UnitStatus, WorkOrder, kUnitTypeSpy;
 import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart'
     show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart'
@@ -33,6 +34,7 @@ bool isCivilianIdleWithNoPendingWork(
   if (unit.ownerId != humanPlayerId) return false;
   if (unit.tileKey == null || unit.tileKey!.isEmpty) return false;
   if (!_isCivilianUnit(unit)) return false;
+  if (unit.type == kUnitTypeSpy) return false;
   if (unit.status != UnitStatus.idle || unit.currentWork != null) {
     return false;
   }

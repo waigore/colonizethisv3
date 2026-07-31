@@ -50,7 +50,7 @@ Eras (Renaissance → Industrial) are flavour for the chart; they do **not** har
 
 ### Spy insight (optional boost)
 
-Spies idle or on counter-spy in a rival Great Power who already unlocked your active tech can add roughly **+15% RP per such rival** (stacks) when funding is at least Low — after spy resolution that turn. Do not bet a whole plan on spies alone.
+Station Spies in rival Great Power provinces via **Relocate** on `UNIT10001` (Chapter 5) to hold presence intel and, when funding is at least **Low**, add roughly **+15% RP per such rival** (stacks) for techs they have already unlocked — after spy resolution that turn. Counter-espionage on home soil is separate (**Assign** → counter-spy). Do not bet a whole plan on spies alone.
 
 ## Counsel
 

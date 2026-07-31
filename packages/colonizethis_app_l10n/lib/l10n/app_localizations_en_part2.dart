@@ -707,4 +707,23 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get civilian_units_assign => 'Assign';
+
+  @override
+  String get civilian_units_relocate => 'Relocate';
+
+  @override
+  String civilian_units_spyStatus_holdingIntel(String province) {
+    return 'Holding intel: $province';
+  }
+
+  @override
+  String get civilian_units_spyStatus_counterEspionage => 'Counter-espionage';
+
+  @override
+  String get civilian_units_spyStatus_reserve => 'Reserve';
+
+  @override
+  String civilian_units_pendingRelocate(String location) {
+    return 'Relocating to: $location';
+  }
 }

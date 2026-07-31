@@ -93,6 +93,7 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Row tap (full list) | Full-list mode | `ClosePanelEvent` + `LocateMapTileEvent` | Panel closes; map pans. |
 | Locate icon | Always in scoped mode | `LocateMapTileEvent` | Panel stays open. |
 | Assign | Idle, no pending work | Work-target selection or shortcut commit | Per row rules in **Per-unit row content**. |
+| Relocate (Spy only) | Idle Spy, no pending work | `StartCivilianRelocateSelectionEvent` → map tile pick → `CivilianMoveRequestedEvent` | Stages `MoveOrder`; leave-intel soft warn when last Spy vacates foreign province. |
 
 ---
 

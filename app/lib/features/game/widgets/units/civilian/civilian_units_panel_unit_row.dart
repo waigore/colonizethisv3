@@ -54,6 +54,17 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   List<WorkOrder> get _pendingForPlayer =>
       currentOrders.workOrdersByPlayerId[humanPlayerId] ?? const [];
 
+  MoveOrder? get _pendingMoveOrder {
+    final moves =
+        currentOrders.moveOrdersByPlayerId[humanPlayerId] ?? const [];
+    for (final o in moves) {
+      if (o.unitId == unit.id) return o;
+    }
+    return null;
+  }
+
+  bool get _isSpy => unit.type == kUnitTypeSpy;
+
   WorkOrder? get _pendingWorkOrder {
     for (final o in _pendingForPlayer) {
       if (o.unitId == unit.id) return o;
@@ -61,7 +72,13 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     return null;
   }
 
-  bool get _hasPending => _pendingWorkOrder != null;
+  bool get _hasPendingWorkOnly => _pendingWorkOrder != null;
+
+  bool get _canRelocateSpy =>
+      _isSpy &&
+      unit.status == UnitStatus.idle &&
+      unit.currentWork == null &&
+      !_hasPendingWorkOnly;
 
   int? get _pendingIndex {
     final list = _pendingForPlayer;
@@ -74,9 +91,10 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   bool get _isIdleNoPending =>
       unit.status == UnitStatus.idle &&
       unit.currentWork == null &&
-      !_hasPending;
+      !_hasPendingWorkOnly;
 
-  bool get _hasWork => unit.currentWork != null || _hasPending;
+  bool get _hasWork =>
+      unit.currentWork != null || _hasPendingWorkOnly || _pendingMoveOrder != null;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,10 +102,11 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
       availableWorkTargetIdsForUnitProvider(unit.id),
     );
     final l10n = appL10n(context);
-    final statusLabel = switch (unit.status) {
-      UnitStatus.idle => l10n.province_unitStatus_idle,
-      UnitStatus.working => l10n.province_unitStatus_working,
-    };
+    final statusLabel = _spyStatusLabel(l10n) ??
+        switch (unit.status) {
+          UnitStatus.idle => l10n.province_unitStatus_idle,
+          UnitStatus.working => l10n.province_unitStatus_working,
+        };
     final showActions = !isTileScope || isSelectedInTileScope;
     final inExplorerShortcutMode =
         (prospectShortcutTargetTileKey != null &&
@@ -124,6 +143,39 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
       ),
       actions: rowActions,
     );
+  }
+
+  String? _spyStatusLabel(AppLocalizations l10n) {
+    if (!_isSpy) return null;
+    final pendingWork = _pendingWorkOrder;
+    if (pendingWork?.target == 'counter_spy' ||
+        (unit.status == UnitStatus.working &&
+            unit.currentWork?.workTarget == 'counter_spy')) {
+      return l10n.civilian_units_spyStatus_counterEspionage;
+    }
+    if (_pendingMoveOrder != null) {
+      return l10n.province_unitStatus_idle;
+    }
+    if (unit.status == UnitStatus.idle && unit.currentWork == null) {
+      final tileKey = projectedTileKey;
+      final regionId = Unit.regionIdFromTileKey(tileKey);
+      final provinceFullId = Unit.provinceIdFromTileKey(tileKey);
+      if (regionId != null && provinceFullId != null) {
+        if (isForeignProvinceForPlayer(
+          game: game,
+          prefixedProvinceId: provinceFullId,
+          humanPlayerId: humanPlayerId,
+        )) {
+          final name =
+              provinceNames[provinceFullId] ??
+              provinceNames['$regionId|${provinceFullId.split('|').last}'] ??
+              provinceFullId;
+          return l10n.civilian_units_spyStatus_holdingIntel(name);
+        }
+      }
+      return l10n.civilian_units_spyStatus_reserve;
+    }
+    return null;
   }
 
   String _locationLabel() {
@@ -163,6 +215,19 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   }
 
   Widget _buildAssignedToSubtitle(AppLocalizations l10n) {
+    final pendingMove = _pendingMoveOrder;
+    if (pendingMove != null) {
+      final destTile = pendingMove.destinationTileKey;
+      final regionId = Unit.regionIdFromTileKey(destTile);
+      final provinceId = Unit.provinceIdFromTileKey(destTile);
+      var location = destTile;
+      if (regionId != null && provinceId != null) {
+        final name =
+            provinceNames['$regionId|$provinceId'] ?? '$regionId|$provinceId';
+        location = '${regionDisplayLabel(regionId)} — $name';
+      }
+      return Text(l10n.civilian_units_pendingRelocate(location));
+    }
     final pending = _pendingWorkOrder;
     if (pending != null) {
       final r = resolveCivilianUnitsPanelPendingAssignedResolution(
@@ -269,6 +334,16 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     );
     final confirmed = await completer.future;
     if (!confirmed || !context.mounted) return;
+    final pendingMove = _pendingMoveOrder;
+    if (pendingMove != null) {
+      bus.emit(
+        RemovePendingCivilianMoveRequestedEvent(
+          playerId: humanPlayerId,
+          unitId: unit.id,
+        ),
+      );
+      return;
+    }
     final idx = _pendingIndex;
     if (idx != null) {
       bus.emit(
@@ -299,12 +374,23 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
         tileKeyForLocate.isNotEmpty &&
         regionIdForLocate != null;
     return [
-      if (showActions && _isIdleNoPending)
+      if (showActions && _canRelocateSpy)
+        UnitsEntityAction(
+          tooltip: l10n.civilian_units_relocate,
+          icon: Icons.directions_walk,
+          label: l10n.civilian_units_relocate,
+          onPressed: () {
+            bus.closePanelThenEmit(
+              StartCivilianRelocateSelectionEvent(unitId: unit.id),
+            );
+          },
+        ),
+      if (showActions && _isIdleNoPending && !_hasPendingWorkOnly)
         UnitsEntityAction(
           tooltip: l10n.civilian_units_assign,
           icon: Icons.playlist_add,
           label: l10n.civilian_units_assign,
-          onPressed: inExplorerShortcutMode
+          onPressed: !_isSpy && inExplorerShortcutMode
               ? () => _startShortcutAssign(availableWorkTargetIds)
               : () => showCivilianUnitsPanelOrderMenu(
                   context,
