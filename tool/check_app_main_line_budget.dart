@@ -18,14 +18,15 @@
 // raised for Marionette debug binding + Ct discoverability (Refs #4199);
 // raised for GAME70001 Victory standings↔minimap selection + OW progress bars (Refs #4197);
 // raised for DLG31001–DLG31003 naval mission assign + UNIT30001/map menu (Refs #4213);
-// raised for DLG20001 invasion intel summaries on move army dialog (Refs #4216).
+// raised for DLG20001 invasion intel summaries on move army dialog (Refs #4216);
+// raised for UNIT10001 Spy relocate + hold/leave intel decision support (Refs #4219).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 65800;
+const _maxMainLines = 66100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
