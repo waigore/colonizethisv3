@@ -104,6 +104,9 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Full list | Default toolbar open | All human civilians by region. |
 | Tile-scoped | Map marker tap | Units on one tile only. |
 | Explorer / Builder shortcut | Province tile actions | Filtered + direct assign. |
+| Spy relocate eligible (Refs #4219) | Idle Spy, no pending work or `MoveOrder` | **Relocate** + **Assign**; status **Reserve** (owned land) or **Holding intel: {province}** (foreign). |
+| Spy counter-espionage (Refs #4219) | Pending or in-progress `counter_spy` | Status **Counter-espionage**; **Relocate** hidden. |
+| Spy pending relocate (Refs #4219) | Pending draft `MoveOrder` for Spy | **Relocating to:** destination copy on assigned-to line; **Relocate** hidden until move clears or is cancelled. |
 
 ---
 
@@ -321,3 +324,17 @@ For each civilian unit, the panel shows:
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "Standalone" use case, **then** the UI layer displays only the Civilian Units panel (no map) with demo data, so that layout and row content (status, location as province name + region, assigned-to) can be verified.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the map above and the Civilian Units panel **at the bottom** (bottom placement like province overlay), built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work, and cancel work so that the full flow is demonstrable.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "As bottom sheet" use case and taps the button, **then** the panel opens as a bottom sheet that slides up from the bottom edge.
+
+---
+
+## Tests
+
+Spy relocate and UXD-002 idle exclusion (Refs #4219):
+
+- `app/test/civilian_units_panel_spy_relocate_test.dart` — Relocate row action, Spy status labels, relocate bus event, pending-move row copy.
+- `app/test/next_turn_confirmation_spy_exclusion_test.dart` — `DLG60001` idle-civilian list excludes all Spies.
+- `packages/colonizethis_logic/test/spy_relocate_intel_test.dart` — `spyLeaveIntelWarningNeeded` projected-count rules.
+- `packages/colonizethis_logic/test/civilians_missing_work_orders_test.dart` — Spy exclusion from idle-civilian detection.
+- `packages/colonizethis_orders/test/orders/civilian_projected_tile_test.dart` — `projectedCivilianTileKey` prefers pending `MoveOrder` destination.
+
+Map relocate selection and leave-intel confirm dialog: `app/lib/features/game/flame/map_state/game_map_area_relocate_selection.dart` (integration covered by logic tests + manual QA; no dedicated map widget test yet).
