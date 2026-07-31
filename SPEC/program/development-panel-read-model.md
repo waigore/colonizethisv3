@@ -42,7 +42,9 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 `resolveDevelopmentAssignRowState` / `selectDevelopmentImproveAssignCandidate` in `colonizethis_orders`:
 
 - Idle Builder: `status == idle`, no `currentWork`, no pending `WorkOrder` for that unit; first by stable unit id.
-- Tile priority among valid targets for the commodity: capital-connected first, then lower `improvementLevel`, then stable tile key.
+- Tile priority among valid targets for the commodity:
+  - When `tileMapByRegion` is supplied: same feedstock + connectivity-aware ordering as `suggestWorkOrders` `build_improvement` (`orderDevelopmentImproveTiles` in `colonizethis_orders`).
+  - When `tileMapByRegion` is absent: capital-connected first, then lower `improvementLevel`, then stable tile key.
 - Materials: affordability uses stockpile after deducting other pending material work orders (same order as economy preview).
 - Disconnected targets: Assign enabled when improve is otherwise valid; warn dialog on commit (Slice C).
 

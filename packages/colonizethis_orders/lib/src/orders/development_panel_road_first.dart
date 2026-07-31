@@ -6,19 +6,18 @@ library;
 import 'dart:collection';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'development_panel_assign_affordance.dart';
-import 'development_panel_assign.dart';
-import 'incremental_candidate_validator.dart';
+import 'development_panel/idle_civilians.dart';
+import 'development_panel/material_affordance.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_work_constants.dart';
-import 'unit_type_helpers.dart';
-import 'validators/work_order_cost_calculator.dart';
 import 'work_tile_candidacy/work_tile_candidacy.dart';
+
+export 'development_panel/idle_civilians.dart'
+    show idleEngineersForDevelopmentAssign;
 
 /// Selected Engineer + tile for a pending `build_road` Road-first gesture.
 class DevelopmentRoadFirstCandidate {
@@ -48,32 +47,6 @@ class DevelopmentRoadFirstState {
   final bool enabled;
   final String? disabledReason;
   final DevelopmentRoadFirstCandidate? candidate;
-}
-
-/// Idle Engineers with no pending work, stable unit-id order.
-List<Unit> idleEngineersForDevelopmentAssign({
-  required Game game,
-  required String playerId,
-  required Orders currentOrders,
-}) {
-  final pendingUnitIds = {
-    for (final order in currentOrders.workOrdersByPlayerId[playerId] ?? const [])
-      order.unitId,
-  };
-  final engineers = <Unit>[];
-  for (final unit in [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ]) {
-    if (unit.ownerId != playerId) continue;
-    if (unit.type != kUnitTypeEngineer) continue;
-    if (unit.status != UnitStatus.idle) continue;
-    if (unit.currentWork != null) continue;
-    if (pendingUnitIds.contains(unit.id)) continue;
-    engineers.add(unit);
-  }
-  engineers.sort((a, b) => a.id.compareTo(b.id));
-  return engineers;
 }
 
 List<String> _sortedNeighborTileKeys({
@@ -180,28 +153,13 @@ bool _canAffordDevelopmentRoadFirst({
   required Orders currentOrders,
   required DevelopmentRoadFirstCandidate candidate,
 }) {
-  final player = game.playerById(playerId);
-  if (player == null) return false;
-
-  final stockpile = effectiveStockpileAfterPendingDevelopmentMaterialWork(
+  return canAffordDevelopmentWorkOrder(
     game: game,
     playerId: playerId,
     currentOrders: currentOrders,
+    workTarget: kWorkTargetBuildRoad,
+    targetTileKey: candidate.targetTileKey,
   );
-  final provinceId = Unit.provinceIdFromTileKey(candidate.targetTileKey);
-  final province = provinceId == null
-      ? null
-      : game.worldState.tryGetProvince(provinceId);
-  final cost = WorkOrderCostCalculator(game, playerId: playerId).calculateCost(
-    kWorkTargetBuildRoad,
-    candidate.targetTileKey,
-    improvementLevel: game.worldState.tileState.improvementLevel(
-      candidate.targetTileKey,
-    ),
-    fortLevel: province?.fortLevel ?? 0,
-  );
-  if (cost == null || cost.isEmpty) return true;
-  return ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost);
 }
 
 DevelopmentRoadFirstCandidate? selectDevelopmentRoadFirstCandidate({

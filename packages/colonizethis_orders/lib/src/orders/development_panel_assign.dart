@@ -4,18 +4,28 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'development_panel_assign_affordance.dart';
-import 'incremental_candidate_validator.dart';
+import 'development_panel/idle_civilians.dart';
+import 'development_panel/improve_tile_ordering.dart';
+import 'development_panel/material_affordance.dart';
 import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_work_constants.dart';
-import 'unit_type_helpers.dart';
-import 'validators/work_order_cost_calculator.dart';
 import 'work_tile_candidacy/work_tile_candidacy.dart';
+
+export 'development_panel/idle_civilians.dart'
+    show
+        idleBuildersForDevelopmentAssign,
+        idleDevelopmentCiviliansForAssign;
+export 'development_panel/improve_tile_ordering.dart'
+    show
+        compareDevelopmentImproveTilePriority,
+        orderDevelopmentImproveTiles,
+        sortedDevelopmentImproveTileCandidates;
+export 'development_panel/material_affordance.dart'
+    show effectiveStockpileAfterPendingDevelopmentMaterialWork;
 
 /// Selected Builder + tile for a pending `build_improvement` assign.
 class DevelopmentImproveAssignCandidate {
@@ -49,81 +59,24 @@ class DevelopmentAssignRowState {
   final DevelopmentImproveAssignCandidate? candidate;
 }
 
-/// Compares improvable tiles for Development panel assign priority.
-///
-/// Connected tiles first, then lower improvement level, then stable tile key.
-int compareDevelopmentImproveTilePriority({
-  required String a,
-  required String b,
-  required Set<String> connectedTileKeys,
-  required TileMapState tileState,
-}) {
-  final aConnected = connectedTileKeys.contains(a);
-  final bConnected = connectedTileKeys.contains(b);
-  if (aConnected != bConnected) {
-    return aConnected ? -1 : 1;
-  }
-  final aLevel = tileState.improvementLevel(a);
-  final bLevel = tileState.improvementLevel(b);
-  if (aLevel != bLevel) {
-    return aLevel.compareTo(bLevel);
-  }
-  return a.compareTo(b);
-}
-
-List<String> sortedDevelopmentImproveTileCandidates({
-  required Iterable<String> tileKeys,
-  required Set<String> connectedTileKeys,
-  required TileMapState tileState,
-}) {
-  final sorted = tileKeys.toList()
-    ..sort(
-      (a, b) => compareDevelopmentImproveTilePriority(
-        a: a,
-        b: b,
-        connectedTileKeys: connectedTileKeys,
-        tileState: tileState,
-      ),
-    );
-  return sorted;
-}
-
-/// Idle Builders with no pending work, stable unit-id order.
-List<Unit> idleBuildersForDevelopmentAssign({
+String? _priorityTileForCommodity({
   required Game game,
   required String playerId,
-  required Orders currentOrders,
-}) {
-  final pendingUnitIds = {
-    for (final order in currentOrders.workOrdersByPlayerId[playerId] ?? const [])
-      order.unitId,
-  };
-  final builders = <Unit>[];
-  for (final unit in [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ]) {
-    if (unit.ownerId != playerId) continue;
-    if (unit.type != kUnitTypeBuilder) continue;
-    if (unit.status != UnitStatus.idle) continue;
-    if (unit.currentWork != null) continue;
-    if (pendingUnitIds.contains(unit.id)) continue;
-    builders.add(unit);
-  }
-  builders.sort((a, b) => a.id.compareTo(b.id));
-  return builders;
-}
-
-String? _priorityTileForCommodity({
   required Set<String> commodityTileKeys,
   required Set<String> connectedTileKeys,
   required TileMapState tileState,
+  MapTopology? topology,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   if (commodityTileKeys.isEmpty) return null;
-  return sortedDevelopmentImproveTileCandidates(
+  return orderDevelopmentImproveTiles(
+    game: game,
+    playerId: playerId,
     tileKeys: commodityTileKeys,
     connectedTileKeys: connectedTileKeys,
     tileState: tileState,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
   ).first;
 }
 
@@ -133,6 +86,8 @@ DevelopmentImproveAssignCandidate? _hypotheticalAssignCandidate({
   required Orders currentOrders,
   required Set<String> commodityTileKeys,
   required Set<String> connectedTileKeys,
+  MapTopology? topology,
+  Map<String, TileMapResult>? tileMapByRegion,
 }) {
   final builders = idleBuildersForDevelopmentAssign(
     game: game,
@@ -141,9 +96,13 @@ DevelopmentImproveAssignCandidate? _hypotheticalAssignCandidate({
   );
   if (builders.isEmpty) return null;
   final tileKey = _priorityTileForCommodity(
+    game: game,
+    playerId: playerId,
     commodityTileKeys: commodityTileKeys,
     connectedTileKeys: connectedTileKeys,
     tileState: game.worldState.tileState,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
   );
   if (tileKey == null) return null;
   return DevelopmentImproveAssignCandidate(
@@ -197,10 +156,14 @@ DevelopmentImproveAssignCandidate? selectDevelopmentImproveAssignCandidate({
     final scoped = validTiles.where(commodityTileKeys.contains).toSet();
     if (scoped.isEmpty) continue;
 
-    final bestTile = sortedDevelopmentImproveTileCandidates(
+    final bestTile = orderDevelopmentImproveTiles(
+      game: game,
+      playerId: playerId,
       tileKeys: scoped,
       connectedTileKeys: connectedTileKeys,
       tileState: tileState,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
     ).first;
 
     return DevelopmentImproveAssignCandidate(
@@ -218,27 +181,13 @@ bool _canAffordDevelopmentImproveAssign({
   required Orders currentOrders,
   required DevelopmentImproveAssignCandidate candidate,
 }) {
-  final player = game.playerById(playerId);
-  if (player == null) return false;
-
-  final stockpile = effectiveStockpileAfterPendingDevelopmentMaterialWork(
+  return canAffordDevelopmentWorkOrder(
     game: game,
     playerId: playerId,
     currentOrders: currentOrders,
+    workTarget: kWorkTargetBuildImprovement,
+    targetTileKey: candidate.targetTileKey,
   );
-  final tileState = game.worldState.tileState;
-  final provinceId = Unit.provinceIdFromTileKey(candidate.targetTileKey);
-  final province = provinceId == null
-      ? null
-      : game.worldState.tryGetProvince(provinceId);
-  final cost = WorkOrderCostCalculator(game, playerId: playerId).calculateCost(
-    kWorkTargetBuildImprovement,
-    candidate.targetTileKey,
-    improvementLevel: tileState.improvementLevel(candidate.targetTileKey),
-    fortLevel: province?.fortLevel ?? 0,
-  );
-  if (cost == null || cost.isEmpty) return true;
-  return ProjectedCostEngine.canAffordWorkMaterialCost(stockpile, cost);
 }
 
 /// Resolves Assign enablement for one improvable commodity row.
@@ -301,6 +250,8 @@ DevelopmentAssignRowState resolveDevelopmentAssignRowState({
     currentOrders: currentOrders,
     commodityTileKeys: commodityTileKeys,
     connectedTileKeys: connectedTileKeys,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
   );
   if (hypothetical == null) {
     return const DevelopmentAssignRowState(
