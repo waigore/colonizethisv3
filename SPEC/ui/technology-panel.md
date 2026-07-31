@@ -68,7 +68,10 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 
 | Control / gesture | When enabled | Emits / calls | Side effects |
 |-------------------|--------------|---------------|--------------|
-| Choose tech | Slot empty or re-assign | Opens filtered tech list | Assigns `ResearchOrder` on select. |
+| Choose tech | Slot empty or re-assign | Opens Choose-tech dialog (`showChooseTechDialog`) | Modal lists researchable-only techs; no order mutation until assign. |
+| Choose-tech row body (assignable area) | Choose-tech open; at least one choosable tech | `applyAssignTechToSlot` via `onSelect` callback | Assigns `ResearchOrder` to slot; closes Choose-tech; dispatches `onOrdersChanged`. |
+| Choose-tech Details | Choose-tech open; per-row control | Opens nested `showTechDefinitionDetailDialog` | Mounts Tree-parity detail dialog (full effects, prerequisites when any, researched-by pennants); does **not** assign or close Choose-tech. |
+| Choose-tech Close | Choose-tech open | `Navigator.pop` | Dismisses dialog; orders unchanged. |
 | Cancel | Slot assigned | Emits empty-`techId` cancel signal `ResearchOrder` (after a forfeiture-warning `CtConfirmDialog` when progress `> 0`) | Persisted slot freed; progress forfeited on resolution per research-resolution. |
 | Funding toggle | Slot assigned and editing enabled | Sets `ResearchOrder.funding` for that slot | Updates `Orders.researchOrdersByPlayerId` immediately; persists until changed or cancelled. |
 
@@ -78,7 +81,10 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 
 | Variant | Trigger | Render difference |
 |---------|---------|-------------------|
-| Empty chooser | No researchable techs | Message "No techs available to research". |
+| Empty chooser | Choose-tech open; no researchable unassigned techs | Single muted line `"No techs available to research"`; footer Close only; no option rows or effect/Details chrome. |
+| Choose-tech option row (default) | Choose-tech open; choosable tech with effect summary | Row shows category icon, display name, GP pennants, era/category/RP subtitle, **1–2 muted effect lines** (`buildTechEffectSummaryLines`), and per-row **Details** `CtActionTextButton`. Row body tap assigns; Details tap opens nested detail dialog. |
+| Choose-tech option row (truncated effects) | Tech has more than two effect lines | Default row shows first two effect lines only; remainder available via Details. |
+| Choose-tech detail nested dialog | Player taps Details on a row | Nested `CtDialogShell` with full effect list, prerequisites (when any), researched-by pennants; Choose-tech remains open underneath. |
 | Assigned slot | `ResearchOrder` present | Shows tech id + progress. |
 
 ---
@@ -86,6 +92,9 @@ Reversing the ordering of (1) ↔ (3) — including via an intervening `CtBrassD
 ## Components
 
 - Technology screen widgets, choose-tech dialog, [tech-tree-widget.md](tech-tree-widget.md).
+- `buildTechEffectSummaryLines` (`app/lib/features/game/widgets/technology/tech_effect_summary.dart`) — shared pure helper for Tree and Choose-tech effect copy (Refs #4222).
+- `showTechDefinitionDetailDialog` / `TechDefinitionDetailDialog` (`tech_definition_detail_dialog.dart`) — Tree-parity detail surface reused by Choose-tech Details (Refs #4222).
+- `ChooseTechOptionRow` / `ChooseTechOptionLabels` (`technology_panel_choose_tech_dialog_rows.dart`) — Choose-tech option row with effect lines and Details control (Refs #4222).
 - `TechSectionHeading` (`app/lib/features/game/widgets/technology/technology_panel.dart`) — mockup-faithful accent display-font heading for the two canonical Slots-tab sections (Refs #3510); see § Slots tab — canonical heading style.
 - `SlotFundingToggleRow` (`app/lib/features/game/widgets/technology/technology_slot_funding_toggles.dart`) — compact five-button per-slot research-funding selector (Refs #3512). Pure-helper `applySetSlotFunding` (`technology_panel_orders.dart`) returns the updated `Orders` for the dispatch callback.
 
