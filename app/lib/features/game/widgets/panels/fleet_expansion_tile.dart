@@ -54,6 +54,7 @@ class FleetExpansionTile extends StatelessWidget {
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
     this.onMoveFleet,
+    this.onAssignMission,
     this.isSplitAllowed = false,
   });
 
@@ -65,6 +66,7 @@ class FleetExpansionTile extends StatelessWidget {
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
   final VoidCallback? onMoveFleet;
+  final VoidCallback? onAssignMission;
   final bool isSplitAllowed;
 
   @override

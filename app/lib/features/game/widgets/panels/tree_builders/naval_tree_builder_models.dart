@@ -59,6 +59,7 @@ class FleetRow {
     this.inPortAtProvinceId,
     this.seaZoneId,
     this.draftNavalMoveLine,
+    this.draftNavalMissionLine,
   });
 
   final String fleetId;
@@ -79,6 +80,7 @@ class FleetRow {
   final String? inPortAtProvinceId;
   final String? seaZoneId;
   final String? draftNavalMoveLine;
+  final String? draftNavalMissionLine;
 }
 
 abstract class NavalTreeLocationNode {

@@ -1698,6 +1698,65 @@
       }
     }
   },
+  "naval_mission_assign": "Mission",
+  "@naval_mission_assign": {
+    "description": "Fleet row and menu label for assigning a naval mission."
+  },
+  "naval_mission_menuTitle": "Assign mission — {fleet}",
+  "@naval_mission_menuTitle": {
+    "description": "Naval mission context menu title.",
+    "placeholders": {
+      "fleet": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_selectFleetTitle": "Select fleet",
+  "@naval_mission_selectFleetTitle": {
+    "description": "Title when multiple fleets share a map marker."
+  },
+  "naval_mission_cancelPending": "Cancel pending mission",
+  "@naval_mission_cancelPending": {
+    "description": "Removes staged naval mission draft for fleet."
+  },
+  "naval_mission_pendingLine": "On mission: {mission}",
+  "@naval_mission_pendingLine": {
+    "description": "Draft naval mission line without province target.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_pendingLineWithTarget": "On mission: {mission} → {target}",
+  "@naval_mission_pendingLineWithTarget": {
+    "description": "Draft naval mission line with province target.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_selectTargetTitle": "Select target — {mission}",
+  "@naval_mission_selectTargetTitle": {
+    "description": "Blockade/beachhead target picker title.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_noMissionsAvailable": "No missions available for this fleet.",
+  "@naval_mission_noMissionsAvailable": {
+    "description": "Empty naval mission menu when base gates fail."
+  },
+  "naval_mission_noTargetsAvailable": "No legal targets for this mission.",
+  "@naval_mission_noTargetsAvailable": {
+    "description": "Empty target picker for blockade/beachhead."
+  },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
     "description": "Empty-state line for fleet with no ships."

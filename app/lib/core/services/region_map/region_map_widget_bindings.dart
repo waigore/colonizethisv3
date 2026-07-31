@@ -32,7 +32,7 @@ typedef CreateCtRegionMapGame = CtRegionMapGame Function({
   required void Function(String tileKey)? onCivilianTileTapped,
   required void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,
@@ -70,7 +70,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required void Function(String tileKey)? onCivilianTileTapped,
   required void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,

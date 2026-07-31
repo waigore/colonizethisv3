@@ -31,7 +31,7 @@ void ctRegionMapGameUpdateProps(
   void Function(String tileKey)? onCivilianTileTapped,
   void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,

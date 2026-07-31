@@ -83,6 +83,9 @@ mixin NavalUnitsPanelList
               onCombineSelectionToggle: () => toggleFleetSelection(row),
               onSplitFleet: readOnly ? null : () => openSplitDialog(row),
               onMoveFleet: readOnly ? null : () => openMoveFleetDialog(row),
+              onAssignMission: readOnly || !row.isAtSea || row.isHomeFleet
+                  ? null
+                  : () => openNavalMissionDialog(row),
               isSplitAllowed: true,
             ),
         ],

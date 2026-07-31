@@ -135,6 +135,8 @@ class AppEventHandler {
         appEventHandlerOpenMilitaryUnitsPanel(this, event, nav);
       case OpenNavalUnitsPanelEvent():
         appEventHandlerOpenNavalUnitsPanel(this, event, nav);
+      case OpenNavalMissionMenuEvent():
+        appEventHandlerOpenNavalMissionMenu(this, event, nav);
       case OpenPanelEvent():
         appEventHandlerOpenPanel(this, event, nav);
       case ClosePanelEvent():
