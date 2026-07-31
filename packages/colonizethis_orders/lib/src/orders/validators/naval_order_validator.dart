@@ -1,8 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import '../naval_mission_targets.dart';
 import '../order_validation_result.dart';
 
 /// Validates naval move and naval mission orders for a single player.
@@ -117,7 +117,8 @@ class NavalOrderValidator extends OrderValidator {
     );
   }
 
-  /// Validates one [NavalMissionOrder]. Blockade requires a target province and war.
+  /// Validates one [NavalMissionOrder]. Blockade and beachhead require a legal
+  /// hostile coastal target adjacent to the fleet's current sea zone.
   OrderValidationResult validateNavalMission(
     NavalMissionOrder o, {
     required bool previousRejected,
@@ -127,45 +128,77 @@ class NavalOrderValidator extends OrderValidator {
       body: () {
         final fleet = _fleetById[o.fleetId];
         final homeFleetId = homeFleetIdFor(_playerId);
-        var valid =
-            fleet != null &&
-            fleet.ownerId == _playerId &&
-            (o.mission == 'join_home_fleet' || fleet.id != homeFleetId);
-        String? rejectReason = valid
-            ? null
-            : (fleet == null ? 'Fleet not found' : 'Fleet not owned by player');
+        if (fleet == null) {
+          return OrderValidationResult.rejected('Fleet not found');
+        }
+        if (fleet.ownerId != _playerId) {
+          return OrderValidationResult.rejected('Fleet not owned by player');
+        }
 
-        if (valid && o.mission == 'blockade') {
+        FleetMission? mission;
+        for (final candidate in FleetMission.values) {
+          if (candidate.name == o.mission) {
+            mission = candidate;
+            break;
+          }
+        }
+
+        if (o.mission == 'join_home_fleet') {
+          if (fleet.id == homeFleetId) {
+            return OrderValidationResult.rejected('Invalid naval mission');
+          }
+          return OrderValidationResult.accepted();
+        }
+
+        if (mission == null) {
+          return OrderValidationResult.rejected('Invalid naval mission');
+        }
+
+        if (fleet.id == homeFleetId) {
+          return OrderValidationResult.rejected('Invalid naval mission');
+        }
+        if (!fleet.isAtSea || fleet.seaZoneId == null) {
+          return OrderValidationResult.rejected(
+            'Mission only allowed when fleet is at sea',
+          );
+        }
+
+        if (mission == FleetMission.blockade || mission == FleetMission.beachhead) {
           final targetProvinceId = o.targetProvinceId;
           if (targetProvinceId == null ||
               targetProvinceId.isEmpty ||
               !ProvinceId.isPrefixed(targetProvinceId)) {
-            valid = false;
-            rejectReason = 'Blockade requires a target province';
-          } else {
-            final province = _game.worldState.tryGetProvince(targetProvinceId);
-            final ownerId = province?.ownerId;
-            if (province == null || ownerId == null || ownerId.isEmpty) {
-              valid = false;
-              rejectReason = 'Blockade target province not found or unowned';
-            } else if (ownerId == _playerId) {
-              valid = false;
-              rejectReason = 'Cannot blockade own province';
-            } else {
-              final rel = getRelation(_game, _playerId, ownerId);
-              if (rel?.atWar != true) {
-                valid = false;
-                rejectReason = 'Blockade only allowed against nations at war';
-              }
-            }
+            return OrderValidationResult.rejected(
+              mission == FleetMission.blockade
+                  ? 'Blockade requires a target province'
+                  : 'Beachhead requires a hostile coastal target province',
+            );
+          }
+          final legalTarget = mission == FleetMission.blockade
+              ? isLegalBlockadeTargetForFleet(
+                  game: _game,
+                  topology: _topology,
+                  playerId: _playerId,
+                  fleet: fleet,
+                  targetProvinceId: targetProvinceId,
+                )
+              : isLegalBeachheadTargetForFleet(
+                  game: _game,
+                  topology: _topology,
+                  playerId: _playerId,
+                  fleet: fleet,
+                  targetProvinceId: targetProvinceId,
+                );
+          if (!legalTarget) {
+            return OrderValidationResult.rejected(
+              mission == FleetMission.blockade
+                  ? 'Blockade target province not legal'
+                  : 'Beachhead target province not legal',
+            );
           }
         }
 
-        return valid
-            ? OrderValidationResult.accepted()
-            : OrderValidationResult.rejected(
-                rejectReason ?? 'Invalid naval mission',
-              );
+        return OrderValidationResult.accepted();
       },
     );
   }

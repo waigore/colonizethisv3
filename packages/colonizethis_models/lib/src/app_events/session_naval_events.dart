@@ -53,3 +53,28 @@ class NavalMoveFleetRequestedEvent extends SessionCommandEvent {
   final String humanPlayerId;
   final NavalMoveOrder moveOrder;
 }
+
+/// Naval mission assign: shell merges [missionOrder] into current-turn draft orders.
+/// Replaces any prior mission for that fleet and clears pending naval move (xor).
+/// SPEC/program/app-ui-wiring.md; Refs #4213.
+class NavalMissionRequestedEvent extends SessionCommandEvent {
+  NavalMissionRequestedEvent({
+    required this.humanPlayerId,
+    required this.missionOrder,
+  });
+
+  final String humanPlayerId;
+  final NavalMissionOrder missionOrder;
+}
+
+/// Cancel pending naval mission for [fleetId] in the current-turn draft.
+/// SPEC/program/app-ui-wiring.md; Refs #4213.
+class NavalMissionCancelRequestedEvent extends SessionCommandEvent {
+  NavalMissionCancelRequestedEvent({
+    required this.humanPlayerId,
+    required this.fleetId,
+  });
+
+  final String humanPlayerId;
+  final String fleetId;
+}

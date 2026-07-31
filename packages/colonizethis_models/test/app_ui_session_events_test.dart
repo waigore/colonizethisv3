@@ -183,6 +183,23 @@ void main() {
         'f1',
       );
       expect(
+        NavalMissionRequestedEvent(
+          humanPlayerId: 'p1',
+          missionOrder: NavalMissionOrder(
+            fleetId: 'f1',
+            mission: FleetMission.patrol.name,
+          ),
+        ).missionOrder.mission,
+        FleetMission.patrol.name,
+      );
+      expect(
+        NavalMissionCancelRequestedEvent(
+          humanPlayerId: 'p1',
+          fleetId: 'f1',
+        ).fleetId,
+        'f1',
+      );
+      expect(
         ArmyCombineRequestedEvent(
           humanPlayerId: 'p1',
           armyIds: const ['a1'],

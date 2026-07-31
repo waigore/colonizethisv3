@@ -15,6 +15,8 @@ export 'development_panel_assign_affordance.dart';
 export 'development_panel_road_first.dart';
 export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
+export 'naval_mission_availability.dart';
+export 'naval_mission_targets.dart';
 export 'order_effects_projector.dart';
 export 'order_engine.dart';
 export 'order_merge.dart';
