@@ -827,6 +827,30 @@ abstract class AppLocalizations {
   /// Field label for destination province picker in move army dialog.
   String get moveArmy_destinationProvince;
 
+  /// Own force size line on move army dialog body (#4216).
+  String moveArmy_yourArmyRegiments(int count);
+
+  /// Combat-capable defender total on invasion row when full military intel (#4216).
+  String moveArmy_defendersRegiments(int count);
+
+  /// Invasion row cue when full intel shows zero combat-capable defenders (#4216).
+  String get moveArmy_unopposedCapture;
+
+  /// Invasion row cue when full military intel is unavailable (#4216).
+  String get moveArmy_defendersUnknown;
+
+  /// Fort level 0 label on invasion row under full military intel (#4216).
+  String get moveArmy_fortOpenField;
+
+  /// Fort level 1 siege label on invasion row (#4216).
+  String get moveArmy_fortWoodSiege;
+
+  /// Fort level 2 siege label on invasion row (#4216).
+  String get moveArmy_fortStoneSiege;
+
+  /// Fort level 3 siege label on invasion row (#4216).
+  String get moveArmy_fortModernSiege;
+
   /// Move fleet dialog title.
   String moveFleet_title(String fleetLabel);
 
