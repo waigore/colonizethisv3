@@ -13,6 +13,7 @@ import '../../../../providers/region_minimap_provider.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_selection.dart';
+import 'game_map_area_relocate_selection.dart';
 import 'game_map_area_view.dart';
 import 'game_map_area_events.dart';
 
@@ -24,6 +25,7 @@ mixin GameMapAreaLifecycle
         ConsumerState<GameMapArea>,
         GameMapAreaStateBase,
         GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
         GameMapAreaView,
         GameMapAreaEvents {
   @override
@@ -44,6 +46,9 @@ mixin GameMapAreaLifecycle
       ),
       bus.on<ct_models.StartCivilianWorkTargetSelectionEvent>().listen(
         (e) => startWorkTargetSelection(e.unitId, e.workTarget),
+      ),
+      bus.on<ct_models.StartCivilianRelocateSelectionEvent>().listen(
+        (e) => startCivilianRelocateSelection(e.unitId),
       ),
       bus.on<ct_models.UnitsPanelClosedEvent>().listen((_) {
         ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
@@ -106,7 +111,7 @@ mixin GameMapAreaLifecycle
       final switchedMode =
           next.isObserving && previous?.mode != next.mode;
       if (enteredObserve || switchedMode) {
-        cancelWorkTargetSelection();
+        cancelAnyMapTileSelection();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -105,6 +105,70 @@ mixin AppEventHandlerScopeSessionCivilianWorkListeners
           },
         );
       }),
+      bus.on<CivilianMoveRequestedEvent>().listen((e) {
+        unlessTurnResolutionBlocksSession('CivilianMoveRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
+          final g = ref.read(currentGameProvider);
+          if (g == null) return;
+          final topo =
+              ref
+                  .read(gameServiceProvider)
+                  .getMapData(g.id)
+                  ?.combinedTopology ??
+              const MapTopology();
+          final tileMaps = ref
+              .read(gameServiceProvider)
+              .getMapData(g.id)
+              ?.tileMapByRegion;
+          final o = ref.read(currentOrdersProvider);
+          final next = applyCivilianMoveOrderForPlayer(
+            o,
+            e.humanPlayerId,
+            e.moveOrder,
+          );
+          final engine = OrderEngine(
+            initialOrders: next,
+            projector: projectOrderEffects,
+          );
+          final results = engine.validatePlayerOrdersWithContext(
+            g,
+            topo,
+            e.humanPlayerId,
+            tileMapByRegion: tileMaps,
+          );
+          if (!results.every((r) => r.isAccepted)) {
+            appEventHandlerScopeLog.e(
+              'ui: civilian move rejected: merged draft failed order validation',
+            );
+            showSnackBarForEvent(
+              const ShowSnackBarEvent(
+                message: 'Could not apply Spy relocate. Orders are invalid.',
+              ),
+            );
+            assert(
+              results.every((r) => r.isAccepted),
+              'CivilianMoveRequestedEvent produced an invalid draft',
+            );
+            return;
+          }
+          ref.read(currentOrdersProvider.notifier).replaceAll(next);
+        });
+      }),
+      bus.on<RemovePendingCivilianMoveRequestedEvent>().listen((e) {
+        unlessTurnResolutionBlocksSession(
+          'RemovePendingCivilianMoveRequestedEvent',
+          () {
+            if (rejectUiMutationIfObserving()) return;
+            final current = ref.read(currentOrdersProvider);
+            final updated = removePendingCivilianMoveForUnit(
+              orders: current,
+              humanPlayerId: e.playerId,
+              unitId: e.unitId,
+            );
+            ref.read(currentOrdersProvider.notifier).replaceAll(updated);
+          },
+        );
+      }),
       bus.on<CancelInProgressCivilianWorkRequestedEvent>().listen((e) {
         unlessTurnResolutionBlocksSession(
           'CancelInProgressCivilianWorkRequestedEvent',

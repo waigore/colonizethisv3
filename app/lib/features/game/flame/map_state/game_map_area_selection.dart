@@ -102,6 +102,9 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
   }
 
   void startWorkTargetSelection(String unitId, String workTarget) {
+    if (civilianRelocateSelection != null) {
+      civilianRelocateSelection = null;
+    }
     final unit = findUnitById(unitId);
     if (unit == null) return;
     setState(() {

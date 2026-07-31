@@ -277,6 +277,21 @@ abstract class AppLocalizations {
   /// Lowercase inline cancel action label in the map work-target selection prompt overlay.
   String get map_selectionMode_cancel;
 
+  /// Prompt overlay when choosing a Spy relocate destination on the map.
+  String get map_selectionMode_relocatePrompt;
+
+  /// Confirm dialog title when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_title;
+
+  /// Confirm dialog body when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_message;
+
+  /// Confirm button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_confirm;
+
+  /// Cancel button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_cancel;
+
   /// Generic Start button label used when beginning a flow.
   String get common_start;
 
@@ -1216,6 +1231,21 @@ abstract class AppLocalizations {
 
   /// Assign action button in civilian units panel.
   String get civilian_units_assign;
+
+  /// Relocate action for idle Spy units in the civilian units panel.
+  String get civilian_units_relocate;
+
+  /// Spy status when idle in a foreign province holding presence intel.
+  String civilian_units_spyStatus_holdingIntel(String province);
+
+  /// Spy status when assigned or working counter-spy.
+  String get civilian_units_spyStatus_counterEspionage;
+
+  /// Spy status when idle on owned land with no mission.
+  String get civilian_units_spyStatus_reserve;
+
+  /// Pending Spy move order destination on the civilian units panel.
+  String civilian_units_pendingRelocate(String location);
 
   /// Section header for purchased-land scopes in the Development panel.
   String get development_purchasedLand;

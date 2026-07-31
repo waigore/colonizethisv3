@@ -98,6 +98,35 @@ Orders applyNavalMoveOrderForPlayer(
   );
 }
 
+/// Replaces any prior civilian move for the same [unitId] and clears a
+/// conflicting pending [WorkOrder] for that unit (move xor work draft rule).
+/// SPEC/program/orders.md.
+Orders applyCivilianMoveOrderForPlayer(
+  Orders orders,
+  String playerId,
+  MoveOrder newOrder,
+) {
+  final nextMoves = List<MoveOrder>.from(
+    orders.moveOrdersByPlayerId[playerId] ?? const <MoveOrder>[],
+  )..removeWhere((o) => o.unitId == newOrder.unitId);
+  nextMoves.add(newOrder);
+
+  final nextWorks = List<WorkOrder>.from(
+    orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[],
+  )..removeWhere((o) => o.unitId == newOrder.unitId);
+
+  return orders.copyWith(
+    moveOrdersByPlayerId: {
+      ...orders.moveOrdersByPlayerId,
+      playerId: nextMoves,
+    },
+    workOrdersByPlayerId: {
+      ...orders.workOrdersByPlayerId,
+      playerId: nextWorks,
+    },
+  );
+}
+
 /// Replaces any prior army move for the same [armyId] for this turn draft.
 /// SPEC/game/military-armies.md.
 Orders applyArmyMoveOrderForPlayer(
