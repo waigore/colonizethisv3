@@ -332,6 +332,34 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get moveArmy_destinationProvince => 'Destination province';
 
   @override
+  String moveArmy_yourArmyRegiments(int count) {
+    return 'Your army: $count regiments';
+  }
+
+  @override
+  String moveArmy_defendersRegiments(int count) {
+    return 'Defenders: $count regiments';
+  }
+
+  @override
+  String get moveArmy_unopposedCapture => 'Unopposed capture';
+
+  @override
+  String get moveArmy_defendersUnknown => 'Defenders unknown';
+
+  @override
+  String get moveArmy_fortOpenField => 'Open field';
+
+  @override
+  String get moveArmy_fortWoodSiege => 'Wood fort siege';
+
+  @override
+  String get moveArmy_fortStoneSiege => 'Stone fort siege';
+
+  @override
+  String get moveArmy_fortModernSiege => 'Modern fort siege';
+
+  @override
   String moveFleet_title(String fleetLabel) {
     return 'Move fleet — $fleetLabel';
   }

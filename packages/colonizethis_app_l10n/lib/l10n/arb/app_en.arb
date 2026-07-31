@@ -1486,6 +1486,48 @@
   "@moveArmy_destinationProvince": {
     "description": "Field label for destination province picker in move army dialog."
   },
+  "moveArmy_yourArmyRegiments": "Your army: {count} regiments",
+  "@moveArmy_yourArmyRegiments": {
+    "description": "Own force size line on move army dialog body (#4216).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_defendersRegiments": "Defenders: {count} regiments",
+  "@moveArmy_defendersRegiments": {
+    "description": "Combat-capable defender total on invasion row when full military intel (#4216).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_unopposedCapture": "Unopposed capture",
+  "@moveArmy_unopposedCapture": {
+    "description": "Invasion row cue when full intel shows zero combat-capable defenders (#4216)."
+  },
+  "moveArmy_defendersUnknown": "Defenders unknown",
+  "@moveArmy_defendersUnknown": {
+    "description": "Invasion row cue when full military intel is unavailable (#4216)."
+  },
+  "moveArmy_fortOpenField": "Open field",
+  "@moveArmy_fortOpenField": {
+    "description": "Fort level 0 label on invasion row under full military intel (#4216)."
+  },
+  "moveArmy_fortWoodSiege": "Wood fort siege",
+  "@moveArmy_fortWoodSiege": {
+    "description": "Fort level 1 siege label on invasion row (#4216)."
+  },
+  "moveArmy_fortStoneSiege": "Stone fort siege",
+  "@moveArmy_fortStoneSiege": {
+    "description": "Fort level 2 siege label on invasion row (#4216)."
+  },
+  "moveArmy_fortModernSiege": "Modern fort siege",
+  "@moveArmy_fortModernSiege": {
+    "description": "Fort level 3 siege label on invasion row (#4216)."
+  },
   "moveFleet_title": "Move fleet — {fleetLabel}",
   "@moveFleet_title": {
     "description": "Move fleet dialog title.",
