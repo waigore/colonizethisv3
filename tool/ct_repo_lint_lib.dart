@@ -45,6 +45,7 @@ import 'check_economy_world_market_admission_shared.dart';
 import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
+import 'check_orders_dedup_development_panel.dart';
 import 'check_orders_dedup_map_clones.dart';
 import 'check_setup_dedup_faction_capital_collect.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
@@ -894,6 +895,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckOrdersDedupMapClones(repoRoot);
     case 'repo.orders_dedup_diplomatic_helpers':
       return runCheckOrdersDedupDiplomaticHelpers(repoRoot);
+    case 'repo.orders_dedup_development_panel':
+      return runCheckOrdersDedupDevelopmentPanel(repoRoot);
     case 'repo.setup_dedup_init_pipeline_retry':
       return runCheckSetupDedupInitPipelineRetry(repoRoot);
     case 'repo.setup_dedup_gp_ow_tile_scans':
