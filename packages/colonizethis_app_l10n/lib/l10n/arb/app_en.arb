@@ -2534,6 +2534,10 @@
       }
     }
   },
+  "technologyPanel_chooseTechDetails": "Details",
+  "@technologyPanel_chooseTechDetails": {
+    "description": "Per-row Details control on the Choose-tech dialog; opens full effect/prerequisite content without assigning (Refs #4222)."
+  },
   "technologyPanel_slotCancelled": "Research slot cancelled",
   "@technologyPanel_slotCancelled": {
     "description": "Snackbar shown when a research slot assignment is removed."
