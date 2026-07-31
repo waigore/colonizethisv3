@@ -299,6 +299,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get technologyPanel_chooseTechDetails => 'Details';
+
+  @override
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
 
   @override

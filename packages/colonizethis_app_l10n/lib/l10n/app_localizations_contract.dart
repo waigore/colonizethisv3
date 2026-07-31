@@ -1462,6 +1462,9 @@ abstract class AppLocalizations {
   /// Uses an em dash between 'Choose Tech' and the slot number.
   String technologyPanel_chooseTechDialogTitle(int slot);
 
+  /// Per-row Details control on the Choose-tech dialog (Refs #4222).
+  String get technologyPanel_chooseTechDetails;
+
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
 
