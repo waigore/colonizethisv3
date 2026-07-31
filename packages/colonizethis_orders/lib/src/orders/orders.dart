@@ -13,6 +13,12 @@ export 'diplomatic_access_helpers.dart'
 export 'development_panel_assign.dart';
 export 'development_panel_assign_affordance.dart';
 export 'development_panel_road_first.dart';
+export 'development_panel/idle_civilians.dart'
+    show idleDevelopmentCiviliansForAssign;
+export 'development_panel/improve_tile_ordering.dart'
+    show orderDevelopmentImproveTiles;
+export 'development_panel/material_affordance.dart'
+    show canAffordDevelopmentWorkOrder;
 export 'draft_orders_mutations.dart';
 export 'incremental_candidate_validator.dart';
 export 'order_effects_projector.dart';
