@@ -66,6 +66,165 @@ void main() {
         isFalse,
       );
     });
+
+    test('returns false for unknown province', () {
+      final game = _twoProvinceSpyGame();
+      expect(
+        isForeignProvinceForPlayer(
+          game: game,
+          prefixedProvinceId: 'oldWorld|missing',
+          humanPlayerId: 'h1',
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('countOwnSpiesProjectedInProvince', () {
+    const humanId = 'h1';
+
+    test('counts Spies projected in foreign province', () {
+      final game = _twoProvinceSpyGame();
+      expect(
+        countOwnSpiesProjectedInProvince(
+          game: game,
+          orders: const Orders(),
+          humanPlayerId: humanId,
+          prefixedProvinceId: 'oldWorld|p2',
+        ),
+        1,
+      );
+    });
+
+    test('uses pending move destination for projection', () {
+      final game = _twoProvinceSpyGame();
+      const orders = Orders(
+        moveOrdersByPlayerId: {
+          humanId: [
+            MoveOrder(
+              unitId: 'spy1',
+              destinationTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+      expect(
+        countOwnSpiesProjectedInProvince(
+          game: game,
+          orders: orders,
+          humanPlayerId: humanId,
+          prefixedProvinceId: 'oldWorld|p2',
+        ),
+        0,
+      );
+      expect(
+        countOwnSpiesProjectedInProvince(
+          game: game,
+          orders: orders,
+          humanPlayerId: humanId,
+          prefixedProvinceId: 'oldWorld|p1',
+        ),
+        1,
+      );
+    });
+  });
+
+  group('applySpyRelocateMoveToOrders', () {
+    const humanId = 'h1';
+
+    test('stages move and clears conflicting work order', () {
+      const orders = Orders(
+        workOrdersByPlayerId: {
+          humanId: [
+            WorkOrder(
+              unitId: 'spy1',
+              target: kWorkTargetCounterSpy,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+      final next = applySpyRelocateMoveToOrders(
+        orders: orders,
+        humanPlayerId: humanId,
+        spyUnitId: 'spy1',
+        destinationTileKey: 'oldWorld|p1|1|0',
+      );
+      expect(next.workOrdersByPlayerId[humanId], isEmpty);
+      expect(
+        pendingCivilianMoveForUnit(
+          orders: next,
+          humanPlayerId: humanId,
+          unitId: 'spy1',
+        ),
+        const MoveOrder(
+          unitId: 'spy1',
+          destinationTileKey: 'oldWorld|p1|1|0',
+        ),
+      );
+    });
+
+    test('replaces prior draft move for same Spy', () {
+      const orders = Orders(
+        moveOrdersByPlayerId: {
+          humanId: [
+            MoveOrder(
+              unitId: 'spy1',
+              destinationTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+      final next = applySpyRelocateMoveToOrders(
+        orders: orders,
+        humanPlayerId: humanId,
+        spyUnitId: 'spy1',
+        destinationTileKey: 'oldWorld|p1|2|0',
+      );
+      expect(next.moveOrdersByPlayerId[humanId], hasLength(1));
+      expect(
+        next.moveOrdersByPlayerId[humanId]!.single.destinationTileKey,
+        'oldWorld|p1|2|0',
+      );
+    });
+  });
+
+  group('removePendingCivilianMoveForUnit', () {
+    const humanId = 'h1';
+
+    test('removes pending move when present', () {
+      const orders = Orders(
+        moveOrdersByPlayerId: {
+          humanId: [
+            MoveOrder(
+              unitId: 'spy1',
+              destinationTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+      final next = removePendingCivilianMoveForUnit(
+        orders: orders,
+        humanPlayerId: humanId,
+        unitId: 'spy1',
+      );
+      expect(next.moveOrdersByPlayerId[humanId], isEmpty);
+    });
+
+    test('returns same orders when no pending move', () {
+      const orders = Orders();
+      expect(
+        identical(
+          removePendingCivilianMoveForUnit(
+            orders: orders,
+            humanPlayerId: humanId,
+            unitId: 'spy1',
+          ),
+          orders,
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('spyLeaveIntelWarningNeeded', () {
@@ -278,5 +437,61 @@ void main() {
         );
       },
     );
+
+    test('returns false for unknown unit', () {
+      final game = _twoProvinceSpyGame();
+      expect(
+        spyLeaveIntelWarningNeeded(
+          game: game,
+          orders: const Orders(),
+          humanPlayerId: humanId,
+          spyUnitId: 'missing',
+          newDestinationTileKey: 'oldWorld|p1|0|0',
+        ),
+        isFalse,
+      );
+    });
+
+    test('returns false when relocating from owned province', () {
+      final game = Game(
+        id: 'g1',
+        players: const [
+          Player(id: 'h1', displayName: 'Human', isHuman: true),
+        ],
+        worldState: WorldState(
+          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: 'oldWorld|p1',
+                regionId: 'oldWorld',
+                displayName: 'Home',
+                ownerId: 'h1',
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'spy1',
+                type: kUnitTypeSpy,
+                ownerId: 'h1',
+                locationProvinceId: 'oldWorld|p1',
+                tileKey: 'oldWorld|p1|0|0',
+              ),
+            ],
+          ),
+          newWorld: const RegionData(),
+        ),
+      );
+      expect(
+        spyLeaveIntelWarningNeeded(
+          game: game,
+          orders: const Orders(),
+          humanPlayerId: humanId,
+          spyUnitId: 'spy1',
+          newDestinationTileKey: 'oldWorld|p1|1|0',
+        ),
+        isFalse,
+      );
+    });
   });
 }
