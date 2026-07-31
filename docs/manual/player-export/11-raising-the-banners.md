@@ -43,7 +43,7 @@ Generals are commanders rather than map units. Your realm begins with one genera
 ### Moving a field army
 
 1. In **Military units panel**, select **Move** on a non-Home army.
-2. **Move army dialog** lists only destinations that are legal for that army and the current turn’s orders.
+2. **Move army dialog** lists only destinations that are legal for that army and the current turn’s orders. The dialog body shows **Your army: N regiments** for the army you are moving. Invasion target rows show defender strength, unopposed capture, and fort/siege risk when your military intel is complete (Spy, full tile visibility, or Spy fog-decay timer); otherwise they show **Defenders unknown**. Select an invasion row to see regiment-type breakdown when intel allows.
 3. Your owned provinces may be selected for relocation, including provinces in another region. Enemy, neutral, Minor Nation, or Tribe provinces must be adjacent to the army’s present province and lie in its current region.
 4. Confirm the selected destination. If entering another faction’s province would begin a war, confirm the invasion warning; the declaration of war and army move are submitted together.
 5. When the turn resolves, every regiment in that army moves with it. The panel shows its pending destination while the order remains in the draft.

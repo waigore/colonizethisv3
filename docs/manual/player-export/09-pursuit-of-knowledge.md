@@ -27,7 +27,7 @@ Technology unlocks better extraction caps, roads and rails, new regiments and sh
 Efficiency is about 2 RP per gold except Maximum (~2.5). Some military/naval techs gain an extra **Industrial Funding of Research** RP bonus when applicable.
 
 - **RP costs** scale by era/tier roughly 1800 → 3600 (about 6–12 turns at Medium funding per slot). Progress is per tech; completing a tech unlocks its effects immediately into `techUnlocked`.
-- **Choose tech** on an empty or reassigned slot lists only **researchable** techs (all prerequisites unlocked). A tech cannot start the same turn its prerequisite finishes.
+- **Choose tech** on an empty or reassigned slot lists only **researchable** techs (all prerequisites unlocked). Each row shows the tech name, era/category/RP cost, and **1–2 plain-language effect lines** (what the tech unlocks or improves). Tap **Details** on a row for prerequisites and the full effect list without leaving the picker; tap the row body to assign. A tech cannot start the same turn its prerequisite finishes.
 - **Cancel** clears the slot; **all progress on that tech is forfeited** (confirm when progress > 0).
 - Slot assignments persist across turns until unlock or cancel. An optional **goal** highlight may sort the Tree for you — it is UI-only and is **not** part of the research order payload.
 - **Empty seats and funding None are legal.** You may leave a slot empty or set funding to **None** when gold is needed for builds, recruits, diplomacy, or the market. That is a treasury choice, not a failed order. Ending the turn does **not** warn about unused research seats the way it may list idle civilians — review slots on **Technology screen** when you mean to invest again.
@@ -50,7 +50,7 @@ Eras (Renaissance → Industrial) are flavour for the chart; they do **not** har
 
 ### Spy insight (optional boost)
 
-Spies idle or on counter-spy in a rival Great Power who already unlocked your active tech can add roughly **+15% RP per such rival** (stacks) when funding is at least Low — after spy resolution that turn. Do not bet a whole plan on spies alone.
+Station Spies in rival Great Power provinces via **Relocate** on **Civilian units panel** (Chapter 5) to hold presence intel and, when funding is at least **Low**, add roughly **+15% RP per such rival** (stacks) for techs they have already unlocked — after spy resolution that turn. Counter-espionage on home soil is separate (**Assign** → counter-spy). Do not bet a whole plan on spies alone.
 
 ## Counsel
 
