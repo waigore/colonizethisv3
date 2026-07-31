@@ -75,13 +75,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Blockade'), findsOneWidget);
-      final blockadeTile = tester.widget<ListTile>(
+      final blockadeInkWell = tester.widget<InkWell>(
         find.ancestor(
           of: find.text('Blockade'),
-          matching: find.byType(ListTile),
+          matching: find.byType(InkWell),
         ),
       );
-      expect(blockadeTile.enabled, isFalse);
+      expect(blockadeInkWell.onTap, isNull);
     });
 
     testWidgets('cancel pending removes draft mission', (tester) async {

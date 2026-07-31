@@ -1,4 +1,5 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'naval_mission_flow.dart';
+import 'move_units_dialog_base.dart';
 import 'move_units_dialog_base_styles.dart';
 
 /// Fleet picker when multiple fleets share one map marker (Refs #4213).
@@ -56,15 +58,17 @@ class _NavalMissionFleetPickerDialogState
           ),
           const SizedBox(height: CtSpacing.ml),
           for (final fleetId in widget.fleetIds)
-            ListTile(
-              dense: true,
-              title: Text(l10n.naval_fleetLabel(fleetId)),
-              leading: Radio<String>(
-                value: fleetId,
-                groupValue: _selected,
-                onChanged: (v) => setState(() => _selected = v),
-              ),
+            MoveDialogDestinationRow(
+              selected: _selected == fleetId,
+              semanticsLabel: l10n.naval_fleetLabel(fleetId),
               onTap: () => setState(() => _selected = fleetId),
+              content: Text(
+                l10n.naval_fleetLabel(fleetId),
+                style: moveDialogRowLabelStyle(
+                  theme,
+                  selected: _selected == fleetId,
+                ),
+              ),
             ),
           const SizedBox(height: CtSpacing.l),
           Wrap(
@@ -112,11 +116,12 @@ class NavalMissionMenuDialog extends StatelessWidget {
     final fleetLabel = l10n.naval_fleetLabel(fleet.id);
     final rows = <Widget>[
       for (final option in availability.missions)
-        _missionTile(context, option),
+        _missionRow(context, option),
       if (availability.canCancelPending)
-        ListTile(
-          dense: true,
-          title: Text(l10n.naval_mission_cancelPending),
+        _menuActionRow(
+          context: context,
+          label: l10n.naval_mission_cancelPending,
+          enabled: true,
           onTap: () => Navigator.pop(
             context,
             const NavalMissionMenuChoiceCancelPending(),
@@ -159,22 +164,68 @@ class NavalMissionMenuDialog extends StatelessWidget {
     );
   }
 
-  Widget _missionTile(BuildContext context, NavalMissionOption option) {
+  Widget _missionRow(BuildContext context, NavalMissionOption option) {
     final label = navalMissionMenuLabel(option.mission);
-    final enabled = option.isEnabled;
-    return ListTile(
-      dense: true,
-      enabled: enabled,
-      title: Text(label),
-      subtitle: option.disabledReason != null
-          ? Text(option.disabledReason!)
-          : null,
-      onTap: enabled
+    return _menuActionRow(
+      context: context,
+      label: label,
+      subtitle: option.disabledReason,
+      enabled: option.isEnabled,
+      onTap: option.isEnabled
           ? () => Navigator.pop(
               context,
               NavalMissionMenuChoiceMission(option.mission),
             )
           : null,
+    );
+  }
+
+  Widget _menuActionRow({
+    required BuildContext context,
+    required String label,
+    String? subtitle,
+    required bool enabled,
+    required VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.5,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: EditorialMonoclePalette.border,
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: CtSpacing.m,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    label,
+                    style: moveDialogRowLabelStyle(theme, selected: false),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: CtSpacing.xs),
+                    Text(
+                      subtitle,
+                      style: moveDialogEmptyTextStyle(theme),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
