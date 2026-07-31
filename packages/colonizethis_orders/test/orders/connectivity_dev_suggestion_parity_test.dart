@@ -3,11 +3,12 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/connectivity_dev_targets.dart';
+import 'package:colonizethis_orders/src/orders/development_panel_assign.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_work.dart';
 import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_test/test.dart';
 
-/// Human suggestion parity pin (Refs #4176 AC-F6).
+/// Human suggestion parity pin (Refs #4176 AC-F6, #4211 Slice B).
 void main() {
   test(
     'suggestWorkOrders applies connectivity ordering for build_improvement',
@@ -129,6 +130,18 @@ void main() {
           .toList();
       expect(improve, hasLength(1));
       expect(improve.single.targetTileKey, connectedGrain);
+
+      final assign = selectDevelopmentImproveAssignCandidate(
+        game: game,
+        playerId: playerId,
+        currentOrders: const Orders(),
+        topology: topology,
+        tileMapByRegion: tileMapByRegion,
+        commodityTileKeys: {connectedGrain, farGrain},
+        connectedTileKeys: snapshot.connected,
+      );
+      expect(assign, isNotNull);
+      expect(assign!.targetTileKey, improve.single.targetTileKey);
     },
   );
 }
