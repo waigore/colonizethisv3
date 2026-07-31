@@ -7,9 +7,12 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_action_text_button.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/strict_asset_icon.dart';
+import 'tech_definition_detail_dialog.dart';
+import 'tech_effect_summary.dart';
 import 'tech_ui_helpers.dart';
 import 'tech_gp_pennant_row.dart';
 
@@ -43,48 +46,69 @@ class ChooseTechOptionRow extends StatelessWidget {
     required this.game,
     required this.contextPlayerId,
     required this.tech,
-    required this.onTap,
+    required this.onAssign,
   });
 
   final Game game;
   final String contextPlayerId;
   final TechDefinition tech;
-  final VoidCallback onTap;
+  final VoidCallback onAssign;
+
+  Player? get _player {
+    for (final p in game.players) {
+      if (p.id == contextPlayerId) return p;
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final iconPath = techCategoryIconAssetPath(tech.category);
-    return InkWell(
-      onTap: onTap,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: EditorialMonoclePalette.border,
-            width: 1,
-          ),
+    final player = _player;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: EditorialMonoclePalette.border,
+          width: 1,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(CtSpacing.m),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (iconPath != null) ...[
-                StrictAssetIcon(
-                  assetPath: iconPath,
-                  width: kChooseTechDialogIconSize,
-                  height: kChooseTechDialogIconSize,
-                ),
-                CtGap.wm,
-              ],
-              Expanded(
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(CtSpacing.m),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (iconPath != null) ...[
+              StrictAssetIcon(
+                assetPath: iconPath,
+                width: kChooseTechDialogIconSize,
+                height: kChooseTechDialogIconSize,
+              ),
+              CtGap.wm,
+            ],
+            Expanded(
+              child: InkWell(
+                onTap: onAssign,
                 child: ChooseTechOptionLabels(
                   game: game,
                   contextPlayerId: contextPlayerId,
                   tech: tech,
                 ),
               ),
+            ),
+            if (player != null) ...[
+              CtGap.wm,
+              CtActionTextButton(
+                label: l10n.technologyPanel_chooseTechDetails,
+                onPressed: () => showTechDefinitionDetailDialog(
+                  context,
+                  game: game,
+                  player: player,
+                  tech: tech,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -97,15 +121,23 @@ class ChooseTechOptionLabels extends StatelessWidget {
     required this.game,
     required this.contextPlayerId,
     required this.tech,
+    this.effectLineCap = kChooseTechDefaultEffectLineCap,
   });
 
   final Game game;
   final String contextPlayerId;
   final TechDefinition tech;
 
+  /// When set, only the first [effectLineCap] effect lines render on the row.
+  final int effectLineCap;
+
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
+    final effectLines = buildTechEffectSummaryLines(l10n, tech);
+    final visibleEffects = effectLineCap <= 0
+        ? const <String>[]
+        : effectLines.take(effectLineCap).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -151,7 +183,26 @@ class ChooseTechOptionLabels extends StatelessWidget {
             ],
           ),
         ),
+        for (final line in visibleEffects) ...[
+          const SizedBox(height: 2),
+          Text(
+            line,
+            style: TextStyle(
+              color: EditorialMonoclePalette.muted,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ],
     );
   }
+}
+
+/// All effect summary lines for [tech] (Tree parity helper for tests).
+@visibleForTesting
+List<String> chooseTechEffectSummaryLinesForTest(
+  AppLocalizations l10n,
+  TechDefinition tech,
+) {
+  return buildTechEffectSummaryLines(l10n, tech);
 }

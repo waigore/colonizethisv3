@@ -140,7 +140,7 @@ class ChooseTechDialog extends StatelessWidget {
                       game: game,
                       contextPlayerId: contextPlayerId,
                       tech: tech,
-                      onTap: () => onSelect(tech),
+                      onAssign: () => onSelect(tech),
                     ),
                   ),
               ],

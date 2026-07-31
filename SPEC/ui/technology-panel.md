@@ -160,12 +160,11 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Frame:** `CtDialogShell` default 2 px `--accent-dim` border on all four sides; canonical panel gradient background; `maxWidth = 480` (catalog default).
 - **Scrim (barrier):** The modal route `barrierColor` MUST resolve to `EditorialMonoclePalette.dialogScrim` (the `--dialog-scrim` token from `pixel-art-ui-catalog.md` § Dialog scrim). Hard-coded `Colors.black54` or hex literals are regressions.
 - **Title row:** Single line `"Choose Tech — Slot N"` (where `N = slotIndex + 1`), rendered in the display font in `--accent`.
-- **Option rows (when at least one choosable tech exists):** Vertical column where each option is a tappable row containing:
+- **Option rows (when at least one choosable tech exists):** Vertical column where each option is a bordered row containing:
   - Tech category icon at 22 px (resolved via `techCategoryIconAssetPath`, omitted when null).
-  - Tech display name in body font / `--fg` / 600 weight (per mockup `.t-name`).
-  - **GP pennants (Refs #3862):** Inline immediately after the tech display name, compact nation-color pennants for each GP that has fully unlocked the tech (see [gp-nation-color-pennant.md](components/gp-nation-color-pennant.md)); context player highlighted; long-press opens researcher list.
-  - Subtitle line in mono font / `--muted` carrying era, category, and cost in research points (existing `technologyPanel_pickSubtitle` content; rendered in mono / muted style per mockup `.t-cost`).
-  - Tapping the row assigns that tech via `applyAssignTechToSlot` and closes the dialog.
+  - **Assignable body** (tappable `InkWell`): tech display name in body font / `--fg` / 600 weight (per mockup `.t-name`); **GP pennants (Refs #3862)** inline after the name; subtitle line in mono font / `--muted` carrying era, category, and cost in research points (`technologyPanel_pickSubtitle`); **1–2 plain-language effect lines** in muted body style (`10` px) sourced from the shared `buildTechEffectSummaryLines` helper (same strings as the Tree description dialog — regiment/ship unlocks, authored `tech_effect_summary` lines, then category fallback when empty). When a tech has more than two effect lines, the default row shows only the first two; remaining lines appear under **Details**.
+  - **Details control (Refs #4222):** Per-row `CtActionTextButton` labelled `technologyPanel_chooseTechDetails` (`"Details"`). Activating Details opens a nested `CtDialogShell` with Tree-parity content (display name, era/category, RP cost, prerequisites when any, full effect list, researched-by GP pennants when any) **without** assigning the tech and **without** closing Choose-tech. Row-body tap (excluding Details) assigns via `applyAssignTechToSlot` and closes Choose-tech.
+  - Prerequisites appear only in the Details dialog, not on the default row.
 - **Empty state (no choosable techs):** Single italic muted line `"No techs available to research"` (existing `technologyPanel_noTechsAvailable`) replaces the option list. The Close button (below) is still rendered.
 - **Footer:** A single full-width `CtNinePatchButton` labelled `"Close"` (existing `common_close`) dismisses the dialog without mutating orders.
 - **Implementation pin:** `app/lib/features/game/widgets/technology/technology_panel_orders.dart` exposes `showChooseTechDialog(...)` (replacing the legacy `showChooseTechBottomSheet`). The dialog body widget is private to that file or co-located alongside it.
@@ -271,6 +270,16 @@ The Choose-tech dialog is the dark editorial-monocle modal opened by the slot ca
 - **Given** the Choose-tech dialog is shown for a slot and the choosable-tech list is empty (no techs both researchable for the player and not already assigned to another slot), **when** the dialog body is rendered, **then** the UI layer renders exactly the line `"No techs available to research"` and a single `"Close"` `CtNinePatchButton`, and renders no option rows.
 
 - **Given** the Choose-tech dialog is shown for a slot and the choosable-tech list is non-empty, **when** the user taps the `"Close"` `CtNinePatchButton`, **then** the UI layer pops the dialog route, the player's `Orders.researchOrdersByPlayerId` are unchanged, and no `ResearchOrder` mutation is dispatched via `onOrdersChanged`.
+
+- **Given** a researchable tech with authored effect lines and/or regiment/ship unlocks, **when** the Choose-tech dialog renders that tech's default row, **then** the UI layer renders 1–2 plain-language effect lines (muted `10` px body) below the era/category/RP subtitle, sourced from `buildTechEffectSummaryLines` (Tree parity).
+
+- **Given** a tech whose full effect list has more than two lines, **when** the default Choose-tech row renders, **then** the UI layer renders only the first two effect lines on the row and exposes the remainder via the per-row **Details** control.
+
+- **Given** a tech with only the category fallback effect, **when** the Choose-tech row renders, **then** the UI layer renders that fallback line on the default row (same rule as the Tree description dialog).
+
+- **Given** the Choose-tech dialog is open, **when** the player activates **Details** on a row, **then** the UI layer mounts a nested detail dialog with full effects and prerequisites (when any) without assigning the tech and without closing Choose-tech.
+
+- **Given** the Choose-tech dialog is open, **when** the player taps the row assignable body (not Details), **then** the slot receives that tech via `applyAssignTechToSlot`, Choose-tech closes, and `onOrdersChanged` dispatches the updated `Orders`.
 
 ## Integration
 
