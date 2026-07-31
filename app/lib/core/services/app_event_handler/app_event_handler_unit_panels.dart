@@ -17,6 +17,7 @@ import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
 import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
 import '../../../features/game/widgets/units/military/military_units_panel.dart';
 import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
+import '../../../features/game/widgets/unit_orders/naval_mission_flow.dart';
 import '../../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 import '../../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
 import '../../../providers/app_event_bus_provider.dart';
@@ -372,5 +373,40 @@ Future<void> appEventHandlerOpenNavalUnitsPanel(
         ),
       );
     },
+  );
+}
+
+Future<void> appEventHandlerOpenNavalMissionMenu(
+  AppEventHandler handler,
+  OpenNavalMissionMenuEvent event,
+  NavigatorState? nav,
+) async {
+  if (nav == null) return;
+  final ctx = nav.context;
+  if (!ctx.mounted) return;
+  final container = ProviderScope.containerOf(ctx);
+  final shell = container.read(shellPlayerContextProvider);
+  if (!shell.canMutateViaUi) {
+    handler.state.onShowSnackBar?.call(
+      const ShowSnackBarEvent(
+        message: 'Observe mode: UI actions are read-only.',
+      ),
+    );
+    return;
+  }
+  final game = container.read(currentGameProvider);
+  if (game == null) return;
+  final humanPlayerId = resolveShellPanelPlayerId(shell, game);
+  final mapData = container.read(gameServiceProvider).getMapData(game.id);
+  final draftOrders = container.read(currentOrdersProvider);
+  await showNavalMissionFlow(
+    context: ctx,
+    game: game,
+    topology: mapData?.combinedTopology ?? const MapTopology(),
+    humanPlayerId: humanPlayerId,
+    draftOrders: draftOrders,
+    bus: container.read(appEventBusProvider),
+    fleetIds: event.fleetIds,
+    preselectedFleetId: event.initialSelectedFleetId,
   );
 }

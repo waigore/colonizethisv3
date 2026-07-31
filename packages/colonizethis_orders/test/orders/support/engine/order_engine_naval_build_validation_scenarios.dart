@@ -15,6 +15,6 @@ List<RunnableScenario> orderEngineNavalBuildValidationScenarios() => [
   rs('work order rejected for invalid target for unit type', nvExpectInvalidWorkTargetRejected),
   rs('initial orders copy: getter returns equal but distinct lists', nvExpectInitialOrdersCopyDistinct),
   rs('naval move order rejected when fleet not found', nvExpectNavalMoveFleetNotFoundRejected),
-  rs('blockade order rejected when not at war with province owner',() => nvExpectBlockadeMission(relationState: RelationState.atPeace,expectedStatus: OrderValidationStatus.rejected,reasonContains: 'at war'),),
+  rs('blockade order rejected when not at war with province owner',() => nvExpectBlockadeMission(relationState: RelationState.atPeace,expectedStatus: OrderValidationStatus.rejected,reasonContains: 'not legal'),),
   rs('blockade order accepted when at war with province owner', () => nvExpectBlockadeMission(relationState: RelationState.atWar, expectedStatus: OrderValidationStatus.accepted)),
 ];

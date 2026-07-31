@@ -82,13 +82,14 @@ mixin GameMapAreaE2e
       ..sort((a, b) => a.tileKey.compareTo(b.tileKey));
     if (markers.isEmpty) return;
     final m = markers.first;
-    final initialFleetId = m.fleetIds.isNotEmpty ? m.fleetIds.first : null;
     ref
         .read(appEventBusProvider)
         .emit(
-          ct_models.OpenNavalUnitsPanelEvent(
+          ct_models.OpenNavalMissionMenuEvent(
             locationScopeKey: m.locationScopeKey,
-            initialSelectedFleetId: initialFleetId,
+            fleetIds: m.fleetIds,
+            initialSelectedFleetId:
+                m.fleetIds.isNotEmpty ? m.fleetIds.first : null,
             tileScopeTileKey: m.tileKey,
           ),
         );

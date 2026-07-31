@@ -62,6 +62,9 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG10001` | New game leader selection | [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) | `app/lib/features/shell/new_game_leader_selection_dialog.dart` | New Game Leader Selection Dialog | active |
 | `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
 | `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
+| `DLG31001` | Naval mission menu dialog | [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Menu Dialog | active |
+| `DLG31002` | Naval mission target dialog | [naval-mission-target-dialog.md](naval-mission-target-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_target_dialog.dart` | Naval Mission Target Dialog | active |
+| `DLG31003` | Naval mission fleet picker dialog | [naval-mission-fleet-picker-dialog.md](naval-mission-fleet-picker-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Fleet Picker Dialog | active |
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
 | `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | `app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart` | Next Turn Confirmation | active |

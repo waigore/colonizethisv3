@@ -49,13 +49,20 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 ### Assign a naval mission
 
-Only a sea-going fleet at sea may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions.
+Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
+
+**Map shortcut (primary):** Tap your **fleet marker** on the map (**Empire overview / map area**). When multiple fleets share the marker, choose which fleet in **Naval mission fleet picker dialog**, then pick a mission in **Naval mission menu dialog**. Blockade and Beachhead open **Naval mission target dialog** so you choose an adjacent enemy province at war with you. **Cancel pending mission** clears a staged mission without issuing a “none” order.
+
+**Panel parity:** In **Naval units panel**, tap **Mission** on an eligible at-sea fleet row for the same flow. The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port.
 - **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs.
 - **Defend:** Remain in place without actively seeking combat. Defending fleets can still be attacked or drawn into combat by hostile patrols or blockades.
-- **Join Home Fleet:** This special mission is valid only for a regular fleet already in port at its owner’s capital. It merges that fleet into the Home Fleet. Under ordinary movement rules, docking at the capital already produces that result; this order chiefly supports legacy or transitional fleet states.
+
+A fleet may have a pending **move** or a pending **mission** for the turn, never both. Staging a mission clears any pending move for that fleet, and vice versa.
+
+**Join Home Fleet** is not assigned through the mission menu. Dock a regular fleet at your capital (merging into the Home Fleet) or use **Transfer to Home Fleet** (**Transfer to home fleet**) from **Naval units panel** when already in port at the capital.
 
 ### Transfer selected ships home
 

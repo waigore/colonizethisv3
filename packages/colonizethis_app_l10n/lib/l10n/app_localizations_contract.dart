@@ -924,6 +924,33 @@ abstract class AppLocalizations {
   /// Fleet mission label.
   String naval_units_mission(String mission);
 
+  /// Fleet row and menu label for assigning a naval mission.
+  String get naval_mission_assign;
+
+  /// Naval mission context menu title.
+  String naval_mission_menuTitle(String fleet);
+
+  /// Title when multiple fleets share a map marker.
+  String get naval_mission_selectFleetTitle;
+
+  /// Removes staged naval mission draft for fleet.
+  String get naval_mission_cancelPending;
+
+  /// Draft naval mission line without province target.
+  String naval_mission_pendingLine(String mission);
+
+  /// Draft naval mission line with province target.
+  String naval_mission_pendingLineWithTarget(String mission, String target);
+
+  /// Blockade/beachhead target picker title.
+  String naval_mission_selectTargetTitle(String mission);
+
+  /// Empty naval mission menu when base gates fail.
+  String get naval_mission_noMissionsAvailable;
+
+  /// Empty target picker for blockade/beachhead.
+  String get naval_mission_noTargetsAvailable;
+
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
 

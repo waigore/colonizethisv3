@@ -58,6 +58,36 @@ mixin AppEventHandlerScopeSessionNavalListeners
               );
         });
       }),
+      bus.on<NavalMissionRequestedEvent>().listen((e) {
+        unlessTurnResolutionBlocksSession('NavalMissionRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
+          final o = ref.read(currentOrdersProvider);
+          ref
+              .read(currentOrdersProvider.notifier)
+              .replaceAll(
+                applyNavalMissionOrderForPlayer(
+                  o,
+                  e.humanPlayerId,
+                  e.missionOrder,
+                ),
+              );
+        });
+      }),
+      bus.on<NavalMissionCancelRequestedEvent>().listen((e) {
+        unlessTurnResolutionBlocksSession('NavalMissionCancelRequestedEvent', () {
+          if (rejectUiMutationIfObserving()) return;
+          final o = ref.read(currentOrdersProvider);
+          ref
+              .read(currentOrdersProvider.notifier)
+              .replaceAll(
+                removeNavalMissionOrderForPlayer(
+                  o,
+                  e.humanPlayerId,
+                  e.fleetId,
+                ),
+              );
+        });
+      }),
       bus.on<TrainNavalBuildOrdersCommittedEvent>().listen((e) {
         unlessTurnResolutionBlocksSession(
           'TrainNavalBuildOrdersCommittedEvent',

@@ -1,6 +1,8 @@
 // Tests for NavalUnitsPanel. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart'
+    show kCtE2EFleetMissionActionKey;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -241,12 +243,23 @@ void main() {
         expect(
           find.descendant(
             of: fleetTile,
+            matching: find.byKey(kCtE2EFleetMissionActionKey),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: fleetTile,
             matching: find.byIcon(Icons.call_split),
           ),
           findsOneWidget,
         );
         expect(
           find.descendant(of: fleetTile, matching: find.text('Move')),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: fleetTile, matching: find.text('Mission')),
           findsNothing,
         );
       },

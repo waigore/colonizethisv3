@@ -15,3 +15,10 @@ String fleetMissionDisplayLabel(FleetMission m) {
       return 'Defend';
   }
 }
+
+FleetMission fleetMissionFromOrderString(String mission) {
+  return FleetMission.values.firstWhere(
+    (e) => e.name == mission,
+    orElse: () => FleetMission.none,
+  );
+}

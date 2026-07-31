@@ -141,6 +141,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Declare-war confirm `showDialog` lives in state after wave-9 de-part
   // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
+  // Naval mission assign flow — fleet picker / mission menu / target picker
+  // `showDialog` steps in `showNavalMissionFlow`. Same local-by-design rationale
+  // as move fleet — `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
+  // (Refs #4213).
+  'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate

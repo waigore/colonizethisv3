@@ -2559,6 +2559,14 @@ Behaviour unchanged (rejection messages + candidacy filters preserved). Remainin
 
 Support LOC after slice A: **12964** (AC ≤13,950; ≥400 headroom). Package `test/` LOC: **14915** (AC ≤15,800; ≥500 headroom). Remaining for #4109: slices B–E (lib splits + `repo.orders_lib_source_file_size`).
 
+## Naval mission draft tests — package LOC headroom (Refs #4213)
+
+| scenario_id | test description | source file(s) | target file | refs |
+|-------------|------------------|----------------|-------------|------|
+| naval-mission-draft-loc | raise `ordersTestPackageLocCeiling` 15800 → 16100 for draft mutation + availability scenario suite | `tool/check_orders_test_support_loc.dart` | same | #4213 |
+
+Package `test/` LOC after naval mission suite: **~16055** (ceiling 16100). Support LOC unchanged.
+
 ## Wave 5 — Slice B: work_order_target_prechecks split (Refs #4109)
 
 | scenario_id | test description | source file(s) | target file | refs |

@@ -18,7 +18,10 @@ extension UnitsEntityActionRowActions on UnitsEntityActionRow {
         if (actions.isNotEmpty) ...[
           SizedBox(width: dense ? spacing : 8),
           Flexible(
-            fit: FlexFit.loose,
+            // Dense naval rows must bound the actions cluster so the inner
+            // LayoutBuilder can switch to icon-only before labeled pills overflow
+            // at 320 dp (Refs #4213 — Move + Mission + Split + Locate).
+            fit: dense ? FlexFit.tight : FlexFit.loose,
             child: Align(
               alignment: Alignment.topRight,
               child: dense
@@ -90,11 +93,19 @@ extension UnitsEntityActionRowActions on UnitsEntityActionRow {
         buildActionPill(action: actions[i], forceIconOnly: forceIconOnly),
       );
     }
-    return Row(
+    final row = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: children,
     );
+    if (forceIconOnly) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: row,
+      );
+    }
+    return row;
   }
 
   Widget buildActionPill({

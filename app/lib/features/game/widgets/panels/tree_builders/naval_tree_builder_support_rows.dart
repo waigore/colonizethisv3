@@ -8,6 +8,7 @@ import '../../../flame/map_state/map_location_resolver.dart';
 import '../../province_overlay/sea_zone_name_resolver.dart';
 import '../../units/shared/region_labels.dart';
 import 'fleet_mission_label.dart';
+import 'naval_draft_mission_line.dart';
 import 'naval_tree_builder_models.dart';
 import 'naval_tree_builder_support_scope.dart';
 
@@ -84,6 +85,13 @@ void navalTreeAppendAtSeaFleetRow({
       fleetId: fleet.id,
       draftOrders: draftOrders,
     ),
+    draftNavalMissionLine: navalDraftMissionLineForFleet(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      fleetId: fleet.id,
+      draftOrders: draftOrders,
+      l10n: l10n,
+    ),
   );
   seas.putIfAbsent(zoneKey, () => []).add(row);
 }
@@ -158,6 +166,13 @@ void navalTreeAppendInPortFleetRow({
             fleetId: fleet.id,
             draftOrders: draftOrders,
           ),
+    draftNavalMissionLine: navalDraftMissionLineForFleet(
+      game: game,
+      humanPlayerId: humanPlayerId,
+      fleetId: fleet.id,
+      draftOrders: draftOrders,
+      l10n: l10n,
+    ),
   );
   if (isHomeFleet) {
     homeFleetSlot[0] = row;

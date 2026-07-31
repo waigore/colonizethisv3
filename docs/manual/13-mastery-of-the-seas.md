@@ -49,13 +49,20 @@ A move order replaces that fleet’s earlier move order and clears its pending m
 
 ### Assign a naval mission
 
-Only a sea-going fleet at sea may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions.
+Only a sea-going fleet **at sea** may patrol, blockade, establish a beachhead, or defend. The Home Fleet cannot receive those missions. Fleets **in port** must undock (move to an adjacent sea zone) before missions are offered.
+
+**Map shortcut (primary):** Tap your **fleet marker** on the map (`MAP10001`). When multiple fleets share the marker, choose which fleet in `DLG31003` **Select fleet**, then pick a mission in `DLG31001` **Assign mission**. Blockade and Beachhead open `DLG31002` **Select target** so you choose an adjacent enemy province at war with you. **Cancel pending mission** clears a staged mission without issuing a “none” order.
+
+**Panel parity:** In `UNIT30001` **Naval Units**, tap **Mission** on an eligible at-sea fleet row for the same flow. The row shows a pending mission line after you confirm (for example `On mission: Patrol` or `Blockade → <province>`).
 
 - **Patrol:** Remain in the current sea zone and attempt to intercept hostile fleets moving through it, including hostile patrols and blockaders.
 - **Blockade:** Remain in a sea zone adjacent to the target enemy province’s port. The blockader has a stronger interception chance against hostile fleets entering that sea zone, including fleets leaving the blockaded port.
 - **Beachhead:** Remain at sea beside a hostile coastal province to establish a landing site. On the following turn, eligible friendly land units may invade that province; the marker expires after that invasion resolves, or after that following turn if no invasion occurs.
 - **Defend:** Remain in place without actively seeking combat. Defending fleets can still be attacked or drawn into combat by hostile patrols or blockades.
-- **Join Home Fleet:** This special mission is valid only for a regular fleet already in port at its owner’s capital. It merges that fleet into the Home Fleet. Under ordinary movement rules, docking at the capital already produces that result; this order chiefly supports legacy or transitional fleet states.
+
+A fleet may have a pending **move** or a pending **mission** for the turn, never both. Staging a mission clears any pending move for that fleet, and vice versa.
+
+**Join Home Fleet** is not assigned through the mission menu. Dock a regular fleet at your capital (merging into the Home Fleet) or use **Transfer to Home Fleet** (`DLG40001`) from `UNIT30001` when already in port at the capital.
 
 ### Transfer selected ships home
 
@@ -95,7 +102,8 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - [ ] Explains the complete merchant and warship roster, each ship’s technology gate, and the Carrack exception.
 - [ ] Documents `UNIT30001` and `UNIT60001` for building ships into the Home Fleet, including treasury, materials, Peasant, and technology constraints.
 - [ ] Documents `DLG30001` one-hop port⇄sea movement, owned-port docking, capital docking, and sea-zone revelation.
-- [ ] Explains Patrol, Blockade, Beachhead, Defend, and Join Home Fleet, including their location and timing preconditions.
+- [ ] Documents map fleet-marker mission assign (`DLG31001`–`DLG31003`) and `UNIT30001` **Mission** parity, including cancel-pending and move xor mission.
+- [ ] Explains Patrol, Blockade, Beachhead, and Defend, including their location and timing preconditions; Join Home Fleet via dock/transfer only (not mission menu).
 - [ ] Documents `DLG40001` transfer of selected hulls from an eligible capital-port fleet into the Home Fleet.
 - [ ] States when interception and naval combat occur, and that port-bound fleets do not fight.
 - [ ] Explains Home-Fleet cargo capacity and why the Home Fleet itself cannot sail.
@@ -111,6 +119,9 @@ Their leaders also shape the danger. Victoria and Henry favour naval research an
 - `SPEC/ui/train-naval-dialog.md`
 - `SPEC/ui/move-fleet-dialog.md`
 - `SPEC/ui/transfer-to-home-fleet-dialog.md`
-- `SPEC/ui/screen-registry.md`
+- `SPEC/ui/naval-mission-menu-dialog.md`
+- `SPEC/ui/naval-mission-target-dialog.md`
+- `SPEC/ui/naval-mission-fleet-picker-dialog.md`
+- `SPEC/ui/map-widget.md`
 - `SPEC/ai/phase-planner-dispatch.md`
 - `SPEC/ai/ai-personalities.md`
