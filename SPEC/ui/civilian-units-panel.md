@@ -334,8 +334,9 @@ Spy relocate and UXD-002 idle exclusion (Refs #4219):
 - `app/test/civilian_units_panel_spy_relocate_test.dart` — Relocate row action, Spy status labels, relocate bus event, pending-move row copy.
 - `app/test/app_event_handler_scope_civilian_work_test.dart` — `CivilianMoveRequestedEvent` stages validated Spy `MoveOrder`; move/work xor clears counter-spy.
 - `app/test/next_turn_confirmation_spy_exclusion_test.dart` — `DLG60001` idle-civilian list excludes all Spies.
+- `app/test/game_map_area_spy_relocate_leave_intel_test.dart` — map relocate leave-intel `ConfirmDialogEvent` emit, cancel, and accept → `CivilianMoveRequestedEvent`.
 - `packages/colonizethis_logic/test/spy_relocate_intel_test.dart` — `spyLeaveIntelWarningNeeded` projected-count rules.
 - `packages/colonizethis_logic/test/civilians_missing_work_orders_test.dart` — Spy exclusion from idle-civilian detection.
 - `packages/colonizethis_orders/test/orders/civilian_projected_tile_test.dart` — `projectedCivilianTileKey` prefers pending `MoveOrder` destination.
 
-Map relocate selection and leave-intel confirm dialog: `app/lib/features/game/flame/map_state/game_map_area_relocate_selection.dart` (integration covered by logic tests + manual QA; no dedicated map widget test yet).
+Map relocate selection and leave-intel confirm dialog: `app/lib/features/game/flame/map_state/game_map_area_relocate_selection.dart`; widget coverage in `app/test/game_map_area_spy_relocate_leave_intel_test.dart` (confirm emit, cancel, accept → `CivilianMoveRequestedEvent`).
