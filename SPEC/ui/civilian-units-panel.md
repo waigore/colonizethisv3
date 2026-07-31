@@ -332,6 +332,7 @@ For each civilian unit, the panel shows:
 Spy relocate and UXD-002 idle exclusion (Refs #4219):
 
 - `app/test/civilian_units_panel_spy_relocate_test.dart` — Relocate row action, Spy status labels, relocate bus event, pending-move row copy.
+- `app/test/civilian_units_panel_spy_relocate_golden_test.dart` — UNIT10001 Spy **Reserve** and **Holding intel** relocate row goldens (`unit_panel_civilian_spy_reserve.png`, `unit_panel_civilian_spy_holding_intel.png`).
 - `app/test/app_event_handler_scope_civilian_work_test.dart` — `CivilianMoveRequestedEvent` stages validated Spy `MoveOrder`; move/work xor clears counter-spy.
 - `app/test/next_turn_confirmation_spy_exclusion_test.dart` — `DLG60001` idle-civilian list excludes all Spies.
 - `app/test/game_map_area_spy_relocate_leave_intel_test.dart` — map relocate leave-intel `ConfirmDialogEvent` emit, cancel, and accept → `CivilianMoveRequestedEvent`.
