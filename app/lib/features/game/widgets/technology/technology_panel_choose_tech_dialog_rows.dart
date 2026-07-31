@@ -142,58 +142,103 @@ class ChooseTechOptionLabels extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: CtSpacing.s,
-          runSpacing: 2,
-          children: [
-            Text(
-              techDisplayName(tech.id),
-              style: TextStyle(
-                color: EditorialMonoclePalette.fg,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-            ),
-            TechGpPennantRow(
-              game: game,
-              techId: tech.id,
-              contextPlayerId: contextPlayerId,
-              compact: true,
-            ),
-          ],
+        ChooseTechOptionTitleRow(
+          game: game,
+          contextPlayerId: contextPlayerId,
+          tech: tech,
         ),
         const SizedBox(height: 2),
-        Text(
-          l10n.technologyPanel_pickSubtitle(
-            eraRoman(tech.era),
-            techCategoryLabelL10n(l10n, tech.category),
-            tech.cost,
-          ),
-          style: TextStyle(
-            color: EditorialMonoclePalette.muted,
-            fontSize: 10,
-            fontFamilyFallback: const <String>[
-              'SF Mono',
-              'Menlo',
-              'monospace',
-            ],
-            fontFeatures: const <FontFeature>[
-              FontFeature.tabularFigures(),
-            ],
-          ),
-        ),
+        ChooseTechOptionSubtitle(tech: tech),
         for (final line in visibleEffects) ...[
           const SizedBox(height: 2),
-          Text(
-            line,
-            style: TextStyle(
-              color: EditorialMonoclePalette.muted,
-              fontSize: 10,
-            ),
-          ),
+          ChooseTechOptionEffectLine(text: line),
         ],
       ],
+    );
+  }
+}
+
+class ChooseTechOptionTitleRow extends StatelessWidget {
+  const ChooseTechOptionTitleRow({
+    super.key,
+    required this.game,
+    required this.contextPlayerId,
+    required this.tech,
+  });
+
+  final Game game;
+  final String contextPlayerId;
+  final TechDefinition tech;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: CtSpacing.s,
+      runSpacing: 2,
+      children: [
+        Text(
+          techDisplayName(tech.id),
+          style: TextStyle(
+            color: EditorialMonoclePalette.fg,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+        TechGpPennantRow(
+          game: game,
+          techId: tech.id,
+          contextPlayerId: contextPlayerId,
+          compact: true,
+        ),
+      ],
+    );
+  }
+}
+
+class ChooseTechOptionSubtitle extends StatelessWidget {
+  const ChooseTechOptionSubtitle({super.key, required this.tech});
+
+  final TechDefinition tech;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    return Text(
+      l10n.technologyPanel_pickSubtitle(
+        eraRoman(tech.era),
+        techCategoryLabelL10n(l10n, tech.category),
+        tech.cost,
+      ),
+      style: TextStyle(
+        color: EditorialMonoclePalette.muted,
+        fontSize: 10,
+        fontFamilyFallback: const <String>[
+          'SF Mono',
+          'Menlo',
+          'monospace',
+        ],
+        fontFeatures: const <FontFeature>[
+          FontFeature.tabularFigures(),
+        ],
+      ),
+    );
+  }
+}
+
+class ChooseTechOptionEffectLine extends StatelessWidget {
+  const ChooseTechOptionEffectLine({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: EditorialMonoclePalette.muted,
+        fontSize: 10,
+      ),
     );
   }
 }
