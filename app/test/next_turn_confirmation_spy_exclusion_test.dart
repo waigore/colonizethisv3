@@ -50,7 +50,7 @@ void main() {
         humanPlayerId: _human,
       );
       expect(missing.map((e) => e.unitId), ['e1']);
-      expect(missing.map((e) => e.type), ['Explorer']);
+      expect(missing.map((e) => e.type), [kUnitTypeExplorer]);
     },
   );
 
@@ -80,8 +80,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Explorer'), findsOneWidget);
-      expect(find.text('Spy'), findsNothing);
+      expect(find.text(kUnitTypeExplorer), findsOneWidget);
+      expect(find.text(kUnitTypeSpy), findsNothing);
       expect(find.text('No work order'), findsOneWidget);
     },
   );
