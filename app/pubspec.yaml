@@ -41,7 +41,7 @@ dependencies:
   colonizethis_app_ui_chrome:
     path: ../packages/colonizethis_app_ui_chrome
   widgetbook: ^3.23.0
-  google_fonts: ^8.2.0
+  google_fonts: ^8.2.1
   intl: ^0.20.2
   window_manager: ^0.5.2
   marionette_flutter: ^0.6.0
