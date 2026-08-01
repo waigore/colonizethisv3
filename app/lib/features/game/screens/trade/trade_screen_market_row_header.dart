@@ -56,60 +56,118 @@ class MarketCommodityRowHeader extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         Expanded(
-          child: Row(
-            children: <Widget>[
-              Flexible(
-                child: Text(
-                  commodityDisplayName,
-                  style: nameStyle,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                // ignore: avoid_hardcoded_strings_in_widgets
-                '($sellableHeadroom)',
-                key: TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId),
-                style: sellableStyle,
-              ),
-              if (showFirstRightChip) ...<Widget>[
-                const SizedBox(width: 4),
-                Tooltip(
-                  message: firstRightTooltip,
-                  child: Text(
-                    firstRightChipLabel,
-                    key: TradeScreenMarketKeys.marketRowFirstRightChipKey(
-                      commodityId,
-                    ),
-                    style: chipStyle,
-                  ),
-                ),
-              ],
-            ],
+          child: _MarketCommodityRowTitleBand(
+            commodityId: commodityId,
+            commodityDisplayName: commodityDisplayName,
+            sellableHeadroom: sellableHeadroom,
+            nameStyle: nameStyle,
+            sellableStyle: sellableStyle,
+            chipStyle: chipStyle,
+            showFirstRightChip: showFirstRightChip,
+            firstRightChipLabel: firstRightChipLabel,
+            firstRightTooltip: firstRightTooltip,
           ),
         ),
-        SizedBox(
-          width: TradeScreenMarketKeys.marketRowPriceColumnWidth,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                StrictAssetIcon(
-                  key: TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
-                  assetPath: TradeScreenMarketKeys.marketRowPriceCoinAssetPath,
-                  width: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
-                  height: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
-                ),
-                const SizedBox(
-                  width: TradeScreenMarketKeys.marketRowPriceColumnInnerGap,
-                ),
-                Text(priceText, style: priceStyle),
-              ],
-            ),
-          ),
+        _MarketCommodityRowPriceTrailing(
+          commodityId: commodityId,
+          priceText: priceText,
+          priceStyle: priceStyle,
         ),
       ],
+    );
+  }
+}
+
+class _MarketCommodityRowTitleBand extends StatelessWidget {
+  const _MarketCommodityRowTitleBand({
+    required this.commodityId,
+    required this.commodityDisplayName,
+    required this.sellableHeadroom,
+    required this.nameStyle,
+    required this.sellableStyle,
+    required this.chipStyle,
+    required this.showFirstRightChip,
+    required this.firstRightChipLabel,
+    required this.firstRightTooltip,
+  });
+
+  final CommodityId commodityId;
+  final String commodityDisplayName;
+  final int sellableHeadroom;
+  final TextStyle nameStyle;
+  final TextStyle sellableStyle;
+  final TextStyle chipStyle;
+  final bool showFirstRightChip;
+  final String firstRightChipLabel;
+  final String firstRightTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Flexible(
+          child: Text(
+            commodityDisplayName,
+            style: nameStyle,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          // ignore: avoid_hardcoded_strings_in_widgets
+          '($sellableHeadroom)',
+          key: TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId),
+          style: sellableStyle,
+        ),
+        if (showFirstRightChip) ...<Widget>[
+          const SizedBox(width: 4),
+          Tooltip(
+            message: firstRightTooltip,
+            child: Text(
+              firstRightChipLabel,
+              key: TradeScreenMarketKeys.marketRowFirstRightChipKey(commodityId),
+              style: chipStyle,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MarketCommodityRowPriceTrailing extends StatelessWidget {
+  const _MarketCommodityRowPriceTrailing({
+    required this.commodityId,
+    required this.priceText,
+    required this.priceStyle,
+  });
+
+  final CommodityId commodityId;
+  final String priceText;
+  final TextStyle priceStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: TradeScreenMarketKeys.marketRowPriceColumnWidth,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            StrictAssetIcon(
+              key: TradeScreenMarketKeys.marketRowPriceCoinIconKey(commodityId),
+              assetPath: TradeScreenMarketKeys.marketRowPriceCoinAssetPath,
+              width: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
+              height: TradeScreenMarketKeys.marketRowPriceCoinIconSize,
+            ),
+            const SizedBox(
+              width: TradeScreenMarketKeys.marketRowPriceColumnInnerGap,
+            ),
+            Text(priceText, style: priceStyle),
+          ],
+        ),
+      ),
     );
   }
 }
