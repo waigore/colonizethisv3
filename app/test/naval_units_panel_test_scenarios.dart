@@ -362,6 +362,57 @@ const kNavalPanelMergePort = 'oldWorld|mergeport';
 /// Capital province id for OW naval panel scenarios.
 const kNavalPanelCapProvince = 'oldWorld|cap1';
 
+/// Sea-source fleet adjacent to capital for Home Fleet transfer pins.
+Fleet navalPanelAdjacentSeaSourceFleet({
+  required String humanId,
+  String id = 'sea_source',
+}) {
+  return Fleet(
+    id: id,
+    ownerId: humanId,
+    regionId: 'oldWorld',
+    seaZoneId: 'zone_alpha',
+    ships: const [
+      ShipInstance(id: 'src_1', typeId: 'fluyte'),
+      ShipInstance(id: 'src_2', typeId: 'carrack'),
+    ],
+  );
+}
+
+/// Home + adjacent sea-source fleet (part3 transfer-dialog matrix).
+Game buildNavalPanelHomeAdjacentSeaSourceGame({
+  String humanId = 'gp_home_adjacent',
+  String gameId = 'g_home_adjacent_transfer',
+}) {
+  return buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: gameId,
+    displayName: 'Home adjacent tester',
+    peerFleets: [navalPanelAdjacentSeaSourceFleet(humanId: humanId)],
+  );
+}
+
+/// Home + non-adjacent sea fleet keeps Combine disabled (part3).
+Game buildNavalPanelHomeNonAdjacentSeaGame({
+  String humanId = 'gp_home_non_adjacent',
+  String gameId = 'g_home_non_adjacent_transfer',
+}) {
+  return buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: gameId,
+    displayName: 'Home non-adjacent tester',
+    peerFleets: [
+      Fleet(
+        id: 'sea_far',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: 'zone_far',
+        ships: const [ShipInstance(id: 'src_1', typeId: 'fluyte')],
+      ),
+    ],
+  );
+}
+
 typedef NavalPanelPortShipSpec = ({String id, String shipId, String typeId});
 
 Fleet navalPanelPortShipFleet({
@@ -551,6 +602,48 @@ typedef NavalPanelCombineOutcomeCase = ({
 });
 
 List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
+  (
+    name: 'AC: Combining fleets creates correct ship counts',
+    build: () => buildNavalPanelMergePortFleetsFromSpecs(
+      humanId: 'gp_combine_count',
+      gameId: 'g_combine_count',
+      displayName: 'Combine tester',
+      fleets: const [
+        (id: 'test_fleet_1', shipId: 'ship_1', typeId: 'carrack'),
+        (id: 'test_fleet_2', shipId: 'ship_2', typeId: 'fluyte'),
+      ],
+    ),
+    humanId: 'gp_combine_count',
+    labels: const ['Fleet test_fleet_1', 'Fleet test_fleet_2'],
+    scroll: false,
+    expectCombineEnabled: null,
+    expectedSurvivorId: 'test_fleet_1',
+    expectedShipIds: ['ship_1', 'ship_2'],
+    expectedFleetCount: null,
+    expectedSurvivorMission: FleetMission.none,
+  ),
+  (
+    name:
+        'AC: Combining three fleets at same port merges all ships into first in panel order',
+    build: () => buildNavalPanelMergePortFleetsFromSpecs(
+      humanId: 'gp_three_combine',
+      gameId: 'g_three_combine',
+      displayName: 'Three combine tester',
+      fleets: const [
+        (id: 'c1', shipId: 's1', typeId: 'carrack'),
+        (id: 'c2', shipId: 's2', typeId: 'fluyte'),
+        (id: 'c3', shipId: 's3', typeId: 'carrack'),
+      ],
+    ),
+    humanId: 'gp_three_combine',
+    labels: const ['Fleet c1', 'Fleet c2', 'Fleet c3'],
+    scroll: true,
+    expectCombineEnabled: null,
+    expectedSurvivorId: 'c1',
+    expectedShipIds: ['s1', 's2', 's3'],
+    expectedFleetCount: 1,
+    expectedSurvivorMission: FleetMission.none,
+  ),
   (
     name: 'AC: combine same-sea survivors merge into first fleet id',
     build: () => buildNavalPanelSameSeaCombineGame(humanId: 'gp_same_sea_combine'),

@@ -24,6 +24,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 import 'app_shell_harness.dart';
 import 'naval_units_panel_test_scenarios.dart';
+import 'units_panel_test_shared.dart' show buildUnitsPanelCapitalAdjacentSeaTopology;
 
 export 'naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
@@ -506,8 +507,14 @@ Future<void> pumpNavalCheckCombineDisabled(
   required Game game,
   required String humanId,
   required List<String> fleetLabels,
+  MapTopology topology = const MapTopology(),
 }) async {
-  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
+  await pumpNavalPanel(
+    tester,
+    game: game,
+    humanPlayerId: humanId,
+    topology: topology,
+  );
   await tapNavalFleetCheckboxes(tester, fleetLabels);
   expectNavalCombineEnabled(tester, enabled: false);
 }
@@ -528,6 +535,150 @@ Future<NavalFleetsUpdatedEvent?> pumpNavalTapCheckCombine(
   }
   await tapNavalCombine(tester, scroll: scroll);
   return latest();
+}
+
+Future<void> pumpNavalHomeAdjacentTransferDialog(
+  WidgetTester tester, {
+  required Game game,
+  required String humanId,
+}) async {
+  await pumpNavalPanel(
+    tester,
+    game: game,
+    humanPlayerId: humanId,
+    topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+  );
+  await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+  expectNavalCombineEnabled(tester, enabled: true);
+  await tapNavalCombine(tester);
+  expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+}
+
+Future<({Set<String> homeShipIds, Set<String> sourceShipIds})>
+pumpNavalHomePartialSeaTransfer(
+  WidgetTester tester, {
+  required String humanId,
+}) async {
+  var gameState = buildNavalPanelHomeAdjacentSeaSourceGame(
+    humanId: humanId,
+    gameId: 'g_${humanId}_partial_transfer',
+  );
+  final homeId = homeFleetIdFor(humanId);
+  final bus = AppEventBus.create();
+  final subTransfer = wireNavalTransferForWidgetTest(
+    bus: bus,
+    gameSnapshot: () => gameState,
+  );
+  final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+    gameState = e.game;
+  });
+  addTearDown(subTransfer.cancel);
+  addTearDown(subUpdated.cancel);
+
+  await pumpNavalPanel(
+    tester,
+    game: gameState,
+    humanPlayerId: humanId,
+    topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+    bus: bus,
+  );
+  await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+  await tapNavalCombine(tester);
+  await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
+
+  final homeFleet = gameState.worldState.fleets.firstWhere((f) => f.id == homeId);
+  final sourceFleet = gameState.worldState.fleets.firstWhere(
+    (f) => f.id == 'sea_source',
+  );
+  return (
+    homeShipIds: homeFleet.ships.map((s) => s.id).toSet(),
+    sourceShipIds: sourceFleet.ships.map((s) => s.id).toSet(),
+  );
+}
+
+Future<void> pumpNavalHomeNeverDeletedTransfer(WidgetTester tester) async {
+  const humanId = 'gp_home_never_deleted';
+  final homeId = homeFleetIdFor(humanId);
+  final g = buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: 'g_home_never_deleted',
+    displayName: 'Home never deleted tester',
+    nextShipInstanceSeq: 3,
+    peerFleets: [
+      navalPanelPortPeer(
+        id: 'donor',
+        humanId: humanId,
+        ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
+      ),
+    ],
+  );
+  final (bus, updated) = wireNavalFleetBusWithWire(
+    wire: (b) => wireNavalTransferForWidgetTest(bus: b, gameSnapshot: () => g),
+  );
+  await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
+  await tapNavalFleetCheckboxFinders(tester, [
+    find.widgetWithText(ExpansionTile, 'Home Fleet'),
+    find.widgetWithText(ExpansionTile, 'Fleet donor'),
+  ]);
+  await tapNavalCombine(tester);
+  expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+  await tapNavalConfirmTransfer(tester, moveAllTypeId: 'fluyte');
+  final fleets = updated()!.game.worldState.fleets;
+  final homeFleet = fleets.where((f) => f.id == homeId);
+  expect(homeFleet, isNotEmpty);
+  expect((homeFleet.first.ships.map((s) => s.id).toList()..sort()), [
+    'home_1',
+    'ship_d',
+  ]);
+  expect(fleets.any((f) => f.id == 'donor'), isFalse);
+}
+
+Future<void> pumpNavalNonHomeSplitEmptyBlocked(WidgetTester tester) async {
+  const humanId = 'gp_nonhome_removed';
+  final g = buildNavalPanelCapitalHomeAndPeersGame(
+    humanId: humanId,
+    gameId: 'g_nonhome_removed',
+    displayName: 'Non-home removed tester',
+    nextShipInstanceSeq: 3,
+    peerFleets: [
+      navalPanelPortPeer(
+        id: 'split_me',
+        humanId: humanId,
+        ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
+      ),
+    ],
+  );
+  final (bus, updated) = wireNavalFleetBusWithWire(
+    wire: (b) => wireNavalSplitForWidgetTest(bus: b, gameSnapshot: () => g),
+  );
+  await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
+  final fleetTile = find.widgetWithText(ExpansionTile, 'Fleet split_me');
+  await tester.ensureVisible(fleetTile);
+  await tester.tap(fleetTile);
+  await tester.pumpAndSettle();
+  final split = find.descendant(
+    of: fleetTile,
+    matching: find.byTooltip('Split'),
+  );
+  await tester.ensureVisible(split);
+  await tester.tap(split);
+  await tester.pumpAndSettle();
+  final typeId = g.worldState.fleets
+      .firstWhere((f) => f.id == 'split_me')
+      .ships
+      .single
+      .typeId;
+  await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne(typeId)));
+  await tester.pumpAndSettle();
+  expect(
+    tester
+        .widget<CtNinePatchButton>(
+          find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+        )
+        .enabled,
+    isFalse,
+  );
+  expect(updated(), isNull);
 }
 
 (AppEventBus bus, List<ClosePanelEvent> events) wireNavalClosePanelCapture() {

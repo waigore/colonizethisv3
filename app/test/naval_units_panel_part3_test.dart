@@ -70,35 +70,6 @@ void main() {
       },
     );
 
-    testWidgets('AC: Combining fleets creates correct ship counts', (
-      WidgetTester tester,
-    ) async {
-      const humanId = 'gp_combine_count';
-      final combineGame = buildNavalPanelMergePortFleetsFromSpecs(
-        humanId: humanId,
-        gameId: 'g_combine_count',
-        displayName: 'Combine tester',
-        fleets: const [
-          (id: 'test_fleet_1', shipId: 'ship_1', typeId: 'carrack'),
-          (id: 'test_fleet_2', shipId: 'ship_2', typeId: 'fluyte'),
-        ],
-      );
-
-      final updated = await pumpNavalTapCheckCombine(
-        tester,
-        game: combineGame,
-        humanId: humanId,
-        labels: const ['Fleet test_fleet_1', 'Fleet test_fleet_2'],
-      );
-
-      expect(updated, isNotNull);
-      final fleetsAfter = updated!.game.worldState.fleets;
-      final merged = fleetsAfter.firstWhere((f) => f.id == 'test_fleet_1');
-      final mergedIds = merged.ships.map((s) => s.id).toList()..sort();
-      expect(mergedIds, ['ship_1', 'ship_2']);
-      expect(fleetsAfter.any((f) => f.id == 'test_fleet_2'), isFalse);
-    });
-
     for (final case_ in navalPanelCombineDisabledCases()) {
       testWidgets(case_.name, (WidgetTester tester) async {
         await pumpNavalCheckCombineDisabled(
@@ -116,27 +87,25 @@ void main() {
         const humanId = 'gp_home_combine';
         final homeId = homeFleetIdFor(humanId);
 
-        final homeCombineGame = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_home_combine',
-          displayName: 'Home combine tester',
-          homeMission: FleetMission.patrol,
-          homeShips: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
-          nextShipInstanceSeq: 3,
-          peerFleets: [
-            navalPanelPortShipFleet(
-              id: 'at_capital',
-              humanId: humanId,
-              port: kNavalPanelCapProvince,
-              shipId: 'ship_v',
-              typeId: 'fluyte',
-            ),
-          ],
-        );
-
         final updated = await pumpNavalHomeFleetTransferAll(
           tester,
-          game: homeCombineGame,
+          game: buildNavalPanelCapitalHomeAndPeersGame(
+            humanId: humanId,
+            gameId: 'g_home_combine',
+            displayName: 'Home combine tester',
+            homeMission: FleetMission.patrol,
+            homeShips: const [ShipInstance(id: 'ship_h', typeId: 'carrack')],
+            nextShipInstanceSeq: 3,
+            peerFleets: [
+              navalPanelPortShipFleet(
+                id: 'at_capital',
+                humanId: humanId,
+                port: kNavalPanelCapProvince,
+                shipId: 'ship_v',
+                typeId: 'fluyte',
+              ),
+            ],
+          ),
           humanId: humanId,
           fleetLabels: const ['Home Fleet', 'Fleet at_capital'],
           transferTypeId: 'fluyte',
@@ -154,72 +123,13 @@ void main() {
     );
 
     testWidgets(
-      'AC: Combining three fleets at same port merges all ships into first in panel order',
-      (WidgetTester tester) async {
-        const humanId = 'gp_three_combine';
-        final threeGame = buildNavalPanelMergePortFleetsFromSpecs(
-          humanId: humanId,
-          gameId: 'g_three_combine',
-          displayName: 'Three combine tester',
-          fleets: const [
-            (id: 'c1', shipId: 's1', typeId: 'carrack'),
-            (id: 'c2', shipId: 's2', typeId: 'fluyte'),
-            (id: 'c3', shipId: 's3', typeId: 'carrack'),
-          ],
-        );
-
-        final updated = await pumpNavalTapCheckCombine(
-          tester,
-          game: threeGame,
-          humanId: humanId,
-          labels: const ['Fleet c1', 'Fleet c2', 'Fleet c3'],
-          scroll: true,
-        );
-
-        expect(updated, isNotNull);
-        final fleetsAfter = updated!.game.worldState.fleets;
-        expect(fleetsAfter.length, 1);
-        final survivor = fleetsAfter.single;
-        expect(survivor.id, 'c1');
-        expect(survivor.ships.map((s) => s.id).toList(), ['s1', 's2', 's3']);
-        expect(survivor.mission, FleetMission.none);
-      },
-    );
-
-    testWidgets(
       'AC: Home Fleet and adjacent sea source enable selected-ship transfer',
       (WidgetTester tester) async {
-        const humanId = 'gp_home_adjacent';
-
-        final gameAdj = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_home_adjacent_transfer',
-          displayName: 'Home adjacent tester',
-          peerFleets: [
-            Fleet(
-              id: 'sea_source',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_alpha',
-              ships: const [
-                ShipInstance(id: 'src_1', typeId: 'fluyte'),
-                ShipInstance(id: 'src_2', typeId: 'carrack'),
-              ],
-            ),
-          ],
-        );
-
-        await pumpNavalPanel(
+        await pumpNavalHomeAdjacentTransferDialog(
           tester,
-          game: gameAdj,
-          humanPlayerId: humanId,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+          game: buildNavalPanelHomeAdjacentSeaSourceGame(),
+          humanId: 'gp_home_adjacent',
         );
-
-        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
-        expectNavalCombineEnabled(tester, enabled: true);
-        await tapNavalCombine(tester);
-        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
       },
     );
 
@@ -227,61 +137,13 @@ void main() {
       'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
       (WidgetTester tester) async {
         const humanId = 'gp_home_transfer_apply';
-        final homeId = homeFleetIdFor(humanId);
-
-        var gameState = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_home_transfer_apply',
-          displayName: 'Home transfer tester',
-          peerFleets: [
-            Fleet(
-              id: 'sea_source',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_alpha',
-              ships: const [
-                ShipInstance(id: 'src_1', typeId: 'fluyte'),
-                ShipInstance(id: 'src_2', typeId: 'carrack'),
-              ],
-            ),
-          ],
-        );
-        final topology = buildUnitsPanelCapitalAdjacentSeaTopology();
-        final bus = AppEventBus.create();
-        final subTransfer = wireNavalTransferForWidgetTest(
-          bus: bus,
-          gameSnapshot: () => gameState,
-        );
-        final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          gameState = e.game;
-        });
-        addTearDown(subTransfer.cancel);
-        addTearDown(subUpdated.cancel);
-
-        await pumpNavalPanel(
+        final result = await pumpNavalHomePartialSeaTransfer(
           tester,
-          game: gameState,
-          humanPlayerId: humanId,
-          topology: topology,
-          bus: bus,
+          humanId: humanId,
         );
-
-        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
-        await tapNavalCombine(tester);
-
-        await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
-
-        final homeFleet = gameState.worldState.fleets.firstWhere(
-          (f) => f.id == homeId,
-        );
-        final sourceFleet = gameState.worldState.fleets.firstWhere(
-          (f) => f.id == 'sea_source',
-        );
-        final homeShipIds = homeFleet.ships.map((s) => s.id).toSet();
-        final sourceShipIds = sourceFleet.ships.map((s) => s.id).toSet();
-        expect(homeShipIds.contains('src_1'), isTrue);
-        expect(sourceShipIds.contains('src_1'), isFalse);
-        expect(sourceShipIds.contains('src_2'), isTrue);
+        expect(result.homeShipIds.contains('src_1'), isTrue);
+        expect(result.sourceShipIds.contains('src_1'), isFalse);
+        expect(result.sourceShipIds.contains('src_2'), isTrue);
       },
     );
 
@@ -289,34 +151,16 @@ void main() {
       'AC: Home Fleet and non-adjacent sea source keep Combine disabled',
       (WidgetTester tester) async {
         const humanId = 'gp_home_non_adjacent';
-
-        final gameNonAdjacent = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_home_non_adjacent_transfer',
-          displayName: 'Home non-adjacent tester',
-          peerFleets: [
-            Fleet(
-              id: 'sea_far',
-              ownerId: humanId,
-              regionId: 'oldWorld',
-              seaZoneId: 'zone_far',
-              ships: const [ShipInstance(id: 'src_1', typeId: 'fluyte')],
-            ),
-          ],
-        );
-
-        await pumpNavalPanel(
+        await pumpNavalCheckCombineDisabled(
           tester,
-          game: gameNonAdjacent,
-          humanPlayerId: humanId,
+          game: buildNavalPanelHomeNonAdjacentSeaGame(humanId: humanId),
+          humanId: humanId,
+          fleetLabels: const ['Home Fleet', 'Fleet sea_far'],
           topology: buildUnitsPanelCapitalAdjacentSeaTopology(
             seaZoneId: 'zone_far',
             includeEdge: false,
           ),
         );
-
-        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_far']);
-        expectNavalCombineEnabled(tester, enabled: false);
       },
     );
 

@@ -489,9 +489,9 @@ void main() {
             humanId: humanId,
             displayName: 'Scope Test',
             capitalProvinceId: capital,
-            oldWorldProvinces: const [
+            oldWorldProvinces: [
               Province(
-                id: capital,
+                id: 'p1',
                 regionId: 'oldWorld',
                 ownerId: humanId,
                 displayName: 'Capital Port',
@@ -508,9 +508,7 @@ void main() {
                 ],
               ),
             ],
-            tileKeysByProvince: const {
-              capital: ['oldWorld|p1|0|0'],
-            },
+            tileKeysByProvince: const {capital: ['oldWorld|p1|0|0']},
           ),
           humanPlayerId: humanId,
           locationScopeKey: 'port:$capital',
@@ -646,93 +644,14 @@ void main() {
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
       (WidgetTester tester) async {
-        const humanId = 'gp_home_never_deleted';
-        final homeId = homeFleetIdFor(humanId);
-        final g = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_home_never_deleted',
-          displayName: 'Home never deleted tester',
-          nextShipInstanceSeq: 3,
-          peerFleets: [
-            navalPanelPortPeer(
-              id: 'donor',
-              humanId: humanId,
-              ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
-            ),
-          ],
-        );
-        final (bus, updated) = wireNavalFleetBusWithWire(
-          wire: (b) =>
-              wireNavalTransferForWidgetTest(bus: b, gameSnapshot: () => g),
-        );
-        await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
-        await tapNavalFleetCheckboxFinders(tester, [
-          find.widgetWithText(ExpansionTile, 'Home Fleet'),
-          find.widgetWithText(ExpansionTile, 'Fleet donor'),
-        ]);
-        await tapNavalCombine(tester);
-        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
-        await tapNavalConfirmTransfer(tester, moveAllTypeId: 'fluyte');
-        final fleets = updated()!.game.worldState.fleets;
-        final homeFleet = fleets.where((f) => f.id == homeId);
-        expect(homeFleet, isNotEmpty);
-        expect((homeFleet.first.ships.map((s) => s.id).toList()..sort()), [
-          'home_1',
-          'ship_d',
-        ]);
-        expect(fleets.any((f) => f.id == 'donor'), isFalse);
+        await pumpNavalHomeNeverDeletedTransfer(tester);
       },
     );
 
     testWidgets(
       'AC: Non-Home fleet split cannot empty original (Confirm Split disabled)',
       (WidgetTester tester) async {
-        const humanId = 'gp_nonhome_removed';
-        final g = buildNavalPanelCapitalHomeAndPeersGame(
-          humanId: humanId,
-          gameId: 'g_nonhome_removed',
-          displayName: 'Non-home removed tester',
-          nextShipInstanceSeq: 3,
-          peerFleets: [
-            navalPanelPortPeer(
-              id: 'split_me',
-              humanId: humanId,
-              ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
-            ),
-          ],
-        );
-        final (bus, updated) = wireNavalFleetBusWithWire(
-          wire: (b) =>
-              wireNavalSplitForWidgetTest(bus: b, gameSnapshot: () => g),
-        );
-        await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
-        final fleetTile = find.widgetWithText(ExpansionTile, 'Fleet split_me');
-        await tester.ensureVisible(fleetTile);
-        await tester.tap(fleetTile);
-        await tester.pumpAndSettle();
-        final split = find.descendant(
-          of: fleetTile,
-          matching: find.byTooltip('Split'),
-        );
-        await tester.ensureVisible(split);
-        await tester.tap(split);
-        await tester.pumpAndSettle();
-        final typeId = g.worldState.fleets
-            .firstWhere((f) => f.id == 'split_me')
-            .ships
-            .single
-            .typeId;
-        await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne(typeId)));
-        await tester.pumpAndSettle();
-        expect(
-          tester
-              .widget<CtNinePatchButton>(
-                find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
-              )
-              .enabled,
-          isFalse,
-        );
-        expect(updated(), isNull);
+        await pumpNavalNonHomeSplitEmptyBlocked(tester);
       },
     );
   });
