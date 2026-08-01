@@ -1,11 +1,12 @@
 // Naval combine / merge-port scenario tables (Refs #4224 Slice D).
-// Split from naval_units_panel_test_scenarios.dart for app_test_file_size gate.
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'naval_units_panel_test_scenarios.dart';
 import 'units_panel_test_shared.dart' show unitsPanelOwProvince;
+
+// --- Combine / merge-port scenario tables (Refs #4224 Slice D) ---
 
 typedef NavalPanelPortShipSpec = ({String id, String shipId, String typeId});
 
@@ -15,15 +16,14 @@ Fleet navalPanelPortShipFleet({
   required String port,
   required String shipId,
   String typeId = 'carrack',
-}) {
-  return Fleet(
-    id: id,
-    ownerId: humanId,
-    regionId: 'oldWorld',
-    inPortAtProvinceId: port,
-    ships: [ShipInstance(id: shipId, typeId: typeId)],
-  );
-}
+}) =>
+    Fleet(
+      id: id,
+      ownerId: humanId,
+      regionId: 'oldWorld',
+      inPortAtProvinceId: port,
+      ships: [ShipInstance(id: shipId, typeId: typeId)],
+    );
 
 Fleet navalPanelSeaShipFleet({
   required String id,
@@ -31,59 +31,55 @@ Fleet navalPanelSeaShipFleet({
   required String seaZoneId,
   required String shipId,
   String typeId = 'carrack',
-}) {
-  return Fleet(
-    id: id,
-    ownerId: humanId,
-    regionId: 'oldWorld',
-    seaZoneId: seaZoneId,
-    inPortAtProvinceId: null,
-    ships: [ShipInstance(id: shipId, typeId: typeId)],
-  );
-}
+}) =>
+    Fleet(
+      id: id,
+      ownerId: humanId,
+      regionId: 'oldWorld',
+      seaZoneId: seaZoneId,
+      ships: [ShipInstance(id: shipId, typeId: typeId)],
+    );
 
-/// Fleets berthed at [kNavalPanelMergePort] from compact ship specs.
 Game buildNavalPanelMergePortFleetsFromSpecs({
   required String humanId,
   required String gameId,
   required String displayName,
   required List<NavalPanelPortShipSpec> fleets,
   int? nextShipInstanceSeq,
-}) {
-  return buildNavalPanelCapitalMergePortFleetsGame(
-    humanId: humanId,
-    gameId: gameId,
-    displayName: displayName,
-    includeMergePortTileKeys: false,
-    nextShipInstanceSeq: nextShipInstanceSeq ?? fleets.length + 1,
-    fleets: [
-      for (final f in fleets)
-        navalPanelPortShipFleet(
-          id: f.id,
-          humanId: humanId,
-          port: kNavalPanelMergePort,
-          shipId: f.shipId,
-          typeId: f.typeId,
-        ),
-    ],
-  );
-}
+}) =>
+    buildNavalPanelCapitalMergePortFleetsGame(
+      humanId: humanId,
+      gameId: gameId,
+      displayName: displayName,
+      includeMergePortTileKeys: false,
+      nextShipInstanceSeq: nextShipInstanceSeq ?? fleets.length + 1,
+      fleets: [
+        for (final f in fleets)
+          navalPanelPortShipFleet(
+            id: f.id,
+            humanId: humanId,
+            port: kNavalPanelMergePort,
+            shipId: f.shipId,
+            typeId: f.typeId,
+          ),
+      ],
+    );
 
-/// Single merge-port fleet row (mission optional).
 Fleet navalPanelPortFleetAtMergePort(
   String id,
   String humanId,
   String shipId,
   String typeId, {
   FleetMission mission = FleetMission.none,
-}) => Fleet(
-  id: id,
-  ownerId: humanId,
-  regionId: 'oldWorld',
-  inPortAtProvinceId: kNavalPanelMergePort,
-  ships: [ShipInstance(id: shipId, typeId: typeId)],
-  mission: mission,
-);
+}) =>
+    Fleet(
+      id: id,
+      ownerId: humanId,
+      regionId: 'oldWorld',
+      inPortAtProvinceId: kNavalPanelMergePort,
+      ships: [ShipInstance(id: shipId, typeId: typeId)],
+      mission: mission,
+    );
 
 typedef NavalPanelAutocloseCase = ({
   String humanId,
@@ -97,7 +93,6 @@ typedef NavalPanelAutocloseCase = ({
   int closeCount,
 });
 
-/// Scoped auto-close matrix for part4 scenario-table pins (Refs #4224 Slice D).
 List<NavalPanelAutocloseCase> navalPanelAutocloseCases() => [
   (
     humanId: 'gp_scope_autoclose_yes',
@@ -133,47 +128,6 @@ List<NavalPanelAutocloseCase> navalPanelAutocloseCases() => [
     closeCount: 0,
   ),
 ];
-
-/// Two at-sea fleets in the same zone for combine pins.
-Game buildNavalPanelSameSeaCombineGame({required String humanId}) {
-  return buildNavalPanelOwFleetsGame(
-    gameId: 'g_same_sea_combine',
-    humanId: humanId,
-    displayName: 'Same-sea combine',
-    capitalProvinceId: kNavalPanelCapProvince,
-    oldWorldProvinces: [
-      unitsPanelOwProvince('coast', humanId, displayName: 'Coast'),
-      unitsPanelOwProvince('cap1', humanId, displayName: 'Capital'),
-    ],
-    fleets: [
-      Fleet(
-        id: 'sea_1',
-        ownerId: humanId,
-        regionId: 'oldWorld',
-        seaZoneId: 'zone_alpha',
-        inPortAtProvinceId: null,
-        ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
-        mission: FleetMission.patrol,
-      ),
-      Fleet(
-        id: 'sea_2',
-        ownerId: humanId,
-        regionId: 'oldWorld',
-        seaZoneId: 'zone_alpha',
-        inPortAtProvinceId: null,
-        ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
-      ),
-    ],
-    portsByProvinceSeaboard: {
-      'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-    },
-    tileKeysByProvince: {
-      kNavalPanelCapProvince: ['oldWorld|cap1|0|0'],
-      'oldWorld|coast': ['oldWorld|coast|0|0'],
-    },
-    nextShipInstanceSeq: 3,
-  );
-}
 
 typedef NavalPanelCombineDisabledCase = ({
   String name,
@@ -228,6 +182,33 @@ NavalPanelCombineOutcomeCase navalPanelMergePortOutcome({
   );
 }
 
+NavalPanelCombineDisabledCase _combineDisabledCase({
+  required String name,
+  required String humanId,
+  required List<Province> provinces,
+  required List<Fleet> fleets,
+  required List<String> labels,
+  Map<String, List<String>> tileKeysByProvince = const {},
+  Map<String, String> portsByProvinceSeaboard = const {},
+  int nextShipInstanceSeq = 3,
+}) =>
+    (
+      name: name,
+      humanId: humanId,
+      build: () => buildNavalPanelOwFleetsGame(
+        gameId: 'g_$humanId',
+        humanId: humanId,
+        displayName: '$humanId tester',
+        capitalProvinceId: kNavalPanelCapProvince,
+        oldWorldProvinces: provinces,
+        fleets: fleets,
+        tileKeysByProvince: tileKeysByProvince,
+        portsByProvinceSeaboard: portsByProvinceSeaboard,
+        nextShipInstanceSeq: nextShipInstanceSeq,
+      ),
+      labels: labels,
+    );
+
 List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
   navalPanelMergePortOutcome(
     name: 'AC: Combining fleets creates correct ship counts',
@@ -253,7 +234,44 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
   ),
   (
     name: 'AC: combine same-sea survivors merge into first fleet id',
-    build: () => buildNavalPanelSameSeaCombineGame(humanId: 'gp_same_sea_combine'),
+    build: () {
+      const humanId = 'gp_same_sea_combine';
+      return buildNavalPanelOwFleetsGame(
+        gameId: 'g_same_sea_combine',
+        humanId: humanId,
+        displayName: 'Same-sea combine',
+        capitalProvinceId: kNavalPanelCapProvince,
+        oldWorldProvinces: [
+          unitsPanelOwProvince('coast', humanId, displayName: 'Coast'),
+          unitsPanelOwProvince('cap1', humanId, displayName: 'Capital'),
+        ],
+        fleets: [
+          Fleet(
+            id: 'sea_1',
+            ownerId: humanId,
+            regionId: 'oldWorld',
+            seaZoneId: 'zone_alpha',
+            ships: const [ShipInstance(id: 'ss1', typeId: 'carrack')],
+            mission: FleetMission.patrol,
+          ),
+          Fleet(
+            id: 'sea_2',
+            ownerId: humanId,
+            regionId: 'oldWorld',
+            seaZoneId: 'zone_alpha',
+            ships: const [ShipInstance(id: 'ss2', typeId: 'fluyte')],
+          ),
+        ],
+        portsByProvinceSeaboard: {
+          'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+        },
+        tileKeysByProvince: {
+          kNavalPanelCapProvince: ['oldWorld|cap1|0|0'],
+          'oldWorld|coast': ['oldWorld|coast|0|0'],
+        },
+        nextShipInstanceSeq: 3,
+      );
+    },
     humanId: 'gp_same_sea_combine',
     labels: const ['Fleet sea_1', 'Fleet sea_2'],
     scroll: false,
@@ -334,150 +352,102 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
   ),
 ];
 
-Game _navalPanelCombineDisabledOwGame({
-  required String humanId,
-  required String gameId,
-  required String displayName,
-  required List<Province> provinces,
-  required List<Fleet> fleets,
-  Map<String, List<String>> tileKeysByProvince = const {},
-  Map<String, String> portsByProvinceSeaboard = const {},
-  int nextShipInstanceSeq = 3,
-}) =>
-    buildNavalPanelOwFleetsGame(
-      gameId: gameId,
-      humanId: humanId,
-      displayName: displayName,
-      capitalProvinceId: kNavalPanelCapProvince,
-      oldWorldProvinces: provinces,
-      fleets: fleets,
-      tileKeysByProvince: tileKeysByProvince,
-      portsByProvinceSeaboard: portsByProvinceSeaboard,
-      nextShipInstanceSeq: nextShipInstanceSeq,
-    );
-
-/// Combine-disabled matrix for part2 scenario-table pins (Refs #4183 Slice E).
 List<NavalPanelCombineDisabledCase> navalPanelCombineDisabledCases() {
+  const capTiles = {kNavalPanelCapProvince: ['oldWorld|cap1|0|0']};
   return [
-    (
+    _combineDisabledCase(
       name:
           'AC: Fleets at different locations keep Combine disabled when both checked',
       humanId: 'gp_diff_loc',
-      build: () {
-        const humanId = 'gp_diff_loc';
-        return _navalPanelCombineDisabledOwGame(
-          humanId: humanId,
-          gameId: 'g_diff_loc',
-          displayName: 'Diff-loc tester',
-          provinces: [
-            unitsPanelOwProvince('cap1', humanId, displayName: 'Capital'),
-            unitsPanelOwProvince('port_a', humanId, displayName: 'Port A'),
-            unitsPanelOwProvince('port_b', humanId, displayName: 'Port B'),
-          ],
-          fleets: [
-            navalPanelPortShipFleet(
-              id: 'fa',
-              humanId: humanId,
-              port: 'oldWorld|port_a',
-              shipId: 'ship_1',
-            ),
-            navalPanelPortShipFleet(
-              id: 'fb',
-              humanId: humanId,
-              port: 'oldWorld|port_b',
-              shipId: 'ship_2',
-              typeId: 'fluyte',
-            ),
-          ],
-          tileKeysByProvince: {
-            kNavalPanelCapProvince: ['oldWorld|cap1|0|0'],
-          },
-        );
-      },
+      provinces: [
+        unitsPanelOwProvince('cap1', 'gp_diff_loc', displayName: 'Capital'),
+        unitsPanelOwProvince('port_a', 'gp_diff_loc', displayName: 'Port A'),
+        unitsPanelOwProvince('port_b', 'gp_diff_loc', displayName: 'Port B'),
+      ],
+      fleets: [
+        navalPanelPortShipFleet(
+          id: 'fa',
+          humanId: 'gp_diff_loc',
+          port: 'oldWorld|port_a',
+          shipId: 'ship_1',
+        ),
+        navalPanelPortShipFleet(
+          id: 'fb',
+          humanId: 'gp_diff_loc',
+          port: 'oldWorld|port_b',
+          shipId: 'ship_2',
+          typeId: 'fluyte',
+        ),
+      ],
       labels: const ['Fleet fa', 'Fleet fb'],
+      tileKeysByProvince: capTiles,
     ),
-    (
+    _combineDisabledCase(
       name:
           'AC: Fleets in different sea zones keep Combine disabled when both checked',
       humanId: 'gp_two_seas',
-      build: () {
-        const humanId = 'gp_two_seas';
-        return _navalPanelCombineDisabledOwGame(
-          humanId: humanId,
-          gameId: 'g_two_seas',
-          displayName: 'Two seas tester',
-          provinces: [
-            unitsPanelOwProvince('coast', humanId, displayName: 'Coast'),
-            unitsPanelOwProvince('cap1', humanId, displayName: 'Capital'),
-          ],
-          fleets: [
-            navalPanelSeaShipFleet(
-              id: 'sea_a',
-              humanId: humanId,
-              seaZoneId: 'zone_alpha',
-              shipId: 'a1',
-            ),
-            navalPanelSeaShipFleet(
-              id: 'sea_b',
-              humanId: humanId,
-              seaZoneId: 'zone_beta',
-              shipId: 'b1',
-              typeId: 'fluyte',
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-            'oldWorld|coast|zone_beta': 'oldWorld|coast|1|0',
-          },
-          tileKeysByProvince: {
-            kNavalPanelCapProvince: ['oldWorld|cap1|0|0'],
-            'oldWorld|coast': ['oldWorld|coast|0|0'],
-          },
-          nextShipInstanceSeq: 2,
-        );
-      },
+      provinces: [
+        unitsPanelOwProvince('coast', 'gp_two_seas', displayName: 'Coast'),
+        unitsPanelOwProvince('cap1', 'gp_two_seas', displayName: 'Capital'),
+      ],
+      fleets: [
+        navalPanelSeaShipFleet(
+          id: 'sea_a',
+          humanId: 'gp_two_seas',
+          seaZoneId: 'zone_alpha',
+          shipId: 'a1',
+        ),
+        navalPanelSeaShipFleet(
+          id: 'sea_b',
+          humanId: 'gp_two_seas',
+          seaZoneId: 'zone_beta',
+          shipId: 'b1',
+          typeId: 'fluyte',
+        ),
+      ],
       labels: const ['Fleet sea_a', 'Fleet sea_b'],
+      portsByProvinceSeaboard: {
+        'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+        'oldWorld|coast|zone_beta': 'oldWorld|coast|1|0',
+      },
+      tileKeysByProvince: {
+        ...capTiles,
+        'oldWorld|coast': ['oldWorld|coast|0|0'],
+      },
+      nextShipInstanceSeq: 2,
     ),
-    (
+    _combineDisabledCase(
       name:
           'AC: Fleet at sea and fleet in port keep Combine disabled when both checked',
       humanId: 'gp_sea_port',
-      build: () {
-        const humanId = 'gp_sea_port';
-        return _navalPanelCombineDisabledOwGame(
-          humanId: humanId,
-          gameId: 'g_sea_port',
-          displayName: 'Sea-port tester',
-          provinces: [
-            unitsPanelOwProvince('cap1', humanId, displayName: 'Capital'),
-            unitsPanelOwProvince('mergeport', humanId, displayName: 'Merge Port'),
-            unitsPanelOwProvince('coast', humanId, displayName: 'Coast'),
-          ],
-          fleets: [
-            navalPanelSeaShipFleet(
-              id: 'at_sea',
-              humanId: humanId,
-              seaZoneId: 'zone_alpha',
-              shipId: 's_sea',
-            ),
-            navalPanelPortShipFleet(
-              id: 'in_port',
-              humanId: humanId,
-              port: kNavalPanelMergePort,
-              shipId: 's_port',
-              typeId: 'fluyte',
-            ),
-          ],
-          portsByProvinceSeaboard: {
-            'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
-          },
-          tileKeysByProvince: {
-            kNavalPanelCapProvince: ['oldWorld|cap1|0|0'],
-            'oldWorld|coast': ['oldWorld|coast|0|0'],
-          },
-        );
-      },
+      provinces: [
+        unitsPanelOwProvince('cap1', 'gp_sea_port', displayName: 'Capital'),
+        unitsPanelOwProvince('mergeport', 'gp_sea_port', displayName: 'Merge Port'),
+        unitsPanelOwProvince('coast', 'gp_sea_port', displayName: 'Coast'),
+      ],
+      fleets: [
+        navalPanelSeaShipFleet(
+          id: 'at_sea',
+          humanId: 'gp_sea_port',
+          seaZoneId: 'zone_alpha',
+          shipId: 's_sea',
+        ),
+        navalPanelPortShipFleet(
+          id: 'in_port',
+          humanId: 'gp_sea_port',
+          port: kNavalPanelMergePort,
+          shipId: 's_port',
+          typeId: 'fluyte',
+        ),
+      ],
       labels: const ['Fleet at_sea', 'Fleet in_port'],
+      portsByProvinceSeaboard: {
+        'oldWorld|coast|zone_alpha': 'oldWorld|coast|0|0',
+      },
+      tileKeysByProvince: {
+        ...capTiles,
+        'oldWorld|coast': ['oldWorld|coast|0|0'],
+      },
     ),
   ];
 }

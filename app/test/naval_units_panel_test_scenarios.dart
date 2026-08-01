@@ -62,17 +62,6 @@ Game buildNavalPanelNamedSeaZoneGame({
   );
 }
 
-/// Single home-fleet game used for ship-type display-name composition asserts.
-Game buildNavalPanelShipLabelGame({String humanId = 'gp_ship_display'}) {
-  return buildNavalPanelCapitalHomeAndPeersGame(
-    humanId: humanId,
-    gameId: 'g_ship_labels',
-    displayName: 'Ship Label Tester',
-    peerFleets: const [],
-    homeShips: const [ShipInstance(id: 'h1', typeId: 'carrack')],
-  );
-}
-
 /// OW capital + optional extra provinces / fleets for naval panel scenarios
 /// (Refs #4013 densify of `naval_units_panel_part{3,4}_test.dart`).
 Game buildNavalPanelOwFleetsGame({

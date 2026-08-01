@@ -142,39 +142,10 @@ void main() {
     testWidgets(
       'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
       (WidgetTester tester) async {
-        const humanId = 'gp_home_transfer_apply';
-        var gameState = buildNavalPanelHomeAdjacentSeaSourceGame(
-          humanId: humanId,
-          gameId: 'g_${humanId}_partial_transfer',
-        );
-        final homeId = homeFleetIdFor(humanId);
-        final bus = AppEventBus.create();
-        final subTransfer = wireNavalTransferForWidgetTest(
-          bus: bus,
-          gameSnapshot: () => gameState,
-        );
-        final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
-          gameState = e.game;
-        });
-        addTearDown(subTransfer.cancel);
-        addTearDown(subUpdated.cancel);
-        await pumpNavalPanel(
+        await pumpNavalHomePartialTransfer(
           tester,
-          game: gameState,
-          humanPlayerId: humanId,
-          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
-          bus: bus,
+          humanId: 'gp_home_transfer_apply',
         );
-        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
-        await tapNavalCombine(tester);
-        await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
-        final homeFleet =
-            gameState.worldState.fleets.firstWhere((f) => f.id == homeId);
-        final sourceFleet =
-            gameState.worldState.fleets.firstWhere((f) => f.id == 'sea_source');
-        expect(homeFleet.ships.map((s) => s.id).toSet().contains('src_1'), isTrue);
-        expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_1'), isFalse);
-        expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_2'), isTrue);
       },
     );
 

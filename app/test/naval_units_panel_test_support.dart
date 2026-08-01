@@ -6,6 +6,8 @@
 
 import 'dart:async';
 
+import 'dart:async';
+
 import 'package:colonizethis_data/colonizethis_data.dart'
     show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -26,6 +28,7 @@ import 'app_shell_harness.dart';
 import 'naval_units_panel_combine_scenarios.dart';
 import 'naval_units_panel_scoped_harness.dart';
 import 'naval_units_panel_test_scenarios.dart';
+import 'units_panel_test_shared.dart';
 export 'naval_units_panel_combine_scenarios.dart';
 export 'naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
@@ -720,5 +723,43 @@ Future<void> tapNavalFleetCheckboxFinders(
     );
     await tester.pumpAndSettle();
   }
+}
+
+Future<void> pumpNavalHomePartialTransfer(
+  WidgetTester tester, {
+  required String humanId,
+}) async {
+  var gameState = buildNavalPanelHomeAdjacentSeaSourceGame(
+    humanId: humanId,
+    gameId: 'g_${humanId}_partial_transfer',
+  );
+  final homeId = homeFleetIdFor(humanId);
+  final bus = AppEventBus.create();
+  final subTransfer = wireNavalTransferForWidgetTest(
+    bus: bus,
+    gameSnapshot: () => gameState,
+  );
+  final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+    gameState = e.game;
+  });
+  addTearDown(subTransfer.cancel);
+  addTearDown(subUpdated.cancel);
+  await pumpNavalPanel(
+    tester,
+    game: gameState,
+    humanPlayerId: humanId,
+    topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+    bus: bus,
+  );
+  await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+  await tapNavalCombine(tester);
+  await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
+  final homeFleet =
+      gameState.worldState.fleets.firstWhere((f) => f.id == homeId);
+  final sourceFleet =
+      gameState.worldState.fleets.firstWhere((f) => f.id == 'sea_source');
+  expect(homeFleet.ships.map((s) => s.id).toSet().contains('src_1'), isTrue);
+  expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_1'), isFalse);
+  expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_2'), isTrue);
 }
 

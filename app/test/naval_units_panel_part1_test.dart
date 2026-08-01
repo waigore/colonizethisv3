@@ -18,6 +18,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_panel.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'naval_units_panel_locate_pins.dart';
 import 'naval_units_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
@@ -123,29 +124,16 @@ void main() {
       expect(panelShell.panelConstraints.maxWidth, greaterThan(400));
     });
 
-    testWidgets('AC: Locate button emits LocateMapTileEvent', (
-      WidgetTester tester,
-    ) async {
-      final (bus, events) = wireNavalLocateCaptureBus();
-      await pumpNavalPanel(
-        tester,
-        game: game,
-        humanPlayerId: humanPlayerIdWithFleets,
-        bus: bus,
-      );
-
-      final locateButtons = find.byTooltip('Locate fleet');
-      if (locateButtons.evaluate().isEmpty) return;
-      await tester.tap(locateButtons.first);
-      await tester.pumpAndSettle();
-
-      expect(events, isNotEmpty);
-      expect(
-        events.last.regionId == 'oldWorld' ||
-            events.last.regionId == 'newWorld',
-        isTrue,
-      );
-    });
+    for (final case_ in navalPanelLocateCases()) {
+      testWidgets(case_.name, (WidgetTester tester) async {
+        await pumpNavalLocateCase(
+          tester,
+          case_,
+          baseGame: game,
+          humanId: humanPlayerIdWithFleets,
+        );
+      });
+    }
 
     testWidgets('AC: Strength is only shown in expanded details', (
       WidgetTester tester,
@@ -180,7 +168,13 @@ void main() {
       'AC: expanded composition lists ship display names not raw ids',
       (WidgetTester tester) async {
         const humanId = 'gp_ship_display';
-        final shipLabelGame = buildNavalPanelShipLabelGame(humanId: humanId);
+        final shipLabelGame = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_ship_labels',
+          displayName: 'Ship Label Tester',
+          peerFleets: const [],
+          homeShips: const [ShipInstance(id: 'h1', typeId: 'carrack')],
+        );
 
         await pumpNavalPanel(
           tester,
@@ -194,58 +188,6 @@ void main() {
         expect(find.text('Carrack'), findsOneWidget);
         expect(find.text('×1'), findsAtLeastNWidgets(1));
         expect(find.textContaining('carrack:'), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'sections render for fleets in both regions and locate button passes region id',
-      (WidgetTester tester) async {
-        final humanId = humanPlayerIdWithFleets;
-        final playerFleets = game.worldState.fleets
-            .where((f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty)
-            .toList();
-        expect(playerFleets, isNotEmpty);
-        final baseFleet = playerFleets.first;
-        final newProvinces = game.worldState.newWorld.provinces;
-        expect(newProvinces, isNotEmpty);
-        final newProvince = newProvinces.first;
-
-        final gameWithNwFleet = withNavalPanelExtraFleets(game, [
-          baseFleet.copyWith(
-            id: 'test_new_world_fleet',
-            regionId: 'newWorld',
-            inPortAtProvinceId: newProvince.id,
-            seaZoneId: null,
-            ownerId: humanId,
-          ),
-        ]);
-
-        final (bus, events) = wireNavalLocateCaptureBus();
-
-        await pumpNavalPanel(
-          tester,
-          game: gameWithNwFleet,
-          humanPlayerId: humanId,
-          bus: bus,
-        );
-
-        expect(find.text('OLD WORLD'), findsAtLeastNWidgets(1));
-        expect(find.text('NEW WORLD'), findsAtLeastNWidgets(1));
-
-        Finder tileFinder = navalFleetTileFinder('Fleet test_new_world_fleet');
-        if (tileFinder.evaluate().isEmpty) {
-          tileFinder = navalFleetTileFinder('Home Fleet');
-        }
-        if (!await tapLocateOnNavalFleetTile(tester, tileFinder)) return;
-        if (events.isEmpty) return;
-
-        expect(events.last.tileKey, isNotNull);
-        expect(events.last.regionId, isNotNull);
-        expect(
-          events.last.regionId == 'oldWorld' ||
-              events.last.regionId == 'newWorld',
-          isTrue,
-        );
       },
     );
 
@@ -270,65 +212,6 @@ void main() {
         expect(events, isEmpty);
       },
     );
-
-    testWidgets(
-      'AC: Sea-zone fleet locate button uses correct sea-zone tile key',
-      (WidgetTester tester) async {
-        final humanId = humanPlayerIdWithFleets;
-        final seaFleet = game.worldState.fleets.firstWhere(
-          (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty && f.isAtSea,
-        );
-        final expectedTileKey = game.worldState.portsByProvinceSeaboard.entries
-            .firstWhere((e) => e.key.split('|').length >= 2)
-            .value;
-
-        final (bus, events) = wireNavalLocateCaptureBus();
-        await pumpNavalPanel(
-          tester,
-          game: game,
-          humanPlayerId: humanId,
-          bus: bus,
-        );
-        final tile = navalFleetTileFinder(navalFleetTileLabel(seaFleet, humanId));
-        expect(tile, findsOneWidget);
-        if (!await tapLocateOnNavalFleetTile(tester, tile)) return;
-        expect(events.last.tileKey, expectedTileKey);
-        expect(events.last.regionId, seaFleet.regionId);
-      },
-    );
-
-    testWidgets('AC: Port fleet locate button uses correct province tile key', (
-      WidgetTester tester,
-    ) async {
-      final humanId = humanPlayerIdWithFleets;
-      final target = firstNavalNonCapitalLocateTarget(game, humanId);
-      if (target == null) {
-        fail('No non-capital province with a resolvable tile key found');
-      }
-
-      final baseFleet = game.worldState.fleets.firstWhere(
-        (f) => f.ownerId == humanId && f.shipTypeIds.isNotEmpty,
-      );
-      final portFleet = baseFleet.copyWith(
-        id: 'test_port_fleet',
-        ownerId: humanId,
-        regionId: target.province.regionId,
-        inPortAtProvinceId: target.province.id,
-        seaZoneId: null,
-      );
-      final (bus, events) = wireNavalLocateCaptureBus();
-      await pumpNavalPanel(
-        tester,
-        game: withNavalPanelExtraFleets(game, [portFleet]),
-        humanPlayerId: humanId,
-        bus: bus,
-      );
-      final tile = navalFleetTileFinder('Fleet ${portFleet.id}');
-      expect(tile, findsOneWidget);
-      if (!await tapLocateOnNavalFleetTile(tester, tile)) return;
-      expect(events.last.tileKey, target.tileKey);
-      expect(events.last.regionId, portFleet.regionId);
-    });
 
     testWidgets(
       'AC: Home Fleet row has checkbox; Split shown; Combine stays in header only',
