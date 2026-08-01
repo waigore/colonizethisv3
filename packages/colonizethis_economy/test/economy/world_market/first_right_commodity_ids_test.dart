@@ -7,6 +7,7 @@ typedef _Scenario = ({
   String label,
   Game game,
   Set<String> expected,
+  String playerId,
 });
 
 Game _multiTilePurchasedGame(Map<String, String> resourceByTileKey) {
@@ -37,6 +38,7 @@ Iterable<_Scenario> _scenarios() sync* {
       ),
     ),
     expected: {'timber'},
+    playerId: 'gpA',
   );
 
   const tileA = 'oldWorld|M1|0|0';
@@ -45,16 +47,41 @@ Iterable<_Scenario> _scenarios() sync* {
     label: 'deduplicates multiple tiles mapping to same commodity',
     game: _multiTilePurchasedGame({tileA: 'timber', tileB: 'timber'}),
     expected: {'timber'},
+    playerId: 'gpA',
   );
   yield (
     label: 'returns multiple commodities for distinct resources',
     game: _multiTilePurchasedGame({tileA: 'timber', tileB: 'iron'}),
     expected: {'timber', 'iron'},
+    playerId: 'gpA',
   );
   yield (
     label: 'returns empty set when no still-valid purchased tiles',
     game: minorPurchasedTileGame(purchasedTilesByTileKey: const {}),
     expected: {},
+    playerId: 'gpA',
+  );
+
+  yield (
+    label: 'skips tiles owned by other GPs',
+    game: singleTileBase.copyWith(
+      worldState: singleTileBase.worldState.copyWith(
+        resourceByTileKey: {tileKey: 'timber'},
+      ),
+    ),
+    expected: {},
+    playerId: 'gpB',
+  );
+
+  yield (
+    label: 'skips tiles with missing or empty resource mapping',
+    game: singleTileBase.copyWith(
+      worldState: singleTileBase.worldState.copyWith(
+        resourceByTileKey: {tileKey: ''},
+      ),
+    ),
+    expected: {},
+    playerId: 'gpA',
   );
 }
 
@@ -64,7 +91,7 @@ void main() {
     _scenarios(),
     (scenario) {
       expect(
-        firstRightCommodityIdsForPlayer(scenario.game, 'gpA'),
+        firstRightCommodityIdsForPlayer(scenario.game, scenario.playerId),
         scenario.expected,
       );
     },
