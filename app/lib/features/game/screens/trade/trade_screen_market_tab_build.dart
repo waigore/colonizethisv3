@@ -147,29 +147,38 @@ extension MarketTabContentBuild on MarketTabContent {
     // each section, rows follow `CommodityCatalog.all` catalog order
     // (no per-section alphabetical sort); this matches the Production
     // panel's intra-section ordering.
-    final List<Widget> sectionWidgets = buildMarketTabSectionWidgets(
-      l10n: l10n,
-      sectioned: sectioned,
-      market: market,
-      orders: orders,
-      offerCap: offerCap,
-      stagedOffers: stagedOffers,
-      bidTypeCap: bidTypeCap,
-      nameStyle: nameStyle,
-      priceStyle: priceStyle,
-      volumeStyle: volumeStyle,
-      quantityStyle: quantityStyle,
-      sectionHandlers: sectionHandlers,
-    );
-
-    final Widget list = SingleChildScrollView(
-      key: TradeScreenMarketKeys.marketCommodityListKey,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: sectionWidgets,
-      ),
+    //
+    // Refs #4227 — wide layouts (≥ marketTwoColumnMinWidth) render a
+    // row-major two-column grid per section with compact two-line rows.
+    final Widget list = LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool wideLayout = constraints.maxWidth >=
+            TradeScreenMarketKeys.marketTwoColumnMinWidth;
+        final List<Widget> sectionWidgets = buildMarketTabSectionWidgets(
+          l10n: l10n,
+          sectioned: sectioned,
+          market: market,
+          orders: orders,
+          offerCap: offerCap,
+          stagedOffers: stagedOffers,
+          bidTypeCap: bidTypeCap,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
+          volumeStyle: volumeStyle,
+          quantityStyle: quantityStyle,
+          sectionHandlers: sectionHandlers,
+          wideLayout: wideLayout,
+        );
+        return SingleChildScrollView(
+          key: TradeScreenMarketKeys.marketCommodityListKey,
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: sectionWidgets,
+          ),
+        );
+      },
     );
 
     final Widget header = RepaintBoundary(

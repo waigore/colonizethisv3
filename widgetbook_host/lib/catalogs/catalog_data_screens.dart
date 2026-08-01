@@ -593,6 +593,21 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market tab — wide two-column (Refs #4227)',
+        builder: (context) => _tradeScreenDefaultStory(
+          stockpile: _tradeScreenStorySectionedStockpile(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market tab — narrow stacked rows (Refs #4227)',
+        builder: (context) => mobileViewport(
+          context,
+          _tradeScreenDefaultStory(
+            stockpile: _tradeScreenStorySectionedStockpile(),
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Market tab — sellable clamp (Refs #3093)',
         builder: (context) => _tradeScreenDefaultStory(
           stockpile: _tradeScreenStorySellableClampStockpile(),

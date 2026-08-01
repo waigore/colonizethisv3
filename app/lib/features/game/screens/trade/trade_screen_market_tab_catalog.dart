@@ -30,6 +30,10 @@ extension MarketTabContentCatalog on MarketTabContent {
   /// section snugs against the cargo header without leaving extra
   /// whitespace, and subsequent sections get a 12 dp separator that
   /// matches the Production panel's between-section gap.
+  ///
+  /// When [wideLayout] is true (content width ≥
+  /// [TradeScreenMarketKeys.marketTwoColumnMinWidth]), rows render in a
+  /// row-major two-column grid with compact two-line rows (Refs #4227).
   List<Widget> buildCommoditySectionWidgets({
     required Key sectionKey,
     required String sectionLabel,
@@ -48,56 +52,259 @@ extension MarketTabContentCatalog on MarketTabContent {
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
     bool isFirstSection = true,
+    bool wideLayout = false,
   }) {
     if (commodities.isEmpty) return const <Widget>[];
     return <Widget>[
       if (!isFirstSection) const SizedBox(height: 12),
       CtSectionLabel(sectionLabel, key: sectionKey),
       const SizedBox(height: 6),
+      if (wideLayout)
+        ..._buildWideCommodityGrid(
+          commodities: commodities,
+          offerCap: offerCap,
+          stagedOffers: stagedOffers,
+          bidTypeCap: bidTypeCap,
+          market: market,
+          orders: orders,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
+          volumeStyle: volumeStyle,
+          quantityStyle: quantityStyle,
+          onDirectionChanged: onDirectionChanged,
+          onQuantityDelta: onQuantityDelta,
+          l10n: l10n,
+        )
+      else
+        ..._buildNarrowCommodityList(
+          commodities: commodities,
+          offerCap: offerCap,
+          stagedOffers: stagedOffers,
+          bidTypeCap: bidTypeCap,
+          market: market,
+          orders: orders,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
+          volumeStyle: volumeStyle,
+          quantityStyle: quantityStyle,
+          onDirectionChanged: onDirectionChanged,
+          onQuantityDelta: onQuantityDelta,
+          l10n: l10n,
+        ),
+    ];
+  }
+
+  List<Widget> _buildNarrowCommodityList({
+    required List<Commodity> commodities,
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required int bidTypeCap,
+    required WorldMarketState market,
+    required Orders orders,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required void Function(CommodityId commodityId, TradeOrderType? next)
+        onDirectionChanged,
+    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
+    required AppLocalizations l10n,
+  }) {
+    return <Widget>[
       for (int index = 0; index < commodities.length; index++)
         Padding(
           key: TradeScreenMarketKeys.marketCommodityRowKey(commodities[index].id),
           padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-          child: MarketCommodityRow(
-            commodityId: commodities[index].id,
-            commodityDisplayName:
-                commodityDisplayName(l10n, commodities[index].id),
-            priceText: formatMarketPrice(
-              market.prices[commodities[index].id],
-              commodityId: commodities[index].id,
-            ),
-            volumeText: volumeText(
-              market.lastTurnActivity[commodities[index].id] ??
-                  MarketActivity.empty,
-            ),
-            stagedOrder: tradeOrderForPlayerCommodity(
-              orders,
-              playerId,
-              commodities[index].id,
-            ),
-            sellableHeadroom: sellableHeadroomFor(
-              offerCap: offerCap,
-              stagedOffers: stagedOffers,
-              commodityId: commodities[index].id,
-            ),
-            offerCap: offerCap[commodities[index].id] ?? 0,
-            canSelectBid: canStageBidOnCommodity(
-              orders: orders,
-              playerId: playerId,
-              commodityId: commodities[index].id,
-              bidTypeCap: bidTypeCap,
-            ),
+          child: _buildCommodityRow(
+            commodity: commodities[index],
+            compact: false,
+            offerCap: offerCap,
+            stagedOffers: stagedOffers,
+            bidTypeCap: bidTypeCap,
+            market: market,
+            orders: orders,
             nameStyle: nameStyle,
             priceStyle: priceStyle,
             volumeStyle: volumeStyle,
             quantityStyle: quantityStyle,
-            onDirectionChanged: (TradeOrderType? next) =>
-                onDirectionChanged(commodities[index].id, next),
-            onIncrement: () => onQuantityDelta(commodities[index].id, 1),
-            onDecrement: () => onQuantityDelta(commodities[index].id, -1),
+            onDirectionChanged: onDirectionChanged,
+            onQuantityDelta: onQuantityDelta,
+            l10n: l10n,
           ),
         ),
     ];
+  }
+
+  List<Widget> _buildWideCommodityGrid({
+    required List<Commodity> commodities,
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required int bidTypeCap,
+    required WorldMarketState market,
+    required Orders orders,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required void Function(CommodityId commodityId, TradeOrderType? next)
+        onDirectionChanged,
+    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
+    required AppLocalizations l10n,
+  }) {
+    final List<Widget> rows = <Widget>[];
+    for (int index = 0; index < commodities.length; index += 2) {
+      final Commodity left = commodities[index];
+      final Commodity? right =
+          index + 1 < commodities.length ? commodities[index + 1] : null;
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: index == 0 ? 0 : TradeScreenMarketKeys.marketGridRowGap,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Padding(
+                  key: TradeScreenMarketKeys.marketCommodityRowKey(left.id),
+                  padding: EdgeInsets.zero,
+                  child: _buildCommodityRow(
+                    commodity: left,
+                    compact: true,
+                    offerCap: offerCap,
+                    stagedOffers: stagedOffers,
+                    bidTypeCap: bidTypeCap,
+                    market: market,
+                    orders: orders,
+                    nameStyle: nameStyle,
+                    priceStyle: priceStyle,
+                    volumeStyle: volumeStyle,
+                    quantityStyle: quantityStyle,
+                    onDirectionChanged: onDirectionChanged,
+                    onQuantityDelta: onQuantityDelta,
+                    l10n: l10n,
+                  ),
+                ),
+              ),
+              const SizedBox(width: TradeScreenMarketKeys.marketGridColumnGap),
+              Expanded(
+                child: right == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        key: TradeScreenMarketKeys.marketCommodityRowKey(right.id),
+                        padding: EdgeInsets.zero,
+                        child: _buildCommodityRow(
+                          commodity: right,
+                          compact: true,
+                          offerCap: offerCap,
+                          stagedOffers: stagedOffers,
+                          bidTypeCap: bidTypeCap,
+                          market: market,
+                          orders: orders,
+                          nameStyle: nameStyle,
+                          priceStyle: priceStyle,
+                          volumeStyle: volumeStyle,
+                          quantityStyle: quantityStyle,
+                          onDirectionChanged: onDirectionChanged,
+                          onQuantityDelta: onQuantityDelta,
+                          l10n: l10n,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return rows;
+  }
+
+  Widget _buildCommodityRow({
+    required Commodity commodity,
+    required bool compact,
+    required Map<CommodityId, int> offerCap,
+    required Map<CommodityId, int> stagedOffers,
+    required int bidTypeCap,
+    required WorldMarketState market,
+    required Orders orders,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required void Function(CommodityId commodityId, TradeOrderType? next)
+        onDirectionChanged,
+    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
+    required AppLocalizations l10n,
+  }) {
+    final CommodityId commodityId = commodity.id;
+    final rowParams = (
+      commodityId: commodityId,
+      commodityDisplayName: commodityDisplayName(l10n, commodityId),
+      priceText: formatMarketPrice(
+        market.prices[commodityId],
+        commodityId: commodityId,
+      ),
+      volumeText: volumeText(
+        market.lastTurnActivity[commodityId] ?? MarketActivity.empty,
+      ),
+      stagedOrder: tradeOrderForPlayerCommodity(orders, playerId, commodityId),
+      sellableHeadroom: sellableHeadroomFor(
+        offerCap: offerCap,
+        stagedOffers: stagedOffers,
+        commodityId: commodityId,
+      ),
+      offerCap: offerCap[commodityId] ?? 0,
+      canSelectBid: canStageBidOnCommodity(
+        orders: orders,
+        playerId: playerId,
+        commodityId: commodityId,
+        bidTypeCap: bidTypeCap,
+      ),
+      nameStyle: nameStyle,
+      priceStyle: priceStyle,
+      volumeStyle: volumeStyle,
+      quantityStyle: quantityStyle,
+      onDirectionChanged: (TradeOrderType? next) =>
+          onDirectionChanged(commodityId, next),
+      onIncrement: () => onQuantityDelta(commodityId, 1),
+      onDecrement: () => onQuantityDelta(commodityId, -1),
+    );
+    if (compact) {
+      return MarketCommodityRowCompact(
+        commodityId: rowParams.commodityId,
+        commodityDisplayName: rowParams.commodityDisplayName,
+        priceText: rowParams.priceText,
+        volumeText: rowParams.volumeText,
+        stagedOrder: rowParams.stagedOrder,
+        sellableHeadroom: rowParams.sellableHeadroom,
+        offerCap: rowParams.offerCap,
+        canSelectBid: rowParams.canSelectBid,
+        nameStyle: rowParams.nameStyle,
+        priceStyle: rowParams.priceStyle,
+        volumeStyle: rowParams.volumeStyle,
+        quantityStyle: rowParams.quantityStyle,
+        onDirectionChanged: rowParams.onDirectionChanged,
+        onIncrement: rowParams.onIncrement,
+        onDecrement: rowParams.onDecrement,
+      );
+    }
+    return MarketCommodityRow(
+      commodityId: rowParams.commodityId,
+      commodityDisplayName: rowParams.commodityDisplayName,
+      priceText: rowParams.priceText,
+      volumeText: rowParams.volumeText,
+      stagedOrder: rowParams.stagedOrder,
+      sellableHeadroom: rowParams.sellableHeadroom,
+      offerCap: rowParams.offerCap,
+      canSelectBid: rowParams.canSelectBid,
+      nameStyle: rowParams.nameStyle,
+      priceStyle: rowParams.priceStyle,
+      volumeStyle: rowParams.volumeStyle,
+      quantityStyle: rowParams.quantityStyle,
+      onDirectionChanged: rowParams.onDirectionChanged,
+      onIncrement: rowParams.onIncrement,
+      onDecrement: rowParams.onDecrement,
+    );
   }
 }
 
