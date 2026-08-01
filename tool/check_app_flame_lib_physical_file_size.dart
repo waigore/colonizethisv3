@@ -15,13 +15,8 @@ const int appFlameLibPhysicalFileSizeCeiling = 400;
 const String _flameLibRelativePath = 'app/lib/features/game/flame';
 
 /// Hot files still above the wave-10 ceiling during transition slices.
-/// Shrink-only allowlist; remove entries as splits land. Refs #4183.
-const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests = <String>[
-  'app/lib/features/game/flame/map_state/game_map_area_province_action_states.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
-  'app/lib/features/game/flame/region_map/region_map_component_shared_visibility.dart',
-];
+/// Shrink-only allowlist; remove entries as splits land. Refs #4183, #4224.
+const List<String> appFlameLibPhysicalFileSizeGrandfatheredForTests = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 

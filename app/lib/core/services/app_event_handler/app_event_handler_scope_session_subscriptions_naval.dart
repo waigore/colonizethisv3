@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show applyNavalSplitFleet, applyNavalTransferShipsBetweenFleets;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import '../../../features/game/widgets/shell/shell_player_context.dart';

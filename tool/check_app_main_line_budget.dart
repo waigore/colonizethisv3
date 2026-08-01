@@ -20,14 +20,15 @@
 // raised for DLG31001–DLG31003 naval mission assign + UNIT30001/map menu (Refs #4213);
 // raised for DLG20001 invasion intel summaries on move army dialog (Refs #4216);
 // raised for Choose-tech effect summary and Details at assignment (Refs #4222);
-// raised for UNIT10001 Spy relocate + hold/leave intel decision support (Refs #4219).
+// raised for UNIT10001 Spy relocate + hold/leave intel decision support (Refs #4219);
+// raised for wave-11 app refactor file splits (Flame, Victory, event handler; Refs #4224).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 66250;
+const _maxMainLines = 66400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

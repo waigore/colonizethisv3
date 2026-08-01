@@ -255,126 +255,39 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Player turn event feed diplomacy line opens diplomacy detail on tap',
-    (WidgetTester tester) async {
+  for (final case_ in eventFeedDiplomacyDetailNavigateCases()) {
+    testWidgets(case_.name, (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);
       final navigateEvents = listenEventFeedNavigateEvents(harness);
 
       await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppDiplomacyChangeEvent(
-          actorId: harness.humanId,
-          targetId: harness.opponentId,
-          changeType: 'declare_war',
-          turnNumber: 1,
-        ),
-      ], turnNumber: 2);
+      await commitEventFeedTurnEvents(
+        tester,
+        harness,
+        case_.buildEvents(harness),
+        turnNumber: 2,
+      );
 
-      final line = find.textContaining('declared war on');
+      final line = find.textContaining(case_.lineMatch);
       expect(line, findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      if (case_.lineMatch == 'Overture advanced!') {
+        expect(find.textContaining(': Embassy!'), findsOneWidget);
+      }
+      if (case_.expectChevron) {
+        expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      }
       await tester.tap(line);
       await tester.pump();
 
       expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.diplomacyDetail);
+      expect(navigateEvents.single.route, case_.expectedRoute);
       final args = navigateEvents.single.arguments as Map<String, Object?>;
       expect(args['factionId'], harness.opponentId);
-      expect(args['humanPlayerId'], harness.humanId);
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed overture line opens diplomacy detail on tap',
-    (WidgetTester tester) async {
-      final harness = newEventFeedHarness(disposeBus: false);
-      final navigateEvents = listenEventFeedNavigateEvents(harness);
-
-      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppOvertureAdvancedEvent(
-          offererGpId: harness.humanId,
-          targetFactionId: harness.opponentId,
-          newStage: 'embassy',
-          turnNumber: 1,
-        ),
-      ], turnNumber: 2);
-
-      final line = find.textContaining('Overture advanced!');
-      expect(line, findsOneWidget);
-      expect(find.textContaining(': Embassy!'), findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-      await tester.tap(line);
-      await tester.pump();
-
-      expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.diplomacyDetail);
-      final args = navigateEvents.single.arguments as Map<String, Object?>;
-      expect(args['factionId'], harness.opponentId);
-      expect(args['humanPlayerId'], harness.humanId);
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed spy caught line opens diplomacy detail on tap',
-    (WidgetTester tester) async {
-      final harness = newEventFeedHarness(disposeBus: false);
-      final navigateEvents = listenEventFeedNavigateEvents(harness);
-
-      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppSpyCaughtEvent(
-          unitId: 'spy_1',
-          spyOwnerId: harness.opponentId,
-          territoryOwnerId: harness.humanId,
-          provinceId: 'oldWorld|cap',
-          turnNumber: 1,
-        ),
-      ], turnNumber: 2);
-
-      final line = find.textContaining('enemy spy from');
-      expect(line, findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-      await tester.tap(line);
-      await tester.pump();
-
-      expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.diplomacyDetail);
-      final args = navigateEvents.single.arguments as Map<String, Object?>;
-      expect(args['factionId'], harness.opponentId);
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed spy defected line opens diplomacy detail on tap',
-    (WidgetTester tester) async {
-      final harness = newEventFeedHarness(disposeBus: false);
-      final navigateEvents = listenEventFeedNavigateEvents(harness);
-
-      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppSpyDefectedEvent(
-          unitId: 'spy_1',
-          previousOwnerId: harness.opponentId,
-          newOwnerId: harness.humanId,
-          provinceId: 'oldWorld|cap',
-          turnNumber: 1,
-        ),
-      ], turnNumber: 2);
-
-      final line = find.textContaining('defected to your side');
-      expect(line, findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-      await tester.tap(line);
-      await tester.pump();
-
-      expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.diplomacyDetail);
-      final args = navigateEvents.single.arguments as Map<String, Object?>;
-      expect(args['factionId'], harness.opponentId);
-    },
-  );
+      if (case_.lineMatch.contains('declared war')) {
+        expect(args['humanPlayerId'], harness.humanId);
+      }
+    });
+  }
 
   testWidgets(
     'Player turn event feed unresolved spy counterpart is non-tappable',
@@ -572,55 +485,13 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Player turn event feed rejected research order opens technology on tap',
-    (WidgetTester tester) async {
-      final harness = newEventFeedHarness(disposeBus: false);
-      final navigateEvents = listenEventFeedNavigateEvents(harness);
-
-      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppOrderRejectedEvent(
-          playerId: harness.humanId,
-          orderKind: OrderKind.research,
-          orderSummary: 'Research cotton',
-          reasonCode: 'insufficient_treasury',
-        ),
-      ], turnNumber: 2);
-
-      final line = find.textContaining('Order rejected: insufficient treasury.');
-      expect(line, findsOneWidget);
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-      await tester.tap(line);
-      await tester.pump();
-
-      expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.technology);
-    },
-  );
-
-  testWidgets(
-    'Player turn event feed rejected trade order opens trade screen on tap',
-    (WidgetTester tester) async {
-      final harness = newEventFeedHarness(disposeBus: false);
-      final navigateEvents = listenEventFeedNavigateEvents(harness);
-
-      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await commitEventFeedTurnEvents(tester, harness, [
-        AppOrderRejectedEvent(
-          playerId: harness.humanId,
-          orderKind: OrderKind.trade,
-          orderSummary: 'Buy grain',
-          reasonCode: 'insufficient_treasury',
-        ),
-      ], turnNumber: 2);
-
-      final line = find.textContaining('Order rejected: insufficient treasury.');
-      await tester.tap(line);
-      await tester.pump();
-
-      expect(navigateEvents, hasLength(1));
-      expect(navigateEvents.single.route, Routes.trade);
-    },
-  );
+  for (final case_ in eventFeedRejectedOrderNavigateCases()) {
+    testWidgets(case_.name, (WidgetTester tester) async {
+      await pumpEventFeedRejectedOrderNavigateCase(
+        tester,
+        gamesBox: gamesBox,
+        case_: case_,
+      );
+    });
+  }
 }

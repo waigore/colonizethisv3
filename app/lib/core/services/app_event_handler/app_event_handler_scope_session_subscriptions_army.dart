@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show applyArmyCombine, applyArmySplit;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'app_event_handler_scope_session_helpers.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';

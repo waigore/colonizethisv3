@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_resolution_result_codec.dart';
 import 'turn_resolution_runner_types.dart';
