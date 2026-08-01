@@ -6,6 +6,7 @@ import '../../widgets/shell/player_turn_event_feed.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'game_map_area_turn_feed_taps.dart';
 
 /// Player turn-event feed for [GameMapArea]: turning resolved `GameToUIEvent`s
 /// into tappable feed entries (Refs #3699 Theme 3).
@@ -13,7 +14,8 @@ mixin GameMapAreaTurnFeed
     on
         ConsumerState<GameMapArea>,
         GameMapAreaStateBase,
-        GameMapAreaTurnFeedLabels {
+        GameMapAreaTurnFeedLabels,
+        GameMapAreaTurnFeedTaps {
   List<PlayerTurnEventFeedEntry> buildFeedEntries() {
     return buildCtTurnFeedEntries(
       events: resolvedPlayerTurnEvents,
