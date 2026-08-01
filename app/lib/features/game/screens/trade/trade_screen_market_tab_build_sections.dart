@@ -70,6 +70,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
     required TradeSectionHandlers sectionHandlers,
+    bool wideLayout = false,
   }) {
     return <Widget>[
       ...buildCommoditySectionWidgets(
@@ -89,6 +90,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
       ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
@@ -108,6 +110,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         isFirstSection: false,
         firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
       ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionManufacturedKey,
@@ -127,6 +130,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         isFirstSection: false,
         firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
     ];
   }

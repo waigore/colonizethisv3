@@ -9,6 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../config/app_constants.dart';
+import '../../../../config/constants.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 
 abstract final class TradeScreenMarketKeys {
@@ -57,6 +58,19 @@ abstract final class TradeScreenMarketKeys {
   /// the row identities themselves.
   static const Key marketCommodityListKey =
       ValueKey<String>('tradeScreenMarketCommodityList');
+
+  /// Content width at which Market commodity rows render in a two-column
+  /// row-major grid with compact two-line rows (Refs #4227). Matches
+  /// [kNarrowBreakpoint] and [TradeScreenDealBookKeys.dealBookTwoPanelMinWidth].
+  static const double marketTwoColumnMinWidth = kNarrowBreakpoint;
+
+  /// Horizontal gap between the two Market commodity columns on wide
+  /// layouts (Refs #4227). Matches Deal Book inter-panel gap.
+  static const double marketGridColumnGap = 12;
+
+  /// Vertical gap between Market commodity grid rows within a section on
+  /// wide layouts (Refs #4227).
+  static const double marketGridRowGap = 6;
 
   /// Stable widget key for the `Food` category section header inside
   /// the Market tab commodity list (Refs `#3093` § Layout & grouping
