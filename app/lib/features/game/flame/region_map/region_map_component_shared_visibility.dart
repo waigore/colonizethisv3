@@ -6,6 +6,16 @@ import 'package:flutter/material.dart';
 
 import '../caches/resource_icon_cache.dart';
 import 'region_map_component_shared_palette.dart';
+import 'region_map_component_shared_visibility_extraction.dart';
+import 'region_map_component_shared_visibility_name_plates.dart';
+
+export 'region_map_component_shared_visibility_extraction.dart'
+    show
+        extractionIndicatorDisplaySizePx,
+        extractionIndicatorRectsForIconRect,
+        paintResourceExtractionDiscIndicators;
+export 'region_map_component_shared_visibility_name_plates.dart'
+    show resolveSeaZoneNamePlateCenterWorld;
 
 /// True when `(x, y)` is within Chebyshev distance ≤ 2 of a fleet marker that
 /// applies the naval move-draft reveal halo. SPEC/ui/map-widget.md.
@@ -302,165 +312,4 @@ double resourceIconDisplaySizePx(double cellSize) {
   return quarter < ResourceIconCache.iconSize
       ? quarter
       : ResourceIconCache.iconSize;
-}
-
-double extractionIndicatorDisplaySizePx(double resourceIconDisplaySizePx) {
-  return math.min(
-    ResourceIconCache.iconSize,
-    resourceIconDisplaySizePx + RegionMapPalette.extractionIndicatorSizeBoostPx,
-  );
-}
-
-List<Rect> extractionIndicatorRectsForIconRect({
-  required Rect iconRect,
-  required int units,
-}) {
-  if (units <= 0) {
-    return const <Rect>[];
-  }
-  final indicatorSize = extractionIndicatorDisplaySizePx(iconRect.width);
-  final stepX =
-      indicatorSize * (1.0 - RegionMapPalette.extractionIndicatorOverlapFactor);
-  final startX =
-      iconRect.right + RegionMapPalette.extractionIndicatorStartInsetXPx;
-  final top = iconRect.bottom - indicatorSize;
-  return List<Rect>.generate(
-    units,
-    (i) =>
-        Rect.fromLTWH(startX + (i * stepX), top, indicatorSize, indicatorSize),
-    growable: false,
-  );
-}
-
-/// Paints per-tile extraction throughput as **filled discs with dark stroke**
-/// (not commodity sprites). Effective slots use [RegionMapPalette.mapSelectionGold]
-/// (transported toward capital); blocked slots use
-/// [RegionMapPalette.extractionDiscBlockedBrown]. Paint order: fill then stroke.
-/// [fogCompatibleOverlayPaint] supplies the same fog `ColorFilter` as resource
-/// icons when the tile is fogged.
-///
-/// SPEC/ui/map-widget.md § Per-tile extraction throughput indicators;
-/// SPEC/program/map-region-map-render.md (`_paintOverlay` extraction discs).
-void paintResourceExtractionDiscIndicators({
-  required Canvas canvas,
-  required List<Rect> indicatorRects,
-  required int effectiveCount,
-  required Paint fogCompatibleOverlayPaint,
-}) {
-  if (indicatorRects.isEmpty) {
-    return;
-  }
-  final fogFilter = fogCompatibleOverlayPaint.colorFilter;
-  final strokeWidth = RegionMapPalette.extractionDiscStrokeWidthPx;
-  for (var i = 0; i < indicatorRects.length; i++) {
-    final isEffective = i < effectiveCount;
-    final fillColor = isEffective
-        ? RegionMapPalette.mapSelectionGold
-        : RegionMapPalette.extractionDiscBlockedBrown;
-    final r = indicatorRects[i];
-    final center = r.center;
-    final radius = r.shortestSide * 0.5;
-
-    final fillPaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = fillColor;
-    if (fogFilter != null) {
-      fillPaint.colorFilter = fogFilter;
-    }
-    canvas.drawCircle(center, radius, fillPaint);
-
-    final strokePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..color = RegionMapPalette.extractionDiscStrokeColor;
-    if (fogFilter != null) {
-      strokePaint.colorFilter = fogFilter;
-    }
-    final strokeRadius = radius - strokeWidth * 0.5;
-    if (strokeRadius > 0) {
-      canvas.drawCircle(center, strokeRadius, strokePaint);
-    }
-  }
-}
-
-Offset resolveSeaZoneNamePlateCenterWorld({
-  required int centroidTileX,
-  required int centroidTileY,
-  required double cellSize,
-  required int gridWidth,
-  required int gridHeight,
-  required double plateWidthLogicalPx,
-  required double plateHeightLogicalPx,
-  required double cameraZoom,
-  int? avoidedTileX,
-  int? avoidedTileY,
-}) {
-  final avoidTileX = avoidedTileX ?? centroidTileX;
-  final avoidTileY = avoidedTileY ?? centroidTileY;
-  final invZ = 1.0 / cameraZoom.clamp(0.25, 4.0);
-  final ww = plateWidthLogicalPx * invZ / 2;
-  final hh = plateHeightLogicalPx * invZ / 2;
-  final mapW = gridWidth * cellSize;
-  final mapH = gridHeight * cellSize;
-  final cellL = avoidTileX * cellSize;
-  final cellT = avoidTileY * cellSize;
-  final cellR = cellL + cellSize;
-  final cellB = cellT + cellSize;
-  const gap = 1.0;
-  var cx = (centroidTileX + 0.5) * cellSize;
-  bool overlapsCell(double pcx, double pcy) {
-    final l = pcx - ww;
-    final r = pcx + ww;
-    final t = pcy - hh;
-    final b = pcy + hh;
-    return !(r <= cellL || l >= cellR || b <= cellT || t >= cellB);
-  }
-  ({double x, double y}) clampPlateCenter(double pcx, double pcy) {
-    var x = pcx;
-    var y = pcy;
-    var l = x - ww;
-    var r = x + ww;
-    if (l < 0) x -= l;
-    r = x + ww;
-    if (r > mapW) x -= r - mapW;
-    l = x - ww;
-    if (l < 0) x = ww;
-    var t = y - hh;
-    var b = y + hh;
-    if (t < 0) y -= t;
-    b = y + hh;
-    if (b > mapH) y -= b - mapH;
-    t = y - hh;
-    if (t < 0) y = hh;
-    return (x: x, y: y);
-  }
-  final aboveY = cellT - gap - hh;
-  final aboveTop = aboveY - hh;
-  final useAbove = aboveTop >= 0;
-  var cy = useAbove ? aboveY : cellB + gap + hh;
-  var clamped = clampPlateCenter(cx, cy);
-  cx = clamped.x;
-  cy = clamped.y;
-  if (overlapsCell(cx, cy)) {
-    if (useAbove) {
-      cy = cellB + gap + hh;
-    } else if (aboveTop >= 0) {
-      cy = aboveY;
-    }
-    clamped = clampPlateCenter(cx, cy);
-    cx = clamped.x;
-    cy = clamped.y;
-  }
-  for (var i = 0; i < 48 && overlapsCell(cx, cy); i++) {
-    final midY = (cellT + cellB) / 2;
-    if (cy < midY) {
-      cy -= 1;
-    } else {
-      cy += 1;
-    }
-    clamped = clampPlateCenter(cx, cy);
-    cx = clamped.x;
-    cy = clamped.y;
-  }
-  return Offset(cx, cy);
 }
