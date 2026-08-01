@@ -5,8 +5,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../turn_pipeline_state.dart';
+import '../turn_resolver_config.dart';
 import 'world_market_phase_activity.dart';
 import 'world_market_phase_credits.dart';
+import 'world_market_phase_overseas_profit_events.dart';
 import 'world_market_phase_deals.dart';
 import 'world_market_phase_gather.dart';
 import 'world_market_phase_orders.dart';
@@ -19,6 +21,8 @@ TurnPhaseStepOutcome settleWorldMarketMatch({
   required TurnPipelineState acc,
   required WorldMarketGatherResult gather,
   required WorldMarketState priorMarket,
+  required TurnResolverConfig config,
+  required int turn,
 }) {
   final game = acc.game;
 
@@ -108,6 +112,17 @@ TurnPhaseStepOutcome settleWorldMarketMatch({
     filledDeals: matchResult.filledDeals,
     gpFactionIds: gpFactionIds,
   );
+  final overseasProfitRecords = buildWorldMarketOverseasProfitCreditRecords(
+    game: game,
+    filledDeals: matchResult.filledDeals,
+    credits: firstRightCredits,
+    purchasedTileIndex: purchasedTileIndex,
+  );
+  emitOverseasProfitCreditedEvents(
+    recordsByGpId: overseasProfitRecords,
+    turn: turn,
+    sink: config.eventSink,
+  );
   final updatedMarket = priorMarket.copyWith(
     prices: Map<CommodityId, int>.unmodifiable(newPrices),
     lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
@@ -117,6 +132,7 @@ TurnPhaseStepOutcome settleWorldMarketMatch({
     ),
     carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
     completedTradePairKeys: completedTradePairKeys,
+    lastTurnOverseasProfitCreditsByGpId: overseasProfitRecords,
   );
 
   final nextGame = game

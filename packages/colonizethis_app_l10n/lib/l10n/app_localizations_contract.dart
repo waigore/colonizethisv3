@@ -1382,6 +1382,31 @@ abstract class AppLocalizations {
   /// Shown when train Agree fails re-validation.
   String get industryCounsel_trainAgreeFailed;
 
+  /// Compact chip on Market rows where the human holds first right of refusal.
+  String get tradeMarket_firstRightChip;
+
+  /// On-request help for the Market first-right chip.
+  String get tradeMarket_firstRightTooltip;
+
+  /// Deal Book audit tag for first-right-of-refusal matches.
+  String get tradeDealBook_matchTagFirstRight;
+
+  /// Deal Book audit tag for favored-trading-partner matches.
+  String get tradeDealBook_matchTagFavoredPartner;
+
+  /// Deal Book subsection heading for last-turn overseas-profit credits.
+  String get tradeDealBook_overseasProfitHeading;
+
+  /// Single overseas-profit ledger row in Deal Book.
+  String tradeDealBook_overseasProfitRow(
+    String commodity,
+    int quantity,
+    int amount,
+  );
+
+  /// Player turn event feed line when overseas profit treasury was credited.
+  String eventFeed_overseasProfitCredited(int amount, int count);
+
   /// Production panel subheader for available resources.
   String get production_available;
 

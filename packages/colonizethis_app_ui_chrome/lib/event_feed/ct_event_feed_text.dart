@@ -23,4 +23,8 @@ class CtEventFeedText {
 
   static String orderRejectedLine(String reasonCode) =>
       'Order rejected: ${orderRejectedReasonLabel(reasonCode)}.';
+
+  static String overseasProfitCreditedLine(int amount, int count) =>
+      'Overseas profit credited: £$amount from $count rival purchase(s). '
+      'Tap to open Deal Book.';
 }

@@ -150,4 +150,8 @@ abstract final class TradeScreenDealBookKeys {
   /// Layout / wireframe pins the literal `"Deal Book"`.
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String dealBookTabLabel = 'Deal Book';
+
+  /// Per-row key for overseas-profit ledger rows (Refs #4226).
+  static Key dealBookOverseasProfitRowKey(int index) =>
+      ValueKey<String>('tradeScreenDealBookOverseasProfitRow:$index');
 }

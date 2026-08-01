@@ -23,6 +23,9 @@ class MarketCommodityRowHeader extends StatelessWidget {
     required this.sellableHeadroom,
     required this.nameStyle,
     required this.priceStyle,
+    this.showFirstRightChip = false,
+    this.firstRightChipLabel = '',
+    this.firstRightTooltip = '',
   });
 
   final CommodityId commodityId;
@@ -31,12 +34,18 @@ class MarketCommodityRowHeader extends StatelessWidget {
   final int sellableHeadroom;
   final TextStyle nameStyle;
   final TextStyle priceStyle;
+  final bool showFirstRightChip;
+  final String firstRightChipLabel;
+  final String firstRightTooltip;
 
   @override
   Widget build(BuildContext context) {
     final TextStyle sellableStyle = nameStyle.copyWith(
       color: EditorialMonoclePalette.muted,
     );
+    final TextStyle chipStyle = (Theme.of(context).textTheme.labelSmall ??
+            const TextStyle(fontSize: 10))
+        .copyWith(color: EditorialMonoclePalette.muted);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
@@ -63,6 +72,19 @@ class MarketCommodityRowHeader extends StatelessWidget {
                 key: TradeScreenMarketKeys.marketRowSellableReadoutKey(commodityId),
                 style: sellableStyle,
               ),
+              if (showFirstRightChip) ...<Widget>[
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: firstRightTooltip,
+                  child: Text(
+                    firstRightChipLabel,
+                    key: TradeScreenMarketKeys.marketRowFirstRightChipKey(
+                      commodityId,
+                    ),
+                    style: chipStyle,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

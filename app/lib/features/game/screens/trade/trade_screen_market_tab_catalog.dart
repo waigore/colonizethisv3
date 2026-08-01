@@ -47,6 +47,7 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
+    required Set<CommodityId> firstRightCommodityIds,
     bool isFirstSection = true,
   }) {
     if (commodities.isEmpty) return const <Widget>[];
@@ -95,6 +96,10 @@ extension MarketTabContentCatalog on MarketTabContent {
                 onDirectionChanged(commodities[index].id, next),
             onIncrement: () => onQuantityDelta(commodities[index].id, 1),
             onDecrement: () => onQuantityDelta(commodities[index].id, -1),
+            showFirstRightChip:
+                firstRightCommodityIds.contains(commodities[index].id),
+            firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+            firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
           ),
         ),
     ];

@@ -4837,5 +4837,42 @@
   "industryCounsel_trainAgreeFailed": "Cannot train that worker tier right now — check stockpile and queued orders.",
   "@industryCounsel_trainAgreeFailed": {
     "description": "Shown when train Agree fails re-validation."
+  },
+  "tradeMarket_firstRightChip": "First right",
+  "@tradeMarket_firstRightChip": {
+    "description": "Compact chip on Market rows where the human holds first right of refusal on purchased-tile commodities."
+  },
+  "tradeMarket_firstRightTooltip": "You hold first right on goods from this purchased tile. Your bids clear before rivals, and you earn overseas profit when another power buys here.",
+  "@tradeMarket_firstRightTooltip": {
+    "description": "On-request help for the Market first-right chip."
+  },
+  "tradeDealBook_matchTagFirstRight": "First right",
+  "@tradeDealBook_matchTagFirstRight": {
+    "description": "Deal Book audit tag for first-right-of-refusal matches."
+  },
+  "tradeDealBook_matchTagFavoredPartner": "Favored partner",
+  "@tradeDealBook_matchTagFavoredPartner": {
+    "description": "Deal Book audit tag for favored-trading-partner matches."
+  },
+  "tradeDealBook_overseasProfitHeading": "Overseas profit",
+  "@tradeDealBook_overseasProfitHeading": {
+    "description": "Deal Book subsection heading for last-turn overseas-profit credits."
+  },
+  "tradeDealBook_overseasProfitRow": "{commodity} × {quantity} — £{amount} credited",
+  "@tradeDealBook_overseasProfitRow": {
+    "description": "Single overseas-profit ledger row in Deal Book.",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"},
+      "amount": {"type": "int"}
+    }
+  },
+  "eventFeed_overseasProfitCredited": "Overseas profit credited: £{amount} from {count} rival purchase(s). Tap to open Deal Book.",
+  "@eventFeed_overseasProfitCredited": {
+    "description": "Player turn event feed line when overseas profit treasury was credited.",
+    "placeholders": {
+      "amount": {"type": "int"},
+      "count": {"type": "int"}
+    }
   }
 }

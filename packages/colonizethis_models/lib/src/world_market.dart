@@ -13,5 +13,6 @@
 export 'world_market/deal_matching.dart';
 export 'world_market/filled_deal.dart';
 export 'world_market/market_activity.dart';
+export 'world_market/overseas_profit_credit_record.dart';
 export 'world_market/trade_order.dart';
 export 'world_market/world_market_state.dart';

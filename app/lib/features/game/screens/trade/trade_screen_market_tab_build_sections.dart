@@ -64,6 +64,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
     required Map<CommodityId, int> offerCap,
     required Map<CommodityId, int> stagedOffers,
     required int bidTypeCap,
+    required Set<CommodityId> firstRightCommodityIds,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
@@ -86,6 +87,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         quantityStyle: quantityStyle,
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
+        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
       ),
       ...buildCommoditySectionWidgets(
@@ -104,6 +106,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
+        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
       ),
       ...buildCommoditySectionWidgets(
@@ -122,6 +125,7 @@ extension MarketTabContentBuildSections on MarketTabContent {
         onDirectionChanged: sectionHandlers.onDirectionChanged,
         onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
+        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
       ),
     ];

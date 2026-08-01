@@ -14,6 +14,7 @@
 /// [emptyKey] is rendered. The totals row remains mounted regardless so
 /// widget tests can pin the affordance.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -36,6 +37,8 @@ class DealBookPanel extends StatelessWidget {
     required this.totalsLabel,
     required this.totalsAmount,
     required this.emptyText,
+    required this.matchTagFirstRight,
+    required this.matchTagFavoredPartner,
   });
 
   final String panelTitle;
@@ -47,6 +50,8 @@ class DealBookPanel extends StatelessWidget {
   final String totalsLabel;
   final int totalsAmount;
   final String emptyText;
+  final String matchTagFirstRight;
+  final String matchTagFavoredPartner;
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +108,8 @@ class DealBookPanel extends StatelessWidget {
             deal: filledRows[i],
             rowStyle: styles.body,
             tagStyle: styles.muted,
+            matchTagFirstRight: matchTagFirstRight,
+            matchTagFavoredPartner: matchTagFavoredPartner,
           ),
         ),
     ];
@@ -177,17 +184,16 @@ class DealBookFilledRow extends StatelessWidget {
     required this.deal,
     required this.rowStyle,
     required this.tagStyle,
+    required this.matchTagFirstRight,
+    required this.matchTagFavoredPartner,
   });
 
   final Key rowKey;
   final FilledDeal deal;
   final TextStyle rowStyle;
   final TextStyle tagStyle;
-
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _frrTag = 'FRR';
-  // ignore: avoid_hardcoded_strings_in_widgets
-  static const String _ftpTag = 'FTP';
+  final String matchTagFirstRight;
+  final String matchTagFavoredPartner;
 
   @override
   Widget build(BuildContext context) {
@@ -197,8 +203,8 @@ class DealBookFilledRow extends StatelessWidget {
       deal.pricePerUnit,
     );
     final List<String> tags = <String>[
-      if (deal.isFirstRightOfRefusalMatch) _frrTag,
-      if (deal.isFtpMatch) _ftpTag,
+      if (deal.isFirstRightOfRefusalMatch) matchTagFirstRight,
+      if (deal.isFtpMatch) matchTagFavoredPartner,
     ];
     return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,

@@ -165,6 +165,36 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Cannot train that worker tier right now — check stockpile and queued orders.';
 
   @override
+  String get tradeMarket_firstRightChip => 'First right';
+
+  @override
+  String get tradeMarket_firstRightTooltip =>
+      'You hold first right on goods from this purchased tile. Your bids clear '
+      'before rivals, and you earn overseas profit when another power buys here.';
+
+  @override
+  String get tradeDealBook_matchTagFirstRight => 'First right';
+
+  @override
+  String get tradeDealBook_matchTagFavoredPartner => 'Favored partner';
+
+  @override
+  String get tradeDealBook_overseasProfitHeading => 'Overseas profit';
+
+  @override
+  String tradeDealBook_overseasProfitRow(
+    String commodity,
+    int quantity,
+    int amount,
+  ) =>
+      '$commodity × $quantity — £$amount credited';
+
+  @override
+  String eventFeed_overseasProfitCredited(int amount, int count) =>
+      'Overseas profit credited: £$amount from $count rival purchase(s). '
+      'Tap to open Deal Book.';
+
+  @override
   String get production_available => 'Available';
 
   @override

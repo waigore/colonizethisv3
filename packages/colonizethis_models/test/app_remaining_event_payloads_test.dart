@@ -177,6 +177,15 @@ void main() {
         ).newStage,
         'embassy',
       );
+      expect(
+        const AppOverseasProfitCreditedEvent(
+          playerId: 'gp1',
+          totalTreasuryCredit: 75,
+          creditCount: 2,
+          turnNumber: 3,
+        ).totalTreasuryCredit,
+        75,
+      );
     });
   });
 }

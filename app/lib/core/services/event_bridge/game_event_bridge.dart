@@ -151,6 +151,15 @@ class GameEventBridge {
             turnNumber: event.turnNumber,
           ),
         );
+      case OverseasProfitCreditedEvent():
+        _appBus.emit(
+          AppOverseasProfitCreditedEvent(
+            playerId: event.playerId,
+            totalTreasuryCredit: event.totalTreasuryCredit,
+            creditCount: event.creditCount,
+            turnNumber: event.turnNumber,
+          ),
+        );
     }
   }
 }

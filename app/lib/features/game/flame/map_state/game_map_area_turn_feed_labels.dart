@@ -342,6 +342,16 @@ mixin GameMapAreaTurnFeedLabels
     };
   }
 
+  void Function()? overseasProfitCreditedTap() {
+    return () => ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.trade, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+            'initialTabIndex': 1,
+          }),
+        );
+  }
+
   void Function()? orderRejectedTapForKind(ct_models.OrderKind orderKind) {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);

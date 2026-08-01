@@ -40,6 +40,9 @@ class MarketCommodityRow extends StatelessWidget {
     required this.onDirectionChanged,
     required this.onIncrement,
     required this.onDecrement,
+    this.showFirstRightChip = false,
+    this.firstRightChipLabel = '',
+    this.firstRightTooltip = '',
   });
 
   final CommodityId commodityId;
@@ -72,6 +75,9 @@ class MarketCommodityRow extends StatelessWidget {
   final ValueChanged<TradeOrderType?> onDirectionChanged;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+  final bool showFirstRightChip;
+  final String firstRightChipLabel;
+  final String firstRightTooltip;
 
   bool get _hasStagedOrder => stagedOrder != null;
 
@@ -118,6 +124,9 @@ class MarketCommodityRow extends StatelessWidget {
           sellableHeadroom: sellableHeadroom,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
+          showFirstRightChip: showFirstRightChip,
+          firstRightChipLabel: firstRightChipLabel,
+          firstRightTooltip: firstRightTooltip,
         ),
         const SizedBox(height: 2),
         Text(volumeText, style: volumeStyle),

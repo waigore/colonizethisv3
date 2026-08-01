@@ -257,3 +257,17 @@ class AppSpyDefectedEvent extends GameToUIEvent {
   final String provinceId;
   final int turnNumber;
 }
+
+/// Overseas-profit treasury credited. Mirrors colonizethis_logic OverseasProfitCreditedEvent.
+class AppOverseasProfitCreditedEvent extends GameToUIEvent {
+  const AppOverseasProfitCreditedEvent({
+    required this.playerId,
+    required this.totalTreasuryCredit,
+    required this.creditCount,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final int totalTreasuryCredit;
+  final int creditCount;
+  final int turnNumber;
+}

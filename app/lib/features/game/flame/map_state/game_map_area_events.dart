@@ -83,6 +83,15 @@ mixin GameMapAreaEvents
     pendingPlayerTurnEvents.add(event);
   }
 
+  void onAppOverseasProfitCreditedEvent(
+    ct_models.AppOverseasProfitCreditedEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
   void onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {

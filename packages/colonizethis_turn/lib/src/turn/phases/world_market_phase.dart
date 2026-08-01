@@ -100,5 +100,7 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
     acc: acc,
     gather: gather,
     priorMarket: priorMarket,
+    config: config,
+    turn: turn,
   );
 }
