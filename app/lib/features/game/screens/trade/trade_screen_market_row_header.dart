@@ -44,7 +44,7 @@ class MarketCommodityRowHeader extends StatelessWidget {
       color: EditorialMonoclePalette.muted,
     );
     final TextStyle chipStyle = (Theme.of(context).textTheme.labelSmall ??
-            const TextStyle(fontSize: 10))
+            const TextStyle(fontSize: 11))
         .copyWith(color: EditorialMonoclePalette.muted);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
