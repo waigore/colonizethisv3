@@ -23,8 +23,11 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 import 'app_shell_harness.dart';
+import 'naval_units_panel_scoped_harness.dart';
+import 'naval_panel_combine_tables.dart';
 import 'naval_units_panel_test_scenarios.dart';
-
+import 'units_panel_test_shared.dart';
+export 'naval_panel_combine_tables.dart';
 export 'naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
 
@@ -122,6 +125,27 @@ Future<void> pumpNavalPanel(
           draftOrders: draftOrders,
           locationScopeKey: locationScopeKey,
         ),
+  );
+}
+
+Future<void> pumpNavalMockupFidelityPanel(
+  WidgetTester tester, {
+  required Game game,
+  String humanPlayerId = kNavalMockupFidelityHumanId,
+}) async {
+  await pumpNavalPanel(
+    tester,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    widget: buildPanelScaffoldShell(
+      NavalUnitsPanel(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        bus: AppEventBus.create(),
+        topology: const MapTopology(),
+      ),
+      viewport: const Size(480, 720),
+    ),
   );
 }
 
@@ -335,17 +359,11 @@ Future<void> confirmNavalSplitMovingFirstShip(
 
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalSplitUpdatedBus({
   required Game Function() gameSnapshot,
-}) {
-  NavalFleetsUpdatedEvent? fleetEvent;
-  final bus = AppEventBus.create();
-  addTearDown(
-    bus.on<NavalFleetsUpdatedEvent>().listen((e) => fleetEvent = e).cancel,
-  );
-  addTearDown(
-    wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot).cancel,
-  );
-  return (bus, () => fleetEvent);
-}
+}) =>
+    wireNavalFleetBusWithWire(
+      wire: (bus) =>
+          wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot),
+    );
 
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalFleetsUpdatedCapture() {
   NavalFleetsUpdatedEvent? updated;
@@ -506,8 +524,14 @@ Future<void> pumpNavalCheckCombineDisabled(
   required Game game,
   required String humanId,
   required List<String> fleetLabels,
+  MapTopology topology = const MapTopology(),
 }) async {
-  await pumpNavalPanel(tester, game: game, humanPlayerId: humanId);
+  await pumpNavalPanel(
+    tester,
+    game: game,
+    humanPlayerId: humanId,
+    topology: topology,
+  );
   await tapNavalFleetCheckboxes(tester, fleetLabels);
   expectNavalCombineEnabled(tester, enabled: false);
 }
@@ -528,6 +552,46 @@ Future<NavalFleetsUpdatedEvent?> pumpNavalTapCheckCombine(
   }
   await tapNavalCombine(tester, scroll: scroll);
   return latest();
+}
+
+Future<void> pumpNavalCombineOutcomeCase(
+  WidgetTester tester,
+  NavalPanelCombineOutcomeCase case_,
+) async {
+  if (case_.pinCollapsedSplitToolbar) {
+    final (bus, latest) = wireNavalFleetsUpdatedCapture();
+    await pumpNavalPanel(
+      tester,
+      game: case_.build(),
+      humanPlayerId: case_.humanId,
+      bus: bus,
+    );
+    final tileA = find.widgetWithText(ExpansionTile, 'Fleet col_a');
+    final tileB = find.widgetWithText(ExpansionTile, 'Fleet col_b');
+    for (final tile in [tileA, tileB]) {
+      expect(
+        find.descendant(of: tile, matching: find.byTooltip('Split')),
+        findsOneWidget,
+      );
+    }
+    await tapNavalFleetCheckboxes(tester, case_.labels);
+    expect(
+      find.descendant(of: tileA, matching: find.byTooltip('Split')),
+      findsOneWidget,
+    );
+    await tapNavalCombine(tester);
+    expectNavalCombineOutcome(latest(), case_);
+    return;
+  }
+  final updated = await pumpNavalTapCheckCombine(
+    tester,
+    game: case_.build(),
+    humanId: case_.humanId,
+    labels: case_.labels,
+    scroll: case_.scroll,
+    expectCombineEnabled: case_.expectCombineEnabled,
+  );
+  expectNavalCombineOutcome(updated, case_);
 }
 
 (AppEventBus bus, List<ClosePanelEvent> events) wireNavalClosePanelCapture() {
@@ -641,101 +705,41 @@ Fleet navalPanelPortPeer({
   return (bus, () => updated);
 }
 
-Future<void> tapNavalFleetCheckboxFinders(
-  WidgetTester tester,
-  List<Finder> tiles,
-) async {
-  for (final tile in tiles) {
-    await tester.tap(
-      find.descendant(of: tile, matching: find.byType(Checkbox)),
-    );
-    await tester.pumpAndSettle();
-  }
-}
-
-/// Stateful host for location-scope / draft-move naval panel pins.
-class ScopedNavalPanelHarness extends StatefulWidget {
-  const ScopedNavalPanelHarness({
-    required this.game,
-    required this.humanPlayerId,
-    required this.bus,
-    required this.topology,
-    required this.locationScopeKey,
-    this.removeFleetOnNextFrame = false,
-    super.key,
+Future<void> pumpNavalHomePartialTransfer(
+  WidgetTester tester, {
+  required String humanId,
+}) async {
+  var gameState = buildNavalPanelHomeAdjacentSeaSourceGame(
+    humanId: humanId,
+    gameId: 'g_${humanId}_partial_transfer',
+  );
+  final homeId = homeFleetIdFor(humanId);
+  final bus = AppEventBus.create();
+  final subTransfer = wireNavalTransferForWidgetTest(
+    bus: bus,
+    gameSnapshot: () => gameState,
+  );
+  final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+    gameState = e.game;
   });
-
-  final Game game;
-  final String humanPlayerId;
-  final AppEventBus bus;
-  final MapTopology topology;
-  final String? locationScopeKey;
-  final bool removeFleetOnNextFrame;
-
-  @override
-  State<ScopedNavalPanelHarness> createState() =>
-      _ScopedNavalPanelHarnessState();
-}
-
-class _ScopedNavalPanelHarnessState extends State<ScopedNavalPanelHarness> {
-  late Orders _draftOrders;
-  late Game _game;
-  StreamSubscription<NavalMoveFleetRequestedEvent>? _moveSub;
-
-  @override
-  void initState() {
-    super.initState();
-    _draftOrders = const Orders();
-    _game = widget.game;
-    _moveSub = widget.bus.on<NavalMoveFleetRequestedEvent>().listen((event) {
-      if (!mounted) return;
-      setState(() {
-        _draftOrders = Orders(
-          navalMoveOrdersByPlayerId: {
-            event.humanPlayerId: [
-              NavalMoveOrder(
-                fleetId: event.moveOrder.fleetId,
-                destinationSeaZoneId: event.moveOrder.destinationSeaZoneId,
-                destinationPortProvinceId:
-                    event.moveOrder.destinationPortProvinceId,
-              ),
-            ],
-          },
-        );
-      });
-    });
-    if (widget.removeFleetOnNextFrame) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _game = _game.copyWith(
-            worldState: _game.worldState.copyWith(fleets: const []),
-          );
-        });
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _moveSub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return buildAppShell(
-      child: Scaffold(
-        body: NavalUnitsPanel(
-          game: _game,
-          humanPlayerId: widget.humanPlayerId,
-          bus: widget.bus,
-          topology: widget.topology,
-          draftOrders: _draftOrders,
-          locationScopeKey: widget.locationScopeKey,
-        ),
-      ),
-    );
-  }
+  addTearDown(subTransfer.cancel);
+  addTearDown(subUpdated.cancel);
+  await pumpNavalPanel(
+    tester,
+    game: gameState,
+    humanPlayerId: humanId,
+    topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+    bus: bus,
+  );
+  await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+  await tapNavalCombine(tester);
+  await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
+  final homeFleet =
+      gameState.worldState.fleets.firstWhere((f) => f.id == homeId);
+  final sourceFleet =
+      gameState.worldState.fleets.firstWhere((f) => f.id == 'sea_source');
+  expect(homeFleet.ships.map((s) => s.id).toSet().contains('src_1'), isTrue);
+  expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_1'), isFalse);
+  expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_2'), isTrue);
 }
 
