@@ -160,6 +160,8 @@ void main() {
         'Market tab — staged bid + offer (Refs #2993 E5b)',
         'Market tab — cargo saturated (Refs #2993 E5c)',
         'Market tab — sectioned grouping (Refs #3093)',
+        'Market tab — wide two-column (Refs #4227)',
+        'Market tab — narrow stacked rows (Refs #4227)',
         'Market tab — sellable clamp (Refs #3093)',
         'Market tab — treasury bid cap (Refs #3093)',
         'Market tab — bid budget saturated (Refs #4186)',

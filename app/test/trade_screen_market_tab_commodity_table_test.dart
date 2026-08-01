@@ -111,8 +111,12 @@ void main() {
 
     testWidgets('rows are grouped under Food / Raw Materials / Manufactured '
         'CtSectionLabel headers in catalog order — deterministic order '
-        'pin (#3093 sectioned grouping)', (tester) async {
-      await pumpTradeScreen(tester, game: buildTradeTestGame());
+        'pin (#3093 sectioned grouping, narrow viewport)', (tester) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(),
+        viewport: const Size(400, 4096),
+      );
 
       // All three section headers mounted in order Food → Raw
       // Materials → Manufactured. The pin verifies their vertical
