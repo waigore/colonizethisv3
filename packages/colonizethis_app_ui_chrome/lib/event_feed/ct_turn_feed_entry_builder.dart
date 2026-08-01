@@ -161,12 +161,12 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
             :final totalTreasuryCredit,
             :final creditCount,
           ) =>
-            _feedEntry(
-              context: context,
+            CtEventFeedEntry(
               text: CtEventFeedText.overseasProfitCreditedLine(
                 totalTreasuryCredit,
                 creditCount,
               ),
+              linkAffordance: context.overseasProfitCreditedTap != null,
               onTap: context.overseasProfitCreditedTap,
             ),
           ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
@@ -237,7 +237,6 @@ CtEventFeedEntry _feedEntry({
 }) {
   return CtEventFeedEntry(
     text: text,
-    linkAffordance: onTap != null,
     onTap: onTap,
   );
 }
