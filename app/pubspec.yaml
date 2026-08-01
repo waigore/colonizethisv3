@@ -27,6 +27,7 @@ dependencies:
   colonizethis_logic:
   colonizethis_orders:
   colonizethis_turn:
+  colonizethis_diplomacy:
   colonizethis_setup:
   colonizethis_world:
   colonizethis_ai:

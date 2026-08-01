@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class GameEventBridge {

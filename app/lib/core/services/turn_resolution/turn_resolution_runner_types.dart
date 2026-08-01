@@ -1,4 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 class TurnResolutionProgressEvent {
   const TurnResolutionProgressEvent({

@@ -1,7 +1,8 @@
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show DevelopmentRoadFirstState;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -6,7 +6,9 @@ import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
 import 'package:colonizethis_app/core/services/ai/ai_profile_resolution.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show mergeOrderLists;
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'turn_resolution_result_codec.dart';
