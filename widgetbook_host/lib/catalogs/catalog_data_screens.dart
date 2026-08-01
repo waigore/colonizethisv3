@@ -131,6 +131,67 @@ Game _tradeScreenStoryGame({
   );
 }
 
+/// Story Game with one still-valid purchased timber tile for the human GP
+/// so reviewers see the Market first-right chip (Refs #4226).
+Game _tradeScreenStoryFirstRightGame() {
+  const String tileKey = 'oldWorld|M1|0|0';
+  return Game(
+    id: 'wb_trade_screen_first_right',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(
+        provinces: [
+          Province(
+            id: 'oldWorld|M1',
+            regionId: 'oldWorld',
+            ownerId: 'M1',
+            townDevelopmentLevel: 1,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      purchasedTilesByTileKey: const {tileKey: 'gp_human'},
+      resourceByTileKey: const {tileKey: 'timber'},
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          'oldWorld|M1': [tileKey],
+        },
+      },
+    ),
+    turnTimeMapping: TurnTimeMapping.gdd01,
+    players: const [
+      Player(
+        id: 'gp_human',
+        displayName: 'England',
+        isHuman: true,
+        treasury: 500,
+        stockpile: Stockpile(
+          quantities: <CommodityId, int>{'timber': 10},
+        ),
+      ),
+    ],
+    minorNations: const [
+      MinorNation(
+        id: 'M1',
+        displayName: 'Minor 1',
+        capitalProvinceId: 'oldWorld|M1',
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'oldWorld|M1',
+          x: 0,
+          y: 0,
+        ),
+      ),
+    ],
+    diplomacyRelations: const [],
+    diplomaticHistoryEvents: const [],
+    dossierEvidenceEntries: const [],
+    worldMarketState: const WorldMarketState(
+      prices: <CommodityId, int>{'timber': 30},
+    ),
+  );
+}
+
 ProviderScope _tradeScreenProviderScope({
   required Widget child,
   Orders? initialOrders,
@@ -162,13 +223,15 @@ Widget _tradeScreenDefaultStory({
   Map<CommodityId, int>? stockpile,
   List<OvertureState> overtureStates = const <OvertureState>[],
   Map<String, bool>? techUnlocked,
+  Game? gameOverride,
 }) {
-  final game = _tradeScreenStoryGame(
-    treasury: treasury,
-    stockpile: stockpile,
-    overtureStates: overtureStates,
-    techUnlocked: techUnlocked,
-  );
+  final game = gameOverride ??
+      _tradeScreenStoryGame(
+        treasury: treasury,
+        stockpile: stockpile,
+        overtureStates: overtureStates,
+        techUnlocked: techUnlocked,
+      );
   final player = game.players.first;
   return _tradeScreenProviderScope(
     initialOrders: initialOrders,
@@ -406,6 +469,24 @@ WorldMarketState _tradeScreenDealBookEmptyState() {
   return const WorldMarketState();
 }
 
+/// `WorldMarketState` for the overseas-profit Deal Book story (Refs #4226).
+WorldMarketState _tradeScreenDealBookOverseasProfitState() {
+  return const WorldMarketState(
+    lastTurnOverseasProfitCreditsByGpId: <String, List<OverseasProfitCreditRecord>>{
+      'gp_human': <OverseasProfitCreditRecord>[
+        OverseasProfitCreditRecord(
+          creditKind: OverseasProfitCreditKind.tileOwnerShare,
+          commodityId: 'timber',
+          quantity: 5,
+          profitTreasury: 15,
+          buyerFactionId: 'gp_aragon',
+          sourceFactionId: 'M1',
+        ),
+      ],
+    },
+  );
+}
+
 /// `WorldMarketState` for the mixed Deal Book story — one FRR-tagged
 /// buy, one FTP-tagged buy, two filled sales, and a mix of carry
 /// forward bids/offers on both sides. Mirrors the realistic resolved
@@ -608,6 +689,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market tab — first-right chip (Refs #4226)',
+        builder: (context) => _tradeScreenDefaultStory(
+          gameOverride: _tradeScreenStoryFirstRightGame(),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Market tab — sellable clamp (Refs #3093)',
         builder: (context) => _tradeScreenDefaultStory(
           stockpile: _tradeScreenStorySellableClampStockpile(),
@@ -654,6 +741,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         name: 'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
         builder: (context) => _tradeScreenDealBookProviderScope(
           worldMarketState: _tradeScreenDealBookMixedState(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Deal Book tab — overseas profit ledger (Refs #4226)',
+        builder: (context) => _tradeScreenDealBookProviderScope(
+          worldMarketState: _tradeScreenDealBookOverseasProfitState(),
         ),
       ),
       WidgetbookUseCase(
