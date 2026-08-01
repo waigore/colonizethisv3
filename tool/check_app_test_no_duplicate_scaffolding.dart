@@ -259,8 +259,7 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
       name.startsWith('military_units_panel_army') ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
-      name == 'civilian_units_panel_row_card_r30_test.dart' ||
-      name == 'naval_units_panel_mockup_fidelity_test.dart') {
+      name == 'civilian_units_panel_row_card_r30_test.dart') {
     return true;
   }
   return false;
@@ -434,7 +433,6 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
-      name == 'naval_units_panel_mockup_fidelity_test.dart' ||
       name == 'game_map_narrow_detail_overlay_test.dart' ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||

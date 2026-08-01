@@ -11,6 +11,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
+import 'naval_panel_mockup_pins.dart';
 import 'naval_units_panel_test_support.dart';
 import 'widget_test_assets.dart';
 
@@ -22,7 +23,7 @@ void main() {
     await setUpNinePatchAssets();
   });
 
-  group('NavalUnitsPanel', () {
+  group('NavalUnitsPanel combine', () {
     testWidgets(
       'AC: Header checkbox selects all fleets then second interaction clears',
       (WidgetTester tester) async {
@@ -266,6 +267,13 @@ void main() {
         expect(tester.widget<Checkbox>(staysCb).value, isTrue);
         expectNavalCombineEnabled(tester, enabled: false);
       },
+    );
+  });
+
+  group('Naval mockup fidelity (UNIT30001)', () {
+    registerNavalMockupFidelityTests(
+      testWidgets,
+      buildNavalPanelMockupFidelityGame(),
     );
   });
 }

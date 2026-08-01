@@ -361,7 +361,7 @@ Large `app/test/**` widget/screen suites that are split into numbered fragments 
 
 | Family | Parts | Stay-split reason (wave-7 re-measure, Refs #4048) |
 |--------|-------|-------------------|
-| `naval_units_panel_test` | 3 | Combined physical lines ~1180 ≫1000 (wave-11 Slice D densify, Refs #4224; baseline 3217 family total @ `8d176c93e`, target ≥15% part-shard reduction met; family harness re-baselined post-densify) |
+| `naval_units_panel_test` | 3 | Combined physical lines ~1180 ≫1000 (wave-11 Slice D densify, Refs #4224; baseline 3217 family total @ `8d176c93e`, post-densify family `naval_units_panel_{support,scenarios,part*,scoped_harness}` ~2385 LOC ≥15% reduction; combine/locate/mockup pins in `naval_panel_*` siblings) |
 | `ct_region_map_widget_test` | 4 | Combined physical lines ~1824 ≫1000 (local `_pump*` wrappers folded into `pumpCtRegionMapTest` on `ct_region_map_test_support.dart`) |
 | `game_map_area_state_logic_test` | 3 (+ cache/campaign siblings) | Combined physical lines ~1440 ≫1000 (wave-10 Slice E densify, Refs #4183; baseline ~2002) |
 | `military_units_panel_test` | army/display/split siblings | Combined physical lines ~1091 ≫1000 |

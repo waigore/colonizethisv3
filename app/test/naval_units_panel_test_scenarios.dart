@@ -213,38 +213,36 @@ Game buildNavalPanelSingleSeaFleetGame({
   String seaZoneId = 's1',
   String shipId = 'ship_1',
   String shipTypeId = 'frigate',
-}) {
-  return buildNavalPanelOwFleetsGame(
-    gameId: gameId,
-    humanId: humanId,
-    displayName: displayName,
-    oldWorldProvinces: const [],
-    fleets: [
-      Fleet(
-        id: fleetId,
-        ownerId: humanId,
-        regionId: 'oldWorld',
-        seaZoneId: seaZoneId,
-        ships: [ShipInstance(id: shipId, typeId: shipTypeId)],
-      ),
-    ],
-  );
-}
+}) =>
+    buildNavalPanelOwFleetsGame(
+      gameId: gameId,
+      humanId: humanId,
+      displayName: displayName,
+      oldWorldProvinces: const [],
+      fleets: [
+        Fleet(
+          id: fleetId,
+          ownerId: humanId,
+          regionId: 'oldWorld',
+          seaZoneId: seaZoneId,
+          ships: [ShipInstance(id: shipId, typeId: shipTypeId)],
+        ),
+      ],
+    );
 
 /// Empty-world human with no fleets (empty-state message pins).
 Game buildNavalPanelEmptyHumanGame({
   String humanId = 'p_empty',
   String gameId = 'empty_naval',
   String displayName = 'Solo',
-}) {
-  return buildNavalPanelOwFleetsGame(
-    gameId: gameId,
-    humanId: humanId,
-    displayName: displayName,
-    oldWorldProvinces: const [],
-    fleets: const [],
-  );
-}
+}) =>
+    buildNavalPanelOwFleetsGame(
+      gameId: gameId,
+      humanId: humanId,
+      displayName: displayName,
+      oldWorldProvinces: const [],
+      fleets: const [],
+    );
 
 /// Beachhead-mission sea fleet for status-line pins.
 Game buildNavalPanelBeachheadMissionGame({
@@ -252,30 +250,29 @@ Game buildNavalPanelBeachheadMissionGame({
   String gameId = 'beach_test',
   String fleetId = 'bf1',
   String seaZoneId = 'atlantic',
-}) {
-  return buildNavalPanelOwFleetsGame(
-    gameId: gameId,
-    humanId: humanId,
-    displayName: 'P',
-    oldWorldProvinces: const [],
-    fleets: [
-      Fleet(
-        id: fleetId,
-        ownerId: humanId,
-        regionId: 'oldWorld',
-        seaZoneId: seaZoneId,
-        shipTypeIds: const ['carrack'],
-        mission: FleetMission.beachhead,
-      ),
-    ],
-    portsByProvinceSeaboard: {
-      'oldWorld|lisbon|$seaZoneId': 'oldWorld|lisbon|0|0',
-    },
-    tileKeysByProvince: const {
-      'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
-    },
-  );
-}
+}) =>
+    buildNavalPanelOwFleetsGame(
+      gameId: gameId,
+      humanId: humanId,
+      displayName: 'P',
+      oldWorldProvinces: const [],
+      fleets: [
+        Fleet(
+          id: fleetId,
+          ownerId: humanId,
+          regionId: 'oldWorld',
+          seaZoneId: seaZoneId,
+          shipTypeIds: const ['carrack'],
+          mission: FleetMission.beachhead,
+        ),
+      ],
+      portsByProvinceSeaboard: {
+        'oldWorld|lisbon|$seaZoneId': 'oldWorld|lisbon|0|0',
+      },
+      tileKeysByProvince: const {
+        'oldWorld|lisbon': ['oldWorld|lisbon|0|0'],
+      },
+    );
 
 /// Two OW sea zones linked for Move / scoped auto-close cases.
 MapTopology buildNavalTwoSeaZonesTopology({

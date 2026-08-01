@@ -6,8 +6,6 @@
 
 import 'dart:async';
 
-import 'dart:async';
-
 import 'package:colonizethis_data/colonizethis_data.dart'
     show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
@@ -25,11 +23,11 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
 import 'app_shell_harness.dart';
-import 'naval_units_panel_combine_scenarios.dart';
 import 'naval_units_panel_scoped_harness.dart';
+import 'naval_panel_combine_tables.dart';
 import 'naval_units_panel_test_scenarios.dart';
 import 'units_panel_test_shared.dart';
-export 'naval_units_panel_combine_scenarios.dart';
+export 'naval_panel_combine_tables.dart';
 export 'naval_units_panel_test_scenarios.dart';
 export 'units_panel_test_shared.dart';
 
@@ -361,17 +359,11 @@ Future<void> confirmNavalSplitMovingFirstShip(
 
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalSplitUpdatedBus({
   required Game Function() gameSnapshot,
-}) {
-  NavalFleetsUpdatedEvent? fleetEvent;
-  final bus = AppEventBus.create();
-  addTearDown(
-    bus.on<NavalFleetsUpdatedEvent>().listen((e) => fleetEvent = e).cancel,
-  );
-  addTearDown(
-    wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot).cancel,
-  );
-  return (bus, () => fleetEvent);
-}
+}) =>
+    wireNavalFleetBusWithWire(
+      wire: (bus) =>
+          wireNavalSplitForWidgetTest(bus: bus, gameSnapshot: gameSnapshot),
+    );
 
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalFleetsUpdatedCapture() {
   NavalFleetsUpdatedEvent? updated;
@@ -711,18 +703,6 @@ Fleet navalPanelPortPeer({
   );
   addTearDown(wire(bus).cancel);
   return (bus, () => updated);
-}
-
-Future<void> tapNavalFleetCheckboxFinders(
-  WidgetTester tester,
-  List<Finder> tiles,
-) async {
-  for (final tile in tiles) {
-    await tester.tap(
-      find.descendant(of: tile, matching: find.byType(Checkbox)),
-    );
-    await tester.pumpAndSettle();
-  }
 }
 
 Future<void> pumpNavalHomePartialTransfer(
