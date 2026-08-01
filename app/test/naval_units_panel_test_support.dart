@@ -398,6 +398,94 @@ void expectNavalCombineEnabled(
   );
 }
 
+Future<void> tapNavalConfirmTransfer(
+  WidgetTester tester, {
+  String? moveAllTypeId,
+  String? moveOneTypeId,
+}) async {
+  if (moveAllTypeId != null) {
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveAll(moveAllTypeId)));
+    await tester.pumpAndSettle();
+  } else if (moveOneTypeId != null) {
+    await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne(moveOneTypeId)));
+    await tester.pumpAndSettle();
+  }
+  final confirmTransfer = find.widgetWithText(CtNinePatchButton, 'Transfer');
+  expect(confirmTransfer, findsOneWidget);
+  final confirmTransferButton = tester.widget<CtNinePatchButton>(
+    confirmTransfer,
+  );
+  expect(confirmTransferButton.enabled, isTrue);
+  expect(confirmTransferButton.onPressed, isNotNull);
+  confirmTransferButton.onPressed!.call();
+  await tester.pumpAndSettle();
+}
+
+Future<NavalFleetsUpdatedEvent?> pumpNavalHomeFleetTransferAll(
+  WidgetTester tester, {
+  required Game game,
+  required String humanId,
+  required List<String> fleetLabels,
+  required String transferTypeId,
+}) async {
+  final (bus, updated) = wireNavalFleetsUpdatedCapture();
+  final subTransfer = wireNavalTransferForWidgetTest(
+    bus: bus,
+    gameSnapshot: () => game,
+  );
+  addTearDown(subTransfer.cancel);
+  await pumpNavalPanel(
+    tester,
+    game: game,
+    humanPlayerId: humanId,
+    bus: bus,
+  );
+  await tapNavalFleetCheckboxes(tester, fleetLabels);
+  await tapNavalCombine(tester);
+  expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
+  await tapNavalConfirmTransfer(
+    tester,
+    moveAllTypeId: transferTypeId,
+  );
+  return updated();
+}
+
+Future<void> pumpNavalAutocloseScenario(
+  WidgetTester tester,
+  NavalPanelAutocloseCase case_,
+) async {
+  final (bus, closeEvents) = await pumpNavalAutocloseCase(
+    tester,
+    humanId: case_.humanId,
+    gameId: case_.gameId,
+    displayName: case_.displayName,
+    locationScopeKey: case_.locationScopeKey,
+    topology: case_.topology,
+    removeFleetOnNextFrame: case_.removeFleetOnNextFrame,
+  );
+  if (case_.expectFleetRow) {
+    expect(find.textContaining('Fleet f1'), findsOneWidget);
+  }
+  if (case_.emitMove) await emitNavalScopedMove(tester, bus, case_.humanId);
+  expect(closeEvents.length, case_.closeCount);
+}
+
+void expectNavalCombineOutcome(
+  NavalFleetsUpdatedEvent? updated,
+  NavalPanelCombineOutcomeCase case_,
+) {
+  expect(updated, isNotNull);
+  final fleetsAfter = updated!.game.worldState.fleets;
+  if (case_.expectedFleetCount != null) {
+    expect(fleetsAfter.length, case_.expectedFleetCount);
+  }
+  final survivor = fleetsAfter.firstWhere((f) => f.id == case_.expectedSurvivorId);
+  final shipIds = survivor.ships.map((s) => s.id).toList()..sort();
+  final expected = [...case_.expectedShipIds]..sort();
+  expect(shipIds, expected);
+  expect(survivor.mission, case_.expectedSurvivorMission);
+}
+
 Future<void> tapNavalCombine(
   WidgetTester tester, {
   bool scroll = false,
@@ -537,24 +625,6 @@ Fleet navalPanelPortPeer({
   regionId: 'oldWorld',
   inPortAtProvinceId: port,
   ships: ships,
-);
-
-Game navalPanelCapPeersGame({
-  required String humanId,
-  required String gameId,
-  required String displayName,
-  required List<Fleet> peerFleets,
-  List<ShipInstance> homeShips = const [
-    ShipInstance(id: 'ship_h', typeId: 'carrack'),
-  ],
-  int? nextShipInstanceSeq,
-}) => buildNavalPanelCapitalHomeAndPeersGame(
-  humanId: humanId,
-  gameId: gameId,
-  displayName: displayName,
-  nextShipInstanceSeq: nextShipInstanceSeq,
-  homeShips: homeShips,
-  peerFleets: peerFleets,
 );
 
 (AppEventBus, NavalFleetsUpdatedEvent? Function()) wireNavalFleetBusWithWire({
