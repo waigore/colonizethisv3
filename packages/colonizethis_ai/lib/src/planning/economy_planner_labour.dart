@@ -1,3 +1,5 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
 import 'ai_commodity_ids.dart';
 import 'economy_planner_constants.dart';
 import 'growth_stage.dart';
@@ -6,6 +8,27 @@ import 'recipe_scoring.dart';
 import 'scored_candidate.dart';
 
 final _log = packageLogger('economy_planner_labour');
+
+bool _delegatesToIndustryCounselCore(LabourAllocationInput input) {
+  if (input.castIronLabourPeasantRecruitFabricBoost) return false;
+  if (input.feedstockReserveOutputIds.isNotEmpty) return false;
+  if (input.militaryRebuildCrisis) return false;
+  if (input.regimentBuildInputProductionBoost) return false;
+  if (input.missingRegimentBuildInputIds.isNotEmpty) return false;
+  if (input.supplierReleaseImprovementInputIds.isNotEmpty) return false;
+  if (input.growthStage != null && !kGrowthStagePlannerEnabled) return false;
+  return true;
+}
+
+IndustryCounselGrowthStage? _industryCounselGrowthStage(GrowthStage? stage) {
+  if (stage == null) return null;
+  return IndustryCounselGrowthStage(
+    workerGrowthPriority: stage.workerGrowthPriority,
+    infrastructurePriority: stage.infrastructurePriority,
+    resourceProductionPriority: stage.resourceProductionPriority,
+    militaryPriority: stage.militaryPriority,
+  );
+}
 
 /// Bundles inputs for [allocateLabour] (Refs #3977 AC5).
 final class LabourAllocationInput {
@@ -54,6 +77,18 @@ Set<String> missingCheapestRegimentBuildInputIds(Stockpile stockpile) {
 }
 
 List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
+  if (_delegatesToIndustryCounselCore(input)) {
+    return industryCounselAllocateLabourCore(
+      stockpile: input.stockpile,
+      workers: input.workers,
+      effectiveLabour: input.effectiveLabour,
+      techUnlocked: input.techUnlocked,
+      agendaId: input.config.hiddenAgendaId,
+      growthStage: _industryCounselGrowthStage(input.growthStage),
+      growthStagePlannerEnabled: kGrowthStagePlannerEnabled,
+    );
+  }
+
   final stockpile = input.stockpile;
   final workers = input.workers;
   final effectiveLabour = input.effectiveLabour;

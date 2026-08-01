@@ -1,3 +1,5 @@
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
 import 'ai_commodity_ids.dart';
 import 'planning_imports.dart';
 
@@ -22,10 +24,8 @@ int buildPaperCost(BuildUnitOrder order) {
 
 /// Integer-floor `1.2 × sustainable` per SPEC/ai/economy-planner.md
 /// § Recruitment planner (Requirement #10).
-int softLuxuryCapDeficitLimit(int sustainable) {
-  if (sustainable <= 0) return 0;
-  return (sustainable * 12) ~/ 10;
-}
+int softLuxuryCapDeficitLimit(int sustainable) =>
+    industryCounselSoftLuxuryCapDeficitLimit(sustainable);
 
 /// True iff `effectiveLabour < targetRecipesLabour × 0.8`. When the hint is
 /// null or carries zero assigned labour, returns `false` (no deficit override).
@@ -43,13 +43,8 @@ bool isRecruitmentLabourDeficit({
   return effective * 10 < target * 8;
 }
 
-int totalAssignedLabourInEconomyPlan(EconomyPlan plan) {
-  var total = 0;
-  for (final a in plan.productionAssignments) {
-    total += a.assignedLabour;
-  }
-  return total;
-}
+int totalAssignedLabourInEconomyPlan(EconomyPlan plan) =>
+    industryCounselTotalAssignedLabour(plan.productionAssignments);
 
 /// Sustainable trained-worker count per tier:
 /// `stockpile[T-luxury] + projectedThisTurnOutput[T-luxury]`. Luxury
@@ -59,41 +54,16 @@ int totalAssignedLabourInEconomyPlan(EconomyPlan plan) {
 Map<WorkerTier, int> sustainableTrainedCounts({
   required Stockpile stockpile,
   required EconomyPlan? economyPlanHint,
-}) {
-  final projected = projectedLuxuryOutput(economyPlanHint);
-  return {
-    WorkerTier.apprentice:
-        stockpile.quantityOf(CommodityCatalog.refinedSugar.id) +
-        (projected[CommodityCatalog.refinedSugar.id] ?? 0),
-    WorkerTier.journeyman:
-        stockpile.quantityOf(CommodityCatalog.cigars.id) +
-        (projected[CommodityCatalog.cigars.id] ?? 0),
-    WorkerTier.master:
-        stockpile.quantityOf(CommodityCatalog.furHats.id) +
-        (projected[CommodityCatalog.furHats.id] ?? 0),
-  };
-}
+}) =>
+    industryCounselSustainableTrainedCounts(
+      stockpile: stockpile,
+      productionAssignments: economyPlanHint?.productionAssignments ?? const [],
+    );
 
-Map<String, int> projectedLuxuryOutput(EconomyPlan? plan) {
-  if (plan == null) return const {};
-  final out = <String, int>{};
-  for (final assigned in plan.productionAssignments) {
-    final recipe = ProductionRecipesCatalog.byId[assigned.recipeId];
-    if (recipe == null) continue;
-    final outputId = recipe.outputCommodityId;
-    if (outputId != CommodityCatalog.refinedSugar.id &&
-        outputId != CommodityCatalog.cigars.id &&
-        outputId != CommodityCatalog.furHats.id) {
-      continue;
-    }
-    final labourPer = recipe.labourPerOutput;
-    if (labourPer <= 0) continue;
-    final runs = assigned.assignedLabour ~/ labourPer;
-    if (runs <= 0) continue;
-    out[outputId] = (out[outputId] ?? 0) + runs * recipe.outputQuantity;
-  }
-  return out;
-}
+Map<String, int> projectedLuxuryOutput(EconomyPlan? plan) =>
+    industryCounselProjectedLuxuryOutput(
+      plan?.productionAssignments ?? const [],
+    );
 
 int pendingPeasantConsumes(Orders currentOrders, String playerId) {
   var count = 0;
