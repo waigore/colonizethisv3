@@ -27,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/turn_resolution_blocking_provider.dart';
 import '../subscription_tracker.dart';
+import 'app_event_handler_navigation.dart';
 import 'app_event_handler_unit_panels.dart';
 
 typedef DialogBuilder =
