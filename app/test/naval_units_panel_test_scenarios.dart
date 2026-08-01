@@ -413,6 +413,103 @@ Game buildNavalPanelHomeNonAdjacentSeaGame({
   );
 }
 
+/// Capital port marker-scope game for part1 location-scope pins.
+Game buildNavalPanelMarkerScopeCapitalGame({
+  String humanId = 'gp_marker_scope',
+  String gameId = 'g_marker_scope',
+}) {
+  const capital = 'oldWorld|p1';
+  return buildNavalPanelOwFleetsGame(
+    gameId: gameId,
+    humanId: humanId,
+    displayName: 'Scope Test',
+    capitalProvinceId: capital,
+    oldWorldProvinces: [
+      Province(
+        id: 'p1',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Capital Port',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: homeFleetIdFor(humanId),
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: capital,
+        ships: const [ShipInstance(id: 'home_ship_1', typeId: 'carrack')],
+      ),
+    ],
+    tileKeysByProvince: const {capital: ['oldWorld|p1|0|0']},
+  );
+}
+
+const kNavalMockupFidelityHumanId = 'gp_naval_fidelity';
+
+/// Deterministic mockup-fidelity scenario (Refs #2866 S8, #4021).
+Game buildNavalPanelMockupFidelityGame() {
+  const humanId = kNavalMockupFidelityHumanId;
+  const capitalProvinceId = 'oldWorld|cap1';
+  const portProvinceId = 'oldWorld|port1';
+  const zonePrefixedId = 'oldWorld|zone_alpha';
+  final homeId = homeFleetIdFor(humanId);
+  return buildNavalPanelOwFleetsGame(
+    gameId: 'naval-fidelity',
+    humanId: humanId,
+    displayName: 'Fidelity Tester',
+    capitalProvinceId: capitalProvinceId,
+    oldWorldProvinces: const [
+      Province(
+        id: 'cap1',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'London',
+      ),
+      Province(
+        id: 'port1',
+        regionId: 'oldWorld',
+        ownerId: humanId,
+        displayName: 'Portsmouth',
+      ),
+    ],
+    fleets: [
+      Fleet(
+        id: homeId,
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: capitalProvinceId,
+        ships: const [
+          ShipInstance(id: 'h1', typeId: 'carrack'),
+          ShipInstance(id: 'h2', typeId: 'frigate'),
+        ],
+      ),
+      Fleet(
+        id: 'channel_fleet',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        inPortAtProvinceId: portProvinceId,
+        ships: const [
+          ShipInstance(id: 'p1', typeId: 'frigate'),
+          ShipInstance(id: 'p2', typeId: 'frigate'),
+        ],
+      ),
+      Fleet(
+        id: 'atlantic_fleet',
+        ownerId: humanId,
+        regionId: 'oldWorld',
+        seaZoneId: 'zone_alpha',
+        ships: const [ShipInstance(id: 's1', typeId: 'galleon')],
+      ),
+    ],
+    seaZoneDisplayNameById: const {zonePrefixedId: 'Bay of Biscay'},
+    tileKeysByProvince: const {
+      capitalProvinceId: ['oldWorld|cap1|0|0'],
+      portProvinceId: ['oldWorld|port1|0|0'],
+    },
+  );
+}
+
 typedef NavalPanelPortShipSpec = ({String id, String shipId, String typeId});
 
 Fleet navalPanelPortShipFleet({
@@ -595,54 +692,67 @@ typedef NavalPanelCombineOutcomeCase = ({
   List<String> labels,
   bool scroll,
   bool? expectCombineEnabled,
+  bool pinCollapsedSplitToolbar,
   String expectedSurvivorId,
   List<String> expectedShipIds,
   int? expectedFleetCount,
   FleetMission expectedSurvivorMission,
 });
 
-List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
-  (
-    name: 'AC: Combining fleets creates correct ship counts',
+NavalPanelCombineOutcomeCase navalPanelMergePortOutcome({
+  required String name,
+  required String humanId,
+  required String gameId,
+  required List<NavalPanelPortShipSpec> fleets,
+  List<String>? labels,
+  bool scroll = false,
+  bool? expectCombineEnabled,
+  bool pinCollapsedSplitToolbar = false,
+  int? expectedFleetCount,
+}) {
+  final survivorId = fleets.first.id;
+  return (
+    name: name,
     build: () => buildNavalPanelMergePortFleetsFromSpecs(
-      humanId: 'gp_combine_count',
-      gameId: 'g_combine_count',
-      displayName: 'Combine tester',
-      fleets: const [
-        (id: 'test_fleet_1', shipId: 'ship_1', typeId: 'carrack'),
-        (id: 'test_fleet_2', shipId: 'ship_2', typeId: 'fluyte'),
-      ],
+      humanId: humanId,
+      gameId: gameId,
+      displayName: '$humanId tester',
+      fleets: fleets,
     ),
-    humanId: 'gp_combine_count',
-    labels: const ['Fleet test_fleet_1', 'Fleet test_fleet_2'],
-    scroll: false,
-    expectCombineEnabled: null,
-    expectedSurvivorId: 'test_fleet_1',
-    expectedShipIds: ['ship_1', 'ship_2'],
-    expectedFleetCount: null,
+    humanId: humanId,
+    labels: labels ?? [for (final f in fleets) 'Fleet ${f.id}'],
+    scroll: scroll,
+    expectCombineEnabled: expectCombineEnabled,
+    pinCollapsedSplitToolbar: pinCollapsedSplitToolbar,
+    expectedSurvivorId: survivorId,
+    expectedShipIds: [for (final f in fleets) f.shipId],
+    expectedFleetCount: expectedFleetCount,
     expectedSurvivorMission: FleetMission.none,
+  );
+}
+
+List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
+  navalPanelMergePortOutcome(
+    name: 'AC: Combining fleets creates correct ship counts',
+    humanId: 'gp_combine_count',
+    gameId: 'g_combine_count',
+    fleets: const [
+      (id: 'test_fleet_1', shipId: 'ship_1', typeId: 'carrack'),
+      (id: 'test_fleet_2', shipId: 'ship_2', typeId: 'fluyte'),
+    ],
   ),
-  (
+  navalPanelMergePortOutcome(
     name:
         'AC: Combining three fleets at same port merges all ships into first in panel order',
-    build: () => buildNavalPanelMergePortFleetsFromSpecs(
-      humanId: 'gp_three_combine',
-      gameId: 'g_three_combine',
-      displayName: 'Three combine tester',
-      fleets: const [
-        (id: 'c1', shipId: 's1', typeId: 'carrack'),
-        (id: 'c2', shipId: 's2', typeId: 'fluyte'),
-        (id: 'c3', shipId: 's3', typeId: 'carrack'),
-      ],
-    ),
     humanId: 'gp_three_combine',
-    labels: const ['Fleet c1', 'Fleet c2', 'Fleet c3'],
+    gameId: 'g_three_combine',
+    fleets: const [
+      (id: 'c1', shipId: 's1', typeId: 'carrack'),
+      (id: 'c2', shipId: 's2', typeId: 'fluyte'),
+      (id: 'c3', shipId: 's3', typeId: 'carrack'),
+    ],
     scroll: true,
-    expectCombineEnabled: null,
-    expectedSurvivorId: 'c1',
-    expectedShipIds: ['s1', 's2', 's3'],
     expectedFleetCount: 1,
-    expectedSurvivorMission: FleetMission.none,
   ),
   (
     name: 'AC: combine same-sea survivors merge into first fleet id',
@@ -651,6 +761,7 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
     labels: const ['Fleet sea_1', 'Fleet sea_2'],
     scroll: false,
     expectCombineEnabled: true,
+    pinCollapsedSplitToolbar: false,
     expectedSurvivorId: 'sea_1',
     expectedShipIds: ['ss1', 'ss2'],
     expectedFleetCount: 1,
@@ -683,6 +794,7 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
     labels: const ['Fleet m1', 'Fleet m2'],
     scroll: false,
     expectCombineEnabled: null,
+    pinCollapsedSplitToolbar: false,
     expectedSurvivorId: 'm1',
     expectedShipIds: ['ms1', 'ms2'],
     expectedFleetCount: 1,
@@ -706,31 +818,22 @@ List<NavalPanelCombineOutcomeCase> navalPanelCombineOutcomeCases() => [
     labels: const ['Fleet r3', 'Fleet r2', 'Fleet r1'],
     scroll: true,
     expectCombineEnabled: null,
+    pinCollapsedSplitToolbar: false,
     expectedSurvivorId: 'r1',
     expectedShipIds: ['rs1', 'rs2', 'rs3'],
     expectedFleetCount: 1,
     expectedSurvivorMission: FleetMission.none,
   ),
-  (
+  navalPanelMergePortOutcome(
     name:
         'AC: Collapsed rows keep inline Split action while checkbox selection works',
-    build: () => buildNavalPanelCapitalMergePortFleetsGame(
-      humanId: 'gp_collapsed_cb',
-      gameId: 'g_collapsed_cb',
-      displayName: 'Collapsed cb tester',
-      fleets: [
-        navalPanelPortFleetAtMergePort('col_a', 'gp_collapsed_cb', 'cs1', 'carrack'),
-        navalPanelPortFleetAtMergePort('col_b', 'gp_collapsed_cb', 'cs2', 'fluyte'),
-      ],
-    ),
     humanId: 'gp_collapsed_cb',
-    labels: const ['Fleet col_a', 'Fleet col_b'],
-    scroll: false,
-    expectCombineEnabled: null,
-    expectedSurvivorId: 'col_a',
-    expectedShipIds: ['cs1', 'cs2'],
-    expectedFleetCount: null,
-    expectedSurvivorMission: FleetMission.none,
+    gameId: 'g_collapsed_cb',
+    fleets: const [
+      (id: 'col_a', shipId: 'cs1', typeId: 'carrack'),
+      (id: 'col_b', shipId: 'cs2', typeId: 'fluyte'),
+    ],
+    pinCollapsedSplitToolbar: true,
   ),
 ];
 

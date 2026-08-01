@@ -125,11 +125,17 @@ void main() {
     testWidgets(
       'AC: Home Fleet and adjacent sea source enable selected-ship transfer',
       (WidgetTester tester) async {
-        await pumpNavalHomeAdjacentTransferDialog(
+        const humanId = 'gp_home_adjacent';
+        await pumpNavalPanel(
           tester,
-          game: buildNavalPanelHomeAdjacentSeaSourceGame(),
-          humanId: 'gp_home_adjacent',
+          game: buildNavalPanelHomeAdjacentSeaSourceGame(humanId: humanId),
+          humanPlayerId: humanId,
+          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
         );
+        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+        expectNavalCombineEnabled(tester, enabled: true);
+        await tapNavalCombine(tester);
+        expect(find.text('Transfer Ships to Home Fleet'), findsOneWidget);
       },
     );
 
@@ -137,13 +143,38 @@ void main() {
       'AC: Home Fleet transfer moves selected ships and keeps source when ships remain',
       (WidgetTester tester) async {
         const humanId = 'gp_home_transfer_apply';
-        final result = await pumpNavalHomePartialSeaTransfer(
-          tester,
+        var gameState = buildNavalPanelHomeAdjacentSeaSourceGame(
           humanId: humanId,
+          gameId: 'g_${humanId}_partial_transfer',
         );
-        expect(result.homeShipIds.contains('src_1'), isTrue);
-        expect(result.sourceShipIds.contains('src_1'), isFalse);
-        expect(result.sourceShipIds.contains('src_2'), isTrue);
+        final homeId = homeFleetIdFor(humanId);
+        final bus = AppEventBus.create();
+        final subTransfer = wireNavalTransferForWidgetTest(
+          bus: bus,
+          gameSnapshot: () => gameState,
+        );
+        final subUpdated = bus.on<NavalFleetsUpdatedEvent>().listen((e) {
+          gameState = e.game;
+        });
+        addTearDown(subTransfer.cancel);
+        addTearDown(subUpdated.cancel);
+        await pumpNavalPanel(
+          tester,
+          game: gameState,
+          humanPlayerId: humanId,
+          topology: buildUnitsPanelCapitalAdjacentSeaTopology(),
+          bus: bus,
+        );
+        await tapNavalFleetCheckboxes(tester, ['Home Fleet', 'Fleet sea_source']);
+        await tapNavalCombine(tester);
+        await tapNavalConfirmTransfer(tester, moveOneTypeId: 'fluyte');
+        final homeFleet =
+            gameState.worldState.fleets.firstWhere((f) => f.id == homeId);
+        final sourceFleet =
+            gameState.worldState.fleets.firstWhere((f) => f.id == 'sea_source');
+        expect(homeFleet.ships.map((s) => s.id).toSet().contains('src_1'), isTrue);
+        expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_1'), isFalse);
+        expect(sourceFleet.ships.map((s) => s.id).toSet().contains('src_2'), isTrue);
       },
     );
 
@@ -166,40 +197,7 @@ void main() {
 
     for (final case_ in navalPanelCombineOutcomeCases()) {
       testWidgets(case_.name, (WidgetTester tester) async {
-        if (case_.name.contains('Collapsed')) {
-          final (bus, latest) = wireNavalFleetsUpdatedCapture();
-          await pumpNavalPanel(
-            tester,
-            game: case_.build(),
-            humanPlayerId: case_.humanId,
-            bus: bus,
-          );
-          final tileA = find.widgetWithText(ExpansionTile, 'Fleet col_a');
-          final tileB = find.widgetWithText(ExpansionTile, 'Fleet col_b');
-          for (final tile in [tileA, tileB]) {
-            expect(
-              find.descendant(of: tile, matching: find.byTooltip('Split')),
-              findsOne,
-            );
-          }
-          await tapNavalFleetCheckboxes(tester, case_.labels);
-          expect(
-            find.descendant(of: tileA, matching: find.byTooltip('Split')),
-            findsOne,
-          );
-          await tapNavalCombine(tester);
-          expectNavalCombineOutcome(latest(), case_);
-          return;
-        }
-        final updated = await pumpNavalTapCheckCombine(
-          tester,
-          game: case_.build(),
-          humanId: case_.humanId,
-          labels: case_.labels,
-          scroll: case_.scroll,
-          expectCombineEnabled: case_.expectCombineEnabled,
-        );
-        expectNavalCombineOutcome(updated, case_);
+        await pumpNavalCombineOutcomeCase(tester, case_);
       });
     }
 

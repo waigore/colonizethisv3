@@ -484,32 +484,7 @@ void main() {
         const capital = 'oldWorld|p1';
         await pumpNavalPanel(
           tester,
-          game: buildNavalPanelOwFleetsGame(
-            gameId: 'g_marker_scope',
-            humanId: humanId,
-            displayName: 'Scope Test',
-            capitalProvinceId: capital,
-            oldWorldProvinces: [
-              Province(
-                id: 'p1',
-                regionId: 'oldWorld',
-                ownerId: humanId,
-                displayName: 'Capital Port',
-              ),
-            ],
-            fleets: [
-              Fleet(
-                id: homeFleetIdFor(humanId),
-                ownerId: humanId,
-                regionId: 'oldWorld',
-                inPortAtProvinceId: capital,
-                ships: const [
-                  ShipInstance(id: 'home_ship_1', typeId: 'carrack'),
-                ],
-              ),
-            ],
-            tileKeysByProvince: const {capital: ['oldWorld|p1|0|0']},
-          ),
+          game: buildNavalPanelMarkerScopeCapitalGame(humanId: humanId),
           humanPlayerId: humanId,
           locationScopeKey: 'port:$capital',
         );
@@ -644,14 +619,78 @@ void main() {
     testWidgets(
       'AC: Home Fleet is never deleted even when empty after combine',
       (WidgetTester tester) async {
-        await pumpNavalHomeNeverDeletedTransfer(tester);
+        const humanId = 'gp_home_never_deleted';
+        final homeId = homeFleetIdFor(humanId);
+        final g = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_home_never_deleted',
+          displayName: 'Home never deleted tester',
+          nextShipInstanceSeq: 3,
+          peerFleets: [
+            navalPanelPortPeer(
+              id: 'donor',
+              humanId: humanId,
+              ships: const [ShipInstance(id: 'ship_d', typeId: 'fluyte')],
+            ),
+          ],
+        );
+        final updated = await pumpNavalHomeFleetTransferAll(
+          tester,
+          game: g,
+          humanId: humanId,
+          fleetLabels: const ['Home Fleet', 'Fleet donor'],
+          transferTypeId: 'fluyte',
+        );
+        final fleets = updated!.game.worldState.fleets;
+        expect(fleets.where((f) => f.id == homeId), isNotEmpty);
+        expect(
+          (fleets.firstWhere((f) => f.id == homeId).ships.map((s) => s.id).toList()
+                ..sort()),
+          ['home_1', 'ship_d'],
+        );
+        expect(fleets.any((f) => f.id == 'donor'), isFalse);
       },
     );
 
     testWidgets(
       'AC: Non-Home fleet split cannot empty original (Confirm Split disabled)',
       (WidgetTester tester) async {
-        await pumpNavalNonHomeSplitEmptyBlocked(tester);
+        const humanId = 'gp_nonhome_removed';
+        final g = buildNavalPanelCapitalHomeAndPeersGame(
+          humanId: humanId,
+          gameId: 'g_nonhome_removed',
+          displayName: 'Non-home removed tester',
+          nextShipInstanceSeq: 3,
+          peerFleets: [
+            navalPanelPortPeer(
+              id: 'split_me',
+              humanId: humanId,
+              ships: const [ShipInstance(id: 'ship_s1', typeId: 'fluyte')],
+            ),
+          ],
+        );
+        final (bus, updated) = wireNavalFleetBusWithWire(
+          wire: (b) => wireNavalSplitForWidgetTest(bus: b, gameSnapshot: () => g),
+        );
+        await pumpNavalPanel(tester, game: g, humanPlayerId: humanId, bus: bus);
+        final fleetTile = find.widgetWithText(ExpansionTile, 'Fleet split_me');
+        await expandAndTapNavalSplit(tester, fleetTile);
+        final typeId = g.worldState.fleets
+            .firstWhere((f) => f.id == 'split_me')
+            .ships
+            .single
+            .typeId;
+        await tester.tap(find.byKey(CtTransferListKeys.leftMoveOne(typeId)));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<CtNinePatchButton>(
+                find.widgetWithText(CtNinePatchButton, 'Confirm Split'),
+              )
+              .enabled,
+          isFalse,
+        );
+        expect(updated(), isNull);
       },
     );
   });
