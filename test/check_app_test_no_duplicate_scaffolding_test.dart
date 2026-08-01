@@ -425,14 +425,14 @@ WidgetbookUseCase _useCase(
     expect(logs.join('\n'), contains('inline Game( construction'));
   });
 
-  test('fails when naval mockup-fidelity suite inlines Game(', () {
+  test('fails when naval part suite inlines Game(', () {
     final temp = Directory.systemTemp.createTempSync(
-      'check_app_test_no_dup_scaffolding_naval_fid_',
+      'check_app_test_no_dup_scaffolding_naval_part_game_',
     );
     addTearDown(() => temp.deleteSync(recursive: true));
     _writeGovernedFile(
       temp,
-      'naval_units_panel_mockup_fidelity_test.dart',
+      'naval_units_panel_part1_test.dart',
       'Game g() => Game(id: "x", worldState: WorldState(), players: const []);\n',
     );
 
@@ -492,15 +492,15 @@ WidgetbookUseCase _useCase(
   });
 
   test(
-    'passes when naval mockup-fidelity uses shared OwFleets factory only',
+    'passes when naval part suite uses shared OwFleets factory only',
     () {
       final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_naval_ok_',
+        'check_app_test_no_dup_scaffolding_naval_part_ok_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
       _writeGovernedFile(
         temp,
-        'naval_units_panel_mockup_fidelity_test.dart',
+        'naval_units_panel_part1_test.dart',
         '''
 import 'naval_units_panel_test_support.dart';
 
