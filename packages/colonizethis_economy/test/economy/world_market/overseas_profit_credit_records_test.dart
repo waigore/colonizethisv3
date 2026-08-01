@@ -3,22 +3,49 @@ import 'package:colonizethis_economy_test_support/colonizethis_economy_test_supp
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-void main() {
-  group('buildOverseasProfitCreditRecordsByGpId (Refs #4226)', () {
-    test('maps tile-owner credited deals into tileOwnerShare rows', () {
-      final credits = computeFirstRightCredits(
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        relationScoreFor: frrConstantRelation(100),
-      );
+typedef _BuildRecordsScenario = ({
+  String label,
+  List<FilledDeal> filledDeals,
+  PurchasedTileIndex purchasedTileIndex,
+  num Function(String, String) relationScoreFor,
+  Map<String, num> Function(String sourceFactionId)? embassyGpRelationsFor,
+  void Function(Map<String, List<OverseasProfitCreditRecord>> records) verify,
+});
 
-      final records = buildOverseasProfitCreditRecordsByGpId(
-        credits: credits,
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        embassyGpRelationsFor: null,
-      );
+typedef _TotalsScenario = ({
+  String label,
+  Map<String, List<OverseasProfitCreditRecord>> records,
+  Map<String, int> expected,
+  bool expectUnmodifiable,
+});
 
+void _runBuildRecordsScenario(_BuildRecordsScenario scenario) {
+  final credits = computeFirstRightCredits(
+    filledDeals: scenario.filledDeals,
+    purchasedTileIndex: scenario.purchasedTileIndex,
+    relationScoreFor: scenario.relationScoreFor,
+    embassyGpRelationsFor: scenario.embassyGpRelationsFor,
+  );
+  final records = buildOverseasProfitCreditRecordsByGpId(
+    credits: credits,
+    filledDeals: scenario.filledDeals,
+    purchasedTileIndex: scenario.purchasedTileIndex,
+    embassyGpRelationsFor: scenario.embassyGpRelationsFor,
+  );
+  scenario.verify(records);
+}
+
+Iterable<_BuildRecordsScenario> _buildRecordsScenarios() sync* {
+  final defaultDeals = [dealOn('k1', buyer: 'gpB')];
+  final defaultIndex = frrIdxK1GpA();
+
+  yield (
+    label: 'maps tile-owner credited deals into tileOwnerShare rows',
+    filledDeals: defaultDeals,
+    purchasedTileIndex: defaultIndex,
+    relationScoreFor: frrConstantRelation(100),
+    embassyGpRelationsFor: null,
+    verify: (records) {
       expect(records.keys, ['gpA']);
       final row = records['gpA']!.single;
       expect(row.creditKind, OverseasProfitCreditKind.tileOwnerShare);
@@ -27,122 +54,117 @@ void main() {
       expect(row.profitTreasury, 200);
       expect(row.buyerFactionId, 'gpB');
       expect(row.sourceFactionId, 'M1');
-    });
+    },
+  );
 
-    test('adds embassyKickback rows for non-owner embassy GPs', () {
-      final filledDeals = [dealOn('k1', buyer: 'gpB')];
-      final credits = computeFirstRightCredits(
-        filledDeals: filledDeals,
-        purchasedTileIndex: frrIdxK1GpA(),
-        relationScoreFor: frrRelationTable(const {
-          'gpA': {'M1': 100},
-        }),
-        embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 50}),
+  yield (
+    label: 'adds embassyKickback rows for non-owner embassy GPs',
+    filledDeals: defaultDeals,
+    purchasedTileIndex: defaultIndex,
+    relationScoreFor: frrRelationTable(const {
+      'gpA': {'M1': 100},
+    }),
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 50}),
+    verify: (records) {
+      expect(
+        records['gpA']!.single.creditKind,
+        OverseasProfitCreditKind.tileOwnerShare,
       );
-
-      final records = buildOverseasProfitCreditRecordsByGpId(
-        credits: credits,
-        filledDeals: filledDeals,
-        purchasedTileIndex: frrIdxK1GpA(),
-        embassyGpRelationsFor: frrEmbassyForM1(const {'gpC': 50}),
-      );
-
-      expect(records['gpA']!.single.creditKind,
-          OverseasProfitCreditKind.tileOwnerShare);
       final kickback = records['gpC']!.single;
       expect(kickback.creditKind, OverseasProfitCreditKind.embassyKickback);
       expect(kickback.profitTreasury, 10);
       expect(kickback.buyerFactionId, 'gpB');
       expect(kickback.sourceFactionId, 'M1');
-    });
+    },
+  );
 
-    test('skips tile-owner row when rounded treasury is zero', () {
-      final credits = computeFirstRightCredits(
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        relationScoreFor: frrConstantRelation(0),
-      );
+  yield (
+    label: 'skips tile-owner row when rounded treasury is zero',
+    filledDeals: defaultDeals,
+    purchasedTileIndex: defaultIndex,
+    relationScoreFor: frrConstantRelation(0),
+    embassyGpRelationsFor: null,
+    verify: (records) => expect(records, isEmpty),
+  );
 
-      final records = buildOverseasProfitCreditRecordsByGpId(
-        credits: credits,
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        embassyGpRelationsFor: null,
-      );
-
-      expect(records, isEmpty);
-    });
-
-    test('skips embassy kickback for tile owner and zero-relation holders', () {
-      final filledDeals = [dealOn('k1', buyer: 'gpB')];
-      final credits = computeFirstRightCredits(
-        filledDeals: filledDeals,
-        purchasedTileIndex: frrIdxK1GpA(),
-        relationScoreFor: frrConstantRelation(100),
-        embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 0}),
-      );
-
-      final records = buildOverseasProfitCreditRecordsByGpId(
-        credits: credits,
-        filledDeals: filledDeals,
-        purchasedTileIndex: frrIdxK1GpA(),
-        embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 0}),
-      );
-
+  yield (
+    label: 'skips embassy kickback for tile owner and zero-relation holders',
+    filledDeals: defaultDeals,
+    purchasedTileIndex: defaultIndex,
+    relationScoreFor: frrConstantRelation(100),
+    embassyGpRelationsFor: frrEmbassyForM1(const {'gpA': 100, 'gpC': 0}),
+    verify: (records) {
       expect(records.keys, ['gpA']);
       expect(records.containsKey('gpC'), isFalse);
-    });
+    },
+  );
 
-    test('returns unmodifiable nested lists', () {
-      final credits = computeFirstRightCredits(
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        relationScoreFor: frrConstantRelation(100),
+  yield (
+    label: 'returns unmodifiable nested lists',
+    filledDeals: defaultDeals,
+    purchasedTileIndex: defaultIndex,
+    relationScoreFor: frrConstantRelation(100),
+    embassyGpRelationsFor: null,
+    verify: (records) {
+      expect(
+        () => records['gpA']!.add(records['gpA']!.first),
+        throwsUnsupportedError,
       );
-
-      final records = buildOverseasProfitCreditRecordsByGpId(
-        credits: credits,
-        filledDeals: [dealOn('k1', buyer: 'gpB')],
-        purchasedTileIndex: frrIdxK1GpA(),
-        embassyGpRelationsFor: null,
-      );
-
-      expect(() => records['gpA']!.add(records['gpA']!.first), throwsUnsupportedError);
       expect(() => records['gpZ'] = const [], throwsUnsupportedError);
-    });
-  });
+    },
+  );
+}
 
-  group('overseasProfitTreasuryTotalByGpId (Refs #4226)', () {
-    test('sums profitTreasury per GP and omits zero totals', () {
-      final records = {
-        'gpA': [
-          const OverseasProfitCreditRecord(
-            creditKind: OverseasProfitCreditKind.tileOwnerShare,
-            commodityId: 'timber',
-            quantity: 10,
-            profitTreasury: 150,
-          ),
-          const OverseasProfitCreditRecord(
-            creditKind: OverseasProfitCreditKind.embassyKickback,
-            commodityId: 'timber',
-            quantity: 10,
-            profitTreasury: 10,
-          ),
-        ],
-        'gpB': [
-          const OverseasProfitCreditRecord(
-            creditKind: OverseasProfitCreditKind.tileOwnerShare,
-            commodityId: 'iron',
-            quantity: 5,
-            profitTreasury: 0,
-          ),
-        ],
-      };
+Iterable<_TotalsScenario> _totalsScenarios() sync* {
+  yield (
+    label: 'sums profitTreasury per GP and omits zero totals',
+    records: {
+      'gpA': [
+        const OverseasProfitCreditRecord(
+          creditKind: OverseasProfitCreditKind.tileOwnerShare,
+          commodityId: 'timber',
+          quantity: 10,
+          profitTreasury: 150,
+        ),
+        const OverseasProfitCreditRecord(
+          creditKind: OverseasProfitCreditKind.embassyKickback,
+          commodityId: 'timber',
+          quantity: 10,
+          profitTreasury: 10,
+        ),
+      ],
+      'gpB': [
+        const OverseasProfitCreditRecord(
+          creditKind: OverseasProfitCreditKind.tileOwnerShare,
+          commodityId: 'iron',
+          quantity: 5,
+          profitTreasury: 0,
+        ),
+      ],
+    },
+    expected: {'gpA': 160},
+    expectUnmodifiable: true,
+  );
+}
 
-      final totals = overseasProfitTreasuryTotalByGpId(records);
+void main() {
+  runLabeledScenarioGroup(
+    'buildOverseasProfitCreditRecordsByGpId (Refs #4226)',
+    _buildRecordsScenarios(),
+    _runBuildRecordsScenario,
+    labelOf: (scenario) => scenario.label,
+  );
 
-      expect(totals, {'gpA': 160});
-      expect(() => totals['gpC'] = 1, throwsUnsupportedError);
-    });
-  });
+  runLabeledScenarioGroup(
+    'overseasProfitTreasuryTotalByGpId (Refs #4226)',
+    _totalsScenarios(),
+    (scenario) {
+      final totals = overseasProfitTreasuryTotalByGpId(scenario.records);
+      expect(totals, scenario.expected);
+      if (scenario.expectUnmodifiable) {
+        expect(() => totals['gpC'] = 1, throwsUnsupportedError);
+      }
+    },
+    labelOf: (scenario) => scenario.label,
+  );
 }
