@@ -7,7 +7,6 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -50,6 +49,8 @@ extension MarketTabContentBuild on MarketTabContent {
         tradeableCommoditiesByCategory();
     final AppLocalizations l10n = appL10n(context);
     final WorldMarketState market = game.worldMarketState;
+    final Set<CommodityId> firstRightCommodityIds =
+        firstRightCommodityIdsForPlayer(game, playerId);
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
     final int totalStagedBid = totalStagedBidQuantity(orders, playerId);
@@ -162,6 +163,7 @@ extension MarketTabContentBuild on MarketTabContent {
           offerCap: offerCap,
           stagedOffers: stagedOffers,
           bidTypeCap: bidTypeCap,
+          firstRightCommodityIds: firstRightCommodityIds,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
           volumeStyle: volumeStyle,

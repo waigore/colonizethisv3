@@ -161,6 +161,7 @@ part 'catalog_dialogs_move_army_invasion_intel.dart';
 part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
+part 'catalog_data_screens_trade.dart';
 part 'catalog_game_chrome.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';

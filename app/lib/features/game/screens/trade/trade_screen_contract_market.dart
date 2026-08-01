@@ -152,6 +152,10 @@ abstract final class TradeScreenMarketKeys {
   static Key marketRowSellableReadoutKey(CommodityId commodityId) =>
       ValueKey<String>('tradeScreenMarketRow:$commodityId:sellable');
 
+  /// Per-row key for the first-right chip on line 1 (Refs #4226).
+  static Key marketRowFirstRightChipKey(CommodityId commodityId) =>
+      ValueKey<String>('tradeScreenMarketRow:$commodityId:firstRightChip');
+
   /// Per-row key for the leading `ResourceIcon` paint on line 1 of the
   /// Market row, immediately before the commodity display name (Refs
   /// `#3093` — row-icons slice). Mounted exactly once per row. When the

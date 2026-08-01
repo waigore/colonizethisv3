@@ -13,6 +13,7 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'game_map_area_turn_feed_taps.dart';
 import 'game_map_area_turn_resolution.dart';
 import 'game_map_area_view.dart';
 
@@ -25,6 +26,7 @@ class GameMapAreaState extends ConsumerState<GameMapArea>
         GameMapAreaView,
         GameMapAreaTurnResolution,
         GameMapAreaTurnFeedLabels,
+        GameMapAreaTurnFeedTaps,
         GameMapAreaTurnFeed,
         GameMapAreaEvents,
         GameMapAreaE2e,

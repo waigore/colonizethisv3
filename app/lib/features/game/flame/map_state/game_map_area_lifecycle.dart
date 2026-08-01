@@ -75,6 +75,9 @@ mixin GameMapAreaLifecycle
       bus.on<ct_models.AppWorkOrderCompletedEvent>().listen(
         onAppWorkOrderCompletedEvent,
       ),
+      bus.on<ct_models.AppOverseasProfitCreditedEvent>().listen(
+        onAppOverseasProfitCreditedEvent,
+      ),
       bus.on<ct_models.AppPlayerProvinceDiscoveredEvent>().listen(
         onAppPlayerProvinceDiscoveredEvent,
       ),

@@ -57,6 +57,9 @@ class GameEventLogger {
       SpyDefectedEvent e =>
         'turn=${e.turnNumber} unitId=${e.unitId} previousOwnerId=${e.previousOwnerId} '
             'newOwnerId=${e.newOwnerId} provinceId=${e.provinceId}',
+      OverseasProfitCreditedEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'totalTreasuryCredit=${e.totalTreasuryCredit} creditCount=${e.creditCount}',
     };
   }
 }

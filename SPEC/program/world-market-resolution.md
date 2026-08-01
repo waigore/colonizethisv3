@@ -85,6 +85,8 @@ class WorldMarketState {
   final Map<CommodityId, MarketActivity> lastTurnActivity;
   final Map<String, List<TradeOrder>> carryForwardOffersByFactionId;
   final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
+  final Map<String, List<OverseasProfitCreditRecord>>
+      lastTurnOverseasProfitCreditsByGpId; // Refs #4226
 }
 
 class FilledDeal {
@@ -328,6 +330,10 @@ Edge cases:
 - An offer or bid with `quantity == 0` is treated as already exhausted — no `FilledDeal` is emitted, no carry-forward record is generated for it.
 - `ftpPairKeys` is consulted as a set; ordering of pairs inside the set does not affect output. The canonical `pairKey` ensures the input set need not be duplicated for both `(a,b)` and `(b,a)`.
 - First right of refusal **is** handled by this engine when `purchasedTileIndex` is supplied (see Issue D / #2992 D2). Offers without an `originTileKey`, offers whose `originTileKey` is not in the index, and runs with a `null` index all skip the FRR pre-pass and behave exactly as the legacy tier loop. The D4 treasury transfer (overseas-profit credit to the owning GP) is a separate phase-handler responsibility — it consumes `FilledDeal.isFirstRightOfRefusalMatch` to identify FRR-applied flows and looks up the owning GP via the same `purchasedTileIndex` row to compute the relation-based profit per `SPEC/game/world-market-first-right-of-refusal.md` § Treasury transfer (D4).
+
+### Phase-handler overseas-profit ledger — `lastTurnOverseasProfitCreditsByGpId` (Refs #4226)
+
+`worldMarketTurnPhaseHandler` is the sole writer of `WorldMarketState.lastTurnOverseasProfitCreditsByGpId`. During Step F settlement, after D4 treasury credits are applied, the handler replaces the map with the output of `buildOverseasProfitCreditRecordsByGpId` (`packages/colonizethis_economy/lib/src/economy/world_market/overseas_profit_credit_records.dart`) fed by `FirstRightCreditsResult` (tile-owner `creditedDeals` + per-deal embassy kickback rows). Each `OverseasProfitCreditRecord` carries `creditKind` (`tileOwnerShare` | `embassyKickback`), `commodityId`, `quantity`, rounded `profitTreasury`, and optional `buyerFactionId` / `sourceFactionId`. Rows with `profitTreasury <= 0` after rounding are omitted at persistence time. The map is replaced wholesale each phase pass (same lifecycle as `lastTurnActivity`); nested lists are stored unmodifiable. Deal Book and the turn event feed read persisted rows only — they do not re-derive credits from live treasury deltas. When a GP's combined tile-owner + embassy credits for the turn sum to `> 0`, the handler also publishes `OverseasProfitCreditedEvent` (bridged to `AppOverseasProfitCreditedEvent` per `SPEC/program/game-event-bridge.md`).
 
 ---
 

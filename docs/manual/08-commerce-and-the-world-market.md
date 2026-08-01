@@ -33,10 +33,10 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 ### Where you act in the UI
 
 1. From `GAME10001`, tap **Trade** on the left empire rail (or open route `/game/trade`) to reach `GAME60001` **Trade screen**.
-2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Bid goods: U of C** (distinct bid commodities vs your cap), **Cargo remaining**, and **Bid budget: R of B** (treasury headroom for bids after other pending costs). Bid and offer are mutually exclusive per commodity; staged bids respect bid-type, cargo, and treasury caps from the rules above. Riches never appear as trade rows.
-3. **Deal Book** tab: review last-turn filled buys/sales and any carry-forward unfilled orders for your court.
+2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Bid goods: U of C** (distinct bid commodities vs your cap), **Cargo remaining**, and **Bid budget: R of B** (treasury headroom for bids after other pending costs). Bid and offer are mutually exclusive per commodity; staged bids respect bid-type, cargo, and treasury caps from the rules above. Riches never appear as trade rows. Commodities where you still hold **first right** from a purchased tile show a compact **First right** chip beside the name — tap it for a short reminder of bid priority and overseas profit.
+3. **Deal Book** tab: review last-turn filled buys/sales and any carry-forward unfilled orders for your court. Filled rows may show **First right** or **Favored partner** tags when the matcher applied those rules. When rivals bought goods under your purchased-tile rights last turn, an **Overseas profit** section lists each credited commodity, quantity, and treasury amount.
 4. Production (`GAME20001`) shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
-5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, turn news, and market activity.
+5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, the turn event feed (tap an overseas-profit line to open Deal Book), turn news, and market activity.
 
 ## Counsel
 
@@ -64,7 +64,7 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 
 - [ ] Explains global market, tradeable vs riches, TradeOrder bid/offer, Phase 13 timing.
 - [ ] Documents mutual exclusion, bid-type caps (3/6), cargo and treasury caps, carry-forward.
-- [ ] Covers first right of refusal / overseas profit / FTP at player level.
+- [x] Covers first right of refusal / overseas profit / FTP at player level (Market chip, Deal Book tags + overseas-profit ledger, feed deep-link).
 - [ ] Documents operable `GAME60001` Trade (left-rail / route entry, Market + Deal Book, caps) without a draft-screen marker; notes any deferred control separately.
 - [ ] Notes Production sellable headroom linkage.
 - [ ] Sources match the chapter coverage map.

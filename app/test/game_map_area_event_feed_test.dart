@@ -255,6 +255,57 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Player turn event feed overseas profit line opens Deal Book on tap (Refs #4226)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const line =
+          'Overseas profit credited: £42 from 2 rival purchase(s). '
+          'Tap to open Deal Book.';
+      expect(find.text(line), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(find.text(line));
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.trade);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+      expect(args['initialTabIndex'], 1);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed overseas profit line is omitted for other players',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.opponentId,
+          totalTreasuryCredit: 99,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsNothing);
+    },
+  );
+
   for (final case_ in eventFeedDiplomacyDetailNavigateCases()) {
     testWidgets(case_.name, (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);

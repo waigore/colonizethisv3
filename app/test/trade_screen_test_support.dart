@@ -39,6 +39,9 @@ const Size kTradeMarketTabViewport = Size(1024, 4096);
 /// pins (`tradeCargoCapacityOverride == 10`).
 const String kTradeTestCapitalProvinceId = 'oldWorld|cap1';
 
+/// Purchased-tile key for first-right Market cue pins (Refs #4226).
+const String kTradeTestFirstRightTileKey = 'oldWorld|M1|0|0';
+
 /// Stockpile map covering every tradeable commodity at [quantity] (excludes
 /// riches and `spices`). Used by Offer-side interactive suites so the sellable
 /// clamp does not zero out default Offer taps.
@@ -74,6 +77,14 @@ Game buildTradeTestGame({
   WorldMarketState? worldMarketState,
   List<OvertureState> overtureStates = const <OvertureState>[],
   Map<String, bool>? techUnlocked,
+  Map<String, String> purchasedTilesByTileKey = const <String, String>{},
+  Map<String, String> resourceByTileKey = const <String, String>{},
+  Map<String, Map<String, List<String>>> tileKeysByRegionAndProvince =
+      const <String, Map<String, List<String>>>{},
+  List<MinorNation> minorNations = const <MinorNation>[],
+  Map<String, List<OverseasProfitCreditRecord>>
+      lastTurnOverseasProfitCreditsByGpId =
+      const <String, List<OverseasProfitCreditRecord>>{},
   /// When `10`, seeds a galleon+fluyte home fleet (cargoHold 6+4). Other
   /// values throw — only the E5c / E8 cargo-cap mapping is supported.
   int? tradeCargoCapacityOverride,
@@ -129,6 +140,9 @@ Game buildTradeTestGame({
       oldWorld: resolvedOldWorld,
       newWorld: newWorld,
       fleets: resolvedFleets,
+      purchasedTilesByTileKey: purchasedTilesByTileKey,
+      resourceByTileKey: resourceByTileKey,
+      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
     ),
     turnTimeMapping: TurnTimeMapping.gdd01,
     players:
@@ -146,6 +160,7 @@ Game buildTradeTestGame({
             ),
           ),
         ],
+    minorNations: minorNations,
     overtureStates: overtureStates,
     diplomacyRelations: const [],
     diplomaticHistoryEvents: const [],
@@ -158,7 +173,47 @@ Game buildTradeTestGame({
               lastTurnActivity ?? const <CommodityId, MarketActivity>{},
           carryForwardBidsByFactionId: carryForwardBids,
           carryForwardOffersByFactionId: carryForwardOffers,
+          lastTurnOverseasProfitCreditsByGpId:
+              lastTurnOverseasProfitCreditsByGpId,
         ),
+  );
+}
+
+/// Game with one still-valid purchased timber tile for the human GP (Refs #4226).
+Game buildTradeTestGameWithTimberFirstRight() {
+  return buildTradeTestGame(
+    oldWorld: const RegionData(
+      provinces: [
+        Province(
+          id: 'oldWorld|M1',
+          regionId: 'oldWorld',
+          ownerId: 'M1',
+          townDevelopmentLevel: 1,
+        ),
+      ],
+    ),
+    minorNations: const [
+      MinorNation(
+        id: 'M1',
+        displayName: 'Minor 1',
+        capitalProvinceId: 'oldWorld|M1',
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'oldWorld|M1',
+          x: 0,
+          y: 0,
+        ),
+      ),
+    ],
+    purchasedTilesByTileKey: const {
+      kTradeTestFirstRightTileKey: kTradeTestHumanPlayerId,
+    },
+    resourceByTileKey: const {kTradeTestFirstRightTileKey: 'timber'},
+    tileKeysByRegionAndProvince: const {
+      'oldWorld': {
+        'oldWorld|M1': [kTradeTestFirstRightTileKey],
+      },
+    },
   );
 }
 

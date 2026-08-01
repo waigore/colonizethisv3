@@ -242,3 +242,18 @@ class SpyDefectedEvent extends GameEvent {
   final String provinceId;
   final int turnNumber;
 }
+
+/// Overseas-profit treasury credited to a GP from world-market phase (Refs #4226).
+class OverseasProfitCreditedEvent extends GameEvent {
+  const OverseasProfitCreditedEvent({
+    required this.playerId,
+    required this.totalTreasuryCredit,
+    required this.creditCount,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int totalTreasuryCredit;
+  final int creditCount;
+  final int turnNumber;
+}

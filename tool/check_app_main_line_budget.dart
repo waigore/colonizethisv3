@@ -22,6 +22,7 @@
 // raised for Choose-tech effect summary and Details at assignment (Refs #4222);
 // raised for UNIT10001 Spy relocate + hold/leave intel decision support (Refs #4219);
 // raised for wave-11 app refactor file splits (Flame, Victory, event handler; Refs #4224);
+// raised for GAME60001 first-right Market cue, Deal Book labels, overseas-profit ledger (Refs #4226).
 // raised for GAME60001 Market wide two-column compact rows (Refs #4227).
 import 'dart:convert';
 import 'dart:io';
@@ -29,7 +30,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 66900;
+const _maxMainLines = 67000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

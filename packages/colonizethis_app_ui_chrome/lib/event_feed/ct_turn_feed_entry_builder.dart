@@ -26,6 +26,7 @@ class CtTurnFeedEntryContext {
     required this.provinceOverlayTapForProvince,
     required this.navalCombatTapForSeaZone,
     required this.workOrderCompletedTap,
+    required this.overseasProfitCreditedTap,
     required this.orderRejectedTapForKind,
   });
 
@@ -64,6 +65,7 @@ class CtTurnFeedEntryContext {
     required String unitId,
     required String targetTileKey,
   }) workOrderCompletedTap;
+  final VoidCallback? overseasProfitCreditedTap;
   final VoidCallback? Function(ct_models.OrderKind orderKind)
       orderRejectedTapForKind;
 }
@@ -155,6 +157,18 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
               text:
                   '${context.provinceLabel(provinceId)} work completed! ${context.workTargetLabel(workTarget)} finished!',
             ),
+          ct_models.AppOverseasProfitCreditedEvent(
+            :final totalTreasuryCredit,
+            :final creditCount,
+          ) =>
+            CtEventFeedEntry(
+              text: CtEventFeedText.overseasProfitCreditedLine(
+                totalTreasuryCredit,
+                creditCount,
+              ),
+              linkAffordance: context.overseasProfitCreditedTap != null,
+              onTap: context.overseasProfitCreditedTap,
+            ),
           ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
             _feedEntry(
               context: context,
@@ -221,7 +235,10 @@ CtEventFeedEntry _feedEntry({
   required String text,
   VoidCallback? onTap,
 }) {
-  return CtEventFeedEntry(text: text, onTap: onTap);
+  return CtEventFeedEntry(
+    text: text,
+    onTap: onTap,
+  );
 }
 
 CtEventFeedEntry _diplomacyFeedEntry({

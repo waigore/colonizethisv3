@@ -102,9 +102,14 @@ class Routes {
         );
       case RoutePaths.trade:
         final player = game.playerById(humanPlayerId)!;
+        final initialTabIndex = args['initialTabIndex'] as int? ?? 0;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => TradeScreen(game: game, player: player),
+          builder: (_) => TradeScreen(
+            game: game,
+            player: player,
+            initialTabIndex: initialTabIndex,
+          ),
         );
       case RoutePaths.victory:
         return MaterialPageRoute<void>(

@@ -148,6 +148,8 @@ TurnPhaseStepOutcome worldMarketNoOrdersOutcome({
     carryForwardOffersByFactionId: const <String, List<TradeOrder>>{},
     carryForwardBidsByFactionId: const <String, List<TradeOrder>>{},
     completedTradePairKeys: const <String>{},
+    lastTurnOverseasProfitCreditsByGpId:
+        const <String, List<OverseasProfitCreditRecord>>{},
   );
   return TurnPhaseStepContinue(
     acc.copyWith(game: game.copyWith(worldMarketState: updatedMarket)),

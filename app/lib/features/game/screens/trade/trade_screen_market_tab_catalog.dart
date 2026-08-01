@@ -51,6 +51,7 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
+    required Set<CommodityId> firstRightCommodityIds,
     bool isFirstSection = true,
     bool wideLayout = false,
   }) {
@@ -74,6 +75,7 @@ extension MarketTabContentCatalog on MarketTabContent {
           onDirectionChanged: onDirectionChanged,
           onQuantityDelta: onQuantityDelta,
           l10n: l10n,
+          firstRightCommodityIds: firstRightCommodityIds,
         )
       else
         ..._buildNarrowCommodityList(
@@ -90,6 +92,7 @@ extension MarketTabContentCatalog on MarketTabContent {
           onDirectionChanged: onDirectionChanged,
           onQuantityDelta: onQuantityDelta,
           l10n: l10n,
+          firstRightCommodityIds: firstRightCommodityIds,
         ),
     ];
   }
@@ -109,6 +112,7 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
+    required Set<CommodityId> firstRightCommodityIds,
   }) {
     return <Widget>[
       for (int index = 0; index < commodities.length; index++)
@@ -130,6 +134,7 @@ extension MarketTabContentCatalog on MarketTabContent {
             onDirectionChanged: onDirectionChanged,
             onQuantityDelta: onQuantityDelta,
             l10n: l10n,
+            firstRightCommodityIds: firstRightCommodityIds,
           ),
         ),
     ];
@@ -150,6 +155,7 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
+    required Set<CommodityId> firstRightCommodityIds,
   }) {
     final List<Widget> rows = <Widget>[];
     for (int index = 0; index < commodities.length; index += 2) {
@@ -183,6 +189,7 @@ extension MarketTabContentCatalog on MarketTabContent {
                     onDirectionChanged: onDirectionChanged,
                     onQuantityDelta: onQuantityDelta,
                     l10n: l10n,
+                    firstRightCommodityIds: firstRightCommodityIds,
                   ),
                 ),
               ),
@@ -208,6 +215,7 @@ extension MarketTabContentCatalog on MarketTabContent {
                           onDirectionChanged: onDirectionChanged,
                           onQuantityDelta: onQuantityDelta,
                           l10n: l10n,
+                          firstRightCommodityIds: firstRightCommodityIds,
                         ),
                       ),
               ),
@@ -235,8 +243,10 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged,
     required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
+    required Set<CommodityId> firstRightCommodityIds,
   }) {
     final CommodityId commodityId = commodity.id;
+    final bool showFirstRightChip = firstRightCommodityIds.contains(commodityId);
     final rowParams = (
       commodityId: commodityId,
       commodityDisplayName: commodityDisplayName(l10n, commodityId),
@@ -286,6 +296,9 @@ extension MarketTabContentCatalog on MarketTabContent {
         onDirectionChanged: rowParams.onDirectionChanged,
         onIncrement: rowParams.onIncrement,
         onDecrement: rowParams.onDecrement,
+        showFirstRightChip: showFirstRightChip,
+        firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+        firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
       );
     }
     return MarketCommodityRow(
@@ -304,6 +317,9 @@ extension MarketTabContentCatalog on MarketTabContent {
       onDirectionChanged: rowParams.onDirectionChanged,
       onIncrement: rowParams.onIncrement,
       onDecrement: rowParams.onDecrement,
+      showFirstRightChip: showFirstRightChip,
+      firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+      firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
     );
   }
 }

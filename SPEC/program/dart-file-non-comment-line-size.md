@@ -52,8 +52,11 @@ rule is **scope wiring**, not a keyed violation waiver.
 The checker skips any repo-relative path that:
 
 - Ends with `.g.dart`, `.freezed.dart`, `.mocks.dart`, or `.gen.dart`, or
-- Contains the substring `app/lib/l10n/app_localizations_`, or
-- Contains the substring `app/lib/l10n/gen/app_l10n_flutter_gen_`.
+- Contains the substring
+  `packages/colonizethis_app_l10n/lib/l10n/app_localizations_`, or
+- Contains the substring
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen` (delegate
+  `app_l10n_flutter_gen.dart` and per-locale `app_l10n_flutter_gen_*.dart`).
 
 There is **no** YAML or keyed table that raises the effective line cap for a
 specific hand-written library file.
@@ -72,9 +75,16 @@ specific hand-written library file.
   exits zero and does not list that file as a violation.
 
 - Given a temporary workspace containing only
-  `app/lib/l10n/gen/app_l10n_flutter_gen_en.dart` with more than 1000 non-comment
-  lines, when the System runs `runCheckDartFileNonCommentLineSize`, then the
-  checker exits zero and does not list that path as a violation.
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen_en.dart`
+  with more than 1000 non-comment lines, when the System runs
+  `runCheckDartFileNonCommentLineSize`, then the checker exits zero and does not
+  list that path as a violation.
+
+- Given a temporary workspace containing only
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen.dart` with
+  more than 1000 non-comment lines, when the System runs
+  `runCheckDartFileNonCommentLineSize`, then the checker exits zero and does not
+  list that path as a violation.
 
 - Given the repository root as cwd, when CI runs
   `dart run tool/ct_repo_lint.dart` and rule `repo.dart_file_non_comment_line_size`

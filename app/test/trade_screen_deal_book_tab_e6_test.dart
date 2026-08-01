@@ -373,10 +373,8 @@ void main() {
           ),
           findsOneWidget,
         );
-        // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('FRR'), findsOneWidget);
-        // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('FTP'), findsOneWidget);
+        expect(find.text('First right'), findsOneWidget);
+        expect(find.text('Favored partner'), findsOneWidget);
         _expectTotals(tester, bids: 180);
       },
     );
