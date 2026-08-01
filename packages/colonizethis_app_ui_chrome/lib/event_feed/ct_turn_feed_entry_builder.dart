@@ -235,7 +235,11 @@ CtEventFeedEntry _feedEntry({
   required String text,
   VoidCallback? onTap,
 }) {
-  return CtEventFeedEntry(text: text, onTap: onTap);
+  return CtEventFeedEntry(
+    text: text,
+    linkAffordance: onTap != null,
+    onTap: onTap,
+  );
 }
 
 CtEventFeedEntry _diplomacyFeedEntry({
