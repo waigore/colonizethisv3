@@ -1,6 +1,9 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show applyVoluntaryAllianceBreak, getRelation;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show DiplomacyFactionMembership, GamePlayerLookup;
 
 Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
   if (currentGame == null) {

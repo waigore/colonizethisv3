@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'check_app_core_services_narrow_logic_import.dart';
 import 'check_app_editorial_monocle_colors.dart';
 import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
@@ -829,6 +830,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugConsoleSharedHelpers(repoRoot);
     case 'repo.app_event_handler_scope_logic_boundary':
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
+    case 'repo.app_core_services_narrow_logic_import':
+      return runCheckAppCoreServicesNarrowLogicImport(repoRoot);
     case 'repo.app_event_bus_decoupling':
       return runCheckAppEventBusDecoupling(repoRoot);
     case 'repo.app_no_shell_panel_duplication':
