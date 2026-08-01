@@ -219,21 +219,24 @@ class MarketCommodityRowCompact extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(
+              Flexible(
+                fit: FlexFit.loose,
                 child: Text(volumeText, style: volumeStyle),
               ),
-              MarketCommodityRowControls(
-                commodityId: commodityId,
-                stagedType: stagedOrder?.type,
-                quantityText: _quantityText,
-                quantityStyle: quantityStyle,
-                canDecrement: _canDecrement,
-                canIncrement: _canIncrement,
-                canSelectOffer: _canSelectOffer,
-                canSelectBid: canSelectBid,
-                onDirectionChanged: onDirectionChanged,
-                onIncrement: onIncrement,
-                onDecrement: onDecrement,
+              Flexible(
+                child: MarketCommodityRowControls(
+                  commodityId: commodityId,
+                  stagedType: stagedOrder?.type,
+                  quantityText: _quantityText,
+                  quantityStyle: quantityStyle,
+                  canDecrement: _canDecrement,
+                  canIncrement: _canIncrement,
+                  canSelectOffer: _canSelectOffer,
+                  canSelectBid: canSelectBid,
+                  onDirectionChanged: onDirectionChanged,
+                  onIncrement: onIncrement,
+                  onDecrement: onDecrement,
+                ),
               ),
             ],
           ),
