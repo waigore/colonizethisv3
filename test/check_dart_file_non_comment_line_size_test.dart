@@ -115,6 +115,31 @@ final a = 1; // ignore: avoid_print
       expect(code, 0);
     });
 
+    test('excludes generated app l10n flutter delegate file without locale suffix', () {
+      final temp = Directory.systemTemp.createTempSync(
+        'dart-ncl-size-generated-l10n-delegate-',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+
+      final generatedFile = File(
+        p.join(
+          temp.path,
+          'packages',
+          'colonizethis_app_l10n',
+          'lib',
+          'l10n',
+          'gen',
+          'app_l10n_flutter_gen.dart',
+        ),
+      )..createSync(recursive: true);
+      generatedFile.writeAsStringSync(
+        List.filled(2000, 'final generated = 1;').join('\n'),
+      );
+
+      final code = runCheckDartFileNonCommentLineSize(temp.path);
+      expect(code, 0);
+    });
+
     test('supports incremental path filtering for PR scans', () {
       final temp = Directory.systemTemp.createTempSync('dart-ncl-size-inc-');
       addTearDown(() => temp.deleteSync(recursive: true));
