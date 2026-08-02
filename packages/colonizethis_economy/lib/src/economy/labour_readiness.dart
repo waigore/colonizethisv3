@@ -43,6 +43,76 @@ int _workingCount(WorkerIdleCounts working, WorkerTierKey tier) {
   };
 }
 
+int _fedCountForTier(WorkerConsumptionBreakdown breakdown, WorkerTierKey tier) {
+  return switch (tier) {
+    WorkerTierKey.peasant => breakdown.fedPeasants,
+    WorkerTierKey.apprentice => breakdown.fedApprentices,
+    WorkerTierKey.journeyman => breakdown.fedJourneymen,
+    WorkerTierKey.master => breakdown.fedMasters,
+  };
+}
+
+int _foodLabourLost({
+  required WorkerPool workers,
+  required WorkerConsumptionBreakdown breakdown,
+}) {
+  var lost = 0;
+  for (final tier in WorkerTierKey.values) {
+    final unfed = _poolCount(workers, tier) - _fedCountForTier(breakdown, tier);
+    if (unfed <= 0) continue;
+    lost += unfed * _labourPerTier(tier);
+  }
+  return lost;
+}
+
+List<LabourLuxuryShortfall> _luxuryShortfallsFromBreakdown(
+  WorkerConsumptionBreakdown breakdown,
+) {
+  final shortfalls = <LabourLuxuryShortfall>[];
+  void add(WorkerTierKey tier, int fed, int withLuxury) {
+    final short = fed - withLuxury;
+    if (short <= 0) return;
+    shortfalls.add(
+      LabourLuxuryShortfall(
+        tier: tier,
+        commodityId: _luxuryIdForTier(tier),
+        labourLost: short * _labourPerTier(tier),
+      ),
+    );
+  }
+
+  add(WorkerTierKey.master, breakdown.fedMasters, breakdown.mastersWithLuxury);
+  add(
+    WorkerTierKey.journeyman,
+    breakdown.fedJourneymen,
+    breakdown.journeymenWithLuxury,
+  );
+  add(
+    WorkerTierKey.apprentice,
+    breakdown.fedApprentices,
+    breakdown.apprenticesWithLuxury,
+  );
+  return shortfalls;
+}
+
+LabourReadinessCauseKind? _primaryCauseKind(int foodLabourLost, int luxuryLabourLost) {
+  if (foodLabourLost > luxuryLabourLost) return LabourReadinessCauseKind.food;
+  if (luxuryLabourLost > foodLabourLost) return LabourReadinessCauseKind.luxury;
+  if (foodLabourLost > 0) return LabourReadinessCauseKind.food;
+  if (luxuryLabourLost > 0) return LabourReadinessCauseKind.luxury;
+  return null;
+}
+
+LabourLuxuryShortfall? _worstLuxuryShortfall(List<LabourLuxuryShortfall> shortfalls) {
+  LabourLuxuryShortfall? worst;
+  for (final s in shortfalls) {
+    if (worst == null || s.labourLost > worst.labourLost) {
+      worst = s;
+    }
+  }
+  return worst;
+}
+
 /// Computes labour readiness from post-extraction preview inputs.
 ///
 /// Uses the same consumption/strike rules as [effectiveLabourForWorkers].
@@ -77,72 +147,14 @@ LabourReadinessSnapshot computeLabourReadiness({
     );
   }
 
-  var foodLabourLost = 0;
-  for (final tier in WorkerTierKey.values) {
-    final pool = _poolCount(workers, tier);
-    final fed = switch (tier) {
-      WorkerTierKey.peasant => breakdown.fedPeasants,
-      WorkerTierKey.apprentice => breakdown.fedApprentices,
-      WorkerTierKey.journeyman => breakdown.fedJourneymen,
-      WorkerTierKey.master => breakdown.fedMasters,
-    };
-    final unfed = pool - fed;
-    if (unfed > 0) {
-      foodLabourLost += unfed * _labourPerTier(tier);
-    }
-  }
-
-  final luxuryShortfalls = <LabourLuxuryShortfall>[];
-  void addLuxuryShortfall(WorkerTierKey tier, int fed, int withLuxury) {
-    final short = fed - withLuxury;
-    if (short <= 0) return;
-    luxuryShortfalls.add(
-      LabourLuxuryShortfall(
-        tier: tier,
-        commodityId: _luxuryIdForTier(tier),
-        labourLost: short * _labourPerTier(tier),
-      ),
-    );
-  }
-
-  addLuxuryShortfall(
-    WorkerTierKey.master,
-    breakdown.fedMasters,
-    breakdown.mastersWithLuxury,
-  );
-  addLuxuryShortfall(
-    WorkerTierKey.journeyman,
-    breakdown.fedJourneymen,
-    breakdown.journeymenWithLuxury,
-  );
-  addLuxuryShortfall(
-    WorkerTierKey.apprentice,
-    breakdown.fedApprentices,
-    breakdown.apprenticesWithLuxury,
-  );
-
+  final foodLabourLost = _foodLabourLost(workers: workers, breakdown: breakdown);
+  final luxuryShortfalls = _luxuryShortfallsFromBreakdown(breakdown);
   final luxuryLabourLost = luxuryShortfalls.fold<int>(
     0,
     (sum, s) => sum + s.labourLost,
   );
-
-  LabourReadinessCauseKind? primaryKind;
-  if (foodLabourLost > luxuryLabourLost) {
-    primaryKind = LabourReadinessCauseKind.food;
-  } else if (luxuryLabourLost > foodLabourLost) {
-    primaryKind = LabourReadinessCauseKind.luxury;
-  } else if (foodLabourLost > 0) {
-    primaryKind = LabourReadinessCauseKind.food;
-  } else if (luxuryLabourLost > 0) {
-    primaryKind = LabourReadinessCauseKind.luxury;
-  }
-
-  LabourLuxuryShortfall? worstLuxury;
-  for (final s in luxuryShortfalls) {
-    if (worstLuxury == null || s.labourLost > worstLuxury.labourLost) {
-      worstLuxury = s;
-    }
-  }
+  final primaryKind = _primaryCauseKind(foodLabourLost, luxuryLabourLost);
+  final worstLuxury = _worstLuxuryShortfall(luxuryShortfalls);
 
   return LabourReadinessSnapshot(
     effectiveLabour: effectiveLabour,
