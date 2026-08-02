@@ -89,6 +89,9 @@ mixin GameMapAreaLifecycle
       ),
       bus.on<ct_models.AppSpyCaughtEvent>().listen(onAppSpyCaughtEvent),
       bus.on<ct_models.AppSpyDefectedEvent>().listen(onAppSpyDefectedEvent),
+      bus.on<ct_models.AppGeneralMedalGainedEvent>().listen(
+        onAppGeneralMedalGainedEvent,
+      ),
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
         onTurnResolutionCompleteEvent,
       ),

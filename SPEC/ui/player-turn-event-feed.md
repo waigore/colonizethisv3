@@ -20,9 +20,10 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
+  - General medal gain when event `playerId` equals human id (Refs #4234).
   - Province capture when human id equals previous or new owner.
   - Diplomacy when human id equals actor or target.
   - Research/order rejected when event `playerId` equals human id.
@@ -107,6 +108,8 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the feed renders after turn commit, then the row shows plain-language overseas-profit copy with a trailing chevron and is tappable (Refs #4226).
 - Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the user taps the row, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4226).
 - Given an `AppOverseasProfitCreditedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation).
+- Given a human `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
+- Given an `AppGeneralMedalGainedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4234).
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.
 - Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.

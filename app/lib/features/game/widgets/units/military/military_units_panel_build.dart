@@ -11,6 +11,7 @@ import '../shared/region_labels.dart';
 import '../shared/region_section_header.dart';
 import 'military_units_panel.dart';
 import 'military_units_panel_dialogs.dart';
+import 'military_generals_strip.dart';
 import 'military_units_panel_support_army_tile.dart';
 import 'military_units_panel_support_detail_rows.dart';
 
@@ -57,6 +58,11 @@ mixin MilitaryUnitsPanelBuild
     AppLocalizations l10n,
   ) {
     return [
+      if (!widget.readOnly && groups.isNotEmpty)
+        MilitaryGeneralsStrip(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+        ),
       for (final group in groups) ...[
         RegionSectionHeader(
           label: regionDisplayLabel(group.regionKey),

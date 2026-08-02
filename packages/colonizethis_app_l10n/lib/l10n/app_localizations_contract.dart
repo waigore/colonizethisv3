@@ -845,6 +845,12 @@ abstract class AppLocalizations {
   /// Own force size line on move army dialog body (#4216).
   String moveArmy_yourArmyRegiments(int count);
 
+  /// Draft invasion count vs generals on invasion destinations (#4233).
+  String moveArmy_invasionsThisTurn(int invasions, int generals);
+
+  /// Soft warning when staged invasions exceed general count (#4233).
+  String get moveArmy_invasionOverGeneralCapacityWarning;
+
   /// Combat-capable defender total on invasion row when full military intel (#4216).
   String moveArmy_defendersRegiments(int count);
 
@@ -901,6 +907,24 @@ abstract class AppLocalizations {
 
   /// Empty message in military units panel.
   String get military_units_empty;
+
+  /// Generals roster count vs cap on Military Units panel (#4233).
+  String military_units_generalsCount(int count, int cap);
+
+  /// Per-general medal line on Military Units generals strip (#4233).
+  String military_units_generalMedals(int index, int medals);
+
+  /// Plain-language generals summary on Military Units panel (#4233).
+  String get military_units_generalsPlainSummary;
+
+  /// Details gloss for general medals on Military Units panel (#4233).
+  String get military_units_generalsMedalGloss;
+
+  /// Toggle to show general medal gloss on Military Units panel (#4233).
+  String get military_units_generalsDetails;
+
+  /// Collapse general medal gloss on Military Units panel (#4233).
+  String get military_units_generalsHideDetails;
 
   /// Label for home army.
   String get military_units_homeArmy;
