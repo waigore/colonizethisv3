@@ -65,6 +65,68 @@ void main() {
       expect(find.text('Labour details'), findsOneWidget);
     });
 
+    testWidgets('shows luxury shortfall reason when masters lack fur hats', (
+      WidgetTester tester,
+    ) async {
+      final player = Player(
+        id: 'gp1',
+        displayName: 'Test',
+        isHuman: true,
+        workerPool: const WorkerPool(masters: 2),
+        stockpile: const Stockpile()
+            .applyDelta('grain', 10)
+            .applyDelta('meat', 10),
+      );
+      final readiness = computeLabourReadiness(
+        workers: player.workerPool,
+        stockpile: player.stockpile,
+      );
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: player,
+          gameOverride: productionPanelTestGameFor(player),
+          labourReadinessOverride: readiness,
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(
+        find.text('Some workers are not working — short of Fur hats.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Labour this turn: 0'), findsOneWidget);
+    });
+
+    testWidgets('shows primary reason when labour is zero', (
+      WidgetTester tester,
+    ) async {
+      final player = Player(
+        id: 'gp1',
+        displayName: 'Test',
+        isHuman: true,
+        workerPool: const WorkerPool(peasants: 4, masters: 1),
+        stockpile: const Stockpile(),
+      );
+      final readiness = computeLabourReadiness(
+        workers: player.workerPool,
+        stockpile: player.stockpile,
+      );
+      await tester.pumpWidget(
+        buildProductionPanel(
+          player: player,
+          gameOverride: productionPanelTestGameFor(player),
+          labourReadinessOverride: readiness,
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.textContaining('Labour this turn: 0'), findsOneWidget);
+      expect(
+        find.text('Some workers are not working — food is short.'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('expands tier detail rows on Labour details tap', (
       WidgetTester tester,
     ) async {

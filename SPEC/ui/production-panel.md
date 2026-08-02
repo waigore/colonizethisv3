@@ -136,6 +136,10 @@ Required use cases (each one builder closure under the `Production Panel` folder
 - `Cotton weaving unlocked` — full-availability player with `cotton_weaving` unlocked (`cottonWeavingUnlockedProductionPlayer()`), so the `fabric_from_cotton` row renders normally and interactive.
 - `Industry counsel stars` — full-availability player with two starred produce recipes (`lumber_from_timber`, `paper_from_timber`) and a no-op `onOpenCounsel` callback so reviewers can see Allocation stars and the header **Counsel** button.
 - `Industry counsel stars (mobile)` — same starred scenario wrapped in `mobileViewport`.
+- `Labour food shortfall` — `foodShortfallLabourReadinessPlayer()` (peasants, low grain); muted food reason + **Labour details** (Refs #4237 S2).
+- `Labour luxury shortfall` — `luxuryShortfallLabourReadinessPlayer()` (masters, no fur hats); luxury primary reason (Refs #4237 S3).
+- `Labour zero` — `zeroLabourReadinessPlayer()` (workers, empty stockpile); labour **0** + primary reason (Refs #4237 S6).
+- `Labour food shortfall (mobile)` — food-shortfall scenario in `mobileViewport` (Refs #4237 S8).
 
 Every production use case MUST host the panel inside a `ProviderScope` (no overrides required for the default state) so the panel reads/writes `productionDesiredOutputProvider`, MUST wrap the resulting subtree in `widgetbookEditorialMonocleApp(child: …)` so the dark theme is applied and the Navigator pushes the live Breakdown dialog onto the same overlay the in-app `ProductionScreen` uses, and MUST pass a non-null `onOpenCommodityBreakdown` callback that calls `showDialog<void>(builder: (_) => ProductionCommodityBreakdownDialog(…))` so the Available **Breakdown** `CtNinePatchButton` is visible and tapping it opens the live dialog. The story's `netDeltasByCommodity` MUST come from `previewStockpileNetDeltaByCommodityForPlayer` (same preview helper as the running app) so signed deltas on Available cells track slider / stepper changes; passing `const {}` is a regression because it decouples the story from the SPEC § Net Changes pipeline. Refs #2862 S6.
 

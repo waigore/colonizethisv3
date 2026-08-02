@@ -89,6 +89,33 @@ List<WidgetbookNode> get productionPanelDirectories => [
           ),
         ),
       ),
+      WidgetbookUseCase(
+        name: 'Labour food shortfall',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: foodShortfallLabourReadinessPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour luxury shortfall',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: luxuryShortfallLabourReadinessPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour zero',
+        builder: (context) => ProductionPanelStory(
+          playerOverride: zeroLabourReadinessPlayer(),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Labour food shortfall (mobile)',
+        builder: (context) => mobileViewport(
+          context,
+          ProductionPanelStory(
+            playerOverride: foodShortfallLabourReadinessPlayer(),
+          ),
+        ),
+      ),
     ],
   ),
 ];
