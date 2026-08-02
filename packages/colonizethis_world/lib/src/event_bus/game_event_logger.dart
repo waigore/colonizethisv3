@@ -27,6 +27,9 @@ class GameEventLogger {
         'turn=${e.turnNumber} provinceId=${e.provinceId} attackerId=${e.attackerId} '
             'defenderId=${e.defenderId} winnerId=${e.winnerId} '
             'casualtyEntries=${e.casualties.length}',
+      GeneralMedalGainedEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} generalId=${e.generalId} '
+            'provinceId=${e.provinceId} newMedals=${e.newMedals}',
       NavalCombatResultEvent e =>
         'turn=${e.turnNumber} seaZoneId=${e.seaZoneId} outcome=${e.outcomeName} '
             'winnerOwnerId=${e.winnerOwnerId} side1=${e.side1OwnerId} side2=${e.side2OwnerId}',

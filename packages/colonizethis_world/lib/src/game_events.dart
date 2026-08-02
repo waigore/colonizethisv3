@@ -30,6 +30,25 @@ class CombatResultEvent extends GameEvent {
   final Map<String, int> casualties;
 }
 
+/// A general's medals increased after winning a land battle (Refs #4234).
+class GeneralMedalGainedEvent extends GameEvent {
+  const GeneralMedalGainedEvent({
+    required this.playerId,
+    required this.generalId,
+    required this.provinceId,
+    required this.newMedals,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final String generalId;
+
+  /// Province id in prefixed form (regionId|localId).
+  final String provinceId;
+  final int newMedals;
+  final int turnNumber;
+}
+
 /// Naval battle resolved in a sea zone. SPEC/program/game-events.md.
 class NavalCombatResultEvent extends GameEvent {
   const NavalCombatResultEvent({

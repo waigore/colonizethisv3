@@ -8,6 +8,7 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'turn_event_sink.dart';
+import 'combat_medal_gain_events.dart';
 import 'turn_resolution_seeds.dart';
 
 /// Runs one land battle: applies result (quick battle or auto-resolve), evidence, and dialogue.
@@ -22,6 +23,7 @@ Game runOneLandBattle(
   CombatPhaseGeneralLedger combatGeneralLedger, {
   TurnEventSink sink = const TurnEventSink(),
 }) {
+  final gameBeforeBattle = state;
   state = applyLandBattleAttackTreasuryCosts(state, ctx);
 
   final attackerUnitsTotal = ctx.attackers.fold<int>(
@@ -190,6 +192,14 @@ Game runOneLandBattle(
       ),
     );
   }
+  emitGeneralMedalGainedIfAny(
+    gameBefore: gameBeforeBattle,
+    gameAfter: state,
+    ctx: ctx,
+    winnerId: winnerId,
+    turn: turn,
+    sink: sink,
+  );
 
   return state;
 }

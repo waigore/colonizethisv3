@@ -2,6 +2,7 @@ import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'combat_resolver_support.dart';
 import 'combat_rng.dart';
 import 'combat_survivor_units.dart';
 import 'conflict_detection.dart';
@@ -297,5 +298,12 @@ Game applyQuickBattleResultToGame(
       updatedGame,
     ),
   );
-  return updatedGame;
+
+  final winnerFactionId = switch (result.winner) {
+    QuickBattleWinner.attacker =>
+      ctx.attackers.isNotEmpty ? ctx.attackers.first.factionId : null,
+    QuickBattleWinner.defender => ctx.defenderFactionId,
+    QuickBattleWinner.mutualExhaustion => null,
+  };
+  return awardWinningGeneralMedal(updatedGame, ctx, winnerFactionId);
 }

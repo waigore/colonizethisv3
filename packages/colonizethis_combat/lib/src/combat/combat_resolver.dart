@@ -16,6 +16,8 @@ import 'military_strength.dart';
 
 export 'combat_constants.dart';
 export 'combat_engagement.dart' show resolveEngagement;
+export 'combat_resolver_support.dart'
+    show awardWinningGeneralMedal, winningGeneralIdForBattle;
 export 'combat_types.dart';
 
 /// Resolves one battle context and returns updated Game state.

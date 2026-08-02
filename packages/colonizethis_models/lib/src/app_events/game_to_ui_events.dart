@@ -82,6 +82,23 @@ class AppCombatResultEvent extends GameToUIEvent {
   final Map<String, int> casualties;
 }
 
+/// General medals increased after a land battle win. Mirrors [GeneralMedalGainedEvent].
+class AppGeneralMedalGainedEvent extends GameToUIEvent {
+  const AppGeneralMedalGainedEvent({
+    required this.playerId,
+    required this.generalId,
+    required this.provinceId,
+    required this.newMedals,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final String generalId;
+  final String provinceId;
+  final int newMedals;
+  final int turnNumber;
+}
+
 /// Naval battle resolved in a sea zone. Mirrors colonizethis_logic NavalCombatResultEvent.
 class AppNavalCombatResultEvent extends GameToUIEvent {
   const AppNavalCombatResultEvent({

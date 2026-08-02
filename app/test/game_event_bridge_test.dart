@@ -384,6 +384,32 @@ void main() {
       expect(received[2], isA<AppCombatResultEvent>());
     });
 
+    test('forwards GeneralMedalGainedEvent', () async {
+      final received = <GameToUIEvent>[];
+      appBus.on<GameToUIEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        const GeneralMedalGainedEvent(
+          playerId: 'gp1',
+          generalId: 'g1',
+          provinceId: 'oldWorld|cap',
+          newMedals: 2,
+          turnNumber: 4,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.single, isA<AppGeneralMedalGainedEvent>());
+      final evt = received.single as AppGeneralMedalGainedEvent;
+      expect(evt.playerId, 'gp1');
+      expect(evt.generalId, 'g1');
+      expect(evt.provinceId, 'oldWorld|cap');
+      expect(evt.newMedals, 2);
+      expect(evt.turnNumber, 4);
+    });
+
     test('dispose after stop is safe', () {
       bridge.start();
       bridge.stop();
