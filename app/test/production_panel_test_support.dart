@@ -2,6 +2,7 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -28,6 +29,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     required this.player,
     required this.initialDesiredOutput,
     required this.netDeltasByCommodity,
+    required this.labourReadiness,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
@@ -41,6 +43,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final Player player;
   final Map<String, int> initialDesiredOutput;
   final Map<String, int> netDeltasByCommodity;
+  final LabourReadinessSnapshot labourReadiness;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final VoidCallback? onOpenCommodityBreakdown;
   final Orders? currentOrders;
@@ -72,6 +75,7 @@ class _ProductionPanelTestWrapperState
       player: widget.player,
       desiredOutputByRecipe: _desiredOutput,
       netDeltasByCommodity: widget.netDeltasByCommodity,
+      labourReadiness: widget.labourReadiness,
       onDesiredOutputChanged: (next) {
         setState(() {
           _desiredOutput = Map<String, int>.from(next);
@@ -103,10 +107,17 @@ Widget buildProductionPanel({
   Map<String, IndustryCounselRecommendation>
   starredProduceRecommendationsByRecipeId = const {},
   ProductionOpenCounselCallback? onOpenCounsel,
+  LabourReadinessSnapshot? labourReadinessOverride,
   double width = 800,
   double height = 500,
 }) {
   final displayGame = gameOverride ?? productionPanelTestGameFor(player);
+  final labourReadiness =
+      labourReadinessOverride ??
+      computeLabourReadiness(
+        workers: player.workerPool,
+        stockpile: player.stockpile,
+      );
   final netDeltasByCommodity = <String, int>{};
   for (final entry in desiredOutputByRecipe.entries) {
     final recipe = ProductionRecipesCatalog.byId[entry.key];
@@ -128,6 +139,7 @@ Widget buildProductionPanel({
         player: player,
         initialDesiredOutput: desiredOutputByRecipe,
         netDeltasByCommodity: netDeltasByCommodity,
+        labourReadiness: labourReadiness,
         onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
         onOpenCommodityBreakdown: onOpenCommodityBreakdown,
         currentOrders: currentOrders,

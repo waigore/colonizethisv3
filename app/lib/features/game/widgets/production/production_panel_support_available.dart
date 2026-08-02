@@ -13,7 +13,9 @@ import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/resource_icon.dart';
 import 'commodity_ui_helpers.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'production_available_grid.dart';
+import 'production_labour_readiness_summary.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
 import 'production_panel_constants.dart';
@@ -23,7 +25,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
   const ProductionPanelAvailableSubpanel({
     required this.game,
     required this.player,
-    required this.effectiveLabour,
+    required this.labourReadiness,
     required this.inputCommodityIds,
     required this.outputCommodityIds,
     required this.netDeltasByCommodity,
@@ -37,7 +39,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
 
   final Game game;
   final Player player;
-  final int effectiveLabour;
+  final LabourReadinessSnapshot labourReadiness;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> netDeltasByCommodity;
@@ -196,8 +198,9 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
         ],
       ),
       CtGap.m,
-      EffectiveLabourTotal(
-        text: l10n.production_effectiveLabour(effectiveLabour),
+      ProductionLabourReadinessSummary(
+        snapshot: labourReadiness,
+        l10n: l10n,
         theme: theme,
       ),
     ];

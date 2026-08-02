@@ -1,4 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class ProductionPanel extends StatelessWidget {
     required this.player,
     required this.desiredOutputByRecipe,
     required this.netDeltasByCommodity,
+    required this.labourReadiness,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
@@ -40,6 +42,7 @@ class ProductionPanel extends StatelessWidget {
   final Player player;
   final Map<String, int> desiredOutputByRecipe;
   final Map<String, int> netDeltasByCommodity;
+  final LabourReadinessSnapshot labourReadiness;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
   /// When set, Available header shows a text button that opens the breakdown dialog.
@@ -77,26 +80,14 @@ class ProductionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final regimentCounts = regimentTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
-    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
-    final effectiveLabour = effectiveLabourForWorkers(
-      workers: player.workerPool,
-      stockpile: player.stockpile,
-      foodCounts: MilitaryNavyFoodCounts(
-        regimentCountsById: regimentCounts,
-        shipCountsById: shipCounts,
-      ),
-    );
+    final effectiveLabour = labourReadiness.effectiveLabour;
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
     final availableSubpanel = ProductionPanelAvailableSubpanel(
       game: game,
       player: player,
-      effectiveLabour: effectiveLabour,
+      labourReadiness: labourReadiness,
       inputCommodityIds: inputCommodityIds,
       outputCommodityIds: outputCommodityIds,
       netDeltasByCommodity: netDeltasByCommodity,

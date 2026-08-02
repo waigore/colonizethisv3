@@ -922,6 +922,36 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String production_labourThisTurn(int n) {
+    return 'Labour this turn: $n';
+  }
+
+  @override
+  String get production_labourReasonFood =>
+      'Some workers are not working — food is short.';
+
+  @override
+  String get production_labourReasonFoodWithMilitary =>
+      'Some workers are not working — armies and fleets are fed first, then food runs short.';
+
+  @override
+  String production_labourReasonLuxury(String commodity) {
+    return 'Some workers are not working — short of $commodity.';
+  }
+
+  @override
+  String get production_labourDetails => 'Labour details';
+
+  @override
+  String production_labourTierDetail(
+    String tier,
+    int working,
+    int notWorking,
+  ) {
+    return '$tier: $working working, $notWorking not working';
+  }
+
+  @override
   String production_recipeAffordance(int max, String limiting) {
     return '$max · $limiting';
   }

@@ -45,7 +45,7 @@ Asset filenames and style for commodities and workers appear in [game-toolbar-ic
   - **Food, Raw Materials, Manufactured cells:** Each commodity is rendered as a `CtResourceCell` (see `SPEC/ui/pixel-art-ui-catalog.md` § CtResourceCell and `Refs #2859` R10) with: a 20×20 px leading commodity icon, the commodity display name, the current quantity (rendered with the dark-theme monospace style coloured `--accent-dim`), and an **optional trailing signed delta** rendered as `+N` in `--success` or `-N` in `--danger` when the projected end-of-turn net change for that commodity is non-zero. When the net change is zero, the cell omits delta **glyphs** (`delta == null`) with no empty reserved slot after the quantity so the painted amount's right inset matches the leading icon inset (Refs #3999 wide-layout inset parity). Equal-width peers with the same quantity and delta presence still share a panel-wide quantity column (label-length invariant). The legacy parenthetical inline format (e.g. `Timber: 100 (-10)`) is superseded by the per-cell signed-delta convention. **Compact typography (per **C9** / **C10** / S9):** name and quantity at `CtResourceCell.nameFontSize` / `quantityFontSize` (~10 logical px), delta at `deltaFontSize` (~9 logical px). The name and trailing share an `Expanded` + `LayoutBuilder` row: the name is `Expanded` with ellipsis; the trailing quantity + reserved delta slot use a right-aligned `FittedBox` (`scaleDown`) capped to the cell budget so amounts never collapse to a blank trailing region; under extreme squeeze the cluster scales down instead of overflowing. The quantity right edges share one screen-x across equal-width cards **independent of label length** and **independent of whether a delta is painted** (reserved delta slot). Name ellipsizes first under normal squeeze; trailing amounts must remain visible including quantity `0` (Refs #3485 / #3999).
   - **Commodity grid layout:** Inside each Food / Raw Materials / Manufactured section, `CtResourceCell` cells are laid out in a **3-column grid** (mockup `.grid-3col`, owner decision **C7** / S8b). Cells flow row-by-row (left-to-right, top-to-bottom) at equal column widths derived from the section's available width. The same 3-column layout applies on **both** wide (≥600 dp) and narrow (<600 dp) viewports so the section never collapses to a single column; sections with fewer than three cells render the cells in the leading columns with the trailing columns empty.
   - **Workers section:** Worker tiers are rendered as `CtResourceCell` widgets (one cell per tier in the order peasant → apprentice → journeyman → master) showing the worker icon, the tier display name, and the worker count as the `quantity` value; no delta is shown because pending recruit/train queue counts are surfaced separately by the Labour Controls block below. The four tier cells are laid out in a **2-column grid** (mockup `.grid-2col`, owner decision **C7** / S8b): row 1 hosts peasant + apprentice, row 2 hosts journeyman + master. The same 2-column layout applies on **both** wide and narrow viewports.
-  - **Effective labour:** Single line directly under the Workers grid and **above** the **Labour Controls** subsection, right-aligned, rendered with `--accent` colour, the monospace style with tabular figures, and a 1px `--accent-dim` top border so it reads as a totals row that closes the Workers grid before the per-tier Labour Controls rows begin (see § Labour Controls (12-A) for the subsection placement).
+  - **Effective labour:** Replaced by **Labour readiness** (see § Labour readiness below). Legacy label `Effective labour: N` is superseded by `Labour this turn: N` with optional reason and expandable details.
   - Read-only display of stockpile quantities and net changes from current allocations.
 - **Subpanel 2 — Allocation (right):** One row per recipe: left, output icon + name and inputs in parentheses; **right-aligned** on that row, `max · bottleneck` (`max` = slider cap; `bottleneck` = limiting commodity **display name** or **Labour**). Next row: **`Expanded` `CtSlider`** (flex-grown), then **right-aligned** numeric desired output, then **four icon-only controls** on the **same row** in order: **decrement (−)**, **increment (+)**, **maximize (this recipe)**, **clear (this recipe)** — `StrictAssetIcon` at ~14–16 logical px (same order of magnitude as recipe-line `ResourceIcon` 14px). Trailing cluster uses `MainAxisSize.min` so the slider keeps remaining width; narrow (&lt;600 dp) stacked layout must not clip the row horizontally. Summary lines below retain total labour / insufficient-labour warning. **Inset:** Allocation subpanel uses **extra right padding** so `max · bottleneck` and the numeric column are not clipped by the nine-patch frame.
 - **Allocation row chrome:** Each recipe row is wrapped in dark editorial-monocle row chrome that paints `CtGradients.rowGradient` (subtle horizontal `--bg` → `--surface` brightening) inside a 1px `EditorialMonoclePalette.accentDim` border (consistent with the unit-panel row contract from `Refs #2866`). Adjacent recipe rows are visually separated by a `CtBrassDivider` (`SPEC/ui/components/` brass divider — 8 px tall with 1 px gradient accent line + 8×8 diamond + three dots per side), making the brass edge strip the dark-theme demarcation between rows. The first recipe row paints **without** a leading divider; the last recipe row paints **without** a trailing divider. Hard-coded light-theme row colours (parchment `#F5F5DC`, raw Material primaries) are forbidden — every visible colour resolves through `EditorialMonoclePalette` tokens.
@@ -193,6 +193,34 @@ The `Full availability (mobile)` use case must be pinned by `app/test/widgetbook
 - **Breakdown table parity:** Given the breakdown dialog open for the current preview inputs, when the table renders, then for every commodity row **Pending build costs + Extraction + Riches to treasury + Consumption + Production** equals the **Total** column and matches `previewStockpileNetDeltaByCommodityForPlayer` for that commodity (or **Total** `0` when the net map omits that id).
 - **Breakdown live update:** Given the breakdown dialog is open, when the player changes any allocation (**slider**, **±** steppers, **maximize**, **clear**, or header **Reset**) on the main panel, then phase and total cells refresh to match the new preview without closing the dialog.
 - **Breakdown commodity icons:** Given the breakdown dialog open, when a data row for a commodity renders, then the **Commodity** cell shows a **leading** `ResourceIcon` for that commodity id (16px, 4dp gap before the name) like the Available grid; long names truncate with ellipsis without breaking table layout.
+
+## Labour readiness (Refs #4237)
+
+In-panel labour preview on `GAME20001` Available only (not end-turn nags). Uses the same consumption/strike rules as the resolver (`previewWorkerIdleLabour` / `effectiveLabourForWorkers`) on a **post-extraction** stockpile: pending build costs → Extraction → Riches-to-treasury (not raw warehouse alone).
+
+### Default (always visible)
+
+- **Labour this turn: N** — right-aligned accent total (same chrome as former Effective labour row).
+- When **N < full pool capacity** (`WorkerPool.labourSupplyPerTurn`): one muted reason line naming the **primary** cause (food shortfall, or one luxury commodity when luxury is primary). No reason when at full capacity.
+- **Primary-cause priority:** largest labour loss; tie → food over luxury.
+
+### On request
+
+- **Labour details** `CtActionTextButton` toggles per-tier **working vs not working** counts (consistent with `previewWorkerIdleLabour` on the preview stockpile).
+
+### Non-goals
+
+- No end-turn / Settings labour nags; no deep-link buttons; no auto Trade/Disband/Allocation.
+
+### Acceptance criteria
+
+- **Given** effective labour equals full pool capacity, **when** Available builds, **then** the UI shows `Labour this turn: N` only (no reason line).
+- **Given** food shortfall reduces labour below capacity, **when** Available builds, **then** the UI shows one muted food reason and `Labour this turn: N` uses post-extraction preview stockpile.
+- **Given** luxury shortfall is the primary cause, **when** Available builds, **then** the reason names the worst-affected tier's luxury display name.
+- **Given** N < capacity, **when** the player taps **Labour details**, **then** each tier with workers shows working vs not-working counts.
+- **Given** Allocation total required labour exceeds N, **when** the summary builds, **then** the warning uses the same N as the labour readiness summary.
+
+---
 
 ## Labour Controls (12-A)
 

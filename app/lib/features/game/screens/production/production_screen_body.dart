@@ -74,6 +74,27 @@ class ProductionScreenBody extends ConsumerWidget {
         },
       ),
     );
+    final regimentCounts = regimentTypeCountsForPlayer(
+      displayGame.worldState,
+      displayPlayer.id,
+    );
+    final shipCounts = shipTypeCountsForPlayer(
+      displayGame.worldState,
+      displayPlayer.id,
+    );
+    final labourReadiness = labourReadinessForPlayer(
+      game: displayGame,
+      topology: panelTopology,
+      playerId: displayPlayer.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: panelTileMaps,
+        currentOrders: currentOrders,
+      ),
+    );
     final canEdit = shell.canMutateViaUi;
     final bus = shellRef.read(appEventBusProvider);
     final industryCounselRecommendations = rankIndustryCounselRecommendations(
@@ -134,6 +155,7 @@ class ProductionScreenBody extends ConsumerWidget {
       player: displayPlayer,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
+      labourReadiness: labourReadiness,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: canEdit,

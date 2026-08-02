@@ -19,6 +19,8 @@ Workers live only in the labour pool shown on `GAME20001` **Production screen**.
 
 Higher tiers eat more and demand luxuries. Unfed or luxury-starved workers may **strike** (0 labour that turn) but remain in the pool. Consumption runs in the resolved turn **before** Production uses idle labour.
 
+On **Production screen**, the **Labour this turn** line under the worker grid previews how many labour points will actually be available after armies, fleets, and workers eat — using food and luxuries arriving this turn from extraction, not the warehouse alone. When some workers will not work, a short reason names the main shortage (food or a luxury). Tap **Labour details** for per-tier working vs not-working counts. Respond via Trade, Allocation, Labour Controls, or Disband — the panel informs only; it does not auto-fix shortages.
+
 ### Recruit, train, and disband
 
 On `GAME20001`, use **Labour Controls**:

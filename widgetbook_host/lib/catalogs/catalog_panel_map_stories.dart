@@ -314,11 +314,21 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         // see the danger text button at idle / disabled opacity.
       },
     );
+    final labourReadiness = labourReadinessForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+      ),
+    );
     return ProductionPanel(
       game: game,
       player: player,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
+      labourReadiness: labourReadiness,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: true,
