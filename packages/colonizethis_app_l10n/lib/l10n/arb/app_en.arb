@@ -3522,6 +3522,51 @@
       }
     }
   },
+  "production_labourThisTurn": "Labour this turn: {n}",
+  "@production_labourThisTurn": {
+    "description": "Labour readiness total line on Production Available panel.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourReasonFood": "Some workers are not working — food is short.",
+  "@production_labourReasonFood": {
+    "description": "Primary labour-readiness reason when food is the main shortfall."
+  },
+  "production_labourReasonFoodWithMilitary": "Some workers are not working — armies and fleets are fed first, then food runs short.",
+  "@production_labourReasonFoodWithMilitary": {
+    "description": "Labour-readiness reason when military/navy food draw contributes to worker shortfall."
+  },
+  "production_labourReasonLuxury": "Some workers are not working — short of {commodity}.",
+  "@production_labourReasonLuxury": {
+    "description": "Primary labour-readiness reason when a trained tier lacks luxury.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDetails": "Labour details",
+  "@production_labourDetails": {
+    "description": "Toggle to expand per-tier labour readiness breakdown."
+  },
+  "production_labourTierDetail": "{tier}: {working} working, {notWorking} not working",
+  "@production_labourTierDetail": {
+    "description": "Per-tier labour readiness detail row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "working": {
+        "type": "int"
+      },
+      "notWorking": {
+        "type": "int"
+      }
+    }
+  },
   "production_recipeAffordance": "{max} · {limiting}",
   "@production_recipeAffordance": {
     "description": "Recipe affordance line (max output and limiting factor label).",

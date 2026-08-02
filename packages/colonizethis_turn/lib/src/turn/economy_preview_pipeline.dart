@@ -150,6 +150,74 @@ economyPreviewStockpilePhaseDeltasForPlayer({
   };
 }
 
+/// Runs pending build costs → Extraction → Riches-to-treasury only.
+///
+/// Used by Production labour readiness so food arriving this turn is included
+/// without applying Consumption or Production (Refs #4237).
+Game applyEconomyPhasesThroughRichesForPreview({
+  required Game game,
+  required MapTopology topology,
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
+}) {
+  var acc = TurnPipelineState(game: game);
+  acc = acc.copyWith(
+    game: applyPendingStockpileCostsForPreview(
+      game: acc.game,
+      currentOrders: inputs.currentOrders,
+    ),
+  );
+  acc = runEconomyExtractionStep(
+    acc,
+    _economyPreviewStepContext(
+      topology: topology,
+      tileMapByRegion: inputs.tileMapByRegion,
+      extractedByPlayerId: inputs.extractedByPlayerId,
+      defaultAssignments: inputs.defaultAssignments,
+      defaultAssignmentsByPlayerId: inputs.defaultAssignmentsByPlayerId,
+    ),
+  );
+  acc = runEconomyRichesToTreasuryStep(
+    acc,
+    _economyPreviewStepContext(
+      topology: topology,
+      tileMapByRegion: inputs.tileMapByRegion,
+      extractedByPlayerId: inputs.extractedByPlayerId,
+      defaultAssignments: inputs.defaultAssignments,
+      defaultAssignmentsByPlayerId: inputs.defaultAssignmentsByPlayerId,
+    ),
+  );
+  return acc.game;
+}
+
+/// Labour readiness for one player using post-extraction preview stockpile.
+LabourReadinessSnapshot labourReadinessForPlayer({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
+}) {
+  final before = game.playerById(playerId);
+  if (before == null) {
+    return const LabourReadinessSnapshot(
+      effectiveLabour: 0,
+      fullCapacity: 0,
+      tierStatuses: [],
+    );
+  }
+  final previewGame = applyEconomyPhasesThroughRichesForPreview(
+    game: game,
+    topology: topology,
+    inputs: inputs,
+  );
+  final previewPlayer = previewGame.playerById(playerId)!;
+  return computeLabourReadiness(
+    workers: previewPlayer.workerPool,
+    stockpile: previewPlayer.stockpile,
+    foodCounts: foodCounts,
+  );
+}
+
 /// Runs Extraction → Riches-to-treasury → Consumption → Production only.
 Game applyEconomyPhasesForPreview({
   required Game game,

@@ -11,6 +11,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_pan
 
 import 'golden_capture_harness.dart';
 import 'panel_fixtures/production.dart';
+import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
 IndustryCounselRecommendation _produceRecommendation(String recipeId) {
@@ -45,6 +46,7 @@ void main() {
         player: player,
         desiredOutputByRecipe: const {},
         netDeltasByCommodity: const {},
+        labourReadiness: labourReadinessForPlayer(player),
         onDesiredOutputChanged: (_) {},
         starredProduceRecommendationsByRecipeId: {
           'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
@@ -82,6 +84,7 @@ void main() {
         player: player,
         desiredOutputByRecipe: const {},
         netDeltasByCommodity: const {},
+        labourReadiness: labourReadinessForPlayer(player),
         onDesiredOutputChanged: (_) {},
         onOpenCounsel: ({String? highlightRecommendationId}) {},
       ),

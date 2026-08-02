@@ -106,7 +106,7 @@ void _addAvailableTexts(
   addWorkerCellTexts('apprentice', player.workerPool.apprentices);
   addWorkerCellTexts('journeyman', player.workerPool.journeymen);
   addWorkerCellTexts('master', player.workerPool.masters);
-  out.add(l10n.production_effectiveLabour(effectiveLabour));
+  out.add(l10n.production_labourThisTurn(effectiveLabour));
 }
 
 String _recipeLabelText(ProductionRecipe recipe) {
@@ -242,14 +242,20 @@ List<String> productionPanelWideExpectedTexts(
     snap.game.worldState,
     snap.player.id,
   );
-  final effectiveLabour = effectiveLabourForWorkers(
-    workers: snap.player.workerPool,
-    stockpile: snap.player.stockpile,
+  final labourReadiness = labourReadinessForPlayer(
+    game: snap.game,
+    topology: snap.topology,
+    playerId: snap.player.id,
     foodCounts: MilitaryNavyFoodCounts(
       regimentCountsById: regimentCounts,
       shipCountsById: shipCounts,
     ),
+    inputs: economyPreviewInputs(
+      tileMapByRegion: snap.tileMapByRegion,
+      currentOrders: snap.currentOrders,
+    ),
   );
+  final effectiveLabour = labourReadiness.effectiveLabour;
 
   final out = <String>[];
   _addAvailableTexts(out, snap, l10n, effectiveLabour);

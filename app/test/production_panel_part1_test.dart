@@ -112,7 +112,7 @@ void main() {
       expect(find.text('RAW MATERIALS'), findsOneWidget);
       expect(find.text('MANUFACTURED'), findsOneWidget);
       expect(find.text('WORKERS'), findsOneWidget);
-      expect(find.textContaining('Effective labour:'), findsOneWidget);
+      expect(find.textContaining('Labour this turn:'), findsOneWidget);
     });
 
     testWidgets('Available subpanel shows raw materials used as inputs', (

@@ -2029,6 +2029,28 @@ abstract class AppLocalizations {
   /// Shows effective labour total in production panel.
   String production_effectiveLabour(int n);
 
+  /// Labour readiness total on Production Available panel.
+  String production_labourThisTurn(int n);
+
+  /// Primary labour-readiness reason when food is the main shortfall.
+  String get production_labourReasonFood;
+
+  /// Labour-readiness reason when military/navy food draw contributes.
+  String get production_labourReasonFoodWithMilitary;
+
+  /// Primary labour-readiness reason when luxury is the main shortfall.
+  String production_labourReasonLuxury(String commodity);
+
+  /// Toggle to expand per-tier labour readiness breakdown.
+  String get production_labourDetails;
+
+  /// Per-tier labour readiness detail row.
+  String production_labourTierDetail(
+    String tier,
+    int working,
+    int notWorking,
+  );
+
   /// Recipe affordance line (max output and limiting factor label).
   String production_recipeAffordance(int max, String limiting);
 

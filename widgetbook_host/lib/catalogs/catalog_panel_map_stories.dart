@@ -263,12 +263,13 @@ class ProductionPanelStoryBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final game = demoGameForOverlay;
+    final baseGame = demoGameForOverlay;
     final player =
         playerOverride ??
         (useFullAvailability
             ? fullAvailabilityProductionPlayer()
             : partialAvailabilityProductionPlayer());
+    final game = _productionStoryGameForPlayer(baseGame, player);
     final topology = MapTopology();
     const Map<String, TileMapResult>? tileMapByRegion = null;
     // Read the story's `currentOrdersProvider` so the Labour Controls
@@ -314,11 +315,21 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         // see the danger text button at idle / disabled opacity.
       },
     );
+    final labourReadiness = labourReadinessForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+      ),
+    );
     return ProductionPanel(
       game: game,
       player: player,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
+      labourReadiness: labourReadiness,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: true,
@@ -342,6 +353,26 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       onOpenCounsel: onOpenCounsel,
     );
   }
+}
+
+/// Merges [player] into [baseGame] so preview helpers read the same stockpile
+/// and worker pool the panel displays (Widgetbook story overrides).
+Game _productionStoryGameForPlayer(Game baseGame, Player player) {
+  if (baseGame.players.isEmpty) {
+    return baseGame.copyWith(players: [player]);
+  }
+  var replaced = false;
+  final players = baseGame.players.map((existing) {
+    if (existing.id == player.id) {
+      replaced = true;
+      return player;
+    }
+    return existing;
+  }).toList();
+  if (!replaced) {
+    players[0] = player;
+  }
+  return baseGame.copyWith(players: players);
 }
 
 /// Civilian Units Panel + map in tandem. SPEC/ui/civilian-units-panel.md.

@@ -159,4 +159,27 @@ void main() {
       expect(result?.confirmed, isFalse);
     },
   );
+
+  testWidgets(
+    'Given idle workers would reduce labour When DLG60001 builds Then no labour '
+    'readiness copy is shown (Refs #4237 non-goals)',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        hostApp(
+          onOpen: (ctx) async {
+            await showNextTurnConfirmationDialog(ctx, currentTurn: 7);
+          },
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Labour this turn:'), findsNothing);
+      expect(find.text('Labour details'), findsNothing);
+      expect(
+        find.text('Some workers are not working — food is short.'),
+        findsNothing,
+      );
+    },
+  );
 }

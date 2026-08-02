@@ -218,6 +218,7 @@ void main() {
               CommodityCatalog.grain.id: -16,
               CommodityCatalog.meat.id: 12,
             },
+            labourReadiness: labourReadinessForPlayer(player),
             onDesiredOutputChanged: (_) {},
           ),
         ),
