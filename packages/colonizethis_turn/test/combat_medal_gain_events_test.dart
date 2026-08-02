@@ -20,7 +20,7 @@ Game _minimalGame({List<General> generals = const []}) {
 }
 
 void main() {
-  group('winnerGeneralIdForBattle', () {
+  group('winningGeneralIdForBattle', () {
     test('returns defender general when defender wins', () {
       const ctx = BattleContext(
         provinceId: 'oldWorld|p1',
@@ -34,7 +34,7 @@ void main() {
         fortLevel: 0,
         terrain: 'plains',
       );
-      expect(winnerGeneralIdForBattle(ctx, 'def'), 'g-def');
+      expect(winningGeneralIdForBattle(ctx, 'def'), 'g-def');
     });
 
     test('returns attacker general when attacker wins', () {
@@ -53,7 +53,7 @@ void main() {
         fortLevel: 0,
         terrain: 'plains',
       );
-      expect(winnerGeneralIdForBattle(ctx, 'att'), 'g-att');
+      expect(winningGeneralIdForBattle(ctx, 'att'), 'g-att');
     });
   });
 

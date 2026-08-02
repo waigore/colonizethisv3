@@ -88,3 +88,47 @@ double combatSideMoraleMultiplier({
   return moraleMultiplierForFeedingCoverage(feedingCoverage) *
       moraleMultiplierForGeneralMedals(generalMedals);
 }
+
+/// Winning faction's assigned general for medal gain after a resolved land battle.
+String? winningGeneralIdForBattle(BattleContext ctx, String winnerFactionId) {
+  if (winnerFactionId == ctx.defenderFactionId) {
+    return ctx.defenderGeneralId;
+  }
+  for (final attacker in ctx.attackers) {
+    if (attacker.factionId == winnerFactionId) {
+      return attacker.generalId;
+    }
+  }
+  return null;
+}
+
+/// Awards +1 medal to the winning general when present (Quick Battle path).
+/// Auto-resolve uses [incrementGeneralMedals] inside engagement outcomes.
+Game awardWinningGeneralMedal(
+  Game game,
+  BattleContext ctx,
+  String? winnerFactionId,
+) {
+  if (winnerFactionId == null) {
+    return game;
+  }
+  final generalId = winningGeneralIdForBattle(ctx, winnerFactionId);
+  if (generalId == null) {
+    return game;
+  }
+  final generalsById = {for (final g in game.generals) g.id: g};
+  final before = generalsById[generalId];
+  if (before == null) {
+    return game;
+  }
+  incrementGeneralMedals(generalsById: generalsById, generalId: generalId);
+  final after = generalsById[generalId];
+  if (after == null || after.medals == before.medals) {
+    return game;
+  }
+  return game.copyWith(
+    generals: game.generals
+        .map((g) => g.id == generalId ? after : g)
+        .toList(growable: false),
+  );
+}

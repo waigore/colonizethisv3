@@ -6,18 +6,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'turn_event_sink.dart';
 
-String? winnerGeneralIdForBattle(BattleContext ctx, String winnerId) {
-  if (winnerId == ctx.defenderFactionId) {
-    return ctx.defenderGeneralId;
-  }
-  for (final attacker in ctx.attackers) {
-    if (attacker.factionId == winnerId) {
-      return attacker.generalId;
-    }
-  }
-  return null;
-}
-
 General? _generalById(Game game, String generalId) {
   for (final general in game.generals) {
     if (general.id == generalId) {
@@ -38,7 +26,7 @@ void emitGeneralMedalGainedIfAny({
   if (!sink.hasGameEvent || winnerId == null) {
     return;
   }
-  final generalId = winnerGeneralIdForBattle(ctx, winnerId);
+  final generalId = winningGeneralIdForBattle(ctx, winnerId);
   if (generalId == null) {
     return;
   }
