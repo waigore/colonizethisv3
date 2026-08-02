@@ -93,6 +93,17 @@ Iterable<_Scenario> _scenarios() sync* {
       expect(snapshot.effectiveLabour, 0);
     },
   );
+
+  yield (
+    label: 'dual shortfall picks food as primary when food labour loss is larger',
+    workers: const WorkerPool(peasants: 8, apprentices: 1),
+    stockpile: const Stockpile().applyDelta('grain', 2).applyDelta('meat', 2),
+    foodCounts: const MilitaryNavyFoodCounts(),
+    verify: (snapshot) {
+      expect(snapshot.effectiveLabour, lessThan(snapshot.fullCapacity));
+      expect(snapshot.primaryCauseKind, LabourReadinessCauseKind.food);
+    },
+  );
 }
 
 void main() {
