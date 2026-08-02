@@ -306,6 +306,50 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Player turn event feed general medal line shows for human (Refs #4234)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppGeneralMedalGainedEvent(
+          playerId: harness.humanId,
+          generalId: 'g1',
+          provinceId: 'oldWorld|cap',
+          newMedals: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.textContaining('a general earned a medal (now 2)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('commander'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed general medal line is omitted for other players (Refs #4234)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppGeneralMedalGainedEvent(
+          playerId: harness.opponentId,
+          generalId: 'g-ai',
+          provinceId: 'oldWorld|cap',
+          newMedals: 3,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('earned a medal'), findsNothing);
+    },
+  );
+
   for (final case_ in eventFeedDiplomacyDetailNavigateCases()) {
     testWidgets(case_.name, (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);
