@@ -1545,6 +1545,22 @@
       }
     }
   },
+  "moveArmy_invasionsThisTurn": "Invasions this turn: {invasions} · Generals: {generals}",
+  "@moveArmy_invasionsThisTurn": {
+    "description": "Draft invasion count vs available generals on invasion destinations (#4233).",
+    "placeholders": {
+      "invasions": {
+        "type": "int"
+      },
+      "generals": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_invasionOverGeneralCapacityWarning": "More invasions than generals — extra armies fight with weaker command.",
+  "@moveArmy_invasionOverGeneralCapacityWarning": {
+    "description": "Soft warning when staged invasions exceed general count; Confirm stays enabled (#4233)."
+  },
   "moveArmy_defendersRegiments": "Defenders: {count} regiments",
   "@moveArmy_defendersRegiments": {
     "description": "Combat-capable defender total on invasion row when full military intel (#4216).",
@@ -1643,6 +1659,46 @@
   "military_units_empty": "No military units",
   "@military_units_empty": {
     "description": "Empty message in military units panel."
+  },
+  "military_units_generalsCount": "Generals: {count} of {cap}",
+  "@military_units_generalsCount": {
+    "description": "Generals roster count vs cap on Military Units panel (#4233).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "int"
+      }
+    }
+  },
+  "military_units_generalMedals": "General {index}: {medals} medals",
+  "@military_units_generalMedals": {
+    "description": "Per-general medal line on Military Units generals strip (#4233).",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "medals": {
+        "type": "int"
+      }
+    }
+  },
+  "military_units_generalsPlainSummary": "Each general can lead one invasion this turn. More medals mean a stronger fight.",
+  "@military_units_generalsPlainSummary": {
+    "description": "Plain-language generals summary on Military Units panel (#4233)."
+  },
+  "military_units_generalsMedalGloss": "Medals let more regiments fight, help troops hold the line, and can decide who strikes first.",
+  "@military_units_generalsMedalGloss": {
+    "description": "Details gloss for general medals on Military Units panel (#4233)."
+  },
+  "military_units_generalsDetails": "Details",
+  "@military_units_generalsDetails": {
+    "description": "Toggle to show general medal gloss on Military Units panel (#4233)."
+  },
+  "military_units_generalsHideDetails": "Hide",
+  "@military_units_generalsHideDetails": {
+    "description": "Collapse general medal gloss on Military Units panel (#4233)."
   },
   "military_units_homeArmy": "Home Army",
   "@military_units_homeArmy": {

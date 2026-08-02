@@ -337,6 +337,15 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   }
 
   @override
+  String moveArmy_invasionsThisTurn(int invasions, int generals) {
+    return 'Invasions this turn: $invasions · Generals: $generals';
+  }
+
+  @override
+  String get moveArmy_invasionOverGeneralCapacityWarning =>
+      'More invasions than generals — extra armies fight with weaker command.';
+
+  @override
   String moveArmy_defendersRegiments(int count) {
     return 'Defenders: $count regiments';
   }
@@ -401,6 +410,30 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get military_units_empty => 'No military units';
+
+  @override
+  String military_units_generalsCount(int count, int cap) {
+    return 'Generals: $count of $cap';
+  }
+
+  @override
+  String military_units_generalMedals(int index, int medals) {
+    return 'General $index: $medals medals';
+  }
+
+  @override
+  String get military_units_generalsPlainSummary =>
+      'Each general can lead one invasion this turn. More medals mean a stronger fight.';
+
+  @override
+  String get military_units_generalsMedalGloss =>
+      'Medals let more regiments fight, help troops hold the line, and can decide who strikes first.';
+
+  @override
+  String get military_units_generalsDetails => 'Details';
+
+  @override
+  String get military_units_generalsHideDetails => 'Hide';
 
   @override
   String get military_units_homeArmy => 'Home Army';
