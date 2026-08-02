@@ -24,13 +24,14 @@
 // raised for wave-11 app refactor file splits (Flame, Victory, event handler; Refs #4224);
 // raised for GAME60001 first-right Market cue, Deal Book labels, overseas-profit ledger (Refs #4226).
 // raised for GAME60001 Market wide two-column compact rows (Refs #4227).
+// raised for UNIT20001 generals strip + DLG20001 invasion capacity warn (Refs #4233).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 67000;
+const _maxMainLines = 67500;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
