@@ -7,6 +7,7 @@ import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../province_overlay/province_panel_labels.dart';
 import 'move_army_dialog.dart';
+import '../units/military/general_command_capacity.dart';
 import 'move_army_invasion_intel.dart';
 import 'move_army_invasion_intel_labels.dart';
 import 'move_army_dialog_state_logic.dart';
@@ -43,6 +44,24 @@ mixin MoveArmyDialogDestinations
 
     final intelMutedStyle = (theme.textTheme.bodySmall ?? const TextStyle())
         .copyWith(color: EditorialMonoclePalette.muted);
+    final selected = selectedEntry(entries);
+    final showInvasionCapacity =
+        selected != null && !selected.isPlayerOwned;
+    final invasionCount = showInvasionCapacity
+        ? stagedInvasionCountForTurn(
+            game: widget.game,
+            humanPlayerId: widget.humanPlayerId,
+            draftOrders: widget.draftOrders,
+            previewArmyId: widget.army.id,
+            previewDestinationProvinceId: armySelectedDestination,
+          )
+        : 0;
+    final generalCount = humanGeneralCountForDisplay(
+      widget.game,
+      widget.humanPlayerId,
+    );
+    final invasionOverCapacity =
+        showInvasionCapacity && invasionCount > generalCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,6 +71,23 @@ mixin MoveArmyDialogDestinations
           l10n.moveArmy_yourArmyRegiments(moveArmyOwnRegimentCount(widget.army)),
           style: intelMutedStyle,
         ),
+        if (showInvasionCapacity) ...[
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            l10n.moveArmy_invasionsThisTurn(invasionCount, generalCount),
+            style: intelMutedStyle,
+          ),
+          if (invasionOverCapacity)
+            Padding(
+              padding: const EdgeInsets.only(top: CtSpacing.xs),
+              child: Text(
+                l10n.moveArmy_invasionOverGeneralCapacityWarning,
+                style: intelMutedStyle.copyWith(
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
         const SizedBox(height: CtSpacing.ml),
         if (owned.isNotEmpty) ...[
           CtSectionLabel(l10n.moveArmy_groupYourProvinces),

@@ -37,6 +37,7 @@ The military units panel lists every **army** and **fleet** for the human player
 
 ## Scope: land (armies)
 
+- **Generals strip (Refs #4233):** At the top of the land subsection (before region groupings), when the panel is **not** in observe/read-only mode and at least one army row will render, show a compact **Generals** strip for the **human player only**: `Generals: N of Cap`, one line per general with medal count (`General {index}: {medals} medals`), one plain sentence that each general can lead one invasion this turn and more medals mean a stronger fight, and a **Details** control that toggles a short medal gloss (more regiments fight, troops hold better, who strikes first) — no combat tables. Legacy saves with an empty `generals` roster but positive cap display at least one general (minimum pool per `military-generals.md` load reconciliation). The strip is omitted in observe/read-only mode.
 - **Included:** All **armies** owned by the human player from `WorldState.armies` (or per-region equivalent). **Home Army** is always listed for the capital region (even at **zero** regiments), pinned like Home Fleet.
 - **Grouping:** By **region**, then by **province** (stationed province). Under each province: **one row per army** (not one row per regiment type). **Order:** Region headings; within region, **Home Army** section first when capital is in that region; then **province** nodes (stable order by display name or id); within a province, armies in stable order (e.g. by army label or id).
 - **Row content (collapsed):** Army display name (or generated id label). **Location line:** After the regiment count, show the stationed province’s **display name** when `Province.displayName` is set (`Province.displayName ?? Province.id` from world state lookup by full province id); do **not** show raw `stationedProvinceId` alone when a display name exists. Region context remains on the location section header (“name — region”). Short composition summary (e.g. total regiments). Optional **status** from aggregate regiment `Unit.status` (if any Working → show Working). Collapsed rows render via the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite (left details, right left-to-right actions, top-aligned action group, icon-only on narrow widths).
@@ -169,6 +170,12 @@ the displayed text content (`name — region` on the location line) is unchanged
 - Given the panel renders army or naval rows with row actions, when the row is shown on wide or narrow widths, then the UI layer uses the shared [`UnitsEntityActionRow`](components/units-entity-action-row.md) composite with details on the left, actions on the right in left-to-right order, and icon-only action rendering on narrow widths.
 
 - **(Golden coverage, issue #3514)** Given `UNIT20001` rendered against `AppThemes.editorialMonocle` from the deterministic `getDebugInitGameResult()` fixture (seed 42) at the canonical test host viewport (`440×820`, panel constrained to `400×760`), when `flutter test` runs the unit-panel golden suite (`app/test/unit_panels_goldens_test.dart`), then the keyed `RepaintBoundary` capture matches the committed baseline `app/test/goldens/unit_panel_military_default.png` and the panel raises no exception (`WidgetTester.takeException()` is `null`).
+
+- Given the human player has two generals with medals 0 and 2 and general cap 3, when Military Units opens in interactive (non-read-only) mode, then the UI layer shows `military_units_generalsCount(2, 3)`, both `military_units_generalMedals` lines, and `military_units_generalsPlainSummary` without opening Details (#4233).
+
+- Given Military Units is open, when the player taps `military_units_generalsDetails`, then the UI layer shows `military_units_generalsMedalGloss` (#4233).
+
+- Given Military Units is in observe/read-only mode, when the panel renders, then the UI layer does not mount `MilitaryGeneralsStrip` (#4233).
 
 ---
 
