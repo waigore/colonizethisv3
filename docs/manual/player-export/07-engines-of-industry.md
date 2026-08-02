@@ -15,7 +15,7 @@ Extraction fills your warehouse only with raw plenty. **Production** turns timbe
 ### Opening Production
 
 1. From **Game screen**, open Production via the empire rail / toolbar route to **Production screen**.
-2. **Available** (left on wide layouts): food, raw materials, manufactured goods, and worker tiers, with projected signed deltas when net change is non-zero. Tap **Breakdown** to open **Production commodity breakdown dialog** for a read-only deeper view.
+2. **Available** (left on wide layouts): food, raw materials, manufactured goods, and worker tiers, with projected signed deltas when net change is non-zero. Under the worker grid, **Labour this turn** shows how much labour will be available after feeding armies, fleets, and workers (including food arriving from extraction this turn). When labour falls short of your full worker pool, a plain reason explains the main shortage; **Labour details** lists each tier’s working vs not-working headcounts. Tap **Breakdown** to open **Production commodity breakdown dialog** for a read-only deeper view.
 3. **Allocation** (right / below): one row per recipe. Set **desired output** with the slider or − / + / maximize / clear. The row shows inputs in parentheses, `max · bottleneck`, and labour warnings when idle labour or materials cannot cover the ask.
 4. Desired output is converted to labour assignments for the resolver (`desired × labour per unit`). **Reset** clears allocations. While turn resolution is blocking, treat the panel as read-only.
 
