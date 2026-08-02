@@ -1,16 +1,12 @@
 import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_combat_test_support/colonizethis_combat_test_support.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 Game _gameWithGeneral({required int medals}) {
-  return Game(
+  return landResolverBattleGame(
     id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
+    units: const [],
     players: const [Player(id: 'att', displayName: 'Att', isHuman: true)],
     generals: [General(id: 'g-att', ownerId: 'att', medals: medals)],
   );
