@@ -189,5 +189,6 @@ the displayed text content (`name — region` on the location line) is unchanged
 ## Widgetbook
 
 - **Standalone:** Demo armies + fleets; verify Home Army pinning, province grouping, expanded composition, split/combine disabled states.
+- **Generals strip (#4233):** Isolated `MilitaryGeneralsStrip` with two generals (0 and 2 medals) and cap 3; tap **Details** to expand medal gloss.
 - **With map:** `getDebugInitGameResult()`; army row → pan/center province.
 - **Mobile (360x640):** Panel inside a `360 × 640` dp frame bound by the production narrow constraints (`unitsPanelSheetConstraints` — full width × `50%` height), showing the fill-height narrow sizing contract (Refs #3627).

@@ -192,3 +192,205 @@ List<WidgetbookUseCase> get moveArmyInvasionIntelDialogUseCases => [
     },
   ),
 ];
+
+({
+  Game game,
+  MapTopology topology,
+  Army army,
+  PlayerView playerView,
+  Orders draftOrders,
+}) _moveArmyGeneralCapacityStoryFixture({
+  required List<General> generals,
+  required int generalCap,
+}) {
+  const playerId = 'gp_move_cap_story';
+  const rivalId = 'gp_rival_cap_story';
+  const from = 'oldWorld|p_from_cap';
+  const invasionDest = 'oldWorld|p_invasion_cap';
+
+  const topology = MapTopology(
+    nodes: [
+      TopologyNode(
+        id: from,
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: invasionDest,
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: [
+      TopologyEdge(id1: from, id2: invasionDest),
+    ],
+  );
+
+  final draftOrders = Orders(
+    armyMoveOrdersByPlayerId: {
+      playerId: [
+        const ArmyMoveOrder(
+          armyId: 'a_other_cap',
+          destinationProvinceId: invasionDest,
+        ),
+      ],
+    },
+  );
+
+  final game = Game(
+    id: 'g_move_cap_story',
+    generals: generals,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: RegionData(
+        provinces: const [
+          Province(
+            id: from,
+            regionId: 'oldWorld',
+            ownerId: playerId,
+            displayName: 'Origin',
+          ),
+          Province(
+            id: invasionDest,
+            regionId: 'oldWorld',
+            ownerId: rivalId,
+            displayName: 'Rival City',
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'u_cap_mover',
+            type: 'musketeers',
+            ownerId: playerId,
+            locationProvinceId: from,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      armies: const [
+        Army(
+          id: 'a_move_cap',
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: from,
+          regimentUnitIds: ['u_cap_mover'],
+          isHomeArmy: false,
+        ),
+        Army(
+          id: 'a_other_cap',
+          ownerId: playerId,
+          regionId: 'oldWorld',
+          stationedProvinceId: from,
+          regimentUnitIds: [],
+          isHomeArmy: false,
+        ),
+      ],
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          from: ['oldWorld|p_from_cap|0|0'],
+          invasionDest: ['oldWorld|p_invasion_cap|0|0'],
+        },
+      },
+      playerVisibilityByTile: const {
+        playerId: {
+          'oldWorld|p_from_cap|0|0': 'fullyVisible',
+          'oldWorld|p_invasion_cap|0|0': 'fullyVisible',
+        },
+      },
+    ),
+    players: [
+      Player(
+        id: playerId,
+        displayName: 'Catalog Player',
+        isHuman: true,
+        capitalProvinceId: from,
+        generalCap: generalCap,
+      ),
+      Player(
+        id: rivalId,
+        displayName: 'Rival Power',
+        isHuman: false,
+        capitalProvinceId: invasionDest,
+      ),
+    ],
+  );
+
+  final playerView = buildPlayerView(game, topology, playerId);
+
+  return (
+    game: game,
+    topology: topology,
+    army: game.worldState.armies.firstWhere((a) => a.id == 'a_move_cap'),
+    playerView: playerView,
+    draftOrders: draftOrders,
+  );
+}
+
+/// Invasion-vs-generals capacity line on DLG20001. SPEC/ui/move-army-dialog.md (#4233).
+List<WidgetbookUseCase> get moveArmyGeneralCapacityDialogUseCases => [
+  WidgetbookUseCase(
+    name: 'Invasion vs generals — balanced (#4233)',
+    builder: (context) {
+      final fixture = _moveArmyGeneralCapacityStoryFixture(
+        generals: const [
+          General(id: 'g1', ownerId: 'gp_move_cap_story'),
+          General(id: 'g2', ownerId: 'gp_move_cap_story'),
+        ],
+        generalCap: 2,
+      );
+      return _moveDialogStoryFrame(
+        open: (innerContext) {
+          return ElevatedButton(
+            onPressed: () {
+              showDialog<void>(
+                context: innerContext,
+                builder: (_) => MoveArmyDialog(
+                  army: fixture.army,
+                  game: fixture.game,
+                  humanPlayerId: 'gp_move_cap_story',
+                  bus: AppEventBus.create(),
+                  topology: fixture.topology,
+                  draftOrders: fixture.draftOrders,
+                  playerView: fixture.playerView,
+                ),
+              );
+            },
+            // ignore: avoid_hardcoded_strings_in_widgets
+            child: const Text('Open Move Army (invasion capacity)'),
+          );
+        },
+      );
+    },
+  ),
+  WidgetbookUseCase(
+    name: 'Invasion vs generals — over capacity warn (#4233)',
+    builder: (context) {
+      final fixture = _moveArmyGeneralCapacityStoryFixture(
+        generals: const [General(id: 'g1', ownerId: 'gp_move_cap_story')],
+        generalCap: 1,
+      );
+      return _moveDialogStoryFrame(
+        open: (innerContext) {
+          return ElevatedButton(
+            onPressed: () {
+              showDialog<void>(
+                context: innerContext,
+                builder: (_) => MoveArmyDialog(
+                  army: fixture.army,
+                  game: fixture.game,
+                  humanPlayerId: 'gp_move_cap_story',
+                  bus: AppEventBus.create(),
+                  topology: fixture.topology,
+                  draftOrders: fixture.draftOrders,
+                  playerView: fixture.playerView,
+                ),
+              );
+            },
+            // ignore: avoid_hardcoded_strings_in_widgets
+            child: const Text('Open Move Army (over capacity)'),
+          );
+        },
+      );
+    },
+  ),
+];

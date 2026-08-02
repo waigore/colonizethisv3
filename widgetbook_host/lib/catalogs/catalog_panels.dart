@@ -972,6 +972,7 @@ List<WidgetbookNode> get militaryUnitsPanelDirectories => [
           );
         },
       ),
+      ...militaryGeneralsStripUseCases,
       WidgetbookUseCase(
         name: 'With map',
         builder: (context) => const MilitaryPanelWithMapStory(),
