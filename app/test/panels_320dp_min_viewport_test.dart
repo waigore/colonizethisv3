@@ -96,6 +96,7 @@ Widget _buildProductionPanel(Player player) {
     player: player,
     desiredOutputByRecipe: const <String, int>{},
     netDeltasByCommodity: const <String, int>{},
+    labourReadiness: labourReadinessForPlayer(player),
     onDesiredOutputChanged: (_) {},
   );
 }

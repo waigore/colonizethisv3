@@ -20,6 +20,13 @@ export 'panel_fixtures/production.dart'
         productionPanelTestGameFor,
         productionPanelTestPartialPlayer;
 
+/// Labour readiness for tests that construct [ProductionPanel] directly.
+LabourReadinessSnapshot labourReadinessForPlayer(Player player) =>
+    computeLabourReadiness(
+      workers: player.workerPool,
+      stockpile: player.stockpile,
+    );
+
 /// Holds allocation map in state so [ProductionPanel] rebuilds after each change
 /// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
 class ProductionPanelTestWrapper extends StatefulWidget {

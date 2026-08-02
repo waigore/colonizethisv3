@@ -34,6 +34,7 @@ void main() {
           player: player,
           desiredOutputByRecipe: const {},
           netDeltasByCommodity: const {},
+          labourReadiness: labourReadinessForPlayer(player),
           onDesiredOutputChanged: (_) {},
         ),
       );
