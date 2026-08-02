@@ -27,4 +27,13 @@ class CtEventFeedText {
   static String overseasProfitCreditedLine(int amount, int count) =>
       'Overseas profit credited: £$amount from $count rival purchase(s). '
       'Tap to open Deal Book.';
+
+  static String generalMedalGainedLine(int newMedals) =>
+      'General gained a medal (now $newMedals).';
+
+  static String generalMedalGainedAtProvinceLine(
+    String provinceLabel,
+    int newMedals,
+  ) =>
+      'Victory at $provinceLabel: a general earned a medal (now $newMedals).';
 }

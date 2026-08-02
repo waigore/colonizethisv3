@@ -90,6 +90,18 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
                   '${context.provinceLabel(provinceId)} battle resolved! ${context.factionLabel(winnerId)} defeated ${context.factionLabel(winnerId == attackerId ? defenderId : attackerId)}!',
               onTap: context.provinceOverlayTapForProvince(provinceId),
             ),
+          ct_models.AppGeneralMedalGainedEvent(
+            :final provinceId,
+            :final newMedals,
+          ) =>
+            _feedEntry(
+              context: context,
+              text: CtEventFeedText.generalMedalGainedAtProvinceLine(
+                context.provinceLabel(provinceId),
+                newMedals,
+              ),
+              onTap: context.provinceOverlayTapForProvince(provinceId),
+            ),
           ct_models.AppProvinceCapturedEvent(
             :final provinceId,
             :final newOwnerId,

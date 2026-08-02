@@ -20,9 +20,10 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
+  - General medal gain when event `playerId` equals human id (Refs #4234).
   - Province capture when human id equals previous or new owner.
   - Diplomacy when human id equals actor or target.
   - Research/order rejected when event `playerId` equals human id.

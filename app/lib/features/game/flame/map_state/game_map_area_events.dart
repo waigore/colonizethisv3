@@ -133,4 +133,13 @@ mixin GameMapAreaEvents
     }
     pendingPlayerTurnEvents.add(event);
   }
+
+  void onAppGeneralMedalGainedEvent(
+    ct_models.AppGeneralMedalGainedEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
 }

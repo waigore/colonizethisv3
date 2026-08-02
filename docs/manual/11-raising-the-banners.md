@@ -38,7 +38,7 @@ Every land regiment belongs to one army, and an army occupies one province. Armi
 
 Your capital always has a **Home Army**, even when it has no regiments. It receives every newly trained regiment. To create a force that can campaign, split regiments from the Home Army into a field army at the capital.
 
-Generals are commanders rather than map units. Your realm begins with one general; military and national advances can raise the cap to two with Organised Regiments, three with National Bureaucracy or Improved Infantry Tactics, and four with Nationalism. Before combat, generals are assigned to armies fighting that turn. A victorious commanding general gains medals, up to four; medals improve the army’s combat contribution.
+Generals are commanders rather than map units. Your realm begins with one general; military and national advances can raise the cap to two with Organised Regiments, three with National Bureaucracy or Improved Infantry Tactics, and four with Nationalism. Before combat, generals are assigned to armies fighting that turn. A victorious commanding general gains medals, up to four; medals improve the army’s combat contribution. After a win, the turn news feed may report that a general earned a medal and show the new count.
 
 ### Moving a field army
 

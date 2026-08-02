@@ -23,6 +23,7 @@ Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use
 | Event type           | When emitted                    | Payload (minimal) |
 |----------------------|----------------------------------|-------------------|
 | `combat_result`      | After Combat phase              | provinceId (prefixed), attackerId, defenderId, winnerId, casualties (or summary). |
+| `general_medal_gained` | After Combat phase when a winning general's medals increase | playerId (general owner), generalId, provinceId (prefixed), newMedals, turnNumber. Omitted when medals unchanged or at cap (Refs #4234). |
 | `naval_combat_result` | After each resolved sea battle in Naval interception phase | seaZoneId (local, e.g. s3), side1OwnerId, side2OwnerId, outcomeName (`NavalBattleOutcome.name`), turnNumber, optional winnerOwnerId, retreat flags. |
 | `province_captured`  | When province ownership transfers **from one non-empty faction to another** (combat capture or other supported handover) | provinceId (prefixed), previousOwnerId, newOwnerId (both non-empty faction ids), turnNumber. Not emitted when the new `ownerId` would be null/empty—uncolonized frontier is not a capture outcome; see [world-model.md](../game/world-model.md) § Invariants. |
 | `diplomacy_change`   | After Diplomacy phase           | actorId, targetId, changeType (e.g. war, peace, alliance), turnNumber. |

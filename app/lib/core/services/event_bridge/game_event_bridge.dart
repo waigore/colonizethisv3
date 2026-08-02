@@ -160,6 +160,16 @@ class GameEventBridge {
             turnNumber: event.turnNumber,
           ),
         );
+      case GeneralMedalGainedEvent():
+        _appBus.emit(
+          AppGeneralMedalGainedEvent(
+            playerId: event.playerId,
+            generalId: event.generalId,
+            provinceId: event.provinceId,
+            newMedals: event.newMedals,
+            turnNumber: event.turnNumber,
+          ),
+        );
     }
   }
 }
