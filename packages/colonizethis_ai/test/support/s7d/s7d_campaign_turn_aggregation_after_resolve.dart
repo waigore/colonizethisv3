@@ -118,4 +118,3 @@ extension Seed42S7dCampaignTurnAggregationAfterResolve on Seed42S7dCampaignRollu
     }
   }
 }
-}

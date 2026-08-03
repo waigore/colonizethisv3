@@ -130,7 +130,8 @@ mixin Seed42S7dCampaignRollupFeedstockCounters {
   // as later supply slices land.
   late final fabricRecipes = <ProductionRecipe>[
     for (final recipe in ProductionRecipesCatalog.all)
-      if (cheapestRegimentInputs.containsKey(recipe.outputCommodityId)) recipe,
+      if (RegimentEconomyCatalog.peasantLevies.buildInputs
+          .containsKey(recipe.outputCommodityId)) recipe,
   ];
   late final fabricFeedstockIds = <String>{
     for (final recipe in fabricRecipes) ...recipe.inputQuantities.keys,

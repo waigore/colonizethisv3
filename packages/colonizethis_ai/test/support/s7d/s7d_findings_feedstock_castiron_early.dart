@@ -4,15 +4,6 @@ library;
 
 // ignore_for_file: dangling_library_doc_comments
 
-/// CastIron / fabric / labour S7-D findings (Refs #2847 / #3972).
-///
-/// Per-component affordability, castIron staging / labour starvation,
-/// peasant-recruit fabric lock, and castIron-feedstock labour futility.
-///
-library;
-
-// ignore_for_file: dangling_library_doc_comments
-
 /// ## S7-D refresh (captured 2026-06-05 on merged `dev`, per-component
 ///     affordability split — this slice, Refs #2847)
 ///
