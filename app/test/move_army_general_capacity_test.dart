@@ -50,6 +50,8 @@ void main() {
   Game buildGame({
     List<General> generals = const [],
     int generalCap = 2,
+    Stockpile stockpile = const Stockpile(),
+    List<Unit> extraUnits = const [],
   }) {
     return Game(
       id: 'g_cap',
@@ -84,6 +86,7 @@ void main() {
               ownerId: playerId,
               locationProvinceId: from,
             ),
+            ...extraUnits,
           ],
         ),
         newWorld: const RegionData(),
@@ -127,6 +130,7 @@ void main() {
           isHuman: true,
           capitalProvinceId: from,
           generalCap: generalCap,
+          stockpile: stockpile,
         ),
         Player(
           id: rivalId,
@@ -230,6 +234,40 @@ void main() {
     expect(
       find.text(
         'More invasions than generals — extra armies fight with weaker command.',
+      ),
+      findsOneWidget,
+    );
+    final confirm = find.widgetWithText(CtNinePatchButton, 'Confirm');
+    expect(tester.widget<CtNinePatchButton>(confirm).onPressed, isNotNull);
+  });
+
+  testWidgets('soft warning when land forces are underfed on invasion', (
+    tester,
+  ) async {
+    final game = buildGame(
+      stockpile: const Stockpile().applyDelta('grain', 2),
+      extraUnits: [
+        Unit(
+          id: 'u2',
+          type: 'pikemen',
+          ownerId: playerId,
+          locationProvinceId: from,
+        ),
+        Unit(
+          id: 'u3',
+          type: 'pikemen',
+          ownerId: playerId,
+          locationProvinceId: from,
+        ),
+      ],
+    );
+    await pumpDialog(tester, game: game, draftOrders: const Orders());
+    await tester.tap(find.text('Invade Dest'));
+    await tester.pump();
+
+    expect(
+      find.text(
+        'Your armies are very short on rations — they will fight much weaker this turn.',
       ),
       findsOneWidget,
     );

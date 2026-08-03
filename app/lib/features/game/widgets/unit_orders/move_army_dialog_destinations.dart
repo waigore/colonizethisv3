@@ -6,8 +6,10 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../widgets/ct_section_label.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../province_overlay/province_panel_labels.dart';
+import '../production/force_feeding_readiness_labels.dart';
 import 'move_army_dialog.dart';
 import '../units/military/general_command_capacity.dart';
+import 'move_army_force_feeding.dart';
 import 'move_army_invasion_intel.dart';
 import 'move_army_invasion_intel_labels.dart';
 import 'move_army_dialog_state_logic.dart';
@@ -62,6 +64,15 @@ mixin MoveArmyDialogDestinations
     );
     final invasionOverCapacity =
         showInvasionCapacity && invasionCount > generalCount;
+    final forcesFeeding = humanForcesFeedingPreview(
+      game: widget.game,
+      topology: widget.topology,
+      humanPlayerId: widget.humanPlayerId,
+      draftOrders: widget.draftOrders,
+    );
+    final landUnderfedWarning = showInvasionCapacity
+        ? landForceFeedingSoftWarning(l10n, forcesFeeding)
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -82,6 +93,16 @@ mixin MoveArmyDialogDestinations
               padding: const EdgeInsets.only(top: CtSpacing.xs),
               child: Text(
                 l10n.moveArmy_invasionOverGeneralCapacityWarning,
+                style: intelMutedStyle.copyWith(
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          if (landUnderfedWarning != null)
+            Padding(
+              padding: const EdgeInsets.only(top: CtSpacing.xs),
+              child: Text(
+                landUnderfedWarning,
                 style: intelMutedStyle.copyWith(
                   fontStyle: FontStyle.italic,
                 ),

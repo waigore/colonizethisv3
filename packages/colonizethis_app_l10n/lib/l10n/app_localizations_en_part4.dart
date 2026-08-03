@@ -85,6 +85,60 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
+  String get production_forcesFoodArmiesFullyFed =>
+      'Armies fully fed this turn.';
+
+  @override
+  String get production_forcesFoodArmiesUnderfedModerate =>
+      'Armies short on rations — land battles somewhat weaker.';
+
+  @override
+  String get production_forcesFoodArmiesUnderfedSevere =>
+      'Armies very short on rations — land battles much weaker.';
+
+  @override
+  String get production_forcesFoodFleetsFullyFed =>
+      'Fleets fully fed this turn.';
+
+  @override
+  String get production_forcesFoodFleetsUnderfedModerate =>
+      'Fleets short on rations — naval battles somewhat weaker.';
+
+  @override
+  String get production_forcesFoodFleetsUnderfedSevere =>
+      'Fleets very short on rations — naval battles much weaker.';
+
+  @override
+  String get production_forcesFoodDetails => 'Forces food details';
+
+  @override
+  String production_forcesFoodDetailsArmies(int fed, int total) {
+    return 'Armies: $fed of $total regiments fed';
+  }
+
+  @override
+  String production_forcesFoodDetailsFleets(int fed, int total) {
+    return 'Fleets: $fed of $total ships fed';
+  }
+
+  @override
+  String production_forcesFoodDetailsDemand(int demand) {
+    return 'Forces food demand this turn: $demand';
+  }
+
+  @override
+  String get production_forcesFoodDetailsPriority =>
+      'Armies and fleets eat before workers.';
+
+  @override
+  String get forcesFood_landUnderfedModerateWarning =>
+      'Your armies are short on rations — they will fight somewhat weaker this turn.';
+
+  @override
+  String get forcesFood_landUnderfedSevereWarning =>
+      'Your armies are very short on rations — they will fight much weaker this turn.';
+
+  @override
   String production_recipeAffordance(int max, String limiting) {
     return '$max · $limiting';
   }

@@ -219,6 +219,7 @@ void main() {
               CommodityCatalog.meat.id: 12,
             },
             labourReadiness: labourReadinessForPlayer(player),
+            forcesFeeding: forcesFeedingForPlayer(player),
             onDesiredOutputChanged: (_) {},
           ),
         ),

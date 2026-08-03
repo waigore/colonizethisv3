@@ -13,6 +13,7 @@ export 'economy_preview_pipeline.dart'
         economyPreviewInputs,
         economyPreviewStockpilePhaseDeltasForPlayer,
         emptyEconomyPreviewInputs,
+        forcesFeedingForPlayer,
         labourReadinessForPlayer,
         previewStockpileNetDeltaByCommodityForPlayer,
         previewStockpilePhaseDeltasByCommodityForPlayer;

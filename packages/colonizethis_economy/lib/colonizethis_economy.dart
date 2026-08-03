@@ -31,6 +31,8 @@ export 'src/economy/sea_transport.dart';
 export 'src/economy/trade_cargo_capacity.dart';
 export 'src/economy/trade_interception.dart';
 export 'src/economy/worker_action_cost.dart';
+export 'src/economy/force_feeding_readiness.dart';
+export 'src/economy/force_feeding_readiness_types.dart';
 export 'src/economy/labour_readiness.dart';
 export 'src/economy/labour_readiness_types.dart';
 export 'src/economy/worker_economy.dart';

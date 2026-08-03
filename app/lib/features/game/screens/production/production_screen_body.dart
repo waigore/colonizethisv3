@@ -95,6 +95,19 @@ class ProductionScreenBody extends ConsumerWidget {
         currentOrders: currentOrders,
       ),
     );
+    final forcesFeeding = forcesFeedingForPlayer(
+      game: displayGame,
+      topology: panelTopology,
+      playerId: displayPlayer.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: panelTileMaps,
+        currentOrders: currentOrders,
+      ),
+    );
     final canEdit = shell.canMutateViaUi;
     final bus = shellRef.read(appEventBusProvider);
     final industryCounselRecommendations = rankIndustryCounselRecommendations(
@@ -156,6 +169,7 @@ class ProductionScreenBody extends ConsumerWidget {
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
       labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: canEdit,

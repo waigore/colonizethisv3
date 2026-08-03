@@ -27,6 +27,11 @@ LabourReadinessSnapshot labourReadinessForPlayer(Player player) =>
       stockpile: player.stockpile,
     );
 
+/// Forces-food readiness for tests that construct [ProductionPanel] directly.
+ForceFeedingSnapshot forcesFeedingForPlayer(Player player) => previewForceFeeding(
+  stockpile: player.stockpile,
+);
+
 /// Holds allocation map in state so [ProductionPanel] rebuilds after each change
 /// (matches Riverpod-driven app behaviour; required for long-press repeat tests).
 class ProductionPanelTestWrapper extends StatefulWidget {
@@ -37,6 +42,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
     required this.initialDesiredOutput,
     required this.netDeltasByCommodity,
     required this.labourReadiness,
+    required this.forcesFeeding,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
@@ -51,6 +57,7 @@ class ProductionPanelTestWrapper extends StatefulWidget {
   final Map<String, int> initialDesiredOutput;
   final Map<String, int> netDeltasByCommodity;
   final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
   final VoidCallback? onOpenCommodityBreakdown;
   final Orders? currentOrders;
@@ -83,6 +90,7 @@ class _ProductionPanelTestWrapperState
       desiredOutputByRecipe: _desiredOutput,
       netDeltasByCommodity: widget.netDeltasByCommodity,
       labourReadiness: widget.labourReadiness,
+      forcesFeeding: widget.forcesFeeding,
       onDesiredOutputChanged: (next) {
         setState(() {
           _desiredOutput = Map<String, int>.from(next);
@@ -115,6 +123,7 @@ Widget buildProductionPanel({
   starredProduceRecommendationsByRecipeId = const {},
   ProductionOpenCounselCallback? onOpenCounsel,
   LabourReadinessSnapshot? labourReadinessOverride,
+  ForceFeedingSnapshot? forcesFeedingOverride,
   double width = 800,
   double height = 500,
 }) {
@@ -125,6 +134,8 @@ Widget buildProductionPanel({
         workers: player.workerPool,
         stockpile: player.stockpile,
       );
+  final forcesFeeding =
+      forcesFeedingOverride ?? forcesFeedingForPlayer(player);
   final netDeltasByCommodity = <String, int>{};
   for (final entry in desiredOutputByRecipe.entries) {
     final recipe = ProductionRecipesCatalog.byId[entry.key];
@@ -147,6 +158,7 @@ Widget buildProductionPanel({
         initialDesiredOutput: desiredOutputByRecipe,
         netDeltasByCommodity: netDeltasByCommodity,
         labourReadiness: labourReadiness,
+        forcesFeeding: forcesFeeding,
         onDesiredOutputChanged: onDesiredOutputChanged ?? (_) {},
         onOpenCommodityBreakdown: onOpenCommodityBreakdown,
         currentOrders: currentOrders,

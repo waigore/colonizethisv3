@@ -324,12 +324,34 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         currentOrders: currentOrders,
       ),
     );
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
+    final shipCounts = shipTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
+    final forcesFeeding = forcesFeedingForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+      ),
+    );
     return ProductionPanel(
       game: game,
       player: player,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
       labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: true,
