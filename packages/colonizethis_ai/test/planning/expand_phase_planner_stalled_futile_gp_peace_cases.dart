@@ -84,83 +84,13 @@ const String _gpRivalB = 'gp_rival_b';
 const String _minor1 = 'minor1';
 const String _tribeA = 'tribe_a';
 
-/// Builds a minimal `Game` where `gp_own` holds [ownProvinces] OW
-/// provinces. [gpRivalProvincesById] adds one Great Power per entry
-/// owning the listed OW province ids. [minorOwProvincesByMinorId]
-/// registers each minor as a `MinorNation` and assigns the listed OW
-/// province ids to them. [tribeIds] registers each id as a `Tribe`.
-/// [atWarFactionIds] adds an `atWar` `DiplomacyRelation` for each
-/// listed faction id (works for GPs, minors, and tribes uniformly).
-Game _ownGame({
-  required int ownProvinces,
-  Map<String, List<String>> gpRivalProvincesById = const {},
-  Map<String, List<String>> minorOwProvincesByMinorId = const {},
-  List<String> tribeIds = const [],
-  List<String> atWarFactionIds = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in gpRivalProvincesById.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-    for (final entry in minorOwProvincesByMinorId.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in gpRivalProvincesById.keys)
-      Player(id: id, displayName: id, isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final id in minorOwProvincesByMinorId.keys)
-      MinorNation(id: id, displayName: id),
-  ];
-
-  final tribes = <Tribe>[
-    for (final id in tribeIds) Tribe(id: id, displayName: id),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarFactionIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-stalled-futile-gp-and-tribe-distraction-canonical-'
-        'own$ownProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
 void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
   group('stalledFutileGpPeaceTargets — outer guards', () {
     test('returns const [] above the stalled OW band (own == quota)', () {
       // gp_own at the observer OW quota — isStalledOldWorldExpansion is
       // false so the canonical decider must short-circuit before the
       // futile-GP scan.
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         gpRivalProvincesById: const {
           _gpRivalA: ['oldWorld|${_gpRivalA}_target'],
@@ -188,7 +118,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
     test('returns const [] when invadableProvinceIdsSorted is empty', () {
       // gp_own in the stalled band with an at-war GP but no invadable OW
       // — the empty-invadable guard must short-circuit.
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: []},
         minorOwProvincesByMinorId: const {_minor1: []},
@@ -214,7 +144,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
       // invadable OW province is GP-owned (no minor on the invadable
       // frontier). The minorsOwnInvadable guard must short-circuit so
       // the stalledGpBlockerFocus collector owns the decision instead.
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {
           _gpRivalA: ['oldWorld|${_gpRivalA}_target'],
@@ -250,7 +180,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
         // must be exactly [gp_rival_b] (gp_rival_a filtered out).
         const minor1Pid = 'oldWorld|${_minor1}_active';
         const rivalAPid = 'oldWorld|${_gpRivalA}_blocker';
-        final game = _ownGame(
+        final game = buildStalledFutileExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           gpRivalProvincesById: const {
             _gpRivalA: [rivalAPid],
@@ -283,7 +213,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
       // tribe. Only the GP must surface — minors and tribes have
       // their own dedicated peace deciders.
       const minor1Pid = 'oldWorld|${_minor1}_active';
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: []},
         minorOwProvincesByMinorId: const {
@@ -313,7 +243,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
       // non-sorted order. Result must be ascending [gp_rival_a,
       // gp_rival_b].
       const minor1Pid = 'oldWorld|${_minor1}_active';
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: [], _gpRivalB: []},
         minorOwProvincesByMinorId: const {
@@ -342,7 +272,7 @@ void registerExpandPhasePlannerStalledFutileGpPeaceCases() {
       // own == kStalledOldWorldProvinceThreshold (still stalled).
       // The decider must run normally and surface the futile GP.
       const minor1Pid = 'oldWorld|${_minor1}_active';
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kStalledOldWorldProvinceThreshold,
         gpRivalProvincesById: const {_gpRivalA: []},
         minorOwProvincesByMinorId: const {

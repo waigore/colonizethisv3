@@ -90,76 +90,6 @@ const String _minor1 = 'minor1';
 const String _tribeA = 'tribe_a';
 const String _tribeB = 'tribe_b';
 
-/// Builds a minimal `Game` where `gp_own` holds [ownProvinces] OW
-/// provinces. [gpRivalProvincesById] adds one Great Power per entry
-/// owning the listed OW province ids. [minorOwProvincesByMinorId]
-/// registers each minor as a `MinorNation` and assigns the listed OW
-/// province ids to them. [tribeIds] registers each id as a `Tribe`.
-/// [atWarFactionIds] adds an `atWar` `DiplomacyRelation` for each
-/// listed faction id (works for GPs, minors, and tribes uniformly).
-Game _ownGame({
-  required int ownProvinces,
-  Map<String, List<String>> gpRivalProvincesById = const {},
-  Map<String, List<String>> minorOwProvincesByMinorId = const {},
-  List<String> tribeIds = const [],
-  List<String> atWarFactionIds = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in gpRivalProvincesById.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-    for (final entry in minorOwProvincesByMinorId.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in gpRivalProvincesById.keys)
-      Player(id: id, displayName: id, isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final id in minorOwProvincesByMinorId.keys)
-      MinorNation(id: id, displayName: id),
-  ];
-
-  final tribes = <Tribe>[
-    for (final id in tribeIds) Tribe(id: id, displayName: id),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarFactionIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-stalled-futile-gp-and-tribe-distraction-canonical-'
-        'own$ownProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
 void registerExpandPhasePlannerTribeDistractionPeaceCases() {
   group('atWarGpDistractionTribePeaceTargets — outer guards', () {
     test('returns const [] above the stalled OW band (own == quota)', () {
@@ -167,7 +97,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       // at-war tribe. The stalled-OW guard must fire so the tribe
       // peace shortcut does not apply (above-quota collectors own
       // the decision).
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: []},
         tribeIds: const [_tribeA],
@@ -192,7 +122,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       // war — the GP-distraction precondition must fire and
       // short-circuit. (Without an active GP front the tribe peace
       // is not justified.)
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         tribeIds: const [_tribeA],
         atWarFactionIds: const [_tribeA],
@@ -220,7 +150,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
         // tribes. Tribes must be peaced in ascending lex order, the GP
         // must be filtered out (handled by GP-blocker / consolidate
         // collectors elsewhere).
-        final game = _ownGame(
+        final game = buildStalledFutileExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           gpRivalProvincesById: const {_gpRivalA: []},
           tribeIds: const [_tribeA, _tribeB],
@@ -247,7 +177,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       // tribe. Only the tribe must surface — the GP is filtered as
       // a non-distraction front and the minor is routed through the
       // dedicated minor peace collectors.
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: []},
         minorOwProvincesByMinorId: const {_minor1: []},
@@ -272,7 +202,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       // gp_own in the stalled band, at war with a GP only. The GP
       // front is active so the precondition fires, but there are
       // no tribes in atWarWith so the result is the empty list.
-      final game = _ownGame(
+      final game = buildStalledFutileExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         gpRivalProvincesById: const {_gpRivalA: []},
         tribeIds: const [_tribeA],
@@ -297,7 +227,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       'stalledFutileGpPeaceTargets returns identical lists across calls',
       () {
         const minor1Pid = 'oldWorld|${_minor1}_active';
-        final game = _ownGame(
+        final game = buildStalledFutileExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           gpRivalProvincesById: const {
             _gpRivalA: ['oldWorld|${_gpRivalA}_blocker'],
@@ -355,7 +285,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
     test(
       'atWarGpDistractionTribePeaceTargets returns identical lists across calls',
       () {
-        final game = _ownGame(
+        final game = buildStalledFutileExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           gpRivalProvincesById: const {_gpRivalA: []},
           tribeIds: const [_tribeA, _tribeB],
@@ -411,7 +341,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
         final fixtures = <({String name, Game game, AIWorldSnapshot snapshot})>[
           (
             name: 'fire path, futile GP and active GP blocker',
-            game: _ownGame(
+            game: buildStalledFutileExpandPeaceGame(
               ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
               gpRivalProvincesById: const {
                 _gpRivalA: [rivalAPid],
@@ -431,7 +361,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
           ),
           (
             name: 'above-quota guard',
-            game: _ownGame(
+            game: buildStalledFutileExpandPeaceGame(
               ownProvinces: kObserverConquestMinOwProvincesPerGp,
               gpRivalProvincesById: const {_gpRivalA: []},
               minorOwProvincesByMinorId: const {
@@ -447,7 +377,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
           ),
           (
             name: 'empty invadable guard',
-            game: _ownGame(
+            game: buildStalledFutileExpandPeaceGame(
               ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
               gpRivalProvincesById: const {_gpRivalA: []},
               atWarFactionIds: const [_gpRivalA],
@@ -461,7 +391,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
           ),
           (
             name: 'GP-only invadable guard (no minor on frontier)',
-            game: _ownGame(
+            game: buildStalledFutileExpandPeaceGame(
               ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
               gpRivalProvincesById: const {
                 _gpRivalA: [rivalAPid],
@@ -502,7 +432,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
       final fixtures = <({String name, Game game, AIWorldSnapshot snapshot})>[
         (
           name: 'fire path, two tribes plus GP front',
-          game: _ownGame(
+          game: buildStalledFutileExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             gpRivalProvincesById: const {_gpRivalA: []},
             tribeIds: const [_tribeA, _tribeB],
@@ -515,7 +445,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
         ),
         (
           name: 'above-quota guard',
-          game: _ownGame(
+          game: buildStalledFutileExpandPeaceGame(
             ownProvinces: kObserverConquestMinOwProvincesPerGp,
             gpRivalProvincesById: const {_gpRivalA: []},
             tribeIds: const [_tribeA],
@@ -528,7 +458,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
         ),
         (
           name: 'no-GP-front guard (tribe-only war)',
-          game: _ownGame(
+          game: buildStalledFutileExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             tribeIds: const [_tribeA],
             atWarFactionIds: const [_tribeA],
@@ -540,7 +470,7 @@ void registerExpandPhasePlannerTribeDistractionPeaceCases() {
         ),
         (
           name: 'GP-only war (no tribe in atWarWith)',
-          game: _ownGame(
+          game: buildStalledFutileExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             gpRivalProvincesById: const {_gpRivalA: []},
             tribeIds: const [_tribeA],

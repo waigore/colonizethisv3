@@ -59,6 +59,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gpOwn = 'gp_own';
 const String _gpA = 'gp_a';
@@ -67,81 +68,6 @@ const String _gpC = 'gp_c';
 const String _minorM1 = 'minor_m1';
 const String _minorM2 = 'minor_m2';
 const String _tribeT1 = 'tribe_t1';
-
-/// Builds a minimal `Game` whose Old World province list is populated
-/// from the supplied [owOwners] map: each entry contributes
-/// `count` provinces owned by `factionId`. Province ids are
-/// deterministic (`oldWorld|<factionId>_<i>` for `i in 1..count`) so
-/// callers can place specific provinces on the invadable list. When
-/// any minor or tribe id appears in [owOwners], the corresponding
-/// `MinorNation` / `Tribe` entry is added to the game so
-/// `playerById`/`minorNations.any` filtering matches the legacy
-/// fixture conventions.
-Game _gameOf({
-  required Map<String, int> owOwners,
-  required List<String> atWarPartners,
-  bool atWarWithExtraGp = true,
-}) {
-  final provinces = <Province>[];
-  for (final entry in owOwners.entries) {
-    for (var i = 1; i <= entry.value; i++) {
-      provinces.add(
-        Province(
-          id: 'oldWorld|${entry.key}_$i',
-          regionId: 'oldWorld',
-          ownerId: entry.key,
-        ),
-      );
-    }
-  }
-
-  final knownMinors = <String>{_minorM1, _minorM2};
-  final knownTribes = <String>{_tribeT1};
-  final ownerAndPartnerIds = <String>{...owOwners.keys, ...atWarPartners};
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in ownerAndPartnerIds)
-      if (id != _gpOwn &&
-          !knownMinors.contains(id) &&
-          !knownTribes.contains(id))
-        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final id in ownerAndPartnerIds)
-      if (knownMinors.contains(id)) MinorNation(id: id, displayName: id),
-  ];
-
-  final tribes = <Tribe>[
-    for (final id in ownerAndPartnerIds)
-      if (knownTribes.contains(id)) Tribe(id: id, displayName: id),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final partner in atWarPartners)
-      if (atWarWithExtraGp || players.any((p) => p.id == partner))
-        DiplomacyRelation(
-          factionId1: _gpOwn,
-          factionId2: partner,
-          state: RelationState.atWar,
-          score: 30,
-        ),
-  ];
-
-  return Game(
-    id: 'g-2509-default-start-and-near-quota-peace-canonical',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
 
 AIWorldSnapshot _snapshot({
   required int oldWorldProvincesOwned,
@@ -170,7 +96,7 @@ void main() {
       // helper short-circuits before ceiling/blocker logic. The
       // EXPAND→COLONIAL handoff lets the quota-met collectors govern
       // post-quota wars.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 10, _gpA: 1},
         atWarPartners: const [_gpA],
       );
@@ -192,7 +118,7 @@ void main() {
     test('returns const [] above ceiling without an uninvaded minor', () {
       // OW = 9, no minors on the map → maxOwForGpPeace = 8 →
       // ownOw > 8 → empty. Locks the no-minor ceiling shape.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 9, _gpA: 5},
         atWarPartners: const [_gpA],
       );
@@ -220,7 +146,7 @@ void main() {
         // The only invadable OW belongs to the minor, so the
         // frontier is not GP-only → invadableBlocker = null →
         // every at-war GP is peaced (gp_a alone here).
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 9, _minorM1: 1},
           atWarPartners: const [_gpA],
           atWarWithExtraGp: false,
@@ -249,7 +175,7 @@ void main() {
       // gp_a owns one invadable OW; minor_m1 owns another. The minor
       // owner makes the frontier non-GP-only → invadableBlocker null
       // → every at-war GP is peaced ascending.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 8, _gpA: 1, _gpB: 0, _minorM1: 1},
         atWarPartners: const [_gpA, _gpB],
       );
@@ -277,7 +203,7 @@ void main() {
         // Pure GP frontier: gp_a owns the sole invadable OW; gp_b
         // also at war but owns nothing on the frontier. The canonical
         // helper must drop gp_a (blocker) and return [gp_b] sorted.
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 8, _gpA: 1, _gpB: 0},
           atWarPartners: const [_gpA, _gpB],
         );
@@ -307,7 +233,7 @@ void main() {
         // be dropped because game.playerById(tribe_t1) == null. The
         // GP-only frontier is true (gp_a owns the only invadable OW)
         // so blocker exclusion drops gp_a as well → empty.
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 7, _gpA: 1, _tribeT1: 0},
           atWarPartners: const [_gpA],
           atWarWithExtraGp: false,
@@ -332,7 +258,7 @@ void main() {
         // (owns the only invadable OW). The canonical helper must
         // return [gp_b, gp_c] ascending across two consecutive calls
         // (Refs #2509 Must-have #7).
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 7, _gpA: 1, _gpB: 0, _gpC: 0},
           atWarPartners: const [_gpC, _gpA, _gpB],
         );
@@ -371,7 +297,7 @@ void main() {
     test('returns const [] when at the observer OW quota', () {
       // OW == kObserverConquestMinOwProvincesPerGp → not below quota →
       // canonical helper short-circuits.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 10, _gpA: 1},
         atWarPartners: const [_gpA],
       );
@@ -394,7 +320,7 @@ void main() {
       // OW = kObserverDefaultStartOldWorldProvincesPerGp (default
       // start) → !isStalledOldWorldExpansion → empty so the
       // default-start collector owns the decision.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 7, _gpA: 1},
         atWarPartners: const [_gpA],
       );
@@ -417,7 +343,7 @@ void main() {
       // gp_own at 8 OW → in stalled band, below quota → both outer
       // guards pass. atWarWith carries only a tribe → playerById
       // filter empties the gp-war set → const [].
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 8, _tribeT1: 0},
         atWarPartners: const [],
       );
@@ -444,7 +370,7 @@ void main() {
         // both stalled below quota). Only invadable OW is gp_a's →
         // GP-only frontier. No OW minors → !hasUninvadedOldWorldMinor.
         // Canonical helper returns the unsorted single-GP list.
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 8, _gpA: 8},
           atWarPartners: const [_gpA],
         );
@@ -471,7 +397,7 @@ void main() {
       // is the blocker; minor pivot is absent so the
       // sole-GP-blocker hold-open guard fires and the canonical helper
       // returns const [] — keep fighting the blocker.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 8, _gpA: 10},
         atWarPartners: const [_gpA],
       );
@@ -504,7 +430,7 @@ void main() {
         // sole-GP-blocker hold guard does not trigger. Multi-GP arm
         // requires length >= 2; with length 1 the function falls
         // through to `return gpWars` (single-GP fall-through path).
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 8, _gpA: 8, _minorM1: 1},
           atWarPartners: const [_gpA],
         );
@@ -530,7 +456,7 @@ void main() {
       // gp_own=8 (stalled-plateau, below quota). Three GPs at war
       // supplied out of order; gp_a owns the sole invadable OW
       // (blocker). Canonical helper returns [gp_b, gp_c] ascending.
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 8, _gpA: 1, _gpB: 0, _gpC: 0},
         atWarPartners: const [_gpC, _gpA, _gpB],
       );
@@ -555,7 +481,7 @@ void main() {
         // gp_own=8 (stalled-plateau). Two GPs at war but
         // invadableProvinceIdsSorted is empty → blocker == null →
         // every at-war GP is returned ascending.
-        final game = _gameOf(
+        final game = buildDefaultStartNearQuotaExpandPeaceGame(
           owOwners: const {_gpOwn: 8, _gpA: 0, _gpB: 0},
           atWarPartners: const [_gpA, _gpB],
         );
@@ -576,7 +502,7 @@ void main() {
 
   group('nearQuotaHoldPeaceTargets — determinism / delegation', () {
     test('identical inputs return identical lists across two calls', () {
-      final game = _gameOf(
+      final game = buildDefaultStartNearQuotaExpandPeaceGame(
         owOwners: const {_gpOwn: 8, _gpA: 1, _gpB: 0},
         atWarPartners: const [_gpA, _gpB],
       );
