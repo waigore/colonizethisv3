@@ -3,6 +3,10 @@ import 'dart:async';
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/combat_mode_choice_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/production/force_feeding_readiness_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_force_feeding.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
@@ -158,10 +162,29 @@ mixin AppEventHandlerScopeDialogBuilders on ConsumerState<AppEventHandlerScope> 
     Map<String, Object?>? params,
   ) {
     final container = ProviderScope.containerOf(ctx);
+    final l10n = appL10n(ctx);
+    final explicitWarning = params?['landForceFeedingWarning'] as String?;
+    String? landForceFeedingWarning = explicitWarning;
+    if (landForceFeedingWarning == null) {
+      final game = params?['game'] as Game?;
+      final humanPlayerId = params?['humanPlayerId'] as String?;
+      final topology = params?['topology'] as MapTopology?;
+      if (game != null && humanPlayerId != null && topology != null) {
+        final draftOrders = params?['draftOrders'] as Orders? ?? const Orders();
+        final snapshot = humanForcesFeedingPreview(
+          game: game,
+          topology: topology,
+          humanPlayerId: humanPlayerId,
+          draftOrders: draftOrders,
+        );
+        landForceFeedingWarning = landForceFeedingSoftWarning(l10n, snapshot);
+      }
+    }
     return CombatModeChoiceDialog(
       bus: container.read(appEventBusProvider),
       provinceName: params?['provinceName'] as String? ?? '',
       isCapitalSiege: params?['isCapitalSiege'] == true,
+      landForceFeedingWarning: landForceFeedingWarning,
     );
   }
 

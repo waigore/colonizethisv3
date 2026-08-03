@@ -3567,6 +3567,79 @@
       }
     }
   },
+  "production_forcesFoodArmiesFullyFed": "Armies fully fed this turn.",
+  "@production_forcesFoodArmiesFullyFed": {
+    "description": "Forces-food default line when land military feeding is complete."
+  },
+  "production_forcesFoodArmiesUnderfedModerate": "Armies short on rations — land battles somewhat weaker.",
+  "@production_forcesFoodArmiesUnderfedModerate": {
+    "description": "Forces-food default line when land feeding coverage is in [0.5, 1.0)."
+  },
+  "production_forcesFoodArmiesUnderfedSevere": "Armies very short on rations — land battles much weaker.",
+  "@production_forcesFoodArmiesUnderfedSevere": {
+    "description": "Forces-food default line when land feeding coverage is below 0.5."
+  },
+  "production_forcesFoodFleetsFullyFed": "Fleets fully fed this turn.",
+  "@production_forcesFoodFleetsFullyFed": {
+    "description": "Forces-food default line when naval feeding is complete."
+  },
+  "production_forcesFoodFleetsUnderfedModerate": "Fleets short on rations — naval battles somewhat weaker.",
+  "@production_forcesFoodFleetsUnderfedModerate": {
+    "description": "Forces-food default line when naval feeding coverage is in [0.5, 1.0)."
+  },
+  "production_forcesFoodFleetsUnderfedSevere": "Fleets very short on rations — naval battles much weaker.",
+  "@production_forcesFoodFleetsUnderfedSevere": {
+    "description": "Forces-food default line when naval feeding coverage is below 0.5."
+  },
+  "production_forcesFoodDetails": "Forces food details",
+  "@production_forcesFoodDetails": {
+    "description": "Toggle to expand forces-food readiness breakdown on Production Available."
+  },
+  "production_forcesFoodDetailsArmies": "Armies: {fed} of {total} regiments fed",
+  "@production_forcesFoodDetailsArmies": {
+    "description": "Forces-food detail row for land military feeding.",
+    "placeholders": {
+      "fed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsFleets": "Fleets: {fed} of {total} ships fed",
+  "@production_forcesFoodDetailsFleets": {
+    "description": "Forces-food detail row for naval feeding.",
+    "placeholders": {
+      "fed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsDemand": "Forces food demand this turn: {demand}",
+  "@production_forcesFoodDetailsDemand": {
+    "description": "Forces-food detail row for combined military/navy food demand.",
+    "placeholders": {
+      "demand": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsPriority": "Armies and fleets eat before workers.",
+  "@production_forcesFoodDetailsPriority": {
+    "description": "Reminder that military/navy food is reserved before worker consumption."
+  },
+  "forcesFood_landUnderfedModerateWarning": "Your armies are short on rations — they will fight somewhat weaker this turn.",
+  "@forcesFood_landUnderfedModerateWarning": {
+    "description": "Soft warn at invasion/combat decision points when land feeding coverage is in [0.5, 1.0)."
+  },
+  "forcesFood_landUnderfedSevereWarning": "Your armies are very short on rations — they will fight much weaker this turn.",
+  "@forcesFood_landUnderfedSevereWarning": {
+    "description": "Soft warn at invasion/combat decision points when land feeding coverage is below 0.5."
+  },
   "production_recipeAffordance": "{max} · {limiting}",
   "@production_recipeAffordance": {
     "description": "Recipe affordance line (max output and limiting factor label).",

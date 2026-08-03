@@ -2051,6 +2051,45 @@ abstract class AppLocalizations {
     int notWorking,
   );
 
+  /// Forces-food default line when land military feeding is complete.
+  String get production_forcesFoodArmiesFullyFed;
+
+  /// Forces-food default line when land feeding coverage is in [0.5, 1.0).
+  String get production_forcesFoodArmiesUnderfedModerate;
+
+  /// Forces-food default line when land feeding coverage is below 0.5.
+  String get production_forcesFoodArmiesUnderfedSevere;
+
+  /// Forces-food default line when naval feeding is complete.
+  String get production_forcesFoodFleetsFullyFed;
+
+  /// Forces-food default line when naval feeding coverage is in [0.5, 1.0).
+  String get production_forcesFoodFleetsUnderfedModerate;
+
+  /// Forces-food default line when naval feeding coverage is below 0.5.
+  String get production_forcesFoodFleetsUnderfedSevere;
+
+  /// Toggle to expand forces-food readiness breakdown on Production Available.
+  String get production_forcesFoodDetails;
+
+  /// Forces-food detail row for land military feeding.
+  String production_forcesFoodDetailsArmies(int fed, int total);
+
+  /// Forces-food detail row for naval feeding.
+  String production_forcesFoodDetailsFleets(int fed, int total);
+
+  /// Forces-food detail row for combined military/navy food demand.
+  String production_forcesFoodDetailsDemand(int demand);
+
+  /// Reminder that military/navy food is reserved before worker consumption.
+  String get production_forcesFoodDetailsPriority;
+
+  /// Soft warn when land feeding coverage is in [0.5, 1.0) at invasion/combat.
+  String get forcesFood_landUnderfedModerateWarning;
+
+  /// Soft warn when land feeding coverage is below 0.5 at invasion/combat.
+  String get forcesFood_landUnderfedSevereWarning;
+
   /// Recipe affordance line (max output and limiting factor label).
   String production_recipeAffordance(int max, String limiting);
 

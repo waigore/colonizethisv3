@@ -47,6 +47,7 @@ void main() {
         desiredOutputByRecipe: const {},
         netDeltasByCommodity: const {},
         labourReadiness: labourReadinessForPlayer(player),
+        forcesFeeding: forcesFeedingForPlayer(player),
         onDesiredOutputChanged: (_) {},
         starredProduceRecommendationsByRecipeId: {
           'lumber_from_timber': _produceRecommendation('lumber_from_timber'),
@@ -85,6 +86,7 @@ void main() {
         desiredOutputByRecipe: const {},
         netDeltasByCommodity: const {},
         labourReadiness: labourReadinessForPlayer(player),
+        forcesFeeding: forcesFeedingForPlayer(player),
         onDesiredOutputChanged: (_) {},
         onOpenCounsel: ({String? highlightRecommendationId}) {},
       ),

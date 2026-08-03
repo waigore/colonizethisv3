@@ -109,12 +109,15 @@ Game buildMoveArmyInvasionIntelGoldenGame({
       },
       playerVisibilityByTile: {moveArmyInvasionIntelGoldenPlayerId: visibilityByTile},
     ),
-    players: const [
+    players: [
       Player(
         id: moveArmyInvasionIntelGoldenPlayerId,
         displayName: 'Human',
         isHuman: true,
         capitalProvinceId: moveArmyInvasionIntelGoldenFrom,
+        // Fully fed land forces so invasion-intel goldens stay scoped to #4216
+        // (not underfed soft-warn from #4242).
+        stockpile: const Stockpile().applyDelta('grain', 20).applyDelta('meat', 20),
       ),
       Player(
         id: moveArmyInvasionIntelGoldenRivalId,

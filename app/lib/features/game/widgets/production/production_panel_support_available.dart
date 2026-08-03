@@ -15,6 +15,7 @@ import '../../../../widgets/resource_icon.dart';
 import 'commodity_ui_helpers.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'production_available_grid.dart';
+import 'production_forces_food_readiness_summary.dart';
 import 'production_labour_readiness_summary.dart';
 import 'production_labour_helpers.dart';
 import 'production_labour_section.dart';
@@ -26,6 +27,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
     required this.game,
     required this.player,
     required this.labourReadiness,
+    required this.forcesFeeding,
     required this.inputCommodityIds,
     required this.outputCommodityIds,
     required this.netDeltasByCommodity,
@@ -40,6 +42,7 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
   final Game game;
   final Player player;
   final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> netDeltasByCommodity;
@@ -200,6 +203,12 @@ class ProductionPanelAvailableSubpanel extends StatelessWidget {
       CtGap.m,
       ProductionLabourReadinessSummary(
         snapshot: labourReadiness,
+        l10n: l10n,
+        theme: theme,
+      ),
+      CtGap.m,
+      ProductionForcesFoodReadinessSummary(
+        snapshot: forcesFeeding,
         l10n: l10n,
         theme: theme,
       ),

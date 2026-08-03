@@ -224,6 +224,33 @@ In-panel labour preview on `GAME20001` Available only (not end-turn nags). Uses 
 - **Given** N < capacity, **when** the player taps **Labour details**, **then** each tier with workers shows working vs not-working counts.
 - **Given** Allocation total required labour exceeds N, **when** the summary builds, **then** the warning uses the same N as the labour readiness summary.
 
+## Forces food readiness (Refs #4242)
+
+In-panel army/navy feeding preview on `GAME20001` Available only (not end-turn nags). Uses the same post-extraction stockpile and military/navy consumption phases as labour readiness (`previewForceFeeding` on stockpile after pending build costs → Extraction → Riches-to-treasury).
+
+### Default (when player has regiments and/or ships)
+
+- One muted line per force type present: armies and/or fleets fed status in plain language.
+- When underfed, append combat-effect copy (`somewhat weaker` for coverage in [0.5, 1.0); `much weaker` below 0.5) — not raw multipliers.
+- **Hide** the entire strip when there are zero regiments **and** zero ships.
+
+### On request
+
+- **Forces food details** `CtActionTextButton` toggles fed/total regiments, fed/total ships, forces food demand, and a one-line reminder that armies and fleets eat before workers.
+
+### Non-goals
+
+- No end-turn checklist; no auto Trade/orders; no per-row unit chips on army/fleet panels in v1.
+
+### Acceptance criteria
+
+- **Given** post-extraction food fully covers land military demand, **when** Available builds, **then** the forces strip shows armies fully fed with no weaker combat line.
+- **Given** land feeding coverage is in [0.5, 1.0), **when** Available builds, **then** default copy states underfed and somewhat weaker; details show fed/total regiments.
+- **Given** land feeding coverage < 0.5, **when** Available builds, **then** default copy uses the severe weaker tier.
+- **Given** ships exist and navy is underfed, **when** Available builds, **then** fleet status is reflected on the default strip and in details.
+- **Given** zero regiments and zero ships, **when** Available builds, **then** no forces-food strip is shown.
+- **Given** labour readiness also reports a food shortfall involving military draw, **when** both strips render, **then** neither contradicts the other.
+
 ---
 
 ## Labour Controls (12-A)

@@ -19,7 +19,7 @@ If several attackers reach the same province, they fight in initiative order. Th
 
 ### Choosing the combat mode
 
-1. When your coming battle needs a choice, `CMPT10001` **Combat mode choice dialog** names the contested province.
+1. When your coming battle needs a choice, `CMPT10001` **Combat mode choice dialog** names the contested province. If your armies are short on rations this turn, a soft informational line warns that they will fight weaker; you may still choose Auto-Resolve or Quick Battle.
 2. Choose **Auto-Resolve** for an immediate deterministic result, or **Quick Battle** to direct the current tactical encounter.
 3. A capital siege permits only Quick Battle. The Auto-Resolve choice is not available in that case.
 

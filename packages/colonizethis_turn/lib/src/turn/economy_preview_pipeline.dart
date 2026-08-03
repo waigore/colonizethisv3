@@ -189,6 +189,38 @@ Game applyEconomyPhasesThroughRichesForPreview({
   return acc.game;
 }
 
+/// Forces feeding readiness for one player using post-extraction preview stockpile.
+ForceFeedingSnapshot forcesFeedingForPlayer({
+  required Game game,
+  required MapTopology topology,
+  required String playerId,
+  MilitaryNavyFoodCounts foodCounts = const MilitaryNavyFoodCounts(),
+  EconomyPreviewInputs inputs = emptyEconomyPreviewInputs,
+}) {
+  final before = game.playerById(playerId);
+  if (before == null) {
+    return const ForceFeedingSnapshot(
+      totalRegiments: 0,
+      fullyFedRegiments: 0,
+      totalShips: 0,
+      fullyFedShips: 0,
+      landCombatTier: ForceFeedingCombatTier.full,
+      navalCombatTier: ForceFeedingCombatTier.full,
+      forcesFoodDemand: 0,
+    );
+  }
+  final previewGame = applyEconomyPhasesThroughRichesForPreview(
+    game: game,
+    topology: topology,
+    inputs: inputs,
+  );
+  final previewPlayer = previewGame.playerById(playerId)!;
+  return previewForceFeeding(
+    stockpile: previewPlayer.stockpile,
+    foodCounts: foodCounts,
+  );
+}
+
 /// Labour readiness for one player using post-extraction preview stockpile.
 LabourReadinessSnapshot labourReadinessForPlayer({
   required Game game,

@@ -25,6 +25,7 @@ class ProductionPanel extends StatelessWidget {
     required this.desiredOutputByRecipe,
     required this.netDeltasByCommodity,
     required this.labourReadiness,
+    required this.forcesFeeding,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
@@ -43,6 +44,7 @@ class ProductionPanel extends StatelessWidget {
   final Map<String, int> desiredOutputByRecipe;
   final Map<String, int> netDeltasByCommodity;
   final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
   /// When set, Available header shows a text button that opens the breakdown dialog.
@@ -88,6 +90,7 @@ class ProductionPanel extends StatelessWidget {
       game: game,
       player: player,
       labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       inputCommodityIds: inputCommodityIds,
       outputCommodityIds: outputCommodityIds,
       netDeltasByCommodity: netDeltasByCommodity,
