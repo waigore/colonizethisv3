@@ -7,7 +7,10 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show Orders, TradeOrderType;
+import 'package:colonizethis_world/colonizethis_world.dart' show Game;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../providers/games_provider.dart';

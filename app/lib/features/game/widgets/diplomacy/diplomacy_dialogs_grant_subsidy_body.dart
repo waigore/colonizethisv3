@@ -1,4 +1,6 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';

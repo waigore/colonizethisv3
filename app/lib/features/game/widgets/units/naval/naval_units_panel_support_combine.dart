@@ -1,6 +1,6 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show GamePlayerLookup, homeFleetIdFor;
+import 'package:colonizethis_world/colonizethis_world.dart' show GamePlayerLookup, homeFleetIdFor;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 

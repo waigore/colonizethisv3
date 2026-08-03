@@ -1,6 +1,10 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/src/economy/economy_resource_constants.dart'
+    show kMineralResourceIds;
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class MapResourceExtractionMaps {

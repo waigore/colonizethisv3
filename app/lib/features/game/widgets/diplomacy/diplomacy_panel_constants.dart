@@ -1,7 +1,8 @@
 // Diplomacy panel layout constants. SPEC/ui/diplomacy-panel.md.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show relationScoreToMeterStep;
+
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/relation_meter.dart';
