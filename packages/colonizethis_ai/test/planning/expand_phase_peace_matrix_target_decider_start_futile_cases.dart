@@ -13,6 +13,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -29,16 +30,6 @@ const List<Player> _defaultGpRoster = <Player>[
   Player(id: _gp2, displayName: 'GP2', isHuman: false),
   Player(id: _gp3, displayName: 'GP3', isHuman: false),
   Player(id: _gp4, displayName: 'GP4', isHuman: false),
-];
-
-/// `count` Old World provinces owned by [ownerId], ids `oldWorld|<owner>_<i>`.
-/// Only province *ownership* is read by these deciders (`provinceCountOwnedBy`
-/// / `getProvinceOwnerMap`), so the synthetic ids are arbitrary except where a
-/// row's [_Case.invadable] list references a specific id (those are added as
-/// explicit provinces in the row).
-List<Province> _owned(String ownerId, int count) => <Province>[
-  for (var i = 0; i < count; i++)
-    Province(id: 'oldWorld|${ownerId}_$i', regionId: 'oldWorld', ownerId: ownerId),
 ];
 
 typedef _PeaceTargetsFn = List<String> Function({
@@ -78,36 +69,25 @@ class _Case {
   final String? reason;
 }
 
-Game _buildGame(_Case c) => Game(
-  id: 'g-expand-peace-target-matrix',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-    oldWorld: RegionData(provinces: c.owProvinces),
-    newWorld: const RegionData(),
-  ),
-  players: c.players,
-  minorNations: c.minorNations,
-  tribes: c.tribes,
-);
-
-AIWorldSnapshot _snapshot(_Case c) => AIWorldSnapshot(
-  playerId: c.playerId,
-  threats: ThreatSummary(atWarWith: c.atWarWith),
-  opportunities: const OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: c.ownOw,
-    invadableProvinceIdsSorted: c.invadable,
-  ),
-  colonial: const ColonialSummary(),
-  economy: const EconomySummary(),
-  relations: const {},
-);
-
 void _runDecider(String label, _PeaceTargetsFn fn, List<_Case> cases) {
   group(label, () {
     for (final c in cases) {
       test(c.name, () {
-        final result = fn(game: _buildGame(c), snapshot: _snapshot(c));
+        final result = fn(
+          game: buildExpandPeaceMatrixGame(
+            owProvinces: c.owProvinces,
+            players: c.players,
+            minorNations: c.minorNations,
+            tribes: c.tribes,
+            gameId: 'g-expand-peace-target-matrix',
+          ),
+          snapshot: buildExpandPeaceMatrixSnapshot(
+            playerId: c.playerId,
+            atWarWith: c.atWarWith,
+            oldWorldProvincesOwned: c.ownOw,
+            invadableProvinceIdsSorted: c.invadable,
+          ),
+        );
         if (c.expected == null) {
           expect(result, isEmpty, reason: c.reason);
         } else {
@@ -281,8 +261,8 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       name: 'returns [] when own OW is one below the observer quota '
           '(isBelowObserverConquestQuota early guard)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp - 1),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp - 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -301,8 +281,8 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       name: 'returns [] when no invadable OW provinces remain '
           '(invadableProvinceIdsSorted.isEmpty early guard)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
       ],
       players: _defaultGpRoster,
       minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
@@ -318,8 +298,8 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
     _Case(
       name: 'skips non-GP factions in atWarWith (minors / tribes filtered)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -337,9 +317,9 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
     _Case(
       name: 'skips at-war enemy GPs that have met the observer quota',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp2, kObserverConquestMinOwProvincesPerGp),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, kObserverConquestMinOwProvincesPerGp),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -358,9 +338,9 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
     _Case(
       name: 'skips at-war enemy GPs that own one of the invadable OW provinces',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp2, 7),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 7),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|gp2_inv', regionId: 'oldWorld', ownerId: _gp2),
       ],
       players: _defaultGpRoster,
@@ -379,9 +359,9 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
     _Case(
       name: 'skips the primary invadable OW blocker (defensive backstop)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp2, 6),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 6),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|gp2_inv_a', regionId: 'oldWorld', ownerId: _gp2),
         const Province(id: 'oldWorld|gp2_inv_b', regionId: 'oldWorld', ownerId: _gp2),
       ],
@@ -403,10 +383,10 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       name: 'returns multiple below-quota non-blocker enemy GPs sorted by '
           'factionId',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp2, 8),
-        ..._owned(_gp3, 8),
-        ..._owned(_gp4, 7),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp4, 7),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -425,9 +405,9 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       name: 'filters an interleaved non-GP entry AND sorts the remaining '
           'eligible GPs (shared gpAtWarPeaceTargetsWhere skeleton)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned(_gp2, 8),
-        ..._owned(_gp4, 7),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp4, 7),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -447,8 +427,8 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       name: 'enters main pass when own OW equals the observer quota '
           '(strict `<` boundary)',
       owProvinces: [
-        ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp),
-        ..._owned(_gp3, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
         const Province(id: 'oldWorld|inv1', regionId: 'oldWorld', ownerId: _minor1),
       ],
       players: _defaultGpRoster,
@@ -471,30 +451,29 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
   // `(game, snapshot) -> targets` row).
   group('peace-target decider determinism / blocker-identity guards', () {
     test('defaultStartGpPeaceTargets is bit-identical on repeated calls', () {
-      final game = _buildGame(
-        const _Case(
-          name: 'determinism',
-          owProvinces: [
-            Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
-          ],
-          players: _defaultGpRoster,
-          tribes: [Tribe(id: _tribe1, displayName: 'T1')],
-          playerId: _gp1,
-          ownOw: 7,
-          atWarWith: [_gp2, _gp3, _gp4],
-          invadable: ['oldWorld|gp2_a'],
-        ),
+      const c = _Case(
+        name: 'determinism',
+        owProvinces: [
+          Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
+        ],
+        players: _defaultGpRoster,
+        tribes: [Tribe(id: _tribe1, displayName: 'T1')],
+        playerId: _gp1,
+        ownOw: 7,
+        atWarWith: [_gp2, _gp3, _gp4],
+        invadable: ['oldWorld|gp2_a'],
       );
-      final snapshot = _snapshot(
-        const _Case(
-          name: 'determinism',
-          owProvinces: [],
-          players: _defaultGpRoster,
-          playerId: _gp1,
-          ownOw: 7,
-          atWarWith: [_gp2, _gp3, _gp4],
-          invadable: ['oldWorld|gp2_a'],
-        ),
+      final game = buildExpandPeaceMatrixGame(
+        owProvinces: c.owProvinces,
+        players: c.players,
+        tribes: c.tribes,
+        gameId: 'g-expand-peace-target-matrix',
+      );
+      final snapshot = buildExpandPeaceMatrixSnapshot(
+        playerId: c.playerId,
+        atWarWith: c.atWarWith,
+        oldWorldProvincesOwned: c.ownOw,
+        invadableProvinceIdsSorted: c.invadable,
       );
       final first = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
       final second = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
@@ -507,9 +486,9 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       final c = _Case(
         name: 'blocker sanity',
         owProvinces: [
-          ..._owned(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-          ..._owned(_gp2, 6),
-          ..._owned(_gp3, 8),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 6),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
           const Province(id: 'oldWorld|gp2_inv_a', regionId: 'oldWorld', ownerId: _gp2),
           const Province(id: 'oldWorld|gp2_inv_b', regionId: 'oldWorld', ownerId: _gp2),
         ],
@@ -523,8 +502,19 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
       );
       expect(
         primaryInvadableOldWorldGpBlocker(
-          game: _buildGame(c),
-          snapshot: _snapshot(c),
+          game: buildExpandPeaceMatrixGame(
+            owProvinces: c.owProvinces,
+            players: c.players,
+            minorNations: c.minorNations,
+            tribes: c.tribes,
+            gameId: 'g-expand-peace-target-matrix',
+          ),
+          snapshot: buildExpandPeaceMatrixSnapshot(
+            playerId: c.playerId,
+            atWarWith: c.atWarWith,
+            oldWorldProvincesOwned: c.ownOw,
+            invadableProvinceIdsSorted: c.invadable,
+          ),
         ),
         _gp2,
         reason:

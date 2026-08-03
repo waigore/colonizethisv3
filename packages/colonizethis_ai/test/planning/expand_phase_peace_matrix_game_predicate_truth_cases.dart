@@ -11,6 +11,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -30,16 +31,6 @@ const List<Player> _gp1gp2 = <Player>[
 ];
 const List<Player> _gp1only = <Player>[
   Player(id: _gp1, displayName: 'GP1', isHuman: false),
-];
-
-/// `count` Old World provinces owned by [owner], ids `oldWorld|<owner>_<i>`
-/// starting at index [start]. Only province *ownership* is read by these
-/// predicates (`getProvinceOwnerMap` / the minor-roster OW scan), so synthetic
-/// filler ids are arbitrary except where a row's [_Case.invadable] list
-/// references a specific id (those are added explicitly in the row).
-List<Province> _ow(String owner, int count, {int start = 0}) => <Province>[
-  for (var i = start; i < start + count; i++)
-    Province(id: 'oldWorld|${owner}_$i', regionId: 'oldWorld', ownerId: owner),
 ];
 
 /// One byte-equivalent branch row transcribed from a source `*_branches_test`.
@@ -75,31 +66,6 @@ class _Case {
   final String? reason;
 }
 
-Game _buildGame(_Case c) => Game(
-  id: 'g-expand-peace-predicate-matrix',
-  worldState: WorldState(
-    turnState: TurnState(phase: TurnPhase.orders, turnNumber: c.turnNumber),
-    oldWorld: RegionData(provinces: c.owProvinces),
-    newWorld: RegionData(provinces: c.nwProvinces),
-  ),
-  players: c.players,
-  minorNations: c.minorNations,
-  tribes: c.tribes,
-);
-
-AIWorldSnapshot _snapshot(_Case c) => AIWorldSnapshot(
-  playerId: c.playerId,
-  threats: ThreatSummary(atWarWith: c.atWarWith),
-  opportunities: const OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: c.ow,
-    invadableProvinceIdsSorted: c.invadable,
-  ),
-  colonial: const ColonialSummary(),
-  economy: const EconomySummary(),
-  relations: const {},
-);
-
 typedef _PredicateFn = bool Function({
   required Game game,
   required AIWorldSnapshot snapshot,
@@ -110,7 +76,19 @@ void _runPredicate(String label, _PredicateFn fn, List<_Case> cases) {
     for (final c in cases) {
       test(c.name, () {
         expect(
-          fn(game: _buildGame(c), snapshot: _snapshot(c)),
+          fn(game: buildExpandPeaceMatrixGame(
+            owProvinces: c.owProvinces,
+            players: c.players,
+            minorNations: c.minorNations,
+            tribes: c.tribes,
+            nwProvinces: c.nwProvinces,
+            turnNumber: c.turnNumber,
+          ), snapshot: buildExpandPeaceMatrixSnapshot(
+            playerId: c.playerId,
+            atWarWith: c.atWarWith,
+            oldWorldProvincesOwned: c.ow,
+            invadableProvinceIdsSorted: c.invadable,
+          )),
           c.expected ? isTrue : isFalse,
           reason: c.reason,
         );
@@ -135,7 +113,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp5gp6,
       playerId: _gp5,
       owProvinces: [
-        ..._ow(_gp5, kObserverConquestMinOwProvincesPerGp),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp5, kObserverConquestMinOwProvincesPerGp),
         _gp6Frontier,
       ],
       ow: kObserverConquestMinOwProvincesPerGp,
@@ -149,7 +127,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       name: 'false when below quota but no invadable provinces remain',
       players: _gp5gp6,
       playerId: _gp5,
-      owProvinces: [..._ow(_gp5, 8), _gp6Frontier],
+      owProvinces: [...oldWorldProvincesForExpandPeaceMatrix(_gp5, 8), _gp6Frontier],
       ow: 8,
       atWarWith: const [_gp6],
       turnNumber: 60,
@@ -162,7 +140,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp5gp6,
       playerId: _gp5,
       owProvinces: [
-        ..._ow(_gp5, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp5, 8),
         _gp6Frontier,
         const Province(
           id: 'oldWorld|minor1_p1',
@@ -183,7 +161,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp5gp6,
       playerId: _gp5,
       owProvinces: [
-        ..._ow(_gp5, 8),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp5, 8),
         const Province(
           id: 'oldWorld|tribe1_p1',
           regionId: 'oldWorld',
@@ -203,7 +181,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
           'Great Power (canonical seed-42 gp5/gp6 trap)',
       players: _gp5gp6,
       playerId: _gp5,
-      owProvinces: [..._ow(_gp5, 9), _gp6Frontier],
+      owProvinces: [...oldWorldProvincesForExpandPeaceMatrix(_gp5, 9), _gp6Frontier],
       ow: 9,
       atWarWith: const [_gp6],
       invadable: const ['oldWorld|gp6_frontier'],
@@ -229,7 +207,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp5gp6,
       playerId: _gp5,
       owProvinces: [
-        ..._ow(_gp5, kObserverConquestMinOwProvincesPerGp - 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp5, kObserverConquestMinOwProvincesPerGp - 1),
         _gp6Frontier,
       ],
       ow: kObserverConquestMinOwProvincesPerGp - 1,
@@ -248,7 +226,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       name: 'quota-met short-circuit returns true even with no minor pivot',
       players: _gp1gp2,
       playerId: _gp1,
-      owProvinces: _ow(_gp1, kObserverConquestMinOwProvincesPerGp, start: 1),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp, start: 1),
       ow: kObserverConquestMinOwProvincesPerGp,
       atWarWith: const [_gp2],
       expected: true,
@@ -265,7 +243,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       name: 'quota-exceeded with no minor pivot still returns true',
       players: _gp1gp2,
       playerId: _gp1,
-      owProvinces: _ow(_gp1, kObserverConquestMinOwProvincesPerGp + 5, start: 1),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 5, start: 1),
       ow: kObserverConquestMinOwProvincesPerGp + 5,
       atWarWith: const [_gp2],
       expected: true,
@@ -279,7 +257,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp1gp2,
       playerId: _gp1,
       owProvinces: [
-        ..._ow(_gp1, 8, start: 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, 8, start: 1),
         const Province(
           id: 'oldWorld|minor1_a',
           regionId: 'oldWorld',
@@ -304,7 +282,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp1gp2,
       playerId: _gp1,
       owProvinces: [
-        ..._ow(_gp1, 8, start: 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, 8, start: 1),
         const Province(
           id: 'oldWorld|minor1_a',
           regionId: 'oldWorld',
@@ -326,7 +304,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       name: 'below quota with NW-only minor in invadable list returns true (B3)',
       players: _gp1gp2,
       playerId: _gp1,
-      owProvinces: _ow(_gp1, 8, start: 1),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix(_gp1, 8, start: 1),
       nwProvinces: const [
         Province(
           id: 'newWorld|minor1_a',
@@ -352,8 +330,8 @@ void registerExpandPeaceGamePredicateTruthCases() {
       players: _gp1gp2,
       playerId: _gp1,
       owProvinces: [
-        ..._ow(_gp1, 8, start: 1),
-        ..._ow(_gp2, 3, start: 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp1, 8, start: 1),
+        ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 3, start: 1),
       ],
       ow: 8,
       atWarWith: const [_gp2],
@@ -370,7 +348,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
       name: 'below quota with empty invadable list and no minors returns false',
       players: _gp1gp2,
       playerId: _gp1,
-      owProvinces: _ow(_gp1, 8, start: 1),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix(_gp1, 8, start: 1),
       ow: 8,
       atWarWith: const [_gp2],
       expected: false,
@@ -386,7 +364,7 @@ void registerExpandPeaceGamePredicateTruthCases() {
           'false',
       players: _gp1gp2,
       playerId: _gp1,
-      owProvinces: _ow(_gp1, kObserverConquestMinOwProvincesPerGp - 1, start: 1),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp - 1, start: 1),
       ow: kObserverConquestMinOwProvincesPerGp - 1,
       atWarWith: const [_gp2],
       expected: false,
