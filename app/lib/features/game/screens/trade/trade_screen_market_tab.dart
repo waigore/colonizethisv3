@@ -45,7 +45,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show Orders, TradeOrder, TradeOrderType;
+import 'package:colonizethis_world/colonizethis_world.dart' show Game;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../providers/games_provider.dart';

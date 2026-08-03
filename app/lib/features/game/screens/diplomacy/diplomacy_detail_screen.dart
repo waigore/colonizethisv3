@@ -1,6 +1,11 @@
 // Diplomacy detail: history + dossier for one faction. SPEC/ui/diplomacy-detail-screen.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show diplomaticHistoryForPair, getOverture, greatPowerPowerScore;
+import 'package:colonizethis_economy/colonizethis_economy.dart' show PurchasedTileIndex;
+import 'package:colonizethis_logic/src/turn_to_year.dart' show turnToYear;
+import 'package:colonizethis_world/colonizethis_world.dart' show Game;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

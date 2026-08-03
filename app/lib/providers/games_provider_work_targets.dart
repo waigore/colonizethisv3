@@ -1,5 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/shell/shell_player_context.dart';
