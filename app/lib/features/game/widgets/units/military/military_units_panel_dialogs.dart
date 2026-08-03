@@ -1,8 +1,8 @@
 /// Dialog openers and combine mutations for military army actions.
 /// SPEC/ui/military-units-panel.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show buildPlayerView;
+import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 

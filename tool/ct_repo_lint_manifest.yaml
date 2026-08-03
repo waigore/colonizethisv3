@@ -538,12 +538,12 @@ rules:
     runner: dart
     script: tool/check_app_event_handler_scope_logic_boundary.dart
 
-  - rule_id: repo.app_core_services_narrow_logic_import
+  - rule_id: repo.app_narrow_logic_import
     group: architecture
-    title: app core services must not import the broad colonizethis_logic barrel (Refs #4224 Slice C)
+    title: scoped app trees must not import the broad colonizethis_logic barrel (Refs #4240 Slice A)
     spec: SPEC/program/logic-package-barrel-contracts.md
     runner: dart
-    script: tool/check_app_core_services_narrow_logic_import.dart
+    script: tool/check_app_narrow_logic_import.dart
 
   - rule_id: repo.app_no_part_directives
     group: structure

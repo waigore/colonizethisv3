@@ -1,4 +1,7 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show getRelation, relationScoreToDisplayLabel;
+import 'package:colonizethis_world/colonizethis_world.dart' show Game, GamePlayerLookup;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".

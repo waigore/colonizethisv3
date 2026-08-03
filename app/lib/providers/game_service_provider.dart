@@ -1,4 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show DefaultGameEventBus;
+
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -28,6 +28,8 @@ dependencies:
   colonizethis_orders:
   colonizethis_turn:
   colonizethis_diplomacy:
+  colonizethis_economy:
+  colonizethis_combat:
   colonizethis_setup:
   colonizethis_world:
   colonizethis_ai:

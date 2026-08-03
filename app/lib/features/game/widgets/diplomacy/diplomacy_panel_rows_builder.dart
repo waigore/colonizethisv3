@@ -1,7 +1,12 @@
 /// Row-builder pipeline for diplomacy panel faction lists.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_panel_rows.dart';
