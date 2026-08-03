@@ -25,13 +25,14 @@
 // raised for GAME60001 first-right Market cue, Deal Book labels, overseas-profit ledger (Refs #4226).
 // raised for GAME60001 Market wide two-column compact rows (Refs #4227).
 // raised for UNIT20001 generals strip + DLG20001 invasion capacity warn (Refs #4233).
+// raised for forces food readiness + invasion/combat underfed soft warns (Refs #4242).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 67500;
+const _maxMainLines = 68000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
