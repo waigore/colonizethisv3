@@ -15,7 +15,8 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrder, TradeOrderType;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'trade_screen_contract_market.dart';

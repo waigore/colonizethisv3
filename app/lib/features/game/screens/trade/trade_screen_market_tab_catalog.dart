@@ -7,15 +7,17 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show CommodityCatalog, WorldMarketState;
+import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrderType;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../widgets/ct_section_label.dart';
 import '../../widgets/production/commodity_ui_helpers.dart';
+import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_row.dart';
 import 'trade_screen_market_tab.dart';
-import 'trade_screen_market_tab_order_handlers.dart';
 
 extension MarketTabContentCatalog on MarketTabContent {
   /// Builds the widget list that renders one Market commodity category
@@ -38,20 +40,12 @@ extension MarketTabContentCatalog on MarketTabContent {
     required Key sectionKey,
     required String sectionLabel,
     required List<Commodity> commodities,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required int bidTypeCap,
-    required WorldMarketState market,
-    required Orders orders,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required void Function(CommodityId commodityId, TradeOrderType? next)
-        onDirectionChanged,
-    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
-    required Set<CommodityId> firstRightCommodityIds,
     bool isFirstSection = true,
     bool wideLayout = false,
   }) {
@@ -63,56 +57,34 @@ extension MarketTabContentCatalog on MarketTabContent {
       if (wideLayout)
         ..._buildWideCommodityGrid(
           commodities: commodities,
-          offerCap: offerCap,
-          stagedOffers: stagedOffers,
-          bidTypeCap: bidTypeCap,
-          market: market,
-          orders: orders,
+          staging: staging,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
           volumeStyle: volumeStyle,
           quantityStyle: quantityStyle,
-          onDirectionChanged: onDirectionChanged,
-          onQuantityDelta: onQuantityDelta,
           l10n: l10n,
-          firstRightCommodityIds: firstRightCommodityIds,
         )
       else
         ..._buildNarrowCommodityList(
           commodities: commodities,
-          offerCap: offerCap,
-          stagedOffers: stagedOffers,
-          bidTypeCap: bidTypeCap,
-          market: market,
-          orders: orders,
+          staging: staging,
           nameStyle: nameStyle,
           priceStyle: priceStyle,
           volumeStyle: volumeStyle,
           quantityStyle: quantityStyle,
-          onDirectionChanged: onDirectionChanged,
-          onQuantityDelta: onQuantityDelta,
           l10n: l10n,
-          firstRightCommodityIds: firstRightCommodityIds,
         ),
     ];
   }
 
   List<Widget> _buildNarrowCommodityList({
     required List<Commodity> commodities,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required int bidTypeCap,
-    required WorldMarketState market,
-    required Orders orders,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required void Function(CommodityId commodityId, TradeOrderType? next)
-        onDirectionChanged,
-    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
-    required Set<CommodityId> firstRightCommodityIds,
   }) {
     return <Widget>[
       for (int index = 0; index < commodities.length; index++)
@@ -122,19 +94,12 @@ extension MarketTabContentCatalog on MarketTabContent {
           child: _buildCommodityRow(
             commodity: commodities[index],
             compact: false,
-            offerCap: offerCap,
-            stagedOffers: stagedOffers,
-            bidTypeCap: bidTypeCap,
-            market: market,
-            orders: orders,
+            staging: staging,
             nameStyle: nameStyle,
             priceStyle: priceStyle,
             volumeStyle: volumeStyle,
             quantityStyle: quantityStyle,
-            onDirectionChanged: onDirectionChanged,
-            onQuantityDelta: onQuantityDelta,
             l10n: l10n,
-            firstRightCommodityIds: firstRightCommodityIds,
           ),
         ),
     ];
@@ -142,20 +107,12 @@ extension MarketTabContentCatalog on MarketTabContent {
 
   List<Widget> _buildWideCommodityGrid({
     required List<Commodity> commodities,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required int bidTypeCap,
-    required WorldMarketState market,
-    required Orders orders,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required void Function(CommodityId commodityId, TradeOrderType? next)
-        onDirectionChanged,
-    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
-    required Set<CommodityId> firstRightCommodityIds,
   }) {
     final List<Widget> rows = <Widget>[];
     for (int index = 0; index < commodities.length; index += 2) {
@@ -177,19 +134,12 @@ extension MarketTabContentCatalog on MarketTabContent {
                   child: _buildCommodityRow(
                     commodity: left,
                     compact: true,
-                    offerCap: offerCap,
-                    stagedOffers: stagedOffers,
-                    bidTypeCap: bidTypeCap,
-                    market: market,
-                    orders: orders,
+                    staging: staging,
                     nameStyle: nameStyle,
                     priceStyle: priceStyle,
                     volumeStyle: volumeStyle,
                     quantityStyle: quantityStyle,
-                    onDirectionChanged: onDirectionChanged,
-                    onQuantityDelta: onQuantityDelta,
                     l10n: l10n,
-                    firstRightCommodityIds: firstRightCommodityIds,
                   ),
                 ),
               ),
@@ -203,19 +153,12 @@ extension MarketTabContentCatalog on MarketTabContent {
                         child: _buildCommodityRow(
                           commodity: right,
                           compact: true,
-                          offerCap: offerCap,
-                          stagedOffers: stagedOffers,
-                          bidTypeCap: bidTypeCap,
-                          market: market,
-                          orders: orders,
+                          staging: staging,
                           nameStyle: nameStyle,
                           priceStyle: priceStyle,
                           volumeStyle: volumeStyle,
                           quantityStyle: quantityStyle,
-                          onDirectionChanged: onDirectionChanged,
-                          onQuantityDelta: onQuantityDelta,
                           l10n: l10n,
-                          firstRightCommodityIds: firstRightCommodityIds,
                         ),
                       ),
               ),
@@ -230,54 +173,38 @@ extension MarketTabContentCatalog on MarketTabContent {
   Widget _buildCommodityRow({
     required Commodity commodity,
     required bool compact,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required int bidTypeCap,
-    required WorldMarketState market,
-    required Orders orders,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required void Function(CommodityId commodityId, TradeOrderType? next)
-        onDirectionChanged,
-    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
-    required Set<CommodityId> firstRightCommodityIds,
   }) {
     final CommodityId commodityId = commodity.id;
-    final bool showFirstRightChip = firstRightCommodityIds.contains(commodityId);
+    final bool showFirstRightChip =
+        staging.firstRightCommodityIds.contains(commodityId);
     final rowParams = (
       commodityId: commodityId,
       commodityDisplayName: commodityDisplayName(l10n, commodityId),
       priceText: formatMarketPrice(
-        market.prices[commodityId],
+        staging.market.prices[commodityId],
         commodityId: commodityId,
       ),
       volumeText: volumeText(
-        market.lastTurnActivity[commodityId] ?? MarketActivity.empty,
+        staging.market.lastTurnActivity[commodityId] ?? MarketActivity.empty,
       ),
-      stagedOrder: tradeOrderForPlayerCommodity(orders, playerId, commodityId),
-      sellableHeadroom: sellableHeadroomFor(
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        commodityId: commodityId,
-      ),
-      offerCap: offerCap[commodityId] ?? 0,
-      canSelectBid: canStageBidOnCommodity(
-        orders: orders,
-        playerId: playerId,
-        commodityId: commodityId,
-        bidTypeCap: bidTypeCap,
-      ),
+      stagedOrder: staging.stagedOrderFor(commodityId),
+      sellableHeadroom: staging.sellableHeadroomFor(commodityId),
+      offerCap: staging.offerCap[commodityId] ?? 0,
+      canSelectBid: staging.canSelectBidOn(commodityId),
       nameStyle: nameStyle,
       priceStyle: priceStyle,
       volumeStyle: volumeStyle,
       quantityStyle: quantityStyle,
       onDirectionChanged: (TradeOrderType? next) =>
-          onDirectionChanged(commodityId, next),
-      onIncrement: () => onQuantityDelta(commodityId, 1),
-      onDecrement: () => onQuantityDelta(commodityId, -1),
+          staging.onDirectionChanged(commodityId, next),
+      onIncrement: () => staging.onQuantityDelta(commodityId, 1),
+      onDecrement: () => staging.onQuantityDelta(commodityId, -1),
     );
     if (compact) {
       return MarketCommodityRowCompact(
@@ -322,24 +249,6 @@ extension MarketTabContentCatalog on MarketTabContent {
       firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
     );
   }
-}
-
-/// Returns the per-row sellable headroom shown as `(N)` next to the
-/// commodity name on the Trade Market tab (Refs #3093 — sellable
-/// clamp slice). Equals `max(0, offerCap[c] − stagedOffer[c])` for
-/// the row's commodity. Mirrors
-/// `sellableHeadroomByCommodityId` but with per-row resolution so
-/// the build path passes one int per row instead of rebuilding the
-/// full map per child.
-int sellableHeadroomFor({
-  required Map<CommodityId, int> offerCap,
-  required Map<CommodityId, int> stagedOffers,
-  required CommodityId commodityId,
-}) {
-  final int cap = offerCap[commodityId] ?? 0;
-  final int staged = stagedOffers[commodityId] ?? 0;
-  final int headroom = cap - staged;
-  return headroom < 0 ? 0 : headroom;
 }
 
 String volumeText(MarketActivity activity) {

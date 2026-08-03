@@ -1,4 +1,6 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show assignedRecipesFromDesiredOutput;
+import 'package:colonizethis_models/colonizethis_models.dart' show AssignedRecipe;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Desired output units per recipe (recipe id → units). Used by Production panel

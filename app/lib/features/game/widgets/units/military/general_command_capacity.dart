@@ -3,11 +3,9 @@
 
 import 'package:colonizethis_data/colonizethis_data.dart'
     show generalCapForUnlockedTechs;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveToFullProvinceId;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show GamePlayerLookup, WorldStateProvinceLookup;
+    show GamePlayerLookup, WorldStateProvinceLookup, resolveToFullProvinceId;
 
 /// Effective general cap for a Great Power (persisted cap or tech-derived).
 int effectiveGeneralCapForPlayer(Player player) =>
