@@ -6,15 +6,10 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_economy/colonizethis_economy.dart' show WorldMarketState;
-import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrderType;
-
-import 'package:colonizethis_models/colonizethis_models.dart';
-
+import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_tab.dart';
 import 'trade_screen_market_tab_catalog.dart';
-import 'trade_section_handlers.dart';
 
 extension MarketTabContentBuildSections on MarketTabContent {
   ({
@@ -61,17 +56,11 @@ extension MarketTabContentBuildSections on MarketTabContent {
   List<Widget> buildMarketTabSectionWidgets({
     required AppLocalizations l10n,
     required SectionedTradeableCommodities sectioned,
-    required WorldMarketState market,
-    required Orders orders,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required int bidTypeCap,
-    required Set<CommodityId> firstRightCommodityIds,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required TradeSectionHandlers sectionHandlers,
     bool wideLayout = false,
   }) {
     return <Widget>[
@@ -79,18 +68,11 @@ extension MarketTabContentBuildSections on MarketTabContent {
         sectionKey: TradeScreenMarketKeys.marketSectionFoodKey,
         sectionLabel: l10n.production_food,
         commodities: sectioned.food,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        bidTypeCap: bidTypeCap,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
-        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
         wideLayout: wideLayout,
       ),
@@ -98,19 +80,12 @@ extension MarketTabContentBuildSections on MarketTabContent {
         sectionKey: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
         sectionLabel: l10n.production_rawMaterials,
         commodities: sectioned.rawMaterials,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        bidTypeCap: bidTypeCap,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
-        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
         wideLayout: wideLayout,
       ),
@@ -118,19 +93,12 @@ extension MarketTabContentBuildSections on MarketTabContent {
         sectionKey: TradeScreenMarketKeys.marketSectionManufacturedKey,
         sectionLabel: l10n.production_manufactured,
         commodities: sectioned.manufactured,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        bidTypeCap: bidTypeCap,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
-        firstRightCommodityIds: firstRightCommodityIds,
         l10n: l10n,
         wideLayout: wideLayout,
       ),
