@@ -7,8 +7,8 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Physical-line ceiling for residual fat pin contracts after case
 /// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
 /// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
-/// ratchets to ≤600-or-cases for gated basenames.
-const int residualFatPinSuitePhysicalLineCeiling = 600;
+/// ratchets to ≤550-or-cases for gated basenames (Phase-11 Slice C).
+const int residualFatPinSuitePhysicalLineCeiling = 550;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
@@ -43,6 +43,9 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'expand_phase_planner_declare_war_test.dart',
   'expand_phase_planner_military_test.dart',
   'growth_stage_planner_test.dart',
+  // Phase-11 Slice C ungated ≥550 densify (Refs #4239).
+  'phase_planner_diplomacy_filter_test.dart',
+  'expand_phase_planner_gp_blocker_focus_peace_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {

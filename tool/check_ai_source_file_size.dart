@@ -3,7 +3,7 @@
 //
 // Complements the repository-wide 1000 NCL gate and the AI no-part gate so
 // Phase-9/10 planning concern splits cannot silently re-merge into kitchen-sink
-// modules. Ceiling is **450** physical lines (stricter than
+// modules. Ceiling is **400** physical lines (stricter than
 // `repo.domain_package_source_file_size` 500). Shrink-only grandfather allowlist
 // fails when entries are missing or the named file is now under-cap (same
 // pattern as save/data).
@@ -14,14 +14,14 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int aiSourceFileSizeCeiling = 450;
+const int aiSourceFileSizeCeiling = 400;
 
 const String _aiSrcRelDir = 'packages/colonizethis_ai/lib/src';
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 /// Empty allowlist after #4079 Slice C / #4104 Slice B splits: every AI `lib/src`
-/// file must stay ≤450 physical lines. Override in tests via [grandfatheredPaths].
+/// file must stay ≤400 physical lines. Override in tests via [grandfatheredPaths].
 const List<String> aiSourceFileSizeGrandfatheredForTests = <String>[];
 
 int runCheckAiSourceFileSize(
@@ -105,7 +105,7 @@ int runCheckAiSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_ai_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4104).',
+      '(ceiling $ceiling; Refs #4239).',
     );
     return 0;
   }
@@ -113,7 +113,7 @@ int runCheckAiSourceFileSize(
   violations.sort();
   logE(
     'check_ai_source_file_size: found ${violations.length} violation(s) '
-    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4104):',
+    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4239):',
   );
   for (final violation in violations) {
     logE(' - $violation');

@@ -14,6 +14,7 @@ import 'diplomacy_planner_pass_helpers.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_result.dart';
 import 'phase_planner_dispatch.dart';
+import 'diplomacy_planner_pass_filter.dart';
 
 // Public peace-target / OW frontier helper re-exports below replace the legacy
 // `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart`
@@ -158,132 +159,6 @@ List<DiplomaticOrder> _suggestDiplomacyCandidates({
         ctx.orders,
       );
 
-List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-  required List<DiplomaticOrder> candidates,
-}) {
-  var filtered = candidates;
-  if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, snapshot);
-    if (atWarWithGp) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                !isTribeFaction(ctx.game, o.targetFactionId),
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    final provinceOwner = getProvinceOwnerMap(ctx.game);
-    final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
-      game: ctx.game,
-      snapshot: snapshot,
-      provinceOwner: provinceOwner,
-    );
-    if (minorsOwnInvadable) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                !isTribeFaction(ctx.game, o.targetFactionId),
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final gpWars = gpFactionIdsAtWarWith(ctx.game, snapshot);
-    final blocker = primaryInvadableOldWorldGpBlocker(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    final consolidateGpFronts =
-        gpWars.length > 1 ||
-        (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-            gpWars.isNotEmpty);
-    final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    if (blocker != null && gpOnlyFrontier) {
-      final mutualPlateauBlocker = isMutualBelowQuotaPlateauPeer(
-        ownOw: snapshot.conquest.oldWorldProvincesOwned,
-        partnerOw: provinceCountOwnedBy(ctx.game, blocker),
-      );
-      if (!mutualPlateauBlocker) {
-        filtered = filtered
-            .where(
-              (o) =>
-                  o.type != DiplomaticOrderType.declareWar ||
-                  o.targetFactionId == blocker,
-            )
-            .toList();
-      }
-    } else if (blocker != null && consolidateGpFronts) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                ctx.game.playerById(o.targetFactionId) == null ||
-                o.targetFactionId == blocker,
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.nonDeclareWarOnly &&
-      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-    final blocker = primaryInvadableOldWorldGpBlocker(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    final allowBlockerPeace =
-        blocker != null &&
-        unwinnableSoleGpFrontierPeaceTarget(
-              game: ctx.game,
-              snapshot: snapshot,
-            ) ==
-            blocker;
-    filtered = filtered
-        .where(
-          (o) =>
-              o.type != DiplomaticOrderType.alliance &&
-              !(o.type == DiplomaticOrderType.offerPeace &&
-                  o.targetFactionId == blocker &&
-                  !allowBlockerPeace),
-        )
-        .toList();
-  }
-  final existingThisTurn =
-      ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [];
-  final declaredThisTurn = <String>{
-    for (final o in existingThisTurn)
-      if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
-  };
-  switch (pass) {
-    case DiplomacyPlannerPass.declareWarOnly:
-    case DiplomacyPlannerPass.all:
-      return filtered;
-    case DiplomacyPlannerPass.nonDeclareWarOnly:
-      return filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar &&
-                !declaredThisTurn.contains(o.targetFactionId) &&
-                !existingThisTurn.any(
-                  (existing) =>
-                      existing.type == o.type &&
-                      existing.targetFactionId == o.targetFactionId,
-                ),
-          )
-          .toList();
-  }
-}
-
 DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -364,7 +239,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
-  final filtered = _filterDiplomacyCandidatesForPass(
+  final filtered = filterDiplomacyCandidatesForPass(
     ctx: ctx,
     snapshot: snapshot,
     pass: pass,

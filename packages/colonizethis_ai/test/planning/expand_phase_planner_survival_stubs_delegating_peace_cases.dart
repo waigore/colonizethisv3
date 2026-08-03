@@ -1,0 +1,377 @@
+// Topic-split case module (Refs #3997 Phase 8).
+// Pin/row coverage preserved 1:1 from the former combined cases file.
+
+// Case bodies for `expand_phase_planner_survival_multi_front_peace_test.dart` (Refs #3977 Phase 6).
+// Registered from the thin contract file of the same stem.
+// Pin/row coverage is preserved 1:1 from the former inline suite.
+
+// Pins canonical homes in `expand_phase_planner.dart` for
+// `stalledZeroRegimentAllFactionPeaceTargets`,
+// `stalledZeroRegimentGpPeaceTargets`,
+// `mutualZeroRegimentGpStalematePeaceTargets`,
+// `mutualExhaustedBelowQuotaGpStalematePeaceTargets`, and
+// `multiFrontNonBlockerGpPeaceTargets` (Refs #2509 S1). Also covers
+// `stalledZeroRegimentGpPeaceTargets` and
+// `mutualZeroRegimentGpStalematePeaceTargets` EXPAND-phase zero-regiment
+// survival peace deciders at their new home in `expand_phase_planner.dart`
+// (Refs #2509 S1).
+//
+// Both deciders were relocated from `diplomacy_planner_peace_targets.dart`
+// so they survive the now-completed S1 deletion of that file. The canonical
+// implementations live in `expand_phase_planner.dart`;
+// `diplomacy_planner_peace_targets.dart` previously retained thin delegating stubs
+// for the legacy `diplomacy_planner_below_quota_peace_part3_test.dart`
+// § "all GP wars when stalled" fixture and the in-file
+// `_survivalGreatPowerPeaceTargets` /
+// `collectStalledGreatPowerPeaceTargets` `zeroRegimentBlockerPeace` /
+// `stalledOwExpansionNeedsPeacePass` consumer chains until the planned
+// deletion.
+//
+// Live consumers (post-relocation):
+//   * `stalledZeroRegimentGpPeaceTargets` is the broad EXPAND
+//     zero-regiment rebuild shortcut from
+//     `SPEC/ai/ai-architecture.md` § Diplomacy targeting — "when
+//     stalled below quota with zero regiments, peace every at-war
+//     Great Power so rebuild is not blocked by futile fronts". It
+//     peaces every at-war GP once the active player is inside the
+//     stalled OW band and holds zero standing regiments, sorted
+//     ascending by `factionId` for downstream offer-peace
+//     determinism.
+//   * `mutualZeroRegimentGpStalematePeaceTargets` is the sole-GP
+//     mutual-stalemate carve-out. It peaces the lone GP enemy when
+//     both sides have zero standing regiments and the active player
+//     is stalled — the only path that exits an army-exhausted GP-only
+//     frontier where the broader `stalledZeroRegimentGpPeaceTargets`
+//     arm is overridden by the `collectStalledGreatPowerPeaceTargets`
+//     GP-only-frontier carve-out re-adding the canonical OW frontier
+//     blocker to the keep-at-war set.
+//
+// Sibling test coverage that this file complements (but does not duplicate):
+//
+//   * `diplomacy_planner_below_quota_peace_part3_test.dart` § "all GP
+//     wars when stalled" exercises the broader arm through the legacy
+//     `diplomacy_planner_peace_targets.dart` entry point and pins the
+//     "filters minors out of GP results" invariant. Both legacy
+//     fixtures depend on the delegating stubs and continue to pass
+//     unchanged after the canonical bodies relocated here.
+//   * `domain_planner_orchestrator_*_two_gp_peace_test.dart` exercise
+//     the deciders through the orchestrator's `runDiplomacyPlanner`
+//     pass under EXPAND / COLONIAL / DEVELOP phases. Those flows rely
+//     on the same post-delegation return values pinned here.
+//
+// Behavioral invariants pinned at the canonical entry points:
+//
+//   1. `stalledZeroRegimentGpPeaceTargets` short-circuits to `const []`
+//      when the active player's `oldWorldProvincesOwned` exceeds
+//      `kStalledOldWorldProvinceThreshold` — outside the stalled band
+//      the rebuild-peace arm does not engage.
+//   2. `stalledZeroRegimentGpPeaceTargets` short-circuits to `const []`
+//      when the active player still holds at least one standing
+//      regiment — the rebuild-peace arm is a zero-regiment shortcut.
+//   3. `stalledZeroRegimentGpPeaceTargets` filters minors and tribes
+//      from `threats.atWarWith` so only Great Powers appear in the
+//      returned list; the companion `stalledZeroRegimentAllFactionPeaceTargets`
+//      owns the minor/tribe arm.
+//   4. `stalledZeroRegimentGpPeaceTargets` sorts the GP list ascending
+//      so the downstream offer-peace pass observes a stable order
+//      regardless of the iteration order of `threats.atWarWith`.
+//   5. `mutualZeroRegimentGpStalematePeaceTargets` short-circuits to
+//      `const []` when the active player's `oldWorldProvincesOwned`
+//      is outside the stalled band, when the active player still has
+//      at least one standing regiment, when the GP-war set is empty,
+//      when the GP-war set has 2+ entries (multi-front shape handled
+//      by `multiFrontNonBlockerGpPeaceTargets`), or when the sole GP
+//      enemy still has at least one standing regiment.
+//   6. `mutualZeroRegimentGpStalematePeaceTargets` returns the
+//      single-element list with the lone GP enemy's `factionId` when
+//      all guards pass.
+//   7. The delegating stubs in `diplomacy_planner_peace_targets.dart`
+//      return the same value as the canonical helpers for every
+//      representative input — required so the legacy fixtures and the
+//      in-file consumer paths agree on the deciders.
+
+import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
+    as diplomacy_planner_peace_targets;
+import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
+
+const String _gpEnemy = 'gp_enemy';
+const String _gpThird = 'gp_third';
+const String _minor1 = 'minor1';
+const String _tribe1 = 'tribe1';
+
+
+void registerExpandSurvivalStubsDelegatingPeaceCases() {
+  group('stalledZeroRegimentGpPeaceTargets — canonical outer guards', () {
+    test('stalledZeroRegimentGpPeaceTargets is byte-equivalent across '
+        'two consecutive invocations on the same inputs', () {
+      final game = buildZeroRegimentExpandPeaceGame(
+        ownProvinces: 7,
+        ownRegimentCount: 0,
+        enemyGpIds: const [_gpThird, _gpEnemy],
+        enemyRegimentCount: 0,
+      );
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: 7,
+        atWarWith: const [_gpThird, _gpEnemy],
+      );
+      final first = stalledZeroRegimentGpPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      );
+      final second = stalledZeroRegimentGpPeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      );
+      expect(
+        second,
+        first,
+        reason:
+            'Pure-function determinism is Refs #2509 Must-have #7. '
+            'Identical (Game, AIWorldSnapshot) inputs must return '
+            'identical (and ascending-sorted) lists on every '
+            'invocation; pinned independently of the firing-path '
+            'expectations so a future regression that introduced a '
+            'set-iteration leak would surface here.',
+      );
+    });
+
+    test('mutualZeroRegimentGpStalematePeaceTargets is byte-equivalent '
+        'across two consecutive invocations on the same inputs', () {
+      final game = buildZeroRegimentExpandPeaceGame(
+        ownProvinces: 7,
+        ownRegimentCount: 0,
+        enemyGpIds: const [_gpEnemy],
+        enemyRegimentCount: 0,
+      );
+      final snapshot = ownSnapshot(
+        oldWorldProvincesOwned: 7,
+        atWarWith: const [_gpEnemy],
+      );
+      final first = mutualZeroRegimentGpStalematePeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      );
+      final second = mutualZeroRegimentGpStalematePeaceTargets(
+        game: game,
+        snapshot: snapshot,
+      );
+      expect(second, first);
+    });
+  });
+
+  group('Delegating stubs match canonical', () {
+    test('diplomacy_planner_peace_targets.stalledZeroRegimentGpPeaceTargets '
+        'matches canonical across band + filter + sort fixtures', () {
+      // Pin delegator parity across: above-band guard, regiment-count
+      // guard, firing path with multi-GP sort, and minor/tribe filter
+      // path (only GP returned).
+      final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
+        // 1. Above stalled band → const [].
+        (
+          game: buildZeroRegimentExpandPeaceGame(
+            ownProvinces: kStalledOldWorldProvinceThreshold + 1,
+            ownRegimentCount: 0,
+            enemyGpIds: const [_gpEnemy],
+            enemyRegimentCount: 0,
+          ),
+          snapshot: ownSnapshot(
+            oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
+            atWarWith: const [_gpEnemy],
+          ),
+        ),
+        // 2. Active player still has regiments → const [].
+        (
+          game: buildZeroRegimentExpandPeaceGame(
+            ownProvinces: 6,
+            ownRegimentCount: 1,
+            enemyGpIds: const [_gpEnemy],
+            enemyRegimentCount: 0,
+          ),
+          snapshot: ownSnapshot(
+            oldWorldProvincesOwned: 6,
+            atWarWith: const [_gpEnemy],
+          ),
+        ),
+        // 3. Inside stalled band, zero regiments, multi-GP sort.
+        (
+          game: buildZeroRegimentExpandPeaceGame(
+            ownProvinces: 6,
+            ownRegimentCount: 0,
+            enemyGpIds: const [_gpThird, _gpEnemy],
+            enemyRegimentCount: 0,
+          ),
+          snapshot: ownSnapshot(
+            oldWorldProvincesOwned: 6,
+            atWarWith: const [_gpThird, _gpEnemy],
+          ),
+        ),
+        // 4. Minor / tribe filter — GP-only result.
+        (
+          game: buildZeroRegimentExpandPeaceGame(
+            ownProvinces: 6,
+            ownRegimentCount: 0,
+            enemyGpIds: const [_gpEnemy],
+            enemyRegimentCount: 0,
+            minorIds: const [_minor1],
+            tribeIds: const [_tribe1],
+            atWarMinorIds: const [_minor1],
+            atWarTribeIds: const [_tribe1],
+          ),
+          snapshot: ownSnapshot(
+            oldWorldProvincesOwned: 6,
+            atWarWith: const [_minor1, _gpEnemy, _tribe1],
+          ),
+        ),
+      ];
+      for (final scenario in scenarios) {
+        final canonical = stalledZeroRegimentGpPeaceTargets(
+          game: scenario.game,
+          snapshot: scenario.snapshot,
+        );
+        final delegated = diplomacy_planner_peace_targets
+            .stalledZeroRegimentGpPeaceTargets(
+              game: scenario.game,
+              snapshot: scenario.snapshot,
+            );
+        expect(
+          delegated,
+          canonical,
+          reason:
+              'diplomacy_planner_peace_targets.stalledZeroRegimentGpPeaceTargets '
+              'must agree with the canonical expand_phase_planner '
+              'implementation across the band guard, regiment-count '
+              'guard, the multi-GP sort firing path, and the '
+              'minor/tribe filter — the delegating stub is the only '
+              'live caller path the legacy diplomacy_planner_below_quota_peace_part3_test.dart '
+              "fixture and the in-file _survivalGreatPowerPeaceTargets / "
+              'collectStalledGreatPowerPeaceTargets / '
+              'stalledOwExpansionNeedsPeacePass consumer chains '
+              'reach until the now-completed S1 deletion of '
+              'diplomacy_planner_peace_targets.dart.',
+        );
+      }
+    });
+
+    test(
+      'diplomacy_planner_peace_targets.mutualZeroRegimentGpStalematePeaceTargets '
+      'matches canonical across each outer guard + firing path',
+      () {
+        // Pin delegator parity across the outer guard table:
+        //  1. Above stalled band → const [].
+        //  2. Active player has regiments → const [].
+        //  3. Enemy has regiments → const [].
+        //  4. Zero GP wars → const [].
+        //  5. Multi-GP wars → const [].
+        //  6. Firing path: sole GP, both sides exhausted, stalled band.
+        final scenarios = <({Game game, AIWorldSnapshot snapshot})>[
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: kStalledOldWorldProvinceThreshold + 1,
+              ownRegimentCount: 0,
+              enemyGpIds: const [_gpEnemy],
+              enemyRegimentCount: 0,
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
+              atWarWith: const [_gpEnemy],
+            ),
+          ),
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: 6,
+              ownRegimentCount: 1,
+              enemyGpIds: const [_gpEnemy],
+              enemyRegimentCount: 0,
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: 6,
+              atWarWith: const [_gpEnemy],
+            ),
+          ),
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: 6,
+              ownRegimentCount: 0,
+              enemyGpIds: const [_gpEnemy],
+              enemyRegimentCount: 2,
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: 6,
+              atWarWith: const [_gpEnemy],
+            ),
+          ),
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: 6,
+              ownRegimentCount: 0,
+              enemyGpIds: const [],
+              enemyRegimentCount: 0,
+              minorIds: const [_minor1],
+              atWarMinorIds: const [_minor1],
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: 6,
+              atWarWith: const [_minor1],
+            ),
+          ),
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: 6,
+              ownRegimentCount: 0,
+              enemyGpIds: const [_gpEnemy, _gpThird],
+              enemyRegimentCount: 0,
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: 6,
+              atWarWith: const [_gpEnemy, _gpThird],
+            ),
+          ),
+          (
+            game: buildZeroRegimentExpandPeaceGame(
+              ownProvinces: kStalledOldWorldProvinceThreshold,
+              ownRegimentCount: 0,
+              enemyGpIds: const [_gpEnemy],
+              enemyRegimentCount: 0,
+            ),
+            snapshot: ownSnapshot(
+              oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold,
+              atWarWith: const [_gpEnemy],
+            ),
+          ),
+        ];
+        for (final scenario in scenarios) {
+          final canonical = mutualZeroRegimentGpStalematePeaceTargets(
+            game: scenario.game,
+            snapshot: scenario.snapshot,
+          );
+          final delegated = diplomacy_planner_peace_targets
+              .mutualZeroRegimentGpStalematePeaceTargets(
+                game: scenario.game,
+                snapshot: scenario.snapshot,
+              );
+          expect(
+            delegated,
+            canonical,
+            reason:
+                'diplomacy_planner_peace_targets.mutualZeroRegimentGpStalematePeaceTargets '
+                'must agree with the canonical expand_phase_planner '
+                'implementation across the band guard, regiment guards '
+                'for both sides, the multi-front guard, and the '
+                'firing path — the delegating stub is the only live '
+                'caller path the in-file _survivalGreatPowerPeaceTargets / '
+                'collectStalledGreatPowerPeaceTargets / '
+                'stalledOwExpansionNeedsPeacePass consumer chains '
+                'reach until the now-completed S1 deletion of '
+                'diplomacy_planner_peace_targets.dart.',
+          );
+        }
+      },
+    );
+  });
+
+}

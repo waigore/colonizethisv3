@@ -5,6 +5,7 @@ import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -45,30 +46,6 @@ class _Case {
   final int turnNumber;
 }
 
-Game _buildGame(_Case c) => Game(
-  id: 'g-expand-peace-predicate-matrix',
-  worldState: WorldState(
-    turnState: TurnState(phase: TurnPhase.orders, turnNumber: c.turnNumber),
-    oldWorld: RegionData(provinces: c.owProvinces),
-    newWorld: const RegionData(),
-  ),
-  players: c.players,
-  minorNations: c.minorNations,
-);
-
-AIWorldSnapshot _snapshot(_Case c) => AIWorldSnapshot(
-  playerId: c.playerId,
-  threats: ThreatSummary(atWarWith: c.atWarWith),
-  opportunities: const OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: c.ow,
-    invadableProvinceIdsSorted: c.invadable,
-  ),
-  colonial: const ColonialSummary(),
-  economy: const EconomySummary(),
-  relations: const {},
-);
-
 void registerExpandPeaceGamePredicateDeterminismCases() {
   group('peace-predicate determinism guards', () {
     test(
@@ -96,8 +73,18 @@ void registerExpandPeaceGamePredicateDeterminismCases() {
           invadable: ['oldWorld|minor1_a'],
           expected: true,
         );
-        final game = _buildGame(c);
-        final snapshot = _snapshot(c);
+        final game = buildExpandPeaceMatrixGame(
+          owProvinces: c.owProvinces,
+          players: c.players,
+          minorNations: c.minorNations,
+          turnNumber: c.turnNumber,
+        );
+        final snapshot = buildExpandPeaceMatrixSnapshot(
+          playerId: c.playerId,
+          atWarWith: c.atWarWith,
+          oldWorldProvincesOwned: c.ow,
+          invadableProvinceIdsSorted: c.invadable,
+        );
         final first =
             canPivotFromSoleGpWarAfterPeace(game: game, snapshot: snapshot);
         final second =
@@ -130,8 +117,18 @@ void registerExpandPeaceGamePredicateDeterminismCases() {
           turnNumber: 50,
           expected: true,
         );
-        final game = _buildGame(c);
-        final snapshot = _snapshot(c);
+        final game = buildExpandPeaceMatrixGame(
+          owProvinces: c.owProvinces,
+          players: c.players,
+          minorNations: c.minorNations,
+          turnNumber: c.turnNumber,
+        );
+        final snapshot = buildExpandPeaceMatrixSnapshot(
+          playerId: c.playerId,
+          atWarWith: c.atWarWith,
+          oldWorldProvincesOwned: c.ow,
+          invadableProvinceIdsSorted: c.invadable,
+        );
         final first = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot);
         final second = hasUninvadedOldWorldMinor(game: game, snapshot: snapshot);
         expect(second, first);

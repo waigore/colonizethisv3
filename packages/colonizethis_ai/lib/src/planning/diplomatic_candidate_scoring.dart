@@ -147,7 +147,7 @@ List<int> computeDiplomaticCandidateScores(
         break;
       case DiplomaticOrderType.declareWar:
         s = scoreDeclareWarDiplomaticOrder(
-          DeclareWarTargetContext.build(
+          buildDeclareWarTargetContext(
             order: o,
             nationId: nationId,
             game: game,
