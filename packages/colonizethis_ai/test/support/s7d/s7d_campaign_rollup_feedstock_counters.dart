@@ -11,6 +11,8 @@ import 'supply_probes.dart';
 mixin Seed42S7dCampaignRollupFeedstockCounters {
   List<String> get gpIds;
 
+  Map<String, int> get cheapestRegimentInputs;
+
   Map<String, int> zeroPerGpCounter(List<String> ids) => {for (final gpId in ids) gpId: 0};
 
   // Refs #2847 H8-extraction castIron residual localization (post-#3241).

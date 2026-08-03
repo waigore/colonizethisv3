@@ -22,10 +22,14 @@ void main() {
         contains('TurnTraceAiSection buildAiTraceSection(AiTraceBuildInput input)'),
       );
 
+      final treasuryInput = File(
+        p.join(planningDir.path, 'treasury_planner_input.dart'),
+      ).readAsStringSync();
+      expect(treasuryInput, contains('final class TreasuryPlannerInput'));
+
       final treasury = File(
         p.join(planningDir.path, 'treasury_planner.dart'),
       ).readAsStringSync();
-      expect(treasury, contains('final class TreasuryPlannerInput'));
       expect(
         treasury,
         contains('List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input)'),

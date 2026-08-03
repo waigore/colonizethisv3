@@ -265,13 +265,3 @@ library;
 /// confirm `gpCastIronFeedstockHeldAtTurn99` `timber` / `iron` rise, domestic
 /// `lumber` / `castIron` production assigns, and the fabric → regiment → OW
 /// conquest chain completes before expecting OW gain to reach +3.
-///
-/// ## S7-D refresh (captured 2026-06-06 on current `dev` HEAD — castIron
-///     production-assignment localization, this slice, Refs #2847)
-///
-/// Re-running the diagnostic on the merged `dev` HEAD (post the seller
-/// feedstock-tile acquisition thread #3271–#3276 and the lumber bootstrap
-/// waiver) confirms the prior re-pointed step is now reached: the owned-tile
-/// extraction path **works** for gp5 / gp6 — `gpFeedstockInStockpileTurns` =
-/// gp5 49 / gp6 44 (was 1) and `gpCastIronFeedstockHeldAtTurn99` shows **gp5
-/// co-holds `timber` = 71 and `iron` = 64** at turn 99 (gp6 `timber` = 214 /
