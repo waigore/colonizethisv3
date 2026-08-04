@@ -4,8 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-
-
+import 'game_map_area_draft_projection_shared.dart';
 
 /// Fleet-marker draft projection for the human player.
 ///
@@ -137,38 +136,11 @@ class GameMapAreaFleetDraftProjection {
         ),
       );
     }
-    out.sort((a, b) {
-      final yc = a.y.compareTo(b.y);
-      if (yc != 0) {
-        return yc;
-      }
-      final xc = a.x.compareTo(b.x);
-      if (xc != 0) {
-        return xc;
-      }
-      return a.tileKey.compareTo(b.tileKey);
-    });
+    GameMapAreaDraftProjectionShared.sortFleetTileMarkersByMapPosition(out);
 
-    return RegionMapViewData(
-      regionId: region.regionId,
-      width: region.width,
-      height: region.height,
-      cellSize: region.cellSize,
-      cells: region.cells,
-      capitalMarkers: region.capitalMarkers,
-      portMarkers: region.portMarkers,
-      factionColors: region.factionColors,
-      greatPowerFactionIds: region.greatPowerFactionIds,
-      terrainColors: region.terrainColors,
-      unitMarkers: region.unitMarkers,
-      civilianTileMarkers: region.civilianTileMarkers,
+    return GameMapAreaDraftProjectionShared.copyRegionMapViewDataMarkerLayers(
+      region: region,
       fleetTileMarkers: out,
-      warpMarkers: region.warpMarkers,
-      townMarkers: region.townMarkers,
-      provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
-      provincePoliticalOwnerByPrefixedProvinceId:
-          region.provincePoliticalOwnerByPrefixedProvinceId,
-      seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
     );
   }
 }

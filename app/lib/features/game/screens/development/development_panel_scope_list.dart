@@ -1,6 +1,12 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show
+        DevelopmentImprovableCommodityRow,
+        DevelopmentPanelRegionModel,
+        DevelopmentPanelScopeRow;
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
 import 'package:flutter/material.dart';
 
 import '../../../../widgets/commodity_display_name.dart';
