@@ -22,6 +22,7 @@ const scopedRelativeDirs = <String>[
   'app/lib/features/game/screens/counsel',
   'app/lib/features/game/screens/victory',
   'app/lib/features/game/widgets/units',
+  'app/lib/features/game/widgets/unit_orders',
   'app/lib/features/game/widgets/diplomacy',
   'app/lib/features/game/widgets/production',
 ];

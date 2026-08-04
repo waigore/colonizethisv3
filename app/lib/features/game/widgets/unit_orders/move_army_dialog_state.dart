@@ -1,5 +1,6 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show ArmyMovePickerDestination, IncrementalCandidateValidator;
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 

@@ -1,5 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_models/colonizethis_models.dart'
+    show ArmyMoveOrder, ArmyMoveRequestedEvent, Orders;
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        ArmyMovePickerDestination,
+        IncrementalCandidateValidator,
+        armyMovePickerDestinations,
+        orderResolutionContextFromView;
 import 'package:flutter/material.dart';
 
 import 'move_army_dialog.dart';
