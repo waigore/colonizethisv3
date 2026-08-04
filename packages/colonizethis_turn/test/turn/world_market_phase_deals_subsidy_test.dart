@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase_deals.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 /// `applyDealsToPlayers` subsidy price adjustment (Refs #3753 R3.4).
 ///

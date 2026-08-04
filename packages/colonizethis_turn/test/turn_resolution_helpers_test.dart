@@ -1,10 +1,9 @@
 import 'dart:math';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_turn/src/turn/turn_resolution_helpers.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolution_seeds.dart';
 
 /// Unit coverage for the shared turn-resolution helpers (Refs #3565 / #4039):
 /// province full-id projection, the province-capture predicate, the `[0, 1]`

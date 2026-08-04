@@ -2,9 +2,8 @@ import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
-import 'package:colonizethis_turn/src/turn/combat_medal_gain_events.dart';
-import 'package:colonizethis_turn/src/turn/turn_event_sink.dart';
 
 Game _minimalGame({List<General> generals = const []}) {
   return Game(

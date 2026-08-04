@@ -7,8 +7,8 @@
 // `package_logger_shared_test.dart`.
 
 import 'dart:io';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
-import 'package:colonizethis_turn/src/turn/turn_logging.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart' show Level, LogEvent, Logger;
 

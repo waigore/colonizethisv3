@@ -799,6 +799,20 @@ rules:
     runner: dart
     script: tool/check_turn_test_file_size.dart
 
+  - rule_id: repo.turn_test_no_src_imports
+    group: testing
+    title: colonizethis_turn tests must not import package:colonizethis_turn/src/ (Refs #4252)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_no_src_imports.dart
+
+  - rule_id: repo.turn_test_integration_inline_game_ctor
+    group: testing
+    title: colonizethis_turn integration scenarios must not inline Game(...) (grandfathered files exempt; Refs #4252, #4168)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_turn_test_integration_inline_game_ctor.dart
+
   - rule_id: repo.diplomacy_no_part_of
     group: structure
     title: colonizethis_diplomacy lib must not use Dart part / part of directives (Refs #3419)

@@ -1,8 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolution_sequence.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 import '../support/world_market_test_support.dart';
 
@@ -63,18 +62,7 @@ void main() {
   group('worldMarketTurnPhaseHandler empty-turn no-op (Refs #2990 B3)', () {
     test('returns TurnPhaseStepContinue with semantically unchanged Game '
         'when no trade orders or carry-forwards exist', () {
-      final game = Game(
-        id: 'g1',
-        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-        worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.worldMarket,
-            turnNumber: 3,
-          ),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-      );
+      final game = worldMarketEmptyTurnGame();
       final next = runWorldMarketPhasePipeline(
         game: game,
         orders: const Orders(),

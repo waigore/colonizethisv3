@@ -1,8 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_turn/src/turn/end_of_turn_resolver.dart';
-import 'package:colonizethis_turn/src/turn/naval_resolution.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 /// Shared New World coastal/inland + seaOrigin/seaDest ids for ship-reveal tests.
 abstract final class NwShipRevealCoastalIds {

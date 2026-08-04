@@ -1,11 +1,11 @@
 import 'dart:math';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 import 'package:colonizethis_logic/colonizethis_logic.dart' show kWorkTargetCounterSpy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_turn/src/turn/spy_resolver.dart';
 
 void main() {
   group('resolveSpyPhase', () {

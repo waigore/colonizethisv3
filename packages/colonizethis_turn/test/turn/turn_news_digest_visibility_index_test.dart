@@ -1,9 +1,9 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 // In-package import: emitPlayerDiscoveryEvents is not re-exported via the
 // package barrel, so the turn package's own tests reach it through src/.
-import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
 
 import '../support/turn_news_digest_test_support.dart';
 
