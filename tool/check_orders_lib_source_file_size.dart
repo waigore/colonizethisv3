@@ -1,10 +1,5 @@
-// Physical line ratchet for colonizethis_orders lib source (repo rule:
-// `repo.orders_lib_source_file_size`).
-//
-// Wave 5 (#4109) split the remaining near-cap modules (prechecks, ICE replay,
-// feedstock gates, explorer probes) so most lib files stay well below the
-// shared 500-line `repo.domain_package_source_file_size` cap. This tighter
-// orders-only ceiling keeps the splits from silently re-growing.
+// Wave 6 (#4246) split validation modules and ratcheted ceiling to 350 physical
+// lines; shrink-only grandfather cleared after Slice A.
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,16 +7,16 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling chosen at wave-5 post-split target (~400 physical lines).
-const int ordersLibSourceFileSizeCeiling = 400;
+/// Ratchet ceiling chosen at wave-6 post-split target (~350 physical lines).
+const int ordersLibSourceFileSizeCeiling = 350;
 
 const String _ordersLibRelativePath = 'packages/colonizethis_orders/lib';
 
-/// Hot files still above the wave-5 physical-line ceiling but separately gated
-/// by `repo.orders_file_size` (1000 non-comment lines). Shrink-only allowlist.
+/// Shrink-only allowlist for residual offenders above the wave-6 ceiling until
+/// Slice C splits (Refs #4246).
 const List<String> ordersLibSourceFileSizeGrandfathered = <String>[
-  'packages/colonizethis_orders/lib/src/orders/order_engine_validation.dart',
-  'packages/colonizethis_orders/lib/src/orders/validators/work_order_validator.dart',
+  'packages/colonizethis_orders/lib/src/orders/orders_application_completed_work.dart',
+  'packages/colonizethis_orders/lib/src/orders/order_suggestion_army_move.dart',
 ];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -85,7 +80,7 @@ int runCheckOrdersLibSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_orders_lib_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4109).',
+      '(ceiling $ceiling; Refs #4246).',
     );
     return 0;
   }
@@ -93,7 +88,7 @@ int runCheckOrdersLibSourceFileSize(
   violations.sort();
   logE(
     'check_orders_lib_source_file_size: found ${violations.length} violation(s) '
-    'under $_ordersLibRelativePath (wave-5 ceiling $ceiling; Refs #4109):',
+    'under $_ordersLibRelativePath (wave-6 ceiling $ceiling; Refs #4246):',
   );
   for (final violation in violations) {
     logE(' - $violation');

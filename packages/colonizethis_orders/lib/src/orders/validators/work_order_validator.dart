@@ -2,17 +2,16 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../order_work_constants.dart';
+import '../order_validation_result.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
-import '../build_rail_work_rules.dart';
 import '../bundled_civilian_work_order.dart';
 import '../diplomatic_access_helpers.dart';
-import '../orders_application_helpers.dart';
 import '../order_visibility.dart';
 import '../unit_type_helpers.dart';
 import 'stateful_validator.dart';
-import 'work_order_cost_calculator.dart';
 import 'work_order_target_prechecks.dart';
+import 'work_order_validator_material.dart';
 
 /// Nullable result means “continue”; first non-null result short-circuits the
 /// pipeline (Refs #2391 AC9).
@@ -53,10 +52,6 @@ class WorkOrderValidationContext {
 }
 
 class WorkOrderValidator extends StatefulValidator {
-  final WorkOrderValidationContext _context;
-
-  final Set<String> _seenUnitIds;
-
   WorkOrderValidator({
     required WorkOrderValidationContext context,
     required Stockpile stockpile,
@@ -69,6 +64,12 @@ class WorkOrderValidator extends StatefulValidator {
          treasuryState: treasury,
          workerPoolState: context.player.workerPool,
        );
+
+  final WorkOrderValidationContext _context;
+  final Set<String> _seenUnitIds;
+
+  /// Package-visible for [WorkOrderValidatorMaterial] extension (Refs #4246).
+  WorkOrderValidationContext get workOrderContext => _context;
 
   Stockpile get stockpile => stockpileState;
   int get treasury => treasuryState;
@@ -102,7 +103,7 @@ class WorkOrderValidator extends StatefulValidator {
             ownerId: ownerId,
             type: unit!.type,
           ),
-          () => _validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
+          () => validateMaterialAndTechRules(o, province?.fortLevel ?? 0),
           () {
             if (!workOrderVisibilityOk(
               _context.view,
@@ -131,7 +132,7 @@ class WorkOrderValidator extends StatefulValidator {
             }
             return null;
           },
-          () => _validateProspectTarget(o),
+          () => validateProspectTarget(o),
         ];
 
         for (final gate in gates) {
@@ -147,7 +148,7 @@ class WorkOrderValidator extends StatefulValidator {
           _context.devExclusiveTiles.add(o.targetTileKey);
         }
 
-        _applyProjectedWorkCost(o);
+        applyProjectedWorkCost(o);
 
         return OrderValidationResult.accepted();
       },
@@ -219,184 +220,6 @@ class WorkOrderValidator extends StatefulValidator {
       targetProvinceId,
       ownerId,
       type,
-    );
-  }
-
-  OrderValidationResult? _validateMaterialAndTechRules(
-    WorkOrder o,
-    int fortLevel,
-  ) {
-    if (_skipsMaterialAndTechValidation(o.target)) return null;
-    final improvementLevel = _improvementLevelForCost(o);
-    final roadLevel = _context.game.worldState.roadLevelAtTile(o.targetTileKey);
-    final techResult = _validateRoadFortRailTech(o, fortLevel, roadLevel);
-    if (techResult != null) return techResult;
-    return _validateWorkMaterialCosts(
-      o,
-      improvementLevel: improvementLevel,
-      fortLevel: fortLevel,
-      roadLevel: roadLevel,
-    );
-  }
-
-  bool _skipsMaterialAndTechValidation(String target) =>
-      kWorkTargetsWithoutMaterialCost.contains(target);
-
-  int _improvementLevelForCost(WorkOrder o) =>
-      o.target == kWorkTargetBuildImprovement
-      ? _context.game.worldState.improvementLevelAtTile(o.targetTileKey)
-      : 0;
-
-  OrderValidationResult? _validateRoadFortRailTech(
-    WorkOrder o,
-    int fortLevel,
-    int roadLevel,
-  ) {
-    final roadResult = _validateRoadTech(o.target, roadLevel);
-    if (roadResult != null) return roadResult;
-    final fortResult = _validateFortTech(o.target, fortLevel);
-    if (fortResult != null) return fortResult;
-    return _validateRailTech(o, roadLevel);
-  }
-
-  OrderValidationResult? _validateRoadTech(String target, int roadLevel) {
-    if (target != kWorkTargetBuildRoad || roadLevel < 1) return null;
-    final hasRoadConstruction =
-        _context.player.techUnlocked?[kTechIdRoadConstruction] == true;
-    if (hasRoadConstruction) return null;
-    return OrderValidationResult.rejected(
-      'Road Construction tech required for transport level 2',
-    );
-  }
-
-  OrderValidationResult? _validateFortTech(String target, int fortLevel) {
-    if (target != kWorkTargetBuildFort) return null;
-    if (fortLevel == 1 &&
-        _context.player.techUnlocked?[kTechIdMineEngineering] != true) {
-      return OrderValidationResult.rejected(
-        'Mine Engineering tech required for fort level 2',
-      );
-    }
-    if (fortLevel == 2 &&
-        _context.player.techUnlocked?[kTechIdModernForts] != true) {
-      return OrderValidationResult.rejected(
-        'Modern Forts tech required for fort level 3',
-      );
-    }
-    return null;
-  }
-
-  OrderValidationResult? _validateRailTech(WorkOrder o, int roadLevel) {
-    if (o.target != kWorkTargetBuildRail) return null;
-    final terrain = terrainTypeForTileKey(
-      _context.tileMapByRegion,
-      o.targetTileKey,
-    );
-    final reason = rejectionReasonForBuildRailOrder(
-      techUnlocked: _context.player.techUnlocked,
-      roadLevel: roadLevel,
-      terrain: terrain,
-    );
-    if (reason == null) return null;
-    return OrderValidationResult.rejected(reason);
-  }
-
-  OrderValidationResult? _validateWorkMaterialCosts(
-    WorkOrder o, {
-    required int improvementLevel,
-    required int fortLevel,
-    required int roadLevel,
-  }) {
-    final costMap = _workCostMap(
-      o.target,
-      o.targetTileKey,
-      improvementLevel: improvementLevel,
-      fortLevel: fortLevel,
-      roadLevel: roadLevel,
-    );
-    if (costMap == null) return null;
-    if (_hasInsufficientStockpileForCost(costMap)) {
-      return OrderValidationResult.rejected(
-        'Insufficient materials for work order',
-      );
-    }
-    return null;
-  }
-
-  Map<String, int>? _workCostMap(
-    String target,
-    String tileKey, {
-    required int improvementLevel,
-    required int fortLevel,
-    required int roadLevel,
-  }) => WorkOrderCostCalculator(_context.game, playerId: _context.playerId)
-      .calculateCost(
-        target,
-        tileKey,
-        improvementLevel: improvementLevel,
-        fortLevel: fortLevel,
-        roadLevel: roadLevel,
-      );
-
-  bool _hasInsufficientStockpileForCost(Map<String, int> costMap) =>
-      !ProjectedCostEngine.canAffordWorkMaterialCost(stockpileState, costMap);
-
-  OrderValidationResult? _validateProspectTarget(WorkOrder o) {
-    if (o.target != kWorkTargetProspect) return null;
-    if (!isMineralEligibleTile(
-      _context.game,
-      _context.tileMapByRegion,
-      o.targetTileKey,
-    )) {
-      return OrderValidationResult.rejected(
-        'Tile is not mineral-eligible for prospecting',
-      );
-    }
-    final prospected = _context.game.worldState.prospectedTilesForPlayer(
-      _context.playerId,
-    );
-    if (prospected.contains(o.targetTileKey)) {
-      return OrderValidationResult.rejected('Tile already prospected');
-    }
-    return null;
-  }
-
-  void _applyProjectedWorkCost(WorkOrder o) {
-    if (_applyProjectedPurchaseLandCost(o)) return;
-    if (_skipsProjectedCost(o.target)) return;
-    final costMap =
-        WorkOrderCostCalculator(
-          _context.game,
-          playerId: _context.playerId,
-        ).calculateCost(
-          o.target,
-          o.targetTileKey,
-          improvementLevel: _improvementLevelForCost(o),
-        );
-    if (costMap == null) return;
-    _applyProjectedCostMap(costMap);
-  }
-
-  bool _applyProjectedPurchaseLandCost(WorkOrder o) {
-    if (o.target != kWorkTargetPurchaseLand) return false;
-    // Treasury is validated in precheck and charged only on work completion
-    // (SPEC/program/orders.md); do not deduct here.
-    return true;
-  }
-
-  bool _skipsProjectedCost(String target) =>
-      kWorkTargetsWithoutProjectedMaterialCost.contains(target);
-
-  void _applyProjectedCostMap(Map<String, int> costMap) {
-    if (!ProjectedCostEngine.canAffordWorkMaterialCost(
-      stockpileState,
-      costMap,
-    )) {
-      return;
-    }
-    stockpileState = ProjectedCostEngine.deductWorkMaterialCost(
-      stockpileState,
-      costMap,
     );
   }
 }
