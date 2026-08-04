@@ -1,7 +1,6 @@
 // Pure data for Military Units panel tree. SPEC/ui/military-units-panel.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show resolveToFullProvinceId, WorldStateProvinceLookup;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'draft_move_destination_line.dart';
@@ -9,6 +8,7 @@ import 'draft_move_destination_line.dart';
 export 'military_tree_builder_assembly.dart'
     show buildMilitaryGroups, canCombineArmySelection, flattenMilitaryArmyBlocks;
 export 'military_tree_builder_assembly_province.dart' show rowsForArmyUnits;
+import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup, resolveToFullProvinceId;
 
 String armyStationedProvinceDisplayLabel(Game game, Army army) {
   final pid = army.stationedProvinceId;

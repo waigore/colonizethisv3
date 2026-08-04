@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +39,7 @@ export 'region_map_component_shared_visibility.dart'
         shouldWrapProvinceLabelPresenceIcons,
         visibilityForTerrainForMapCell;
 export 'region_map_component_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Flame-based region map component. Renders one RegionMapViewData and exposes
 /// hover/selection state via callbacks. SPEC/ui/map-widget.md.

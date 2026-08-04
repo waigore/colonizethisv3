@@ -1,14 +1,7 @@
 /// Revealed-tile body for [ProvinceSeaZoneDetailOverlay] tile section.
 
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        ProvinceTileCapitalLinkPreview,
-        explorerConsulateGateBlocksMinorTribeProvince,
-        isProspectableTerrain,
-        isProspectableTerrainId,
-        PlayerView,
-        resourceIdVisibleInPlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
@@ -23,6 +16,8 @@ import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show explorerConsulateGateBlocksMinorTribeProvince, isProspectableTerrain, isProspectableTerrainId;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
 
 Widget buildRevealedTileSection({
   required BuildContext context,

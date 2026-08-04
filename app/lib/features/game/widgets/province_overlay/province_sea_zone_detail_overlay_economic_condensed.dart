@@ -1,6 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show CommodityCatalog;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show ProvinceImprovableCommodityCount;
+
 import 'package:colonizethis_models/colonizethis_models.dart'
     show ProvinceExtractionSnapshot;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -11,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../production/commodity_ui_helpers.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
 
 Widget extractionAvailableSubsection({
   required String heading,

@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show isMilitaryUnit;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, foreignCivilianVisibleToPlayer;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, foreignCivilianVisibleToPlayer;
 
 /// Military/civilian units in one province for overlay sections (single pass).
 ({List<Unit> military, List<Unit> civilian, int visibleCivilianCount})

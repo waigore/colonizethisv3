@@ -11,20 +11,11 @@ import 'package:path/path.dart' as p;
 const forbiddenImportNeedle =
     'package:colonizethis_logic/colonizethis_logic.dart';
 
-/// Scoped app trees migrated in wave 12 slice A (Refs #4240).
+/// Scoped app trees: core services (wave 11 #4224), providers + features (wave 12 #4240).
 const scopedRelativeDirs = <String>[
   'app/lib/core/services',
   'app/lib/providers',
-  'app/lib/features/game/screens/trade',
-  'app/lib/features/game/screens/diplomacy',
-  'app/lib/features/game/screens/production',
-  'app/lib/features/game/screens/development',
-  'app/lib/features/game/screens/counsel',
-  'app/lib/features/game/screens/victory',
-  'app/lib/features/game/widgets/units',
-  'app/lib/features/game/widgets/unit_orders',
-  'app/lib/features/game/widgets/diplomacy',
-  'app/lib/features/game/widgets/production',
+  'app/lib/features',
 ];
 
 const coreServicesRelativeDir = 'app/lib/core/services';

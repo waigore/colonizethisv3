@@ -1,5 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show foreignCivilianVisibleToPlayer, homeFleetIdFor, PlayerView;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
@@ -10,6 +9,7 @@ import 'province_panel_labels.dart';
 import 'province_panel_pending_orders.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, foreignCivilianVisibleToPlayer, homeFleetIdFor;
 
 Widget buildCivilianSectionFiltered({
   required AppLocalizations l10n,
