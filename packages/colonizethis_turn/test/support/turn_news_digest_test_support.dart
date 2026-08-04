@@ -192,7 +192,6 @@ Game turnNewsOvertureGame({
 ({Game start, Game end}) turnNewsSeaZoneFleetPair() {
   const regionId = 'oldWorld';
   const localSea = 'seaA';
-  final fullSea = ProvinceId.full(regionId, localSea);
   final fleet = Fleet(
     id: 'fl1',
     ownerId: 'gp1',
