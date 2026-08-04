@@ -17,6 +17,8 @@
 /// stays overflow-safe (`SPEC/ui/mobile-adaptation.md` § 7). On wider
 /// viewports the bids panel sits left of the offers panel inside a
 /// `Row`.
+library;
+
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';

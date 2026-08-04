@@ -1,5 +1,6 @@
 /// Negotiation-mood emission helpers for [DiplomacyPanel] order actions.
 /// SPEC/ui/diplomacy-panel.md.
+library;
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show RegionMapViewData;
@@ -14,6 +14,7 @@ import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 
 import 'game_map_area.dart';
+import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 
 /// Shared state for [GameMapArea]: every domain mixin (`GameMapAreaSelection`,
 /// `GameMapAreaView`, `GameMapAreaEvents`, …) is `on GameMapAreaStateBase`

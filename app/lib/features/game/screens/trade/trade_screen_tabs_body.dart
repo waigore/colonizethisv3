@@ -12,6 +12,8 @@
 /// two-tab structure stays as the durable wireframe so the follow-up
 /// cargo indicator + priority dropdown + Deal Book ledger slices can
 /// swap each tab body in place without remounting the strip.
+library;
+
 
 import 'package:flutter/material.dart';
 

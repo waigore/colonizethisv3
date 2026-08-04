@@ -1,7 +1,6 @@
 // Smoke pins for move_dialogs_specs_test_support (Refs #4013).
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'move_dialogs_specs_test_support.dart';

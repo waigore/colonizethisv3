@@ -1,15 +1,15 @@
 /// Economic tile label helpers for province overlay sections.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kProspectRequiredResourceIds, VisibilityLevel;
+
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel, kProspectRequiredResourceIds;
 
 String? economicTerrainTitleForTile(RegionMapViewData region, String tk) {
   final parsed = tryParseTileKey(tk);

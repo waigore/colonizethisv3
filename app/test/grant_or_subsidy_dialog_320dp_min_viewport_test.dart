@@ -57,7 +57,6 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show grantAidAmountStep;
 import 'package:colonizethis_models/colonizethis_models.dart';

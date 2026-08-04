@@ -2,12 +2,9 @@ import 'dart:math' as math;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:flutter/material.dart';
 
 import '../caches/resource_icon_cache.dart';
 import 'region_map_component_shared_palette.dart';
-import 'region_map_component_shared_visibility_extraction.dart';
-import 'region_map_component_shared_visibility_name_plates.dart';
 
 export 'region_map_component_shared_visibility_extraction.dart'
     show

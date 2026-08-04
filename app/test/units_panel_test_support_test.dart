@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
-import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 
 import 'military_units_panel_test_support.dart';
 import 'naval_units_panel_test_support.dart';

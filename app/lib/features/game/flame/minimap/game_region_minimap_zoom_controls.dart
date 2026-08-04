@@ -12,7 +12,7 @@ import '../../screens/game/game_screen_shared.dart';
 
 /// Minimap zoom label + [CtSlider] and dark editorial-monocle toggle chrome.
 class GameRegionMinimapZoomControls extends StatefulWidget {
-  const GameRegionMinimapZoomControls({
+  const GameRegionMinimapZoomControls({super.key, 
     required this.regionId,
     required this.bus,
     required this.viewportMultiplier,

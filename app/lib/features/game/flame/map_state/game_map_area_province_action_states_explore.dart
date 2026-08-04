@@ -1,10 +1,13 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 
 /// Explore inline-action visibility/enablement for province overlay.
 abstract final class GameMapAreaProvinceActionStatesExplore {

@@ -9,7 +9,6 @@
 //
 // SPEC: SPEC/ui/trade-screen.md § Market tab — treasury bid budget indicator.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';

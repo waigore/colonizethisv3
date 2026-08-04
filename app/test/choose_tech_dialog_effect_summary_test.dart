@@ -1,14 +1,12 @@
 // Choose-tech effect summary + Details ACs (Refs #4222).
 // SPEC/ui/technology-panel.md § Choose-tech dialog.
 
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_definition_detail_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_effect_summary.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

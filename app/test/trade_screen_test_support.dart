@@ -28,7 +28,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'app_shell_harness.dart';
 import 'min_viewport_harness.dart';
-import 'trade_screen_test_game_builders.dart';
 
 export 'trade_screen_test_game_builders.dart';
 

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_map/colonizethis_map.dart'
     show RegionMapViewData;
 
@@ -23,6 +23,8 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack.dart';
 import 'game_map_area_relocate_selection.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Map play-area shell (keyboard focus, debug console, narrow detail slot).
 /// Split from [game_map_area_build.dart] for Phase 3 flame map modularization.

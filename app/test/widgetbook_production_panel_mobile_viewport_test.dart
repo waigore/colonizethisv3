@@ -28,7 +28,6 @@
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:widgetbook/widgetbook.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';

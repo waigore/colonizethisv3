@@ -1,5 +1,4 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show Game;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,7 @@ import '../../../../widgets/ct_spacing.dart';
 /// Body of the "History" card — vertical list of [DiplomacyDetailLeftBorderTile]s,
 /// newest first, or an italic muted empty-state.
 class DiplomacyDetailHistorySection extends StatelessWidget {
-  const DiplomacyDetailHistorySection({
+  const DiplomacyDetailHistorySection({super.key, 
     required this.history,
     required this.formatYear,
     required this.formatSentence,
@@ -46,7 +45,7 @@ class DiplomacyDetailHistorySection extends StatelessWidget {
 
 /// Body of the "Dossier" card (Great Powers only).
 class DiplomacyDetailDossierSection extends StatelessWidget {
-  const DiplomacyDetailDossierSection({
+  const DiplomacyDetailDossierSection({super.key, 
     required this.game,
     required this.observerId,
     required this.subjectId,
@@ -94,7 +93,7 @@ class DiplomacyDetailDossierSection extends StatelessWidget {
 /// `.event` / `.dossier` rules: `--surface` background, 2 px `--accent-dim`
 /// left border, monospace `--accent-dim` label, `--fg` body sentence.
 class DiplomacyDetailLeftBorderTile extends StatelessWidget {
-  const DiplomacyDetailLeftBorderTile({
+  const DiplomacyDetailLeftBorderTile({super.key, 
     required this.label,
     required this.body,
   });
@@ -151,7 +150,7 @@ class DiplomacyDetailLeftBorderTile extends StatelessWidget {
 
 /// Italic muted empty-state line shared by the history and dossier sections.
 class DiplomacyDetailEmptyState extends StatelessWidget {
-  const DiplomacyDetailEmptyState({required this.text});
+  const DiplomacyDetailEmptyState({super.key, required this.text});
 
   final String text;
 

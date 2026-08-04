@@ -12,10 +12,11 @@
 /// content on the first two lines and the interactive direction
 /// selector + stepper on a third line so the row remains overflow-safe
 /// at the 320 dp minimum viewport (SPEC/ui/mobile-adaptation.md §7).
+library;
+
 
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrder, TradeOrderType;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -25,7 +26,7 @@ import 'trade_screen_market_row_header.dart';
 import 'trade_screen_market_tab.dart';
 
 class MarketCommodityRow extends StatelessWidget {
-  const MarketCommodityRow({
+  const MarketCommodityRow({super.key, 
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,
@@ -153,7 +154,7 @@ class MarketCommodityRow extends StatelessWidget {
 /// Wide-layout (≥ 600 dp) Market row: two-line compact structure with the
 /// volume readout and interactive controls sharing line 2 (Refs #4227).
 class MarketCommodityRowCompact extends StatelessWidget {
-  const MarketCommodityRowCompact({
+  const MarketCommodityRowCompact({super.key, 
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,

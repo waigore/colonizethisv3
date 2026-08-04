@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
@@ -31,6 +31,9 @@ import '../../../../core/services/turn_resolution/turn_resolution_result_applier
 import 'game_map_area.dart';
 import 'game_map_area_log.dart';
 import 'game_map_area_state_base.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Next-turn resolution flow for [GameMapArea]: confirmation, the processing
 /// dialog lifecycle, worker session orchestration, result application, and the

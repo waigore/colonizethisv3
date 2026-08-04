@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:colonizethis_app/config/app_assets.dart';
-import 'package:colonizethis_app/config/app_constants.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/flame/caches/civilian_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';

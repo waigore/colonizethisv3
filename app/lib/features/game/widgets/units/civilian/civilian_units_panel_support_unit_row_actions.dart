@@ -1,5 +1,6 @@
 /// Work-target assignment bottom sheet for civilian unit rows.
 /// SPEC/ui/civilian-units-panel.md — local-by-design dialog carve-out.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';

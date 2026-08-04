@@ -29,7 +29,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
 import 'golden_capture_harness.dart';
 import 'panel_fixtures/core.dart';
 import 'victory_panel_test_support.dart';

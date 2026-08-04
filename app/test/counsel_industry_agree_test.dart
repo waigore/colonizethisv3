@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/features/game/screens/counsel/counsel_industry_tab_body.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'app_shell_harness.dart';
-import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
 IndustryCounselRecommendation _produceRec(String recipeId) {

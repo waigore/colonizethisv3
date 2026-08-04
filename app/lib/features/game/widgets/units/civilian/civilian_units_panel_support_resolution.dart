@@ -1,4 +1,5 @@
 /// Pending work-order resolution helpers. SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';

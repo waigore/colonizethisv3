@@ -11,14 +11,12 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
 import 'move_dialogs_specs_test_support.dart';
 

@@ -4,7 +4,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'panel_fixtures/core.dart';
 
-import 'panel_fixtures/core.dart';
 
 Province _owProvince(String localId, String ownerId) {
   return Province(

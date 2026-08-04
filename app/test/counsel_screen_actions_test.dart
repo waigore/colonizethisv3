@@ -111,7 +111,7 @@ void main() {
     await pumpSettleCapped(tester);
   }
 
-  Game _trainAgreeFailureGame() {
+  Game trainAgreeFailureGame() {
     const playerId = kPanelTestHumanPlayerId;
     return buildPanelTestGame(
       players: [
@@ -126,7 +126,7 @@ void main() {
     );
   }
 
-  Orders _ordersWithPendingPeasantRecruit(String playerId) {
+  Orders ordersWithPendingPeasantRecruit(String playerId) {
     return Orders(
       recruitWorkerOrdersByPlayerId: {
         playerId: const [RecruitWorkerOrder(targetTier: WorkerTier.peasant)],
@@ -138,7 +138,7 @@ void main() {
     'train Agree emits snackbar when recruit is no longer affordable',
     (WidgetTester tester) async {
       const playerId = kPanelTestHumanPlayerId;
-      final game = _trainAgreeFailureGame();
+      final game = trainAgreeFailureGame();
       final bus = AppEventBus.create();
       final snackbars = <ShowSnackBarEvent>[];
       bus.on<ShowSnackBarEvent>().listen(snackbars.add);
@@ -147,7 +147,7 @@ void main() {
         tester,
         game: game,
         bus: bus,
-        initialOrders: _ordersWithPendingPeasantRecruit(playerId),
+        initialOrders: ordersWithPendingPeasantRecruit(playerId),
       );
 
       final agree = find.byKey(

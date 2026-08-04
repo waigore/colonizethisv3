@@ -1,8 +1,9 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../flame/map_state/map_location_resolver.dart';
 import 'military_tree_builder.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 List<RegimentTypeRow> rowsForArmyUnits(
   Game game,

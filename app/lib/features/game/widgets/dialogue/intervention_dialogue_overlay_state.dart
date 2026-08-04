@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:jenny/jenny.dart';
@@ -15,6 +15,8 @@ import 'intervention_choice_buttons.dart';
 import 'intervention_dialogue_overlay.dart';
 import 'intervention_dialogue_overlay_flow.dart';
 import 'intervention_dialogue_overlay_shell.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 class InterventionDialogueOverlayState extends State<InterventionDialogueOverlay>
     with InterventionDialogueOverlayFlow {

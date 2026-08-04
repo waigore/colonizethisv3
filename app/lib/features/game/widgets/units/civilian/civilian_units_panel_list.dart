@@ -12,7 +12,6 @@ import '../shared/region_labels.dart';
 import '../shared/region_section_header.dart';
 import 'civilian_units_panel.dart';
 import 'civilian_units_panel_unit_row.dart';
-import 'civilian_units_sort.dart';
 
 mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
   bool isExplorerUnit(Unit unit) {

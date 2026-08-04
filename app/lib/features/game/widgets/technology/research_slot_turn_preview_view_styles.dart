@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../config/app_assets.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Treasury-coin glyph shared with the trade screen / game tab-bar treasury chip.
 const String kResearchSlotTurnPreviewTreasuryCoinAsset =

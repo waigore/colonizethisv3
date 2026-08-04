@@ -1,8 +1,9 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
+library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
-import 'package:colonizethis_logic/colonizethis_logic.dart' show VisibilityLevel;
+
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel;
 
 String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show RegionMapViewData;
@@ -17,6 +17,8 @@ import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_view.dart';
 import 'game_map_area_selection.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Integration-test-only hooks for [GameMapArea], gated by [kCtE2EEnabled] and
 /// surfaced through invisible `InkWell`s in the build tree. Each mirrors a real

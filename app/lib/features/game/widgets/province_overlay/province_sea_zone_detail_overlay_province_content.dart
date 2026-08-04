@@ -1,16 +1,7 @@
 /// Province tab content assembly for [ProvinceSeaZoneDetailOverlay].
+library;
 
-import 'package:colonizethis_data/colonizethis_data.dart' show kTownDevelopmentLevelMin;
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        PlayerView,
-        ProvinceImprovableCommodityCount,
-        ProvinceTileCapitalLinkPreview,
-        fleetsInPortAtProvince,
-        kRegionNewWorld,
-        provincePanelShowsFullTileDerivedIntel;
-import 'package:colonizethis_models/colonizethis_models.dart'
-    show ProvinceExtractionSnapshot;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -30,6 +21,8 @@ import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, fleetsInPortAtProvince, kRegionNewWorld, provincePanelShowsFullTileDerivedIntel;
 
 OverlayContent provinceContent({
   required BuildContext context,

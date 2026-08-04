@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_map/colonizethis_map.dart'
     show RegionMapViewData;
 
@@ -24,6 +24,8 @@ import 'game_map_area_selection.dart';
 import 'game_map_area_e2e.dart';
 import 'game_map_area_build_map_stack_chrome.dart';
 import 'game_map_area_relocate_selection.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Map canvas stack and in-map overlay chrome (left rail, corner controls,
 /// side menu, minimap, players bar, turn feed). Split from

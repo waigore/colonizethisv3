@@ -4,8 +4,6 @@ import '../caches/town_icon_cache.dart';
 import '../render/warp_zone_edge_geometry.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_support.dart';
 import 'region_map_province_overlay_geometry.dart';
 
 extension CtRegionMapRenderMarkersSettlementsCapitals on CtRegionMapComponent {

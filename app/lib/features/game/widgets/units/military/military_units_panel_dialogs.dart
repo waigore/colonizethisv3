@@ -1,5 +1,6 @@
 /// Dialog openers and combine mutations for military army actions.
 /// SPEC/ui/military-units-panel.md.
+library;
 
 import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView;
 

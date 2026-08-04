@@ -2,6 +2,7 @@
 /// overlay. See SPEC/ui/province-sea-zone-detail-overlay.md § Province overlay
 /// content `Tile` (town / capital designation) and `Political / Economic /
 /// Naval` (Capital row).
+library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';

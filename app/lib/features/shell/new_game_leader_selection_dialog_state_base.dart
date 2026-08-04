@@ -4,7 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'new_game_leader_selection_dialog.dart';
-import 'new_game_leader_selection_dialog_layout.dart';
 
 /// Shared mutable state for [NewGameLeaderSelectionDialog] mixins (Refs #4117).
 mixin NewGameLeaderSelectionDialogStateBase

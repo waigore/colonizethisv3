@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'package:colonizethis_app/config/app_assets.dart';
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +15,8 @@ import 'package:jenny/jenny.dart';
 import 'ct_dialogue_view.dart';
 import 'intervention_dialogue_overlay.dart';
 import 'yarn_dialogue_bootstrap.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 mixin InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
   YarnProject? get interventionProject;

@@ -12,7 +12,7 @@ import '../../widgets/diplomacy/diplomacy_panel.dart';
 /// Body of the "Current relation" card. Renders a one-line summary with a
 /// War/Peace state (colored badge label) and the one-word relation label.
 class DiplomacyDetailRelationSummary extends StatelessWidget {
-  const DiplomacyDetailRelationSummary({
+  const DiplomacyDetailRelationSummary({super.key, 
     required this.relation,
     required this.l10n,
     this.standingChips = const DiplomaticStandingChips(),
@@ -58,7 +58,7 @@ class DiplomacyDetailRelationSummary extends StatelessWidget {
 /// One-line War/Peace state, relation meter, one-word ladder label, and the
 /// optional formal-alliance badge.
 class DiplomacyDetailRelationSummaryRow extends StatelessWidget {
-  const DiplomacyDetailRelationSummaryRow({
+  const DiplomacyDetailRelationSummaryRow({super.key, 
     required this.relation,
     required this.l10n,
   });

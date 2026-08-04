@@ -1,11 +1,6 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../config/app_assets.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart' show kCargoHoldIndicatorKey;
-import 'game_tab_bar.dart';
 
 class GameRegionTab extends StatelessWidget {
   const GameRegionTab({

@@ -1,9 +1,9 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show greatPowerPowerScore;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import 'game_map_players_bar_chip_column.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show greatPowerPowerScore;
 
 /// Floating column of per–Great-Power chips on the in-game map stack.
 ///

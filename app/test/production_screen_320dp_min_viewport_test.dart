@@ -50,8 +50,6 @@
 // screen).
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
-    show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/screens/production/production_screen.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/shell_player_context.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';

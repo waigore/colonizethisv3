@@ -1,6 +1,5 @@
 // Part1 scenario pumps and pins (Refs #4224 Slice D densify).
 
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart'
     show kCtE2EFleetMissionActionKey;
 import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
@@ -9,8 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 

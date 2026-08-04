@@ -1,5 +1,6 @@
 /// Public Deal Book keys/literals for the trade screen.
 /// Tests and Deal Book UI parts use this type directly (Refs #4035 trade API collapse).
+library;
 
 import 'package:flutter/material.dart';
 

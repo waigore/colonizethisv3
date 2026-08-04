@@ -10,7 +10,6 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'naval_mission_flow.dart';
 import 'move_units_dialog_base.dart';
-import 'move_units_dialog_base_styles.dart';
 
 /// Fleet picker when multiple fleets share one map marker (Refs #4213).
 class NavalMissionFleetPickerDialog extends StatefulWidget {

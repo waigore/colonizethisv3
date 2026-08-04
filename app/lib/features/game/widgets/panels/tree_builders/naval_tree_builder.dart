@@ -1,9 +1,7 @@
 // Pure data for Naval Units panel tree. SPEC/ui/naval-units-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show GamePlayerLookup, kRegionNewWorld, kRegionOldWorld, WorldStateProvinceLookup;
-import 'package:colonizethis_map/colonizethis_map.dart';
+
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -12,6 +10,7 @@ import 'naval_tree_builder_support_group.dart';
 import 'naval_tree_builder_support_scope.dart';
 
 export 'naval_tree_builder_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show GamePlayerLookup, WorldStateProvinceLookup, kRegionNewWorld, kRegionOldWorld;
 
 List<
   ({

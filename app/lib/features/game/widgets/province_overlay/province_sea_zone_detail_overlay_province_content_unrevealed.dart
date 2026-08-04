@@ -1,4 +1,5 @@
 /// Fully unrevealed province tab assembly for [ProvinceSeaZoneDetailOverlay].
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';

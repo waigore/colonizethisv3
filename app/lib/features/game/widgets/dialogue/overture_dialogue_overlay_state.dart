@@ -1,5 +1,5 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +13,8 @@ import 'dialogue_tristate_decision_row.dart';
 import 'overture_dialogue_overlay.dart';
 import 'overture_dialogue_overlay_flow.dart';
 import 'overture_dialogue_overlay_phase_two.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 class OvertureDialogueOverlayState extends State<OvertureDialogueOverlay>
     with OvertureDialogueOverlayFlow {

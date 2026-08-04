@@ -1,7 +1,7 @@
 /// Tile section builder for [ProvinceSeaZoneDetailOverlay].
+library;
 
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, ProvinceTileCapitalLinkPreview;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
 import 'province_sea_zone_detail_overlay_tile_section_revealed.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 Widget buildTileSection({
   required BuildContext context,

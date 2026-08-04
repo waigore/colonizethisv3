@@ -11,7 +11,7 @@ import 'game_region_minimap_painter.dart';
 import 'region_minimap_math.dart';
 
 class GameRegionMinimapVisiblePanel extends StatelessWidget {
-  const GameRegionMinimapVisiblePanel({
+  const GameRegionMinimapVisiblePanel({super.key, 
     required this.region,
     required this.cellSizePx,
     required this.bus,

@@ -1,5 +1,6 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:flutter/material.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Visibility mode for the region map. SPEC/ui/map-widget.md.
 enum CtMapVisibilityMode { full, playerConstrained }

@@ -10,7 +10,6 @@ import 'package:colonizethis_app/features/game/widgets/production/production_ind
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 
 import 'golden_capture_harness.dart';
-import 'panel_fixtures/production.dart';
 import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 

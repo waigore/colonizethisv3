@@ -5,12 +5,14 @@
 /// Compact stepper button used by [MarketCommodityRowControls]. Uses
 /// an `InkWell` so the chrome stays in the editorial-monocle palette
 /// (no Material elevated buttons or accent splash colours).
+library;
+
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 class StepperButton extends StatelessWidget {
-  const StepperButton({
+  const StepperButton({super.key, 
     required this.buttonKey,
     required this.glyph,
     required this.semanticLabel,

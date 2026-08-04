@@ -1,13 +1,8 @@
 import 'dart:math' as math;
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 import '../caches/province_label_icon_cache.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_shared_visibility.dart';
-import 'region_map_component_shared_visibility_name_plates.dart';
-import 'region_map_component_support.dart';
 
 extension CtRegionMapRenderPoliticalLabelsSea on CtRegionMapComponent {
   void _ensureSeaZoneLabelCache() {

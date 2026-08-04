@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
-import 'technology_panel_constants.dart';
 import 'technology_panel_research_slots.dart';
 import 'technology_panel_widgets.dart';
 

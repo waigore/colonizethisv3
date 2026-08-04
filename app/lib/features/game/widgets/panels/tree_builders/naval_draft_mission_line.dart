@@ -1,8 +1,9 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'fleet_mission_label.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Pending naval mission draft line for fleet rows (Refs #4213).
 String? navalDraftMissionLineForFleet({

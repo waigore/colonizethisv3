@@ -85,7 +85,7 @@ void main() {
     int? gotSeed;
     await pumpNewGameLeaderSelectionDialog(
       tester,
-      onConfirmed: (_, _, s, _, _, __, ___) => gotSeed = s,
+      onConfirmed: (_, _, s, _, _, _, _) => gotSeed = s,
     );
     await enterSeed(tester, seed);
     await ensureTapNewGameLeaderSelectionStart(tester);
@@ -96,7 +96,7 @@ void main() {
     double? gotTerrainVariation;
     await pumpNewGameLeaderSelectionDialog(
       tester,
-      onConfirmed: (_, _, _, _, terrainVariation, __, ___) =>
+      onConfirmed: (_, _, _, _, terrainVariation, _, _) =>
           gotTerrainVariation = terrainVariation,
     );
     if (dragLeft != null) {
@@ -117,7 +117,7 @@ void main() {
       tester,
       surfaceSize: surfaceSize,
       baseConfig: baseConfig,
-      onConfirmed: (_, _, _, _, _, __, advancedStart) =>
+      onConfirmed: (_, _, _, _, _, _, advancedStart) =>
           gotAdvancedStart = advancedStart,
     );
     if (beforeStart != null) {
@@ -226,7 +226,7 @@ void main() {
 
       await pumpNewGameLeaderSelectionDialog(
         tester,
-        onConfirmed: (ids, leaders, seed, infiniteMode, _, __, ___) {
+        onConfirmed: (ids, leaders, seed, infiniteMode, _, _, _) {
           gotIds = ids;
           gotLeaders = leaders;
           gotSeed = seed;
@@ -255,7 +255,7 @@ void main() {
             tester,
             surfaceSize: _largeViewport,
             blessedProfileNames: const ['aggressive_v2'],
-            onConfirmed: (_, _, _, _, _, profiles, __) => onConfirmed(profiles),
+            onConfirmed: (_, _, _, _, _, profiles, _) => onConfirmed(profiles),
           );
         }
 
@@ -301,7 +301,7 @@ void main() {
 
       await pumpNewGameLeaderSelectionDialog(
         tester,
-        onConfirmed: (ids, leaders, _, _, _, __, ___) {
+        onConfirmed: (ids, leaders, _, _, _, _, _) {
           gotIds = ids;
           gotLeaders = leaders;
         },
@@ -334,7 +334,7 @@ void main() {
       bool? gotInfiniteMode;
       await pumpNewGameLeaderSelectionDialog(
         tester,
-        onConfirmed: (_, _, _, infiniteMode, _, __, ___) =>
+        onConfirmed: (_, _, _, infiniteMode, _, _, _) =>
             gotInfiniteMode = infiniteMode,
       );
       final toggle = find.byType(CtToggleSwitch);

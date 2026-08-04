@@ -78,7 +78,7 @@ class ProductionAllocationRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(flex: 2, child: buildRecipeLabel(recipe, locked)),
-        if (headerCounselStar != null) headerCounselStar,
+        ?headerCounselStar,
         Expanded(
           flex: 1,
           child: Text(

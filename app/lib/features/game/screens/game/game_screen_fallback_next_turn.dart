@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -9,6 +9,7 @@ import '../../flame/map_state/map_state.dart';
 import 'game_screen_fallback_next_turn_runner.dart';
 import 'game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
+import 'package:colonizethis_logic/src/turn_to_year.dart';
 
 /// Flame-canvas fallback Next-turn button (used when `mapViewDataProvider == null`).
 class GameScreenFallbackNextTurnButton extends ConsumerStatefulWidget {

@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import '../../screens/game/game_screen_shared.dart' show kGameMapWideProvinceSid
 import '../caches/per_player_work_target_selection_cache.dart';
 import 'province_detail_overlay_host_support.dart';
 import 'province_detail_panel_slide_transition.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Wide-layout province / sea zone panel; reads [mapProvincePanelProvider] only.
 class GameMapProvinceDetailSidePanel extends ConsumerWidget {

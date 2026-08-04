@@ -1,10 +1,8 @@
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-import 'package:colonizethis_app/package_logger.dart';
 import '../../../../../widgets/ct_loading_indicator.dart';
 import 'ct_dialogue_line_choice_body.dart';
 import 'ct_dialogue_view.dart';
@@ -17,6 +15,7 @@ export 'intervention_dialogue_overlay_shell.dart'
         kInterventionOverlayBrassDividerKey,
         kInterventionOverlayTitleKey;
 export 'intervention_dialogue_overlay_state.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 /// Host factory for `repo.dialogue_blocking_combined_step` (Refs #3878).
 CtDialogueView createInterventionDialogueView(CtLogger log) =>

@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
@@ -10,12 +10,11 @@ import '../map_state/province_action_state_calculator.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
-import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_labels.dart'
-    show tryParseProvinceOverlayTileCoords;
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';
 import 'province_detail_overlay_host_support_tile_connectivity.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Builds the shared [ProvinceSeaZoneDetailOverlay] wiring used by wide and
 /// narrow panel hosts. Hosts own layout / E2E only. Refs #4018.

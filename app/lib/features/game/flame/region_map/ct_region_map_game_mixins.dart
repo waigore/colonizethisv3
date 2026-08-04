@@ -1,6 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;
@@ -13,6 +12,7 @@ import 'region_map_viewport_snapshot.dart'
         computeRegionMapFitMapZoom,
         kRegionMapZoomMultiplierMax,
         kRegionMapZoomMultiplierMin;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 // ignore_for_file: deprecated_member_use
 

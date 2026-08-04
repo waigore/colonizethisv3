@@ -1,4 +1,5 @@
 /// Row-builder pipeline for diplomacy panel faction lists.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_combat/colonizethis_combat.dart';

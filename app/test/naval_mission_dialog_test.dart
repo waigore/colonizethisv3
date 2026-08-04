@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
 import 'app_shell_harness.dart';
-import 'naval_units_panel_test_scenarios.dart';
 import 'naval_units_panel_test_support.dart';
 
 void main() {

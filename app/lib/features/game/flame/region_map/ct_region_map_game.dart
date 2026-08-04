@@ -1,6 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
@@ -12,6 +11,7 @@ import 'ct_region_map_game_props.dart';
 import 'ct_region_map_game_viewport.dart';
 import 'region_map_component.dart';
 import 'region_map_viewport_snapshot.dart' show RegionMapViewportSnapshot;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 // ignore_for_file: deprecated_member_use
 

@@ -2,7 +2,7 @@
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -13,6 +13,7 @@ import 'tech_tree_widget_legend.dart';
 import 'tech_tree_widget_types.dart';
 
 export 'tech_tree_widget_types.dart' show TechNodePosition;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Full-screen tech tree graph. Left-to-right layout, explicit edges, scrollable.
 /// SPEC/ui/tech-tree-widget.md.

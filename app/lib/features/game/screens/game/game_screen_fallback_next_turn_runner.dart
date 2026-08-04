@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +24,9 @@ import '../../turn_resolution/next_turn_confirmation_flow.dart';
 import '../../flame/overlays/turn_resolution_processing_dialog.dart';
 import '../../flame/overlays/turn_resolution_progress_labels.dart';
 import 'game_screen_fallback_next_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 final _gameScreenFallbackNextTurnLog = packageLogger('logic');
 

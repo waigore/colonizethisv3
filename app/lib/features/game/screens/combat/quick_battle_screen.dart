@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -10,6 +10,7 @@ import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../widgets/combat/quick_battle_action_selector.dart';
 import '../../widgets/combat/quick_battle_deployment_view.dart';
 import 'quick_battle_screen_result.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 
 /// Quick Battle flow: deployment → rounds → result. SPEC/game/quick-battle.md.
 /// Uses default actions (Volley Fire) when run in headless/AI mode.

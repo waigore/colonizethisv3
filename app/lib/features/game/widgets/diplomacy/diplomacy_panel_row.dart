@@ -23,7 +23,7 @@ import 'diplomacy_panel_rows.dart';
 import 'relative_power_line.dart';
 
 class DiplomacyRow extends StatelessWidget {
-  const DiplomacyRow({
+  const DiplomacyRow({super.key, 
     required this.data,
     required this.onAction,
     this.onTap,
@@ -264,7 +264,7 @@ class DiplomacyRow extends StatelessWidget {
 }
 
 class DiplomacyActionButton extends StatelessWidget {
-  const DiplomacyActionButton({
+  const DiplomacyActionButton({super.key, 
     required this.order,
     required this.onPressed,
     this.isPending = false,

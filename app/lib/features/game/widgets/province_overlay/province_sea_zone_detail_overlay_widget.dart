@@ -1,14 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        PlayerView,
-        ProvinceImprovableCommodityCount,
-        ProvinceTileCapitalLinkPreview,
-        resourceIdVisibleInPlayerView,
-        isProspectableTerrain,
-        isProspectableTerrainId,
-        explorerConsulateGateBlocksMinorTribeProvince;
-import 'package:colonizethis_models/colonizethis_models.dart'
-    show ProvinceExtractionSnapshot;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -22,6 +12,8 @@ import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].

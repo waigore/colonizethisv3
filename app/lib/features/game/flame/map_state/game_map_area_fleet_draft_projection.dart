@@ -1,10 +1,11 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
 import 'game_map_area_draft_projection_shared.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Fleet-marker draft projection for the human player.
 ///

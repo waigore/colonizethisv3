@@ -6,6 +6,7 @@
 /// `CtTabStrip` (Market + Deal Book). Widget keys and copy literals live on
 /// [TradeScreenMarketKeys] / [TradeScreenDealBookKeys] (Refs #4035) — this
 /// widget no longer re-declares that static surface.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

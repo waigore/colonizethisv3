@@ -1,12 +1,9 @@
 import 'dart:math' as math;
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/material.dart';
 import '../render/gp_ownership_tint_layer.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_support.dart';
 import 'region_map_province_overlay_geometry.dart';
 
 extension CtRegionMapRenderPoliticalBordersProvince on CtRegionMapComponent {

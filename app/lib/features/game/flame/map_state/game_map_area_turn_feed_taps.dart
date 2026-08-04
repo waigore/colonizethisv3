@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../config/routes.dart';
@@ -13,6 +13,8 @@ import 'map_location_resolver.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'game_map_area_turn_feed_labels.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Turn-feed tap targets and navigation for [GameMapArea] (Refs #3878, #4226).
 mixin GameMapAreaTurnFeedTaps

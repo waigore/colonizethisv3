@@ -6,7 +6,7 @@ import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
 
 /// Centered minus/amount/plus row matching `.stepper` in the DIPL20001 mockup.
 class GrantSubsidyAmountStepper extends StatelessWidget {
-  const GrantSubsidyAmountStepper({
+  const GrantSubsidyAmountStepper({super.key, 
     required this.amount,
     required this.amountText,
     required this.canAdjust,
@@ -56,7 +56,7 @@ class GrantSubsidyAmountStepper extends StatelessWidget {
 /// `DecoratedBox` reproduces the chrome with the disable opacity convention
 /// used by the rest of the dark catalog.
 class GrantSubsidyStepperButton extends StatelessWidget {
-  const GrantSubsidyStepperButton({
+  const GrantSubsidyStepperButton({super.key, 
     required this.buttonKey,
     required this.label,
     required this.enabled,

@@ -1,9 +1,10 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'military_tree_builder.dart';
 import 'military_tree_builder_assembly_province.dart';
 import 'military_tree_builder_assembly_sea.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
   final unitsById = game.worldState.allUnitsById;

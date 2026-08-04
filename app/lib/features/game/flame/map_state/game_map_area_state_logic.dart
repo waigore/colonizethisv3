@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
@@ -13,6 +13,9 @@ export 'game_map_area_state_logic_draft_projection.dart';
 export 'game_map_area_state_logic_province_actions.dart';
 export 'game_map_area_state_logic_shell.dart';
 export 'game_map_area_state_logic_work_targets.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 ///

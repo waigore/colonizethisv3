@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show TopologyNodeType, techById, techDisplayName;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../config/routes.dart';
@@ -19,6 +19,7 @@ import '../../widgets/units/civilian/civilian_units_panel_support_resolution.dar
 import 'map_location_resolver.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Display-label and map-locate helpers for [GameMapArea] turn-event feed
 /// entries (Refs #3878 Phase 3 map_state modularization).

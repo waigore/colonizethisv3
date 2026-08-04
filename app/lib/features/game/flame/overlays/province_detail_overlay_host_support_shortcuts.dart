@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:flutter/widgets.dart';
@@ -7,6 +7,7 @@ import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/game_map_area_state_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// The three province-overlay shortcut `onTap` callbacks. Each entry is `null`
 /// when its action is disabled or no tile is selected, matching the previous

@@ -7,6 +7,8 @@
 /// bid-goods usage, cargo remaining, and saturation warnings. Shared by
 /// the editable and observe-mode bodies so telemetry stays live even when
 /// row controls are dimmed.
+library;
+
 
 import 'package:flutter/material.dart';
 
@@ -19,7 +21,7 @@ import 'trade_screen_contract_market.dart';
 const double _limitHelpHitPadding = 13;
 
 class MarketTabHeaderStrip extends StatelessWidget {
-  const MarketTabHeaderStrip({
+  const MarketTabHeaderStrip({super.key, 
     required this.stagedDistinctBidCount,
     required this.bidTypeCap,
     required this.clampedRemaining,

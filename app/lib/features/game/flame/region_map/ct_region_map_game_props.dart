@@ -1,10 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
 import 'ct_region_map_game_mixins.dart';
 import 'region_map_component.dart';
 import 'region_map_viewport_snapshot.dart' show RegionMapViewportSnapshot;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Updates [CtRegionMapGame] configuration without recreating the game instance.
 void ctRegionMapGameUpdateProps(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../config/constants.dart';
@@ -15,6 +15,8 @@ import 'victory_overlay_panel_corners.dart';
 import 'victory_overlay_panel_layout.dart';
 
 export 'victory_overlay_panel_layout.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Brass-bordered ceremonial panel for the military victory overlay.
 ///

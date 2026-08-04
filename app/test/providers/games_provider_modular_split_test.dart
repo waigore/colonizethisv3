@@ -2,9 +2,6 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/games_provider_current_game.dart';
-import 'package:colonizethis_app/providers/games_provider_diplomacy.dart';
-import 'package:colonizethis_app/providers/games_provider_work_targets.dart';
 
 /// De-parted games-provider library seam checks (Refs #4117).
 void main() {

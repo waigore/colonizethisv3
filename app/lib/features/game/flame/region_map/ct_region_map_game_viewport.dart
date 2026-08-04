@@ -9,7 +9,7 @@ import 'region_map_viewport_snapshot.dart'
 void _ctRegionMapGameFinishCameraMove(CtRegionMapGameFields game) {
   (game as CtRegionMapGameCamera).clampCameraToMap();
   game.onRegionViewChanged?.call();
-  (game as CtRegionMapGameCamera).emitViewportSnapshot();
+  (game).emitViewportSnapshot();
 }
 
 void ctRegionMapGameSetCameraCenterWorld(

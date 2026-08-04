@@ -4,8 +4,6 @@ import '../caches/civilian_icon_cache.dart';
 import '../caches/fleet_icon_cache.dart';
 import 'region_map_boundary_visibility.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_support.dart';
 
 extension CtRegionMapRenderMarkersUnitsCivilian on CtRegionMapComponent {
   void paintCivilianTileMarkers(Canvas canvas) {

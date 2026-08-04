@@ -12,7 +12,6 @@ import '../../../../providers/map_view_provider.dart';
 import '../../../../providers/turn_resolution_blocking_provider.dart';
 import '../../../../widgets/ct_screen_shell.dart';
 import '../../flame/overlays/exit_confirm_dialog.dart';
-import '../../widgets/dialogue/tribe_first_contact_sync.dart';
 import 'game_screen_overlay_stack.dart';
 
 /// Hosts the Flame game canvas or map. When map data exists, shows map + province/sea zone overlay.

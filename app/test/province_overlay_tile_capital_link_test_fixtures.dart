@@ -4,8 +4,6 @@
 import 'package:colonizethis_app/core/services/game_service/game_service.dart'
     show GameMapData;
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
-    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_data/colonizethis_data.dart'
     show

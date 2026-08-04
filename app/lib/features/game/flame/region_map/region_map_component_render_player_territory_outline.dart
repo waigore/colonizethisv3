@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'region_map_boundary_visibility.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_shared_visibility.dart';
 
 /// Player-owned land perimeter stroke for panel maps. Refs #4175.
 const double kPlayerTerritoryOutlineStrokeWidth = 2.0;

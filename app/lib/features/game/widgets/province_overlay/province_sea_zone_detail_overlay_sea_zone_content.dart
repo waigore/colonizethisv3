@@ -1,6 +1,7 @@
 /// Sea-zone tab content assembly for [ProvinceSeaZoneDetailOverlay].
+library;
 
-import 'package:colonizethis_logic/colonizethis_logic.dart' show kRegionOldWorld;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -11,6 +12,7 @@ import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'sea_zone_name_resolver.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show kRegionOldWorld;
 
 OverlayContent seaZoneContent({
   required AppLocalizations l10n,

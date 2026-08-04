@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../providers/games_provider.dart';
@@ -14,6 +14,8 @@ import '../region_map/region_map_viewport_snapshot.dart';
 import 'game_map_area_state_logic.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Camera/view-state controls for [GameMapArea]: base-layer display cycling,
 /// map view state persistence, capital centering, tile locating, and region

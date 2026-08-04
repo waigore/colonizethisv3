@@ -1,9 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../flame/region_map/region_map.dart' show CtMapVisibilityMode;
 
 export 'shell_player_context_provider.dart' show shellPlayerContextProvider;
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Resolved play/observe context for the in-game shell. SPEC/ui/observe-mode.md.
 class ShellPlayerContext {

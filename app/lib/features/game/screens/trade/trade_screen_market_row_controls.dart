@@ -4,10 +4,11 @@
 
 /// Direction selector + quantity stepper below the static read-only data on a
 /// Market tab commodity row.
+library;
+
 
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrder, TradeOrderType;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -17,7 +18,7 @@ import 'trade_screen_market_row_stepper.dart';
 import 'trade_screen_market_tab.dart';
 
 class MarketCommodityRowControls extends StatelessWidget {
-  const MarketCommodityRowControls({
+  const MarketCommodityRowControls({super.key, 
     required this.commodityId,
     required this.stagedType,
     required this.quantityText,

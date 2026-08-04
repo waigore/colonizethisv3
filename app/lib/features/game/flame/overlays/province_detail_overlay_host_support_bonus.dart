@@ -1,14 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show
-        ProvinceImprovableCommodityCount,
-        previewTownManufacturingBonusByProvince,
-        projectProvinceExtraction,
-        provinceImprovableResourceTileCounts,
-        WorldStateProvinceLookup;
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
+import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount, projectProvinceExtraction, provinceImprovableResourceTileCounts;
+import 'package:colonizethis_turn/colonizethis_turn.dart' show previewTownManufacturingBonusByProvince;
+import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup;
 
 /// Town manufacturing bonus preview for the province overlay Economic section.
 ///

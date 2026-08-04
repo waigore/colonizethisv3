@@ -1,6 +1,7 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Resolved mount-time / home-to-capital auto-center target for the in-game
 /// shell. SPEC/ui/empire-overview.md § Initial map viewport (shell entry).

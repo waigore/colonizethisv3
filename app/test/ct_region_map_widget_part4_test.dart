@@ -2,11 +2,9 @@
 // Split from part1/part2 under `repo.app_test_file_size` (Refs #4013).
 // Stay-split family: ct_region_map_widget_test (SPEC/program/repo-lint.md).
 
-import 'dart:ui' as ui;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 

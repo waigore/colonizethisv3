@@ -17,7 +17,7 @@ import 'diplomacy_panel_rows.dart';
 /// inactive label `--muted`, active label `--accent`, and `--accent-dim`
 /// border on the active item.
 class DiplomacyModeBar extends StatelessWidget {
-  const DiplomacyModeBar({required this.mode, required this.onModeChanged});
+  const DiplomacyModeBar({super.key, required this.mode, required this.onModeChanged});
 
   final DiplomacyFilterMode mode;
   final ValueChanged<DiplomacyFilterMode> onModeChanged;
@@ -74,7 +74,7 @@ class DiplomacyModeBar extends StatelessWidget {
 }
 
 class DiplomacyModeButton extends StatelessWidget {
-  const DiplomacyModeButton({
+  const DiplomacyModeButton({super.key, 
     required this.label,
     required this.isActive,
     required this.onPressed,

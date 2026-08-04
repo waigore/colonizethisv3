@@ -9,7 +9,6 @@
 
 library;
 
-import 'package:flutter/material.dart';
 
 export 'move_units_dialog_base_row.dart'
     show MoveDialogDestinationRow, MoveDialogRadioDot;

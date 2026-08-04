@@ -4,7 +4,7 @@
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +17,7 @@ import 'technology_panel_order_mutations.dart';
 
 export 'technology_panel_choose_tech_dialog_rows.dart'
     show kChooseTechDialogIconSize;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Opens the dark editorial-monocle Choose-tech dialog for [slotIndex]
 /// and dispatches `onOrdersChanged` with the updated `Orders` when the

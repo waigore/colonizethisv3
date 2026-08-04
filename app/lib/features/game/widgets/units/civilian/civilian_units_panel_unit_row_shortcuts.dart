@@ -1,5 +1,6 @@
 /// Explorer/prospect/improvement shortcut assign for civilian unit rows.
 /// SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 
