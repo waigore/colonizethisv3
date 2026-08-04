@@ -7,9 +7,9 @@ import '../order_resolution_context.dart';
 import '../order_suggestion_context.dart';
 import '../order_suggestion_helpers.dart';
 import '../order_work_constants.dart';
-import '../partial_province_reveal.dart';
 import '../unit_type_helpers.dart';
 import 'work_tile_candidate_index.dart';
+import 'work_order_tile_key_probe.dart';
 
 // Work-tile candidate index and tile-keys probe API.
 // Spec: SPEC/program/order-suggestions.md § Pre-filtering by work target type.
@@ -93,7 +93,7 @@ Set<String> getValidWorkOrderTileKeys(
   );
 
   final effectiveView = view ?? buildPlayerView(game, topology, playerId);
-  final probe = _prepareWorkOrderTileKeyProbe(
+  final probe = prepareWorkOrderTileKeyProbe(
     game: game,
     topology: topology,
     playerId: playerId,
@@ -110,7 +110,7 @@ Set<String> getValidWorkOrderTileKeys(
   );
   if (probe == null) return const {};
 
-  final valid = _collectValidWorkOrderTileKeys(
+  final valid = collectValidWorkOrderTileKeys(
     probe: probe,
     tileKeysToProbe: probe.rawCandidateTileKeys,
   );
@@ -153,7 +153,7 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
         sharedCandidateValidator.playerId == view.playerId,
   );
 
-  final probe = _prepareWorkOrderTileKeyProbe(
+  final probe = prepareWorkOrderTileKeyProbe(
     game: game,
     topology: topology,
     playerId: view.playerId,
@@ -169,131 +169,13 @@ Set<String> getValidWorkOrderTileKeysWithVisibility({
   );
   if (probe == null) return const {};
 
-  return _collectValidWorkOrderTileKeys(
+  return collectValidWorkOrderTileKeys(
     probe: probe,
     tileKeysToProbe: sortedVisibleWorkTargetCandidates(
       view,
       probe.rawCandidateTileKeys,
     ),
   );
-}
-
-class _WorkOrderTileKeyProbe {
-  const _WorkOrderTileKeyProbe({
-    required this.unitId,
-    required this.workTarget,
-    required this.reservedForPicker,
-    required this.candidateValidator,
-    required this.rawCandidateTileKeys,
-  });
-
-  final String unitId;
-  final String workTarget;
-  final Set<String> reservedForPicker;
-  final IncrementalCandidateValidator candidateValidator;
-  final Set<String> rawCandidateTileKeys;
-}
-
-_WorkOrderTileKeyProbe? _prepareWorkOrderTileKeyProbe({
-  required Game game,
-  required MapTopology topology,
-  required String playerId,
-  required PlayerView view,
-  required String unitId,
-  required String workTarget,
-  required Orders currentOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  OrderResolutionContext? resolution,
-  DiplomacyFactionMembership? factionMembership,
-  IncrementalCandidateValidator? sharedCandidateValidator,
-  Set<String>? playerOwnedProvinceIds,
-  required bool applyExploreProvinceScope,
-}) {
-  final unit = game.worldState.tryGetUnitById(unitId);
-  if (unit == null || unit.ownerId != playerId) return null;
-  if (unit.currentWork != null) return null;
-  if (playerHasPendingWorkOrderForUnit(currentOrders, playerId, unitId)) {
-    return null;
-  }
-  if (!isWorkOrderTargetAllowedForUnitType(unit.type, workTarget)) return null;
-
-  final effectiveFactionMembership =
-      sharedCandidateValidator?.factionMembershipSnapshot ??
-      factionMembership ??
-      DiplomacyFactionMembership.from(game);
-  final effectiveResolution =
-      resolution ??
-      (sharedCandidateValidator != null
-          ? (
-              view: sharedCandidateValidator.view,
-              unitsById: sharedCandidateValidator.unitsById,
-              provinceById: sharedCandidateValidator.view.provincesById,
-            )
-          : orderResolutionContextFromView(view, game));
-  final effectiveOwnedProvinceIds =
-      playerOwnedProvinceIds ??
-      <String>{
-        for (final e in effectiveResolution.provinceById.entries)
-          if (e.value.ownerId == playerId) e.key,
-      };
-  final candidateValidator =
-      sharedCandidateValidator ??
-      buildIncrementalCandidateValidator(
-        game: game,
-        topology: topology,
-        playerId: playerId,
-        baseOrders: currentOrders,
-        tileMapByRegion: tileMapByRegion,
-        resolution: effectiveResolution,
-        factionMembership: effectiveFactionMembership,
-      );
-  final raw = rawCandidateTilesForWorkTarget(
-    game: game,
-    playerId: playerId,
-    workTarget: workTarget,
-    exploreProvinceScope: applyExploreProvinceScope &&
-            workTarget == kWorkTargetExplore
-        ? partiallyRevealedPrefixedProvinceIdsForPlayer(game: game, view: view)
-        : null,
-    tileMapByRegion: tileMapByRegion,
-    playerOwnedProvinceIds: effectiveOwnedProvinceIds,
-    factionMembership: effectiveFactionMembership,
-  );
-
-  return _WorkOrderTileKeyProbe(
-    unitId: unitId,
-    workTarget: workTarget,
-    reservedForPicker: devExclusiveReservedTileKeysForPlayer(
-      game,
-      currentOrders,
-      playerId,
-      ignorePendingWorkOrderUnitId: unitId,
-    ),
-    candidateValidator: candidateValidator,
-    rawCandidateTileKeys: raw,
-  );
-}
-
-Set<String> _collectValidWorkOrderTileKeys({
-  required _WorkOrderTileKeyProbe probe,
-  required Iterable<String> tileKeysToProbe,
-}) {
-  final valid = <String>{};
-  for (final tileKey in tileKeysToProbe) {
-    if (isDevExclusiveWorkTarget(probe.workTarget) &&
-        probe.reservedForPicker.contains(tileKey)) {
-      continue;
-    }
-    final candidate = WorkOrder(
-      unitId: probe.unitId,
-      target: probe.workTarget,
-      targetTileKey: tileKey,
-    );
-    if (isWorkOrderAcceptedWithValidator(probe.candidateValidator, candidate)) {
-      valid.add(tileKey);
-    }
-  }
-  return valid;
 }
 
 List<String> sortedVisibleWorkTargetCandidates(
