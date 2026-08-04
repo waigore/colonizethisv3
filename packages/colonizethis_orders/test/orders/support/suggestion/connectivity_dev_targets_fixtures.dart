@@ -121,12 +121,9 @@ connectivityDevSeaUnreachablePortCase() {
   );
 }
 
-Game connectivityDevEmptyGame() => Game(
+Game connectivityDevEmptyGame() => ordersOwRegionGame(
   id: 'g',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
+  turnNumber: 1,
   players: const [],
+  oldWorld: const RegionData(),
 );
