@@ -157,25 +157,11 @@ class CargoHoldDetailsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextStyle rowStyle = (theme.textTheme.bodySmall ?? const TextStyle())
-        .copyWith(
-          color: EditorialMonoclePalette.fg,
-          fontSize: 11,
-          height: 1.3,
-        );
+    final TextStyle rowStyle = _cargoHoldDetailsRowStyle(context);
     final TextStyle counselStyle = rowStyle.copyWith(
       color: EditorialMonoclePalette.muted,
       fontStyle: FontStyle.italic,
     );
-
-    final String usedLabel =
-        isCargoUsedReliable ? '$cargoUsed' : '—';
-    final int freeForTrade = isCargoUsedReliable
-        ? (cargoCapacity - cargoUsed).clamp(0, cargoCapacity)
-        : 0;
-    final String freeLabel =
-        isCargoUsedReliable ? '$freeForTrade' : '—';
 
     return DecoratedBox(
       key: kCargoHoldDetailsPanelKey,
@@ -193,26 +179,12 @@ class CargoHoldDetailsPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        l10n.mapControls_cargoHold_details_overseas(usedLabel),
-                        style: rowStyle,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.mapControls_cargoHold_details_capacity(
-                          '$cargoCapacity',
-                        ),
-                        style: rowStyle,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.mapControls_cargoHold_details_free(freeLabel),
-                        style: rowStyle,
-                      ),
-                    ],
+                  child: _CargoHoldDetailsRows(
+                    l10n: l10n,
+                    cargoUsed: cargoUsed,
+                    cargoCapacity: cargoCapacity,
+                    isCargoUsedReliable: isCargoUsedReliable,
+                    rowStyle: rowStyle,
                   ),
                 ),
                 CtIconAction(
@@ -232,6 +204,60 @@ class CargoHoldDetailsPanel extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+TextStyle _cargoHoldDetailsRowStyle(BuildContext context) {
+  final ThemeData theme = Theme.of(context);
+  return (theme.textTheme.bodySmall ?? const TextStyle()).copyWith(
+    color: EditorialMonoclePalette.fg,
+    fontSize: 11,
+    height: 1.3,
+  );
+}
+
+class _CargoHoldDetailsRows extends StatelessWidget {
+  const _CargoHoldDetailsRows({
+    required this.l10n,
+    required this.cargoUsed,
+    required this.cargoCapacity,
+    required this.isCargoUsedReliable,
+    required this.rowStyle,
+  });
+
+  final AppLocalizations l10n;
+  final int cargoUsed;
+  final int cargoCapacity;
+  final bool isCargoUsedReliable;
+  final TextStyle rowStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final String usedLabel = isCargoUsedReliable ? '$cargoUsed' : '—';
+    final int freeForTrade = isCargoUsedReliable
+        ? (cargoCapacity - cargoUsed).clamp(0, cargoCapacity)
+        : 0;
+    final String freeLabel = isCargoUsedReliable ? '$freeForTrade' : '—';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          l10n.mapControls_cargoHold_details_overseas(usedLabel),
+          style: rowStyle,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.mapControls_cargoHold_details_capacity('$cargoCapacity'),
+          style: rowStyle,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.mapControls_cargoHold_details_free(freeLabel),
+          style: rowStyle,
+        ),
+      ],
     );
   }
 }
