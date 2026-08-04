@@ -1,8 +1,11 @@
 // Industry Counsel Agree apply handlers. SPEC/ui/counsel-panel.md (Refs #4191).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show suggestRecruitWorkerOrders;
+import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView;
 
 import '../../widgets/production/production_labour_recruit_economy_mutations.dart';
 

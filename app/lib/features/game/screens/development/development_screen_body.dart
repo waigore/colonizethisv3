@@ -3,9 +3,21 @@ import 'dart:async';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show
+        DevelopmentAssignRowState,
+        DevelopmentImproveAssignCandidate,
+        developmentPanelMaterialShortageCommodityIds,
+        resolveDevelopmentAssignRowState,
+        resolveDevelopmentRoadFirstState;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show
+        allProvinces,
+        buildPlayerView,
+        kRegionNewWorld,
+        kRegionOldWorld,
+        resolveConnectivity;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,7 +56,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
     final shell = ref.watch(shellPlayerContextProvider);
     final canEdit = shell.canMutateViaUi;
     final provinceNames = <String, String>{};
-    for (final province in game.worldState.allProvinces()) {
+    for (final province in allProvinces(game.worldState)) {
       provinceNames[province.id] = province.displayName ?? province.id;
     }
     final playerNames = {for (final p in game.players) p.id: p.displayName};

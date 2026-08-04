@@ -1,7 +1,16 @@
 import 'package:colonizethis_data/colonizethis_data.dart'
     show kMilitaryVictoryOldWorldProvinceThreshold;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart'
+    show aggregateMilitaryStrengthForPlayer;
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show
+        powerScoreProvinceWeight,
+        powerScoreRegimentWeight,
+        powerScoreShipWeight,
+        provinceCountOwnedBy,
+        shipCountForFaction;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Weighted power-score components for one Great Power row expansion.
 class VictoryPowerScoreBreakdown {
