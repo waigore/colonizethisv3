@@ -53,16 +53,24 @@ class GameTabBarCargoHoldIndicator extends StatelessWidget {
     super.key,
     required this.cargoHoldLabel,
     required this.labelStyle,
+    required this.numericColor,
+    this.tooltip,
+    this.semanticsLabel,
+    this.onTap,
   });
 
   final String cargoHoldLabel;
   final TextStyle labelStyle;
+  final Color numericColor;
+  final String? tooltip;
+  final String? semanticsLabel;
+  final VoidCallback? onTap;
 
   static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final Widget indicator = Container(
       key: kCargoHoldIndicatorKey,
       padding: const EdgeInsets.symmetric(horizontal: CtSpacing.m),
       decoration: BoxDecoration(
@@ -83,9 +91,32 @@ class GameTabBarCargoHoldIndicator extends StatelessWidget {
             height: _iconSize,
           ),
           const SizedBox(width: 4),
-          Text(cargoHoldLabel, style: labelStyle),
+          Text(
+            cargoHoldLabel,
+            style: labelStyle.copyWith(color: numericColor),
+          ),
         ],
       ),
     );
+
+    Widget wrapped = indicator;
+    if (onTap != null) {
+      wrapped = GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: wrapped,
+      );
+    }
+    if (tooltip != null) {
+      wrapped = Tooltip(message: tooltip, child: wrapped);
+    }
+    if (semanticsLabel != null) {
+      wrapped = Semantics(
+        button: onTap != null,
+        label: semanticsLabel,
+        child: wrapped,
+      );
+    }
+    return wrapped;
   }
 }

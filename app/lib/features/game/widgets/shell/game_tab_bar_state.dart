@@ -1,15 +1,19 @@
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
+import 'cargo_hold_indicator_support.dart';
 import 'game_tab_bar.dart';
 import 'game_tab_bar_indicators.dart';
 import 'game_tab_bar_region_tabs.dart';
 
 /// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
 class GameTabBarState extends State<GameTabBar> {
+  final GlobalKey _cargoHoldAnchorKey = GlobalKey();
+
   static final NumberFormat _exactTreasuryFormat =
       NumberFormat.decimalPattern();
   static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
@@ -65,6 +69,17 @@ class GameTabBarState extends State<GameTabBar> {
         : _treasuryDeltaLabel(widget.treasuryDelta);
     final deltaColor =
         _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
+    final AppLocalizations l10n = appL10n(context);
+    final String usedToken =
+        widget.isCargoUsedReliable ? '${widget.cargoUsed}' : '—';
+    final String capacityToken = '${widget.cargoCapacity}';
+    final Color cargoNumericColor = cargoHoldNumericColor(
+      used: widget.cargoUsed,
+      capacity: widget.cargoCapacity,
+      cargoNotDefined: widget.cargoNotDefined,
+      isCargoUsedReliable: widget.isCargoUsedReliable,
+    );
+    final bool cargoInteractive = !widget.cargoNotDefined;
 
     return SizedBox(
       key: GameTabBar.surfaceKey,
@@ -138,10 +153,37 @@ class GameTabBarState extends State<GameTabBar> {
                 ),
               ),
               GameTabBarCargoHoldIndicator(
+                key: _cargoHoldAnchorKey,
                 cargoHoldLabel: widget.cargoHoldLabel,
-                labelStyle: monoBody.copyWith(
-                  color: EditorialMonoclePalette.muted,
-                ),
+                labelStyle: monoBody,
+                numericColor: cargoNumericColor,
+                tooltip: cargoInteractive
+                    ? l10n.mapControls_cargoHold_tooltip(usedToken, capacityToken)
+                    : null,
+                semanticsLabel: cargoInteractive
+                    ? l10n.mapControls_cargoHold_semanticsLabel(
+                        usedToken,
+                        capacityToken,
+                      )
+                    : widget.cargoHoldLabel,
+                onTap: cargoInteractive
+                    ? () {
+                        final RenderBox? tabBarBox =
+                            context.findRenderObject() as RenderBox?;
+                        final double chromeBottomY =
+                            (tabBarBox?.localToGlobal(Offset.zero).dy ?? 0) +
+                            GameTabBar.height;
+                        showCargoHoldDetailsPopover(
+                          context: context,
+                          anchorKey: _cargoHoldAnchorKey,
+                          chromeBottomY: chromeBottomY,
+                          l10n: l10n,
+                          cargoUsed: widget.cargoUsed,
+                          cargoCapacity: widget.cargoCapacity,
+                          isCargoUsedReliable: widget.isCargoUsedReliable,
+                        );
+                      }
+                    : null,
               ),
               const SizedBox(width: GameTabBar.clusterTrailingGap),
               widget.trailing,
