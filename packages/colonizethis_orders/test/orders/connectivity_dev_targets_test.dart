@@ -5,6 +5,7 @@ import 'package:colonizethis_orders/src/orders/order_work_constants.dart';
 import 'package:colonizethis_test/test.dart';
 
 import 'support/scenario_runner.dart';
+import 'support/suggestion/connectivity_dev_extended_fixtures.dart';
 import 'support/suggestion/connectivity_dev_targets_fixtures.dart';
 import 'support/suggestion/order_suggestion_work_feedstock_priority_fixtures.dart';
 
@@ -166,5 +167,25 @@ void main() {
         input,
       );
     }),
+  ], runRunnableScenario);
+
+  runLabeledScenarioGroup('buildConnectivityDevSnapshot', [
+    rs('AC-A5 owned-land traversal only for extension distances', connectivityDevRunForeignBarrierSnapshot),
+  ], runRunnableScenario);
+
+  runLabeledScenarioGroup('build_road connectivity ordering with probe cap', [
+    rs('AC-A7 frontier tile is first accepted despite lex-smaller non-frontier', connectivityDevRunFrontierRoadLexOrder),
+  ], runRunnableScenario);
+
+  runLabeledScenarioGroup('Town-rule awareness (AC-F7)', [
+    rs('town-connected resource tile is not a frontier extension target', connectivityDevRunTownRuleFrontier),
+  ], runRunnableScenario);
+
+  runLabeledScenarioGroup('suggestWorkOrders connectivity parity (AC-F6)', [
+    rs('suggestWorkOrders applies connectivity ordering for build_improvement', connectivityDevRunSuggestionParity),
+  ], runRunnableScenario);
+
+  runLabeledScenarioGroup('suggestWorkOrders determinism (AC-F4)', [
+    rs('byte-identical across two passes', connectivityDevRunWorkOrdersDeterminism),
   ], runRunnableScenario);
 }

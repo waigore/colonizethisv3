@@ -20,8 +20,8 @@ const String ordersTestPackageRelativeDir = 'packages/colonizethis_orders/test';
 const int ordersTestSupportLocCeiling = 13950;
 
 /// Ratchet ceiling for package `test/` physical LOC.
-/// Wave-6 Slice E (#4246): connectivity dev fixtures densify 16200 → 16095.
-const int ordersTestPackageLocCeiling = 16095;
+/// Wave-6 Slice E (#4246): connectivity dev fixture densify 16200 → 15900.
+const int ordersTestPackageLocCeiling = 15900;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countOrdersTestSupportPhysicalLoc(Directory dir) {
@@ -93,13 +93,13 @@ int runCheckOrdersTestSupportLoc(
   if (packageLoc > packageCeiling) {
     logE(
       'check_orders_test_support_loc: package test/ LOC $packageLoc exceeds '
-      'ceiling $packageCeiling (wave-6 target ≤16095; Refs #4246).',
+      'ceiling $packageCeiling (wave-6 target ≤15900; Refs #4246).',
     );
     return 1;
   }
   logI(
     'check_orders_test_support_loc: package test/ LOC $packageLoc ≤ ceiling '
-    '$packageCeiling (wave-6 target ≤16095; Refs #4246).',
+    '$packageCeiling (wave-6 target ≤15900; Refs #4246).',
   );
   return 0;
 }
