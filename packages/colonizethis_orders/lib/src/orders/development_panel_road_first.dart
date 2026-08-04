@@ -11,7 +11,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'development_panel/idle_civilians.dart';
 import 'development_panel/material_affordance.dart';
-import 'order_resolution_context.dart';
+import 'development_panel_pass_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_work_constants.dart';
 import 'work_tile_candidacy/work_tile_candidacy.dart';
@@ -190,15 +190,13 @@ DevelopmentRoadFirstCandidate? selectDevelopmentRoadFirstCandidate({
   );
   if (path == null || path.length < 2) return null;
 
-  final view = buildPlayerView(game, topology, playerId);
-  final validator = buildIncrementalCandidateValidator(
+  final pass = DevelopmentPanelPassContext.fromPlayerView(
     game: game,
     topology: topology,
     playerId: playerId,
-    baseOrders: currentOrders,
+    currentOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
   );
-  final resolution = orderResolutionContextFromView(view, game);
 
   final roadCandidates = <String>[
     for (var i = path.length - 2; i >= 0; i--) path[i],
@@ -208,13 +206,13 @@ DevelopmentRoadFirstCandidate? selectDevelopmentRoadFirstCandidate({
     final validTiles = getValidWorkOrderTileKeysWithVisibility(
       game: game,
       topology: topology,
-      view: view,
+      view: pass.view,
       unitId: engineer.id,
       workTarget: kWorkTargetBuildRoad,
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
-      sharedCandidateValidator: validator,
-      resolution: resolution,
+      sharedCandidateValidator: pass.candidateValidator,
+      resolution: pass.resolution,
     );
     for (final tileKey in roadCandidates) {
       if (!validTiles.contains(tileKey)) continue;
