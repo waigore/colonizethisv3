@@ -62,18 +62,7 @@ void main() {
   group('worldMarketTurnPhaseHandler empty-turn no-op (Refs #2990 B3)', () {
     test('returns TurnPhaseStepContinue with semantically unchanged Game '
         'when no trade orders or carry-forwards exist', () {
-      final game = Game(
-        id: 'g1',
-        players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-        worldState: WorldState(
-          turnState: const TurnState(
-            phase: TurnPhase.worldMarket,
-            turnNumber: 3,
-          ),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-      );
+      final game = worldMarketEmptyTurnGame();
       final next = runWorldMarketPhasePipeline(
         game: game,
         orders: const Orders(),
