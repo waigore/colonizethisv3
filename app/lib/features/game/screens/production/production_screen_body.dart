@@ -1,7 +1,15 @@
-import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart'
+    show rankIndustryCounselRecommendations;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart'
+    show
+        economyPreviewInputs,
+        forcesFeedingForPlayer,
+        labourReadinessForPlayer,
+        previewStockpileNetDeltaByCommodityForPlayer;
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';

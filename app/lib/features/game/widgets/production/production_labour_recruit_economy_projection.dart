@@ -3,7 +3,8 @@
 // SPEC/ui/production-panel.md § Labour Controls, SPEC/game/workers-and-population.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show applyRecruitWorkerCostDeduction, canAffordRecruitWorker;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Per-tier queued recruit-worker counts for [playerId] from [currentOrders].

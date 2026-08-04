@@ -17,8 +17,10 @@ const scopedRelativeDirs = <String>[
   'app/lib/providers',
   'app/lib/features/game/screens/trade',
   'app/lib/features/game/screens/diplomacy',
+  'app/lib/features/game/screens/production',
   'app/lib/features/game/widgets/units',
   'app/lib/features/game/widgets/diplomacy',
+  'app/lib/features/game/widgets/production',
 ];
 
 const coreServicesRelativeDir = 'app/lib/core/services';

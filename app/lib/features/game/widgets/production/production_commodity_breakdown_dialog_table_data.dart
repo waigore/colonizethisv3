@@ -1,5 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show EconomyPreviewStockpilePhase;
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
