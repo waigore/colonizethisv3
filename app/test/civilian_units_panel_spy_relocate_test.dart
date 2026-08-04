@@ -1,14 +1,10 @@
 // Spy Relocate row actions and status labels (Refs #4219).
 // SPEC: SPEC/ui/civilian-units-panel.md, SPEC/ui/ux-design-decisions.md UXD-002.
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart' show kUnitTypeExplorer;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 
 import 'civilian_units_panel_test_support.dart';
 

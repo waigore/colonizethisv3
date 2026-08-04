@@ -7,7 +7,6 @@
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
     show Orders, TradeOrder, TradeOrderType, tradeOrderForPlayerCommodity;
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

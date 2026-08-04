@@ -6,9 +6,6 @@ import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core.dart';
 import 'region_map_component_render_core_overlays.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_shared_visibility.dart';
-import 'region_map_component_support.dart';
 
 extension CtRegionMapRenderCoreTiles on CtRegionMapComponent {
   void paintTiles(Canvas canvas) {

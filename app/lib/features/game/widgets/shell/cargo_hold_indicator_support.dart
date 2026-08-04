@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 
 import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_spacing.dart';
-import 'game_tab_bar.dart';
 
 /// Stable key for widget tests that open the cargo details popover.
 const Key kCargoHoldDetailsPanelKey = Key('cargo_hold_details_panel');

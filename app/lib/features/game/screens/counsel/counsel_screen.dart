@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
-import '../../../../config/constants.dart';
 import '../../../../config/routes.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../core/services/game_service/try_get_game_map_data.dart';

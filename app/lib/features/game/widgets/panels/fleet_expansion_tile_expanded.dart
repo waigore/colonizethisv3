@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../widgets/ct_spacing.dart';
 import 'tree_builders/naval_tree_builder.dart';
-import 'fleet_expansion_tile_expanded.dart';
 
 /// `HOME` chip rendered next to the Home Fleet name (Refs #2866 S8 R26).
 class HomeFleetChip extends StatelessWidget {

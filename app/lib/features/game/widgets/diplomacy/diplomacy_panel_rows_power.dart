@@ -1,4 +1,5 @@
 /// Great Power relative-strength helpers for diplomacy panel rows.
+library;
 
 import 'dart:math' as math;
 

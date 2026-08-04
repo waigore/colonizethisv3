@@ -5,6 +5,8 @@
 /// Resource icon, commodity name, sellable `(N)` headroom readout, then a
 /// fixed-width trailing column that right-aligns the coin icon and price so
 /// every row shares the same price-digit column edge.
+library;
+
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +18,7 @@ import '../../../../widgets/strict_asset_icon.dart';
 import 'trade_screen_contract_market.dart';
 
 class MarketCommodityRowHeader extends StatelessWidget {
-  const MarketCommodityRowHeader({
+  const MarketCommodityRowHeader({super.key, 
     required this.commodityId,
     required this.commodityDisplayName,
     required this.priceText,

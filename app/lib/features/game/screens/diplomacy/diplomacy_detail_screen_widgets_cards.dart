@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 /// 0.06 em). Separate from `CtSectionLabel` because card titles do not paint
 /// a bottom border on the mockup.
 class DiplomacyDetailCardTitle extends StatelessWidget {
-  const DiplomacyDetailCardTitle(this.text);
+  const DiplomacyDetailCardTitle(this.text, {super.key});
 
   final String text;
 
@@ -33,7 +33,7 @@ class DiplomacyDetailCardTitle extends StatelessWidget {
 /// Framed card with gradient background (`--surface-lite → --surface →
 /// --bg-deep`) and a 1 px `--border` outline. Mirrors mockup `.card`.
 class DiplomacyDetailCard extends StatelessWidget {
-  const DiplomacyDetailCard({required this.title, required this.child});
+  const DiplomacyDetailCard({super.key, required this.title, required this.child});
 
   final String title;
   final Widget child;

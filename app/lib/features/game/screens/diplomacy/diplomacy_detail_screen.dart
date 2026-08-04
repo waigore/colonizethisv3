@@ -4,7 +4,6 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
     show diplomaticHistoryForPair, getOverture, greatPowerPowerScore;
 import 'package:colonizethis_economy/colonizethis_economy.dart' show PurchasedTileIndex;
 import 'package:colonizethis_logic/src/turn_to_year.dart' show turnToYear;
-import 'package:colonizethis_world/colonizethis_world.dart' show Game;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +14,7 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_top_bar.dart';
-import '../../../../widgets/relation_meter.dart';
 import '../../widgets/diplomacy/diplomacy_panel.dart';
 import 'diplomacy_detail_screen_format.dart';
 import 'diplomacy_detail_screen_widgets_cards.dart';

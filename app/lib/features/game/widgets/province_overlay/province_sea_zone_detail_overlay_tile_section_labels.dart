@@ -1,4 +1,5 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
+library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;

@@ -1,5 +1,6 @@
 /// Diplomatic order submission and negotiation-mood handlers.
 /// SPEC/ui/diplomacy-panel.md.
+library;
 
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -11,7 +12,6 @@ import '../../../../config/routes.dart';
 import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import 'diplomacy_order_helpers.dart';
 import 'diplomacy_panel_order_actions_mood.dart';
-import 'diplomacy_panel_rows.dart';
 import 'diplomacy_panel_state.dart';
 
 mixin DiplomacyOrderActions

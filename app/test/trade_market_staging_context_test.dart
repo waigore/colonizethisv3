@@ -1,7 +1,5 @@
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 
 import 'package:colonizethis_app/features/game/screens/trade/trade_market_staging_context.dart';
-import 'package:colonizethis_app/features/game/screens/trade/trade_section_handlers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,7 +31,7 @@ void main() {
             capturedId = id;
             captured = true;
           },
-          onQuantityDelta: (_, __) {},
+          onQuantityDelta: (_, _) {},
         ),
         firstRightCommodityIds: const {},
       );

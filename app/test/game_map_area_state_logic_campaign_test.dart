@@ -1,4 +1,3 @@
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_test/flutter_test.dart';

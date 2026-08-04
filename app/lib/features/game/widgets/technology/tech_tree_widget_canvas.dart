@@ -6,7 +6,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'tech_tree_widget_canvas.dart';
 import 'tech_tree_widget_constants.dart';
 import 'tech_tree_widget_dialog.dart';
 import 'tech_tree_widget_nodes.dart';

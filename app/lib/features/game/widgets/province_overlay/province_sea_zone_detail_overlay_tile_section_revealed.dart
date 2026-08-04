@@ -1,4 +1,5 @@
 /// Revealed-tile body for [ProvinceSeaZoneDetailOverlay] tile section.
+library;
 
 import 'package:colonizethis_data/colonizethis_data.dart' show terrainDisplayName;
 

@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'diplomacy_panel_orders_pump_support.dart';
-import 'diplomacy_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
 import 'widget_test_assets.dart';
 

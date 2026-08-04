@@ -21,7 +21,6 @@ import 'package:widgetbook_host/catalogs/catalog.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:widgetbook/widgetbook.dart';
 import 'widgetbook_test_harness.dart';
 
 

@@ -10,8 +10,6 @@ import '../map_state/province_action_state_calculator.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
-import '../../widgets/province_overlay/province_sea_zone_detail_overlay_tile_section_labels.dart'
-    show tryParseProvinceOverlayTileCoords;
 import 'province_detail_overlay_host_support_bonus.dart';
 import 'province_detail_overlay_host_support_display.dart';
 import 'province_detail_overlay_host_support_shortcuts.dart';

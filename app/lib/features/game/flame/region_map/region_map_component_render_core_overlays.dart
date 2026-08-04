@@ -7,9 +7,6 @@ import '../caches/resource_icon_cache.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
 import 'region_map_component_render_core.dart';
-import 'region_map_component_shared_palette.dart';
-import 'region_map_component_shared_visibility.dart';
-import 'region_map_component_support.dart';
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
 
 extension CtRegionMapRenderCoreTransportFeature on CtRegionMapComponent {

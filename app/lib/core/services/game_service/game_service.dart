@@ -207,7 +207,7 @@ class GameService {
   /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
   TurnResolutionResult resumeOvertureDecisions(
     Game game,
-    List<OvertureOffer> _pendingOvertures,
+    List<OvertureOffer> pendingOvertures,
     List<OvertureDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
@@ -223,7 +223,7 @@ class GameService {
   /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
   TurnResolutionResult resumeFtpDecisions(
     Game game,
-    List<FtpOffer> _pendingFtpOffers,
+    List<FtpOffer> pendingFtpOffers,
     List<FtpDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,

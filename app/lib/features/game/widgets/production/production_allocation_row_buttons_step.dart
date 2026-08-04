@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../config/app_assets.dart';
 import 'production_allocation_repeat_timing.dart';
 import 'production_allocation_row_buttons.dart';
-import 'production_allocation_row_buttons_surface.dart';
 
 /// **+** or **−** with tap and long-press repeat per SPEC/ui/production-panel.md.
 ///

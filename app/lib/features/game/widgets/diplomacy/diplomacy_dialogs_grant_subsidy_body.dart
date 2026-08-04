@@ -1,5 +1,4 @@
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,7 @@ import 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
 import 'diplomacy_dialogs_grant_subsidy_chrome_stepper.dart';
 
 class GrantSubsidyAmountBody extends StatefulWidget {
-  const GrantSubsidyAmountBody({
+  const GrantSubsidyAmountBody({super.key, 
     required this.title,
     required this.treasury,
     required this.isSubsidy,

@@ -1,4 +1,5 @@
 /// Pending-order state for a civilian unit row. SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

@@ -1,5 +1,6 @@
 /// Army expansion tile for the military units panel.
 /// SPEC/ui/military-units-panel.md.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ import '../shared/units_entity_card.dart';
 import 'military_units_panel_support_detail_rows.dart';
 
 class MilitaryArmyExpansionTile extends StatelessWidget {
-  const MilitaryArmyExpansionTile({
+  const MilitaryArmyExpansionTile({super.key, 
     required this.block,
     required this.l10n,
     required this.stationedProvinceDisplayLabel,

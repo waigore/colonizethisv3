@@ -1,6 +1,5 @@
 
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting, VoidCallback;

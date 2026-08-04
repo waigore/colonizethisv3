@@ -1,5 +1,6 @@
 /// Status and assigned-to subtitles for civilian unit rows.
 /// SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_logic/src/civilians/spy_relocate_intel.dart'

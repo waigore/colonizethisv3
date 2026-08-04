@@ -1,8 +1,6 @@
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart'
     show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -15,7 +13,6 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart';
 import '../../../../../providers/games_provider.dart';
-import '../../train/train_dialog_chrome.dart';
 import '../shared/units_panel_shell.dart';
 import 'civilian_units_panel.dart';
 import 'civilian_units_panel_list.dart';

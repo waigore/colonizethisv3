@@ -1,5 +1,6 @@
 /// Shared types and style helpers for the province / sea-zone detail overlay
 /// de-parted cluster (Refs #4117).
+library;
 
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
@@ -51,7 +52,7 @@ Widget buildOverlaySection(String title, Widget child) {
 }
 
 class OverlayObfuscatedSection extends StatelessWidget {
-  const OverlayObfuscatedSection({required this.l10n});
+  const OverlayObfuscatedSection({super.key, required this.l10n});
 
   final AppLocalizations l10n;
 

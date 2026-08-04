@@ -1,7 +1,5 @@
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 

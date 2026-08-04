@@ -11,7 +11,7 @@ import 'app_shell_harness.dart';
 void main() {
   suppressLogsForTests();
 
-  Widget _host({
+  Widget host({
     required bool nextTurnEnabled,
     required Future<void> Function() onNextTurn,
   }) {
@@ -49,7 +49,7 @@ void main() {
   ) async {
     var pressed = false;
     await tester.pumpWidget(
-      _host(
+      host(
         nextTurnEnabled: false,
         onNextTurn: () async {
           pressed = true;

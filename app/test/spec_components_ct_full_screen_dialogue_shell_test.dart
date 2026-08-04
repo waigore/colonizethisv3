@@ -25,7 +25,6 @@ library;
 
 import 'dart:io' show File;
 
-import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _kSpecPath =

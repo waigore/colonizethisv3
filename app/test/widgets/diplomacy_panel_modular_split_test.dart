@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_body.dart';
-import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_constants.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_state.dart';
 
 /// De-parted diplomacy-panel library seam checks (Refs #4117).

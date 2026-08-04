@@ -1,4 +1,5 @@
 /// Regiment/ship detail row widgets. SPEC/ui/military-units-panel.md.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -8,7 +9,7 @@ import '../../../../../widgets/ct_spacing.dart';
 import '../../panels/tree_builders/military_tree_builder.dart';
 
 class MilitaryRegimentDetailRow extends StatelessWidget {
-  const MilitaryRegimentDetailRow({
+  const MilitaryRegimentDetailRow({super.key, 
     required this.row,
     required this.l10n,
     this.onTap,
@@ -38,7 +39,7 @@ class MilitaryRegimentDetailRow extends StatelessWidget {
 }
 
 class MilitaryShipDetailRow extends StatelessWidget {
-  const MilitaryShipDetailRow({
+  const MilitaryShipDetailRow({super.key, 
     required this.row,
     required this.l10n,
     this.onTap,
@@ -70,7 +71,7 @@ class MilitaryShipDetailRow extends StatelessWidget {
 /// `TextTheme` slots; an optional [onTap] surfaces the same tap affordance
 /// the prior `ListTile(onTap:)` provided.
 class MilitaryUnitDetailRow extends StatelessWidget {
-  const MilitaryUnitDetailRow({
+  const MilitaryUnitDetailRow({super.key, 
     required this.title,
     this.subtitle,
     this.onTap,

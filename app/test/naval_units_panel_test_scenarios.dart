@@ -9,7 +9,6 @@ import 'package:colonizethis_logic/colonizethis_logic.dart' show homeFleetIdFor;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'panel_test_fixtures.dart';
-import 'units_panel_test_shared.dart' show unitsPanelOwProvince;
 
 /// Home-fleet-only game for part1 default assertions (single Split tooltip).
 /// Refs #3656: lightweight fixture replaces procedural map generation.

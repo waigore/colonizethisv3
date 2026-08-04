@@ -1,4 +1,5 @@
 /// Political section assembly and owner/region display helpers.
+library;
 
 
 import 'package:colonizethis_models/colonizethis_models.dart';

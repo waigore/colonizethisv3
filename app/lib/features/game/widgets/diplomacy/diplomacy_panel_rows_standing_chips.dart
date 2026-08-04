@@ -1,6 +1,6 @@
 /// Standing-chip derivation for diplomacy panel rows.
+library;
 
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 

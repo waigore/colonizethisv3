@@ -1,7 +1,6 @@
 // Shared harness and pump helpers for `game_map_area_event_feed_test.dart`
 // (Refs #4146 — keeps the main suite under the 800-line app test gate).
 
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
@@ -13,7 +12,6 @@ import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/providers/map_view_provider.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
@@ -26,7 +24,7 @@ import 'map_view_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
 
 class MapAreaHost extends StatefulWidget {
-  const MapAreaHost({required this.game, required this.mapViewData});
+  const MapAreaHost({super.key, required this.game, required this.mapViewData});
 
   final Game game;
   final InitGameMapViewData mapViewData;

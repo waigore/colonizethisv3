@@ -1,4 +1,5 @@
 /// Tile-derived economic intel aggregation for province tab content.
+library;
 
 
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;

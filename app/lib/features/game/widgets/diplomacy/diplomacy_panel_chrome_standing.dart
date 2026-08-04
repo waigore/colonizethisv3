@@ -27,7 +27,7 @@ final Color diplomacyPanelAllianceBadgeBackground = oklchToColor(
 /// a row of compact treaty/economic markers. SPEC/ui/diplomacy-panel.md
 /// § Diplomatic standing chip cluster (Refs #3753 R12).
 class DiplomacyStandingChip extends StatelessWidget {
-  const DiplomacyStandingChip({
+  const DiplomacyStandingChip({super.key, 
     required this.label,
     required this.background,
     required this.foreground,
@@ -138,7 +138,7 @@ class DiplomacyStandingChipCluster extends StatelessWidget {
 /// pointer-hovered. The 4 px outer bottom margin matches `.faction-row`
 /// in [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html).
 class DiplomacyRowChrome extends StatefulWidget {
-  const DiplomacyRowChrome({required this.child});
+  const DiplomacyRowChrome({super.key, required this.child});
 
   final Widget child;
 

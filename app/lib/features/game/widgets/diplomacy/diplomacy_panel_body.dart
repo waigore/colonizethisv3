@@ -1,5 +1,6 @@
 /// Filtered faction-row list body for the diplomacy panel.
 /// SPEC/ui/diplomacy-panel.md.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
@@ -12,7 +13,7 @@ import 'diplomacy_panel_row.dart';
 import 'diplomacy_panel_rows.dart';
 
 class DiplomacyPanelBody extends StatelessWidget {
-  const DiplomacyPanelBody({
+  const DiplomacyPanelBody({super.key, 
     required this.gps,
     required this.minors,
     required this.tribes,
@@ -107,7 +108,7 @@ class DiplomacyPanelBody extends StatelessWidget {
 /// (matches the mockup `.empty` style), e.g. the Tribes section before
 /// any tribe has been contacted shows "No tribes contacted yet.".
 class DiplomacyEmptySectionPlaceholder extends StatelessWidget {
-  const DiplomacyEmptySectionPlaceholder({required this.text});
+  const DiplomacyEmptySectionPlaceholder({super.key, required this.text});
 
   final String text;
 

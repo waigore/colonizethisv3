@@ -1,5 +1,6 @@
 /// Row action buttons and cancel confirmation for civilian unit rows.
 /// SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'dart:async';
 

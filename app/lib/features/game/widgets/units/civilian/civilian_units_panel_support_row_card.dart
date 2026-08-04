@@ -1,4 +1,5 @@
 /// Civilian unit row card chrome. SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';

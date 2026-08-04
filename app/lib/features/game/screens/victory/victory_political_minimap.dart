@@ -72,7 +72,7 @@ class _VictoryPoliticalMinimapState extends State<VictoryPoliticalMinimap> {
       _inspectLabel = victoryProvinceInspectLabel(widget.game, province);
     });
     if (ownerIsGp) {
-      widget.onGreatPowerOwnerSelected?.call(ownerId!);
+      widget.onGreatPowerOwnerSelected?.call(ownerId);
     }
   }
 

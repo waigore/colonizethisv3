@@ -16,7 +16,7 @@ import 'diplomacy_panel_constants.dart';
 /// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
 /// `.f-relation .state`.
 class DiplomacyRelationStateBadge extends StatelessWidget {
-  const DiplomacyRelationStateBadge({required this.atWar});
+  const DiplomacyRelationStateBadge({super.key, required this.atWar});
 
   final bool atWar;
 

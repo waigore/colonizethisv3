@@ -8,7 +8,6 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'diplomacy_panel_rows.dart';
-import 'diplomacy_panel_rows_standing_chips.dart';
 
 int? outgoingSubsidyPercent(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {

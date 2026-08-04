@@ -1,7 +1,6 @@
 // Unit tests for Victory political minimap annotation helpers. SPEC/ui/victory-panel.md.
 
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap_annotations.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 

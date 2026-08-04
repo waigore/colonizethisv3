@@ -3,7 +3,6 @@
 // badge colors.
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../config/themes.dart' show editorialMonocleDisplayFontFamily;
@@ -18,7 +17,7 @@ import 'diplomacy_panel_rows.dart';
 /// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
 /// `.section-head`.
 class DiplomacySectionHeader extends StatelessWidget {
-  const DiplomacySectionHeader({required this.title, this.isFirst = false});
+  const DiplomacySectionHeader({super.key, required this.title, this.isFirst = false});
 
   final String title;
 
@@ -75,7 +74,7 @@ class DiplomacySectionHeader extends StatelessWidget {
 /// border-radius). All colors resolve from the canonical editorial-monocle
 /// palette — no hardcoded Material chrome.
 class DiplomacyFactionKindBadge extends StatelessWidget {
-  const DiplomacyFactionKindBadge({required this.kind});
+  const DiplomacyFactionKindBadge({super.key, required this.kind});
 
   final FactionKind kind;
 

@@ -12,7 +12,6 @@ import '../caches/resource_icon_cache.dart';
 import '../caches/town_icon_cache.dart';
 import '../tilesets/tilesets.dart';
 import 'region_map_component.dart';
-import 'region_map_component_shared_visibility.dart';
 
 /// Mutable session fields for de-parted [CtRegionMapComponent] libraries (Refs #4117).
 class CtRegionMapComponentSession {

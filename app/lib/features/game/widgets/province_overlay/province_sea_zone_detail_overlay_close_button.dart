@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// `×` glyph paints in `--muted` per
 /// SPEC/ui/province-sea-zone-detail-overlay.md § Dark-theme chrome.
 class OverlayCloseButton extends StatelessWidget {
-  const OverlayCloseButton({this.onClose});
+  const OverlayCloseButton({super.key, this.onClose});
 
   static const Key kOverlayCloseKey = Key('overlay_close');
 

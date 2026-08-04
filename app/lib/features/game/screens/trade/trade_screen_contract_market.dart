@@ -1,8 +1,8 @@
 /// Public Market-tab (and shared chrome) keys/literals for the trade screen.
 /// Row-level literals live in [TradeScreenMarketRowKeys] (private).
 /// Tests and Market UI parts use this type directly (Refs #4035 trade API collapse).
+library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';

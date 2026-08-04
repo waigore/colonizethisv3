@@ -1,4 +1,5 @@
 /// Sea-zone tab content assembly for [ProvinceSeaZoneDetailOverlay].
+library;
 
 
 import 'package:colonizethis_map/colonizethis_map.dart';

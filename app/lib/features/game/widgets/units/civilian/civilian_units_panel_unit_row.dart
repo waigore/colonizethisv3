@@ -1,4 +1,5 @@
 /// Per-unit civilian row builder. SPEC/ui/civilian-units-panel.md.
+library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 

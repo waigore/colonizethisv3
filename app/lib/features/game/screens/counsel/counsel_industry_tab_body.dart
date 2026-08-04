@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/routes.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../widgets/production/industry_counsel_l10n.dart';
@@ -49,7 +48,7 @@ class CounselIndustryTabBody extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(12),
       itemCount: recommendations.length,
-      separatorBuilder: (_, __) => CtGap.m,
+      separatorBuilder: (_, _) => CtGap.m,
       itemBuilder: (context, index) {
         final recommendation = recommendations[index];
         final highlighted =

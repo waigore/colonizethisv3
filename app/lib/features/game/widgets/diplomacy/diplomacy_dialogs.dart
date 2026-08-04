@@ -2,7 +2,6 @@
 // SPEC: SPEC/ui/grant-or-subsidy-dialog.md (DIPL20001),
 // SPEC/ui/diplomacy-panel.md.
 
-import 'package:colonizethis_world/colonizethis_world.dart' show Game;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';

@@ -1,4 +1,5 @@
 /// Tile section builder for [ProvinceSeaZoneDetailOverlay].
+library;
 
 
 import 'package:colonizethis_map/colonizethis_map.dart';

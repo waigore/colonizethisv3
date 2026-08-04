@@ -13,13 +13,12 @@
 /// per-section headings collapse and a single empty-state line keyed
 /// [emptyKey] is rendered. The totals row remains mounted regardless so
 /// widget tests can pin the affordance.
+library;
 
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_economy/colonizethis_economy.dart' show WorldMarketState;
-import 'package:colonizethis_orders/colonizethis_orders.dart' show TradeOrder;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 
@@ -181,7 +180,7 @@ class DealBookPanelStyles {
 
 
 class DealBookFilledRow extends StatelessWidget {
-  const DealBookFilledRow({
+  const DealBookFilledRow({super.key, 
     required this.rowKey,
     required this.deal,
     required this.rowStyle,
@@ -239,7 +238,7 @@ class DealBookFilledRow extends StatelessWidget {
 /// has not cleared yet so there is no per-unit price or notional —
 /// `commodity — qty N (priority P)` is the canonical readout.
 class DealBookUnfilledRow extends StatelessWidget {
-  const DealBookUnfilledRow({
+  const DealBookUnfilledRow({super.key, 
     required this.rowKey,
     required this.order,
     required this.rowStyle,
