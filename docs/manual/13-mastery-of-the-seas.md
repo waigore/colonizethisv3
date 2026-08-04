@@ -38,6 +38,8 @@ The `UNIT30001` Naval Units panel lists every fleet by region and location. Your
 
 The Home Fleet remains docked at the capital. Its merchant cargo holds are the realm’s total overseas transport and trade capacity for the turn. Split ships from it when you need a sea-going squadron; the new fleet begins at the same location and can then receive movement and mission orders.
 
+On the in-game map shell (`GAME10001`), the tab bar shows a compact **cargo** readout (`used/capacity`) beside your treasury. Tap it for a plain-language breakdown: overseas extraction load, total Home Fleet holds, and how many holds remain open for trade bids. The numbers turn a warm accent when holds are tight and red when full — a quiet warning, not a popup.
+
 ### Move a sea-going fleet
 
 1. In `UNIT30001`, select **Move** beside a sea-going fleet to open `DLG30001` **Move Fleet**.

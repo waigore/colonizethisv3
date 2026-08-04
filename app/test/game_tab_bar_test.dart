@@ -1,7 +1,10 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
-    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
+    show kCargoHoldIndicatorKey, kGameMapNextTurnButtonKey, kTreasuryIndicatorKey;
+import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicator_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,12 +22,17 @@ void main() {
     int? treasuryDelta,
     bool treasuryNotDefined = false,
     String cargoHoldLabel = '3/12',
+    int cargoUsed = 3,
+    int cargoCapacity = 12,
+    bool cargoNotDefined = false,
+    bool isCargoUsedReliable = true,
+    double width = 600,
     Widget? trailing,
   }) {
     return buildAppShell(
       child: Scaffold(
         body: SizedBox(
-          width: 600,
+          width: width,
           height: 120,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -37,10 +45,10 @@ void main() {
                 treasury: treasury,
                 treasuryDelta: treasuryDelta,
                 treasuryNotDefined: treasuryNotDefined,
-                cargoUsed: 3,
-                cargoCapacity: 12,
-                cargoNotDefined: false,
-                isCargoUsedReliable: true,
+                cargoUsed: cargoUsed,
+                cargoCapacity: cargoCapacity,
+                cargoNotDefined: cargoNotDefined,
+                isCargoUsedReliable: isCargoUsedReliable,
                 cargoHoldLabel: cargoHoldLabel,
                 trailing: trailing ?? const SizedBox(width: 32, height: 32),
               ),
@@ -162,6 +170,163 @@ void main() {
     expect(find.byKey(kCargoHoldIndicatorKey), findsOneWidget);
     expect(find.text('7/20'), findsOneWidget);
   });
+
+  testWidgets('cargo numeric text uses accent at tight threshold', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      hostFor(
+        cargoHoldLabel: '10/12',
+        cargoUsed: 10,
+        cargoCapacity: 12,
+      ),
+    );
+    await tester.pump();
+
+    final label = tester.widget<Text>(find.text('10/12'));
+    expect(label.style?.color, EditorialMonoclePalette.accent);
+  });
+
+  testWidgets('cargo numeric text uses danger when full', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      hostFor(
+        cargoHoldLabel: '12/12',
+        cargoUsed: 12,
+        cargoCapacity: 12,
+      ),
+    );
+    await tester.pump();
+
+    final label = tester.widget<Text>(find.text('12/12'));
+    expect(label.style?.color, EditorialMonoclePalette.danger);
+  });
+
+  testWidgets('cargo tooltip exposes plain-language overseas vs holds', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostFor());
+    await tester.pump();
+
+    expect(
+      find.byTooltip('Cargo: 3 overseas of 12 Home Fleet holds'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('tapping cargo opens details panel with breakdown rows', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostFor());
+    await tester.pump();
+
+    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
+    expect(find.text('Overseas extraction: 3'), findsOneWidget);
+    expect(find.text('Home Fleet holds: 12'), findsOneWidget);
+    expect(find.text('Free for trade bids: 9'), findsOneWidget);
+    expect(
+      find.textContaining('Merchant ships in your Home Fleet'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('dismiss cargo panel via close and reopen on next tap', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(hostFor());
+    await tester.pump();
+
+    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
+
+    await tester.tap(find.byKey(CargoHoldDetailsPanel.closeButtonKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(kCargoHoldDetailsPanelKey), findsNothing);
+
+    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
+    await tester.pumpAndSettle();
+    expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
+  });
+
+  testWidgets('unreliable cargo used shows em dash in panel overseas row', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      hostFor(
+        cargoHoldLabel: '—/12',
+        cargoUsed: 0,
+        cargoCapacity: 12,
+        isCargoUsedReliable: false,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(kCargoHoldIndicatorKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Overseas extraction: —'), findsOneWidget);
+    expect(find.text('Free for trade bids: —'), findsOneWidget);
+  });
+
+  testWidgets(
+    'narrow viewport: cargo panel leaves Next turn tappable',
+    (WidgetTester tester) async {
+      var nextTurnTaps = 0;
+      await tester.pumpWidget(
+        buildAppShell(
+          child: Scaffold(
+            body: SizedBox(
+              width: kMinViewportWidth,
+              height: 120,
+              child: Column(
+                children: [
+                  GameTopBar(
+                    onToggleSideMenu: () {},
+                    onPausePressed: () {},
+                    onNextTurn: () async => nextTurnTaps++,
+                    nextTurnEnabled: true,
+                    turnDisplayText: 'Turn 1',
+                    nextTurnText: 'Next turn',
+                    menuTooltip: 'Menu',
+                    pauseTooltip: 'Pause',
+                  ),
+                  GameTabBar(
+                    regionIndex: 0,
+                    onRegionIndexChanged: (_) {},
+                    oldWorldLabel: 'Old World',
+                    newWorldLabel: 'New World',
+                    treasury: 100,
+                    treasuryDelta: null,
+                    treasuryNotDefined: false,
+                    cargoUsed: 10,
+                    cargoCapacity: 12,
+                    cargoNotDefined: false,
+                    isCargoUsedReliable: true,
+                    cargoHoldLabel: '10/12',
+                    trailing: const SizedBox(width: 24, height: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byKey(kCargoHoldIndicatorKey));
+      await tester.pumpAndSettle();
+      expect(find.byKey(kCargoHoldDetailsPanelKey), findsOneWidget);
+
+      await tester.tap(find.byKey(kGameMapNextTurnButtonKey));
+      await tester.pump();
+      expect(nextTurnTaps, 1);
+    },
+  );
 
   testWidgets('negative: treasury delta does not use Material green/red', (
     WidgetTester tester,

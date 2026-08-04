@@ -3321,6 +3321,61 @@
       }
     }
   },
+  "mapControls_cargoHold_tooltip": "Cargo: {used} overseas of {capacity} Home Fleet holds",
+  "@mapControls_cargoHold_tooltip": {
+    "description": "Hover tooltip for the tab-bar cargo hold indicator.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_semanticsLabel": "Cargo hold: {used} overseas, {capacity} Home Fleet holds",
+  "@mapControls_cargoHold_semanticsLabel": {
+    "description": "Semantics label for the tab-bar cargo hold indicator.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_overseas": "Overseas extraction: {used}",
+  "@mapControls_cargoHold_details_overseas": {
+    "description": "Cargo details popover row for overseas extraction load.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_capacity": "Home Fleet holds: {capacity}",
+  "@mapControls_cargoHold_details_capacity": {
+    "description": "Cargo details popover row for Home Fleet cargo capacity.",
+    "placeholders": {
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_free": "Free for trade bids: {free}",
+  "@mapControls_cargoHold_details_free": {
+    "description": "Cargo details popover row for trade-bid headroom.",
+    "placeholders": {
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_counsel": "Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.",
+  "@mapControls_cargoHold_details_counsel": {
+    "description": "Counsel line in the cargo details popover."
+  },
   "mapControls_playersBarToggle": "Players bar",
   "@mapControls_playersBarToggle": {
     "description": "Tooltip for the in-game players bar show/hide toggle on the tab bar."
