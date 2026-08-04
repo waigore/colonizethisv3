@@ -71,40 +71,17 @@ void main() {
       () {
         const regionId = 'oldWorld';
         const localPid = 'P1';
-        final fullPid = ProvinceId.full(regionId, localPid);
-        final start = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: fullPid, regionId: regionId, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
-          ],
+        final pair = turnNewsProvinceOwnershipPair(
+          regionId: regionId,
+          localPid: localPid,
+          startTurn: 0,
+          startOwner: 'gp1',
+          endOwner: null,
         );
-        final end = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: fullPid, regionId: regionId, ownerId: null),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
-          ],
+        final r = buildTurnNewsDigestForComplete(
+          start: pair.start,
+          end: pair.end,
         );
-        final r = buildTurnNewsDigestForComplete(start: start, end: end);
         final caps = r.digest!.lines.whereType<TurnNewsProvinceCapturedLine>();
         expect(caps, isEmpty);
       },
@@ -116,39 +93,17 @@ void main() {
         const regionId = 'oldWorld';
         const localPid = 'P1';
         final fullPid = ProvinceId.full(regionId, localPid);
-        final start = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: fullPid, regionId: regionId, ownerId: 'gp1'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
-          ],
+        final pair = turnNewsProvinceOwnershipPair(
+          regionId: regionId,
+          localPid: localPid,
+          startTurn: 0,
+          startOwner: 'gp1',
+          endOwner: 'gp2',
         );
-        final end = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: fullPid, regionId: regionId, ownerId: 'gp2'),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-            Player(id: 'gp2', displayName: 'B', isHuman: false, treasury: 0),
-          ],
+        final r = buildTurnNewsDigestForComplete(
+          start: pair.start,
+          end: pair.end,
         );
-        final r = buildTurnNewsDigestForComplete(start: start, end: end);
         final caps = r.digest!.lines.whereType<TurnNewsProvinceCapturedLine>();
         expect(caps, hasLength(1));
         expect(caps.single.provinceId, fullPid);
@@ -173,43 +128,11 @@ void main() {
     test(
       'Given overture stage advances When build Then overture line sorted',
       () {
-        final start = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-          ],
-          overtureStates: const [
-            OvertureState(
-              gpId: 'gp1',
-              targetId: 'm1',
-              stage: OvertureStage.none,
-            ),
-          ],
+        final pair = turnNewsOvertureAdvancePair();
+        final r = buildTurnNewsDigestForComplete(
+          start: pair.start,
+          end: pair.end,
         );
-        final end = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-          ],
-          overtureStates: const [
-            OvertureState(
-              gpId: 'gp1',
-              targetId: 'm1',
-              stage: OvertureStage.tradeConsulate,
-            ),
-          ],
-        );
-        final r = buildTurnNewsDigestForComplete(start: start, end: end);
         final ov = r.digest!.lines.whereType<TurnNewsOvertureAdvancedLine>();
         expect(ov, hasLength(1));
         expect(ov.single.offererGpId, 'gp1');
@@ -224,37 +147,11 @@ void main() {
         const regionId = 'oldWorld';
         const localSea = 'seaA';
         final fullSea = ProvinceId.full(regionId, localSea);
-        final fleet = Fleet(
-          id: 'fl1',
-          ownerId: 'gp1',
-          regionId: regionId,
-          seaZoneId: localSea,
-          ships: const [ShipInstance(id: 'ship_1', typeId: 'carrack')],
+        final pair = turnNewsSeaZoneFleetPair();
+        final r = buildTurnNewsDigestForComplete(
+          start: pair.start,
+          end: pair.end,
         );
-        final start = Game(
-          id: 'g',
-          worldState: const WorldState(
-            turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(),
-            newWorld: RegionData(),
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-          ],
-        );
-        final end = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-            fleets: [fleet],
-          ),
-          players: const [
-            Player(id: 'gp1', displayName: 'A', isHuman: true, treasury: 0),
-          ],
-        );
-        final r = buildTurnNewsDigestForComplete(start: start, end: end);
         expect(
           r.game.worldState.newsDigestSeaZoneFleetDoneIds,
           contains(fullSea),
