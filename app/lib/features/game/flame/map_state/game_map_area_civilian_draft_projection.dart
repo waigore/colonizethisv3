@@ -4,7 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-
+import 'game_map_area_draft_projection_shared.dart';
 
 /// Civilian-marker draft projection for the human player.
 ///
@@ -173,26 +173,9 @@ class _ProjectedCivilianUnit {
 }
 
 RegionMapViewData _regionWithEmptyCivilianMarkers(RegionMapViewData region) {
-  return RegionMapViewData(
-    regionId: region.regionId,
-    width: region.width,
-    height: region.height,
-    cellSize: region.cellSize,
-    cells: region.cells,
-    capitalMarkers: region.capitalMarkers,
-    portMarkers: region.portMarkers,
-    factionColors: region.factionColors,
-    greatPowerFactionIds: region.greatPowerFactionIds,
-    terrainColors: region.terrainColors,
-    unitMarkers: region.unitMarkers,
+  return GameMapAreaDraftProjectionShared.copyRegionMapViewDataMarkerLayers(
+    region: region,
     civilianTileMarkers: const [],
-    fleetTileMarkers: region.fleetTileMarkers,
-    warpMarkers: region.warpMarkers,
-    townMarkers: region.townMarkers,
-    provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
-    provincePoliticalOwnerByPrefixedProvinceId:
-        region.provincePoliticalOwnerByPrefixedProvinceId,
-    seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
   );
 }
 
@@ -244,13 +227,9 @@ List<CivilianTileMarkerView> _buildProjectedCivilianMarkers({
     );
   }
 
-  projectedMarkers.sort((a, b) {
-    final yc = a.y.compareTo(b.y);
-    if (yc != 0) return yc;
-    final xc = a.x.compareTo(b.x);
-    if (xc != 0) return xc;
-    return a.tileKey.compareTo(b.tileKey);
-  });
+  GameMapAreaDraftProjectionShared.sortCivilianTileMarkersByMapPosition(
+    projectedMarkers,
+  );
   return projectedMarkers;
 }
 
@@ -258,25 +237,8 @@ RegionMapViewData _regionWithProjectedCivilianMarkers({
   required RegionMapViewData region,
   required List<CivilianTileMarkerView> projectedMarkers,
 }) {
-  return RegionMapViewData(
-    regionId: region.regionId,
-    width: region.width,
-    height: region.height,
-    cellSize: region.cellSize,
-    cells: region.cells,
-    capitalMarkers: region.capitalMarkers,
-    portMarkers: region.portMarkers,
-    factionColors: region.factionColors,
-    greatPowerFactionIds: region.greatPowerFactionIds,
-    terrainColors: region.terrainColors,
-    unitMarkers: region.unitMarkers,
+  return GameMapAreaDraftProjectionShared.copyRegionMapViewDataMarkerLayers(
+    region: region,
     civilianTileMarkers: projectedMarkers,
-    fleetTileMarkers: region.fleetTileMarkers,
-    warpMarkers: region.warpMarkers,
-    townMarkers: region.townMarkers,
-    provinceUnitPresenceByProvinceId: region.provinceUnitPresenceByProvinceId,
-    provincePoliticalOwnerByPrefixedProvinceId:
-        region.provincePoliticalOwnerByPrefixedProvinceId,
-    seaZoneDisplayNameByPrefixedId: region.seaZoneDisplayNameByPrefixedId,
   );
 }

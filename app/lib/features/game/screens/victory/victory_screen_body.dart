@@ -1,5 +1,6 @@
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show pickUniqueGreatPowerLeaderByPowerScore;
 import 'package:colonizethis_map/colonizethis_map.dart'
     show factionOwnershipColorMapForOldWorld;
 import 'package:colonizethis_models/colonizethis_models.dart';

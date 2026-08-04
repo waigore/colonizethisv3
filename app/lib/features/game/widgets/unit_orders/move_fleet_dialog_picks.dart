@@ -1,6 +1,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../../flame/map_state/map_location_resolver.dart';
 import '../province_overlay/sea_zone_name_resolver.dart';

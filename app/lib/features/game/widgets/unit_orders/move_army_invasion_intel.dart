@@ -1,9 +1,9 @@
 // Fog-respecting invasion intel for DLG20001. SPEC/ui/move-army-dialog.md (#4216).
 
 import 'package:colonizethis_data/colonizethis_data.dart'
-    show canUnitInitiateCombat, kRegionNewWorld;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+    show canUnitInitiateCombat;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 enum MoveArmyInvasionIntelLevel { unknown, full }
 
