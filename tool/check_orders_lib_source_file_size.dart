@@ -1,5 +1,6 @@
-// Wave 6 (#4246) split validation modules and ratcheted ceiling to 350 physical
-// lines; shrink-only grandfather cleared after Slice A.
+// Wave 6 (#4246) split validation, suggestion, and application modules and
+// ratcheted ceiling to 350 physical lines; shrink-only grandfather cleared after
+// Slice C.
 import 'dart:convert';
 import 'dart:io';
 
@@ -12,12 +13,9 @@ const int ordersLibSourceFileSizeCeiling = 350;
 
 const String _ordersLibRelativePath = 'packages/colonizethis_orders/lib';
 
-/// Shrink-only allowlist for residual offenders above the wave-6 ceiling until
-/// Slice C splits (Refs #4246).
-const List<String> ordersLibSourceFileSizeGrandfathered = <String>[
-  'packages/colonizethis_orders/lib/src/orders/orders_application_completed_work.dart',
-  'packages/colonizethis_orders/lib/src/orders/order_suggestion_army_move.dart',
-];
+/// Shrink-only allowlist for residual offenders above the wave-6 ceiling.
+/// Cleared after Slice C (#4246).
+const List<String> ordersLibSourceFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
