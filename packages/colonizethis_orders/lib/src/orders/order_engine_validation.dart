@@ -18,6 +18,10 @@ import 'order_effects_projector.dart';
 import 'order_resolution_context.dart';
 import 'order_validation_result_append.dart';
 import 'order_validator_factory.dart';
+import 'order_engine_validation_phases.dart';
+import 'order_engine_validation_state.dart';
+
+export 'order_engine_validation_state.dart';
 
 /// Canonical, declarative per-category validation phase plan: the phase [name]
 /// plus whether the validator bundle is rebuilt **before** the phase runs.
@@ -71,25 +75,6 @@ void _runResourceLedgerPhase<T>(
     (o, prev) => validate(v, o, prev),
   );
   carryForwardLedgers(v, state);
-}
-
-/// Mutable state threaded through [runOrderValidationPhases].
-/// Holds the running rejected flag, treasury, stockpile, worker pool, and
-/// the accumulated [OrderValidationResult] list. Existing only inside
-/// [OrderEngine.validatePlayerOrdersWithContext]'s call stack.
-class OrderValidationRunState {
-  OrderValidationRunState({
-    required this.results,
-    required this.stockpile,
-    required this.treasury,
-    required this.workerPool,
-  });
-
-  final List<OrderValidationResult> results;
-  bool rejected = false;
-  Stockpile stockpile;
-  int treasury;
-  WorkerPool workerPool;
 }
 
 /// Build and run the per-category validation phases for one player.
@@ -160,7 +145,7 @@ void runOrderValidationPhases({
   // (SPEC/game/workers-and-population.md § Peasant reservation;
   // SPEC/program/turn-resolution-phase-details.md § Build / work).
   final phaseRuns = <void Function(OrderValidators v)>[
-    (v) => _runMovePhase(
+    (v) => runMoveValidationPhase(
       v,
       state,
       moves,
@@ -171,7 +156,7 @@ void runOrderValidationPhases({
       topology,
       factionMembership,
     ),
-    (v) => _runArmyMovePhase(
+    (v) => runArmyMoveValidationPhase(
       v,
       state,
       armyMoves,
@@ -216,9 +201,9 @@ void runOrderValidationPhases({
         st.treasury = vv.workValidator.treasury;
       },
     ),
-    (v) => _runDiplomaticPhase(v, state, diplomatic),
-    (v) => _runNavalPhase(v, state, navals, missions),
-    (v) => _runTradeOrderPhase(
+    (v) => runDiplomaticValidationPhase(v, state, diplomatic),
+    (v) => runNavalValidationPhase(v, state, navals, missions),
+    (v) => runTradeOrderValidationPhase(
       state,
       game,
       playerId,
@@ -241,164 +226,5 @@ void runOrderValidationPhases({
       validators = newValidatorBundle();
     }
     phaseRuns[i](validators);
-  }
-}
-
-void _runMovePhase(
-  OrderValidators v,
-  OrderValidationRunState state,
-  List<MoveOrder> moves,
-  Game game,
-  String playerId,
-  OrderResolutionContext resolution,
-  List<DiplomaticOrder> diplomatic,
-  MapTopology topology,
-  DiplomacyFactionMembership factionMembership,
-) {
-  // [resolution] is the per-pass snapshot built once in
-  // [validatePlayerOrdersWithContext]; the per-move
-  // [MoveValidator.validate] call reuses it directly so probes do not
-  // rebuild equivalent `view` / `unitsById` maps (Refs #2836 AC 3;
-  // SPEC/program/logic-validator-units-params.md).
-  state.rejected = appendValidationResults(
-    state.results,
-    moves,
-    state.rejected,
-    (o, prev) => v.moveValidator.validate(
-      o,
-      game,
-      playerId,
-      resolution,
-      diplomatic,
-      topology,
-      previousRejected: prev,
-      factionMembership: factionMembership,
-    ),
-  );
-}
-
-void _runArmyMovePhase(
-  OrderValidators v,
-  OrderValidationRunState state,
-  List<ArmyMoveOrder> armyMoves,
-  Game game,
-  String playerId,
-  List<DiplomaticOrder> diplomatic,
-  PlayerView view,
-  MapTopology topology,
-  Map<String, Army> armiesById,
-  DiplomacyFactionMembership factionMembership,
-) {
-  state.rejected = appendValidationResults(
-    state.results,
-    armyMoves,
-    state.rejected,
-    (o, prev) => v.armyMoveValidator.validate(
-      o,
-      game,
-      playerId,
-      diplomatic,
-      view,
-      topology,
-      previousRejected: prev,
-      armiesById: armiesById,
-      factionMembership: factionMembership,
-    ),
-  );
-}
-
-void _runDiplomaticPhase(
-  OrderValidators v,
-  OrderValidationRunState state,
-  List<DiplomaticOrder> diplomatic,
-) {
-  final afterDiplomatic =
-      appendValidationResultsWithState<DiplomaticOrder, int>(
-        state.results,
-        diplomatic,
-        state.rejected,
-        state.treasury,
-        (o, prev) {
-          final r = v.diplomaticValidator.validate(o, previousRejected: prev);
-          return (result: r.result, state: r.treasury);
-        },
-      );
-  state.rejected = afterDiplomatic.rejected;
-  state.treasury = afterDiplomatic.state;
-}
-
-void _runNavalPhase(
-  OrderValidators v,
-  OrderValidationRunState state,
-  List<NavalMoveOrder> navals,
-  List<NavalMissionOrder> missions,
-) {
-  state.rejected = appendValidationResults(
-    state.results,
-    navals,
-    state.rejected,
-    (o, prev) => v.navalValidator.validateNavalMove(o, previousRejected: prev),
-  );
-  state.rejected = appendValidationResults(
-    state.results,
-    missions,
-    state.rejected,
-    (o, prev) =>
-        v.navalValidator.validateNavalMission(o, previousRejected: prev),
-  );
-}
-
-void _runTradeOrderPhase(
-  OrderValidationRunState state,
-  Game game,
-  String playerId,
-  List<TradeOrder> tradeOrders,
-  MapTopology topology,
-  Orders stagedOrders,
-  Map<String, TileMapResult>? tileMapByRegion,
-  OrderEffectsProjector? projector,
-) {
-  if (tradeOrders.isEmpty) return;
-  if (state.rejected) {
-    for (var i = 0; i < tradeOrders.length; i++) {
-      state.results.add(previousInvalidOrderResult);
-    }
-    return;
-  }
-  // The projected non-bid treasury delta is a turn-layer dry-run
-  // (`projectOrderEffects` calls `resolveTurnForGame`) that lives in the neutral
-  // `lib/src/projections/` core module — above the `orders` domain. The engine
-  // therefore receives it as an injected [OrderEffectsProjector] (Refs #3290
-  // C2) and hands the resulting delta to the (economy-local) context builder,
-  // keeping both `orders` free of any `projections`/`turn` import and `economy`
-  // free of any `orders`/`turn` import per
-  // `SPEC/program/logic-package-split-phase0.md`.
-  if (projector == null) {
-    throw StateError(
-      'OrderEngine trade-order validation requires an injected '
-      'OrderEffectsProjector; construct OrderEngine(projector: '
-      'projectOrderEffects).',
-    );
-  }
-  final projected = projector(
-    game: game,
-    orders: stagedOrders,
-    topology: topology,
-    tileMapByRegion: tileMapByRegion ?? const {},
-    playerId: playerId,
-  );
-  final context = tradeOrderValidationContextFromGame(
-    game,
-    playerId,
-    stagedOrders: stagedOrders,
-    projectedTreasuryDelta: projected.treasuryDelta ?? 0,
-  );
-  final tradeResults = TradeOrderValidator.validate(
-    context: context,
-    proposedOrders: tradeOrders,
-  );
-  state.results.addAll(tradeResults);
-  if (tradeResults.any((r) => !r.isAccepted)) {
-    state.rejected = true;
   }
 }

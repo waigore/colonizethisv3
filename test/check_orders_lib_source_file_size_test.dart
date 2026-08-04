@@ -13,7 +13,7 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckOrdersLibSourceFileSize', () {
-    test('passes on current repo tree under wave-5 ceiling', () {
+    test('passes on current repo tree under wave-6 ceiling', () {
       expect(runCheckOrdersLibSourceFileSize('.'), 0);
     });
 
@@ -38,7 +38,7 @@ void main() {
       expect(errors.join('\n'), contains('fat.dart'));
     });
 
-    test('ignores generated files and grandfathered hot files', () {
+    test('ignores generated files and shrink-only grandfather entries', () {
       final root = Directory.systemTemp.createTempSync('orders_src_size_gen');
       addTearDown(() => root.deleteSync(recursive: true));
       _writeFile(
@@ -48,7 +48,7 @@ void main() {
       );
       _writeFile(
         root,
-        'packages/colonizethis_orders/lib/src/orders/validators/work_order_validator.dart',
+        'packages/colonizethis_orders/lib/src/orders/grandfathered.dart',
         List.generate(12, (i) => '// grandfathered $i').join('\n'),
       );
       _writeFile(
@@ -62,7 +62,7 @@ void main() {
         root.path,
         ceiling: 10,
         grandfatheredPaths: const [
-          'packages/colonizethis_orders/lib/src/orders/validators/work_order_validator.dart',
+          'packages/colonizethis_orders/lib/src/orders/grandfathered.dart',
         ],
         info: logs.add,
         err: logs.add,
