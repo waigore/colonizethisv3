@@ -17,7 +17,6 @@ const String _ordersLibRelativePath = 'packages/colonizethis_orders/lib';
 const List<String> ordersLibSourceFileSizeGrandfathered = <String>[
   'packages/colonizethis_orders/lib/src/orders/orders_application_completed_work.dart',
   'packages/colonizethis_orders/lib/src/orders/order_suggestion_army_move.dart',
-  'packages/colonizethis_orders/lib/src/orders/order_suggestion_context.dart',
 ];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
