@@ -1932,6 +1932,24 @@ abstract class AppLocalizations {
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
 
+  /// Hover tooltip for the tab-bar cargo hold indicator.
+  String mapControls_cargoHold_tooltip(String used, String capacity);
+
+  /// Semantics label for the tab-bar cargo hold indicator.
+  String mapControls_cargoHold_semanticsLabel(String used, String capacity);
+
+  /// Cargo details popover row for overseas extraction load.
+  String mapControls_cargoHold_details_overseas(String used);
+
+  /// Cargo details popover row for Home Fleet cargo capacity.
+  String mapControls_cargoHold_details_capacity(String capacity);
+
+  /// Cargo details popover row for trade-bid headroom.
+  String mapControls_cargoHold_details_free(String free);
+
+  /// Counsel line in the cargo details popover.
+  String get mapControls_cargoHold_details_counsel;
+
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;
 
