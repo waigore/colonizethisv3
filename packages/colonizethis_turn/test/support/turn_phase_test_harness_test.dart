@@ -1,8 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/src/turn/phases/riches_to_treasury_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 import 'turn_phase_test_harness.dart';
 

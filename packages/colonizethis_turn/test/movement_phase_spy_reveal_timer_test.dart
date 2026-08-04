@@ -1,7 +1,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_turn/src/turn/phases/movement_phase.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 /// Spy fog is immediate at end-of-turn when no spy remains (Refs #3834 R3).
 /// Movement no longer arms spyRevealTurnsByPlayer timers.
