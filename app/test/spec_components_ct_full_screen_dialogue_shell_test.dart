@@ -25,6 +25,7 @@ library;
 
 import 'dart:io' show File;
 
+import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
 const String _kSpecPath =
@@ -34,6 +35,8 @@ const String _kComponentsReadmePath = '../SPEC/ui/components/README.md';
 String _readSpec() => File(_kSpecPath).readAsStringSync();
 
 void main() {
+  suppressLogsForTests();
+
   group(
     'SPEC/ui/components/ct-full-screen-dialogue-shell.md (#2914 S9)',
     () {
