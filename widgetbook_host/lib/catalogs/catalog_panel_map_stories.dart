@@ -74,6 +74,30 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Standalone — tile Build road enabled',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: true,
+          buildRoadActionEnabled: true,
+          buildRoadActionHasEngineerUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build road disabled',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: true,
+          buildRoadActionEnabled: false,
+          buildRoadActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build road hidden',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: false,
+          buildRoadActionEnabled: false,
+          buildRoadActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
           final game = demoGameForOverlay;
@@ -183,6 +207,33 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
     ],
   ),
 ];
+
+/// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
+Widget _provinceOverlayBuildRoadStory({
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showBuildRoadActionIcon: showBuildRoadActionIcon,
+      buildRoadActionEnabled: buildRoadActionEnabled,
+      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+      onBuildRoadTap: () {},
+      onClose: () {},
+    ),
+  );
+}
 
 /// Production panel story with `ProviderScope` + live Breakdown dialog
 /// wired into the same `previewStockpileNetDeltaByCommodityForPlayer`
