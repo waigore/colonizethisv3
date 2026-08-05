@@ -4,8 +4,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'package:colonizethis_world/src/world/connectivity_tile_helpers.dart';
-
 import 'order_suggestion_pass_context.dart';
 
 /// Owned-land tile graph primitives shared by connectivity dev snapshot and
