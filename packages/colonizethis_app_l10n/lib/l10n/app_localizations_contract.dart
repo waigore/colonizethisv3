@@ -420,6 +420,27 @@ abstract class AppLocalizations {
     String intervening,
   );
 
+  /// Plain situation strip on the intervention choice picker (Refs #4267).
+  String game_intervention_choiceSituation(String aggressor, String defender);
+
+  /// Muted hold-reason line when the intervening GP has an Embassy with the defender.
+  String get game_intervention_holdReasonEmbassy;
+
+  /// Muted hold-reason line when the intervening GP owns purchased land with the defender.
+  String get game_intervention_holdReasonPurchasedLand;
+
+  /// Muted hold-reason line when both Embassy and purchased land apply.
+  String get game_intervention_holdReasonEmbassyAndPurchasedLand;
+
+  /// First-order effect for Intervene on the choice picker.
+  String game_intervention_effectIntervene(String aggressor, String defender);
+
+  /// First-order effect for Do naught on the choice picker.
+  String game_intervention_effectDoNothing(String aggressor, String defender);
+
+  /// First-order effect for Diplomatic protest on the choice picker.
+  String game_intervention_effectProtest(String aggressor, String defender);
+
   /// Button: military intervention on behalf of the defender.
   String get game_intervention_intervene;
 

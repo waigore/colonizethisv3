@@ -26,7 +26,7 @@ Relations are shown as Peace or War and a descriptive relation meter rather than
 
 When a human-controlled Great Power must answer an overture, `OVL30001` **Overture dialogue overlay** pauses resolution until every offer is accepted or rejected. A formal ally called to defend against a declaration of war likewise pauses resolution at `OVL40001` **Call to arms dialogue overlay** until you choose Join or Refuse.
 
-If another Great Power declares war on a Minor Nation or Tribe in which you hold an Embassy or purchased land, `OVL50001` **Pending intervention overlay** asks you to Intervene, Do naught, or make a Diplomatic protest. Intervening puts you at war with the aggressor; doing nothing abandons your overtures with the attacked faction; protest keeps peace but harms relations with the aggressor.
+If another Great Power declares war on a Minor Nation or Tribe in which you hold an Embassy or purchased land, `OVL50001` **Pending intervention overlay** asks you to Intervene, Do naught, or make a Diplomatic protest. Before you choose, the overlay states who declared war on whom, why you were prompted (Embassy and/or purchased land), and plain **Effect** lines under each option summarizing war, overture loss, and relation penalties. Intervening puts you at war with the aggressor; doing nothing abandons your overtures with the attacked faction while purchased land remains; protest keeps peace but harms relations with the aggressor.
 
 ## Counsel
 
