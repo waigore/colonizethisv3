@@ -7,6 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../order_work_constants.dart';
+import '../province_tile_lookup.dart';
 import '../validators/work_order_cost_calculator.dart';
 
 /// Effective stockpile after deducting pending material work orders for
@@ -33,10 +34,7 @@ Stockpile effectiveStockpileAfterPendingDevelopmentMaterialWork({
     if (order.targetTileKey.isEmpty) continue;
     if (!isWorkOrderTargetAllowedForUnitType(unit.type, order.target)) continue;
 
-    final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
-    final province = provinceId == null
-        ? null
-        : game.worldState.tryGetProvince(provinceId);
+    final province = tryGetProvinceAtTileKey(game.worldState, order.targetTileKey);
     final cost = WorkOrderCostCalculator(game, playerId: playerId).calculateCost(
       order.target,
       order.targetTileKey,
@@ -69,10 +67,7 @@ bool canAffordDevelopmentWorkOrder({
     playerId: playerId,
     currentOrders: currentOrders,
   );
-  final provinceId = Unit.provinceIdFromTileKey(targetTileKey);
-  final province = provinceId == null
-      ? null
-      : game.worldState.tryGetProvince(provinceId);
+  final province = tryGetProvinceAtTileKey(game.worldState, targetTileKey);
   final cost = WorkOrderCostCalculator(game, playerId: playerId).calculateCost(
     workTarget,
     targetTileKey,
