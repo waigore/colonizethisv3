@@ -19,6 +19,18 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildRoadTap,
 });
 
+VoidCallback? _provinceDetailShortcutTap({
+  required bool enabled,
+  required bool Function() revalidateEnabled,
+  required void Function() emit,
+}) {
+  if (!enabled) return null;
+  return () {
+    if (!revalidateEnabled()) return;
+    emit();
+  };
+}
+
 /// Builds the explore / prospect / build-improvement shortcut callbacks shared
 /// by both province-detail overlay hosts.
 ///
@@ -57,101 +69,74 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   }
   final topology = mapData?.combinedTopology;
 
-  VoidCallback? onExplore;
-  if (exploreEnabled) {
-    onExplore = () {
-      final revalidated = GameMapAreaStateLogic.provinceExploreActionState(
+  return (
+    onExploreWithExplorerTap: _provinceDetailShortcutTap(
+      enabled: exploreEnabled,
+      revalidateEnabled: () => GameMapAreaStateLogic.provinceExploreActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
         selectedRegion: region,
         workTargetSelectionCache: workTargetSelectionCache,
-      );
-      if (!revalidated.enabled) {
-        return;
-      }
-      bus.emit(
+      ).enabled,
+      emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           explorerOnly: true,
           exploreShortcutTargetTileKey: tileKey,
         ),
-      );
-    };
-  }
-
-  VoidCallback? onProspect;
-  if (prospectEnabled) {
-    onProspect = () {
-      final revalidated = GameMapAreaStateLogic.provinceProspectActionState(
-        game: game,
-        humanPlayerId: humanPlayerId,
-        selectedTileKey: tileKey,
-        playerView: playerView,
-        topology: topology,
-        currentOrders: draftOrders,
-        tileMapByRegion: mapData?.tileMapByRegion,
-      );
-      if (!revalidated.enabled) {
-        return;
-      }
-      bus.emit(
+      ),
+    ),
+    onProspectWithExplorerTap: _provinceDetailShortcutTap(
+      enabled: prospectEnabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogic.provinceProspectActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            topology: topology,
+            currentOrders: draftOrders,
+            tileMapByRegion: mapData?.tileMapByRegion,
+          ).enabled,
+      emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           explorerOnly: true,
           prospectShortcutTargetTileKey: tileKey,
         ),
-      );
-    };
-  }
-
-  VoidCallback? onBuildImprovement;
-  if (buildImprovementEnabled) {
-    onBuildImprovement = () {
-      final revalidated =
+      ),
+    ),
+    onBuildImprovementTap: _provinceDetailShortcutTap(
+      enabled: buildImprovementEnabled,
+      revalidateEnabled: () =>
           GameMapAreaStateLogic.provinceBuildImprovementActionState(
             game: game,
             humanPlayerId: humanPlayerId,
             selectedTileKey: tileKey,
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
-          );
-      if (!revalidated.enabled) {
-        return;
-      }
-      bus.emit(
+          ).enabled,
+      emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           builderOnly: true,
           buildImprovementShortcutTargetTileKey: tileKey,
         ),
-      );
-    };
-  }
-
-  VoidCallback? onBuildRoad;
-  if (buildRoadEnabled) {
-    onBuildRoad = () {
-      final revalidated = GameMapAreaStateLogic.provinceBuildRoadActionState(
+      ),
+    ),
+    onBuildRoadTap: _provinceDetailShortcutTap(
+      enabled: buildRoadEnabled,
+      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildRoadActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: tileKey,
         playerView: playerView,
         workTargetSelectionCache: workTargetSelectionCache,
-      );
-      if (!revalidated.enabled) {
-        return;
-      }
-      bus.emit(
+      ).enabled,
+      emit: () => bus.emit(
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
           buildRoadShortcutTargetTileKey: tileKey,
         ),
-      );
-    };
-  }
-
-  return (
-    onExploreWithExplorerTap: onExplore,
-    onProspectWithExplorerTap: onProspect,
-    onBuildImprovementTap: onBuildImprovement,
-    onBuildRoadTap: onBuildRoad,
+      ),
+    ),
   );
 }
