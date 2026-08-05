@@ -61,7 +61,8 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 
 ## Widgetbook
 
-- **Use case:** `InterventionDialogueOverlay` with `skipIntroForTest: true`, one synthetic prompt, placeholder `Game` with matching player/minor ids, dark colonial theme.
+- **Use case:** `InterventionDialogueOverlay` with `skipIntroForTest: true`, one synthetic prompt, placeholder `Game` with matching player/minor ids and Embassy overture, dark colonial theme.
+- **Use case:** `Choice picker — Effects (#4267)` — static preview of the choice-picker phase with situation strip, Embassy hold reason, and per-choice Effect lines under editorial-monocle chrome.
 
 ---
 
