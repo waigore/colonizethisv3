@@ -379,6 +379,7 @@ class DiplomacyActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = appL10n(context);
     final label = isPending ? 'Cancel' : diplomacyActionLabel(order);
     final ThemeData theme = Theme.of(context);
     final TextStyle labelStyle =
@@ -409,7 +410,7 @@ class DiplomacyActionButton extends StatelessWidget {
             fontSize: kDiplomacyActionRejectionReasonFontSize,
           );
       return Semantics(
-        label: '$label. $reason',
+        label: l10n.diplomacy_actionRejection_semanticsLabel(label, reason),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

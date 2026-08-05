@@ -51,6 +51,11 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   String get diplomacy_panel_fewerActions => 'Fewer actions';
 
   @override
+  String diplomacy_actionRejection_semanticsLabel(String action, String reason) {
+    return '$action. $reason';
+  }
+
+  @override
   String production_commodityStock(String name, int qty, String change) {
     return '$name: $qty$change';
   }
