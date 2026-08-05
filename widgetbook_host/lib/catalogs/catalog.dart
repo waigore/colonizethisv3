@@ -160,6 +160,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
 part 'catalog_panels_generals.dart';
+part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
