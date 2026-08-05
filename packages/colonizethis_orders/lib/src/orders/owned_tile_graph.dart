@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'package:colonizethis_world/src/world/connectivity_tile_helpers.dart';
+
 import 'order_suggestion_pass_context.dart';
 
 /// Owned-land tile graph primitives shared by connectivity dev snapshot and
@@ -160,6 +162,33 @@ Map<String, int> extensionDistancesOverOwnedLand({
     }
   }
   return distances;
+}
+
+/// True when [tileKey] is 4-adjacent to any tile with transport level > 0
+/// (road, rail, or port). Used for `build_road` frontier extension tiles where
+/// logical connectivity may include road-level-0 tiles reached from the capital.
+bool isTileAdjacentToRoadNetwork({
+  required String tileKey,
+  required WorldState worldState,
+  required Map<String, (String, String)> portTileToProvinceSeaZone,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Set<String> landProvinceIds,
+}) {
+  for (final neighbor in cardinalLandNeighborTileKeys(
+    tileKey: tileKey,
+    tileMapByRegion: tileMapByRegion,
+    landProvinceIds: landProvinceIds,
+  )) {
+    if (transportLevelAtTile(
+          worldState,
+          neighbor,
+          portTileToProvinceSeaZone,
+        ) >
+        0) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// True when [tileKey] is 4-adjacent to any tile in [connected].
