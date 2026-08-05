@@ -86,7 +86,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_choice_buttons.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
@@ -158,6 +160,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
 part 'catalog_panels_generals.dart';
+part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';

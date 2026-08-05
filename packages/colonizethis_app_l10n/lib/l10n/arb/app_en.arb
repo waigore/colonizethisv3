@@ -730,7 +730,7 @@
   },
   "game_intervention_situation": "{aggressor} against {defender}. Thou speakest for {intervening}.",
   "@game_intervention_situation": {
-    "description": "One-line summary of the war and which GP the player decides for.",
+    "description": "Legacy Yarn-era summary; choice picker uses game_intervention_choiceSituation instead.",
     "placeholders": {
       "aggressor": {
         "type": "String"
@@ -739,6 +739,66 @@
         "type": "String"
       },
       "intervening": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_choiceSituation": "{aggressor} declared war on {defender}.",
+  "@game_intervention_choiceSituation": {
+    "description": "Plain situation strip on the intervention choice picker (Refs #4267).",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_holdReasonEmbassy": "You hold: Embassy",
+  "@game_intervention_holdReasonEmbassy": {
+    "description": "Muted hold-reason line when the intervening GP has an Embassy with the defender."
+  },
+  "game_intervention_holdReasonPurchasedLand": "You hold: purchased land",
+  "@game_intervention_holdReasonPurchasedLand": {
+    "description": "Muted hold-reason line when the intervening GP owns purchased land with the defender."
+  },
+  "game_intervention_holdReasonEmbassyAndPurchasedLand": "You hold: Embassy and purchased land",
+  "@game_intervention_holdReasonEmbassyAndPurchasedLand": {
+    "description": "Muted hold-reason line when both Embassy and purchased land apply."
+  },
+  "game_intervention_effectIntervene": "Effect: Enter war with {aggressor} this turn. Embassy with {defender} stays.",
+  "@game_intervention_effectIntervene": {
+    "description": "First-order effect for Intervene on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_effectDoNothing": "Effect: Stay at peace with {aggressor}. Lose Embassy and all overtures with {defender}. Purchased land remains until normal conquest rules apply.",
+  "@game_intervention_effectDoNothing": {
+    "description": "First-order effect for Do naught on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_effectProtest": "Effect: Stay at peace. Relations with {aggressor} worsen (−10). Embassy and purchased land with {defender} stay.",
+  "@game_intervention_effectProtest": {
+    "description": "First-order effect for Diplomatic protest on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
         "type": "String"
       }
     }

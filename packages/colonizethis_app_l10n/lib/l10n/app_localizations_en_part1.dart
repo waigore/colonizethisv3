@@ -447,6 +447,37 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String game_intervention_choiceSituation(String aggressor, String defender) {
+    return '$aggressor declared war on $defender.';
+  }
+
+  @override
+  String get game_intervention_holdReasonEmbassy => 'You hold: Embassy';
+
+  @override
+  String get game_intervention_holdReasonPurchasedLand =>
+      'You hold: purchased land';
+
+  @override
+  String get game_intervention_holdReasonEmbassyAndPurchasedLand =>
+      'You hold: Embassy and purchased land';
+
+  @override
+  String game_intervention_effectIntervene(String aggressor, String defender) {
+    return 'Effect: Enter war with $aggressor this turn. Embassy with $defender stays.';
+  }
+
+  @override
+  String game_intervention_effectDoNothing(String aggressor, String defender) {
+    return 'Effect: Stay at peace with $aggressor. Lose Embassy and all overtures with $defender. Purchased land remains until normal conquest rules apply.';
+  }
+
+  @override
+  String game_intervention_effectProtest(String aggressor, String defender) {
+    return 'Effect: Stay at peace. Relations with $aggressor worsen (−10). Embassy and purchased land with $defender stay.';
+  }
+
+  @override
   String get game_intervention_intervene => 'Intervene with force';
 
   @override

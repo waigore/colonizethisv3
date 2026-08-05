@@ -30,13 +30,14 @@
 // raised for MAP20001 Build road Engineer tile shortcut (Refs #4260).
 // raised for work-order cost and affordability at assign time (Refs #4262);
 // raised for GAME30001 diplomacy ready-first actions + More expander (Refs #4265).
+// raised for OVL50001 intervention choice-picker situation and Effect lines (Refs #4267).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 69100;
+const _maxMainLines = 69200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

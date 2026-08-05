@@ -24,6 +24,7 @@ export 'src/diplomacy/diplomacy_subsidies_relations_resolver.dart';
 export 'src/diplomacy/faction_absorption_engine.dart';
 export 'src/diplomacy/ftp_resolver.dart';
 export 'src/diplomacy/gp_tribe_first_contact.dart';
+export 'src/diplomacy/intervention_hold_flags.dart';
 export 'src/diplomacy/intervention_resolver.dart';
 export 'src/diplomacy/known_diplomatic_targets.dart';
 export 'src/diplomacy/overture_resolver.dart';

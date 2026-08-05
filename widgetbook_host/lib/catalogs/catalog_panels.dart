@@ -780,60 +780,6 @@ class _TechnologyFundingPreviewStoryState
   }
 }
 
-/// Intervention blocking dialogue. SPEC/ui/screens/pending-intervention-overlay.md.
-List<WidgetbookNode> get interventionDialogueDirectories => [
-  WidgetbookFolder(
-    name: 'Dialogue',
-    children: [
-      WidgetbookUseCase(
-        name: 'InterventionDialogueOverlay',
-        builder: (context) {
-          final game = Game(
-            id: 'wb_iv',
-            worldState: const WorldState(
-              turnState: TurnState(phase: TurnPhase.orders, turnNumber: 3),
-              oldWorld: RegionData(),
-              newWorld: RegionData(),
-            ),
-            players: const [
-              Player(
-                id: 'spain',
-                displayName: 'Spain',
-                isHuman: false,
-                treasury: 0,
-              ),
-              Player(
-                id: 'portugal',
-                displayName: 'Portugal',
-                isHuman: true,
-                treasury: 0,
-              ),
-            ],
-            minorNations: const [
-              MinorNation(id: 'minorca', displayName: 'Minorca'),
-            ],
-          );
-          return widgetbookEditorialMonocleApp(
-            child: InterventionDialogueOverlay(
-              game: game,
-              prompts: const [
-                InterventionPrompt(
-                  aggressorGpId: 'spain',
-                  defenderMinorOrTribeId: 'minorca',
-                  interveningGpId: 'portugal',
-                ),
-              ],
-              skipIntroForTest: true,
-              onDecisions: (_) {},
-              child: Center(child: Text(appL10n(context).widgetbook_gameShell)),
-            ),
-          );
-        },
-      ),
-    ],
-  ),
-];
-
 /// Turn news dialog. SPEC/ui/turn-news-dialog.md.
 List<WidgetbookNode> get turnNewsDialogDirectories => [
   WidgetbookFolder(

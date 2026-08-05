@@ -29,9 +29,19 @@ Present **all** `InterventionPrompt` rows for the current pending batch before t
   3. `CtBrassDivider` carrying the stable key `ValueKey<String>('interventionOverlayBrassDivider')` (#2867 R26b).
   4. `SizedBox(height: 12)` gap before the phase-specific body.
   - The header band MUST render on every phase of the overlay, including the degraded error panel, the Yarn-loading state, every Yarn line/choice page, every per-prompt situation page, every choice picker, and every aggressor reaction page. This guarantees the player always sees the dialog identity and a brass-trimmed visual anchor regardless of which sub-state is on screen.
-- **Phases:** (1) Yarn intro node — line(s) + Continue; (2) Per prompt: Yarn situation node (variables: aggressor, defender, intervening names) + Continue; (3) Three `CtNinePatchButton` actions: **Intervene**, **Do naught**, **Diplomatic protest** → map to `InterventionChoice`; (4) Yarn reaction node for that choice + Continue; repeat until all prompts decided; (5) implicit submit — parent receives full `InterventionDecision` list.
+- **Phases:** (1) Yarn intro node — line(s) + Continue; (2) Per prompt: Yarn situation node (variables: aggressor, defender, intervening names) + Continue; (3) Choice picker — plain situation strip, optional muted hold-reason line, three `CtNinePatchButton` actions each followed by a first-order **Effect** line (Refs #4267), mapping to `InterventionChoice`; (4) Yarn reaction node for that choice + Continue; repeat until all prompts decided; (5) implicit submit — parent receives full `InterventionDecision` list.
   - Every Yarn line/choice page (phases 1, 2, 4) is rendered by the shared `CtDialogueLineChoiceBody` ([`../ct-dialogue-view.md`](../ct-dialogue-view.md) § Combined line+choice presentation). Each node ends in a single trivial `-> Continue` option, so the narrative line immediately preceding it collapses with the option into **one** step: the narrative renders once above a **single** `Continue` button, and one tap advances the line and selects the option (no separate option-only step). In a multi-line node (`intervention_intro` has two lines), only the **final** line collapses with the option; the earlier line keeps its own advance tap (Refs #3628).
 - **Choice-button styling (#2867 R26b):** Differentiated emphasis so the player reads the affordance at a glance. **Intervene** uses default primary `CtNinePatchButton` chrome. **Diplomatic protest** and **Do naught** use `CtNinePatchButton.mutedVariant: true` (secondary). No choice button uses `dangerVariant` (reserved for declare-war / exit flows). All three keep the canonical 48 dp tap-target and engraved-label drop-shadow contract; the muted token contract lives in [`pixel-art-ui-catalog.md`](../pixel-art-ui-catalog.md) § *CtNinePatchButton* (Muted variant).
+- **Choice-picker facts (#4267):** On phase (3) only, before any pick:
+  1. **Situation strip:** `{Aggressor} declared war on {Defender}.` using display names (l10n `game_intervention_choiceSituation`; stable key `kInterventionChoiceSituationKey`).
+  2. **Optional muted hold reason** when the intervening GP has an Embassy and/or purchased land with the defender (`interventionHoldFlags` from live game state): `You hold: Embassy` / `purchased land` / both (l10n keys `game_intervention_holdReason*`; stable key `kInterventionHoldReasonKey`). Omitted when no stake flags apply (should not occur for valid prompts).
+  3. **Per-choice Effect** (plain language, GDD-aligned; l10n `game_intervention_effect*`; stable keys `kInterventionEffectInterveneKey`, `kInterventionEffectDoNothingKey`, `kInterventionEffectProtestKey`): rendered in muted `bodySmall` directly beneath its button; read-only until tapped.
+     - **Intervene:** enter war with aggressor this turn; Embassy with defender stays.
+     - **Do naught:** stay at peace with aggressor; lose Embassy and all overtures with defender; purchased land remains until normal conquest rules apply.
+     - **Diplomatic protest:** stay at peace; relations with aggressor worsen (−10); Embassy and purchased land with defender stay.
+  4. Yarn intro / situation / reaction phases do **not** require these Effect lines.
+  5. Multi-prompt batches: each prompt’s choice picker uses that prompt’s aggressor/defender pair only.
+  6. Choice-picker body is wrapped in `SingleChildScrollView` so 320 dp viewports do not overflow unrecoverably.
 
 ---
 
@@ -51,7 +61,8 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 
 ## Widgetbook
 
-- **Use case:** `InterventionDialogueOverlay` with `skipIntroForTest: true`, one synthetic prompt, placeholder `Game` with matching player/minor ids, dark colonial theme.
+- **Use case:** `InterventionDialogueOverlay` with `skipIntroForTest: true`, one synthetic prompt, placeholder `Game` with matching player/minor ids and Embassy overture, dark colonial theme.
+- **Use case:** `Choice picker — Effects (#4267)` — static preview of the choice-picker phase with situation strip, Embassy hold reason, and per-choice Effect lines under editorial-monocle chrome.
 
 ---
 
@@ -74,6 +85,15 @@ Variables are set on `YarnProject.variables` before `startDialogue`.
 ### Choice-button styling (#2867 R26b)
 
 - Given the per-prompt choice picker is on screen, when the picker tree is inspected, then exactly one `CtNinePatchButton` (Intervene) has `dangerVariant: false` AND `mutedVariant: false`, exactly two (Do naught, Diplomatic protest) have `mutedVariant: true` AND `dangerVariant: false`, and zero have `dangerVariant: true`.
+
+### Choice-picker first-order effects (#4267)
+
+- Given pending intervention for the human with an Embassy with the defender and Castile as aggressor display name and Powhatan as defender display name, when the choice picker is shown before any pick, then the UI layer finds exactly one `Text` keyed `kInterventionChoiceSituationKey` whose data equals `Castile declared war on Powhatan.` and exactly one keyed `kInterventionHoldReasonKey` whose data equals `You hold: Embassy`.
+- Given the same choice picker, when the Effect lines are read, then the Intervene Effect mentions entering war with the aggressor this turn and keeping Embassy with the defender, the Do naught Effect mentions staying at peace with the aggressor, losing Embassy and overtures with the defender, and that purchased land remains, and the Protest Effect mentions staying at peace, relations with the aggressor worsening (−10), and Embassy and purchased land with the defender staying.
+- Given the choice picker is visible, when the player has not yet picked, then no `InterventionDecision` is submitted (Effect lines are read-only `Text` widgets only).
+- Given Yarn intro, Yarn situation, or Yarn reaction phases, when those phases render, then zero `Text` widgets keyed `kInterventionEffectInterveneKey`, `kInterventionEffectDoNothingKey`, or `kInterventionEffectProtestKey` are mounted.
+- Given the choice picker at viewport width 320 dp, when the widget tree settles, then `WidgetTester.takeException()` is `null`, exactly one `SingleChildScrollView` wraps the picker body, and all three Effect keys remain findable.
+- **Negative:** Given the Do naught Effect line text, when inspected, then the string does not contain `treasury` (case-insensitive) and does not claim loss of purchased land (must contain `Purchased land remains`).
 
 ### 320 dp viewport pin (#2870 S8 / S10)
 
