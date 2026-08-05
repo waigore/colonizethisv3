@@ -7,7 +7,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'order_work_constants.dart';
-import 'orders_application_helpers.dart';
 import 'validators/work_order_cost_calculator.dart';
 
 /// Work targets with no material/treasury cost preview in assign UI.
