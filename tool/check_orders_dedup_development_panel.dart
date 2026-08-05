@@ -15,6 +15,14 @@ const _canonicalImproveOrderingRelative =
 const _canonicalMaterialAffordanceRelative =
     'packages/colonizethis_orders/lib/src/orders/development_panel/material_affordance.dart';
 
+const _canonicalPassContextRelative =
+    'packages/colonizethis_orders/lib/src/orders/development_panel_pass_context.dart';
+
+/// Inline ICE construction outside the shared pass-context module.
+final RegExp _inlineIncrementalCandidateValidatorPattern = RegExp(
+  r'buildIncrementalCandidateValidator\s*\(',
+);
+
 /// Duplicate idle-scan bodies outside the canonical helper file.
 final RegExp _idleBuilderScanBodyPattern = RegExp(
   r'if \(unit\.type != kUnitTypeBuilder\) continue;',
@@ -132,6 +140,41 @@ findDevelopmentPanelMaterialAffordanceViolations({
   return violations;
 }
 
+bool _isDevelopmentPanelModule(String relativePath) {
+  if (relativePath == _canonicalPassContextRelative) return false;
+  if (relativePath.endsWith('development_panel_assign.dart')) return true;
+  if (relativePath.endsWith('development_panel_road_first.dart')) return true;
+  return relativePath.contains('development_panel/');
+}
+
+List<OrdersDedupMapCloneViolation>
+findDevelopmentPanelPassContextViolations({
+  required String relativePath,
+  required String source,
+}) {
+  if (!_isDevelopmentPanelModule(relativePath)) return const [];
+
+  final violations = <OrdersDedupMapCloneViolation>[];
+  final lines = source.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    if (_isCommentLine(line)) continue;
+    if (_inlineIncrementalCandidateValidatorPattern.hasMatch(line)) {
+      violations.add(
+        OrdersDedupMapCloneViolation(
+          path: relativePath,
+          line: i + 1,
+          message:
+              'Inline IncrementalCandidateValidator build; use '
+              'DevelopmentPanelPassContext.fromPlayerView from '
+              'development_panel_pass_context.dart.',
+        ),
+      );
+    }
+  }
+  return violations;
+}
+
 int runCheckOrdersDedupDevelopmentPanel(
   String repoRoot, {
   void Function(String line)? info,
@@ -167,6 +210,12 @@ int runCheckOrdersDedupDevelopmentPanel(
     );
     violations.addAll(
       findDevelopmentPanelMaterialAffordanceViolations(
+        relativePath: relativePath,
+        source: source,
+      ),
+    );
+    violations.addAll(
+      findDevelopmentPanelPassContextViolations(
         relativePath: relativePath,
         source: source,
       ),

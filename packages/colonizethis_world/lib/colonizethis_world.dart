@@ -43,6 +43,10 @@ export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart'
         evaluateCapitalReassignmentEligibility;
 export 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 export 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+// Tile transport helpers consumed by colonizethis_orders owned-land graph paths
+// (Refs #4258); surfaced through the barrel so orders does not deep-import src/.
+export 'package:colonizethis_world/src/world/connectivity_tile_helpers.dart'
+    show portToProvinceSeaZone, transportLevelAtTile;
 // Connectivity hot-path metrics counters (Refs #2268 AC-10). Previously surfaced
 // via the `connectivity_resolver.dart` `part` chain; after the Step 3 split
 // (Refs #3544) it lives in its own library. Following Refs #3544 AC3 the metrics
