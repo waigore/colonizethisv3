@@ -26,4 +26,16 @@ void main() {
     expect(summary, contains('1'));
     expect(summary, contains('2'));
   });
+
+  test('workOrderAffordStatusLine reports can afford when costs covered', () {
+    final l10n = AppLocalizationsEn();
+    final line = workOrderAffordStatusLine(
+      l10n: l10n,
+      preview: WorkOrderAffordPreview(
+        materialCosts: {'lumber': 1},
+        canAfford: true,
+      ),
+    );
+    expect(line, l10n.workOrderAfford_canAfford);
+  });
 }
