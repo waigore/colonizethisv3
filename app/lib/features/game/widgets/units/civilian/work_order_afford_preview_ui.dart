@@ -46,6 +46,7 @@ String workOrderAffordStatusLine({
 }
 
 Widget buildWorkOrderAffordCostChips({
+  required AppLocalizations l10n,
   required WorkOrderAffordPreview preview,
 }) {
   final children = <Widget>[];
@@ -67,7 +68,9 @@ Widget buildWorkOrderAffordCostChips({
     }
   }
   if (preview.treasuryAmount != null) {
-    children.add(Text('Treasury ${preview.treasuryAmount}'));
+    children.add(
+      Text(l10n.trainUnits_treasury(preview.treasuryAmount!.toString())),
+    );
   }
   if (children.isEmpty) {
     return const SizedBox.shrink();

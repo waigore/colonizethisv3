@@ -138,7 +138,7 @@ class _GameMapSelectionPromptAffordSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 6),
-        buildWorkOrderAffordCostChips(preview: preview),
+        buildWorkOrderAffordCostChips(l10n: l10n, preview: preview),
         const SizedBox(height: 4),
         buildWorkOrderAffordStatusText(
           l10n: l10n,
