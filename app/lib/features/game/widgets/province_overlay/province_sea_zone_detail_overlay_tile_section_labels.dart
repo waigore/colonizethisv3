@@ -3,6 +3,10 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -133,10 +137,47 @@ Widget buildTileImprovementLabel({
 
 const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
 
+String provinceOverlayBuildRoadTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String selectedTileKey,
+  required bool enabled,
+  required bool hasEngineerUnits,
+}) {
+  if (!enabled && !hasEngineerUnits) {
+    return l10n.provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip;
+  }
+  if (!enabled) {
+    return l10n.provinceOverlay_tileBuildRoadDisabledTooltip;
+  }
+  final roadLevel = game.worldState.tileState.roadLevel(selectedTileKey);
+  final costMap = WorkOrderCostCalculator(game).calculateCost(
+    kWorkTargetBuildRoad,
+    selectedTileKey,
+    roadLevel: roadLevel,
+  );
+  if (costMap == null || costMap.isEmpty) {
+    return l10n.provinceOverlay_tileBuildRoadTooltip;
+  }
+  final parts = <String>[];
+  for (final entry in costMap.entries) {
+    final commodity = CommodityCatalog.byId[entry.key];
+    final label = commodity?.displayName ?? entry.key;
+    parts.add('$label ${entry.value}');
+  }
+  return l10n.provinceOverlay_tileBuildRoadTooltipWithCost(parts.join(', '));
+}
+
 List<Widget> buildTileRoadLabelWidgets({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String selectedTileKey,
   required int? roadLevel,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
 }) {
   if (roadLevel == null) {
     return [Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle())];
@@ -148,11 +189,35 @@ List<Widget> buildTileRoadLabelWidgets({
     height: 1.25,
     color: EditorialMonoclePalette.muted,
   );
+  final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
+    l10n: l10n,
+    game: game,
+    selectedTileKey: selectedTileKey,
+    enabled: buildRoadActionEnabled,
+    hasEngineerUnits: buildRoadActionHasEngineerUnits,
+  );
+  final transportRow = Row(
+    children: [
+      Expanded(
+        child: Text(
+          roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+          style: overlayFgBodyStyle(),
+        ),
+      ),
+      if (showBuildRoadActionIcon)
+        CtIconAction(
+          tooltip: buildRoadTooltip,
+          onPressed: buildRoadActionEnabled ? onBuildRoadTap : null,
+          icon: Icons.add_road,
+          enabled: buildRoadActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
+    ],
+  );
   return [
-    Text(
-      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
-      style: overlayFgBodyStyle(),
-    ),
+    transportRow,
     Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),

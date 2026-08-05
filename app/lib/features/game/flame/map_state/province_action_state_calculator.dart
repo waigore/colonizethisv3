@@ -21,11 +21,19 @@ typedef ProvinceBuilderActionState = ({
   bool hasBuilderUnits,
 });
 
-/// The three province-overlay inline action states computed together.
+/// Build-road inline action state shape.
+typedef ProvinceEngineerActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasEngineerUnits,
+});
+
+/// The four province-overlay inline action states computed together.
 typedef ProvinceActionStates = ({
   ProvinceExplorerActionState explore,
   ProvinceExplorerActionState prospect,
   ProvinceBuilderActionState buildImprovement,
+  ProvinceEngineerActionState buildRoad,
 });
 
 /// Computes the explore / prospect / build-improvement inline action states
@@ -92,10 +100,20 @@ class ProvinceActionStateCalculator {
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
           );
+    final buildRoad = selectedTileKey == null
+        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogic.provinceBuildRoadActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          );
     return (
       explore: explore,
       prospect: prospect,
       buildImprovement: buildImprovement,
+      buildRoad: buildRoad,
     );
   }
 }
