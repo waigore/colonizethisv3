@@ -28,14 +28,15 @@
 // raised for forces food readiness + invasion/combat underfed soft warns (Refs #4242).
 // raised for shell cargo hold tap details + tight colour tiers (Refs #4253).
 // raised for MAP20001 Build road Engineer tile shortcut (Refs #4260).
-// raised for work-order cost and affordability at assign time (Refs #4262).
+// raised for work-order cost and affordability at assign time (Refs #4262);
+// raised for GAME30001 diplomacy ready-first actions + More expander (Refs #4265).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 69000;
+const _maxMainLines = 69100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
