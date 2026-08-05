@@ -16,7 +16,6 @@ import 'intervention_choice_buttons.dart';
 import 'intervention_dialogue_overlay.dart';
 import 'intervention_dialogue_overlay_flow.dart';
 import 'intervention_dialogue_overlay_shell.dart';
-import 'package:colonizethis_turn/colonizethis_turn.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 
 class InterventionDialogueOverlayState extends State<InterventionDialogueOverlay>
