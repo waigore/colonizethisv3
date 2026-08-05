@@ -154,7 +154,7 @@ When **`logicEventBus`** is set, turn resolution passes it into **`resolveTurnFo
 | Event | Opened by | Handler builds |
 |-------|-----------|----------------|
 | `OpenPauseMenuPanelEvent` | `GameScreen` (pause) | `PauseMenuPanel` |
-| `OpenCivilianUnitsPanelEvent` | `GameSideMenu`, province Tile inline shortcuts | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`). Optional shortcut fields (at most one non-null): `exploreShortcutTargetTileKey`, `prospectShortcutTargetTileKey`, `buildImprovementShortcutTargetTileKey` — each opens the panel in the matching filtered shortcut mode for direct assign on that tile key. |
+| `OpenCivilianUnitsPanelEvent` | `GameSideMenu`, province Tile inline shortcuts | `CivilianUnitsPanel` (+ Riverpod game/orders, `AppEventBus`). Optional shortcut fields (at most one non-null): `exploreShortcutTargetTileKey`, `prospectShortcutTargetTileKey`, `buildImprovementShortcutTargetTileKey`, `buildRoadShortcutTargetTileKey` — each opens the panel in the matching filtered shortcut mode (`explorerOnly`, `builderOnly`, or `engineerOnly`) for direct assign on that tile key. |
 | `OpenMilitaryUnitsPanelEvent` | `GameSideMenu` | `MilitaryUnitsPanel` |
 | `OpenNavalUnitsPanelEvent` | `GameSideMenu` | `NavalUnitsPanel` (+ `AppEventBus`); optional `locationScopeKey`, `initialSelectedFleetId`, `tileScopeTileKey` for tile-scoped list and header |
 | `OpenNavalMissionMenuEvent` | Map fleet marker tap | Mission assign flow (`showNavalMissionFlow` → mission menu / target picker); emits `NavalMissionRequestedEvent` / `NavalMissionCancelRequestedEvent` |

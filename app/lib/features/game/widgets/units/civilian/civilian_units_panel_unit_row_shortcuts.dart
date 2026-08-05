@@ -13,13 +13,16 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
   required String? prospectShortcutTargetTileKey,
   required String? exploreShortcutTargetTileKey,
   required String? buildImprovementShortcutTargetTileKey,
+  required String? buildRoadShortcutTargetTileKey,
 }) =>
     (prospectShortcutTargetTileKey != null &&
         prospectShortcutTargetTileKey.isNotEmpty) ||
     (exploreShortcutTargetTileKey != null &&
         exploreShortcutTargetTileKey.isNotEmpty) ||
     (buildImprovementShortcutTargetTileKey != null &&
-        buildImprovementShortcutTargetTileKey.isNotEmpty);
+        buildImprovementShortcutTargetTileKey.isNotEmpty) ||
+    (buildRoadShortcutTargetTileKey != null &&
+        buildRoadShortcutTargetTileKey.isNotEmpty);
 
 void startCivilianUnitsPanelUnitRowShortcutAssign({
   required AppEventBus bus,
@@ -30,6 +33,7 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   required String? prospectShortcutTargetTileKey,
   required String? exploreShortcutTargetTileKey,
   required String? buildImprovementShortcutTargetTileKey,
+  required String? buildRoadShortcutTargetTileKey,
 }) {
   final hasExploreShortcut =
       exploreShortcutTargetTileKey != null &&
@@ -40,7 +44,12 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   final hasBuildImprovementShortcut =
       buildImprovementShortcutTargetTileKey != null &&
       buildImprovementShortcutTargetTileKey.isNotEmpty;
-  final targetTileKey = hasBuildImprovementShortcut
+  final hasBuildRoadShortcut =
+      buildRoadShortcutTargetTileKey != null &&
+      buildRoadShortcutTargetTileKey.isNotEmpty;
+  final targetTileKey = hasBuildRoadShortcut
+      ? buildRoadShortcutTargetTileKey
+      : hasBuildImprovementShortcut
       ? buildImprovementShortcutTargetTileKey
       : hasExploreShortcut
       ? exploreShortcutTargetTileKey
@@ -48,7 +57,9 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? prospectShortcutTargetTileKey
       : null;
   if (targetTileKey == null || targetTileKey.isEmpty) return;
-  final workTarget = hasBuildImprovementShortcut
+  final workTarget = hasBuildRoadShortcut
+      ? kWorkTargetBuildRoad
+      : hasBuildImprovementShortcut
       ? kWorkTargetBuildImprovement
       : hasExploreShortcut
       ? kWorkTargetExplore

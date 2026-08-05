@@ -27,13 +27,14 @@
 // raised for UNIT20001 generals strip + DLG20001 invasion capacity warn (Refs #4233).
 // raised for forces food readiness + invasion/combat underfed soft warns (Refs #4242).
 // raised for shell cargo hold tap details + tight colour tiers (Refs #4253).
+// raised for MAP20001 Build road Engineer tile shortcut (Refs #4260).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 68500;
+const _maxMainLines = 68700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

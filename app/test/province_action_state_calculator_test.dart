@@ -41,6 +41,10 @@ void main() {
           states.buildImprovement,
           GameMapAreaStateLogic.kHiddenBuilderInlineActionState,
         );
+        expect(
+          states.buildRoad,
+          GameMapAreaStateLogic.kHiddenEngineerInlineActionState,
+        );
       },
     );
 
@@ -94,10 +98,19 @@ void main() {
           playerView: playerView,
           workTargetSelectionCache: cache,
         );
+        final expectedBuildRoad =
+            GameMapAreaStateLogic.provinceBuildRoadActionState(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: tileKey,
+          playerView: playerView,
+          workTargetSelectionCache: cache,
+        );
 
         expect(states.explore, expectedExplore);
         expect(states.prospect, expectedProspect);
         expect(states.buildImprovement, expectedBuild);
+        expect(states.buildRoad, expectedBuildRoad);
       },
     );
   });
