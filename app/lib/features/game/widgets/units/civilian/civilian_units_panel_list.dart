@@ -28,6 +28,13 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         false;
   }
 
+  bool isEngineerUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetBuildRoad,
+        ) ??
+        false;
+  }
+
   List<Widget> civilianListChildrenForRegion({
     required String regionId,
     required List<Unit> units,
@@ -115,6 +122,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
       buildImprovementShortcutTargetTileKey:
           widget.buildImprovementShortcutTargetTileKey,
+      buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
     );
   }
 
@@ -123,10 +131,11 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     required String? tileScopeTileKey,
     required bool explorerOnly,
     required bool builderOnly,
+    required bool engineerOnly,
   }) {
     final tileScopeActive =
         tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
-    if (!tileScopeActive && !explorerOnly && !builderOnly) {
+    if (!tileScopeActive && !explorerOnly && !builderOnly && !engineerOnly) {
       return units;
     }
     return [
@@ -139,7 +148,8 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
                     ) ==
                     tileScopeTileKey) &&
             (!explorerOnly || isExplorerUnit(u)) &&
-            (!builderOnly || isBuilderUnit(u)))
+            (!builderOnly || isBuilderUnit(u)) &&
+            (!engineerOnly || isEngineerUnit(u)))
           u,
     ];
   }

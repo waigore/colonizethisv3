@@ -3,6 +3,9 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
@@ -136,7 +139,15 @@ const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
 List<Widget> buildTileRoadLabelWidgets({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
   required int? roadLevel,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
 }) {
   if (roadLevel == null) {
     return [Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle())];
@@ -148,11 +159,37 @@ List<Widget> buildTileRoadLabelWidgets({
     height: 1.25,
     color: EditorialMonoclePalette.muted,
   );
+  final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    enabled: buildRoadActionEnabled,
+    hasEngineerUnits: buildRoadActionHasEngineerUnits,
+  );
+  final transportRow = Row(
+    children: [
+      Expanded(
+        child: Text(
+          roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+          style: overlayFgBodyStyle(),
+        ),
+      ),
+      if (showBuildRoadActionIcon)
+        CtIconAction(
+          tooltip: buildRoadTooltip,
+          onPressed: buildRoadActionEnabled ? onBuildRoadTap : null,
+          icon: Icons.add_road,
+          enabled: buildRoadActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
+    ],
+  );
   return [
-    Text(
-      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
-      style: overlayFgBodyStyle(),
-    ),
+    transportRow,
     Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),

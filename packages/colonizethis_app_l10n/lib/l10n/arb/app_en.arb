@@ -2974,6 +2974,19 @@
       }
     }
   },
+  "provinceOverlay_tileBuildRoadTooltip": "Build road",
+  "@provinceOverlay_tileBuildRoadTooltip": {
+    "description": "Tooltip and semantics label for province tile build-road shortcut action when enabled."
+  },
+  "provinceOverlay_tileBuildRoadTooltipWithCost": "Build road ({costs})",
+  "@provinceOverlay_tileBuildRoadTooltipWithCost": {
+    "description": "Enabled build-road shortcut tooltip including material cost summary.",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": "No idle Builders",
   "@provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": {
     "description": "Disabled build-improvement shortcut when no Builder units exist."
@@ -3009,6 +3022,23 @@
     "placeholders": {
       "amount": {
         "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip": "No Engineer available to build road",
+  "@provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip": {
+    "description": "Disabled build-road shortcut tooltip when the human player has no Engineer units."
+  },
+  "provinceOverlay_tileBuildRoadDisabledTooltip": "No Engineer can assign road work here this turn",
+  "@provinceOverlay_tileBuildRoadDisabledTooltip": {
+    "description": "Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile."
+  },
+  "provinceOverlay_tileBuildRoadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRoadDisabledMaterialsTooltip": {
+    "description": "Disabled build-road shortcut when materials/treasury shortfall is primary reason (Refs #4262).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
       }
     }
   },

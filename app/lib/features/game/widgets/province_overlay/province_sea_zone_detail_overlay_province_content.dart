@@ -45,6 +45,10 @@ OverlayContent provinceContent({
   required bool buildImprovementActionEnabled,
   required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -125,6 +129,10 @@ OverlayContent provinceContent({
     buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     currentOrders: draftOrders,
+    showBuildRoadActionIcon: showBuildRoadActionIcon,
+    buildRoadActionEnabled: buildRoadActionEnabled,
+    buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+    onBuildRoadTap: onBuildRoadTap,
     tileConnectivity: tileConnectivity,
   );
   final political = buildPoliticalSection(

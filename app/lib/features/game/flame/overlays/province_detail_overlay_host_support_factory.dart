@@ -51,6 +51,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final exploreState = actionStates.explore;
   final prospectState = actionStates.prospect;
   final buildImprovementState = actionStates.buildImprovement;
+  final buildRoadState = actionStates.buildRoad;
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -63,6 +64,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     exploreEnabled: exploreState.enabled,
     prospectEnabled: prospectState.enabled,
     buildImprovementEnabled: buildImprovementState.enabled,
+    buildRoadEnabled: buildRoadState.enabled,
     bus: bus,
   );
   final townProductionBonus = provinceTownProductionBonusPreview(
@@ -133,9 +135,13 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         canMutateViaUi && buildImprovementState.enabled,
     buildImprovementActionHasBuilderUnits:
         buildImprovementState.hasBuilderUnits,
+    showBuildRoadActionIcon: canMutateViaUi && buildRoadState.showIcon,
+    buildRoadActionEnabled: canMutateViaUi && buildRoadState.enabled,
+    buildRoadActionHasEngineerUnits: buildRoadState.hasEngineerUnits,
     omniscientDetail: omniscientDetail,
     onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
     onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
     onBuildImprovementTap: shortcuts.onBuildImprovementTap,
+    onBuildRoadTap: shortcuts.onBuildRoadTap,
   );
 }

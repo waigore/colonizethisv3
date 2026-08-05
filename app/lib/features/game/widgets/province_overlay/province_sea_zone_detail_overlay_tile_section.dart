@@ -36,6 +36,10 @@ Widget buildTileSection({
   required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
   required Orders currentOrders,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   if (selectedTileKey == null) {
@@ -104,6 +108,10 @@ Widget buildTileSection({
     buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     currentOrders: currentOrders,
+    showBuildRoadActionIcon: showBuildRoadActionIcon,
+    buildRoadActionEnabled: buildRoadActionEnabled,
+    buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+    onBuildRoadTap: onBuildRoadTap,
     tileConnectivity: tileConnectivity,
   );
 }

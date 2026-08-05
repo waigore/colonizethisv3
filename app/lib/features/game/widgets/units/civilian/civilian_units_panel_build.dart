@@ -45,12 +45,14 @@ mixin CivilianUnitsPanelBuild
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
+      engineerOnly: widget.engineerOnly,
     );
     final scopedNw = scopedCivilianUnits(
       nw,
       tileScopeTileKey: scopeTileKey,
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
+      engineerOnly: widget.engineerOnly,
     );
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];

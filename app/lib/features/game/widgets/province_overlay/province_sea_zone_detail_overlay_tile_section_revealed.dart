@@ -45,6 +45,10 @@ Widget buildRevealedTileSection({
   required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
   required Orders currentOrders,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final tileState = game.worldState.tileState;
@@ -178,7 +182,15 @@ Widget buildRevealedTileSection({
         ...buildTileRoadLabelWidgets(
           context: context,
           l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
+          selectedTileKey: selectedTileKey,
           roadLevel: roadLevel,
+          showBuildRoadActionIcon: showBuildRoadActionIcon,
+          buildRoadActionEnabled: buildRoadActionEnabled,
+          buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+          onBuildRoadTap: onBuildRoadTap,
         ),
         ...buildTileConnectivityLabelWidgets(
           l10n: l10n,

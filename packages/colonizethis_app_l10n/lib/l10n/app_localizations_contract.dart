@@ -1775,6 +1775,21 @@ abstract class AppLocalizations {
   /// Treasury shortfall line for purchase_land assign previews (Refs #4262).
   String workOrderAfford_shortTreasury(int amount);
 
+  /// Tooltip and semantics label for province tile build-road shortcut action when enabled.
+  String get provinceOverlay_tileBuildRoadTooltip;
+
+  /// Enabled build-road shortcut tooltip including material cost summary.
+  String provinceOverlay_tileBuildRoadTooltipWithCost(String costs);
+
+  /// Disabled build-road shortcut tooltip when the human player has no Engineer units.
+  String get provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip;
+
+  /// Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile.
+  String get provinceOverlay_tileBuildRoadDisabledTooltip;
+
+  /// Disabled build-road shortcut when materials/treasury shortfall is primary reason.
+  String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason);
+
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
 

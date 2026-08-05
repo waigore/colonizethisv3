@@ -7,7 +7,12 @@
 // SPEC: SPEC/ui/civilian-units-panel.md, SPEC/program/repo-lint.md.
 
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kUnitTypeSpy, kWorkTargetBuildImprovement, kWorkTargetCounterSpy;
+    show
+        kUnitTypeBuilder,
+        kUnitTypeEngineer,
+        kUnitTypeSpy,
+        kWorkTargetBuildImprovement,
+        kWorkTargetCounterSpy;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'panel_fixtures/core.dart';
@@ -95,6 +100,35 @@ Game buildCivilianExplorerBuilderShortcutGame({
     id: id,
     humanId: humanId,
     units: builderFirst ? [builder, explorer] : [explorer, builder],
+  );
+}
+
+/// Engineer + builder on one OW tile for build-road shortcut mode.
+Game buildCivilianEngineerBuilderShortcutGame({
+  required String id,
+  String humanId = 'h1',
+  String tileKey = 'oldWorld|p1|0|0',
+  bool engineerFirst = false,
+}) {
+  const provinceId = 'oldWorld|p1';
+  final engineer = civilianIdleUnit(
+    id: 'e_eng',
+    type: kUnitTypeEngineer,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  final builder = civilianIdleUnit(
+    id: 'b1',
+    type: kUnitTypeBuilder,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  return buildCivilianOwUnitsGame(
+    id: id,
+    humanId: humanId,
+    units: engineerFirst ? [engineer, builder] : [builder, engineer],
   );
 }
 

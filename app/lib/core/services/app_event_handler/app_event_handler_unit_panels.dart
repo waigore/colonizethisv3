@@ -53,10 +53,12 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
           initialSelectedUnitId: event.initialSelectedUnitId,
           explorerOnly: event.explorerOnly,
           builderOnly: event.builderOnly,
+          engineerOnly: event.engineerOnly,
           prospectShortcutTargetTileKey: event.prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               event.buildImprovementShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey: event.buildRoadShortcutTargetTileKey,
         ),
       );
     },
