@@ -14,14 +14,15 @@ import 'support/seed42_observer_campaign.dart';
 const int kHeartlandBaselineTurns = 10;
 
 /// Connected-tile counts per GP after seed-42 turn [kHeartlandBaselineTurns].
-/// Captured on `dev` after PR #4178 merged (connectivity-aware civilian work).
+/// Captured on `dev` after PR #4258 merged (owned-province projection via
+/// ProvinceOwnerCache; connectivity-aware civilian work unchanged).
 const Map<String, int> kSeed42Turn10ConnectedTileCounts = {
-  'gp1': 203,
-  'gp2': 202,
-  'gp3': 144,
-  'gp4': 207,
+  'gp1': 205,
+  'gp2': 209,
+  'gp3': 143,
+  'gp4': 208,
   'gp5': 117,
-  'gp6': 169,
+  'gp6': 167,
 };
 
 void main() {
