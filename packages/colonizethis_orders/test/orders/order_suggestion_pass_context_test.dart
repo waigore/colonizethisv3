@@ -26,4 +26,9 @@ void main() {
     ownedProvinceIdsFromViewScenarios(),
     runRunnableScenario,
   );
+  runLabeledScenarioGroup(
+    'ownedProvinceIdsForPlayer',
+    ownedProvinceIdsForPlayerScenarios(),
+    runRunnableScenario,
+  );
 }

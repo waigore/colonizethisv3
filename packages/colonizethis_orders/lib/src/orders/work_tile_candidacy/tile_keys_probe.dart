@@ -6,6 +6,7 @@ import '../incremental_candidate_validator.dart';
 import '../order_resolution_context.dart';
 import '../order_suggestion_context.dart';
 import '../order_suggestion_helpers.dart';
+import '../order_suggestion_pass_context.dart';
 import '../order_work_constants.dart';
 import '../unit_type_helpers.dart';
 import 'work_tile_candidate_index.dart';
@@ -34,11 +35,7 @@ Set<String> rawCandidateTilesForWorkTarget({
 }) {
   final world = game.worldState;
   final ownedProvinceIds =
-      playerOwnedProvinceIds ??
-      <String>{
-        for (final p in ProvinceOwnerCache.of(world).provincesOwnedBy(playerId))
-          p.id,
-      };
+      playerOwnedProvinceIds ?? ownedProvinceIdsForPlayer(world, playerId);
   return WorkTileCandidateIndex(
     game: game,
     playerId: playerId,

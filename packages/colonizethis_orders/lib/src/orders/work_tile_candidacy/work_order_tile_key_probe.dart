@@ -6,6 +6,7 @@ import '../incremental_candidate_validator.dart';
 import '../order_resolution_context.dart';
 import '../order_suggestion_context.dart';
 import '../order_suggestion_helpers.dart';
+import '../order_suggestion_pass_context.dart';
 import '../order_work_constants.dart';
 import '../partial_province_reveal.dart';
 import '../unit_type_helpers.dart';
@@ -66,10 +67,7 @@ WorkOrderTileKeyProbe? prepareWorkOrderTileKeyProbe({
           : orderResolutionContextFromView(view, game));
   final effectiveOwnedProvinceIds =
       playerOwnedProvinceIds ??
-      <String>{
-        for (final e in effectiveResolution.provinceById.entries)
-          if (e.value.ownerId == playerId) e.key,
-      };
+      ownedProvinceIdsForPlayer(game.worldState, playerId);
   final candidateValidator =
       sharedCandidateValidator ??
       buildIncrementalCandidateValidator(

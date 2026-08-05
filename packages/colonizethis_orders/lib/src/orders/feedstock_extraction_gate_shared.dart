@@ -3,6 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'feedstock_common.dart';
+import 'province_tile_lookup.dart';
 
 /// True iff [playerId] holds Old World land below the observer conquest quota
 /// (`oldWorldProvinceCountOwnedBy` in `[2, kObserverConquestMinOwProvincesPerGp)`)
@@ -32,9 +33,7 @@ bool ownsUnimprovedFeedstockResourceTile(
   final ws = game.worldState;
   for (final entry in ws.resourceByTileKey.entries) {
     if (!feedstockIds.contains(entry.value)) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = ws.tryGetProvince(provinceId);
+    final province = tryGetProvinceAtTileKey(ws, entry.key);
     if (province == null || province.ownerId != playerId) continue;
     if (ws.tileState.improvementLevel(entry.key) < 1) return true;
   }

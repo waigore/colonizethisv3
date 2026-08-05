@@ -10,7 +10,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'development_panel/idle_civilians.dart';
 import 'development_panel/improve_tile_ordering.dart';
 import 'development_panel/material_affordance.dart';
-import 'order_resolution_context.dart';
+import 'development_panel_pass_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_work_constants.dart';
 import 'work_tile_candidacy/work_tile_candidacy.dart';
@@ -130,28 +130,26 @@ DevelopmentImproveAssignCandidate? selectDevelopmentImproveAssignCandidate({
   );
   if (builders.isEmpty) return null;
 
-  final view = buildPlayerView(game, topology, playerId);
-  final tileState = game.worldState.tileState;
-  final validator = buildIncrementalCandidateValidator(
+  final pass = DevelopmentPanelPassContext.fromPlayerView(
     game: game,
     topology: topology,
     playerId: playerId,
-    baseOrders: currentOrders,
+    currentOrders: currentOrders,
     tileMapByRegion: tileMapByRegion,
   );
-  final resolution = orderResolutionContextFromView(view, game);
+  final tileState = game.worldState.tileState;
 
   for (final builder in builders) {
     final validTiles = getValidWorkOrderTileKeysWithVisibility(
       game: game,
       topology: topology,
-      view: view,
+      view: pass.view,
       unitId: builder.id,
       workTarget: kWorkTargetBuildImprovement,
       currentOrders: currentOrders,
       tileMapByRegion: tileMapByRegion,
-      sharedCandidateValidator: validator,
-      resolution: resolution,
+      sharedCandidateValidator: pass.candidateValidator,
+      resolution: pass.resolution,
     );
     final scoped = validTiles.where(commodityTileKeys.contains).toSet();
     if (scoped.isEmpty) continue;

@@ -2,6 +2,9 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
+import 'package:colonizethis_orders/src/orders/order_suggestion_pass_context.dart';
+import 'package:colonizethis_orders/src/orders/work_tile_candidacy/tile_keys_probe.dart';
+import 'package:colonizethis_orders/src/orders/work_tile_candidacy/work_order_tile_key_probe.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
 import 'order_suggestion_work_tile_keys_shared_validator_fixtures.dart';
@@ -17,10 +20,13 @@ void oswtkRunMatchesPriorBehaviorForBuilderImprovementTiles() {final fixture = w
 
 void oswtkRunSharedViewAndValidatorMatchesDefaultPath() {final fixture = workTileKeysSharedValidatorFixture(); final baseline = getValidWorkOrderTileKeys( fixture.game, fixture.topology, workTileKeysSharedValidatorPlayerId, 'b1', kWorkTargetBuildImprovement, fixture.orders, ); final membership = DiplomacyFactionMembership.from(fixture.game); final shared = buildIncrementalCandidateValidator( game: fixture.game, topology: fixture.topology, playerId: workTileKeysSharedValidatorPlayerId, baseOrders: fixture.orders, resolution: orderResolutionContextFromView( fixture.view, fixture.game, unitsById: fixture.unitsById, ), factionMembership: membership, ); final withShared = getValidWorkOrderTileKeys( fixture.game, fixture.topology, workTileKeysSharedValidatorPlayerId, 'b1', kWorkTargetBuildImprovement, fixture.orders, resolution: orderResolutionContextFromView( fixture.view, fixture.game, unitsById: fixture.unitsById, ), factionMembership: membership, sharedCandidateValidator: shared, playerOwnedProvinceIds: fixture.ownedIds, ); expect(withShared, equals(baseline));}
 
+void oswtkRunProbeStackOwnedProvinceParity() {final fixture = workTileKeysSharedValidatorFixture(); expect(ownedProvinceIdsForPlayer(fixture.game.worldState,workTileKeysSharedValidatorPlayerId),equals(fixture.ownedIds),); final fromRaw = rawCandidateTilesForWorkTarget(game: fixture.game,playerId: workTileKeysSharedValidatorPlayerId,workTarget: kWorkTargetBuildImprovement,); final probe = prepareWorkOrderTileKeyProbe(game: fixture.game,topology: fixture.topology,playerId: workTileKeysSharedValidatorPlayerId,view: fixture.view,unitId: 'b1',workTarget: kWorkTargetBuildImprovement,currentOrders: fixture.orders,applyExploreProvinceScope: false,); expect(probe,isNotNull); expect(probe!.rawCandidateTileKeys,fromRaw);}
+
 List<RunnableScenario>
 orderSuggestionWorkTileKeysSharedValidatorVisibilityScenarios() => [
   rs('sharedCandidateValidator matches default path for same inputs', oswtkRunSharedCandidateValidatorMatchesDefaultPath),
   rs('playerOwnedProvinceIds matches default path for same inputs', oswtkRunPlayerOwnedProvinceIdsMatchesDefaultPath),
+  rs('probe stack owned-province projection matches rawCandidateTilesForWorkTarget', oswtkRunProbeStackOwnedProvinceParity, '#4258'),
   rs('optional unitsById matches default path', oswtkRunOptionalUnitsByIdMatchesDefaultPath),
 ];
 
