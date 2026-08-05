@@ -98,7 +98,6 @@ List<String>? shortestOwnedTilePathToConnectedNetwork({
   }
 
   final landProvinceIds = provinceNodeIds(topology);
-  final ownedLandTiles = ownedLandTileKeysForPlayer(game: game, playerId: playerId);
   final parent = <String, String?>{startTileKey: null};
   final queue = Queue<String>()..add(startTileKey);
 
@@ -121,13 +120,30 @@ List<String>? shortestOwnedTilePathToConnectedNetwork({
       tileMapByRegion: tileMapByRegion,
       landProvinceIds: landProvinceIds,
     )) {
-      if (!ownedLandTiles.contains(neighbor)) continue;
+      if (!_isOwnedPlayerLandTile(
+        game: game,
+        playerId: playerId,
+        tileKey: neighbor,
+      )) {
+        continue;
+      }
       if (parent.containsKey(neighbor)) continue;
       parent[neighbor] = current;
       queue.add(neighbor);
     }
   }
   return null;
+}
+
+bool _isOwnedPlayerLandTile({
+  required Game game,
+  required String playerId,
+  required String tileKey,
+}) {
+  final provinceId = Unit.provinceIdFromTileKey(tileKey);
+  if (provinceId == null) return false;
+  final province = game.worldState.tryGetProvince(provinceId);
+  return province?.ownerId == playerId;
 }
 
 /// Minimum owned-land steps from each reachable tile to the nearest tile in
