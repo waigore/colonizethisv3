@@ -170,7 +170,8 @@ void main() {
 
         await pumpDiplomacyOrdersPanel(tester, game: _colonyGame(), bus: bus);
         expect(find.text('Boycott'), findsOneWidget);
-        expect(find.text('Revoke Boycott'), findsOneWidget);
+        // Revoke Boycott is disabled until a boycott is active (Refs #4265 More).
+        expect(find.text('Revoke Boycott'), findsNothing);
 
         await tapVisibleDiplomacy(tester, find.text('Boycott'));
         final event = await appendFuture;
@@ -266,6 +267,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpDiplomacyOrdersPanel(tester, game: buildDiplomacyPanelTestGame());
 
+        await tapVisibleDiplomacy(tester, find.text('More actions'));
         final boycottButton = find.widgetWithText(CtNinePatchButton, 'Boycott');
         expect(boycottButton, findsOneWidget);
         expect(tester.widget<CtNinePatchButton>(boycottButton).enabled, isFalse);
