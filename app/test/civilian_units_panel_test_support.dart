@@ -132,6 +132,60 @@ Game buildCivilianEngineerBuilderShortcutGame({
   );
 }
 
+/// Two builders on OW Alpha with grain tiles and minimal lumber/cast iron
+/// stockpile for pending-order affordance scenarios (Refs #4262).
+Game buildCivilianDualBuilderLowStockGame({
+  required String id,
+  String humanId = 'h1',
+}) {
+  const provinceId = 'oldWorld|p1';
+  const tileA = 'oldWorld|p1|0|0';
+  const tileB = 'oldWorld|p1|1|0';
+  return buildPanelTestGame(
+    id: id,
+    players: [
+      Player(
+        id: humanId,
+        displayName: 'Human',
+        isHuman: true,
+        stockpile: const Stockpile(
+          quantities: {'lumber': 1, 'castIron': 1},
+        ),
+      ),
+    ],
+    oldWorldProvinces: [
+      Province(
+        id: provinceId,
+        regionId: 'oldWorld',
+        displayName: 'Alpha',
+      ),
+    ],
+    oldWorldUnits: [
+      civilianIdleUnit(
+        id: 'b1',
+        type: kUnitTypeBuilder,
+        ownerId: humanId,
+        provinceId: provinceId,
+        tileKey: tileA,
+      ),
+      civilianIdleUnit(
+        id: 'b2',
+        type: kUnitTypeBuilder,
+        ownerId: humanId,
+        provinceId: provinceId,
+        tileKey: tileA,
+      ),
+    ],
+    tileKeysByRegionAndProvince: {
+      'oldWorld': {provinceId: [tileA, tileB]},
+    },
+    playerVisibilityByTile: {
+      humanId: {tileA: 'fullyVisible', tileB: 'fullyVisible'},
+    },
+    resourceByTileKey: {tileA: 'grain', tileB: 'grain'},
+  );
+}
+
 /// Single civilian on OW Alpha (locate / pending-cost scenarios).
 Game buildCivilianSingleUnitOwGame({
   required String id,

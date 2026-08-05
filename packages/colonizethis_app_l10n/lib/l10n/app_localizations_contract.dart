@@ -1755,6 +1755,26 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
+  /// Enabled build-improvement shortcut tooltip with material cost hint (Refs #4262).
+  String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs);
+
+  /// Disabled build-improvement shortcut when no Builder units exist.
+  String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
+
+  /// Disabled build-improvement shortcut when materials/treasury shortfall is primary.
+  String provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip(
+    String reason,
+  );
+
+  /// Plain success copy when projected stockpile/treasury covers work cost (Refs #4262).
+  String get workOrderAfford_canAfford;
+
+  /// Material shortfall line for work-order assign previews (Refs #4262).
+  String workOrderAfford_shortMaterial(String commodity, int quantity);
+
+  /// Treasury shortfall line for purchase_land assign previews (Refs #4262).
+  String workOrderAfford_shortTreasury(int amount);
+
   /// Tooltip and semantics label for province tile build-road shortcut action when enabled.
   String get provinceOverlay_tileBuildRoadTooltip;
 
@@ -1766,6 +1786,9 @@ abstract class AppLocalizations {
 
   /// Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile.
   String get provinceOverlay_tileBuildRoadDisabledTooltip;
+
+  /// Disabled build-road shortcut when materials/treasury shortfall is primary reason.
+  String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason);
 
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);

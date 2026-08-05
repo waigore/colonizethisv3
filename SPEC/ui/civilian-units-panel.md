@@ -288,7 +288,8 @@ For each civilian unit, the panel shows:
 
 - **Given** a unit is **working** with `currentWork` set, **when** the panel renders that row, **then** the UI layer shows progress as today and **does not** add a commodity cost preview strip for that row.
 
-- **Given** any row showing a pending cost preview (materials or treasury), **when** the panel renders, **then** the UI layer does **not** add stockpile/treasury deficit or “can’t afford” styling (required amounts only).
+- **Given** a pending material-backed work order is **not** affordable after earlier pending work in draft order, **when** `UNIT10001` lists that row, **then** the UI layer shows required cost chips **and** one **muted** shortfall line (`workOrderAfford_shortMaterial` / `workOrderAfford_shortTreasury`) naming the primary deficit; the row does **not** auto-cancel the order.
+- **Given** all pending work orders are affordable in draft order, **when** the panel renders, **then** no shortfall lines appear on pending rows.
 
 - **Given** the Civilian Units panel renders civilian rows, **when** row actions are visible, **then** the UI layer uses the shared unit-panel row-action abstraction with left details and right actions, keeps locate where specified, and switches row actions to icon-only on narrow widths without changing action availability.
 

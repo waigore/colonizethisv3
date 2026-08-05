@@ -133,6 +133,8 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         canMutateViaUi && buildImprovementState.showIcon,
     buildImprovementActionEnabled:
         canMutateViaUi && buildImprovementState.enabled,
+    buildImprovementActionHasBuilderUnits:
+        buildImprovementState.hasBuilderUnits,
     showBuildRoadActionIcon: canMutateViaUi && buildRoadState.showIcon,
     buildRoadActionEnabled: canMutateViaUi && buildRoadState.enabled,
     buildRoadActionHasEngineerUnits: buildRoadState.hasEngineerUnits,

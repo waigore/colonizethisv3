@@ -119,6 +119,43 @@ void main() {
     );
 
     testWidgets(
+      'AC #4262: second pending build_improvement shows muted shortfall line',
+      (WidgetTester tester) async {
+        const tileA = 'oldWorld|p1|0|0';
+        const tileB = 'oldWorld|p1|1|0';
+        await tester.pumpWidget(
+          buildCivilianPanel(
+            game: buildCivilianDualBuilderLowStockGame(
+              id: 'g_civ_dual_shortfall',
+            ),
+            humanPlayerId: _human,
+            currentOrders: civilianPendingWorkOrders(
+              humanId: _human,
+              workOrders: [
+                WorkOrder(
+                  unitId: 'b1',
+                  target: kWorkTargetBuildImprovement,
+                  targetTileKey: tileA,
+                ),
+                WorkOrder(
+                  unitId: 'b2',
+                  target: kWorkTargetBuildImprovement,
+                  targetTileKey: tileB,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Assigned to:'), findsNWidgets(2));
+        expect(_resourceIcon('lumber'), findsNWidgets(2));
+        expect(_resourceIcon('castIron'), findsNWidgets(2));
+        expect(find.textContaining('Short:'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'AC: pending explore shows inline turns and no ResourceIcon strip',
       (WidgetTester tester) async {
         await _pumpPendingUnit(

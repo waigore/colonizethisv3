@@ -17,6 +17,7 @@ import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart' show explorerConsulateGateBlocksMinorTribeProvince, isProspectableTerrain, isProspectableTerrainId;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
 
@@ -41,7 +42,9 @@ Widget buildRevealedTileSection({
   VoidCallback? onProspectWithExplorerTap,
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
+  required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
+  required Orders currentOrders,
   required bool showBuildRoadActionIcon,
   required bool buildRoadActionEnabled,
   required bool buildRoadActionHasEngineerUnits,
@@ -116,6 +119,15 @@ Widget buildRevealedTileSection({
         ),
     ],
   );
+  final buildImprovementTooltip = provinceOverlayBuildImprovementTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    enabled: buildImprovementActionEnabled,
+    hasBuilderUnits: buildImprovementActionHasBuilderUnits,
+  );
   final improvementRow = Row(
     children: [
       Expanded(
@@ -129,7 +141,7 @@ Widget buildRevealedTileSection({
       ),
       if (showBuildImprovementActionIcon)
         CtIconAction(
-          tooltip: l10n.provinceOverlay_tileBuildImprovementTooltip,
+          tooltip: buildImprovementTooltip,
           onPressed: buildImprovementActionEnabled
               ? onBuildImprovementTap
               : null,
@@ -171,6 +183,8 @@ Widget buildRevealedTileSection({
           context: context,
           l10n: l10n,
           game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
           selectedTileKey: selectedTileKey,
           roadLevel: roadLevel,
           showBuildRoadActionIcon: showBuildRoadActionIcon,

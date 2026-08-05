@@ -14,6 +14,7 @@ import '../../../../../widgets/resource_icon.dart';
 import '../shared/region_labels.dart';
 import 'civilian_units_panel_support_resolution.dart';
 import 'civilian_units_panel_unit_row_pending.dart';
+import 'work_order_afford_preview_ui.dart';
 
 String? civilianUnitsPanelUnitRowSpyStatusLabel({
   required AppLocalizations l10n,
@@ -127,6 +128,10 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
       pendingWork,
       provinceNames,
     );
+    final pendingAfford = previewPendingCivilianWorkOrderAfford(
+      game: game,
+      pending: pending,
+    );
     final turns = l10n.civilian_units_turns(r.totalTurns);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,6 +168,17 @@ Widget buildCivilianUnitsPanelUnitRowAssignedToSubtitle({
               child: Text(
                 l10n.trainUnits_treasury(r.treasuryAmount!.toString()),
               ),
+            ),
+          ),
+        if (pendingAfford != null &&
+            pendingAfford.hasCostPreview &&
+            !pendingAfford.canAfford)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: buildWorkOrderAffordStatusText(
+              l10n: l10n,
+              preview: pendingAfford,
+              muted: true,
             ),
           ),
       ],

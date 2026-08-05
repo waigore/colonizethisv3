@@ -38,6 +38,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onExploreWithExplorerTap,
     this.showBuildImprovementActionIcon = false,
     this.buildImprovementActionEnabled = false,
+    this.buildImprovementActionHasBuilderUnits = false,
     this.onBuildImprovementTap,
     this.showBuildRoadActionIcon = false,
     this.buildRoadActionEnabled = false,
@@ -69,6 +70,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final VoidCallback? onExploreWithExplorerTap;
   final bool showBuildImprovementActionIcon;
   final bool buildImprovementActionEnabled;
+  final bool buildImprovementActionHasBuilderUnits;
   final VoidCallback? onBuildImprovementTap;
   final bool showBuildRoadActionIcon;
   final bool buildRoadActionEnabled;
@@ -121,6 +123,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
+      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
       onBuildImprovementTap: onBuildImprovementTap,
       showBuildRoadActionIcon: showBuildRoadActionIcon,
       buildRoadActionEnabled: buildRoadActionEnabled,

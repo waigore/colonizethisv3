@@ -577,6 +577,35 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
+  String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs) {
+    return 'Build improvement ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip =>
+      'No idle Builders';
+
+  @override
+  String provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip(
+    String reason,
+  ) {
+    return reason;
+  }
+
+  @override
+  String get workOrderAfford_canAfford => 'Can afford';
+
+  @override
+  String workOrderAfford_shortMaterial(String commodity, int quantity) {
+    return 'Short: $commodity ×$quantity';
+  }
+
+  @override
+  String workOrderAfford_shortTreasury(int amount) {
+    return 'Short: treasury ×$amount';
+  }
+
+  @override
   String get provinceOverlay_tileBuildRoadTooltip => 'Build road';
 
   @override
@@ -591,6 +620,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String get provinceOverlay_tileBuildRoadDisabledTooltip =>
       'No Engineer can assign road work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
 
   @override
   String provinceOverlay_tileImprovement(String value) {

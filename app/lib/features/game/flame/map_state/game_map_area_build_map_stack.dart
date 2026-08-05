@@ -77,6 +77,12 @@ mixin GameMapAreaBuildMapStack
               ? cancelAnyMapTileSelection
               : null,
           selectionPromptUsesRelocateCopy: civilianRelocateSelection != null,
+          workTargetForSelection: workTargetSelection?.workTarget,
+          hoveredWorkTargetTileKey: hoveredWorkTargetTileKey,
+          lastValidHoveredWorkTargetTileKey: lastValidHoveredWorkTargetTileKey,
+          onWorkTargetTileHovered: workTargetSelection != null
+              ? onWorkTargetTileHovered
+              : null,
           onCivilianTileStateChanged: (tileKey) {
             setState(() {
               selectedCivilianTileKey = tileKey;
