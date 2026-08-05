@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_constants.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'app_shell_harness.dart';
@@ -247,7 +248,7 @@ void main() {
 
         final Key bodyKey = ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2');
         final List<Rect> rects = actionRects(tester, bodyKey);
-        expect(rects.length, greaterThanOrEqualTo(4));
+        expect(rects.length, greaterThanOrEqualTo(3));
 
         final Map<double, List<Rect>> runs = _runsByTop(rects);
 
@@ -339,15 +340,15 @@ void main() {
 
         final Key bodyKey = ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2');
         final List<Rect> rects = actionRects(tester, bodyKey);
-        expect(rects.length, greaterThanOrEqualTo(4));
+        expect(rects.length, greaterThanOrEqualTo(3));
 
         final Map<double, List<Rect>> runs = _runsByTop(rects);
         expect(
           runs.length,
           1,
           reason:
-              'Given ample width, all action buttons must share a single '
-              'horizontal run (the cluster extends horizontally, not stacked).',
+              'Given ample width, the default ready shortlist must share one '
+              'horizontal run (Refs #4265 / #3621).',
         );
       },
     );

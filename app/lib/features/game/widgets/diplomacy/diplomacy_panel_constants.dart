@@ -61,6 +61,16 @@ const EdgeInsets kDiplomacyActionButtonPadding = EdgeInsets.symmetric(
 /// SPEC/ui/diplomacy-panel.md § Action button styling (Refs #3621).
 const double kDiplomacyActionButtonFontSize = 10.0;
 
+/// Stable key for the per-row **More actions** expander on `GAME30001`.
+/// Value: `diplomacyMoreActions:<factionId>`.
+/// SPEC/ui/diplomacy-panel.md § Per-faction row (Refs #4265).
+const String kDiplomacyMoreActionsKeyPrefix = 'diplomacyMoreActions:';
+
+/// Font size (Flutter sp) for inline validator refusal copy shown beneath
+/// disabled actions in the expanded **More** cluster.
+/// SPEC/ui/diplomacy-panel.md § Per-faction row (Refs #4265).
+const double kDiplomacyActionRejectionReasonFontSize = 8.0;
+
 /// Label for the formal-alliance (treaty) badge rendered on the relation line
 /// when `DiplomacyRelation.formalAlliance` is `true`. Exposed at library scope
 /// so widget tests pin the badge text from a single source.

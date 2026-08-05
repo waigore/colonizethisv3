@@ -497,7 +497,7 @@ void main() {
   }
 
   testWidgets(
-    'Non-goal: disabled action matrix unchanged on GP row (Refs #4181)',
+    'Non-goal: disabled Offer Peace reachable under More (Refs #4181 / #4265)',
     (WidgetTester tester) async {
       final game = buildDiplomacyPanelTestGame();
       final rows = buildDiplomacyRows(
@@ -514,6 +514,8 @@ void main() {
       expect(offerPeace.rejectionReason, isNotEmpty);
 
       await pumpDiplomacyOrdersPanel(tester, game: game, tall: true);
+      await tapVisibleDiplomacy(tester, find.text('More actions').first);
+      await tester.pumpAndSettle();
       final offerPeaceButton = find.widgetWithText(
         CtNinePatchButton,
         'Offer Peace',

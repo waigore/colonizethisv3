@@ -332,22 +332,20 @@ void main() {
         ),
         (
           name:
-              'AC-7/AC-10 golden: GP row shows overture + FTP controls, disabled stages present',
+              'AC-7/AC-10 golden: GP row shows default shortlist + More control',
           game: _greatPowerRowGame,
           keyId: 'diplomacy_gp_row_golden',
           golden: 'goldens/diplomacy_panel_gp_row.png',
           pin: (_) {
             expect(find.text('Great Powers'), findsOneWidget);
             expect(find.text('Castile'), findsOneWidget);
-            expect(find.text('Consulate'), findsWidgets);
-            expect(find.text('Embassy'), findsWidgets);
-            expect(find.text('Establish FTP'), findsWidgets);
+            expect(find.text('More actions'), findsWidgets);
             expect(
-              find.byWidgetPredicate(
-                (Widget w) => w is CtNinePatchButton && !w.enabled,
-              ),
-              findsWidgets,
+              find.text('Declare War').evaluate().isNotEmpty ||
+                  find.text('Alliance').evaluate().isNotEmpty,
+              isTrue,
             );
+            expect(find.text('Offer Peace'), findsNothing);
           },
         ),
         (
@@ -372,7 +370,7 @@ void main() {
             expect(find.text('Tribes'), findsOneWidget);
             expect(find.text('Powhatan'), findsOneWidget);
             expect(find.text('No tribes contacted yet.'), findsNothing);
-            expect(find.text('Consulate'), findsWidgets);
+            expect(find.text('More actions'), findsWidgets);
           },
         ),
         (
@@ -450,7 +448,7 @@ void main() {
             matching: find.byType(CtNinePatchButton),
           );
           final int count = buttons.evaluate().length;
-          expect(count, greaterThanOrEqualTo(4));
+          expect(count, greaterThanOrEqualTo(3));
           const double tol = 0.5;
           double quantize(double v) => (v / tol).roundToDouble() * tol;
           final Map<double, Set<double>> leftsByRunTop =

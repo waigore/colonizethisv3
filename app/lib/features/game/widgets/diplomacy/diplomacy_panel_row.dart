@@ -228,38 +228,128 @@ class DiplomacyRow extends StatelessWidget {
     if (readOnly) {
       return const SizedBox.shrink();
     }
-    return Wrap(
-      alignment: alignEnd ? WrapAlignment.end : WrapAlignment.start,
-      spacing: kDiplomacyActionWrapSpacing,
-      runSpacing: kDiplomacyActionWrapSpacing,
-      children: [
-        for (final action in data.actions)
-          if (_isActionPending(action))
-            DiplomacyActionButton(
-              order: action.order,
-              onPressed: () {},
-              isPending: true,
-              onCancel: () => onAction(action.order),
-            )
-          else
-            DiplomacyActionButton(
-              order: action.order,
-              enabled: action.enabled,
-              rejectionReason: action.rejectionReason,
-              onPressed: action.enabled ? () => onAction(action.order) : null,
-            ),
-      ],
+    return _DiplomacyActionCluster(
+      factionId: data.factionId,
+      actions: data.actions,
+      pendingOrderTypes: data.pendingOrderTypes,
+      pendingOvertureStage: data.pendingOvertureStage,
+      onAction: onAction,
+      alignEnd: alignEnd,
     );
   }
+}
+
+class _DiplomacyActionCluster extends StatefulWidget {
+  const _DiplomacyActionCluster({
+    required this.factionId,
+    required this.actions,
+    required this.pendingOrderTypes,
+    required this.pendingOvertureStage,
+    required this.onAction,
+    this.alignEnd = false,
+  });
+
+  final String factionId;
+  final List<DiplomaticPanelAction> actions;
+  final Set<DiplomaticOrderType> pendingOrderTypes;
+  final OvertureStage? pendingOvertureStage;
+  final void Function(DiplomaticOrder) onAction;
+  final bool alignEnd;
+
+  @override
+  State<_DiplomacyActionCluster> createState() => _DiplomacyActionClusterState();
+}
+
+class _DiplomacyActionClusterState extends State<_DiplomacyActionCluster> {
+  bool _expanded = false;
 
   bool _isActionPending(DiplomaticPanelAction action) {
-    if (!data.pendingOrderTypes.contains(action.order.type)) {
+    if (!widget.pendingOrderTypes.contains(action.order.type)) {
       return false;
     }
     if (action.order.type == DiplomaticOrderType.establishOverture) {
-      return data.pendingOvertureStage == action.order.overtureStage;
+      return widget.pendingOvertureStage == action.order.overtureStage;
     }
     return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = appL10n(context);
+    final List<DiplomaticPanelAction> defaultActions = <DiplomaticPanelAction>[];
+    final List<DiplomaticPanelAction> hiddenActions = <DiplomaticPanelAction>[];
+    for (final DiplomaticPanelAction action in widget.actions) {
+      if (action.enabled || _isActionPending(action)) {
+        defaultActions.add(action);
+      } else {
+        hiddenActions.add(action);
+      }
+    }
+
+    final List<Widget> children = <Widget>[
+      for (final DiplomaticPanelAction action in defaultActions)
+        _buildActionButton(action, showInlineRejectionReason: false),
+      if (hiddenActions.isNotEmpty)
+        _buildMoreToggleButton(
+          context,
+          expanded: _expanded,
+          label: _expanded
+              ? l10n.diplomacy_panel_fewerActions
+              : l10n.diplomacy_panel_moreActions,
+        ),
+      if (_expanded)
+        for (final DiplomaticPanelAction action in hiddenActions)
+          _buildActionButton(action, showInlineRejectionReason: true),
+    ];
+
+    return Wrap(
+      alignment: widget.alignEnd ? WrapAlignment.end : WrapAlignment.start,
+      spacing: kDiplomacyActionWrapSpacing,
+      runSpacing: kDiplomacyActionWrapSpacing,
+      children: children,
+    );
+  }
+
+  Widget _buildMoreToggleButton(
+    BuildContext context, {
+    required bool expanded,
+    required String label,
+  }) {
+    final TextStyle labelStyle =
+        (Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+            .copyWith(
+              fontFamily: editorialMonocleDisplayFontFamily,
+              fontSize: kDiplomacyActionButtonFontSize,
+            );
+    return CtNinePatchButton(
+      key: ValueKey('${kDiplomacyMoreActionsKeyPrefix}${widget.factionId}'),
+      onPressed: () => setState(() => _expanded = !expanded),
+      minHeight: kDiplomacyActionButtonMinHeight,
+      padding: kDiplomacyActionButtonPadding,
+      shrinkWrap: true,
+      child: Text(label, style: labelStyle),
+    );
+  }
+
+  Widget _buildActionButton(
+    DiplomaticPanelAction action, {
+    required bool showInlineRejectionReason,
+  }) {
+    if (_isActionPending(action)) {
+      return DiplomacyActionButton(
+        order: action.order,
+        onPressed: () {},
+        isPending: true,
+        onCancel: () => widget.onAction(action.order),
+      );
+    }
+    return DiplomacyActionButton(
+      order: action.order,
+      enabled: action.enabled,
+      rejectionReason: action.rejectionReason,
+      showInlineRejectionReason: showInlineRejectionReason,
+      onPressed: action.enabled ? () => widget.onAction(action.order) : null,
+    );
   }
 }
 
@@ -271,6 +361,7 @@ class DiplomacyActionButton extends StatelessWidget {
     this.onCancel,
     this.enabled = true,
     this.rejectionReason,
+    this.showInlineRejectionReason = false,
   });
 
   final DiplomaticOrder order;
@@ -279,6 +370,7 @@ class DiplomacyActionButton extends StatelessWidget {
   final VoidCallback? onCancel;
   final bool enabled;
   final String? rejectionReason;
+  final bool showInlineRejectionReason;
 
   bool get _isDangerVariant =>
       !isPending &&
@@ -304,6 +396,33 @@ class DiplomacyActionButton extends StatelessWidget {
       child: Text(label, style: labelStyle),
     );
     final String? reason = rejectionReason;
+    if (!isPending &&
+        !enabled &&
+        reason != null &&
+        reason.isNotEmpty &&
+        showInlineRejectionReason) {
+      final TextStyle reasonStyle =
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)).copyWith(
+            color: EditorialMonoclePalette.muted,
+            fontFamily: 'monospace',
+            fontFamilyFallback: const ['Courier'],
+            fontSize: kDiplomacyActionRejectionReasonFontSize,
+          );
+      return Semantics(
+        label: '$label. $reason',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            button,
+            Padding(
+              padding: const EdgeInsets.only(top: 2, left: 2, right: 2),
+              child: Text(reason, style: reasonStyle),
+            ),
+          ],
+        ),
+      );
+    }
     if (!isPending && !enabled && reason != null && reason.isNotEmpty) {
       return Tooltip(message: reason, child: button);
     }

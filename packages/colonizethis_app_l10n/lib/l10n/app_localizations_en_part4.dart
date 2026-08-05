@@ -45,6 +45,12 @@ mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   }
 
   @override
+  String get diplomacy_panel_moreActions => 'More actions';
+
+  @override
+  String get diplomacy_panel_fewerActions => 'Fewer actions';
+
+  @override
   String production_commodityStock(String name, int qty, String change) {
     return '$name: $qty$change';
   }

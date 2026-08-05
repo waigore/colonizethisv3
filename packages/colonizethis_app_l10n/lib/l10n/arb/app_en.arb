@@ -3630,6 +3630,14 @@
       }
     }
   },
+  "diplomacy_panel_moreActions": "More actions",
+  "@diplomacy_panel_moreActions": {
+    "description": "Expands the per-faction diplomacy row to show disabled actions with inline refusal reasons."
+  },
+  "diplomacy_panel_fewerActions": "Fewer actions",
+  "@diplomacy_panel_fewerActions": {
+    "description": "Collapses the expanded per-faction diplomacy action cluster back to the ready shortlist."
+  },
   "production_commodityStock": "{name}: {qty}{change}",
   "@production_commodityStock": {
     "description": "Stock line for a commodity; change is empty or parenthesized delta.",
