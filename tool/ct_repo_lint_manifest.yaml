@@ -1443,6 +1443,13 @@ rules:
     runner: dart
     script: tool/check_orders_dedup_development_panel.dart
 
+  - rule_id: repo.orders_owned_province_projection
+    group: architecture
+    title: Orders lib must use ownedProvinceIdsForPlayer instead of manual region province owner loops (Refs #4258)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_owned_province_projection.dart
+
   - rule_id: repo.orders_test_no_duplicate_fixtures
     group: architecture
     title: colonizethis_orders tests must use shared colonizethis_test TestFixtures, not a local copy (Refs #3714)

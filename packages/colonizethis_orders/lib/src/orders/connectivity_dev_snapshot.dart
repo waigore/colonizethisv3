@@ -4,6 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'order_suggestion_pass_context.dart';
+
 /// Plan-time connectivity snapshot for development-target candidate ordering
 /// and Full-AI civilian-work scoring (Refs #4176).
 ///
@@ -86,7 +88,8 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
   final connected = result.connected;
   final pathTransportCap = result.pathTransportCap;
   final landProvinceIds = provinceNodeIds(topology);
-  final ownedProvinceIds = _ownedProvinceIdsForPlayer(game, playerId);
+  final ownedProvinceIds =
+      ownedProvinceIdsForPlayer(game.worldState, playerId);
   final purchasedTiles = game.worldState.purchasedTilesByTileKey.keys.toSet();
   final ownedLandTiles = _ownedLandTileKeys(
     game: game,
@@ -151,17 +154,6 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
     bottleneckRailTiles: bottleneckRailTiles,
     adjacentToConnectedTiles: adjacentToConnectedTiles,
   );
-}
-
-Set<String> _ownedProvinceIdsForPlayer(Game game, String playerId) {
-  final out = <String>{};
-  for (final province in game.worldState.oldWorld.provinces) {
-    if (province.ownerId == playerId) out.add(province.id);
-  }
-  for (final province in game.worldState.newWorld.provinces) {
-    if (province.ownerId == playerId) out.add(province.id);
-  }
-  return out;
 }
 
 Set<String> _ownedLandTileKeys({
