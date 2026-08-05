@@ -112,6 +112,8 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     if (unit == null) return;
     setState(() {
       workTargetSelection = (unit: unit, workTarget: workTarget);
+      hoveredWorkTargetTileKey = null;
+      lastValidHoveredWorkTargetTileKey = null;
       computeValidTileKeysForSelection();
       final validTileKeys = cachedValidTileKeys;
       if (validTileKeys != null) {
@@ -125,6 +127,16 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     });
   }
 
+  void onWorkTargetTileHovered(String? tileKey) {
+    if (workTargetSelection == null) return;
+    setState(() {
+      hoveredWorkTargetTileKey = tileKey;
+      if (tileKey != null && cachedValidTileKeys?.contains(tileKey) == true) {
+        lastValidHoveredWorkTargetTileKey = tileKey;
+      }
+    });
+  }
+
   void cancelWorkTargetSelection() {
     if (workTargetSelection == null) {
       return;
@@ -132,6 +144,8 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
     setState(() {
       workTargetSelection = null;
       cachedValidTileKeys = null;
+      hoveredWorkTargetTileKey = null;
+      lastValidHoveredWorkTargetTileKey = null;
     });
   }
 
@@ -169,6 +183,8 @@ mixin GameMapAreaSelection on ConsumerState<GameMapArea>, GameMapAreaStateBase {
           );
       workTargetSelection = null;
       cachedValidTileKeys = null;
+      hoveredWorkTargetTileKey = null;
+      lastValidHoveredWorkTargetTileKey = null;
     });
   }
 }

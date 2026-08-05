@@ -38,6 +38,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.onExploreWithExplorerTap,
     this.showBuildImprovementActionIcon = false,
     this.buildImprovementActionEnabled = false,
+    this.buildImprovementActionHasBuilderUnits = false,
     this.onBuildImprovementTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
@@ -65,6 +66,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final VoidCallback? onExploreWithExplorerTap;
   final bool showBuildImprovementActionIcon;
   final bool buildImprovementActionEnabled;
+  final bool buildImprovementActionHasBuilderUnits;
   final VoidCallback? onBuildImprovementTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
@@ -113,6 +115,7 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
+      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
       onBuildImprovementTap: onBuildImprovementTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,

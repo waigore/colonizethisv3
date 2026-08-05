@@ -30,6 +30,8 @@ mixin GameMapAreaStateBase on ConsumerState<GameMapArea> {
   ({ct_models.Unit unit, String workTarget})? workTargetSelection;
   ct_models.Unit? civilianRelocateSelection;
   Set<String>? cachedValidTileKeys;
+  String? hoveredWorkTargetTileKey;
+  String? lastValidHoveredWorkTargetTileKey;
   final PerPlayerWorkTargetSelectionCache workTargetSelectionCache =
       PerPlayerWorkTargetSelectionCache();
   bool sideMenuOpen = false;

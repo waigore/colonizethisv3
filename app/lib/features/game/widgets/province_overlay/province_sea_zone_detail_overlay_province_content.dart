@@ -43,6 +43,7 @@ OverlayContent provinceContent({
   VoidCallback? onExploreWithExplorerTap,
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
+  required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
@@ -121,7 +122,9 @@ OverlayContent provinceContent({
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
+    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
+    currentOrders: draftOrders,
     tileConnectivity: tileConnectivity,
   );
   final political = buildPoliticalSection(

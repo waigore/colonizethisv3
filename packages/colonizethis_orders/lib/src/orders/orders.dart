@@ -3,6 +3,7 @@ library;
 
 export 'build_rail_work_rules.dart';
 export 'bundled_civilian_work_order.dart';
+export 'civilian_work_affordance.dart';
 // Refs #3753 R4b: the province-overlay UI reuses the Explorer Consulate-gate
 // predicate + rejection reason so the disabled Explore/Prospect tooltip matches
 // the order-engine submission gate (single source of truth).

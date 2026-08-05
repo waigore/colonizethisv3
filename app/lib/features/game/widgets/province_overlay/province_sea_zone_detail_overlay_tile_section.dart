@@ -33,7 +33,9 @@ Widget buildTileSection({
   VoidCallback? onProspectWithExplorerTap,
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
+  required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
+  required Orders currentOrders,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   if (selectedTileKey == null) {
@@ -99,7 +101,9 @@ Widget buildTileSection({
     onProspectWithExplorerTap: onProspectWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
+    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
+    currentOrders: currentOrders,
     tileConnectivity: tileConnectivity,
   );
 }

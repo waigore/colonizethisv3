@@ -131,6 +131,8 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
         canMutateViaUi && buildImprovementState.showIcon,
     buildImprovementActionEnabled:
         canMutateViaUi && buildImprovementState.enabled,
+    buildImprovementActionHasBuilderUnits:
+        buildImprovementState.hasBuilderUnits,
     omniscientDetail: omniscientDetail,
     onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
     onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,

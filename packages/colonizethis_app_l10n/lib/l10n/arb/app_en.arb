@@ -2965,6 +2965,53 @@
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
   },
+  "provinceOverlay_tileBuildImprovementTooltipWithCost": "Build improvement ({costs})",
+  "@provinceOverlay_tileBuildImprovementTooltipWithCost": {
+    "description": "Enabled build-improvement shortcut tooltip with material cost hint (Refs #4262).",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": "No idle Builders",
+  "@provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": {
+    "description": "Disabled build-improvement shortcut when no Builder units exist."
+  },
+  "provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip": {
+    "description": "Disabled build-improvement shortcut when materials/treasury shortfall is primary reason (Refs #4262).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "workOrderAfford_canAfford": "Can afford",
+  "@workOrderAfford_canAfford": {
+    "description": "Plain success copy when projected stockpile/treasury covers a work-order cost at assign time (Refs #4262)."
+  },
+  "workOrderAfford_shortMaterial": "Short: {commodity} ×{quantity}",
+  "@workOrderAfford_shortMaterial": {
+    "description": "Material shortfall line for work-order assign previews (Refs #4262).",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "workOrderAfford_shortTreasury": "Short: treasury ×{amount}",
+  "@workOrderAfford_shortTreasury": {
+    "description": "Treasury shortfall line for purchase_land assign previews (Refs #4262).",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",
