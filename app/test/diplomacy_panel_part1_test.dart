@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel_constants.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 import 'diplomacy_panel_test_support.dart';
@@ -135,7 +136,7 @@ void main() {
     );
 
     testWidgets(
-      'AC-6/AC-10: overture and FTP buttons shown disabled when invalid',
+      'AC-6/AC-10: overture and FTP buttons behind More when invalid',
       (WidgetTester tester) async {
         await bindDiplomacyTallTestSurface(tester);
         await tester.pumpWidget(
@@ -147,10 +148,43 @@ void main() {
         );
         await pumpDiplomacyPanelBuilt(tester);
 
-        expect(find.text('Consulate'), findsWidgets);
-        expect(find.text('Embassy'), findsWidgets);
-        expect(find.text('Establish FTP'), findsWidgets);
-        expect(find.text('Offer Peace'), findsWidgets);
+        final Finder gp2Row = find.byKey(
+          const ValueKey('${kDiplomacyRowBodyKeyPrefix}gp2'),
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('More actions')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Embassy')),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Establish FTP')),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Offer Peace')),
+          findsNothing,
+        );
+
+        await tester.tap(
+          find.descendant(of: gp2Row, matching: find.text('More actions')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Embassy')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Establish FTP')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: gp2Row, matching: find.text('Offer Peace')),
+          findsOneWidget,
+        );
       },
     );
 

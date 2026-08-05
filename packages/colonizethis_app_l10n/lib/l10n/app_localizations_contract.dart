@@ -2076,6 +2076,18 @@ abstract class AppLocalizations {
   /// Pending subsidy line in diplomacy row.
   String diplomacy_panel_pendingSubsidy(int amount);
 
+  /// Expands the per-faction diplomacy row to show disabled actions with
+  /// inline refusal reasons.
+  String get diplomacy_panel_moreActions;
+
+  /// Collapses the expanded per-faction diplomacy action cluster back to the
+  /// ready shortlist.
+  String get diplomacy_panel_fewerActions;
+
+  /// Accessibility label for a disabled diplomacy action shown under More with
+  /// an inline refusal reason.
+  String diplomacy_actionRejection_semanticsLabel(String action, String reason);
+
   /// Stock line for a commodity; change is empty or parenthesized delta.
   String production_commodityStock(String name, int qty, String change);
 
