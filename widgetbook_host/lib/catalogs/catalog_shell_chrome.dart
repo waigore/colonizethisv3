@@ -242,6 +242,21 @@ class _CtIconActionStoryState extends State<_CtIconActionStory> {
                 tooltip: 'Build improvement (disabled)',
                 onPressed: () {},
               ),
+              const SizedBox(width: 12),
+              CtIconAction(
+                icon: Icons.add_road,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Build road',
+                onPressed: () {},
+              ),
+              const SizedBox(width: 12),
+              CtIconAction(
+                icon: Icons.add_road,
+                enabled: false,
+                // ignore: avoid_hardcoded_strings_in_widgets
+                tooltip: 'Build road (disabled)',
+                onPressed: () {},
+              ),
             ],
           ),
           const SizedBox(height: 16),
