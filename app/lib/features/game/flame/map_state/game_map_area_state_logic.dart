@@ -40,6 +40,9 @@ abstract final class GameMapAreaStateLogic {
   static const ({bool showIcon, bool enabled, bool hasBuilderUnits})
   kHiddenBuilderInlineActionState =
       GameMapAreaProvinceActionStates.kHiddenBuilderInlineActionState;
+  static const ({bool showIcon, bool enabled, bool hasEngineerUnits})
+  kHiddenEngineerInlineActionState =
+      GameMapAreaProvinceActionStates.kHiddenEngineerInlineActionState;
 
   static int regionIndexFromWorldRegionId(String regionId) =>
       GameMapAreaStateLogicShell.regionIndexFromWorldRegionId(regionId);
@@ -249,6 +252,28 @@ abstract final class GameMapAreaStateLogic {
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
       GameMapAreaStateLogicProvinceActions.provinceBuildImprovementActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasEngineerUnits})
+  provinceBuildRoadActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaStateLogicProvinceActions.provinceBuildRoadActionState(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

@@ -577,6 +577,22 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
+  String get provinceOverlay_tileBuildRoadTooltip => 'Build road';
+
+  @override
+  String provinceOverlay_tileBuildRoadTooltipWithCost(String costs) {
+    return 'Build road ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip =>
+      'No Engineer available to build road';
+
+  @override
+  String get provinceOverlay_tileBuildRoadDisabledTooltip =>
+      'No Engineer can assign road work here this turn';
+
+  @override
   String provinceOverlay_tileImprovement(String value) {
     return 'Improvement: $value';
   }

@@ -16,6 +16,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onExploreWithExplorerTap,
   VoidCallback? onProspectWithExplorerTap,
   VoidCallback? onBuildImprovementTap,
+  VoidCallback? onBuildRoadTap,
 });
 
 /// Builds the explore / prospect / build-improvement shortcut callbacks shared
@@ -42,6 +43,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool exploreEnabled,
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
+  required bool buildRoadEnabled,
   required ct_models.AppEventBus bus,
 }) {
   final String? tileKey = selectedTileKey;
@@ -50,6 +52,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onExploreWithExplorerTap: null,
       onProspectWithExplorerTap: null,
       onBuildImprovementTap: null,
+      onBuildRoadTap: null,
     );
   }
   final topology = mapData?.combinedTopology;
@@ -123,9 +126,32 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
     };
   }
 
+  VoidCallback? onBuildRoad;
+  if (buildRoadEnabled) {
+    onBuildRoad = () {
+      final revalidated = GameMapAreaStateLogic.provinceBuildRoadActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: tileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+      );
+      if (!revalidated.enabled) {
+        return;
+      }
+      bus.emit(
+        ct_models.OpenCivilianUnitsPanelEvent(
+          engineerOnly: true,
+          buildRoadShortcutTargetTileKey: tileKey,
+        ),
+      );
+    };
+  }
+
   return (
     onExploreWithExplorerTap: onExplore,
     onProspectWithExplorerTap: onProspect,
     onBuildImprovementTap: onBuildImprovement,
+    onBuildRoadTap: onBuildRoad,
   );
 }

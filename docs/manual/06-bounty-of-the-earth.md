@@ -8,7 +8,7 @@ Tiles feed the realm only when civilians improve them, bind them with roads and 
 
 ### Where you assign work
 
-1. Open `UNIT10001` **Civilian units panel** and select a civilian, **or** select a province on `MAP10001` / `MAP20001` and use Economic / tile shortcuts (e.g. **Build improvement**), **or** open `GAME80001` **Development** from the empire rail for empire-wide improvable tiles and one-tap **Assign**.
+1. Open `UNIT10001` **Civilian units panel** and select a civilian, **or** select a province on `MAP10001` / `MAP20001` and use Economic / tile shortcuts (e.g. **Build improvement**, **Build road** on the Road / railroad row), **or** open `GAME80001` **Development** from the empire rail for empire-wide improvable tiles and one-tap **Assign**.
 2. Choose a work target; the map highlights valid tiles (flashing selection affordances on `MAP10001`).
 3. Confirm the assignment in the Orders phase. Materials and treasury affordability are checked **at assign**; for most builds, stockpile materials are reserved/deducted when Build/work applies the order. Rejected assigns surface messages such as **Insufficient treasury** or **Insufficient materials**.
 4. The unit may need to **move** to the work tile in **Movement**; work then ticks in **Build/work**. New extraction yields appear in later turns’ **Extraction** phase once improvements exist and connectivity allows.

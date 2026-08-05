@@ -1755,6 +1755,18 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
+  /// Tooltip and semantics label for province tile build-road shortcut action when enabled.
+  String get provinceOverlay_tileBuildRoadTooltip;
+
+  /// Enabled build-road shortcut tooltip including material cost summary.
+  String provinceOverlay_tileBuildRoadTooltipWithCost(String costs);
+
+  /// Disabled build-road shortcut tooltip when the human player has no Engineer units.
+  String get provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip;
+
+  /// Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile.
+  String get provinceOverlay_tileBuildRoadDisabledTooltip;
+
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
 

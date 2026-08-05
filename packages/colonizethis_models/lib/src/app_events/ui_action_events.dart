@@ -96,9 +96,11 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.initialSelectedUnitId,
     this.explorerOnly = false,
     this.builderOnly = false,
+    this.engineerOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
+    this.buildRoadShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -114,6 +116,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   /// Optional panel filter mode for builder-only rows.
   final bool builderOnly;
 
+  /// Optional panel filter mode for engineer-only rows.
+  final bool engineerOnly;
+
   /// Optional tile key used by the province prospect shortcut flow.
   final String? prospectShortcutTargetTileKey;
 
@@ -122,6 +127,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province build-improvement shortcut flow.
   final String? buildImprovementShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-road shortcut flow.
+  final String? buildRoadShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.
