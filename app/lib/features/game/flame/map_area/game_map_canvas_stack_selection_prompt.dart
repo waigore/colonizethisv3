@@ -59,48 +59,92 @@ class GameMapCanvasStackSelectionPrompt extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      usesRelocateCopy
-                          ? l10n.map_selectionMode_relocatePrompt
-                          : l10n.map_selectionMode_prompt,
-                      style: TextStyle(
-                        color: EditorialMonoclePalette.fg,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    CtNinePatchButton(
-                      onPressed: onCancel,
-                      minHeight: kMapSelectionPromptCancelMinHeight,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: CtSpacing.ml,
-                        vertical: 4,
-                      ),
-                      child: Text(
-                        l10n.map_selectionMode_cancel,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
+                _GameMapSelectionPromptHeaderRow(
+                  l10n: l10n,
+                  usesRelocateCopy: usesRelocateCopy,
+                  onCancel: onCancel,
                 ),
-                if (showAfford) ...[
-                  const SizedBox(height: 6),
-                  buildWorkOrderAffordCostChips(preview: preview),
-                  const SizedBox(height: 4),
-                  buildWorkOrderAffordStatusText(
+                if (showAfford)
+                  _GameMapSelectionPromptAffordSection(
                     l10n: l10n,
-                    preview: preview,
+                    preview: preview!,
                   ),
-                ],
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _GameMapSelectionPromptHeaderRow extends StatelessWidget {
+  const _GameMapSelectionPromptHeaderRow({
+    required this.l10n,
+    required this.usesRelocateCopy,
+    required this.onCancel,
+  });
+
+  final AppLocalizations l10n;
+  final bool usesRelocateCopy;
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          usesRelocateCopy
+              ? l10n.map_selectionMode_relocatePrompt
+              : l10n.map_selectionMode_prompt,
+          style: TextStyle(
+            color: EditorialMonoclePalette.fg,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 10),
+        CtNinePatchButton(
+          onPressed: onCancel,
+          minHeight: kMapSelectionPromptCancelMinHeight,
+          padding: const EdgeInsets.symmetric(
+            horizontal: CtSpacing.ml,
+            vertical: 4,
+          ),
+          child: Text(
+            l10n.map_selectionMode_cancel,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GameMapSelectionPromptAffordSection extends StatelessWidget {
+  const _GameMapSelectionPromptAffordSection({
+    required this.l10n,
+    required this.preview,
+  });
+
+  final AppLocalizations l10n;
+  final WorkOrderAffordPreview preview;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 6),
+        buildWorkOrderAffordCostChips(preview: preview),
+        const SizedBox(height: 4),
+        buildWorkOrderAffordStatusText(
+          l10n: l10n,
+          preview: preview,
+        ),
+      ],
     );
   }
 }
