@@ -1,7 +1,7 @@
+import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('workOrderAffordStatusLine reports material shortfall', () {
