@@ -71,12 +71,11 @@ List<String> cardinalLandNeighborTileKeys({
     final ny = coords.y + d.$2;
     if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
     final cellId = map.cell(nx, ny);
-    final fullProvinceId = landProvinceIds.contains(cellId)
-        ? ProvinceId.full(coords.regionId, cellId)
-        : (landProvinceIds.contains(ProvinceId.full(coords.regionId, cellId))
-              ? ProvinceId.full(coords.regionId, cellId)
-              : null);
-    if (fullProvinceId == null) continue;
+    final fullProvinceId = '${coords.regionId}|$cellId';
+    if (!landProvinceIds.contains(cellId) &&
+        !landProvinceIds.contains(fullProvinceId)) {
+      continue;
+    }
     neighbors.add(
       CapitalTile.tileKey(coords.regionId, fullProvinceId, nx, ny),
     );
