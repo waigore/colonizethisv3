@@ -37,7 +37,9 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deplo
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
@@ -171,6 +173,7 @@ part 'catalog_event_feed.dart';
 part 'catalog_observe_mode.dart';
 part 'catalog_debug_log_viewer.dart';
 part 'catalog_debug_console.dart';
+part 'catalog_work_order_afford_preview.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -286,6 +289,7 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...transferListDirectories,
   ...mainMenuDirectories,
   ...mapWidgetDirectories,
+  ...workOrderAffordPreviewDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,
   ...counselPanelDirectories,
