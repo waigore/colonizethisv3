@@ -2,11 +2,12 @@
 // Pixel baselines under `app/test/goldens/` close the verify-github-issue UI
 // proof gap for market-summary row rendering on issue #4270.
 //
-// Golden mapping:
+// Golden mapping (widget goldens; feed integration in game_map_area_event_feed_test.dart):
 //  - AC   fill totals row with trailing chevron link affordance
 //  - AC   carry-forward-only row
 //  - AC   fills + carry-forward combined copy on one row
 //  - AC   narrow 320 dp viewport readability (≥44 dp tappable row)
+//  - AC   no market row when only overseas profit (integration test)
 //
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
