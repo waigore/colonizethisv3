@@ -13,7 +13,7 @@ import '../features/game/screens/counsel/counsel_screen.dart';
 import '../features/game/screens/development/development_screen.dart';
 import '../features/game/screens/victory/victory_screen.dart';
 import '../features/shell/shell_screen.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class Routes {

@@ -13,24 +13,7 @@ import 'region_map_component_render_player_territory_outline.dart';
 import 'region_map_component_render_political.dart';
 import 'region_map_component_render_political_borders.dart';
 import 'region_map_component_render_political_sea_labels.dart';
-
-class RegionMapComponentCornerValues {
-  final bool nw;
-  final bool ne;
-  final bool sw;
-  final bool se;
-  final bool same;
-  final bool value;
-
-  RegionMapComponentCornerValues({
-    required this.nw,
-    required this.ne,
-    required this.sw,
-    required this.se,
-    required this.same,
-    required this.value,
-  });
-}
+import 'region_map_component_shared_corner_values.dart';
 
 extension CtRegionMapRenderOrchestrator on CtRegionMapComponent {
   void renderRegionMap(Canvas canvas) {

@@ -5,7 +5,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_combat/colonizethis_combat.dart';
 import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_orders/src/orders/diplomatic_panel_actions.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_models/colonizethis_models.dart';

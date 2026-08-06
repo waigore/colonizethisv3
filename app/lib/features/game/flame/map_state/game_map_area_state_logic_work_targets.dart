@@ -3,7 +3,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Work-target tile selection and order-merge helpers for [GameMapAreaStateLogic].
 abstract final class GameMapAreaStateLogicWorkTargets {

@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'game_map_area_province_action_states.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Province-overlay inline action state helpers for [GameMapAreaStateLogic].
 abstract final class GameMapAreaStateLogicProvinceActions {

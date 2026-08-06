@@ -14,7 +14,7 @@ import '../../../../core/services/turn_resolution/turn_resolution_runner.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
 
 import 'game_map_area.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Shared state for [GameMapArea]: every domain mixin (`GameMapAreaSelection`,
 /// `GameMapAreaView`, `GameMapAreaEvents`, …) is `on GameMapAreaStateBase`

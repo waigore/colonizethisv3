@@ -9,7 +9,7 @@ import '../../flame/map_state/map_state.dart';
 import 'game_screen_fallback_next_turn_runner.dart';
 import 'game_screen_shared.dart'
     show kGameMapNextTurnButtonKey, kNextTurnDisabledOpacity;
-import 'package:colonizethis_logic/src/turn_to_year.dart';
+import 'package:colonizethis_logic/turn_time_api.dart';
 
 /// Flame-canvas fallback Next-turn button (used when `mapViewDataProvider == null`).
 class GameScreenFallbackNextTurnButton extends ConsumerStatefulWidget {

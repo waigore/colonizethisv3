@@ -11,11 +11,14 @@ import 'package:path/path.dart' as p;
 const forbiddenImportNeedle =
     'package:colonizethis_logic/colonizethis_logic.dart';
 
-/// Scoped app trees: core services (wave 11 #4224), providers + features (wave 12 #4240).
+/// Scoped app trees: core services (wave 11 #4224), providers + features (wave 12
+/// #4240), widgets + config (wave 13 #4269 Slice A).
 const scopedRelativeDirs = <String>[
   'app/lib/core/services',
   'app/lib/providers',
   'app/lib/features',
+  'app/lib/widgets',
+  'app/lib/config',
 ];
 
 const coreServicesRelativeDir = 'app/lib/core/services';
@@ -26,6 +29,8 @@ const allowedLogicContractNeedles = <String>[
   'package:colonizethis_logic/order_suggestion_api.dart',
   'package:colonizethis_logic/industry_counsel_api.dart',
   'package:colonizethis_logic/debug_console_api.dart',
+  'package:colonizethis_logic/turn_time_api.dart',
+  'package:colonizethis_logic/civilian_intel_api.dart',
 ];
 
 /// Domain package barrels permitted in scoped trees.

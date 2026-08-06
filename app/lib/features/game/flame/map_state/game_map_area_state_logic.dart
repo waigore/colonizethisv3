@@ -15,7 +15,7 @@ export 'game_map_area_state_logic_shell.dart';
 export 'game_map_area_state_logic_work_targets.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Pure-ish helpers for `GameMapArea` state translation.
 ///

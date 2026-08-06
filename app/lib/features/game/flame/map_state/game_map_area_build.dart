@@ -26,7 +26,7 @@ import 'game_map_area_e2e.dart';
 import 'game_map_area_build_overlays.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_logic/src/turn_to_year.dart';
+import 'package:colonizethis_logic/turn_time_api.dart';
 
 /// View composition for [GameMapArea]: the controls bar and play-area stack
 /// delegating map overlays to [GameMapAreaBuildOverlays] (Refs #3699 Theme 3).
