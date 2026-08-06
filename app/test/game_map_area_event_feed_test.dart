@@ -431,7 +431,7 @@ void main() {
   );
 
   testWidgets(
-    'Player turn event feed omits market summary when no market activity '
+    'Player turn event feed omits market summary on overseas-profit-only turn '
     '(Refs #4270)',
     (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);
