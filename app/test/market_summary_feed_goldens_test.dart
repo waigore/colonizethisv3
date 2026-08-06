@@ -1,13 +1,12 @@
 // Widget goldens for OVL70001 market-summary feed rows (Refs #4270).
-// Pixel baselines under app/test/goldens/ close the verify-github-issue UI
-// proof gap for market-summary row rendering.
+// Pixel baselines under app/test/goldens/; integration coverage in
+// game_map_area_event_feed_test.dart (tap navigation, overseas-profit isolation).
 //
-// Golden mapping (widget goldens; integration coverage in game_map_area_event_feed_test.dart):
-//  - AC   fill totals row with trailing chevron link affordance
-//  - AC   carry-forward-only row
-//  - AC   fills + carry-forward combined copy on one row
-//  - AC   narrow 320 dp viewport readability (≥44 dp tappable row height)
-//  - AC   overseas-profit-only turn omits market row (game_map_area_event_feed_test.dart)
+// Golden mapping:
+//  - fill totals row with trailing chevron link affordance
+//  - carry-forward-only row
+//  - fills + carry-forward combined copy on one row
+//  - narrow 320 dp viewport readability (≥44 dp tappable row height)
 //
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
