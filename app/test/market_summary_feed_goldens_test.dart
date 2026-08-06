@@ -8,7 +8,7 @@
 //  - AC   fills + carry-forward combined copy on one row
 //  - AC   narrow 320 dp viewport readability (≥44 dp tappable row)
 //
-// SPEC: SPEC/ui/player-turn-event-feed.md § Market-summary lines.
+// SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
