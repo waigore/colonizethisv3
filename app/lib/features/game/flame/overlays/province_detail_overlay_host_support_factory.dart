@@ -52,6 +52,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final prospectState = actionStates.prospect;
   final buildImprovementState = actionStates.buildImprovement;
   final buildRoadState = actionStates.buildRoad;
+  final purchaseLandState = actionStates.purchaseLand;
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -65,6 +66,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     prospectEnabled: prospectState.enabled,
     buildImprovementEnabled: buildImprovementState.enabled,
     buildRoadEnabled: buildRoadState.enabled,
+    purchaseLandEnabled: purchaseLandState.enabled,
     bus: bus,
   );
   final townProductionBonus = provinceTownProductionBonusPreview(
@@ -138,10 +140,14 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     showBuildRoadActionIcon: canMutateViaUi && buildRoadState.showIcon,
     buildRoadActionEnabled: canMutateViaUi && buildRoadState.enabled,
     buildRoadActionHasEngineerUnits: buildRoadState.hasEngineerUnits,
+    showPurchaseLandActionIcon: canMutateViaUi && purchaseLandState.showIcon,
+    purchaseLandActionEnabled: canMutateViaUi && purchaseLandState.enabled,
+    purchaseLandActionHasMerchantUnits: purchaseLandState.hasMerchantUnits,
     omniscientDetail: omniscientDetail,
     onExploreWithExplorerTap: shortcuts.onExploreWithExplorerTap,
     onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
     onBuildImprovementTap: shortcuts.onBuildImprovementTap,
     onBuildRoadTap: shortcuts.onBuildRoadTap,
+    onPurchaseLandTap: shortcuts.onPurchaseLandTap,
   );
 }

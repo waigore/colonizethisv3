@@ -14,6 +14,7 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
   required String? exploreShortcutTargetTileKey,
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
+  required String? purchaseLandShortcutTargetTileKey,
 }) =>
     (prospectShortcutTargetTileKey != null &&
         prospectShortcutTargetTileKey.isNotEmpty) ||
@@ -22,7 +23,9 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
     (buildImprovementShortcutTargetTileKey != null &&
         buildImprovementShortcutTargetTileKey.isNotEmpty) ||
     (buildRoadShortcutTargetTileKey != null &&
-        buildRoadShortcutTargetTileKey.isNotEmpty);
+        buildRoadShortcutTargetTileKey.isNotEmpty) ||
+    (purchaseLandShortcutTargetTileKey != null &&
+        purchaseLandShortcutTargetTileKey.isNotEmpty);
 
 void startCivilianUnitsPanelUnitRowShortcutAssign({
   required AppEventBus bus,
@@ -34,6 +37,7 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   required String? exploreShortcutTargetTileKey,
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
+  required String? purchaseLandShortcutTargetTileKey,
 }) {
   final hasExploreShortcut =
       exploreShortcutTargetTileKey != null &&
@@ -47,7 +51,12 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   final hasBuildRoadShortcut =
       buildRoadShortcutTargetTileKey != null &&
       buildRoadShortcutTargetTileKey.isNotEmpty;
-  final targetTileKey = hasBuildRoadShortcut
+  final hasPurchaseLandShortcut =
+      purchaseLandShortcutTargetTileKey != null &&
+      purchaseLandShortcutTargetTileKey.isNotEmpty;
+  final targetTileKey = hasPurchaseLandShortcut
+      ? purchaseLandShortcutTargetTileKey
+      : hasBuildRoadShortcut
       ? buildRoadShortcutTargetTileKey
       : hasBuildImprovementShortcut
       ? buildImprovementShortcutTargetTileKey
@@ -57,7 +66,9 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? prospectShortcutTargetTileKey
       : null;
   if (targetTileKey == null || targetTileKey.isEmpty) return;
-  final workTarget = hasBuildRoadShortcut
+  final workTarget = hasPurchaseLandShortcut
+      ? kWorkTargetPurchaseLand
+      : hasBuildRoadShortcut
       ? kWorkTargetBuildRoad
       : hasBuildImprovementShortcut
       ? kWorkTargetBuildImprovement

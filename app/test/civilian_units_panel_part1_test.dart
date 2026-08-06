@@ -10,7 +10,7 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildImprovement, kWorkTargetBuildRoad, kWorkTargetExplore, kWorkTargetProspect;
+    show kWorkTargetBuildImprovement, kWorkTargetBuildRoad, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand;
 
 import 'civilian_units_panel_test_support.dart';
 
@@ -214,10 +214,12 @@ void main() {
       bool explorerOnly = false,
       bool builderOnly = false,
       bool engineerOnly = false,
+      bool merchantOnly = false,
       String? prospectShortcutTargetTileKey,
       String? exploreShortcutTargetTileKey,
       String? buildImprovementShortcutTargetTileKey,
       String? buildRoadShortcutTargetTileKey,
+      String? purchaseLandShortcutTargetTileKey,
       bool expectCloseBeforeUpsert = true,
       Game Function(String id)? customGameBuilder,
     }) async {
@@ -245,11 +247,13 @@ void main() {
           explorerOnly: explorerOnly,
           builderOnly: builderOnly,
           engineerOnly: engineerOnly,
+          merchantOnly: merchantOnly,
           prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               buildImprovementShortcutTargetTileKey,
           buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
           availableWorkTargets: {
             unitId: [workTarget],
           },
@@ -347,6 +351,27 @@ void main() {
           customGameBuilder: (id) => buildCivilianEngineerBuilderShortcutGame(
             id: id,
             engineerFirst: true,
+          ),
+        );
+      },
+    );
+
+    testWidgets(
+      'purchase-land shortcut mode filters merchants and commits',
+      (WidgetTester tester) async {
+        await expectShortcutCommit(
+          tester,
+          gameId: 'g_civ_purchase_land_shortcut',
+          visibleType: kUnitTypeMerchant,
+          hiddenType: kUnitTypeBuilder,
+          unitId: 'm1',
+          workTarget: kWorkTargetPurchaseLand,
+          merchantOnly: true,
+          purchaseLandShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          expectCloseBeforeUpsert: false,
+          customGameBuilder: (id) => buildCivilianMerchantBuilderShortcutGame(
+            id: id,
+            merchantFirst: true,
           ),
         );
       },

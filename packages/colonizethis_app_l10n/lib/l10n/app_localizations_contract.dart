@@ -1811,6 +1811,21 @@ abstract class AppLocalizations {
   /// Disabled build-road shortcut when materials/treasury shortfall is primary reason.
   String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason);
 
+  /// Tooltip and semantics label for province tile purchase-land shortcut action.
+  String get provinceOverlay_tilePurchaseLandTooltip;
+
+  /// Enabled purchase-land shortcut tooltip with treasury cost hint (Refs #4274).
+  String provinceOverlay_tilePurchaseLandTooltipWithCost(int amount);
+
+  /// Disabled purchase-land shortcut when no Merchant units exist.
+  String get provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip;
+
+  /// Disabled purchase-land shortcut when embassy is missing or at war.
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
+
+  /// Disabled purchase-land shortcut when treasury shortfall is primary.
+  String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount);
+
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
 

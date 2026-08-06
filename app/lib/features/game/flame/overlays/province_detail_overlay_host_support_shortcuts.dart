@@ -17,6 +17,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onProspectWithExplorerTap,
   VoidCallback? onBuildImprovementTap,
   VoidCallback? onBuildRoadTap,
+  VoidCallback? onPurchaseLandTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -56,6 +57,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
+  required bool purchaseLandEnabled,
   required ct_models.AppEventBus bus,
 }) {
   final String? tileKey = selectedTileKey;
@@ -65,6 +67,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onProspectWithExplorerTap: null,
       onBuildImprovementTap: null,
       onBuildRoadTap: null,
+      onPurchaseLandTap: null,
     );
   }
   final topology = mapData?.combinedTopology;
@@ -135,6 +138,23 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
           buildRoadShortcutTargetTileKey: tileKey,
+        ),
+      ),
+    ),
+    onPurchaseLandTap: _provinceDetailShortcutTap(
+      enabled: purchaseLandEnabled,
+      revalidateEnabled: () =>
+          GameMapAreaStateLogic.provincePurchaseLandActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: tileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          ).enabled,
+      emit: () => bus.emit(
+        ct_models.OpenCivilianUnitsPanelEvent(
+          merchantOnly: true,
+          purchaseLandShortcutTargetTileKey: tileKey,
         ),
       ),
     ),
