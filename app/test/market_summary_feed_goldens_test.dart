@@ -1,6 +1,6 @@
 // Widget goldens for OVL70001 market-summary feed rows (Refs #4270).
 // Pixel baselines under `app/test/goldens/` close the verify-github-issue UI
-// proof gap flagged on issue #4270.
+// proof gap for market-summary row rendering on issue #4270.
 //
 // Golden mapping:
 //  - AC   fill totals row with trailing chevron link affordance
