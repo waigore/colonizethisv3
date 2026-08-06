@@ -53,6 +53,48 @@ List<WidgetbookNode> get playerTurnEventFeedCardDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market summary — tappable link to Deal Book',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Market: bought £240 · sold £160 · 2 orders carried',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Market + overseas profit — separate rows',
+        builder: (context) => _playerTurnEventFeedCardStoryFrame(
+          child: PlayerTurnEventFeedCard(
+            entries: [
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text:
+                    'Overseas profit credited: £120 from 2 rival purchase(s). '
+                    'Tap to open Deal Book.',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+              PlayerTurnEventFeedEntry(
+                // ignore: avoid_hardcoded_strings_in_widgets
+                text: 'Market: bought £240 · sold £160',
+                linkAffordance: true,
+                onTap: () {},
+              ),
+            ],
+            // ignore: avoid_hardcoded_strings_in_widgets
+            emptyLabel: 'No events this turn.',
+          ),
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Populated — three entries (top entry tappable)',
         builder: (context) => _playerTurnEventFeedCardStoryFrame(
           child: PlayerTurnEventFeedCard(

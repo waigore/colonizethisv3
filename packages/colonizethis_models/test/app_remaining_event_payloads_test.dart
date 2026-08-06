@@ -186,6 +186,16 @@ void main() {
         ).totalTreasuryCredit,
         75,
       );
+      expect(
+        const AppMarketTurnSummaryEvent(
+          playerId: 'gp1',
+          totalSpent: 240,
+          totalReceived: 160,
+          carryForwardOrderCount: 2,
+          turnNumber: 3,
+        ).carryForwardOrderCount,
+        2,
+      );
     });
   });
 }

@@ -31,13 +31,14 @@
 // raised for work-order cost and affordability at assign time (Refs #4262);
 // raised for GAME30001 diplomacy ready-first actions + More expander (Refs #4265).
 // raised for OVL50001 intervention choice-picker situation and Effect lines (Refs #4267).
+// raised for OVL70001 market fill summary feed row with Deal Book deep-link (Refs #4270).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 69200;
+const _maxMainLines = 69300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

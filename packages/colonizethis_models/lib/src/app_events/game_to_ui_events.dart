@@ -288,3 +288,20 @@ class AppOverseasProfitCreditedEvent extends GameToUIEvent {
   final int creditCount;
   final int turnNumber;
 }
+
+/// Last-turn ordinary market fill / carry-forward summary. Mirrors
+/// [MarketTurnSummaryEvent] (Refs #4270).
+class AppMarketTurnSummaryEvent extends GameToUIEvent {
+  const AppMarketTurnSummaryEvent({
+    required this.playerId,
+    required this.totalSpent,
+    required this.totalReceived,
+    required this.carryForwardOrderCount,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final int totalSpent;
+  final int totalReceived;
+  final int carryForwardOrderCount;
+  final int turnNumber;
+}
