@@ -7,7 +7,7 @@
 //  - AC   carry-forward-only row
 //  - AC   fills + carry-forward combined copy on one row
 //  - AC   narrow 320 dp viewport readability (≥44 dp tappable row height)
-//  - AC   no market row when only overseas profit (game_map_area_event_feed_test.dart)
+//  - AC   overseas-profit-only turn omits market row (game_map_area_event_feed_test.dart)
 //
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
