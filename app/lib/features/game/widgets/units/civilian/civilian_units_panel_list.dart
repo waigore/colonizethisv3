@@ -35,6 +35,13 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
         false;
   }
 
+  bool isMerchantUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetPurchaseLand,
+        ) ??
+        false;
+  }
+
   List<Widget> civilianListChildrenForRegion({
     required String regionId,
     required List<Unit> units,
@@ -123,6 +130,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       buildImprovementShortcutTargetTileKey:
           widget.buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
+      purchaseLandShortcutTargetTileKey: widget.purchaseLandShortcutTargetTileKey,
     );
   }
 
@@ -132,10 +140,15 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
     required bool explorerOnly,
     required bool builderOnly,
     required bool engineerOnly,
+    required bool merchantOnly,
   }) {
     final tileScopeActive =
         tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
-    if (!tileScopeActive && !explorerOnly && !builderOnly && !engineerOnly) {
+    if (!tileScopeActive &&
+        !explorerOnly &&
+        !builderOnly &&
+        !engineerOnly &&
+        !merchantOnly) {
       return units;
     }
     return [
@@ -149,7 +162,8 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
                     tileScopeTileKey) &&
             (!explorerOnly || isExplorerUnit(u)) &&
             (!builderOnly || isBuilderUnit(u)) &&
-            (!engineerOnly || isEngineerUnit(u)))
+            (!engineerOnly || isEngineerUnit(u)) &&
+            (!merchantOnly || isMerchantUnit(u)))
           u,
     ];
   }

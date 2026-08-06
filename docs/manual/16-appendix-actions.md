@@ -35,7 +35,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | `build_fort` — Engineer | Materials, town tile, and fort technology where required. | Raises fort level. |
 | `build_rail` — Rail Builder | Steel ×2 + lumber ×2; road level 1–2, known terrain, matching rail technology. | Sets railroad transport level 4. |
 | `counter_spy` — Spy | Free; owned province. | Ongoing empire-wide counter-espionage effect; spy checks occur in **Spy resolution**. |
-| `purchase_land` — Merchant | Embassy, peace, resource tile, prospection for minerals, and treasury ≥ 15× base price; no prior buyer. | One-turn completion debits treasury and records the tile purchase. |
+| `purchase_land` — Merchant | Embassy, peace, resource tile, prospection for minerals, and treasury ≥ 15× base price; no prior buyer. **`MAP20001` Purchase land** shortcut on the Tile Resource row opens Merchant-only assignment for the selected tile when eligible. | One-turn completion debits treasury and records the tile purchase. |
 
 ### Diplomacy
 

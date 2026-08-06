@@ -627,6 +627,27 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
+
+  @override
+  String provinceOverlay_tilePurchaseLandTooltipWithCost(int amount) {
+    return 'Purchase land — £$amount';
+  }
+
+  @override
+  String get provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip =>
+      'No idle Merchants';
+
+  @override
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip =>
+      'Embassy required with this Minor or Tribe';
+
+  @override
+  String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount) {
+    return 'Short: treasury ×$amount';
+  }
+
+  @override
   String provinceOverlay_tileImprovement(String value) {
     return 'Improvement: $value';
   }

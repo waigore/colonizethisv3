@@ -46,6 +46,7 @@ mixin CivilianUnitsPanelBuild
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
       engineerOnly: widget.engineerOnly,
+      merchantOnly: widget.merchantOnly,
     );
     final scopedNw = scopedCivilianUnits(
       nw,
@@ -53,6 +54,7 @@ mixin CivilianUnitsPanelBuild
       explorerOnly: widget.explorerOnly,
       builderOnly: widget.builderOnly,
       engineerOnly: widget.engineerOnly,
+      merchantOnly: widget.merchantOnly,
     );
     final hasAny = scopedOw.isNotEmpty || scopedNw.isNotEmpty;
     final allScopedUnits = <Unit>[...scopedOw, ...scopedNw];

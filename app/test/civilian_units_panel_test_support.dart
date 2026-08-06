@@ -10,6 +10,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
         kUnitTypeBuilder,
         kUnitTypeEngineer,
+        kUnitTypeMerchant,
         kUnitTypeSpy,
         kWorkTargetBuildImprovement,
         kWorkTargetCounterSpy;
@@ -129,6 +130,35 @@ Game buildCivilianEngineerBuilderShortcutGame({
     id: id,
     humanId: humanId,
     units: engineerFirst ? [engineer, builder] : [builder, engineer],
+  );
+}
+
+/// Merchant + builder on one OW tile for purchase-land shortcut mode.
+Game buildCivilianMerchantBuilderShortcutGame({
+  required String id,
+  String humanId = 'h1',
+  String tileKey = 'oldWorld|p1|0|0',
+  bool merchantFirst = false,
+}) {
+  const provinceId = 'oldWorld|p1';
+  final merchant = civilianIdleUnit(
+    id: 'm1',
+    type: kUnitTypeMerchant,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  final builder = civilianIdleUnit(
+    id: 'b1',
+    type: kUnitTypeBuilder,
+    ownerId: humanId,
+    provinceId: provinceId,
+    tileKey: tileKey,
+  );
+  return buildCivilianOwUnitsGame(
+    id: id,
+    humanId: humanId,
+    units: merchantFirst ? [merchant, builder] : [builder, merchant],
   );
 }
 
