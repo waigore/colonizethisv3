@@ -3,7 +3,8 @@
 // game_map_area_event_feed_test.dart (tap navigation, overseas-profit isolation).
 //
 // Golden mapping:
-//  - fill totals row with trailing chevron link affordance
+//  - bid-only fill totals row with trailing chevron link affordance
+//  - bought + sold fill totals row with trailing chevron link affordance
 //  - carry-forward-only row
 //  - fills + carry-forward combined copy on one row
 //  - narrow 320 dp viewport readability (≥44 dp tappable row height)
@@ -79,7 +80,38 @@ void main() {
 
   group('Market summary feed goldens (#4270)', () {
     testWidgets(
-      'golden: market summary fill totals row with chevron link affordance',
+      'golden: market summary bid-only fill totals row with chevron link affordance',
+      (WidgetTester tester) async {
+        const boundaryKey = ValueKey<String>(
+          'marketSummaryFeedBidOnlyWide',
+        );
+
+        await _pumpMarketSummaryFeedGolden(
+          tester,
+          boundaryKey: boundaryKey,
+          viewport: _kWideFeedViewport,
+          entries: const <PlayerTurnEventFeedEntry>[
+            PlayerTurnEventFeedEntry(
+              text: 'Market: bought £240',
+              linkAffordance: true,
+            ),
+          ],
+        );
+
+        expect(tester.takeException(), isNull);
+        expectEditorialMonocleDarkChrome(tester);
+        expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+        expect(find.text('Market: bought £240'), findsOneWidget);
+
+        await expectLater(
+          find.byKey(boundaryKey),
+          matchesGoldenFile('goldens/market_summary_feed_bid_only_wide.png'),
+        );
+      },
+    );
+
+    testWidgets(
+      'golden: market summary bought and sold fill totals row with chevron link affordance',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'marketSummaryFeedFillTotalsWide',
