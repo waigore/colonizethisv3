@@ -2,7 +2,7 @@
 // Pixel baselines under app/test/goldens/; integration coverage in
 // game_map_area_event_feed_test.dart (tap navigation, overseas-profit isolation).
 //
-// Golden mapping:
+// Golden mapping (five baselines under app/test/goldens/):
 //  - bid-only fill totals row with trailing chevron link affordance
 //  - bought + sold fill totals row with trailing chevron link affordance
 //  - carry-forward-only row
