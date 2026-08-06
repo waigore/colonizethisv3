@@ -49,6 +49,10 @@ Widget buildRevealedTileSection({
   required bool buildRoadActionEnabled,
   required bool buildRoadActionHasEngineerUnits,
   VoidCallback? onBuildRoadTap,
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+  VoidCallback? onPurchaseLandTap,
   ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final tileState = game.worldState.tileState;
@@ -174,8 +178,17 @@ Widget buildRevealedTileSection({
         buildTileResourceLabelRow(
           context: context,
           l10n: l10n,
+          game: game,
+          humanPlayerId: humanPlayerId,
+          currentOrders: currentOrders,
+          selectedTileKey: selectedTileKey,
+          provinceId: provinceId,
           resourceVisible: resourceVisible,
           resourceLabel: resourceLabel,
+          showPurchaseLandActionIcon: showPurchaseLandActionIcon,
+          purchaseLandActionEnabled: purchaseLandActionEnabled,
+          purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+          onPurchaseLandTap: onPurchaseLandTap,
         ),
         prospectedRow,
         improvementRow,

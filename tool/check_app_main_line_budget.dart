@@ -32,13 +32,14 @@
 // raised for GAME30001 diplomacy ready-first actions + More expander (Refs #4265).
 // raised for OVL50001 intervention choice-picker situation and Effect lines (Refs #4267).
 // raised for OVL70001 market fill summary feed row with Deal Book deep-link (Refs #4270).
+// raised for MAP20001 Purchase land Merchant tile shortcut (Refs #4274).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 69300;
+const _maxMainLines = 69800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

@@ -7,6 +7,7 @@ import 'game_map_area_province_action_states_build_improvement.dart';
 import 'game_map_area_province_action_states_build_road.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_prospect.dart';
+import 'game_map_area_province_action_states_purchase_land.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -40,6 +41,12 @@ class GameMapAreaProvinceActionStates {
     showIcon: false,
     enabled: false,
     hasEngineerUnits: false,
+  );
+  static const ({bool showIcon, bool enabled, bool hasMerchantUnits})
+  kHiddenMerchantInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasMerchantUnits: false,
   );
 
   /// Returns province-overlay prospect action visibility + enablement.
@@ -129,6 +136,27 @@ class GameMapAreaProvinceActionStates {
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
       GameMapAreaProvinceActionStatesBuildRoad.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasMerchantUnits}) purchaseLand({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesPurchaseLand.compute(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

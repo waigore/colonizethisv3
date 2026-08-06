@@ -95,10 +95,29 @@ String tileDetailProspectedDisplayLabel(
 Widget buildTileResourceLabelRow({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
+  required String provinceId,
   required String? resourceVisible,
   required String resourceLabel,
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+  VoidCallback? onPurchaseLandTap,
 }) {
   final bodyStyle = overlayFgBodyStyle();
+  final purchaseLandTooltip = provinceOverlayPurchaseLandTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    provinceId: provinceId,
+    enabled: purchaseLandActionEnabled,
+    hasMerchantUnits: purchaseLandActionHasMerchantUnits,
+  );
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
@@ -110,6 +129,16 @@ Widget buildTileResourceLabelRow({
         )
       else
         Text(resourceLabel, style: bodyStyle),
+      if (showPurchaseLandActionIcon)
+        CtIconAction(
+          tooltip: purchaseLandTooltip,
+          onPressed: purchaseLandActionEnabled ? onPurchaseLandTap : null,
+          icon: Icons.payments,
+          enabled: purchaseLandActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
     ],
   );
 }

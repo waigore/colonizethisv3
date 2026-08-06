@@ -24,10 +24,12 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
     this.explorerOnly = false,
     this.builderOnly = false,
     this.engineerOnly = false,
+    this.merchantOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
     this.buildRoadShortcutTargetTileKey,
+    this.purchaseLandShortcutTargetTileKey,
     this.readOnly = false,
   });
 
@@ -63,6 +65,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
   /// Optional filter mode used by province build-road shortcut.
   final bool engineerOnly;
 
+  /// Optional filter mode used by province purchase-land shortcut.
+  final bool merchantOnly;
+
   /// Optional selected tile key for immediate explorer prospect assign flow.
   final String? prospectShortcutTargetTileKey;
 
@@ -74,6 +79,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
 
   /// Optional selected tile key for immediate engineer build-road assign flow.
   final String? buildRoadShortcutTargetTileKey;
+
+  /// Optional selected tile key for immediate merchant purchase-land assign flow.
+  final String? purchaseLandShortcutTargetTileKey;
 
   /// When true, work assign/cancel and train are disabled (observe mode).
   @override

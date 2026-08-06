@@ -122,12 +122,14 @@ Widget buildCivilianPanel({
   bool explorerOnly = false,
   bool builderOnly = false,
   bool engineerOnly = false,
+  bool merchantOnly = false,
   String? tileScopeTileKey,
   String? initialSelectedUnitId,
   String? prospectShortcutTargetTileKey,
   String? exploreShortcutTargetTileKey,
   String? buildImprovementShortcutTargetTileKey,
   String? buildRoadShortcutTargetTileKey,
+  String? purchaseLandShortcutTargetTileKey,
 }) {
   final resolvedBus = bus ?? AppEventBus.create();
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -152,11 +154,13 @@ Widget buildCivilianPanel({
           explorerOnly: explorerOnly,
           builderOnly: builderOnly,
           engineerOnly: engineerOnly,
+          merchantOnly: merchantOnly,
           prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               buildImprovementShortcutTargetTileKey,
           buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
         ),
       ),
     ),
