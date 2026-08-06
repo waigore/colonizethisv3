@@ -1,6 +1,6 @@
-// Widget goldens for OVL70001 market-summary feed rows (Refs #4270, PR #4277).
+// Widget goldens for OVL70001 market-summary feed rows (Refs #4270).
 // Pixel baselines under app/test/goldens/ close the verify-github-issue UI
-// proof gap for market-summary row rendering on issue #4270.
+// proof gap for market-summary row rendering.
 //
 // Golden mapping (widget goldens; integration coverage in game_map_area_event_feed_test.dart):
 //  - AC   fill totals row with trailing chevron link affordance
