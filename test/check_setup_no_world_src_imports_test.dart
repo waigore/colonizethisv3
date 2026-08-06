@@ -10,7 +10,7 @@ void main() {
     const setupLibPath =
         'packages/colonizethis_setup/lib/src/setup/capital_choice.dart';
     const setupTestPath =
-        'packages/colonizethis_setup/test/validation_exceptions_test.dart';
+        'packages/colonizethis_setup/test/setup/validation_exceptions_test.dart';
 
     test('flags a world src import in lib', () {
       const src = '''

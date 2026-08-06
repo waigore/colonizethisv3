@@ -897,6 +897,27 @@ rules:
     runner: dart
     script: tool/check_colonizethis_setup_lib_file_size.dart
 
+  - rule_id: repo.colonizethis_setup_test_mirrors_lib
+    group: structure
+    title: colonizethis_setup tests must mirror lib/ (no flat-root test sources) (Refs #4273)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_colonizethis_setup_test_mirrors_lib.dart
+
+  - rule_id: repo.colonizethis_setup_prefer_scenario_tables
+    group: testing
+    title: colonizethis_setup prefer scenario-table runners for new long imperative tests (Refs #4273)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_colonizethis_setup_scenario_table_runner.dart
+
+  - rule_id: repo.colonizethis_setup_test_support_loc
+    group: testing
+    title: colonizethis_setup test/setup/support/ physical LOC must stay under wave-6 ratchet ceiling (Refs #4273)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_colonizethis_setup_test_support_loc.dart
+
   - rule_id: repo.ai_contracts_h8_test_shared_fixtures
     group: testing
     title: colonizethis_ai_contracts H8 seller/supplier pins must not redeclare local _flaggedSellerGame / _supplierGame (use test/support/) (Refs #4084)
