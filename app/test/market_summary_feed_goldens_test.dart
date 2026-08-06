@@ -178,7 +178,7 @@ void main() {
     );
 
     testWidgets(
-      'golden: narrow 320 dp market summary row without overflow',
+      'golden: narrow 320 dp market summary row without overflow (≥44 dp tap target)',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'marketSummaryFeedNarrow320dp',
