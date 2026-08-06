@@ -4,6 +4,7 @@
 //
 // Five baselines in app/test/goldens/market_summary_feed_*.png:
 // bid-only fills, bought+sold fills, carry-forward-only, fills+carry, narrow 320 dp.
+// Integration tap/isolation cases: game_map_area_event_feed_test.dart.
 //
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
