@@ -105,17 +105,20 @@ TurnPipelineState runWorldMarketPhasePipeline({
   MapTopology topology = kEmptyTopology,
   Map<String, TileMapResult>? tileMapByRegion,
   int turnNumber = 3,
-}) =>
-    runTurnPhaseHandlerPipeline(
-      handler: worldMarketTurnPhaseHandler,
-      game: game,
-      config: worldMarketPhaseConfig(
-        orders: orders,
-        topology: topology,
-        tileMapByRegion: tileMapByRegion,
-      ),
-      turnNumber: turnNumber,
-    );
+  TurnEventSink? eventSink,
+}) {
+  final config = worldMarketPhaseConfig(
+    orders: orders,
+    topology: topology,
+    tileMapByRegion: tileMapByRegion,
+  );
+  return runTurnPhaseHandlerPipeline(
+    handler: worldMarketTurnPhaseHandler,
+    game: game,
+    config: eventSink == null ? config : config.copyWith(eventSink: eventSink),
+    turnNumber: turnNumber,
+  );
+}
 
 /// Runs [worldMarketTurnPhaseHandler] on turn [turnNumber] and returns the game.
 Game runWorldMarketPhase({
@@ -124,6 +127,7 @@ Game runWorldMarketPhase({
   MapTopology topology = kEmptyTopology,
   Map<String, TileMapResult>? tileMapByRegion,
   int turnNumber = 3,
+  TurnEventSink? eventSink,
 }) =>
     runWorldMarketPhasePipeline(
       game: game,
@@ -131,6 +135,7 @@ Game runWorldMarketPhase({
       topology: topology,
       tileMapByRegion: tileMapByRegion,
       turnNumber: turnNumber,
+      eventSink: eventSink,
     ).game;
 
 /// Like [runWorldMarketPhasePipeline] but preserves pre-seeded pipeline fields

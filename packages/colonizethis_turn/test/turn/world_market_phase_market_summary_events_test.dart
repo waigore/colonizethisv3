@@ -4,7 +4,6 @@ import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
 import '../support/world_market_test_support.dart';
-import '../support/turn_phase_test_harness.dart';
 
 /// Market-turn-summary game-event emission for phase 13 (Refs #4270).
 void main() {
@@ -19,16 +18,11 @@ void main() {
           buyerTreasury: 1000,
           marketPrices: const {'timber': 30},
         );
-        final config = worldMarketPhaseConfig(
-          orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
-        ).copyWith(
-          eventSink: TurnEventSink(onGameEvent: events.add),
-        );
 
-        runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
+        runWorldMarketPhase(
           game: game,
-          config: config,
+          orders: gpGpTimberTradeOrders(offerQuantity: 5, bidQuantity: 5),
+          eventSink: TurnEventSink(onGameEvent: events.add),
         );
 
         final summaries = events.whereType<MarketTurnSummaryEvent>().toList();
@@ -54,16 +48,11 @@ void main() {
             buyerTreasury: 1000,
             marketPrices: const {'timber': 30},
           );
-          final config = worldMarketPhaseConfig(
-            orders: gpGpTimberTradeOrders(offerQuantity: 3, bidQuantity: 10),
-          ).copyWith(
-            eventSink: TurnEventSink(onGameEvent: events.add),
-          );
 
-          runTurnPhaseHandler(
-            handler: worldMarketTurnPhaseHandler,
+          runWorldMarketPhase(
             game: game,
-            config: config,
+            orders: gpGpTimberTradeOrders(offerQuantity: 3, bidQuantity: 10),
+            eventSink: TurnEventSink(onGameEvent: events.add),
           );
 
           final buyerSummary = events
@@ -82,16 +71,11 @@ void main() {
           buyerTreasury: 0,
           marketPrices: const {'timber': 30},
         );
-        final config = worldMarketPhaseConfig(
-          orders: const Orders(),
-        ).copyWith(
-          eventSink: TurnEventSink(onGameEvent: events.add),
-        );
 
-        runTurnPhaseHandler(
-          handler: worldMarketTurnPhaseHandler,
+        runWorldMarketPhase(
           game: game,
-          config: config,
+          orders: const Orders(),
+          eventSink: TurnEventSink(onGameEvent: events.add),
         );
 
         expect(events.whereType<MarketTurnSummaryEvent>(), isEmpty);
