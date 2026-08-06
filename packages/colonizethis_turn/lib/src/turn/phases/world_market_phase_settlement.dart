@@ -9,6 +9,7 @@ import '../turn_resolver_config.dart';
 import 'world_market_phase_activity.dart';
 import 'world_market_phase_credits.dart';
 import 'world_market_phase_overseas_profit_events.dart';
+import 'world_market_phase_market_summary_events.dart';
 import 'world_market_phase_deals.dart';
 import 'world_market_phase_gather.dart';
 import 'world_market_phase_orders.dart';
@@ -120,6 +121,14 @@ TurnPhaseStepOutcome settleWorldMarketMatch({
   );
   emitOverseasProfitCreditedEvents(
     recordsByGpId: overseasProfitRecords,
+    turn: turn,
+    sink: config.eventSink,
+  );
+  emitMarketTurnSummaryEvents(
+    filledDeals: matchResult.filledDeals,
+    unfilledBidsByFactionId: matchResult.unfilledBidsByFactionId,
+    unfilledOffersByFactionId: matchResult.unfilledOffersByFactionId,
+    gpFactionIds: gpFactionIds,
     turn: turn,
     sink: config.eventSink,
   );

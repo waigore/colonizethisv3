@@ -92,6 +92,15 @@ mixin GameMapAreaEvents
     pendingPlayerTurnEvents.add(event);
   }
 
+  void onAppMarketTurnSummaryEvent(
+    ct_models.AppMarketTurnSummaryEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
   void onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {

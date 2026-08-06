@@ -34,6 +34,7 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | `OrderRejectedEvent` | `AppOrderRejectedEvent` | `NotifyEvent` (warning) |
 | `WorkOrderCompletedEvent` | `AppWorkOrderCompletedEvent` | player turn feed |
 | `OverseasProfitCreditedEvent` | `AppOverseasProfitCreditedEvent` | player turn feed (tap → Trade Deal Book tab) |
+| `MarketTurnSummaryEvent` | `AppMarketTurnSummaryEvent` | player turn feed (tap → Trade Deal Book tab) |
 | `PlayerProvinceDiscoveredEvent` | `AppPlayerProvinceDiscoveredEvent` | player turn feed |
 | `PlayerSeaZoneDiscoveredEvent` | `AppPlayerSeaZoneDiscoveredEvent` | player turn feed |
 | `OvertureAdvancedEvent` | `AppOvertureAdvancedEvent` | player turn feed |

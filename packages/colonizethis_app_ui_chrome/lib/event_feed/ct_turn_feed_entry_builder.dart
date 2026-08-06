@@ -181,6 +181,20 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
               linkAffordance: context.overseasProfitCreditedTap != null,
               onTap: context.overseasProfitCreditedTap,
             ),
+          ct_models.AppMarketTurnSummaryEvent(
+            :final totalSpent,
+            :final totalReceived,
+            :final carryForwardOrderCount,
+          ) =>
+            CtEventFeedEntry(
+              text: CtEventFeedText.marketTurnSummaryLine(
+                totalSpent: totalSpent,
+                totalReceived: totalReceived,
+                carryForwardOrderCount: carryForwardOrderCount,
+              ),
+              linkAffordance: context.overseasProfitCreditedTap != null,
+              onTap: context.overseasProfitCreditedTap,
+            ),
           ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
             _feedEntry(
               context: context,
