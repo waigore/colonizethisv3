@@ -1,11 +1,7 @@
-// Widget goldens for OVL70001 market-summary feed rows (Refs #4270).
-// Pixel baselines under app/test/goldens/; integration coverage in
-// game_map_area_event_feed_test.dart (tap navigation, overseas-profit isolation).
-//
-// Five baselines in app/test/goldens/market_summary_feed_*.png:
-// bid-only fills, bought+sold fills, carry-forward-only, fills+carry, narrow 320 dp.
-// Integration tap/isolation cases: game_map_area_event_feed_test.dart.
-//
+// OVL70001 market-summary feed row goldens (Refs #4270).
+// Baselines: app/test/goldens/market_summary_feed_*.png (bid-only, fill totals,
+// carry-forward-only, fills+carry, narrow 320 dp). Tap navigation and
+// overseas-profit isolation: game_map_area_event_feed_test.dart.
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
 import 'package:colonizethis_app/config/constants.dart';
