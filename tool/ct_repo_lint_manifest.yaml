@@ -890,6 +890,13 @@ rules:
     runner: dart
     script: tool/check_setup_no_part_directives.dart
 
+  - rule_id: repo.colonizethis_setup_lib_file_size
+    group: structure
+    title: colonizethis_setup lib files must stay at or below the wave-6 400 physical-line ceiling (Refs #4273)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_colonizethis_setup_lib_file_size.dart
+
   - rule_id: repo.ai_contracts_h8_test_shared_fixtures
     group: testing
     title: colonizethis_ai_contracts H8 seller/supplier pins must not redeclare local _flaggedSellerGame / _supplierGame (use test/support/) (Refs #4084)
