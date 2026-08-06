@@ -79,7 +79,7 @@ void main() {
 
   group('Market summary feed goldens (#4270)', () {
     testWidgets(
-      'golden: fill totals row with chevron link affordance',
+      'golden: market summary fill totals row with chevron link affordance',
       (WidgetTester tester) async {
         const boundaryKey = ValueKey<String>(
           'marketSummaryFeedFillTotalsWide',
