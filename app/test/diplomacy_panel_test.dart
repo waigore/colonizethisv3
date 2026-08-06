@@ -14,7 +14,7 @@ import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'diplomacy_panel_test_scenarios.dart';
 import 'diplomacy_panel_test_support.dart';
 import 'panel_test_fixtures.dart';
-import 'support/diplomacy/diplomacy_panel_widget_harness.dart';
+import 'diplomacy_panel_widget_harness.dart';
 import 'widget_test_assets.dart';
 
 void main() {
