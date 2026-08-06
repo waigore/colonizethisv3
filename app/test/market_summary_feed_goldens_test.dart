@@ -1,4 +1,4 @@
-// Widget goldens for OVL70001 market-summary feed rows (Refs #4270).
+// Widget goldens for OVL70001 market-summary feed rows (Refs #4270, PR #4277).
 // Pixel baselines under app/test/goldens/ close the verify-github-issue UI
 // proof gap for market-summary row rendering on issue #4270.
 //
