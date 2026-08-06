@@ -28,6 +28,27 @@ class CtEventFeedText {
       'Overseas profit credited: £$amount from $count rival purchase(s). '
       'Tap to open Deal Book.';
 
+  static String marketTurnSummaryLine({
+    required int totalSpent,
+    required int totalReceived,
+    required int carryForwardOrderCount,
+  }) {
+    final parts = <String>[];
+    if (totalSpent > 0) {
+      parts.add('bought £$totalSpent');
+    }
+    if (totalReceived > 0) {
+      parts.add('sold £$totalReceived');
+    }
+    if (carryForwardOrderCount > 0) {
+      if (parts.isEmpty) {
+        return 'Market: $carryForwardOrderCount orders carried forward';
+      }
+      parts.add('$carryForwardOrderCount orders carried');
+    }
+    return 'Market: ${parts.join(' · ')}';
+  }
+
   static String generalMedalGainedLine(int newMedals) =>
       'General gained a medal (now $newMedals).';
 

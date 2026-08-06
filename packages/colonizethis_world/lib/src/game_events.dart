@@ -276,3 +276,20 @@ class OverseasProfitCreditedEvent extends GameEvent {
   final int creditCount;
   final int turnNumber;
 }
+
+/// Last-turn ordinary market fill / carry-forward summary for a GP (Refs #4270).
+class MarketTurnSummaryEvent extends GameEvent {
+  const MarketTurnSummaryEvent({
+    required this.playerId,
+    required this.totalSpent,
+    required this.totalReceived,
+    required this.carryForwardOrderCount,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int totalSpent;
+  final int totalReceived;
+  final int carryForwardOrderCount;
+  final int turnNumber;
+}

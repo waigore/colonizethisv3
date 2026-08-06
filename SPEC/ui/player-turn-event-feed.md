@@ -20,7 +20,7 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
   - General medal gain when event `playerId` equals human id (Refs #4234).
@@ -29,9 +29,10 @@
   - Research/order rejected when event `playerId` equals human id.
   - Work-order/province/sea discovery when event `playerId` equals human id.
   - Overseas profit when event `playerId` equals human id and `totalTreasuryCredit > 0` (Refs #4226).
+  - Market turn summary when event `playerId` equals human id and at least one of `totalSpent > 0`, `totalReceived > 0`, or `carryForwardOrderCount > 0` (Refs #4270).
   - Overture advanced when human id equals offerer GP id or target faction id.
 - Formatting lives in Flutter UI; logic payloads remain ids.
-- Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226).
+- Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent` and `AppMarketTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270).
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
 
 ---
@@ -48,6 +49,7 @@
 - Diplomacy-change, overture-advanced, spy-caught, and spy-defected lines show a trailing chevron when tappable and open `GAME30002` **Diplomacy detail** for the counterpart faction via `NavigateToRouteEvent(Routes.diplomacyDetail, …)` (same args as the diplomacy panel row detail action).
 - Order-rejected lines use plain-language reason copy. When `orderKind` is present on `AppOrderRejectedEvent`, the row shows a trailing chevron and opens the owning panel or screen: work and recruit-worker → `UNIT10001` **Civilian units**; move and army-move → military units panel; naval move and naval mission → naval units panel; build-unit → `GAME20001` **Production**; trade → `GAME60001` **Trade**; research → `GAME40001` **Technology**; diplomacy → `GAME30001` **Diplomacy** list (requires resolvable topology). When topology cannot be resolved for diplomacy rejections, the row is non-tappable.
 - Overseas-profit lines (`AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0` for the human) show plain-language copy (`Overseas profit credited: £<amount> from <count> rival purchase(s). Tap to open Deal Book.`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via `NavigateToRouteEvent(Routes.trade, {'game': game, 'humanPlayerId': humanPlayerId, 'initialTabIndex': 1})` (Refs #4226).
+- Market-summary lines (`AppMarketTurnSummaryEvent` for the human with last-turn fills and/or carry-forwards) show at most one totals-first row (e.g. `Market: bought £240 · sold £160`, `Market: bought £240 · sold £160 · 2 orders carried`, or `Market: 2 orders carried forward`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via the same `NavigateToRouteEvent` shape as overseas-profit rows (Refs #4270).
 - Other lines are non-tappable in v1.
 - Fallback: if no valid map anchor can be resolved for a tappable row, the counterpart faction cannot be resolved, the completing civilian unit no longer exists, or the research event tech id is absent from the catalog, render it non-tappable with safe copy and keep app stable.
 
@@ -108,6 +110,10 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the feed renders after turn commit, then the row shows plain-language overseas-profit copy with a trailing chevron and is tappable (Refs #4226).
 - Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the user taps the row, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4226).
 - Given an `AppOverseasProfitCreditedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation).
+- Given a human `AppMarketTurnSummaryEvent` with at least one of `totalSpent > 0`, `totalReceived > 0`, or `carryForwardOrderCount > 0`, when the feed renders after turn commit, then exactly one market-summary row appears with totals-first copy and a trailing chevron (Refs #4270).
+- Given a human `AppMarketTurnSummaryEvent` row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4270).
+- Given an `AppMarketTurnSummaryEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4270).
+- Given both overseas-profit and market-summary events for the human in the same turn batch, when the feed renders, then both rows appear as separate lines (not merged; Refs #4270).
 - Given a human `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
 - Given an `AppGeneralMedalGainedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4234).
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).

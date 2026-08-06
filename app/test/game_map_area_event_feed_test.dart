@@ -307,6 +307,130 @@ void main() {
   );
 
   testWidgets(
+    'Player turn event feed market summary line shows fill totals (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 160,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.text('Market: bought £240 · sold £160'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary carry-forward-only line (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 0,
+          totalReceived: 0,
+          carryForwardOrderCount: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.text('Market: 2 orders carried forward'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary line opens Deal Book on tap (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 0,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const line = 'Market: bought £240';
+      expect(find.text(line), findsOneWidget);
+      await tester.tap(find.text(line));
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.trade);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+      expect(args['initialTabIndex'], 1);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary line is omitted for other players (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.opponentId,
+          totalSpent: 500,
+          totalReceived: 0,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Market:'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed shows separate overseas profit and market rows (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 160,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsOneWidget);
+      expect(find.text('Market: bought £240 · sold £160'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'Player turn event feed general medal line shows for human (Refs #4234)',
     (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);

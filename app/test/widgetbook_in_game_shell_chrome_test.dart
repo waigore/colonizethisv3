@@ -247,6 +247,41 @@ void main() {
     );
 
     testWidgets(
+      'Player Turn Event Feed Card folder exposes market summary variants '
+      '(Refs #4270)',
+      (WidgetTester tester) async {
+        final market = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
+          playerTurnEventFeedCardDirectories,
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Market summary — tappable link to Deal Book',
+        );
+        expect(market.entries.length, 1);
+        expect(market.entries.first.linkAffordance, isTrue);
+        expect(
+          market.entries.first.text,
+          'Market: bought £240 · sold £160 · 2 orders carried',
+        );
+
+        final combined = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
+          playerTurnEventFeedCardDirectories,
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Market + overseas profit — separate rows',
+        );
+        expect(combined.entries.length, 2);
+        expect(
+          combined.entries.map((entry) => entry.text).toList(),
+          [
+            'Overseas profit credited: £120 from 2 rival purchase(s). '
+                'Tap to open Deal Book.',
+            'Market: bought £240 · sold £160',
+          ],
+        );
+      },
+    );
+
+    testWidgets(
       'Player Turn Event Feed Card folder exposes narrow variants '
       '(Refs #2870 S3)',
       (WidgetTester tester) async {

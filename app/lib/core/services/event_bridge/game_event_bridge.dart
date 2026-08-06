@@ -160,6 +160,16 @@ class GameEventBridge {
             turnNumber: event.turnNumber,
           ),
         );
+      case MarketTurnSummaryEvent():
+        _appBus.emit(
+          AppMarketTurnSummaryEvent(
+            playerId: event.playerId,
+            totalSpent: event.totalSpent,
+            totalReceived: event.totalReceived,
+            carryForwardOrderCount: event.carryForwardOrderCount,
+            turnNumber: event.turnNumber,
+          ),
+        );
       case GeneralMedalGainedEvent():
         _appBus.emit(
           AppGeneralMedalGainedEvent(

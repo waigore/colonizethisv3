@@ -63,6 +63,10 @@ class GameEventLogger {
       OverseasProfitCreditedEvent e =>
         'turn=${e.turnNumber} playerId=${e.playerId} '
             'totalTreasuryCredit=${e.totalTreasuryCredit} creditCount=${e.creditCount}',
+      MarketTurnSummaryEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'totalSpent=${e.totalSpent} totalReceived=${e.totalReceived} '
+            'carryForwardOrderCount=${e.carryForwardOrderCount}',
     };
   }
 }
