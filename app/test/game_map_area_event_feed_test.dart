@@ -431,6 +431,27 @@ void main() {
   );
 
   testWidgets(
+    'Player turn event feed omits market summary when no market activity '
+    '(Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsOneWidget);
+      expect(find.textContaining('Market:'), findsNothing);
+    },
+  );
+
+  testWidgets(
     'Player turn event feed general medal line shows for human (Refs #4234)',
     (WidgetTester tester) async {
       final harness = newEventFeedHarness(disposeBus: false);
