@@ -14,7 +14,7 @@ import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Civilian work-target tile selection for [GameMapArea]: maintaining the
 /// per-player valid-tile cache, starting/cancelling a selection, and committing

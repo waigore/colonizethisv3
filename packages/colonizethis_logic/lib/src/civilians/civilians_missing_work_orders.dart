@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart'
     show UnitRole, unitRoleForType;
 import 'package:colonizethis_models/colonizethis_models.dart'
     show Game, Orders, Unit, UnitStatus, WorkOrder, kUnitTypeSpy;
-import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart'
+import 'package:colonizethis_orders/colonizethis_orders.dart'
     show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart'
     show WorldStateProvinceLookup;

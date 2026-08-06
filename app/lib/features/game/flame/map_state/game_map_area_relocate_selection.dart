@@ -17,7 +17,7 @@ import 'game_map_area_state_logic.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_logic/src/civilians/spy_relocate_intel.dart';
+import 'package:colonizethis_logic/civilian_intel_api.dart';
 
 /// Spy relocate destination selection for [GameMapArea] (Refs #4219).
 mixin GameMapAreaRelocateSelection

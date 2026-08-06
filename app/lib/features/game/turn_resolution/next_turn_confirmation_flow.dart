@@ -3,7 +3,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
 import '../flame/overlays/next_turn_confirmation_dialog.dart';
-import 'package:colonizethis_logic/src/civilians/civilians_missing_work_orders.dart' show findCiviliansMissingWorkOrders;
+import 'package:colonizethis_logic/civilian_intel_api.dart' show findCiviliansMissingWorkOrders;
 
 /// Shared end-turn confirmation for map and Flame-canvas entry points.
 ///

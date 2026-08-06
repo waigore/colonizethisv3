@@ -9,7 +9,7 @@ import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Province-overlay action visibility/enablement computations for prospect,
 /// explore, and build-improvement shortcuts.

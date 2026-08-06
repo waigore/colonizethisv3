@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
-import 'package:colonizethis_logic/src/civilians/spy_relocate_intel.dart'
+import 'package:colonizethis_logic/civilian_intel_api.dart'
     show removePendingCivilianMoveForUnit;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;

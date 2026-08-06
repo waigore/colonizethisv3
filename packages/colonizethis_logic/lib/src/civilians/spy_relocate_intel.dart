@@ -1,5 +1,5 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart'
+import 'package:colonizethis_orders/colonizethis_orders.dart'
     show pendingMoveOrderForUnit, projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart'
     show WorldStateProvinceLookup;

@@ -3,7 +3,11 @@
 // SPEC/ui/components/relation-meter.md, SPEC/game/diplomacy.md
 // § Player-facing relation display — 10-step relation meter (Refs #3753 R13).
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show
+        relationMeterStepCount,
+        relationScoreToDisplayLabel,
+        relationScoreToMeterStep;
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 

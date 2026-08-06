@@ -3,7 +3,7 @@
 library;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/src/civilians/spy_relocate_intel.dart'
+import 'package:colonizethis_logic/civilian_intel_api.dart'
     show isForeignProvinceForPlayer;
 import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:flutter/material.dart';

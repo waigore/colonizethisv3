@@ -1,7 +1,7 @@
 import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
 import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart'
+import 'package:colonizethis_orders/colonizethis_orders.dart'
     show projectedCivilianTileKey;
 import 'package:colonizethis_world/colonizethis_world.dart';
 

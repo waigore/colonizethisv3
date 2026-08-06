@@ -9,7 +9,7 @@ import '../../../../widgets/ct_icon_action.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_toggle_switch.dart';
-import 'package:colonizethis_logic/src/civilians/civilians_missing_work_orders.dart' show CivilianMissingWorkOrderEntry;
+import 'package:colonizethis_logic/civilian_intel_api.dart' show CivilianMissingWorkOrderEntry;
 
 
 /// Outcome of [showNextTurnConfirmationDialog].

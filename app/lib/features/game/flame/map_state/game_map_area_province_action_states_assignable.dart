@@ -5,7 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
-import 'package:colonizethis_orders/src/orders/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Shared visibility/enablement for province-overlay inline actions that
 /// assign a civilian work target to the selected tile.

@@ -6,6 +6,7 @@ import 'package:yaml/yaml.dart';
 
 import 'check_app_core_services_narrow_logic_import.dart';
 import 'check_app_narrow_logic_import.dart';
+import 'check_app_lib_no_src_imports.dart';
 import 'check_app_editorial_monocle_colors.dart';
 import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
@@ -834,6 +835,8 @@ int? _tryRunDartRuleInProcess({
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
     case 'repo.app_narrow_logic_import':
       return runCheckAppNarrowLogicImport(repoRoot);
+    case 'repo.app_lib_no_src_imports':
+      return runCheckAppLibNoSrcImports(repoRoot);
     case 'repo.app_core_services_narrow_logic_import':
       return runCheckAppCoreServicesNarrowLogicImport(repoRoot);
     case 'repo.app_event_bus_decoupling':

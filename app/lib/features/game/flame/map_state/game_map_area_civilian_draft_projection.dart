@@ -7,7 +7,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'game_map_area_draft_projection_shared.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
-import 'package:colonizethis_orders/src/orders/civilian_projected_tile.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Civilian-marker draft projection for the human player.
 ///
