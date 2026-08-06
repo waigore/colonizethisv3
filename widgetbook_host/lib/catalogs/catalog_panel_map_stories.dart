@@ -98,6 +98,30 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land enabled',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: true,
+          purchaseLandActionEnabled: true,
+          purchaseLandActionHasMerchantUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land disabled',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: true,
+          purchaseLandActionEnabled: false,
+          purchaseLandActionHasMerchantUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land hidden',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: false,
+          purchaseLandActionEnabled: false,
+          purchaseLandActionHasMerchantUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
           final game = demoGameForOverlay;
@@ -230,6 +254,33 @@ Widget _provinceOverlayBuildRoadStory({
       buildRoadActionEnabled: buildRoadActionEnabled,
       buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
       onBuildRoadTap: () {},
+      onClose: () {},
+    ),
+  );
+}
+
+/// MAP20001 Tile **Purchase land** inline-action variants. Refs #4274.
+Widget _provinceOverlayPurchaseLandStory({
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
+      purchaseLandActionEnabled: purchaseLandActionEnabled,
+      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+      onPurchaseLandTap: () {},
       onClose: () {},
     ),
   );

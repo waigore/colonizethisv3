@@ -54,11 +54,15 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
           explorerOnly: event.explorerOnly,
           builderOnly: event.builderOnly,
           engineerOnly: event.engineerOnly,
+          merchantOnly: event.merchantOnly,
           prospectShortcutTargetTileKey: event.prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: event.exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               event.buildImprovementShortcutTargetTileKey,
-          buildRoadShortcutTargetTileKey: event.buildRoadShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey:
+              event.buildRoadShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey:
+              event.purchaseLandShortcutTargetTileKey,
         ),
       );
     },

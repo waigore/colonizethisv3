@@ -44,6 +44,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.buildRoadActionEnabled = false,
     this.buildRoadActionHasEngineerUnits = false,
     this.onBuildRoadTap,
+    this.showPurchaseLandActionIcon = false,
+    this.purchaseLandActionEnabled = false,
+    this.purchaseLandActionHasMerchantUnits = false,
+    this.onPurchaseLandTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -76,6 +80,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool buildRoadActionEnabled;
   final bool buildRoadActionHasEngineerUnits;
   final VoidCallback? onBuildRoadTap;
+  final bool showPurchaseLandActionIcon;
+  final bool purchaseLandActionEnabled;
+  final bool purchaseLandActionHasMerchantUnits;
+  final VoidCallback? onPurchaseLandTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -129,6 +137,10 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       buildRoadActionEnabled: buildRoadActionEnabled,
       buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
       onBuildRoadTap: onBuildRoadTap,
+      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
+      purchaseLandActionEnabled: purchaseLandActionEnabled,
+      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+      onPurchaseLandTap: onPurchaseLandTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,

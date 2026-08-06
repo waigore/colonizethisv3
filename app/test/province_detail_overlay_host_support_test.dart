@@ -75,6 +75,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
+  required bool purchaseLandEnabled,
   required AppEventBus bus,
 }) =>
     buildProvinceDetailShortcutCallbacks(
@@ -91,6 +92,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
       prospectEnabled: prospectEnabled,
       buildImprovementEnabled: buildImprovementEnabled,
       buildRoadEnabled: buildRoadEnabled,
+      purchaseLandEnabled: purchaseLandEnabled,
       bus: bus,
     );
 
@@ -132,6 +134,7 @@ void main() {
         prospectEnabled: true,
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
+        purchaseLandEnabled: true,
         bus: bus,
       );
 
@@ -139,6 +142,7 @@ void main() {
       expect(callbacks.onProspectWithExplorerTap, isNull);
       expect(callbacks.onBuildImprovementTap, isNull);
       expect(callbacks.onBuildRoadTap, isNull);
+      expect(callbacks.onPurchaseLandTap, isNull);
     });
 
     test('returns all-null callbacks when every action is disabled', () {
@@ -149,6 +153,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
 
@@ -156,6 +161,7 @@ void main() {
       expect(callbacks.onProspectWithExplorerTap, isNull);
       expect(callbacks.onBuildImprovementTap, isNull);
       expect(callbacks.onBuildRoadTap, isNull);
+      expect(callbacks.onPurchaseLandTap, isNull);
     });
 
     test('exposes only the enabled action callback (per-action gating)', () {
@@ -166,12 +172,14 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(exploreOnly.onExploreWithExplorerTap, isNotNull);
       expect(exploreOnly.onProspectWithExplorerTap, isNull);
       expect(exploreOnly.onBuildImprovementTap, isNull);
       expect(exploreOnly.onBuildRoadTap, isNull);
+      expect(exploreOnly.onPurchaseLandTap, isNull);
 
       final prospectOnly = _callbacks(
         game: _minimalGame(),
@@ -180,12 +188,14 @@ void main() {
         prospectEnabled: true,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(prospectOnly.onExploreWithExplorerTap, isNull);
       expect(prospectOnly.onProspectWithExplorerTap, isNotNull);
       expect(prospectOnly.onBuildImprovementTap, isNull);
       expect(prospectOnly.onBuildRoadTap, isNull);
+      expect(prospectOnly.onPurchaseLandTap, isNull);
 
       final buildOnly = _callbacks(
         game: _minimalGame(),
@@ -194,12 +204,14 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(buildOnly.onExploreWithExplorerTap, isNull);
       expect(buildOnly.onProspectWithExplorerTap, isNull);
       expect(buildOnly.onBuildImprovementTap, isNotNull);
       expect(buildOnly.onBuildRoadTap, isNull);
+      expect(buildOnly.onPurchaseLandTap, isNull);
 
       final buildRoadOnly = _callbacks(
         game: _minimalGame(),
@@ -208,12 +220,30 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: true,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(buildRoadOnly.onExploreWithExplorerTap, isNull);
       expect(buildRoadOnly.onProspectWithExplorerTap, isNull);
       expect(buildRoadOnly.onBuildImprovementTap, isNull);
       expect(buildRoadOnly.onBuildRoadTap, isNotNull);
+      expect(buildRoadOnly.onPurchaseLandTap, isNull);
+
+      final purchaseLandOnly = _callbacks(
+        game: _minimalGame(),
+        selectedTileKey: _kTileKey,
+        exploreEnabled: false,
+        prospectEnabled: false,
+        buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        purchaseLandEnabled: true,
+        bus: bus,
+      );
+      expect(purchaseLandOnly.onExploreWithExplorerTap, isNull);
+      expect(purchaseLandOnly.onProspectWithExplorerTap, isNull);
+      expect(purchaseLandOnly.onBuildImprovementTap, isNull);
+      expect(purchaseLandOnly.onBuildRoadTap, isNull);
+      expect(purchaseLandOnly.onPurchaseLandTap, isNotNull);
     });
   });
 
