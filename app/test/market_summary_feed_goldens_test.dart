@@ -2,12 +2,8 @@
 // Pixel baselines under app/test/goldens/; integration coverage in
 // game_map_area_event_feed_test.dart (tap navigation, overseas-profit isolation).
 //
-// Golden mapping (five baselines under app/test/goldens/):
-//  - bid-only fill totals row with trailing chevron link affordance
-//  - bought + sold fill totals row with trailing chevron link affordance
-//  - carry-forward-only row
-//  - fills + carry-forward combined copy on one row
-//  - narrow 320 dp viewport readability (≥44 dp tappable row height)
+// Five baselines in app/test/goldens/market_summary_feed_*.png:
+// bid-only fills, bought+sold fills, carry-forward-only, fills+carry, narrow 320 dp.
 //
 // SPEC: SPEC/ui/player-turn-event-feed.md — Market-summary lines.
 
