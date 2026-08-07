@@ -15,6 +15,9 @@ const _canonicalImproveOrderingRelative =
 const _canonicalMaterialAffordanceRelative =
     'packages/colonizethis_orders/lib/src/orders/development_panel/material_affordance.dart';
 
+const _canonicalAffordanceProjectionRelative =
+    'packages/colonizethis_orders/lib/src/orders/work_order_affordance_projection.dart';
+
 const _canonicalPassContextRelative =
     'packages/colonizethis_orders/lib/src/orders/development_panel_pass_context.dart';
 
@@ -40,6 +43,11 @@ final RegExp _inlineConnectedFirstSortPattern = RegExp(
 /// Inline pending-material stockpile projection outside material_affordance.
 final RegExp _inlinePendingMaterialProjectionPattern = RegExp(
   r'_developmentPanelPendingMaterialWorkTargets',
+);
+
+/// Duplicate pending-work replay outside the canonical affordance projection module.
+final RegExp _inlinePendingWorkReplayPattern = RegExp(
+  r'ProjectedCostEngine\.deductWorkMaterialCost',
 );
 
 bool _isCommentLine(String line) {
@@ -140,6 +148,41 @@ findDevelopmentPanelMaterialAffordanceViolations({
   return violations;
 }
 
+List<OrdersDedupMapCloneViolation> findAffordanceProjectionReplayViolations({
+  required String relativePath,
+  required String source,
+}) {
+  if (relativePath == _canonicalAffordanceProjectionRelative) return const [];
+  if (!_isAffordancePreviewModule(relativePath)) return const [];
+
+  final violations = <OrdersDedupMapCloneViolation>[];
+  final lines = source.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    final line = lines[i];
+    if (_isCommentLine(line)) continue;
+    if (_inlinePendingWorkReplayPattern.hasMatch(line)) {
+      violations.add(
+        OrdersDedupMapCloneViolation(
+          path: relativePath,
+          line: i + 1,
+          message:
+              'Duplicate pending-work replay; use replayPendingWorkResourceProjection '
+              'from work_order_affordance_projection.dart.',
+        ),
+      );
+    }
+  }
+  return violations;
+}
+
+bool _isAffordancePreviewModule(String relativePath) {
+  if (relativePath.endsWith('civilian_work_affordance.dart')) return true;
+  if (relativePath.endsWith('development_panel_assign.dart')) return true;
+  if (relativePath.endsWith('development_panel_road_first.dart')) return true;
+  return relativePath.contains('development_panel/') &&
+      relativePath.contains('affordance');
+}
+
 bool _isDevelopmentPanelModule(String relativePath) {
   if (relativePath == _canonicalPassContextRelative) return false;
   if (relativePath.endsWith('development_panel_assign.dart')) return true;
@@ -210,6 +253,12 @@ int runCheckOrdersDedupDevelopmentPanel(
     );
     violations.addAll(
       findDevelopmentPanelMaterialAffordanceViolations(
+        relativePath: relativePath,
+        source: source,
+      ),
+    );
+    violations.addAll(
+      findAffordanceProjectionReplayViolations(
         relativePath: relativePath,
         source: source,
       ),
