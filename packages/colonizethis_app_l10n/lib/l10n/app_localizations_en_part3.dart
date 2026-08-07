@@ -997,47 +997,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
     return '$terrain/$resourceName $detail';
   }
 
-  @override
-  String get diplomacy_detail_historyTitle => 'Diplomatic history';
-
-  @override
-  String get diplomacy_detail_noEvents =>
-      'No recorded events with this faction.';
-
-  @override
-  String diplomacy_detail_yearTurn(int year, int turn) {
-    return '$year (Turn $turn)';
-  }
-
-  @override
-  String get diplomacy_detail_dossierTitle => 'Dossier';
-
-  @override
-  String get diplomacy_detail_currentRelation => 'Current relation';
-
-  @override
-  String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
-
-  @override
-  String diplomacy_detail_turnEvidence(int turn) {
-    return 'Turn $turn:';
-  }
-
-  @override
-  String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
-
-  @override
-  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
-
-  @override
-  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
-
-  @override
-  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
-
-  @override
-  String diplomacy_panel_powerScore(int score) {
-    return 'Power: $score';
-  }
-
 }
