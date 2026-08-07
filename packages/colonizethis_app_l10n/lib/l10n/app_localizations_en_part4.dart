@@ -2,6 +2,15 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String province_economic_resourceRow(
+    String terrain,
+    String resourceName,
+    String detail,
+  ) {
+    return '$terrain/$resourceName $detail';
+  }
+
+  @override
   String get diplomacy_detail_historyTitle => 'Diplomatic history';
 
   @override

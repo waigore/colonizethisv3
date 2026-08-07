@@ -988,13 +988,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
     return '$pct percent';
   }
 
-  @override
-  String province_economic_resourceRow(
-    String terrain,
-    String resourceName,
-    String detail,
-  ) {
-    return '$terrain/$resourceName $detail';
-  }
-
 }
