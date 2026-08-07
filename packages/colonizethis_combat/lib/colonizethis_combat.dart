@@ -1,6 +1,7 @@
 /// Land and naval combat resolution for Colonize This (Refs #3290).
 library colonizethis_combat;
 
+export 'src/combat/battle_context.dart';
 export 'src/combat/battle_general_assignment.dart';
 export 'src/combat/combat_effective_strength.dart';
 export 'src/combat/combat_rng.dart';

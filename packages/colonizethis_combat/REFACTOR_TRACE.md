@@ -405,3 +405,15 @@ Delivered in this slice:
 
 Final ceilings: per-file **220** phys; package LOC **7250** (shrink-only ratchet; baseline was 7,307 @ `396fa936`).
 
+## Phase 4 — slice A (Refs #4284)
+
+Delivered in this slice:
+
+- Extracted `BattleContext` and `AttackingSide` from `conflict_detection.dart` into `battle_context.dart`.
+- Package barrel exports `battle_context.dart`; `conflict_detection.dart` re-exports types for stable deep-import paths.
+- `detectConflicts` remains in `conflict_detection.dart` (detection-only module).
+
+Post-split physical lines (approx.): `battle_context.dart` **103**; `conflict_detection.dart` **207** (was 310 combined).
+
+Deferred to slices B–D on #4284: Quick Battle apply/outcome split, land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
+
