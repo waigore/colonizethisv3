@@ -6,8 +6,76 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 
 // dart format off
+final _lumberRecipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
+
+WorldMarketState _grainHalfFillState() => WorldMarketState(
+      lastTurnActivity: {
+        CommodityCatalog.grain.id: const MarketActivity(
+          totalOfferQuantity: 4,
+          filledQuantity: 2,
+        ),
+      },
+    );
+
+WorldMarketState _timberCarryForwardState() => WorldMarketState(
+      carryForwardOffersByFactionId: {
+        'gp1': [
+          TradeOrder(
+            type: TradeOrderType.offer,
+            commodityId: CommodityCatalog.timber.id,
+            quantity: 2,
+            priority: 5,
+          ),
+          TradeOrder(
+            type: TradeOrderType.offer,
+            commodityId: CommodityCatalog.timber.id,
+            quantity: 3,
+            priority: 5,
+          ),
+        ],
+      },
+    );
+
+Game _tradeCounselEmitGame() => TestFixtures.minimalGame(
+      players: [
+        Player(
+          id: 'gp1',
+          displayName: 'GP',
+          isHuman: true,
+          stockpile: Stockpile()
+              .applyDelta(CommodityCatalog.timber.id, 100)
+              .applyDelta(CommodityCatalog.grain.id, 0),
+          treasury: tradeCounselTreasuryAffluenceThreshold(),
+        ),
+      ],
+    );
+
+void _populateTimberSurplusBelowCost({
+  required Map<CommodityId, int> available,
+  required Map<CommodityId, int> need,
+}) {
+  tradeCounselPopulateSurplusAndNeedMaps(
+    TradeCounselSurplusNeedMapsInput(
+      trackedCommodityIds: {CommodityCatalog.timber.id},
+      inputNeeds: const {},
+      projected: Stockpile().applyDelta(CommodityCatalog.timber.id, 50),
+      carryForwardOffers: const {},
+      carryForwardBids: const {},
+      marketPrices: {CommodityCatalog.timber.id: 1},
+      available: available,
+      need: need,
+    ),
+  );
+}
+
+TradeOrder _grainBid({required int quantity}) => TradeOrder(
+      type: TradeOrderType.bid,
+      commodityId: CommodityCatalog.grain.id,
+      quantity: quantity,
+      priority: 4,
+    );
+
 void main() {
-  final lumberRecipe = ProductionRecipesCatalog.byId['lumber_from_timber']!;
 
   group('tradeCounselProjectStockpileAfterProduction', () {
     test('deducts inputs and adds outputs from assignments', () {
@@ -16,8 +84,8 @@ void main() {
         stockpile: stockpile,
         productionAssignments: [
           AssignedRecipe(
-            recipeId: lumberRecipe.id,
-            assignedLabour: lumberRecipe.labourPerOutput * 2,
+            recipeId: _lumberRecipe.id,
+            assignedLabour: _lumberRecipe.labourPerOutput * 2,
           ),
         ],
       );
@@ -30,8 +98,8 @@ void main() {
     test('aggregates recipe input quantities', () {
       final needs = tradeCounselInputNeedsFromAssignments([
         AssignedRecipe(
-          recipeId: lumberRecipe.id,
-          assignedLabour: lumberRecipe.labourPerOutput * 3,
+          recipeId: _lumberRecipe.id,
+          assignedLabour: _lumberRecipe.labourPerOutput * 3,
         ),
       ]);
       expect(needs[CommodityCatalog.timber.id], 6);
@@ -65,30 +133,22 @@ void main() {
     test('records surplus and deficit when price below production cost', () {
       final available = <CommodityId, int>{};
       final need = <CommodityId, int>{};
-      final projected = Stockpile().applyDelta(CommodityCatalog.timber.id, 50);
-      tradeCounselPopulateSurplusAndNeedMaps(
-        TradeCounselSurplusNeedMapsInput(
-          trackedCommodityIds: {CommodityCatalog.timber.id},
-          inputNeeds: const {},
-          projected: projected,
-          carryForwardOffers: const {},
-          carryForwardBids: const {},
-          marketPrices: {CommodityCatalog.timber.id: 1},
-          available: available,
-          need: need,
-        ),
-      );
+      _populateTimberSurplusBelowCost(available: available, need: need);
       expect(available[CommodityCatalog.timber.id], greaterThan(0));
     });
   });
 
   group('tradeCounselPriorTurnOfferFillRate', () {
-    test('returns 1 when no activity or zero offers', () {
-      const state = WorldMarketState();
+    test('returns 1 when no activity', () {
       expect(
-        tradeCounselPriorTurnOfferFillRate(state, CommodityCatalog.grain.id),
+        tradeCounselPriorTurnOfferFillRate(
+          const WorldMarketState(),
+          CommodityCatalog.grain.id,
+        ),
         1.0,
       );
+    });
+    test('returns 1 when zero offers', () {
       final zeroOffers = WorldMarketState(
         lastTurnActivity: {
           CommodityCatalog.grain.id: const MarketActivity(
@@ -103,16 +163,11 @@ void main() {
       );
     });
     test('clamps fill fraction to 0–1', () {
-      final state = WorldMarketState(
-        lastTurnActivity: {
-          CommodityCatalog.grain.id: const MarketActivity(
-            totalOfferQuantity: 4,
-            filledQuantity: 2,
-          ),
-        },
-      );
       expect(
-        tradeCounselPriorTurnOfferFillRate(state, CommodityCatalog.grain.id),
+        tradeCounselPriorTurnOfferFillRate(
+          _grainHalfFillState(),
+          CommodityCatalog.grain.id,
+        ),
         0.5,
       );
     });
@@ -120,26 +175,8 @@ void main() {
 
   group('tradeCounselCarryForwardQuantitiesByCommodity', () {
     test('sums carry-forward orders by commodity', () {
-      final state = WorldMarketState(
-        carryForwardOffersByFactionId: {
-          'gp1': [
-            TradeOrder(
-              type: TradeOrderType.offer,
-              commodityId: CommodityCatalog.timber.id,
-              quantity: 2,
-              priority: 5,
-            ),
-            TradeOrder(
-              type: TradeOrderType.offer,
-              commodityId: CommodityCatalog.timber.id,
-              quantity: 3,
-              priority: 5,
-            ),
-          ],
-        },
-      );
       final totals = tradeCounselCarryForwardQuantitiesByCommodity(
-        state: state,
+        state: _timberCarryForwardState(),
         playerId: 'gp1',
         side: TradeOrderType.offer,
       );
@@ -149,18 +186,17 @@ void main() {
 
   group('tradeCounselExpectedOfferInflow', () {
     test('sums priced surplus with fill rate', () {
-      final state = WorldMarketState(
-        lastTurnActivity: {
-          CommodityCatalog.timber.id: const MarketActivity(
-            totalOfferQuantity: 10,
-            filledQuantity: 5,
-          ),
-        },
-      );
       final inflow = tradeCounselExpectedOfferInflow(
         available: {CommodityCatalog.timber.id: 4},
         marketPrices: {CommodityCatalog.timber.id: 10},
-        state: state,
+        state: WorldMarketState(
+          lastTurnActivity: {
+            CommodityCatalog.timber.id: const MarketActivity(
+              totalOfferQuantity: 10,
+              filledQuantity: 5,
+            ),
+          },
+        ),
       );
       expect(inflow, 20);
     });
@@ -205,15 +241,19 @@ void main() {
   });
 
   group('tradeCounselBidPriorityForCommodity', () {
-    test('maps categories to counsel bid priorities', () {
+    test('maps fabric to essential input priority', () {
       expect(
         tradeCounselBidPriorityForCommodity(CommodityCatalog.fabric.id),
         kTradeCounselBidPriorityEssentialInput,
       );
+    });
+    test('maps grain to food priority', () {
       expect(
         tradeCounselBidPriorityForCommodity(CommodityCatalog.grain.id),
         kTradeCounselBidPriorityFood,
       );
+    });
+    test('maps timber to raw material priority', () {
       expect(
         tradeCounselBidPriorityForCommodity(CommodityCatalog.timber.id),
         kTradeCounselBidPriorityRawMaterial,
@@ -224,14 +264,7 @@ void main() {
   group('tradeCounselPrioritizedBids', () {
     test('caps bids by cargo, treasury, and bid type cap', () {
       final bids = tradeCounselPrioritizedBids(
-        rawBids: [
-          TradeOrder(
-            type: TradeOrderType.bid,
-            commodityId: CommodityCatalog.grain.id,
-            quantity: 10,
-            priority: 4,
-          ),
-        ],
+        rawBids: [_grainBid(quantity: 10)],
         need: {CommodityCatalog.grain.id: 10},
         bidTypeCap: 1,
         tradeCargoCapacity: 3,
@@ -248,22 +281,9 @@ void main() {
 
   group('tradeCounselEmitOrders', () {
     test('combines offers and prioritized bids', () {
-      final game = TestFixtures.minimalGame(
-        players: [
-          Player(
-            id: 'gp1',
-            displayName: 'GP',
-            isHuman: true,
-            stockpile: Stockpile()
-                .applyDelta(CommodityCatalog.timber.id, 100)
-                .applyDelta(CommodityCatalog.grain.id, 0),
-            treasury: tradeCounselTreasuryAffluenceThreshold(),
-          ),
-        ],
-      );
       final orders = tradeCounselEmitOrders(
         TradeCounselEmitOrdersInput(
-          game: game,
+          game: _tradeCounselEmitGame(),
           playerId: 'gp1',
           bidTypeCap: 2,
           tradeCargoCapacity: 20,
