@@ -47,9 +47,17 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/trade_counsel_api.dart'
+    show
+        rankTradeCounselRecommendationsForHuman,
+        tradeCounselHighlightsByCommodityId;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../../../config/routes.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/production_allocation_provider.dart';
 import '../../../../providers/treasury_summary_provider.dart';
@@ -111,6 +119,7 @@ class MarketTabContent extends ConsumerWidget {
         ref.read(currentOrdersProvider.notifier);
     final Map<String, int> desiredOutputByRecipe =
         ref.watch(productionDesiredOutputProvider);
+    final bus = ref.read(appEventBusProvider);
     int? readProjectedTreasuryDelta() {
       try {
         return ref.read(treasurySummaryProvider).projectedDelta;
@@ -119,12 +128,48 @@ class MarketTabContent extends ConsumerWidget {
       }
     }
 
+    var topology = const MapTopology();
+    Map<String, TileMapResult> tileMapByRegion = const {};
+    final loaded = tryGetGameMapData(
+      () => ref.watch(gameServiceProvider).getMapData(game.id),
+    );
+    if (loaded != null) {
+      topology = loaded.combinedTopology;
+      tileMapByRegion = loaded.tileMapByRegion;
+    }
+    final productionAssignments = desiredOutputToAssignments(
+      desiredOutputByRecipe,
+    );
+    final tradeCounsel = rankTradeCounselRecommendationsForHuman(
+      game: game,
+      playerId: playerId,
+      productionAssignments: productionAssignments,
+      currentOrders: orders,
+      topology: topology,
+      tileMapByRegion: tileMapByRegion,
+    );
+    final highlights = tradeCounselHighlightsByCommodityId(tradeCounsel);
+
+    void openTradeCounsel({String? highlightRecommendationId}) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.counsel, {
+          'game': game,
+          'humanPlayerId': playerId,
+          'counselTab': 'trade',
+          if (highlightRecommendationId != null)
+            'highlightRecommendationId': highlightRecommendationId,
+        }),
+      );
+    }
+
     return buildMarketTabBody(
       context,
       orders: orders,
       ordersNotifier: ordersNotifier,
       desiredOutputByRecipe: desiredOutputByRecipe,
       readProjectedTreasuryDelta: readProjectedTreasuryDelta,
+      tradeCounselHighlightsByCommodityId: highlights,
+      onOpenTradeCounsel: canEdit ? openTradeCounsel : null,
     );
   }
 }

@@ -9,9 +9,13 @@ import 'package:colonizethis_orders/colonizethis_orders.dart'
     show Orders, TradeOrder, TradeOrderType, tradeOrderForPlayerCommodity;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
 import 'trade_screen_market_tab_order_handlers.dart';
 import 'trade_section_handlers.dart';
+
+typedef TradeOpenCounselCallback =
+    void Function({String? highlightRecommendationId});
 
 /// Immutable per-build view of Market tab order-staging inputs.
 class TradeMarketStagingContext {
@@ -24,6 +28,8 @@ class TradeMarketStagingContext {
     required this.market,
     required this.handlers,
     required this.firstRightCommodityIds,
+    this.tradeCounselHighlightsByCommodityId = const {},
+    this.onOpenTradeCounsel,
   });
 
   final String playerId;
@@ -34,6 +40,9 @@ class TradeMarketStagingContext {
   final WorldMarketState market;
   final TradeSectionHandlers handlers;
   final Set<CommodityId> firstRightCommodityIds;
+  final Map<CommodityId, TradeCounselRecommendation>
+      tradeCounselHighlightsByCommodityId;
+  final TradeOpenCounselCallback? onOpenTradeCounsel;
 
   /// Builds staging maps and caps once per Market tab build.
   static TradeMarketStagingContext forMarketBuild({
@@ -42,6 +51,9 @@ class TradeMarketStagingContext {
     required Orders orders,
     required Map<CommodityId, int> productionInputConsumption,
     required TradeSectionHandlers handlers,
+    Map<CommodityId, TradeCounselRecommendation>
+        tradeCounselHighlightsByCommodityId = const {},
+    TradeOpenCounselCallback? onOpenTradeCounsel,
   }) {
     return TradeMarketStagingContext(
       playerId: playerId,
@@ -59,6 +71,8 @@ class TradeMarketStagingContext {
       market: game.worldMarketState,
       handlers: handlers,
       firstRightCommodityIds: firstRightCommodityIdsForPlayer(game, playerId),
+      tradeCounselHighlightsByCommodityId: tradeCounselHighlightsByCommodityId,
+      onOpenTradeCounsel: onOpenTradeCounsel,
     );
   }
 

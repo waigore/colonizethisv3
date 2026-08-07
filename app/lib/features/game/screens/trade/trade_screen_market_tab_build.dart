@@ -12,6 +12,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../providers/games_provider.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
 
 import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
@@ -34,6 +35,9 @@ extension MarketTabContentBuild on MarketTabContent {
     required CurrentOrdersNotifier ordersNotifier,
     required Map<String, int> desiredOutputByRecipe,
     required int? Function() readProjectedTreasuryDelta,
+    required Map<CommodityId, TradeCounselRecommendation>
+        tradeCounselHighlightsByCommodityId,
+    TradeOpenCounselCallback? onOpenTradeCounsel,
   }) {
     final ThemeData theme = Theme.of(context);
     final styles = marketTabTextStyles(theme);
@@ -89,6 +93,8 @@ extension MarketTabContentBuild on MarketTabContent {
       orders: orders,
       productionInputConsumption: productionInputConsumption,
       handlers: sectionHandlers,
+      tradeCounselHighlightsByCommodityId: tradeCounselHighlightsByCommodityId,
+      onOpenTradeCounsel: onOpenTradeCounsel,
     );
 
     final int tradeCargoCapacity = cargoHoldsForHomeFleet(game, playerId);
@@ -158,20 +164,37 @@ extension MarketTabContentBuild on MarketTabContent {
 
     final Widget header = RepaintBoundary(
       key: TradeScreenMarketKeys.marketBidTypeCapGoldenKey,
-      child: MarketTabHeaderStrip(
-        stagedDistinctBidCount: stagedDistinctBidCount,
-        bidTypeCap: bidTypeCap,
-        clampedRemaining: clampedRemaining,
-        cargoWarningVisible: warningVisible,
-        bidBudgetTotal: bidBudgetHeader.budgetTotal,
-        bidBudgetRemaining: bidBudgetHeader.budgetRemaining,
-        bidBudgetWarningVisible: bidBudgetHeader.warningVisible,
-        bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
-        bidTypeWarningStyle: bidTypeWarningStyle,
-        cargoIndicatorStyle: cargoIndicatorStyle,
-        cargoWarningStyle: cargoWarningStyle,
-        bidBudgetIndicatorStyle: bidBudgetIndicatorStyle,
-        bidBudgetWarningStyle: bidBudgetWarningStyle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (onOpenTradeCounsel != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: CtNinePatchButton(
+                  key: const ValueKey<String>('trade_market_counsel_button'),
+                  onPressed: () => onOpenTradeCounsel(),
+                  child: Text(l10n.tradeMarket_counsel),
+                ),
+              ),
+            ),
+          MarketTabHeaderStrip(
+            stagedDistinctBidCount: stagedDistinctBidCount,
+            bidTypeCap: bidTypeCap,
+            clampedRemaining: clampedRemaining,
+            cargoWarningVisible: warningVisible,
+            bidBudgetTotal: bidBudgetHeader.budgetTotal,
+            bidBudgetRemaining: bidBudgetHeader.budgetRemaining,
+            bidBudgetWarningVisible: bidBudgetHeader.warningVisible,
+            bidGoodsIndicatorStyle: bidGoodsIndicatorStyle,
+            bidTypeWarningStyle: bidTypeWarningStyle,
+            cargoIndicatorStyle: cargoIndicatorStyle,
+            cargoWarningStyle: cargoWarningStyle,
+            bidBudgetIndicatorStyle: bidBudgetIndicatorStyle,
+            bidBudgetWarningStyle: bidBudgetWarningStyle,
+          ),
+        ],
       ),
     );
 
