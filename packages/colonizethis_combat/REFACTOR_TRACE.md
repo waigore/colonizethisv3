@@ -429,3 +429,25 @@ Post-split physical lines (approx.): `quick_battle_resolver.dart` **~210** (was 
 
 Deferred to slices C–D on #4284: land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
 
+## Phase 4 — slice C (Refs #4284)
+
+Delivered in this slice:
+
+- Extracted multi-attacker engagement loop from `resolveBattleContext` into `combat_resolver_multi_attacker_loop.dart` (`runLandBattleMultiAttackerLoop`).
+- `combat_resolver.dart` is now a short orchestrator: setup → loop → post-battle → resolve → log.
+
+Post-split physical lines (approx.): `combat_resolver.dart` **~85** (was 221); `combat_resolver_multi_attacker_loop.dart` **~175**.
+
+Deferred to slice D on #4284: `repo.combat_lib_file_size` CI ratchet.
+
+## Phase 4 — slice D (Refs #4284)
+
+Delivered in this slice:
+
+- Added `tool/check_combat_lib_file_size.dart` (per-file ≤280 phys; empty shrink-only grandfather list).
+- Registered `repo.combat_lib_file_size` in `tool/ct_repo_lint_manifest.yaml`.
+- Unit test: `test/check_combat_lib_file_size_test.dart`.
+- Documented rule in `SPEC/program/repo-lint.md`.
+
+Post-split max lib file: `quick_battle_resolver_engine.dart` **≈268** phys (ceiling **280**).
+
