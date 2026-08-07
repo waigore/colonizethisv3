@@ -98,6 +98,30 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Standalone — tile Build fort enabled',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: true,
+          buildFortActionEnabled: true,
+          buildFortActionHasEngineerUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build fort disabled',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: true,
+          buildFortActionEnabled: false,
+          buildFortActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build fort hidden',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: false,
+          buildFortActionEnabled: false,
+          buildFortActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — tile Purchase land enabled',
         builder: (context) => _provinceOverlayPurchaseLandStory(
           showPurchaseLandActionIcon: true,
@@ -231,6 +255,33 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
     ],
   ),
 ];
+
+/// MAP20001 Military **Build fort** inline-action variants. Refs #4280.
+Widget _provinceOverlayBuildFortStory({
+  required bool showBuildFortActionIcon,
+  required bool buildFortActionEnabled,
+  required bool buildFortActionHasEngineerUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showBuildFortActionIcon: showBuildFortActionIcon,
+      buildFortActionEnabled: buildFortActionEnabled,
+      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+      onBuildFortTap: () {},
+      onClose: () {},
+    ),
+  );
+}
 
 /// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
 Widget _provinceOverlayBuildRoadStory({
