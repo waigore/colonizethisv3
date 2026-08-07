@@ -45,7 +45,7 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - Tile priority among valid targets for the commodity:
   - When `tileMapByRegion` is supplied: same feedstock + connectivity-aware ordering as `suggestWorkOrders` `build_improvement` (`orderDevelopmentImproveTiles` in `colonizethis_orders`).
   - When `tileMapByRegion` is absent: capital-connected first, then lower `improvementLevel`, then stable tile key.
-- Materials: affordability uses stockpile after deducting other pending material work orders (same order as economy preview).
+- Materials: affordability uses stockpile after deducting other pending material work orders via `replayPendingWorkResourceProjection` in `work_order_affordance_projection.dart` (same replay order as MAP assign previews and economy preview).
 - Disconnected targets: Assign enabled when improve is otherwise valid; warn dialog on commit (Slice C).
 
 ## Road first (Slice C)
@@ -55,4 +55,4 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - Idle Engineer: same idle/pending rules as Builder; first by stable unit id.
 - Path: shortest owned-tile BFS from improve target to any capital-connected tile; neighbor expansion sorted by tile key.
 - Road tile: first legal `build_road` candidate along the path from the connected endpoint back toward the improve target.
-- Materials: same pending-work stockpile projection as improve assign.
+- Materials: same pending-work stockpile projection as improve assign (`replayPendingWorkResourceProjection` in `work_order_affordance_projection.dart`).

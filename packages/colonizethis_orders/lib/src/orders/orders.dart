@@ -12,7 +12,6 @@ export 'diplomatic_access_helpers.dart'
         explorerConsulateGateBlocksMinorTribeProvince,
         kReasonConsulateRequiredForExplore;
 export 'development_panel_assign.dart';
-export 'development_panel_assign_affordance.dart';
 export 'development_panel_road_first.dart';
 export 'development_panel/idle_civilians.dart'
     show idleDevelopmentCiviliansForAssign;
