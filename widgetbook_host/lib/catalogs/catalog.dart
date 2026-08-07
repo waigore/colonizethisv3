@@ -145,6 +145,7 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'debug_map_visibility_story.dart';
+import 'fort_map_icon_levels_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
@@ -678,6 +679,12 @@ List<WidgetbookNode> get mapWidgetDirectories => [
               return const DebugMapVisibilityStory(showPoliticalOverlay: true);
             },
           ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Fort glyphs L1–L3',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: FortMapIconLevelsStory()),
         ),
       ),
     ],
