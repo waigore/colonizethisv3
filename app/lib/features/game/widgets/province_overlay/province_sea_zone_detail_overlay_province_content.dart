@@ -21,6 +21,7 @@ import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
 import 'province_sea_zone_detail_overlay_sections_political.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'province_sea_zone_detail_overlay_tile_section.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, fleetsInPortAtProvince, kRegionNewWorld, provincePanelShowsFullTileDerivedIntel;
 
@@ -49,6 +50,10 @@ OverlayContent provinceContent({
   required bool buildRoadActionEnabled,
   required bool buildRoadActionHasEngineerUnits,
   VoidCallback? onBuildRoadTap,
+  required bool showBuildFortActionIcon,
+  required bool buildFortActionEnabled,
+  required bool buildFortActionHasEngineerUnits,
+  VoidCallback? onBuildFortTap,
   required bool showPurchaseLandActionIcon,
   required bool purchaseLandActionEnabled,
   required bool purchaseLandActionHasMerchantUnits,
@@ -176,6 +181,22 @@ OverlayContent provinceContent({
           humanPlayerId: humanPlayerId,
           provinceId: provinceId,
           draftOrders: draftOrders,
+          fortLevel: province?.fortLevel ?? 0,
+          showBuildFortActionIcon: showBuildFortActionIcon,
+          buildFortActionEnabled: buildFortActionEnabled,
+          buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+          buildFortTooltip: selectedTileKey == null
+              ? l10n.provinceOverlay_tileBuildFortDisabledTooltip
+              : provinceOverlayBuildFortTooltip(
+                  l10n: l10n,
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: draftOrders,
+                  selectedTileKey: selectedTileKey,
+                  enabled: buildFortActionEnabled,
+                  hasEngineerUnits: buildFortActionHasEngineerUnits,
+                ),
+          onBuildFortTap: onBuildFortTap,
         )
       : buildOverlaySection(
           l10n.provinceOverlay_sectionMilitary,

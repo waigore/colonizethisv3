@@ -190,6 +190,44 @@ String provinceOverlayBuildRoadTooltip({
   return l10n.provinceOverlay_tileBuildRoadTooltip;
 }
 
+String provinceOverlayBuildFortTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
+  required bool enabled,
+  required bool hasEngineerUnits,
+}) {
+  if (!hasEngineerUnits) {
+    return l10n.provinceOverlay_tileBuildFortDisabledNoEngineerTooltip;
+  }
+  final preview = previewWorkOrderAffordAtTile(
+    game: game,
+    playerId: humanPlayerId,
+    currentOrders: currentOrders,
+    workTarget: kWorkTargetBuildFort,
+    targetTileKey: selectedTileKey,
+  );
+  if (!enabled &&
+      preview.hasCostPreview &&
+      !preview.canAfford &&
+      preview.materialShortfalls.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildFortDisabledMaterialsTooltip(
+      workOrderAffordStatusLine(l10n: l10n, preview: preview),
+    );
+  }
+  if (!enabled) {
+    return l10n.provinceOverlay_tileBuildFortDisabledTooltip;
+  }
+  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+    return l10n.provinceOverlay_tileBuildFortTooltipWithCost(
+      formatWorkOrderMaterialCostSummary(preview.materialCosts!),
+    );
+  }
+  return l10n.provinceOverlay_tileBuildFortTooltip;
+}
+
 String provinceOverlayPurchaseLandTooltip({
   required AppLocalizations l10n,
   required Game game,

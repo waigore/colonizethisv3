@@ -22,7 +22,7 @@ void main() {
       expect(kTownIconIds, contains('town_colonial_4'));
       expect(kTownIconIds, contains('town_tribal_2'));
       expect(kTownIconIds, isNot(contains('town_inland_64')));
-      expect(kTownIconIds.length, 13);
+      expect(kTownIconIds.length, 16);
     });
 
     test('town and port render sizes follow spec', () {

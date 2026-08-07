@@ -102,6 +102,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
     this.buildRoadShortcutTargetTileKey,
+    this.buildFortShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
   });
 
@@ -135,6 +136,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province build-road shortcut flow.
   final String? buildRoadShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-fort shortcut flow.
+  final String? buildFortShortcutTargetTileKey;
 
   /// Optional tile key used by the province purchase-land shortcut flow.
   final String? purchaseLandShortcutTargetTileKey;

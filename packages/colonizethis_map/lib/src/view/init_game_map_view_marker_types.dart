@@ -161,6 +161,8 @@ class TownMarkerView {
     required this.townIconStyle,
     this.portIconX,
     this.portIconY,
+    this.worldFortLevel = 0,
+    this.mapVisibleFortLevel,
   });
 
   final int x;
@@ -189,6 +191,36 @@ class TownMarkerView {
   /// [x]/[y] when the port tile matches town or capital). SPEC/ui/town-port-icons.md.
   final int? portIconX;
   final int? portIconY;
+
+  /// Authoritative province fort level (0–3) from world state. Refs #4280.
+  final int worldFortLevel;
+
+  /// Fort level drawn on the map (1–3), or null when hidden (open field or
+  /// intel-gated). Set by the map-view builder or post-process for player view.
+  final int? mapVisibleFortLevel;
+
+  TownMarkerView copyWith({
+    int? worldFortLevel,
+    int? mapVisibleFortLevel,
+    bool clearMapVisibleFortLevel = false,
+  }) {
+    return TownMarkerView(
+      x: x,
+      y: y,
+      provinceId: provinceId,
+      isCoastal: isCoastal,
+      isPort: isPort,
+      touchesSea: touchesSea,
+      townDevelopmentLevel: townDevelopmentLevel,
+      townIconStyle: townIconStyle,
+      portIconX: portIconX,
+      portIconY: portIconY,
+      worldFortLevel: worldFortLevel ?? this.worldFortLevel,
+      mapVisibleFortLevel: clearMapVisibleFortLevel
+          ? null
+          : (mapVisibleFortLevel ?? this.mapVisibleFortLevel),
+    );
+  }
 }
 
 /// Warp zone marker location for a sea zone that links to another region.

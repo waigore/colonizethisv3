@@ -17,6 +17,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onProspectWithExplorerTap,
   VoidCallback? onBuildImprovementTap,
   VoidCallback? onBuildRoadTap,
+  VoidCallback? onBuildFortTap,
   VoidCallback? onPurchaseLandTap,
 });
 
@@ -57,6 +58,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
+  required bool buildFortEnabled,
   required bool purchaseLandEnabled,
   required ct_models.AppEventBus bus,
 }) {
@@ -67,6 +69,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onProspectWithExplorerTap: null,
       onBuildImprovementTap: null,
       onBuildRoadTap: null,
+      onBuildFortTap: null,
       onPurchaseLandTap: null,
     );
   }
@@ -138,6 +141,22 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
           buildRoadShortcutTargetTileKey: tileKey,
+        ),
+      ),
+    ),
+    onBuildFortTap: _provinceDetailShortcutTap(
+      enabled: buildFortEnabled,
+      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildFortActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: tileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+      ).enabled,
+      emit: () => bus.emit(
+        ct_models.OpenCivilianUnitsPanelEvent(
+          engineerOnly: true,
+          buildFortShortcutTargetTileKey: tileKey,
         ),
       ),
     ),

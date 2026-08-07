@@ -3102,6 +3102,45 @@
       }
     }
   },
+  "provinceOverlay_militaryFortStatus": "Fort: {status}",
+  "@provinceOverlay_militaryFortStatus": {
+    "description": "Military section fort posture line for province management (Refs #4280).",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildFortTooltip": "Build fort",
+  "@provinceOverlay_tileBuildFortTooltip": {
+    "description": "Tooltip for enabled build-fort shortcut on town tile (Refs #4280)."
+  },
+  "provinceOverlay_tileBuildFortTooltipWithCost": "Build fort ({costs})",
+  "@provinceOverlay_tileBuildFortTooltipWithCost": {
+    "description": "Enabled build-fort shortcut tooltip with material cost hint.",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildFortDisabledNoEngineerTooltip": "No Engineer available to build fort",
+  "@provinceOverlay_tileBuildFortDisabledNoEngineerTooltip": {
+    "description": "Disabled build-fort shortcut when no Engineer units exist."
+  },
+  "provinceOverlay_tileBuildFortDisabledTooltip": "No Engineer can assign fort work here this turn",
+  "@provinceOverlay_tileBuildFortDisabledTooltip": {
+    "description": "Disabled build-fort shortcut when no valid Engineer assignment exists."
+  },
+  "provinceOverlay_tileBuildFortDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildFortDisabledMaterialsTooltip": {
+    "description": "Disabled build-fort shortcut when materials or treasury are short.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",
