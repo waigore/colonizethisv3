@@ -1,9 +1,11 @@
-// Full-screen Counsel screen. SPEC/ui/counsel-panel.md (Refs #4190 / #4191).
+// Full-screen Counsel screen. SPEC/ui/counsel-panel.md (Refs #4190 / #4191 / #4282).
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
-    show rankIndustryCounselRecommendations;
+    show
+        rankIndustryCounselRecommendations,
+        rankTradeCounselRecommendationsForHuman;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +24,15 @@ import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'counsel_industry_apply.dart';
 import 'counsel_industry_tab_body.dart';
+import 'counsel_trade_apply.dart';
+import 'counsel_trade_tab_body.dart';
+
+enum CounselTab { industry, trade }
+
+CounselTab counselTabFromRouteArg(Object? value) {
+  if (value == 'trade') return CounselTab.trade;
+  return CounselTab.industry;
+}
 
 class CounselScreen extends ConsumerWidget {
   const CounselScreen({
@@ -29,6 +40,7 @@ class CounselScreen extends ConsumerWidget {
     required this.game,
     required this.humanPlayerId,
     this.highlightRecommendationId,
+    this.initialTab = CounselTab.industry,
   });
 
   /// SPEC/ui/counsel-panel.md — [UiScreenIds.counselScreen].
@@ -43,6 +55,7 @@ class CounselScreen extends ConsumerWidget {
   final Game game;
   final String humanPlayerId;
   final String? highlightRecommendationId;
+  final CounselTab initialTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -68,16 +81,27 @@ class CounselScreen extends ConsumerWidget {
           topology = loaded.combinedTopology;
           tileMapByRegion = loaded.tileMapByRegion;
         }
-        final recommendations = rankIndustryCounselRecommendations(
+        final l10n = appL10n(context);
+        final bus = shellRef.read(appEventBusProvider);
+        final industryRecommendations = rankIndustryCounselRecommendations(
           game: displayGame,
           playerId: humanPlayerId,
           currentOrders: currentOrders,
           topology: topology,
           tileMapByRegion: tileMapByRegion,
         );
-        final l10n = appL10n(context);
-        final bus = shellRef.read(appEventBusProvider);
-        final callbacks = CounselIndustryCallbacks(
+        final productionAssignments = desiredOutputToAssignments(
+          shellRef.watch(productionDesiredOutputProvider),
+        );
+        final tradeCounsel = rankTradeCounselRecommendationsForHuman(
+          game: displayGame,
+          playerId: humanPlayerId,
+          productionAssignments: productionAssignments,
+          currentOrders: currentOrders,
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
+        final industryCallbacks = CounselIndustryCallbacks(
           onApplyProduceAllocation: canEdit
               ? () {
                   final currentDesired = shellRef.read(
@@ -125,26 +149,71 @@ class CounselScreen extends ConsumerWidget {
                 }
               : null,
         );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Text(
-                l10n.industryCounsel_tabIndustry,
-                style: Theme.of(context).textTheme.titleSmall,
+        final tradeCallbacks = CounselTradeCallbacks(
+          onApplyBook: canEdit && tradeCounsel.book.isNotEmpty
+              ? () {
+                  final orders = shellRef.read(currentOrdersProvider);
+                  final next = tradeCounselOrdersAfterApplyBook(
+                    currentOrders: orders,
+                    playerId: humanPlayerId,
+                    book: tradeCounsel.book,
+                  );
+                  shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+                }
+              : null,
+          onAgreeLine: canEdit
+              ? (order) {
+                  final orders = shellRef.read(currentOrdersProvider);
+                  final next = tradeCounselOrdersAfterAgree(
+                    currentOrders: orders,
+                    playerId: humanPlayerId,
+                    order: order,
+                  );
+                  if (next == null) {
+                    bus.emit(
+                      ShowSnackBarEvent(message: l10n.tradeCounsel_applyFailed),
+                    );
+                    return;
+                  }
+                  shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+                }
+              : null,
+        );
+        return DefaultTabController(
+          length: 2,
+          initialIndex: initialTab == CounselTab.trade ? 1 : 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TabBar(
+                tabs: [
+                  Tab(text: l10n.industryCounsel_tabIndustry),
+                  Tab(text: l10n.tradeCounsel_tabTrade),
+                ],
               ),
-            ),
-            Expanded(
-              child: CounselIndustryTabBody(
-                recommendations: recommendations,
-                highlightRecommendationId: highlightRecommendationId,
-                l10n: l10n,
-                canEdit: canEdit,
-                callbacks: callbacks,
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    CounselIndustryTabBody(
+                      recommendations: industryRecommendations,
+                      highlightRecommendationId: highlightRecommendationId,
+                      l10n: l10n,
+                      canEdit: canEdit,
+                      callbacks: industryCallbacks,
+                    ),
+                    CounselTradeTabBody(
+                      recommendations: tradeCounsel.recommendations,
+                      book: tradeCounsel.book,
+                      highlightRecommendationId: highlightRecommendationId,
+                      l10n: l10n,
+                      canEdit: canEdit,
+                      callbacks: tradeCallbacks,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

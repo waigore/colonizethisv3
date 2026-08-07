@@ -1427,6 +1427,42 @@ abstract class AppLocalizations {
   /// Shown when train Agree fails re-validation.
   String get industryCounsel_trainAgreeFailed;
 
+  /// Counsel screen Trade tab label.
+  String get tradeCounsel_tabTrade;
+
+  /// Counsel Trade tab empty state.
+  String get tradeCounsel_empty;
+
+  /// Replaces all staged trade orders with the counsel book.
+  String get tradeCounsel_action_applyBook;
+
+  /// Stages one counsel trade line.
+  String get tradeCounsel_action_agree;
+
+  /// Shown when trade counsel Apply/Agree fails validation.
+  String get tradeCounsel_applyFailed;
+
+  /// Trade counsel card title for a bid line.
+  String tradeCounsel_title_bid(String commodity, int quantity);
+
+  /// Trade counsel card title for an offer line.
+  String tradeCounsel_title_offer(String commodity, int quantity);
+
+  /// Brief trade counsel reason for surplus offers.
+  String get tradeCounsel_reason_surplusAboveReserve_brief;
+
+  /// Brief trade counsel reason for deficit bids.
+  String get tradeCounsel_reason_industryShortage_brief;
+
+  /// Brief trade counsel reason for F10 speculative bids.
+  String get tradeCounsel_reason_speculativeInventory_brief;
+
+  /// Trade Market header button opening Trade Counsel.
+  String get tradeMarket_counsel;
+
+  /// Accessibility label for Market row trade counsel star.
+  String tradeMarket_tradeCounselStarSemantic(String brief);
+
   /// Compact chip on Market rows where the human holds first right of refusal.
   String get tradeMarket_firstRightChip;
 

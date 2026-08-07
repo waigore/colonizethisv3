@@ -23,7 +23,8 @@ const int ordersTestSupportLocCeiling = 13950;
 /// Wave-6 Slice E (#4246): connectivity dev fixture densify 16200 → 15900.
 /// Raised to 16050 for civilian work affordance scenario suite (Refs #4262).
 /// Raised to 16100 for work-order affordance projection parity tests (Refs #4281).
-const int ordersTestPackageLocCeiling = 16100;
+/// Raised to 16300 for trade counsel ranking scenario suite (Refs #4282).
+const int ordersTestPackageLocCeiling = 16300;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countOrdersTestSupportPhysicalLoc(Directory dir) {
@@ -95,13 +96,13 @@ int runCheckOrdersTestSupportLoc(
   if (packageLoc > packageCeiling) {
     logE(
       'check_orders_test_support_loc: package test/ LOC $packageLoc exceeds '
-      'ceiling $packageCeiling (wave-6 target ≤16100; Refs #4246, #4262, #4281).',
+      'ceiling $packageCeiling (wave-6 target ≤16300; Refs #4246, #4262, #4281, #4282).',
     );
     return 1;
   }
   logI(
     'check_orders_test_support_loc: package test/ LOC $packageLoc ≤ ceiling '
-    '$packageCeiling (wave-6 target ≤16100; Refs #4246, #4262, #4281).',
+    '$packageCeiling (wave-6 target ≤16300; Refs #4246, #4262, #4281, #4282).',
   );
   return 0;
 }

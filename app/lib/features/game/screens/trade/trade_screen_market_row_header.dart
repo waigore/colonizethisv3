@@ -28,6 +28,7 @@ class MarketCommodityRowHeader extends StatelessWidget {
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
+    this.counselStar,
   });
 
   final CommodityId commodityId;
@@ -39,6 +40,7 @@ class MarketCommodityRowHeader extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final Widget? counselStar;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +70,7 @@ class MarketCommodityRowHeader extends StatelessWidget {
             showFirstRightChip: showFirstRightChip,
             firstRightChipLabel: firstRightChipLabel,
             firstRightTooltip: firstRightTooltip,
+            counselStar: counselStar,
           ),
         ),
         _MarketCommodityRowPriceTrailing(
@@ -91,6 +94,7 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
     required this.showFirstRightChip,
     required this.firstRightChipLabel,
     required this.firstRightTooltip,
+    this.counselStar,
   });
 
   final CommodityId commodityId;
@@ -102,6 +106,7 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final Widget? counselStar;
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +137,7 @@ class _MarketCommodityRowTitleBand extends StatelessWidget {
             ),
           ),
         ],
+        if (counselStar != null) counselStar!,
       ],
     );
   }

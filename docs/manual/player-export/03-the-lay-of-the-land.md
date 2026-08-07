@@ -16,7 +16,7 @@ Your decrees land on **provinces**, **sea zones**, and **tiles**. Reading the ma
 
 1. On **Game screen** / **Empire overview / map area**, select a land province or sea zone.
 2. **Province sea-zone overlay** shows the place’s display name, ownership, and local details (economic and military cues as implemented there).
-3. Town and port icons on the map mark development and seaboard access . Expect those town sites to sit on **plains** terrain at setup — setup prefers plains among eligible candidates and converts the chosen town tile to plains (clearing any surface resource) when no natural plains exists. Layered terrain rendering paints the tile art beneath political ownership .
+3. Town and port icons on the map mark development and seaboard access . When a province has a **fort** (wood, stone, or modern), a smaller **fort glyph** appears offset near the town icon on **Empire overview / map area** — your own forts always show when the town tile is revealed; foreign forts appear only when you have full military intelligence for that province (the same gate as invasion fort lines on **Move army dialog**). Expect those town sites to sit on **plains** terrain at setup — setup prefers plains among eligible candidates and converts the chosen town tile to plains (clearing any surface resource) when no natural plains exists. Layered terrain rendering paints the tile art beneath political ownership .
 4. Political ownership glyphs and GP tinting (when present on the game) help you see who holds which province at a glance.
 
 ### Terrain, resources, and what is hidden

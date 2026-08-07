@@ -48,6 +48,8 @@
 - `TradeScreenMarketKeys.marketBidBudgetIndicatorKey` — `ValueKey<String>('tradeScreenMarketBidBudgetIndicator')` (persistent header strip below the cargo indicator; renders `Bid budget: R of B` where `B = treasuryAvailableForBidsByPlayer(...)` and `R = max(0, B − stagedBidTotalSpendByPlayer(...))` — Refs `#4186`).
 - `TradeScreenMarketKeys.marketBidBudgetWarningKey` — `ValueKey<String>('tradeScreenMarketBidBudgetWarning')` (warning row below the bid-budget indicator when `R == 0` and (`S > 0` or `B == 0`); absent otherwise; default body colour — Refs `#4186`).
 - `TradeScreenMarketKeys.marketBidBudgetTooltipKey` — `ValueKey<String>('tradeScreenMarketBidBudgetTooltip')` (inline `CtIconAction` + `Tooltip` beside the bid-budget line — Refs `#4186`).
+- Market tab **Counsel** header button — `ValueKey<String>('trade_market_counsel_button')` (right-aligned `CtNinePatchButton` above cap indicators; Refs `#4282`). Mounted only when `canMutateViaUi == true`.
+- Per-row **counsel star** — `ValueKey<String>('trade_market_counsel_star')` on `TradeMarketCounselStar` (≤3 highlight commodities; tap opens `GAME90001` Trade tab with `highlightRecommendationId`; Refs `#4282`).
 - `TradeScreenDealBookKeys.dealBookTabBodyKey` — `ValueKey<String>('tradeScreenDealBookTabBody')` (Deal Book tab body root; visible after the user taps the `Deal Book` label; key remained stable when `#2993` E6 swapped the placeholder for the live ledger).
 - `TradeScreenDealBookKeys.dealBookContentKey` — `ValueKey<String>('tradeScreenDealBookContent')` (root of the live Deal Book two-panel ledger content sitting directly under `dealBookTabBodyKey` — Refs `#2993` E6).
 - `TradeScreenDealBookKeys.dealBookBidsPanelKey` — `ValueKey<String>('tradeScreenDealBookBidsPanel')` (left/top container for the player's previous-turn buying activity panel; always mounted under the live ledger root — Refs `#2993` E6).
@@ -92,6 +94,8 @@ Padding (16 dp)
             ├── _MarketTabContent      // keyed `tradeScreenMarketTabBody`
             │   └── (Opacity + IgnorePointer when `canMutateViaUi == false`)
             │       └── Column
+            │           ├── Align (end) → CtNinePatchButton 'Counsel'
+            │           │     (`trade_market_counsel_button` — Refs #4282; hidden when `canMutateViaUi == false`)
             │           ├── Text 'Bid goods: U of C' (`tradeScreenMarketBidGoodsIndicator`,
             │           │     bodySmall, --accent — Refs #4170) + inline help `CtIconAction`
             │           │     (`marketBidGoodsTooltipKey`, Refs #4186)
@@ -130,6 +134,7 @@ Padding (16 dp)
             │                           │   ├── ResourceIcon 20 dp (`...:resourceIcon`)
             │                           │   ├── Expanded → Row
             │                           │   │   ├── Text <displayName> (titleSmall, --accent, ellipsis)
+            │                           │   │   ├── TradeMarketCounselStar ★ (≤3 highlights — Refs #4282)
             │                           │   │   └── Text '(N)' sellable (`...:sellable`, --muted)
             │                           │   └── SizedBox width `marketRowPriceColumnWidth` (right-aligned)
             │                           │       └── Row (mainAxisSize: min)
@@ -369,6 +374,7 @@ The Deal Book tab body's live two-panel ledger ships in this commit (Refs `#2993
 |--------|-----------|--------|
 | Left rail Trade button | `kEmpireTradeButtonKey` tapped | `NavigateToRouteEvent(Routes.trade, …)` → push `TradeScreen`. |
 | Direct route (deep link / test harness) | Caller supplies `RoutePaths.trade` settings with `game` + `humanPlayerId` args | `_buildGameRoute` resolves player and mounts `TradeScreen`. |
+| Counsel return | Player pops from `GAME90001` after opening from Market | `Navigator.maybePop()` returns to `TradeScreen` with prior staged orders preserved. |
 
 ### User actions → outcomes
 
@@ -385,8 +391,10 @@ The Deal Book tab body's live two-panel ledger ships in this commit (Refs `#2993
 | Per-row stepper `+` on a `Bid` row when `remainingCargo == 0` | `canMutateViaUi == true` AND staged `TradeOrderType.bid` AND `remainingCargo == 0` | No-op — `currentOrdersProvider` is **not** mutated. | Cross-commodity bid total stays at `tradeCargoCapacity`; the `tradeScreenMarketCargoWarning` row remains mounted (it was already mounted at saturation). |
 | Per-row `Bid` chip when toggle would exceed cargo (`maxAllowedBidQuantity > 0` AND `desiredQuantity > maxAllowedBidQuantity`) | `canMutateViaUi == true` | `applyTradeOrderForPlayer(... TradeOrder(type: bid, quantity: maxAllowedBidQuantity, …))`. | Staged bid is clamped to the remaining cargo (`desiredQuantity` falls back from the prior `quantity` to the remaining cargo when it is smaller). |
 | Per-row `Bid` chip when no bid fits (`maxAllowedBidQuantity <= 0`) | `canMutateViaUi == true` | No-op — `currentOrdersProvider` is **not** mutated. | Row stays in its prior direction; cross-commodity bid total stays at `tradeCargoCapacity`; the `tradeScreenMarketCargoWarning` row remains mounted. |
+| Market header **Counsel** (`trade_market_counsel_button`) | `canMutateViaUi == true` | `NavigateToRouteEvent(Routes.counsel, {game, humanPlayerId, counselTab: 'trade'})` | Opens `GAME90001` on the Trade tab with the current AI-equivalent book. |
+| Per-row counsel star (`trade_market_counsel_star`) | Highlight commodity AND `canMutateViaUi == true` | `NavigateToRouteEvent(Routes.counsel, {…, counselTab: 'trade', highlightRecommendationId})` | Opens `GAME90001` Trade tab with the matching line emphasized. |
 
-Observe-mode (`canMutateViaUi == false`, distinct from the global-observe / panels-not-defined sentinel covered by variant `c`): the Market tab body is wrapped in `IgnorePointer` and dimmed by an `Opacity` of `0.7`; the chips and stepper buttons remain mounted (so the static read-only data renders) but taps are blocked and `currentOrdersProvider` is not mutated. This matches the production-screen read-only pattern (`canEdit ? panel : IgnorePointer(child: panel)`).
+Observe-mode (`canMutateViaUi == false`, distinct from the global-observe / panels-not-defined sentinel covered by variant `c`): the Market tab body is wrapped in `IgnorePointer` and dimmed by an `Opacity` of `0.7`; the chips and stepper buttons remain mounted (so the static read-only data renders) but taps are blocked and `currentOrdersProvider` is not mutated. The **Counsel** header button and per-row counsel stars are **not** mounted in observe mode. This matches the production-screen read-only pattern (`canEdit ? panel : IgnorePointer(child: panel)`).
 
 ### Future user actions (`#2993` E5b cont.)
 
@@ -422,6 +430,8 @@ The Deal Book ledger described in [§ Deal Book ledger content (`#2993` E6)](#de
 - `_DealBookTabContent` (`app/lib/features/game/screens/trade/trade_screen.dart`) — read-only two-panel ledger (Refs `#2993` E6) hosting both `_DealBookPanel` instances under a `LayoutBuilder` that picks `Row` vs `Column` based on `dealBookTwoPanelMinWidth`.
 - `_DealBookPanel` (`app/lib/features/game/screens/trade/trade_screen.dart`) — single ledger panel; renders panel title, optional empty-state copy, the Filled / Unfilled sections, and the always-mounted totals row.
 - `_DealBookFilledRow` / `_DealBookUnfilledRow` (`app/lib/features/game/screens/trade/trade_screen.dart`) — per-row widgets keyed by `dealBookFilledRowKey(side, index)` / `dealBookUnfilledRowKey(side, index)`.
+- `TradeMarketCounselStar` (`app/lib/features/game/screens/trade/trade_market_counsel_star.dart`) — per-row ★ affordance for top ≤3 trade counsel highlights (Refs `#4282`).
+- `CounselScreen` / `CounselTradeTabBody` (`app/lib/features/game/screens/counsel/`) — Trade Counsel destination (`GAME90001`); see [`counsel-panel.md`](counsel-panel.md).
 
 ---
 
@@ -447,6 +457,7 @@ Use cases for the current slice (E1+E2+E3+E4+E5a+E5b+E5c+E6+E7):
 | `Market tab — bid-type saturated (Refs #4170)` | Default story Game (cap `3`) with three pre-staged distinct-commodity bids so reviewers see `Bid goods: 3 of 3`, the neutral warning, and disabled fresh `Bid` chips on other commodities. |
 | `Market tab — bid-type cap 3 baseline (Refs #4170, #4186)` | Default story Game so `C == 3` and the indicator reads `Bid goods: 0 of 3` (embassy-free ladder). |
 | `Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)` | Story Game with `trade_fairs` unlocked so `C == 6` (embassy not required). |
+| `Market tab — trade counsel stars (Refs #4282)` | Story Game with `timber` stockpile `80` so live `rankTradeCounselRecommendationsForHuman` emits highlights; proves the Market **Counsel** header button and ≤3 per-row ★ stars mount on highlight commodities. |
 | `Deal Book tab — empty (Refs #2993 E7)` | Synthetic Game with `WorldMarketState.empty` (no `lastTurnActivity` and no carry-forwards). Mounted with `TradeScreen.initialTabIndex: 1` so the Deal Book tab is foregrounded on first frame. Proves the per-side empty-state copies (`dealBookBidsEmpty` / `dealBookOffersEmpty`) render together with the always-mounted `Total spent: 0` / `Total received: 0` rows. |
 | `Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)` | Synthetic Game with one first-right-tagged human buy and one favored-partner-tagged human buy of timber (`3 × 30.0` each), one human sale of iron (`4 × 80.0`), one favored-partner-tagged human sale of fabric (`7 × 120.0`), one human carry-forward bid (grain `qty 8 priority 2`), one human carry-forward offer (cast-iron `qty 4 priority 1`), and a foreign-only carry-forward (timber `qty 99` for `gp_aragon`) that must not surface in the human Deal Book. Proves both Filled and Unfilled subsections render together, the **First right** / **Favored partner** audit tags paint in `--muted`, and the totals row reads `Total spent: 180` (`3×30 + 3×30`) and `Total received: 1160` (`4×80 + 7×120`). |
 | `Deal Book tab — overseas profit ledger (Refs #4226)` | Synthetic Game with `lastTurnOverseasProfitCreditsByGpId[gp_human]` containing one tile-owner timber credit (`qty 5`, `£15`) and no filled deals. Proves the **Overseas profit** subsection and keyed profit rows render above the two-panel ledger. |
@@ -627,7 +638,7 @@ The Market tab's `#3093`-era read-only chrome (sectioned grouping, row icons, se
 - **Given** the `TradeScreen` is mounted **without** an explicit `initialTabIndex` argument, **then** the existing E4 default contract holds — `initialTabIndex` resolves to `0`, the Market tab body is foregrounded on first frame, and the Deal Book tab body is off-stage. This preserves backwards-compatibility for the production route.
 - **Given** the `TradeScreen` is mounted with `initialTabIndex: 1` and a `worldMarketState` whose `lastTurnActivity` is empty and whose carry-forward maps are empty, **then** the foregrounded Deal Book body contains the `tradeScreenDealBookBidsEmpty` and `tradeScreenDealBookOffersEmpty` widgets and the totals rows render `Total spent: 0` / `Total received: 0`.
 - **Given** the `TradeScreen` is mounted with `initialTabIndex: 1` and the *mixed fills + carry-forwards* `worldMarketState` (one first-right-tagged human buy + one favored-partner-tagged human buy of timber `3 × 30.0` each, one human sale of iron `4 × 80.0`, one favored-partner-tagged human sale of fabric `7 × 120.0`, one human carry-forward bid grain `qty 8 priority 2`, one human carry-forward offer cast-iron `qty 4 priority 1`, plus a foreign carry-forward `gp_aragon` timber `qty 99 priority 1`), **then** the Deal Book body contains exactly two `dealBookFilledRow(dealBookSideBids, *)` widgets, exactly two `dealBookFilledRow(dealBookSideOffers, *)` widgets, exactly one `dealBookUnfilledRow(dealBookSideBids, 0)` widget, exactly one `dealBookUnfilledRow(dealBookSideOffers, 0)` widget, the literal text `First right` appears exactly once on the foregrounded Deal Book body, the literal text `Favored partner` appears exactly twice (one favored-partner-tagged bid + one favored-partner-tagged sale), the literal text `FRR` does not appear anywhere on the foregrounded Deal Book body, the literal text `FTP` does not appear anywhere on the foregrounded Deal Book body, no widget rendering the foreign timber carry-forward (`timber — qty 99 (priority 1)`) is mounted, the bids totals row reads `Total spent: 180` (`3×30 + 3×30`), and the offers totals row reads `Total received: 1160` (`4×80 + 7×120`).
-- **Given** the Widgetbook `tradeScreenDirectories` are registered into the catalog, **then** the `Trade Screen` folder lists every documented use case in this order — `Scaffold (Market tab)`, `Scaffold (mobile)`, `Market tab — staged bid + offer (Refs #2993 E5b)`, `Market tab — cargo saturated (Refs #2993 E5c)`, `Market tab — sectioned grouping (Refs #3093)`, `Market tab — wide two-column (Refs #4227)`, `Market tab — narrow stacked rows (Refs #4227)`, `Market tab — first-right chip (Refs #4226)`, `Market tab — sellable clamp (Refs #3093)`, `Market tab — treasury bid cap (Refs #3093)`, `Market tab — bid budget saturated (Refs #4186)`, `Market tab — bid-type saturated (Refs #4170)`, `Market tab — bid-type cap 3 baseline (Refs #4170, #4186)`, `Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)`, `Deal Book tab — empty (Refs #2993 E7)`, `Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)`, `Deal Book tab — overseas profit ledger (Refs #4226)`, `Deal Book tab — mobile (stacked) (Refs #2993 E7)`. The order matches `SPEC/ui/trade-screen.md` § Widgetbook so reviewers and the catalog stay in lockstep.
+- **Given** the Widgetbook `tradeScreenDirectories` are registered into the catalog, **then** the `Trade Screen` folder lists every documented use case in this order — `Scaffold (Market tab)`, `Scaffold (mobile)`, `Market tab — staged bid + offer (Refs #2993 E5b)`, `Market tab — cargo saturated (Refs #2993 E5c)`, `Market tab — sectioned grouping (Refs #3093)`, `Market tab — wide two-column (Refs #4227)`, `Market tab — narrow stacked rows (Refs #4227)`, `Market tab — first-right chip (Refs #4226)`, `Market tab — sellable clamp (Refs #3093)`, `Market tab — treasury bid cap (Refs #3093)`, `Market tab — bid budget saturated (Refs #4186)`, `Market tab — bid-type saturated (Refs #4170)`, `Market tab — bid-type cap 3 baseline (Refs #4170, #4186)`, `Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)`, `Market tab — trade counsel stars (Refs #4282)`, `Deal Book tab — empty (Refs #2993 E7)`, `Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)`, `Deal Book tab — overseas profit ledger (Refs #4226)`, `Deal Book tab — mobile (stacked) (Refs #2993 E7)`. The order matches `SPEC/ui/trade-screen.md` § Widgetbook so reviewers and the catalog stay in lockstep.
 
 ### Market tab — first-right chip (`#4226` slice)
 
@@ -650,6 +661,13 @@ The Market tab's `#3093`-era read-only chrome (sectioned grouping, row icons, se
 - **Given** a `CtTabStrip` is constructed with `initialTabIndex: i` where `0 ≤ i < tabLabels.length`, **when** the strip is first mounted, **then** the inner `IndexedStack.index` resolves to `i` on the first frame and the corresponding tab label paints in `EditorialMonoclePalette.accentBright` (selected state) without any user input.
 - **Given** a `CtTabStrip` is constructed with `initialTabIndex` outside the bounds of `tabLabels`, **then** the constructor `assert` fails with the message `initialTabIndex out of bounds for the supplied tabLabels`. This is a programmer-error contract — production callers must clamp before passing.
 - **Given** a `CtTabStrip` is constructed without an explicit `initialTabIndex`, **then** the parameter resolves to `0` and the existing default-selection contract is preserved (no other `CtTabStrip` consumer has to opt in to keep its existing behavior).
+
+### Market tab — Trade Counsel entry (`#4282`)
+
+- **Given** the `TradeScreen` is mounted with a human player and `canMutateViaUi == true`, **when** the Market tab is foregrounded, **then** the widget tree contains exactly one widget keyed `trade_market_counsel_button`.
+- **Given** the same conditions, **when** the player taps the **Counsel** header button, **then** the shell emits `NavigateToRouteEvent(Routes.counsel, {game, humanPlayerId, counselTab: 'trade'})`.
+- **Given** `rankTradeCounselRecommendationsForHuman` returns at least one highlight recommendation for commodity `timber`, **when** the Market tab is foregrounded and `canMutateViaUi == true`, **then** the `tradeScreenMarketRow:timber` subtree contains a widget keyed `trade_market_counsel_star` and at most three distinct commodity rows mount a counsel star.
+- **Given** `canMutateViaUi == false`, **when** the Market tab is foregrounded, **then** no widget keyed `trade_market_counsel_button` or `trade_market_counsel_star` is mounted.
 
 ### Full screen (follow-up `#2993` E5b cont.)
 

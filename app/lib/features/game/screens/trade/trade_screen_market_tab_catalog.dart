@@ -12,6 +12,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../../../../widgets/ct_section_label.dart';
 import '../../widgets/production/commodity_ui_helpers.dart';
+import '../counsel/trade_counsel_l10n.dart';
+import 'trade_market_counsel_star.dart';
 import 'trade_market_staging_context.dart';
 import 'trade_screen_contract_market.dart';
 import 'trade_screen_market_row.dart';
@@ -181,6 +183,19 @@ extension MarketTabContentCatalog on MarketTabContent {
     final CommodityId commodityId = commodity.id;
     final bool showFirstRightChip =
         staging.firstRightCommodityIds.contains(commodityId);
+    final highlight = staging.tradeCounselHighlightsByCommodityId[commodityId];
+    final onOpenCounsel = staging.onOpenTradeCounsel;
+    TradeMarketCounselStar? counselStar;
+    if (highlight != null && onOpenCounsel != null) {
+      final brief = tradeCounselBriefForReason(l10n, highlight.briefReasonKey);
+      counselStar = TradeMarketCounselStar(
+        briefMessage: brief,
+        semanticLabel: l10n.tradeMarket_tradeCounselStarSemantic(brief),
+        onOpenCounsel: () => onOpenCounsel(
+          highlightRecommendationId: highlight.recommendationId,
+        ),
+      );
+    }
     final rowParams = (
       commodityId: commodityId,
       commodityDisplayName: commodityDisplayName(l10n, commodityId),
@@ -224,6 +239,7 @@ extension MarketTabContentCatalog on MarketTabContent {
         showFirstRightChip: showFirstRightChip,
         firstRightChipLabel: l10n.tradeMarket_firstRightChip,
         firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
+        counselStar: counselStar,
       );
     }
     return MarketCommodityRow(
@@ -245,6 +261,7 @@ extension MarketTabContentCatalog on MarketTabContent {
       showFirstRightChip: showFirstRightChip,
       firstRightChipLabel: l10n.tradeMarket_firstRightChip,
       firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
+      counselStar: counselStar,
     );
   }
 }
