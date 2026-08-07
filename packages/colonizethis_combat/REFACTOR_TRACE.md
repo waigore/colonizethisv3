@@ -417,3 +417,15 @@ Post-split physical lines (approx.): `battle_context.dart` **103**; `conflict_de
 
 Deferred to slices B–D on #4284: Quick Battle apply/outcome split, land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
 
+## Phase 4 — slice B (Refs #4284)
+
+Delivered in this slice:
+
+- Moved `applyQuickBattleResultToGame` to `quick_battle_apply.dart` (world mutation separate from round-loop resolve).
+- Moved round-limit terminal outcome to `resolveQuickBattleRoundLimitOutcome` in `quick_battle_resolver_outcome.dart`.
+- `quick_battle_resolver.dart` re-exports apply for stable imports; package barrel exports `quick_battle_apply.dart`.
+
+Post-split physical lines (approx.): `quick_battle_resolver.dart` **~210** (was 309); `quick_battle_apply.dart` **~75**; `quick_battle_resolver_outcome.dart` **~115** (was 79).
+
+Deferred to slices C–D on #4284: land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
+
