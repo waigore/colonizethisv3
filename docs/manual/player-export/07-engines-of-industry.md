@@ -28,6 +28,8 @@ Extraction fills your warehouse only with raw plenty. **Production** turns timbe
 5. **Open Development** on a feedstock card navigates to **Development screen** — it does not auto-assign improve work.
 6. Empty counsel: “No pressing industry advice this turn.” Agree actions are hidden while turn resolution blocks edits, same as Production.
 
+The same **Counsel** screen (**Counsel screen**) also hosts a **Trade** tab when opened from **Trade screen** Market — see Chapter 8 for Apply/Agree on the AI-equivalent trade book.
+
 ### Recipes you can run (current product)
 
 | Output | Typical inputs | Labour / unit | Notes |
