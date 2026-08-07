@@ -1480,7 +1480,7 @@ rules:
 
   - rule_id: repo.orders_dedup_development_panel
     group: architecture
-    title: Development panel helpers must reuse shared idle/ordering/affordance modules (Refs #4211)
+    title: Development panel helpers must reuse shared idle/ordering/affordance modules (Refs #4211, #4281)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_orders_dedup_development_panel.dart
