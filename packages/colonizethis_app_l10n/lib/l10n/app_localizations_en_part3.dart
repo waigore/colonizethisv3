@@ -627,6 +627,32 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_militaryFortStatus(String status) {
+    return 'Fort: $status';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildFortTooltip => 'Build fort';
+
+  @override
+  String provinceOverlay_tileBuildFortTooltipWithCost(String costs) {
+    return 'Build fort ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildFortDisabledNoEngineerTooltip =>
+      'No Engineer available to build fort';
+
+  @override
+  String get provinceOverlay_tileBuildFortDisabledTooltip =>
+      'No Engineer can assign fort work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
+
+  @override
   String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
 
   @override

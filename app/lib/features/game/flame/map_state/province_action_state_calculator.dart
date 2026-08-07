@@ -28,6 +28,13 @@ typedef ProvinceEngineerActionState = ({
   bool hasEngineerUnits,
 });
 
+/// Build-fort inline action state shape.
+typedef ProvinceBuildFortActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasEngineerUnits,
+});
+
 /// Purchase-land inline action state shape.
 typedef ProvinceMerchantActionState = ({
   bool showIcon,
@@ -41,6 +48,7 @@ typedef ProvinceActionStates = ({
   ProvinceExplorerActionState prospect,
   ProvinceBuilderActionState buildImprovement,
   ProvinceEngineerActionState buildRoad,
+  ProvinceBuildFortActionState buildFort,
   ProvinceMerchantActionState purchaseLand,
 });
 
@@ -117,6 +125,15 @@ class ProvinceActionStateCalculator {
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
           );
+    final buildFort = selectedTileKey == null
+        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogic.provinceBuildFortActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          );
     final purchaseLand = selectedTileKey == null
         ? GameMapAreaStateLogic.kHiddenMerchantInlineActionState
         : GameMapAreaStateLogic.provincePurchaseLandActionState(
@@ -131,6 +148,7 @@ class ProvinceActionStateCalculator {
       prospect: prospect,
       buildImprovement: buildImprovement,
       buildRoad: buildRoad,
+      buildFort: buildFort,
       purchaseLand: purchaseLand,
     );
   }

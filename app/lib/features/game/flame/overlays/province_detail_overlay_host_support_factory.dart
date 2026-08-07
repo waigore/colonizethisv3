@@ -52,6 +52,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final prospectState = actionStates.prospect;
   final buildImprovementState = actionStates.buildImprovement;
   final buildRoadState = actionStates.buildRoad;
+  final buildFortState = actionStates.buildFort;
   final purchaseLandState = actionStates.purchaseLand;
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
@@ -66,6 +67,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     prospectEnabled: prospectState.enabled,
     buildImprovementEnabled: buildImprovementState.enabled,
     buildRoadEnabled: buildRoadState.enabled,
+    buildFortEnabled: buildFortState.enabled,
     purchaseLandEnabled: purchaseLandState.enabled,
     bus: bus,
   );
@@ -140,6 +142,9 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     showBuildRoadActionIcon: canMutateViaUi && buildRoadState.showIcon,
     buildRoadActionEnabled: canMutateViaUi && buildRoadState.enabled,
     buildRoadActionHasEngineerUnits: buildRoadState.hasEngineerUnits,
+    showBuildFortActionIcon: canMutateViaUi && buildFortState.showIcon,
+    buildFortActionEnabled: canMutateViaUi && buildFortState.enabled,
+    buildFortActionHasEngineerUnits: buildFortState.hasEngineerUnits,
     showPurchaseLandActionIcon: canMutateViaUi && purchaseLandState.showIcon,
     purchaseLandActionEnabled: canMutateViaUi && purchaseLandState.enabled,
     purchaseLandActionHasMerchantUnits: purchaseLandState.hasMerchantUnits,
@@ -148,6 +153,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onProspectWithExplorerTap: shortcuts.onProspectWithExplorerTap,
     onBuildImprovementTap: shortcuts.onBuildImprovementTap,
     onBuildRoadTap: shortcuts.onBuildRoadTap,
+    onBuildFortTap: shortcuts.onBuildFortTap,
     onPurchaseLandTap: shortcuts.onPurchaseLandTap,
   );
 }

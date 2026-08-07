@@ -104,6 +104,8 @@ TownMarkerView _townMarkerFromJson(Map<String, dynamic> json) => TownMarkerView(
   townIconStyle: json['townIconStyle'] as String? ?? kTownIconStyleEuro,
   portIconX: json['portIconX'] as int?,
   portIconY: json['portIconY'] as int?,
+  worldFortLevel: json['worldFortLevel'] as int? ?? 0,
+  mapVisibleFortLevel: json['mapVisibleFortLevel'] as int?,
 );
 
 WarpMarkerView _warpMarkerFromJson(Map<String, dynamic> json) => WarpMarkerView(

@@ -75,6 +75,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
+  required bool buildFortEnabled,
   required bool purchaseLandEnabled,
   required AppEventBus bus,
 }) =>
@@ -92,6 +93,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
       prospectEnabled: prospectEnabled,
       buildImprovementEnabled: buildImprovementEnabled,
       buildRoadEnabled: buildRoadEnabled,
+      buildFortEnabled: buildFortEnabled,
       purchaseLandEnabled: purchaseLandEnabled,
       bus: bus,
     );
@@ -134,6 +136,7 @@ void main() {
         prospectEnabled: true,
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: true,
         bus: bus,
       );
@@ -153,6 +156,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -172,6 +176,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -188,6 +193,7 @@ void main() {
         prospectEnabled: true,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -204,6 +210,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -220,6 +227,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: true,
+        buildFortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -236,6 +244,7 @@ void main() {
         prospectEnabled: false,
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
+        buildFortEnabled: false,
         purchaseLandEnabled: true,
         bus: bus,
       );

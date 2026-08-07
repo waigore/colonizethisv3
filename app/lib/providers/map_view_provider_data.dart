@@ -8,6 +8,7 @@ import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
 import '../features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
+import '../features/game/flame/map_state/map_view_fort_visibility.dart';
 import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider_current_game.dart';
@@ -79,7 +80,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       );
     }
 
-    return buildInitGameMapViewData(
+    final base = buildInitGameMapViewData(
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
@@ -92,6 +93,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           extractionMaps.effectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile: extractionMaps.blockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
+    );
+    return applyMapFortVisibility(
+      data: base,
+      game: game,
+      view: view,
+      humanPlayerId: mapPlayerId,
+      revealAllForts: useFullVisibility,
     );
   });
 });

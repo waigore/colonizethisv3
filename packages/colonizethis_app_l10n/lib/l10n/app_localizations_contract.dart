@@ -1811,6 +1811,24 @@ abstract class AppLocalizations {
   /// Disabled build-road shortcut when materials/treasury shortfall is primary reason.
   String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason);
 
+  /// Military section fort posture line (Refs #4280).
+  String provinceOverlay_militaryFortStatus(String status);
+
+  /// Tooltip for enabled build-fort shortcut on town tile.
+  String get provinceOverlay_tileBuildFortTooltip;
+
+  /// Enabled build-fort shortcut tooltip with material cost hint.
+  String provinceOverlay_tileBuildFortTooltipWithCost(String costs);
+
+  /// Disabled build-fort shortcut when no Engineer units exist.
+  String get provinceOverlay_tileBuildFortDisabledNoEngineerTooltip;
+
+  /// Disabled build-fort shortcut when no valid Engineer assignment exists.
+  String get provinceOverlay_tileBuildFortDisabledTooltip;
+
+  /// Disabled build-fort shortcut when materials or treasury are short.
+  String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason);
+
   /// Tooltip and semantics label for province tile purchase-land shortcut action.
   String get provinceOverlay_tilePurchaseLandTooltip;
 

@@ -5,6 +5,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import 'game_map_area_province_action_states_build_improvement.dart';
 import 'game_map_area_province_action_states_build_road.dart';
+import 'game_map_area_province_action_states_build_fort.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'game_map_area_province_action_states_purchase_land.dart';
@@ -136,6 +137,27 @@ class GameMapAreaProvinceActionStates {
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
       GameMapAreaProvinceActionStatesBuildRoad.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildFort({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesBuildFort.compute(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

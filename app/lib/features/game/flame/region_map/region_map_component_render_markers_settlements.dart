@@ -55,6 +55,16 @@ extension CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
         ),
         townDevelopmentLevel: town.townDevelopmentLevel,
       );
+      final fortLevel = town.mapVisibleFortLevel;
+      if (fortLevel != null) {
+        _paintFortIconAt(
+          canvas,
+          cell: cell,
+          cx: town.x,
+          cy: town.y,
+          fortLevel: fortLevel,
+        );
+      }
     }
 
     for (final town in region.townMarkers) {
@@ -114,6 +124,46 @@ extension CtRegionMapRenderMarkersSettlementsTowns on CtRegionMapComponent {
     var paint = Paint();
     if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
         regionMapComponentVisibilityForTerrain(this, cell) == TileVisibility.fogged) {
+      paint.color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity);
+    }
+    canvas.drawImageRect(uiImage, srcRect, dstRect, paint);
+  }
+
+  void _paintFortIconAt(
+    Canvas canvas, {
+    required CellViewData cell,
+    required int cx,
+    required int cy,
+    required int fortLevel,
+  }) {
+    final icon = TownIconCache.fortIconId(fortLevel);
+    final uiImage = townIconCache.getIcon(icon);
+    if (uiImage == null) return;
+
+    final centerX =
+        cx * cellSize + cellSize / 2 + TownIconCache.fortIconOffsetDx;
+    final centerY =
+        cy * cellSize + cellSize / 2 + TownIconCache.fortIconOffsetDy;
+    final iconSize = TownIconCache.fortIconSize;
+    final halfIcon = iconSize / 2;
+
+    final srcRect = Rect.fromLTWH(
+      0,
+      0,
+      uiImage.width.toDouble(),
+      uiImage.height.toDouble(),
+    );
+    final dstRect = Rect.fromLTWH(
+      centerX - halfIcon,
+      centerY - halfIcon,
+      iconSize,
+      iconSize,
+    );
+
+    var paint = Paint();
+    if (visibilityMode == CtMapVisibilityMode.playerConstrained &&
+        regionMapComponentVisibilityForTerrain(this, cell) ==
+            TileVisibility.fogged) {
       paint.color = Color.fromRGBO(0, 0, 0, RegionMapPalette.fogOverlayOpacity);
     }
     canvas.drawImageRect(uiImage, srcRect, dstRect, paint);
