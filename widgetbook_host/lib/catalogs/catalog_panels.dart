@@ -157,6 +157,24 @@ Widget _counselIndustryStory(
   return narrowViewport ? mobileViewport(context, child) : child;
 }
 
+Widget _counselTradeStory(
+  BuildContext context, {
+  required Game game,
+  String? highlightRecommendationId,
+  bool narrowViewport = false,
+}) {
+  final screen = CounselScreen(
+    game: game,
+    humanPlayerId: game.players.first.id,
+    highlightRecommendationId: highlightRecommendationId,
+    initialTab: CounselTab.trade,
+  );
+  final child = ProviderScope(
+    child: widgetbookEditorialMonocleApp(child: screen),
+  );
+  return narrowViewport ? mobileViewport(context, child) : child;
+}
+
 /// Counsel Panel stories. SPEC/ui/counsel-panel.md.
 List<WidgetbookNode> get counselPanelDirectories => [
   WidgetbookFolder(
@@ -187,6 +205,36 @@ List<WidgetbookNode> get counselPanelDirectories => [
       WidgetbookUseCase(
         name: 'Counsel Industry (narrow 360)',
         builder: (context) => _counselIndustryStory(
+          context,
+          game: demoGameForOverlay,
+          narrowViewport: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Trade (default)',
+        builder: (context) => _counselTradeStory(
+          context,
+          game: demoGameForOverlay,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Trade (highlight)',
+        builder: (context) => _counselTradeStory(
+          context,
+          game: demoGameForOverlay,
+          highlightRecommendationId: 'offer:timber',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Trade (empty)',
+        builder: (context) {
+          final game = _counselEmptyAdviceGame();
+          return _counselTradeStory(context, game: game);
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Trade (narrow 360)',
+        builder: (context) => _counselTradeStory(
           context,
           game: demoGameForOverlay,
           narrowViewport: true,

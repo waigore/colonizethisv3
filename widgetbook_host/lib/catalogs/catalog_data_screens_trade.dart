@@ -662,6 +662,12 @@ List<WidgetbookNode> get tradeScreenDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Market tab — trade counsel stars (Refs #4282)',
+        builder: (context) => _tradeScreenDefaultStory(
+          stockpile: const <CommodityId, int>{'timber': 80},
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Deal Book tab — empty (Refs #2993 E7)',
         builder: (context) => _tradeScreenDealBookProviderScope(
           worldMarketState: _tradeScreenDealBookEmptyState(),

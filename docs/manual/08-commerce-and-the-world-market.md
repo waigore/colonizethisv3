@@ -38,6 +38,15 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 4. Production (`GAME20001`) shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
 5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, the turn event feed (tap a market-summary or overseas-profit line to open Deal Book), turn news, and market activity.
 
+### Trade Counsel (`GAME90001` Trade tab)
+
+1. On the Market tab, tap **Counsel** in the header (or a ★ on a highlighted commodity row) to open `GAME90001` **Counsel** on the **Trade** tab.
+2. The vizier lists the **full** trade order book the AI treasury planner would stage for your court this turn — surplus offers, deficit bids, and (when treasury is affluent enough) speculative inventory bids — using your stockpile, production plan, treasury, cargo, and pending non-trade costs. Crisis-only AI recovery scripts are **not** included.
+3. Top ≤3 lines are starred on both Counsel and Market; each line shows Bid or Offer, commodity name, quantity, and a short reason.
+4. **Apply recommended market book** replaces **all** your staged trade orders with that snapshot.
+5. **Agree** on one line stages only that commodity (and clears any opposite-direction order on the same commodity).
+6. Empty counsel: “No pressing market advice this turn.” Apply/Agree are hidden while turn resolution blocks edits, same as Industry Counsel.
+
 ## Counsel
 
 **Counsel.** Hark, my liege: a bid without cargo is a promise the fleet cannot keep — leave holds for extraction first, then for the market.
@@ -47,6 +56,8 @@ If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s aut
 **Tip.** **Bid budget: R of B** shows how much treasury you can still commit to bids this turn after other staged spending. When the treasury bid limit is reached, free gold or trim other orders before bidding more; tap the **?** beside the budget line for a short explanation.
 
 **Tip.** A per-row priority dropdown is not yet on the Market tab; staged orders use the default priority until that control ships.
+
+**Tip.** Trade Counsel on `GAME90001` mirrors what rival GPs’ treasury planners would do in your shoes — use it to draft a full book, then trim or override rows on Market before you end the turn.
 
 **Warning.** Selling the last timber you still assigned to lumber on `GAME20001` invites rejected offers or a silent industry stall. Watch sellable headroom.
 
@@ -65,7 +76,8 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 - [ ] Explains global market, tradeable vs riches, TradeOrder bid/offer, Phase 13 timing.
 - [ ] Documents mutual exclusion, bid-type caps (3/6), cargo and treasury caps, carry-forward.
 - [x] Covers first right of refusal / overseas profit / FTP at player level (Market chip, Deal Book tags + overseas-profit ledger, feed deep-link).
-- [ ] Documents operable `GAME60001` Trade (left-rail / route entry, Market + Deal Book, caps) without a draft-screen marker; notes any deferred control separately.
+- [x] Documents operable `GAME60001` Trade (left-rail / route entry, Market + Deal Book, caps) without a draft-screen marker; notes any deferred control separately.
+- [x] Documents `GAME90001` Trade Counsel: Market entry, Apply full book, per-line Agree, empty state.
 - [ ] Notes Production sellable headroom linkage.
 - [ ] Sources match the chapter coverage map.
 
@@ -79,6 +91,8 @@ AI Great Powers bias the **trade** strategic goal when treasury is low and use a
 - `SPEC/program/turn-resolution-phases.md`
 - `SPEC/program/world-market-resolution.md`
 - `SPEC/ui/trade-screen.md`
+- `SPEC/ui/counsel-panel.md`
+- `SPEC/program/trade-counsel-ranking.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/treasury-planner.md`

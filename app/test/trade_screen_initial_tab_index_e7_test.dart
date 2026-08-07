@@ -169,6 +169,7 @@ void main() {
         'Market tab — bid-type saturated (Refs #4170)',
         'Market tab — bid-type cap 3 baseline (Refs #4170, #4186)',
         'Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)',
+        'Market tab — trade counsel stars (Refs #4282)',
         'Deal Book tab — empty (Refs #2993 E7)',
         'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
         'Deal Book tab — overseas profit ledger (Refs #4226)',

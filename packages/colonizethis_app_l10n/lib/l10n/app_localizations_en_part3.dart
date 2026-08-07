@@ -165,6 +165,52 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Cannot train that worker tier right now — check stockpile and queued orders.';
 
   @override
+  String get tradeCounsel_tabTrade => 'Trade';
+
+  @override
+  String get tradeCounsel_empty => 'No pressing market advice this turn.';
+
+  @override
+  String get tradeCounsel_action_applyBook => 'Apply recommended market book';
+
+  @override
+  String get tradeCounsel_action_agree => 'Agree';
+
+  @override
+  String get tradeCounsel_applyFailed =>
+      'Cannot apply that market advice right now — check caps and treasury.';
+
+  @override
+  String tradeCounsel_title_bid(String commodity, int quantity) {
+    return 'Bid $commodity × $quantity';
+  }
+
+  @override
+  String tradeCounsel_title_offer(String commodity, int quantity) {
+    return 'Offer $commodity × $quantity';
+  }
+
+  @override
+  String get tradeCounsel_reason_surplusAboveReserve_brief =>
+      'Sell surplus above your reserve — the planner would offer this stock.';
+
+  @override
+  String get tradeCounsel_reason_industryShortage_brief =>
+      'Buy below production cost — industry inputs are short.';
+
+  @override
+  String get tradeCounsel_reason_speculativeInventory_brief =>
+      'Affluent treasury — build stock toward the planner target.';
+
+  @override
+  String get tradeMarket_counsel => 'Counsel';
+
+  @override
+  String tradeMarket_tradeCounselStarSemantic(String brief) {
+    return 'Trade counsel: $brief';
+  }
+
+  @override
   String get tradeMarket_firstRightChip => 'First right';
 
   @override
@@ -940,58 +986,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String regionMinimap_zoomSemanticsValue(int pct) {
     return '$pct percent';
-  }
-
-  @override
-  String province_economic_resourceRow(
-    String terrain,
-    String resourceName,
-    String detail,
-  ) {
-    return '$terrain/$resourceName $detail';
-  }
-
-  @override
-  String get diplomacy_detail_historyTitle => 'Diplomatic history';
-
-  @override
-  String get diplomacy_detail_noEvents =>
-      'No recorded events with this faction.';
-
-  @override
-  String diplomacy_detail_yearTurn(int year, int turn) {
-    return '$year (Turn $turn)';
-  }
-
-  @override
-  String get diplomacy_detail_dossierTitle => 'Dossier';
-
-  @override
-  String get diplomacy_detail_currentRelation => 'Current relation';
-
-  @override
-  String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
-
-  @override
-  String diplomacy_detail_turnEvidence(int turn) {
-    return 'Turn $turn:';
-  }
-
-  @override
-  String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
-
-  @override
-  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
-
-  @override
-  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
-
-  @override
-  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
-
-  @override
-  String diplomacy_panel_powerScore(int score) {
-    return 'Power: $score';
   }
 
 }

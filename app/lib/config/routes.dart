@@ -133,6 +133,7 @@ class Routes {
             humanPlayerId: humanPlayerId,
             highlightRecommendationId:
                 args['highlightRecommendationId'] as String?,
+            initialTab: counselTabFromRouteArg(args['counselTab']),
           ),
         );
       default:

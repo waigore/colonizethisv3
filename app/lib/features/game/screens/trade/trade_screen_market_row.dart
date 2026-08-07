@@ -45,6 +45,7 @@ class MarketCommodityRow extends StatelessWidget {
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
+    this.counselStar,
   });
 
   final CommodityId commodityId;
@@ -80,6 +81,7 @@ class MarketCommodityRow extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final Widget? counselStar;
 
   bool get _hasStagedOrder => stagedOrder != null;
 
@@ -129,6 +131,7 @@ class MarketCommodityRow extends StatelessWidget {
           showFirstRightChip: showFirstRightChip,
           firstRightChipLabel: firstRightChipLabel,
           firstRightTooltip: firstRightTooltip,
+          counselStar: counselStar,
         ),
         const SizedBox(height: 2),
         Text(volumeText, style: volumeStyle),
@@ -173,6 +176,7 @@ class MarketCommodityRowCompact extends StatelessWidget {
     this.showFirstRightChip = false,
     this.firstRightChipLabel = '',
     this.firstRightTooltip = '',
+    this.counselStar,
   });
 
   final CommodityId commodityId;
@@ -193,6 +197,7 @@ class MarketCommodityRowCompact extends StatelessWidget {
   final bool showFirstRightChip;
   final String firstRightChipLabel;
   final String firstRightTooltip;
+  final Widget? counselStar;
 
   bool get _hasStagedOrder => stagedOrder != null;
 
@@ -233,6 +238,7 @@ class MarketCommodityRowCompact extends StatelessWidget {
           showFirstRightChip: showFirstRightChip,
           firstRightChipLabel: firstRightChipLabel,
           firstRightTooltip: firstRightTooltip,
+          counselStar: counselStar,
         ),
         Padding(
           padding: const EdgeInsets.only(top: 2),
