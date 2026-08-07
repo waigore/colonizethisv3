@@ -12,6 +12,7 @@ import 'package:colonizethis_combat/src/logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'quick_battle_emplaced_guns.dart';
+import 'quick_battle_resolver_engine.dart';
 
 /// Builds and logs the final [QuickBattleResult] from the battle-invariant
 /// state captured once per resolution.
@@ -76,4 +77,39 @@ class QuickBattleFinisher {
       emplacedGunOutcomes: outcomes,
     );
   }
+}
+
+/// Resolves Quick Battle when [input.maxRounds] elapses without elimination.
+QuickBattleResult resolveQuickBattleRoundLimitOutcome(
+  QuickBattleFinisher finisher, {
+  required List<QuickBattleGroup> attGroups,
+  required List<QuickBattleGroup> defGroups,
+}) {
+  final input = finisher.input;
+  final finalAttStr =
+      effectiveStrength(attGroups, input.attackerDeployment.laneTerrain) *
+      input.attackerLeaderMultiplier;
+  final finalDefStr =
+      effectiveStrength(defGroups, input.defenderDeployment.laneTerrain) *
+          input.defenderLeaderMultiplier +
+      (finisher.useVirtualEmplaced
+          ? aliveGunStrengthSum(finisher.mutableGuns)
+          : 0.0);
+
+  if (finalAttStr > finalDefStr * 1.2) {
+    return finisher.finish(
+      winner: QuickBattleWinner.attacker,
+      provinceFlips: true,
+    );
+  }
+  if (finalDefStr > finalAttStr * 1.2) {
+    return finisher.finish(
+      winner: QuickBattleWinner.defender,
+      provinceFlips: false,
+    );
+  }
+  return finisher.finish(
+    winner: QuickBattleWinner.mutualExhaustion,
+    provinceFlips: false,
+  );
 }

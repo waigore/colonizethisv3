@@ -405,3 +405,49 @@ Delivered in this slice:
 
 Final ceilings: per-file **220** phys; package LOC **7250** (shrink-only ratchet; baseline was 7,307 @ `396fa936`).
 
+## Phase 4 — slice A (Refs #4284)
+
+Delivered in this slice:
+
+- Extracted `BattleContext` and `AttackingSide` from `conflict_detection.dart` into `battle_context.dart`.
+- Package barrel exports `battle_context.dart`; `conflict_detection.dart` re-exports types for stable deep-import paths.
+- `detectConflicts` remains in `conflict_detection.dart` (detection-only module).
+
+Post-split physical lines (approx.): `battle_context.dart` **103**; `conflict_detection.dart` **207** (was 310 combined).
+
+Deferred to slices B–D on #4284: Quick Battle apply/outcome split, land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
+
+## Phase 4 — slice B (Refs #4284)
+
+Delivered in this slice:
+
+- Moved `applyQuickBattleResultToGame` to `quick_battle_apply.dart` (world mutation separate from round-loop resolve).
+- Moved round-limit terminal outcome to `resolveQuickBattleRoundLimitOutcome` in `quick_battle_resolver_outcome.dart`.
+- `quick_battle_resolver.dart` re-exports apply for stable imports; package barrel exports `quick_battle_apply.dart`.
+
+Post-split physical lines (approx.): `quick_battle_resolver.dart` **~210** (was 309); `quick_battle_apply.dart` **~75**; `quick_battle_resolver_outcome.dart` **~115** (was 79).
+
+Deferred to slices C–D on #4284: land `resolveBattleContext` seams, `repo.combat_lib_file_size` CI ratchet.
+
+## Phase 4 — slice C (Refs #4284)
+
+Delivered in this slice:
+
+- Extracted multi-attacker engagement loop from `resolveBattleContext` into `combat_resolver_multi_attacker_loop.dart` (`runLandBattleMultiAttackerLoop`).
+- `combat_resolver.dart` is now a short orchestrator: setup → loop → post-battle → resolve → log.
+
+Post-split physical lines (approx.): `combat_resolver.dart` **~85** (was 221); `combat_resolver_multi_attacker_loop.dart` **~175**.
+
+Deferred to slice D on #4284: `repo.combat_lib_file_size` CI ratchet.
+
+## Phase 4 — slice D (Refs #4284)
+
+Delivered in this slice:
+
+- Added `tool/check_combat_lib_file_size.dart` (per-file ≤280 phys; empty shrink-only grandfather list).
+- Registered `repo.combat_lib_file_size` in `tool/ct_repo_lint_manifest.yaml`.
+- Unit test: `test/check_combat_lib_file_size_test.dart`.
+- Documented rule in `SPEC/program/repo-lint.md`.
+
+Post-split max lib file: `quick_battle_resolver_engine.dart` **≈268** phys (ceiling **280**).
+
