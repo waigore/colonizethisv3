@@ -8,7 +8,7 @@
 |---------|---------|------|
 | Need analysis, bid emission, DTOs | `colonizethis_economy` | `lib/src/economy/trade_counsel/` |
 | `emitTradeCounselBook`, `rankTradeCounselRecommendations` | `colonizethis_orders` | `lib/src/orders/trade_counsel_*.dart` |
-| App contract export | `colonizethis_logic` | `lib/trade_counsel_api.dart` |
+| App contract export | `colonizethis_logic` | `lib/industry_counsel_api.dart` (Trade Counsel section) |
 
 ## Rules
 

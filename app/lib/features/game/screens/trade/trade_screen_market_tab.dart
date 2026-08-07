@@ -48,7 +48,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/trade_counsel_api.dart'
+import 'package:colonizethis_logic/industry_counsel_api.dart'
     show
         rankTradeCounselRecommendationsForHuman,
         tradeCounselHighlightsByCommodityId;
