@@ -24,6 +24,7 @@ export 'src/economy/industry_counsel/industry_counsel_constants.dart';
 export 'src/economy/industry_counsel/industry_counsel_growth_stage.dart';
 export 'src/economy/industry_counsel/industry_counsel_labour.dart';
 export 'src/economy/industry_counsel/industry_counsel_scoring.dart';
+export 'src/economy/industry_counsel/industry_counsel_types.dart';
 export 'src/economy/trade_counsel/trade_counsel_bid_emission.dart';
 export 'src/economy/trade_counsel/trade_counsel_constants.dart';
 export 'src/economy/trade_counsel/trade_counsel_market_pricing.dart';

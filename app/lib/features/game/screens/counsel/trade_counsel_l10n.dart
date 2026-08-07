@@ -3,6 +3,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../../widgets/production/commodity_ui_helpers.dart';
+
 String tradeCounselBriefForReason(
   AppLocalizations l10n,
   TradeCounselReasonKey key,
@@ -33,7 +35,5 @@ String commodityDisplayNameForTradeCounsel(
   AppLocalizations l10n,
   CommodityId commodityId,
 ) {
-  final commodity = CommodityCatalog.byId[commodityId];
-  if (commodity == null) return commodityId;
-  return commodity.displayName;
+  return commodityDisplayName(l10n, commodityId);
 }
