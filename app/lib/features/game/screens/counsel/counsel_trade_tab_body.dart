@@ -128,8 +128,54 @@ class CounselTradeRecommendationCard extends StatelessWidget {
     );
     final title = tradeCounselTitleForRecommendation(l10n, recommendation);
     final theme = Theme.of(context);
-    final onAgree = callbacks.onAgreeLine;
+    final action = _buildPrimaryAction(l10n);
 
+    return _CounselTradeCardShell(
+      highlighted: highlighted,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CounselTradeCardTitleRow(
+            title: title,
+            highlighted: highlighted,
+            showStar: recommendation.isHighlight,
+            titleStyle: theme.textTheme.titleSmall,
+          ),
+          CtGap.m,
+          Text(brief, style: theme.textTheme.bodyMedium),
+          if (action != null) ...[
+            CtGap.m,
+            action,
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget? _buildPrimaryAction(AppLocalizations l10n) {
+    final onAgree = callbacks.onAgreeLine;
+    if (!canEdit || onAgree == null) return null;
+    return CtNinePatchButton(
+      key: ValueKey<String>(
+        'counsel_agree_trade_${recommendation.recommendationId}',
+      ),
+      onPressed: () => onAgree(recommendation.order),
+      child: Text(l10n.tradeCounsel_action_agree),
+    );
+  }
+}
+
+class _CounselTradeCardShell extends StatelessWidget {
+  const _CounselTradeCardShell({
+    required this.highlighted,
+    required this.child,
+  });
+
+  final bool highlighted;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
     return Material(
       color: highlighted
           ? EditorialMonoclePalette.surfaceLite.withValues(alpha: 0.9)
@@ -143,47 +189,44 @@ class CounselTradeRecommendationCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: highlighted
-                          ? EditorialMonoclePalette.accentBright
-                          : EditorialMonoclePalette.accentDim,
-                    ),
-                  ),
-                ),
-                if (recommendation.isHighlight)
-                  Text(
-                    '★',
-                    style: TextStyle(
-                      color: EditorialMonoclePalette.accentBright,
-                    ),
-                  ),
-              ],
+      child: Padding(padding: const EdgeInsets.all(12), child: child),
+    );
+  }
+}
+
+class _CounselTradeCardTitleRow extends StatelessWidget {
+  const _CounselTradeCardTitleRow({
+    required this.title,
+    required this.highlighted,
+    required this.showStar,
+    required this.titleStyle,
+  });
+
+  final String title;
+  final bool highlighted;
+  final bool showStar;
+  final TextStyle? titleStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: titleStyle?.copyWith(
+              color: highlighted
+                  ? EditorialMonoclePalette.accentBright
+                  : EditorialMonoclePalette.accentDim,
             ),
-            CtGap.m,
-            Text(brief, style: theme.textTheme.bodyMedium),
-            if (canEdit && onAgree != null) ...[
-              CtGap.m,
-              CtNinePatchButton(
-                key: ValueKey<String>(
-                  'counsel_agree_trade_${recommendation.recommendationId}',
-                ),
-                onPressed: () => onAgree(recommendation.order),
-                child: Text(l10n.tradeCounsel_action_agree),
-              ),
-            ],
-          ],
+          ),
         ),
-      ),
+        if (showStar)
+          Text(
+            '★',
+            style: TextStyle(color: EditorialMonoclePalette.accentBright),
+          ),
+      ],
     );
   }
 }
