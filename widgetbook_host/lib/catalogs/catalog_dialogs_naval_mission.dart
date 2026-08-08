@@ -216,7 +216,32 @@ List<WidgetbookNode> get navalMissionDialogDirectories => [
                   );
                 },
                 // ignore: avoid_hardcoded_strings_in_widgets
-                child: const Text('Open Naval Mission Target'),
+                child: const Text('Open Naval Mission Target (Blockade)'),
+              );
+            },
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Beachhead — coastal target caption',
+        builder: (context) {
+          final fixture = _navalMissionTargetStoryFixture();
+          return _moveDialogStoryFrame(
+            open: (innerContext) {
+              return ElevatedButton(
+                onPressed: () {
+                  showDialog<void>(
+                    context: innerContext,
+                    builder: (_) => NavalMissionTargetDialog(
+                      game: fixture.game,
+                      mission: FleetMission.beachhead,
+                      fleet: fixture.fleet,
+                      targetProvinceIds: fixture.targetProvinceIds,
+                    ),
+                  );
+                },
+                // ignore: avoid_hardcoded_strings_in_widgets
+                child: const Text('Open Naval Mission Target (Beachhead)'),
               );
             },
           );

@@ -24,6 +24,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 +--------------------------------------------------+
 | CtDialogShell                                    |
 | | Select target — <mission label>                | |
+| | <mission caption>                              | |  Blockade / Beachhead only
 | |  ( ) Enemy Province A                          | |
 | |  ( ) Enemy Province B                          | |
 | |                    [ Cancel ]    [ Confirm ]   | |
@@ -31,6 +32,7 @@ Uses [`MoveUnitsDialogState`](components/move-units-dialog-base.md) scaffold (`C
 ```
 
 - Title: `naval_mission_selectTargetTitle(missionLabel)`.
+- **Mission caption** (Refs #4295): muted line under the title from `naval_mission_targetCaption_blockade` or `naval_mission_targetCaption_beachhead`; omitted for other missions.
 - Empty list: `naval_mission_noTargetsAvailable`; Confirm disabled.
 - Row label: province `displayName` fallback to id.
 
@@ -70,7 +72,8 @@ Folder `Naval Mission Target Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — two war targets | Blockade mission; two selectable province rows; Confirm gated on selection. |
+| Default — blockade target | Blockade mission; `naval_mission_targetCaption_blockade`; Confirm gated on selection (Refs #4295). |
+| Beachhead — coastal target caption | Beachhead mission; `naval_mission_targetCaption_beachhead`; Confirm gated on selection (Refs #4295). |
 
 ---
 
@@ -79,3 +82,5 @@ Folder `Naval Mission Target Dialog`:
 - **Given** `targetProvinceIds` contains two legal provinces, **when** the dialog opens, **then** the UI layer renders two `MoveDialogDestinationRow` entries and disables Confirm until one is selected.
 - **Given** the user selects a province and taps Confirm, **when** the dialog closes, **then** `Navigator` returns that province’s full prefixed id string.
 - **Given** `targetProvinceIds` is empty, **when** the dialog opens, **then** the UI layer shows `naval_mission_noTargetsAvailable` and Confirm is disabled.
+- **Given** the player opens the dialog for Beachhead with at least one legal target, **when** the dialog renders, **then** the UI layer shows `naval_mission_targetCaption_beachhead` under the title (Refs #4295).
+- **Given** the player opens the dialog for Blockade with at least one legal target, **when** the dialog renders, **then** the UI layer shows `naval_mission_targetCaption_blockade` under the title (Refs #4295).

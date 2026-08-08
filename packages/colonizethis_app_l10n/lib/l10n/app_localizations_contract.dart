@@ -1035,6 +1035,24 @@ abstract class AppLocalizations {
   /// Empty target picker for blockade/beachhead.
   String get naval_mission_noTargetsAvailable;
 
+  /// Plain-language effect line for Patrol mission row (DLG31001).
+  String get naval_mission_effect_patrol;
+
+  /// Plain-language effect line for Defend mission row (DLG31001).
+  String get naval_mission_effect_defend;
+
+  /// Plain-language effect line for Blockade mission row (DLG31001).
+  String get naval_mission_effect_blockade;
+
+  /// Plain-language effect line for Beachhead mission row (DLG31001).
+  String get naval_mission_effect_beachhead;
+
+  /// Mission consequence caption on Blockade target picker (DLG31002).
+  String get naval_mission_targetCaption_blockade;
+
+  /// Mission consequence caption on Beachhead target picker (DLG31002).
+  String get naval_mission_targetCaption_beachhead;
+
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
 

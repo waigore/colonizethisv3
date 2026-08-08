@@ -1,6 +1,7 @@
 // Naval mission assign flow: fleet pick → mission menu → target pick (Refs #4213).
 // SPEC/program/app-ui-wiring.md.
 
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
@@ -137,3 +138,23 @@ abstract final class NavalMissionDialogIds {
 
 String navalMissionMenuLabel(FleetMission mission) =>
     fleetMissionDisplayLabel(mission);
+
+/// One-line player-facing effect summary for [mission] (Refs #4295).
+String navalMissionEffectLine(AppLocalizations l10n, FleetMission mission) {
+  return switch (mission) {
+    FleetMission.patrol => l10n.naval_mission_effect_patrol,
+    FleetMission.defend => l10n.naval_mission_effect_defend,
+    FleetMission.blockade => l10n.naval_mission_effect_blockade,
+    FleetMission.beachhead => l10n.naval_mission_effect_beachhead,
+    FleetMission.none => '',
+  };
+}
+
+/// Target-picker caption for Blockade / Beachhead (Refs #4295).
+String? navalMissionTargetCaption(AppLocalizations l10n, FleetMission mission) {
+  return switch (mission) {
+    FleetMission.blockade => l10n.naval_mission_targetCaption_blockade,
+    FleetMission.beachhead => l10n.naval_mission_targetCaption_beachhead,
+    _ => null,
+  };
+}

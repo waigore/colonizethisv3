@@ -158,12 +158,59 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Select target — Blockade'), findsOneWidget);
+      expect(
+        find.text(
+          'Pressures the target port approaches with stronger interception than Patrol.',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Enemy Port'), findsOneWidget);
       expect(find.text('Hostile Coast'), findsOneWidget);
 
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile('goldens/naval_mission_target_blockade.png'),
+      );
+    },
+  );
+
+  testWidgets(
+    'golden: beachhead target picker shows invasion timing caption (Refs #4295)',
+    (WidgetTester tester) async {
+      const boundaryKey = ValueKey<String>('navalMissionTargetBeachheadGolden');
+      final game = buildNavalMissionWarTargetsGame();
+      final fleet = game.worldState.fleets.single;
+      final availability = navalMissionAvailabilityForFleet(
+        game: game,
+        topology: navalMissionWarTopology(),
+        playerId: navalMissionGoldenHumanId,
+        fleet: fleet,
+        currentOrders: const Orders(),
+      );
+
+      await pumpNavalMissionGolden(
+        tester,
+        boundaryKey: boundaryKey,
+        child: NavalMissionTargetDialog(
+          game: game,
+          mission: FleetMission.beachhead,
+          fleet: fleet,
+          targetProvinceIds: availability.beachheadTargetProvinceIds,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Select target — Beachhead'), findsOneWidget);
+      expect(
+        find.text(
+          'Landing site supports invasion on the following turn and expires after that turn if unused.',
+        ),
+        findsOneWidget,
+      );
+
+      await expectLater(
+        find.byKey(boundaryKey),
+        matchesGoldenFile('goldens/naval_mission_target_beachhead.png'),
       );
     },
   );
