@@ -29,6 +29,7 @@ void main() {
       expect(ids, contains('repo.turn_no_part_directives'));
       expect(ids, contains('repo.map_gen_no_new_partfiles'));
       expect(ids, contains('repo.map_lib_file_size'));
+      expect(ids, contains('repo.map_lib_file_size_headroom'));
       expect(ids, contains('repo.data_lib_file_size'));
       expect(ids, contains('repo.data_victory_config_registry_parity'));
       expect(ids, contains('repo.map_test_run_generation_harness'));
@@ -36,6 +37,12 @@ void main() {
       expect(
         rules.firstWhere((r) => r.ruleId == 'repo.map_lib_file_size').script,
         'tool/check_map_lib_file_size.dart',
+      );
+      expect(
+        rules
+            .firstWhere((r) => r.ruleId == 'repo.map_lib_file_size_headroom')
+            .script,
+        'tool/check_map_lib_file_size_headroom.dart',
       );
       expect(
         rules

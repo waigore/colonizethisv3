@@ -9,30 +9,7 @@ import 'support/init_game_map_view_region_cells_scenarios.dart';
 void main() {
   group('buildInitGameMapViewData region data', () {
     test('returns InitGameMapViewData with oldWorld and newWorld regions', () {
-      final game = minimalGame(
-        id: 'test',
-        turnNumber: 1,
-        oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            displayName: 'OW P1',
-            ownerId: 'gp1',
-          ),
-        ],
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|p1',
-            regionId: 'newWorld',
-            displayName: 'NW P1',
-          ),
-        ],
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
-      );
-      final viewData = buildViewDataForScenario(
-        provinceSeaDualRegionScenario(game: game),
-        cellSize: 16,
-      );
+      final viewData = regionCellsBasicDualRegionView();
 
       expect(viewData.oldWorld.regionId, 'oldWorld');
       expect(viewData.newWorld.regionId, 'newWorld');
@@ -60,36 +37,7 @@ void main() {
     test(
       'copies seaZoneDisplayNameById into RegionMapViewData.seaZoneDisplayNameByPrefixedId',
       () {
-        final game = minimalGame(
-          id: 'test',
-          turnNumber: 1,
-          seaZoneDisplayNameById: const {
-            'oldWorld|s1': 'Adriatic Sea',
-            'newWorld|s1': 'Caribbean Sea',
-          },
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              displayName: 'OW P1',
-              ownerId: 'gp1',
-            ),
-          ],
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|p1',
-              regionId: 'newWorld',
-              displayName: 'NW P1',
-            ),
-          ],
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          ],
-        );
-        final viewData = buildViewDataForScenario(
-          provinceSeaDualRegionScenario(game: game),
-          cellSize: 16,
-        );
+        final viewData = regionCellsSeaZoneDisplayNameView();
 
         expect(
           viewData.oldWorld.seaZoneDisplayNameByPrefixedId['oldWorld|s1'],
@@ -103,31 +51,7 @@ void main() {
     );
 
     test('invokes with seed configSummary and greatPowerColorOverride', () {
-      final game = minimalGame(
-        id: 'g',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-        newWorldProvinces: const [
-          Province(id: 'newWorld|p1', regionId: 'newWorld'),
-        ],
-        players: const [Player(id: 'gp1', displayName: 'GP', isHuman: false)],
-      );
-      final viewData = buildViewDataForScenario(
-        dualRegionScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['p1'],
-          ],
-          oldWorldTopology: regionTopology(
-            regionId: 'oldWorld',
-            provinceIds: const ['p1'],
-          ),
-        ),
-        cellSize: 8,
-        seed: 123,
-        configSummary: 'test config',
-      );
+      final viewData = regionCellsSeedConfigView();
       expect(viewData.seed, 123);
       expect(viewData.configSummary, 'test config');
       expect(viewData.oldWorld.factionColors['gp1'], isNotNull);
@@ -204,24 +128,7 @@ void main() {
     });
 
     test('cell helper applies visibility and extraction overlays', () {
-      final view = buildViewDataForScenario(
-        oldWorldFocusedScenario(
-          game: minimalGame(
-            id: 'slice-test',
-            oldWorldProvinces: const [
-              Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-            ],
-          ),
-          oldWorldGrid: const [
-            ['p1'],
-          ],
-          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-        ),
-        visibilityByTile: const {'oldWorld|p1|0|0': TileVisibility.fogged},
-        resourceExtractionUnitsByTile: const {'oldWorld|p1|0|0': 9},
-        resourceExtractionEffectiveUnitsByTile: const {'oldWorld|p1|0|0': 7},
-        resourceExtractionBlockedUnitsByTile: const {'oldWorld|p1|0|0': 2},
-      );
+      final view = regionCellsVisibilityOverlayView();
 
       final cell = view.oldWorld.cells.single;
       expect(cell.visibility, TileVisibility.fogged);

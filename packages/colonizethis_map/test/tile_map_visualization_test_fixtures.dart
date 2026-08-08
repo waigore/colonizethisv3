@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:image/image.dart' as img;
 
@@ -80,3 +81,39 @@ void expectPixelNearRgb(
   expect((pixel.g - rgb.$2).abs(), lessThanOrEqualTo(tolerance));
   expect((pixel.b - rgb.$3).abs(), lessThanOrEqualTo(tolerance));
 }
+
+List<int> renderTileMapPngBytes(
+  TileMapResult result,
+  MapTopology topology, {
+  int cellSize = 8,
+  List<(int, int)>? landSeedPositions,
+  List<int>? landSeedContinentIndices,
+  List<(int, int)>? continentSeedPositions,
+}) =>
+    renderTileMapToPng(
+      result,
+      topology,
+      cellSize: cellSize,
+      landSeedPositions: landSeedPositions,
+      landSeedContinentIndices: landSeedContinentIndices,
+      continentSeedPositions: continentSeedPositions,
+    );
+
+img.Image decodeRenderTileMapToPng(
+  TileMapResult result,
+  MapTopology topology, {
+  int cellSize = 8,
+  List<(int, int)>? landSeedPositions,
+  List<int>? landSeedContinentIndices,
+  List<(int, int)>? continentSeedPositions,
+}) =>
+    decodeRenderedPng(
+      renderTileMapPngBytes(
+        result,
+        topology,
+        cellSize: cellSize,
+        landSeedPositions: landSeedPositions,
+        landSeedContinentIndices: landSeedContinentIndices,
+        continentSeedPositions: continentSeedPositions,
+      ),
+    );
