@@ -7,9 +7,11 @@
 //   - stalled: multi-split loop, cap guard, sole-regiment peel (#2925)
 
 import 'army_conquest_prep_basic_cases.dart';
-import 'army_conquest_prep_stalled_cases.dart';
+import 'army_conquest_prep_stalled_noop_cases.dart';
+import 'army_conquest_prep_stalled_split_cases.dart';
 
 void main() {
   registerArmyConquestPrepBasicCases();
-  registerArmyConquestPrepStalledCases();
+  registerArmyConquestPrepStalledSplitCases();
+  registerArmyConquestPrepStalledNoopCases();
 }

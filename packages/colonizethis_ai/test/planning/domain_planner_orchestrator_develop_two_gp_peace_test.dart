@@ -56,123 +56,9 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
-const String _atWarGpAId = 'gp2';
-const String _atWarGpBId = 'gp3';
-const String _atWarMinorId = 'minor1';
-
-// gp1 owns 11 OW provinces via [kGp1OwProvincesAtQuota] (>= observer quota
-// of 10) so the GP is past EXPAND. Combined with an empty `ColonialSummary`
-// (no invadable NW provinces, no adjacent NW owners) and no unowned NW
-// visible in the `Game`'s NW region, this places the GP in DEVELOP per
-// `observerGoalPhaseFor` (`hasColonialAcquisitionTargets` is false and
-// the global NW snapshot has no non-GP-owned provinces).
-
-const String _gpAOwProvince = 'oldWorld|gp2_0';
-const String _gpBOwProvince = 'oldWorld|gp3_0';
-const String _minorOwProvince = 'oldWorld|minor1_0';
-
-Game _developTwoGpWarsScenarioGame() {
-  return Game(
-    id: 'g-2509-develop-two-gp-peace',
-    worldState: WorldState(
-      // Turn 140 keeps us past the turn-120 COLONIAL-lite safeguard window
-      // and inside the DEVELOP improvement-first horizon toward turn 150.
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          const Province(
-            id: _gpAOwProvince,
-            regionId: 'oldWorld',
-            ownerId: _atWarGpAId,
-          ),
-          const Province(
-            id: _gpBOwProvince,
-            regionId: 'oldWorld',
-            ownerId: _atWarGpBId,
-          ),
-          const Province(
-            id: _minorOwProvince,
-            regionId: 'oldWorld',
-            ownerId: _atWarMinorId,
-          ),
-        ],
-      ),
-      // Empty NW region: no unowned `newWorld|` provinces means
-      // `globalNewWorldHasNonGpOwnership(game)` is false and there are no
-      // visible NW colonial targets — both required for DEVELOP.
-      newWorld: const RegionData(),
-      // Each GP holds a non-empty Home Army so `regimentCountForPlayer`
-      // > 0 for every faction, avoiding the zero-regiment stalemate peace
-      // paths (`stalledZeroRegimentGpPeaceTargets`,
-      // `mutualZeroRegimentGpStalematePeaceTargets`) which would
-      // unconditionally peace every at-war GP regardless of phase, for an
-      // entirely different reason than the DEVELOP all-GP rule this test
-      // is pinning.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_atWarGpAId),
-          ownerId: _atWarGpAId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gpAOwProvince,
-          regimentUnitIds: const ['u_gp2'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_atWarGpBId),
-          ownerId: _atWarGpBId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gpBOwProvince,
-          regimentUnitIds: const ['u_gp3'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-      Player(id: _atWarGpAId, displayName: 'GP2', isHuman: false),
-      Player(id: _atWarGpBId, displayName: 'GP3', isHuman: false),
-    ],
-    minorNations: const [
-      MinorNation(id: _atWarMinorId, displayName: 'Minor1'),
-    ],
-    tribes: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _atWarGpAId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _atWarGpBId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _atWarMinorId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    ],
-  );
-}
+const String _atWarGpAId = kOrchestratorDevelopTwoGpAtWarGpAId;
+const String _atWarGpBId = kOrchestratorDevelopTwoGpAtWarGpBId;
+const String _atWarMinorId = kOrchestratorDevelopTwoGpAtWarMinorId;
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -233,7 +119,7 @@ List<String> _offerPeaceTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners DEVELOP two-GP peace', () {
     test('peaces both at-war Great Power fronts', () {
-      final game = _developTwoGpWarsScenarioGame();
+      final game = buildOrchestratorDevelopTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _developTwoGpWarsSnapshot();
@@ -276,7 +162,7 @@ void main() {
     });
 
     test('does not peace the at-war minor in DEVELOP', () {
-      final game = _developTwoGpWarsScenarioGame();
+      final game = buildOrchestratorDevelopTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _developTwoGpWarsSnapshot();
@@ -315,7 +201,7 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical inputs', () {
-      final game = _developTwoGpWarsScenarioGame();
+      final game = buildOrchestratorDevelopTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _developTwoGpWarsSnapshot();

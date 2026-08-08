@@ -52,133 +52,8 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
-const String _blockerGpId = 'gp2';
-const String _nonBlockerGpId = 'gp3';
-
-// gp1 owns 11 OW provinces via [kGp1OwProvincesAtQuota] (>= observer quota
-// of 10), so the GP is past EXPAND and `isBelowObserverConquestQuota` is
-// false. Combined with a non-empty colonial acquisition target set, this
-// places the GP in COLONIAL per `observerGoalPhaseFor`.
-
-// gp2 owns two NW provinces. Both are listed in
-// `invadableNewWorldProvinceIdsSorted` so `primaryColonialGpBlocker`
-// resolves to `_blockerGpId` (the GP owning the most provinces in the
-// invadable colonial set).
-const List<String> _gp2InvadableNwProvinces = <String>[
-  'newWorld|gp2_nw0',
-  'newWorld|gp2_nw1',
-];
-
-// tribe1 owns one NW province in the invadable list. Its presence is what
-// makes `hasColonialAcquisitionTargets` non-empty, but it does not
-// outnumber gp2 in the invadable set so it is not the colonial blocker.
-const String _tribeNwProvince = 'newWorld|tribe1_nw0';
-
-// gp3 owns 10 OW provinces (at the observer quota) with no NW presence,
-// making it the non-blocker target of the COLONIAL multi-GP peace rule.
-// The below-quota peer exclusion in `planColonialPeace` (Refs #2509
-// § Must-have #5) requires every peaceable peer to own ≥
-// `kObserverConquestMinOwProvincesPerGp` OW provinces.
-const List<String> _gp3OwProvinces = <String>[
-  'oldWorld|gp3_0',
-  'oldWorld|gp3_1',
-  'oldWorld|gp3_2',
-  'oldWorld|gp3_3',
-  'oldWorld|gp3_4',
-  'oldWorld|gp3_5',
-  'oldWorld|gp3_6',
-  'oldWorld|gp3_7',
-  'oldWorld|gp3_8',
-  'oldWorld|gp3_9',
-];
-
-Game _colonialTwoGpWarsScenarioGame() {
-  return Game(
-    id: 'g-2509-colonial-two-gp-peace',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          for (final id in _gp3OwProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nonBlockerGpId),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: [
-          for (final id in _gp2InvadableNwProvinces)
-            Province(id: id, regionId: 'newWorld', ownerId: _blockerGpId),
-          const Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: 'tribe1',
-          ),
-        ],
-      ),
-      // Each GP holds a non-empty Home Army so `regimentCountForPlayer`
-      // > 0 for every faction, avoiding the zero-regiment stalemate peace
-      // paths (`stalledZeroRegimentGpPeaceTargets`,
-      // `mutualZeroRegimentGpStalematePeaceTargets`) which would
-      // unconditionally peace every at-war GP (including the blocker) for
-      // an entirely different reason than the COLONIAL non-blocker rule
-      // this test is pinning. Mirrors the equivalent guard in the EXPAND
-      // two-GP peace pin (`domain_planner_orchestrator_expand_two_gp_peace_test.dart`).
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_blockerGpId),
-          ownerId: _blockerGpId,
-          regionId: 'newWorld',
-          stationedProvinceId: _gp2InvadableNwProvinces.first,
-          regimentUnitIds: const ['u_gp2'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_nonBlockerGpId),
-          ownerId: _nonBlockerGpId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gp3OwProvinces.first,
-          regimentUnitIds: const ['u_gp3'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-      Player(id: _blockerGpId, displayName: 'GP2', isHuman: false),
-      Player(id: _nonBlockerGpId, displayName: 'GP3', isHuman: false),
-    ],
-    minorNations: const [],
-    tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _blockerGpId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _nonBlockerGpId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    ],
-  );
-}
+const String _blockerGpId = kOrchestratorColonialTwoGpBlockerId;
+const String _nonBlockerGpId = kOrchestratorColonialTwoGpNonBlockerId;
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -220,9 +95,8 @@ AIWorldSnapshot _colonialTwoGpWarsSnapshot() {
     colonial: ColonialSummary(
       newWorldProvincesOwned: 0,
       invadableNewWorldProvinceIdsSorted: [
-        'newWorld|gp2_nw0',
-        'newWorld|gp2_nw1',
-        _tribeNwProvince,
+        ...kOrchestratorColonialTwoGpBlockerNwProvinces,
+        kOrchestratorColonialTwoGpTribeNwProvince,
       ],
       adjacentNewWorldOwnerFactionIdsSorted: [_blockerGpId, 'tribe1'],
     ),
@@ -239,7 +113,7 @@ List<String> _offerPeaceTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners COLONIAL two-GP peace', () {
     test('peaces the non-blocker GP front', () {
-      final game = _colonialTwoGpWarsScenarioGame();
+      final game = buildOrchestratorColonialTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialTwoGpWarsSnapshot();
@@ -289,7 +163,7 @@ void main() {
     });
 
     test('holds the primary colonial NW frontier blocker war', () {
-      final game = _colonialTwoGpWarsScenarioGame();
+      final game = buildOrchestratorColonialTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialTwoGpWarsSnapshot();
@@ -327,7 +201,7 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical inputs', () {
-      final game = _colonialTwoGpWarsScenarioGame();
+      final game = buildOrchestratorColonialTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _colonialTwoGpWarsSnapshot();

@@ -63,124 +63,6 @@ const String _gpOwn = 'gp_own';
 const String _minorAlpha = 'minor_alpha';
 const String _minorBeta = 'minor_beta';
 
-/// Builds a minimal `Game` where:
-///   * `gp_own` holds [ownProvinces] OW provinces so quota-band checks
-///     can route off `oldWorldProvincesOwned` deterministically.
-///   * Each entry in [minorOwnedInvadables] places that minor as the
-///     owner of every province id in the value list (these are the
-///     ids the snapshot exposes via `invadableProvinceIdsSorted`).
-///   * `gp_own` owns a Home Army with [ownRegiments] regiment unit ids
-///     so `regimentCountForPlayer` returns exactly that count for the
-///     active player (the function sums `regimentUnitIds.length` across
-///     armies owned by `playerId`).
-///   * Every minor in [atWarMinors] is in `RelationState.atWar`
-///     against `gp_own`. Minors not listed exist on the map but are
-///     at peace.
-///   * Every tribe in [atWarTribes] is in `RelationState.atWar`.
-///     Tribes are valid members of `ThreatSummary.atWarWith` but the
-///     distraction-peace pivot drops them (only minors qualify).
-///   * Every GP in [atWarRivalGps] is in `RelationState.atWar`. GPs
-///     are valid members of `ThreatSummary.atWarWith` but the
-///     distraction-peace pivot drops them (only minors qualify).
-Game _multiMinorGame({
-  required int ownProvinces,
-  required int ownRegiments,
-  Map<String, List<String>> minorOwnedInvadables = const {},
-  List<String> atWarMinors = const [],
-  List<String> atWarTribes = const [],
-  List<String> atWarRivalGps = const [],
-  List<String> peacefulMinors = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in minorOwnedInvadables.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in atWarRivalGps)
-      Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-  ];
-
-  final allMinorIds = <String>{
-    ...minorOwnedInvadables.keys,
-    ...atWarMinors,
-    ...peacefulMinors,
-  };
-  final minorNations = <MinorNation>[
-    for (final minorId in allMinorIds)
-      MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final tribes = <Tribe>[
-    for (final tribeId in atWarTribes) Tribe(id: tribeId, displayName: tribeId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarMinors)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final id in atWarTribes)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final id in atWarRivalGps)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  final armies = <Army>[
-    if (ownRegiments > 0)
-      Army(
-        id: homeArmyIdFor(_gpOwn),
-        ownerId: _gpOwn,
-        regionId: 'oldWorld',
-        stationedProvinceId: ownProvinces > 0
-            ? 'oldWorld|${_gpOwn}_1'
-            : 'oldWorld|capital',
-        regimentUnitIds: <String>[
-          for (var i = 1; i <= ownRegiments; i++) 'u_${_gpOwn}_$i',
-        ],
-        isHomeArmy: true,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-multi-minor-distraction-'
-        'own$ownProvinces-reg$ownRegiments-'
-        '${minorOwnedInvadables.keys.join("-")}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-      armies: armies,
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
 void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
   group(
     'belowQuotaMultiMinorDistractionPeaceTargets — canonical outer guards',
@@ -190,7 +72,7 @@ void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
         // outer guard fires before the regiment, frontier, and focus
         // checks. Even with two at-war minors clearly contested on
         // the same frontier, the helper returns const [] at quota.
-        final game = _multiMinorGame(
+        final game = buildExpandPeaceMultiMinorGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp,
           ownRegiments: 2,
           minorOwnedInvadables: const {
@@ -228,7 +110,7 @@ void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
         // (`stalledZeroRegimentAllFactionPeaceTargets` /
         // `stalledZeroRegimentGpPeaceTargets`) own the peace decision
         // below the affordability gate; this helper must defer.
-        final game = _multiMinorGame(
+        final game = buildExpandPeaceMultiMinorGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: 0,
           minorOwnedInvadables: const {
@@ -265,7 +147,7 @@ void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
         // distraction-peace pivot is not warranted. The boundary is
         // `>=`, so the exact threshold value triggers the outer
         // guard.
-        final game = _multiMinorGame(
+        final game = buildExpandPeaceMultiMinorGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
           minorOwnedInvadables: const {
@@ -301,7 +183,7 @@ void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
         // no OW frontier to concentrate on; the pivot has no
         // purpose so the helper returns const [] before invoking
         // the focused-minor scan.
-        final game = _multiMinorGame(
+        final game = buildExpandPeaceMultiMinorGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: 2,
           minorOwnedInvadables: const {
@@ -334,7 +216,7 @@ void registerExpandPhasePlannerBelowQuotaMultiMinorDistractionGuardsCases() {
         // invadable list, but neither at-war minor owns an
         // invadable OW province → stalledFocusMinorTarget returns
         // null → the helper passes that null through as const [].
-        final game = _multiMinorGame(
+        final game = buildExpandPeaceMultiMinorGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: 2,
           minorOwnedInvadables: const {

@@ -6,8 +6,9 @@ import 'ct_repo_lint_scan_contract.dart';
 
 /// Soft physical-line ceiling for S7D support modules (Refs #3997 / #4079 /
 /// #4104). Phase-8 was 800; Phase-9 Slice D tightened to 650; Phase-10
-/// Slice C densify ratchets to 600 (Refs #4104); Phase-11 Slice C →550 (#4239).
-const int aiS7dSupportSuitePhysicalLineCeiling = 550;
+/// Slice C densify ratchets to 600 (Refs #4104); Phase-11 Slice C →550 (#4239);
+/// Phase-12 Slice D →500 (Refs #4291).
+const int aiS7dSupportSuitePhysicalLineCeiling = 500;
 
 /// Repo-relative path prefix for S7D support modules.
 const String _aiS7dSupportPathPrefix =

@@ -1674,6 +1674,13 @@ rules:
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart
 
+  - rule_id: repo.ai_test_support_file_size
+    group: testing
+    title: colonizethis_ai test/support/**/*.dart (excluding s7d/) must stay at or under 400 physical lines (Refs #4291)
+    spec: SPEC/program/ai-test-support-file-size.md
+    runner: dart
+    script: tool/check_ai_test_support_file_size.dart
+
   - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
     group: testing
     title: colonizethis_ai colonial_phase_planner_acquisition_*_test.dart pins must import shared Game / DiplomacyRelation helpers from colonial_acquisition_test_support.dart (no local _acquisitionGame / _purchaseLandGame / _declareWarGame / _bothValidGame / _friendly / _peaceFriendly / _atWar) (Refs #3972)
@@ -1718,7 +1725,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_decider_registry
     group: architecture
-    title: colonizethis_ai EXPAND-regime peace targets must be composed via the ordered ExpandPeaceDecider registry in observer_goal_phase.dart, not hand-unrolled yield* decider chains (Refs #3749)
+    title: colonizethis_ai EXPAND-regime peace targets must be composed via the ordered ExpandPeaceDecider registry in observer_goal_phase_peace_aggregators.dart, not hand-unrolled yield* decider chains (Refs #3749)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_decider_registry.dart

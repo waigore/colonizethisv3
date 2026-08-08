@@ -90,12 +90,9 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
-import 'colonial_phase_planner.dart';
-import 'develop_phase_planner.dart';
-import 'expand_phase_planner.dart';
 import 'observer_goal_phase.dart';
-import 'phase_priority_weights.dart';
 import 'phase_planner_dispatch_outcome.dart';
+import 'phase_planner_dispatch_phases.dart';
 
 export 'phase_planner_dispatch_outcome.dart' show PhasePlanOutcome;
 
@@ -146,240 +143,20 @@ PhasePlanOutcome runPhasePlanners({
   final phase = observerGoalPhaseFor(snapshot: snapshot, game: game);
   switch (phase) {
     case ObserverGoalPhase.expand:
-      return _expandOutcome(
+      return expandPhasePlanOutcome(
         game: game,
         snapshot: snapshot,
         personalityId: personalityId,
       );
     case ObserverGoalPhase.colonialLite:
-      return _colonialLiteOutcome(game: game, snapshot: snapshot);
+      return colonialLitePhasePlanOutcome(game: game, snapshot: snapshot);
     case ObserverGoalPhase.colonial:
-      return _colonialOutcome(
+      return colonialPhasePlanOutcome(
         game: game,
         snapshot: snapshot,
         personalityId: personalityId,
       );
     case ObserverGoalPhase.develop:
-      return _developOutcome(game: game, snapshot: snapshot);
+      return developPhasePlanOutcome(game: game, snapshot: snapshot);
   }
-}
-
-PhasePlanOutcome _expandOutcome({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  String? personalityId,
-}) {
-  final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
-  final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
-  final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
-  final priorityWeights = computePhasePriorityWeights(
-    snapshot: snapshot,
-    game: game,
-    expandEconomyPlan: expandEconomyPlan,
-  );
-  final colonial = priorityWeights.newWorldAcquisition > 0.0
-      ? _colonialPlannerBundle(
-          game: game,
-          snapshot: snapshot,
-          personalityId: personalityId,
-          expandEconomyPlan: expandEconomyPlan,
-        )
-      : null;
-  return PhasePlanOutcome.expand(
-    expandDeclareWarTargetFactionId: declareWarTarget,
-    expandPeaceTargetFactionIdsSorted: planExpandPeace(
-      game: game,
-      snapshot: snapshot,
-    ),
-    expandDistractionPeaceTargetFactionIdsSorted:
-        _expandDistractionPeaceTargets(game: game, snapshot: snapshot),
-    expandEconomyPlan: expandEconomyPlan,
-    expandMilitaryPlan: planExpandMilitary(
-      game: game,
-      snapshot: snapshot,
-      declaredWarTargetFactionId: declareWarTarget,
-    ),
-    expandGpOnlyInvadableFrontierActive:
-        expandFrontier.gpOnlyInvadableFrontierActive,
-    expandPrimaryInvadableGpBlockerFactionId:
-        expandFrontier.primaryInvadableGpBlockerFactionId,
-    colonialAcquisitionTarget: colonial?.acquisition,
-    colonialPeaceTargetFactionIdsSorted:
-        colonial?.peaceTargets ?? const <String>[],
-    colonialMilitaryPlan:
-        colonial?.military ?? ColonialMilitaryPlan.defaultPlan,
-    colonialNavalPlan: colonial?.naval ?? ColonialNavalPlan.defaultPlan,
-    colonialCivilianWorkOrders: colonial?.civilian ?? const <WorkOrder>[],
-    priorityWeights: priorityWeights,
-  );
-}
-
-PhasePlanOutcome _colonialLiteOutcome({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  final declareWarTarget = planExpandDeclareWar(game: game, snapshot: snapshot);
-  final expandFrontier = _expandFrontierContext(game: game, snapshot: snapshot);
-  final expandEconomyPlan = planExpandEconomy(game: game, snapshot: snapshot);
-  return PhasePlanOutcome.colonialLite(
-    expandDeclareWarTargetFactionId: declareWarTarget,
-    expandPeaceTargetFactionIdsSorted: planExpandPeace(
-      game: game,
-      snapshot: snapshot,
-    ),
-    expandDistractionPeaceTargetFactionIdsSorted:
-        _expandDistractionPeaceTargets(game: game, snapshot: snapshot),
-    expandEconomyPlan: expandEconomyPlan,
-    expandMilitaryPlan: planExpandMilitary(
-      game: game,
-      snapshot: snapshot,
-      declaredWarTargetFactionId: declareWarTarget,
-    ),
-    expandGpOnlyInvadableFrontierActive:
-        expandFrontier.gpOnlyInvadableFrontierActive,
-    expandPrimaryInvadableGpBlockerFactionId:
-        expandFrontier.primaryInvadableGpBlockerFactionId,
-    colonialLiteOverturesSorted: planColonialLiteOvertures(
-      game: game,
-      snapshot: snapshot,
-    ),
-    colonialLiteNavalPlan: planColonialLiteNaval(
-      game: game,
-      snapshot: snapshot,
-    ),
-    priorityWeights: computePhasePriorityWeights(
-      snapshot: snapshot,
-      game: game,
-      expandEconomyPlan: expandEconomyPlan,
-    ),
-  );
-}
-
-({
-  ColonialAcquisitionTarget? acquisition,
-  List<String> peaceTargets,
-  ColonialMilitaryPlan military,
-  ColonialNavalPlan naval,
-  List<WorkOrder> civilian,
-})
-_colonialPlannerBundle({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  String? personalityId,
-  ExpandEconomyPlan expandEconomyPlan = ExpandEconomyPlan.defaultPlan,
-}) {
-  final acquisition = planColonialAcquisition(
-    game: game,
-    snapshot: snapshot,
-    personalityId: personalityId,
-    expandEconomyPlan: expandEconomyPlan,
-  );
-  final declaredColonialTarget =
-      (acquisition != null &&
-          acquisition.method == AcquisitionMethod.declareWar)
-      ? acquisition.targetFactionId
-      : null;
-  return (
-    acquisition: acquisition,
-    peaceTargets: planColonialPeace(game: game, snapshot: snapshot),
-    military: planColonialMilitary(
-      game: game,
-      snapshot: snapshot,
-      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
-      expandEconomyPlan: expandEconomyPlan,
-    ),
-    naval: planColonialNaval(
-      game: game,
-      snapshot: snapshot,
-      colonialDeclaredWarTargetFactionId: declaredColonialTarget,
-      expandEconomyPlan: expandEconomyPlan,
-    ),
-    civilian: planColonialCivilian(game: game, snapshot: snapshot),
-  );
-}
-
-PhasePlanOutcome _colonialOutcome({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-  required String? personalityId,
-}) {
-  final colonial = _colonialPlannerBundle(
-    game: game,
-    snapshot: snapshot,
-    personalityId: personalityId,
-    expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
-  );
-  return PhasePlanOutcome.colonial(
-    colonialAcquisitionTarget: colonial.acquisition,
-    colonialPeaceTargetFactionIdsSorted: colonial.peaceTargets,
-    colonialMilitaryPlan: colonial.military,
-    colonialNavalPlan: colonial.naval,
-    colonialCivilianWorkOrders: colonial.civilian,
-    priorityWeights: computePhasePriorityWeights(
-      snapshot: snapshot,
-      game: game,
-      expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
-    ),
-  );
-}
-
-PhasePlanOutcome _developOutcome({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  return PhasePlanOutcome.develop(
-    developPeaceTargetFactionIdsSorted: planDevelopPeace(
-      game: game,
-      snapshot: snapshot,
-    ),
-    developCivilianWorkOrders: planDevelopCivilian(
-      game: game,
-      snapshot: snapshot,
-    ),
-    priorityWeights: computePhasePriorityWeights(
-      snapshot: snapshot,
-      game: game,
-      expandEconomyPlan: ExpandEconomyPlan.defaultPlan,
-    ),
-  );
-}
-
-/// EXPAND below-quota tribe distraction peace for the production
-/// phase-plan path (Refs #2847 § H5).
-///
-/// Sources [belowQuotaRegimentThinTribeDistractionPeaceTargets] only —
-/// the regiment-thin below-quota tribe-distraction pivot that releases a
-/// thin GP from non-frontier tribe wars (seed-42 gp4). The sibling
-/// [belowQuotaMultiMinorDistractionPeaceTargets] is **not** unioned here:
-/// it splits a regiment-thin GP off all but one *minor* front, which
-/// throws away the productive multi-minor conquest the gp3 / gp6
-/// baselines depend on, so the minor distraction pivot stays confined to
-/// the no-`phasePlan` `collectStalledGreatPowerPeaceTargets` fallback
-/// where it originated. The returned list is already ascending-sorted.
-List<String> _expandDistractionPeaceTargets({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) => belowQuotaRegimentThinTribeDistractionPeaceTargets(
-  game: game,
-  snapshot: snapshot,
-);
-
-({
-  bool gpOnlyInvadableFrontierActive,
-  String? primaryInvadableGpBlockerFactionId,
-})
-_expandFrontierContext({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) {
-  return (
-    gpOnlyInvadableFrontierActive: isOldWorldGpOnlyInvadableFrontier(
-      game: game,
-      snapshot: snapshot,
-    ),
-    primaryInvadableGpBlockerFactionId: primaryInvadableOldWorldGpBlocker(
-      game: game,
-      snapshot: snapshot,
-    ),
-  );
 }
