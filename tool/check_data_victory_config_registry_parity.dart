@@ -48,6 +48,55 @@ Set<String> victoryConfigParamNamesFromSources(Iterable<String> fileContents) {
   return names;
 }
 
+/// Victory-config constant modules that must not register params in the work
+/// topic library (`ai_parameter_victory_config_params_work.dart`).
+const Set<String> victoryConfigWorkModuleForbiddenSourceFiles = {
+  'ai_victory_config_declare_war.dart',
+  'ai_victory_config_colonial.dart',
+  'ai_victory_config_stalled_ow.dart',
+  'ai_victory_config_offer_peace.dart',
+};
+
+/// Maps each in-scope victory-config scalar const name to its defining source
+/// file basename (e.g. `ai_victory_config_work.dart`).
+Map<String, String> victoryConfigScalarConstSourceFiles(
+  Map<String, String> fileNameToContent,
+) {
+  final byName = <String, String>{};
+  for (final entry in fileNameToContent.entries) {
+    for (final line in entry.value.split('\n')) {
+      final match = _scalarConstPattern.firstMatch(line.trimLeft());
+      if (match != null) {
+        byName[match.group(1)!] = entry.key;
+      }
+    }
+  }
+  return byName;
+}
+
+/// Returns violations when the work param library registers constants whose
+/// defining module is outside civilian work-order scoring.
+List<String> victoryConfigWorkModuleConcernViolations({
+  required Set<String> workModuleParamNames,
+  required Map<String, String> constNameToSourceFile,
+}) {
+  final violations = <String>[];
+  for (final name in workModuleParamNames.toList()..sort()) {
+    final sourceFile = constNameToSourceFile[name];
+    if (sourceFile == null) {
+      continue;
+    }
+    if (victoryConfigWorkModuleForbiddenSourceFiles.contains(sourceFile)) {
+      violations.add(
+        'victoryConfigParamsWork registers $name but its const is defined in '
+        '$sourceFile (re-home to the matching military / stall-colonial topic '
+        'param library)',
+      );
+    }
+  }
+  return violations;
+}
+
 /// Returns human-readable violation lines, or empty when sets match exactly.
 List<String> victoryConfigRegistryParityViolations({
   required Set<String> sourceConsts,
@@ -139,16 +188,36 @@ int runCheckDataVictoryConfigRegistryParity(
     return 1;
   }
 
+  final configContents = <String, String>{
+    for (final f in configFiles) p.basename(f.path): f.readAsStringSync(),
+  };
+  final paramContents = <String, String>{
+    for (final f in paramFiles) p.basename(f.path): f.readAsStringSync(),
+  };
+
   final sourceConsts = victoryConfigScalarConstNamesFromSources(
-    configFiles.map((f) => f.readAsStringSync()),
+    configContents.values,
   );
   final registeredParams = victoryConfigParamNamesFromSources(
-    paramFiles.map((f) => f.readAsStringSync()),
+    paramContents.values,
   );
-  final violations = victoryConfigRegistryParityViolations(
-    sourceConsts: sourceConsts,
-    registeredParams: registeredParams,
+  final constNameToSourceFile = victoryConfigScalarConstSourceFiles(
+    configContents,
   );
+  final workModuleParamNames = victoryConfigParamNamesFromSources([
+    paramContents['ai_parameter_victory_config_params_work.dart'] ?? '',
+  ]);
+
+  final violations = <String>[
+    ...victoryConfigRegistryParityViolations(
+      sourceConsts: sourceConsts,
+      registeredParams: registeredParams,
+    ),
+    ...victoryConfigWorkModuleConcernViolations(
+      workModuleParamNames: workModuleParamNames,
+      constNameToSourceFile: constNameToSourceFile,
+    ),
+  ];
 
   if (violations.isEmpty) {
     logI(
