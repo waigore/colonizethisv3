@@ -83,7 +83,7 @@ Folder `Naval Mission Menu Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade disabled (no war). |
+| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade/Beachhead disabled (no war); each row shows `naval_mission_effect_<mission>` (Refs #4295). |
 
 ---
 

@@ -72,7 +72,8 @@ Folder `Naval Mission Target Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — two war targets | Blockade mission; two selectable province rows; Confirm gated on selection. |
+| Default — blockade target | Blockade mission; `naval_mission_targetCaption_blockade`; Confirm gated on selection (Refs #4295). |
+| Beachhead — coastal target caption | Beachhead mission; `naval_mission_targetCaption_beachhead`; Confirm gated on selection (Refs #4295). |
 
 ---
 
