@@ -317,4 +317,94 @@ victoryConfigParamsMilitaryStallColonial = <AiParameter>[
     kExploreWorkScoreBonusNewWorld,
     'Explore-work score bonus when the target tile is in the New World.',
   ),
+  victoryConfigIntParam(
+    'kColonialCivilianWorkThresholdCap',
+    kColonialCivilianWorkThresholdCap,
+    'Civilian work economy threshold cap when colonial targets are visible.',
+  ),
+  victoryConfigIntParam(
+    'kColonialBuildOrderThresholdWhenOwnedNwUnderPressure',
+    kColonialBuildOrderThresholdWhenOwnedNwUnderPressure,
+    'Build-order economy threshold cap under COLONIAL acquisition pressure.',
+  ),
+  victoryConfigIntParam(
+    'kColonialNavalMissionNwPortScore',
+    kColonialNavalMissionNwPortScore,
+    'Naval mission score when the target port is a New World port.',
+  ),
+  victoryConfigIntParam(
+    'kColonialNavalMissionPhasePriorityNwPortScore',
+    kColonialNavalMissionPhasePriorityNwPortScore,
+    'Naval mission score for a phase-priority New World port.',
+  ),
+  victoryConfigIntParam(
+    'kColonialNavalMissionNwProvinceScore',
+    kColonialNavalMissionNwProvinceScore,
+    'Naval mission score when the target province is in the New World.',
+  ),
+  victoryConfigIntParam(
+    'kColonialNavalMissionPhasePriorityNwProvinceScore',
+    kColonialNavalMissionPhasePriorityNwProvinceScore,
+    'Naval mission score for a phase-priority New World province.',
+  ),
+  victoryConfigIntParam(
+    'kColonialNavalMissionBeachheadScore',
+    kColonialNavalMissionBeachheadScore,
+    'Naval mission score for beachhead missions under colonial pressure.',
+  ),
+  victoryConfigIntParam(
+    'kOfferPeaceWeakVsInvadableBlockerBonus',
+    kOfferPeaceWeakVsInvadableBlockerBonus,
+    'Offer-peace bonus toward an invadable frontier GP while critically low.',
+  ),
+  victoryConfigIntParam(
+    'kConquestArmyMoveMinWeightWhenStalled',
+    kConquestArmyMoveMinWeightWhenStalled,
+    'Minimum conquest army-move pass weight when OW expansion is stalled.',
+  ),
+  victoryConfigIntParam(
+    'kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar',
+    kConquestArmyMoveMinWeightWhenCriticallyWeakNoGpWar,
+    'Army-move weight floor when critically weak with no GP war.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveStalledDeclaredTargetInvadableBonus',
+    kConquestArmyMoveStalledDeclaredTargetInvadableBonus,
+    'Army-move bonus for invadable provinces of the declared target when stalled.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveStalledDeclaredTargetBonus',
+    kConquestArmyMoveStalledDeclaredTargetBonus,
+    'Army-move bonus for any province of the declared target when stalled.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveAdjacentInvadableBonus',
+    kConquestArmyMoveAdjacentInvadableBonus,
+    'Army-move bonus when destination is adjacent to an invadable OW province.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveStalledGpInvadableBlockerBonus',
+    kConquestArmyMoveStalledGpInvadableBlockerBonus,
+    'Army-move bonus for invadable provinces of an at-war blocker GP.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince',
+    kConquestArmyMoveStalledBehindGpBlockerBonusPerProvince,
+    'Extra army-move bonus per OW province the invadable blocker GP leads by.',
+  ),
+  victoryConfigIntParam(
+    'kOfferPeaceBelowQuotaInvadableBlockerPenalty',
+    kOfferPeaceBelowQuotaInvadableBlockerPenalty,
+    'Offer-peace penalty toward the frontier blocker GP while below quota.',
+  ),
+  victoryConfigIntParam(
+    'kOfferPeaceBelowQuotaStartSizeGpWarPenalty',
+    kOfferPeaceBelowQuotaStartSizeGpWarPenalty,
+    'Offer-peace penalty toward any GP while at start size and below quota.',
+  ),
+  victoryConfigDoubleParam(
+    'kConquestArmyMoveAdjacentAtWarFrontierBonus',
+    kConquestArmyMoveAdjacentAtWarFrontierBonus,
+    'Army-move bonus for own provinces bordering an at-war faction.',
+  ),
 ];

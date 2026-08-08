@@ -68,6 +68,33 @@ victoryConfigDoubleParam('kBeta', kBeta, 'desc'),
     });
   });
 
+  group('victoryConfigWorkModuleConcernViolations', () {
+    test('empty when work params only reference work-module consts', () {
+      expect(
+        victoryConfigWorkModuleConcernViolations(
+          workModuleParamNames: {'kBuildRailBaseWorkScore'},
+          constNameToSourceFile: {
+            'kBuildRailBaseWorkScore': 'ai_victory_config_work.dart',
+          },
+        ),
+        isEmpty,
+      );
+    });
+
+    test('reports declare-war consts registered in the work module', () {
+      final violations = victoryConfigWorkModuleConcernViolations(
+        workModuleParamNames: {'kDeclareWarStalledAnyOwMinorBonus'},
+        constNameToSourceFile: {
+          'kDeclareWarStalledAnyOwMinorBonus':
+              'ai_victory_config_declare_war.dart',
+        },
+      );
+      expect(violations, hasLength(1));
+      expect(violations.single, contains('kDeclareWarStalledAnyOwMinorBonus'));
+      expect(violations.single, contains('declare_war'));
+    });
+  });
+
   group('runCheckDataVictoryConfigRegistryParity', () {
     test('passes for the real colonizethis_data victory-config tree', () {
       final logs = <String>[];
