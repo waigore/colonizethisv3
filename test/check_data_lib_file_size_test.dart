@@ -19,13 +19,13 @@ void main() {
       0,
       reason:
           'Every colonizethis_data lib/src file must stay at or below '
-          '${maxDataLibFileNonCommentLinesForTests()} non-comment lines '
-          '(generated tech_effect_summary_embed skipped; Refs #4072).\n'
+          '${maxDataLibFilePhysicalLinesForTests()} physical lines '
+          '(generated *.gen.dart skipped; Refs #4292).\n'
           '${logs.join('\n')}',
     );
   });
 
-  test('grandfather allowlist is empty after #4072 topic splits', () {
+  test('grandfather allowlist is empty after #4292 wave-5 splits', () {
     expect(dataFileSizeGrandfatheredForTests, isEmpty);
   });
 
@@ -36,7 +36,7 @@ void main() {
     Directory('${temp.path}/$_srcRel').createSync(recursive: true);
     File('${temp.path}/$_srcRel/huge.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(501, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
 
     final logs = <String>[];
     final code = runCheckDataLibFileSize(
@@ -48,37 +48,17 @@ void main() {
 
     expect(code, 1);
     expect(logs.join('\n'), contains('huge.dart'));
-    expect(logs.join('\n'), contains('non-comment lines > 500'));
+    expect(logs.join('\n'), contains('physical lines > 400'));
   });
 
-  test('does not count comment-only lines toward the cap', () {
-    final temp = Directory.systemTemp.createTempSync('check_data_size_cmt_');
+  test('skips an over-cap generated *.gen.dart file', () {
+    final temp = Directory.systemTemp.createTempSync('check_data_size_gen_');
     addTearDown(() => temp.deleteSync(recursive: true));
 
     Directory('${temp.path}/$_srcRel').createSync(recursive: true);
-    final lines = <String>[
-      for (var i = 0; i < 600; i++) '// comment $i',
-      'final x = 1;',
-    ];
-    File('${temp.path}/$_srcRel/comments.dart')
+    File('${temp.path}/$_srcRel/tech_effect_summary_embed.gen.dart')
       ..createSync(recursive: true)
-      ..writeAsStringSync(lines.join('\n'));
-
-    final code = runCheckDataLibFileSize(
-      temp.path,
-      grandfatheredPaths: const <String>[],
-    );
-    expect(code, 0);
-  });
-
-  test('ignores tech_effect_summary_embed over the cap', () {
-    final temp = Directory.systemTemp.createTempSync('check_data_size_embed_');
-    addTearDown(() => temp.deleteSync(recursive: true));
-
-    Directory('${temp.path}/$_srcRel').createSync(recursive: true);
-    File('${temp.path}/$_srcRel/tech_effect_summary_embed.dart')
-      ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(501, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
 
     final code = runCheckDataLibFileSize(
       temp.path,
@@ -95,7 +75,7 @@ void main() {
     const grandfatheredRel = '$_srcRel/legacy.dart';
     File('${temp.path}/$grandfatheredRel')
       ..createSync(recursive: true)
-      ..writeAsStringSync(List.filled(501, 'final x = 1;').join('\n'));
+      ..writeAsStringSync(List.filled(401, 'final x = 1;').join('\n'));
 
     final code = runCheckDataLibFileSize(
       temp.path,

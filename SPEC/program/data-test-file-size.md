@@ -25,14 +25,14 @@ Support helpers under `test/support/` share the same ceiling.
 
 ## Ceiling
 
-**500 physical lines** per file (empty shrink-only grandfather allowlist).
+**400 physical lines** per file (empty shrink-only grandfather allowlist).
 
 ## Acceptance criteria
 
 - Given every `.dart` file under `packages/colonizethis_data/test/**` is at or
-  below 500 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule
-  `repo.data_test_file_size`, then the rule passes and exits `0` (Refs #4121).
-- Given a data test file exceeds 500 physical lines and is not on the
+  below 400 physical lines, when `dart run tool/ct_repo_lint.dart` runs rule
+  `repo.data_test_file_size`, then the rule passes and exits `0` (Refs #4121, #4292).
+- Given a data test file exceeds 400 physical lines and is not on the
   grandfather allowlist, when the checker runs, then the run fails listing the
   offending path and exits `1` (Refs #4121).
 - Given a stale grandfather allowlist entry (missing file), when the checker

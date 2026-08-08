@@ -230,4 +230,109 @@ final List<AiParameter> victoryConfigParamsMilitary = <AiParameter>[
     kStalledConquestFieldArmySplitCap,
     'Max field armies from Home Army splits while OW expansion is stalled.',
   ),
+  victoryConfigIntParam(
+    'kDeclareWarColonialNwTribeDominanceBonus',
+    kDeclareWarColonialNwTribeDominanceBonus,
+    'Extra declare-war weight for tribes owning sea-reachable NW provinces.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarColonialNwTribePriorityOverOwMinorBonus',
+    kDeclareWarColonialNwTribePriorityOverOwMinorBonus,
+    'Tribe declare-war weight to beat OW minor bonuses under colonial pressure.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledLowWarLikelihoodMinorBonus',
+    kDeclareWarStalledLowWarLikelihoodMinorBonus,
+    'Declare-war bonus for low-warLikelihood leaders toward stalled minors.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledLowWarLikelihoodMinorFloor',
+    kDeclareWarStalledLowWarLikelihoodMinorFloor,
+    'Declare-war floor for low-warLikelihood leaders toward stalled minors.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledLowWarLikelihoodTribeCap',
+    kDeclareWarStalledLowWarLikelihoodTribeCap,
+    'Cap NW tribe declare-war for low-warLikelihood leaders while OW minors remain.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledAdjacentInvadableMinorFloor',
+    kDeclareWarStalledAdjacentInvadableMinorFloor,
+    'Declare-war floor toward adjacent invadable minors while stalled.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarWeakGpAdjacentInvadableMinorFloor',
+    kDeclareWarWeakGpAdjacentInvadableMinorFloor,
+    'Higher declare-war floor for critically weak GPs toward OW minors.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarCriticalWeakNoGpWarMinorBonus',
+    kDeclareWarCriticalWeakNoGpWarMinorBonus,
+    'Declare-war bonus toward OW minors when critically weak with no GP war.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledGpWhenMinorsRemainPenalty',
+    kDeclareWarStalledGpWhenMinorsRemainPenalty,
+    'Declare-war penalty toward adjacent GPs while invadable minors remain.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarOnStalledWeakerNeighborPenalty',
+    kDeclareWarOnStalledWeakerNeighborPenalty,
+    'Declare-war penalty toward a stalled weaker neighbor GP.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarAggressorSuppressWeakGpLeadThreshold',
+    kDeclareWarAggressorSuppressWeakGpLeadThreshold,
+    'OW lead over a weak GP above which declare-war is suppressed.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledTribeWhenOwMinorCap',
+    kDeclareWarStalledTribeWhenOwMinorCap,
+    'Cap NW tribe declare-war scores while invadable OW minors remain.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarColonialPressureOwMinorPenalty',
+    kDeclareWarColonialPressureOwMinorPenalty,
+    'Declare-war penalty toward OW minors with no NW provinces under pressure.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledWeakerMinorBonus',
+    kDeclareWarStalledWeakerMinorBonus,
+    'Declare-war bonus for non-adjacent minors weaker than a stalled GP.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledActiveOwMinorBonus',
+    kDeclareWarStalledActiveOwMinorBonus,
+    'Declare-war weight toward any OW-holding minor while at start size.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledWeakestInvadableGpBonus',
+    kDeclareWarStalledWeakestInvadableGpBonus,
+    'Declare-war bonus when the weakest invadable-border GP blocks expansion.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledInvadableGpBlockerBonus',
+    kDeclareWarStalledInvadableGpBlockerBonus,
+    'Declare-war bonus toward a weaker adjacent GP owning invadable OW land.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledGpInvadableBlockerFloor',
+    kDeclareWarStalledGpInvadableBlockerFloor,
+    'Declare-war floor toward the GP owning invadable OW frontier.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledGpBlockerDistantMinorBonus',
+    kDeclareWarStalledGpBlockerDistantMinorBonus,
+    'Declare-war bonus toward a distant minor while OW land is GP-blocked.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarDefaultStartOwMinorBonus',
+    kDeclareWarDefaultStartOwMinorBonus,
+    'Declare-war bonus on any OW minor while at default observer start size.',
+  ),
+  victoryConfigIntParam(
+    'kDeclareWarStalledAnyOwMinorBonus',
+    kDeclareWarStalledAnyOwMinorBonus,
+    'Declare-war bonus toward any OW-holding minor while stalled.',
+  ),
 ];

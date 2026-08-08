@@ -244,11 +244,11 @@ domain packages and complementary to `repo.models_file_size` (500 NCL).
   the checker exits non-zero and reports that the entry must be removed from the
   allowlist.
 
-## colonizethis_data 500 non-comment-line gate (Refs #4072)
+## colonizethis_data 400 physical-line gate (Refs #4072, #4292)
 
 `colonizethis_data` holds ruleset constants and catalogs consumed by logic and
-AI, so it carries a **tighter 500 non-comment-line soft cap** under
-`repo.data_lib_file_size` (mirroring `repo.models_file_size`).
+AI, so it carries a **peer-aligned 400 physical-line soft cap** under
+`repo.data_lib_file_size` (mirroring economy/models/diplomacy packages).
 
 | Artifact | Role |
 |----------|------|
@@ -259,28 +259,26 @@ AI, so it carries a **tighter 500 non-comment-line soft cap** under
 
 - Walks `packages/colonizethis_data/lib/src/**` recursively; only `*.dart`.
 - Skips generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`,
-  `.gen.dart`) and the generated embed
-  `tech_effect_summary_embed.dart`.
-- **Failure threshold:** strictly greater than 500 non-comment lines fails
-  (500 inclusive passes), using `countNonCommentLinesFromSource`.
-- `dataFileSizeGrandfatheredForTests` is **empty** after the #4072 topic splits
-  (victory-config / tech catalog chunks / combat & naming catalogs).
+  `.gen.dart`) including `tech_effect_summary_embed.gen.dart`.
+- **Failure threshold:** strictly greater than 400 physical lines fails
+  (400 inclusive passes).
+- `dataFileSizeGrandfatheredForTests` is **empty** after the #4292 wave-5 splits.
 
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
   `runCheckDataLibFileSize`, then the checker exits zero because every
-  hand-written `colonizethis_data/lib/src` Dart file is at or below 500
-  non-comment lines.
+  hand-written `colonizethis_data/lib/src` Dart file is at or below 400
+  physical lines.
 
 - Given a temporary workspace whose only data source file is a hand-written
-  `packages/colonizethis_data/lib/src/huge.dart` with more than 500
-  non-comment lines and an empty grandfather list, when the System runs
+  `packages/colonizethis_data/lib/src/huge.dart` with more than 400
+  physical lines and an empty grandfather list, when the System runs
   `runCheckDataLibFileSize`, then the checker exits non-zero and names
   `huge.dart`.
 
 - Given a temporary workspace whose only data source file is
-  `tech_effect_summary_embed.dart` and exceeds 500 non-comment lines, when the
+  `tech_effect_summary_embed.gen.dart` and exceeds 400 physical lines, when the
   System runs `runCheckDataLibFileSize`, then the checker exits zero.
 
 ## app flame 600 non-comment-line gate (Refs #3878)

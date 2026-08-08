@@ -220,7 +220,7 @@ bool repoLintRepoWideDartCollectorShouldSkip(String relativePathFromRepo) {
   if (slash.endsWith('.g.dart') ||
       slash.endsWith('.freezed.dart') ||
       slash.endsWith('.mocks.dart') ||
-      slash.endsWith('tech_effect_summary_embed.dart')) {
+      slash.endsWith('.gen.dart')) {
     return true;
   }
   if (_repoLintSlashPathContainsFixtureMarker(slash)) {

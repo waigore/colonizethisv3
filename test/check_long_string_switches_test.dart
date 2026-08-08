@@ -82,7 +82,7 @@ $allowedCases
         (i) => "case 'excluded$i': return $i;",
       ).join('\n');
       File(
-        p.join(excludedDir.path, 'tech_effect_summary_embed.dart'),
+        p.join(excludedDir.path, 'tech_effect_summary_embed.gen.dart'),
       ).writeAsStringSync('''
 int g(String v) {
   switch (v) {
@@ -104,7 +104,7 @@ $excludedCases
       expect(code, 1);
       final out = [...warnings, ...errors].join('\n');
       expect(out, contains('allowed.dart'));
-      expect(out, isNot(contains('tech_effect_summary_embed.dart')));
+      expect(out, isNot(contains('tech_effect_summary_embed.gen.dart')));
     });
   });
 }

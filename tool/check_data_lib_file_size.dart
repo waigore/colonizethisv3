@@ -1,34 +1,24 @@
-// colonizethis_data non-comment line limit (`repo.data_lib_file_size`).
+// Physical line ratchet for colonizethis_data lib source (`repo.data_lib_file_size`).
 //
-// SPEC: SPEC/program/dart-file-non-comment-line-size.md (§ colonizethis_data
-// 500-line gate). Refs #4072.
-//
-// Complements the repository-wide `repo.dart_file_non_comment_line_size` (1000
-// NCL) so the #4072 topic splits (victory-config, tech catalog chunks, combat /
-// naming catalogs) cannot silently re-merge into kitchen-sink files.
+// Wave 5 (#4292) lowers the peer-aligned ceiling from 500 NCL to 400 physical
+// lines after topic splits. Generated suffixes are excluded.
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-import 'check_dart_file_non_comment_line_size.dart'
-    show countNonCommentLinesFromSource;
 import 'ct_repo_lint_scan_contract.dart';
 
-const _maxNonCommentLines = 500;
-
-final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
+/// Ratchet ceiling for wave-5 post-split target (≤400 physical lines).
+const int dataLibFileSizeCeiling = 400;
 
 const String _dataSrcRelDir = 'packages/colonizethis_data/lib/src';
 
-/// Generated embed skipped by the shared repo-wide collector; also out of scope
-/// for this package soft gate (Refs #4072).
-bool _isGeneratedEmbed(String relativePath) => relativePath
-    .replaceAll('\\', '/')
-    .endsWith('tech_effect_summary_embed.dart');
-
-/// Empty allowlist: every hand-written data `lib/src` file must stay ≤500 NCL.
-/// Override in tests via [grandfatheredPaths].
+/// Empty allowlist: every hand-written data `lib/src` file must stay ≤400 physical
+/// lines. Override in tests via [grandfatheredPaths].
 const List<String> dataFileSizeGrandfatheredForTests = <String>[];
+
+final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
 
 int runCheckDataLibFileSize(
   String repoRoot, {
@@ -36,6 +26,7 @@ int runCheckDataLibFileSize(
   Iterable<String>? grandfatheredPaths,
   void Function(String line)? info,
   void Function(String line)? err,
+  int ceiling = dataLibFileSizeCeiling,
 }) {
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
@@ -77,30 +68,27 @@ int runCheckDataLibFileSize(
     if (grandfathered.contains(relativePath)) {
       continue;
     }
-    if (_isGeneratedEmbed(relativePath)) {
+    final physicalLines = const LineSplitter()
+        .convert(file.readAsStringSync())
+        .length;
+    if (physicalLines <= ceiling) {
       continue;
     }
-    final nonCommentLines = countNonCommentLinesFromSource(
-      file.readAsStringSync(),
-    );
-    if (nonCommentLines <= _maxNonCommentLines) {
-      continue;
-    }
-    violations.add(
-      '$relativePath ($nonCommentLines non-comment lines > '
-      '$_maxNonCommentLines)',
-    );
+    violations.add('$relativePath ($physicalLines physical lines > $ceiling)');
   }
 
   if (violations.isEmpty) {
-    logI('check_data_lib_file_size: no violations found.');
+    logI(
+      'check_data_lib_file_size: no violations found '
+      '(ceiling $ceiling; Refs #4292).',
+    );
     return 0;
   }
 
   violations.sort();
   logE(
     'check_data_lib_file_size: found ${violations.length} violation(s) under '
-    '$_dataSrcRelDir (cap $_maxNonCommentLines non-comment lines):',
+    '$_dataSrcRelDir (wave-5 ceiling $ceiling; Refs #4292):',
   );
   for (final violation in violations) {
     logE(' - $violation');
@@ -142,7 +130,7 @@ List<String> _collectFilesToCheck(
   return results;
 }
 
-int maxDataLibFileNonCommentLinesForTests() => _maxNonCommentLines;
+int maxDataLibFilePhysicalLinesForTests() => dataLibFileSizeCeiling;
 
 void main(List<String> args) {
   final files = repoLintStrictIncrementalFilesArgListOrExit(args);
