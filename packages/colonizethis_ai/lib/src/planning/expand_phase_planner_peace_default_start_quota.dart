@@ -7,11 +7,12 @@ import 'expand_peace_frontier_helpers.dart';
 import 'planning_helpers.dart';
 import 'planning_imports.dart';
 
+export 'expand_phase_planner_peace_stalled_pass_predicate.dart'
+    show stalledOwExpansionNeedsPeacePass;
+
 import 'expand_phase_planner_gp_blocker_peace.dart';
 import 'expand_phase_planner_peace_default_start.dart'
-    show
-        defaultStartFutileMinorPeaceTargets,
-        defaultStartGpPeaceTargets;
+    show defaultStartGpPeaceTargets;
 import 'expand_phase_planner_peace_targets.dart';
 import 'expand_phase_planner_peer_peace.dart';
 
@@ -254,101 +255,3 @@ List<String> belowQuotaMultiMinorDistractionPeaceTargets({
   );
 }
 
-/// Returns `true` when at least one EXPAND-phase stalled-expansion
-/// peace decider would emit a non-empty target list under the given
-/// [game] / [snapshot] pair — the composite predicate used by the
-/// diplomacy planner's `offerPeace` passes and the
-/// `collectStalledGreatPowerPeaceTargets` public entry.
-///
-/// Canonical home (Refs #2509 S1) for the legacy
-/// `stalledOwExpansionNeedsPeacePass` composite predicate previously
-/// hosted in `diplomacy_planner_peace_targets.dart`. The composite
-/// OR-checks all 22 EXPAND-phase peace deciders in a fixed deterministic
-/// order identical to the order the current orchestrator evaluates
-/// them; any one decider returning a non-empty result is sufficient
-/// to signal that a stalled-expansion `offerPeace` pass is warranted.
-///
-/// `diplomacy_planner_peace_targets.dart` previously retained a thin delegating
-/// stub for the legacy `diplomacy_planner_stalled_peace_test.dart`
-/// fixture and the in-file `_expandRatchetGreatPowerPeaceTargets` /
-/// `stalledOwExpansionNeedsPeacePass` / `collectStalledGreatPowerPeaceTargets`
-/// / `supplementMutualStalledGreatPowerPeaceOrders` consumer chains
-/// until the now-completed S1 deletion of that file.
-///
-/// Pure and deterministic — identical inputs always yield identical
-/// output (Refs #2509 Must-have #7). Cost is bounded by the union
-/// of the individual decider costs.
-bool stalledOwExpansionNeedsPeacePass({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) =>
-    stalledStrongerGpBlockerPeaceTarget(game: game, snapshot: snapshot) !=
-        null ||
-    stalledFutileGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledGpBlockerFocusPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledExpansionDistractionPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    atWarGpDistractionTribePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    multiFrontNonBlockerGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalMultiFrontGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalWeakGpSurvivalPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    weakHoldingsInvadableBlockerPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    mutualZeroRegimentGpStalematePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledZeroRegimentAllFactionPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    stalledZeroRegimentGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    mutualExhaustedBelowQuotaGpStalematePeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    criticalOwHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    stalledBelowQuotaGpLeadPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    belowQuotaPeerGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    defaultStartGpPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    defaultStartFutileMinorPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    nearQuotaHoldPeaceTargets(game: game, snapshot: snapshot).isNotEmpty ||
-    quotaMetBelowQuotaAtWarPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    quotaMetFutileBelowQuotaGpPeaceTargets(
-      game: game,
-      snapshot: snapshot,
-    ).isNotEmpty ||
-    unwinnableSoleGpFrontierPeaceTarget(game: game, snapshot: snapshot) !=
-        null ||
-    consolidateGainsSoleGpPeaceTarget(game: game, snapshot: snapshot) != null;

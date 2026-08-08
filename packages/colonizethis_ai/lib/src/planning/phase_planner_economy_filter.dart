@@ -85,12 +85,11 @@ import 'phase_planner_dispatch.dart';
 import 'phase_priority_weights.dart';
 import 'planning_helpers.dart'
     show
-        clampPhaseWeightUpperUnit,
-        resolvePhaseNewWorldAcquisitionWeight,
-        resolvePhaseNewWorldCivilianWeight,
-        resolvePhaseOldWorldCivilianWeight;
+        resolvePhaseNewWorldAcquisitionWeight;
+import 'phase_planner_economy_filter_caps.dart';
 import 'phase_planner_economy_filter_expand.dart';
 
+export 'phase_planner_economy_filter_caps.dart';
 export 'phase_planner_economy_filter_expand.dart';
 
 /// When `true`, `_runEconomyDomainPlanners` lowers the civilian work
@@ -221,143 +220,3 @@ int? resolvePhaseEconomyColonialBuildOrderThresholdCap({
 double resolvePhaseEconomyColonialPressureWeight({
   required PhasePlanOutcome phasePlan,
 }) => resolvePhaseNewWorldAcquisitionWeight(phasePlan);
-
-/// Returns the economy-pass civilian-work threshold cap scaled by the
-/// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
-/// civilian-work threshold cap wiring).
-///
-/// `_runEconomyDomainPlanners` consumes this helper as the production
-/// source of truth for the colonial-pressure civilian-work threshold
-/// cap that previously activated as a hard
-/// `workThreshold = min(workThreshold, kColonialCivilianWorkThresholdCap)`
-/// step under the boolean [resolvePhaseEconomyColonialPressureActive].
-/// The new helper interpolates the cap linearly from the uncapped
-/// threshold (no cap) down to [kColonialCivilianWorkThresholdCap] as
-/// [colonialPressureWeight] rises, so the civilian-work bar tracks the
-/// soft-phase NW acquisition priority instead of stepping on/off at the
-/// EXPAND→COLONIAL boundary:
-///
-/// - `colonialPressureWeight <= 0.0` returns [uncappedThreshold] (no cap
-///   applied — legacy `colonialPressure: false` equivalent; the civilian
-///   work bar keeps whatever value the spy-modifier base produced).
-/// - `colonialPressureWeight == 1.0` returns
-///   [kColonialCivilianWorkThresholdCap] exactly — identity-equal to the
-///   legacy COLONIAL hard-phase cap.
-/// - Intermediate `colonialPressureWeight` values return
-///   `round(uncappedThreshold - (uncappedThreshold -
-///   kColonialCivilianWorkThresholdCap) × colonialPressureWeight)`,
-///   matching the continuous-scale contract used by the conquest
-///   army-move floor, the naval colonial-pressure bonus/floor, the
-///   goal-score floors, and the economy build-pick cargo bonus
-///   (`SPEC/ai/phase-planner-architecture.md` § Phase 3 consumer
-///   wiring).
-///
-/// At the early-sprint default curve (`newWorldAcquisition = 0.05` for
-/// `oldWorldProvincesOwned <= 7`) with the default `uncappedThreshold`
-/// of `40`, the cap collapses to `round(40 - 28 × 0.05) = 39` — a
-/// one-point relaxation that leaves the OW conquest sprint civilian/build
-/// balance essentially unchanged. At the resource-need override floor
-/// (`newWorldAcquisition = 0.60`, the EXPAND geographic peer-war lock
-/// recovery weight per § Resource-need overrides) the cap reaches
-/// `round(40 - 28 × 0.60) = 23`, lowering the civilian-work bar so
-/// colonial Builder / Merchant work can engage while a locked GP is still
-/// in EXPAND.
-///
-/// The orchestrator applies `math.min(workThreshold, <result>)` so a base
-/// threshold already at or below [kColonialCivilianWorkThresholdCap]
-/// (after a large spy modifier) is never raised by this helper.
-///
-/// Pure and deterministic — identical
-/// `(colonialPressureWeight, uncappedThreshold)` inputs always yield
-/// identical `int` results (Refs #2509 Must-have #7). Performs no I/O,
-/// no logging, no order emission. The function is a projection of two
-/// scalar inputs and never reads `PhasePlanOutcome`, snapshot, or `Game`
-/// state.
-int economyColonialPressureCivilianWorkThresholdCap({
-  required double colonialPressureWeight,
-  required int uncappedThreshold,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return uncappedThreshold;
-  }
-  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
-  final span = uncappedThreshold - kColonialCivilianWorkThresholdCap;
-  return (uncappedThreshold - span * clamped).round();
-}
-
-/// Returns the economy-pass build-order threshold cap scaled by the
-/// soft-phase NW acquisition weight (Refs #2847 Phase 3 economy
-/// build-order threshold cap wiring).
-///
-/// `_appendEconomyBuildOrders` consumes this helper (via
-/// [resolvePhaseEconomyColonialBuildOrderThresholdCap]) as the
-/// production source of truth for the colonial build-order threshold
-/// cap that previously activated as a hard
-/// `buildThreshold = min(buildThreshold,
-/// kColonialBuildOrderThresholdWhenOwnedNwUnderPressure)` step only
-/// under the boolean [resolvePhaseEconomyColonialPressureActive]:
-///
-/// - `colonialPressureWeight <= 0.0` returns `null` (no cap applied —
-///   legacy hard-suppress / EXPAND equivalent).
-/// - `colonialPressureWeight == 1.0` returns
-///   [kColonialBuildOrderThresholdWhenOwnedNwUnderPressure] exactly —
-///   identity-equal to the legacy COLONIAL hard cap.
-/// - Intermediate weights return
-///   `round(kColonialBuildOrderThresholdWhenOwnedNwUnderPressure ×
-///   colonialPressureWeight)` with the weight clamped to `[0.0, 1.0]`.
-///
-/// The orchestrator applies the result only when
-/// `colonial.newWorldProvincesOwned > 0` (tagalong unchanged).
-///
-/// Pure and deterministic (Refs #2509 Must-have #7). Performs no I/O,
-/// no logging, no order emission.
-int? economyColonialPressureBuildOrderThresholdCap({
-  required double colonialPressureWeight,
-}) {
-  if (colonialPressureWeight <= 0.0) {
-    return null;
-  }
-  final clamped = clampPhaseWeightUpperUnit(colonialPressureWeight);
-  return (kColonialBuildOrderThresholdWhenOwnedNwUnderPressure * clamped)
-      .round();
-}
-
-/// Advisory `[0.0, 1.0]` multiplier for the OW civilian-work bias
-/// (build / improvement / population orders on OW-owned land)
-/// sourced from [PhasePriorityWeights.oldWorldCivilian] (Refs #2847
-/// Phase 2 scaffolding).
-///
-/// Pairs with [resolvePhaseEconomyNewWorldCivilianWeight] to form the
-/// OW/NW civilian weight pair that future Phase 3 consumer wiring
-/// will multiply into the build-pipeline scoring. The boolean
-/// [resolvePhaseEconomyDevelopActive] remains the production source
-/// of truth for the DEVELOP threshold-cap / force-on civilian
-/// decisions in this slice.
-///
-/// Pure and deterministic (Refs #2509 Must-have #7). Reads only
-/// `phasePlan.priorityWeights`.
-double resolvePhaseEconomyOldWorldCivilianWeight({
-  required PhasePlanOutcome phasePlan,
-}) => resolvePhaseOldWorldCivilianWeight(phasePlan);
-
-/// Advisory `[0.0, 1.0]` multiplier for the NW civilian-work bias
-/// (build / improvement / population orders on NW-owned land)
-/// sourced from [PhasePriorityWeights.newWorldCivilian] (Refs #2847
-/// Phase 2 scaffolding).
-///
-/// Companion of [resolvePhaseEconomyOldWorldCivilianWeight]. The
-/// existing tag-along condition `snapshot.colonial.newWorldProvincesOwned > 0`
-/// at the orchestrator call sites remains the structural gate in
-/// this slice — Phase 3 wiring will fold the NW civilian weight into
-/// the build-pipeline weighting where appropriate.
-///
-/// Pure and deterministic (Refs #2509 Must-have #7).
-double resolvePhaseEconomyNewWorldCivilianWeight({
-  required PhasePlanOutcome phasePlan,
-}) => resolvePhaseNewWorldCivilianWeight(phasePlan);
-
-/// Resource-need override predicate (Refs #2847 § Resource-need overrides).
-///
-/// True when treasury recovery cargo is active, the GP owns no NW
-/// provinces, and cash treasury is exactly zero — the same triple that
-/// lifts `newWorldAcquisition` to [kPhasePriorityNwTreasuryRecoveryFloor].

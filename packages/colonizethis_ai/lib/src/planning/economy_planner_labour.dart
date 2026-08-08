@@ -2,10 +2,15 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 
 import 'ai_commodity_ids.dart';
 import 'economy_planner_constants.dart';
+import 'economy_planner_labour_fabric_prepass.dart';
+import 'economy_planner_labour_feedstock.dart';
 import 'growth_stage.dart';
 import 'planning_imports.dart';
 import 'recipe_scoring.dart';
 import 'scored_candidate.dart';
+
+export 'economy_planner_labour_feedstock.dart'
+    show multiInputImprovementOutputs;
 
 final _log = packageLogger('economy_planner_labour');
 
@@ -118,13 +123,11 @@ List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
   // recipes the GP is actively producing (Refs #2847 H8-extraction feedstock
   // co-availability). Empty when no such recipe is targeted, in which case
   // feasibility falls back to the unreduced stockpile (behaviour-equal).
-  final feedstockReserve = _feedstockReserveForOutputs(
-    feedstockReserveOutputIds,
-  );
+  final feedstockReserve = feedstockReserveForOutputs(feedstockReserveOutputIds);
   final labourByRecipe = <String, int>{};
 
   if (castIronLabourPeasantRecruitFabricBoost) {
-    _assignCastIronLabourFabricPrePass(
+    assignCastIronLabourFabricPrePass(
       virtual: virtual,
       remainingLabour: remainingLabour,
       feedstockReserve: feedstockReserve,
@@ -163,7 +166,7 @@ List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
         ? virtual
-        : _stockpileWithReserve(virtual, feedstockReserve);
+        : stockpileWithFeedstockReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
       stockpile: feasibilityStock,
@@ -220,7 +223,7 @@ List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
     final feasibilityStock =
         feedstockReserveOutputIds.contains(recipe.outputCommodityId)
         ? virtual
-        : _stockpileWithReserve(virtual, feedstockReserve);
+        : stockpileWithFeedstockReserve(virtual, feedstockReserve);
     final runs = feasibleRuns(
       recipe: recipe,
       stockpile: feasibilityStock,
@@ -253,130 +256,6 @@ List<AssignedRecipe> allocateLabour(LabourAllocationInput input) {
     );
   }
   return result;
-}
-
-/// Assigns the lowest-`id` feasible fabric recipe before the general greedy
-/// pass when the castIron-labour peasant-recruit fabric path is active, so
-/// scarce effective labour is not consumed by competing boosted recipes
-/// (`castIron`, `lumber`) on the same turn (Refs #2847).
-void _assignCastIronLabourFabricPrePass({
-  required Stockpile virtual,
-  required int remainingLabour,
-  required Map<CommodityId, int> feedstockReserve,
-  required Set<String> feedstockReserveOutputIds,
-  required Map<String, int> labourByRecipe,
-  required void Function(Stockpile virtual, int remainingLabour) onStateUpdated,
-  Map<String, bool>? techUnlocked,
-}) {
-  final fabricId = kAiCommodityIds.fabric;
-  final fabricRecipes = ProductionRecipesCatalog.producing(fabricId).toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  var nextVirtual = virtual;
-  var nextRemainingLabour = remainingLabour;
-  for (final recipe in fabricRecipes) {
-    // Tech-locked fabric recipes (e.g. `fabric_from_cotton` without
-    // `cotton_weaving`) are not assignable. Refs #3470 Slice C.
-    if (!ProductionRecipesCatalog.isRecipeAvailableForPlayer(
-      recipe,
-      techUnlocked,
-    )) {
-      continue;
-    }
-    if (nextRemainingLabour < recipe.labourPerOutput) continue;
-    final feasibilityStock =
-        feedstockReserveOutputIds.contains(recipe.outputCommodityId)
-        ? nextVirtual
-        : _stockpileWithReserve(nextVirtual, feedstockReserve);
-    final runs = feasibleRuns(
-      recipe: recipe,
-      stockpile: feasibilityStock,
-      remainingLabour: nextRemainingLabour,
-    );
-    if (runs <= 0) continue;
-    final labourUsed = runs * recipe.labourPerOutput;
-    labourByRecipe[recipe.id] = (labourByRecipe[recipe.id] ?? 0) + labourUsed;
-    nextRemainingLabour -= labourUsed;
-    for (final entry in recipe.inputQuantities.entries) {
-      nextVirtual = nextVirtual.applyDelta(entry.key, -entry.value * runs);
-    }
-    nextVirtual = nextVirtual.applyDelta(
-      recipe.outputCommodityId,
-      recipe.outputQuantity * runs,
-    );
-    onStateUpdated(nextVirtual, nextRemainingLabour);
-    return;
-  }
-}
-
-/// The subset of [outputIds] whose lowest-`id` producing recipe consumes more
-/// than one distinct input commodity (Refs #2847 § H8-extraction feedstock
-/// co-availability; S7-D lumber re-localization). Only these multi-input
-/// outputs (e.g. `castIron` from `timber` + `iron`) can have a competing
-/// single-input recipe drain their partial feedstock, so only they need a
-/// feedstock reserve. Single-input outputs (e.g. `lumber` from `timber`) are
-/// excluded: reserving their feedstock would needlessly withhold it and, by
-/// marking them reserve targets, defeat the reserve they are meant to respect.
-/// Deterministic over the static `ProductionRecipesCatalog`; returns the empty
-/// set when [outputIds] is empty so feasibility falls back to the unreduced
-/// stockpile (behaviour-equal).
-Set<String> multiInputImprovementOutputs(Set<String> outputIds) {
-  if (outputIds.isEmpty) return const <String>{};
-  final result = <String>{};
-  for (final outputId in outputIds) {
-    final recipe = _lowestIdRecipeProducingOutput(outputId);
-    if (recipe == null) continue;
-    if (recipe.inputQuantities.length > 1) result.add(outputId);
-  }
-  return result;
-}
-
-/// The production recipe with the lowest `id` whose output is [outputId], or
-/// `null` when no recipe produces it. Deterministic over the static
-/// `ProductionRecipesCatalog`; uses the O(1) `producing` index instead of an
-/// O(recipes) full-catalog scan (Refs #3288 step 5).
-ProductionRecipe? _lowestIdRecipeProducingOutput(String outputId) {
-  ProductionRecipe? best;
-  for (final recipe in ProductionRecipesCatalog.producing(outputId)) {
-    if (best == null || recipe.id.compareTo(best.id) < 0) best = recipe;
-  }
-  return best;
-}
-
-/// One production run's input requirements for each output id in
-/// [outputIds], summed across outputs. Used to reserve the multi-input
-/// feedstock (`timber` + `iron` for `castIron`) a domestically-produced
-/// improvement input needs so single-input competitors (`lumber_from_timber`)
-/// cannot drain it before the multi-input recipe accumulates a full run
-/// (Refs #2847 H8-extraction feedstock co-availability). Deterministic: the
-/// lowest-`id` recipe is chosen per output via the O(1) `producing` index
-/// (Refs #3288 step 5) and reserve accumulation is order-independent. Returns
-/// an empty map when [outputIds] is empty.
-Map<CommodityId, int> _feedstockReserveForOutputs(Set<String> outputIds) {
-  if (outputIds.isEmpty) return const {};
-  final reserve = <CommodityId, int>{};
-  for (final out in outputIds) {
-    final recipe = _lowestIdRecipeProducingOutput(out);
-    if (recipe == null) continue;
-    for (final entry in recipe.inputQuantities.entries) {
-      reserve[entry.key] = (reserve[entry.key] ?? 0) + entry.value;
-    }
-  }
-  return reserve;
-}
-
-/// [base] with each [reserve] quantity withheld (clamped at zero). The
-/// reserved feedstock is invisible to non-target recipes so they cannot
-/// consume it (Refs #2847 H8-extraction feedstock co-availability). Returns
-/// [base] unchanged when [reserve] is empty.
-Stockpile _stockpileWithReserve(Stockpile base, Map<CommodityId, int> reserve) {
-  if (reserve.isEmpty) return base;
-  var adjusted = base;
-  for (final entry in reserve.entries) {
-    final have = adjusted.quantityOf(entry.key);
-    final reduce = entry.value < have ? entry.value : have;
-    if (reduce > 0) adjusted = adjusted.applyDelta(entry.key, -reduce);
-  }
-  return adjusted;
 }
 
 bool _isMilitaryInputRecipe(ProductionRecipe recipe) {
