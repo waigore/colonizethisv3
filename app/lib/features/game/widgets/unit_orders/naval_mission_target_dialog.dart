@@ -41,6 +41,10 @@ class _NavalMissionTargetDialogState
   }
 
   @override
+  String? get moveDialogCaption =>
+      navalMissionTargetCaption(appL10n(context), widget.mission);
+
+  @override
   bool get moveDialogHasDestinations => widget.targetProvinceIds.isNotEmpty;
 
   @override
