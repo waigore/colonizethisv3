@@ -22,10 +22,16 @@
 | +----------------------------------------------+ |
 | | Assign mission — Fleet <id>                  | |  title (`naval_mission_menuTitle`)
 | +----------------------------------------------+ |
-| |  Patrol                                      | |  ListTile per enabled mission
+| |  Patrol                                      | |  mission row: title + effect line
+| |    Stay here and try to intercept…           | |  (`naval_mission_effect_patrol`)
 | |  Defend                                      | |
-| |  Blockade          (subtitle when disabled)    | |
-| |  Beachhead         (subtitle when disabled)    | |
+| |    Stay in place without seeking combat…     | |
+| |  Blockade                                    | |
+| |    Stronger intercept chance…                | |
+| |    No adjacent provinces owned by…         | |  disabled reason when gated
+| |  Beachhead                                   | |
+| |    Stage a landing site…                     | |
+| |    No hostile coastal provinces…             | |
 | |  Cancel pending mission                      | |  when draft mission exists
 | +----------------------------------------------+ |
 | |                              [ Cancel ]      | |  CtNinePatchButton
@@ -33,7 +39,8 @@
 ```
 
 - Empty missions: body shows `naval_mission_noMissionsAvailable`; Cancel still dismisses.
-- Disabled missions render with `subtitle` = plain-language `disabledReason`; `onTap` is null.
+- Every mission row shows its display name and a muted **effect line** from `naval_mission_effect_<mission>` (Refs #4295). Effect lines render for both enabled and disabled missions.
+- Disabled missions also render `disabledReason` below the effect line; `onTap` is null.
 - Patrol / Defend confirm immediately on row tap (no target picker).
 
 ---
@@ -76,13 +83,14 @@ Folder `Naval Mission Menu Dialog`:
 
 | Use case | Proves |
 |----------|--------|
-| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade disabled (no war). |
+| Default — patrol available | At-sea fleet; Patrol/Defend enabled; Blockade/Beachhead disabled (no war); each row shows `naval_mission_effect_<mission>` (Refs #4295). |
 
 ---
 
 ## Acceptance criteria
 
 - **Given** an at-sea non-Home fleet with `navalMissionAvailabilityForFleet.baseGatesPass == true`, **when** `NavalMissionMenuDialog` opens, **then** the UI layer lists Patrol and Defend as enabled rows and titles the dialog `naval_mission_menuTitle(fleetLabel)`.
-- **Given** no factions at war with the player, **when** the menu renders Blockade, **then** the Blockade `ListTile` has `enabled == false` and a non-null disabled-reason subtitle.
+- **Given** an at-sea non-Home fleet with `navalMissionAvailabilityForFleet.baseGatesPass == true`, **when** `NavalMissionMenuDialog` opens, **then** each of Patrol, Defend, Blockade, and Beachhead shows its display name and a non-empty `naval_mission_effect_<mission>` line (Refs #4295).
+- **Given** no factions at war with the player, **when** the menu renders Blockade, **then** the Blockade row has `enabled == false`, shows `naval_mission_effect_blockade`, and a non-null disabled-reason line.
 - **Given** a pending `NavalMissionOrder` for the fleet, **when** the menu opens, **then** the UI layer shows **Cancel pending mission** and tapping it pops `NavalMissionMenuChoiceCancelPending`.
 - **Given** the user taps **Cancel**, **when** the gesture completes, **then** the dialog is removed and no `NavalMissionRequestedEvent` or `NavalMissionCancelRequestedEvent` is emitted from this dialog step.

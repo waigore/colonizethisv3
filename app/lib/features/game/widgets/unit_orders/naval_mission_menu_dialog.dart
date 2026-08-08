@@ -165,11 +165,14 @@ class NavalMissionMenuDialog extends StatelessWidget {
   }
 
   Widget _missionRow(BuildContext context, NavalMissionOption option) {
+    final l10n = appL10n(context);
     final label = navalMissionMenuLabel(option.mission);
+    final effectLine = navalMissionEffectLine(l10n, option.mission);
     return _menuActionRow(
       context: context,
       label: label,
-      subtitle: option.disabledReason,
+      effectLine: effectLine,
+      disabledReason: option.disabledReason,
       enabled: option.isEnabled,
       onTap: option.isEnabled
           ? () => Navigator.pop(
@@ -183,11 +186,13 @@ class NavalMissionMenuDialog extends StatelessWidget {
   Widget _menuActionRow({
     required BuildContext context,
     required String label,
-    String? subtitle,
+    String? effectLine,
+    String? disabledReason,
     required bool enabled,
     required VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
+    final mutedStyle = moveDialogEmptyTextStyle(theme);
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),
       child: InkWell(
@@ -213,12 +218,13 @@ class NavalMissionMenuDialog extends StatelessWidget {
                     label,
                     style: moveDialogRowLabelStyle(theme, selected: false),
                   ),
-                  if (subtitle != null) ...[
+                  if (effectLine != null && effectLine.isNotEmpty) ...[
                     const SizedBox(height: CtSpacing.xs),
-                    Text(
-                      subtitle,
-                      style: moveDialogEmptyTextStyle(theme),
-                    ),
+                    Text(effectLine, style: mutedStyle),
+                  ],
+                  if (disabledReason != null) ...[
+                    const SizedBox(height: CtSpacing.xs),
+                    Text(disabledReason, style: mutedStyle),
                   ],
                 ],
               ),

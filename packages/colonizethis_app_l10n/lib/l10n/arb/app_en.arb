@@ -1965,6 +1965,30 @@
   "@naval_mission_noTargetsAvailable": {
     "description": "Empty target picker for blockade/beachhead."
   },
+  "naval_mission_effect_patrol": "Stay here and try to intercept hostile fleets moving through this sea zone.",
+  "@naval_mission_effect_patrol": {
+    "description": "Plain-language effect line for Patrol mission row (DLG31001)."
+  },
+  "naval_mission_effect_defend": "Stay in place without seeking combat; you can still be attacked or pulled into a fight.",
+  "@naval_mission_effect_defend": {
+    "description": "Plain-language effect line for Defend mission row (DLG31001)."
+  },
+  "naval_mission_effect_blockade": "Stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
+  "@naval_mission_effect_blockade": {
+    "description": "Plain-language effect line for Blockade mission row (DLG31001)."
+  },
+  "naval_mission_effect_beachhead": "Stage a landing site so your armies can invade that coast next turn; marker then expires.",
+  "@naval_mission_effect_beachhead": {
+    "description": "Plain-language effect line for Beachhead mission row (DLG31001)."
+  },
+  "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
+  "@naval_mission_targetCaption_blockade": {
+    "description": "Mission consequence caption on Blockade target picker (DLG31002)."
+  },
+  "naval_mission_targetCaption_beachhead": "Landing site supports invasion on the following turn and expires after that turn if unused.",
+  "@naval_mission_targetCaption_beachhead": {
+    "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
+  },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
     "description": "Empty-state line for fleet with no ships."

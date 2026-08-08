@@ -74,6 +74,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Blockade'), findsOneWidget);
+      expect(
+        find.text(
+          'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text('No adjacent provinces owned by factions at war'),
+        findsOneWidget,
+      );
       final blockadeInkWell = tester.widget<InkWell>(
         find.ancestor(
           of: find.text('Blockade'),
@@ -81,6 +91,54 @@ void main() {
         ),
       );
       expect(blockadeInkWell.onTap, isNull);
+    });
+
+    testWidgets('menu shows effect line for every mission', (tester) async {
+      final game = buildNavalPanelNamedSeaZoneGame();
+      final fleet = game.worldState.fleets.single;
+      final availability = navalMissionAvailabilityForFleet(
+        game: game,
+        topology: const MapTopology(),
+        playerId: 'gp_named_sea',
+        fleet: fleet,
+        currentOrders: const Orders(),
+      );
+
+      await tester.pumpWidget(
+        buildAppShell(
+          child: NavalMissionMenuDialog(
+            game: game,
+            fleet: fleet,
+            availability: availability,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Stay here and try to intercept hostile fleets moving through this sea zone.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Stay in place without seeking combat; you can still be attacked or pulled into a fight.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Stage a landing site so your armies can invade that coast next turn; marker then expires.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('cancel pending removes draft mission', (tester) async {
@@ -114,7 +172,10 @@ void main() {
 
       await tester.tap(find.byKey(kCtE2EFleetMissionActionKey));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel pending mission'));
+      final cancelPending = find.text('Cancel pending mission');
+      await tester.ensureVisible(cancelPending);
+      await tester.pumpAndSettle();
+      await tester.tap(cancelPending);
       await tester.pumpAndSettle();
 
       expect(orders.navalMissionOrdersByPlayerId[humanId], isEmpty);

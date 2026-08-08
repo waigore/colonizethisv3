@@ -38,6 +38,10 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
   /// Invoked when the user taps Cancel.
   void onMoveDialogCancel();
 
+  /// Optional muted caption rendered under the title (e.g. mission consequence
+  /// copy on naval target picker). Default `null`.
+  String? get moveDialogCaption => null;
+
   /// Composes the shared `CtDialogShell` scaffold. Subclasses return this
   /// from their `build`.
   Widget buildMoveDialogScaffold(BuildContext context) {
@@ -51,6 +55,10 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(moveDialogTitle, style: titleStyle),
+        if (moveDialogCaption != null) ...[
+          const SizedBox(height: CtSpacing.s),
+          Text(moveDialogCaption!, style: emptyStyle),
+        ],
         const SizedBox(height: CtSpacing.ml),
         if (!moveDialogHasDestinations)
           Text(moveDialogEmptyText, style: emptyStyle)

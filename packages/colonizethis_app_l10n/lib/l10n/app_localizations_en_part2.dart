@@ -556,6 +556,30 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
       'No legal targets for this mission.';
 
   @override
+  String get naval_mission_effect_patrol =>
+      'Stay here and try to intercept hostile fleets moving through this sea zone.';
+
+  @override
+  String get naval_mission_effect_defend =>
+      'Stay in place without seeking combat; you can still be attacked or pulled into a fight.';
+
+  @override
+  String get naval_mission_effect_blockade =>
+      'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
+
+  @override
+  String get naval_mission_effect_beachhead =>
+      'Stage a landing site so your armies can invade that coast next turn; marker then expires.';
+
+  @override
+  String get naval_mission_targetCaption_blockade =>
+      'Pressures the target port approaches with stronger interception than Patrol.';
+
+  @override
+  String get naval_mission_targetCaption_beachhead =>
+      'Landing site supports invasion on the following turn and expires after that turn if unused.';
+
+  @override
   String get naval_units_noShipsInFleet => 'No ships in this fleet';
 
   @override
