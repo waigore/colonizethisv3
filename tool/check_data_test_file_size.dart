@@ -7,11 +7,11 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-const int dataTestFileSizeCeiling = 500;
+const int dataTestFileSizeCeiling = 400;
 
 const String _dataTestsRelDir = 'packages/colonizethis_data/test';
 
-/// Empty allowlist: every data test file must stay ≤500 physical lines.
+/// Empty allowlist: every data test file must stay ≤400 physical lines.
 /// Override in tests via [grandfatheredPaths].
 const List<String> dataTestFileSizeGrandfatheredForTests = <String>[];
 

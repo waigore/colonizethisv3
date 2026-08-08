@@ -13,7 +13,7 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckDataTestFileSize', () {
-    test('passes on current repo tree under 500 physical-line ceiling', () {
+    test('passes on current repo tree under 400 physical-line ceiling', () {
       expect(runCheckDataTestFileSize('.'), 0);
     });
 

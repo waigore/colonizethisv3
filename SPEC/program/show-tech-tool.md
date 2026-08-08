@@ -45,8 +45,8 @@
 ## Maintenance: tech effect copy and ARB
 
 - After editing `packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml`, run `dart tool/generate_tech_effect_l10n.dart` from the repo root, then `cd packages/colonizethis_app_l10n && flutter gen-l10n`, so `packages/colonizethis_app_l10n/lib/l10n/arb/app_en.arb`, `tech_effect_summary_lookup.dart`, and its generated `tech_effect_summary_lookup_entries_*.dart` parts stay aligned with the YAML.
-- If the YAML file alone changes, refresh the embed with `dart tool/embed_tech_effect_summary.dart` (or re-run the flow that regenerates `tech_effect_summary_embed.dart`).
+- If the YAML file alone changes, refresh the embed with `dart tool/embed_tech_effect_summary.dart` (or re-run the flow that regenerates `tech_effect_summary_embed.gen.dart`).
 
 ## CI: long string switches
 
-- **Given** a Dart `switch` (statement or expression) whose case patterns are **string literals**, **when** the analyzer-based check `dart tool/check_long_string_switches.dart` runs in CI, **then** the job **warns** if such cases count ≥ 20 and **fails** if they count ≥ 50 (other switches are ignored). Scope: all `.dart` files under the repo except generated paths (e.g. `*.g.dart`, `tech_effect_summary_embed.dart`).
+- **Given** a Dart `switch` (statement or expression) whose case patterns are **string literals**, **when** the analyzer-based check `dart tool/check_long_string_switches.dart` runs in CI, **then** the job **warns** if such cases count ≥ 20 and **fails** if they count ≥ 50 (other switches are ignored). Scope: all `.dart` files under the repo except generated paths (e.g. `*.g.dart`, `*.gen.dart`).

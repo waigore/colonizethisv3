@@ -3,7 +3,7 @@
 
 import 'package:yaml/yaml.dart';
 
-import 'tech_effect_summary_embed.dart';
+import 'tech_effect_summary_embed.gen.dart';
 
 /// Tech ids that have at least one authored effect-summary line in YAML `by_tech`.
 Iterable<String> get techEffectSummaryAuthoredTechIds =>
