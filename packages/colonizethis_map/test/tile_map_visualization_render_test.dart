@@ -11,7 +11,7 @@ import 'tile_map_visualization_test_fixtures.dart';
 void main() {
   group('renderTileMapToPng', () {
     test('returns non-empty PNG bytes', () {
-      final bytes = renderTileMapToPng(
+      final bytes = renderTileMapPngBytes(
         visualizationSmallResult,
         visualizationTopology,
         cellSize: 4,
@@ -22,12 +22,10 @@ void main() {
 
     test('decoded image has expected dimensions (map + legend)', () {
       const cellSize = 8;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationSmallResult,
-          visualizationTopology,
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationSmallResult,
+        visualizationTopology,
+        cellSize: cellSize,
       );
       expect(decoded.width, 32);
       expect(decoded.height, greaterThanOrEqualTo(24));
@@ -37,12 +35,10 @@ void main() {
       'dimensions with terrain: width and height match map + terrain legend',
       () {
         const cellSize = 8;
-        final decoded = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-          ),
+        final decoded = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
         );
         final mapW = visualizationResultWithTerrain.width * cellSize;
         final mapH = visualizationResultWithTerrain.height * cellSize;
@@ -55,12 +51,10 @@ void main() {
 
     test('sea cell color: center pixel of sea cell is deep blue', () {
       const cellSize = 24;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationResultWithTerrain,
-          visualizationTopology,
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationResultWithTerrain,
+        visualizationTopology,
+        cellSize: cellSize,
       );
       final (x, y) = cellCenterPixel(1, 1, cellSize);
       expectPixelNearRgb(decoded, x, y, visualizationSeaRgb);
@@ -68,12 +62,10 @@ void main() {
 
     test('land terrain color: center pixel of plains cell matches palette', () {
       const cellSize = 8;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationResultWithTerrain,
-          visualizationTopology,
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationResultWithTerrain,
+        visualizationTopology,
+        cellSize: cellSize,
       );
       final (x, y) = cellCenterPixel(0, 0, cellSize);
       expectPixelNearRgb(decoded, x, y, visualizationPlainsRgb);
@@ -81,12 +73,10 @@ void main() {
 
     test('border pixel is black between different region ids (land border)', () {
       const cellSize = 8;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationResultWithTerrain,
-          visualizationTopology,
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationResultWithTerrain,
+        visualizationTopology,
+        cellSize: cellSize,
       );
       final pixel = decoded.getPixel(2 * cellSize, cellSize ~/ 2);
       expect(pixel.r, lessThanOrEqualTo(5));
@@ -96,12 +86,10 @@ void main() {
 
     test('sea zone border is light blue when two sea zones are adjacent', () {
       const cellSize = 8;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          mapTileGrid([['s1', 's2']]),
-          twoAdjacentSeaZonesTopology('oldWorld'),
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        mapTileGrid([['s1', 's2']]),
+        twoAdjacentSeaZonesTopology('oldWorld'),
+        cellSize: cellSize,
       );
       expectPixelNearRgb(
         decoded,
@@ -115,12 +103,10 @@ void main() {
       'legend height with terrain: total height = map + terrain legend lines',
       () {
         const cellSize = 8;
-        final decoded = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-          ),
+        final decoded = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
         );
         final mapH = visualizationResultWithTerrain.height * cellSize;
         final legendLines = 2 + 1 + TerrainType.values.length;
@@ -129,12 +115,10 @@ void main() {
     );
 
     test('fallback no terrain: valid PNG, region dimensions, no throw', () {
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationSmallResult,
-          visualizationTopology,
-          cellSize: 8,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationSmallResult,
+        visualizationTopology,
+        cellSize: 8,
       );
       expect(decoded.width, 32);
       expect(decoded.height, greaterThanOrEqualTo(24));
@@ -144,13 +128,11 @@ void main() {
       'with landSeedPositions only (no continent indices): single Land seeds legend row',
       () {
         const cellSize = 8;
-        final decoded = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationSmallResult,
-            visualizationTopology,
-            cellSize: cellSize,
-            landSeedPositions: [(0, 0), (1, 1)],
-          ),
+        final decoded = decodeRenderTileMapToPng(
+          visualizationSmallResult,
+          visualizationTopology,
+          cellSize: cellSize,
+          landSeedPositions: [(0, 0), (1, 1)],
         );
         expect(
           decoded.height,
@@ -164,18 +146,16 @@ void main() {
       'with landSeedPositions: marker at cell center and extra legend row',
       () {
         const cellSize = 8;
-        final bytesWithout = renderTileMapToPng(
+        final bytesWithout = renderTileMapPngBytes(
           visualizationSmallResult,
           visualizationTopology,
           cellSize: cellSize,
         );
-        final decodedWith = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationSmallResult,
-            visualizationTopology,
-            cellSize: cellSize,
-            landSeedPositions: [(0, 0), (1, 1)],
-          ),
+        final decodedWith = decodeRenderTileMapToPng(
+          visualizationSmallResult,
+          visualizationTopology,
+          cellSize: cellSize,
+          landSeedPositions: [(0, 0), (1, 1)],
         );
         expect(
           decodedWith.height,
@@ -191,20 +171,16 @@ void main() {
       'with continentSeedPositions only: extra legend row for continent seeds',
       () {
         const cellSize = 8;
-        final decodedWith = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-            continentSeedPositions: [(0, 0)],
-          ),
+        final decodedWith = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
+          continentSeedPositions: [(0, 0)],
         );
-        final decodedWithout = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-          ),
+        final decodedWithout = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
         );
         expect(
           decodedWith.height,
@@ -218,16 +194,14 @@ void main() {
       'with continentSeedPositions and landSeedPositions: two legend rows and distinct markers',
       () {
         const cellSize = 8;
-        final decoded = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-            landSeedPositions: [(2, 2)],
-            continentSeedPositions: [(0, 0)],
-          ),
+        final decoded = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
+          landSeedPositions: [(2, 2)],
+          continentSeedPositions: [(0, 0)],
         );
-        final bytesLandOnly = renderTileMapToPng(
+        final bytesLandOnly = renderTileMapPngBytes(
           visualizationResultWithTerrain,
           visualizationTopology,
           cellSize: cellSize,
@@ -247,16 +221,14 @@ void main() {
       'with landSeedContinentIndices: markers colored by continent and legend has one row per continent',
       () {
         const cellSize = 24;
-        final decoded = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-            landSeedPositions: [(0, 0), (2, 2)],
-            landSeedContinentIndices: [0, 1],
-          ),
+        final decoded = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
+          landSeedPositions: [(0, 0), (2, 2)],
+          landSeedContinentIndices: [0, 1],
         );
-        final bytesSingleRow = renderTileMapToPng(
+        final bytesSingleRow = renderTileMapPngBytes(
           visualizationResultWithTerrain,
           visualizationTopology,
           cellSize: cellSize,
@@ -275,19 +247,15 @@ void main() {
       'with resourceGrid: image height larger and legend includes resource rows',
       () {
         const cellSize = 8;
-        final decodedWithout = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrain,
-            visualizationTopology,
-            cellSize: cellSize,
-          ),
+        final decodedWithout = decodeRenderTileMapToPng(
+          visualizationResultWithTerrain,
+          visualizationTopology,
+          cellSize: cellSize,
         );
-        final decodedWith = decodeRenderedPng(
-          renderTileMapToPng(
-            visualizationResultWithTerrainAndResources,
-            visualizationTopology,
-            cellSize: cellSize,
-          ),
+        final decodedWith = decodeRenderTileMapToPng(
+          visualizationResultWithTerrainAndResources,
+          visualizationTopology,
+          cellSize: cellSize,
         );
         expect(
           decodedWith.height,
@@ -314,12 +282,10 @@ void main() {
     test('region id label is drawn in red at top-left of each cell', () {
       const cellSize = 8;
       const idInset = 2;
-      final decoded = decodeRenderedPng(
-        renderTileMapToPng(
-          visualizationSmallResult,
-          visualizationTopology,
-          cellSize: cellSize,
-        ),
+      final decoded = decodeRenderTileMapToPng(
+        visualizationSmallResult,
+        visualizationTopology,
+        cellSize: cellSize,
       );
       var foundRed = false;
       for (var py = idInset; py < idInset + 14 && !foundRed; py++) {

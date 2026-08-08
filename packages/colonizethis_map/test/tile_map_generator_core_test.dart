@@ -4,6 +4,7 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:logger/logger.dart';
 
 import 'support/tile_map_gen_fixtures.dart';
+import 'support/tile_map_generator_core_scenarios.dart';
 
 void main() {
   group('TileMapGenerator core', () {
@@ -96,10 +97,7 @@ void main() {
     });
 
     test('numProvinces 0 throws', () {
-      // map-generation-harness-exempt: constructor/DI probe
-      final gen = TileMapGenerator(
-        params: genParams(width: 10, height: 10),
-      );
+      final gen = coreTestGenerator(width: 10, height: 10);
       expect(
         () => gen.generate(numProvinces: 0, numContinents: 1, regionId: 'r1'),
         throwsArgumentError,
@@ -107,10 +105,7 @@ void main() {
     });
 
     test('numContinents 0 throws', () {
-      // map-generation-harness-exempt: constructor/DI probe
-      final gen = TileMapGenerator(
-        params: genParams(width: 10, height: 10),
-      );
+      final gen = coreTestGenerator(width: 10, height: 10);
       expect(
         () => gen.generate(numProvinces: 1, numContinents: 0, regionId: 'r1'),
         throwsArgumentError,
@@ -135,12 +130,7 @@ void main() {
           numContinents: 1,
           regionId: 'r1',
         );
-        var landCount = 0;
-        for (var y = 0; y < h; y++) {
-          for (var x = 0; x < w; x++) {
-            if (!RegExp(r'^s\d+$').hasMatch(result.cell(x, y))) landCount++;
-          }
-        }
+        final landCount = countLandCells(result, w, h);
         final expectedLand = ((1 - seaFraction) * w * h).round();
         expect(landCount, expectedLand);
       },
@@ -153,27 +143,17 @@ void main() {
         numProvinces: 1,
         numContinents: 1,
         regionId: 'r1',
-        onLog: (msg) => logLines.add(msg),
+        onLog: logLines.add,
         omitResourceRules: true,
       );
-      expect(logLines.any((s) => s.contains('Pass 1')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 2')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 3')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 4')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 5')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 6')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 8')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 9')), isTrue);
-      expect(logLines.any((s) => s.contains('Pass 11')), isTrue);
+      expectStandardPassLogLines(logLines);
     });
 
     test(
       'emits generation_params map log with derived grid and key toggles',
       () {
         final capturedEvents = <LogEvent>[];
-        void listener(LogEvent event) => capturedEvents.add(event);
-        Logger.addLogListener(listener);
-        addTearDown(() => Logger.removeLogListener(listener));
+        addLoggerCaptureTearDown(capturedEvents);
 
         final params = genParams(
           width: 12,
@@ -221,16 +201,7 @@ void main() {
           numContinents: 1,
           regionId: 'r1',
         );
-        final validIds = topology.nodes.map((n) => n.id).toSet();
-        for (var y = 0; y < result.height; y++) {
-          for (var x = 0; x < result.width; x++) {
-            expect(
-              validIds.contains(result.cell(x, y)),
-              isTrue,
-              reason: 'cell ($x,$y) has id ${result.cell(x, y)}',
-            );
-          }
-        }
+        expectAllCellsHaveValidTopologyIds(result, topology);
       },
     );
 
@@ -254,35 +225,11 @@ void main() {
     test(
       'seed 125148772 with default buffer and fill lakes has no p6-p33 land bridge',
       () {
-        final mapGenParams = MapGenerationParams(
-          seed: 125148772,
-          numContinents: 3,
-          continentBufferTiles: 2,
-          skipFillLakes: false,
+        final topology = runLandBridgeRegressionGeneration();
+        expect(
+          topologyHasProvinceEdge(topology, 'p6', 'p33'),
+          isFalse,
         );
-        final size = computeGridSizeFromParams(60, mapGenParams);
-        final params = genParams(
-          width: size.width,
-          height: size.height,
-          seed: mapGenParams.seed,
-          seaFraction: mapGenParams.seaFraction,
-          continentBufferTiles: mapGenParams.continentBufferTiles,
-          skipFillLakes: mapGenParams.skipFillLakes,
-        );
-        final (_, topology) = runTileMapGeneration(
-          params: params,
-          numProvinces: 60,
-          numContinents: 3,
-          regionId: 'oldWorld',
-        );
-        final p6p33Key = 'p6|p33';
-        final hasBridge = topology.edges.any((e) {
-          final key = e.id1.compareTo(e.id2) < 0
-              ? '${e.id1}|${e.id2}'
-              : '${e.id2}|${e.id1}';
-          return key == p6p33Key;
-        });
-        expect(hasBridge, isFalse);
       },
     );
 
@@ -290,13 +237,12 @@ void main() {
       'joinContinents completes for small multi-continent grids (regression: no hang)',
       () {
         for (final seed in [0, 7, 42, 99, 777]) {
-          final params = genParams(
-            width: 20,
-            height: 18,
-            seed: seed,
-          );
           runTileMapGeneration(
-            params: params,
+            params: genParams(
+              width: 20,
+              height: 18,
+              seed: seed,
+            ),
             numProvinces: 6,
             numContinents: 3,
             regionId: 'oldWorld',
