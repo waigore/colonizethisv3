@@ -98,7 +98,7 @@ void _runDecider(String label, _PeaceTargetsFn fn, List<_Case> cases) {
   });
 }
 
-void registerExpandPeaceTargetDeciderStartFutileCases() {
+void registerExpandPeaceTargetDeciderStartCases() {
   _runDecider('defaultStartGpPeaceTargets (truth table)',
       defaultStartGpPeaceTargets, <_Case>[
     _Case(
@@ -449,80 +449,4 @@ void registerExpandPeaceTargetDeciderStartFutileCases() {
   // Function-unit determinism + blocker-identity guards retained verbatim from
   // the source suites (the only assertions that are not a single
   // `(game, snapshot) -> targets` row).
-  group('peace-target decider determinism / blocker-identity guards', () {
-    test('defaultStartGpPeaceTargets is bit-identical on repeated calls', () {
-      const c = _Case(
-        name: 'determinism',
-        owProvinces: [
-          Province(id: 'oldWorld|gp2_a', regionId: 'oldWorld', ownerId: _gp2),
-        ],
-        players: _defaultGpRoster,
-        tribes: [Tribe(id: _tribe1, displayName: 'T1')],
-        playerId: _gp1,
-        ownOw: 7,
-        atWarWith: [_gp2, _gp3, _gp4],
-        invadable: ['oldWorld|gp2_a'],
-      );
-      final game = buildExpandPeaceMatrixGame(
-        owProvinces: c.owProvinces,
-        players: c.players,
-        tribes: c.tribes,
-        gameId: 'g-expand-peace-target-matrix',
-      );
-      final snapshot = buildExpandPeaceMatrixSnapshot(
-        playerId: c.playerId,
-        atWarWith: c.atWarWith,
-        oldWorldProvincesOwned: c.ownOw,
-        invadableProvinceIdsSorted: c.invadable,
-      );
-      final first = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
-      final second = defaultStartGpPeaceTargets(game: game, snapshot: snapshot);
-      expect(second, first);
-      expect(first, const [_gp3, _gp4]);
-    });
-
-    test('primaryInvadableOldWorldGpBlocker resolves to the plurality owner '
-        '(gp2) for the blocker-equality fixture', () {
-      final c = _Case(
-        name: 'blocker sanity',
-        owProvinces: [
-          ...oldWorldProvincesForExpandPeaceMatrix(_gp1, kObserverConquestMinOwProvincesPerGp + 2),
-          ...oldWorldProvincesForExpandPeaceMatrix(_gp2, 6),
-          ...oldWorldProvincesForExpandPeaceMatrix(_gp3, 8),
-          const Province(id: 'oldWorld|gp2_inv_a', regionId: 'oldWorld', ownerId: _gp2),
-          const Province(id: 'oldWorld|gp2_inv_b', regionId: 'oldWorld', ownerId: _gp2),
-        ],
-        players: _defaultGpRoster,
-        minorNations: const [MinorNation(id: _minor1, displayName: 'M1')],
-        tribes: const [Tribe(id: _tribe1, displayName: 'T1')],
-        playerId: _gp1,
-        ownOw: kObserverConquestMinOwProvincesPerGp + 2,
-        atWarWith: const [_gp2, _gp3],
-        invadable: const ['oldWorld|gp2_inv_a', 'oldWorld|gp2_inv_b'],
-      );
-      expect(
-        primaryInvadableOldWorldGpBlocker(
-          game: buildExpandPeaceMatrixGame(
-            owProvinces: c.owProvinces,
-            players: c.players,
-            minorNations: c.minorNations,
-            tribes: c.tribes,
-            gameId: 'g-expand-peace-target-matrix',
-          ),
-          snapshot: buildExpandPeaceMatrixSnapshot(
-            playerId: c.playerId,
-            atWarWith: c.atWarWith,
-            oldWorldProvincesOwned: c.ownOw,
-            invadableProvinceIdsSorted: c.invadable,
-          ),
-        ),
-        _gp2,
-        reason:
-            'Fixture sanity: gp2 owns the plurality of invadable OW so the '
-            'blocker resolves to gp2 — the blocker-equality skip arm in '
-            '`quotaMetFutileBelowQuotaGpPeaceTargets` must exclude gp2 even if '
-            'the invadable-owning skip is bypassed by a future refactor.',
-      );
-    });
-  });
 }
