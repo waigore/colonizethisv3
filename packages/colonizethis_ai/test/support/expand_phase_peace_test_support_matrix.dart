@@ -35,6 +35,80 @@ Game buildExpandPeaceMatrixGame({
   tribes: tribes,
 );
 
+/// Roster-only Game for sole-GP peace-matrix identity rows.
+Game buildExpandPeaceGpsAndMinorsGame({
+  List<String> playerIds = const <String>['gp1', 'gp2', 'gp3'],
+  List<String> minorIds = const <String>['minor1'],
+}) {
+  return Game(
+    id: 'g-2509-sole-at-war-gp-branches',
+    worldState: const WorldState(
+      turnState: TurnState(turnNumber: 60, phase: TurnPhase.orders),
+      oldWorld: RegionData(),
+      newWorld: RegionData(),
+    ),
+    players: <Player>[
+      for (final id in playerIds)
+        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
+    ],
+    minorNations: <MinorNation>[
+      for (final id in minorIds) MinorNation(id: id, displayName: id),
+    ],
+  );
+}
+
+/// Two-GP OW-count Game for consolidate-gains sole-GP matrix rows.
+Game buildExpandPeaceConsolidateTwoGpGame({
+  required int focusOw,
+  required int enemyOw,
+  List<String> extraGpIds = const <String>[],
+  List<DiplomacyRelation> diplomacyRelations = const <DiplomacyRelation>[],
+  List<MinorNation> minorNations = const <MinorNation>[],
+}) {
+  return Game(
+    id: 'g-consolidate-${focusOw}_$enemyOw',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 90),
+      oldWorld: RegionData(
+        provinces: <Province>[
+          for (var i = 0; i < focusOw; i++)
+            Province(
+              id: 'oldWorld|focus_$i',
+              regionId: 'oldWorld',
+              ownerId: 'focus',
+            ),
+          for (var i = 0; i < enemyOw; i++)
+            Province(
+              id: 'oldWorld|enemy_$i',
+              regionId: 'oldWorld',
+              ownerId: 'enemy',
+            ),
+        ],
+        units: const <Unit>[],
+      ),
+      newWorld: const RegionData(provinces: <Province>[], units: <Unit>[]),
+    ),
+    players: <Player>[
+      const Player(
+        id: 'focus',
+        displayName: 'Focus',
+        isHuman: false,
+        leaderKey: 'victoria',
+      ),
+      const Player(
+        id: 'enemy',
+        displayName: 'Enemy',
+        isHuman: false,
+        leaderKey: 'napoleon',
+      ),
+      for (final extra in extraGpIds)
+        Player(id: extra, displayName: extra.toUpperCase(), isHuman: false),
+    ],
+    minorNations: minorNations,
+    diplomacyRelations: diplomacyRelations,
+  );
+}
+
 /// Peace-matrix snapshot builder shared by predicate and target rows.
 AIWorldSnapshot buildExpandPeaceMatrixSnapshot({
   required String playerId,

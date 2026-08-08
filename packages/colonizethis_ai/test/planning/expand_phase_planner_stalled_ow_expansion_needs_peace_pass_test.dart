@@ -41,86 +41,10 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
-const String _minorZeta = 'minor_zeta';
-
-Game _pristineGame() {
-  return Game(
-    id: 'g-2509-needs-peace-pass-pristine',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 1; i <= 6; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [],
-    ),
-    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
-    minorNations: const [],
-    tribes: const [],
-    diplomacyRelations: const [],
-  );
-}
-
-Game _zeroRegimentAtWarGame() {
-  return Game(
-    id: 'g-2509-needs-peace-pass-zero-reg',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 1; i <= 6; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          Province(
-            id: 'oldWorld|minor_zeta_1',
-            regionId: 'oldWorld',
-            ownerId: _minorZeta,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: homeArmyIdFor(_gpOwn),
-          ownerId: _gpOwn,
-          regionId: 'oldWorld',
-          stationedProvinceId: 'oldWorld|${_gpOwn}_1',
-          regimentUnitIds: const <String>[],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: [const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false)],
-    minorNations: [
-      const MinorNation(id: _minorZeta, displayName: 'minor_zeta'),
-    ],
-    tribes: const [],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: _minorZeta,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    ],
-  );
-}
-
 void main() {
   group('stalledOwExpansionNeedsPeacePass — canonical home', () {
     test('returns false when no decider fires (pristine state)', () {
-      final game = _pristineGame();
+      final game = buildStalledOwPristineGame();
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 6,
         atWarWith: const [],
@@ -140,11 +64,11 @@ void main() {
     test(
       'returns true when stalledZeroRegimentAllFactionPeaceTargets fires',
       () {
-        final game = _zeroRegimentAtWarGame();
+        final game = buildStalledOwZeroRegimentAtWarGame();
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 6,
-          atWarWith: const [_minorZeta],
-          invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
+          atWarWith: const [kStalledOwMinorZeta],
+          invadableProvinceIdsSorted: const ['oldWorld|${kStalledOwMinorZeta}_1'],
         );
         expect(
           stalledOwExpansionNeedsPeacePass(game: game, snapshot: snapshot),
@@ -158,11 +82,11 @@ void main() {
     );
 
     test('Determinism (Must-have #7) — identical result on repeat', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = ownSnapshot(
-        oldWorldProvincesOwned: 6,
-        atWarWith: const [_minorZeta],
-        invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
+        final game = buildStalledOwZeroRegimentAtWarGame();
+        final snapshot = ownSnapshot(
+          oldWorldProvincesOwned: 6,
+          atWarWith: const [kStalledOwMinorZeta],
+          invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
       );
       final first = stalledOwExpansionNeedsPeacePass(
         game: game,
@@ -182,11 +106,11 @@ void main() {
     });
 
     test('Stub delegation parity', () {
-      final game = _zeroRegimentAtWarGame();
-      final snapshot = ownSnapshot(
-        oldWorldProvincesOwned: 6,
-        atWarWith: const [_minorZeta],
-        invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
+        final game = buildStalledOwZeroRegimentAtWarGame();
+        final snapshot = ownSnapshot(
+          oldWorldProvincesOwned: 6,
+          atWarWith: const [kStalledOwMinorZeta],
+          invadableProvinceIdsSorted: const ['oldWorld|minor_zeta_1'],
       );
       final canonical = stalledOwExpansionNeedsPeacePass(
         game: game,

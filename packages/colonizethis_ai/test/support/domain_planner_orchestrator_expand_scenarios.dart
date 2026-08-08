@@ -5,4 +5,5 @@ library;
 
 export 'domain_planner_orchestrator_expand_games.dart';
 export 'domain_planner_orchestrator_expand_snapshots.dart';
+export 'domain_planner_orchestrator_two_gp_peace_games.dart';
 

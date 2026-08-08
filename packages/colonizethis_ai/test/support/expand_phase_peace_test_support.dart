@@ -9,4 +9,7 @@ export 'expand_phase_peace_test_support_own_vs_partner.dart';
 export 'expand_phase_peace_test_support_default_start.dart';
 export 'expand_phase_peace_test_support_tribe_pivot_survival.dart';
 export 'expand_phase_peace_test_support_matrix.dart';
+export 'expand_phase_peace_test_support_stalled_ow.dart';
+export 'expand_phase_peace_test_support_weak_holdings.dart';
+export 'expand_phase_peace_test_support_multi_minor.dart';
 

@@ -18,6 +18,14 @@ const Set<String> _diplomaticScoringColonialSnapshotAdopters = <String>{
       'diplomatic_candidate_scoring_personality_colonial_divergence_test.dart',
 };
 
+/// Two-GP peace orchestrator pins that must import shared Game builders
+/// (Refs #4291 Slice C).
+const Set<String> _twoGpPeaceGameAdopterBasenames = <String>{
+  'domain_planner_orchestrator_expand_two_gp_peace_test.dart',
+  'domain_planner_orchestrator_develop_two_gp_peace_test.dart',
+  'domain_planner_orchestrator_colonial_two_gp_peace_test.dart',
+};
+
 /// Canonical shared support library that owns
 /// [kGp1OwProvincesBelowQuota] / [kGp1OwProvincesAtQuota].
 const String orchestratorSharedFixturesSupportFile =
@@ -73,6 +81,17 @@ final RegExp _localColonialLiteSnapshotFn = RegExp(
   r'AIWorldSnapshot\s+_colonialLiteSnapshot\s*\(',
 );
 
+/// Forbidden local two-GP peace Game clones (Refs #4291 Slice C).
+final RegExp _localExpandTwoGpWarsGameDecl = RegExp(
+  r'Game\s+_expandTwoGpWarsScenarioGame\b',
+);
+final RegExp _localDevelopTwoGpWarsGameDecl = RegExp(
+  r'Game\s+_developTwoGpWarsScenarioGame\b',
+);
+final RegExp _localColonialTwoGpWarsGameDecl = RegExp(
+  r'Game\s+_colonialTwoGpWarsScenarioGame\b',
+);
+
 /// True when [content] uses a Game builder that pairs with the shared
 /// minor-war at-war snapshot (those pins must not redeclare it locally).
 bool _usesExpandMinorWarAtWarSnapshotPairing(String content) {
@@ -103,6 +122,13 @@ bool _usesDevelopGpOwnedNwScenarioPairing(String content) {
 /// True when [content] uses the COLONIAL-lite declare-war Game builder.
 bool _usesColonialLiteDeclareWarScenarioPairing(String content) {
   return content.contains('buildOrchestratorColonialLiteDeclareWarScenarioGame');
+}
+
+bool _isTwoGpPeaceGameAdopterPath(String normalized) {
+  if (!normalized.startsWith(_orchestratorTestPathPrefix)) {
+    return false;
+  }
+  return _twoGpPeaceGameAdopterBasenames.contains(p.basename(normalized));
 }
 
 /// True when the repo-relative [slashPath] is an in-scope orchestrator
@@ -215,6 +241,24 @@ String? aiOrchestratorSharedFixturesViolationReason(
     return 'redeclares local `_colonialSnapshot`; call '
         '`buildOrchestratorColonialNwTribeTargetSnapshot` from '
         '`$orchestratorSharedFixturesSupportFile` (Refs #3997)';
+  }
+  if (_isTwoGpPeaceGameAdopterPath(normalized) &&
+      _localExpandTwoGpWarsGameDecl.hasMatch(content)) {
+    return 'redeclares local `_expandTwoGpWarsScenarioGame`; call '
+        '`buildOrchestratorExpandTwoGpWarsScenarioGame` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #4291)';
+  }
+  if (_isTwoGpPeaceGameAdopterPath(normalized) &&
+      _localDevelopTwoGpWarsGameDecl.hasMatch(content)) {
+    return 'redeclares local `_developTwoGpWarsScenarioGame`; call '
+        '`buildOrchestratorDevelopTwoGpWarsScenarioGame` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #4291)';
+  }
+  if (_isTwoGpPeaceGameAdopterPath(normalized) &&
+      _localColonialTwoGpWarsGameDecl.hasMatch(content)) {
+    return 'redeclares local `_colonialTwoGpWarsScenarioGame`; call '
+        '`buildOrchestratorColonialTwoGpWarsScenarioGame` from '
+        '`$orchestratorSharedFixturesSupportFile` (Refs #4291)';
   }
   return null;
 }

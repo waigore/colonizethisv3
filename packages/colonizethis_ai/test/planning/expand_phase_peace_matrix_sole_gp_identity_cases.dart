@@ -85,82 +85,7 @@ void _runDecider(String label, _SoleGpPeaceTargetFn fn, List<_Case> cases) {
 
 // --- soleAtWarGreatPowerId fixtures (plain roster). ---
 
-Game _gameWithGpsAndMinors({
-  List<String> playerIds = const [_gp1, _gp2, _gp3],
-  List<String> minorIds = const [_minor1],
-}) {
-  return Game(
-    id: 'g-2509-sole-at-war-gp-branches',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 60, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      for (final id in playerIds)
-        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-    ],
-    minorNations: [
-      for (final id in minorIds) MinorNation(id: id, displayName: id),
-    ],
-  );
-}
-
 // --- consolidateGainsSoleGpPeaceTarget fixtures (two-GP OW counts). ---
-
-/// Builds a Game with two GPs (`focus` and `enemy`) whose OW holdings are
-/// exactly [focusOw] and [enemyOw] respectively, optionally including
-/// additional GP players from [extraGpIds].
-Game _twoGpGame({
-  required int focusOw,
-  required int enemyOw,
-  List<String> extraGpIds = const [],
-  List<DiplomacyRelation> diplomacyRelations = const [],
-  List<MinorNation> minorNations = const [],
-}) {
-  return Game(
-    id: 'g-consolidate-${focusOw}_$enemyOw',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 90),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < focusOw; i++)
-            Province(
-              id: 'oldWorld|focus_$i',
-              regionId: 'oldWorld',
-              ownerId: 'focus',
-            ),
-          for (var i = 0; i < enemyOw; i++)
-            Province(
-              id: 'oldWorld|enemy_$i',
-              regionId: 'oldWorld',
-              ownerId: 'enemy',
-            ),
-        ],
-        units: const [],
-      ),
-      newWorld: const RegionData(provinces: [], units: []),
-    ),
-    players: [
-      const Player(
-        id: 'focus',
-        displayName: 'Focus',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-      const Player(
-        id: 'enemy',
-        displayName: 'Enemy',
-        isHuman: false,
-        leaderKey: 'napoleon',
-      ),
-      for (final extra in extraGpIds)
-        Player(id: extra, displayName: extra.toUpperCase(), isHuman: false),
-    ],
-    minorNations: minorNations,
-    diplomacyRelations: diplomacyRelations,
-  );
-}
 
 void registerExpandPeaceSoleGpIdentityCases() {
   // --- soleAtWarGreatPowerId (plain roster, snapshot at-war set only). ---
@@ -168,7 +93,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       <_Case>[
     _Case(
       name: 'empty atWarWith returns null (B1)',
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const []),
       reason:
           'No active wars means no sole-GP foe; both '
@@ -179,7 +104,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     ),
     _Case(
       name: 'atWarWith contains only one minor returns null (B2)',
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const [_minor1]),
       reason:
           '`playerById` filters minor ids out of `gpWars`, so a '
@@ -191,7 +116,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       name: 'atWarWith contains only an unknown tribe id returns null (B3)',
       // Tribes / removed players are not in `game.players`; `playerById`
       // returns null and the id is excluded from `gpWars`.
-      game: _gameWithGpsAndMinors(minorIds: const []),
+      game: buildExpandPeaceGpsAndMinorsGame(minorIds: const []),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const [_tribe1]),
       reason:
           'Unknown-faction at-war entries (e.g. NW tribes, removed '
@@ -200,7 +125,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     ),
     _Case(
       name: 'atWarWith with exactly one GP returns that GP (B4)',
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const [_gp2]),
       expected: _gp2,
       reason:
@@ -212,7 +137,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       name: 'atWarWith with one GP and one minor returns only the GP (B5)',
       // Minor wars are deliberately ignored when counting GP foes;
       // the resulting `gpWars` list is length 1 and the GP wins.
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const [_gp2, _minor1]),
       expected: _gp2,
       reason:
@@ -223,7 +148,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     ),
     _Case(
       name: 'atWarWith with two GPs returns null (B6 length guard)',
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot: _snapshot(playerId: _gp1, atWarWith: const [_gp2, _gp3]),
       reason:
           'The `length != 1` guard refuses to elect a sole-GP foe '
@@ -238,7 +163,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       // The minor is filtered, but `gpWars.length` is 2; the null
       // exit stands. Pins that the minor filter does not collapse a
       // two-GP war into a "sole GP plus filtered minor" outcome.
-      game: _gameWithGpsAndMinors(),
+      game: buildExpandPeaceGpsAndMinorsGame(),
       snapshot:
           _snapshot(playerId: _gp1, atWarWith: const [_gp2, _gp3, _minor1]),
       reason:
@@ -252,7 +177,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     'soleAtWarGreatPowerId determinism: identical inputs produce identical '
     'outputs (must-have #7)',
     () {
-      final game = _gameWithGpsAndMinors();
+      final game = buildExpandPeaceGpsAndMinorsGame();
       final snapshot =
           _snapshot(playerId: _gp1, atWarWith: const [_gp2, _minor1]);
       final first = soleAtWarGreatPowerId(game: game, snapshot: snapshot);
@@ -270,7 +195,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       consolidateGainsSoleGpPeaceTarget, <_Case>[
     _Case(
       name: 'returns null when no Great Powers are at war (only minors)',
-      game: _twoGpGame(
+      game: buildExpandPeaceConsolidateTwoGpGame(
         focusOw: 20,
         enemyOw: 5,
         minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
@@ -297,7 +222,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     ),
     _Case(
       name: 'returns null when two or more Great Powers are at war',
-      game: _twoGpGame(
+      game: buildExpandPeaceConsolidateTwoGpGame(
         focusOw: 20,
         enemyOw: 5,
         extraGpIds: const ['gp3'],
@@ -329,7 +254,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     ),
     _Case(
       name: 'returns null at own == consolidate-min - 1 even with a huge lead',
-      game: _twoGpGame(focusOw: 11, enemyOw: 1),
+      game: buildExpandPeaceConsolidateTwoGpGame(focusOw: 11, enemyOw: 1),
       snapshot: _snapshot(
         playerId: 'focus',
         atWarWith: const ['enemy'],
@@ -344,7 +269,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
     _Case(
       name: 'returns enemy at exact consolidate-min boundary with sufficient '
           'lead',
-      game: _twoGpGame(focusOw: 12, enemyOw: 1),
+      game: buildExpandPeaceConsolidateTwoGpGame(focusOw: 12, enemyOw: 1),
       snapshot: _snapshot(
         playerId: 'focus',
         atWarWith: const ['enemy'],
@@ -362,7 +287,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
           'met',
       // enemyOw = 10, focusOw = 12 -> lead = 2 == 3 - 1. Consolidate-min
       // (12) is met, so the lead guard is the only thing keeping this null.
-      game: _twoGpGame(focusOw: 12, enemyOw: 10),
+      game: buildExpandPeaceConsolidateTwoGpGame(focusOw: 12, enemyOw: 10),
       snapshot: _snapshot(
         playerId: 'focus',
         atWarWith: const ['enemy'],
@@ -378,7 +303,7 @@ void registerExpandPeaceSoleGpIdentityCases() {
       name: 'returns enemy at own == enemyOw + lead boundary',
       // enemyOw = 9, focusOw = 12 -> lead = 3 == required. Consolidate-min
       // (12) is met, so the lead boundary is the only deciding guard.
-      game: _twoGpGame(focusOw: 12, enemyOw: 9),
+      game: buildExpandPeaceConsolidateTwoGpGame(focusOw: 12, enemyOw: 9),
       snapshot: _snapshot(
         playerId: 'focus',
         atWarWith: const ['enemy'],
