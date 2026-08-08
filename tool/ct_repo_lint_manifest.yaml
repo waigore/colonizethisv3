@@ -1725,7 +1725,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_decider_registry
     group: architecture
-    title: colonizethis_ai EXPAND-regime peace targets must be composed via the ordered ExpandPeaceDecider registry in observer_goal_phase.dart, not hand-unrolled yield* decider chains (Refs #3749)
+    title: colonizethis_ai EXPAND-regime peace targets must be composed via the ordered ExpandPeaceDecider registry in observer_goal_phase_peace_aggregators.dart, not hand-unrolled yield* decider chains (Refs #3749)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_decider_registry.dart
