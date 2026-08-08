@@ -1674,6 +1674,13 @@ rules:
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart
 
+  - rule_id: repo.ai_test_support_file_size
+    group: testing
+    title: colonizethis_ai test/support/**/*.dart (excluding s7d/) must stay at or under 400 physical lines (Refs #4291)
+    spec: SPEC/program/ai-test-support-file-size.md
+    runner: dart
+    script: tool/check_ai_test_support_file_size.dart
+
   - rule_id: repo.ai_colonial_acquisition_test_shared_fixtures
     group: testing
     title: colonizethis_ai colonial_phase_planner_acquisition_*_test.dart pins must import shared Game / DiplomacyRelation helpers from colonial_acquisition_test_support.dart (no local _acquisitionGame / _purchaseLandGame / _declareWarGame / _bothValidGame / _friendly / _peaceFriendly / _atWar) (Refs #3972)
