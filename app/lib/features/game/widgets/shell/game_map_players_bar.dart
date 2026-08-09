@@ -1,17 +1,9 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show greatPowerPowerScore;
-import 'package:colonizethis_map/colonizethis_map.dart'
-    show factionOwnershipColorMapForOldWorld;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../screens/game/game_screen_shared.dart'
-    show kGameMapPlayerChipKeyPrefix, kGameMapPlayersBarKey;
-
-part 'game_map_players_bar_chip.dart';
-part 'game_map_players_bar_chip_column.dart';
+import 'game_map_players_bar_chip_column.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show greatPowerPowerScore;
 
 /// Floating column of per–Great-Power chips on the in-game map stack.
 ///
@@ -64,7 +56,11 @@ class GameMapPlayersBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final column = _buildChipColumn(context);
+    final column = buildGameMapPlayersBarChipColumn(
+      context: context,
+      game: game,
+      highlightPlayerId: highlightPlayerId,
+    );
     if (embedded) {
       return column;
     }

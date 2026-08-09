@@ -135,6 +135,22 @@ Map render resolves icon id via `TownIconCache.townIconIdForMarker(style, level)
 
 ---
 
+## Fort map icons (Refs #4280)
+
+When `worldFortLevel ≥ 1` and `mapVisibleFortLevel` is non-null (player-view gate), draw a **fort glyph** near the town tile at offset **(−14, −18)** px from town center, destination side **40** px. Assets: `ui_icon_com_fort_{1,2,3}_64.png`, cache ids `fort_1` … `fort_3`. Single colonial style family (v1). Tap opens province detail like town/port.
+
+| Level | Name | Asset |
+|-------|------|-------|
+| 1 | Wood | `ui_icon_com_fort_1_64.png` |
+| 2 | Stone | `ui_icon_com_fort_2_64.png` |
+| 3 | Modern | `ui_icon_com_fort_3_64.png` |
+
+**Visibility:** `mapVisibleFortLevel` is null when `worldFortLevel == 0`, when foreign and military intel is incomplete (`provincePanelShowsFullTileDerivedIntel`), or when the town tile is unrevealed (no glyph). Own provinces: true level when tile is not unrevealed (fog uses reduced opacity). Full-visibility / tool maps set `revealAllForts`.
+
+Generator: `pytool/generate_fort_map_icons_64.py` (PIL; Pixflux prompts optional for art refresh).
+
+---
+
 ## Implementation Notes
 
 - `TownIconCache` loads all 16 town ids plus `port` (`kTownIconIds`). Level **1** honors `kCtLegacyTownIconsEnabled` (`CT_LEGACY_TOWN_ICONS`) via `legacyTownIconAssetPaths`; levels **2–4** always use production paths. `townIconDestinationSize` applies S10 paint-time sides **48 / 56 / 60 / 64**.

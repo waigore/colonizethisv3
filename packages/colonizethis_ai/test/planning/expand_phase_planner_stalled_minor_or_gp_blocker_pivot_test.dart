@@ -23,54 +23,13 @@ const String _gpOwn = 'gp4';
 const String _gpBlocker = 'gp3';
 const String _minor1 = 'minor1';
 
-Game _pivotGame({
-  required List<Province> provinces,
-  required List<String> atWarFactionIds,
-  List<MinorNation> minorNations = const [],
-  Set<String> extraGpIds = const {},
-}) {
-  final playerIds = <String>{
-    _gpOwn,
-    ...extraGpIds,
-    for (final id in atWarFactionIds)
-      if (id.startsWith('gp')) id,
-  };
-  return Game(
-    id: 'g-3717-pivot-${provinces.length}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      for (final id in playerIds)
-        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-    ],
-    minorNations: minorNations,
-    diplomacyRelations: [
-      for (final id in atWarFactionIds)
-        DiplomacyRelation(
-          factionId1: _gpOwn,
-          factionId2: id,
-          state: RelationState.atWar,
-          score: 10,
-        ),
-    ],
-  );
-}
-
-
-List<Province> _ownedOldWorld(String ownerId, int count) => [
-  for (var i = 0; i < count; i++)
-    Province(id: 'oldWorld|${ownerId}_$i', regionId: 'oldWorld', ownerId: ownerId),
-];
-
 void main() {
   group('resolveStalledMinorOrGpBlockerPivot — pivot applies', () {
     test('minor owns invadable frontier → minorsOwnInvadable arm', () {
-      final game = _pivotGame(
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
         provinces: [
-          ..._ownedOldWorld(_gpOwn, 7),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
           const Province(
             id: 'oldWorld|inv1',
             regionId: 'oldWorld',
@@ -100,10 +59,11 @@ void main() {
     });
 
     test('GP-only below-quota frontier → gpBlockerFocus arm', () {
-      final game = _pivotGame(
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
         provinces: [
-          ..._ownedOldWorld(_gpOwn, 7),
-          ..._ownedOldWorld(_gpBlocker, 10),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpBlocker, 10),
           const Province(
             id: 'oldWorld|inv1',
             regionId: 'oldWorld',
@@ -134,9 +94,10 @@ void main() {
 
   group('resolveStalledMinorOrGpBlockerPivot — pivot does not apply', () {
     test('unowned invadable frontier → null (neither arm fires)', () {
-      final game = _pivotGame(
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
         provinces: [
-          ..._ownedOldWorld(_gpOwn, 7),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
           const Province(
             id: 'oldWorld|inv1',
             regionId: 'oldWorld',
@@ -162,8 +123,9 @@ void main() {
     });
 
     test('empty invadable frontier → null', () {
-      final game = _pivotGame(
-        provinces: _ownedOldWorld(_gpOwn, 7),
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
+        provinces: oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
         atWarFactionIds: const [_gpBlocker],
       );
       final snapshot = ownSnapshot(
@@ -182,10 +144,11 @@ void main() {
 
   group('resolveStalledMinorOrGpBlockerPivot — equivalence + determinism', () {
     test('fields equal the predicates the resolver composes', () {
-      final game = _pivotGame(
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
         provinces: [
-          ..._ownedOldWorld(_gpOwn, 7),
-          ..._ownedOldWorld(_gpBlocker, 10),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpBlocker, 10),
           const Province(
             id: 'oldWorld|inv1',
             regionId: 'oldWorld',
@@ -223,9 +186,10 @@ void main() {
     });
 
     test('identical results on repeat', () {
-      final game = _pivotGame(
+      final game = buildPivotExpandPeaceGame(
+        ownPlayerId: _gpOwn,
         provinces: [
-          ..._ownedOldWorld(_gpOwn, 7),
+          ...oldWorldProvincesForExpandPeaceMatrix(_gpOwn, 7),
           const Province(
             id: 'oldWorld|inv1',
             regionId: 'oldWorld',

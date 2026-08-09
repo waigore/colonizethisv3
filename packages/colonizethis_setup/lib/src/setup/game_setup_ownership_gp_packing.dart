@@ -1,10 +1,12 @@
-part of 'game_setup_ownership.dart';
+// GP→landmass packing helpers for OW ownership (Refs #4086 Slice A+B de-part).
+
+import 'province_assignment.dart';
 
 /// Upper bound on how many OW provinces all Great Powers can own together when each GP
 /// is confined to one P–P landmass and each GP needs a sea-bound seed on that landmass.
 /// Uses the union of landmasses that receive at least one GP; spreading GPs across
 /// separate landmasses maximizes that union (see SPEC/game/game-setup.md).
-int _maxFeasibleGpProvinceBudgetOnLandmasses({
+int maxFeasibleGpProvinceBudgetOnLandmasses({
   required Map<int, int> landmassSizes,
   required Map<int, int> seaBoundCountByLandmass,
   required int gpCount,
@@ -37,14 +39,14 @@ int _maxFeasibleGpProvinceBudgetOnLandmasses({
 }
 
 /// Result of greedy GP→landmass assignment (largest-targets first).
-typedef _GpLandmassPackResult = ({
+typedef GpLandmassPackResult = ({
   Map<String, int> gpLandmassAssignments,
   Map<String, int> targetPerGp,
   List<String> sortedGpIds,
 });
 
 /// Tries to place each GP on one landmass with sea-cap and per-landmass target sums.
-_GpLandmassPackResult? _tryPackGpsOntoLandmassesGreedy({
+GpLandmassPackResult? tryPackGpsOntoLandmassesGreedy({
   required List<String> gpIds,
   required int gpProvinceBudget,
   required Map<int, int> landmassSizes,
@@ -93,7 +95,7 @@ _GpLandmassPackResult? _tryPackGpsOntoLandmassesGreedy({
 }
 
 /// Largest budget in [gpCount, cap] for which [computeFairTargets] + greedy packing succeeds.
-int _largestFeasibleGpProvinceBudgetByPacking({
+int largestFeasibleGpProvinceBudgetByPacking({
   required List<String> gpIds,
   required int gpCount,
   required int cap,
@@ -106,7 +108,7 @@ int _largestFeasibleGpProvinceBudgetByPacking({
   var best = gpCount - 1;
   while (lo <= hi) {
     final mid = (lo + hi) ~/ 2;
-    final pack = _tryPackGpsOntoLandmassesGreedy(
+    final pack = tryPackGpsOntoLandmassesGreedy(
       gpIds: gpIds,
       gpProvinceBudget: mid,
       landmassSizes: landmassSizes,

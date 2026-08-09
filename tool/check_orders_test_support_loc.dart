@@ -4,11 +4,11 @@ import 'package:path/path.dart' as p;
 
 /// SPEC: SPEC/program/repo-lint.md (Refs #3971).
 ///
-/// Physical-line ceilings for `colonizethis_orders` test trees so wave-4
+/// Physical-line ceilings for `colonizethis_orders` test trees so wave-5
 /// fixture/shorthand densification cannot regress.
 ///
-/// - Support: `test/orders/support/` (wave-4 AC ≤14,900)
-/// - Package: `test/` (wave-4 AC ≤16,400)
+/// - Support: `test/orders/support/` (wave-5 AC ≤13,950)
+/// - Package: `test/` (wave-5 AC ≤15,800)
 
 const String ordersTestSupportRelativeDir =
     'packages/colonizethis_orders/test/orders/support';
@@ -16,12 +16,15 @@ const String ordersTestSupportRelativeDir =
 const String ordersTestPackageRelativeDir = 'packages/colonizethis_orders/test';
 
 /// Ratchet ceiling for support physical LOC (`find … | xargs cat | wc -l`).
-/// Wave-4 AC target: 14900. Lower this constant as slices land.
-const int ordersTestSupportLocCeiling = 14500;
+/// Wave-5 AC target: 13950. Lower this constant as slices land.
+const int ordersTestSupportLocCeiling = 13950;
 
 /// Ratchet ceiling for package `test/` physical LOC.
-/// Wave-4 AC target: 16400.
-const int ordersTestPackageLocCeiling = 16400;
+/// Wave-6 Slice E (#4246): connectivity dev fixture densify 16200 → 15900.
+/// Raised to 16050 for civilian work affordance scenario suite (Refs #4262).
+/// Raised to 16100 for work-order affordance projection parity tests (Refs #4281).
+/// Raised to 16300 for trade counsel ranking scenario suite (Refs #4282).
+const int ordersTestPackageLocCeiling = 16300;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countOrdersTestSupportPhysicalLoc(Directory dir) {
@@ -68,13 +71,13 @@ int runCheckOrdersTestSupportLoc(
   if (loc > ceiling) {
     logE(
       'check_orders_test_support_loc: support LOC $loc exceeds ceiling '
-      '$ceiling (wave-4 target ≤14900; Refs #3971).',
+      '$ceiling (wave-5 target ≤13950; Refs #4109).',
     );
     return 1;
   }
   logI(
     'check_orders_test_support_loc: support LOC $loc ≤ ceiling $ceiling '
-    '(wave-4 target ≤14900; Refs #3971).',
+    '(wave-5 target ≤13950; Refs #4109).',
   );
 
   if (!checkPackage) {
@@ -93,13 +96,13 @@ int runCheckOrdersTestSupportLoc(
   if (packageLoc > packageCeiling) {
     logE(
       'check_orders_test_support_loc: package test/ LOC $packageLoc exceeds '
-      'ceiling $packageCeiling (wave-4 target ≤16400; Refs #3971).',
+      'ceiling $packageCeiling (wave-6 target ≤16300; Refs #4246, #4262, #4281, #4282).',
     );
     return 1;
   }
   logI(
     'check_orders_test_support_loc: package test/ LOC $packageLoc ≤ ceiling '
-    '$packageCeiling (wave-4 target ≤16400; Refs #3971).',
+    '$packageCeiling (wave-6 target ≤16300; Refs #4246, #4262, #4281, #4282).',
   );
   return 0;
 }

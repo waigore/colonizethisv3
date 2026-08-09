@@ -8,7 +8,7 @@ import 'package:colonizethis_test/test.dart';
 ///
 /// * the stockpile commodity delta (`after.quantityOf(k) - before.quantityOf(k)`)
 ///   must live only in `_stockpileCommodityDeltaMap`
-///   (`economy_preview_pipeline.dart`); see issue #3565 item #1.
+///   (`economy_preview_stockpile_phases.dart`); see issue #3565 item #1.
 /// * the turn-seed root (`(game.globalGameSeed ?? 0) ^ (turn * kTurnResolutionSeedMix)`)
 ///   must live only in `mixTurnSeed` (`turn_resolution_seeds.dart`); see issue
 ///   #3565 item #4.
@@ -31,14 +31,14 @@ void main() {
       final offenders = _filesMatching(
         libDir,
         pattern,
-        allowed: 'economy_preview_pipeline.dart',
+        allowed: 'economy_preview_stockpile_phases.dart',
       );
       expect(
         offenders,
         isEmpty,
         reason:
             'after-before stockpile deltas must reuse _stockpileCommodityDeltaMap '
-            '(economy_preview_pipeline.dart). Inlined copies found in:\n'
+            '(economy_preview_stockpile_phases.dart). Inlined copies found in:\n'
             '${offenders.join('\n')}',
       );
     });
@@ -119,7 +119,7 @@ void main() {
       // Sanity: the guards are meaningful only if the canonical sources still
       // contain the patterns. This fails loudly if a helper is renamed/moved.
       final delta = File(
-        '${libDir.path}/src/turn/economy_preview_pipeline.dart',
+        '${libDir.path}/src/turn/economy_preview_stockpile_phases.dart',
       ).readAsStringSync();
       final seeds = File(
         '${libDir.path}/src/turn/turn_resolution_seeds.dart',

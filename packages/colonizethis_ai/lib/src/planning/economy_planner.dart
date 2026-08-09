@@ -9,36 +9,18 @@ import 'cast_iron_labour_gate.dart'
 import 'expand_phase_planner.dart' hide cheapestRegimentBuildTreasuryCost;
 import 'growth_stage.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_planner_economy_filter.dart';
 import 'phase_planner_expand_economy.dart';
-import 'planning_helpers.dart' show isAtWarWithAnyGreatPower;
 import 'ai_commodity_ids.dart';
+import 'economy_planner_labour.dart';
+import 'economy_planner_cargo.dart';
 import 'effective_labour_state.dart';
 import 'planning_imports.dart';
-import 'recipe_scoring.dart';
-import 'scored_candidate.dart';
 import 'treasury_planner.dart';
 
-part 'economy_planner_labour.dart';
+export 'economy_planner_constants.dart';
+export 'economy_planner_labour.dart' show LabourAllocationInput;
 
 final _log = packageLogger('economy_planner');
-
-/// Recipe-score boost for outputs that supply a missing cheapest-regiment
-/// build input when the EXPAND regiment-rebuild directive is active
-/// (Refs #2847 H8 production companion).
-const double kRegimentBuildInputProductionScoreBoost = 50.0;
-
-/// Recipe-score boost an **affluent supplier** applies to a domestically
-/// produced improvement input (e.g. `castIron`) that a *peer* lock-recovery
-/// seller needs but the world market structurally cannot supply (Refs #2847
-/// H8-supply castIron source). Deliberately **small** — far below the
-/// shortage-driven score of the supplier's own essential recipes
-/// (`kShortageWeight * kShortageThreshold == 16`) — so the supplier only
-/// converts **leftover** labour/feedstock into a releasable surplus and never
-/// starves its own conquest economy. This keeps the +6 OW baseline for the
-/// healthy GPs (gp1/gp2) safe by construction. Planner-internal (not a new
-/// `ai_victory_config.dart` constant).
-const double kSupplierBuildInputReleaseProductionScoreBoost = 5.0;
 
 /// Runs the economy planner for one AI-controlled player. Deterministic given
 /// [game], [view], [config], and [seeds]. Returns production assignments and
@@ -91,7 +73,7 @@ EconomyPlan runEconomyPlanner({
   ).compute();
 
   final belowQuotaPeaceTreasuryRecovery =
-      _resolveBelowQuotaPeaceTreasuryRecovery(
+      resolveBelowQuotaPeaceTreasuryRecovery(
         game: game,
         view: view,
         snapshot: snapshot,
@@ -103,7 +85,7 @@ EconomyPlan runEconomyPlanner({
   if (effectiveLabour <= 0) {
     return EconomyPlan(
       productionAssignments: [],
-      cargoPreference: _cargoPreference(
+      cargoPreference: economyPlannerCargoPreference(
         game,
         view.playerId,
         config,
@@ -143,7 +125,7 @@ EconomyPlan runEconomyPlanner({
   final expandEconomy = phasePlan != null
       ? expandEconomyPlanFromPhasePlan(phasePlan)
       : ExpandEconomyPlan.defaultPlan;
-  final missingRegimentBuildInputs = _missingCheapestRegimentBuildInputIds(
+  final missingRegimentBuildInputs = missingCheapestRegimentBuildInputIds(
     stockpile,
   );
   // Refs #2847 § H8-extraction (S7-D lumber re-localization): when the
@@ -200,7 +182,7 @@ EconomyPlan runEconomyPlanner({
   // Refs #2847 § castIron labour peasant-recruit fabric bootstrap: the peasant
   // recruit row costs 2 `fabric` while the cheapest regiment build input only
   // requires 1, so a seller holding one unit is not in
-  // `_missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
+  // `missingCheapestRegimentBuildInputIds` yet still cannot pay the recruit
   // the #3303 boost emits. Stage domestic `fabric` production whenever the
   // castIron-labour population-bound gate holds and the stockpile is short the
   // recruit cost — **independent of** `forceCheapestRegimentBuild` / treasury
@@ -281,8 +263,8 @@ EconomyPlan runEconomyPlanner({
   // only relaxes the seller path while preserving the supplier's release sizing
   // and the +6 OW baseline.
   final feedstockReserveOutputIds = <String>{
-    ..._multiInputImprovementOutputs(domesticImprovementInputOutputs),
-    ..._multiInputImprovementOutputs(stageableImprovementInputs),
+    ...multiInputImprovementOutputs(domesticImprovementInputOutputs),
+    ...multiInputImprovementOutputs(stageableImprovementInputs),
     ...supplierReleaseImprovementInputs,
   };
 
@@ -290,7 +272,7 @@ EconomyPlan runEconomyPlanner({
       ? GrowthStage.compute(game, view.playerId, snapshot: snapshot)
       : null;
 
-  final assignments = _allocateLabour(
+  final assignments = allocateLabour(
     LabourAllocationInput(
       stockpile: stockpile,
       workers: workers,
@@ -318,7 +300,7 @@ EconomyPlan runEconomyPlanner({
     ),
   );
 
-  final cargoPref = _cargoPreference(
+  final cargoPref = economyPlannerCargoPreference(
     game,
     view.playerId,
     config,
@@ -355,127 +337,4 @@ EconomyPlan runEconomyPlanner({
     cargoPreference: cargoPref,
     tradeOrders: tradeOrders,
   );
-}
-
-CargoPreference _cargoPreference(
-  Game game,
-  String playerId,
-  AIConfig config, {
-  ColonialSummary colonial = const ColonialSummary(),
-  bool belowQuotaPeaceTreasuryRecovery = false,
-}) {
-  final domainWeights = resolveDomainWeights(
-    config.personalityId,
-    overrides: config.parameterOverrides,
-  );
-  final agendaId = config.hiddenAgendaId;
-  // Trade-oriented agendas/personalities favour cargo.
-  var economyWeight = domainWeights.economy;
-  if (belowQuotaPeaceTreasuryRecovery) {
-    economyWeight += kBelowQuotaPeaceTreasuryRecoveryCargoBoost;
-  }
-  if (colonial.invadableNewWorldProvinceIdsSorted.isNotEmpty ||
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
-    economyWeight += kColonialCargoPreferenceEconomyBoost;
-  }
-  if (colonial.newWorldProvincesOwned == 0 &&
-      colonial.adjacentNewWorldOwnerFactionIdsSorted.isNotEmpty) {
-    economyWeight += kColonialCargoPreferenceNoNwColoniesBoost;
-  }
-  if (economyWeight < 30) {
-    _log.d('cargoPreference none economyWeight=$economyWeight');
-    return CargoPreference.none;
-  }
-  // Strong when economy is high and agenda is trade-related.
-  final tradeBias = agendaId == 'industrial_trader' || agendaId == 'merchant'
-      ? 20
-      : agendaId == 'navigator'
-      ? 15
-      : 0;
-  final pref = economyWeight >= 70 + tradeBias
-      ? CargoPreference.strongCargo
-      : economyWeight >= 50 + tradeBias
-      ? CargoPreference.preferCargo
-      : CargoPreference.none;
-  _log.d(
-    'cargoPreference eval playerId=$playerId '
-    'economyWeight=$economyWeight agendaId=$agendaId tradeBias=$tradeBias result=$pref',
-  );
-  return pref;
-}
-
-/// Resolves the EXPAND-phase "below-quota peace treasury recovery" cargo
-/// boost trigger for `runEconomyPlanner`.
-///
-/// When [phasePlan] is supplied (Refs #2509 S5), the resolver routes the
-/// two rebuild-trap arms through the phase-planner economy resolvers
-/// instead of the legacy `colonial_pressure.dart` predicates:
-///
-/// - Zero-regiments rebuild arm ->
-///   [resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive]
-/// - Insufficient-regiments + treasury arm ->
-///   [resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive]
-///   paired with the same effective-treasury threshold used by the legacy
-///   compute (`treasury + pendingRichesTreasuryDelta(...) <
-///   cheapestRegimentBuildTreasuryCost()`).
-///
-/// Phase-derived `bool` is field-equal to the legacy
-/// [isBelowQuotaPeaceTreasuryRecovery] compute under EXPAND / COLONIAL-lite
-/// because both phases require
-/// `oldWorldProvincesOwned < kObserverConquestMinOwProvincesPerGp` at
-/// entry via [observerGoalPhaseFor], satisfying the legacy
-/// `isBelowObserverConquestQuota` guard structurally. Under COLONIAL and
-/// DEVELOP the phase resolvers collapse to `false`, mirroring the
-/// suppression matrix established for the orchestrator's economy
-/// build-pass slice (`_appendEconomyBuildOrders`).
-///
-/// When [phasePlan] is `null`, the helper falls back to the legacy
-/// compute so test callers and other unmigrated entry points that
-/// pre-date the S5 threading stay behaviour-equal on the
-/// no-`phasePlan` path. When [snapshot] is `null`, the cargo boost
-/// cannot be evaluated and the return is `false` (matches the prior
-/// guard).
-bool _resolveBelowQuotaPeaceTreasuryRecovery({
-  required Game game,
-  required PlayerView view,
-  required AIWorldSnapshot? snapshot,
-  required PhasePlanOutcome? phasePlan,
-  required int treasury,
-  required Stockpile stockpile,
-}) {
-  if (snapshot == null) {
-    return false;
-  }
-  final regimentCount = regimentCountForPlayer(game, view.playerId);
-  final atWarWithAnyGreatPower = isAtWarWithAnyGreatPower(game, snapshot);
-  final hasInvadableProvinces =
-      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty;
-  if (phasePlan == null) {
-    return isBelowQuotaPeaceTreasuryRecovery(
-      oldWorldProvincesOwned: snapshot.conquest.oldWorldProvincesOwned,
-      regimentCount: regimentCount,
-      atWarWithAnyGreatPower: atWarWithAnyGreatPower,
-      hasInvadableProvinces: hasInvadableProvinces,
-      treasury: treasury,
-      stockpile: stockpile,
-    );
-  }
-  if (resolvePhaseEconomyExpandBelowQuotaPeaceZeroRegimentsRebuildActive(
-    phasePlan: phasePlan,
-    regimentCount: regimentCount,
-    hasInvadableProvinces: hasInvadableProvinces,
-  )) {
-    return true;
-  }
-  if (!resolvePhaseEconomyExpandBelowQuotaPeaceInsufficientRegimentsActive(
-    phasePlan: phasePlan,
-    regimentCount: regimentCount,
-    atWarWithAnyGreatPower: atWarWithAnyGreatPower,
-    hasInvadableProvinces: hasInvadableProvinces,
-  )) {
-    return false;
-  }
-  final effectiveTreasury =
-      treasury + pendingRichesTreasuryDelta(stockpile: stockpile);
-  return effectiveTreasury < cheapestRegimentBuildTreasuryCost();
 }

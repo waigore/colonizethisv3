@@ -1,4 +1,10 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'full_ai_civilian_work_selection_feedstock.dart';
 
 // Seller feedstock-tile acquisition target selection plus the
 // lock-recovery producible improvement-input staging and Old World
@@ -8,8 +14,7 @@ part of 'full_ai_civilian_work_selection.dart';
 // `orders` domain (`orders/feedstock_extraction_targets.dart`) so the one-way
 // orders↔ai dependency direction holds (Refs #3290). Split out of
 // full_ai_civilian_work_selection_feedstock.dart by concern to keep each
-// library file at or below the repo source-file line limit; shares the parent
-// library's private scope via `part`.
+// library file at or below the repo source-file line limit.
 
 /// The deterministic ascending-sorted list of **Old World** province ids the
 /// flagged seller [playerId] could acquire (by conquest or purchasable land) to
@@ -204,62 +209,4 @@ ProductionRecipe? _lowestIdMultiInputRecipeProducingOutput(String outputId) {
     if (best == null || recipe.id.compareTo(best.id) < 0) best = recipe;
   }
   return best;
-}
-
-/// True iff [playerId] owns at least one **Old World** province tile hosting a
-/// resource in [feedstockIds] that is still unimproved (`improvementLevel < 1`)
-/// — the `build_improvement` target a supplier (or seller) must keep an idle
-/// Builder in the Old World to extract (Refs #2847 § H8-extraction supplier
-/// Old World feedstock unit reservation). Old World is every region that is not
-/// [kNewWorldRegionId], derived from the tile key alone so the scan works from
-/// `WorldState.resourceByTileKey`. Read-only and deterministic.
-bool _ownsUnimprovedOldWorldFeedstockTile(
-  Game game,
-  String playerId,
-  Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final entry in ws.resourceByTileKey.entries) {
-    if (!feedstockIds.contains(entry.value)) continue;
-    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = ws.tryGetProvince(provinceId);
-    if (province == null || province.ownerId != playerId) continue;
-    if (ws.tileState.improvementLevel(entry.key) < 1) return true;
-  }
-  return false;
-}
-
-/// True iff [playerId] owns at least one **Old World** province tile hosting an
-/// **unprospected mineral** feedstock resource in [feedstockIds] — the
-/// `prospect` target a supplier (or seller) must keep an idle Explorer in the
-/// Old World to expose before the Builder can improve it (Refs #2847
-/// § H8-extraction supplier Old World feedstock unit reservation). Read-only
-/// and deterministic.
-bool _ownsUnprospectedOldWorldMineralFeedstockTile(
-  Game game,
-  String playerId,
-  Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final ws = game.worldState;
-  for (final entry in ws.resourceByTileKey.entries) {
-    if (!feedstockIds.contains(entry.value)) continue;
-    if (Unit.regionIdFromTileKey(entry.key) == kNewWorldRegionId) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (provinceId == null) continue;
-    final province = ws.tryGetProvince(provinceId);
-    if (province == null || province.ownerId != playerId) continue;
-    if (_isUnprospectedMineralFeedstockTile(
-      game,
-      playerId,
-      entry.key,
-      feedstockIds,
-    )) {
-      return true;
-    }
-  }
-  return false;
 }

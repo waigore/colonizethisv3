@@ -5,7 +5,6 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,8 +15,8 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 Player _dummyPlayer() =>
     Player(id: 'dummy', displayName: 'Dummy', isHuman: true);

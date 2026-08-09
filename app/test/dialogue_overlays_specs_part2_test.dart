@@ -32,8 +32,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/dialogue_overlays_specs_test_support.dart';
+import 'app_shell_harness.dart';
+import 'dialogue_overlays_specs_test_support.dart';
 
 const Game _gpTrioGame = Game(
   id: 'test_gp_trio',

@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show kTechIdTradeFairs;
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios_gp_tribe.dart';
+
 void main() {
   group('tradeSlotsForGp', () {
     test('returns 0 without embassy', () {
@@ -44,23 +46,21 @@ void main() {
     });
 
     test(
-      'returns kWorldMarketBaselineBidTypeCap (1) when player has no '
-      'overtures at all (Refs #2924; SPEC/game/world-market.md § Bid type '
-      'cap baseline participation)',
+      'returns kWorldMarketBaselineBidTypeCap (3) when player has no '
+      'overtures at all (Refs #4186 embassy-free ladder)',
       () {
         final game = tradeSlotsBidCapTestGame();
         expect(
           worldMarketBidTypeCap(game, 'gp1'),
           kWorldMarketBaselineBidTypeCap,
         );
-        expect(kWorldMarketBaselineBidTypeCap, 1);
+        expect(kWorldMarketBaselineBidTypeCap, 3);
       },
     );
 
     test(
-      'returns kWorldMarketBaselineBidTypeCap (1) when player has only '
-      'trade-consulate overtures (Refs #2924; the baseline cap precedes the '
-      'embassy-tier 3-cap upgrade)',
+      'returns kWorldMarketBaselineBidTypeCap (3) when player has only '
+      'trade-consulate overtures (embassy does not affect cap; Refs #4186)',
       () {
         final game = tradeSlotsBidCapTestGame(
           overtureStates: const [
@@ -79,21 +79,24 @@ void main() {
       },
     );
 
-    test('returns 3 with at least one embassy and no trade_fairs', () {
-      final game = tradeSlotsBidCapTestGame(
-        overtureStates: const [
-          OvertureState(
-            gpId: 'gp1',
-            targetId: 'minor1',
-            stage: OvertureStage.embassy,
-            sinceTurn: 0,
-          ),
-        ],
-      );
-      expect(worldMarketBidTypeCap(game, 'gp1'), 3);
-    });
+    test(
+      'returns 3 with embassy and no trade_fairs (embassy does not raise cap)',
+      () {
+        final game = tradeSlotsBidCapTestGame(
+          overtureStates: const [
+            OvertureState(
+              gpId: 'gp1',
+              targetId: 'minor1',
+              stage: OvertureStage.embassy,
+              sinceTurn: 0,
+            ),
+          ],
+        );
+        expect(worldMarketBidTypeCap(game, 'gp1'), 3);
+      },
+    );
 
-    test('returns 3 with NAP overture (NAP implies embassy)', () {
+    test('returns 3 with NAP overture and no trade_fairs', () {
       final game = tradeSlotsBidCapTestGame(
         overtureStates: const [
           OvertureState(
@@ -107,7 +110,7 @@ void main() {
       expect(worldMarketBidTypeCap(game, 'gp1'), 3);
     });
 
-    test('returns 6 with embassy and trade_fairs', () {
+    test('returns 6 with trade_fairs regardless of embassy', () {
       final game = tradeSlotsBidCapTestGame(
         techUnlocked: {kTechIdTradeFairs: true},
         overtureStates: const [
@@ -122,9 +125,15 @@ void main() {
       expect(worldMarketBidTypeCap(game, 'gp1'), 6);
     });
 
+    test('returns 6 with trade_fairs and no embassy', () {
+      final game = tradeSlotsBidCapTestGame(
+        techUnlocked: {kTechIdTradeFairs: true},
+      );
+      expect(worldMarketBidTypeCap(game, 'gp1'), 6);
+    });
+
     test(
-      'ignores embassies belonging to a different gp (aggregation is '
-      'per-player, not global)',
+      'embassy on another gp does not change cap for gp without trade_fairs',
       () {
         final game = diplomacyGame(
           players: const [
@@ -140,14 +149,7 @@ void main() {
             ),
           ],
         );
-        expect(
-          worldMarketBidTypeCap(game, 'gp1'),
-          kWorldMarketBaselineBidTypeCap,
-          reason:
-              'gp1 is a known player without any embassy of its own, so it '
-              'gets the baseline cap of 1 (Refs #2924); gp2 keeps the '
-              'embassy-tier 3-cap.',
-        );
+        expect(worldMarketBidTypeCap(game, 'gp1'), 3);
         expect(worldMarketBidTypeCap(game, 'gp2'), 3);
       },
     );

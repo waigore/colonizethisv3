@@ -1,15 +1,12 @@
 // Row model and builder for diplomacy UI. SPEC/ui/diplomacy-panel.md.
 
-import 'dart:math' as math;
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-part 'diplomacy_panel_rows_standing_chips.dart';
-part 'diplomacy_panel_rows_builder_helpers.dart';
-part 'diplomacy_panel_rows_builder.dart';
-part 'diplomacy_panel_rows_power.dart';
+export 'diplomacy_panel_rows_builder.dart';
+export 'diplomacy_panel_rows_power.dart';
+export 'diplomacy_panel_rows_standing_chips.dart';
 
 /// Faction type for display. SPEC/game/factions.md.
 enum FactionKind { greatPower, minor, tribe }

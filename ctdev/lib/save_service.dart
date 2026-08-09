@@ -1,4 +1,4 @@
-// Ctdev save/load: Hive box and GameSaveAdapter. SPEC/program/ctdev-app.md, plan-update-gp-colours-save-load.
+// Ctdev save/load: Hive box and GameSaveAdapter. SPEC/program/ctdev-app.md, SPEC/program/save-load.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';

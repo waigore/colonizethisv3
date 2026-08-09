@@ -10,11 +10,13 @@
 // keeps the same fixture and the verbatim regression `reason`.
 
 import 'diplomacy_planner_below_quota_peace_core_cases.dart';
-import 'diplomacy_planner_below_quota_peace_peer_near_quota_cases.dart';
+import 'diplomacy_planner_below_quota_peace_near_quota_cases.dart';
+import 'diplomacy_planner_below_quota_peace_peer_cases.dart';
 import 'diplomacy_planner_below_quota_peace_stalled_integration_cases.dart';
 
 void main() {
   registerDiplomacyBelowQuotaPeaceCoreCases();
-  registerDiplomacyBelowQuotaPeacePeerNearQuotaCases();
+  registerDiplomacyBelowQuotaPeacePeerCases();
+  registerDiplomacyBelowQuotaPeaceNearQuotaCases();
   registerDiplomacyBelowQuotaPeaceStalledIntegrationCases();
 }

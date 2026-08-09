@@ -25,7 +25,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/config/themes.dart';
@@ -39,8 +39,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 
-import 'support/min_viewport_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'min_viewport_harness.dart';
+import 'panel_test_fixtures.dart';
 
 const Map<String, List<int>> _kPennantGoldenColorOverride = {
   'gp1': [200, 40, 40],

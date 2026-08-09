@@ -117,6 +117,50 @@ Player cottonWeavingUnlockedProductionPlayer() =>
       techUnlocked: const <String, bool>{kTechIdCottonWeaving: true},
     );
 
+Player _labourReadinessDemoPlayer({
+  required Stockpile stockpile,
+  required WorkerPool workerPool,
+}) {
+  final game = demoGameForOverlay;
+  final base = game.players.isNotEmpty ? game.players.first : null;
+  if (base == null) {
+    return Player(
+      id: 'demo',
+      displayName: 'Demo',
+      isHuman: true,
+      stockpile: stockpile,
+      workerPool: workerPool,
+    );
+  }
+  return base.copyWith(
+    stockpile: stockpile,
+    workerPool: workerPool,
+  );
+}
+
+/// Peasants with insufficient grain — food shortfall reason on labour summary.
+/// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S2).
+Player foodShortfallLabourReadinessPlayer() => _labourReadinessDemoPlayer(
+      stockpile: const Stockpile().applyDelta('grain', 2),
+      workerPool: const WorkerPool(peasants: 4),
+    );
+
+/// Masters fed but missing fur hats — luxury shortfall reason on labour summary.
+/// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S3).
+Player luxuryShortfallLabourReadinessPlayer() => _labourReadinessDemoPlayer(
+      stockpile: const Stockpile()
+          .applyDelta('grain', 10)
+          .applyDelta('meat', 10),
+      workerPool: const WorkerPool(masters: 2),
+    );
+
+/// Workers present but no food — zero effective labour with primary reason.
+/// SPEC/ui/production-panel.md § Labour readiness (Refs #4237 S6).
+Player zeroLabourReadinessPlayer() => _labourReadinessDemoPlayer(
+      stockpile: const Stockpile(),
+      workerPool: const WorkerPool(peasants: 4, masters: 1),
+    );
+
 /// Stockpile/worker presets for fast widget tests (avoid `demoGameForOverlay` / debug init).
 Stockpile get productionPanelTestFullStockpile => _fullStockpile;
 

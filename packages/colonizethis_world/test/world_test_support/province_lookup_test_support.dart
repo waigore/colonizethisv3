@@ -84,3 +84,41 @@ WorldState makeWorld({
   );
 }
 
+/// Shared dual-region fixtures for traversal / forEachRegion pins (Refs #4125).
+const Province traversalPOld = Province(
+  id: 'oldWorld|P1',
+  regionId: kRegionOldWorld,
+  ownerId: 'o',
+);
+const Province traversalPNew = Province(
+  id: 'newWorld|P2',
+  regionId: kRegionNewWorld,
+  ownerId: 'n',
+);
+
+Unit traversalUOld = Unit(
+  id: 'u_old',
+  type: kUnitTypeExplorer,
+  ownerId: 'o',
+  locationProvinceId: 'oldWorld|P1',
+);
+
+Unit traversalUNew = Unit(
+  id: 'u_new',
+  type: kUnitTypeExplorer,
+  ownerId: 'n',
+  locationProvinceId: 'newWorld|P2',
+);
+
+WorldState traversalDualRegionWorld({
+  List<Province> oldProvinces = const [traversalPOld],
+  List<Province> newProvinces = const [traversalPNew],
+  List<Unit> oldUnits = const [],
+  List<Unit> newUnits = const [],
+}) {
+  return TestFixtures.worldStateAtOrdersPhase(
+    oldWorld: RegionData(provinces: oldProvinces, units: oldUnits),
+    newWorld: RegionData(provinces: newProvinces, units: newUnits),
+  );
+}
+

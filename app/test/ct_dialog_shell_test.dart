@@ -5,12 +5,12 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Widget _host(Widget child, {ThemeData? themeOverride}) {
+  Widget host(Widget child, {ThemeData? themeOverride}) {
     // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
     // Theme overrides for bare ThemeData / light-theme guards wrap [child]
     // so MaterialApp stays canonical.
@@ -26,7 +26,7 @@ void main() {
     ) async {
       const maxH = 500.0;
       await tester.pumpWidget(
-        _host(
+        host(
           const Scaffold(
             body: Center(
               child: CtDialogShell(
@@ -59,7 +59,7 @@ void main() {
     ) async {
       const maxH = 200.0;
       await tester.pumpWidget(
-        _host(
+        host(
           Scaffold(
             body: Center(
               child: CtDialogShell(
@@ -109,7 +109,7 @@ void main() {
   group('CtDialogShell dark frame contract (#2859 R3 / S4)', () {
     Future<void> pumpShell(WidgetTester tester) async {
       await tester.pumpWidget(
-        _host(
+        host(
           const Scaffold(
             body: Center(
               child: CtDialogShell(
@@ -176,7 +176,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _host(
+        host(
           const Scaffold(
             body: Center(child: CtDialogShell(child: Text('Body'))),
           ),
@@ -263,7 +263,7 @@ void main() {
 
         late TextStyle resolvedStyle;
         await tester.pumpWidget(
-          _host(
+          host(
             Scaffold(
               body: Center(
                 child: CtDialogShell(

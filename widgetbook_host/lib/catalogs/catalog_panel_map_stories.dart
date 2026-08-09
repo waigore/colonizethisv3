@@ -49,6 +49,103 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
         },
       ),
       WidgetbookUseCase(
+        name: 'Standalone — tile capital-link disconnected',
+        builder: (context) {
+          final game = demoGameForOverlay;
+          final region = demoRegionForOverlay;
+          return SizedBox(
+            width: 320,
+            height: 480,
+            child: ProvinceSeaZoneDetailOverlay(
+              game: game,
+              region: region,
+              displayId: sampleProvinceIdForOverlay,
+              selectedTileKey: sampleTileKeyForProvinceOverlay,
+              humanPlayerId: game.players.first.id,
+              playerView: demoHumanPlayerViewForOverlay,
+              tileConnectivity: const ProvinceTileConnectivityDisplay(
+                capitalConnected: false,
+                extractionEffective: 0,
+                extractionFull: 3,
+              ),
+              onClose: () {},
+            ),
+          );
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build road enabled',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: true,
+          buildRoadActionEnabled: true,
+          buildRoadActionHasEngineerUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build road disabled',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: true,
+          buildRoadActionEnabled: false,
+          buildRoadActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build road hidden',
+        builder: (context) => _provinceOverlayBuildRoadStory(
+          showBuildRoadActionIcon: false,
+          buildRoadActionEnabled: false,
+          buildRoadActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build fort enabled',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: true,
+          buildFortActionEnabled: true,
+          buildFortActionHasEngineerUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build fort disabled',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: true,
+          buildFortActionEnabled: false,
+          buildFortActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Build fort hidden',
+        builder: (context) => _provinceOverlayBuildFortStory(
+          showBuildFortActionIcon: false,
+          buildFortActionEnabled: false,
+          buildFortActionHasEngineerUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land enabled',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: true,
+          purchaseLandActionEnabled: true,
+          purchaseLandActionHasMerchantUnits: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land disabled',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: true,
+          purchaseLandActionEnabled: false,
+          purchaseLandActionHasMerchantUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Standalone — tile Purchase land hidden',
+        builder: (context) => _provinceOverlayPurchaseLandStory(
+          showPurchaseLandActionIcon: false,
+          purchaseLandActionEnabled: false,
+          purchaseLandActionHasMerchantUnits: false,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Standalone — extraction & available',
         builder: (context) {
           final game = demoGameForOverlay;
@@ -67,11 +164,12 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
               omniscientDetail: true,
               extractionSnapshot: ProvinceExtractionSnapshot(
                 ownerId: ownerId,
+                capitalGrainBonus: 2,
                 byCommodity: {
                   CommodityCatalog.grain.id:
                       const ProvinceExtractionCommodityTotals(
-                        effective: 1,
-                        full: 5,
+                        effective: 3,
+                        full: 7,
                         tileKeys: ['oldWorld|p1|0|0'],
                       ),
                   CommodityCatalog.iron.id:
@@ -158,6 +256,87 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
   ),
 ];
 
+/// MAP20001 Military **Build fort** inline-action variants. Refs #4280.
+Widget _provinceOverlayBuildFortStory({
+  required bool showBuildFortActionIcon,
+  required bool buildFortActionEnabled,
+  required bool buildFortActionHasEngineerUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showBuildFortActionIcon: showBuildFortActionIcon,
+      buildFortActionEnabled: buildFortActionEnabled,
+      buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+      onBuildFortTap: () {},
+      onClose: () {},
+    ),
+  );
+}
+
+/// MAP20001 Tile **Build road** inline-action variants. Refs #4260.
+Widget _provinceOverlayBuildRoadStory({
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showBuildRoadActionIcon: showBuildRoadActionIcon,
+      buildRoadActionEnabled: buildRoadActionEnabled,
+      buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+      onBuildRoadTap: () {},
+      onClose: () {},
+    ),
+  );
+}
+
+/// MAP20001 Tile **Purchase land** inline-action variants. Refs #4274.
+Widget _provinceOverlayPurchaseLandStory({
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+}) {
+  final game = demoGameForOverlay;
+  final region = demoRegionForOverlay;
+  return SizedBox(
+    width: 640,
+    height: 520,
+    child: ProvinceSeaZoneDetailOverlay(
+      game: game,
+      region: region,
+      displayId: sampleProvinceIdForOverlay,
+      selectedTileKey: sampleTileKeyForProvinceOverlay,
+      humanPlayerId: game.players.first.id,
+      playerView: demoHumanPlayerViewForOverlay,
+      showPurchaseLandActionIcon: showPurchaseLandActionIcon,
+      purchaseLandActionEnabled: purchaseLandActionEnabled,
+      purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+      onPurchaseLandTap: () {},
+      onClose: () {},
+    ),
+  );
+}
+
 /// Production panel story with `ProviderScope` + live Breakdown dialog
 /// wired into the same `previewStockpileNetDeltaByCommodityForPlayer`
 /// preview pipeline the running app uses, per
@@ -169,6 +348,8 @@ class ProductionPanelStory extends StatelessWidget {
     super.key,
     this.playerOverride,
     this.useFullAvailability = true,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   /// When set, used instead of the full/partial demo player.
@@ -176,6 +357,11 @@ class ProductionPanelStory extends StatelessWidget {
 
   /// When true, use full-availability demo player; when false, partial.
   final bool useFullAvailability;
+
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +378,9 @@ class ProductionPanelStory extends StatelessWidget {
             child: ProductionPanelStoryBody(
               playerOverride: playerOverride,
               useFullAvailability: useFullAvailability,
+              starredProduceRecommendationsByRecipeId:
+                  starredProduceRecommendationsByRecipeId,
+              onOpenCounsel: onOpenCounsel,
             ),
           ),
         ),
@@ -215,19 +404,25 @@ class ProductionPanelStoryBody extends ConsumerWidget {
     super.key,
     this.playerOverride,
     this.useFullAvailability = true,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   final Player? playerOverride;
   final bool useFullAvailability;
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final game = demoGameForOverlay;
+    final baseGame = demoGameForOverlay;
     final player =
         playerOverride ??
         (useFullAvailability
             ? fullAvailabilityProductionPlayer()
             : partialAvailabilityProductionPlayer());
+    final game = _productionStoryGameForPlayer(baseGame, player);
     final topology = MapTopology();
     const Map<String, TileMapResult>? tileMapByRegion = null;
     // Read the story's `currentOrdersProvider` so the Labour Controls
@@ -273,11 +468,43 @@ class ProductionPanelStoryBody extends ConsumerWidget {
         // see the danger text button at idle / disabled opacity.
       },
     );
+    final labourReadiness = labourReadinessForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+      ),
+    );
+    final regimentCounts = regimentTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
+    final shipCounts = shipTypeCountsForPlayer(
+      game.worldState,
+      player.id,
+    );
+    final forcesFeeding = forcesFeedingForPlayer(
+      game: game,
+      topology: topology,
+      playerId: player.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: tileMapByRegion,
+        currentOrders: currentOrders,
+      ),
+    );
     return ProductionPanel(
       game: game,
       player: player,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
+      labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: true,
@@ -296,8 +523,31 @@ class ProductionPanelStoryBody extends ConsumerWidget {
       onDesiredOutputChanged: (next) {
         ref.read(productionDesiredOutputProvider.notifier).replaceAll(next);
       },
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: onOpenCounsel,
     );
   }
+}
+
+/// Merges [player] into [baseGame] so preview helpers read the same stockpile
+/// and worker pool the panel displays (Widgetbook story overrides).
+Game _productionStoryGameForPlayer(Game baseGame, Player player) {
+  if (baseGame.players.isEmpty) {
+    return baseGame.copyWith(players: [player]);
+  }
+  var replaced = false;
+  final players = baseGame.players.map((existing) {
+    if (existing.id == player.id) {
+      replaced = true;
+      return player;
+    }
+    return existing;
+  }).toList();
+  if (!replaced) {
+    players[0] = player;
+  }
+  return baseGame.copyWith(players: players);
 }
 
 /// Civilian Units Panel + map in tandem. SPEC/ui/civilian-units-panel.md.

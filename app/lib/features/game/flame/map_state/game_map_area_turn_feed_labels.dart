@@ -1,28 +1,49 @@
-part of 'game_map_area.dart';
+
+import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show TopologyNodeType, techById, techDisplayName;
+
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../widgets/diplomacy/diplomacy_order_helpers.dart';
+import '../../widgets/diplomacy/diplomacy_panel_rows.dart';
+import '../../widgets/units/civilian/civilian_units_panel_support_resolution.dart';
+
+import 'map_location_resolver.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 /// Display-label and map-locate helpers for [GameMapArea] turn-event feed
 /// entries (Refs #3878 Phase 3 map_state modularization).
-mixin _GameMapAreaTurnFeedLabels
-    on ConsumerState<GameMapArea>, _GameMapAreaStateBase {
-  String _factionLabel(String id) =>
+mixin GameMapAreaTurnFeedLabels
+    on ConsumerState<GameMapArea>, GameMapAreaStateBase {
+  String factionLabel(String id) =>
       widget.game.factionDisplayNameById(id) ?? id;
 
-  String _provinceLabel(String fullProvinceId) =>
+  String provinceLabel(String fullProvinceId) =>
       widget.game.worldState.tryGetProvince(fullProvinceId)?.displayName ??
       fullProvinceId;
 
-  String _seaZoneLabel(String seaZoneId) {
+  String seaZoneLabel(String seaZoneId) {
     return widget.game.worldState.seaZoneDisplayNameById[seaZoneId] ??
         seaZoneId;
   }
 
-  String _diplomacyOutcomeLine({
+  String diplomacyOutcomeLine({
     required String actorId,
     required String targetId,
     required String changeType,
   }) {
-    final actor = _factionLabel(actorId);
-    final target = _factionLabel(targetId);
+    final actor = factionLabel(actorId);
+    final target = factionLabel(targetId);
     final normalized = changeType.toLowerCase();
     return switch (normalized) {
       'declare_war' => '$actor declared war on $target!',
@@ -33,7 +54,7 @@ mixin _GameMapAreaTurnFeedLabels
     };
   }
 
-  Set<String> _seaZoneRegionCandidates(String seaZoneId) {
+  Set<String> seaZoneRegionCandidates(String seaZoneId) {
     final regionFromPrefix = prefixedIdRegionSegment(seaZoneId);
     if (regionFromPrefix != null && regionFromPrefix.isNotEmpty) {
       return {regionFromPrefix};
@@ -68,8 +89,8 @@ mixin _GameMapAreaTurnFeedLabels
     return {...fromPorts, ...fromTopology};
   }
 
-  String? _tileKeyForSeaZoneEvent(String seaZoneId) {
-    final candidates = _seaZoneRegionCandidates(seaZoneId);
+  String? tileKeyForSeaZoneEvent(String seaZoneId) {
+    final candidates = seaZoneRegionCandidates(seaZoneId);
     if (candidates.length != 1) {
       return null;
     }
@@ -84,10 +105,10 @@ mixin _GameMapAreaTurnFeedLabels
     );
   }
 
-  ct_models.Province? _provinceByPrefixedId(String prefixedProvinceId) =>
+  ct_models.Province? provinceByPrefixedId(String prefixedProvinceId) =>
       widget.game.worldState.tryGetProvince(prefixedProvinceId);
 
-  void _emitLocateMapTile({
+  void emitLocateMapTile({
     required String tileKey,
     required String regionId,
   }) {
@@ -99,24 +120,24 @@ mixin _GameMapAreaTurnFeedLabels
         );
   }
 
-  void _locateProvinceTile(ct_models.Province province) {
+  void locateProvinceTile(ct_models.Province province) {
     final tileKey = tileKeyForProvinceLocation(widget.game, province);
     if (tileKey == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: province.regionId);
   }
 
-  void _locateProvinceById(String provinceId) {
-    final province = _provinceByPrefixedId(provinceId);
+  void locateProvinceById(String provinceId) {
+    final province = provinceByPrefixedId(provinceId);
     if (province == null) {
       return;
     }
-    _locateProvinceTile(province);
+    locateProvinceTile(province);
   }
 
-  void _locateSeaZoneTile(String seaZoneId) {
-    final tileKey = _tileKeyForSeaZoneEvent(seaZoneId);
+  void locateSeaZoneTile(String seaZoneId) {
+    final tileKey = tileKeyForSeaZoneEvent(seaZoneId);
     if (tileKey == null) {
       return;
     }
@@ -124,14 +145,112 @@ mixin _GameMapAreaTurnFeedLabels
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
 
-  void _locateTileKey(String tileKey) {
+  void locateTileKey(String tileKey) {
     final regionId = ct_models.Unit.regionIdFromTileKey(tileKey);
     if (regionId == null) {
       return;
     }
-    _emitLocateMapTile(tileKey: tileKey, regionId: regionId);
+    emitLocateMapTile(tileKey: tileKey, regionId: regionId);
   }
+
+  bool isCatalogTech(String techId) => techById(techId) != null;
+
+  String researchCompleteLine(String techId) {
+    if (!isCatalogTech(techId)) {
+      return 'Research complete — technology unlocked!';
+    }
+    return 'Research complete: ${techDisplayName(techId)} unlocked';
+  }
+
+  void navigateToTechnologyScreen() {
+    final orders = ref.read(currentOrdersProvider);
+    ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.technology, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+            'currentOrders': orders,
+          }),
+        );
+  }
+
+  String workTargetLabel(String workTarget) =>
+      civilianUnitsPanelWorkTargetLabels[workTarget] ?? workTarget;
+
+  String overtureStageLabel(String stage) {
+    for (final value in ct_models.OvertureStage.values) {
+      if (value.name == stage) {
+        return diplomacyOvertureStageShortLabel(value);
+      }
+    }
+    return stage.replaceAll('_', ' ');
+  }
+
+  String orderRejectedReasonLabel(String reasonCode) =>
+      CtEventFeedText.orderRejectedReasonLabel(reasonCode);
+
+  String orderRejectedLine(String reasonCode) =>
+      CtEventFeedText.orderRejectedLine(reasonCode);
+
+  bool canResolveFaction(String factionId) =>
+      widget.game.playerById(factionId) != null ||
+      widget.game.minorNations.any((m) => m.id == factionId) ||
+      widget.game.tribes.any((t) => t.id == factionId);
+
+  FactionKind? factionKindForId(String factionId) {
+    if (widget.game.playerById(factionId) != null) {
+      return FactionKind.greatPower;
+    }
+    if (widget.game.minorNations.any((m) => m.id == factionId)) {
+      return FactionKind.minor;
+    }
+    if (widget.game.tribes.any((t) => t.id == factionId)) {
+      return FactionKind.tribe;
+    }
+    return null;
+  }
+
+  String? counterpartFactionId({
+    required String actorId,
+    required String targetId,
+  }) {
+    if (actorId == mapPlayerId) {
+      return targetId;
+    }
+    if (targetId == mapPlayerId) {
+      return actorId;
+    }
+    return null;
+  }
+
+  String? overtureCounterpartFactionId({
+    required String offererGpId,
+    required String targetFactionId,
+  }) {
+    if (offererGpId == mapPlayerId) {
+      return targetFactionId;
+    }
+    if (targetFactionId == mapPlayerId) {
+      return offererGpId;
+    }
+    return null;
+  }
+
+  String? spyCounterpartFactionId({
+    required String spyOwnerId,
+    required String territoryOwnerId,
+  }) {
+    if (mapPlayerId == territoryOwnerId) {
+      return spyOwnerId;
+    }
+    if (mapPlayerId == spyOwnerId) {
+      return territoryOwnerId;
+    }
+    return null;
+  }
+
+  bool unitExists(String unitId) =>
+      widget.game.worldState.allUnitsById.containsKey(unitId);
 }

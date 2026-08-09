@@ -13,6 +13,7 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 const String _gp1 = 'gp1';
 const String _gp2 = 'gp2';
@@ -29,16 +30,6 @@ const List<Player> _defaultGpRoster = <Player>[
   Player(id: _gp2, displayName: 'GP2', isHuman: false),
   Player(id: _gp3, displayName: 'GP3', isHuman: false),
   Player(id: _gp4, displayName: 'GP4', isHuman: false),
-];
-
-/// `count` Old World provinces owned by [ownerId], ids `oldWorld|<owner>_<i>`.
-/// Only province *ownership* is read by these deciders (`provinceCountOwnedBy`
-/// / `getProvinceOwnerMap`), so the synthetic ids are arbitrary except where a
-/// row's [_Case.invadable] list references a specific id (those are added as
-/// explicit provinces in the row).
-List<Province> _owned(String ownerId, int count) => <Province>[
-  for (var i = 0; i < count; i++)
-    Province(id: 'oldWorld|${ownerId}_$i', regionId: 'oldWorld', ownerId: ownerId),
 ];
 
 typedef _PeaceTargetsFn = List<String> Function({
@@ -78,36 +69,25 @@ class _Case {
   final String? reason;
 }
 
-Game _buildGame(_Case c) => Game(
-  id: 'g-expand-peace-target-matrix',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-    oldWorld: RegionData(provinces: c.owProvinces),
-    newWorld: const RegionData(),
-  ),
-  players: c.players,
-  minorNations: c.minorNations,
-  tribes: c.tribes,
-);
-
-AIWorldSnapshot _snapshot(_Case c) => AIWorldSnapshot(
-  playerId: c.playerId,
-  threats: ThreatSummary(atWarWith: c.atWarWith),
-  opportunities: const OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: c.ownOw,
-    invadableProvinceIdsSorted: c.invadable,
-  ),
-  colonial: const ColonialSummary(),
-  economy: const EconomySummary(),
-  relations: const {},
-);
-
 void _runDecider(String label, _PeaceTargetsFn fn, List<_Case> cases) {
   group(label, () {
     for (final c in cases) {
       test(c.name, () {
-        final result = fn(game: _buildGame(c), snapshot: _snapshot(c));
+        final result = fn(
+          game: buildExpandPeaceMatrixGame(
+            owProvinces: c.owProvinces,
+            players: c.players,
+            minorNations: c.minorNations,
+            tribes: c.tribes,
+            gameId: 'g-expand-peace-target-matrix',
+          ),
+          snapshot: buildExpandPeaceMatrixSnapshot(
+            playerId: c.playerId,
+            atWarWith: c.atWarWith,
+            oldWorldProvincesOwned: c.ownOw,
+            invadableProvinceIdsSorted: c.invadable,
+          ),
+        );
         if (c.expected == null) {
           expect(result, isEmpty, reason: c.reason);
         } else {
@@ -124,7 +104,7 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
       criticalOwHoldPeaceTargets, <_Case>[
     _Case(
       name: 'returns const [] when atWarWith contains only a minor',
-      owProvinces: _owned('focus', 5),
+      owProvinces: oldWorldProvincesForExpandPeaceMatrix('focus', 5),
       players: const [Player(id: 'focus', displayName: 'Focus', isHuman: false)],
       minorNations: const [MinorNation(id: 'minor_a', displayName: 'M')],
       playerId: 'focus',
@@ -139,7 +119,7 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'returns const [] above the defend threshold but below quota '
           '(own == kFewOldWorldProvincesDefendThreshold + 1)',
-      owProvinces: [..._owned('focus', 7), ..._owned('gp_enemy', 6)],
+      owProvinces: [...oldWorldProvincesForExpandPeaceMatrix('focus', 7), ...oldWorldProvincesForExpandPeaceMatrix('gp_enemy', 6)],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
         Player(id: 'gp_enemy', displayName: 'E', isHuman: false),
@@ -156,7 +136,7 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'returns const [] at the observer quota '
           '(own == kObserverConquestMinOwProvincesPerGp)',
-      owProvinces: [..._owned('focus', 10), ..._owned('gp_enemy', 6)],
+      owProvinces: [...oldWorldProvincesForExpandPeaceMatrix('focus', 10), ...oldWorldProvincesForExpandPeaceMatrix('gp_enemy', 6)],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
         Player(id: 'gp_enemy', displayName: 'E', isHuman: false),
@@ -173,7 +153,7 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'fires toward a sole GP enemy strictly below the defend threshold '
           '(own == kFewOldWorldProvincesDefendThreshold - 1)',
-      owProvinces: [..._owned('focus', 5), ..._owned('gp_enemy', 10)],
+      owProvinces: [...oldWorldProvincesForExpandPeaceMatrix('focus', 5), ...oldWorldProvincesForExpandPeaceMatrix('gp_enemy', 10)],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
         Player(id: 'gp_enemy', displayName: 'E', isHuman: false),
@@ -191,9 +171,9 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
       name: 'returns ascending factionId order when atWarWith lists GP enemies '
           'in descending lexical order',
       owProvinces: [
-        ..._owned('focus', 6),
-        ..._owned('gp_a', 6),
-        ..._owned('gp_z', 6),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', 6),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_a', 6),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_z', 6),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
@@ -218,9 +198,9 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
       name: 'returns const [] at own == quota - 1 even with two below-quota '
           'GP enemies at war',
       owProvinces: [
-        ..._owned('focus', kObserverConquestMinOwProvincesPerGp - 1),
-        ..._owned('gp_low_a', 5),
-        ..._owned('gp_low_b', 6),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', kObserverConquestMinOwProvincesPerGp - 1),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_low_a', 5),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_low_b', 6),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
@@ -238,8 +218,8 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'returns the sole below-quota GP enemy at own == quota boundary',
       owProvinces: [
-        ..._owned('focus', kObserverConquestMinOwProvincesPerGp),
-        ..._owned('gp_low_a', 5),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', kObserverConquestMinOwProvincesPerGp),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_low_a', 5),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
@@ -258,8 +238,8 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'filters out at-war minors (only GP targets are returned)',
       owProvinces: [
-        ..._owned('focus', kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned('minor_low', 3),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix('minor_low', 3),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
@@ -277,9 +257,9 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'filters out a GP target whose own holdings are at observer quota',
       owProvinces: [
-        ..._owned('focus', kObserverConquestMinOwProvincesPerGp + 2),
-        ..._owned('gp_at_quota', kObserverConquestMinOwProvincesPerGp),
-        ..._owned('gp_low', kObserverConquestMinOwProvincesPerGp - 1),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', kObserverConquestMinOwProvincesPerGp + 2),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_at_quota', kObserverConquestMinOwProvincesPerGp),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_low', kObserverConquestMinOwProvincesPerGp - 1),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),
@@ -299,9 +279,9 @@ void registerExpandPeaceTargetDeciderHoldQuotaCases() {
     _Case(
       name: 'returns ascending factionId order regardless of at-war list order',
       owProvinces: [
-        ..._owned('focus', kObserverConquestMinOwProvincesPerGp + 1),
-        ..._owned('gp_a', 4),
-        ..._owned('gp_b', 5),
+        ...oldWorldProvincesForExpandPeaceMatrix('focus', kObserverConquestMinOwProvincesPerGp + 1),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_a', 4),
+        ...oldWorldProvincesForExpandPeaceMatrix('gp_b', 5),
       ],
       players: const [
         Player(id: 'focus', displayName: 'Focus', isHuman: false),

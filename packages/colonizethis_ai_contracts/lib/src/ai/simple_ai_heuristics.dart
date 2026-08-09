@@ -7,94 +7,18 @@ import 'dart:math' as math;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../ai_contracts_logging.dart';
-
-import '../constants.dart';
-import 'package:colonizethis_orders/src/orders/draft_orders_mutations.dart';
-import 'package:colonizethis_orders/src/orders/order_suggestion.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_orders/src/orders/order_suggestion_context.dart';
-import 'package:colonizethis_world/src/world/army_migration.dart';
-import 'package:colonizethis_world/src/world/faction_membership.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-/// Derives turn seed per ai-planner: turnSeed = hash(globalGameSeed, aiSeed[P], T).
-/// When [fallbackAiSeed] is provided and [game.aiSeedByGpId] has no entry for
-/// [playerId], it is used so that Option A (same seed when same role) holds.
-int turnSeedForPlayer(
-  Game game,
-  String playerId,
-  int turnNumber, {
-  int? fallbackAiSeed,
-}) {
-  final global = game.globalGameSeed ?? 0;
-  final aiSeed =
-      game.aiSeedByGpId[playerId] ?? fallbackAiSeed ?? playerId.hashCode;
-  var h = global ^ (turnNumber * kDeterministicHashMixPrime32);
-  h ^= aiSeed * kDeterministicHashMixPrime32;
-  return h & kDeterministicLcg31Mask;
-}
+import '../ai_contracts_logging.dart';
+import '../constants.dart';
+import 'simple_ai_heuristics_category.dart';
 
-enum _SuggestionCategory { moves, work, build, research }
-
-/// Picks the next suggestion category. When both move and work have candidates,
-/// uses [rng] so work (e.g. `build_rail` with tile maps) is not always starved.
-/// SPEC/program/sim-game-default-ai.md, ai-planner.md.
-_SuggestionCategory _chooseSuggestionCategory(
-  List<_SuggestionCategory> categories,
-  math.Random rng,
-) {
-  categories.sort((a, b) => a.index.compareTo(b.index));
-  final hasMoves = categories.contains(_SuggestionCategory.moves);
-  final hasWork = categories.contains(_SuggestionCategory.work);
-  if (hasMoves && hasWork) {
-    return rng.nextBool()
-        ? _SuggestionCategory.moves
-        : _SuggestionCategory.work;
-  }
-  return categories.first;
-}
-
-List<_SuggestionCategory> _categoriesPresent({
-  required List<MoveOrder> moveSuggestions,
-  required List<ArmyMoveOrder> armyMoveSuggestions,
-  required List<WorkOrder> workSuggestions,
-  required List<BuildUnitOrder> buildSuggestions,
-  required List<ResearchOrder> researchSuggestions,
-}) {
-  final categories = <_SuggestionCategory>[];
-  if (moveSuggestions.isNotEmpty || armyMoveSuggestions.isNotEmpty) {
-    categories.add(_SuggestionCategory.moves);
-  }
-  if (workSuggestions.isNotEmpty) {
-    categories.add(_SuggestionCategory.work);
-  }
-  if (buildSuggestions.isNotEmpty) {
-    categories.add(_SuggestionCategory.build);
-  }
-  if (researchSuggestions.isNotEmpty) {
-    categories.add(_SuggestionCategory.research);
-  }
-  return categories;
-}
-
-_SuggestionCategory _resolveSimpleHeuristicCategory({
-  required List<_SuggestionCategory> categories,
-  required List<WorkOrder> workSuggestions,
-  required math.Random rng,
-}) {
-  if (categories.contains(_SuggestionCategory.moves) &&
-      categories.contains(_SuggestionCategory.work) &&
-      workSuggestions.any((w) => w.target == kWorkTargetBuildRail)) {
-    return _SuggestionCategory.work;
-  }
-  return _chooseSuggestionCategory(
-    List<_SuggestionCategory>.from(categories),
-    rng,
-  );
-}
+export 'simple_ai_heuristics_seed.dart' show turnSeedForPlayer;
 
 Orders _applyChosenSimpleHeuristicCategory({
-  required _SuggestionCategory chosenCategory,
+  required SimpleHeuristicSuggestionCategory chosenCategory,
   required Game g,
   required String playerId,
   required math.Random rng,
@@ -106,7 +30,7 @@ Orders _applyChosenSimpleHeuristicCategory({
   required List<ResearchOrder> researchSuggestions,
 }) {
   switch (chosenCategory) {
-    case _SuggestionCategory.moves:
+    case SimpleHeuristicSuggestionCategory.moves:
       if (moveSuggestions.isEmpty) {
         final idx = rng.nextInt(armyMoveSuggestions.length);
         final chosen = armyMoveSuggestions[idx];
@@ -141,7 +65,7 @@ Orders _applyChosenSimpleHeuristicCategory({
       final idx = rng.nextInt(armyMoveSuggestions.length);
       final chosen = armyMoveSuggestions[idx];
       return applyArmyMoveOrderForPlayer(current, playerId, chosen);
-    case _SuggestionCategory.work:
+    case SimpleHeuristicSuggestionCategory.work:
       final idx = rng.nextInt(workSuggestions.length);
       final chosen = workSuggestions[idx];
       final list = List<WorkOrder>.from(
@@ -150,7 +74,7 @@ Orders _applyChosenSimpleHeuristicCategory({
       return current.copyWith(
         workOrdersByPlayerId: {...current.workOrdersByPlayerId, playerId: list},
       );
-    case _SuggestionCategory.build:
+    case SimpleHeuristicSuggestionCategory.build:
       final bidx = rng.nextInt(buildSuggestions.length);
       final bchosen = buildSuggestions[bidx];
       final blist = List<BuildUnitOrder>.from(
@@ -162,7 +86,7 @@ Orders _applyChosenSimpleHeuristicCategory({
           playerId: blist,
         },
       );
-    case _SuggestionCategory.research:
+    case SimpleHeuristicSuggestionCategory.research:
       final ridx = rng.nextInt(researchSuggestions.length);
       final rchosen = researchSuggestions[ridx];
       final rlist = <ResearchOrder>[
@@ -326,7 +250,7 @@ Orders generateOrdersWithSimpleHeuristics(
       current,
     );
 
-    final categories = _categoriesPresent(
+    final categories = categoriesPresent(
       moveSuggestions: moveSuggestions,
       armyMoveSuggestions: armyMoveSuggestions,
       workSuggestions: workSuggestions,
@@ -336,7 +260,7 @@ Orders generateOrdersWithSimpleHeuristics(
 
     if (categories.isEmpty) break;
 
-    final chosenCategory = _resolveSimpleHeuristicCategory(
+    final chosenCategory = resolveSimpleHeuristicCategory(
       categories: categories,
       workSuggestions: workSuggestions,
       rng: rng,

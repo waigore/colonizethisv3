@@ -1,5 +1,7 @@
 // Growth-stage priority vector for economy planning. SPEC/ai/growth-stage-planner.md.
 
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+
 import '../perception/perception_snapshot.dart';
 import 'ai_commodity_ids.dart';
 import 'effective_labour_state.dart';
@@ -39,13 +41,14 @@ const double kRecruitmentFloor = 0.25;
 /// Military priority below which regiment/ship builds are suppressed.
 const double kMilitaryBuildSuppressionThreshold = 0.2;
 
-const Set<String> _kCriticalFeedstockResourceIds = {
-  'wool',
-  'cotton',
-  'timber',
-  'iron',
-  'coal',
-};
+IndustryCounselGrowthStage _industryCounselStage(GrowthStage stage) {
+  return IndustryCounselGrowthStage(
+    workerGrowthPriority: stage.workerGrowthPriority,
+    infrastructurePriority: stage.infrastructurePriority,
+    resourceProductionPriority: stage.resourceProductionPriority,
+    militaryPriority: stage.militaryPriority,
+  );
+}
 
 /// Persistent growth-stage priorities derived each turn from game state.
 class GrowthStage {
@@ -168,50 +171,14 @@ bool growthStageReservesFabricForMilitary({
 
 /// Category priority for a recipe output under [stage].
 double categoryPriorityForOutput(String outputId, GrowthStage stage) {
-  final fabricId = kAiCommodityIds.fabric;
-  final castIronId = kAiCommodityIds.castIron;
-  final lumberId = kAiCommodityIds.lumber;
-
-  double priority;
-  if (outputId == fabricId) {
-    priority = stage.workerGrowthPriority > stage.resourceProductionPriority
-        ? stage.workerGrowthPriority
-        : stage.resourceProductionPriority;
-  } else if (outputId == castIronId || outputId == lumberId) {
-    priority = stage.infrastructurePriority > stage.resourceProductionPriority
-        ? stage.infrastructurePriority
-        : stage.resourceProductionPriority;
-  } else if (_isMilitaryOutput(outputId) || _isLuxuryOutput(outputId)) {
-    priority = stage.militaryPriority;
-  } else {
-    priority = _maxOfFour(
-      stage.workerGrowthPriority,
-      stage.infrastructurePriority,
-      stage.resourceProductionPriority,
-      stage.militaryPriority,
-    );
-  }
-  return priority < kMinCategoryFloor ? kMinCategoryFloor : priority;
+  return industryCounselCategoryPriorityForOutput(
+    outputId,
+    _industryCounselStage(stage),
+  );
 }
 
 int prospectedImprovedFeedstockTileCount(Game game, String playerId) {
-  final ws = game.worldState;
-  final ownerByProvince = getProvinceOwnerMap(game);
-  final prospected = ws.playerProspectedTiles[playerId] ?? const <String>{};
-  var count = 0;
-  for (final entry in ws.resourceByTileKey.entries) {
-    final resourceId = entry.value;
-    if (!_kCriticalFeedstockResourceIds.contains(resourceId)) continue;
-    final provinceId = Unit.provinceIdFromTileKey(entry.key);
-    if (ownerByProvince[provinceId] != playerId) continue;
-    if (ws.tileState.improvementLevel(entry.key) < 1) continue;
-    if (kMineralResourceIds.contains(resourceId) &&
-        !prospected.contains(entry.key)) {
-      continue;
-    }
-    count++;
-  }
-  return count;
+  return industryCounselProspectedImprovedFeedstockTileCount(game, playerId);
 }
 
 bool _isAtWar(
@@ -252,27 +219,8 @@ double _reserveShortfall(int quantity) {
   return shortfall < 0 ? 0 : shortfall;
 }
 
-bool _isMilitaryOutput(String outputId) {
-  return outputId == CommodityCatalog.steel.id ||
-      outputId == CommodityCatalog.bronze.id;
-}
-
-bool _isLuxuryOutput(String outputId) {
-  return outputId == CommodityCatalog.refinedSugar.id ||
-      outputId == CommodityCatalog.cigars.id ||
-      outputId == CommodityCatalog.furHats.id;
-}
-
 double _clamp01(double value) {
   if (value < 0) return 0;
   if (value > 1) return 1;
   return value;
-}
-
-double _maxOfFour(double a, double b, double c, double d) {
-  var max = a;
-  if (b > max) max = b;
-  if (c > max) max = c;
-  if (d > max) max = d;
-  return max;
 }

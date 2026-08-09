@@ -1,8 +1,14 @@
-/// Legend chip widgets for the tech tree graph.
+// Legend chip widgets for the tech tree graph.
 
-part of 'tech_tree_widget.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-enum _TechLegendStateKind { researched, inProgress, available, locked }
+import 'tech_tree_widget_constants.dart';
+import 'tech_tree_widget_nodes.dart';
+
+enum TechLegendStateKind { researched, inProgress, available, locked }
 
 /// Static color-coded category swatch used by the tech tree legend.
 ///
@@ -18,8 +24,8 @@ enum _TechLegendStateKind { researched, inProgress, available, locked }
 /// `Container`-based replacement preserves that visual contract
 /// (alpha-blended fill, 1.5 dp colored border, compact padding) without
 /// Material chrome.
-class _LegendChip extends StatelessWidget {
-  const _LegendChip({required this.color, required this.label});
+class TechTreeLegendChip extends StatelessWidget {
+  const TechTreeLegendChip({required this.color, required this.label, super.key});
 
   /// Horizontal padding inside the legend chip — pinned to
   /// `CtSpacing.m` (8 dp) so it matches the canonical `CtChoiceChip`
@@ -65,21 +71,21 @@ class _LegendChip extends StatelessWidget {
   }
 }
 
-class _StateLegendSample extends StatelessWidget {
-  const _StateLegendSample({
+class TechTreeStateLegendSample extends StatelessWidget {
+  const TechTreeStateLegendSample({
     required this.game,
     required this.kind,
     required this.state,
+    super.key,
   });
 
   final Game game;
-  final _TechLegendStateKind kind;
-  final _TechNodeState state;
+  final TechLegendStateKind kind;
+  final TechTreeNodeState state;
 
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    // Use a dummy tech with neutral category just to render the style.
     const dummyTech = TechDefinition(
       id: 'legend_dummy',
       era: 1,
@@ -94,14 +100,13 @@ class _StateLegendSample extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: _nodeWidth,
-          height: _nodeHeight,
-          child: _TechNode(
+          width: kTechTreeNodeWidth,
+          height: kTechTreeNodeHeight,
+          child: TechTreeNode(
             game: game,
             tech: dummyTech,
-            contextPlayerId: game.players.isNotEmpty
-                ? game.players.first.id
-                : 'gp1',
+            contextPlayerId:
+                game.players.isNotEmpty ? game.players.first.id : 'gp1',
             state: state,
             onTap: () {},
           ),
@@ -117,10 +122,10 @@ class _StateLegendSample extends StatelessWidget {
 
   String _localizedLabel(AppLocalizations l10n) {
     return switch (kind) {
-      _TechLegendStateKind.researched => l10n.techTree_stateResearched,
-      _TechLegendStateKind.inProgress => l10n.techTree_stateInProgress,
-      _TechLegendStateKind.available => l10n.techTree_stateAvailable,
-      _TechLegendStateKind.locked => l10n.techTree_stateLocked,
+      TechLegendStateKind.researched => l10n.techTree_stateResearched,
+      TechLegendStateKind.inProgress => l10n.techTree_stateInProgress,
+      TechLegendStateKind.available => l10n.techTree_stateAvailable,
+      TechLegendStateKind.locked => l10n.techTree_stateLocked,
     };
   }
 }

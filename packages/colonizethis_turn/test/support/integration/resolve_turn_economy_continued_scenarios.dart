@@ -10,37 +10,8 @@ void registerEconomyContinuedTests() {
       test(
         'full turn with tileMapByRegion: extraction pipeline, turn advanced',
         () {
-          final topology = MapTopology(
-            nodes: [
-              const TopologyNode(
-                id: 'p1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: [],
-          );
-          final grid = [
-            ['p1'],
-          ];
-          final tileMap = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: grid,
-            resourceGrid: [
-              [Resource.grain],
-            ],
-          );
-          final tileState = TileMapState()
-              .setImprovement('oldWorld|p1|0|0', 2)
-              .setRoadLevel('oldWorld|p1|0|0', 1);
-          const ow = 'oldWorld';
-          final cap = CapitalTile(
-            regionId: ow,
-            provinceId: '$ow|p1',
-            x: 0,
-            y: 0,
-          );
+          const ow = kRegionOldWorld;
+          const tileKey = '$ow|p1|0|0';
           final game = Game(
             id: 'g1',
             capitalTileGrainBonusPerTurn: 0,
@@ -60,7 +31,9 @@ void registerEconomyContinuedTests() {
                 ],
               ),
               newWorld: const RegionData(),
-              tileState: tileState,
+              tileState: TileMapState()
+                  .setImprovement(tileKey, 2)
+                  .setRoadLevel(tileKey, 1),
             ),
             players: [
               Player(
@@ -68,16 +41,22 @@ void registerEconomyContinuedTests() {
                 displayName: 'Spain',
                 isHuman: true,
                 capitalProvinceId: '$ow|p1',
-                capitalTile: cap,
+                capitalTile: CapitalTile(
+                  regionId: ow,
+                  provinceId: '$ow|p1',
+                  x: 0,
+                  y: 0,
+                ),
               ),
             ],
           );
           final next = resolveTurnComplete(
             game: game,
-            topology: topology,
+            topology: turnTestOwSingleProvinceTopology(provinceLocalId: 'p1'),
             orders: const Orders(),
-            tileMapByRegion: {'oldWorld': tileMap},
-            defaultAssignments: const [],
+            tileMapByRegion: {
+              kRegionOldWorld: turnTestResourceTileMap('p1', Resource.grain),
+            },
           );
           expect(next.worldState.turnState.turnNumber, 1);
           expect(next.players.single.stockpile.quantityOf('grain'), 1);
@@ -87,54 +66,8 @@ void registerEconomyContinuedTests() {
       test(
         'extraction phase with overseas runs allocateOverseasToStockpile and applyTradeInterception path',
         () {
-          final topology = MapTopology(
-            nodes: [
-              const TopologyNode(
-                id: 'p1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              const TopologyNode(
-                id: 'n1',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: [],
-          );
-          final tileMapOw = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['p1'],
-            ],
-            resourceGrid: [
-              [Resource.grain],
-            ],
-          );
-          final tileMapNw = TileMapResult(
-            width: 1,
-            height: 1,
-            grid: [
-              ['n1'],
-            ],
-            resourceGrid: [
-              [Resource.sugarCane],
-            ],
-          );
-          final tileState = TileMapState()
-              .setImprovement('oldWorld|p1|0|0', 1)
-              .setRoadLevel('oldWorld|p1|0|0', 1)
-              .setImprovement('newWorld|n1|0|0', 1)
-              .setRoadLevel('newWorld|n1|0|0', 1);
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
-          final cap = CapitalTile(
-            regionId: ow,
-            provinceId: '$ow|p1',
-            x: 0,
-            y: 0,
-          );
+          const ow = kRegionOldWorld;
+          const nw = kRegionNewWorld;
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -152,7 +85,11 @@ void registerEconomyContinuedTests() {
                   Province(id: '$nw|n1', regionId: nw, ownerId: 'pl1'),
                 ],
               ),
-              tileState: tileState,
+              tileState: TileMapState()
+                  .setImprovement('$ow|p1|0|0', 1)
+                  .setRoadLevel('$ow|p1|0|0', 1)
+                  .setImprovement('$nw|n1|0|0', 1)
+                  .setRoadLevel('$nw|n1|0|0', 1),
             ),
             players: [
               Player(
@@ -160,16 +97,26 @@ void registerEconomyContinuedTests() {
                 displayName: 'Spain',
                 isHuman: true,
                 capitalProvinceId: '$ow|p1',
-                capitalTile: cap,
+                capitalTile: CapitalTile(
+                  regionId: ow,
+                  provinceId: '$ow|p1',
+                  x: 0,
+                  y: 0,
+                ),
               ),
             ],
           );
           final next = resolveTurnComplete(
             game: game,
-            topology: topology,
+            topology: turnTestOwNwCrossRegionTopology(
+              owProvinceLocalId: 'p1',
+              nwProvinceLocalId: 'n1',
+            ),
             orders: const Orders(),
-            tileMapByRegion: {'oldWorld': tileMapOw, 'newWorld': tileMapNw},
-            defaultAssignments: const [],
+            tileMapByRegion: {
+              kRegionOldWorld: turnTestResourceTileMap('p1', Resource.grain),
+              kRegionNewWorld: turnTestResourceTileMap('n1', Resource.sugarCane),
+            },
           );
           expect(next.worldState.turnState.turnNumber, 1);
           expect(
@@ -180,7 +127,6 @@ void registerEconomyContinuedTests() {
       );
 
       test('production phase uses defaultAssignmentsByPlayerId per player', () {
-        const topology = MapTopology(nodes: [], edges: []);
         final game = Game(
           id: 'g1',
           worldState: WorldState(
@@ -213,20 +159,18 @@ void registerEconomyContinuedTests() {
             ),
           ],
         );
-        final defaultAssignmentsByPlayerId = <String, List<AssignedRecipe>>{
-          'p1': const [
-            AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
-          ],
-          'p2': const [
-            AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 15),
-          ],
-        };
         final next = resolveTurnComplete(
           game: game,
-          topology: topology,
+          topology: const MapTopology(nodes: [], edges: []),
           orders: const Orders(),
-          defaultAssignments: const [],
-          defaultAssignmentsByPlayerId: defaultAssignmentsByPlayerId,
+          defaultAssignmentsByPlayerId: const {
+            'p1': [
+              AssignedRecipe(recipeId: 'lumber_from_timber', assignedLabour: 10),
+            ],
+            'p2': [
+              AssignedRecipe(recipeId: 'castIron_from_iron', assignedLabour: 15),
+            ],
+          },
         );
         final player1 = next.playerById('p1')!;
         final player2 = next.playerById('p2')!;

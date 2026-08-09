@@ -7,19 +7,6 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-/// One row in a naval privateering scenario table.
-class NavalCombatPrivateeringScenario implements LabeledScenario {
-  const NavalCombatPrivateeringScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 Game _gameWithInterceptorTech({required bool hasPrivateering}) =>
@@ -78,9 +65,9 @@ int _countIntercepts({required bool hasPrivateering}) {
   return intercepts;
 }
 
-List<NavalCombatPrivateeringScenario>
+List<RunnableScenario>
     navalPrivateeringInterceptProbabilityScenarios() => [
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'npp-baseline',
     label: 'no privateering uses the baseline (unscaled) interceptor score',
     run: () {
@@ -94,7 +81,7 @@ List<NavalCombatPrivateeringScenario>
       );
     },
   ),
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'npp-scaled',
     label: 'privateering scales interceptor score by 1.25 before clamp',
     run: () {
@@ -109,7 +96,7 @@ List<NavalCombatPrivateeringScenario>
       );
     },
   ),
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'npp-higher-than-baseline',
     label: 'privateering yields strictly higher probability than baseline',
     run: () {
@@ -127,7 +114,7 @@ List<NavalCombatPrivateeringScenario>
       expect(boosted, greaterThan(baseline));
     },
   ),
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'npp-clamped',
     label: 'privateering result remains within [0.05, 0.85] clamp',
     run: () {
@@ -143,9 +130,9 @@ List<NavalCombatPrivateeringScenario>
   ),
 ];
 
-List<NavalCombatPrivateeringScenario>
+List<RunnableScenario>
     filterBattlesByInterceptionPrivateeringScenarios() => [
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'fbi-at-least-as-often',
     label: 'interceptor with privateering intercepts at least as often',
     run: () {
@@ -154,7 +141,7 @@ List<NavalCombatPrivateeringScenario>
       expect(withTech, greaterThan(withoutTech));
     },
   ),
-  NavalCombatPrivateeringScenario(
+  RunnableScenario(
     scenarioId: 'fbi-deterministic',
     label: 'interception counts are deterministic for fixed seeds',
     run: () {

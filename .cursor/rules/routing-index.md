@@ -22,6 +22,7 @@ Reduce irrelevant rule overlays by defining one routing map for rule applicabili
 | `colonizethis-lifecycle.mdc` | Flutter/Flame lifecycle |
 | `colonizethis-assets.mdc` | Asset and pubspec conventions |
 | `colonizethis-acceptance-criteria.mdc` | SPEC acceptance criteria quality |
+| `colonizethis-game-manual.mdc` | Player game manual (`docs/manual/`) — required when player UX/gameplay changes; issue planning, implementation, PR review |
 
 ## Applicability Matrix (Before -> After)
 
@@ -35,6 +36,7 @@ Reduce irrelevant rule overlays by defining one routing map for rule applicabili
 | Tooling facade code (`tool/**`) | `tools` plus broad overlays | `tools` primary + targeted structural/review overlays | Preserve tooling rules and remove unrelated overlays |
 | Logic <-> AI boundary work (`packages/colonizethis_logic/**`, `packages/colonizethis_ai/**`) | always-applied decoupling + multiple broad overlays | always-applied decoupling + targeted path overlays only | Preserve strict decoupling while reducing collateral directives |
 | OpenCode skill docs (`.opencode/skills/**`) | duplicated routing prose in references | references point to this index + source `.mdc` files | Avoid duplicated normative summaries |
+| Player game manual (`docs/manual/**`) or player-facing SPEC edits (`SPEC/game/**`, `SPEC/ui/**`, allowlisted `SPEC/program/` order/turn files) | always-applied only | always-applied + `game-manual` | Require manual update when player UX/gameplay changes; chapter review or justify non-update on PR |
 
 ## Precedence Model
 

@@ -1,11 +1,14 @@
 // Table-driven trade-interception scenarios (Refs #3939 phase 3, #3979).
-import 'trade_interception_expectations.dart';
 // dart format off
+
+/// Pins for [applyTradeInterception] rows.
+enum ApplyTradeInterceptionTarget { emptyOverseas, noEnemiesAtWar, atWarNoInterceptor, enemyPatrolReduces, deterministicSeed, privateeringBaseline, privateeringBoosted, privateeringDeterministic, shipRemovalLoop }
+
+ApplyTradeInterceptionScenario applyTradeInterceptionScenario({required String label, required ApplyTradeInterceptionTarget target, String? refs}) => (label: label, target: target, refs: refs);
+
 /// One row in [applyTradeInterceptionScenarios] (Refs #3979).
 typedef ApplyTradeInterceptionScenario = ({String label, ApplyTradeInterceptionTarget target, String? refs});
-void runApplyTradeInterceptionScenario(ApplyTradeInterceptionScenario scenario) {
-  runApplyTradeInterceptionExpectation(scenario.target);
-}
+
 /// Canonical scenarios for [applyTradeInterception].
 List<ApplyTradeInterceptionScenario> applyTradeInterceptionScenarios() => [
   applyTradeInterceptionScenario(label: 'returns as-is when overseasDelivered is empty', target: ApplyTradeInterceptionTarget.emptyOverseas),
@@ -18,11 +21,15 @@ List<ApplyTradeInterceptionScenario> applyTradeInterceptionScenarios() => [
   applyTradeInterceptionScenario(label: 'privateering trade-raid result is deterministic for a fixed seed', target: ApplyTradeInterceptionTarget.privateeringDeterministic, refs: '#3470'),
   applyTradeInterceptionScenario(label: 'can remove merchant ships when interception triggers and RNG hits', target: ApplyTradeInterceptionTarget.shipRemovalLoop),
 ];
+
+/// Pins for [scanTradeInterceptionInputs] rows.
+enum TradeInterceptionScanTarget { noEnemyPatrol, merchantEscortCount, enemyBlockade, privateeringScales }
+
+TradeInterceptionScanScenario tradeInterceptionScanScenario({required String label, required TradeInterceptionScanTarget target, String? refs}) => (label: label, target: target, refs: refs);
+
 /// One row in [tradeInterceptionScanScenarios] (Refs #3979).
 typedef TradeInterceptionScanScenario = ({String label, TradeInterceptionScanTarget target, String? refs});
-void runTradeInterceptionScanScenario(TradeInterceptionScanScenario scenario) {
-  runTradeInterceptionScanExpectation(scenario.target);
-}
+
 /// Canonical scenarios for [scanTradeInterceptionInputs].
 List<TradeInterceptionScanScenario> tradeInterceptionScanScenarios() => [
   tradeInterceptionScanScenario(label: 'no enemy patrol/blockade fleets yields zero intercept score', target: TradeInterceptionScanTarget.noEnemyPatrol),

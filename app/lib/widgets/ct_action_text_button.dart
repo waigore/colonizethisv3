@@ -7,10 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../config/themes.dart';
 import 'ct_gradients.dart';
-import 'ct_hover_button.dart';
 import 'ct_nine_patch_button.dart';
 
-part 'ct_action_text_button_state.dart';
+import 'ct_action_text_button_state.dart';
 
 /// Reusable small **neutral** text button used for secondary panel-header
 /// actions (e.g. the Available subpanel **Breakdown** affordance) that do not
@@ -119,15 +118,15 @@ class CtActionTextButton extends StatefulWidget {
   /// chrome so existing call sites do not change.
   final bool primary;
 
-  static const double _fontSize = 10;
-  static const double _letterSpacing = 10 * 0.04; // .04em = 0.4 logical px
-  static const double _horizontalPadding = 10;
-  static const double _verticalPadding = 3;
-  static const double _borderWidth = 1;
+  static const double fontSize = 10;
+  static const double letterSpacing = 10 * 0.04; // .04em = 0.4 logical px
+  static const double horizontalPadding = 10;
+  static const double verticalPadding = 3;
+  static const double borderWidth = 1;
 
   /// Hover animation duration (shared with [CtNinePatchButton]).
   static const Duration animationDuration = CtNinePatchButton.animationDuration;
 
   @override
-  State<CtActionTextButton> createState() => _CtActionTextButtonState();
+  State<CtActionTextButton> createState() => CtActionTextButtonState();
 }

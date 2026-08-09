@@ -1,13 +1,14 @@
 import 'army.dart';
 import 'fleet.dart';
-import 'province_extraction_snapshot.dart';
-import 'province_id.dart';
+import 'model_collection_equality.dart';
 import 'region_data.dart';
 import 'tile_map_state.dart';
 import 'turn_state.dart';
+import 'world_state/equality_helpers.dart';
+import 'world_state_serialization.dart';
 
-part 'world_state/equality_helpers.dart';
-part 'world_state/focused_accessors.dart';
+export 'world_state/focused_accessors.dart';
+
 
 /// Snapshot at a point in time. Turn state + region data + tile state. SPEC/game/world-model.
 class WorldState {
@@ -30,7 +31,6 @@ class WorldState {
     this.nextArmySeq = 1,
     this.newsDigestProvinceRevealDoneIds = const [],
     this.newsDigestSeaZoneFleetDoneIds = const [],
-    this.lastTurnProvinceExtractionByProvinceId = const {},
   });
 
   final TurnState turnState;
@@ -88,248 +88,11 @@ class WorldState {
   /// Prefixed sea zone ids that already generated a news "first fleet" line.
   final List<String> newsDigestSeaZoneFleetDoneIds;
 
-  /// Last-turn province Extraction display snapshots by prefixed province id.
-  /// SPEC/program/province-extraction-snapshot.md. Refs #4002.
-  final Map<String, ProvinceExtractionSnapshot>
-  lastTurnProvinceExtractionByProvinceId;
 
-  Map<String, dynamic> toJson() => {
-    'turnState': turnState.toJson(),
-    'oldWorld': oldWorld.toJson(),
-    'newWorld': newWorld.toJson(),
-    'tileState': tileState.toJson(),
-    'portsByProvinceSeaboard': portsByProvinceSeaboard,
-    if (playerVisibilityByTile.isNotEmpty)
-      'playerVisibilityByTile': playerVisibilityByTile,
-    if (playerProspectedTiles.isNotEmpty)
-      'playerProspectedTiles': playerProspectedTiles.map(
-        (playerId, tiles) => MapEntry(playerId, tiles.toList()),
-      ),
-    if (fleets.isNotEmpty) 'fleets': fleets.map((e) => e.toJson()).toList(),
-    if (tileKeysByRegionAndProvince.isNotEmpty)
-      'tileKeysByRegionAndProvince': tileKeysByRegionAndProvince.map(
-        (regionId, byProvince) => MapEntry(
-          regionId,
-          byProvince.map((provinceId, keys) => MapEntry(provinceId, keys)),
-        ),
-      ),
-    if (spyRevealTurnsByPlayer.isNotEmpty)
-      'spyRevealTurnsByPlayer': spyRevealTurnsByPlayer,
-    if (purchasedTilesByTileKey.isNotEmpty)
-      'purchasedTilesByTileKey': purchasedTilesByTileKey,
-    if (resourceByTileKey.isNotEmpty) 'resourceByTileKey': resourceByTileKey,
-    if (seaZoneDisplayNameById.isNotEmpty)
-      'seaZoneDisplayNameById': seaZoneDisplayNameById,
-    'nextShipInstanceSeq': nextShipInstanceSeq,
-    if (armies.isNotEmpty) 'armies': armies.map((e) => e.toJson()).toList(),
-    if (nextArmySeq != 1) 'nextArmySeq': nextArmySeq,
-    if (newsDigestProvinceRevealDoneIds.isNotEmpty)
-      'newsDigestProvinceRevealDoneIds': newsDigestProvinceRevealDoneIds,
-    if (newsDigestSeaZoneFleetDoneIds.isNotEmpty)
-      'newsDigestSeaZoneFleetDoneIds': newsDigestSeaZoneFleetDoneIds,
-    if (lastTurnProvinceExtractionByProvinceId.isNotEmpty)
-      'lastTurnProvinceExtractionByProvinceId': {
-        for (final e in lastTurnProvinceExtractionByProvinceId.entries)
-          e.key: e.value.toJson(),
-      },
-  };
+  Map<String, dynamic> toJson() => encodeWorldStateToJson(this);
 
-  static WorldState fromJson(Map<String, dynamic> json) {
-    final tileStateRaw = json['tileState'];
-    final tileState = tileStateRaw is Map<String, dynamic>
-        ? TileMapState.fromJson(tileStateRaw)
-        : TileMapState.fromJson(
-            tileStateRaw is Map<Object?, Object?>
-                ? Map<String, dynamic>.from(tileStateRaw)
-                : null,
-          );
-
-    final portsRaw = json['portsByProvinceSeaboard'];
-    final ports = portsRaw is Map<Object?, Object?>
-        ? Map<String, String>.from(
-            portsRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
-          )
-        : <String, String>{};
-
-    final visRaw = json['playerVisibilityByTile'];
-    final visibility = <String, Map<String, String>>{};
-    if (visRaw is Map<Object?, Object?>) {
-      visRaw.forEach((playerId, value) {
-        if (value is Map<Object?, Object?>) {
-          visibility[playerId.toString()] = Map<String, String>.from(
-            value.map((k, v) => MapEntry(k.toString(), v.toString())),
-          );
-        }
-      });
-    }
-
-    final prospectedRaw = json['playerProspectedTiles'];
-    final prospected = <String, Set<String>>{};
-    if (prospectedRaw is Map<Object?, Object?>) {
-      prospectedRaw.forEach((playerId, value) {
-        if (value is List<Object?>) {
-          prospected[playerId.toString()] = value
-              .map((e) => e.toString())
-              .toSet();
-        }
-      });
-    }
-
-    final fleetsRaw = json['fleets'] as List<dynamic>? ?? [];
-    final fleets = fleetsRaw
-        .map(
-          (e) => Fleet.fromJson(
-            Map<String, dynamic>.from(e as Map<Object?, Object?>),
-          ),
-        )
-        .toList();
-
-    final inferredSeq = inferNextShipInstanceSeqFromFleets(fleets);
-    final storedSeq = json['nextShipInstanceSeq'];
-    final nextShipInstanceSeq = storedSeq is int
-        ? (storedSeq >= inferredSeq ? storedSeq : inferredSeq)
-        : inferredSeq;
-
-    final armiesRaw = json['armies'] as List<dynamic>? ?? [];
-    final armies = armiesRaw
-        .map(
-          (e) => Army.fromJson(
-            Map<String, dynamic>.from(e as Map<Object?, Object?>),
-          ),
-        )
-        .toList();
-
-    final storedArmySeq = json['nextArmySeq'];
-    final nextArmySeq = storedArmySeq is int ? storedArmySeq : 1;
-
-    final newsProvRaw =
-        json['newsDigestProvinceRevealDoneIds'] as List<dynamic>?;
-    final newsDigestProvinceRevealDoneIds = newsProvRaw == null
-        ? const <String>[]
-        : newsProvRaw.map((e) => e.toString()).toList();
-
-    final newsSeaRaw = json['newsDigestSeaZoneFleetDoneIds'] as List<dynamic>?;
-    final newsDigestSeaZoneFleetDoneIds = newsSeaRaw == null
-        ? const <String>[]
-        : newsSeaRaw.map((e) => e.toString()).toList();
-
-    final oldWorld = RegionData.fromJson(
-      Map<String, dynamic>.from(json['oldWorld'] as Map<Object?, Object?>),
-    );
-    final newWorld = RegionData.fromJson(
-      Map<String, dynamic>.from(json['newWorld'] as Map<Object?, Object?>),
-    );
-    final localProvinceIdsByRegion = <String, Set<String>>{
-      'oldWorld': {
-        for (final province in oldWorld.provinces)
-          ProvinceId.isPrefixed(province.id)
-              ? ProvinceId.localIdFrom(province.id)
-              : province.id,
-      },
-      'newWorld': {
-        for (final province in newWorld.provinces)
-          ProvinceId.isPrefixed(province.id)
-              ? ProvinceId.localIdFrom(province.id)
-              : province.id,
-      },
-    };
-    final tileKeysRaw = json['tileKeysByRegionAndProvince'];
-    final tileKeysByRegionAndProvince = <String, Map<String, List<String>>>{};
-    if (tileKeysRaw is Map<Object?, Object?>) {
-      tileKeysRaw.forEach((regionIdRaw, byProvince) {
-        if (byProvince is! Map<Object?, Object?>) return;
-        final regionId = regionIdRaw.toString();
-        final localProvinceIds = localProvinceIdsByRegion[regionId] ?? const {};
-        final inner = <String, List<String>>{};
-        byProvince.forEach((bucketId, keys) {
-          if (keys is! List<Object?>) return;
-          final key = bucketId.toString();
-          final tileKeys = keys.map((e) => e.toString()).toList();
-          final canonicalKey = _canonicalTileBucketKeyForLoad(
-            regionId: regionId,
-            bucketKey: key,
-            tileKeys: tileKeys,
-            localProvinceIds: localProvinceIds,
-          );
-          inner[canonicalKey] = tileKeys;
-        });
-        tileKeysByRegionAndProvince[regionId] = inner;
-      });
-    }
-
-    final spyRevealRaw = json['spyRevealTurnsByPlayer'];
-    final spyRevealTurnsByPlayer = <String, Map<String, int>>{};
-    if (spyRevealRaw is Map<Object?, Object?>) {
-      spyRevealRaw.forEach((playerId, inner) {
-        if (inner is Map<Object?, Object?>) {
-          spyRevealTurnsByPlayer[playerId.toString()] = inner.map(
-            (k, v) =>
-                MapEntry(k.toString(), (v is int) ? v : (v as num).toInt()),
-          );
-        }
-      });
-    }
-
-    final purchasedRaw = json['purchasedTilesByTileKey'];
-    final purchasedTilesByTileKey = purchasedRaw is Map<Object?, Object?>
-        ? Map<String, String>.from(
-            purchasedRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
-          )
-        : <String, String>{};
-
-    final resourceRaw = json['resourceByTileKey'];
-    final resourceByTileKey = resourceRaw is Map<Object?, Object?>
-        ? Map<String, String>.from(
-            resourceRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
-          )
-        : <String, String>{};
-
-    final seaNamesRaw = json['seaZoneDisplayNameById'];
-    final seaZoneDisplayNameById = seaNamesRaw is Map<Object?, Object?>
-        ? Map<String, String>.from(
-            seaNamesRaw.map((k, v) => MapEntry(k.toString(), v.toString())),
-          )
-        : <String, String>{};
-
-    final extractionSnapRaw = json['lastTurnProvinceExtractionByProvinceId'];
-    final lastTurnProvinceExtractionByProvinceId =
-        <String, ProvinceExtractionSnapshot>{};
-    if (extractionSnapRaw is Map<Object?, Object?>) {
-      extractionSnapRaw.forEach((provinceId, value) {
-        if (value is Map<Object?, Object?>) {
-          lastTurnProvinceExtractionByProvinceId[provinceId
-              .toString()] = ProvinceExtractionSnapshot.fromJson(
-            Map<String, dynamic>.from(value),
-          );
-        }
-      });
-    }
-
-    return WorldState(
-      turnState: TurnState.fromJson(
-        Map<String, dynamic>.from(json['turnState'] as Map<Object?, Object?>),
-      ),
-      oldWorld: oldWorld,
-      newWorld: newWorld,
-      tileState: tileState,
-      portsByProvinceSeaboard: ports,
-      playerVisibilityByTile: visibility,
-      playerProspectedTiles: prospected,
-      fleets: fleets,
-      nextShipInstanceSeq: nextShipInstanceSeq,
-      tileKeysByRegionAndProvince: tileKeysByRegionAndProvince,
-      spyRevealTurnsByPlayer: spyRevealTurnsByPlayer,
-      purchasedTilesByTileKey: purchasedTilesByTileKey,
-      resourceByTileKey: resourceByTileKey,
-      seaZoneDisplayNameById: seaZoneDisplayNameById,
-      armies: armies,
-      nextArmySeq: nextArmySeq,
-      newsDigestProvinceRevealDoneIds: newsDigestProvinceRevealDoneIds,
-      newsDigestSeaZoneFleetDoneIds: newsDigestSeaZoneFleetDoneIds,
-      lastTurnProvinceExtractionByProvinceId:
-          lastTurnProvinceExtractionByProvinceId,
-    );
-  }
+  static WorldState fromJson(Map<String, dynamic> json) =>
+      decodeWorldStateFromJson(json);
 
   WorldState copyWith({
     TurnState? turnState,
@@ -350,8 +113,6 @@ class WorldState {
     int? nextArmySeq,
     List<String>? newsDigestProvinceRevealDoneIds,
     List<String>? newsDigestSeaZoneFleetDoneIds,
-    Map<String, ProvinceExtractionSnapshot>?
-    lastTurnProvinceExtractionByProvinceId,
   }) {
     return WorldState(
       turnState: turnState ?? this.turnState,
@@ -382,9 +143,6 @@ class WorldState {
           this.newsDigestProvinceRevealDoneIds,
       newsDigestSeaZoneFleetDoneIds:
           newsDigestSeaZoneFleetDoneIds ?? this.newsDigestSeaZoneFleetDoneIds,
-      lastTurnProvinceExtractionByProvinceId:
-          lastTurnProvinceExtractionByProvinceId ??
-          this.lastTurnProvinceExtractionByProvinceId,
     );
   }
 
@@ -397,38 +155,43 @@ class WorldState {
           oldWorld == other.oldWorld &&
           newWorld == other.newWorld &&
           tileState == other.tileState &&
-          _mapEquals(portsByProvinceSeaboard, other.portsByProvinceSeaboard) &&
-          _nestedStringMapEquals(
+          modelMapEquals(
+            portsByProvinceSeaboard,
+            other.portsByProvinceSeaboard,
+          ) &&
+          worldStateNestedStringMapEquals(
             playerVisibilityByTile,
             other.playerVisibilityByTile,
           ) &&
-          _mapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
-          _listEqualsFleet(fleets, other.fleets) &&
-          _tileKeysByRegionEquals(
+          worldStateMapOfSetEquals(playerProspectedTiles, other.playerProspectedTiles) &&
+          modelListEquals(fleets, other.fleets) &&
+          worldStateTileKeysByRegionEquals(
             tileKeysByRegionAndProvince,
             other.tileKeysByRegionAndProvince,
           ) &&
-          _spyRevealEquals(
+          worldStateSpyRevealEquals(
             spyRevealTurnsByPlayer,
             other.spyRevealTurnsByPlayer,
           ) &&
-          _mapEquals(purchasedTilesByTileKey, other.purchasedTilesByTileKey) &&
-          _mapEquals(resourceByTileKey, other.resourceByTileKey) &&
-          _mapEquals(seaZoneDisplayNameById, other.seaZoneDisplayNameById) &&
+          modelMapEquals(
+            purchasedTilesByTileKey,
+            other.purchasedTilesByTileKey,
+          ) &&
+          modelMapEquals(resourceByTileKey, other.resourceByTileKey) &&
+          modelMapEquals(
+            seaZoneDisplayNameById,
+            other.seaZoneDisplayNameById,
+          ) &&
           nextShipInstanceSeq == other.nextShipInstanceSeq &&
-          _listEqualsArmy(armies, other.armies) &&
+          modelListEquals(armies, other.armies) &&
           nextArmySeq == other.nextArmySeq &&
-          _listEqualsString(
-            _sortedCopy(newsDigestProvinceRevealDoneIds),
-            _sortedCopy(other.newsDigestProvinceRevealDoneIds),
+          modelListEquals(
+            worldStateSortedCopy(newsDigestProvinceRevealDoneIds),
+            worldStateSortedCopy(other.newsDigestProvinceRevealDoneIds),
           ) &&
-          _listEqualsString(
-            _sortedCopy(newsDigestSeaZoneFleetDoneIds),
-            _sortedCopy(other.newsDigestSeaZoneFleetDoneIds),
-          ) &&
-          _provinceExtractionEquals(
-            lastTurnProvinceExtractionByProvinceId,
-            other.lastTurnProvinceExtractionByProvinceId,
+          modelListEquals(
+            worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds),
+            worldStateSortedCopy(other.newsDigestSeaZoneFleetDoneIds),
           );
 
   @override
@@ -472,12 +235,7 @@ class WorldState {
     nextShipInstanceSeq,
     Object.hashAll(armies),
     nextArmySeq,
-    Object.hashAll(_sortedCopy(newsDigestProvinceRevealDoneIds)),
-    Object.hashAll(_sortedCopy(newsDigestSeaZoneFleetDoneIds)),
-    Object.hashAll(
-      lastTurnProvinceExtractionByProvinceId.entries.map(
-        (e) => Object.hash(e.key, e.value),
-      ),
-    ),
+    Object.hashAll(worldStateSortedCopy(newsDigestProvinceRevealDoneIds)),
+    Object.hashAll(worldStateSortedCopy(newsDigestSeaZoneFleetDoneIds)),
   );
 }

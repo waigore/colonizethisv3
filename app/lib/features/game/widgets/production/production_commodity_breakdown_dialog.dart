@@ -1,8 +1,11 @@
 // Read-only commodity phase breakdown for Production panel. SPEC/ui/production-panel.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show assignedRecipesFromDesiredOutput, EconomyPreviewStockpilePhase;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart'
+    show economyPreviewInputs, previewStockpilePhaseDeltasByCommodityForPlayer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -12,15 +15,10 @@ import '../../../../providers/production_allocation_provider.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
-import 'commodity_ui_helpers.dart';
+import 'production_commodity_breakdown_dialog_layout.dart';
+import 'production_commodity_breakdown_dialog_table.dart';
 
-part 'production_commodity_breakdown_dialog_layout.dart';
-part 'production_commodity_breakdown_dialog_table_cells.dart';
-part 'production_commodity_breakdown_dialog_table.dart';
-part 'production_commodity_breakdown_dialog_table_data.dart';
+export 'production_commodity_breakdown_dialog_layout.dart';
 
 /// Dialog showing per-commodity preview deltas for each economy preview phase.
 class ProductionCommodityBreakdownDialog extends ConsumerStatefulWidget {

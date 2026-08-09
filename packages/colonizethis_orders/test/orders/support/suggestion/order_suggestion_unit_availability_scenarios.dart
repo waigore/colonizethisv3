@@ -53,30 +53,7 @@ void osuaRunPendingDraftZeroProbesScale() => _osuaWithProbeTracking(() {
   expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
 });
 
-void osuaRunMultiTargetMatchesSharedValidator() {
-  final game = orderSuggestionUnitAvailabilityMultiTargetGame();
-  const topology = orderSuggestionUnitAvailabilityEmptyTopology;
-  const orders = Orders();
-  final view = buildPlayerView(game, topology, orderSuggestionUnitAvailabilityPlayerId);
-  final ownedIds = <String>{for (final e in view.provincesById.entries) if (e.value.ownerId == orderSuggestionUnitAvailabilityPlayerId) e.key};
-  final unitsById = {for (final u in view.ownUnits) u.id: u};
-  final shared = buildIncrementalCandidateValidator(
-    game: game,
-    topology: topology,
-    playerId: orderSuggestionUnitAvailabilityPlayerId,
-    baseOrders: orders,
-    resolution: orderResolutionContextFromView(view, game, unitsById: unitsById),
-    factionMembership: DiplomacyFactionMembership.from(game),
-  );
-  final availability = getAvailableWorkTargetsForUnit(view: view, game: game, topology: topology, currentOrders: orders, unitId: 'b1');
-  expect(availability.assignable, isTrue);
-  for (final target in availability.availableWorkTargetIdsSorted()) {
-    expect(
-      availability.validTileKeysByTarget[target],
-      equals(getValidWorkOrderTileKeysWithVisibility(game: game, topology: topology, view: view, unitId: 'b1', workTarget: target, currentOrders: orders, sharedCandidateValidator: shared, playerOwnedProvinceIds: ownedIds)),
-    );
-  }
-}
+void osuaRunMultiTargetMatchesSharedValidator() {final game = orderSuggestionUnitAvailabilityMultiTargetGame(); const topology = orderSuggestionUnitAvailabilityEmptyTopology; const orders = Orders(); final view = buildPlayerView(game, topology, orderSuggestionUnitAvailabilityPlayerId); final ownedIds = <String>{for (final e in view.provincesById.entries) if (e.value.ownerId == orderSuggestionUnitAvailabilityPlayerId) e.key}; final unitsById = {for (final u in view.ownUnits) u.id: u}; final shared = buildIncrementalCandidateValidator( game: game, topology: topology, playerId: orderSuggestionUnitAvailabilityPlayerId, baseOrders: orders, resolution: orderResolutionContextFromView(view, game, unitsById: unitsById), factionMembership: DiplomacyFactionMembership.from(game), ); final availability = getAvailableWorkTargetsForUnit(view: view, game: game, topology: topology, currentOrders: orders, unitId: 'b1'); expect(availability.assignable, isTrue); for (final target in availability.availableWorkTargetIdsSorted()) { expect( availability.validTileKeysByTarget[target], equals(getValidWorkOrderTileKeysWithVisibility(game: game, topology: topology, view: view, unitId: 'b1', workTarget: target, currentOrders: orders, sharedCandidateValidator: shared, playerOwnedProvinceIds: ownedIds)), ); }}
 // dart format on
 
 /// Scenarios for getAvailableWorkTargetsForUnit.

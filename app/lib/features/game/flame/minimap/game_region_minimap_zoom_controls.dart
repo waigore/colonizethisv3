@@ -1,15 +1,25 @@
-part of 'game_region_minimap.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-/// Minimap zoom label + [CtSlider] (non-Material), with local value during drag so
-/// the thumb and % label track the gesture before the viewport snapshot catches up.
-class _MinimapZoomControls extends StatefulWidget {
-  const _MinimapZoomControls({
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import '../../../../config/app_assets.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_slider.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../region_map/region_map_viewport_snapshot.dart'
+    show kRegionMapZoomMultiplierMax, kRegionMapZoomMultiplierMin;
+import '../../screens/game/game_screen_shared.dart';
+
+/// Minimap zoom label + [CtSlider] and dark editorial-monocle toggle chrome.
+class GameRegionMinimapZoomControls extends StatefulWidget {
+  const GameRegionMinimapZoomControls({super.key, 
     required this.regionId,
     required this.bus,
     required this.viewportMultiplier,
     required this.trackWidth,
     required this.theme,
-    required this.trailing,
+    required this.visible,
+    required this.onToggle,
   });
 
   final String regionId;
@@ -17,18 +27,21 @@ class _MinimapZoomControls extends StatefulWidget {
   final double viewportMultiplier;
   final double trackWidth;
   final ThemeData theme;
-  final Widget trailing;
+  final bool visible;
+  final VoidCallback onToggle;
 
   @override
-  State<_MinimapZoomControls> createState() => _MinimapZoomControlsState();
+  State<GameRegionMinimapZoomControls> createState() =>
+      _GameRegionMinimapZoomControlsState();
 }
 
-class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
+class _GameRegionMinimapZoomControlsState
+    extends State<GameRegionMinimapZoomControls> {
   double? _dragMultiplier;
   bool _dragging = false;
 
   @override
-  void didUpdateWidget(covariant _MinimapZoomControls oldWidget) {
+  void didUpdateWidget(covariant GameRegionMinimapZoomControls oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.regionId != widget.regionId) {
       _dragMultiplier = null;
@@ -103,11 +116,93 @@ class _MinimapZoomControlsState extends State<_MinimapZoomControls> {
                   ),
                 ),
               ),
-              widget.trailing,
+              _MinimapToggleButton(
+                visible: widget.visible,
+                onTap: widget.onToggle,
+              ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MinimapToggleButton extends StatefulWidget {
+  const _MinimapToggleButton({required this.visible, required this.onTap});
+
+  final bool visible;
+  final VoidCallback onTap;
+
+  static const double buttonSize = 32;
+  static const double iconSize = 20;
+  static const Duration animationDuration = Duration(milliseconds: 120);
+  static const Curve animationCurve = Curves.easeOut;
+
+  @override
+  State<_MinimapToggleButton> createState() => _MinimapToggleButtonState();
+}
+
+class _MinimapToggleButtonState extends State<_MinimapToggleButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = widget.visible
+        ? 'Hide region minimap'
+        : 'Show region minimap';
+    final borderColor = (_hovered || _pressed)
+        ? EditorialMonoclePalette.accentDim
+        : EditorialMonoclePalette.border;
+    final iconColor = (_hovered || _pressed)
+        ? EditorialMonoclePalette.accentBright
+        : EditorialMonoclePalette.accentDim;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Tooltip(
+        message: tooltip,
+        child: Semantics(
+          button: true,
+          label: tooltip,
+          child: SizedBox(
+            key: kRegionMinimapToggleKey,
+            width: _MinimapToggleButton.buttonSize,
+            height: _MinimapToggleButton.buttonSize,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onTap,
+                onHighlightChanged: (v) => setState(() => _pressed = v),
+                child: AnimatedContainer(
+                  duration: _MinimapToggleButton.animationDuration,
+                  curve: _MinimapToggleButton.animationCurve,
+                  decoration: BoxDecoration(
+                    color: EditorialMonoclePalette.bgDeep,
+                    border: Border.all(color: borderColor, width: 1),
+                  ),
+                  child: Center(
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        iconColor,
+                        BlendMode.srcIn,
+                      ),
+                      child: StrictAssetIcon(
+                        assetPath:
+                            '${kAppIconAssetPrefix}ui_icon_region_minimap.png',
+                        width: _MinimapToggleButton.iconSize,
+                        height: _MinimapToggleButton.iconSize,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

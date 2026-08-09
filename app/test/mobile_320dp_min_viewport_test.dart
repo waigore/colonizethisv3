@@ -33,11 +33,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_fixtures/runtime/app_display_strings.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
+import 'min_viewport_harness.dart';
 
 /// Minimum supported viewport dimensions for SPEC/ui/mobile-adaptation.md
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) is the lower end
@@ -316,25 +316,18 @@ void main() {
     // at the narrow viewport, not the showDialog route plumbing
     // (already covered by `new_game_leader_selection_dialog_test.dart`).
     Future<void> pumpDialog(WidgetTester tester, {required Size size}) async {
-      await pumpAtMinViewport(
+      await pumpDialogs320At(
         tester,
-        size: size,
-        localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        child: Scaffold(
-          body: Center(
-            child: NewGameLeaderSelectionDialog(
-              baseConfig: GameSetupConfig.defaultConfig,
-              naming: defaultNamingConfig,
-              initialLeaderByGpId: defaultInitialLeaderByGpId(),
-              blessedProfileNames: const [],
-              onCancel: () {},
-              onConfirmed: (_, _, _, _, _, _, _) {},
-            ),
-          ),
+        NewGameLeaderSelectionDialog(
+          baseConfig: GameSetupConfig.defaultConfig,
+          naming: defaultNamingConfig,
+          initialLeaderByGpId: defaultInitialLeaderByGpId(),
+          blessedProfileNames: const [],
+          onCancel: () {},
+          onConfirmed: (_, _, _, _, _, _, _) {},
         ),
-        settle: true,
+        size: size,
+        locale: const Locale('en'),
       );
     }
 

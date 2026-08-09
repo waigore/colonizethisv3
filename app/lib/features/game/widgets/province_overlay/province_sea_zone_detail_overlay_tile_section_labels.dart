@@ -1,9 +1,21 @@
 /// Tile-section label helpers and row builders for [ProvinceSeaZoneDetailOverlay].
+library;
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-/// Supplementary GDD label for [roadLevel] on land tiles (issue #1537 / extraction-and-improvements § Transport Level).
-@visibleForTesting
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel;
+
 String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {
     0 => l10n.provinceOverlay_tileRoadLabelNone,
@@ -14,8 +26,6 @@ String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   };
 }
 
-/// Primary Tile-section line for land tiles; [transportLevel] is stored road/rail level.
-@visibleForTesting
 String roadRailTransportLevelPrimaryLine(
   AppLocalizations l10n,
   int transportLevel,
@@ -23,7 +33,6 @@ String roadRailTransportLevelPrimaryLine(
   return l10n.provinceOverlay_tileRoadTransportLevel(transportLevel);
 }
 
-/// Ordered text lines for Tile “Road / railroad” (null → sea / no land transport row).
 @visibleForTesting
 List<String> roadRailTileDetailLinesForTests({
   required AppLocalizations l10n,
@@ -43,18 +52,12 @@ List<String> roadRailTileDetailLinesForTests({
   return lines;
 }
 
-/// Parses `regionId|…|x|y` tile keys for the province overlay; null when invalid.
-@visibleForTesting
 ({int x, int y})? tryParseProvinceOverlayTileCoords({
   required String regionId,
   required int regionWidth,
   required int regionHeight,
   required String selectedTileKey,
 }) {
-  // Defensive parse: last two `|`-separated segments are x|y. Some legacy
-  // overlay call sites construct 5-part keys where the local id itself
-  // contains a `|`; preserve compatibility while still avoiding the
-  // List<String> allocation from `split('|')`.
   final firstPipe = selectedTileKey.indexOf('|');
   if (firstPipe <= 0) return null;
   final keyRegion = selectedTileKey.substring(0, firstPipe);
@@ -78,7 +81,6 @@ List<String> roadRailTileDetailLinesForTests({
   return (x: x, y: y);
 }
 
-@visibleForTesting
 String tileDetailProspectedDisplayLabel(
   AppLocalizations l10n, {
   required bool terrainProspectable,
@@ -90,24 +92,32 @@ String tileDetailProspectedDisplayLabel(
       : l10n.provinceOverlay_tileProspectedNo;
 }
 
-Widget _buildTileResourceLabelRow({
+Widget buildTileResourceLabelRow({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
+  required String provinceId,
   required String? resourceVisible,
   required String resourceLabel,
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+  VoidCallback? onPurchaseLandTap,
 }) {
-  // Dark-theme tokens (Refs #2865, SPEC § Dark-theme Tile section body
-  // tokens — live-data body rows). Pin the Resource row prefix, the
-  // visible-commodity label rendered by `ResourceLabelInline`, and the
-  // no-resource fallback Text to EditorialMonoclePalette.fg via the
-  // shared `_fgBodyStyle()` helper so the editorial-monocle dark theme
-  // owns these live-data rows alongside coordinates / terrain /
-  // civilian-units / Prospected / Improvement / road primary / sea-tile
-  // no-road. `ResourceLabelInline.labelStyle` is the new opt-in pin
-  // path so the Tile call site can fix the commodity-id label colour
-  // without changing the default fall-through used by the Economic
-  // section row layout (which keeps its existing token contract).
-  final bodyStyle = _fgBodyStyle();
+  final bodyStyle = overlayFgBodyStyle();
+  final purchaseLandTooltip = provinceOverlayPurchaseLandTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    provinceId: provinceId,
+    enabled: purchaseLandActionEnabled,
+    hasMerchantUnits: purchaseLandActionHasMerchantUnits,
+  );
   return Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
@@ -119,18 +129,28 @@ Widget _buildTileResourceLabelRow({
         )
       else
         Text(resourceLabel, style: bodyStyle),
+      if (showPurchaseLandActionIcon)
+        CtIconAction(
+          tooltip: purchaseLandTooltip,
+          onPressed: purchaseLandActionEnabled ? onPurchaseLandTap : null,
+          icon: Icons.payments,
+          enabled: purchaseLandActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
     ],
   );
 }
 
-Widget _buildTileImprovementLabel({
+Widget buildTileImprovementLabel({
   required AppLocalizations l10n,
   required int impLevel,
   required VisibilityLevel visLevel,
   required String? rawResourceId,
   required String? visibleResourceId,
 }) {
-  final improvementLine = _improvementLabelForTileDetail(
+  final improvementLine = improvementLabelForTileDetail(
     l10n: l10n,
     impLevel: impLevel,
     visLevel: visLevel,
@@ -139,25 +159,27 @@ Widget _buildTileImprovementLabel({
   );
   return Text(
     l10n.provinceOverlay_tileImprovement(improvementLine),
-    style: _fgBodyStyle(),
+    style: overlayFgBodyStyle(),
   );
 }
 
-/// Disabled-state opacity for the Tile section inline shortcut icons
-/// (`Explore`, `Prospect`, `Build improvement`). Pinned at `0.65` so the
-/// SPEC § Style / implementation — Dark-theme Tile section body tokens
-/// contract resolves the disabled color deterministically from
-/// [EditorialMonoclePalette.muted].
-@visibleForTesting
 const double kProvinceOverlayTileInlineActionDisabledAlpha = 0.65;
 
-List<Widget> _buildTileRoadLabelWidgets({
+List<Widget> buildTileRoadLabelWidgets({
   required BuildContext context,
   required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String selectedTileKey,
   required int? roadLevel,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
 }) {
   if (roadLevel == null) {
-    return [Text(l10n.provinceOverlay_tileRoadNone, style: _fgBodyStyle())];
+    return [Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle())];
   }
   final theme = Theme.of(context);
   final roadCaptionStyle = (theme.textTheme.labelSmall ??
@@ -166,13 +188,98 @@ List<Widget> _buildTileRoadLabelWidgets({
     height: 1.25,
     color: EditorialMonoclePalette.muted,
   );
+  final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    enabled: buildRoadActionEnabled,
+    hasEngineerUnits: buildRoadActionHasEngineerUnits,
+  );
+  final transportRow = Row(
+    children: [
+      Expanded(
+        child: Text(
+          roadRailTransportLevelPrimaryLine(l10n, roadLevel),
+          style: overlayFgBodyStyle(),
+        ),
+      ),
+      if (showBuildRoadActionIcon)
+        CtIconAction(
+          tooltip: buildRoadTooltip,
+          onPressed: buildRoadActionEnabled ? onBuildRoadTap : null,
+          icon: Icons.add_road,
+          enabled: buildRoadActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
+    ],
+  );
   return [
-    Text(
-      roadRailTransportLevelPrimaryLine(l10n, roadLevel),
-      style: _fgBodyStyle(),
-    ),
+    transportRow,
     Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
   ];
+}
+
+String tileCapitalLinkLine(
+  AppLocalizations l10n,
+  ProvinceTileConnectivityDisplay display,
+) {
+  if (display.capitalConnected) {
+    final pathLevel = display.pathTransportLevel;
+    if (pathLevel != null) {
+      return l10n.provinceOverlay_tileCapitalLinkConnectedWithPath(pathLevel);
+    }
+    return l10n.provinceOverlay_tileCapitalLinkConnected;
+  }
+  return l10n.provinceOverlay_tileCapitalLinkNotConnected;
+}
+
+@visibleForTesting
+List<String> tileConnectivityDetailLinesForTests({
+  required AppLocalizations l10n,
+  required ProvinceTileConnectivityDisplay? tileConnectivity,
+}) {
+  if (tileConnectivity == null) {
+    return const [];
+  }
+  final lines = <String>[tileCapitalLinkLine(l10n, tileConnectivity)];
+  if (tileConnectivity.showExtractionRow) {
+    lines.add(
+      l10n.provinceOverlay_tileExtractionFromTile(
+        tileConnectivity.extractionEffective!,
+        tileConnectivity.extractionFull!,
+      ),
+    );
+  }
+  return lines;
+}
+
+List<Widget> buildTileConnectivityLabelWidgets({
+  required AppLocalizations l10n,
+  required ProvinceTileConnectivityDisplay? tileConnectivity,
+}) {
+  if (tileConnectivity == null) {
+    return const [];
+  }
+  final bodyStyle = overlayFgBodyStyle();
+  final widgets = <Widget>[
+    Text(tileCapitalLinkLine(l10n, tileConnectivity), style: bodyStyle),
+  ];
+  if (tileConnectivity.showExtractionRow) {
+    widgets.add(
+      Text(
+        l10n.provinceOverlay_tileExtractionFromTile(
+          tileConnectivity.extractionEffective!,
+          tileConnectivity.extractionFull!,
+        ),
+        style: bodyStyle,
+      ),
+    );
+  }
+  return widgets;
 }

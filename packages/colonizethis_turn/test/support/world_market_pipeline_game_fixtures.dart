@@ -2,12 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'riches_to_treasury_phase_purchased_tile_riches_test_support.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 
 Game minorTimberAutoOfferPipelineGame({
   required int buyerTreasury,
   int timberPrice = 30,
 }) {
-  const ow = 'oldWorld';
+  const ow = kRegionOldWorld;
   const minorProvinceId = '$ow|m1';
   const tileKey = '$ow|m1|0|0';
   return Game(
@@ -68,7 +69,7 @@ Game purchasedTimberBidPipelineGame({
   required int gpATreasury,
   int timberPrice = 25,
 }) {
-  const ow = 'oldWorld';
+  const ow = kRegionOldWorld;
   const minorProvinceId = '$ow|M1';
   const tileKey = '$ow|M1|0|0';
   return Game(

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/game_service_provider.dart';
 import '../../../providers/games_provider.dart';
 import '../../../providers/observe_session_provider.dart';
-import 'debug_command_helpers.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart' show DebugCommandResult;
 import '../game_service/game_service.dart';
 
 /// Applies ctdev/debug commands to the active session.

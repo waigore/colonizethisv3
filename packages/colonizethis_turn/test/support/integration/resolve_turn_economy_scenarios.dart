@@ -30,112 +30,62 @@ void registerEconomyCoreTests() {
           },
         );
 
-        final extractedByPlayerId = {
-          'p1': {'grain': 3},
-        };
-
-        final defaultAssignments = const <AssignedRecipe>[];
-
         final next = resolveTurnComplete(
           game: game,
           topology: topology,
           orders: orders,
-          extractedByPlayerId: extractedByPlayerId,
-          defaultAssignments: defaultAssignments,
+          extractedByPlayerId: const {'p1': {'grain': 3}},
         );
 
-        // Turn number advanced.
         expect(next.worldState.turnState.turnNumber, 1);
-        // Unit moved to P2.
         expect(
           next.worldState.oldWorld.units.single.locationProvinceId,
-          'oldWorld|P2',
+          '$ow|P2',
         );
-        // Extraction applied to player stockpile.
         expect(next.players.single.stockpile.quantityOf('grain'), 3);
       });
 
       test(
         'army move within own provinces across regions is instantaneous',
         () {
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'P1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'P2',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
-              ),
-            ],
-            edges: const [],
-          );
-
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
+          final topology = turnTestOwNwCrossRegionTopology();
+          const ow = kRegionOldWorld;
+          const nw = kRegionNewWorld;
           final game = ensureMilitaryArmiesForGame(
-            Game(
-              id: 'g1',
-              worldState: WorldState(
-                turnState: const TurnState(
-                  phase: TurnPhase.orders,
-                  turnNumber: 0,
+            turnTestOwNwCrossRegionGame(
+              owUnits: [
+                Unit(
+                  id: 'u1',
+                  type: 'musketeers',
+                  ownerId: 'p1',
+                  locationProvinceId: '$ow|P1',
                 ),
-                oldWorld: RegionData(
-                  provinces: [
-                    Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                  ],
-                  units: [
-                    Unit(
-                      id: 'u1',
-                      type: 'musketeers',
-                      ownerId: 'p1',
-                      locationProvinceId: '$ow|P1',
-                    ),
-                  ],
-                ),
-                newWorld: RegionData(
-                  provinces: [
-                    Province(id: '$nw|P2', regionId: nw, ownerId: 'p1'),
-                  ],
-                  units: [],
-                ),
-                playerVisibilityByTile: const {
-                  'p1': {
-                    'oldWorld|P1|0|0': 'fullyVisible',
-                    'newWorld|P2|0|0': 'fullyVisible',
-                  },
+              ],
+              playerVisibilityByTile: const {
+                'p1': {
+                  'oldWorld|P1|0|0': 'fullyVisible',
+                  'newWorld|P2|0|0': 'fullyVisible',
                 },
-              ),
-              players: const [
-                Player(id: 'p1', displayName: 'A', isHuman: true),
-              ],
+              },
             ),
-          );
-
-          final orders = Orders(
-            armyMoveOrdersByPlayerId: {
-              'p1': [
-                ArmyMoveOrder(
-                  armyId: fieldArmyIdFor('p1', '$ow|P1'),
-                  destinationProvinceId: '$nw|P2',
-                ),
-              ],
-            },
           );
 
           final next = resolveTurnComplete(
             game: game,
             topology: topology,
-            orders: orders,
+            orders: Orders(
+              armyMoveOrdersByPlayerId: {
+                'p1': [
+                  ArmyMoveOrder(
+                    armyId: fieldArmyIdFor('p1', '$ow|P1'),
+                    destinationProvinceId: '$nw|P2',
+                  ),
+                ],
+              },
+            ),
           );
 
-          // Turn number advanced.
           expect(next.worldState.turnState.turnNumber, 1);
-          // Unit moved from Old World to New World in a single movement phase.
           expect(next.worldState.oldWorld.units, isEmpty);
           expect(next.worldState.newWorld.units.single.id, 'u1');
           expect(
@@ -148,78 +98,42 @@ void registerEconomyCoreTests() {
       test(
         'civilian move within own provinces across regions is instantaneous and sets tileKey',
         () {
-          final topology = MapTopology(
-            nodes: const [
-              TopologyNode(
-                id: 'P1',
-                regionId: 'oldWorld',
-                type: TopologyNodeType.province,
-              ),
-              TopologyNode(
-                id: 'P2',
-                regionId: 'newWorld',
-                type: TopologyNodeType.province,
+          final topology = turnTestOwNwCrossRegionTopology();
+          const ow = kRegionOldWorld;
+          const nw = kRegionNewWorld;
+          const nwProv = '$nw|P2';
+          const nwTile = '$nwProv|0|0';
+          final game = turnTestOwNwCrossRegionGame(
+            owUnits: [
+              Unit(
+                id: 'c1',
+                type: kUnitTypeMerchant,
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
+                tileKey: '$ow|P1|0|0',
               ),
             ],
-            edges: const [],
-          );
-
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
-          const owProv = '$ow|P1';
-          const nwProv = '$nw|P2';
-          const nwTile = '$nw|P2|0|0';
-
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 0,
-              ),
-              oldWorld: RegionData(
-                provinces: [Province(id: owProv, regionId: ow, ownerId: 'p1')],
-                units: [
-                  Unit(
-                    id: 'c1',
-                    type: kUnitTypeMerchant,
-                    ownerId: 'p1',
-                    locationProvinceId: owProv,
-                    tileKey: '$ow|P1|0|0',
-                  ),
-                ],
-              ),
-              newWorld: RegionData(
-                provinces: [Province(id: nwProv, regionId: nw, ownerId: 'p1')],
-                units: [],
-              ),
-              tileKeysByRegionAndProvince: {
-                nw: {
-                  nwProv: [nwTile],
-                },
+            tileKeysByRegionAndProvince: {
+              nw: {nwProv: [nwTile]},
+            },
+            playerVisibilityByTile: const {
+              'p1': {
+                'oldWorld|P1|0|0': 'fullyVisible',
+                'newWorld|P2|0|0': 'fullyVisible',
               },
-              playerVisibilityByTile: const {
-                'p1': {
-                  'oldWorld|P1|0|0': 'fullyVisible',
-                  'newWorld|P2|0|0': 'fullyVisible',
-                },
-              },
-            ),
-            players: const [Player(id: 'p1', displayName: 'A', isHuman: true)],
-          );
-
-          final orders = Orders(
-            moveOrdersByPlayerId: {
-              'p1': [
-                MoveOrder(unitId: 'c1', destinationTileKey: '$nwProv|0|0'),
-              ],
             },
           );
 
           final next = resolveTurnComplete(
             game: game,
             topology: topology,
-            orders: orders,
+            orders: Orders(
+              moveOrdersByPlayerId: {
+                'p1': [
+                  MoveOrder(unitId: 'c1', destinationTileKey: nwTile),
+                ],
+              },
+            ),
           );
 
           expect(next.worldState.turnState.turnNumber, 1);
@@ -232,38 +146,9 @@ void registerEconomyCoreTests() {
       );
 
       test('riches to treasury phase converts riches in stockpile', () {
-        const ow = 'oldWorld';
-        final topology = MapTopology(
-          nodes: const [
-            TopologyNode(
-              id: 'P1',
-              regionId: ow,
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: const [
-                Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-              ],
-              units: [],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            Player(
-              id: 'p1',
-              displayName: 'P1',
-              isHuman: true,
-              treasury: 0,
-              stockpile: Stockpile(quantities: {'gold': 2, 'grain': 1}),
-            ),
-          ],
+        final topology = turnTestOwSingleProvinceTopology();
+        final game = turnTestOwSingleProvinceGame(
+          stockpile: Stockpile(quantities: {'gold': 2, 'grain': 1}),
         );
         final next = resolveTurnComplete(
           game: game,
@@ -313,20 +198,19 @@ void registerEconomyCoreTests() {
               ),
             ],
           );
-          final orders = Orders(
-            armyMoveOrdersByPlayerId: {
-              'p1': [
-                ArmyMoveOrder(
-                  armyId: fieldArmyIdFor('p1', '$ow|P2'),
-                  destinationProvinceId: '$ow|P1',
-                ),
-              ],
-            },
-          );
           final next = resolveTurnComplete(
             game: game,
             topology: topology,
-            orders: orders,
+            orders: Orders(
+              armyMoveOrdersByPlayerId: {
+                'p1': [
+                  ArmyMoveOrder(
+                    armyId: fieldArmyIdFor('p1', '$ow|P2'),
+                    destinationProvinceId: '$ow|P1',
+                  ),
+                ],
+              },
+            ),
           );
           expect(next.worldState.turnState.turnNumber, 1);
           expect(next.worldState.oldWorld.units.length, lessThanOrEqualTo(2));

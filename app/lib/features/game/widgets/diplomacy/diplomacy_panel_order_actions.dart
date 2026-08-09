@@ -1,10 +1,21 @@
 /// Diplomatic order submission and negotiation-mood handlers.
 /// SPEC/ui/diplomacy-panel.md.
+library;
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-mixin _DiplomacyOrderActions
-    on State<DiplomacyPanel>, _DiplomacyOrderActionsMood {
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/routes.dart';
+import '../../../../core/services/app_event_handler/app_event_handler_scope.dart';
+import 'diplomacy_order_helpers.dart';
+import 'diplomacy_panel_order_actions_mood.dart';
+import 'diplomacy_panel_state.dart';
+
+mixin DiplomacyOrderActions
+    on State<DiplomacyPanel>, DiplomacyOrderActionsMood {
   void submitOrDialog(DiplomaticOrder order) {
     final pending =
         widget.currentOrders.diplomaticOrdersByPlayerId[widget.humanPlayerId] ??
@@ -36,11 +47,16 @@ mixin _DiplomacyOrderActions
 
   void showConfirmDialog(DiplomaticOrder order) {
     final actionLabel = diplomacyActionLabel(order);
+    final target = targetName(order.targetFactionId);
     widget.bus.emit(
       ConfirmDialogEvent(
         title: actionLabel,
-        message:
-            'Confirm $actionLabel against ${targetName(order.targetFactionId)}?',
+        message: buildDiplomacyConfirmPreviewMessage(
+          order: order,
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+          targetDisplayName: target,
+        ),
         onResult: (confirmed) {
           if (confirmed) {
             if (order.type == DiplomaticOrderType.breakAlliance) {

@@ -20,7 +20,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 import 'package:intl/intl.dart';
 
 import 'package:colonizethis_app/config/themes.dart';
@@ -35,7 +35,7 @@ import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 const Map<String, List<int>> _kPlayersBarGoldenColorOverride = {
   'gp1': [200, 40, 40],

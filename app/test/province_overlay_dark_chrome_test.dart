@@ -14,7 +14,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleSeaZoneIdForOverlay;
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

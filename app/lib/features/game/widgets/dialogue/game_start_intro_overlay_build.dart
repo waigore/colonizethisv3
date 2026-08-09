@@ -1,10 +1,26 @@
-part of 'game_start_intro_overlay.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+import 'package:jenny/jenny.dart';
 
-extension _GameStartIntroOverlayBuild on _GameStartIntroOverlayState {
+import '../../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'ct_dialogue_line_choice_body.dart';
+import 'ct_dialogue_view.dart';
+import 'game_start_intro_overlay.dart';
+import 'titled_dialogue_chrome.dart';
+
+mixin GameStartIntroOverlayBuild on State<GameStartIntroOverlay> {
+  CtDialogueView? get introView;
+  Object? get introLoadError;
+  set introLoadError(Object? value);
+  bool get introDialogueFinished;
+  DialogueRunner? get introRunner;
+
   Widget buildIntroOverlay(BuildContext context) {
     final l10n = appL10n(context);
     final theme = Theme.of(context);
-    if (_loadError != null) {
+    if (introLoadError != null) {
       return buildTitledDialogueChrome(
         backdrop: widget.child,
         title: l10n.gameStartIntroOverlay_title,
@@ -14,7 +30,7 @@ extension _GameStartIntroOverlayBuild on _GameStartIntroOverlayState {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              l10n.game_intro_loadError('$_loadError'),
+              l10n.game_intro_loadError('$introLoadError'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: EditorialMonoclePalette.accentDim,
               ),
@@ -25,7 +41,7 @@ extension _GameStartIntroOverlayBuild on _GameStartIntroOverlayState {
               alignment: Alignment.center,
               child: CtNinePatchButton(
                 onPressed: () {
-                  setState(() => _loadError = null);
+                  setState(() => introLoadError = null);
                   widget.onDismissed();
                 },
                 child: Text(l10n.game_intervention_continue),
@@ -36,11 +52,11 @@ extension _GameStartIntroOverlayBuild on _GameStartIntroOverlayState {
       );
     }
 
-    if (_dialogueFinished) {
+    if (introDialogueFinished) {
       return widget.child;
     }
 
-    if (_view == null || _runner == null) {
+    if (introView == null || introRunner == null) {
       return buildTitledDialogueChrome(
         backdrop: widget.child,
         title: l10n.gameStartIntroOverlay_title,
@@ -52,7 +68,7 @@ extension _GameStartIntroOverlayBuild on _GameStartIntroOverlayState {
       backdrop: widget.child,
       title: l10n.gameStartIntroOverlay_title,
       body: CtDialogueLineChoiceBody(
-        view: _view!,
+        view: introView!,
         continueLabel: l10n.game_intervention_continue,
         lineTextStyle: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurface,

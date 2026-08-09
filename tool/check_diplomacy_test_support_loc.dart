@@ -10,9 +10,9 @@ import 'package:path/path.dart' as p;
 const String diplomacyTestSupportRelativeDir =
     'packages/colonizethis_diplomacy_test_support/lib';
 
-/// Ratchet ceiling for support physical LOC. Wave-4 densify (Refs #4037)
-/// measured post-slice total (≤2500 band met).
-const int diplomacyTestSupportLocCeiling = 2488;
+/// Ratchet ceiling for support physical LOC. Wave-5 slice E densify (Refs #4130)
+/// measured post-fixture relocation total.
+const int diplomacyTestSupportLocCeiling = 536;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countDiplomacyTestSupportPhysicalLoc(Directory dir) {

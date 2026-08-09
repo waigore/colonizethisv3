@@ -62,7 +62,7 @@ class ProvinceDetailPanelSlideTransition extends StatelessWidget {
           alignment: _stackAlignment(),
           children: [
             ...previousChildren,
-            if (currentChild != null) currentChild,
+            ?currentChild,
           ],
         );
       },

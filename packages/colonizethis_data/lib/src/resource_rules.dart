@@ -1,12 +1,9 @@
+import 'region_ids.dart';
 import 'resource.dart';
 import 'terrain_type.dart';
 
 /// Allowed region(s) for a resource. TDD 04b, GDD 04b.
-enum ResourceRegionRule {
-  oldWorldOnly,
-  newWorldOnly,
-  both,
-}
+enum ResourceRegionRule { oldWorldOnly, newWorldOnly, both }
 
 /// Resource–region and resource–terrain rules plus default market price for spawn weights.
 /// SPEC/program/tile-map-gen-resources.md, SPEC/game/resource-terrain-region-rules.md.
@@ -17,7 +14,7 @@ class ResourceRules {
     required this.defaultMarketPrice,
     Map<String, int>? manufacturedDefaultMarketPrice,
   }) : manufacturedDefaultMarketPrice =
-            manufacturedDefaultMarketPrice ?? const <String, int>{};
+           manufacturedDefaultMarketPrice ?? const <String, int>{};
 
   /// Which region(s) this resource may appear in.
   final Map<Resource, ResourceRegionRule> regionRule;
@@ -95,15 +92,16 @@ class ResourceRules {
     return null;
   }
 
-  /// Whether resource [r] is allowed in region [regionId] (e.g. 'oldWorld', 'newWorld').
+  /// Whether resource [r] is allowed in region [regionId]
+  /// (e.g. [kOldWorldRegionId], [kNewWorldRegionId]).
   bool isAllowedInRegion(Resource r, String regionId) {
     final rule = regionRule[r];
     if (rule == null) return false;
     switch (rule) {
       case ResourceRegionRule.oldWorldOnly:
-        return regionId == 'oldWorld';
+        return regionId == kOldWorldRegionId;
       case ResourceRegionRule.newWorldOnly:
-        return regionId == 'newWorld';
+        return regionId == kNewWorldRegionId;
       case ResourceRegionRule.both:
         return true;
     }
@@ -144,10 +142,7 @@ class ResourceRules {
         Resource.meat: [TerrainType.plains],
         Resource.wool: [TerrainType.hills],
         Resource.horses: [TerrainType.plains],
-        Resource.timber: [
-          TerrainType.hardwoodForest,
-          TerrainType.scrubForest,
-        ],
+        Resource.timber: [TerrainType.hardwoodForest, TerrainType.scrubForest],
         Resource.iron: [TerrainType.hills, TerrainType.mountain],
         Resource.copper: [TerrainType.hills, TerrainType.mountain],
         Resource.tin: [TerrainType.swamp],
@@ -182,8 +177,7 @@ class ResourceRules {
         Resource.gems: 250,
         Resource.diamonds: 500,
       },
-      manufacturedDefaultMarketPrice:
-          _defaultManufacturedMarketPrice,
+      manufacturedDefaultMarketPrice: _defaultManufacturedMarketPrice,
     );
   }
 
@@ -207,8 +201,7 @@ class ResourceRules {
   /// | `steel`          | `iron x 1 + coal x 1` (80 + 90)         | 170        |
   /// | `paper`          | `timber x 2` (30 * 2)                   | 60         |
   /// | `bronze`         | `copper x 1 + tin x 1` (70 + 75)        | 145        |
-  static const Map<String, int> _defaultManufacturedMarketPrice =
-      <String, int>{
+  static const Map<String, int> _defaultManufacturedMarketPrice = <String, int>{
     'lumber': 60,
     'fabric': 80,
     'castIron': 160,

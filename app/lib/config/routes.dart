@@ -9,8 +9,11 @@ import '../features/game/screens/diplomacy/diplomacy_screen.dart';
 import '../features/game/screens/production/production_screen.dart';
 import '../features/game/screens/technology/technology_screen.dart';
 import '../features/game/screens/trade/trade_screen.dart';
+import '../features/game/screens/counsel/counsel_screen.dart';
+import '../features/game/screens/development/development_screen.dart';
+import '../features/game/screens/victory/victory_screen.dart';
 import '../features/shell/shell_screen.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class Routes {
@@ -24,6 +27,9 @@ class Routes {
   static const String diplomacyDetail = RoutePaths.diplomacyDetail;
   static const String technology = RoutePaths.technology;
   static const String trade = RoutePaths.trade;
+  static const String victory = RoutePaths.victory;
+  static const String development = RoutePaths.development;
+  static const String counsel = RoutePaths.counsel;
 
   static Route<dynamic>? generate(RouteSettings settings) {
     switch (settings.name) {
@@ -47,6 +53,9 @@ class Routes {
       case RoutePaths.diplomacyDetail:
       case RoutePaths.technology:
       case RoutePaths.trade:
+      case RoutePaths.victory:
+      case RoutePaths.development:
+      case RoutePaths.counsel:
         return _buildGameRoute(settings);
       default:
         return null;
@@ -93,9 +102,39 @@ class Routes {
         );
       case RoutePaths.trade:
         final player = game.playerById(humanPlayerId)!;
+        final initialTabIndex = args['initialTabIndex'] as int? ?? 0;
         return MaterialPageRoute<void>(
           settings: settings,
-          builder: (_) => TradeScreen(game: game, player: player),
+          builder: (_) => TradeScreen(
+            game: game,
+            player: player,
+            initialTabIndex: initialTabIndex,
+          ),
+        );
+      case RoutePaths.victory:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) =>
+              VictoryScreen(game: game, humanPlayerId: humanPlayerId),
+        );
+      case RoutePaths.development:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => DevelopmentScreen(
+            game: game,
+            humanPlayerId: humanPlayerId,
+          ),
+        );
+      case RoutePaths.counsel:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => CounselScreen(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            highlightRecommendationId:
+                args['highlightRecommendationId'] as String?,
+            initialTab: counselTabFromRouteArg(args['counselTab']),
+          ),
         );
       default:
         return null;

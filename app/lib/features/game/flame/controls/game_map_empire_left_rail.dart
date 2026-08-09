@@ -1,22 +1,14 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_models/colonizethis_models.dart' show AppEventBus;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/app_assets.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../config/routes.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../providers/debug_console_provider.dart';
 import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
-import '../../../../widgets/ct_gradients.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart';
 
-part 'game_map_empire_left_rail_button.dart';
-part 'game_map_empire_left_rail_buttons.dart';
+import 'game_map_empire_left_rail_buttons.dart';
 
 /// Always-visible icon column for empire actions on the in-game map.
 ///
@@ -82,7 +74,7 @@ class GameMapEmpireLeftRail extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: _buildEmpireRailButtons(
+      children: buildEmpireRailButtons(
         game: game,
         humanPlayerId: humanPlayerId,
         topology: topology,

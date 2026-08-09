@@ -6,7 +6,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'province_tile_ranking.dart';
-import 'town_capital_occupancy.dart';
 
 /// Thrown when the capital province cannot host four bootstrap grain farms on land tiles.
 class GreatPowerGrainBootstrapError implements Exception {

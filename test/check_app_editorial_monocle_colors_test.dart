@@ -433,7 +433,7 @@ const accentConst = const Color(0xFFCC0000);
 
     test(
       'allowlists app/lib/widgets/ canvas-compositing files '
-      '(main_menu.dart, main_menu_buttons.dart)',
+      '(main_menu_widget.dart, main_menu_buttons.dart)',
       () {
         final temp = Directory.systemTemp.createTempSync(
           'check_app_editorial_monocle_colors_widgets_compositing_',
@@ -444,9 +444,9 @@ const accentConst = const Color(0xFFCC0000);
           ..createSync(recursive: true)
           ..writeAsStringSync('// keep\n');
 
-        // main_menu.dart — hover ColorFilter.mode darken composite; the
+        // main_menu_widget.dart — hover ColorFilter.mode darken composite; the
         // Colors.black literal is a blend operand, not a theme reference.
-        File('${temp.path}/app/lib/widgets/main_menu.dart')
+        File('${temp.path}/app/lib/widgets/main_menu_widget.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
 import 'package:flutter/material.dart';
@@ -457,12 +457,12 @@ final hoverFilter = ColorFilter.mode(
 );
 ''');
 
-        // main_menu_buttons.dart — `part of 'main_menu.dart'` split-out file
-        // carrying the same hover ColorFilter.mode darken composite.
+        // main_menu_buttons.dart — de-parted library carrying the same hover
+        // ColorFilter.mode darken composite.
         File('${temp.path}/app/lib/widgets/main_menu_buttons.dart')
           ..createSync(recursive: true)
           ..writeAsStringSync('''
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
 
 final hoverFilter = ColorFilter.mode(
   Colors.black.withValues(alpha: 0.15),
@@ -625,7 +625,9 @@ class Clean extends StatelessWidget {
       const skipped = <String>[
         'app/lib/features/game/flame/region_map/region_map_component_render_core.dart',
         'app/lib/features/game/flame/region_map/region_map_component_render_political.dart',
-        'app/lib/features/game/flame/region_map/region_map_component_render_markers.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_selection.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_settlements.dart',
+        'app/lib/features/game/flame/region_map/region_map_component_render_markers_units.dart',
         'app/lib/features/game/flame/minimap/game_region_minimap.dart',
         'app/lib/features/game/flame/render/resource_icon_disc_palette.dart',
       ];
@@ -670,7 +672,7 @@ class Clean extends StatelessWidget {
       'extended scope)',
       () {
         const compositing = <String>[
-          'app/lib/widgets/main_menu.dart',
+          'app/lib/widgets/main_menu_widget.dart',
           'app/lib/widgets/main_menu_buttons.dart',
         ];
         for (final path in compositing) {

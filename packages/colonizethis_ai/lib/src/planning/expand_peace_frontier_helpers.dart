@@ -16,10 +16,8 @@ import 'planning_imports.dart';
 /// GP owning the most invadable Old World provinces (frontier blocker).
 ///
 /// Public entry for the phase dispatcher and orchestrator wiring (Refs
-/// #2509 S5). Mirrors the existing `primaryInvadableOldWorldGpBlocker`
-/// algorithm in `colonial_pressure.dart` so the new planner stays
-/// self-contained against the S1 deletion of that file (Refs #2509 §
-/// EXPAND phase planner). Behavior is byte-identical to the legacy helper:
+/// #2509 S5 / #4079). Behavior is byte-identical to the legacy
+/// `colonial_pressure.dart` helper:
 ///
 ///   1. Tally GP ownership across [ConquestSummary.invadableProvinceIdsSorted]
 ///      using [getProvinceOwnerMap], skipping unowned and non-GP entries.
@@ -31,7 +29,7 @@ import 'planning_imports.dart';
 /// invadable provinces are owned by a Great Power. Linear in the
 /// invadable-OW set, matching the budget-rule note in
 /// `colonizethis-turn-resolution-budget.mdc`.
-String? expandPrimaryInvadableOldWorldGpBlocker({
+String? primaryInvadableOldWorldGpBlocker({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
@@ -64,21 +62,14 @@ String? expandPrimaryInvadableOldWorldGpBlocker({
   return bestGpId;
 }
 
-/// Canonical name for [expandPrimaryInvadableOldWorldGpBlocker] (Refs #2509 S1).
-String? primaryInvadableOldWorldGpBlocker({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) => expandPrimaryInvadableOldWorldGpBlocker(game: game, snapshot: snapshot);
-
 /// Whether the invadable Old World frontier is held only by Great Powers
 /// (no minor nation owns any invadable OW province).
 ///
-/// Mirrors `isOldWorldGpOnlyInvadableFrontier` from `colonial_pressure.dart`.
 /// Public entry for the phase dispatcher and orchestrator wiring (Refs
-/// #2509 S5). The mutual-plateau sole-GP carve-out in [planExpandPeace]
-/// requires this gate so we only peace the lone GP blocker when no minor
-/// pivot remains.
-bool expandIsOldWorldGpOnlyInvadableFrontier({
+/// #2509 S5 / #4079). The mutual-plateau sole-GP carve-out in
+/// [planExpandPeace] requires this gate so we only peace the lone GP
+/// blocker when no minor pivot remains.
+bool isOldWorldGpOnlyInvadableFrontier({
   required Game game,
   required AIWorldSnapshot snapshot,
 }) {
@@ -100,12 +91,6 @@ bool expandIsOldWorldGpOnlyInvadableFrontier({
     provinceOwner: provinceOwner,
   );
 }
-
-/// Canonical name for [expandIsOldWorldGpOnlyInvadableFrontier] (Refs #2509 S1).
-bool isOldWorldGpOnlyInvadableFrontier({
-  required Game game,
-  required AIWorldSnapshot snapshot,
-}) => expandIsOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
 
 /// Whether any Old World minor nation still holds provinces and is not
 /// already at war with the active player (uninvaded minor pivot remaining).
@@ -232,3 +217,37 @@ bool isStalledOldWorldGpBlockerFocus({
 }) =>
     isOwnOldWorldBelowConquestQuota(snapshot) &&
     isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot);
+
+/// Whether the active player is in a geographic peer-war lock against
+/// [peerGpId] — exactly one Great Power foe owns every Old World province
+/// adjacent to the active player's territory (Refs #2847 § H4-a).
+bool expandIsGeographicPeerWarLock({
+  required AIWorldSnapshot snapshot,
+  required String peerGpId,
+}) {
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  return adjacentOwners.single == peerGpId;
+}
+
+/// Whether [planExpandEconomy] should widen the insufficient-regiment
+/// force-build arm (Arm D) under the EXPAND-trap (Refs #2847 § H3).
+bool expandIsGeographicPeerWarLockNoNwTreasuryRecovery({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (snapshot.colonial.newWorldProvincesOwned > 0) {
+    return false;
+  }
+  final adjacentOwners = snapshot.conquest.adjacentOwnerFactionIdsSorted;
+  if (adjacentOwners.length != 1) {
+    return false;
+  }
+  final peerGpId = adjacentOwners.single;
+  if (game.playerById(peerGpId) == null) {
+    return false;
+  }
+  return expandIsGeographicPeerWarLock(snapshot: snapshot, peerGpId: peerGpId);
+}

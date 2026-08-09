@@ -1,7 +1,38 @@
-part of 'production_screen.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart'
+    show rankIndustryCounselRecommendations;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart'
+    show
+        economyPreviewInputs,
+        forcesFeedingForPlayer,
+        labourReadinessForPlayer,
+        previewStockpileNetDeltaByCommodityForPlayer;
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class _ProductionScreenBody extends ConsumerWidget {
-  const _ProductionScreenBody({
+import '../../../../config/routes.dart';
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../core/services/game_service/try_get_game_map_data.dart';
+import '../../../../providers/game_service_provider.dart';
+import '../../../../providers/games_provider.dart';
+import '../../../../providers/production_allocation_provider.dart';
+import '../../widgets/production/production_commodity_breakdown_dialog.dart';
+import '../../widgets/production/production_labour_helpers.dart';
+import '../../widgets/production/production_panel.dart';
+import '../../widgets/shell/shell_player_context.dart';
+import '../../widgets/shell/shell_player_guarded_body.dart';
+import 'production_screen.dart';
+
+/// Production screen body with shell guard and panel wiring (Refs #4117 de-part).
+class ProductionScreenBody extends ConsumerWidget {
+  const ProductionScreenBody({
+    super.key,
     required this.displayGame,
     required this.screen,
   });
@@ -51,7 +82,65 @@ class _ProductionScreenBody extends ConsumerWidget {
         },
       ),
     );
+    final regimentCounts = regimentTypeCountsForPlayer(
+      displayGame.worldState,
+      displayPlayer.id,
+    );
+    final shipCounts = shipTypeCountsForPlayer(
+      displayGame.worldState,
+      displayPlayer.id,
+    );
+    final labourReadiness = labourReadinessForPlayer(
+      game: displayGame,
+      topology: panelTopology,
+      playerId: displayPlayer.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: panelTileMaps,
+        currentOrders: currentOrders,
+      ),
+    );
+    final forcesFeeding = forcesFeedingForPlayer(
+      game: displayGame,
+      topology: panelTopology,
+      playerId: displayPlayer.id,
+      foodCounts: MilitaryNavyFoodCounts(
+        regimentCountsById: regimentCounts,
+        shipCountsById: shipCounts,
+      ),
+      inputs: economyPreviewInputs(
+        tileMapByRegion: panelTileMaps,
+        currentOrders: currentOrders,
+      ),
+    );
     final canEdit = shell.canMutateViaUi;
+    final bus = shellRef.read(appEventBusProvider);
+    final industryCounselRecommendations = rankIndustryCounselRecommendations(
+      game: displayGame,
+      playerId: displayPlayer.id,
+      currentOrders: currentOrders,
+      topology: panelTopology,
+      tileMapByRegion: panelTileMaps ?? const {},
+    );
+    final starredProduceRecommendationsByRecipeId = {
+      for (final recommendation in industryCounselRecommendations)
+        if (recommendation.kind ==
+                IndustryCounselRecommendationKind.produceRecipe &&
+            recommendation.recipeId != null)
+          recommendation.recipeId!: recommendation,
+    };
+    void openCounsel({String? highlightRecommendationId}) {
+      bus.emit(
+        NavigateToRouteEvent(Routes.counsel, {
+          'game': displayGame,
+          'humanPlayerId': displayPlayer.id,
+          'highlightRecommendationId': highlightRecommendationId,
+        }),
+      );
+    }
     final labourCallbacks = ProductionLabourCallbacks(
       onAppendRecruitOrder: (tier) {
         if (!canEdit) return;
@@ -87,6 +176,8 @@ class _ProductionScreenBody extends ConsumerWidget {
       player: displayPlayer,
       desiredOutputByRecipe: desiredOutputByRecipe,
       netDeltasByCommodity: netDeltasByCommodity,
+      labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       currentOrders: currentOrders,
       labourCallbacks: labourCallbacks,
       canEditLabour: canEdit,
@@ -109,9 +200,10 @@ class _ProductionScreenBody extends ConsumerWidget {
         if (!canEdit) return;
         shellRef.read(productionDesiredOutputProvider.notifier).replaceAll(next);
       },
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: openCounsel,
     );
-    final panel =
-        canEdit ? productionPanel : IgnorePointer(child: productionPanel);
     if (kCtE2EEnabled) {
       updateCtE2eProductionPanelSnapshotIfEnabled(
         CtE2eProductionPanelSnapshot(
@@ -125,8 +217,8 @@ class _ProductionScreenBody extends ConsumerWidget {
           tileMapByRegion: panelTileMaps,
         ),
       );
-      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: panel);
+      return KeyedSubtree(key: kCtE2EProductionPanelRootKey, child: productionPanel);
     }
-    return panel;
+    return productionPanel;
   }
 }

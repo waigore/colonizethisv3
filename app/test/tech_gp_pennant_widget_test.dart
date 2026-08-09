@@ -14,8 +14,8 @@ import 'package:colonizethis_app/features/game/widgets/technology/technology_pan
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/gp_nation_color_pennant.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

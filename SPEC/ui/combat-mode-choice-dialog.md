@@ -15,6 +15,7 @@
 | `bus` | `AppEventBus` | yes | Bus used to emit `CombatModeChosenEvent(CombatMode)` once the player picks a mode. |
 | `provinceName` | `String` | yes | Display name of the contested province; rendered in the dialog title. May be empty (`''`) if upstream did not resolve a name; in that case the title shows the localized template with no name interpolated. |
 | `isCapitalSiege` | `bool` | yes | When `true`, the dialog forces Quick Battle as the only option (auto-resolve is hidden); when `false`, both options are offered. |
+| `landForceFeedingWarning` | `String?` | no | Soft informational line when the human's land forces are underfed this turn (#4242). Omitted when fully fed. The dialog builder may compute this from `game`, `humanPlayerId`, `topology`, and optional `draftOrders` in `params` when the explicit string is absent. |
 
 The widget owns no internal state. It pops itself via `Navigator.of(context).pop()` once the user picks a mode.
 
@@ -82,6 +83,7 @@ The widget owns no internal state. It pops itself via `Navigator.of(context).pop
 |-------|---------|--------|
 | Default (regular) | `isCapitalSiege == false` | Body text from `quickBattle_chooseCombatMode`; both action buttons visible. |
 | Capital siege | `isCapitalSiege == true` | Body text from `quickBattle_capitalSiegeQuickBattleOnly`; only Quick Battle button visible. Auto-Resolve button is **omitted from the tree**, not merely disabled. |
+| Land underfed | `landForceFeedingWarning != null` | Muted italic body line below the main explanatory text; both combat mode choices remain enabled (Refs #4242). |
 | Empty province name | `provinceName == ''` | Title still renders the localized `quickBattle_combatAt` template; the empty string is interpolated as-is. |
 
 The dialog is modal; it does not auto-dismiss without a player choice.

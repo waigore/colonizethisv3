@@ -6,6 +6,7 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'setup_logging.dart';
 import 'gp_old_world_tile_scan.dart';
+import 'setup_unit_spawn.dart';
 
 bool _isGpOwnedCivilianOrMilitaryUnit(Unit unit, String gpId) {
   if (unit.ownerId != gpId) return false;
@@ -24,64 +25,6 @@ List<Unit> _filterGpCiviliansAndMilitary(List<Unit> units, Set<String> gpIds) {
           !_isGpOwnedCivilianOrMilitaryUnit(unit, unit.ownerId))
         unit,
   ];
-}
-
-void _spawnCivilianUnitsOfType({
-  required Map<String, List<Unit>> unitsByRegion,
-  required String ownerId,
-  required String capitalProvinceId,
-  required String capitalTileKey,
-  required String capitalRegionId,
-  required String unitType,
-  required int count,
-}) {
-  final destination = unitsByRegion[capitalRegionId];
-  if (destination == null) {
-    throw StateError(
-      'Unknown capital region "$capitalRegionId" for owner=$ownerId',
-    );
-  }
-  final suffix = unitType.toLowerCase().replaceAll(' ', '_');
-  for (var k = 1; k <= count; k++) {
-    destination.add(
-      Unit(
-        id: '${ownerId}_adv_${suffix}_$k',
-        type: unitType,
-        ownerId: ownerId,
-        locationProvinceId: capitalProvinceId,
-        status: UnitStatus.idle,
-        tileKey: capitalTileKey,
-      ),
-    );
-  }
-}
-
-void _spawnRegimentsForPlayer({
-  required Player player,
-  required String capitalProvinceId,
-  required String regionId,
-  required List<String> regimentTypeIds,
-  required Map<String, List<Unit>> unitsByRegion,
-}) {
-  if (regimentTypeIds.isEmpty) return;
-  final destination = unitsByRegion[regionId];
-  if (destination == null) {
-    throw StateError(
-      'Unknown capital region "$regionId" for player=${player.id}',
-    );
-  }
-  for (var i = 0; i < regimentTypeIds.length; i++) {
-    final typeId = regimentTypeIds[i];
-    destination.add(
-      Unit(
-        id: '${player.id}_adv_${typeId}_reg${i + 1}',
-        type: typeId,
-        ownerId: player.id,
-        locationProvinceId: capitalProvinceId,
-        status: UnitStatus.idle,
-      ),
-    );
-  }
 }
 
 Game applyAdvancedStartUnitsAndShips({
@@ -114,7 +57,7 @@ Game applyAdvancedStartUnitsAndShips({
     final capitalRegionId = ProvinceId.regionIdFrom(capitalProvinceId);
 
     for (final entry in civilianCounts.entries) {
-      _spawnCivilianUnitsOfType(
+      spawnCivilianUnitsOfType(
         unitsByRegion: unitsByRegion,
         ownerId: player.id,
         capitalProvinceId: capitalProvinceId,
@@ -122,6 +65,7 @@ Game applyAdvancedStartUnitsAndShips({
         capitalRegionId: capitalRegionId,
         unitType: entry.key,
         count: entry.value,
+        unitIdFor: advancedStartCivilianUnitId,
       );
     }
 
@@ -129,55 +73,37 @@ Game applyAdvancedStartUnitsAndShips({
       techUnlocked: player.techUnlocked,
       totalCount: regimentCount,
     );
-    _spawnRegimentsForPlayer(
-      player: player,
+    spawnRegimentsAtCapital(
+      ownerId: player.id,
       capitalProvinceId: capitalProvinceId,
       regionId: capitalRegionId,
       regimentTypeIds: regimentTypes,
       unitsByRegion: unitsByRegion,
+      unitIdFor: advancedStartRegimentUnitId,
     );
   }
 
-  var fleets = List<Fleet>.from(game.worldState.fleets);
-  final fleetIndexById = <String, int>{
-    for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
-  };
-  var nextSeq = game.worldState.nextShipInstanceSeq;
-  final inferredStart = inferNextShipInstanceSeqFromFleets(fleets);
-  if (nextSeq < inferredStart) nextSeq = inferredStart;
+  final scratch = prepareHomeFleetMergeScratch(game.worldState);
+  final fleets = scratch.fleets;
+  final fleetIndexById = scratch.fleetIndexById;
+  var nextSeq = scratch.nextSeq;
 
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
     if (capitalProvinceId == null) continue;
     final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
-    if (regionId != kRegionOldWorld || shipCount <= 0) continue;
-
     final localProvinceId = ProvinceId.localIdFrom(capitalProvinceId);
-    final fullProvinceId = '$regionId|$localProvinceId';
-    final homeFleetId = homeFleetIdFor(player.id);
-    final existingIndex = fleetIndexById[homeFleetId];
-    final (seqAfter, newInstances) = mintShipInstances(
-      nextShipInstanceSeq: nextSeq,
-      typeIds: [
-        for (var i = 0; i < shipCount; i++) kAdvancedStartCargoShipTypeId,
-      ],
-    );
-    nextSeq = seqAfter;
-
-    final homeFleet = Fleet(
-      id: homeFleetId,
+    nextSeq = mergeHomeFleetShips(
       ownerId: player.id,
-      seaZoneId: null,
-      inPortAtProvinceId: fullProvinceId,
       regionId: regionId,
-      ships: newInstances,
+      localProvinceId: localProvinceId,
+      shipCount: shipCount,
+      shipTypeId: kAdvancedStartCargoShipTypeId,
+      fleets: fleets,
+      fleetIndexById: fleetIndexById,
+      nextSeq: nextSeq,
+      appendExistingShips: false,
     );
-    if (existingIndex == null) {
-      fleets.add(homeFleet);
-      fleetIndexById[homeFleetId] = fleets.length - 1;
-    } else {
-      fleets[existingIndex] = homeFleet;
-    }
   }
 
   var updated = game.copyWith(

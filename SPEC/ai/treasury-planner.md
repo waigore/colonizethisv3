@@ -120,7 +120,7 @@ Given current `Stockpile`, `productionAssignments`, and `game.worldMarketState.p
 - **Bid priority tiers:** essential inputs (manufactured/advanced) = 1, luxury = 2, raw = 3, food = 4. Re-sorts admitted bids after the suggester pass.
 - **Offer priority:** `2` (urgent) when `treasury < cheapestRegimentBuildTreasuryCost()`, else `5` (moderate).
 - **Cargo:** When `runEconomyPlanner` supplies `tileMapByRegion` and `topology`, `tradeCargoCapacityForGreatPower` forecasts `max(0, cargoHoldsForHomeFleet − overseasShippedTonnage)` using the same extraction + `allocateOverseasToStockpile` path as phase 12/13 (`packages/colonizethis_logic/lib/src/economy/trade_cargo_capacity.dart`, Refs #2924). Without tile maps, falls back to full home-fleet holds (legacy test path).
-- **Bid type cap:** `worldMarketBidTypeCap(game, playerId)` (embassy / trade-fairs diplomacy gates).
+- **Bid type cap:** `worldMarketBidTypeCap(game, playerId)` (`3` baseline / `6` with Trade Fairs; embassy-free per Refs #4186).
 
 ### Acceptance criteria (F1–F5 / F7)
 
@@ -165,7 +165,7 @@ Speculative bids **do not** apply the F3 "market price strictly below cheapest p
 
 ### Cap inheritance
 
-Speculative bids share the same `bidTypeCap` and `tradeCargoCapacity` as F1–F5 bids; the deficit pass admits bids first, the speculative pass fills any remaining cap slots in alphabetical commodity order. Because `worldMarketBidTypeCap` returns `kWorldMarketBaselineBidTypeCap` (= `1`) by default ([world-market-resolution.md](../program/world-market-resolution.md) § Bid type cap helper), no-embassy GPs still get at least one speculative bid per turn.
+Speculative bids share the same `bidTypeCap` and `tradeCargoCapacity` as F1–F5 bids; the deficit pass admits bids first, the speculative pass fills any remaining cap slots in alphabetical commodity order. Because `worldMarketBidTypeCap` returns `kWorldMarketBaselineBidTypeCap` (= `3`) by default ([world-market-resolution.md](../program/world-market-resolution.md) § Bid type cap helper), every GP may stage up to three distinct speculative bids per turn when cap slots remain.
 
 ### Determinism and budget
 
@@ -173,7 +173,7 @@ The selection set, scoring, and cap distribution are pure functions of `Stockpil
 
 ### Acceptance criteria (F10)
 
-- Given an AI GP with `treasury >= kTreasuryAffluenceThreshold` (= `1 × cheapestRegimentBuildTreasuryCost()` = `2000`), no recipe-input deficit, an empty stockpile for a non-riches commodity `C`, and `worldMarketBidTypeCap(game, playerId) == kWorldMarketBaselineBidTypeCap` (`1`, no embassy), when `runTreasuryPlanner` runs, then it emits exactly one `TradeOrderType.bid` for `C` with `quantity == kSpeculativeBidStockpileTarget` (`8`) and `priority` set per `_bidPriorityForCommodity(C)`.
+- Given an AI GP with `treasury >= kTreasuryAffluenceThreshold` (= `1 × cheapestRegimentBuildTreasuryCost()` = `2000`), no recipe-input deficit, an empty stockpile for a non-riches commodity `C`, and `worldMarketBidTypeCap(game, playerId) == kWorldMarketBaselineBidTypeCap` (`3`), when `runTreasuryPlanner` runs, then it emits exactly one `TradeOrderType.bid` for `C` with `quantity == kSpeculativeBidStockpileTarget` (`8`) and `priority` set per `_bidPriorityForCommodity(C)`.
 - Given an AI GP whose `treasury < kTreasuryAffluenceThreshold` and no deficit-driven bid, when `runTreasuryPlanner` runs, then it emits no bid (speculative pass is gated off).
 - Given an AI GP whose `treasury >= kTreasuryAffluenceThreshold` and whose projected stockpile of every non-riches commodity is at or above `kSpeculativeBidStockpileTarget`, when `runTreasuryPlanner` runs, then it emits no speculative bid (no commodity has positive `speculativeTarget`).
 - Given identical orchestrator inputs, when `runTreasuryPlanner` runs twice on the affluent path, then both runs return identical `List<TradeOrder>` outputs (determinism preserved by alphabetical commodity ordering and the cap distribution rule).
@@ -881,7 +881,7 @@ deadlock). The non-deadlocking escape is to buy the **production feedstock** of
 `kDomesticProductionImprovementInputIds` (`treasury_planner.dart`) lists the
 improvement-inputs the seller produces domestically (`{castIron}`). The
 improvement-input bid path (above) acquires inputs in two ordered passes so the
-single `bidTypeCap` slot (baseline `1`) is never spent on a raw-material
+single `bidTypeCap` slot (baseline `3`) is never spent on a raw-material
 feedstock bid while an essential, market-supplied input is still missing (the
 suggester admits bids in alphabetical, cap-bounded order):
 

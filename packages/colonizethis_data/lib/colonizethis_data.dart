@@ -46,6 +46,7 @@ export 'src/ai_personality_config.dart';
 export 'src/ai_personality_overrides.dart';
 export 'src/ai_research_config.dart';
 export 'src/research_funding.dart';
+export 'src/region_ids.dart';
 export 'src/ai_victory_config.dart';
 export 'src/ai_parameter_registry.dart';
 export 'src/ai_profile.dart';

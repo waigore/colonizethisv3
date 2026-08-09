@@ -140,6 +140,12 @@ For every suggested order `o`, appending it to the current list and validating v
 - **Relationship to `availableWorkTargetIdsForUnitProvider`:** That provider reads **`getAvailableWorkTargetsForUnit`** (selected-unit availability). Shortcut **enablement** does **not** reimplement exclusivity rules; it aligns with **per-unit** valid tile keys from **`getValidWorkOrderTileKeysWithVisibility`**, the same entrypoint used when the shell enters tile-target selection after choosing an order. Full rule coverage stays in **`colonizethis_logic`** tests (e.g. `order_engine_validate_work_build_improvement_test.dart`, `work_order_target_prechecks_test.dart`, `order_suggestion_valid_work_tiles_test.dart`).
 - **CI / app tests:** App-level tests assert wiring, visibility vs enablement split, drift no-op, and **contract (A)** equivalence between **`provinceBuildImprovementActionState(...).enabled`** and the pipeline above; they do not duplicate every `WorkOrderValidator` branch. Golden snapshots (wide side panel host vs narrow bottom-sheet host) assert consistent rendering of the shortcut control in each layout shell.
 
+### Province Tile `Purchase land` shortcut enablement (pipeline contract A)
+
+- **Authoritative pipeline (branch A):** The province overlay’s **`Purchase land`** row uses **`GameMapAreaStateLogic.provincePurchaseLandActionState`**. Its **`enabled`** flag is **true** iff the human player has at least one idle Merchant (no `currentWork`, type allows `purchase_land`) **and** the selected tile key appears in **`getValidWorkOrderTileKeysWithVisibility`** for **at least one** such Merchant, with the **same** arguments as the civilian work-target picker: `game`, `topology`, `PlayerView`, `unitId`, `workTarget: purchase_land`, `currentOrders`, and optional `tileMapByRegion`. Prefer **cache-first** membership in **`PerPlayerWorkTargetSelectionCache`** for `purchase_land` after the same runtime stale-tile filter used for other protected targets; overlay rebuilds must not recompute order-suggestion pools. **`showIcon`** is trait-only (Minor/Tribe province, land tile with visible resource); it does **not** call this pipeline.
+- **Relationship to `availableWorkTargetIdsForUnitProvider`:** Shortcut **enablement** aligns with **per-unit** valid tile keys from **`getValidWorkOrderTileKeysWithVisibility`**, not a parallel purchase eligibility set in the UI. Embassy (not Consulate), peace, prospection, treasury, and tile-exclusivity gates remain in **`colonizethis_logic`** / `precheckPurchaseLand`.
+- **CI / app tests:** App-level tests assert host emit (`merchantOnly` + `purchaseLandShortcutTargetTileKey`), visibility vs enablement split, drift no-op, and golden snapshots for enabled/disabled/hidden variants (Refs #4274). UI spec: [province-sea-zone-detail-overlay.md](../ui/province-sea-zone-detail-overlay.md).
+
 ### Dev-exclusive tile reservations (logic package)
 
 - **Given** a `Game`, current-turn `Orders`, and a Great Power `playerId`, **the system** builds the set of `targetTileKey` values reserved for that player: tiles with in-progress dev work (Builder/Engineer/Merchant `currentWork`) plus `targetTileKey` of each pending work order whose target is dev-exclusive (`build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `purchase_land`).
@@ -249,6 +255,31 @@ This ordering change is **gated**: for every ordinary player the feedstock set i
 - Given a player whose feedstock-extraction gate is **inactive** (`feedstockExtractionResourceIdsForPlayer` empty), when the system orders the `build_improvement` candidates, then the list is returned unchanged in its lexicographic order (negative control).
 - Given a player whose feedstock-extraction gate is active but whose only feedstock-resource tile is **already improved** (`improvementLevel >= 1`), when the system orders the `build_improvement` candidates, then that improved tile is not promoted and the list is returned unchanged (negative control — only unimproved feedstock tiles are prioritized).
 - Given identical `(game, playerId, candidate list)` inputs, when the system orders the `build_improvement` candidates twice, then both orderings are identical (determinism).
+
+---
+
+## Connectivity-aware development target ordering (Refs #4176)
+
+When `suggestWorkOrders` is called with non-null `tileMapByRegion`, the pass builds one `ConnectivityDevSnapshot` per player (`buildConnectivityDevSnapshot` in `colonizethis_orders`) from `resolveConnectivity(game, tileMapByRegion, topology)` plus an owned-land multi-source BFS toward unconnected resource/improved tiles. The snapshot is shared by all worker units in that pass.
+
+Candidate lists for `build_road`, `build_rail`, `build_improvement`, and `build_port` are **stable-partitioned** by connectivity tier before the worker probe loop (feedstock `build_improvement` partitioning from § Feedstock-extraction priority runs first and keeps precedence). When no unconnected dev targets exist, ordering is unchanged (negative control).
+
+| Target | Promotion rule | Demotion rule |
+|--------|----------------|---------------|
+| `build_road` | Tiles in `frontierExtensionTiles` (4-adjacent to connected set), ascending extension distance | Non-frontier candidates sort after every frontier candidate |
+| `build_rail` | Connected `bottleneckRailTiles` | Disconnected candidates sort last |
+| `build_improvement` | Connected → adjacent-to-connected → far | Never hard-forbidden |
+| `build_port` | Coastal tiles in provinces with unconnected dev targets and capital-reachable sea zones | Sea-unreachable or no-unconnected-resource provinces sort last |
+
+Human suggestion passes using the same pure helpers (`applyConnectivityDevTargetOrdering`) when `tileMapByRegion` is supplied. Selection-layer scoring mirrors are normative in `SPEC/ai/civilian-work-planner.md` § Connectivity-aware development targets.
+
+**Acceptance criteria (connectivity-aware ordering)**
+
+- Given unconnected dev targets and `build_road` candidates `R1` (frontier-extending) and `R2` (not adjacent to the connected set), when candidate ordering runs, then `R1` sorts before `R2` regardless of lexicographic order.
+- Given two frontier `build_road` candidates at extension distances 1 and 3 from their nearest unconnected target, when ordering runs, then the distance-1 candidate sorts first.
+- Given no unconnected resource/improved tiles, when ordering runs for any of the four targets, then the candidate order equals the pre-change deterministic order.
+- Given unimproved resource tiles `C` (connected), `A` (adjacent to connected), and `F` (far), when `build_improvement` ordering runs, then `C` sorts before `A` before `F`.
+- Given an active feedstock-extraction gate, an unconnected unimproved feedstock tile, and a connected non-feedstock tile, when `build_improvement` ordering runs, then the feedstock tile still sorts first (no regression of #2847 H8).
 
 ---
 

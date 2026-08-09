@@ -1,6 +1,14 @@
 /// Civilian unit row card chrome. SPEC/ui/civilian-units-panel.md.
+library;
 
-part of 'civilian_units_panel.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/widgets/ct_circular_locate_button.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
+import '../../../../../widgets/ct_gap.dart';
+import '../shared/units_entity_action_row.dart';
 
 /// Bordered civilian-unit row card per `SPEC/ui/civilian-units-panel.md`
 /// § Layout / wireframe → Row card chrome and mockup `.unit-row`

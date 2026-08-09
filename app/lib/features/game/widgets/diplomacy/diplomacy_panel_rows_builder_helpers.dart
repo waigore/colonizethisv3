@@ -1,8 +1,15 @@
 // Discovery and pending-order helpers for diplomacy row assembly.
 
-part of 'diplomacy_panel_rows.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-int? _outgoingSubsidyPercent(Game game, String payerId, String targetId) {
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'diplomacy_panel_rows.dart';
+
+int? outgoingSubsidyPercent(Game game, String payerId, String targetId) {
   for (final s in game.subsidyStates) {
     if (s.payerId == payerId && s.targetId == targetId) {
       return s.percent;
@@ -11,7 +18,7 @@ int? _outgoingSubsidyPercent(Game game, String payerId, String targetId) {
   return null;
 }
 
-void _appendDiscoveredFactionId(
+void appendDiscoveredFactionId(
   Game game,
   String humanPlayerId,
   String id,
@@ -35,7 +42,7 @@ void _appendDiscoveredFactionId(
   }
 }
 
-({int? grant, int? subsidy}) _pendingEconomicAmounts(
+({int? grant, int? subsidy}) pendingEconomicAmounts(
   List<DiplomaticOrder> list,
   String targetId,
 ) {
@@ -60,7 +67,7 @@ void _appendDiscoveredFactionId(
 /// The `DiplomacyRelation` constructor already defaults to these values; the
 /// turn fields are pinned to the current turn so history-derived UI stays
 /// deterministic.
-DiplomacyRelation _defaultFirstContactRelation(
+DiplomacyRelation defaultFirstContactRelation(
   String humanPlayerId,
   String factionId,
   int currentTurn,
@@ -71,7 +78,7 @@ DiplomacyRelation _defaultFirstContactRelation(
   lastInteractionTurn: currentTurn,
 );
 
-String _displayNameForFaction(Game game, String id) {
+String displayNameForFaction(Game game, String id) {
   final p = game.playerById(id);
   if (p != null) return p.displayName;
   for (final m in game.minorNations) {
@@ -83,7 +90,7 @@ String _displayNameForFaction(Game game, String id) {
   return id;
 }
 
-DiplomacyRowData _buildDiplomacyRowData({
+DiplomacyRowData buildDiplomacyRowData({
   required Game game,
   required String humanPlayerId,
   required String factionId,
@@ -101,10 +108,10 @@ DiplomacyRowData _buildDiplomacyRowData({
 }) {
   final relation =
       view.diplomacyByOtherId[factionId] ??
-      _defaultFirstContactRelation(humanPlayerId, factionId, currentTurn);
+      defaultFirstContactRelation(humanPlayerId, factionId, currentTurn);
   return DiplomacyRowData(
     factionId: factionId,
-    displayName: _displayNameForFaction(game, factionId),
+    displayName: displayNameForFaction(game, factionId),
     kind: kind,
     relation: relation,
     overture: getOverture(game, humanPlayerId, factionId),
@@ -113,7 +120,7 @@ DiplomacyRowData _buildDiplomacyRowData({
     playerPowerScore: playerPowerScore,
     pendingOrderTypes: pendingOrderTypes,
     pendingOvertureStage: pendingOvertureStage,
-    activeSubsidyPercent: _outgoingSubsidyPercent(game, humanPlayerId, factionId),
+    activeSubsidyPercent: outgoingSubsidyPercent(game, humanPlayerId, factionId),
     pendingGrantAmount: pendingGrantAmount,
     pendingSubsidyPercent: pendingSubsidyPercent,
     standingChips: diplomaticStandingChips(

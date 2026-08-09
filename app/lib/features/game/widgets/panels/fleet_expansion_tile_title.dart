@@ -1,14 +1,13 @@
-// Collapsed fleet-row title/subtitle chrome for [FleetExpansionTile].
-// Split from `fleet_expansion_tile.dart` to keep the host under the repo
-// file-size target (Refs #3878).
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:flutter/material.dart';
 
-part of 'fleet_expansion_tile.dart';
+import '../units/shared/units_entity_action_row.dart';
+import 'fleet_expansion_tile.dart';
+import 'fleet_expansion_tile_expanded.dart';
 
-extension _FleetExpansionTileTitle on FleetExpansionTile {
+/// Collapsed fleet-row title/subtitle chrome for [FleetExpansionTile] (Refs #4117).
+extension FleetExpansionTileTitle on FleetExpansionTile {
   Widget buildFleetTitleRow() {
-    // `chrome: false`: the surrounding bordered gradient card is supplied by
-    // [UnitsEntityCard] so the action row must not paint its own
-    // [UnitsPanelRowChrome] border (issue #3514 AC-6).
     return UnitsEntityActionRow(
       chrome: false,
       dense: true,
@@ -32,7 +31,7 @@ extension _FleetExpansionTileTitle on FleetExpansionTile {
         Flexible(child: Text(row.label, overflow: TextOverflow.ellipsis)),
         if (row.isHomeFleet) ...[
           const SizedBox(width: 6),
-          _HomeFleetChip(label: l10n.naval_units_homeFleetChip),
+          HomeFleetChip(label: l10n.naval_units_homeFleetChip),
         ],
       ],
     );
@@ -48,6 +47,17 @@ extension _FleetExpansionTileTitle on FleetExpansionTile {
           label: l10n.common_move,
           onPressed: onMoveFleet,
           buttonKey: kCtE2EFleetMoveActionKey,
+        ),
+      );
+    }
+    if (onAssignMission != null) {
+      actions.add(
+        UnitsEntityAction(
+          tooltip: l10n.naval_mission_assign,
+          icon: Icons.flag,
+          label: l10n.naval_mission_assign,
+          onPressed: onAssignMission,
+          buttonKey: kCtE2EFleetMissionActionKey,
         ),
       );
     }
@@ -83,6 +93,7 @@ extension _FleetExpansionTileTitle on FleetExpansionTile {
         Text(row.locationLabel),
         Text(l10n.naval_units_mission(row.missionLabel)),
         if (row.draftNavalMoveLine != null) Text(row.draftNavalMoveLine!),
+        if (row.draftNavalMissionLine != null) Text(row.draftNavalMissionLine!),
       ],
     );
   }

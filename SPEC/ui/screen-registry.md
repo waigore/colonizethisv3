@@ -13,7 +13,7 @@ Major flows only; keep this table small.
 | Code | Flow | Sub-flow digits (4th char) |
 |------|------|----------------------------|
 | `SHEL` | App shell, main menu, initializing, pause menu | `1` menu/shell route, `3` game initializing, `4` pause menu panel |
-| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route |
+| `GAME` | In-game route hosts and side menu | `1` game screen, `2` production route, `3` diplomacy routes, `4` technology route, `5` game side menu, `6` trade route, `7` victory route, `9` counsel route |
 | `MAP` | Map widget and map-attached UI | `1` map area/widget, `2` province/sea-zone overlay |
 | `UNIT` | Unit management panels and train dialogs | `1` civilian, `2` military, `3` naval, `4` train civilians, `5` train military, `6` train naval |
 | `DIPL` | Diplomacy panels and grant flows | `1` diplomacy panel/screen, `2` grant/subsidy dialog |
@@ -34,7 +34,7 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 |----|-------|------|----------------|------------|--------|
 | `SHEL10001` | Shell screen | [shell-screen.md](shell-screen.md) | `app/lib/features/shell/shell_screen.dart` | Shell Screen | active |
 | `SHEL10002` | Main menu (CtMainMenu) | [main-menu.md](main-menu.md) | `app/lib/widgets/main_menu.dart` | Main Menu | active |
-| `SHEL30001` | Game initializing | [game-initializing.md](game-initializing.md) | TBD | — | draft |
+| `SHEL30001` | Game initializing | [game-initializing.md](game-initializing.md) | `app/lib/features/shell/new_game_setup_flow_dialogs_progress.dart` | Game Initializing | active |
 | `SHEL40001` | Pause menu panel | [pause-menu-panel.md](pause-menu-panel.md) | `app/lib/features/game/widgets/panels/pause_menu_panel.dart` | Pause Menu Panel | active |
 | `GAME10001` | Game screen | [game-screen.md](game-screen.md) | `app/lib/features/game/screens/game/game_screen.dart` | Game Screen | active |
 | `GAME20001` | Production screen | [production-panel.md](production-panel.md) | `app/lib/features/game/screens/production/production_screen.dart` | Production Panel | active |
@@ -42,7 +42,10 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `GAME30002` | Diplomacy detail screen | [diplomacy-detail-screen.md](diplomacy-detail-screen.md) | `app/lib/features/game/screens/diplomacy/diplomacy_detail_screen.dart` | Diplomacy Detail Screen | active |
 | `GAME40001` | Technology screen | [technology-panel.md](technology-panel.md) | `app/lib/features/game/screens/technology/technology_screen.dart` | Tech Tree | active |
 | `GAME50001` | Game side menu | [game-side-menu.md](game-side-menu.md) | `app/lib/features/game/flame/controls/game_side_menu.dart` | Game Side Menu | active |
-| `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | draft |
+| `GAME60001` | Trade screen | [trade-screen.md](trade-screen.md) | `app/lib/features/game/screens/trade/trade_screen.dart` | Trade Screen | active |
+| `GAME70001` | Victory screen | [victory-panel.md](victory-panel.md) | `app/lib/features/game/screens/victory/victory_screen.dart` | Victory Screen | active |
+| `GAME80001` | Development screen | [development-panel.md](development-panel.md) | `app/lib/features/game/screens/development/development_screen.dart` | Development Panel | active |
+| `GAME90001` | Counsel screen | [counsel-panel.md](counsel-panel.md) | `app/lib/features/game/screens/counsel/counsel_screen.dart` | Counsel Panel | active |
 | `MAP10001` | Empire overview / map area | [empire-overview.md](empire-overview.md) | `app/lib/features/game/flame/map_state/game_map_area.dart` | Map Widget | active |
 | `MAP20001` | Province sea-zone overlay | [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md) | `app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart` | Province Overlay | active |
 | `UNIT10001` | Civilian units panel | [civilian-units-panel.md](civilian-units-panel.md) | `app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart` | Civilian Units Panel | active |
@@ -59,21 +62,25 @@ Status: `draft` = ID reserved, spec incomplete; `active` = spec + Widgetbook + c
 | `DLG10001` | New game leader selection | [new-game-leader-selection-dialog.md](new-game-leader-selection-dialog.md) | `app/lib/features/shell/new_game_leader_selection_dialog.dart` | New Game Leader Selection Dialog | active |
 | `DLG20001` | Move army dialog | [move-army-dialog.md](move-army-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_army_dialog.dart` | Move Army Dialog | active |
 | `DLG30001` | Move fleet dialog | [move-fleet-dialog.md](move-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/move_fleet_dialog.dart` | Move Fleet Dialog | active |
+| `DLG31001` | Naval mission menu dialog | [naval-mission-menu-dialog.md](naval-mission-menu-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Menu Dialog | active |
+| `DLG31002` | Naval mission target dialog | [naval-mission-target-dialog.md](naval-mission-target-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_target_dialog.dart` | Naval Mission Target Dialog | active |
+| `DLG31003` | Naval mission fleet picker dialog | [naval-mission-fleet-picker-dialog.md](naval-mission-fleet-picker-dialog.md) | `app/lib/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart` | Naval Mission Fleet Picker Dialog | active |
 | `DLG40001` | Transfer to home fleet | [transfer-to-home-fleet-dialog.md](transfer-to-home-fleet-dialog.md) | `app/lib/features/game/widgets/unit_orders/transfer_to_home_fleet_dialog.dart` | Transfer to Home Fleet Dialog | active |
 | `DLG50001` | Turn news dialog | [turn-news-dialog.md](turn-news-dialog.md) | `app/lib/features/game/widgets/dialogs/turn_news_dialog.dart` | Turn news | active |
-| `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | TBD | — | draft |
+| `DLG60001` | Next turn confirmation | [next-turn-confirmation.md](next-turn-confirmation.md) | `app/lib/features/game/flame/overlays/next_turn_confirmation_dialog.dart` | Next Turn Confirmation | active |
 | `DLG70001` | Save game name | [save-game-name-dialog.md](save-game-name-dialog.md) | `app/lib/features/shell/save_load/save_game_name_dialog.dart` | Save Game Name Dialog | active |
 | `DLG80001` | Load game list | [load-game-list-dialog.md](load-game-list-dialog.md) | `app/lib/features/shell/save_load/load_game_list_dialog.dart` | Load Game List Dialog | active |
+| `DLG90001` | Settings | [settings-dialog.md](settings-dialog.md) | `app/lib/features/shell/settings/settings_dialog.dart` | Settings Dialog | active |
 | `OVL10001` | Game start intro | [game-start-intro-overlay.md](game-start-intro-overlay.md) | `app/lib/features/game/widgets/dialogue/game_start_intro_overlay.dart` | Game Start Intro Overlay | active |
 | `OVL20001` | Victory overlay | [victory-overlay.md](victory-overlay.md) | `app/lib/features/game/flame/overlays/victory_overlay.dart` | Victory | active |
 | `OVL30001` | Overture dialogue | [overture-dialogue-overlay.md](overture-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/overture_dialogue_overlay.dart` | Overture Dialogue Overlay | active |
 | `OVL40001` | Call to arms dialogue overlay | [call-to-arms-dialogue-overlay.md](call-to-arms-dialogue-overlay.md) | `app/lib/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart` | Call to Arms Dialogue Overlay | active |
 | `OVL50001` | Pending intervention overlay | [pending-intervention-overlay.md](screens/pending-intervention-overlay.md) | `app/lib/features/game/widgets/dialogue/intervention_dialogue_overlay.dart` | Dialogue | active |
-| `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | TBD | — | draft |
-| `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | TBD | — | draft |
+| `OVL60001` | Observe mode overlay | [observe-mode.md](observe-mode.md) | `app/lib/features/game/widgets/panels/observe_mode_not_defined_panel.dart` | Observe Mode Not Defined Panel | active |
+| `OVL70001` | Player turn event feed | [player-turn-event-feed.md](player-turn-event-feed.md) | `app/lib/features/game/widgets/shell/player_turn_event_feed_card.dart` | Player Turn Event Feed Card | active |
 | `OVL80001` | Tribe first contact herald | [tribe-first-contact-overlay.md](tribe-first-contact-overlay.md) | `app/lib/features/game/widgets/dialogue/tribe_first_contact_overlay.dart` | Tribe First Contact Overlay | active |
-| `SYS10001` | Debug log viewer | — | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | — | draft |
-| `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | TBD | — | draft |
+| `SYS10001` | Debug log viewer | [debug-log-viewer.md](debug-log-viewer.md) | `app/lib/features/debug_log/debug_log_viewer_screen.dart` | Debug Log Viewer | active |
+| `SYS20001` | Debug console panel | [debug-console-panel.md](debug-console-panel.md) | `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart` | Debug Console Panel | active |
 
 Add new rows at the bottom of the sub-flow group. Gaps in `####` are intentional only when reserved in an open PR.
 

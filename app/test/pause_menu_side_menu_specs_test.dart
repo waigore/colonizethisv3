@@ -23,8 +23,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -136,7 +136,7 @@ void main() {
     );
 
     testWidgets(
-      'AC: when not blocking, Save/Load are enabled; Settings stays disabled',
+      'AC: when not blocking, Save/Load/Settings are enabled and emit dialogs',
       (WidgetTester tester) async {
         final bus = AppEventBus.create();
         addTearDown(bus.dispose);
@@ -158,8 +158,8 @@ void main() {
         );
         expect(save.enabled, isTrue);
         expect(load.enabled, isTrue);
-        expect(settings.enabled, isFalse);
-        expect(settings.onPressed, isNull);
+        expect(settings.enabled, isTrue);
+        expect(settings.onPressed, isNotNull);
 
         await tester.tap(find.byKey(PauseMenuPanel.saveGameButtonKey));
         await tester.pumpAndSettle();
@@ -174,6 +174,14 @@ void main() {
         final loadEvent = events.whereType<OpenDialogEvent>().single;
         expect(loadEvent.dialogId, 'load_game_list');
         expect(loadEvent.params?['fromPause'], isTrue);
+
+        events.clear();
+        await tester.tap(find.byKey(PauseMenuPanel.settingsButtonKey));
+        await tester.pumpAndSettle();
+        expect(
+          events.whereType<OpenDialogEvent>().single.dialogId,
+          'settings',
+        );
       },
     );
 

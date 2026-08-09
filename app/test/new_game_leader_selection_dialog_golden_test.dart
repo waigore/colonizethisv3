@@ -23,7 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 
-import 'support/golden_capture_harness.dart';
+import 'golden_capture_harness.dart';
 
 void main() {
   suppressLogsForTests();

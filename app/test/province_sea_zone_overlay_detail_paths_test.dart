@@ -13,9 +13,9 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_tab_strip.dart';
 
-import 'support/game_fixture.dart';
-import 'support/map_view_fixture.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'game_fixture.dart';
+import 'map_view_fixture.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

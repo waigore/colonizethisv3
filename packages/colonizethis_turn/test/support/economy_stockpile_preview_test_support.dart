@@ -73,6 +73,74 @@ Stockpile validWorkPreviewStockpile() {
       .applyDelta(CommodityCatalog.steel.id, 50);
 }
 
+/// Single idle work-unit game for pending-build-cost preview scenarios.
+Game economyPreviewWorkUnitGame({
+  required String unitId,
+  required String unitType,
+  Stockpile? playerStockpile,
+  UnitStatus status = UnitStatus.idle,
+  CurrentWork? currentWork,
+  String targetTileKey = kEconomyPreviewWorkTileKey,
+}) {
+  return TestFixtures.singlePlayerWorkPreviewGame(
+    playerStockpile: playerStockpile ?? validWorkPreviewStockpile(),
+    units: [
+      Unit(
+        id: unitId,
+        type: unitType,
+        ownerId: 'p1',
+        locationProvinceId: 'ow|p1',
+        tileKey: targetTileKey,
+        status: status,
+        currentWork: currentWork,
+      ),
+    ],
+    tileState: const TileMapState().setImprovement(kEconomyPreviewWorkTileKey, 0),
+  );
+}
+
+Orders economyPreviewSingleWorkOrder({
+  required String unitId,
+  required String target,
+  String targetTileKey = kEconomyPreviewWorkTileKey,
+}) {
+  return Orders(
+    workOrdersByPlayerId: {
+      'p1': [
+        WorkOrder(
+          unitId: unitId,
+          target: target,
+          targetTileKey: targetTileKey,
+        ),
+      ],
+    },
+  );
+}
+
+Map<CommodityId, int> economyPreviewPendingBuildCosts({
+  required Game game,
+  required Orders orders,
+}) {
+  return previewStockpilePhaseDeltasByCommodityForPlayer(
+    game: game,
+    topology: const MapTopology(),
+    playerId: 'p1',
+    inputs: economyPreviewInputs(currentOrders: orders),
+  )[EconomyPreviewStockpilePhase.pendingBuildCosts]!;
+}
+
+void expectEconomyPreviewPendingBuildCostsEmpty({
+  required Game game,
+  required Orders orders,
+  String reason = '',
+}) {
+  expect(
+    economyPreviewPendingBuildCosts(game: game, orders: orders),
+    isEmpty,
+    reason: reason,
+  );
+}
+
 void expectPhaseDeltasSumToNet({
   required Game game,
   required String playerId,

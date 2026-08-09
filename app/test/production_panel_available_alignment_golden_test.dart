@@ -11,6 +11,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_ava
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -18,8 +19,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/production_panel_test_support.dart';
-import 'support/golden_capture_harness.dart';
+import 'production_panel_test_support.dart';
+import 'golden_capture_harness.dart';
 import 'widget_test_pumps.dart';
 
 Widget _tinyIcon(BuildContext context) => const SizedBox(
@@ -173,8 +174,8 @@ void main() {
       const Key boundaryKey = ValueKey<String>(
         'production_available_grain_visibility_golden',
       );
-      // Grain and Timber both quantity 0 so same-column amount anchors share
-      // digit width (AC: same quantity value across Food / Raw Materials col 0).
+      // Grain has a signed delta; Timber does not. Visibility + inset parity
+      // are asserted below (quantity anchors need not match across delta shapes).
       final Player player = Player(
         id: 'test_gp_grain_zero',
         displayName: 'Grain zero',
@@ -217,6 +218,8 @@ void main() {
               CommodityCatalog.grain.id: -16,
               CommodityCatalog.meat.id: 12,
             },
+            labourReadiness: labourReadinessForPlayer(player),
+            forcesFeeding: forcesFeedingForPlayer(player),
             onDesiredOutputChanged: (_) {},
           ),
         ),
@@ -248,19 +251,37 @@ void main() {
         find.descendant(of: grainCell, matching: find.text('-16')),
         findsOneWidget,
       );
+      // Inset parity: painted trailing (delta) right inset ≈ leading icon inset.
+      final Rect grainBox = tester.getRect(grainCell);
+      final double grainIconLeft = tester
+          .getTopLeft(
+            find.descendant(
+              of: grainCell,
+              matching: find.byType(ResourceIcon),
+            ),
+          )
+          .dx;
+      final double grainDeltaRight = tester
+          .getTopRight(
+            find.descendant(
+              of: grainCell,
+              matching: find.byKey(CtResourceCell.deltaTextKey),
+            ),
+          )
+          .dx;
       expect(
-        tester.getTopRight(grainQty).dx,
-        closeTo(
-          tester
-              .getTopRight(
-                find.descendant(
-                  of: timberCell,
-                  matching: find.byKey(CtResourceCell.quantityTextKey),
-                ),
-              )
-              .dx,
-          0.5,
+        grainIconLeft - grainBox.left,
+        closeTo(grainBox.right - grainDeltaRight, 1.0),
+      );
+      // Timber (null delta, same qty 0) stays visible; quantity right edges are
+      // not required to match Grain once a delta is present (inset-parity
+      // follow-up on #3999).
+      expect(
+        find.descendant(
+          of: timberCell,
+          matching: find.byKey(CtResourceCell.quantityTextKey),
         ),
+        findsOneWidget,
       );
 
       await expectLater(

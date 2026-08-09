@@ -1,39 +1,36 @@
-# Province last-turn extraction snapshot
+# Province extraction display projection
 
-**SPEC/program** — Persisted per-province Extraction display data written during the Extraction phase. UI contract: [province-economic-extraction-available.md](../ui/province-economic-extraction-available.md). Formula source: [extraction-and-improvements.md](../game/extraction-and-improvements.md).
+**SPEC/program** — Display-time Extraction projection for the province Economic line. UI: [province-economic-extraction-available.md](../ui/province-economic-extraction-available.md). Formula: [extraction-and-improvements.md](../game/extraction-and-improvements.md). Refs #4064 (replaces last-turn history from #4002).
 
-## Field home
+## Display model
 
-`WorldState.lastTurnProvinceExtractionByProvinceId`: map keyed by **prefixed** province id (`regionId|localId`).
-
-Each value is `ProvinceExtractionSnapshot`:
+`ProvinceExtractionSnapshot` is a **non-persisted** projection DTO (name retained for API stability):
 
 | Field | Meaning |
 |-------|---------|
-| `ownerId` | Province owner at snapshot write time |
+| `ownerId` | Current province owner used when projecting |
 | `byCommodity` | Commodity id → `{ effective, full, tileKeys }` |
+| `capitalGrainBonus` | Units of `Game.capitalTileGrainBonusPerTurn` folded into grain (0 if none) |
 
 `tileKeys` lists tiles that contributed to that commodity’s full or effective totals (deterministic sort). Capital grain bonus units have **no** tile key.
 
-## Write path
+## Projection path (display-time)
 
-During normal `runExtractionPhase` (empty `extractedByPlayerId`), after connectivity resolve and in the same pass as `computeExtraction`, the system **rewrites** this map for Great Power provinces:
+When the province overlay needs Extraction for `provinceId`, the system projects from the **current post-resolution** `Game` + `tileMapByRegion` + connectivity (same inputs as Extraction phase yield math), **without** applying stockpile:
 
-1. For each improved land tile (`improvementLevel ≥ 1`) owned by a GP, with extractable resource (minerals require prospected for that owner):
+1. For each improved land tile (`improvementLevel ≥ 1`) owned by the **current** GP owner of `provinceId`, with extractable resource (minerals require prospected for that owner):
    - **full** = production = `min(improvementLevel, tech/terrain extraction cap)` clamped `[0, 4]`
-   - **effective** = `0` when the tile is not capital-connected; else the shared effective-yield formula (transport then town-cap branches)
-   - Attribute to the tile’s province; record the tile key when `full > 0` or `effective > 0`
-2. Add `Game.capitalTileGrainBonusPerTurn` to the capital province’s grain **effective** and **full** (equal so bonus alone never creates brackets)
+   - **effective** = `0` when the tile is not capital-connected; else the shared effective-yield formula
+   - Attribute only tiles in `provinceId`; record the tile key when `full > 0` or `effective > 0`
+2. If `provinceId` is that owner’s capital and `capitalTileGrainBonusPerTurn = B > 0`, add B to grain **effective** and **full** (equal so bonus alone never creates brackets) and set `capitalGrainBonus = B`
 
-**Scripted override:** When `extractedByPlayerId` is non-empty, clear `lastTurnProvinceExtractionByProvinceId` to empty (no tile-accurate brackets from empire totals). See [turn-resolution-phase-details.md](turn-resolution-phase-details.md) § Extraction override.
+**Draft orders:** Projection must not apply mid-turn draft improve/road/town orders.
 
-## Read / display gate
+**Scripted extraction override:** Stockpile may use scripted empire totals; this line remains formula projection from tiles (not stockpile delta).
 
-UI and helpers show a province snapshot only when `province.ownerId == snapshot.ownerId`. Otherwise treat as missing → Extraction `—` until the next normal Extraction write for the new owner.
+## Persistence
 
-## Save / load
-
-JSON key `lastTurnProvinceExtractionByProvinceId`. Missing / null → empty map (legacy saves). Round-trip preserves effective, full, tileKeys, and ownerId.
+`WorldState.lastTurnProvinceExtractionByProvinceId` is **removed**. Legacy saves that still contain the JSON key are ignored on load. Extraction phase does **not** write province Extraction display data.
 
 ## Available counts (not persisted)
 
@@ -41,11 +38,11 @@ Pure helper `provinceImprovableResourceTileCounts` over current world state afte
 
 ## Acceptance criteria
 
-- Given a normal Extraction phase completes with improved connected tiles, when the system finishes the phase, then `WorldState.lastTurnProvinceExtractionByProvinceId` contains per-province aggregates with effective, full, and tile keys for contributing tiles.
-- Given an improved disconnected tile with production N, when the snapshot is built, then that commodity includes effective contribution `0` and full contribution `N` for that tile.
-- Given `extractedByPlayerId` is non-empty, when Extraction runs, then `lastTurnProvinceExtractionByProvinceId` is empty afterward.
-- Given a saved game with a non-empty snapshot map, when the system loads the save, then the snapshot map matches the pre-save values.
-- Given a legacy save without the field, when loaded, then the map is empty.
-- Given province ownership changed since the snapshot was written, when display resolves the snapshot, then the system returns no snapshot for that province (UI shows `—`).
+- Given a post-resolution world with improved capital-connected tiles in province P, when the system projects Extraction for P, then the projection contains per-commodity effective, full, and tile keys matching the shared production/effective formula.
+- Given an improved disconnected tile with production N in province P, when the system projects Extraction for P, then that commodity includes effective contribution `0` and full contribution `N` for that tile.
+- Given capital province P with `capitalTileGrainBonusPerTurn = B > 0`, when the system projects Extraction for P, then grain effective and full each include B and `capitalGrainBonus` equals B.
+- Given mid-turn draft improve/road/town orders, when the system projects Extraction, then quantities match the unresolved world state (drafts ignored).
+- Given province P owned by GP A with improved extractable tiles, when ownership of P changes to GP B and the system projects Extraction for P, then the projection `ownerId` is B and B’s tile contributions appear immediately (no prior Extraction-phase write required); A’s capital grain bonus no longer applies unless P remains A’s capital.
+- Given a legacy save JSON that still contains `lastTurnProvinceExtractionByProvinceId`, when the system loads the save, then the field is ignored and display uses projection instead.
 - Given three improvable grain tiles and two improvable timber tiles under the owner’s tech/terrain caps, when Available counts are computed, then grain count is 3 and timber count is 2.
 - Given an unprospected mineral tile, when Available counts are computed, then that tile is excluded.

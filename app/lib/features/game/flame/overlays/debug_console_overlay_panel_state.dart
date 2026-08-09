@@ -1,6 +1,14 @@
-part of 'debug_console_overlay_panel.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
+import 'package:colonizethis_app/widgets/ct_radius.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'package:flutter/material.dart';
 
-class _DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
+import 'debug_console_controller.dart';
+import 'debug_console_overlay_panel.dart';
+
+class DebugConsoleOverlayPanelState extends State<DebugConsoleOverlayPanel> {
   late final DebugConsoleController _controller;
 
   @override

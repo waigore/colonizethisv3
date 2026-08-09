@@ -1,4 +1,22 @@
-part of 'victory_overlay.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../config/constants.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/ct_spacing.dart';
+
+import 'victory_overlay_panel_actions.dart';
+import 'victory_overlay_panel_corners.dart';
+import 'victory_overlay_panel_layout.dart';
+
+export 'victory_overlay_panel_layout.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Brass-bordered ceremonial panel for the military victory overlay.
 ///
@@ -21,28 +39,29 @@ class VictoryPanel extends StatelessWidget {
   final ct_models.AppEventBus bus;
   final VoidCallback? onViewFinalState;
 
-  /// Outer max width for the ceremonial panel. Matches the mockup's
-  /// `clamp(280px,88vw,460px)` ceiling so the panel does not stretch to the
-  /// full overlay width on wide viewports.
+  /// Outer max width for the ceremonial panel.
   @visibleForTesting
-  static const double maxWidth = 460;
+  static const double maxWidth = VictoryPanelLayout.maxWidth;
 
   /// Border thickness for the surrounding `--accent` frame.
-  static const double borderWidth = 2;
+  static const double borderWidth = VictoryPanelLayout.borderWidth;
 
   /// Corner-bracket dimensions for the top-left / bottom-right ornaments.
-  static const double cornerBracketWidth = 20;
-  static const double cornerBracketHeight = 24;
-  static const double cornerBracketInset = 4;
-  static const double cornerBracketStroke = 1.5;
-  static const double cornerBracketAlpha = 0.7;
+  static const double cornerBracketWidth =
+      VictoryPanelLayout.cornerBracketWidth;
+  static const double cornerBracketHeight =
+      VictoryPanelLayout.cornerBracketHeight;
+  static const double cornerBracketInset =
+      VictoryPanelLayout.cornerBracketInset;
+  static const double cornerBracketStroke =
+      VictoryPanelLayout.cornerBracketStroke;
+  static const double cornerBracketAlpha =
+      VictoryPanelLayout.cornerBracketAlpha;
 
-  /// Laurel font size (logical px) at default and narrow viewport widths.
-  /// Pinned to the lower bound of the mockup's `clamp(24px,5vw,36px)` so the
-  /// narrow flip lands on the same value the mockup hits at small widths.
-  /// SPEC/ui/victory-overlay.md § Narrow viewport.
-  static const double laurelFontSizeWide = 28;
-  static const double laurelFontSizeNarrow = 24;
+  /// Laurel font size at default and narrow viewport widths.
+  static const double laurelFontSizeWide = VictoryPanelLayout.laurelFontSizeWide;
+  static const double laurelFontSizeNarrow =
+      VictoryPanelLayout.laurelFontSizeNarrow;
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +74,15 @@ class VictoryPanel extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             _buildPanelSurface(context, narrow: narrow),
-            const Positioned(
+            Positioned(
               top: cornerBracketInset,
               left: cornerBracketInset,
-              child: _VictoryCornerBracket(corner: _CornerSide.topLeft),
+              child: victoryPanelTopLeftCornerBracket(),
             ),
-            const Positioned(
+            Positioned(
               bottom: cornerBracketInset,
               right: cornerBracketInset,
-              child: _VictoryCornerBracket(corner: _CornerSide.bottomRight),
+              child: victoryPanelBottomRightCornerBracket(),
             ),
           ],
         ),
@@ -110,7 +129,7 @@ class VictoryPanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _VictoryLaurelRow(narrow: narrow),
+        VictoryLaurelRow(narrow: narrow),
         const SizedBox(height: 10),
         Text(
           victoryLabel.toUpperCase(),
@@ -126,7 +145,13 @@ class VictoryPanel extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
-        buildActionRow(context, l10n, narrow: narrow),
+        buildVictoryPanelActionRow(
+          context,
+          l10n,
+          bus: bus,
+          onViewFinalState: onViewFinalState,
+          narrow: narrow,
+        ),
       ],
     );
   }

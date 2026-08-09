@@ -6,8 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/map_state/map_location_resolver.dart';
 
-import 'support/military_units_panel_test_support.dart';
-import 'support/panel_test_fixtures.dart';
+import 'military_units_panel_test_support.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

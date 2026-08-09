@@ -1,4 +1,9 @@
-part of 'games_provider.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import '../config/constants.dart';
+import 'game_service_provider.dart';
 
 /// List of saved game ids. Refreshed by reading from GameService.
 final gameListIdsProvider = FutureProvider<List<String>>((ref) async {

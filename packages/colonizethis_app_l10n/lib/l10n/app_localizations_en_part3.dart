@@ -2,6 +2,48 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
+  String get development_purchasedLand => 'Purchased land';
+
+  @override
+  String get development_noImprovableResources => 'No improvable resources';
+
+  @override
+  String get development_materialsShortageForAssign =>
+      'Materials shortage for assign:';
+
+  @override
+  String development_idleCivilians(int builders, int engineers) {
+    return 'Idle Builders: $builders · Idle Engineers: $engineers';
+  }
+
+  @override
+  String get development_assignedCiviliansHeading => 'Assigned civilians';
+
+  @override
+  String get development_mapDataUnavailable => 'Map data unavailable';
+
+  @override
+  String get development_disconnectedTitle => 'Not connected to capital';
+
+  @override
+  String get development_disconnectedBody =>
+      'The chosen tile is not linked to your capital. Improve anyway, build a road step toward the capital first, or cancel.';
+
+  @override
+  String get development_roadFirst => 'Road first';
+
+  @override
+  String get development_improveAnyway => 'Improve anyway';
+
+  @override
+  String get development_show => 'Show';
+
+  @override
+  String development_improvableCount(int count, String name) {
+    return '$count $name';
+  }
+
+  @override
   String get production_breakdown_title => 'Commodity breakdown';
 
   @override
@@ -29,6 +71,174 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
 
   @override
   String get production_breakdown => 'Breakdown';
+
+  @override
+  String get production_counsel => 'Counsel';
+
+  @override
+  String production_industryCounselStarSemantic(String brief) {
+    return 'Industry counsel: $brief';
+  }
+
+  @override
+  String get industryCounsel_tabIndustry => 'Industry';
+
+  @override
+  String get industryCounsel_empty => 'No pressing industry advice this turn.';
+
+  @override
+  String get industryCounsel_title_produce => 'Produce goods';
+
+  @override
+  String industryCounsel_title_produceRecipe(String commodity) {
+    return 'Produce $commodity';
+  }
+
+  @override
+  String get industryCounsel_title_train => 'Train workers';
+
+  @override
+  String industryCounsel_title_trainWorker(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String get industryCounsel_title_feedstock => 'Unblock feedstock';
+
+  @override
+  String industryCounsel_title_unblockFeedstock(String commodity) {
+    return 'Improve $commodity extraction';
+  }
+
+  @override
+  String get industryCounsel_reason_outputShortage_brief =>
+      'Your stocks of this output are low — the plan favours producing it now.';
+
+  @override
+  String get industryCounsel_reason_outputShortage_detail =>
+      'Short output stocks raise the priority of this recipe in the neutral industry plan.';
+
+  @override
+  String get industryCounsel_reason_chainLuxury_brief =>
+      'This output feeds training or downstream industry — worth prioritising.';
+
+  @override
+  String get industryCounsel_reason_chainLuxury_detail =>
+      'Chain outputs and worker luxuries score higher when your workforce can use them.';
+
+  @override
+  String get industryCounsel_reason_labourDeficit_brief =>
+      'Recruit peasants — planned labour exceeds effective workers.';
+
+  @override
+  String get industryCounsel_reason_labourDeficit_detail =>
+      'The core allocation assigns more labour than your effective pool can supply this turn.';
+
+  @override
+  String get industryCounsel_reason_luxuryShortage_brief =>
+      'Train this tier — luxury goods for them are scarce.';
+
+  @override
+  String get industryCounsel_reason_luxuryShortage_detail =>
+      'Soft luxury caps favour training when refined luxuries are below sustainable levels.';
+
+  @override
+  String get industryCounsel_reason_feedstockBlocked_brief =>
+      'Improve feedstock tiles to unblock starred production inputs.';
+
+  @override
+  String get industryCounsel_reason_feedstockBlocked_detail =>
+      'Production is input-starved while improvable tiles can raise the blocking commodity.';
+
+  @override
+  String get industryCounsel_action_applyProduceAllocation =>
+      'Apply recommended industry allocation';
+
+  @override
+  String get industryCounsel_action_agreeTrain => 'Agree';
+
+  @override
+  String get industryCounsel_action_openDevelopment => 'Open Development';
+
+  @override
+  String get industryCounsel_trainAgreeFailed =>
+      'Cannot train that worker tier right now — check stockpile and queued orders.';
+
+  @override
+  String get tradeCounsel_tabTrade => 'Trade';
+
+  @override
+  String get tradeCounsel_empty => 'No pressing market advice this turn.';
+
+  @override
+  String get tradeCounsel_action_applyBook => 'Apply recommended market book';
+
+  @override
+  String get tradeCounsel_action_agree => 'Agree';
+
+  @override
+  String get tradeCounsel_applyFailed =>
+      'Cannot apply that market advice right now — check caps and treasury.';
+
+  @override
+  String tradeCounsel_title_bid(String commodity, int quantity) {
+    return 'Bid $commodity × $quantity';
+  }
+
+  @override
+  String tradeCounsel_title_offer(String commodity, int quantity) {
+    return 'Offer $commodity × $quantity';
+  }
+
+  @override
+  String get tradeCounsel_reason_surplusAboveReserve_brief =>
+      'Sell surplus above your reserve — the planner would offer this stock.';
+
+  @override
+  String get tradeCounsel_reason_industryShortage_brief =>
+      'Buy below production cost — industry inputs are short.';
+
+  @override
+  String get tradeCounsel_reason_speculativeInventory_brief =>
+      'Affluent treasury — build stock toward the planner target.';
+
+  @override
+  String get tradeMarket_counsel => 'Counsel';
+
+  @override
+  String tradeMarket_tradeCounselStarSemantic(String brief) {
+    return 'Trade counsel: $brief';
+  }
+
+  @override
+  String get tradeMarket_firstRightChip => 'First right';
+
+  @override
+  String get tradeMarket_firstRightTooltip =>
+      'You hold first right on goods from this purchased tile. Your bids clear '
+      'before rivals, and you earn overseas profit when another power buys here.';
+
+  @override
+  String get tradeDealBook_matchTagFirstRight => 'First right';
+
+  @override
+  String get tradeDealBook_matchTagFavoredPartner => 'Favored partner';
+
+  @override
+  String get tradeDealBook_overseasProfitHeading => 'Overseas profit';
+
+  @override
+  String tradeDealBook_overseasProfitRow(
+    String commodity,
+    int quantity,
+    int amount,
+  ) =>
+      '$commodity × $quantity — £$amount credited';
+
+  @override
+  String eventFeed_overseasProfitCredited(int amount, int count) =>
+      'Overseas profit credited: £$amount from $count rival purchase(s). '
+      'Tap to open Deal Book.';
 
   @override
   String get production_available => 'Available';
@@ -163,6 +373,9 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String technologyPanel_chooseTechDialogTitle(int slot) {
     return 'Choose Tech \u2014 Slot $slot';
   }
+
+  @override
+  String get technologyPanel_chooseTechDetails => 'Details';
 
   @override
   String get technologyPanel_slotCancelled => 'Research slot cancelled';
@@ -410,12 +623,127 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String get provinceOverlay_tileBuildImprovementTooltip => 'Build improvement';
 
   @override
+  String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs) {
+    return 'Build improvement ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip =>
+      'No idle Builders';
+
+  @override
+  String provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip(
+    String reason,
+  ) {
+    return reason;
+  }
+
+  @override
+  String get workOrderAfford_canAfford => 'Can afford';
+
+  @override
+  String workOrderAfford_shortMaterial(String commodity, int quantity) {
+    return 'Short: $commodity ×$quantity';
+  }
+
+  @override
+  String workOrderAfford_shortTreasury(int amount) {
+    return 'Short: treasury ×$amount';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildRoadTooltip => 'Build road';
+
+  @override
+  String provinceOverlay_tileBuildRoadTooltipWithCost(String costs) {
+    return 'Build road ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip =>
+      'No Engineer available to build road';
+
+  @override
+  String get provinceOverlay_tileBuildRoadDisabledTooltip =>
+      'No Engineer can assign road work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
+
+  @override
+  String provinceOverlay_militaryFortStatus(String status) {
+    return 'Fort: $status';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildFortTooltip => 'Build fort';
+
+  @override
+  String provinceOverlay_tileBuildFortTooltipWithCost(String costs) {
+    return 'Build fort ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildFortDisabledNoEngineerTooltip =>
+      'No Engineer available to build fort';
+
+  @override
+  String get provinceOverlay_tileBuildFortDisabledTooltip =>
+      'No Engineer can assign fort work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
+
+  @override
+  String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
+
+  @override
+  String provinceOverlay_tilePurchaseLandTooltipWithCost(int amount) {
+    return 'Purchase land — £$amount';
+  }
+
+  @override
+  String get provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip =>
+      'No idle Merchants';
+
+  @override
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip =>
+      'Embassy required with this Minor or Tribe';
+
+  @override
+  String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount) {
+    return 'Short: treasury ×$amount';
+  }
+
+  @override
   String provinceOverlay_tileImprovement(String value) {
     return 'Improvement: $value';
   }
 
   @override
   String get provinceOverlay_tileRoadNone => 'Road / railroad: -';
+
+  @override
+  String get provinceOverlay_tileCapitalLinkConnected =>
+      'Capital link: Connected';
+
+  @override
+  String provinceOverlay_tileCapitalLinkConnectedWithPath(int level) {
+    return 'Capital link: Connected (path transport level $level)';
+  }
+
+  @override
+  String get provinceOverlay_tileCapitalLinkNotConnected =>
+      'Capital link: Not connected — will not extract';
+
+  @override
+  String provinceOverlay_tileExtractionFromTile(int effective, int full) {
+    return 'Extraction from this tile: $effective of $full';
+  }
 
   @override
   String provinceOverlay_tileRoadTransportLevel(int level) {
@@ -572,6 +900,15 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_extractionCapitalGrainBonus(int bonus) {
+    return ' (incl. +$bonus capital grain bonus)';
+  }
+
+  @override
+  String get provinceOverlay_extractionPartialReason =>
+      'Some improved tiles are not linked to your capital, or the road/port path is too weak.';
+
+  @override
   String provinceOverlay_availableTileCount(int count, String name) {
     return '$count $name';
   }
@@ -607,6 +944,35 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String mapControls_cargoHold_tooltip(String used, String capacity) {
+    return 'Cargo: $used overseas of $capacity Home Fleet holds';
+  }
+
+  @override
+  String mapControls_cargoHold_semanticsLabel(String used, String capacity) {
+    return 'Cargo hold: $used overseas, $capacity Home Fleet holds';
+  }
+
+  @override
+  String mapControls_cargoHold_details_overseas(String used) {
+    return 'Overseas extraction: $used';
+  }
+
+  @override
+  String mapControls_cargoHold_details_capacity(String capacity) {
+    return 'Home Fleet holds: $capacity';
+  }
+
+  @override
+  String mapControls_cargoHold_details_free(String free) {
+    return 'Free for trade bids: $free';
+  }
+
+  @override
+  String get mapControls_cargoHold_details_counsel =>
+      'Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.';
+
+  @override
   String get mapControls_playersBarToggle => 'Players bar';
 
   @override
@@ -620,180 +986,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   @override
   String regionMinimap_zoomSemanticsValue(int pct) {
     return '$pct percent';
-  }
-
-  @override
-  String province_economic_resourceRow(
-    String terrain,
-    String resourceName,
-    String detail,
-  ) {
-    return '$terrain/$resourceName $detail';
-  }
-
-  @override
-  String get diplomacy_detail_historyTitle => 'Diplomatic history';
-
-  @override
-  String get diplomacy_detail_noEvents =>
-      'No recorded events with this faction.';
-
-  @override
-  String diplomacy_detail_yearTurn(int year, int turn) {
-    return '$year (Turn $turn)';
-  }
-
-  @override
-  String get diplomacy_detail_dossierTitle => 'Dossier';
-
-  @override
-  String get diplomacy_detail_currentRelation => 'Current relation';
-
-  @override
-  String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
-
-  @override
-  String diplomacy_detail_turnEvidence(int turn) {
-    return 'Turn $turn:';
-  }
-
-  @override
-  String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
-
-  @override
-  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
-
-  @override
-  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
-
-  @override
-  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
-
-  @override
-  String diplomacy_panel_powerScore(int score) {
-    return 'Power: $score';
-  }
-
-  @override
-  String get diplomacy_relativePower_label => 'Relative power:';
-
-  @override
-  String get diplomacy_relativePower_tierRoughlyEqual => 'Roughly equal';
-
-  @override
-  String get diplomacy_relativePower_tierSuperior => 'Superior';
-
-  @override
-  String get diplomacy_relativePower_tierVastlySuperior => 'Vastly superior';
-
-  @override
-  String get diplomacy_relativePower_tierInferior => 'Inferior';
-
-  @override
-  String get diplomacy_relativePower_tierVastlyInferior => 'Vastly inferior';
-
-  @override
-  String get diplomacy_relativePower_tooltip =>
-      "Compares this Great Power's military power score "
-      '(provinces, army strength, ships) to yours.';
-
-  @override
-  String diplomacy_relativePower_semantics(String pct, String tier) {
-    return 'Relative power $pct, $tier';
-  }
-
-  @override
-  String diplomacy_panel_outgoingSubsidy(int amount, String target) {
-    return 'Outgoing subsidy: $amount% to $target';
-  }
-
-  @override
-  String diplomacy_panel_pendingGrant(int amount) {
-    return 'Pending grant aid: £$amount (resolves end of turn)';
-  }
-
-  @override
-  String diplomacy_panel_pendingSubsidy(int amount) {
-    return 'Pending subsidy: $amount% (resolves end of turn)';
-  }
-
-  @override
-  String production_commodityStock(String name, int qty, String change) {
-    return '$name: $qty$change';
-  }
-
-  @override
-  String production_effectiveLabour(int n) {
-    return 'Effective labour: $n';
-  }
-
-  @override
-  String production_recipeAffordance(int max, String limiting) {
-    return '$max · $limiting';
-  }
-
-  @override
-  String production_totalLabour(int required, int effective) {
-    return 'Total labour: $required / $effective';
-  }
-
-  @override
-  String get production_labourInsufficient =>
-      'Insufficient labour — production will be capped next turn';
-
-  @override
-  String production_labourQueued(int count) {
-    return 'Queued: $count';
-  }
-
-  @override
-  String production_labourRecruitTier(String tier) {
-    return 'Recruit $tier';
-  }
-
-  @override
-  String production_labourTrainTier(String tier) {
-    return 'Train $tier';
-  }
-
-  @override
-  String production_labourDequeueTier(String tier) {
-    return 'Cancel last queued $tier';
-  }
-
-  @override
-  String production_labourDisbandTier(String tier) {
-    return 'Disband $tier';
-  }
-
-  @override
-  String get production_labourDisband => 'Disband';
-
-  @override
-  String get production_labourTierUnlocked => '(unlocked)';
-
-  @override
-  String get production_labourTierLocked => '(locked)';
-
-  @override
-  String get production_recipeLocked => '(locked)';
-
-  @override
-  String production_labourTierLabel(String tier, String state) {
-    return '$tier $state';
-  }
-
-  @override
-  String get production_labourControlsSectionLabel => 'Labour Controls';
-
-  @override
-  String production_workerCount(String name, int count) {
-    return '$name: $count';
-  }
-
-  @override
-  String naval_units_shipTypeCount(String typeName, int count) {
-    return '$typeName: $count';
   }
 
 }

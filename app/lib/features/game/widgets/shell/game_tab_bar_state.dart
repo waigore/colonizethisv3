@@ -1,6 +1,19 @@
-part of 'game_tab_bar.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class _GameTabBarState extends State<GameTabBar> {
+import '../../screens/game/game_screen_shared.dart' show kTreasuryIndicatorKey;
+import 'cargo_hold_indicator_support.dart';
+import 'game_tab_bar.dart';
+import 'game_tab_bar_indicators.dart';
+import 'game_tab_bar_region_tabs.dart';
+
+/// Stateful implementation for [GameTabBar] (Refs #4117 de-part).
+class GameTabBarState extends State<GameTabBar> {
+  final GlobalKey _cargoHoldAnchorKey = GlobalKey();
+
   static final NumberFormat _exactTreasuryFormat =
       NumberFormat.decimalPattern();
   static final NumberFormat _abbrevTreasuryFormat = NumberFormat.compact(
@@ -56,6 +69,17 @@ class _GameTabBarState extends State<GameTabBar> {
         : _treasuryDeltaLabel(widget.treasuryDelta);
     final deltaColor =
         _treasuryDeltaColor(deltaLabel == null ? null : widget.treasuryDelta);
+    final AppLocalizations l10n = appL10n(context);
+    final String usedToken =
+        widget.isCargoUsedReliable ? '${widget.cargoUsed}' : '—';
+    final String capacityToken = '${widget.cargoCapacity}';
+    final Color cargoNumericColor = cargoHoldNumericColor(
+      used: widget.cargoUsed,
+      capacity: widget.cargoCapacity,
+      cargoNotDefined: widget.cargoNotDefined,
+      isCargoUsedReliable: widget.isCargoUsedReliable,
+    );
+    final bool cargoInteractive = !widget.cargoNotDefined;
 
     return SizedBox(
       key: GameTabBar.surfaceKey,
@@ -77,16 +101,13 @@ class _GameTabBarState extends State<GameTabBar> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Region tabs are start-aligned (left in LTR); the scroll view
-              // lets them shrink on narrow viewports without overflowing
-              // (mockup `.region-tab` group, issue #2861 M1).
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _GameRegionTab(
+                      GameRegionTab(
                         label: widget.oldWorldLabel,
                         selected: widget.regionIndex == 0,
                         onTap: () => widget.onRegionIndexChanged(0),
@@ -95,14 +116,14 @@ class _GameTabBarState extends State<GameTabBar> {
                       if (kCtE2EEnabled)
                         KeyedSubtree(
                           key: kCtE2ERegionTabNewWorldKey,
-                          child: _GameRegionTab(
+                          child: GameRegionTab(
                             label: widget.newWorldLabel,
                             selected: widget.regionIndex == 1,
                             onTap: () => widget.onRegionIndexChanged(1),
                           ),
                         )
                       else
-                        _GameRegionTab(
+                        GameRegionTab(
                           label: widget.newWorldLabel,
                           selected: widget.regionIndex == 1,
                           onTap: () => widget.onRegionIndexChanged(1),
@@ -111,9 +132,6 @@ class _GameTabBarState extends State<GameTabBar> {
                   ),
                 ),
               ),
-              // Trailing indicator group, end-aligned in mockup order:
-              // treasury -> cargo -> news toggle (mockup `.tabbar-spacer`
-              // separates the tabs from this group; issue #2861 M1).
               GestureDetector(
                 key: kTreasuryIndicatorKey,
                 onTap: widget.treasuryNotDefined
@@ -121,7 +139,7 @@ class _GameTabBarState extends State<GameTabBar> {
                     : () => setState(
                           () => _showExactTreasury = !_showExactTreasury,
                         ),
-                child: _TreasuryIndicator(
+                child: GameTabBarTreasuryIndicator(
                   treasuryLabel: treasuryLabel,
                   deltaLabel: deltaLabel,
                   deltaColor: deltaColor,
@@ -134,11 +152,38 @@ class _GameTabBarState extends State<GameTabBar> {
                   ),
                 ),
               ),
-              _CargoHoldIndicator(
+              GameTabBarCargoHoldIndicator(
+                key: _cargoHoldAnchorKey,
                 cargoHoldLabel: widget.cargoHoldLabel,
-                labelStyle: monoBody.copyWith(
-                  color: EditorialMonoclePalette.muted,
-                ),
+                labelStyle: monoBody,
+                numericColor: cargoNumericColor,
+                tooltip: cargoInteractive
+                    ? l10n.mapControls_cargoHold_tooltip(usedToken, capacityToken)
+                    : null,
+                semanticsLabel: cargoInteractive
+                    ? l10n.mapControls_cargoHold_semanticsLabel(
+                        usedToken,
+                        capacityToken,
+                      )
+                    : widget.cargoHoldLabel,
+                onTap: cargoInteractive
+                    ? () {
+                        final RenderBox? tabBarBox =
+                            context.findRenderObject() as RenderBox?;
+                        final double chromeBottomY =
+                            (tabBarBox?.localToGlobal(Offset.zero).dy ?? 0) +
+                            GameTabBar.height;
+                        showCargoHoldDetailsPopover(
+                          context: context,
+                          anchorKey: _cargoHoldAnchorKey,
+                          chromeBottomY: chromeBottomY,
+                          l10n: l10n,
+                          cargoUsed: widget.cargoUsed,
+                          cargoCapacity: widget.cargoCapacity,
+                          isCargoUsedReliable: widget.isCargoUsedReliable,
+                        );
+                      }
+                    : null,
               ),
               const SizedBox(width: GameTabBar.clusterTrailingGap),
               widget.trailing,

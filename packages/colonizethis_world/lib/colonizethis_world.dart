@@ -3,12 +3,18 @@ library colonizethis_world;
 
 export 'src/event_bus/game_event_bus.dart';
 export 'src/game_events.dart';
+export 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
 export 'src/game_player_lookup.dart';
 export 'src/logic_validation_exception.dart';
 export 'package:colonizethis_world/src/trace/turn_trace_contracts.dart';
 export 'package:colonizethis_world/src/trace/turn_trace_file_exporter.dart';
 export 'package:colonizethis_world/src/trace/turn_trace_runtime.dart';
 export 'src/world_constants.dart';
+// Graph-traversal helpers consumed by colonizethis_setup ownership painting
+// and its test support (Refs #4054); only the setup-facing subset is shown to
+// keep the BFS/bottleneck internals private.
+export 'src/utils/graph_traversal.dart'
+    show connectedComponentsInSubset, landmassIdsFromProvinceAdjacency;
 export 'package:colonizethis_world/src/world/army_commands.dart';
 export 'package:colonizethis_world/src/world/army_ids.dart';
 export 'package:colonizethis_world/src/world/army_lookup.dart';
@@ -17,8 +23,16 @@ export 'package:colonizethis_world/src/world/army_migration.dart';
 export 'package:colonizethis_world/src/world/army_movement.dart';
 export 'package:colonizethis_world/src/world/capital_reassignment_fatal.dart';
 // Capital / GP-fall cascade stays `show`-restricted (Refs #4038): combat + debug
-// entry points only. Eligibility helpers beyond this list, and the setup-facing
-// `capital_reassignment.dart` surface, remain deep-import (not fully published).
+// entry points only. Eligibility helpers beyond this list remain internal; the
+// setup-facing `capital_reassignment.dart` subset is barrel-published below
+// (Refs #4054) so colonizethis_setup no longer deep-imports it.
+export 'package:colonizethis_world/src/world/capital_reassignment.dart'
+    show
+        applyGreatPowerCapitalProvinceTownDevelopment,
+        pickCapitalProvinceIdForReassignment,
+        setCapitalForMinorReassignment,
+        setCapitalForReassignment,
+        setCapitalForTribeReassignment;
 export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart'
     show
         CapitalReassignmentEligibility,
@@ -29,6 +43,10 @@ export 'package:colonizethis_world/src/world/capital_and_gp_fall.dart'
         evaluateCapitalReassignmentEligibility;
 export 'package:colonizethis_world/src/world/civilian_tile_occupancy.dart';
 export 'package:colonizethis_world/src/world/connectivity_resolver.dart';
+// Tile transport helpers consumed by colonizethis_orders owned-land graph paths
+// (Refs #4258); surfaced through the barrel so orders does not deep-import src/.
+export 'package:colonizethis_world/src/world/connectivity_tile_helpers.dart'
+    show portToProvinceSeaZone, transportLevelAtTile;
 // Connectivity hot-path metrics counters (Refs #2268 AC-10). Previously surfaced
 // via the `connectivity_resolver.dart` `part` chain; after the Step 3 split
 // (Refs #3544) it lives in its own library. Following Refs #3544 AC3 the metrics
@@ -64,6 +82,12 @@ export 'package:colonizethis_world/src/world/province_visibility_index.dart';
 export 'package:colonizethis_world/src/world/sea_zone_identity.dart';
 export 'package:colonizethis_world/src/world/ship_instance_allocate.dart';
 export 'package:colonizethis_world/src/world/tile_control.dart';
+// Town/capital tile-strip helpers consumed by colonizethis_setup occupancy
+// wiring (Refs #4054); published so setup re-exports through the barrel.
+export 'package:colonizethis_world/src/world/town_capital_tile_strip.dart'
+    show
+        collectTownAndCapitalTileKeys,
+        stripResourcesAndExtractionImprovementsOnTileKeys;
 // `parseTileKeyCoordinates` now lives in `colonizethis_models` (Refs #3427) and
 // is re-exported by `tile_key_coordinates.dart`. Because the canonical
 // declaration is the single `colonizethis_models` one, the `colonizethis_world`

@@ -1,9 +1,14 @@
-// Slots and Tree tab bodies for [TechnologyScreen].
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-part of 'technology_screen.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../widgets/technology/tech_tree_widget.dart';
+import '../../widgets/technology/technology_panel.dart';
 
-class _SlotsBody extends StatelessWidget {
-  const _SlotsBody({
+/// Slots and Tree tab bodies for [TechnologyScreen] (Refs #4117 de-part).
+class TechnologySlotsBody extends StatelessWidget {
+  const TechnologySlotsBody({
+    super.key,
     required this.game,
     required this.player,
     this.currentOrders = const Orders(),
@@ -29,8 +34,8 @@ class _SlotsBody extends StatelessWidget {
   }
 }
 
-class _TreeBody extends StatelessWidget {
-  const _TreeBody({required this.game, required this.player});
+class TechnologyTreeBody extends StatelessWidget {
+  const TechnologyTreeBody({super.key, required this.game, required this.player});
 
   final Game game;
   final Player player;

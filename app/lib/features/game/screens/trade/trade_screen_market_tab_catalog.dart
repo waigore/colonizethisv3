@@ -2,9 +2,24 @@
 // Split from `trade_screen_market_tab_handlers.dart` to keep each trade-screen
 // part under the repo file-size target (Refs #3878).
 
-part of 'trade_screen.dart';
 
-extension _MarketTabContentCatalog on _MarketTabContent {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../../widgets/ct_section_label.dart';
+import '../../widgets/production/commodity_ui_helpers.dart';
+import '../counsel/trade_counsel_l10n.dart';
+import 'trade_market_counsel_star.dart';
+import 'trade_market_staging_context.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_row.dart';
+import 'trade_screen_market_tab.dart';
+
+extension MarketTabContentCatalog on MarketTabContent {
   /// Builds the widget list that renders one Market commodity category
   /// section: a `CtSectionLabel` header keyed by [sectionKey] followed
   /// by the per-commodity rows for [commodities] in their input order.
@@ -17,91 +32,243 @@ extension _MarketTabContentCatalog on _MarketTabContent {
   /// section snugs against the cargo header without leaving extra
   /// whitespace, and subsequent sections get a 12 dp separator that
   /// matches the Production panel's between-section gap.
-  List<Widget> _buildCommoditySectionWidgets({
+  ///
+  /// When [wideLayout] is true (content width ≥
+  /// [TradeScreenMarketKeys.marketTwoColumnMinWidth]), rows render in a
+  /// row-major two-column grid with compact two-line rows (Refs #4227).
+  List<Widget> buildCommoditySectionWidgets({
     required Key sectionKey,
     required String sectionLabel,
     required List<Commodity> commodities,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
-    required WorldMarketState market,
-    required Orders orders,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required void Function(CommodityId commodityId, TradeOrderType? next)
-        onDirectionChanged,
-    required void Function(CommodityId commodityId, int delta) onQuantityDelta,
     required AppLocalizations l10n,
     bool isFirstSection = true,
+    bool wideLayout = false,
   }) {
     if (commodities.isEmpty) return const <Widget>[];
     return <Widget>[
       if (!isFirstSection) const SizedBox(height: 12),
       CtSectionLabel(sectionLabel, key: sectionKey),
       const SizedBox(height: 6),
+      if (wideLayout)
+        ..._buildWideCommodityGrid(
+          commodities: commodities,
+          staging: staging,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
+          volumeStyle: volumeStyle,
+          quantityStyle: quantityStyle,
+          l10n: l10n,
+        )
+      else
+        ..._buildNarrowCommodityList(
+          commodities: commodities,
+          staging: staging,
+          nameStyle: nameStyle,
+          priceStyle: priceStyle,
+          volumeStyle: volumeStyle,
+          quantityStyle: quantityStyle,
+          l10n: l10n,
+        ),
+    ];
+  }
+
+  List<Widget> _buildNarrowCommodityList({
+    required List<Commodity> commodities,
+    required TradeMarketStagingContext staging,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required AppLocalizations l10n,
+  }) {
+    return <Widget>[
       for (int index = 0; index < commodities.length; index++)
         Padding(
           key: TradeScreenMarketKeys.marketCommodityRowKey(commodities[index].id),
           padding: EdgeInsets.only(top: index == 0 ? 0 : 12),
-          child: _MarketCommodityRow(
-            commodityId: commodities[index].id,
-            commodityDisplayName:
-                commodityDisplayName(l10n, commodities[index].id),
-            priceText: _formatPrice(
-              market.prices[commodities[index].id],
-              commodityId: commodities[index].id,
-            ),
-            volumeText: _volumeText(
-              market.lastTurnActivity[commodities[index].id] ??
-                  MarketActivity.empty,
-            ),
-            stagedOrder: tradeOrderForPlayerCommodity(
-              orders,
-              playerId,
-              commodities[index].id,
-            ),
-            sellableHeadroom: _sellableHeadroomFor(
-              offerCap: offerCap,
-              stagedOffers: stagedOffers,
-              commodityId: commodities[index].id,
-            ),
-            offerCap: offerCap[commodities[index].id] ?? 0,
+          child: _buildCommodityRow(
+            commodity: commodities[index],
+            compact: false,
+            staging: staging,
             nameStyle: nameStyle,
             priceStyle: priceStyle,
             volumeStyle: volumeStyle,
             quantityStyle: quantityStyle,
-            onDirectionChanged: (TradeOrderType? next) =>
-                onDirectionChanged(commodities[index].id, next),
-            onIncrement: () => onQuantityDelta(commodities[index].id, 1),
-            onDecrement: () => onQuantityDelta(commodities[index].id, -1),
+            l10n: l10n,
           ),
         ),
     ];
   }
+
+  List<Widget> _buildWideCommodityGrid({
+    required List<Commodity> commodities,
+    required TradeMarketStagingContext staging,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required AppLocalizations l10n,
+  }) {
+    final List<Widget> rows = <Widget>[];
+    for (int index = 0; index < commodities.length; index += 2) {
+      final Commodity left = commodities[index];
+      final Commodity? right =
+          index + 1 < commodities.length ? commodities[index + 1] : null;
+      rows.add(
+        Padding(
+          padding: EdgeInsets.only(
+            top: index == 0 ? 0 : TradeScreenMarketKeys.marketGridRowGap,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Padding(
+                  key: TradeScreenMarketKeys.marketCommodityRowKey(left.id),
+                  padding: EdgeInsets.zero,
+                  child: _buildCommodityRow(
+                    commodity: left,
+                    compact: true,
+                    staging: staging,
+                    nameStyle: nameStyle,
+                    priceStyle: priceStyle,
+                    volumeStyle: volumeStyle,
+                    quantityStyle: quantityStyle,
+                    l10n: l10n,
+                  ),
+                ),
+              ),
+              const SizedBox(width: TradeScreenMarketKeys.marketGridColumnGap),
+              Expanded(
+                child: right == null
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        key: TradeScreenMarketKeys.marketCommodityRowKey(right.id),
+                        padding: EdgeInsets.zero,
+                        child: _buildCommodityRow(
+                          commodity: right,
+                          compact: true,
+                          staging: staging,
+                          nameStyle: nameStyle,
+                          priceStyle: priceStyle,
+                          volumeStyle: volumeStyle,
+                          quantityStyle: quantityStyle,
+                          l10n: l10n,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return rows;
+  }
+
+  Widget _buildCommodityRow({
+    required Commodity commodity,
+    required bool compact,
+    required TradeMarketStagingContext staging,
+    required TextStyle nameStyle,
+    required TextStyle priceStyle,
+    required TextStyle volumeStyle,
+    required TextStyle quantityStyle,
+    required AppLocalizations l10n,
+  }) {
+    final CommodityId commodityId = commodity.id;
+    final bool showFirstRightChip =
+        staging.firstRightCommodityIds.contains(commodityId);
+    final highlight = staging.tradeCounselHighlightsByCommodityId[commodityId];
+    final onOpenCounsel = staging.onOpenTradeCounsel;
+    TradeMarketCounselStar? counselStar;
+    if (highlight != null && onOpenCounsel != null) {
+      final brief = tradeCounselBriefForReason(l10n, highlight.briefReasonKey);
+      counselStar = TradeMarketCounselStar(
+        briefMessage: brief,
+        semanticLabel: l10n.tradeMarket_tradeCounselStarSemantic(brief),
+        onOpenCounsel: () => onOpenCounsel(
+          highlightRecommendationId: highlight.recommendationId,
+        ),
+      );
+    }
+    final rowParams = (
+      commodityId: commodityId,
+      commodityDisplayName: commodityDisplayName(l10n, commodityId),
+      priceText: formatMarketPrice(
+        staging.market.prices[commodityId],
+        commodityId: commodityId,
+      ),
+      volumeText: volumeText(
+        staging.market.lastTurnActivity[commodityId] ?? MarketActivity.empty,
+      ),
+      stagedOrder: staging.stagedOrderFor(commodityId),
+      sellableHeadroom: staging.sellableHeadroomFor(commodityId),
+      offerCap: staging.offerCap[commodityId] ?? 0,
+      canSelectBid: staging.canSelectBidOn(commodityId),
+      nameStyle: nameStyle,
+      priceStyle: priceStyle,
+      volumeStyle: volumeStyle,
+      quantityStyle: quantityStyle,
+      onDirectionChanged: (TradeOrderType? next) =>
+          staging.onDirectionChanged(commodityId, next),
+      onIncrement: () => staging.onQuantityDelta(commodityId, 1),
+      onDecrement: () => staging.onQuantityDelta(commodityId, -1),
+    );
+    if (compact) {
+      return MarketCommodityRowCompact(
+        commodityId: rowParams.commodityId,
+        commodityDisplayName: rowParams.commodityDisplayName,
+        priceText: rowParams.priceText,
+        volumeText: rowParams.volumeText,
+        stagedOrder: rowParams.stagedOrder,
+        sellableHeadroom: rowParams.sellableHeadroom,
+        offerCap: rowParams.offerCap,
+        canSelectBid: rowParams.canSelectBid,
+        nameStyle: rowParams.nameStyle,
+        priceStyle: rowParams.priceStyle,
+        volumeStyle: rowParams.volumeStyle,
+        quantityStyle: rowParams.quantityStyle,
+        onDirectionChanged: rowParams.onDirectionChanged,
+        onIncrement: rowParams.onIncrement,
+        onDecrement: rowParams.onDecrement,
+        showFirstRightChip: showFirstRightChip,
+        firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+        firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
+        counselStar: counselStar,
+      );
+    }
+    return MarketCommodityRow(
+      commodityId: rowParams.commodityId,
+      commodityDisplayName: rowParams.commodityDisplayName,
+      priceText: rowParams.priceText,
+      volumeText: rowParams.volumeText,
+      stagedOrder: rowParams.stagedOrder,
+      sellableHeadroom: rowParams.sellableHeadroom,
+      offerCap: rowParams.offerCap,
+      canSelectBid: rowParams.canSelectBid,
+      nameStyle: rowParams.nameStyle,
+      priceStyle: rowParams.priceStyle,
+      volumeStyle: rowParams.volumeStyle,
+      quantityStyle: rowParams.quantityStyle,
+      onDirectionChanged: rowParams.onDirectionChanged,
+      onIncrement: rowParams.onIncrement,
+      onDecrement: rowParams.onDecrement,
+      showFirstRightChip: showFirstRightChip,
+      firstRightChipLabel: l10n.tradeMarket_firstRightChip,
+      firstRightTooltip: l10n.tradeMarket_firstRightTooltip,
+      counselStar: counselStar,
+    );
+  }
 }
 
-/// Returns the per-row sellable headroom shown as `(N)` next to the
-/// commodity name on the Trade Market tab (Refs #3093 — sellable
-/// clamp slice). Equals `max(0, offerCap[c] − stagedOffer[c])` for
-/// the row's commodity. Mirrors
-/// `sellableHeadroomByCommodityId` but with per-row resolution so
-/// the build path passes one int per row instead of rebuilding the
-/// full map per child.
-int _sellableHeadroomFor({
-  required Map<CommodityId, int> offerCap,
-  required Map<CommodityId, int> stagedOffers,
-  required CommodityId commodityId,
-}) {
-  final int cap = offerCap[commodityId] ?? 0;
-  final int staged = stagedOffers[commodityId] ?? 0;
-  final int headroom = cap - staged;
-  return headroom < 0 ? 0 : headroom;
-}
-
-String _volumeText(MarketActivity activity) {
-  return '${_MarketTabContent.bidsLabel} ${activity.totalBidQuantity} / '
-      '${_MarketTabContent.offersLabel} ${activity.totalOfferQuantity}';
+String volumeText(MarketActivity activity) {
+  return '${MarketTabContent.bidsLabel} ${activity.totalBidQuantity} / '
+      '${MarketTabContent.offersLabel} ${activity.totalOfferQuantity}';
 }
 
 /// Returns the tradeable commodities grouped by their
@@ -113,7 +280,7 @@ String _volumeText(MarketActivity activity) {
 /// preserves `CommodityCatalog.all` iteration order so this surface
 /// matches the Production panel's Available subpanel (which iterates
 /// the same catalog list filtered by category).
-_SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
+SectionedTradeableCommodities tradeableCommoditiesByCategory() {
   final List<Commodity> food = <Commodity>[];
   final List<Commodity> rawMaterials = <Commodity>[];
   final List<Commodity> manufactured = <Commodity>[];
@@ -133,7 +300,7 @@ _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
         break;
     }
   }
-  return _SectionedTradeableCommodities(
+  return SectionedTradeableCommodities(
     food: food,
     rawMaterials: rawMaterials,
     manufactured: manufactured,
@@ -152,23 +319,23 @@ _SectionedTradeableCommodities _tradeableCommoditiesByCategory() {
 /// `SPEC/game/commodity-catalog.md` § Manufactured base prices). The
 /// canonical em-dash glyph is a defensive fallback retained for future
 /// commodity additions that ship without a catalog default.
-String _formatPrice(int? price, {required CommodityId commodityId}) {
+String formatMarketPrice(int? price, {required CommodityId commodityId}) {
   final ResourceRules rules =
       TradeScreenMarketKeys.marketPriceResourceRulesOverride ??
       ResourceRules.defaultRules;
   final int? effective =
       price ?? rules.defaultMarketPriceForCommodityId(commodityId);
-  if (effective == null) return _MarketTabContent.priceUnknownGlyph;
+  if (effective == null) return MarketTabContent.priceUnknownGlyph;
   return effective.toString();
 }
 
 /// Pre-grouped tradeable commodities passed from
-/// `_tradeableCommoditiesByCategory()` to the section builder. Holds
+/// `tradeableCommoditiesByCategory()` to the section builder. Holds
 /// the three Market tab sections (food / raw materials / manufactured)
 /// in catalog order so the renderer does not re-iterate
 /// [CommodityCatalog.all] per section.
-class _SectionedTradeableCommodities {
-  const _SectionedTradeableCommodities({
+class SectionedTradeableCommodities {
+  const SectionedTradeableCommodities({
     required this.food,
     required this.rawMaterials,
     required this.manufactured,

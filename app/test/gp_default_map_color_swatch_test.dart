@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();

@@ -8,20 +8,16 @@ import 'order_resolution_context.dart';
 import 'order_suggestion_context.dart';
 import 'order_visibility.dart';
 import 'order_work_constants.dart';
-import 'orders_application_helpers.dart';
 import 'work_suggestion_pipeline.dart';
+import 'work_tile_candidacy/explorer_province_probe.dart';
 
-// Explore-only logic retained in this library (Refs #3971 wave-4 AC):
-// - Province probe cap `kMaxExploreProvinceProbesPerUnit` and per-province
-//   tile pick / visibility / usefulness gates in
+// Explore-only logic retained in this library (Refs #4109 wave-5 slice D):
+// - `exploreProvinceStillUsefulFromAuthoritativeTiles` gate in
 //   `_tryExploreWorkOrderForProvince`.
-// - Explore candidate assembly + ranking in `suggestExploreWorkOrders` that
-//   has no worker/spy counterpart (fogged-province usefulness + bundled move
-//   leg for explore targets).
-// Shared with worker/spy where behavior-identical: bundled move-leg rejection,
-// incremental candidate validation, and pipeline candidacy helpers imported
-// above. Do not extract explore-only probe scaffolding until a second call
-// site appears outside this file.
+// - Explore candidate assembly + ranking in `addExplorerWorkSuggestionsForUnit`
+//   (fogged-province usefulness + bundled move leg for explore targets).
+// Shared province/tile probe scaffolding lives in
+// `work_tile_candidacy/explorer_province_probe.dart`.
 
 ({WorkOrder? chosen, String lastReason}) _tryExploreWorkOrderForProvince({
   required PlayerView view,
@@ -37,18 +33,11 @@ import 'work_suggestion_pipeline.dart';
   required IncrementalCandidateValidator candidateValidator,
   Map<String, TileMapResult>? tileMapByRegion,
 }) {
-  final regionIdP = prov.regionId;
-  final provinceIdFull = prov.id;
-  final tilesInP =
-      tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+  final tilesInP = tileKeysForProvinceInRegion(tileKeysByRegion, prov);
   if (tilesInP.isEmpty) {
     return (chosen: null, lastReason: 'no_valid_tile');
   }
-  final sortedTilesInP = List<String>.from(tilesInP)..sort();
-  final targetTileKey = sortedTilesInP.firstWhere(
-    (tk) => view.visibilityForTile(tk) != VisibilityLevel.unknown,
-    orElse: () => sortedTilesInP.first,
-  );
+  final targetTileKey = pickFirstKnownOrFirstSortedTile(view, tilesInP);
 
   if (!workOrderVisibilityOk(
     view,
@@ -59,12 +48,7 @@ import 'work_suggestion_pipeline.dart';
   )) {
     return (chosen: null, lastReason: 'visibility');
   }
-  if (!provinceHasAtLeastVisibility(
-    view,
-    regionIdP,
-    provinceIdFull,
-    VisibilityLevel.fogged,
-  )) {
+  if (!provinceHasFoggedVisibilityForExplore(view, prov)) {
     return (chosen: null, lastReason: 'visibility');
   }
   if (!exploreProvinceStillUsefulFromAuthoritativeTiles(view, tilesInP)) {
@@ -147,12 +131,7 @@ void addExplorerWorkSuggestionsForUnit({
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     candidatesProvider: () sync* {
-      var provinceProbes = 0;
-      for (final prov in provinces) {
-        provinceProbes++;
-        if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
-          break;
-        }
+      for (final prov in cappedExploreProvinceProbes(provinces)) {
         final attempt = _tryExploreWorkOrderForProvince(
           view: view,
           game: game,
@@ -198,102 +177,6 @@ void addExplorerWorkSuggestionsForUnit({
     resolution: resolution,
     tileMapByRegion: tileMapByRegion,
   );
-}
-
-/// Every engine-valid prospect tile in [tilesInProvince], in sorted tile order.
-/// [lastReason] is the last rejection reason when the list is empty.
-({List<String> tiles, String lastReason}) _allAcceptedProspectTilesInProvince({
-  required PlayerView view,
-  required Game game,
-  required MapTopology topology,
-  required Orders currentOrders,
-  required String playerId,
-  required Unit unit,
-  required List<String> tilesInProvince,
-  required Set<String> prospected,
-  required OrderResolutionContext resolution,
-  required List<DiplomaticOrder> diplomaticOrders,
-  required IncrementalCandidateValidator candidateValidator,
-  required WorkSuggestionProbeBudget workProbeBudget,
-  Map<String, TileMapResult>? tileMapByRegion,
-
-  /// When `false`, this province's tile probes are exempt from the shared
-  /// per-pass [WorkSuggestionProbeBudget] — used for the Explorer's **own**
-  /// (current) province so a co-located owned mineral prospect candidate is
-  /// never starved by earlier units' explore/prospect probes draining the
-  /// shared budget (Refs #2847 § Old World mineral feedstock prospect
-  /// localization). The per-province [kMaxWorkProbeAttemptsPerUnitPerTarget]
-  /// cap still bounds the probe count.
-  bool consumeSharedBudget = true,
-}) {
-  var lastReason = 'no_valid_tile';
-  final sortedTiles = List<String>.from(tilesInProvince)..sort();
-  final accepted = <String>[];
-  if (sortedTiles.isNotEmpty) {
-    final moveLegReason = bundledWorkMoveLegRejectionReason(
-      game: game,
-      topology: topology,
-      playerId: playerId,
-      unit: unit,
-      probe: WorkOrder(
-        unitId: unit.id,
-        target: kWorkTargetProspect,
-        targetTileKey: sortedTiles.first,
-      ),
-      resolution: resolution,
-      diplomatic: diplomaticOrders,
-    );
-    if (moveLegReason != null) {
-      return (tiles: const <String>[], lastReason: moveLegReason);
-    }
-  }
-  // Own-province prospect probes are exempt from the shared per-pass budget
-  // ([consumeSharedBudget] false) and must not be capped at
-  // [kMaxWorkProbeAttemptsPerUnitPerTarget] when other accepted mineral tiles in
-  // the same province sort earlier — otherwise a co-located feedstock `iron`
-  // tile never reaches the suggestion list (Refs #2847).
-  final maxTileProbes = consumeSharedBudget
-      ? kMaxWorkProbeAttemptsPerUnitPerTarget
-      : sortedTiles.length;
-  var probeAttempts = 0;
-  for (final tk in sortedTiles) {
-    probeAttempts++;
-    if (probeAttempts > maxTileProbes) {
-      break;
-    }
-    if (prospected.contains(tk)) continue;
-    if (!isMineralEligibleTile(game, tileMapByRegion, tk)) continue;
-    final candidate = WorkOrder(
-      unitId: unit.id,
-      target: kWorkTargetProspect,
-      targetTileKey: tk,
-    );
-    if (consumeSharedBudget && !workProbeBudget.consume()) {
-      break;
-    }
-    if (isWorkOrderAcceptedWithValidator(candidateValidator, candidate)) {
-      accepted.add(tk);
-    } else {
-      lastReason = 'engine_rejected';
-    }
-  }
-  return (tiles: accepted, lastReason: lastReason);
-}
-
-/// Provinces scanned for `prospect` candidates, with [unit]'s
-/// [Unit.locationProvinceId] first so the [kMaxExploreProvinceProbesPerUnit]
-/// cap still reaches a co-located mineral tile on large maps (Refs #2847).
-List<Province> _prospectProvincesSortedForExplorer({
-  required PlayerView view,
-  required Unit unit,
-}) {
-  final provinces = view.provincesById.values.toList()
-    ..sort((a, b) => a.id.compareTo(b.id));
-  final at = unit.locationProvinceId;
-  if (at.isEmpty) return provinces;
-  final atProv = view.provincesById[at];
-  if (atProv == null) return provinces;
-  return [atProv, ...provinces.where((p) => p.id != at)];
 }
 
 void _addProspectSuggestionIfEligible({
@@ -342,7 +225,7 @@ void _addProspectSuggestionIfEligible({
   // SPEC/program/order-suggestions.md). Probe the explorer's current province
   // first so [kMaxExploreProvinceProbesPerUnit] still reaches co-located
   // mineral tiles on seed-scale maps (Refs #2847).
-  final provinces = _prospectProvincesSortedForExplorer(view: view, unit: unit);
+  final provinces = provincesWithUnitLocationFirst(view, unit);
   final atProvinceFullId = unit.locationProvinceId;
 
   var lastReason = 'no_valid_tile';
@@ -355,34 +238,20 @@ void _addProspectSuggestionIfEligible({
     existingTargetsByUnit: existingTargetsByUnit,
     suggestions: suggestions,
     candidatesProvider: () sync* {
-      var provinceProbes = 0;
-      for (final prov in provinces) {
-        provinceProbes++;
-        if (provinceProbes > kMaxExploreProvinceProbesPerUnit) {
-          break;
-        }
-        final regionIdP = prov.regionId;
-        final provinceIdFull = prov.id;
-        if (!provinceHasAtLeastVisibility(
-          view,
-          regionIdP,
-          provinceIdFull,
-          VisibilityLevel.fogged,
-        )) {
+      for (final prov in cappedExploreProvinceProbes(provinces)) {
+        if (!provinceHasFoggedVisibilityForExplore(view, prov)) {
           lastReason = 'visibility';
           continue;
         }
-        final tilesInP =
-            tileKeysByRegion[regionIdP]?[provinceIdFull] ?? const <String>[];
+        final tilesInP = tileKeysForProvinceInRegion(tileKeysByRegion, prov);
         if (tilesInP.isEmpty) {
           lastReason = 'no_valid_tile';
           continue;
         }
-        final scan = _allAcceptedProspectTilesInProvince(
+        final scan = acceptedProspectTilesInProvince(
           view: view,
           game: game,
           topology: topology,
-          currentOrders: currentOrders,
           playerId: playerId,
           unit: unit,
           tilesInProvince: tilesInP,
@@ -396,7 +265,7 @@ void _addProspectSuggestionIfEligible({
           // prospect candidate (a co-located owned mineral tile); exempt it
           // from the shared per-pass budget so earlier units cannot starve it
           // (Refs #2847). Remote provinces still consume the shared budget.
-          consumeSharedBudget: provinceIdFull != atProvinceFullId,
+          consumeSharedBudget: prov.id != atProvinceFullId,
         );
         lastReason = scan.lastReason;
         for (final tk in scan.tiles) {

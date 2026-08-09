@@ -1,4 +1,7 @@
-part of '../orders.dart';
+/// Order value types. First-class library (Refs #4068 Slice C).
+
+import '../model_validation_exception.dart';
+import '../province_id.dart';
 
 /// Move a civilian land unit to a destination **land tile**.
 /// Serialized form is [destinationTileKey] only; enclosing province is derived.

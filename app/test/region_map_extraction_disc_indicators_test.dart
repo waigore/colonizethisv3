@@ -65,6 +65,73 @@ void main() {
       );
     }
 
+    RegionMapViewData oneCellDisconnectedBlockedExtractionRegion() {
+      return RegionMapViewData(
+        regionId: 'goldenDisconnectedExtractionRegion',
+        width: 1,
+        height: 1,
+        cellSize: 64,
+        cells: const [
+          CellViewData(
+            x: 0,
+            y: 0,
+            regionCellId: 'pDisc',
+            isSea: false,
+            terrainType: TerrainType.plains,
+            resourceId: 'grain',
+            resourceExtractionEffectiveUnits: 0,
+            resourceExtractionBlockedUnits: 2,
+            provinceDisplayName: 'Disc',
+          ),
+        ],
+        capitalMarkers: const [],
+        portMarkers: const [],
+        townMarkers: const [],
+        factionColors: const {},
+        greatPowerFactionIds: const {},
+        terrainColors: const {TerrainType.plains: (120, 160, 90)},
+        warpMarkers: const [],
+      );
+    }
+
+    testWidgets(
+      'terrainAndResources: disconnected improved E=0 B=2 golden (Refs #4151)',
+      (WidgetTester tester) async {
+        final region = oneCellDisconnectedBlockedExtractionRegion();
+        await tester.pumpWidget(
+          ctRegionMapTestHarness(
+            region: region,
+            width: 96,
+            height: 64,
+            cellSizePx: 64,
+            visibilityMode: CtMapVisibilityMode.full,
+            showPoliticalOverlay: false,
+            showProvinceOverlay: false,
+            showProvinceNamesLayer: false,
+            baseLayerDisplayMode: BaseLayerDisplayMode.terrainAndResources,
+            useScaffold: false,
+            repaintBoundaryKey: const ValueKey(
+              'region_map_disconnected_extraction_discs_golden',
+            ),
+          ),
+        );
+
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+
+        await expectLater(
+          find.byKey(
+            const ValueKey('region_map_disconnected_extraction_discs_golden'),
+          ),
+          matchesGoldenFile(
+            'goldens/region_map_disconnected_extraction_discs_grain_64.png',
+          ),
+        );
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
     testWidgets(
       'terrainAndResources: copper + E=2 B=1 golden (disc markers; Refs #1847)',
       (WidgetTester tester) async {
@@ -103,7 +170,7 @@ void main() {
 
     testWidgets(
       'paintResourceExtractionDiscIndicators fills effective with gold '
-      'and blocked with brown (transport semantics; Refs #1847)',
+      'and blocked with brown with dark stroke rims (Refs #4151 Phase 3)',
       (WidgetTester tester) async {
         await tester.runAsync(() async {
           final recorder = ui.PictureRecorder();
@@ -147,6 +214,59 @@ void main() {
           expect(r1, lessThan(180));
           expect((r0 - r1).abs(), greaterThan(40));
           expect((g0 - g1).abs() + (b0 - b1).abs(), greaterThan(30));
+
+          // Rim samples (stroke) are darker than center fill (luminance).
+          final radius = rects[0].shortestSide * 0.5;
+          final rimX = (c0x + radius - 1).round();
+          final rimR = bytes.getUint8(offset(rimX, c0y));
+          final rimG = bytes.getUint8(offset(rimX, c0y) + 1);
+          final rimB = bytes.getUint8(offset(rimX, c0y) + 2);
+          int luminance(int r, int g, int b) =>
+              (r * 299 + g * 587 + b * 114) ~/ 1000;
+          expect(
+            luminance(rimR, rimG, rimB),
+            lessThan(luminance(r0, g0, b0) - 40),
+          );
+        });
+        await tester.pump();
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
+
+    testWidgets(
+      'paintResourceExtractionDiscIndicators applies fog filter to stroke '
+      '(Refs #4151 Phase 3)',
+      (WidgetTester tester) async {
+        await tester.runAsync(() async {
+          final recorder = ui.PictureRecorder();
+          final canvas = Canvas(recorder);
+          const iconRect = Rect.fromLTWH(4, 4, 32, 32);
+          final rects = extractionIndicatorRectsForIconRect(
+            iconRect: iconRect,
+            units: 1,
+          );
+          final fogPaint = Paint()
+            ..colorFilter = const ColorFilter.mode(
+              Color.fromRGBO(128, 128, 128, 0.6),
+              BlendMode.modulate,
+            );
+          paintResourceExtractionDiscIndicators(
+            canvas: canvas,
+            indicatorRects: rects,
+            effectiveCount: 1,
+            fogCompatibleOverlayPaint: fogPaint,
+          );
+          final picture = recorder.endRecording();
+          final image = await picture.toImage(64, 64);
+          final bytes = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          expect(bytes, isNotNull);
+          int offset(int x, int y) => (y * image.width + x) * 4;
+          final cx = rects[0].center.dx.round();
+          final cy = rects[0].center.dy.round();
+          // Fog-modulated gold center is dimmer than unfogged gold.
+          expect(bytes!.getUint8(offset(cx, cy)), lessThan(230));
         });
         await tester.pump();
       },

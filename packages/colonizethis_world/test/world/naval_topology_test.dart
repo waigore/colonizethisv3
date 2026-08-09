@@ -78,6 +78,12 @@ void main() {
       expect(rl.regionId, 'oldWorld');
       expect(rl.localId, 'p1');
     });
+
+    test('keeps remainder after first pipe as local id', () {
+      final rl = regionAndLocalProvinceForFleetInPort('r|a|b', 'fallback');
+      expect(rl.regionId, 'r');
+      expect(rl.localId, 'a|b');
+    });
   });
 
   test('indexTopologyNodesByRegion groups nodes by region', () {

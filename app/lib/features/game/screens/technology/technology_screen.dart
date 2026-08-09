@@ -1,24 +1,22 @@
 // Full-screen Technology view with Slots and Tree tabs. SPEC/ui/technology-panel.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/app_constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
-import '../../widgets/technology/tech_tree_widget.dart';
-import '../../widgets/technology/technology_panel.dart';
-
-part 'technology_screen_top_bar.dart';
-part 'technology_screen_body.dart';
+import 'technology_screen_body.dart';
+import 'technology_screen_tab.dart';
+import 'technology_screen_top_bar.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Full-screen Technology screen with two tabs: Research Slots and Tech Tree.
 ///
@@ -71,9 +69,9 @@ class TechnologyScreen extends ConsumerStatefulWidget {
 }
 
 class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
-  _TechnologyTab _tab = _TechnologyTab.slots;
+  TechnologyScreenTab _tab = TechnologyScreenTab.slots;
 
-  void _select(_TechnologyTab next) {
+  void _select(TechnologyScreenTab next) {
     if (_tab == next) return;
     setState(() => _tab = next);
   }
@@ -87,7 +85,7 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         key: TechnologyScreen.topBarKey,
         title: TechnologyScreen.topBarTitle,
         iconAsset: TechnologyScreen.topBarIconAsset,
-        trailing: _TechnologyTabToggle(
+        trailing: TechnologyTabToggle(
           selected: _tab,
           onSelect: _select,
         ),
@@ -100,8 +98,8 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
         final displayPlayer = displayGame.playerById(widget.player.id)!;
         final canEdit = shell.canMutateViaUi;
         switch (_tab) {
-          case _TechnologyTab.slots:
-            return _SlotsBody(
+          case TechnologyScreenTab.slots:
+            return TechnologySlotsBody(
               game: displayGame,
               player: displayPlayer,
               currentOrders: currentOrders,
@@ -113,8 +111,8 @@ class _TechnologyScreenState extends ConsumerState<TechnologyScreen> {
                     }
                   : null,
             );
-          case _TechnologyTab.tree:
-            return _TreeBody(game: displayGame, player: displayPlayer);
+          case TechnologyScreenTab.tree:
+            return TechnologyTreeBody(game: displayGame, player: displayPlayer);
         }
       },
     );

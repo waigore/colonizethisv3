@@ -9,7 +9,6 @@
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_map/colonizethis_map.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,9 +17,9 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 
-import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/province_overlay_dark_token_scenarios.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
+import 'province_overlay_dark_token_scenarios.dart';
+import 'province_overlay_test_harness.dart';
 
 Widget _overlay({
   required ThemeData theme,

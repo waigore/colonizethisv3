@@ -2,7 +2,9 @@
 // Production panel Labour controls section.
 // SPEC/ui/production-panel.md § Labour Controls, SPEC/game/workers-and-population.md.
 
-part of 'production_labour_helpers.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'production_labour_recruit_economy_projection.dart';
 
 /// Appends one [RecruitWorkerOrder] at [tier] for [playerId] and returns
 /// the new [Orders] value. Preserves the prior order list ordering.

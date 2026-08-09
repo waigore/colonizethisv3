@@ -1,18 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
-    show boycottBlockedTradePairKeys, ftpPairKeysFromGame;
-import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'package:colonizethis_world/colonizethis_world.dart';
 import '../turn_pipeline_state.dart';
 import '../turn_resolver_config.dart';
-import 'world_market_phase_orders.dart';
-import 'world_market_phase_price_discovery.dart';
-import 'world_market_phase_deals.dart';
-import 'world_market_phase_credits.dart';
-import 'world_market_phase_sell_priority.dart';
-import 'world_market_phase_carry_forward.dart';
-import 'world_market_phase_activity.dart';
+import 'world_market_phase_gather.dart';
+import 'world_market_phase_settlement.dart';
 
 /// World Market phase (phase 13) — gather submitted Great-Power trade orders,
 /// merge previous-turn carry-forwards, run the deal-matching engine, apply
@@ -89,257 +80,27 @@ TurnPhaseStepOutcome worldMarketTurnPhaseHandler(
   final game = acc.game;
   final priorMarket = game.worldMarketState;
 
-  final splitOrders = splitTradeOrdersByType(
-    config.orders.tradeOrdersByPlayerId,
-  );
-  final newOffersByFactionId = splitOrders.offersByFactionId;
-  final newBidsByFactionId = splitOrders.bidsByFactionId;
-
-  // Minor/tribe auto-offers (Refs #2991 C4) — `SPEC/program/world-market-resolution.md`
-  // § Step A Gather (Step A.2) and `SPEC/game/world-market.md` § Minor and
-  // tribe auto-sell. Each connected non-GP tile producing a non-riches
-  // commodity contributes one `TradeOrder(type: offer, priority: 1,
-  // originTileKey: tileKey)`. These auto-offers feed the matcher alongside
-  // GP-submitted orders; they are intentionally **not** stored as
-  // carry-forwards (per § Step E "Minor/Tribe auto-offers do not carry
-  // forward") and are excluded from price discovery aggregation (handled
-  // implicitly by `aggregateNewQuantitiesPerCommodity` keying on
-  // `newOffersByFactionId` only — auto-offers live in their own map).
-  final autoOffersByFactionId = mergeOrdersByFaction(
-    computeMinorTribeAutoOffers(game: game, config: config),
-    computeMinorTribeTownManufacturingAutoOffers(game: game, config: config),
-  );
-
-  // Lock-recovery minor auto-bids (Refs #2924 F15): when any GP is below the
-  // regiment-build treasury band, each Minor Nation submits a synthetic bid for
-  // the liquidity food commodity. Synthetic treasury/cargo budgets are injected
-  // below so the matcher can clear broke GP urgent offers without debiting a GP
-  // wallet. Bids are not carry-forwarded (same as minor auto-offers).
-  final lockRecoveryMinorBidsByFactionId = computeLockRecoveryMinorAutoBids(
+  final gather = gatherWorldMarketPhaseInputs(
     game: game,
-    worldMarketState: priorMarket,
-  );
-
-  // F15 (Refs #2924; SPEC/program/world-market-resolution.md § Step A 3.1):
-  // build a phase-13-only view where any broke GP (negative treasury and
-  // below the regiment-build band) is treated as having `treasury = 0`.
-  // The clamped view feeds the matcher's seller-priority sort and the
-  // per-buyer treasury budget so seller credits from urgent offers are
-  // not consumed servicing phase-1–12 debt. Player.treasury is **not**
-  // mutated here — post-phase persistence is computed from original
-  // values plus deal-applied deltas (see `applyDealsToPlayers`), which
-  // preserves AC#3 (a broke buyer with no fills exits phase 13 with
-  // their original negative balance unchanged). Not an affordability
-  // bypass — regiment builds still require
-  // `treasury >= cheapestRegimentBuildTreasuryCost()` after phase 13.
-  final lockRecoveryView = applyLockRecoveryTreasuryViewForMarket(game);
-  final gameForMarket = lockRecoveryView.gameForMarket;
-  final lockRecoverySellerPriorityIds =
-      lockRecoveryView.lockRecoverySellerPriorityIds;
-
-  // Compute start-of-phase trade cargo capacity, stockpile, raw treasury, and
-  // per-buyer treasury budget per GP in a single player pass (Refs #3565).
-  // These values gate (a) carry-forward re-validation per
-  // `SPEC/program/world-market-resolution.md` § Step A.3 and (b) the
-  // matcher's downstream cargo cap. Minor/tribe sellers are not GPs and
-  // are absent from these maps, which is intentional — carry-forwards are
-  // only re-validated for known GP factions; unknown faction ids fall
-  // through unchanged for now (no upstream owner to re-check), matching
-  // the matcher's GP-only validation surface.
-  final capacities = computeStartOfPhaseCapacities(
-    gameForMarket: gameForMarket,
+    priorMarket: priorMarket,
+    config: config,
     extractionTonnageByPlayerId: acc.overseasExtractionShippedTonnageByPlayerId,
-    lockRecoveryMinorBidsByFactionId: lockRecoveryMinorBidsByFactionId,
-  );
-  final tradeCapacityByFactionId = capacities.tradeCapacityByFactionId;
-  final stockpileByFactionId = capacities.stockpileByFactionId;
-  final treasuryByFactionId = capacities.treasuryByFactionId;
-  final treasuryBudgetByBuyerFactionId =
-      capacities.treasuryBudgetByBuyerFactionId;
-
-  final carryForwardValidation = validateCarryForwards(
-    carryForwardOffersByFactionId: priorMarket.carryForwardOffersByFactionId,
-    carryForwardBidsByFactionId: priorMarket.carryForwardBidsByFactionId,
-    stockpileByFactionId: stockpileByFactionId,
-    tradeCapacityByFactionId: tradeCapacityByFactionId,
   );
 
-  final mergedOffersByFactionId = mergeOrdersByFaction(
-    newOffersByFactionId,
-    carryForwardValidation.validOffersByFactionId,
-    autoOffersByFactionId,
-  );
-  final mergedBidsByFactionId = mergeOrdersByFaction(
-    newBidsByFactionId,
-    carryForwardValidation.validBidsByFactionId,
-    lockRecoveryMinorBidsByFactionId,
-  );
-
-  final hasAnyOrders =
-      mergedOffersByFactionId.isNotEmpty || mergedBidsByFactionId.isNotEmpty;
-
-  final newQuantitiesByCommodity = aggregateNewQuantitiesPerCommodity(
-    newOffersByFactionId: newOffersByFactionId,
-    newBidsByFactionId: newBidsByFactionId,
-  );
-
-  if (!hasAnyOrders) {
-    final activity = <CommodityId, MarketActivity>{};
-    for (final entry in newQuantitiesByCommodity.entries) {
-      if (entry.value.bid == 0 && entry.value.offer == 0) continue;
-      activity[entry.key] = MarketActivity(
-        totalBidQuantity: entry.value.bid,
-        totalOfferQuantity: entry.value.offer,
-      );
-    }
-    // Attach any drop notes even when no surviving orders remain — the
-    // Deal Book / observer trace still needs to see the dropped
-    // carry-forwards for the resolved turn.
-    attachDropNotes(
-      activity: activity,
-      notesByCommodity: carryForwardValidation.dropNotesByCommodity,
-    );
-    final updatedMarket = priorMarket.copyWith(
-      lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
-      carryForwardOffersByFactionId: const <String, List<TradeOrder>>{},
-      carryForwardBidsByFactionId: const <String, List<TradeOrder>>{},
-      completedTradePairKeys: const <String>{},
-    );
-    return TurnPhaseStepContinue(
-      acc.copyWith(game: game.copyWith(worldMarketState: updatedMarket)),
+  if (!gather.hasAnyOrders) {
+    return worldMarketNoOrdersOutcome(
+      acc: acc,
+      priorMarket: priorMarket,
+      newQuantitiesByCommodity: gather.newQuantitiesByCommodity,
+      carryForwardValidation: gather.carryForwardValidation,
     );
   }
 
-  final ftpPairKeys = ftpPairKeysFromGame(game);
-  final purchasedTileIndex = PurchasedTileIndex.fromGame(game);
-
-  // #3753 R6 boycott colony trade embargo: pair keys the matcher must refuse to
-  // fill so a boycotted GP cannot trade with the issuer's colony Tribes. Empty
-  // when no boycott is active. SPEC/game/diplomacy.md § GP–Tribe Rules (Boycott).
-  final boycottBlockedPairKeys = boycottBlockedTradePairKeys(game);
-
-  // #3753 R7.3 sell-priority relation tiebreaker input: consulate-holding
-  // buyer relations per Minor/Tribe seller that has an offer this turn.
-  final sellPriorityRelationByMinorTribeSeller = computeSellPriorityRelations(
-    game: game,
-    offersByFactionId: mergedOffersByFactionId,
+  return settleWorldMarketMatch(
+    acc: acc,
+    gather: gather,
+    priorMarket: priorMarket,
+    config: config,
+    turn: turn,
   );
-
-  final matchInputs = (
-    offersByFactionId: mergedOffersByFactionId,
-    bidsByFactionId: mergedBidsByFactionId,
-    tradeCapacityByFactionId: tradeCapacityByFactionId,
-    treasuryBudgetByBuyerFactionId: treasuryBudgetByBuyerFactionId,
-    pricesByCommodityId: <CommodityId, double>{
-      for (final entry in priorMarket.prices.entries)
-        entry.key: entry.value.toDouble(),
-    },
-    ftpPairKeys: ftpPairKeys,
-    purchasedTileIndex: purchasedTileIndex,
-    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
-    treasuryByFactionId: treasuryByFactionId,
-    sellPriorityRelationByMinorTribeSeller:
-        sellPriorityRelationByMinorTribeSeller,
-    boycottBlockedPairKeys: boycottBlockedPairKeys,
-  );
-  final matchResult = DealMatcher.matchDeals(matchInputs);
-
-  // #3753 R8.3 embassy kickbacks apply only to Minor/Tribe sellers (overseas
-  // profit-share is a Minor/Tribe-sale concept; GP–GP sales are excluded even
-  // though GPs hold auto-embassies). The two-tier credit computation (tile
-  // owner full share + per-embassy kickback) is delegated to
-  // [computeWorldMarketFirstRightCredits] to keep this handler within the
-  // function-size budget.
-  final firstRightCredits = computeWorldMarketFirstRightCredits(
-    game: game,
-    filledDeals: matchResult.filledDeals,
-    purchasedTileIndex: purchasedTileIndex,
-  );
-
-  final lockRecoveryLiquidityCommodityId =
-      lockRecoveryMinorBidsByFactionId.isEmpty
-      ? null
-      : lockRecoveryMinorBidsByFactionId.values.first.first.commodityId;
-
-  // #3753 R3.4 subsidy price adjustment: directed `'<payerId>><targetId>'` keys
-  // built from active GP→Minor/Tribe subsidies. War / embassy-loss cancellation
-  // already cleared invalid subsidies in the earlier Diplomacy phase, so every
-  // surviving entry is enforceable at settlement.
-  // SPEC/game/world-market.md § Subsidy price adjustment.
-  final subsidyPercentByPayerTargetKey = <String, int>{
-    for (final s in game.subsidyStates)
-      if (s.percent > 0) '${s.payerId}>${s.targetId}': s.percent,
-  };
-
-  final updatedPlayers = applyDealsToPlayers(
-    players: game.players,
-    filledDeals: matchResult.filledDeals,
-    firstRightTreasuryCreditByGpId: firstRightCredits.treasuryCreditByGpId,
-    embassyKickbackTreasuryCreditByGpId:
-        firstRightCredits.embassyKickbackByGpId,
-    lockRecoverySellerPriorityIds: lockRecoverySellerPriorityIds,
-    lockRecoveryLiquidityCommodityId: lockRecoveryLiquidityCommodityId,
-    subsidyPercentByPayerTargetKey: subsidyPercentByPayerTargetKey,
-  );
-
-  // Price-discovery bid-side cap (Refs #3115): aggregate `totalBid_new[c]`
-  // from the filled portion of newly-submitted bids only (not from
-  // submitted quantity). The newly-submitted bids appear at the head of
-  // each faction's merged bid list per `mergeOrdersByFaction`, so Step C
-  // consumes them before any carry-forward residuals; the per-(faction,
-  // commodity) `min` below allocates filled units to newly-submitted bids
-  // first. See SPEC/program/world-market-resolution.md § Step E.
-  final filledNewBidsByCommodity = aggregateFilledNewBidsByCommodity(
-    newBidsByFactionId: newBidsByFactionId,
-    filledDeals: matchResult.filledDeals,
-  );
-  final priceDiscoveryByCommodity = buildPriceDiscoveryPairs(
-    newQuantitiesByCommodity: newQuantitiesByCommodity,
-    filledNewBidsByCommodity: filledNewBidsByCommodity,
-  );
-
-  final newPrices = computeNextPrices(
-    priorPrices: priorMarket.prices,
-    newQuantitiesByCommodity: priceDiscoveryByCommodity,
-  );
-
-  final activity = buildActivity(
-    matchResult: matchResult,
-    newQuantitiesByCommodity: priceDiscoveryByCommodity,
-    priorPrices: priorMarket.prices,
-    newPrices: newPrices,
-  );
-  attachMatcherNotes(activity: activity, matchResult: matchResult);
-  attachDropNotes(
-    activity: activity,
-    notesByCommodity: carryForwardValidation.dropNotesByCommodity,
-  );
-
-  // Minor/tribe auto-offers never carry forward (Refs #2991 C4) per
-  // `SPEC/program/world-market-resolution.md` § Step E: each turn re-emits
-  // them based on that turn's extraction. Restrict carry-forwards to known
-  // Great-Power faction ids; unknown ids (auto-offer minors/tribes and any
-  // other non-GP submitter) are dropped from the persisted map.
-  final gpFactionIds = <String>{for (final p in game.players) p.id};
-  // #3753 R10: record this turn's completed-trade pair keys (GP-involved) so the
-  // next turn's Diplomacy phase applies the additive trade-deal relation boost.
-  final completedTradePairKeys = completedTradePairKeysFromDeals(
-    filledDeals: matchResult.filledDeals,
-    gpFactionIds: gpFactionIds,
-  );
-  final updatedMarket = priorMarket.copyWith(
-    prices: Map<CommodityId, int>.unmodifiable(newPrices),
-    lastTurnActivity: Map<CommodityId, MarketActivity>.unmodifiable(activity),
-    carryForwardOffersByFactionId: restrictToFactions(
-      matchResult.unfilledOffersByFactionId,
-      gpFactionIds,
-    ),
-    carryForwardBidsByFactionId: matchResult.unfilledBidsByFactionId,
-    completedTradePairKeys: completedTradePairKeys,
-  );
-
-  final nextGame = game
-      .withPlayers(updatedPlayers)
-      .copyWith(worldMarketState: updatedMarket);
-  return TurnPhaseStepContinue(acc.copyWith(game: nextGame));
 }

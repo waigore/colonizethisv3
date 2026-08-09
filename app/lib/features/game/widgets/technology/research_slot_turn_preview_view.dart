@@ -8,27 +8,18 @@
 //
 // SPEC: SPEC/ui/technology-panel.md § Slot turn preview.
 
-import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-
-import '../../../../config/app_assets.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
+import 'package:flutter/material.dart';
+
 import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/strict_asset_icon.dart';
 import 'research_slot_preview.dart';
-import 'technology_slot_funding_toggles.dart';
+import 'research_slot_turn_preview_view_bar.dart';
+import 'research_slot_turn_preview_view_controls.dart';
+import 'research_slot_turn_preview_view_styles.dart';
 
-part 'research_slot_turn_preview_view_bar.dart';
-part 'research_slot_turn_preview_view_controls.dart';
-part 'research_slot_turn_preview_view_breakdown.dart';
-
-/// Treasury-coin glyph shared with the trade screen / game tab-bar treasury
-/// chip. SPEC/ui/technology-panel.md § Slot turn preview.
-const String _kTreasuryCoinAsset = '${kAppIconAssetPrefix}ui_icon_treasury_coin.png';
+export 'research_slot_turn_preview_view_breakdown.dart'
+    show ResearchFundingBreakdownDialog;
 
 /// Renders the committed/anticipated progress bar, RP progress label + delta,
 /// and the treasury (gold) row for one assigned, editable research slot.
@@ -64,7 +55,7 @@ class ResearchSlotTurnPreviewView extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _ResearchDualSegmentBar(
+              child: ResearchDualSegmentBar(
                 committedFraction: preview.committedFraction,
                 anticipatedFraction: preview.anticipatedFraction,
                 anticipatedSegmentKey: anticipatedSegmentKey(slotIndex),
@@ -76,11 +67,13 @@ class ResearchSlotTurnPreviewView extends StatelessWidget {
                 preview.committedProgress,
                 preview.cost,
               ),
-              style: _monoStyle(EditorialMonoclePalette.accentDim),
+              style: researchSlotTurnPreviewMonoStyle(
+                EditorialMonoclePalette.accentDim,
+              ),
             ),
             if (preview.showsAnticipatedSegment) ...[
               const SizedBox(width: 6),
-              _RpDeltaControl(
+              RpDeltaControl(
                 key: rpDeltaKey(slotIndex),
                 preview: preview,
               ),
@@ -88,7 +81,7 @@ class ResearchSlotTurnPreviewView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
-        _GoldPreviewRow(
+        GoldPreviewRow(
           key: goldRowKey(slotIndex),
           preview: preview,
         ),
@@ -96,10 +89,3 @@ class ResearchSlotTurnPreviewView extends StatelessWidget {
     );
   }
 }
-
-TextStyle _monoStyle(Color color) => TextStyle(
-  color: color,
-  fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
-  fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-  fontSize: 10,
-);

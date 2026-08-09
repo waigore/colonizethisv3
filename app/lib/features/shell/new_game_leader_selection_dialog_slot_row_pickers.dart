@@ -1,24 +1,7 @@
-part of 'new_game_leader_selection_dialog.dart';
+import 'package:flutter/material.dart';
 
-class _LeaderDialogTextStyles {
-  const _LeaderDialogTextStyles({
-    required this.title,
-    required this.intro,
-    required this.fieldLabel,
-    required this.helper,
-    required this.slotLabel,
-    required this.slotYouTag,
-    required this.profileInlineLabel,
-  });
-
-  final TextStyle title;
-  final TextStyle intro;
-  final TextStyle fieldLabel;
-  final TextStyle helper;
-  final TextStyle slotLabel;
-  final TextStyle slotYouTag;
-  final TextStyle profileInlineLabel;
-}
+import 'package:colonizethis_app/config/constants.dart';
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Pickers body that switches between a side-by-side `Row` and a vertically
 /// stacked `Column` at the [kLeaderSelectionNarrowBreakpoint] (540 dp) viewport
@@ -28,11 +11,12 @@ class _LeaderDialogTextStyles {
 /// SPEC: `SPEC/ui/new-game-leader-selection-dialog.md` § Layout / wireframe
 /// + Acceptance Criteria narrow-viewport stacking AC;
 /// `SPEC/ui/mobile-adaptation.md` § 4 New game leader selection.
-class _SlotPickersBody extends StatelessWidget {
-  const _SlotPickersBody({
+class NewGameLeaderSelectionDialogSlotPickersBody extends StatelessWidget {
+  const NewGameLeaderSelectionDialogSlotPickersBody({
     required this.nationDropdown,
     required this.leaderDropdown,
     this.profileLine,
+    super.key,
   });
 
   final Widget nationDropdown;

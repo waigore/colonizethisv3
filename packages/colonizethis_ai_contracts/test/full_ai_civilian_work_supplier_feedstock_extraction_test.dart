@@ -4,7 +4,7 @@ import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
+import 'support/full_ai_civilian_work_supplier_feedstock_extraction_fixtures.dart';
 
 void main() {
   group(

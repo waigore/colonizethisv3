@@ -3,15 +3,15 @@
 # from scan). See SPEC/program/logic-dual-region-province-access.md.
 version: 1
 sanctions:
-  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 88
-    rationale: Turn news digest summarizes changes across all provinces.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest_discovery.dart
+    line: 16
+    rationale: Turn news digest province-discovery lines scan all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
-  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest.dart
-    line: 198
-    rationale: Turn news digest second pass over all provinces.
+  - path: packages/colonizethis_turn/lib/src/turn/turn_news_digest_terrestrial.dart
+    line: 11
+    rationale: Turn news digest province-capture lines scan all provinces.
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/2278
 
@@ -21,14 +21,14 @@ sanctions:
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
 
-  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
-    line: 141
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events_diplomacy.dart
+    line: 41
     rationale: Province-captured events scan all provinces for owner handovers (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416
 
-  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events.dart
-    line: 296
+  - path: packages/colonizethis_turn/lib/src/turn/turn_resolution_events_discovery.dart
+    line: 125
     rationale: Per-player province discovery events scan all provinces (unified dual-region iteration, Refs #3416).
     spec: SPEC/program/logic-dual-region-province-access.md
     issue: https://github.com/waigore/colonizethisv3/issues/3416

@@ -17,7 +17,7 @@ import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -76,7 +76,7 @@ void main() {
         findsNWidgets(ProductionRecipesCatalog.all.length),
       );
       expect(find.text('Available'), findsOneWidget);
-      expect(find.textContaining('Effective labour: 2'), findsOneWidget);
+      expect(find.textContaining('Labour this turn: 2'), findsOneWidget);
     });
 
     testWidgets(
@@ -387,7 +387,7 @@ void main() {
         );
         expect(labourControlsLabel, findsOneWidget);
 
-        final effectiveLabour = find.textContaining('Effective labour:');
+        final effectiveLabour = find.textContaining('Labour this turn:');
         expect(effectiveLabour, findsOneWidget);
 
         final effectiveY = tester.getTopLeft(effectiveLabour).dy;
@@ -429,7 +429,7 @@ void main() {
         );
         await pumpSettleCapped(tester);
 
-        final effectiveLabour = find.textContaining('Effective labour:');
+        final effectiveLabour = find.textContaining('Labour this turn:');
         final l10n = lookupAppLocalizations(const Locale('en'));
         // The disband button for the apprentice row (if rendered) must
         // appear below the Effective Labour line.

@@ -8,10 +8,13 @@ import 'check_map_gen_stage_protocol.dart';
 import 'check_map_grid_cell_iteration_central.dart';
 import 'check_map_grid_ops_central.dart';
 import 'check_map_lib_file_size.dart';
+import 'check_map_lib_file_size_headroom.dart';
 import 'check_map_no_partfile_classes.dart';
 import 'check_map_public_barrel_surface.dart';
 import 'check_map_region_data_access_central.dart';
 import 'check_map_region_dispatch_central.dart';
+import 'check_map_render_legend_layout_dedup.dart';
+import 'check_map_test_file_size.dart';
 import 'check_map_test_minimal_game_shared.dart';
 import 'check_map_test_no_duplicate_view_fixtures.dart';
 import 'check_map_test_run_generation_harness.dart';
@@ -45,6 +48,8 @@ int? tryRunMapRuleInProcess({
       return runCheckMapGenNoNewPartfiles(repoRoot);
     case 'repo.map_lib_file_size':
       return runCheckMapLibFileSize(repoRoot);
+    case 'repo.map_lib_file_size_headroom':
+      return runCheckMapLibFileSizeHeadroom(repoRoot);
     case 'repo.map_public_barrel_surface':
       return runCheckMapPublicBarrelSurface(repoRoot);
     case 'repo.map_region_data_access_central':
@@ -61,6 +66,10 @@ int? tryRunMapRuleInProcess({
       return runCheckMapTestRunGenerationHarness(repoRoot);
     case 'repo.map_test_minimal_game_shared':
       return runCheckMapTestMinimalGameShared(repoRoot);
+    case 'repo.map_test_file_size':
+      return runCheckMapTestFileSize(repoRoot);
+    case 'repo.map_render_legend_layout_dedup':
+      return runCheckMapRenderLegendLayoutDedup(repoRoot);
     default:
       return null;
   }

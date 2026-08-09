@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-import 'support/military_units_panel_test_support.dart';
+import 'military_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();

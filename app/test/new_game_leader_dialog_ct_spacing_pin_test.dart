@@ -15,23 +15,24 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   suppressLogsForTests();
 
-  const path = 'lib/features/shell/new_game_leader_selection_dialog.dart';
+  const shellDir = 'lib/features/shell';
 
-  String _leaderDialogLibrarySource() {
-    final libraryFile = File(path);
-    final source = libraryFile.readAsStringSync();
-    final partRegex = RegExp(r"^\s*part\s+'([^']+)';", multiLine: true);
-    final dir = libraryFile.parent.path;
-    final parts = partRegex
-        .allMatches(source)
-        .map((m) => File('$dir/${m.group(1)!}').readAsStringSync())
+  String leaderDialogClusterSource() {
+    final dir = Directory(shellDir);
+    final clusterFiles = dir
+        .listSync()
+        .whereType<File>()
+        .where(
+          (file) => file.path.contains('new_game_leader_selection_dialog'),
+        )
+        .map((file) => file.readAsStringSync())
         .join('\n');
-    return '$source\n$parts';
+    return clusterFiles;
   }
 
   group('New game leader dialog CtSpacing pins (Refs #2914)', () {
-    test('imports the CtSpacing token scale', () {
-      final source = File(path).readAsStringSync();
+    test('cluster imports the CtSpacing token scale', () {
+      final source = leaderDialogClusterSource();
       expect(
         source,
         contains("import 'package:colonizethis_app/widgets/ct_spacing.dart';"),
@@ -39,7 +40,7 @@ void main() {
     });
 
     test('dialog body block gaps use CtSpacing tokens', () {
-      final source = _leaderDialogLibrarySource();
+      final source = leaderDialogClusterSource();
       expect(source, contains('const SizedBox(height: CtSpacing.l)'));
       expect(source, contains('const SizedBox(height: CtSpacing.ml)'));
       // No raw magic-number vertical gaps remain in the body column.
@@ -48,7 +49,7 @@ void main() {
     });
 
     test('header, seed, and terrain field gaps use CtSpacing tokens', () {
-      final source = _leaderDialogLibrarySource();
+      final source = leaderDialogClusterSource();
       // Slot-row vertical padding uses CtSpacing.m (mockup `.slot-row{padding:8px …}`).
       expect(source, contains('vertical: CtSpacing.m'));
       expect(source, contains('const SizedBox(height: CtSpacing.xs)'));
@@ -61,21 +62,27 @@ void main() {
     });
 
     test('footer + slot picker horizontal gaps use CtSpacing.m', () {
-      final source = _leaderDialogLibrarySource();
+      final source = leaderDialogClusterSource();
       expect(source, contains('const SizedBox(width: CtSpacing.m)'));
       expect(source, isNot(contains('SizedBox(width: 8)')));
     });
 
-    test('slot list inter-row gap uses CtSpacing.s via _kSlotListGap', () {
-      final source = _leaderDialogLibrarySource();
+    test('slot list inter-row gap uses CtSpacing.s via layout constant', () {
+      final source = leaderDialogClusterSource();
       // Mockup `.slots-list{gap:6px}` — column gaps, not per-row bottom padding.
-      expect(source, contains('const double _kSlotListGap = CtSpacing.s'));
-      expect(source, contains('const SizedBox(height: _kSlotListGap)'));
+      expect(
+        source,
+        contains('const double kNewGameLeaderSelectionSlotListGap = CtSpacing.s'),
+      );
+      expect(
+        source,
+        contains('const SizedBox(height: kNewGameLeaderSelectionSlotListGap)'),
+      );
       expect(source, isNot(contains('EdgeInsets.only(bottom: 12)')));
     });
 
     test('stacked slot picker gap derives from CtSpacing scale', () {
-      final source = _leaderDialogLibrarySource();
+      final source = leaderDialogClusterSource();
       expect(source, contains('static const double stackedGap = CtSpacing.m / 2;'));
       expect(source, isNot(contains('static const double stackedGap = 4;')));
     });

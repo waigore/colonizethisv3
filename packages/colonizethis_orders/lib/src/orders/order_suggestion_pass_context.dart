@@ -161,6 +161,21 @@ Set<String> ownedProvinceIdsFromView(PlayerView view, String playerId) {
   };
 }
 
+/// Full province ids owned by [playerId] from the memoised [ProvinceOwnerCache].
+///
+/// Canonical ownership projection for work-tile candidacy, connectivity dev
+/// snapshot, and probe-stack paths that must not rescan region province lists
+/// or diverge from [ProvinceOwnerCache] (Refs #4258 Slice B).
+Set<String> ownedProvinceIdsForPlayer(WorldState world, String playerId) {
+  final cache = ProvinceOwnerCache.of(world);
+  return {
+    for (final p in cache.provincesOwnedBy(playerId))
+      ProvinceId.isPrefixed(p.id)
+          ? p.id
+          : ProvinceId.full(p.regionId, p.id),
+  };
+}
+
 /// Indexes existing orders by entity id → target id set for dedup during
 /// suggestion probes.
 Map<String, Set<String>> indexExistingTargetsByEntityId<T>(

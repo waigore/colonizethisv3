@@ -1,20 +1,23 @@
+import 'dart:math' as math;
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:flutter/material.dart';
+import 'region_map_component.dart';
+import 'region_map_province_overlay_geometry.dart';
 
-part of 'region_map_component.dart';
-
-extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
-  void _paintValidTilesGlow(Canvas canvas) {
+extension CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
+  void paintValidTilesGlow(Canvas canvas) {
     final keys = validTileKeys!;
-    final t = _hoverAnimationT;
+    final t = session.hoverAnimationT;
     final opacity =
-        _kValidWorkTargetGlowOpacityBase +
-        _kValidWorkTargetGlowOpacityAmplitude *
-            (_kSinNormalizedMid +
-                _kSinNormalizedMid *
-                    math.sin(t * _kValidWorkTargetGlowTimeScale));
+        RegionMapPalette.validWorkTargetGlowOpacityBase +
+        RegionMapPalette.validWorkTargetGlowOpacityAmplitude *
+            (RegionMapPalette.sinNormalizedMid +
+                RegionMapPalette.sinNormalizedMid *
+                    math.sin(t * RegionMapPalette.validWorkTargetGlowTimeScale));
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapValidTileTargetStrokeWidth
-      ..color = _kValidWorkTargetStrokeYellow.withValues(alpha: opacity);
+      ..color = RegionMapPalette.validWorkTargetStrokeYellow.withValues(alpha: opacity);
     for (var y = 0; y < region.height; y++) {
       for (var x = 0; x < region.width; x++) {
         final cell = region.cellAt(x, y);
@@ -27,30 +30,30 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     }
   }
 
-  void _paintSelectedTile(Canvas canvas) {
+  void paintSelectedTile(Canvas canvas) {
     _paintTileOutlineRing(
       canvas,
       tileKey: selectedTileKey!,
-      color: _kMapSelectedHighlightOrange,
+      color: RegionMapPalette.mapSelectedHighlightOrange,
       strokeWidth: kMapSelectedTileStrokeWidth,
     );
   }
 
-  void _paintSecondaryHighlightTile(Canvas canvas) {
+  void paintSecondaryHighlightTile(Canvas canvas) {
     _paintTileOutlineRing(
       canvas,
       tileKey: secondaryHighlightTileKey!,
-      color: _kMapSecondarySelectionCyan,
+      color: RegionMapPalette.mapSecondarySelectionCyan,
       strokeWidth: kMapSecondaryHighlightStrokeWidth,
     );
   }
 
-  void _paintSecondaryHighlightTiles(Canvas canvas, Set<String> tileKeys) {
+  void paintSecondaryHighlightTiles(Canvas canvas, Set<String> tileKeys) {
     for (final tileKey in tileKeys) {
       _paintTileOutlineRing(
         canvas,
         tileKey: tileKey,
-        color: _kMapSecondarySelectionCyan,
+        color: RegionMapPalette.mapSecondarySelectionCyan,
         strokeWidth: kMapSecondaryHighlightStrokeWidth,
       );
     }
@@ -77,13 +80,13 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     canvas.drawRect(rect, paint);
   }
 
-  void _paintSelector(Canvas canvas) {
-    final x = _hoveredTileX!;
-    final y = _hoveredTileY!;
+  void paintSelector(Canvas canvas) {
+    final x = session.hoveredTileX!;
+    final y = session.hoveredTileY!;
     final bounce =
-        _kHoverSelectorBounceBaseline +
-        _kHoverSelectorBounceAmplitude *
-            math.sin(_hoverAnimationT * _kHoveredProvinceGlowAngularFrequency);
+        RegionMapPalette.hoverSelectorBounceBaseline +
+        RegionMapPalette.hoverSelectorBounceAmplitude *
+            math.sin(session.hoverAnimationT * RegionMapPalette.hoveredProvinceGlowAngularFrequency);
     final cx = x * cellSize + cellSize / 2;
     final cy = y * cellSize + cellSize / 2;
     final half = (cellSize / 2 - 2.0) * bounce;
@@ -92,8 +95,8 @@ extension _CtRegionMapRenderMarkersSelection on CtRegionMapComponent {
     final size = half * 2;
     final rect = Rect.fromLTWH(left, top, size, size);
     final color = (validTileKeys != null && validTileKeys!.isNotEmpty)
-        ? _kMapSelectedHighlightOrange
-        : _kMapHoverSelectorIdle;
+        ? RegionMapPalette.mapSelectedHighlightOrange
+        : RegionMapPalette.mapHoverSelectorIdle;
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = kMapHoverSelectorStrokeWidth

@@ -11,7 +11,9 @@
 | `region_map_component_render_orchestrator.dart` | `_CtRegionMapRenderOrchestrator` | Visibility helpers, `_renderRegionMap` **call order** (stacking) |
 | `region_map_component_render_core.dart` | `_CtRegionMapRenderCore` | Terrain / tile Wang passes, transport bitmask overlay (between land base and L2 feature tiles), resource overlay, corner labels |
 | `region_map_component_render_political.dart` | `_CtRegionMapRenderPolitical` | GP ownership tint, province/faction borders, province names, hovered-province glow |
-| `region_map_component_render_markers.dart` | `_CtRegionMapRenderMarkers` | Capitals, towns, warp zones, civilians, fleets, hover selector, tile selection highlights |
+| `region_map_component_render_markers_selection.dart` | `CtRegionMapRenderMarkersSelection` | Valid-tile glow, tile selection highlights, hover selector |
+| `region_map_component_render_markers_settlements.dart` | `CtRegionMapRenderMarkersSettlements*` | Capitals, towns, warp zones |
+| `region_map_component_render_markers_units.dart` | `CtRegionMapRenderMarkersUnits*` | Civilian and fleet tile markers |
 
 Shared constants and small pure helpers used across layers: `region_map_component_shared.dart`. Pure warp-glow segment math (test without canvas): `render/warp_zone_edge_geometry.dart`.
 

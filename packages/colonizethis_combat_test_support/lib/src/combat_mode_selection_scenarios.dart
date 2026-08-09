@@ -6,23 +6,10 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'scenario_runner.dart';
 
-/// One row in a combat mode selection scenario table.
-class CombatModeSelectionScenario implements LabeledScenario {
-  const CombatModeSelectionScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<CombatModeSelectionScenario> isCapitalSiegeScenarios() => [
-  CombatModeSelectionScenario(
+List<RunnableScenario> isCapitalSiegeScenarios() => [
+  RunnableScenario(
     scenarioId: 'cms-not-siege-no-fort',
     label: 'returns false when not a siege (no fort)',
     run: () {
@@ -49,7 +36,7 @@ List<CombatModeSelectionScenario> isCapitalSiegeScenarios() => [
       expect(isCapitalSiege(game, ctx), isFalse);
     },
   ),
-  CombatModeSelectionScenario(
+  RunnableScenario(
     scenarioId: 'cms-siege-not-capital',
     label: 'returns false when siege but province is not a capital',
     run: () {
@@ -76,7 +63,7 @@ List<CombatModeSelectionScenario> isCapitalSiegeScenarios() => [
       expect(isCapitalSiege(game, ctx), isFalse);
     },
   ),
-  CombatModeSelectionScenario(
+  RunnableScenario(
     scenarioId: 'cms-siege-gp-capital',
     label: 'returns true when siege of GP capital',
     run: () {
@@ -105,8 +92,8 @@ List<CombatModeSelectionScenario> isCapitalSiegeScenarios() => [
   ),
 ];
 
-List<CombatModeSelectionScenario> resolveCombatModeForBattleScenarios() => [
-  CombatModeSelectionScenario(
+List<RunnableScenario> resolveCombatModeForBattleScenarios() => [
+  RunnableScenario(
     scenarioId: 'cms-capital-siege-qb',
     label: 'capital siege always returns QuickBattle',
     run: () {
@@ -136,7 +123,7 @@ List<CombatModeSelectionScenario> resolveCombatModeForBattleScenarios() => [
       );
     },
   ),
-  CombatModeSelectionScenario(
+  RunnableScenario(
     scenarioId: 'cms-default-mode',
     label: 'uses default when no per-battle override',
     run: () {
@@ -174,7 +161,7 @@ List<CombatModeSelectionScenario> resolveCombatModeForBattleScenarios() => [
       );
     },
   ),
-  CombatModeSelectionScenario(
+  RunnableScenario(
     scenarioId: 'cms-per-battle-override',
     label: 'uses per-battle override when provided',
     run: () {

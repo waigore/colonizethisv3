@@ -6,8 +6,8 @@
 
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_turn/src/turn/end_of_turn_resolver.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 /// Pre-migration `findMilitaryVictoryWinner`: a full old-world owner-count scan
 /// filtered to Great Powers controlling 31+ Old World provinces.

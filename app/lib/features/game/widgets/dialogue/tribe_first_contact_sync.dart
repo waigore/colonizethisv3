@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +11,9 @@ import '../../../../providers/game_service_provider.dart';
 import '../../../../providers/games_provider.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../shell/shell_player_context.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_logic/order_suggestion_api.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 String tribeCapitalDisplayName(Game game, Tribe tribe) {
   final capId = tribe.capitalProvinceId;

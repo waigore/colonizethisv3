@@ -2,9 +2,7 @@ import 'dart:ui';
 
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-import 'region_map_boundary_visibility.dart';
-
-part 'region_map_province_overlay_geometry_segments.dart';
+export 'region_map_province_overlay_geometry_segments.dart';
 
 /// Province/sea topology overlay stroke width (world px). Legacy was 1.0; 2× per SPEC/ui/map-widget.md.
 const double kProvinceOverlayTopologyStrokeWidth = 2.0;

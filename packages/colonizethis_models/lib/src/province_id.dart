@@ -38,6 +38,20 @@ class ProvinceId {
   /// True if [id] looks prefixed (contains "|").
   static bool isPrefixed(String id) => id.contains('|');
 
+  /// Returns [provinceId] when already prefixed, otherwise prefixes it with
+  /// [regionId]. This preserves legacy/local-id normalization without changing
+  /// already canonical ids.
+  static String prefixedFrom(String regionId, String provinceId) {
+    if (isPrefixed(provinceId)) return provinceId;
+    return full(regionId, provinceId);
+  }
+
+  /// Returns the local segment from either a prefixed or bare local province id.
+  static String localFromMaybePrefixed(String provinceId) {
+    if (isPrefixed(provinceId)) return localIdFrom(provinceId);
+    return provinceId;
+  }
+
   /// Returns [provinceId] when it is prefixed; otherwise throws [ModelValidationException].
   static String requirePrefixed(
     String provinceId, {

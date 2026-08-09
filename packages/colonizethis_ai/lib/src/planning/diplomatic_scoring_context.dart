@@ -1,4 +1,5 @@
-part of 'diplomatic_candidate_scoring.dart';
+import '../perception/perception_snapshot.dart';
+import 'planning_imports.dart';
 
 /// Shared diplomatic order-scoring inputs (Refs #3822 Phase 3).
 typedef WarDesireForTarget = int Function(

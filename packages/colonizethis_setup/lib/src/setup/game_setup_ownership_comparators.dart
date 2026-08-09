@@ -1,5 +1,3 @@
-part of 'game_setup_ownership.dart';
-
 /// Deterministic faction ordering: **higher [targetPerFaction] value first**,
 /// ties broken by **ascending faction id**. Single source of truth for the
 /// "by target desc, then id asc" growth/packing order previously inlined in

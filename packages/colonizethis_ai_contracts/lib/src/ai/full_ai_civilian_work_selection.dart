@@ -1,26 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../constants.dart';
-import 'package:colonizethis_orders/src/orders/build_rail_work_rules.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
 import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
-import 'package:colonizethis_world/src/world/diplomatic_relation_lookup.dart';
-import 'package:colonizethis_world/src/world/faction_membership.dart';
-import 'package:colonizethis_world/src/world/player_view.dart';
-import 'package:colonizethis_world/src/world/province_lookup.dart';
-import 'package:colonizethis_world/src/world/unit_lookup.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-part 'full_ai_civilian_work_selection_feedstock.dart';
-part 'full_ai_civilian_work_selection_feedstock_acquisition.dart';
-part 'full_ai_civilian_work_selection_explore_prospect.dart';
-part 'full_ai_civilian_work_selection_build_purchase.dart';
-part 'full_ai_civilian_work_selection_upgrade_town.dart';
-part 'full_ai_civilian_work_selection_rail.dart';
-part 'full_ai_civilian_work_selection_engineer.dart';
-part 'full_ai_civilian_work_selection_spy.dart';
-part 'full_ai_civilian_work_selection_unit_paths.dart';
+import 'full_ai_civilian_work_selection_build_purchase.dart';
+import 'full_ai_civilian_work_selection_shared.dart';
+import 'full_ai_civilian_work_selection_unit_paths.dart';
 
 /// Idle civilian (no new work) for Full AI observability.
 class FullAiCivilianWorkIdle {
@@ -48,34 +35,13 @@ class FullAiCivilianWorkSelectionResult {
   final List<FullAiCivilianWorkIdle> idleEvents;
 }
 
-bool _civilianWorkCapableType(String type) =>
-    isExplorerUnit(type) ||
-    isCivilianWorkerUnit(type) ||
-    isSpyUnit(type) ||
-    isMerchantUnit(type);
-
-int _compareWorkOrderLex(WorkOrder a, WorkOrder b) {
-  final t = a.target.compareTo(b.target);
-  if (t != 0) return t;
-  return a.targetTileKey.compareTo(b.targetTileKey);
-}
-
-void _sortWorkOrdersLex(List<WorkOrder> list) {
-  list.sort(_compareWorkOrderLex);
-}
-
-WorkOrder? _pickLexicographic(List<WorkOrder> w) {
-  if (w.isEmpty) return null;
-  final copy = List<WorkOrder>.from(w)..sort(_compareWorkOrderLex);
-  return copy.first;
-}
-
 /// Selects per-unit civilian work for Full AI from [workSuggestions].
 FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   required List<WorkOrder> workSuggestions,
   required PlayerView view,
   required Game game,
   Map<String, TileMapResult>? tileMapByRegion,
+  MapTopology? topology,
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
   bool spyDevelopPhase = false,
@@ -85,12 +51,12 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
     byUnit.putIfAbsent(w.unitId, () => <WorkOrder>[]).add(w);
   }
   for (final list in byUnit.values) {
-    _sortWorkOrdersLex(list);
+    sortWorkOrdersLex(list);
   }
 
   final suggestionUnitIds = byUnit.keys.toList()..sort();
   final idleCivilianIds = view.ownUnits
-      .where((u) => u.currentWork == null && _civilianWorkCapableType(u.type))
+      .where((u) => u.currentWork == null && civilianWorkCapableType(u.type))
       .map((u) => u.id)
       .toList();
   final allUnitIds = {...suggestionUnitIds, ...idleCivilianIds}.toList()
@@ -101,14 +67,22 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
   final factionMembership = DiplomacyFactionMembership.from(game);
   final feedstockExtractionResourceIds =
       feedstockExtractionResourceIdsForPlayer(game, view.playerId);
-  final reservation = _resolveOwFeedstockReservation(
+  final reservation = resolveOwFeedstockReservation(
     view,
     game,
     feedstockExtractionResourceIds,
   );
+  final connectivityDev = topology == null
+      ? null
+      : buildConnectivityDevSnapshot(
+          game: game,
+          playerId: view.playerId,
+          topology: topology,
+          tileMapByRegion: tileMapByRegion,
+        );
 
   for (final unitId in allUnitIds) {
-    _appendSelectionForUnitId(
+    appendSelectionForUnitId(
       unitId: unitId,
       byUnit: byUnit,
       view: view,
@@ -124,10 +98,11 @@ FullAiCivilianWorkSelectionResult selectFullAiCivilianWorkOrders({
           growthStageInfraFeedstockResourceIds,
       reservation: reservation,
       spyDevelopPhase: spyDevelopPhase,
+      connectivityDev: connectivityDev,
     );
   }
 
-  workOrders.sort(_compareWorkOrderLex);
+  workOrders.sort(compareWorkOrderLex);
   return FullAiCivilianWorkSelectionResult(
     workOrders: workOrders,
     idleEvents: idleEvents,

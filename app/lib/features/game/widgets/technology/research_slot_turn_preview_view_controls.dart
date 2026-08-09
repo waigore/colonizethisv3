@@ -1,8 +1,16 @@
-part of 'research_slot_turn_preview_view.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_resource_cell.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import 'research_slot_preview.dart';
+import 'research_slot_turn_preview_view_breakdown.dart';
+import 'research_slot_turn_preview_view_styles.dart';
 
 /// Green `+N RP` anticipated-delta chip that opens the breakdown dialog.
-class _RpDeltaControl extends StatelessWidget {
-  const _RpDeltaControl({super.key, required this.preview});
+class RpDeltaControl extends StatelessWidget {
+  const RpDeltaControl({super.key, required this.preview});
 
   final ResearchSlotTurnPreview preview;
 
@@ -16,17 +24,15 @@ class _RpDeltaControl extends StatelessWidget {
       ),
       child: Text(
         l10n.technologyPanel_rpDeltaPreview(preview.anticipatedRpPerTurn),
-        style: _monoStyle(EditorialMonoclePalette.success),
+        style: researchSlotTurnPreviewMonoStyle(EditorialMonoclePalette.success),
       ),
     );
   }
 }
 
-/// Treasury (gold) per-turn cost row with a signed delta. When the slot is
-/// debt-blocked the per-turn cost is shown greyed with a zero delta (no spend
-/// will occur). SPEC/ui/technology-panel.md § Slot turn preview.
-class _GoldPreviewRow extends StatelessWidget {
-  const _GoldPreviewRow({super.key, required this.preview});
+/// Treasury (gold) per-turn cost row with a signed delta.
+class GoldPreviewRow extends StatelessWidget {
+  const GoldPreviewRow({super.key, required this.preview});
 
   final ResearchSlotTurnPreview preview;
 
@@ -37,8 +43,6 @@ class _GoldPreviewRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final bool spends = preview.goldSpentThisTurn > 0;
-    // Spending gold is a negative treasury delta (danger colour per
-    // CtResourceCell rules); debt-blocked shows the cost greyed with no spend.
     final Color color = spends
         ? (CtResourceCell.deltaColor(-preview.goldSpentThisTurn) ??
               EditorialMonoclePalette.muted)
@@ -49,12 +53,12 @@ class _GoldPreviewRow extends StatelessWidget {
     return Row(
       children: [
         StrictAssetIcon(
-          assetPath: _kTreasuryCoinAsset,
+          assetPath: kResearchSlotTurnPreviewTreasuryCoinAsset,
           width: 14,
           height: 14,
         ),
         const SizedBox(width: 5),
-        Text(label, style: _monoStyle(color)),
+        Text(label, style: researchSlotTurnPreviewMonoStyle(color)),
       ],
     );
   }

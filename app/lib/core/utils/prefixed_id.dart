@@ -3,6 +3,7 @@
 /// For province ids that must be prefixed at validation boundaries, prefer
 /// [ProvinceId] in `colonizethis_models`. These helpers mirror legacy
 /// `contains('|')` + `split('|')` behavior without extra allocations.
+library;
 
 /// Local segment after the first `|`, or [id] when unprefixed.
 String prefixedIdLocalSegment(String id) {
@@ -17,7 +18,7 @@ String? prefixedIdRegionSegment(String id) {
 }
 
 /// True when [id] contains a `|` delimiter.
-bool prefixedIdHasDelimiter(String id) => id.indexOf('|') >= 0;
+bool prefixedIdHasDelimiter(String id) => id.contains('|');
 
 /// Parsed components of a `regionId|provinceLocalId|x|y` tile key.
 ///

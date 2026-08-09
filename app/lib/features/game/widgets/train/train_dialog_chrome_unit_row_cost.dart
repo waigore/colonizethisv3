@@ -1,4 +1,7 @@
-part of 'train_dialog_chrome.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../config/constants.dart';
 
 /// Inline `icon + number` cost segment in a train-dialog unit-row cost
 /// summary (treasury / peasant / commodity requirement).

@@ -2,20 +2,14 @@
 // SPEC: SPEC/ui/grant-or-subsidy-dialog.md (DIPL20001),
 // SPEC/ui/diplomacy-panel.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_nine_patch_button.dart';
-import '../../../../widgets/ct_spacing.dart';
-
-part 'diplomacy_dialogs_grant_subsidy_body.dart';
-part 'diplomacy_dialogs_grant_subsidy_chrome_labels.dart';
-part 'diplomacy_dialogs_grant_subsidy_chrome_stepper.dart';
+import 'diplomacy_dialogs_grant_subsidy_body.dart';
 
 /// Grant or Subsidy dialog widget. Emits [GrantOrSubsidySubmittedEvent] on submit.
 ///
@@ -52,7 +46,7 @@ class GrantOrSubsidyDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     return CtDialogShell(
-      child: _GrantSubsidyAmountBody(
+      child: GrantSubsidyAmountBody(
         title: isSubsidy ? l10n.diplomacy_setSubsidy : l10n.diplomacy_grantAid,
         treasury: _treasury,
         isSubsidy: isSubsidy,

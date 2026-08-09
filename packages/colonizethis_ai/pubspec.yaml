@@ -12,10 +12,11 @@ dependencies:
   logger: ^2.0.2
   colonizethis_logger:
   colonizethis_data:
+  colonizethis_economy:
   colonizethis_logic:
   colonizethis_ai_contracts:
   colonizethis_models:
-
+  colonizethis_orders:
 dev_dependencies:
   colonizethis_exception_lint:
     path: ../colonizethis_exception_lint

@@ -4,16 +4,17 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Physical-line ceiling for Phase-8 residual fat pin contracts after
-/// case extraction (Refs #3997). Same ≤750-or-cases pattern as colonial
-/// military / naval / lite-naval.
-const int residualFatPinSuitePhysicalLineCeiling = 750;
+/// Physical-line ceiling for residual fat pin contracts after case
+/// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
+/// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
+/// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D).
+const int residualFatPinSuitePhysicalLineCeiling = 500;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
     'packages/colonizethis_ai/test/support_test/';
 
-/// Basenames gated as residual fat pins are cases-split under Phase 8.
+/// Basenames gated as residual fat pins are cases-split under Phase 8+.
 const Set<String> residualFatPinSuiteGatedBasenames = {
   'observer_goal_phase_test.dart',
   'treasury_planner_treasury_budget_test.dart',
@@ -27,6 +28,35 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'expand_phase_planner_focus_minor_target_test.dart',
   'colonial_phase_planner_acquisition_purchase_land_test.dart',
   'seed42_s7d_feedstock_helpers_test.dart',
+  // Phase-9 Slice D residual ≥650 densify (Refs #4079).
+  'phase_planner_naval_mission_ranking_test.dart',
+  'expand_phase_planner_economy_test.dart',
+  'phase_planner_naval_ranking_test.dart',
+  'phase_planner_conquest_frontier_march_test.dart',
+  // Phase-10 Slice C ungated ≥600 densify (Refs #4104).
+  'diplomacy_planner_stalled_peace_test.dart',
+  'recruitment_planner_test.dart',
+  'colonial_naval_scoring_branches_test.dart',
+  'army_conquest_prep_test.dart',
+  'colonial_phase_planner_acquisition_declare_war_test.dart',
+  'domain_planner_orchestrator_expand_nw_work_suppression_test.dart',
+  'expand_phase_planner_declare_war_test.dart',
+  'expand_phase_planner_military_test.dart',
+  'growth_stage_planner_test.dart',
+  // Phase-11 Slice C ungated ≥550 densify (Refs #4239).
+  'phase_planner_diplomacy_filter_test.dart',
+  'expand_phase_planner_gp_blocker_focus_peace_test.dart',
+  // Phase-12 Slice D ungated ≥500 densify (Refs #4291).
+  'colonial_phase_planner_colonial_lite_overtures_test.dart',
+  'planning_peace_collectors_test.dart',
+  'diplomacy_planner_mutual_exhausted_peace_test.dart',
+  'phase_priority_weights_test.dart',
+  'treasury_planner_forecasting_test.dart',
+  'colonial_phase_planner_civilian_test.dart',
+  'phase_planner_naval_plans_test.dart',
+  'phase_planner_peace_targets_test.dart',
+  'colonial_phase_planner_test.dart',
+  'phase_planner_naval_wiring_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {

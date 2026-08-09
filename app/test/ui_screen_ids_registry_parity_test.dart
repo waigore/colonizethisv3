@@ -25,6 +25,10 @@ const Map<String, String> _expectedConstants = {
   'diplomacyDetailScreen': UiScreenIds.diplomacyDetailScreen,
   'technologyScreen': UiScreenIds.technologyScreen,
   'gameSideMenu': UiScreenIds.gameSideMenu,
+  'tradeScreen': UiScreenIds.tradeScreen,
+  'victoryScreen': UiScreenIds.victoryScreen,
+  'developmentScreen': UiScreenIds.developmentScreen,
+  'counselScreen': UiScreenIds.counselScreen,
   'empireOverviewMapArea': UiScreenIds.empireOverviewMapArea,
   'provinceSeaZoneOverlay': UiScreenIds.provinceSeaZoneOverlay,
   'civilianUnitsPanel': UiScreenIds.civilianUnitsPanel,
@@ -50,6 +54,9 @@ const Map<String, String> _expectedConstants = {
   'newGameLeaderSelectionDialog': UiScreenIds.newGameLeaderSelectionDialog,
   'moveArmyDialog': UiScreenIds.moveArmyDialog,
   'moveFleetDialog': UiScreenIds.moveFleetDialog,
+  'navalMissionMenuDialog': UiScreenIds.navalMissionMenuDialog,
+  'navalMissionTargetDialog': UiScreenIds.navalMissionTargetDialog,
+  'navalMissionFleetPickerDialog': UiScreenIds.navalMissionFleetPickerDialog,
   'transferToHomeFleetDialog': UiScreenIds.transferToHomeFleetDialog,
   'turnNewsDialog': UiScreenIds.turnNewsDialog,
   'nextTurnConfirmation': UiScreenIds.nextTurnConfirmation,
@@ -57,6 +64,7 @@ const Map<String, String> _expectedConstants = {
   'loadGameListDialog': UiScreenIds.loadGameListDialog,
   'debugLogViewer': UiScreenIds.debugLogViewer,
   'debugConsolePanel': UiScreenIds.debugConsolePanel,
+  'settingsDialog': UiScreenIds.settingsDialog,
 };
 
 /// Returns the set of (id, status) tuples from the SPEC/ui/screen-registry.md

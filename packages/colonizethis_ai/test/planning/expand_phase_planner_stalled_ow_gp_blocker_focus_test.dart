@@ -46,13 +46,14 @@ import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import '../support/expand_phase_peace_test_support.dart';
 
 void main() {
   group('isStalledOldWorldGpBlockerFocus', () {
     test(
       'false when at the observer OW quota even with a GP-only invadable frontier',
       () {
-        final game = _gameWithGpOnlyInvadable(
+        final game = buildStalledOwGpOnlyInvadableGame(
           ownOwProvinces: kObserverConquestMinOwProvincesPerGp,
         );
         const snapshot = AIWorldSnapshot(
@@ -79,7 +80,7 @@ void main() {
     );
 
     test('false when below quota but no invadable provinces remain', () {
-      final game = _gameWithGpOnlyInvadable(ownOwProvinces: 8);
+      final game = buildStalledOwGpOnlyInvadableGame(ownOwProvinces: 8);
       const snapshot = AIWorldSnapshot(
         playerId: 'gp5',
         threats: ThreatSummary(atWarWith: ['gp6']),
@@ -101,7 +102,7 @@ void main() {
     test(
       'false when an invadable province is owned by a minor nation (minor pivot)',
       () {
-        final game = _gameWithMinorAndGpInvadable(ownOwProvinces: 8);
+        final game = buildStalledOwMinorAndGpInvadableGame(ownOwProvinces: 8);
         const snapshot = AIWorldSnapshot(
           playerId: 'gp5',
           threats: ThreatSummary(atWarWith: ['gp6']),
@@ -129,7 +130,7 @@ void main() {
     );
 
     test('false when every invadable province is owned by a tribe (no GP)', () {
-      final game = _gameWithTribeOnlyInvadable(ownOwProvinces: 8);
+      final game = buildStalledOwTribeOnlyInvadableGame(ownOwProvinces: 8);
       const snapshot = AIWorldSnapshot(
         playerId: 'gp5',
         threats: ThreatSummary(),
@@ -156,7 +157,7 @@ void main() {
       'true when below quota and every invadable province is owned by a Great Power '
       '(canonical seed-42 gp5/gp6 trap)',
       () {
-        final game = _gameWithGpOnlyInvadable(ownOwProvinces: 9);
+        final game = buildStalledOwGpOnlyInvadableGame(ownOwProvinces: 9);
         const snapshot = AIWorldSnapshot(
           playerId: 'gp5',
           threats: ThreatSummary(atWarWith: ['gp6']),
@@ -179,7 +180,7 @@ void main() {
     test(
       'true at zero OW provinces with an all-GP invadable list (lower bound)',
       () {
-        final game = _gameWithGpOnlyInvadable(ownOwProvinces: 0);
+        final game = buildStalledOwGpOnlyInvadableGame(ownOwProvinces: 0);
         const snapshot = AIWorldSnapshot(
           playerId: 'gp5',
           threats: ThreatSummary(atWarWith: ['gp6']),
@@ -204,7 +205,7 @@ void main() {
 
     test('true just below the observer OW quota with an all-GP invadable list '
         '(quota - 1 boundary)', () {
-      final game = _gameWithGpOnlyInvadable(
+      final game = buildStalledOwGpOnlyInvadableGame(
         ownOwProvinces: kObserverConquestMinOwProvincesPerGp - 1,
       );
       const snapshot = AIWorldSnapshot(
@@ -230,7 +231,7 @@ void main() {
     });
 
     test('is deterministic across repeated calls (Must-have #7)', () {
-      final game = _gameWithGpOnlyInvadable(ownOwProvinces: 9);
+      final game = buildStalledOwGpOnlyInvadableGame(ownOwProvinces: 9);
       const snapshot = AIWorldSnapshot(
         playerId: 'gp5',
         threats: ThreatSummary(atWarWith: ['gp6']),
@@ -261,98 +262,4 @@ void main() {
       );
     });
   });
-}
-
-Game _gameWithGpOnlyInvadable({required int ownOwProvinces}) {
-  return Game(
-    id: 'g-stalled-blocker-gp-only',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < ownOwProvinces; i++)
-            Province(
-              id: 'oldWorld|gp5_$i',
-              regionId: 'oldWorld',
-              ownerId: 'gp5',
-            ),
-          const Province(
-            id: 'oldWorld|gp6_frontier',
-            regionId: 'oldWorld',
-            ownerId: 'gp6',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp5', displayName: 'P5', isHuman: false),
-      Player(id: 'gp6', displayName: 'P6', isHuman: false),
-    ],
-  );
-}
-
-Game _gameWithMinorAndGpInvadable({required int ownOwProvinces}) {
-  return Game(
-    id: 'g-stalled-blocker-minor-pivot',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < ownOwProvinces; i++)
-            Province(
-              id: 'oldWorld|gp5_$i',
-              regionId: 'oldWorld',
-              ownerId: 'gp5',
-            ),
-          const Province(
-            id: 'oldWorld|gp6_frontier',
-            regionId: 'oldWorld',
-            ownerId: 'gp6',
-          ),
-          const Province(
-            id: 'oldWorld|minor1_p1',
-            regionId: 'oldWorld',
-            ownerId: 'minor1',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp5', displayName: 'P5', isHuman: false),
-      Player(id: 'gp6', displayName: 'P6', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: 'minor1', displayName: 'M1')],
-  );
-}
-
-Game _gameWithTribeOnlyInvadable({required int ownOwProvinces}) {
-  return Game(
-    id: 'g-stalled-blocker-tribe-only',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < ownOwProvinces; i++)
-            Province(
-              id: 'oldWorld|gp5_$i',
-              regionId: 'oldWorld',
-              ownerId: 'gp5',
-            ),
-          const Province(
-            id: 'oldWorld|tribe1_p1',
-            regionId: 'oldWorld',
-            ownerId: 'tribe1',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp5', displayName: 'P5', isHuman: false),
-      Player(id: 'gp6', displayName: 'P6', isHuman: false),
-    ],
-    tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
-  );
 }

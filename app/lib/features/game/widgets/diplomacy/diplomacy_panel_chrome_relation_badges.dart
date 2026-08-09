@@ -2,7 +2,11 @@
 // SPEC/ui/diplomacy-panel.md § Relation state badge and § Formal alliance
 // indicator (Refs #3625).
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'diplomacy_panel_chrome_standing.dart';
+import 'diplomacy_panel_constants.dart';
 
 /// Relation state chip rendered before the one-word relation label per
 /// SPEC/ui/diplomacy-panel.md § Relation state badge. War rows show a
@@ -11,8 +15,8 @@ part of 'diplomacy_panel.dart';
 /// cool-green background and `--success` foreground. Mirrors
 /// [mockups/GAME30001-diplomacy-panel.html](../../../../../SPEC/ui/mockups/GAME30001-diplomacy-panel.html)
 /// `.f-relation .state`.
-class _RelationStateBadge extends StatelessWidget {
-  const _RelationStateBadge({required this.atWar});
+class DiplomacyRelationStateBadge extends StatelessWidget {
+  const DiplomacyRelationStateBadge({super.key, required this.atWar});
 
   final bool atWar;
 
@@ -20,12 +24,12 @@ class _RelationStateBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final ({Color background, Color foreground, String label}) spec = atWar
         ? (
-            background: _kWarBadgeBackground,
+            background: diplomacyPanelWarBadgeBackground,
             foreground: EditorialMonoclePalette.danger,
             label: 'WAR',
           )
         : (
-            background: _kPeaceBadgeBackground,
+            background: diplomacyPanelPeaceBadgeBackground,
             foreground: EditorialMonoclePalette.success,
             label: 'PEACE',
           );
@@ -51,15 +55,6 @@ class _RelationStateBadge extends StatelessWidget {
   }
 }
 
-/// Translucent overlay used as the formal-alliance badge background, derived
-/// from the accent hue at lightness 0.40, chroma 0.06, hue 85, alpha 0.30.
-/// SPEC/ui/diplomacy-panel.md § Formal alliance indicator (Refs #3625) cites
-/// the mockup-aligned token `oklch(40% 0.06 85 / 0.30)`; this constant
-/// computes the same OKLCH sRGB approximation through [oklchToColor].
-final Color _kAllianceBadgeBackground = oklchToColor(
-  kDiplomacyAllianceBadgeBgToken,
-).withValues(alpha: kDiplomacyAllianceBadgeAlpha);
-
 /// Formal-alliance (treaty) chip rendered on the relation line after the
 /// WAR/PEACE relation state badge per SPEC/ui/diplomacy-panel.md § Formal
 /// alliance indicator (Refs #3625). Rendered only when the row's
@@ -81,7 +76,7 @@ class DiplomacyAllianceBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(
-        color: _kAllianceBadgeBackground,
+        color: diplomacyPanelAllianceBadgeBackground,
         borderRadius: BorderRadius.circular(1),
       ),
       child: Text(

@@ -22,19 +22,30 @@ void main() {
         contains('TurnTraceAiSection buildAiTraceSection(AiTraceBuildInput input)'),
       );
 
+      final treasuryInput = File(
+        p.join(planningDir.path, 'treasury_planner_input.dart'),
+      ).readAsStringSync();
+      expect(treasuryInput, contains('final class TreasuryPlannerInput'));
+
       final treasury = File(
         p.join(planningDir.path, 'treasury_planner.dart'),
       ).readAsStringSync();
-      expect(treasury, contains('final class TreasuryPlannerInput'));
       expect(
         treasury,
         contains('List<TradeOrder> runTreasuryPlanner(TreasuryPlannerInput input)'),
       );
 
+      final recruitmentTypes = File(
+        p.join(planningDir.path, 'recruitment_planner_types.dart'),
+      ).readAsStringSync();
+      expect(
+        recruitmentTypes,
+        contains('final class RecruitmentPlannerInput'),
+      );
+
       final recruitment = File(
         p.join(planningDir.path, 'recruitment_planner.dart'),
       ).readAsStringSync();
-      expect(recruitment, contains('final class RecruitmentPlannerInput'));
       expect(
         recruitment,
         contains(
@@ -43,22 +54,42 @@ void main() {
       );
     });
 
-    test('recruitment planner is concern-split under the near-gate preference '
-        '(Refs #3997 AC5)', () {
+    test('recruitment planner is concern-split into explicit-import libraries '
+        '(Refs #3997 AC5; #4079 Slice A)', () {
       final recruitment = File(
         p.join(planningDir.path, 'recruitment_planner.dart'),
       );
       final candidates = File(
         p.join(planningDir.path, 'recruitment_planner_candidates.dart'),
       );
+      final types = File(
+        p.join(planningDir.path, 'recruitment_planner_types.dart'),
+      );
       expect(candidates.existsSync(), isTrue);
+      expect(types.existsSync(), isTrue);
+
+      final recruitmentSource = recruitment.readAsStringSync();
+      final candidatesSource = candidates.readAsStringSync();
+      final typesSource = types.readAsStringSync();
+      for (final source in [
+        recruitmentSource,
+        candidatesSource,
+        typesSource,
+      ]) {
+        expect(source, isNot(contains("part '")));
+        expect(source, isNot(contains('part of ')));
+      }
       expect(
-        recruitment.readAsStringSync(),
-        contains("part 'recruitment_planner_candidates.dart';"),
+        recruitmentSource,
+        contains("import 'recruitment_planner_candidates.dart';"),
       );
       expect(
-        candidates.readAsStringSync(),
-        contains("part of 'recruitment_planner.dart';"),
+        recruitmentSource,
+        contains("import 'recruitment_planner_types.dart';"),
+      );
+      expect(
+        candidatesSource,
+        contains("import 'recruitment_planner_types.dart';"),
       );
       expect(
         recruitment.readAsLinesSync().length,
@@ -115,8 +146,9 @@ void main() {
       expect(recruitment, isNot(contains('runRecruitmentPlanner({')));
     });
 
-    test('economy labour helpers are topic-split under the near-gate preference',
-        () {
+    test(
+        'economy labour helpers are topic-split into an explicit-import '
+        'library (Refs #4079 Slice A)', () {
       final economy = File(
         p.join(planningDir.path, 'economy_planner.dart'),
       );
@@ -124,13 +156,16 @@ void main() {
         p.join(planningDir.path, 'economy_planner_labour.dart'),
       );
       expect(labour.existsSync(), isTrue);
+
+      final economySource = economy.readAsStringSync();
+      final labourSource = labour.readAsStringSync();
+      for (final source in [economySource, labourSource]) {
+        expect(source, isNot(contains("part '")));
+        expect(source, isNot(contains('part of ')));
+      }
       expect(
-        economy.readAsStringSync(),
-        contains("part 'economy_planner_labour.dart';"),
-      );
-      expect(
-        labour.readAsStringSync(),
-        contains("part of 'economy_planner.dart';"),
+        economySource,
+        contains("import 'economy_planner_labour.dart';"),
       );
       expect(
         economy.readAsLinesSync().length,
@@ -143,9 +178,19 @@ void main() {
       final colonial = File(
         p.join(planningDir.path, 'colonial_phase_planner.dart'),
       ).readAsStringSync();
-      expect(colonial, contains("part 'colonial_phase_planner_naval.dart';"));
-      expect(colonial, contains("part 'colonial_phase_planner_lite.dart';"));
-      expect(colonial, contains("part 'colonial_phase_planner_civilian.dart';"));
+      expect(
+        colonial,
+        contains("import 'colonial_phase_planner_naval.dart';"),
+      );
+      expect(
+        colonial,
+        contains("import 'colonial_phase_planner_lite.dart';"),
+      );
+      expect(
+        colonial,
+        contains("export 'colonial_phase_planner_civilian.dart';"),
+      );
+      expect(colonial, isNot(contains("part '")));
 
       for (final name in <String>[
         'colonial_phase_planner_naval.dart',
@@ -163,25 +208,40 @@ void main() {
           lessThanOrEqualTo(750),
           reason: '$name should sit under ~750 after Phase-5 near-gate splits',
         );
+        expect(
+          file.readAsStringSync(),
+          isNot(contains("part of '")),
+          reason: '$name should be an explicit-import library (Refs #4079)',
+        );
       }
 
       final diplomacy = File(
         p.join(planningDir.path, 'diplomacy_planner.dart'),
       ).readAsStringSync();
-      expect(diplomacy, contains("part 'diplomacy_planner_pass_helpers.dart';"));
       expect(
-        File(
-          p.join(planningDir.path, 'diplomacy_planner_pass_helpers.dart'),
-        ).readAsStringSync(),
-        contains("part of 'diplomacy_planner.dart';"),
+        diplomacy,
+        contains("import 'diplomacy_planner_pass_helpers.dart';"),
       );
+      expect(diplomacy, isNot(contains("part '")));
 
       final orchestrator = File(
         p.join(planningDir.path, 'domain_planner_orchestrator.dart'),
       ).readAsStringSync();
       expect(
         orchestrator,
-        contains("part 'domain_planner_orchestrator_economy_build.dart';"),
+        contains("import 'domain_planner_orchestrator_economy.dart';"),
+      );
+      expect(orchestrator, isNot(contains("part '")));
+
+      final economy = File(
+        p.join(
+          planningDir.path,
+          'domain_planner_orchestrator_economy.dart',
+        ),
+      ).readAsStringSync();
+      expect(
+        economy,
+        contains("import 'domain_planner_orchestrator_economy_build.dart';"),
       );
     });
 

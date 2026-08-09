@@ -72,65 +72,306 @@ class CtDropdownSelectedRowStoryState
   }
 }
 
-Game _tradeScreenStoryGame({
-  int treasury = 500,
-  Map<CommodityId, int>? stockpile,
-}) {
-  const humanId = 'gp_human';
-  // Seed the world market state so the Refs #2993 E5a read-only
-  // commodity table renders representative prices + previous-turn
-  // aggregate volumes for a handful of commodities — the remaining
-  // rows render the em-dash price glyph + `Bids 0 / Offers 0` zero
-  // default so reviewers can see both code paths at a glance.
-  // Post-#3093: WorldMarketState.prices is `Map<CommodityId, int>` (floored at
-  // persistence boundary per SPEC/game/world-market.md § Price discovery).
-  const Map<CommodityId, int> prices = <CommodityId, int>{
-    'timber': 30,
-    'iron': 80,
-    'grain': 50,
-    'fabric': 120,
-    'castIron': 175,
-  };
-  const Map<CommodityId, MarketActivity> activity =
-      <CommodityId, MarketActivity>{
-        'timber': MarketActivity(totalBidQuantity: 12, totalOfferQuantity: 8),
-        'iron': MarketActivity(totalBidQuantity: 5, totalOfferQuantity: 14),
-        'grain': MarketActivity(totalBidQuantity: 18, totalOfferQuantity: 18),
-      };
+Game _victoryScreenStoryGame() {
   return Game(
-    id: 'wb_trade_screen',
+    id: 'wb_victory_screen',
     worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 12),
+      oldWorld: RegionData(
+        provinces: [
+          const Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
+          const Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
+          const Province(id: 'oldWorld|p3', regionId: 'oldWorld', ownerId: 'gp2'),
+        ],
+      ),
       newWorld: const RegionData(),
     ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(
-        id: humanId,
-        displayName: 'England',
-        isHuman: true,
-        treasury: treasury,
-        stockpile: Stockpile(
-          quantities: stockpile ?? const <CommodityId, int>{},
-        ),
-      ),
+    players: const [
+      Player(id: 'gp1', displayName: 'England', isHuman: true),
+      Player(id: 'gp2', displayName: 'France', isHuman: false),
     ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: const WorldMarketState(
-      prices: prices,
-      lastTurnActivity: activity,
+  );
+}
+
+Widget _victoryScreenDefaultStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: VictoryScreen(game: game, humanPlayerId: 'gp1'),
+  );
+}
+
+Widget _victoryScreenRivalSelectedStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: VictoryScreen(
+      game: game,
+      humanPlayerId: 'gp1',
+      initialSelectedPlayerId: 'gp2',
     ),
   );
 }
 
-ProviderScope _tradeScreenProviderScope({
-  required Widget child,
-  Orders? initialOrders,
-}) {
+RegionMapViewData _victoryScreenAnnotatedMinimapRegion() {
+  return RegionMapViewData(
+    regionId: 'oldWorld',
+    width: 2,
+    height: 2,
+    cellSize: 8,
+    cells: [
+      const CellViewData(
+        x: 0,
+        y: 0,
+        regionCellId: 'p1',
+        isSea: false,
+        ownerFactionId: 'gp1',
+        provinceDisplayName: 'London',
+      ),
+      const CellViewData(
+        x: 1,
+        y: 0,
+        regionCellId: 'p1',
+        isSea: false,
+        ownerFactionId: 'gp1',
+        provinceDisplayName: 'London',
+      ),
+      const CellViewData(x: 0, y: 1, regionCellId: 'sea1', isSea: true),
+      const CellViewData(
+        x: 1,
+        y: 1,
+        regionCellId: 'p2',
+        isSea: false,
+        ownerFactionId: 'gp2',
+        provinceDisplayName: 'Paris',
+      ),
+    ],
+    capitalMarkers: const [
+      CapitalMarkerView(
+        factionId: 'gp1',
+        displayName: 'England',
+        x: 0,
+        y: 0,
+      ),
+    ],
+    portMarkers: const [],
+    factionColors: const {
+      'gp1': (180, 80, 80),
+      'gp2': (80, 80, 180),
+    },
+    greatPowerFactionIds: {'gp1', 'gp2'},
+    terrainColors: const {},
+    townMarkers: const [
+      TownMarkerView(
+        x: 1,
+        y: 1,
+        provinceId: 'p2',
+        isCoastal: false,
+        isPort: false,
+        touchesSea: false,
+        townDevelopmentLevel: 1,
+        townIconStyle: 'euro',
+      ),
+    ],
+  );
+}
+
+Widget _victoryScreenAnnotatedMinimapStory() {
+  final game = _victoryScreenStoryGame();
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    useScaffold: false,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: VictoryPoliticalMinimap(
+        game: game,
+        region: _victoryScreenAnnotatedMinimapRegion(),
+        selectedPlayerId: 'gp2',
+      ),
+    ),
+  );
+}
+
+const String _kDevelopmentPanelStoryGameId = 'wb_development_panel';
+
+Game _developmentPanelStoryGame() {
+  const human = 'gp1';
+  const p1 = 'oldWorld|p1';
+  const p2 = 'oldWorld|p2';
+  const tileA = 'oldWorld|p1|0|0';
+  const tileB = 'oldWorld|p1|1|0';
+  const tileP2 = 'oldWorld|p2|0|1';
+
+  return Game(
+    id: _kDevelopmentPanelStoryGameId,
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
+      oldWorld: RegionData(
+        provinces: [
+          Province(
+            id: p1,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Avalon',
+            townTileKey: tileA,
+          ),
+          Province(
+            id: p2,
+            regionId: 'oldWorld',
+            ownerId: human,
+            displayName: 'Barren',
+            townTileKey: tileP2,
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'b1',
+            type: kUnitTypeBuilder,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+          Unit(
+            id: 'e1',
+            type: kUnitTypeEngineer,
+            ownerId: human,
+            locationProvinceId: p1,
+            tileKey: tileA,
+            status: UnitStatus.idle,
+          ),
+        ],
+      ),
+      newWorld: const RegionData(),
+      tileKeysByRegionAndProvince: {
+        'oldWorld': {
+          p1: [tileA, tileB],
+          p2: [tileP2],
+        },
+      },
+      resourceByTileKey: {
+        tileA: 'grain',
+        tileB: 'grain',
+      },
+      tileState: const TileMapState(
+        improvementByTile: {
+          tileA: 0,
+          tileB: 0,
+        },
+      ),
+      playerVisibilityByTile: {
+        human: {
+          tileA: 'fullyVisible',
+          tileB: 'fullyVisible',
+          tileP2: 'fullyVisible',
+        },
+      },
+    ),
+    players: const [
+      Player(
+        id: human,
+        displayName: 'England',
+        isHuman: true,
+        capitalProvinceId: p1,
+        capitalTile: CapitalTile(
+          regionId: 'oldWorld',
+          provinceId: 'p1',
+          x: 0,
+          y: 0,
+        ),
+        stockpile: Stockpile(quantities: {'lumber': 20, 'castIron': 20}),
+        techUnlocked: {kTechIdCircularSaw: true},
+      ),
+    ],
+  );
+}
+
+class _DevelopmentPanelStoryGameService extends StoryStubGameService {
+  static final Map<String, MapTopology> _topologyByRegion = {
+    'oldWorld': MapTopology(
+      nodes: const [
+        TopologyNode(
+          id: 'p1',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+        TopologyNode(
+          id: 'p2',
+          regionId: 'oldWorld',
+          type: TopologyNodeType.province,
+        ),
+      ],
+      edges: const [TopologyEdge(id1: 'p1', id2: 'p2')],
+    ),
+    'newWorld': const MapTopology(nodes: [], edges: []),
+  };
+
+  static final Map<String, TileMapResult> _tileMapByRegion = {
+    'oldWorld': TileMapResult(
+      width: 2,
+      height: 2,
+      grid: const [
+        ['p1', 'p1'],
+        ['p2', 'p2'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains, TerrainType.plains],
+        [TerrainType.plains, TerrainType.plains],
+      ],
+      resourceGrid: [
+        [Resource.grain, Resource.grain],
+        [null, null],
+      ],
+    ),
+    'newWorld': TileMapResult(
+      width: 1,
+      height: 1,
+      grid: const [
+        ['nw1'],
+      ],
+      terrainGrid: const [
+        [TerrainType.plains],
+      ],
+    ),
+  };
+
+  static final MapTopology _combinedTopology = MapTopology(
+    nodes: const [
+      TopologyNode(
+        id: 'oldWorld|p1',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+      TopologyNode(
+        id: 'oldWorld|p2',
+        regionId: 'oldWorld',
+        type: TopologyNodeType.province,
+      ),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'oldWorld|p1', id2: 'oldWorld|p2'),
+    ],
+  );
+
+  @override
+  GameMapData? getMapData(String gameId) {
+    if (gameId != _kDevelopmentPanelStoryGameId) return null;
+    return (
+      combinedTopology: _combinedTopology,
+      tileMapByRegion: _tileMapByRegion,
+      topologyByRegion: _topologyByRegion,
+      warpLinks: null,
+    );
+  }
+}
+
+Widget _developmentPanelStoryHost({required Widget child}) {
+  final game = _developmentPanelStoryGame();
   return ProviderScope(
     overrides: [
       appEventBusProvider.overrideWith((ref) {
@@ -138,10 +379,13 @@ ProviderScope _tradeScreenProviderScope({
         ref.onDispose(bus.dispose);
         return bus;
       }),
-      if (initialOrders != null)
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(initialOrders),
-        ),
+      currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
+      currentOrdersProvider.overrideWith(
+        () => CurrentOrdersNotifier(const Orders()),
+      ),
+      gameServiceProvider.overrideWith(
+        (ref) => _DevelopmentPanelStoryGameService(),
+      ),
     ],
     child: widgetbookEditorialMonocleApp(
       localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -152,419 +396,66 @@ ProviderScope _tradeScreenProviderScope({
   );
 }
 
-Widget _tradeScreenDefaultStory({
-  Orders? initialOrders,
-  int treasury = 500,
-  Map<CommodityId, int>? stockpile,
-}) {
-  final game = _tradeScreenStoryGame(treasury: treasury, stockpile: stockpile);
-  final player = game.players.first;
-  return _tradeScreenProviderScope(
-    initialOrders: initialOrders,
-    child: TradeScreen(game: game, player: player),
+Widget _developmentPanelDefaultStory() {
+  final game = _developmentPanelStoryGame();
+  return _developmentPanelStoryHost(
+    child: DevelopmentScreen(game: game, humanPlayerId: 'gp1'),
   );
 }
 
-/// Pre-staged Orders snapshot used by the "Market tab — staged bid +
-/// offer (Refs #2993 E5b)" use case so reviewers see both an active
-/// `Bid` direction and an active `Offer` direction with non-default
-/// quantities, mirroring what a player who has interacted with the
-/// row controls would see when they re-open the screen.
-Orders _tradeScreenStoryStagedOrders() {
-  return Orders(
-    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
-      'gp_human': <TradeOrder>[
-        TradeOrder(
-          commodityId: 'timber',
-          type: TradeOrderType.bid,
-          quantity: 4,
-          priority: 1,
-        ),
-        TradeOrder(
-          commodityId: 'fabric',
-          type: TradeOrderType.offer,
-          quantity: 7,
-          priority: 1,
-        ),
-      ],
-    },
-  );
-}
-
-/// Pre-staged Orders snapshot used by the "Market tab — cargo
-/// saturated (Refs #2993 E5c)" use case so reviewers see the
-/// `Cargo remaining: 0` indicator alongside the dark-theme `--danger`
-/// warning row without having to drive the stepper themselves. The
-/// story Game has no home fleet so `cargoHoldsForHomeFleet` falls back
-/// to `defaultCargoHoldsStub = 24`; saturating bids therefore total
-/// 24 across four commodities to leave room for offers on the rest.
-/// Stockpile snapshot for the "Market tab — sectioned grouping (Refs
-/// #3093)" use case: non-zero quantities in each category so reviewers
-/// see Food / Raw Materials / Manufactured headers with populated rows.
-Map<CommodityId, int> _tradeScreenStorySectionedStockpile() {
-  return const <CommodityId, int>{
-    'grain': 42,
-    'meat': 18,
-    'timber': 10,
-    'iron': 25,
-    'fabric': 50,
-    'lumber': 12,
-  };
-}
-
-/// Pre-staged Orders for the "Market tab — sellable clamp (Refs #3093)"
-/// use case: timber offer qty 2 against stockpile 10 → `(8)` readout;
-/// grain stockpile 0 → disabled Offer chip.
-Orders _tradeScreenStorySellableClampOrders() {
-  return Orders(
-    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
-      'gp_human': <TradeOrder>[
-        TradeOrder(
-          commodityId: 'timber',
-          type: TradeOrderType.offer,
-          quantity: 2,
-          priority: 1,
-        ),
-      ],
-    },
-  );
-}
-
-Map<CommodityId, int> _tradeScreenStorySellableClampStockpile() {
-  return const <CommodityId, int>{'timber': 10, 'grain': 0, 'iron': 5};
-}
-
-/// Pre-staged Orders for the "Market tab — treasury bid cap (Refs #3093)"
-/// use case: treasury 100 with a timber bid consuming 90 of the budget so
-/// a fresh iron bid (price 80) cannot stage — mirrors the widget test pin.
-Orders _tradeScreenStoryTreasuryBidCapOrders() {
-  return Orders(
-    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
-      'gp_human': <TradeOrder>[
-        TradeOrder(
-          commodityId: 'timber',
-          type: TradeOrderType.bid,
-          quantity: 3,
-          priority: 1,
-        ),
-      ],
-    },
-  );
-}
-
-Orders _tradeScreenStoryCargoSaturatedOrders() {
-  return Orders(
-    tradeOrdersByPlayerId: <String, List<TradeOrder>>{
-      'gp_human': <TradeOrder>[
-        TradeOrder(
-          commodityId: 'timber',
-          type: TradeOrderType.bid,
-          quantity: 8,
-          priority: 1,
-        ),
-        TradeOrder(
-          commodityId: 'iron',
-          type: TradeOrderType.bid,
-          quantity: 6,
-          priority: 1,
-        ),
-        TradeOrder(
-          commodityId: 'grain',
-          type: TradeOrderType.bid,
-          quantity: 6,
-          priority: 1,
-        ),
-        TradeOrder(
-          commodityId: 'castIron',
-          type: TradeOrderType.bid,
-          quantity: 4,
-          priority: 1,
-        ),
-        TradeOrder(
-          commodityId: 'fabric',
-          type: TradeOrderType.offer,
-          quantity: 7,
-          priority: 1,
-        ),
-      ],
-    },
-  );
-}
-
-/// Synthetic [Game] for the Deal Book tab Widgetbook stories
-/// (Refs #2993 E7). Mirrors the real-game shape used by the trade
-/// screen runtime: the human player `gp_human` plus a foreign GP
-/// `gp_aragon` so deals can carry distinct buyer/seller faction ids
-/// without leaking foreign carry-forwards into the human Deal Book
-/// (per `SPEC/ui/trade-screen.md` § Deal Book tab — live two-panel
-/// ledger). Callers supply the `worldMarketState` payload so each
-/// story pins the scenario it cares about (empty / mixed) without
-/// duplicating the player setup boilerplate.
-Game _tradeScreenDealBookStoryGame({
-  required WorldMarketState worldMarketState,
-}) {
-  return Game(
-    id: 'wb_trade_screen_deal_book',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    turnTimeMapping: TurnTimeMapping.gdd01,
-    players: [
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(
-        id: 'gp_human',
-        // ignore: avoid_hardcoded_strings_in_widgets
-        displayName: 'England',
-        isHuman: true,
-        treasury: 500,
-      ),
-      // ignore: avoid_hardcoded_strings_in_widgets
-      Player(
-        id: 'gp_aragon',
-        // ignore: avoid_hardcoded_strings_in_widgets
-        displayName: 'Aragon',
-        isHuman: false,
-        treasury: 500,
-      ),
-    ],
-    diplomacyRelations: const [],
-    diplomaticHistoryEvents: const [],
-    dossierEvidenceEntries: const [],
-    worldMarketState: worldMarketState,
-  );
-}
-
-/// `WorldMarketState` for the empty Deal Book story — no filled deals
-/// and no carry-forwards. Proves the per-side empty-state copy
-/// (`dealBookBidsEmpty` / `dealBookOffersEmpty`) renders together with
-/// the always-mounted `Total spent: 0` / `Total received: 0` rows
-/// (Refs #2993 E6).
-WorldMarketState _tradeScreenDealBookEmptyState() {
-  return const WorldMarketState();
-}
-
-/// `WorldMarketState` for the mixed Deal Book story — one FRR-tagged
-/// buy, one FTP-tagged buy, two filled sales, and a mix of carry
-/// forward bids/offers on both sides. Mirrors the realistic resolved
-/// turn shape so reviewers can verify the dark-theme tag rendering,
-/// the totals math (`qty × price`), and the player-isolation filter
-/// (the foreign carry-forward on `gp_aragon` must not appear in the
-/// human Deal Book).
-WorldMarketState _tradeScreenDealBookMixedState() {
-  const String human = 'gp_human';
-  const String foreign = 'gp_aragon';
-  const Map<CommodityId, MarketActivity> activity =
-      <CommodityId, MarketActivity>{
-        'timber': MarketActivity(
-          totalBidQuantity: 6,
-          totalOfferQuantity: 0,
-          filledQuantity: 6,
-          deals: <FilledDeal>[
-            FilledDeal(
-              sellerFactionId: foreign,
-              buyerFactionId: human,
-              commodityId: 'timber',
-              quantity: 3,
-              pricePerUnit: 30.0,
-              isFirstRightOfRefusalMatch: true,
-            ),
-            FilledDeal(
-              sellerFactionId: foreign,
-              buyerFactionId: human,
-              commodityId: 'timber',
-              quantity: 3,
-              pricePerUnit: 30.0,
-              isFtpMatch: true,
-            ),
-          ],
-        ),
-        'iron': MarketActivity(
-          totalBidQuantity: 4,
-          totalOfferQuantity: 4,
-          filledQuantity: 4,
-          deals: <FilledDeal>[
-            FilledDeal(
-              sellerFactionId: human,
-              buyerFactionId: foreign,
-              commodityId: 'iron',
-              quantity: 4,
-              pricePerUnit: 80.0,
-            ),
-          ],
-        ),
-        'fabric': MarketActivity(
-          totalBidQuantity: 0,
-          totalOfferQuantity: 7,
-          filledQuantity: 7,
-          deals: <FilledDeal>[
-            FilledDeal(
-              sellerFactionId: human,
-              buyerFactionId: foreign,
-              commodityId: 'fabric',
-              quantity: 7,
-              pricePerUnit: 120.0,
-              isFtpMatch: true,
-            ),
-          ],
-        ),
-      };
-  // `TradeOrder` runs runtime validation in its constructor so its
-  // instances are not `const`. The carry-forward maps therefore must
-  // be plain (non-const) literals; `lastTurnActivity` stays `const`
-  // because `FilledDeal` and `MarketActivity` both expose `const`
-  // constructors.
-  return WorldMarketState(
-    lastTurnActivity: activity,
-    carryForwardBidsByFactionId: <String, List<TradeOrder>>{
-      human: <TradeOrder>[
-        TradeOrder(
-          commodityId: 'grain',
-          type: TradeOrderType.bid,
-          quantity: 8,
-          priority: 2,
-        ),
-      ],
-    },
-    carryForwardOffersByFactionId: <String, List<TradeOrder>>{
-      human: <TradeOrder>[
-        TradeOrder(
-          commodityId: 'castIron',
-          type: TradeOrderType.offer,
-          quantity: 4,
-          priority: 1,
-        ),
-      ],
-      // Foreign carry-forward — must not surface in the human Deal Book
-      // because `_DealBookViewData.build` keys by playerId. Included
-      // here so reviewers can verify the player-isolation filter.
-      foreign: <TradeOrder>[
-        TradeOrder(
-          commodityId: 'timber',
-          type: TradeOrderType.offer,
-          quantity: 99,
-          priority: 1,
-        ),
-      ],
-    },
-  );
-}
-
-ProviderScope _tradeScreenDealBookProviderScope({
-  required WorldMarketState worldMarketState,
-}) {
-  final Game game = _tradeScreenDealBookStoryGame(
-    worldMarketState: worldMarketState,
-  );
-  final Player player = game.players.firstWhere(
-    (p) => p.isHuman,
-    orElse: () => game.players.first,
-  );
-  return ProviderScope(
-    overrides: [
-      appEventBusProvider.overrideWith((ref) {
-        final bus = AppEventBus.create();
-        ref.onDispose(bus.dispose);
-        return bus;
-      }),
-    ],
-    child: widgetbookEditorialMonocleApp(
-      localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      useScaffold: false,
-      // initialTabIndex: 1 → Deal Book tab is foregrounded on first
-      // mount. Backed by `CtTabStrip.initialTabIndex` (Refs #2993 E7);
-      // the production route still uses the default `0` so the
-      // existing Market-default contract (E4 ACs) is preserved.
-      child: TradeScreen(game: game, player: player, initialTabIndex: 1),
-    ),
-  );
-}
-
-/// Trade screen stories. SPEC/ui/trade-screen.md.
-///
-/// Refs #2993 E1+E2+E3+E4 ship the route, screen ID, left-rail button,
-/// dark editorial-monocle chrome, and the durable two-tab body. Refs
-/// #2993 E5a adds the Market tab's read-only commodity table sourced
-/// from `Game.worldMarketState`. Refs #2993 E5b wires the per-row
-/// interactive bid/offer/none direction selector and quantity stepper
-/// to `currentOrdersProvider`. Refs #2993 E5c adds the persistent
-/// cross-commodity cargo indicator + cap + saturation warning. Refs
-/// #2993 E6 swaps the Deal Book placeholder for the live two-panel
-/// ledger sourced from `Game.worldMarketState.lastTurnActivity[*].deals`
-/// and `carryForward{Bids,Offers}ByFactionId[playerId]`. Refs #2993 E7
-/// (this slice) registers the recommended Deal Book Widgetbook stories
-/// — empty, mixed fills + carry-forwards, and mobile (stacked) — so
-/// reviewers can audit the live ledger chrome without driving the tab
-/// strip themselves; each Deal Book use case opts into the secondary
-/// tab via `TradeScreen.initialTabIndex: 1` rather than simulating a
-/// label tap.
-List<WidgetbookNode> get tradeScreenDirectories => [
+/// Development screen stories. SPEC/ui/development-panel.md.
+List<WidgetbookNode> get developmentScreenDirectories => [
   WidgetbookFolder(
-    name: 'Trade Screen',
+    name: 'Development Panel',
     children: [
       WidgetbookUseCase(
-        name: 'Scaffold (Market tab)',
-        builder: (context) => _tradeScreenDefaultStory(),
+        name: 'Default — Old World',
+        builder: (context) => _developmentPanelDefaultStory(),
+      ),
+      WidgetbookUseCase(
+        name: 'Default — Old World (mobile)',
+        builder: (context) =>
+            mobileViewport(context, _developmentPanelDefaultStory()),
+      ),
+      WidgetbookUseCase(
+        name: 'Default — Old World (wide)',
+        builder: (context) =>
+            wideViewport(context, _developmentPanelDefaultStory()),
+      ),
+    ],
+  ),
+];
+
+/// Victory screen stories. SPEC/ui/victory-panel.md.
+List<WidgetbookNode> get victoryScreenDirectories => [
+  WidgetbookFolder(
+    name: 'Victory Screen',
+    children: [
+      WidgetbookUseCase(
+        name: 'Scaffold (default)',
+        builder: (context) => _victoryScreenDefaultStory(),
       ),
       WidgetbookUseCase(
         name: 'Scaffold (mobile)',
         builder: (context) =>
-            mobileViewport(context, _tradeScreenDefaultStory()),
+            mobileViewport(context, _victoryScreenDefaultStory()),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — staged bid + offer (Refs #2993 E5b)',
-        builder: (context) => _tradeScreenDefaultStory(
-          initialOrders: _tradeScreenStoryStagedOrders(),
-        ),
+        name: 'Scaffold (wide side-by-side)',
+        builder: (context) => wideViewport(context, _victoryScreenDefaultStory()),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — cargo saturated (Refs #2993 E5c)',
-        builder: (context) => _tradeScreenDefaultStory(
-          initialOrders: _tradeScreenStoryCargoSaturatedOrders(),
-        ),
+        name: 'Scaffold (rival GP selected)',
+        builder: (context) => _victoryScreenRivalSelectedStory(),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — sectioned grouping (Refs #3093)',
-        builder: (context) => _tradeScreenDefaultStory(
-          stockpile: _tradeScreenStorySectionedStockpile(),
-        ),
+        name: 'Scaffold (rival GP selected, wide)',
+        builder: (context) =>
+            wideViewport(context, _victoryScreenRivalSelectedStory()),
       ),
       WidgetbookUseCase(
-        name: 'Market tab — sellable clamp (Refs #3093)',
-        builder: (context) => _tradeScreenDefaultStory(
-          stockpile: _tradeScreenStorySellableClampStockpile(),
-          initialOrders: _tradeScreenStorySellableClampOrders(),
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Market tab — treasury bid cap (Refs #3093)',
-        builder: (context) => _tradeScreenDefaultStory(
-          treasury: 100,
-          initialOrders: _tradeScreenStoryTreasuryBidCapOrders(),
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Deal Book tab — empty (Refs #2993 E7)',
-        builder: (context) => _tradeScreenDealBookProviderScope(
-          worldMarketState: _tradeScreenDealBookEmptyState(),
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
-        builder: (context) => _tradeScreenDealBookProviderScope(
-          worldMarketState: _tradeScreenDealBookMixedState(),
-        ),
-      ),
-      WidgetbookUseCase(
-        name: 'Deal Book tab — mobile (stacked) (Refs #2993 E7)',
-        builder: (context) => mobileViewport(
-          context,
-          _tradeScreenDealBookProviderScope(
-            worldMarketState: _tradeScreenDealBookMixedState(),
-          ),
-        ),
+        name: 'Political minimap (annotated)',
+        builder: (context) => _victoryScreenAnnotatedMinimapStory(),
       ),
     ],
   ),

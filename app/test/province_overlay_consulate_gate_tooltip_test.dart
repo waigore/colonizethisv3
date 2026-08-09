@@ -19,7 +19,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleTileKeyForProvinceOverlay;
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 const String _kConsulateTooltip =
     'Establish a consulate before exploring or prospecting';

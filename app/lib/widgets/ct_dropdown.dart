@@ -1,8 +1,8 @@
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../config/constants.dart';
 import 'ct_dialog_shell.dart';
-import 'ct_nine_patch_button.dart';
 
 part 'ct_dropdown_trigger.dart';
 part 'ct_dropdown_picker.dart';
@@ -23,12 +23,27 @@ const double _kChevronClosedTurns = 0.0;
 /// keeping the layout stable across selection changes (Refs #2859 R5c).
 const double kCtDropdownPickerSelectedLeftEdgeWidth = 1.0;
 
-/// Pixel-art dropdown: nine-patch button + modal list of options.
+/// Compact trigger visual min-height (DLG10001 mockup `.dropdown-wrapper
+/// select`). Layout contribution stays at this height; hit testing expands
+/// to [kMinTouchTargetSize] via an invisible OverflowBox (Refs #4062).
+const double kCtDropdownTriggerVisualMinHeight = 34.0;
+
+/// Compact picker-row visual min-height (Refs #4062).
+const double kCtDropdownPickerRowVisualMinHeight = 32.0;
+
+/// Trigger / picker label font size (mockup `font-size:12px`).
+const double kCtDropdownLabelFontSize = 12.0;
+
+/// Trigger chevron glyph size (mockup `.chevron` `font-size:10px`).
+const double kCtDropdownChevronSize = 10.0;
+
+/// Compact flat select + modal list of options.
 ///
 /// Trigger chevron animates between chevron-down (closed) and chevron-up
 /// (open) over [kCtDropdownChevronAnimationDuration] using
 /// [Curves.easeOut], per the R5d visual contract in
-/// SPEC/ui/pixel-art-ui-catalog.md.
+/// SPEC/ui/pixel-art-ui-catalog.md. Trigger / picker chrome follow the
+/// DLG10001 compact flat select contract (Refs #4062).
 class CtDropdown<T> extends StatefulWidget {
   const CtDropdown({
     super.key,
@@ -52,6 +67,15 @@ class CtDropdown<T> extends StatefulWidget {
   /// value is selected and in each picker row when non-null.
   final Widget? Function(BuildContext context, T value)? itemLeading;
 
+  /// Player-visible label for Marionette / accessibility probes (Refs #4199).
+  String? get marionetteVisibleLabel {
+    final T? selected = value;
+    if (selected != null) {
+      return itemLabel != null ? itemLabel!(selected) : selected.toString();
+    }
+    return hint;
+  }
+
   /// Test hook (debug-only): the [Key] of the [AnimatedRotation] driving the
   /// trigger chevron animation. Tests can locate the chevron via this key to
   /// assert turn counts and durations without depending on widget tree order.
@@ -69,21 +93,40 @@ class CtDropdown<T> extends StatefulWidget {
     'ct_dropdown_picker_selected_row',
   );
 
+  /// Test hook: the [Key] of the trigger's painted visual surface
+  /// ([DecoratedBox]) so widget tests can pin the 34 dp visual height
+  /// independently of the invisible ≥44 dp hit-area expansion.
+  static const Key kCtDropdownTriggerVisualKey = Key(
+    'ct_dropdown_trigger_visual',
+  );
+
+  /// Test hook: the [Key] of the trigger's opaque hit target so widget
+  /// tests can assert ≥ [kMinTouchTargetSize] without depending on tree
+  /// order.
+  static const Key kCtDropdownTriggerHitTargetKey = Key(
+    'ct_dropdown_trigger_hit_target',
+  );
+
   @override
   State<CtDropdown<T>> createState() => _CtDropdownState<T>();
 }
 
 class _CtDropdownState<T> extends State<CtDropdown<T>> {
   bool _isOpen = false;
+  bool _hovered = false;
 
   String labelFor(T v) =>
       widget.itemLabel != null ? widget.itemLabel!(v) : v.toString();
 
+  void _setHovered(bool value) {
+    if (_hovered == value) return;
+    setState(() => _hovered = value);
+  }
+
+  bool get _accentBorder => _hovered || _isOpen;
+
   @override
   Widget build(BuildContext context) {
-    return CtNinePatchButton(
-      onPressed: () => openPicker(context),
-      child: buttonChild(context),
-    );
+    return buildTrigger(context);
   }
 }

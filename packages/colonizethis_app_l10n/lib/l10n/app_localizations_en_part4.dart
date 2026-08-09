@@ -2,6 +2,275 @@ part of 'app_localizations_en.dart';
 
 mixin _AppLocalizationsEnStrings4 on AppLocalizations {
   @override
+  String province_economic_resourceRow(
+    String terrain,
+    String resourceName,
+    String detail,
+  ) {
+    return '$terrain/$resourceName $detail';
+  }
+
+  @override
+  String get diplomacy_detail_historyTitle => 'Diplomatic history';
+
+  @override
+  String get diplomacy_detail_noEvents =>
+      'No recorded events with this faction.';
+
+  @override
+  String diplomacy_detail_yearTurn(int year, int turn) {
+    return '$year (Turn $turn)';
+  }
+
+  @override
+  String get diplomacy_detail_dossierTitle => 'Dossier';
+
+  @override
+  String get diplomacy_detail_currentRelation => 'Current relation';
+
+  @override
+  String get diplomacy_detail_noDossier => 'No dossier evidence yet.';
+
+  @override
+  String diplomacy_detail_turnEvidence(int turn) {
+    return 'Turn $turn:';
+  }
+
+  @override
+  String get diplomacy_panel_noFactions => 'No other factions discovered yet.';
+
+  @override
+  String get diplomacy_panel_noGreatPowers => 'No Great Powers discovered yet.';
+
+  @override
+  String get diplomacy_panel_noMinorNations => 'No Minor Nations discovered yet.';
+
+  @override
+  String get diplomacy_panel_noTribes => 'No tribes contacted yet.';
+
+  @override
+  String diplomacy_panel_powerScore(int score) {
+    return 'Power: $score';
+  }
+
+  @override
+  String get diplomacy_relativePower_label => 'Relative power:';
+
+  @override
+  String get diplomacy_relativePower_tierRoughlyEqual => 'Roughly equal';
+
+  @override
+  String get diplomacy_relativePower_tierSuperior => 'Superior';
+
+  @override
+  String get diplomacy_relativePower_tierVastlySuperior => 'Vastly superior';
+
+  @override
+  String get diplomacy_relativePower_tierInferior => 'Inferior';
+
+  @override
+  String get diplomacy_relativePower_tierVastlyInferior => 'Vastly inferior';
+
+  @override
+  String get diplomacy_relativePower_tooltip =>
+      "Compares this Great Power's military power score "
+      '(provinces, army strength, ships) to yours.';
+
+  @override
+  String diplomacy_relativePower_semantics(String pct, String tier) {
+    return 'Relative power $pct, $tier';
+  }
+
+  @override
+  String diplomacy_panel_outgoingSubsidy(int amount, String target) {
+    return 'Outgoing subsidy: $amount% to $target';
+  }
+
+  @override
+  String diplomacy_panel_pendingGrant(int amount) {
+    return 'Pending grant aid: £$amount (resolves end of turn)';
+  }
+
+  @override
+  String diplomacy_panel_pendingSubsidy(int amount) {
+    return 'Pending subsidy: $amount% (resolves end of turn)';
+  }
+
+  @override
+  String get diplomacy_panel_moreActions => 'More actions';
+
+  @override
+  String get diplomacy_panel_fewerActions => 'Fewer actions';
+
+  @override
+  String diplomacy_actionRejection_semanticsLabel(String action, String reason) {
+    return '$action. $reason';
+  }
+
+  @override
+  String production_commodityStock(String name, int qty, String change) {
+    return '$name: $qty$change';
+  }
+
+  @override
+  String production_effectiveLabour(int n) {
+    return 'Effective labour: $n';
+  }
+
+  @override
+  String production_labourThisTurn(int n) {
+    return 'Labour this turn: $n';
+  }
+
+  @override
+  String get production_labourReasonFood =>
+      'Some workers are not working — food is short.';
+
+  @override
+  String get production_labourReasonFoodWithMilitary =>
+      'Some workers are not working — armies and fleets are fed first, then food runs short.';
+
+  @override
+  String production_labourReasonLuxury(String commodity) {
+    return 'Some workers are not working — short of $commodity.';
+  }
+
+  @override
+  String get production_labourDetails => 'Labour details';
+
+  @override
+  String production_labourTierDetail(
+    String tier,
+    int working,
+    int notWorking,
+  ) {
+    return '$tier: $working working, $notWorking not working';
+  }
+
+  @override
+  String get production_forcesFoodArmiesFullyFed =>
+      'Armies fully fed this turn.';
+
+  @override
+  String get production_forcesFoodArmiesUnderfedModerate =>
+      'Armies short on rations — land battles somewhat weaker.';
+
+  @override
+  String get production_forcesFoodArmiesUnderfedSevere =>
+      'Armies very short on rations — land battles much weaker.';
+
+  @override
+  String get production_forcesFoodFleetsFullyFed =>
+      'Fleets fully fed this turn.';
+
+  @override
+  String get production_forcesFoodFleetsUnderfedModerate =>
+      'Fleets short on rations — naval battles somewhat weaker.';
+
+  @override
+  String get production_forcesFoodFleetsUnderfedSevere =>
+      'Fleets very short on rations — naval battles much weaker.';
+
+  @override
+  String get production_forcesFoodDetails => 'Forces food details';
+
+  @override
+  String production_forcesFoodDetailsArmies(int fed, int total) {
+    return 'Armies: $fed of $total regiments fed';
+  }
+
+  @override
+  String production_forcesFoodDetailsFleets(int fed, int total) {
+    return 'Fleets: $fed of $total ships fed';
+  }
+
+  @override
+  String production_forcesFoodDetailsDemand(int demand) {
+    return 'Forces food demand this turn: $demand';
+  }
+
+  @override
+  String get production_forcesFoodDetailsPriority =>
+      'Armies and fleets eat before workers.';
+
+  @override
+  String get forcesFood_landUnderfedModerateWarning =>
+      'Your armies are short on rations — they will fight somewhat weaker this turn.';
+
+  @override
+  String get forcesFood_landUnderfedSevereWarning =>
+      'Your armies are very short on rations — they will fight much weaker this turn.';
+
+  @override
+  String production_recipeAffordance(int max, String limiting) {
+    return '$max · $limiting';
+  }
+
+  @override
+  String production_totalLabour(int required, int effective) {
+    return 'Total labour: $required / $effective';
+  }
+
+  @override
+  String get production_labourInsufficient =>
+      'Insufficient labour — production will be capped next turn';
+
+  @override
+  String production_labourQueued(int count) {
+    return 'Queued: $count';
+  }
+
+  @override
+  String production_labourRecruitTier(String tier) {
+    return 'Recruit $tier';
+  }
+
+  @override
+  String production_labourTrainTier(String tier) {
+    return 'Train $tier';
+  }
+
+  @override
+  String production_labourDequeueTier(String tier) {
+    return 'Cancel last queued $tier';
+  }
+
+  @override
+  String production_labourDisbandTier(String tier) {
+    return 'Disband $tier';
+  }
+
+  @override
+  String get production_labourDisband => 'Disband';
+
+  @override
+  String get production_labourTierUnlocked => '(unlocked)';
+
+  @override
+  String get production_labourTierLocked => '(locked)';
+
+  @override
+  String get production_recipeLocked => '(locked)';
+
+  @override
+  String production_labourTierLabel(String tier, String state) {
+    return '$tier $state';
+  }
+
+  @override
+  String get production_labourControlsSectionLabel => 'Labour Controls';
+
+  @override
+  String production_workerCount(String name, int count) {
+    return '$name: $count';
+  }
+
+  @override
+  String naval_units_shipTypeCount(String typeName, int count) {
+    return '$typeName: $count';
+  }
+
+  @override
   String civilian_assignWorkTitle(String unitType) {
     return 'Assign work: $unitType';
   }

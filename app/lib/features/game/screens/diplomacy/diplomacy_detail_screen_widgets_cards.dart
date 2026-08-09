@@ -1,11 +1,12 @@
-part of 'diplomacy_detail_screen.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-/// Inner heading inside a `_DetailCard`. Matches the GAME30002 mockup
+/// Inner heading inside a [DiplomacyDetailCard]. Matches the GAME30002 mockup
 /// `.card h3` rule (display font, 13 px, `--muted`, uppercase, letter-spacing
 /// 0.06 em). Separate from `CtSectionLabel` because card titles do not paint
 /// a bottom border on the mockup.
-class _CardTitle extends StatelessWidget {
-  const _CardTitle(this.text);
+class DiplomacyDetailCardTitle extends StatelessWidget {
+  const DiplomacyDetailCardTitle(this.text, {super.key});
 
   final String text;
 
@@ -31,8 +32,8 @@ class _CardTitle extends StatelessWidget {
 
 /// Framed card with gradient background (`--surface-lite → --surface →
 /// --bg-deep`) and a 1 px `--border` outline. Mirrors mockup `.card`.
-class _DetailCard extends StatelessWidget {
-  const _DetailCard({required this.title, required this.child});
+class DiplomacyDetailCard extends StatelessWidget {
+  const DiplomacyDetailCard({super.key, required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -59,7 +60,7 @@ class _DetailCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _CardTitle(title),
+            DiplomacyDetailCardTitle(title),
             child,
           ],
         ),

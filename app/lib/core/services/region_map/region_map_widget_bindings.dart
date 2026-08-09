@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:flutter/foundation.dart' show VoidCallback;
 
@@ -32,7 +32,7 @@ typedef CreateCtRegionMapGame = CtRegionMapGame Function({
   required void Function(String tileKey)? onCivilianTileTapped,
   required void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,
@@ -49,6 +49,8 @@ typedef CreateCtRegionMapGame = CtRegionMapGame Function({
   required void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged,
   required double initialZoomMultiplier,
+  bool showPlayerTerritoryOutline,
+  Set<String>? playerTerritoryTileKeys,
 });
 
 CtRegionMapGame defaultCreateCtRegionMapGame({
@@ -68,7 +70,7 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required void Function(String tileKey)? onCivilianTileTapped,
   required void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,
@@ -85,6 +87,8 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
   required void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged,
   required double initialZoomMultiplier,
+  bool showPlayerTerritoryOutline = false,
+  Set<String>? playerTerritoryTileKeys,
 }) {
   return CtRegionMapGame(
     region: region,
@@ -114,6 +118,8 @@ CtRegionMapGame defaultCreateCtRegionMapGame({
     playerViewForResources: playerViewForResources,
     onViewportSnapshotChanged: onViewportSnapshotChanged,
     initialZoomMultiplier: initialZoomMultiplier,
+    showPlayerTerritoryOutline: showPlayerTerritoryOutline,
+    playerTerritoryTileKeys: playerTerritoryTileKeys,
   );
 }
 

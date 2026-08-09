@@ -1,6 +1,14 @@
-part of 'game_service.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-TurnResolutionResult _gameServiceRunTurnResolution(
+import 'game_service.dart';
+import 'game_service_map_cache.dart';
+import 'game_service_turn_trace.dart';
+
+TurnResolutionResult gameServiceRunTurnResolution(
   GameService service,
   Game current, {
   Orders? orders,
@@ -10,14 +18,14 @@ TurnResolutionResult _gameServiceRunTurnResolution(
   Map<String, TileMapResult>? tileMapByRegion,
   void Function(GameEvent)? onGameEvent,
 }) {
-  final mapData = _gameServiceRequiredMapDataView(service, current.id);
+  final mapData = gameServiceRequiredMapDataView(service, current.id);
   final topo = topology ?? mapData.combinedTopology;
   final tileMaps = tileMapByRegion ?? mapData.tileMapByRegion;
   final humanOrders = orders ?? const Orders();
   final resolvedOrders = aiOrders != null
       ? mergeOrderLists(humanOrders: humanOrders, aiOrders: aiOrders)
       : humanOrders;
-  final result = _gameServiceResolveTurnWithTrace(
+  final result = gameServiceResolveTurnWithTrace(
     service,
     game: current,
     aiTraceSections: aiTraceSections,
@@ -31,11 +39,11 @@ TurnResolutionResult _gameServiceRunTurnResolution(
       ),
     ),
   );
-  _gameServiceEmitTurnResolutionEvents(service, result);
+  gameServiceEmitTurnResolutionEvents(service, result);
   return result;
 }
 
-TurnResolutionResult _gameServiceResumeTurnFromDiplomacy(
+TurnResolutionResult gameServiceResumeTurnFromDiplomacy(
   GameService service,
   Game game,
   Orders orders, {
@@ -45,8 +53,8 @@ TurnResolutionResult _gameServiceResumeTurnFromDiplomacy(
   List<FtpDecision>? ftpDecisions,
   List<InterventionDecision>? interventionDecisions,
 }) {
-  final mapData = _gameServiceRequiredMapDataView(service, game.id);
-  final result = _gameServiceResolveTurnWithTrace(
+  final mapData = gameServiceRequiredMapDataView(service, game.id);
+  final result = gameServiceResolveTurnWithTrace(
     service,
     game: game,
     config: TurnResolverConfig(
@@ -64,18 +72,18 @@ TurnResolutionResult _gameServiceResumeTurnFromDiplomacy(
       interventionDecisions: interventionDecisions,
     ),
   );
-  _gameServiceEmitTurnResolutionEvents(service, result);
+  gameServiceEmitTurnResolutionEvents(service, result);
   return result;
 }
 
-void _gameServiceEmitTurnResolutionEvents(
+void gameServiceEmitTurnResolutionEvents(
   GameService service,
   TurnResolutionResult result,
 ) {
   if (result is TurnResolutionComplete) {
     final complete = result;
     service.saveGame(complete.game);
-    _gameServiceMirrorAutoSave(service, complete.game);
+    gameServiceMirrorAutoSave(service, complete.game);
     service.eventBus?.emit(
       TurnResolutionCompleteEvent(
         gameId: complete.game.id,

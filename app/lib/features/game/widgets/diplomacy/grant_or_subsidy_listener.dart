@@ -1,7 +1,9 @@
 // Listens for GrantOrSubsidySubmittedEvent and shows a confirmation dialog.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
@@ -56,26 +58,28 @@ class _GrantOrSubsidyListenerState extends State<GrantOrSubsidyListener> {
         widget.bus.on<GrantOrSubsidySubmittedEvent>().listen((event) {
         final targetName = _targetName(event.targetFactionId);
         final actionName = event.isSubsidy ? 'Set subsidy' : 'Grant aid';
-        // Subsidies are a percentage (Refs #3753 R3); grants are a £ amount.
-        final amountText =
-            event.isSubsidy ? '${event.amount}%' : '£${event.amount}';
+        final order = DiplomaticOrder(
+          type: event.isSubsidy
+              ? DiplomaticOrderType.setSubsidy
+              : DiplomaticOrderType.grantAid,
+          targetFactionId: event.targetFactionId,
+          amount: event.amount,
+        );
         widget.bus.emit(
           ConfirmDialogEvent(
             title: actionName,
-            message: '$actionName of $amountText to $targetName?',
+            message: buildDiplomacyConfirmPreviewMessage(
+              order: order,
+              game: widget.game,
+              humanPlayerId: widget.humanPlayerId,
+              targetDisplayName: targetName,
+            ),
             onResult: (confirmed) {
               if (confirmed) {
-                final orderType = event.isSubsidy
-                    ? DiplomaticOrderType.setSubsidy
-                    : DiplomaticOrderType.grantAid;
                 widget.bus.emit(
                   AppendDiplomaticOrderRequestedEvent(
                     playerId: widget.humanPlayerId,
-                    order: DiplomaticOrder(
-                      type: orderType,
-                      targetFactionId: event.targetFactionId,
-                      amount: event.amount,
-                    ),
+                    order: order,
                   ),
                 );
                 final turn = widget.game.worldState.turnState.turnNumber;

@@ -3,8 +3,7 @@
 // `AppThemes.editorialMonocle.textTheme` rather than a hard-coded
 // `const TextStyle(fontSize: 12)` literal.
 //
-// `_ActionButton` lives in `diplomacy_panel_row_actions.dart` (extracted from
-// `diplomacy_panel.dart`).
+// `DiplomacyActionButton` lives in `diplomacy_panel_row_actions.dart` (Refs #4269).
 //
 // SPEC:
 //  * `SPEC/ui/pixel-art-ui-catalog.md` § *Editorial-monocle palette* —
@@ -28,7 +27,7 @@ void main() {
   suppressLogsForTests();
 
   group(
-    'diplomacy_panel_row_actions.dart _ActionButton routes caption through TextTheme '
+    'diplomacy_panel_row_actions.dart DiplomacyActionButton routes caption through TextTheme '
     '(Refs #2914 S7 regression guard)',
     () {
       late final String diplomacyPanelRowSource;
@@ -64,7 +63,7 @@ void main() {
           slotFallback.hasMatch(diplomacyPanelRowSource),
           isTrue,
           reason:
-              'Expected `_ActionButton.build` in `diplomacy_panel_row_actions.dart` to '
+              'Expected `DiplomacyActionButton.build` in `diplomacy_panel_row_actions.dart` to '
               'resolve its caption text style via '
               '`theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)` '
               '(Refs #2914 S7). If the slot was intentionally changed, '

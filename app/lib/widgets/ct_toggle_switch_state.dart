@@ -1,50 +1,55 @@
-part of 'ct_toggle_switch.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-class _CtToggleSwitchState extends State<CtToggleSwitch> {
+import 'ct_toggle_switch.dart';
+import 'ct_toggle_switch_track.dart';
+
+/// Stateful implementation for [CtToggleSwitch] (Refs #4117 de-part).
+class CtToggleSwitchState extends State<CtToggleSwitch> {
   bool _hovered = false;
 
-  bool get _enabled => widget.onChanged != null;
+  bool get enabled => widget.onChanged != null;
 
-  void _handleHover(bool entered) {
-    if (!_enabled) return;
+  void handleHover(bool entered) {
+    if (!enabled) return;
     if (_hovered == entered) return;
     setState(() => _hovered = entered);
   }
 
-  void _handleTap() {
+  void handleTap() {
     final ValueChanged<bool>? cb = widget.onChanged;
     if (cb == null) return;
     cb(!widget.value);
   }
 
-  Color get _resolvedGlowColor =>
+  Color get resolvedGlowColor =>
       widget.onGlowColor ?? EditorialMonoclePalette.accent;
 
   @override
   Widget build(BuildContext context) {
-    if (!_enabled) {
+    if (!enabled) {
       return Opacity(
         opacity: CtToggleSwitch.disabledOpacity,
-        child: _CtToggleSwitchTrack(
+        child: CtToggleSwitchTrack(
           value: widget.value,
           hovered: false,
           animated: false,
-          glowColor: _resolvedGlowColor,
+          glowColor: resolvedGlowColor,
         ),
       );
     }
     return MouseRegion(
-      onEnter: (_) => _handleHover(true),
-      onExit: (_) => _handleHover(false),
+      onEnter: (_) => handleHover(true),
+      onExit: (_) => handleHover(false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _handleTap,
-        child: _CtToggleSwitchTrack(
+        onTap: handleTap,
+        child: CtToggleSwitchTrack(
           value: widget.value,
           hovered: _hovered,
           animated: true,
-          glowColor: _resolvedGlowColor,
+          glowColor: resolvedGlowColor,
         ),
       ),
     );

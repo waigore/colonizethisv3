@@ -1,6 +1,6 @@
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -9,9 +9,12 @@ import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../../widgets/ct_full_screen_dialogue_shell.dart';
 import '../../../../../widgets/ct_nine_patch_button.dart';
 import '../../../../../widgets/ct_spacing.dart';
+import 'call_to_arms_call_row.dart';
 import 'dialogue_tristate_decision_row.dart';
-
-part 'call_to_arms_call_row.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Blocking overlay: human ally accepts or refuses each pending call to arms.
 class CallToArmsDialogueOverlay extends StatefulWidget {
@@ -111,7 +114,7 @@ class _CallToArmsDialogueOverlayState extends State<CallToArmsDialogueOverlay> {
             itemCount: items.length,
             itemBuilder: (context, i) {
               final c = items[i];
-              return _CallToArmsCallRow(
+              return CallToArmsCallRow(
                 rowIndex: i,
                 factionName: _gpName(c.defenderGpId),
                 prompt: l10n.game_callToArms_prompt(

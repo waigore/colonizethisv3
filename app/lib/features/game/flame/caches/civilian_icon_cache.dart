@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 
-import '../../../../config/app_assets.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+
 import 'asset_image_cache.dart';
 
 const Map<String, String> kCivilianTypeToIconSlug = {
@@ -31,7 +33,8 @@ class CivilianIconCache extends AssetImageCache {
 
   @override
   String assetPath(String assetId) =>
-      '${kAppIcon64AssetPrefix}ui_icon_civ_$assetId.png';
+      '${ActiveMapTheme.current.iconPrefixFor(MapThemeGroupId.civilianIcons)}'
+      'ui_icon_civ_$assetId.png';
 
   @override
   String get loadLogLabel => 'civilian map icons';

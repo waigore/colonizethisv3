@@ -15,10 +15,11 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleProvinceIdForOverlay,
         sampleSeaZoneIdForOverlay,
         sampleTileKeyForProvinceOverlay;
+import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/widget_test_assets.dart';
+import 'app_shell_harness.dart';
+import 'widget_test_assets.dart';
 
 CellViewData _copyCell(
   CellViewData c, {
@@ -94,6 +95,7 @@ Future<void> _pumpOverlay(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
+  bool buildImprovementActionHasBuilderUnits = false,
   VoidCallback? onBuildImprovementTap,
   Size? mediaQuerySize,
   bool settle = true,
@@ -122,6 +124,8 @@ Future<void> _pumpOverlay(
           onExploreWithExplorerTap: onExploreWithExplorerTap,
           showBuildImprovementActionIcon: showBuildImprovementActionIcon,
           buildImprovementActionEnabled: buildImprovementActionEnabled,
+          buildImprovementActionHasBuilderUnits:
+              buildImprovementActionHasBuilderUnits,
           onBuildImprovementTap: onBuildImprovementTap,
         ),
       ),
@@ -145,6 +149,7 @@ Future<void> _pumpProvinceDemo(
   VoidCallback? onExploreWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
+  bool buildImprovementActionHasBuilderUnits = false,
   VoidCallback? onBuildImprovementTap,
   Size? mediaQuerySize,
   Game? game,
@@ -163,6 +168,7 @@ Future<void> _pumpProvinceDemo(
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
+    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
     mediaQuerySize: mediaQuerySize,
     game: game,
@@ -368,13 +374,17 @@ void main() {
         onProspectWithExplorerTap: () {},
         showBuildImprovementActionIcon: true,
         buildImprovementActionEnabled: true,
+        buildImprovementActionHasBuilderUnits: true,
         onBuildImprovementTap: () {},
       );
       final exploreFinder = find.byTooltip('Explore with explorer');
       final prospectFinder = find.byTooltip('Prospect with explorer');
+      final buildImprovementFinder = find.byWidgetPredicate(
+        (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
+      );
       expect(exploreFinder, findsOneWidget);
       expect(prospectFinder, findsOneWidget);
-      expect(find.byTooltip('Build improvement'), findsOneWidget);
+      expect(buildImprovementFinder, findsOneWidget);
       expect(
         tester.getTopLeft(exploreFinder).dx,
         lessThan(tester.getTopLeft(prospectFinder).dx),

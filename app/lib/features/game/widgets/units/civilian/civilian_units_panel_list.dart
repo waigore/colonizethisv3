@@ -1,21 +1,48 @@
-part of 'civilian_units_panel.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show projectedCivilianTileKey;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
-  bool _isExplorerUnit(Unit unit) {
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../shared/region_labels.dart';
+import '../shared/region_section_header.dart';
+import 'civilian_units_panel.dart';
+import 'civilian_units_panel_unit_row.dart';
+
+mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
+  bool isExplorerUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetProspect,
         ) ??
         false;
   }
 
-  bool _isBuilderUnit(Unit unit) {
+  bool isBuilderUnit(Unit unit) {
     return workOrderTargetsByUnitType[unit.type]?.contains(
           kWorkTargetBuildImprovement,
         ) ??
         false;
   }
 
-  List<Widget> _civilianListChildrenForRegion({
+  bool isEngineerUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetBuildRoad,
+        ) ??
+        false;
+  }
+
+  bool isMerchantUnit(Unit unit) {
+    return workOrderTargetsByUnitType[unit.type]?.contains(
+          kWorkTargetPurchaseLand,
+        ) ??
+        false;
+  }
+
+  List<Widget> civilianListChildrenForRegion({
     required String regionId,
     required List<Unit> units,
     required bool multiOwner,
@@ -37,7 +64,7 @@ extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
     if (!multiOwner) {
       children.addAll(
         units.map(
-          (u) => _unitRow(
+          (u) => unitRow(
             unit: u,
             provinceNames: provinceNames,
             tileScopeActive: tileScopeActive,
@@ -62,7 +89,7 @@ extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
       );
       children.addAll(
         ownerUnits.map(
-          (u) => _unitRow(
+          (u) => unitRow(
             unit: u,
             provinceNames: provinceNames,
             tileScopeActive: tileScopeActive,
@@ -75,14 +102,14 @@ extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
     return children;
   }
 
-  Widget _unitRow({
+  Widget unitRow({
     required Unit unit,
     required Map<String, String> provinceNames,
     required bool tileScopeActive,
     required String? resolvedSelectedUnitId,
     required void Function(String id) onSelectUnit,
   }) {
-    return _UnitRow(
+    return CivilianUnitsPanelUnitRow(
       game: widget.game,
       unit: unit,
       provinceNames: provinceNames,
@@ -102,18 +129,27 @@ extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
       exploreShortcutTargetTileKey: widget.exploreShortcutTargetTileKey,
       buildImprovementShortcutTargetTileKey:
           widget.buildImprovementShortcutTargetTileKey,
+      buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
+      buildFortShortcutTargetTileKey: widget.buildFortShortcutTargetTileKey,
+      purchaseLandShortcutTargetTileKey: widget.purchaseLandShortcutTargetTileKey,
     );
   }
 
-  List<Unit> _scopedCivilianUnits(
+  List<Unit> scopedCivilianUnits(
     List<Unit> units, {
     required String? tileScopeTileKey,
     required bool explorerOnly,
     required bool builderOnly,
+    required bool engineerOnly,
+    required bool merchantOnly,
   }) {
     final tileScopeActive =
         tileScopeTileKey != null && tileScopeTileKey.isNotEmpty;
-    if (!tileScopeActive && !explorerOnly && !builderOnly) {
+    if (!tileScopeActive &&
+        !explorerOnly &&
+        !builderOnly &&
+        !engineerOnly &&
+        !merchantOnly) {
       return units;
     }
     return [
@@ -125,8 +161,10 @@ extension _CivilianUnitsPanelList on _CivilianUnitsPanelState {
                       orders: widget.currentOrders,
                     ) ==
                     tileScopeTileKey) &&
-            (!explorerOnly || _isExplorerUnit(u)) &&
-            (!builderOnly || _isBuilderUnit(u)))
+            (!explorerOnly || isExplorerUnit(u)) &&
+            (!builderOnly || isBuilderUnit(u)) &&
+            (!engineerOnly || isEngineerUnit(u)) &&
+            (!merchantOnly || isMerchantUnit(u)))
           u,
     ];
   }

@@ -6,6 +6,23 @@ The list below is the single place for **what tools exist** and **how to invoke 
 
 ---
 
+## export_player_manual (Python)
+
+Regenerates the self-contained **player handbook** at `docs/manual/player-export/` from authoring chapters in `docs/manual/`. Strips Sources/AC acceptance sections, `SPEC/` citations, screen IDs, and internal order class names. Spec: [SPEC/program/player-manual-export.md](../SPEC/program/player-manual-export.md). Skill: `.cursor/skills/export-player-manual/SKILL.md`.
+
+**Invocation**
+
+```bash
+python3 pytool/export_player_manual.py
+python3 pytool/export_player_manual.py --check
+```
+
+Optional: `--author-dir`, `--output-dir`, `--registry`.
+
+Run after **`update-game-manual`** edits and before agent **`player-playthrough`** runs.
+
+---
+
 ## init_game
 
 Game creation: generate Old World and New World maps, assign provinces and capitals to Great Powers, Minor Nations, and Tribes, build initial world state. Outputs combined map PNG (with ownership and capitals) and faction setup markdown. Does not advance turns. Spec: [SPEC/program/init-game-tool.md](../SPEC/program/init-game-tool.md).
@@ -283,7 +300,7 @@ Runs Flutter widget tests for the **app** package (`app/test/` only). Use this (
 melos run test_app
 ```
 
-Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_part1_test.dart`
+Optional: run a single test file: `cd app && flutter test test/diplomacy_panel_test.dart`
 
 ---
 

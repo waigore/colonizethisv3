@@ -1,4 +1,9 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../constants.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
+import 'full_ai_civilian_work_selection_build_purchase.dart';
 
 // Builder `upgrade_town` candidate scoring / row selection. Adds the
 // `upgrade_town` target to the Builder's scored pool so town upgrades compete
@@ -6,7 +11,7 @@ part of 'full_ai_civilian_work_selection.dart';
 // the lexicographic fallback (which picked an `upgrade_town` candidate only when
 // no `build_improvement` candidate existed). Split out of
 // full_ai_civilian_work_selection.dart by concern to keep each library file
-// small; shares the parent library's private scope via `part`.
+// small.
 //
 // Normative SPEC: SPEC/ai/civilian-work-planner.md § Builder (Refs #3794).
 // `upgrade_town` scoring is a GA-tunable baseline plus context bonuses using the
@@ -98,32 +103,35 @@ int _compareBuilderCrossType(WorkOrder a, WorkOrder b) {
 /// scored pool. The highest-scoring candidate across **both** target types wins;
 /// when no `upgrade_town` candidate exists the result is byte-identical to the
 /// `build_improvement`-only selection (Refs #3794 § Builder, no-regression).
-WorkOrder? _bestBuilderRow(
+WorkOrder? bestBuilderRow(
   List<WorkOrder> candidates,
   Game game, {
   required String playerId,
   Set<String> feedstockExtractionResourceIds = const <String>{},
   Set<String> growthStageFabricFeedstockResourceIds = const <String>{},
   Set<String> growthStageInfraFeedstockResourceIds = const <String>{},
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
-  final improvement = _bestBuildImprovementRow(
+  final improvement = bestBuildImprovementRow(
     candidates,
     game,
     playerId: playerId,
     feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     growthStageFabricFeedstockResourceIds: growthStageFabricFeedstockResourceIds,
     growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
+    connectivityDev: connectivityDev,
   );
   final upgrade = _bestUpgradeTownRow(candidates, game, playerId: playerId);
   if (improvement == null) return upgrade;
   if (upgrade == null) return improvement;
-  final iScore = _buildImprovementWorkScore(
+  final iScore = buildImprovementWorkScore(
     improvement,
     game,
     playerId: playerId,
     feedstockExtractionResourceIds: feedstockExtractionResourceIds,
     growthStageFabricFeedstockResourceIds: growthStageFabricFeedstockResourceIds,
     growthStageInfraFeedstockResourceIds: growthStageInfraFeedstockResourceIds,
+    connectivityDev: connectivityDev,
   );
   final uScore = _upgradeTownWorkScore(upgrade, game, playerId: playerId);
   if (uScore > iScore) return upgrade;

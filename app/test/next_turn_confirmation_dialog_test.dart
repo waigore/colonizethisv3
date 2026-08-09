@@ -10,7 +10,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -115,9 +115,9 @@ void main() {
   );
 
   testWidgets(
-    'Given the dialog is shown When the user taps Yes Then it returns true',
+    'Given the dialog is shown When the user taps Yes Then it returns confirmed',
     (WidgetTester tester) async {
-      bool? result;
+      NextTurnConfirmationResult? result;
       await tester.pumpWidget(
         hostApp(
           onOpen: (ctx) async {
@@ -133,14 +133,14 @@ void main() {
       await tester.tap(find.text('Yes'));
       await tester.pumpAndSettle();
 
-      expect(result, isTrue);
+      expect(result?.confirmed, isTrue);
     },
   );
 
   testWidgets(
-    'Given the dialog is shown When the user taps No Then it returns false',
+    'Given the dialog is shown When the user taps No Then it returns not confirmed',
     (WidgetTester tester) async {
-      bool? result;
+      NextTurnConfirmationResult? result;
       await tester.pumpWidget(
         hostApp(
           onOpen: (ctx) async {
@@ -156,7 +156,30 @@ void main() {
       await tester.tap(find.text('No'));
       await tester.pumpAndSettle();
 
-      expect(result, isFalse);
+      expect(result?.confirmed, isFalse);
+    },
+  );
+
+  testWidgets(
+    'Given idle workers would reduce labour When DLG60001 builds Then no labour '
+    'readiness copy is shown (Refs #4237 non-goals)',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        hostApp(
+          onOpen: (ctx) async {
+            await showNextTurnConfirmationDialog(ctx, currentTurn: 7);
+          },
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Labour this turn:'), findsNothing);
+      expect(find.text('Labour details'), findsNothing);
+      expect(
+        find.text('Some workers are not working — food is short.'),
+        findsNothing,
+      );
     },
   );
 }

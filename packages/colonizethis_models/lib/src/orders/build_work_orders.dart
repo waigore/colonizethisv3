@@ -1,4 +1,8 @@
-part of '../orders.dart';
+/// Order value types. First-class library (Refs #4068 Slice C).
+
+import '../model_validation_exception.dart';
+import '../province_id.dart';
+import '../worker_tier.dart';
 
 /// Build a new unit for a player.
 /// SPEC/program/orders.md

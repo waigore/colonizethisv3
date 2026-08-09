@@ -6,7 +6,10 @@ export 'package:colonizethis_models/colonizethis_models.dart'
     show AssignedRecipe;
 export 'package:colonizethis_world/colonizethis_world.dart';
 export 'order_suggestion_api.dart';
+export 'industry_counsel_api.dart';
 export 'src/constants.dart';
+export 'src/civilians/civilians_missing_work_orders.dart';
+export 'src/civilians/spy_relocate_intel.dart';
 export 'src/turn_to_year.dart';
 
 // Setup — GitHub #2201: these setup/dossier/world lines stay public for package
@@ -50,6 +53,7 @@ export 'package:colonizethis_orders/src/orders/unit_type_helpers.dart'
     show devExclusiveReservedTileKeysForPlayer;
 
 // Diplomacy
+export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_confirm_preview.dart';
 export 'package:colonizethis_diplomacy/src/diplomacy/diplomacy_resolver.dart';
 export 'package:colonizethis_diplomacy/src/diplomacy/break_alliance_resolver.dart'
     show applyVoluntaryAllianceBreak;

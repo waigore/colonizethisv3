@@ -19,6 +19,8 @@ class CtE2eLastPanelSnapshot {
     required this.humanPlayerId,
     required this.playerView,
     required this.draftOrders,
+    this.topology,
+    this.tileMapByRegion,
   });
 
   final Game game;
@@ -28,6 +30,12 @@ class CtE2eLastPanelSnapshot {
   final String humanPlayerId;
   final PlayerView playerView;
   final Orders draftOrders;
+
+  /// Combined topology for Extraction projection (Refs #4064).
+  final MapTopology? topology;
+
+  /// Tile maps for Extraction projection / Available counts (Refs #4064).
+  final Map<String, TileMapResult>? tileMapByRegion;
 }
 
 /// Mutable holder (integration tests read after driving the UI).

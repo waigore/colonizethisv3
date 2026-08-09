@@ -9,7 +9,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -116,7 +116,7 @@ void main() {
   );
 
   testWidgets(
-    'When not blocking, Save/Load emit OpenDialogEvent; Settings stays disabled',
+    'When not blocking, Save/Load/Settings emit OpenDialogEvent',
     (WidgetTester tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -138,8 +138,8 @@ void main() {
       );
       expect(save.enabled, isTrue);
       expect(load.enabled, isTrue);
-      expect(settings.enabled, isFalse);
-      expect(settings.onPressed, isNull);
+      expect(settings.enabled, isTrue);
+      expect(settings.onPressed, isNotNull);
 
       await tester.tap(find.byKey(PauseMenuPanel.saveGameButtonKey));
       await tester.pumpAndSettle();
@@ -154,11 +154,19 @@ void main() {
       final loadEvent = events.whereType<OpenDialogEvent>().single;
       expect(loadEvent.dialogId, 'load_game_list');
       expect(loadEvent.params?['fromPause'], isTrue);
+
+      events.clear();
+      await tester.tap(find.byKey(PauseMenuPanel.settingsButtonKey));
+      await tester.pumpAndSettle();
+      expect(
+        events.whereType<OpenDialogEvent>().single.dialogId,
+        'settings',
+      );
     },
   );
 
   testWidgets(
-    'When turn-resolution blocking, Save/Load stay disabled',
+    'When turn-resolution blocking, Save/Load/Settings stay disabled',
     (WidgetTester tester) async {
       final bus = AppEventBus.create();
       addTearDown(bus.dispose);
@@ -185,6 +193,10 @@ void main() {
       );
       await tester.tap(
         find.byKey(PauseMenuPanel.loadGameButtonKey),
+        warnIfMissed: false,
+      );
+      await tester.tap(
+        find.byKey(PauseMenuPanel.settingsButtonKey),
         warnIfMissed: false,
       );
       await tester.pumpAndSettle();

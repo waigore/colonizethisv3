@@ -1,4 +1,7 @@
-part of 'move_units_dialog_base.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_spacing.dart';
 
 /// Single destination row shared by the move dialogs.
 ///

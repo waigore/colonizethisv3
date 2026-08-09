@@ -1,4 +1,8 @@
-part of 'call_to_arms_dialogue_overlay.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
+import 'dialogue_tristate_decision_row.dart';
 
 /// Per-call decision row for the call-to-arms overlay.
 ///
@@ -7,8 +11,9 @@ part of 'call_to_arms_dialogue_overlay.dart';
 /// `--muted`, and Join / Refuse use [DialogueTristateDecisionRow] (issue #2867
 /// R24 / #4018). Submit stays disabled until every row has a non-null decision
 /// (R25).
-class _CallToArmsCallRow extends StatelessWidget {
-  const _CallToArmsCallRow({
+class CallToArmsCallRow extends StatelessWidget {
+  const CallToArmsCallRow({
+    super.key,
     required this.rowIndex,
     required this.factionName,
     required this.prompt,

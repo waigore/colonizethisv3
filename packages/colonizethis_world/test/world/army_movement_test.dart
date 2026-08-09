@@ -279,5 +279,82 @@ void main() {
       expect(result.remainingArmyMoveOrdersByPlayerId['p1'], hasLength(3));
       expect(result.worldState.armies, world.armies);
     });
+
+    // Ported from colonizethis_logic army_integration_test (Refs #4090 Slice D).
+    test(
+      'cross-region army moves reuse updated army location between orders',
+      () {
+        const playerId = 'p1';
+        const oldProvince = 'oldWorld|p1';
+        const newProvince = 'newWorld|n1';
+        final world = TestFixtures.worldStateAtOrdersPhase(
+          oldWorld: RegionData(
+            provinces: const [
+              Province(
+                id: oldProvince,
+                regionId: 'oldWorld',
+                ownerId: playerId,
+              ),
+            ],
+            units: [
+              Unit(
+                id: 'r1',
+                type: 'musketeers',
+                ownerId: playerId,
+                locationProvinceId: oldProvince,
+              ),
+            ],
+          ),
+          newWorld: const RegionData(
+            provinces: [
+              Province(
+                id: newProvince,
+                regionId: 'newWorld',
+                ownerId: playerId,
+              ),
+            ],
+          ),
+          armies: [
+            _army(
+              'field',
+              stationedProvinceId: oldProvince,
+              regimentUnitIds: const ['r1'],
+            ),
+          ],
+        );
+        final game = TestFixtures.singlePlayerGame(
+          const Player(id: playerId, displayName: 'P1', isHuman: true),
+          gameId: 'g-seq',
+          worldState: world,
+        );
+
+        final result = applyCrossRegionArmyMovesWithinOwnedProvinces(
+          game: game,
+          worldState: world,
+          armyMoveOrdersByPlayerId: const {
+            playerId: [
+              ArmyMoveOrder(
+                armyId: 'field',
+                destinationProvinceId: newProvince,
+              ),
+              ArmyMoveOrder(
+                armyId: 'field',
+                destinationProvinceId: oldProvince,
+              ),
+            ],
+          },
+        );
+
+        expect(result.remainingArmyMoveOrdersByPlayerId, isEmpty);
+        expect(
+          result.worldState.armies.single.stationedProvinceId,
+          oldProvince,
+        );
+        expect(
+          result.worldState.oldWorld.units.single.locationProvinceId,
+          oldProvince,
+        );
+      },
+    );
   });
 }

@@ -40,7 +40,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 const String _kGameId = 'g_prospect_shortcut_emit';
 const String _kHumanPlayerId = 'gp1';

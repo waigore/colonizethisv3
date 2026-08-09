@@ -3,7 +3,7 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/src/turn/naval_resolution_battle.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 void main() {
   BattleContextSea battle({

@@ -1,119 +1,154 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'game_map_area_selection.dart';
 
 /// App-event-bus handlers for [GameMapArea]: filtering combat/diplomacy/
 /// discovery/overture events to the viewing player and buffering them for the
 /// turn-event feed, plus the turn-resolution-complete flush (Refs #3699 Theme
 /// 3).
-mixin _GameMapAreaEvents
-    on ConsumerState<GameMapArea>, _GameMapAreaStateBase, _GameMapAreaSelection {
-  void _onTurnResolutionCompleteEvent(
+mixin GameMapAreaEvents
+    on ConsumerState<GameMapArea>, GameMapAreaStateBase, GameMapAreaSelection {
+  void onTurnResolutionCompleteEvent(
     ct_models.TurnResolutionCompleteEvent event,
   ) {
     if (event.gameId != widget.game.id || !mounted) {
       return;
     }
     setState(() {
-      _refreshWorkTargetSelectionCache(widget.game);
-      _resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
-        _pendingPlayerTurnEvents,
+      refreshWorkTargetSelectionCache(widget.game);
+      resolvedPlayerTurnEvents = List<ct_models.GameToUIEvent>.from(
+        pendingPlayerTurnEvents,
       );
-      _pendingPlayerTurnEvents.clear();
+      pendingPlayerTurnEvents.clear();
     });
   }
 
-  void _onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
-    if (event.attackerId != _mapPlayerId &&
-        event.defenderId != _mapPlayerId) {
+  void onAppCombatResultEvent(ct_models.AppCombatResultEvent event) {
+    if (event.attackerId != mapPlayerId &&
+        event.defenderId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
-    if (event.side1OwnerId != _mapPlayerId &&
-        event.side2OwnerId != _mapPlayerId) {
+  void onAppNavalCombatResultEvent(ct_models.AppNavalCombatResultEvent event) {
+    if (event.side1OwnerId != mapPlayerId &&
+        event.side2OwnerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
-    if (event.previousOwnerId != _mapPlayerId &&
-        event.newOwnerId != _mapPlayerId) {
+  void onAppProvinceCapturedEvent(ct_models.AppProvinceCapturedEvent event) {
+    if (event.previousOwnerId != mapPlayerId &&
+        event.newOwnerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
-    if (event.actorId != _mapPlayerId && event.targetId != _mapPlayerId) {
+  void onAppDiplomacyChangeEvent(ct_models.AppDiplomacyChangeEvent event) {
+    if (event.actorId != mapPlayerId && event.targetId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
-    if (event.playerId != _mapPlayerId) {
+  void onAppResearchCompleteEvent(ct_models.AppResearchCompleteEvent event) {
+    if (event.playerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
-    if (event.playerId != _mapPlayerId) {
+  void onAppOrderRejectedEvent(ct_models.AppOrderRejectedEvent event) {
+    if (event.playerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppWorkOrderCompletedEvent(
+  void onAppWorkOrderCompletedEvent(
     ct_models.AppWorkOrderCompletedEvent event,
   ) {
-    if (event.playerId != _mapPlayerId) {
+    if (event.playerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppPlayerProvinceDiscoveredEvent(
+  void onAppOverseasProfitCreditedEvent(
+    ct_models.AppOverseasProfitCreditedEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
+  void onAppMarketTurnSummaryEvent(
+    ct_models.AppMarketTurnSummaryEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
+  void onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {
-    if (event.playerId != _mapPlayerId) {
+    if (event.playerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppPlayerSeaZoneDiscoveredEvent(
+  void onAppPlayerSeaZoneDiscoveredEvent(
     ct_models.AppPlayerSeaZoneDiscoveredEvent event,
   ) {
-    if (event.playerId != _mapPlayerId) {
+    if (event.playerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
-    if (event.offererGpId != _mapPlayerId &&
-        event.targetFactionId != _mapPlayerId) {
+  void onAppOvertureAdvancedEvent(ct_models.AppOvertureAdvancedEvent event) {
+    if (event.offererGpId != mapPlayerId &&
+        event.targetFactionId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppSpyCaughtEvent(ct_models.AppSpyCaughtEvent event) {
-    if (event.spyOwnerId != _mapPlayerId &&
-        event.territoryOwnerId != _mapPlayerId) {
+  void onAppSpyCaughtEvent(ct_models.AppSpyCaughtEvent event) {
+    if (event.spyOwnerId != mapPlayerId &&
+        event.territoryOwnerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
   }
 
-  void _onAppSpyDefectedEvent(ct_models.AppSpyDefectedEvent event) {
-    if (event.previousOwnerId != _mapPlayerId &&
-        event.newOwnerId != _mapPlayerId) {
+  void onAppSpyDefectedEvent(ct_models.AppSpyDefectedEvent event) {
+    if (event.previousOwnerId != mapPlayerId &&
+        event.newOwnerId != mapPlayerId) {
       return;
     }
-    _pendingPlayerTurnEvents.add(event);
+    pendingPlayerTurnEvents.add(event);
+  }
+
+  void onAppGeneralMedalGainedEvent(
+    ct_models.AppGeneralMedalGainedEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
   }
 }

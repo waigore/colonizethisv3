@@ -1,9 +1,11 @@
-/// Last-turn province Extraction display snapshot. Refs #4002.
+/// Province Extraction display projection DTO. Refs #4064.
 ///
 /// SPEC: SPEC/program/province-extraction-snapshot.md
 library;
 
-/// Per-commodity totals for one province's last Extraction-phase snapshot.
+import 'model_collection_equality.dart';
+
+/// Per-commodity totals for one province Extraction projection.
 class ProvinceExtractionCommodityTotals {
   const ProvinceExtractionCommodityTotals({
     required this.effective,
@@ -45,38 +47,40 @@ class ProvinceExtractionCommodityTotals {
       other is ProvinceExtractionCommodityTotals &&
           effective == other.effective &&
           full == other.full &&
-          _listEquals(tileKeys, other.tileKeys);
+          modelListEquals(tileKeys, other.tileKeys);
 
   @override
   int get hashCode => Object.hash(effective, full, Object.hashAll(tileKeys));
-
-  static bool _listEquals(List<String> a, List<String> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }
 
-/// Last-turn Extraction snapshot for one province.
+/// Display-time Extraction projection for one province (not persisted).
 class ProvinceExtractionSnapshot {
   const ProvinceExtractionSnapshot({
     required this.ownerId,
     this.byCommodity = const {},
+    this.capitalGrainBonus = 0,
   });
 
-  /// Province owner id at snapshot write time.
+  /// Province owner id used when projecting.
   final String ownerId;
 
   /// Commodity id → totals.
   final Map<String, ProvinceExtractionCommodityTotals> byCommodity;
+
+  /// Capital grain bonus units folded into grain (`0` when none).
+  /// SPEC/ui/province-economic-extraction-available.md capital-bonus indication.
+  final int capitalGrainBonus;
+
+  /// True when any commodity has effective yield below production full (Refs #4150).
+  bool get hasPartialYield =>
+      byCommodity.values.any((t) => t.effective < t.full);
 
   Map<String, dynamic> toJson() => {
     'ownerId': ownerId,
     'byCommodity': {
       for (final e in byCommodity.entries) e.key: e.value.toJson(),
     },
+    if (capitalGrainBonus > 0) 'capitalGrainBonus': capitalGrainBonus,
   };
 
   static ProvinceExtractionSnapshot fromJson(Map<String, dynamic> json) {
@@ -95,6 +99,7 @@ class ProvinceExtractionSnapshot {
     return ProvinceExtractionSnapshot(
       ownerId: json['ownerId']?.toString() ?? '',
       byCommodity: byCommodity,
+      capitalGrainBonus: (json['capitalGrainBonus'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -103,24 +108,15 @@ class ProvinceExtractionSnapshot {
       identical(this, other) ||
       other is ProvinceExtractionSnapshot &&
           ownerId == other.ownerId &&
-          _mapEquals(byCommodity, other.byCommodity);
+          capitalGrainBonus == other.capitalGrainBonus &&
+          modelMapEquals(byCommodity, other.byCommodity);
 
   @override
   int get hashCode => Object.hash(
     ownerId,
+    capitalGrainBonus,
     Object.hashAll(byCommodity.entries.map((e) => Object.hash(e.key, e.value))),
   );
-
-  static bool _mapEquals(
-    Map<String, ProvinceExtractionCommodityTotals> a,
-    Map<String, ProvinceExtractionCommodityTotals> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
 }
 
 /// Returns [snapshot] only when [currentOwnerId] matches [snapshot.ownerId].

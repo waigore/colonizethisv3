@@ -1,6 +1,16 @@
-part of 'production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show EconomyPreviewStockpilePhase;
+import 'package:flutter/material.dart';
 
-extension on ProductionBreakdownTableBody {
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/resource_icon.dart';
+import 'commodity_ui_helpers.dart';
+import 'production_commodity_breakdown_dialog.dart';
+import 'production_commodity_breakdown_dialog_table.dart';
+import 'production_commodity_breakdown_dialog_table_cells.dart';
+
+extension ProductionBreakdownTableBodyData on ProductionBreakdownTableBody {
   DataTable buildProductionBreakdownDataTable(
     BuildContext context,
     List<double>? columnContentWidths,
@@ -25,9 +35,8 @@ extension on ProductionBreakdownTableBody {
     }
 
     List<DataRow> rowsFor(List<Commodity> list) {
-      final l10n = appL10n(context);
       return list.map((c) {
-        final total = _rowTotal(c.id);
+        final total = rowTotal(c.id);
         final name = commodityDisplayName(l10n, c.id);
         final rowShade = commodityRowIndex.isEven
             ? Colors.transparent
@@ -48,7 +57,7 @@ extension on ProductionBreakdownTableBody {
                         name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: _productionBreakdownCommodityNameStyle(context),
+                        style: productionBreakdownCommodityNameStyle(context),
                       ),
                     ),
                   ],
@@ -59,9 +68,9 @@ extension on ProductionBreakdownTableBody {
               (entry) => DataCell(
                 sizedCell(
                   1 + entry.$1,
-                  _productionBreakdownDeltaCell(
+                  productionBreakdownDeltaCell(
                     context,
-                    _phaseValue(c.id, entry.$2),
+                    phaseValue(c.id, entry.$2),
                   ),
                 ),
               ),
@@ -69,7 +78,7 @@ extension on ProductionBreakdownTableBody {
             DataCell(
               sizedCell(
                 phaseColCount + 1,
-                _productionBreakdownDeltaCell(context, total),
+                productionBreakdownDeltaCell(context, total),
               ),
             ),
           ],
@@ -82,15 +91,15 @@ extension on ProductionBreakdownTableBody {
       dataRowMinHeight: 32,
       dataRowMaxHeight: 48,
       dividerThickness: 1,
-      columnSpacing: ProductionBreakdownTableBody._tableColumnSpacing,
-      horizontalMargin: ProductionBreakdownTableBody._tableHorizontalMargin,
+      columnSpacing: ProductionBreakdownTableBody.tableColumnSpacing,
+      horizontalMargin: ProductionBreakdownTableBody.tableHorizontalMargin,
       headingRowColor: WidgetStatePropertyAll<Color?>(
         EditorialMonoclePalette.surfaceLite,
       ),
       border: TableBorder(
         horizontalInside: BorderSide(color: dividerColor),
       ),
-      headingTextStyle: _productionBreakdownHeadingStyle(context),
+      headingTextStyle: productionBreakdownHeadingStyle(context),
       columns: [
         DataColumn(
           label: sizedHeader(0, Text(l10n.production_breakdown_commodity)),
@@ -124,7 +133,7 @@ extension on ProductionBreakdownTableBody {
                 DataCell(
                   sizedCell(
                     0,
-                    _productionBreakdownSectionHeaderCell(context, label),
+                    productionBreakdownSectionHeaderCell(context, label),
                   ),
                 ),
                 ...List<DataCell>.generate(

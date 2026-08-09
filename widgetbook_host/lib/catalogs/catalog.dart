@@ -6,8 +6,10 @@ import 'dart:convert';
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_app/core/utils/state_toggle_notifier.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show CapitalMarkerView, CellViewData, RegionMapViewData, TownMarkerView;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart'
     show GameSaveAdapter, LoadableSaveEntry, LoadableSaveKind, kAutoSaveListLabel, kAutoSaveSlotId;
@@ -35,39 +37,58 @@ import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_deplo
 import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app/features/game/flame/map_area/game_map_canvas_stack_selection_prompt.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_dialogs.dart';
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogs/game_map_options_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_map_players_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/players_bar_toggle_button.dart';
+import 'package:colonizethis_app/features/game/widgets/shell/cargo_hold_indicator_support.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_tab_bar.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/game_top_bar.dart';
+import 'package:colonizethis_app/features/game/widgets/units/military/military_generals_strip.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/naval/naval_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
+import 'package:colonizethis_app/features/game/widgets/panels/observe_mode_not_defined_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/shell/save_load/load_game_list_dialog.dart';
 import 'package:colonizethis_app/features/shell/save_load/save_game_name_dialog.dart';
+import 'package:colonizethis_app/features/shell/settings/settings_dialog.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_catalog_loader.dart';
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_commodity_breakdown_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_labour_helpers.dart';
 import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
+import 'package:colonizethis_app/features/game/widgets/production/production_panel_support_allocation.dart';
 import 'package:colonizethis_app_fixtures/demo/production_panel_demo_data.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
+import 'package:colonizethis_app/features/game/screens/counsel/counsel_screen.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_disconnected_assign_dialog.dart';
+import 'package:colonizethis_app/features/game/screens/development/development_screen.dart';
 import 'package:colonizethis_app/features/game/screens/diplomacy/diplomacy_detail_screen.dart';
 import 'package:colonizethis_app/features/game/screens/technology/technology_screen.dart';
 import 'package:colonizethis_app/features/game/screens/trade/trade_screen.dart';
+import 'package:colonizethis_app/features/game/screens/victory/victory_political_minimap.dart';
+import 'package:colonizethis_app/features/game/screens/victory/victory_screen.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show CivilianMissingWorkOrderEntry, navalMissionAvailabilityForFleet;
 import 'package:colonizethis_app/features/game/widgets/dialogue/call_to_arms_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/ct_dialogue_view.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_choice_buttons.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay.dart';
+import 'package:colonizethis_app/features/game/widgets/dialogue/intervention_dialogue_overlay_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/overture_dialogue_overlay.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
@@ -75,6 +96,7 @@ import 'package:colonizethis_app/features/game/flame/controls/controls.dart';
 import 'package:colonizethis_app/features/game/flame/minimap/minimap.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen.dart';
 import 'package:colonizethis_app/features/game/flame/controls/game_side_menu.dart';
+import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/exit_confirm_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/victory_overlay.dart';
@@ -82,6 +104,8 @@ import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
@@ -90,8 +114,11 @@ import 'package:colonizethis_app/features/game/widgets/dialogs/turn_news_dialog.
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
 import 'package:colonizethis_app/features/shell/shell_screen.dart';
+import 'package:colonizethis_app/features/debug_log/debug_log_viewer_screen.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_fixtures/test_support/seed42_init_game_result.dart';
+import 'package:logger/logger.dart';
+import 'package:session_log_buffer/session_log_buffer.dart';
 import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
@@ -118,6 +145,7 @@ import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'debug_map_visibility_story.dart';
+import 'fort_map_icon_levels_story.dart';
 import 'package:colonizethis_app/widgets/main_menu.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_region_map.dart';
@@ -132,15 +160,24 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';
+part 'catalog_panels_generals.dart';
+part 'catalog_panels_intervention.dart';
 part 'catalog_diplomacy_panel.dart';
 part 'catalog_diplomacy_detail.dart';
 part 'catalog_screens_combat.dart';
 part 'catalog_dialogs.dart';
+part 'catalog_dialogs_move_army_invasion_intel.dart';
+part 'catalog_dialogs_naval_mission.dart';
 part 'catalog_primitives.dart';
 part 'catalog_data_screens.dart';
+part 'catalog_data_screens_trade.dart';
 part 'catalog_game_chrome.dart';
 part 'catalog_shell_chrome.dart';
 part 'catalog_event_feed.dart';
+part 'catalog_observe_mode.dart';
+part 'catalog_debug_log_viewer.dart';
+part 'catalog_debug_console.dart';
+part 'catalog_work_order_afford_preview.dart';
 
 Unit? _unitByIdForCatalog(Game game, String unitId) {
   for (final u in game.worldState.oldWorld.units) {
@@ -217,6 +254,16 @@ Widget mobileViewport(BuildContext context, Widget child) {
   );
 }
 
+/// Simulated wide viewport (900×760 dp) for layout verification. SPEC/ui/mobile-adaptation.md.
+Widget wideViewport(BuildContext context, Widget child) {
+  const double width = 900;
+  const double height = 760;
+  return MediaQuery(
+    data: MediaQuery.of(context).copyWith(size: Size(width, height)),
+    child: SizedBox(width: width, height: height, child: child),
+  );
+}
+
 /// Widgetbook app: defaults to `AppThemes.editorialMonocle` (dark) per
 /// `SPEC/ui/pixel-art-ui-catalog.md` § Editorial-monocle palette; the
 /// MaterialThemeAddon below exposes a toolbar toggle between the
@@ -246,8 +293,10 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...transferListDirectories,
   ...mainMenuDirectories,
   ...mapWidgetDirectories,
+  ...workOrderAffordPreviewDirectories,
   ...provinceOverlayDirectories,
   ...productionPanelDirectories,
+  ...counselPanelDirectories,
   ...civilianUnitsPanelDirectories,
   ...trainCiviliansDialogDirectories,
   ...trainMilitaryDialogDirectories,
@@ -268,8 +317,10 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...combatUiDirectories,
   ...moveArmyDialogDirectories,
   ...moveFleetDialogDirectories,
+  ...navalMissionDialogDirectories,
   ...transferToHomeFleetDialogDirectories,
   ...productionCommodityBreakdownDialogDirectories,
+  ...developmentDisconnectedAssignDialogDirectories,
   ...grantOrSubsidyDialogDirectories,
   ...newGameLeaderSelectionDialogDirectories,
   ...shellScreenDirectories,
@@ -283,14 +334,20 @@ List<WidgetbookNode> get _ctWidgetbookDirectories => [
   ...gameRegionMinimapDirectories,
   ...gameMapProvinceDetailSidePanelDirectories,
   ...playerTurnEventFeedCardDirectories,
+  ...observeModeNotDefinedPanelDirectories,
+  ...debugConsolePanelDirectories,
   ...pauseMenuPanelDirectories,
   ...saveLoadDialogDirectories,
+  ...settingsDialogDirectories,
   ...nextTurnConfirmationDialogDirectories,
   ...gameInitializingDirectories,
   ...gameSideMenuDirectories,
   ...gameMapNarrowDetailOverlaySlotDirectories,
   ...diplomacyDetailScreenDirectories,
   ...tradeScreenDirectories,
+  ...victoryScreenDirectories,
+  ...developmentScreenDirectories,
+  ...debugLogViewerDirectories,
   ...ctDarkThemePrimitiveDirectories,
 ];
 
@@ -622,6 +679,12 @@ List<WidgetbookNode> get mapWidgetDirectories => [
               return const DebugMapVisibilityStory(showPoliticalOverlay: true);
             },
           ),
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Fort glyphs L1–L3',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          child: const Center(child: FortMapIconLevelsStory()),
         ),
       ),
     ],

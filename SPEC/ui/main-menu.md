@@ -99,7 +99,7 @@ Variant rendering (mockup-aligned dark editorial-monocle):
 
 **Interaction.** The main menu widget is presentational: it receives callbacks for each action. The shell (or parent) supplies `onNewGame`, `onResumeGame` (when resume is shown), `onLoadGame`, `onSettings`, `onQuit` and handles navigation and app exit. No routing logic lives in the widget.
 
-**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_part1_test.dart` (visibility, Load Game state/tooltip, Resume, navigation) and `app/test/screen_spec_acceptance_part2_test.dart` (pixelArt chrome, scroll brackets, ≤430 dp responsive) assert the acceptance criteria above. Shared frames live in `app/test/support/screen_spec_acceptance_test_support.dart`. Run: `flutter test test/screen_spec_acceptance_part1_test.dart test/screen_spec_acceptance_part2_test.dart` from the app package.
+**Automated tests.** Widget tests in `app/test/screen_spec_acceptance_part1_test.dart` (visibility, Load Game state/tooltip, Resume, navigation) and `app/test/screen_spec_acceptance_part2_test.dart` (pixelArt chrome, scroll brackets, ≤430 dp responsive) assert the acceptance criteria above. Shared frames live in `app/test/screen_spec_acceptance_test_support.dart`. Run: `flutter test test/screen_spec_acceptance_part1_test.dart test/screen_spec_acceptance_part2_test.dart` from the app package.
 
 ---
 
@@ -178,7 +178,7 @@ For both variants the widget contract (`variant`, `state`, `version`, callbacks,
 | New Game | Always | `onNewGame` | Shell opens leader-selection dialog. |
 | Resume game | `resumeGameVisible == true` | `onResumeGame` | Shell loads auto-save and navigates to game. |
 | Load Game | Saves exist | `onLoadGame` | Shell loads game or no-op when disabled. |
-| Settings | Always | `onSettings` | Shell opens Settings (stub). |
+| Settings | Always | `onSettings` | Shell emits `OpenDialogEvent(settings)` → [`settings-dialog.md`](settings-dialog.md). |
 | Quit | Always | `onQuit` | App exit. |
 
 ---

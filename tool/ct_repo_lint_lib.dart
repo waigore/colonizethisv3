@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import 'check_app_core_services_narrow_logic_import.dart';
+import 'check_app_narrow_logic_import.dart';
+import 'check_app_lib_no_src_imports.dart';
 import 'check_app_editorial_monocle_colors.dart';
 import 'check_app_event_bus_decoupling.dart';
 import 'check_app_event_handler_scope_logic_boundary.dart';
@@ -45,6 +48,8 @@ import 'check_economy_world_market_admission_shared.dart';
 import 'check_economy_bid_treasury_spend_shared.dart';
 import 'check_land_province_bucket_keys.dart';
 import 'check_orders_dedup_diplomatic_helpers.dart';
+import 'check_orders_dedup_development_panel.dart';
+import 'check_orders_owned_province_projection.dart';
 import 'check_orders_dedup_map_clones.dart';
 import 'check_setup_dedup_faction_capital_collect.dart';
 import 'check_setup_dedup_gp_ids_from_players.dart';
@@ -56,6 +61,12 @@ import 'check_setup_dedup_seaboard_nearest_tile.dart';
 import 'check_setup_dedup_full_grid_tile_scans.dart';
 import 'check_setup_dedup_advanced_start_flood_fill.dart';
 import 'check_setup_dedup_ownership_paint.dart';
+import 'check_setup_dedup_advanced_start_selection.dart';
+import 'check_setup_dedup_unit_spawn.dart';
+import 'check_setup_naming_lookup.dart';
+import 'check_setup_no_world_src_imports.dart';
+import 'check_setup_per_pass_nw_owner_map.dart';
+import 'check_setup_prefixed_province_id_normalizer.dart';
 import 'check_setup_helpers_first_class_libraries.dart';
 import 'check_setup_dedup_topology_adjacency.dart';
 import 'check_setup_lib_tile_key_interpolation.dart';
@@ -822,6 +833,12 @@ int? _tryRunDartRuleInProcess({
       return runCheckDebugConsoleSharedHelpers(repoRoot);
     case 'repo.app_event_handler_scope_logic_boundary':
       return runCheckAppEventHandlerScopeLogicBoundary(repoRoot);
+    case 'repo.app_narrow_logic_import':
+      return runCheckAppNarrowLogicImport(repoRoot);
+    case 'repo.app_lib_no_src_imports':
+      return runCheckAppLibNoSrcImports(repoRoot);
+    case 'repo.app_core_services_narrow_logic_import':
+      return runCheckAppCoreServicesNarrowLogicImport(repoRoot);
     case 'repo.app_event_bus_decoupling':
       return runCheckAppEventBusDecoupling(repoRoot);
     case 'repo.app_no_shell_panel_duplication':
@@ -888,6 +905,10 @@ int? _tryRunDartRuleInProcess({
       return runCheckOrdersDedupMapClones(repoRoot);
     case 'repo.orders_dedup_diplomatic_helpers':
       return runCheckOrdersDedupDiplomaticHelpers(repoRoot);
+    case 'repo.orders_dedup_development_panel':
+      return runCheckOrdersDedupDevelopmentPanel(repoRoot);
+    case 'repo.orders_owned_province_projection':
+      return runCheckOrdersOwnedProvinceProjection(repoRoot);
     case 'repo.setup_dedup_init_pipeline_retry':
       return runCheckSetupDedupInitPipelineRetry(repoRoot);
     case 'repo.setup_dedup_gp_ow_tile_scans':
@@ -1036,6 +1057,18 @@ int? _tryRunSetupRuleInProcess({
       return runCheckSetupDedupAdvancedStartFloodFill(repoRoot);
     case 'repo.setup_dedup_ownership_paint':
       return runCheckSetupDedupOwnershipPaint(repoRoot);
+    case 'repo.setup_prefixed_province_id_normalizer':
+      return runCheckSetupPrefixedProvinceIdNormalizer(repoRoot);
+    case 'repo.setup_per_pass_nw_owner_map':
+      return runCheckSetupPerPassNwOwnerMap(repoRoot);
+    case 'repo.setup_dedup_advanced_start_selection':
+      return runCheckSetupDedupAdvancedStartSelection(repoRoot);
+    case 'repo.setup_dedup_unit_spawn':
+      return runCheckSetupDedupUnitSpawn(repoRoot);
+    case 'repo.setup_naming_lookup':
+      return runCheckSetupNamingLookup(repoRoot);
+    case 'repo.setup_no_world_src_imports':
+      return runCheckSetupNoWorldSrcImports(repoRoot);
     case 'repo.setup_helpers_first_class_libraries':
       return runCheckSetupHelpersFirstClassLibraries(repoRoot);
     case 'repo.setup_test_default_init_options':

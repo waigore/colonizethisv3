@@ -1,4 +1,7 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_orders/src/orders/feedstock_extraction_targets.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 // Old World feedstock-tile ownership predicates and the feedstock-tile
 // acquisition residual for the below-quota zero-NW lock-recovery seller /
@@ -7,8 +10,7 @@ part of 'full_ai_civilian_work_selection.dart';
 // (`orders/feedstock_extraction_targets.dart`) so the one-way orders↔ai
 // dependency direction holds (Refs #3290). Split out of
 // full_ai_civilian_work_selection.dart by concern to keep each library file
-// at or below the repo non-comment line limit; shares the parent library's
-// private scope via `part`.
+// at or below the repo non-comment line limit.
 
 /// True iff [playerId] owns at least one province tile hosting a resource in
 /// [feedstockIds] at **any** improvement level — the inverse precondition of

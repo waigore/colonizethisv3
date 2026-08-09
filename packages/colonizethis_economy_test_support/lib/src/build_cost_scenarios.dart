@@ -1,24 +1,43 @@
 // dart format off
 // Table-driven build-cost scenarios (Refs #3856, #3979).
+
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'build_cost_expectations.dart';
+
+/// Pins for unknown-unit afford/reject rows.
+typedef BuildCostUnknownUnitPins = ({bool viaApplyDeduction, int peasants, int treasury, int expectedPeasants, int expectedTreasury});
+
+BuildCostScenario buildCostUnknownUnitScenario({required String label, required BuildCostUnknownUnitPins pins}) =>
+    (label: label, unknownUnit: pins, affordApply: null, affordReject: null, refs: null);
+
+/// Pins for afford-then-apply catalog rows.
+typedef BuildCostAffordApplyPins = ({String unitType, bool isMilitary, int peasants, int treasuryPadding});
+
+BuildCostScenario buildCostAffordApplyScenario({required String label, required BuildCostAffordApplyPins pins}) =>
+    (label: label, unknownUnit: null, affordApply: pins, affordReject: null, refs: null);
+
+/// Pins for afford-reject rows.
+typedef BuildCostAffordRejectPins = ({
+  String unitType,
+  bool isMilitary,
+  int peasants,
+  Map<String, bool>? techUnlocked,
+  int treasuryPadding,
+  String expectedReason,
+});
+
+BuildCostScenario buildCostAffordRejectScenario({required String label, required BuildCostAffordRejectPins pins}) =>
+    (label: label, unknownUnit: null, affordApply: null, affordReject: pins, refs: null);
+
 /// One row for build-cost tables (Refs #3979). Exactly one pin family is set.
-typedef BuildCostScenario = ({String label, BuildCostUnknownUnitPins? unknownUnit, BuildCostAffordApplyPins? affordApply, BuildCostAffordRejectPins? affordReject, String? refs});
-/// Runs [scenario] via the matching expectation helper.
-void runBuildCostScenario(BuildCostScenario scenario) {
-  final unknownUnit = scenario.unknownUnit;
-  if (unknownUnit != null) {
-    runBuildCostUnknownUnitExpectation(unknownUnit);
-    return;
-  }
-  final affordApply = scenario.affordApply;
-  if (affordApply != null) {
-    runBuildCostAffordApplyExpectation(affordApply);
-    return;
-  }
-  runBuildCostAffordRejectExpectation(scenario.affordReject!);
-}
+typedef BuildCostScenario = ({
+  String label,
+  BuildCostUnknownUnitPins? unknownUnit,
+  BuildCostAffordApplyPins? affordApply,
+  BuildCostAffordRejectPins? affordReject,
+  String? refs,
+});
+
 /// Canonical scenarios for [canAffordBuild] and [applyBuildCostDeduction].
 List<BuildCostScenario> buildCostScenarios() => [
   buildCostUnknownUnitScenario(label: 'canAffordBuild returns false for unknown unit type', pins: (viaApplyDeduction: false, peasants: 10, treasury: 10000, expectedPeasants: 10, expectedTreasury: 10000)),

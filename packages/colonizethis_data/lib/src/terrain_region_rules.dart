@@ -2,6 +2,7 @@
 /// Canonical source: Imperialism II Terrain and Development table (OW-only, NW-only, Both).
 /// Phase 1: minimal mapping from current TerrainType enum; extend when terrain enum is expanded.
 
+import 'region_ids.dart';
 import 'terrain_type.dart';
 
 /// Terrains allowed in the Old World (OW-only + Both from canonical table).
@@ -121,16 +122,16 @@ TerrainDistribution _buildDistribution(
 }
 
 /// Returns the normalized terrain distribution for map generation in
-/// [regionId]. Recognized ids: 'oldWorld', 'newWorld'. Unknown regions fall
-/// back to the Old World distribution.
+/// [regionId]. Recognized ids: [kOldWorldRegionId], [kNewWorldRegionId].
+/// Unknown regions fall back to the Old World distribution.
 TerrainDistribution terrainDistributionForRegion(String regionId) {
   switch (regionId) {
-    case 'newWorld':
+    case kNewWorldRegionId:
       return _buildDistribution(
         _newWorldMountainFraction,
         _newWorldNonMountainWeights,
       );
-    case 'oldWorld':
+    case kOldWorldRegionId:
     default:
       return _buildDistribution(
         _oldWorldMountainFraction,
@@ -140,12 +141,13 @@ TerrainDistribution terrainDistributionForRegion(String regionId) {
 }
 
 /// Returns the list of terrain types allowed for map generation in [regionId].
-/// Recognized region ids: 'oldWorld', 'newWorld'. Unknown regions fall back to [oldWorldTerrains].
+/// Recognized region ids: [kOldWorldRegionId], [kNewWorldRegionId]. Unknown
+/// regions fall back to [oldWorldTerrains].
 List<TerrainType> allowedTerrainsForRegion(String regionId) {
   switch (regionId) {
-    case 'oldWorld':
+    case kOldWorldRegionId:
       return oldWorldTerrains;
-    case 'newWorld':
+    case kNewWorldRegionId:
       return newWorldTerrains;
     default:
       return oldWorldTerrains;

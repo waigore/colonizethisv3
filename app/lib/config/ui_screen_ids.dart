@@ -18,6 +18,9 @@ abstract final class UiScreenIds {
   static const String technologyScreen = 'GAME40001';
   static const String gameSideMenu = 'GAME50001';
   static const String tradeScreen = 'GAME60001';
+  static const String victoryScreen = 'GAME70001';
+  static const String developmentScreen = 'GAME80001';
+  static const String counselScreen = 'GAME90001';
 
   // MAP — map surfaces
   static const String empireOverviewMapArea = 'MAP10001';
@@ -57,10 +60,14 @@ abstract final class UiScreenIds {
   static const String moveArmyDialog = 'DLG20001';
   static const String moveFleetDialog = 'DLG30001';
   static const String transferToHomeFleetDialog = 'DLG40001';
+  static const String navalMissionMenuDialog = 'DLG31001';
+  static const String navalMissionTargetDialog = 'DLG31002';
+  static const String navalMissionFleetPickerDialog = 'DLG31003';
   static const String turnNewsDialog = 'DLG50001';
   static const String nextTurnConfirmation = 'DLG60001';
   static const String saveGameNameDialog = 'DLG70001';
   static const String loadGameListDialog = 'DLG80001';
+  static const String settingsDialog = 'DLG90001';
 
   // SYS — system / debug surfaces
   static const String debugLogViewer = 'SYS10001';

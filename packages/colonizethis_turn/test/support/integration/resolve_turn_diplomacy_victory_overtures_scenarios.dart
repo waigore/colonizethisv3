@@ -8,148 +8,51 @@ void registerDiplomacyVictoryOverturesTests() {
   group('diplomacy victory', () {
     group('diplomacy victory overtures', () {
       test(
-        'endOfTurn sets military victory when one GP controls 31+ provinces',
+        'endOfTurn sets military victory when one GP controls enough OW provinces',
         () {
-          const ow = 'oldWorld';
-          final provinces = List<Province>.generate(
-            32,
-            (i) => Province(id: '$ow|P$i', regionId: ow, ownerId: 'p1'),
-          );
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 5,
-              ),
-              oldWorld: RegionData(provinces: provinces),
-              newWorld: const RegionData(),
-            ),
-            players: const [
-              Player(id: 'p1', displayName: 'A', isHuman: true),
-              Player(id: 'p2', displayName: 'B', isHuman: true),
-            ],
-          );
-          final topology = MapTopology(
-            nodes: [
-              for (var i = 0; i < 32; i++)
-                TopologyNode(
-                  id: 'P$i',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-            ],
-            edges: const [],
-          );
-          final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: const Orders(),
-          );
-          expect(next.victory, isNotNull);
-          expect(next.victory!.winnerPlayerId, 'p1');
-          expect(next.victory!.type, VictoryType.military);
-        },
-      );
-
-      test(
-        'endOfTurn sets military victory when one GP controls exactly 31 OW provinces',
-        () {
-          const ow = 'oldWorld';
-          final provinces = List<Province>.generate(
-            31,
-            (i) => Province(id: '$ow|P$i', regionId: ow, ownerId: 'p1'),
-          );
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 3,
-              ),
-              oldWorld: RegionData(provinces: provinces),
-              newWorld: const RegionData(),
-            ),
-            players: const [
-              Player(id: 'p1', displayName: 'A', isHuman: true),
-              Player(id: 'p2', displayName: 'B', isHuman: true),
-            ],
-          );
-          final topology = MapTopology(
-            nodes: [
-              for (var i = 0; i < 31; i++)
-                TopologyNode(
-                  id: 'P$i',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-            ],
-            edges: const [],
-          );
-          final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: const Orders(),
-          );
-          expect(next.victory, isNotNull);
-          expect(next.victory!.winnerPlayerId, 'p1');
-          expect(next.victory!.type, VictoryType.military);
+          for (final scenario in <({int count, int turnNumber})>[
+            (count: 32, turnNumber: 5),
+            (count: 31, turnNumber: 3),
+          ]) {
+            final fixture = turnTestOwProvinceStacksFixture(
+              stacks: [
+                (ownerId: 'p1', count: scenario.count, localIdPrefix: 'P'),
+              ],
+              turnNumber: scenario.turnNumber,
+            );
+            final next = resolveTurnComplete(
+              game: fixture.game,
+              topology: fixture.topology,
+              orders: const Orders(),
+            );
+            expect(
+              next.victory,
+              isNotNull,
+              reason: 'count=${scenario.count}',
+            );
+            expect(next.victory!.winnerPlayerId, 'p1');
+            expect(next.victory!.type, VictoryType.military);
+          }
         },
       );
 
       test(
         'endOfTurn tie-break: two GPs with ≥31 OW provinces wins lexicographically smallest id',
         () {
-          const ow = 'oldWorld';
-          final provinces = <Province>[
-            ...List<Province>.generate(
-              31,
-              (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1'),
-            ),
-            ...List<Province>.generate(
-              31,
-              (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2'),
-            ),
-          ];
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 1,
-              ),
-              oldWorld: RegionData(provinces: provinces),
-              newWorld: const RegionData(),
-            ),
+          final fixture = turnTestOwProvinceStacksFixture(
+            stacks: [
+              (ownerId: 'p1', count: 31, localIdPrefix: 'A'),
+              (ownerId: 'p2', count: 31, localIdPrefix: 'B'),
+            ],
+            turnNumber: 1,
             players: const [
               Player(id: 'p1', displayName: 'P1', isHuman: true),
               Player(id: 'p2', displayName: 'P2', isHuman: true),
             ],
           );
-          final topology = MapTopology(
-            nodes: [
-              ...List.generate(
-                31,
-                (i) => TopologyNode(
-                  id: 'A$i',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-              ),
-              ...List.generate(
-                31,
-                (i) => TopologyNode(
-                  id: 'B$i',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-              ),
-            ],
-            edges: const [],
-          );
           final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
+            game: fixture.game,
+            topology: fixture.topology,
             orders: const Orders(),
           );
           expect(next.victory, isNotNull);
@@ -160,40 +63,19 @@ void registerDiplomacyVictoryOverturesTests() {
       test(
         'endOfTurn no victory when only Minor/Tribe has ≥31 OW provinces',
         () {
-          const ow = 'oldWorld';
-          final provinces = List<Province>.generate(
-            31,
-            (i) => Province(id: '$ow|P$i', regionId: ow, ownerId: 'minor1'),
-          );
-          final game = Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.orders,
-                turnNumber: 2,
-              ),
-              oldWorld: RegionData(provinces: provinces),
-              newWorld: const RegionData(),
-            ),
+          final fixture = turnTestOwProvinceStacksFixture(
+            stacks: [
+              (ownerId: 'minor1', count: 31, localIdPrefix: 'P'),
+            ],
+            turnNumber: 2,
             players: const [
               Player(id: 'p1', displayName: 'GP1', isHuman: true),
               Player(id: 'p2', displayName: 'GP2', isHuman: true),
             ],
           );
-          final topology = MapTopology(
-            nodes: [
-              for (var i = 0; i < 31; i++)
-                TopologyNode(
-                  id: 'P$i',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-            ],
-            edges: const [],
-          );
           final next = resolveTurnComplete(
-            game: game,
-            topology: topology,
+            game: fixture.game,
+            topology: fixture.topology,
             orders: const Orders(),
           );
           expect(next.victory, isNull);
@@ -201,53 +83,20 @@ void registerDiplomacyVictoryOverturesTests() {
       );
 
       test('endOfTurn no victory when no GP has ≥31 OW provinces', () {
-        const ow = 'oldWorld';
-        final provinces = <Province>[
-          ...List<Province>.generate(
-            30,
-            (i) => Province(id: '$ow|A$i', regionId: ow, ownerId: 'p1'),
-          ),
-          ...List<Province>.generate(
-            30,
-            (i) => Province(id: '$ow|B$i', regionId: ow, ownerId: 'p2'),
-          ),
-        ];
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(provinces: provinces),
-            newWorld: const RegionData(),
-          ),
+        final fixture = turnTestOwProvinceStacksFixture(
+          stacks: [
+            (ownerId: 'p1', count: 30, localIdPrefix: 'A'),
+            (ownerId: 'p2', count: 30, localIdPrefix: 'B'),
+          ],
+          turnNumber: 1,
           players: const [
             Player(id: 'p1', displayName: 'P1', isHuman: true),
             Player(id: 'p2', displayName: 'P2', isHuman: true),
           ],
         );
-        final topology = MapTopology(
-          nodes: [
-            ...List.generate(
-              30,
-              (i) => TopologyNode(
-                id: 'A$i',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-            ),
-            ...List.generate(
-              30,
-              (i) => TopologyNode(
-                id: 'B$i',
-                regionId: ow,
-                type: TopologyNodeType.province,
-              ),
-            ),
-          ],
-          edges: const [],
-        );
         final next = resolveTurnComplete(
-          game: game,
-          topology: topology,
+          game: fixture.game,
+          topology: fixture.topology,
           orders: const Orders(),
         );
         expect(next.victory, isNull);
@@ -256,7 +105,7 @@ void registerDiplomacyVictoryOverturesTests() {
       test(
         'endOfTurn phase leaves game unchanged when victory already set',
         () {
-          const ow = 'oldWorld';
+          const ow = kRegionOldWorld;
           final game = Game(
             id: 'g1',
             worldState: WorldState(
@@ -284,7 +133,7 @@ void registerDiplomacyVictoryOverturesTests() {
               nodes: const [
                 TopologyNode(
                   id: 'P1',
-                  regionId: 'oldWorld',
+                  regionId: kRegionOldWorld,
                   type: TopologyNodeType.province,
                 ),
               ],

@@ -1,10 +1,19 @@
 /// Filtered faction-row list body for the diplomacy panel.
 /// SPEC/ui/diplomacy-panel.md.
+library;
 
-part of 'diplomacy_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-class _DiplomacyPanelBody extends StatelessWidget {
-  const _DiplomacyPanelBody({
+import '../../../../widgets/ct_spacing.dart';
+import 'diplomacy_panel_chrome_section_header.dart';
+import 'diplomacy_panel_row.dart';
+import 'diplomacy_panel_rows.dart';
+
+class DiplomacyPanelBody extends StatelessWidget {
+  const DiplomacyPanelBody({super.key, 
     required this.gps,
     required this.minors,
     required this.tribes,
@@ -74,15 +83,15 @@ class _DiplomacyPanelBody extends StatelessWidget {
     required FactionKind kind,
   }) {
     return [
-      _DiplomacySectionHeader(
+      DiplomacySectionHeader(
         title: title,
         isFirst: firstShownKind == kind,
       ),
       if (rows.isEmpty)
-        _DiplomacyEmptySectionPlaceholder(text: emptyText)
+        DiplomacyEmptySectionPlaceholder(text: emptyText)
       else
         ...rows.map(
-          (r) => _DiplomacyRow(
+          (r) => DiplomacyRow(
             data: r,
             onAction: onAction,
             onTap: () => onTap(r),
@@ -98,8 +107,8 @@ class _DiplomacyPanelBody extends StatelessWidget {
 /// muted italic text using the editorial-monocle `--muted` token
 /// (matches the mockup `.empty` style), e.g. the Tribes section before
 /// any tribe has been contacted shows "No tribes contacted yet.".
-class _DiplomacyEmptySectionPlaceholder extends StatelessWidget {
-  const _DiplomacyEmptySectionPlaceholder({required this.text});
+class DiplomacyEmptySectionPlaceholder extends StatelessWidget {
+  const DiplomacyEmptySectionPlaceholder({super.key, required this.text});
 
   final String text;
 

@@ -1,4 +1,10 @@
-part of 'move_units_dialog_base.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'move_units_dialog_base_styles.dart';
 
 /// Abstract `State` base for the in-game move dialogs.
 ///
@@ -32,6 +38,10 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
   /// Invoked when the user taps Cancel.
   void onMoveDialogCancel();
 
+  /// Optional muted caption rendered under the title (e.g. mission consequence
+  /// copy on naval target picker). Default `null`.
+  String? get moveDialogCaption => null;
+
   /// Composes the shared `CtDialogShell` scaffold. Subclasses return this
   /// from their `build`.
   Widget buildMoveDialogScaffold(BuildContext context) {
@@ -45,6 +55,10 @@ abstract class MoveUnitsDialogState<W extends StatefulWidget>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(moveDialogTitle, style: titleStyle),
+        if (moveDialogCaption != null) ...[
+          const SizedBox(height: CtSpacing.s),
+          Text(moveDialogCaption!, style: emptyStyle),
+        ],
         const SizedBox(height: CtSpacing.ml),
         if (!moveDialogHasDestinations)
           Text(moveDialogEmptyText, style: emptyStyle)

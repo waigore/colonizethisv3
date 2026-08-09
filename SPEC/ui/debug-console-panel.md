@@ -1,8 +1,8 @@
 # Debug console panel
 
 **Screen ID:** `SYS20001` — stable; do not reassign.
-**SPEC/ui** — Debug-only in-map console overlay for immediate debug session commands (spawn, treasury credit, worker pool credit, debug province transfer).
-
+**SPEC/ui** — Debug-only in-map console overlay for immediate debug session commands (spawn, treasury credit, worker pool credit, debug province transfer). Implementation: `app/lib/features/game/flame/overlays/debug_console_overlay_panel.dart`.
+**Widgetbook:** `Debug Console Panel` → `widgetbook_host/lib/catalogs/catalog_debug_console.dart`.
 **Mockup:** [mockups/SYS20001-debug-console-panel.html](mockups/SYS20001-debug-console-panel.html)
 ---
 

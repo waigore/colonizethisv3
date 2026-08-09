@@ -1,10 +1,11 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 
 import '../../../../core/services/game_service/game_service.dart' show GameMapData;
 import 'game_map_area_state_logic.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Explore / prospect inline action state shape (shared by both overlay slots).
 typedef ProvinceExplorerActionState = ({
@@ -20,11 +21,35 @@ typedef ProvinceBuilderActionState = ({
   bool hasBuilderUnits,
 });
 
-/// The three province-overlay inline action states computed together.
+/// Build-road inline action state shape.
+typedef ProvinceEngineerActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasEngineerUnits,
+});
+
+/// Build-fort inline action state shape.
+typedef ProvinceBuildFortActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasEngineerUnits,
+});
+
+/// Purchase-land inline action state shape.
+typedef ProvinceMerchantActionState = ({
+  bool showIcon,
+  bool enabled,
+  bool hasMerchantUnits,
+});
+
+/// The five province-overlay inline action states computed together.
 typedef ProvinceActionStates = ({
   ProvinceExplorerActionState explore,
   ProvinceExplorerActionState prospect,
   ProvinceBuilderActionState buildImprovement,
+  ProvinceEngineerActionState buildRoad,
+  ProvinceBuildFortActionState buildFort,
+  ProvinceMerchantActionState purchaseLand,
 });
 
 /// Computes the explore / prospect / build-improvement inline action states
@@ -91,10 +116,40 @@ class ProvinceActionStateCalculator {
             playerView: playerView,
             workTargetSelectionCache: workTargetSelectionCache,
           );
+    final buildRoad = selectedTileKey == null
+        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogic.provinceBuildRoadActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          );
+    final buildFort = selectedTileKey == null
+        ? GameMapAreaStateLogic.kHiddenEngineerInlineActionState
+        : GameMapAreaStateLogic.provinceBuildFortActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          );
+    final purchaseLand = selectedTileKey == null
+        ? GameMapAreaStateLogic.kHiddenMerchantInlineActionState
+        : GameMapAreaStateLogic.provincePurchaseLandActionState(
+            game: game,
+            humanPlayerId: humanPlayerId,
+            selectedTileKey: selectedTileKey,
+            playerView: playerView,
+            workTargetSelectionCache: workTargetSelectionCache,
+          );
     return (
       explore: explore,
       prospect: prospect,
       buildImprovement: buildImprovement,
+      buildRoad: buildRoad,
+      buildFort: buildFort,
+      purchaseLand: purchaseLand,
     );
   }
 }

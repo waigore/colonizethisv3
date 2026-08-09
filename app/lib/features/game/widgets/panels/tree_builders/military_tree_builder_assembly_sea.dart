@@ -1,6 +1,12 @@
-part of 'military_tree_builder.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
 
-List<MilitarySeaZoneNode> _militarySeaZoneNodesForRegion({
+import '../../../flame/map_state/map_location_resolver.dart';
+import '../../province_overlay/sea_zone_name_resolver.dart';
+import 'fleet_mission_label.dart';
+import 'military_tree_builder.dart';
+
+List<MilitarySeaZoneNode> militaryTreeSeaZoneNodesForRegion({
   required Game game,
   required String regionKey,
   required String humanPlayerId,

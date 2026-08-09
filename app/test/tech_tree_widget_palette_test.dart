@@ -15,9 +15,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget.dart';
+import 'package:colonizethis_app/features/game/widgets/technology/tech_tree_widget_nodes.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -104,7 +105,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Pin that the tech tree still mounts a `_TechTreeEdgePainter`
+      // Pin that the tech tree still mounts a [TechTreeEdgePainter]
       // under a `CustomPaint`; the painter's stroke colour is read
       // from `EditorialMonoclePalette.border` (refactored from
       // `Colors.grey.shade600`). The source-level grep in #2914 G1
@@ -112,8 +113,7 @@ void main() {
       // structural presence so the file is exercised in CI.
       final customPaints = find.byWidgetPredicate(
         (widget) =>
-            widget is CustomPaint &&
-            widget.painter.runtimeType.toString() == '_TechTreeEdgePainter',
+            widget is CustomPaint && widget.painter is TechTreeEdgePainter,
       );
       expect(
         customPaints,

@@ -1,4 +1,5 @@
-part of 'turn_resolution_runner.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 class TurnResolutionProgressEvent {
   const TurnResolutionProgressEvent({

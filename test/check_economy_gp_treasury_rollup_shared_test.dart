@@ -7,9 +7,9 @@ void main() {
     test('passes when both targets reference GpTreasuryCreditRollup', () {
       final violations = findEconomyGpTreasuryRollupSharedViolations(
         sourcesByPath: {
-          'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credits.dart':
+          'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credit_records.dart':
               'class X { GpTreasuryCreditRollup<double> r; }',
-          'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches.dart':
+          'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches_records.dart':
               'class Y { GpTreasuryCreditRollup<int> r; }',
         },
       );
@@ -19,14 +19,14 @@ void main() {
     test('fails when a target omits GpTreasuryCreditRollup', () {
       final violations = findEconomyGpTreasuryRollupSharedViolations(
         sourcesByPath: {
-          'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credits.dart':
+          'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credit_records.dart':
               'class X {}',
-          'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches.dart':
+          'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches_records.dart':
               'class Y { GpTreasuryCreditRollup<int> r; }',
         },
       );
       expect(violations, hasLength(1));
-      expect(violations.single, contains('first_right_credits.dart'));
+      expect(violations.single, contains('first_right_credit_records.dart'));
     });
   });
 }

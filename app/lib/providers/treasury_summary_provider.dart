@@ -1,5 +1,7 @@
 import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'game_service_provider.dart';

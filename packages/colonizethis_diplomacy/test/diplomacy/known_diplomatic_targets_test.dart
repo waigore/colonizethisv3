@@ -5,6 +5,8 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios_gp_tribe.dart';
+
 /// Coverage for `knownDiplomaticTargetFactionIds` in `known_diplomatic_targets.dart`
 /// (Refs #3290 test migration — per-package coverage gate for
 /// `colonizethis_diplomacy`).

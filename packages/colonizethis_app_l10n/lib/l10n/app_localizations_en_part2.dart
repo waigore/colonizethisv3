@@ -233,6 +233,69 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get victory_viewFinalState => 'View final state';
 
   @override
+  String victory_conditionsMilitaryThreshold(int threshold) {
+    return 'Control $threshold or more Old World provinces to win.';
+  }
+
+  @override
+  String get victory_conditionsCalendarEnd =>
+      'If no one wins by province count, the campaign can halt near 1800 '
+      '(turn 201 under the default calendar). The Great Power with the '
+      'strongest overall realm may be named the declared winner; a tie names '
+      'no one.';
+
+  @override
+  String get victory_conditionsInfiniteMode =>
+      'Infinite mode is on: the calendar halt is bypassed. Only reaching the '
+      'province win or leaving the campaign ends play.';
+
+  @override
+  String victory_endProvinceCountWin(String winner, int turn) {
+    return '$winner won on turn $turn by controlling enough Old World provinces.';
+  }
+
+  @override
+  String victory_endCalendarDeclaredWinner(String winner) {
+    return 'Calendar campaign ended. $winner had the strongest overall realm '
+        'when play stopped.';
+  }
+
+  @override
+  String get victory_endCalendarNoWinner =>
+      'Calendar campaign ended with no declared winner (tied overall strength).';
+
+  @override
+  String get victory_powerBreakdownIntro =>
+      'These totals matter only if the campaign runs to the calendar end '
+      'without a province-count winner.';
+
+  @override
+  String victory_powerBreakdownProvinces(int count) =>
+      'Provinces (all worlds): $count';
+
+  @override
+  String victory_powerBreakdownRegiments(int strength) =>
+      'Regiment strength: $strength';
+
+  @override
+  String victory_powerBreakdownShips(int count) => 'Ships: $count';
+
+  @override
+  String victory_powerBreakdownTotal(int total) =>
+      'Overall strength total: $total';
+
+  @override
+  String victory_standingOwCount(int count) => '$count OW';
+
+  @override
+  String victory_standingOwProgress(int count, int threshold) =>
+      '$count / $threshold Old World provinces';
+
+  @override
+  String get victory_standingsHelper =>
+      'Colours match the map. Select a Great Power to see their Old World lands.';
+
+  @override
   String get moveArmy_groupYourProvinces => 'Your provinces';
 
   @override
@@ -267,6 +330,43 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get moveArmy_destinationProvince => 'Destination province';
+
+  @override
+  String moveArmy_yourArmyRegiments(int count) {
+    return 'Your army: $count regiments';
+  }
+
+  @override
+  String moveArmy_invasionsThisTurn(int invasions, int generals) {
+    return 'Invasions this turn: $invasions · Generals: $generals';
+  }
+
+  @override
+  String get moveArmy_invasionOverGeneralCapacityWarning =>
+      'More invasions than generals — extra armies fight with weaker command.';
+
+  @override
+  String moveArmy_defendersRegiments(int count) {
+    return 'Defenders: $count regiments';
+  }
+
+  @override
+  String get moveArmy_unopposedCapture => 'Unopposed capture';
+
+  @override
+  String get moveArmy_defendersUnknown => 'Defenders unknown';
+
+  @override
+  String get moveArmy_fortOpenField => 'Open field';
+
+  @override
+  String get moveArmy_fortWoodSiege => 'Wood fort siege';
+
+  @override
+  String get moveArmy_fortStoneSiege => 'Stone fort siege';
+
+  @override
+  String get moveArmy_fortModernSiege => 'Modern fort siege';
 
   @override
   String moveFleet_title(String fleetLabel) {
@@ -310,6 +410,30 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get military_units_empty => 'No military units';
+
+  @override
+  String military_units_generalsCount(int count, int cap) {
+    return 'Generals: $count of $cap';
+  }
+
+  @override
+  String military_units_generalMedals(int index, int medals) {
+    return 'General $index: $medals medals';
+  }
+
+  @override
+  String get military_units_generalsPlainSummary =>
+      'Each general can lead one invasion this turn. More medals mean a stronger fight.';
+
+  @override
+  String get military_units_generalsMedalGloss =>
+      'Medals let more regiments fight, help troops hold the line, and can decide who strikes first.';
+
+  @override
+  String get military_units_generalsDetails => 'Details';
+
+  @override
+  String get military_units_generalsHideDetails => 'Hide';
 
   @override
   String get military_units_homeArmy => 'Home Army';
@@ -393,6 +517,67 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String naval_units_mission(String mission) {
     return 'Mission: $mission';
   }
+
+  @override
+  String get naval_mission_assign => 'Mission';
+
+  @override
+  String naval_mission_menuTitle(String fleet) {
+    return 'Assign mission — $fleet';
+  }
+
+  @override
+  String get naval_mission_selectFleetTitle => 'Select fleet';
+
+  @override
+  String get naval_mission_cancelPending => 'Cancel pending mission';
+
+  @override
+  String naval_mission_pendingLine(String mission) {
+    return 'On mission: $mission';
+  }
+
+  @override
+  String naval_mission_pendingLineWithTarget(String mission, String target) {
+    return 'On mission: $mission → $target';
+  }
+
+  @override
+  String naval_mission_selectTargetTitle(String mission) {
+    return 'Select target — $mission';
+  }
+
+  @override
+  String get naval_mission_noMissionsAvailable =>
+      'No missions available for this fleet.';
+
+  @override
+  String get naval_mission_noTargetsAvailable =>
+      'No legal targets for this mission.';
+
+  @override
+  String get naval_mission_effect_patrol =>
+      'Stay here and try to intercept hostile fleets moving through this sea zone.';
+
+  @override
+  String get naval_mission_effect_defend =>
+      'Stay in place without seeking combat; you can still be attacked or pulled into a fight.';
+
+  @override
+  String get naval_mission_effect_blockade =>
+      'Stronger intercept chance on fleets entering this zone, including ships leaving the target port.';
+
+  @override
+  String get naval_mission_effect_beachhead =>
+      'Stage a landing site so your armies can invade that coast next turn; marker then expires.';
+
+  @override
+  String get naval_mission_targetCaption_blockade =>
+      'Pressures the target port approaches with stronger interception than Patrol.';
+
+  @override
+  String get naval_mission_targetCaption_beachhead =>
+      'Landing site supports invasion on the following turn and expires after that turn if unused.';
 
   @override
   String get naval_units_noShipsInFleet => 'No ships in this fleet';
@@ -579,4 +764,23 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
 
   @override
   String get civilian_units_assign => 'Assign';
+
+  @override
+  String get civilian_units_relocate => 'Relocate';
+
+  @override
+  String civilian_units_spyStatus_holdingIntel(String province) {
+    return 'Holding intel: $province';
+  }
+
+  @override
+  String get civilian_units_spyStatus_counterEspionage => 'Counter-espionage';
+
+  @override
+  String get civilian_units_spyStatus_reserve => 'Reserve';
+
+  @override
+  String civilian_units_pendingRelocate(String location) {
+    return 'Relocating to: $location';
+  }
 }

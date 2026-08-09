@@ -1,4 +1,8 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
+import '../order_kind.dart';
+import '../turn_news_digest.dart';
 
 // ---------------------------------------------------------------------------
 // Game-to-UI bridge — emitted by services when game state changes.
@@ -76,6 +80,23 @@ class AppCombatResultEvent extends GameToUIEvent {
   final String winnerId;
   final int turnNumber;
   final Map<String, int> casualties;
+}
+
+/// General medals increased after a land battle win. Mirrors [GeneralMedalGainedEvent].
+class AppGeneralMedalGainedEvent extends GameToUIEvent {
+  const AppGeneralMedalGainedEvent({
+    required this.playerId,
+    required this.generalId,
+    required this.provinceId,
+    required this.newMedals,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final String generalId;
+  final String provinceId;
+  final int newMedals;
+  final int turnNumber;
 }
 
 /// Naval battle resolved in a sea zone. Mirrors colonizethis_logic NavalCombatResultEvent.
@@ -156,10 +177,12 @@ class AppVictorySetEvent extends GameToUIEvent {
 class AppOrderRejectedEvent extends GameToUIEvent {
   const AppOrderRejectedEvent({
     required this.playerId,
+    required this.orderKind,
     required this.orderSummary,
     required this.reasonCode,
   });
   final String playerId;
+  final OrderKind orderKind;
   final String orderSummary;
   final String reasonCode;
 }
@@ -249,5 +272,36 @@ class AppSpyDefectedEvent extends GameToUIEvent {
   final String previousOwnerId;
   final String newOwnerId;
   final String provinceId;
+  final int turnNumber;
+}
+
+/// Overseas-profit treasury credited. Mirrors colonizethis_logic OverseasProfitCreditedEvent.
+class AppOverseasProfitCreditedEvent extends GameToUIEvent {
+  const AppOverseasProfitCreditedEvent({
+    required this.playerId,
+    required this.totalTreasuryCredit,
+    required this.creditCount,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final int totalTreasuryCredit;
+  final int creditCount;
+  final int turnNumber;
+}
+
+/// Last-turn ordinary market fill / carry-forward summary. Mirrors
+/// [MarketTurnSummaryEvent] (Refs #4270).
+class AppMarketTurnSummaryEvent extends GameToUIEvent {
+  const AppMarketTurnSummaryEvent({
+    required this.playerId,
+    required this.totalSpent,
+    required this.totalReceived,
+    required this.carryForwardOrderCount,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final int totalSpent;
+  final int totalReceived;
+  final int carryForwardOrderCount;
   final int turnNumber;
 }

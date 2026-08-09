@@ -93,6 +93,7 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Row tap (full list) | Full-list mode | `ClosePanelEvent` + `LocateMapTileEvent` | Panel closes; map pans. |
 | Locate icon | Always in scoped mode | `LocateMapTileEvent` | Panel stays open. |
 | Assign | Idle, no pending work | Work-target selection or shortcut commit | Per row rules in **Per-unit row content**. |
+| Relocate (Spy only) | Idle Spy, no pending work | `StartCivilianRelocateSelectionEvent` → map tile pick → `CivilianMoveRequestedEvent` | Stages `MoveOrder`; leave-intel soft warn when last Spy vacates foreign province. |
 
 ---
 
@@ -103,6 +104,9 @@ The observe-mode multi-owner sub-heading (per-faction grouping) is not part of t
 | Full list | Default toolbar open | All human civilians by region. |
 | Tile-scoped | Map marker tap | Units on one tile only. |
 | Explorer / Builder shortcut | Province tile actions | Filtered + direct assign. |
+| Spy relocate eligible (Refs #4219) | Idle Spy, no pending work or `MoveOrder` | **Relocate** + **Assign**; status **Reserve** (owned land) or **Holding intel: {province}** (foreign). |
+| Spy counter-espionage (Refs #4219) | Pending or in-progress `counter_spy` | Status **Counter-espionage**; **Relocate** hidden. |
+| Spy pending relocate (Refs #4219) | Pending draft `MoveOrder` for Spy | **Relocating to:** destination copy on assigned-to line; **Relocate** hidden until move clears or is cancelled. |
 
 ---
 
@@ -125,7 +129,7 @@ For each civilian unit, the panel shows:
 
 | Field        | Source | Notes |
 |-------------|--------|--------|
-| **Status**  | `Unit.status` | One of: `idle`, `working`. Display as short label (e.g. "Idle", "Working"). |
+| **Status**  | `Unit.status` (+ Spy overrides) | Default: `idle` / `working` as short labels. **Spy-only** plain-language overrides (Refs #4219, **UXD-002**): foreign idle presence → **Holding intel: {province}**; pending/active `counter_spy` → **Counter-espionage**; owned-land idle reserve → **Reserve**; pending `MoveOrder` destination row uses pending-relocate assigned-to copy (status may show generic Idle until move resolves). |
 | **Location**| projected civilian tile key | **Province name only** (no raw id). Province name from game data (e.g. `Province.displayName` for the province derived from projected tile). **Always show the region** with the location (e.g. "Old World — London" or "New World — Mexica") so the player knows which map tab the unit is in. |
 | **Assigned to** | pending `WorkOrder` first, else `Unit.currentWork` when `status == working` | If idle and no pending work: show "—". If pending or in-progress: show work target, target location, and localized inline turn counter on the first line (e.g. `X turns`), where pending uses assign-time `totalTurns` and in-progress uses `remainingTurns/totalTurns`. **Pending cost preview (this turn only):** when the pending order has a **stockpile material** cost per `WorkOrderCostCalculator(game).calculateCost(...)` (same inputs as order validation: `target`, `targetTileKey`, `improvementLevel` from tile state for `build_improvement` only, `fortLevel` / `roadLevel` from game state), show a second line (below "Assigned to") of **dense chips**: each commodity as **`ResourceIcon` + required quantity** (canonical pattern; align with training / production panels, `app/lib/widgets/resource_icon.dart`). **Pending `purchase_land` (Merchant):** show **treasury** cost via `purchaseLandCost(resourceId)` with `resourceId` from `game.worldState.resourceByTileKey[order.targetTileKey]`, using the same **treasury chip/string** pattern as military training (`trainUnits_treasury` / `train_military_dialog.dart`) — **not** a commodity `ResourceIcon` for cash. **No literal ` (pending)` suffix is shown for any pending target.** **No affordability UI** on this panel: show required amounts only; do not compare to stockpile/treasury or use deficit/error styling. |
 
@@ -137,7 +141,9 @@ For each civilian unit, the panel shows:
 - **Assign (idle only):** For each unit with `Unit.status == idle` and no pending work order for this turn, the row shows an **Assign** button. Clicking it opens a menu of **allowed work orders** for that unit type only (per [civilian-units.md](../game/civilian-units.md) Work Order Summary and `workOrderTargetsByUnitType`). **Draft xor with Move:** The human shell must not keep a pending civilian **`MoveOrder`** and a **`WorkOrder`** for the **same** `unitId` in one turn; committing work via Assign clears a conflicting move in the draft helper `GameMapAreaStateLogic.addHumanWorkOrder`, matching [orders.md](../program/orders.md) § Civilian `WorkOrder` bundling (implicit move leg) and xor draft. After the user selects an order from the menu, the shell enters **work-target selection mode**: for `explore`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, and `build_rail`, the shell reads valid target tiles from its **`PerPlayerWorkTargetSelectionCache`** instance ([order-suggestions.md](../program/order-suggestions.md) § Per-player work-target selection cache; shared semantics with province shortcut states); for other targets it computes valid tiles once using `getValidWorkOrderTileKeysWithVisibility`, passing **per-region tile maps** when loaded. For cache-first protected targets (`explore`, `steal_tech`, `counter_spy`, `purchase_land`, `prospect`, `build_improvement`, `upgrade_town`, `build_road`, `build_port`, `build_fort`, `build_rail`), the shell applies runtime stale-tile filtering on cached keys using current draft/in-progress conflicts and does not trigger live fallback recomputation in the interaction. The shell passes a **global** tile set (all regions) unchanged to the map widget. The map shows **valid target tiles** with a **flashing yellow selector** and an **orange hover cursor** (see [map-widget.md](map-widget.md) § Work target selection mode). The user may **switch region tabs** to select a target in the other region; tab changes update rendering from the same global cache and do not recompute or overwrite the cached set. Clicking a **valid** tile commits the work order and exits selection mode. For **province-level** orders (`explore`, `steal_tech`, `counter_spy`), the clicked tile is translated to the province (e.g. `regionId|provinceId|0|0`) per [orders.md](../program/orders.md). **Back-out:** Invalid/empty tile clicks are no-op (selection mode persists); explicit cancel via the top-centered prompt `cancel`, `Esc` while selection mode is active, or any left-rail map icon exits selection mode without submitting while preserving each icon's existing action.
 - **Assign (explorer shortcut mode):** In explorer-filtered shortcut mode opened from province Tile actions, pressing **Assign** on an eligible Explorer bypasses the generic choose-order menu and directly commits a pending work order targeting the already selected province-panel tile. The UI must not enter work-target selection mode for this shortcut. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order.
 - **Assign (builder shortcut mode):** In builder-filtered shortcut mode opened from province Tile `Build improvement`, pressing **Assign** on an eligible idle/no-pending Builder bypasses the generic choose-order menu and directly commits pending `WorkOrder(target: build_improvement, targetTileKey: <exact selected tile key>)`. Builder rows with pending/in-progress work keep standard row content and do not show Assign. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order.
-- **Explicit shortcut contract:** `OpenCivilianUnitsPanelEvent` carries explicit shortcut target fields; `prospectShortcutTargetTileKey` opens direct-assign `prospect`, `exploreShortcutTargetTileKey` opens direct-assign `explore`, `buildImprovementShortcutTargetTileKey` opens direct-assign `build_improvement`. At most one shortcut field is non-null for a given panel open request.
+- **Assign (engineer shortcut mode):** In engineer-filtered shortcut mode opened from province Tile `Build road`, pressing **Assign** on an eligible idle/no-pending Engineer bypasses the generic choose-order menu and directly commits pending `WorkOrder(target: build_road, targetTileKey: <exact selected tile key>)`. Engineer rows with pending/in-progress work keep standard row content and do not show Assign. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order.
+- **Assign (merchant shortcut mode):** In merchant-filtered shortcut mode opened from province Tile `Purchase land` (Refs #4274), pressing **Assign** on an eligible idle/no-pending Merchant bypasses the generic choose-order menu and directly commits pending `WorkOrder(target: purchase_land, targetTileKey: <exact selected tile key>)`. Merchant rows with pending/in-progress work keep standard row content and do not show Assign. If assignment is no longer valid at click-time (state drift), the UI performs a silent no-op and does not commit a pending work order. The UI must not enter map work-target selection mode for this shortcut.
+- **Explicit shortcut contract:** `OpenCivilianUnitsPanelEvent` carries explicit shortcut target fields and unit-filter flags: `prospectShortcutTargetTileKey` opens direct-assign `prospect`, `exploreShortcutTargetTileKey` opens direct-assign `explore`, `buildImprovementShortcutTargetTileKey` opens direct-assign `build_improvement` (with `builderOnly: true`), `buildRoadShortcutTargetTileKey` opens direct-assign `build_road` (with `engineerOnly: true`), `purchaseLandShortcutTargetTileKey` opens direct-assign `purchase_land` (with `merchantOnly: true`). At most one shortcut target field is non-null for a given panel open request.
 - **Testing (Build improvement shortcut):** Whether the province Tile row shows **Build improvement** as enabled (vs visible-but-disabled) follows **pipeline contract A** in [order-suggestions.md](../program/order-suggestions.md) — the same per-unit `getValidWorkOrderTileKeysWithVisibility` predicate the shell uses for tile-target selection after choosing `build_improvement` from the Assign menu. UI specs: [province-sea-zone-detail-overlay.md](province-sea-zone-detail-overlay.md).
 - **Cancel (units with work):** For each unit that has either (1) a **pending** work order this turn (in the current orders list) or (2) **in-progress** work (`Unit.status == working`, `Unit.currentWork != null`), the row shows a **Cancel** control. Before cancelling, the UI layer shows a **confirm dialog** (e.g. "Cancel this work order?"). On confirm: **pending** — remove the work order from the player's orders for this turn; **in-progress** — the system clears `Unit.currentWork` and sets `Unit.status` to idle for that unit (no material refund). Implementation of in-progress cancel: see [development-resolution.md](../program/development-resolution.md) and/or [orders.md](../program/orders.md).
 
@@ -208,6 +214,18 @@ For each civilian unit, the panel shows:
 
 - **Given** the user opens the Civilian Units panel, **when** the panel is displayed, **then** the UI layer presents it as a **bottom sheet** that appears from the bottom edge (slides up), so the map remains visible above; on narrow viewports layout and touch targets follow [mobile-adaptation.md](mobile-adaptation.md).
 
+- **Given** an idle Spy with no pending work or move order, **when** `UNIT10001` renders that row, **then** the UI layer shows **Relocate** (and **Assign** still offers `counter_spy` only on owned targets per game rules).
+
+- **Given** the user taps **Relocate** on an eligible Spy row, **when** the tap is handled, **then** the UI layer emits `StartCivilianRelocateSelectionEvent(unitId)` and enters map relocate selection mode (orange hover, valid-tile highlights, relocate prompt copy).
+
+- **Given** a Spy is idle in a non-owned province, **when** the row renders, **then** the status line shows **Holding intel: {province display name}** (not bare Idle alone).
+
+- **Given** a Spy has pending or in-progress `counter_spy`, **when** the row renders, **then** the status line shows **Counter-espionage** and **Relocate** is hidden.
+
+- **Given** a Spy is idle in an owned province with no mission, **when** the row renders, **then** the status line shows **Reserve**.
+
+- **Given** Relocate would leave a foreign province with zero projected own Spies (per `spyLeaveIntelWarningNeeded` in logic), **when** the player selects a destination tile, **then** the UI layer shows a soft confirm warning that full intel there will fog after end of turn and still allows confirm.
+
 - **Given** the Civilian Units panel is open and a unit has `Unit.status == idle` and no pending work order for the human player this turn, **when** the user views that unit's row, **then** the UI layer shows an **Assign** button (or equivalent control).
 
 - **Given** the user clicked **Assign** for an idle civilian unit, **when** the order menu is shown, **then** the UI layer displays only work order targets allowed for that unit type (per game model); the user may select one or dismiss the menu.
@@ -271,7 +289,8 @@ For each civilian unit, the panel shows:
 
 - **Given** a unit is **working** with `currentWork` set, **when** the panel renders that row, **then** the UI layer shows progress as today and **does not** add a commodity cost preview strip for that row.
 
-- **Given** any row showing a pending cost preview (materials or treasury), **when** the panel renders, **then** the UI layer does **not** add stockpile/treasury deficit or “can’t afford” styling (required amounts only).
+- **Given** a pending material-backed work order is **not** affordable after earlier pending work in draft order, **when** `UNIT10001` lists that row, **then** the UI layer shows required cost chips **and** one **muted** shortfall line (`workOrderAfford_shortMaterial` / `workOrderAfford_shortTreasury`) naming the primary deficit; the row does **not** auto-cancel the order.
+- **Given** all pending work orders are affordable in draft order, **when** the panel renders, **then** no shortfall lines appear on pending rows.
 
 - **Given** the Civilian Units panel renders civilian rows, **when** row actions are visible, **then** the UI layer uses the shared unit-panel row-action abstraction with left details and right actions, keeps locate where specified, and switches row actions to icon-only on narrow widths without changing action availability.
 
@@ -308,3 +327,20 @@ For each civilian unit, the panel shows:
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "Standalone" use case, **then** the UI layer displays only the Civilian Units panel (no map) with demo data, so that layout and row content (status, location as province name + region, assigned-to) can be verified.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "With map" use case, **then** the UI layer displays the map above and the Civilian Units panel **at the bottom** (bottom placement like province overlay), built from a real generated map and initialized game (`getDebugInitGameResult()`), and the user can locate units, assign work, and cancel work so that the full flow is demonstrable.
   - **Given** the Widgetbook "Civilian Units Panel" folder is open, **when** the user selects the "As bottom sheet" use case and taps the button, **then** the panel opens as a bottom sheet that slides up from the bottom edge.
+
+---
+
+## Tests
+
+Spy relocate and UXD-002 idle exclusion (Refs #4219):
+
+- `app/test/civilian_units_panel_spy_relocate_test.dart` — Relocate row action, Spy status labels, relocate bus event, pending-move row copy.
+- `app/test/civilian_units_panel_spy_relocate_golden_test.dart` — UNIT10001 Spy **Reserve** and **Holding intel** relocate row goldens (`unit_panel_civilian_spy_reserve.png`, `unit_panel_civilian_spy_holding_intel.png`).
+- `app/test/app_event_handler_scope_civilian_work_test.dart` — `CivilianMoveRequestedEvent` stages validated Spy `MoveOrder`; move/work xor clears counter-spy.
+- `app/test/next_turn_confirmation_spy_exclusion_test.dart` — `DLG60001` idle-civilian list excludes all Spies.
+- `app/test/game_map_area_spy_relocate_leave_intel_test.dart` — map relocate leave-intel `ConfirmDialogEvent` emit, cancel, and accept → `CivilianMoveRequestedEvent`.
+- `packages/colonizethis_logic/test/spy_relocate_intel_test.dart` — `spyLeaveIntelWarningNeeded` projected-count rules.
+- `packages/colonizethis_logic/test/civilians_missing_work_orders_test.dart` — Spy exclusion from idle-civilian detection.
+- `packages/colonizethis_orders/test/orders/civilian_projected_tile_test.dart` — `projectedCivilianTileKey` prefers pending `MoveOrder` destination.
+
+Map relocate selection and leave-intel confirm dialog: `app/lib/features/game/flame/map_state/game_map_area_relocate_selection.dart`; widget coverage in `app/test/game_map_area_spy_relocate_leave_intel_test.dart` (confirm emit, cancel, accept → `CivilianMoveRequestedEvent`).

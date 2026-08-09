@@ -1,38 +1,15 @@
 // SPEC/game/tile-map-and-generation.md; SPEC/program/game-setup-pipeline.md (§7d.redist).
 
-import 'dart:math';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'setup_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'gp_old_world_resource_redistribution_quota_placement.dart';
+import 'gp_old_world_resource_redistribution_tile_scans.dart';
 import 'gp_old_world_tile_scan.dart';
-import 'seed_perturbation.dart';
-import 'setup_exceptions.dart';
-import 'town_capital_occupancy.dart';
+import 'setup_logging.dart';
 
-// GP Old World resource-redistribution concern fragments (Refs #3290 Phase 0
-// file-split). Each `part of` fragment shares this library's imports and
-// private scope, so the move is behaviour-preserving — symbols, visibility,
-// and helper sharing are unchanged.
-part 'gp_old_world_resource_redistribution_tile_scans.dart';
-part 'gp_old_world_resource_redistribution_quota_placement.dart';
-
-/// Salt for `Object.hash` when building per-resource shuffle RNGs.
-/// ASCII "REDO" packed (issue #1837 / SPEC/program/game-setup-pipeline.md).
-const int kGpOwResourceRedistributionSalt = 0x5245444f;
-
-/// Thrown when a resource cannot be placed back on GP Old World tiles after spillover.
-class GpOldWorldResourceRedistributionInfeasibleException
-    extends SetupConfigConstraintException {
-  static const codeValue = 'gp_ow_resource_redistribution_infeasible';
-
-  GpOldWorldResourceRedistributionInfeasibleException({
-    required Resource resource,
-    required String details,
-  }) : super(code: codeValue, details: 'resource=${resource.name}: $details');
-}
+export 'gp_old_world_resource_redistribution_types.dart';
 
 /// After redistribution: counts [resource] on GP-owned OW land (excl. town/capital).
 int countResourceOnGpOldWorldTiles({
@@ -43,12 +20,12 @@ int countResourceOnGpOldWorldTiles({
   final gpIds = gpIdsSortedFromPlayers(game).toSet();
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
-  final inventory = _buildGpOwTileInventory(
+  final inventory = buildGpOwTileInventory(
     map: map,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
   );
-  return _countResourceOnGpTiles(
+  return countResourceOnGpTiles(
     inventory: inventory,
     forbidden: forbidden,
     resource: resource,
@@ -83,17 +60,17 @@ applyGreatPowerOldWorldResourceRedistribution({
 
   final ownerByLocal = gpOwnerByLocalProvinceId(game);
   final forbidden = collectTownAndCapitalTileKeys(game);
-  final resourceSet = _resourcesInRedistributionSet(resourceRules);
+  final resourceSet = resourcesInRedistributionSet(resourceRules);
 
   // Single pre-clear inventory for N_r counts (Refs #4029).
-  final preClearInventory = _buildGpOwTileInventory(
+  final preClearInventory = buildGpOwTileInventory(
     map: tileMapOldWorld,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
   );
   final inventoryN = <Resource, int>{};
   for (final r in resourceSet) {
-    inventoryN[r] = _countResourceOnGpTiles(
+    inventoryN[r] = countResourceOnGpTiles(
       inventory: preClearInventory,
       forbidden: forbidden,
       resource: r,
@@ -102,7 +79,7 @@ applyGreatPowerOldWorldResourceRedistribution({
 
   var map = tileMapOldWorld;
   var ws = game.worldState;
-  final cleared = _clearGreatPowerOldWorldTerrainResources(
+  final cleared = clearGreatPowerOldWorldTerrainResources(
     mapIn: map,
     game: game,
     resMapIn: ws.resourceByTileKey,
@@ -117,7 +94,7 @@ applyGreatPowerOldWorldResourceRedistribution({
   for (final r in resourceSet) {
     final nR = inventoryN[r] ?? 0;
     if (nR <= 0) continue;
-    final out = _redistributeOneResource(
+    final out = redistributeOneResource(
       mapIn: map,
       resMapIn: resMap,
       r: r,
@@ -138,12 +115,12 @@ applyGreatPowerOldWorldResourceRedistribution({
     game = game.withWorldState(ws);
   }
 
-  final postInventory = _buildGpOwTileInventory(
+  final postInventory = buildGpOwTileInventory(
     map: map,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
   );
-  final fairness = _fairnessScore(
+  final fairness = fairnessScore(
     gpIdsSorted: gpIdsSorted,
     inventoryN: inventoryN,
     inventory: postInventory,

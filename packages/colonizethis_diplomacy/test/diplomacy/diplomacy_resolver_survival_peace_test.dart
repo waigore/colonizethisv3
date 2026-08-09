@@ -5,6 +5,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios_gp_tribe.dart';
+
 const _gp2gp3AtWar = DiplomacyRelation(
   factionId1: 'gp2',
   factionId2: 'gp3',

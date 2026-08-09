@@ -1,6 +1,6 @@
 # Wang Tileset and Map Asset Pipeline
 
-**SPEC/ui** — Terrain tilesets and overlay assets for the Flame map viewer. Wang tilesets forL0/L1 transitions (sea, plains, desert); standalone overlay tiles forL2+ features. See [layered-terrain-rendering.md](layered-terrain-rendering.md) for rendering details.
+**SPEC/ui** — Terrain tilesets and overlay assets for the Flame map viewer. Wang tilesets forL0/L1 transitions (sea, plains, desert); standalone overlay tiles forL2+ features. See [layered-terrain-rendering.md](layered-terrain-rendering.md) for rendering details. Bundled alternate themes and per-group selection: [`../program/map-theme-catalog.md`](../program/map-theme-catalog.md).
 
 ---
 

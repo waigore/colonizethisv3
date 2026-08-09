@@ -1,12 +1,18 @@
-part of 'ct_region_map.dart';
+import 'package:flutter/material.dart';
 
-class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixin {
-  late CtRegionMapGame _game;
-  final SubscriptionTracker _subscriptions = SubscriptionTracker();
+import '../core/services/region_map/region_map_widget_bindings.dart';
+import '../core/services/subscription_tracker.dart';
+import 'ct_region_map.dart';
+import 'ct_region_map_state_handlers.dart';
+import 'ct_region_map_viewport.dart';
+
+class CtRegionMapState extends State<CtRegionMap> with CtRegionMapViewportMixin {
+  late CtRegionMapGame game;
+  final SubscriptionTracker subscriptions = SubscriptionTracker();
   double _scaleGestureStartMultiplier = 1.0;
 
   @override
-  CtRegionMapGame get regionMapGame => _game;
+  CtRegionMapGame get regionMapGame => game;
 
   @override
   double get scaleGestureStartMultiplier => _scaleGestureStartMultiplier;
@@ -18,13 +24,13 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
   @override
   void initState() {
     super.initState();
-    _game = _buildCtRegionMapGame(this);
-    _attachMinimapCameraBusSubscriptions(this);
+    game = buildCtRegionMapGame(this);
+    attachCtRegionMapMinimapCameraBusSubscriptions(this);
   }
 
   @override
   void dispose() {
-    _subscriptions.cancelAll();
+    subscriptions.cancelAll();
     super.dispose();
   }
 
@@ -54,10 +60,12 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
         widget.onWorkTargetSelectionCancelled !=
             oldWidget.onWorkTargetSelectionCancelled ||
         widget.playerViewForResources != oldWidget.playerViewForResources ||
+        widget.showPlayerTerritoryOutline != oldWidget.showPlayerTerritoryOutline ||
+        widget.playerTerritoryTileKeys != oldWidget.playerTerritoryTileKeys ||
         widget.onViewportSnapshotChanged !=
             oldWidget.onViewportSnapshotChanged ||
         widget.zoomMultiplier != oldWidget.zoomMultiplier) {
-      _game.updateProps(
+      game.updateProps(
         region: widget.region,
         showPoliticalOverlay: widget.showPoliticalOverlay,
         showProvinceOverlay: widget.showProvinceOverlay,
@@ -83,27 +91,29 @@ class _CtRegionMapState extends State<CtRegionMap> with _CtRegionMapViewportMixi
         onTileSelected: widget.onTileSelected,
         onWorkTargetSelectionCancelled: widget.onWorkTargetSelectionCancelled,
         onCivilianTileTapped: (tileKey) =>
-            _handleCtRegionMapCivilianTileTapped(this, tileKey),
-        onFleetMarkerTapped: (locationScopeKey, initialFleetId, markerTileKey) =>
-            _handleCtRegionMapFleetMarkerTapped(
+            handleCtRegionMapCivilianTileTapped(this, tileKey),
+        onFleetMarkerTapped: (locationScopeKey, fleetIds, markerTileKey) =>
+            handleCtRegionMapFleetMarkerTapped(
               this,
               locationScopeKey,
-              initialFleetId,
+              fleetIds,
               markerTileKey,
             ),
         onCivilianTileSelectionCleared: widget.onCivilianTileSelectionCleared,
         playerViewForResources: widget.playerViewForResources,
         onViewportSnapshotChanged: widget.onViewportSnapshotChanged,
         zoomMultiplier: widget.zoomMultiplier,
+        showPlayerTerritoryOutline: widget.showPlayerTerritoryOutline,
+        playerTerritoryTileKeys: widget.playerTerritoryTileKeys,
       );
     }
     if (widget.bus != oldWidget.bus) {
-      _attachMinimapCameraBusSubscriptions(this);
+      attachCtRegionMapMinimapCameraBusSubscriptions(this);
     }
     if (widget.centerOnTileKey != null &&
         widget.centerOnTileKey != oldWidget.centerOnTileKey) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _game.centerOnTileKey(widget.centerOnTileKey!);
+        game.centerOnTileKey(widget.centerOnTileKey!);
       });
     }
   }

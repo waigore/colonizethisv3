@@ -34,7 +34,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -111,8 +111,12 @@ void main() {
 
     testWidgets('rows are grouped under Food / Raw Materials / Manufactured '
         'CtSectionLabel headers in catalog order — deterministic order '
-        'pin (#3093 sectioned grouping)', (tester) async {
-      await pumpTradeScreen(tester, game: buildTradeTestGame());
+        'pin (#3093 sectioned grouping, narrow viewport)', (tester) async {
+      await pumpTradeScreen(
+        tester,
+        game: buildTradeTestGame(),
+        viewport: const Size(400, 4096),
+      );
 
       // All three section headers mounted in order Food → Raw
       // Materials → Manufactured. The pin verifies their vertical

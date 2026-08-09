@@ -9,7 +9,7 @@ import 'package:colonizethis_app/features/game/widgets/production/production_all
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row_buttons.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 import 'widget_test_pumps.dart';
 
 void main() {

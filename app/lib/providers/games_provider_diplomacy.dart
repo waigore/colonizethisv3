@@ -1,4 +1,6 @@
-part of 'games_provider.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart' show CallToArmsPending, FtpOffer, InterventionPrompt, OvertureOffer;
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// At most one blocking diplomacy gate from turn resolution (overture, intervention, CTA).
 /// SPEC/ui/pending-diplomacy-state.md, SPEC/program/dialogue-system.md.

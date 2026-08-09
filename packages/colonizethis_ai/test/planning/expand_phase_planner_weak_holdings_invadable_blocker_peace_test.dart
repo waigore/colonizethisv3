@@ -51,71 +51,6 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
-const String _gpBlocker = 'gp_blocker';
-const String _minor1 = 'minor1';
-
-/// Builds a `Game` where:
-///   * `gp_own` holds [ownProvinces] OW provinces.
-///   * `gp_blocker` holds [blockerOwnProvinces] OW provinces (sets
-///     the lead the blocker has over the active player).
-///   * Every entry in [extraInvadableOwners] places a province with
-///     id `oldWorld|inv_<n>` owned by the listed factionId — used to
-///     control whether the invadable frontier is GP-only or mixed.
-///   * `gp_own` is at war with every faction in [atWarFactionIds].
-Game _weakHoldingsGame({
-  required int ownProvinces,
-  required int blockerOwnProvinces,
-  Map<String, List<String>> extraInvadableOwners = const {},
-  List<String> atWarFactionIds = const [_gpBlocker],
-  List<MinorNation> minorNations = const [
-    MinorNation(id: _minor1, displayName: 'M1'),
-  ],
-}) {
-  return Game(
-    id:
-        'g-2509-weak-holdings-canonical-'
-        'own$ownProvinces-blocker$blockerOwnProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 70),
-      oldWorld: RegionData(
-        provinces: <Province>[
-          for (var i = 1; i <= ownProvinces; i++)
-            Province(
-              id: 'oldWorld|${_gpOwn}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpOwn,
-            ),
-          for (var i = 1; i <= blockerOwnProvinces; i++)
-            Province(
-              id: 'oldWorld|${_gpBlocker}_$i',
-              regionId: 'oldWorld',
-              ownerId: _gpBlocker,
-            ),
-          for (final entry in extraInvadableOwners.entries)
-            for (final pid in entry.value)
-              Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-      Player(id: _gpBlocker, displayName: 'GP_BLOCKER', isHuman: false),
-    ],
-    minorNations: minorNations,
-    diplomacyRelations: [
-      for (final id in atWarFactionIds)
-        DiplomacyRelation(
-          factionId1: _gpOwn,
-          factionId2: id,
-          state: RelationState.atWar,
-          score: 30,
-        ),
-    ],
-  );
-}
-
 void main() {
   group(
     'weakHoldingsInvadableBlockerPeaceTargets — canonical outer guards',
@@ -124,17 +59,17 @@ void main() {
         // ownOw = 9 → above defend threshold, below quota row applies but
         // we want the "above defend AND not below quota AND not zero-reg
         // stalled" combined skip. Use ownOw above quota with armies.
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 12,
           blockerOwnProvinces: 20,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
-            _minor1: ['oldWorld|inv_minor'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
           },
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 12,
-          atWarWith: const [_gpBlocker],
+          atWarWith: const [kWeakHoldingsGpBlocker],
           invadableProvinceIdsSorted: const [
             'oldWorld|inv_blocker',
             'oldWorld|inv_minor',
@@ -158,17 +93,17 @@ void main() {
         // Below quota (5 OW), but invadable owned only by gp_blocker
         // (no minor on frontier) → GP-only; gp-blocker-focus collector
         // owns the decision instead.
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 5,
           blockerOwnProvinces: 10,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
           },
           minorNations: const [],
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 5,
-          atWarWith: const [_gpBlocker],
+          atWarWith: const [kWeakHoldingsGpBlocker],
           invadableProvinceIdsSorted: const ['oldWorld|inv_blocker'],
         );
         expect(
@@ -187,18 +122,18 @@ void main() {
       test('returns const [] when the blocker is not at war', () {
         // Below quota (5 OW), mixed frontier, but gp_blocker is not in
         // atWarWith → blocker membership guard fires.
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 5,
           blockerOwnProvinces: 10,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
-            _minor1: ['oldWorld|inv_minor'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
           },
-          atWarFactionIds: const [_minor1],
+          atWarFactionIds: const [kWeakHoldingsMinor1],
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 5,
-          atWarWith: const [_minor1],
+          atWarWith: const [kWeakHoldingsMinor1],
           invadableProvinceIdsSorted: const [
             'oldWorld|inv_blocker',
             'oldWorld|inv_minor',
@@ -225,17 +160,17 @@ void main() {
       test('default-start critical row (ownOw <= 9) fires at lead == 1', () {
         // ownOw = 7 (default-start) → minLead = 1; blocker total = 7
         // base + 1 extra invadable = 8 (lead = 1) → fires.
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 7,
           blockerOwnProvinces: 7,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
-            _minor1: ['oldWorld|inv_minor'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
           },
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
-          atWarWith: const [_gpBlocker],
+          atWarWith: const [kWeakHoldingsGpBlocker],
           invadableProvinceIdsSorted: const [
             'oldWorld|inv_blocker',
             'oldWorld|inv_minor',
@@ -246,7 +181,7 @@ void main() {
             game: game,
             snapshot: snapshot,
           ),
-          const [_gpBlocker],
+          const [kWeakHoldingsGpBlocker],
           reason:
               'Default-start critical row (ownOw <= '
               'kObserverDefaultStartOldWorldProvincesPerGp + 2 = 9) '
@@ -258,17 +193,17 @@ void main() {
       test('default-start row does NOT fire at lead == 0 (equal strength)', () {
         // ownOw = 7, blocker total = 6 base + 1 extra invadable = 7 →
         // lead 0 < minLead 1 → no peace.
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 7,
           blockerOwnProvinces: 6,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
-            _minor1: ['oldWorld|inv_minor'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
           },
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
-          atWarWith: const [_gpBlocker],
+          atWarWith: const [kWeakHoldingsGpBlocker],
           invadableProvinceIdsSorted: const [
             'oldWorld|inv_blocker',
             'oldWorld|inv_minor',
@@ -291,17 +226,17 @@ void main() {
         // below-quota row applies. Blocker total = 9 base + 1 extra
         // invadable = 10, lead 10-8 = 2 → fires below-quota arm
         // (ownOw 8 <= default-start + 2 = 9 → minLead 1; lead 2 >= 1).
-        final game = _weakHoldingsGame(
+        final game = buildWeakHoldingsInvadableBlockerGame(
           ownProvinces: 8,
           blockerOwnProvinces: 9,
           extraInvadableOwners: const {
-            _gpBlocker: ['oldWorld|inv_blocker'],
-            _minor1: ['oldWorld|inv_minor'],
+            kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+            kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
           },
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 8,
-          atWarWith: const [_gpBlocker],
+          atWarWith: const [kWeakHoldingsGpBlocker],
           invadableProvinceIdsSorted: const [
             'oldWorld|inv_blocker',
             'oldWorld|inv_minor',
@@ -312,7 +247,7 @@ void main() {
             game: game,
             snapshot: snapshot,
           ),
-          const [_gpBlocker],
+          const [kWeakHoldingsGpBlocker],
           reason:
               'Below quota at ownOw == 8 (default-start + 1) → minLead '
               '= 1; lead 10 - 8 = 2 >= 1 → peace blocker.',
@@ -323,17 +258,17 @@ void main() {
 
   group('Determinism (Must-have #7)', () {
     test('weakHoldingsInvadableBlockerPeaceTargets is identical on repeat', () {
-      final game = _weakHoldingsGame(
+      final game = buildWeakHoldingsInvadableBlockerGame(
         ownProvinces: 7,
         blockerOwnProvinces: 9,
         extraInvadableOwners: const {
-          _gpBlocker: ['oldWorld|inv_blocker'],
-          _minor1: ['oldWorld|inv_minor'],
+          kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+          kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
         },
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [_gpBlocker],
+        atWarWith: const [kWeakHoldingsGpBlocker],
         invadableProvinceIdsSorted: const [
           'oldWorld|inv_blocker',
           'oldWorld|inv_minor',
@@ -348,7 +283,7 @@ void main() {
         snapshot: snapshot,
       );
       expect(first, equals(second));
-      expect(first, const [_gpBlocker]);
+      expect(first, const [kWeakHoldingsGpBlocker]);
     });
   });
 
@@ -357,17 +292,17 @@ void main() {
       final fixtures = <({Game game, AIWorldSnapshot snapshot, String label})>[
         (
           label: 'outer guard: not in critical-weak band',
-          game: _weakHoldingsGame(
+          game: buildWeakHoldingsInvadableBlockerGame(
             ownProvinces: 12,
             blockerOwnProvinces: 20,
             extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
+              kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+              kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
             },
           ),
           snapshot: ownSnapshot(
             oldWorldProvincesOwned: 12,
-            atWarWith: const [_gpBlocker],
+            atWarWith: const [kWeakHoldingsGpBlocker],
             invadableProvinceIdsSorted: const [
               'oldWorld|inv_blocker',
               'oldWorld|inv_minor',
@@ -376,33 +311,33 @@ void main() {
         ),
         (
           label: 'outer guard: GP-only frontier',
-          game: _weakHoldingsGame(
+          game: buildWeakHoldingsInvadableBlockerGame(
             ownProvinces: 5,
             blockerOwnProvinces: 10,
             extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
+              kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
             },
             minorNations: const [],
           ),
           snapshot: ownSnapshot(
             oldWorldProvincesOwned: 5,
-            atWarWith: const [_gpBlocker],
+            atWarWith: const [kWeakHoldingsGpBlocker],
             invadableProvinceIdsSorted: const ['oldWorld|inv_blocker'],
           ),
         ),
         (
           label: 'fire path: default-start critical row at lead 1',
-          game: _weakHoldingsGame(
+          game: buildWeakHoldingsInvadableBlockerGame(
             ownProvinces: 7,
             blockerOwnProvinces: 7,
             extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
+              kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+              kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
             },
           ),
           snapshot: ownSnapshot(
             oldWorldProvincesOwned: 7,
-            atWarWith: const [_gpBlocker],
+            atWarWith: const [kWeakHoldingsGpBlocker],
             invadableProvinceIdsSorted: const [
               'oldWorld|inv_blocker',
               'oldWorld|inv_minor',
@@ -411,17 +346,17 @@ void main() {
         ),
         (
           label: 'fire path: below-quota row at lead 2',
-          game: _weakHoldingsGame(
+          game: buildWeakHoldingsInvadableBlockerGame(
             ownProvinces: 8,
             blockerOwnProvinces: 9,
             extraInvadableOwners: const {
-              _gpBlocker: ['oldWorld|inv_blocker'],
-              _minor1: ['oldWorld|inv_minor'],
+              kWeakHoldingsGpBlocker: ['oldWorld|inv_blocker'],
+              kWeakHoldingsMinor1: ['oldWorld|inv_minor'],
             },
           ),
           snapshot: ownSnapshot(
             oldWorldProvincesOwned: 8,
-            atWarWith: const [_gpBlocker],
+            atWarWith: const [kWeakHoldingsGpBlocker],
             invadableProvinceIdsSorted: const [
               'oldWorld|inv_blocker',
               'oldWorld|inv_minor',

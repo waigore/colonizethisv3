@@ -15,16 +15,16 @@ void vetRunRejectsMutualExclusionWhenBidAndOfferShareACommodity() {final game = 
 
 void vetRunRejectsOfferExceedingAvailableStockpile() {final game = vetGameWith(player: vetGp1(stockpile: Stockpile(quantities: {CommodityCatalog.timber.id: 3}),),); final result = vetAddTrade(game,vetTradeEngine(),validatorOffer(CommodityCatalog.timber.id,10),); expect(result.isAccepted,isFalse); expect(result.reason,TradeOrderRejectionReasons.offerExceedsStockpile);}
 
-void vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy() {final game = vetGameWith(player: vetGp1(treasury: 500)); final result = vetAddTrade(game,vetTradeEngine(),validatorBid(CommodityCatalog.timber.id,1),); expect(result.isAccepted,isTrue,reason: 'Baseline kWorldMarketBaselineBidTypeCap == 1 admits exactly ' 'one bid even for a no-embassy GP.',);}
+void vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy() {final game = vetGameWith(player: vetGp1(treasury: 500)); final result = vetAddTrade(game,vetTradeEngine(),validatorBid(CommodityCatalog.timber.id,1),); expect(result.isAccepted,isTrue,reason: 'Baseline kWorldMarketBaselineBidTypeCap == 3 admits bids for a no-embassy GP.',);}
 
-void vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy() {final game = vetGameWith(player: vetGp1(treasury: 500)); final engine = vetTradeEngine()..addTradeOrderWithContext(game,vetTopology,'gp1',validatorBid(CommodityCatalog.timber.id,1),); final result = vetAddTrade(game,engine,validatorBid(CommodityCatalog.iron.id,1),); expect(result.isAccepted,isFalse); expect(result.reason,TradeOrderRejectionReasons.bidTypeCapExceeded);}
+void vetRunRejectsFourthDistinctCommodityBidWhenNoEmbassy() {final game = vetGameWith(player: vetGp1(treasury: 500)); final engine = vetTradeEngine()..addTradeOrderWithContext(game,vetTopology,'gp1',validatorBid(CommodityCatalog.timber.id,1),)..addTradeOrderWithContext(game,vetTopology,'gp1',validatorBid(CommodityCatalog.iron.id,1),)..addTradeOrderWithContext(game,vetTopology,'gp1',validatorBid(CommodityCatalog.coal.id,1),); final result = vetAddTrade(game,engine,validatorBid(CommodityCatalog.grain.id,1),); expect(result.isAccepted,isFalse); expect(result.reason,TradeOrderRejectionReasons.bidTypeCapExceeded);}
 
 List<RunnableScenario> orderEngineValidateTradeScenarios() => [
   // dart format off
       rs('accepts a valid offer when stockpile covers quantity', vetRunAcceptsValidOfferWhenStockpileCoversQuantity),
       rs('rejects mutual exclusion when bid and offer share a commodity', vetRunRejectsMutualExclusionWhenBidAndOfferShareACommodity),
       rs('rejects offer exceeding available stockpile', vetRunRejectsOfferExceedingAvailableStockpile),
-      rs('accepts first bid when player has no embassy (baseline bid type cap 1 per Refs #2924; SPEC/game/world-market.md § Bid type cap)', vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy),
-      rs('rejects second distinct-commodity bid when no embassy (baseline bid type cap == 1 exhausted; Refs #2924)', vetRunRejectsSecondDistinctCommodityBidWhenNoEmbassy),
+      rs('accepts first bid when player has no embassy (baseline bid type cap 3 per Refs #4186; SPEC/game/world-market.md § Bid type cap)', vetRunAcceptsFirstBidWhenPlayerHasNoEmbassy),
+      rs('rejects fourth distinct-commodity bid when no embassy (baseline bid type cap == 3 exhausted; Refs #4186)', vetRunRejectsFourthDistinctCommodityBidWhenNoEmbassy),
       // dart format on
 ];

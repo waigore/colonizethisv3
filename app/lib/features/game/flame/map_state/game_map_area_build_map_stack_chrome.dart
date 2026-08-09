@@ -1,14 +1,33 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show RegionMapViewData;
+
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+
+import '../../screens/game/game_screen_shared.dart';
+import '../minimap/minimap.dart';
+import '../../widgets/shell/game_map_players_bar.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'game_map_area_view.dart';
+import 'game_map_area_selection.dart';
+import 'game_map_area_e2e.dart';
 
 /// Minimap, players bar, and turn-feed overlay chrome for the map stack.
-mixin _GameMapAreaBuildMapStackChrome
+mixin GameMapAreaBuildMapStackChrome
     on
         ConsumerState<GameMapArea>,
-        _GameMapAreaStateBase,
-        _GameMapAreaView,
-        _GameMapAreaSelection,
-        _GameMapAreaE2e {
-  List<Widget> _buildMapStackChromeChildren({
+        GameMapAreaStateBase,
+        GameMapAreaView,
+        GameMapAreaSelection,
+        GameMapAreaE2e {
+  List<Widget> buildMapStackChromeChildren({
     required bool isNarrow,
     required RegionMapViewData projectedRegion,
     required String mapPlayerId,
@@ -29,9 +48,9 @@ mixin _GameMapAreaBuildMapStackChrome
             bottom: 8,
             child: GameRegionMinimap(
               region: projectedRegion,
-              viewportSnapshot: _regionViewportSnapshot,
+              viewportSnapshot: regionViewportSnapshot,
               bus: ref.read(appEventBusProvider),
-              cellSizePx: _currentRegion.cellSize.toDouble(),
+              cellSizePx: currentRegion.cellSize.toDouble(),
               narrow: isNarrow,
             ),
           );
@@ -43,7 +62,7 @@ mixin _GameMapAreaBuildMapStackChrome
       // feed cards below.
       if (!isNarrow &&
           widget.game.victory == null &&
-          _mapViewState.showPlayersBar)
+          mapViewState.showPlayersBar)
         GameMapPlayersBar(
           game: widget.game,
           highlightPlayerId: shell.inObservePhase && shell.viewingPlayerId == null
@@ -60,7 +79,7 @@ mixin _GameMapAreaBuildMapStackChrome
               provincePanelOpen: panelOpen,
             );
             if (!shell.showPlayerChrome ||
-                !_mapViewState.showPlayerTurnEventsFeed) {
+                !mapViewState.showPlayerTurnEventsFeed) {
               return const SizedBox.shrink();
             }
             return Positioned(
@@ -75,9 +94,9 @@ mixin _GameMapAreaBuildMapStackChrome
         ),
       if (isNarrow &&
           widget.game.victory == null &&
-          (_mapViewState.showPlayersBar ||
+          (mapViewState.showPlayersBar ||
               (shell.showPlayerChrome &&
-                  _mapViewState.showPlayerTurnEventsFeed)))
+                  mapViewState.showPlayerTurnEventsFeed)))
         Positioned(
           right: kMapOverlayEdgeInset,
           top: 56,
@@ -86,15 +105,15 @@ mixin _GameMapAreaBuildMapStackChrome
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (shell.showPlayerChrome &&
-                  _mapViewState.showPlayerTurnEventsFeed)
+                  mapViewState.showPlayerTurnEventsFeed)
                 PlayerTurnEventFeedCard(
                   entries: feedEntries,
                   emptyLabel: 'No player events last turn.',
                   narrow: true,
                 ),
-              if (_mapViewState.showPlayersBar) ...[
+              if (mapViewState.showPlayersBar) ...[
                 if (shell.showPlayerChrome &&
-                    _mapViewState.showPlayerTurnEventsFeed)
+                    mapViewState.showPlayerTurnEventsFeed)
                   const SizedBox(
                     height: GameMapPlayersBar.narrowStackGap,
                   ),

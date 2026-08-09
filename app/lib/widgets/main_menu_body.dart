@@ -2,10 +2,13 @@
 // host file under the repo-lint non-comment line limit per
 // `SPEC/program/dart-file-non-comment-line-size.md`.
 
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
 
-class _MainMenuBody extends StatelessWidget {
-  const _MainMenuBody({
+import 'main_menu_body_content.dart';
+import 'main_menu_constants.dart';
+
+class MainMenuBody extends StatelessWidget {
+  const MainMenuBody({
     required this.variant,
     required this.showAfterVictorySubtitle,
     required this.loadGameEnabled,
@@ -17,6 +20,7 @@ class _MainMenuBody extends StatelessWidget {
     required this.onSettings,
     required this.onQuit,
     required this.logoBuilder,
+    super.key,
   });
 
   final MainMenuVariant variant;
@@ -47,7 +51,7 @@ class _MainMenuBody extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: SingleChildScrollView(
-                  child: _MainMenuBodyContent(
+                  child: MainMenuBodyContent(
                     variant: variant,
                     showAfterVictorySubtitle: showAfterVictorySubtitle,
                     loadGameEnabled: loadGameEnabled,

@@ -1,12 +1,13 @@
+import 'tech_catalog_cost.dart';
+import 'tech_definition.dart';
+import 'tech_ids.dart';
 
-part of 'tech_catalog.dart';
-
-void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
+void addTechCatalogChunk5(Map<String, TechDefinition> m) {
   m[kTechIdPaddlewheels] = TechDefinition(
     id: kTechIdPaddlewheels,
     era: 3,
     category: 'naval',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Paddlewheels',
     prerequisiteIds: [kTechIdAdvancedHullDesign, kTechIdEarlySteamEngine],
     shipUnlockIds: ['raider'],
@@ -15,7 +16,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdMerchantSteamships,
     era: 4,
     category: 'naval',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Merchant Steamships',
     prerequisiteIds: [kTechIdPaddlewheels, kTechIdRiverboats],
     shipUnlockIds: ['merchant_steamship'],
@@ -26,7 +27,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdAdvancedHullDesign,
     era: 3,
     category: 'naval',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Advanced Hull Design',
     prerequisiteIds: [
       kTechIdUniversity,
@@ -39,7 +40,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdShipOfTheLine,
     era: 3,
     category: 'naval',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Ship of the Line',
     prerequisiteIds: [kTechIdLargeHulls, kTechIdLargeCopperAndTinMines],
     shipUnlockIds: [kTechIdShipOfTheLine],
@@ -48,7 +49,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdPrivateeringCompanies,
     era: 2,
     category: 'naval',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Privateering Companies',
     prerequisiteIds: [kTechIdNavigation, kTechIdDiplomaticExpertise],
   );
@@ -56,7 +57,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdAdvancedIronWorking,
     era: 4,
     category: 'naval',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Advanced Iron Working',
     prerequisiteIds: [
       kTechIdShipOfTheLine,
@@ -71,7 +72,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdOrganisedRegiments,
     era: 1,
     category: 'military',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Organised Regiments',
     prerequisiteIds: [kTechIdLandEnclosure],
     regimentUnlockIds: ['lancers'],
@@ -80,7 +81,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdImprovedIronWeapons,
     era: 1,
     category: 'military',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Improved Iron Weapons',
     prerequisiteIds: [kTechIdOrganisedRegiments, kTechIdIronMining],
     regimentUnlockIds: ['halberdiers'],
@@ -89,7 +90,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdImprovedInfantryTactics,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Improved Infantry Tactics',
     prerequisiteIds: [kTechIdOrganisedRegiments, kTechIdPrintingPress],
     regimentUnlockIds: ['calivermen'],
@@ -98,7 +99,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdCrucibleProcess,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Crucible Process',
     prerequisiteIds: [kTechIdSquareSetTimbering, kTechIdSteamInMining],
   );
@@ -106,7 +107,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdBayonet,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Bayonet',
     prerequisiteIds: [kTechIdImprovedIronWeapons, kTechIdCrucibleProcess],
     regimentUnlockIds: ['regulars'],
@@ -115,7 +116,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdWeaponCraftsmanship,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Weapon Craftsmanship',
     prerequisiteIds: [kTechIdOrganisedRegiments, kTechIdCopperAndTinMining],
     regimentUnlockIds: ['musketeers'],
@@ -124,7 +125,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdIndustrialMachinery,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Industrial Machinery',
     prerequisiteIds: [
       kTechIdTrainedJourneymen,
@@ -136,7 +137,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdExplosives,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Explosives',
     prerequisiteIds: [kTechIdWeaponCraftsmanship, kTechIdIndustrialMachinery],
     regimentUnlockIds: ['grenadiers'],
@@ -145,7 +146,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdEarlyRifles,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Early Rifles',
     prerequisiteIds: [kTechIdImprovedInfantryTactics, kTechIdCrucibleProcess],
     regimentUnlockIds: ['skirmishers'],
@@ -154,7 +155,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdLongRangeRifles,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Long Range Rifles',
     prerequisiteIds: [kTechIdEarlyRifles, kTechIdCrucibleProcess],
     regimentUnlockIds: ['sharpshooters'],
@@ -163,7 +164,7 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
     id: kTechIdNeedleGuns,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Needle Guns',
     prerequisiteIds: [
       kTechIdIndustrialFundingOfResearch,
@@ -174,12 +175,12 @@ void _addTechCatalogChunk5(Map<String, TechDefinition> m) {
   );
 }
 
-void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
+void addTechCatalogChunk6(Map<String, TechDefinition> m) {
   m[kTechIdEliteMilitaryTraining] = TechDefinition(
     id: kTechIdEliteMilitaryTraining,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Elite Military Training',
     prerequisiteIds: [
       kTechIdModernMilitaryFunding,
@@ -194,7 +195,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdRecruitSteppeHorsemen,
     era: 1,
     category: 'military',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Recruit Steppe Horsemen',
     prerequisiteIds: [kTechIdCropRotation],
     regimentUnlockIds: ['cossacks'],
@@ -203,7 +204,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdImprovedCavalryTactics,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Improved Cavalry Tactics',
     prerequisiteIds: [kTechIdPrintingPress, kTechIdAnimalHusbandry],
     regimentUnlockIds: ['harquebusiers'],
@@ -212,7 +213,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdHussars,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Hussars',
     prerequisiteIds: [
       kTechIdImprovedCavalryTactics,
@@ -224,7 +225,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdImprovedCavalryWeapons,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Improved Cavalry Weapons',
     prerequisiteIds: [
       kTechIdIndustrialMachinery,
@@ -237,7 +238,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdScouting,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Scouting',
     prerequisiteIds: [kTechIdHussars, kTechIdEarlyRifles],
     regimentUnlockIds: ['scouts'],
@@ -246,7 +247,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdRepeatingCavalryCarbine,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Repeating Cavalry Carbine',
     prerequisiteIds: [
       kTechIdIndustrialFundingOfResearch,
@@ -260,7 +261,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdHorseArtillery,
     era: 1,
     category: 'military',
-    cost: _cost(1),
+    cost: techCatalogCostForTier(1),
     displayName: 'Horse Artillery',
     prerequisiteIds: [kTechIdAnimalHusbandry, kTechIdCopperAndTinMining],
     regimentUnlockIds: [kTechIdHorseArtillery],
@@ -269,7 +270,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdSiegeEngineering,
     era: 2,
     category: 'military',
-    cost: _cost(2),
+    cost: techCatalogCostForTier(2),
     displayName: 'Siege Engineering',
     prerequisiteIds: [kTechIdPrintingPress, kTechIdCopperAndTinMining],
     regimentUnlockIds: ['royal_artillery'],
@@ -278,7 +279,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdLightArtilleryTactics,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Light Artillery Tactics',
     prerequisiteIds: [kTechIdCrucibleProcess, kTechIdUniversity],
     regimentUnlockIds: ['light_artillery'],
@@ -287,7 +288,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdModernForts,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Modern Forts',
     prerequisiteIds: [kTechIdSiegeEngineering, kTechIdUniversity],
   );
@@ -295,7 +296,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdHeavyArtillery,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Heavy Artillery',
     prerequisiteIds: [kTechIdModernForts, kTechIdCrucibleProcess],
     regimentUnlockIds: [kTechIdHeavyArtillery],
@@ -304,7 +305,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdHeavyEmplacedArtillery,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Heavy Emplaced Artillery',
     prerequisiteIds: [
       kTechIdRoadConstruction,
@@ -316,7 +317,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdFieldArtilleryTactics,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Field Artillery Tactics',
     prerequisiteIds: [
       kTechIdLightArtilleryTactics,
@@ -328,7 +329,7 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
     id: kTechIdHighGradeSteel,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'High Grade Steel',
     prerequisiteIds: [
       kTechIdHeavyArtillery,
@@ -339,12 +340,12 @@ void _addTechCatalogChunk6(Map<String, TechDefinition> m) {
   );
 }
 
-void _addTechCatalogChunk7(Map<String, TechDefinition> m) {
+void addTechCatalogChunk7(Map<String, TechDefinition> m) {
   m[kTechIdEmplacedSiegeGuns] = TechDefinition(
     id: kTechIdEmplacedSiegeGuns,
     era: 4,
     category: 'military',
-    cost: _cost(4),
+    cost: techCatalogCostForTier(4),
     displayName: 'Emplaced Siege Guns',
     prerequisiteIds: [kTechIdHeavyArtillery, kTechIdHeavyEmplacedArtillery],
   );
@@ -352,7 +353,7 @@ void _addTechCatalogChunk7(Map<String, TechDefinition> m) {
     id: kTechIdModernMilitaryFunding,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Modern Military Funding',
     prerequisiteIds: [
       kTechIdBanking,
@@ -364,7 +365,7 @@ void _addTechCatalogChunk7(Map<String, TechDefinition> m) {
     id: kTechIdIndustrialFundingOfResearch,
     era: 3,
     category: 'military',
-    cost: _cost(3),
+    cost: techCatalogCostForTier(3),
     displayName: 'Industrial Funding of Research',
     prerequisiteIds: [kTechIdIndustrialMachinery, kTechIdCrucibleProcess],
   );

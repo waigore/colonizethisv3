@@ -18,8 +18,10 @@ This spec authorizes the registry and profile **data layer only**. Wiring profil
 
 Registry API: `allParams`, `defaults` (name→default), `byCategory(category)`, `byName(name)`.
 
-**In scope:** every numeric (`int`/`double`) constant in `ai_personality_config.dart` and `ai_victory_config.dart` that affects AI behavior.
-**Out of scope:** `String` constants (`kOldWorldRegionId`, `kNewWorldRegionId`), `bool`/utility functions, and infrastructure constants (`kMaxDossierEvidenceEntries`). Hidden agendas and starting-resources config stay separate.
+**In scope:** every numeric (`int`/`double`) scalar constant in `ai_personality_config.dart` and the `ai_victory_config*.dart` modules (including topic-split civilian-build libraries) that affects AI behavior.
+**Out of scope:** `String` constants (`kOldWorldRegionId`, `kNewWorldRegionId`), `bool`/utility functions, infrastructure constants (`kMaxDossierEvidenceEntries`), and **structured `Map` / nested-map tunables** in victory-config (for example `kCivilianBuildMinCountByType`, `kCivilianBuildTargetCountByType`, `kCivilianBuildMaxCountByType`, `kCivilianBuildPhaseMultiplierByPhaseType`). Those maps remain GA-adjacent defaults owned by the victory-config modules; flattening them into per-key registry entries is deferred. Hidden agendas and starting-resources config stay separate.
+
+Victory-config constants may live in topical libraries re-exported by `ai_victory_config.dart`; registry completeness is evaluated against every in-scope `const int` / `const double` `k*` across those modules (Refs #4072). CI enforces the same set parity via `repo.data_victory_config_registry_parity` (`tool/check_data_victory_config_registry_parity.dart`).
 
 ### Categories
 
@@ -72,7 +74,8 @@ The 7 existing leader configs (`victoria`, `napoleon`, `isabella`, `henry`, `der
 
 ## Acceptance criteria
 
-- Given the registry, when `allParams` is read, then it contains an `AiParameter` for every in-scope numeric constant in `ai_personality_config.dart` and `ai_victory_config.dart`, and contains no entry for `kMaxDossierEvidenceEntries`, `kOldWorldRegionId`, or `kNewWorldRegionId`.
+- Given the registry, when `allParams` is read, then it contains an `AiParameter` for every in-scope numeric scalar constant in `ai_personality_config.dart` and the `ai_victory_config*.dart` modules, and contains no entry for `kMaxDossierEvidenceEntries`, `kOldWorldRegionId`, `kNewWorldRegionId`, or structured victory-config `Map` tunable identifiers such as `kCivilianBuildMinCountByType`.
+- Given the committed `ai_victory_config*.dart` and `ai_parameter_victory_config_params*.dart` sources under `packages/colonizethis_data/lib/src/`, when `dart run tool/ct_repo_lint.dart` runs rule `repo.data_victory_config_registry_parity`, then every `const int` / `const double` `k*` has a matching `victoryConfigIntParam` / `victoryConfigDoubleParam` name string and there are no orphan param names (Refs #4072).
 - Given a registered parameter, when its metadata is read, then `name`, `category`, `isInteger`, `minValue`, `maxValue`, `defaultValue`, and `description` are all populated, with `minValue <= defaultValue <= maxValue`.
 - Given a personality parameter, when its key is read, then the key equals `<sourceMapName>.<fieldName>`; given a victory-config parameter, then the key equals the flat Dart constant identifier.
 - Given a profile JSON omitting a registered parameter, when `AiProfile.fromJson` runs, then the resulting `parameters[name]` equals that parameter's registry default.

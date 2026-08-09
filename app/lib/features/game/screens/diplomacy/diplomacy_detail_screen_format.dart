@@ -1,4 +1,8 @@
-part of 'diplomacy_detail_screen.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show getRelation, relationScoreToDisplayLabel;
+import 'package:colonizethis_world/colonizethis_world.dart' show Game, GamePlayerLookup;
+
+import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Human-readable sentence for a diplomatic event. Unknown factions shown as "Unknown faction".
 String formatDiplomaticEvent(
@@ -25,7 +29,7 @@ String formatDiplomaticEvent(
   final from = e.fromFactionId != null ? name(e.fromFactionId!) : null;
   final to = e.toFactionId != null ? name(e.toFactionId!) : null;
   final stage = e.overtureStage != null
-      ? _overtureLabel(e.overtureStage!)
+      ? overtureLabel(e.overtureStage!)
       : null;
 
   switch (e.type) {
@@ -75,7 +79,7 @@ String formatDiplomaticEvent(
   }
 }
 
-String _overtureLabel(OvertureStage s) {
+String overtureLabel(OvertureStage s) {
   return switch (s) {
     OvertureStage.none => 'overture',
     OvertureStage.tradeConsulate => 'Trade Consulate',

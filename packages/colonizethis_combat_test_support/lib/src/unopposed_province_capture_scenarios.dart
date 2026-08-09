@@ -5,17 +5,6 @@ import 'package:colonizethis_test/test.dart';
 
 import 'scenario_runner.dart';
 
-class UnopposedProvinceCaptureScenario implements LabeledScenario {
-  const UnopposedProvinceCaptureScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 Game _gameWithMinorProvince({
   required String provinceId,
@@ -48,8 +37,8 @@ Game _gameWithMinorProvince({
   diplomacyRelations: relations,
 );
 
-List<UnopposedProvinceCaptureScenario> unopposedProvinceCaptureScenarios() => [
-  UnopposedProvinceCaptureScenario(
+List<RunnableScenario> unopposedProvinceCaptureScenarios() => [
+  RunnableScenario(
     scenarioId: 'upc-captures-undefended',
     label: 'captures undefended minor province when GP army moved in at war',
     run: () {
@@ -92,7 +81,7 @@ List<UnopposedProvinceCaptureScenario> unopposedProvinceCaptureScenarios() => [
       );
     },
   ),
-  UnopposedProvinceCaptureScenario(
+  RunnableScenario(
     scenarioId: 'upc-defender-units',
     label: 'skips when province owner still has combat units in province',
     run: () {
@@ -141,7 +130,7 @@ List<UnopposedProvinceCaptureScenario> unopposedProvinceCaptureScenarios() => [
       );
     },
   ),
-  UnopposedProvinceCaptureScenario(
+  RunnableScenario(
     scenarioId: 'upc-peace',
     label: 'skips when attacker is not at war with province owner',
     run: () {

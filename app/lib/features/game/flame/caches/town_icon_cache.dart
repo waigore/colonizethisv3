@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 
-import '../../../../config/app_assets.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/active_map_theme.dart';
+import 'package:colonizethis_app/features/game/flame/map_theme/map_theme_models.dart';
+
 import '../../../../config/ct_legacy_town_icons.dart';
 import 'asset_image_cache.dart';
 
@@ -25,6 +27,9 @@ Set<String> buildTownIconAssetIds() {
       ids.add('town_${style}_$level');
     }
   }
+  for (final level in TownIconCache.kFortLevels) {
+    ids.add(TownIconCache.fortIconId(level));
+  }
   return ids;
 }
 
@@ -34,6 +39,14 @@ class TownIconCache extends AssetImageCache {
   static const String portIconId = 'port';
   static const double portIconSize = 64.0;
   static const double townIconSize = 64.0;
+  static const double fortIconSize = 40.0;
+  static const List<int> kFortLevels = [1, 2, 3];
+
+  /// Stable pixel offset from town tile center (north-west quadrant). Refs #4280.
+  static const double fortIconOffsetDx = -14.0;
+  static const double fortIconOffsetDy = -18.0;
+
+  static String fortIconId(int fortLevel) => 'fort_${fortLevel.clamp(1, 3)}';
 
   /// On-map destination side (px) by level (Refs #3870 S10): 48/56/60/64.
   /// Ports use [portIconSize] and ignore this ladder.
@@ -53,16 +66,24 @@ class TownIconCache extends AssetImageCache {
   static String assetPathForId(
     String assetId, {
     bool? useLegacyTownIcons,
+    String? iconPrefix,
   }) {
+    final prefix =
+        iconPrefix ??
+        ActiveMapTheme.current.iconPrefixFor(MapThemeGroupId.townIcons);
     if (assetId == portIconId) {
-      return '${kAppIcon64AssetPrefix}ui_icon_com_port.png';
+      return '${prefix}ui_icon_com_port.png';
+    }
+    if (assetId.startsWith('fort_')) {
+      final level = assetId.replaceFirst('fort_', '');
+      return '${prefix}ui_icon_com_fort_${level}_64.png';
     }
     final useLegacy = useLegacyTownIcons ?? kCtLegacyTownIconsEnabled;
     if (useLegacy && _isLevel1TownIconId(assetId)) {
       final suffix = assetId.replaceFirst('town_', '');
-      return '${kAppIcon64AssetPrefix}ui_icon_com_town_${suffix}_legacy_64.png';
+      return '${prefix}ui_icon_com_town_${suffix}_legacy_64.png';
     }
-    return '${kAppIcon64AssetPrefix}ui_icon_com_${assetId}_64.png';
+    return '${prefix}ui_icon_com_${assetId}_64.png';
   }
 
   static bool _isLevel1TownIconId(String assetId) {

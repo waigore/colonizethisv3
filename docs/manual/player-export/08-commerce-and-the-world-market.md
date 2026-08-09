@@ -1,0 +1,72 @@
+# Commerce and the World Market
+
+## Purpose
+
+When your warehouse overflows with timber or starves for coal, the **world market** lets Great Powers bid treasury for goods and offer surplus for coin. Minors and Tribes auto-sell what they extract. Mastery here smooths shortages, funds wars, and rewards Merchants who purchased foreign tiles. This chapter explains bids, offers, caps, first right of refusal, and how to stage trade at the dedicated Trade desk.
+
+## How it is done
+
+### What clears on the market
+
+- One **global** market for every Great Power, Minor, and Tribe. No player-drawn trade routes; cargo still uses home-fleet holds after overseas extraction takes its share.
+- **Tradeable** commodities: food, raw materials, and manufactured goods from the catalog — **not** riches (`gold`, `silver`, `gems`, `diamonds`, `spices`), which convert to treasury in Riches-to-treasury instead.
+- Great Powers submit **trade decree** rows: `bid` or `offer`, commodity, quantity, priority (1 = highest tier). Minors/Tribes never bid; their extraction becomes system offers in **Phase 13 World Market**.
+
+### Caps and rules that protect the realm
+
+- **Mutual exclusion:** for a given commodity in one turn you may bid **or** offer, not both.
+- **Bid-type cap:** by default **3** distinct commodity bids; **6** when you research **Trade Fairs**. Embassy presence does not change this cap. Offers are uncapped by that rule.
+- **Quantity:** bids limited by remaining **trade cargo**; offers limited by projected stockpile after industry reservations.
+- **Treasury bid budget:** total bid spend (`quantity × current integer price`) cannot exceed treasury after other pending costs (builds, recruits, work, subsidies). Over-budget bids are rejected.
+- Unfilled bids/offers may **carry forward** when stockpile/cargo still cover them; minor auto-offers do not carry.
+
+### First right of refusal and friends
+
+If a Merchant completed `purchase_land` on a Minor/Tribe tile, that tile’s auto-offers still list under the Minor/Tribe, but **you** enjoy:
+
+- **Bid priority** on that commodity against the purchased-tile offer (above ordinary priority and Favored Trading Partner tie-breaks).
+- **Overseas profit** when another GP buys those goods (relation-linear share for the tile owner; embassy holders may receive a smaller kickback — see Sources).
+- **Riches handoff** on purchased riches tiles into **your** treasury (not the Minor’s).
+
+**Favored Trading Partner** (diplomacy) only breaks ties inside the same priority tier; it never overrides first right of refusal.
+
+### Where you act in the UI
+
+1. From **Game screen**, tap **Trade** on the left empire rail (or open route `/game/trade`) to reach **Trade screen**.
+2. **Market** tab: for each tradeable commodity, choose **None / Bid / Offer**, set quantity with the steppers, and watch **Bid goods: U of C** (distinct bid commodities vs your cap), **Cargo remaining**, and **Bid budget: R of B** (treasury headroom for bids after other pending costs). Bid and offer are mutually exclusive per commodity; staged bids respect bid-type, cargo, and treasury caps from the rules above. Riches never appear as trade rows. Commodities where you still hold **first right** from a purchased tile show a compact **First right** chip beside the name — tap it for a short reminder of bid priority and overseas profit.
+3. **Deal Book** tab: review last-turn filled buys/sales and any carry-forward unfilled orders for your court. Filled rows may show **First right** or **Favored partner** tags when the matcher applied those rules. When rivals bought goods under your purchased-tile rights last turn, an **Overseas profit** section lists each credited commodity, quantity, and treasury amount.
+4. Production (**Production screen**) shows **sellable headroom** on tradeable stockpile lines so you do not offer what industry still needs.
+5. Market clearance still resolves in **Phase 13**; after you end the turn, confirm fills in Deal Book, the turn event feed (tap a market-summary or overseas-profit line to open Deal Book), turn news, and market activity.
+
+### Trade Counsel (**Counsel screen** Trade tab)
+
+1. On the Market tab, tap **Counsel** in the header (or a ★ on a highlighted commodity row) to open **Counsel screen** on the **Trade** tab.
+2. The vizier lists the **full** trade order book the AI treasury planner would stage for your court this turn — surplus offers, deficit bids, and (when treasury is affluent enough) speculative inventory bids — using your stockpile, production plan, treasury, cargo, and pending non-trade costs. Crisis-only AI recovery scripts are **not** included.
+3. Top ≤3 lines are starred on both Counsel and Market; each line shows Bid or Offer, commodity name, quantity, and a short reason.
+4. **Apply recommended market book** replaces **all** your staged trade orders with that snapshot.
+5. **Agree** on one line stages only that commodity (and clears any opposite-direction order on the same commodity).
+6. Empty counsel: “No pressing market advice this turn.” Apply/Agree are hidden while turn resolution blocks edits, same as Industry Counsel.
+
+## Counsel
+
+**Counsel.** Hark, my liege: a bid without cargo is a promise the fleet cannot keep — leave holds for extraction first, then for the market.
+
+**Tip.** You may bid on up to **three** distinct commodities each turn by default; research **Trade Fairs** to raise the limit to six. The Market header shows **Bid goods: U of C** and a **?** beside each limit line for a short explanation.
+
+**Tip.** **Bid budget: R of B** shows how much treasury you can still commit to bids this turn after other staged spending. When the treasury bid limit is reached, free gold or trim other orders before bidding more; tap the **?** beside the budget line for a short explanation.
+
+**Tip.** A per-row priority dropdown is not yet on the Market tab; staged orders use the default priority until that control ships.
+
+**Tip.** Trade Counsel on **Counsel screen** mirrors what rival GPs’ treasury planners would do in your shoes — use it to draft a full book, then trim or override rows on Market before you end the turn.
+
+**Warning.** Selling the last timber you still assigned to lumber on **Production screen** invites rejected offers or a silent industry stall. Watch sellable headroom.
+
+## The other courts
+
+AI Great Powers bias the **trade** strategic goal when treasury is low and use a **treasury planner** layered on the economy planner to buy deficits and sell surplus within cargo and diplomatic constraints . Boycotts and relation boosts can suppress or prefer certain bids. Expect broke rivals to flood the market with offers and cash-rich ones to contest your feedstock.
+
+## Consequences
+
+- Ignoring Phase 13 while overproducing raw goods leaves coin on the table and lets rivals buy the shortages you created.
+- Purchasing land without bidding on “your” commodity cedes the fill — but you may still earn overseas profit when others buy.
+- Price discovery moves after fills (about half the bid–offer imbalance, capped ±20%, floor near 30% of default). Deals clear at the **old** integer price; the new price applies next turn.

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// JSON codec for [TurnResolutionResult] isolate handoff (Refs #3878).

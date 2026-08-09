@@ -1,6 +1,14 @@
-part of 'units_entity_action_row.dart';
+import 'package:flutter/material.dart';
 
-extension _UnitsEntityActionRowActions on UnitsEntityActionRow {
+import '../../../../../widgets/ct_action_text_button.dart';
+import '../../../../../widgets/ct_circular_locate_button.dart';
+import '../../../../../widgets/ct_danger_text_button.dart';
+import '../../../../../widgets/ct_spacing.dart';
+import 'units_entity_action_row.dart';
+import 'units_panel_row_chrome.dart';
+
+/// Layout helpers for [UnitsEntityActionRow] (Refs #4117 de-part).
+extension UnitsEntityActionRowActions on UnitsEntityActionRow {
   Widget buildEntityActionRowLayout(BoxConstraints constraints) {
     final iconOnly = constraints.maxWidth < iconOnlyBreakpoint;
     final row = Row(
@@ -10,19 +18,15 @@ extension _UnitsEntityActionRowActions on UnitsEntityActionRow {
         if (actions.isNotEmpty) ...[
           SizedBox(width: dense ? spacing : 8),
           Flexible(
-            fit: FlexFit.loose,
+            // Dense naval rows must bound the actions cluster so the inner
+            // LayoutBuilder can switch to icon-only before labeled pills overflow
+            // at 320 dp (Refs #4213 — Move + Mission + Split + Locate).
+            fit: dense ? FlexFit.tight : FlexFit.loose,
             child: Align(
               alignment: Alignment.topRight,
               child: dense
                   ? LayoutBuilder(
                       builder: (context, denseConstraints) {
-                        // Dense Row cannot wrap; if the actions cluster
-                        // alone is narrower than [denseIconOnlyBreakpoint]
-                        // (label + icon footprint per the mockup), fall
-                        // back to icon-only across the whole cluster so
-                        // it stays on one line. R25 spec explicitly
-                        // permits "Narrow icon-only fallback below the
-                        // existing iconOnlyBreakpoint".
                         final denseIconOnly =
                             iconOnly ||
                             denseConstraints.maxWidth <
@@ -56,23 +60,6 @@ extension _UnitsEntityActionRowActions on UnitsEntityActionRow {
     );
   }
 
-  /// Heuristic per-action label+icon width used to decide when the dense
-  /// actions cluster must collapse to icon-only to avoid overflowing the
-  /// single inline row. Sized so the default 3-action naval cluster
-  /// (Move + Split + Locate icon) stays in label+icon mode at the spec'd
-  /// wide naval panel width (≥ ~528 dp content) but collapses to icon-only
-  /// once the cluster's flex share drops below the combined label+icon
-  /// footprint — including when the dense row is hosted inside the
-  /// [UnitsEntityCard] mockup card chrome, where the actions cluster shares
-  /// the title width ~50/50 with the row details and a bare label+icon
-  /// pair (e.g. Move + Split with no locate on a tile-less at-sea fleet)
-  /// would otherwise overflow its share by a few logical px (issue #3514
-  /// naval card migration; SPEC/ui/components/units-entity-card.md).
-  ///
-  /// The `90` constant reflects the measured Cinzel-display label + 14 dp
-  /// icon + 10 dp horizontal padding + 1 dp border footprint of a single
-  /// compact pill plus inter-pill spacing, with a small margin so the
-  /// collapse fires before the `RenderFlex` overflow rather than after it.
   static double denseIconOnlyBreakpoint(int actionCount) {
     return 90.0 * actionCount;
   }
@@ -106,18 +93,21 @@ extension _UnitsEntityActionRowActions on UnitsEntityActionRow {
         buildActionPill(action: actions[i], forceIconOnly: forceIconOnly),
       );
     }
-    return Row(
+    final row = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: children,
     );
+    if (forceIconOnly) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: row,
+      );
+    }
+    return row;
   }
 
-  /// Renders a single action as a mockup compact pill (issue #3514). Per-action
-  /// [UnitsEntityAction.iconOnly] controls (the right-end Locate affordance)
-  /// always render as the circular [CtCircularLocateButton]; the width-driven
-  /// [forceIconOnly] collapse only suppresses the label on neutral/danger
-  /// pills so Move / Split shrink to icon-only at narrow widths.
   Widget buildActionPill({
     required UnitsEntityAction action,
     required bool forceIconOnly,

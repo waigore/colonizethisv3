@@ -1,7 +1,11 @@
-part of 'ct_top_bar.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-extension _CtTopBarLayout on CtTopBar {
-  TextStyle _titleStyle(BuildContext context) {
+import 'ct_back_button.dart';
+import 'ct_top_bar.dart';
+
+extension CtTopBarLayout on CtTopBar {
+  TextStyle titleStyle(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle base =
         theme.textTheme.titleMedium ?? const TextStyle(fontSize: 16);
@@ -11,7 +15,7 @@ extension _CtTopBarLayout on CtTopBar {
     );
   }
 
-  TextStyle _backLabelStyle(BuildContext context) {
+  TextStyle backLabelStyle(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final TextStyle base =
         theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 14);
@@ -23,7 +27,7 @@ extension _CtTopBarLayout on CtTopBar {
     );
   }
 
-  CtBackButton _buildBackButton() {
+  CtBackButton buildBackButton() {
     if (backButtonSemanticLabel == null) {
       return CtBackButton(
         onPressed: onBackPressed,
@@ -37,16 +41,16 @@ extension _CtTopBarLayout on CtTopBar {
     );
   }
 
-  List<Widget> _buildRowChildren(BuildContext context) {
+  List<Widget> buildRowChildren(BuildContext context) {
     final List<Widget> children = <Widget>[];
     if (showBackButton) {
-      children.add(_buildBackButton());
+      children.add(buildBackButton());
       if (backButtonLabel != null) {
         children.add(const SizedBox(width: CtTopBar.leadingGap));
         children.add(
           Text(
             backButtonLabel!,
-            style: _backLabelStyle(context),
+            style: backLabelStyle(context),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -62,7 +66,7 @@ extension _CtTopBarLayout on CtTopBar {
       Expanded(
         child: Text(
           title,
-          style: _titleStyle(context),
+          style: titleStyle(context),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

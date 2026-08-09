@@ -20,15 +20,19 @@
 
 ## Data contract (v1 slice)
 
-- Source: forwarded app game events (`AppCombatResultEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
+- Source: forwarded app game events (`AppCombatResultEvent`, `AppGeneralMedalGainedEvent`, `AppNavalCombatResultEvent`, `AppProvinceCapturedEvent`, `AppDiplomacyChangeEvent`, `AppResearchCompleteEvent`, `AppOrderRejectedEvent`, `AppWorkOrderCompletedEvent`, `AppOverseasProfitCreditedEvent`, `AppMarketTurnSummaryEvent`, `AppPlayerProvinceDiscoveredEvent`, `AppPlayerSeaZoneDiscoveredEvent`, `AppOvertureAdvancedEvent`, `AppSpyCaughtEvent`, `AppSpyDefectedEvent`) plus `TurnResolutionCompleteEvent`.
 - Human-player filter:
   - Combat/naval when human id is a participating side id.
+  - General medal gain when event `playerId` equals human id (Refs #4234).
   - Province capture when human id equals previous or new owner.
   - Diplomacy when human id equals actor or target.
   - Research/order rejected when event `playerId` equals human id.
   - Work-order/province/sea discovery when event `playerId` equals human id.
+  - Overseas profit when event `playerId` equals human id and `totalTreasuryCredit > 0` (Refs #4226).
+  - Market turn summary when event `playerId` equals human id and at least one of `totalSpent > 0`, `totalReceived > 0`, or `carryForwardOrderCount > 0` (Refs #4270).
   - Overture advanced when human id equals offerer GP id or target faction id.
 - Formatting lives in Flutter UI; logic payloads remain ids.
+- Turn-batch ordering (v1): within a committed turn batch, `AppOverseasProfitCreditedEvent` and `AppMarketTurnSummaryEvent` rows append after `AppWorkOrderCompletedEvent` entries and before `AppPlayerProvinceDiscoveredEvent` / `AppPlayerSeaZoneDiscoveredEvent` rows (Refs #4226, #4270).
 - Diplomacy formatting (v1.1 slice): known `changeType` values render concrete outcome copy (`declare_war`, `peace`, `alliance`, `break_alliance`), with a safe generic fallback for unknown values.
 
 ---
@@ -36,13 +40,18 @@
 ## Interaction
 
 - Row tap:
-  - Province-scoped lines (land combat, province capture) attempt map focus to that province.
-- Naval combat lines attempt map focus to a sea-zone anchor tile (centroid when available, otherwise an adjacent mapped port tile).
-- Work-order completion lines tap-focus the target tile.
+  - Province-scoped lines (land combat, province capture) attempt map focus to that province and open `MAP20001` province/sea-zone overlay for the province.
+- Naval combat lines attempt map focus to a sea-zone anchor tile and open the sea-zone overlay when the anchor resolves; otherwise the row is non-tappable.
+- Work-order completion lines tap-focus the target tile and open `UNIT10001` **Civilian units** focused on the completing unit.
 - Province-discovery lines tap-focus the discovered province.
 - Sea-discovery lines tap-focus a sea-zone anchor tile.
+- Research-complete lines for catalog-known techs show the tech display name, a trailing chevron link affordance, and open `GAME40001` **Technology** on the Slots tab via `NavigateToRouteEvent(Routes.technology, …)` (same args as the empire left-rail Technology button).
+- Diplomacy-change, overture-advanced, spy-caught, and spy-defected lines show a trailing chevron when tappable and open `GAME30002` **Diplomacy detail** for the counterpart faction via `NavigateToRouteEvent(Routes.diplomacyDetail, …)` (same args as the diplomacy panel row detail action).
+- Order-rejected lines use plain-language reason copy. When `orderKind` is present on `AppOrderRejectedEvent`, the row shows a trailing chevron and opens the owning panel or screen: work and recruit-worker → `UNIT10001` **Civilian units**; move and army-move → military units panel; naval move and naval mission → naval units panel; build-unit → `GAME20001` **Production**; trade → `GAME60001` **Trade**; research → `GAME40001` **Technology**; diplomacy → `GAME30001` **Diplomacy** list (requires resolvable topology). When topology cannot be resolved for diplomacy rejections, the row is non-tappable.
+- Overseas-profit lines (`AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0` for the human) show plain-language copy (`Overseas profit credited: £<amount> from <count> rival purchase(s). Tap to open Deal Book.`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via `NavigateToRouteEvent(Routes.trade, {'game': game, 'humanPlayerId': humanPlayerId, 'initialTabIndex': 1})` (Refs #4226).
+- Market-summary lines (`AppMarketTurnSummaryEvent` for the human with last-turn fills and/or carry-forwards) show at most one totals-first row (e.g. `Market: bought £240 · sold £160`, `Market: bought £240 · sold £160 · 2 orders carried`, or `Market: 2 orders carried forward`), a trailing chevron link affordance, and open `GAME60001` **Trade** with the Deal Book tab foregrounded via the same `NavigateToRouteEvent` shape as overseas-profit rows (Refs #4270).
 - Other lines are non-tappable in v1.
-- Fallback: if no valid map anchor can be resolved for a tappable row, render it non-tappable and keep app stable.
+- Fallback: if no valid map anchor can be resolved for a tappable row, the counterpart faction cannot be resolved, the completing civilian unit no longer exists, or the research event tech id is absent from the catalog, render it non-tappable with safe copy and keep app stable.
 
 ---
 
@@ -83,9 +92,30 @@ The newspaper toggle lives in [`GameTabBar`](../../app/lib/features/game/widgets
 - Given feed visibility is false, when The Player taps the news icon toggle in **GameMapControls**, then the UI layer shows the floating feed card.
 - Given feed visibility is true, when The Player taps the news icon toggle in **GameMapControls**, then the UI layer hides the floating feed card.
 - Given the feed card is visible, when the feed renders, then the feed card does not display an `Events` title and renders only event rows or empty-state text.
-- Given a tappable province-scoped line whose province anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
-- Given a tappable naval-combat line whose sea-zone anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile.
+- Given a tappable province-scoped line whose province anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile and `OpenMapTileDetailEvent` for the province overlay.
+- Given a tappable naval-combat line whose sea-zone anchor resolves to a tile key, when the user taps that row, then the app emits `LocateMapTileEvent` for that tile and `OpenMapTileDetailEvent` for the sea-zone overlay.
+- Given a naval-combat line whose sea-zone anchor cannot resolve, when the feed renders, then the row is non-tappable with safe copy and the app remains stable.
 - Given a non-tappable line or unresolved anchor, when the user taps the row, then no map-focus event is emitted and the app remains stable.
+- Given a human `AppResearchCompleteEvent` for a catalog-known tech, when the feed renders, then the row shows the tech display name (never the raw tech id), a trailing chevron link affordance, and is tappable.
+- Given a catalog-known research-complete row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.technology` with the same route args as the empire left-rail Technology button.
+- Given a research-complete event whose tech id is not in the catalog, when the feed renders, then the row is non-tappable with safe fallback copy and no raw tech id appears.
+- Given a narrow-layout (`< 600` dp host width) map shell with a tappable research-complete row, when the row builds, then its tap target is at least 44 dp tall.
+- Given a `declare_war` diplomacy feed line involving the human, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the counterpart faction id.
+- Given an overture-advanced feed line, when the feed renders, then the stage label is human-readable (never raw `STAGE!` shouting); when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the other party's faction id.
+- Given a spy-caught or spy-defected feed line whose counterpart faction resolves, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.diplomacyDetail` with the non-human faction id; given the counterpart cannot be resolved, then the row is non-tappable and stable.
+- Given a work-order-completed feed line whose unit still exists, when the feed renders, then the work target uses the localized civilian-panel label (never raw `WORKTARGET!` shouting); when the user taps it, then the app emits `LocateMapTileEvent` and `OpenCivilianUnitsPanelEvent` with `initialSelectedUnitId` set to the completing unit.
+- Given an order-rejected feed line, when the feed renders, then the reason is phrased in plain language.
+- Given an order-rejected feed line whose `orderKind` maps to a known owning surface, when the user taps it, then the app emits the same bus event or `NavigateToRouteEvent` as the empire left-rail button for that order family (civilian, military, naval, production, trade, technology, or diplomacy list).
+- Given an order-rejected diplomacy line when combined topology cannot be resolved, when the feed renders, then the row is non-tappable and stable.
+- Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the feed renders after turn commit, then the row shows plain-language overseas-profit copy with a trailing chevron and is tappable (Refs #4226).
+- Given a human `AppOverseasProfitCreditedEvent` with `totalTreasuryCredit > 0`, when the user taps the row, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4226).
+- Given an `AppOverseasProfitCreditedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation).
+- Given a human `AppMarketTurnSummaryEvent` with at least one of `totalSpent > 0`, `totalReceived > 0`, or `carryForwardOrderCount > 0`, when the feed renders after turn commit, then exactly one market-summary row appears with totals-first copy and a trailing chevron (Refs #4270).
+- Given a human `AppMarketTurnSummaryEvent` row, when the user taps it, then the app emits `NavigateToRouteEvent` for `Routes.trade` with `initialTabIndex: 1` so `GAME60001` foregrounds the Deal Book tab (Refs #4270).
+- Given an `AppMarketTurnSummaryEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4270).
+- Given both overseas-profit and market-summary events for the human in the same turn batch, when the feed renders, then both rows appear as separate lines (not merged; Refs #4270).
+- Given a human `AppGeneralMedalGainedEvent` after a land battle win, when the feed renders after turn commit, then the row shows plain-language copy that a general earned a medal with the new count (e.g. `Victory at {province}: a general earned a medal (now N).`) and uses the word **general**, not "commander" (Refs #4234).
+- Given an `AppGeneralMedalGainedEvent` whose `playerId` is not the human map player, when the feed renders, then the row is omitted (player isolation; Refs #4234).
 - Given a diplomacy feed line with `changeType` of `declare_war`, `peace`, `alliance`, or `break_alliance`, when rendered, then the line uses a concrete outcome template (not the generic "diplomacy changed" fallback).
 - Given The Player toggles `showPlayerTurnEventsFeed` and saves the game, when the game is loaded, then `mapViewState.showPlayerTurnEventsFeed` restores with the same value.
 - Given a legacy save where `mapViewState.showPlayerTurnEventsFeed` is absent, when the game loads, then the loaded value defaults to `false`.

@@ -24,9 +24,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/editorial_monocle_dark_token_assertions.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'editorial_monocle_dark_token_assertions.dart';
+import 'panel_test_fixtures.dart';
 
 void _expectNoMaterialChromeBans(WidgetTester tester) {
   expect(find.byType(AppBar), findsNothing, reason: 'AppBar is banned chrome');

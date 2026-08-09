@@ -2,13 +2,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/capital_reassignment.dart';
+import 'capital_choice_capital_tile_scan.dart';
 import 'setup_exceptions.dart';
 import 'setup_road_wiring.dart';
-import 'setup_topology_adjacency.dart';
-import 'tile_cell_scan.dart';
 
-export 'package:colonizethis_world/src/world/capital_reassignment.dart'
+export 'package:colonizethis_world/colonizethis_world.dart'
     show
         applyGreatPowerCapitalProvinceTownDevelopment,
         pickCapitalProvinceIdForReassignment,
@@ -19,19 +17,12 @@ export 'package:colonizethis_world/src/world/capital_reassignment.dart'
 export 'package:colonizethis_data/colonizethis_data.dart'
     show isProvinceSeaBound;
 
-part 'capital_choice_capital_tile_scan.dart';
-part 'capital_choice_port_road_geometry.dart';
+export 'capital_choice_classify.dart';
 
 /// Capital-choice phase stub. SPEC/game/capital-choice-phase.
 ///
 /// setCapital validates province is sea-bound, sets player capital, and
 /// auto-builds port (on capital if coastal, else nearest coastal tile) and road.
-
-/// Capital tile class per SPEC/game/capital-choice-phase:
-/// - A: coastal and not adjacent to another province
-/// - B: interior and not adjacent to another province
-/// - C: all remaining tiles
-enum CapitalTileClass { a, b, c }
 
 /// Picks a capital province and tile for a faction. SPEC/game/capital-choice-phase#auto-choice-game-setup.
 /// [ownedProvinceIds] and [regionId] come from assignment; [topology] and [tileMap] are for that region.
@@ -44,7 +35,7 @@ enum CapitalTileClass { a, b, c }
   TileMapResult tileMap, {
   bool requireSeaBound = true,
 }) {
-  final provinceId = _capitalProvinceIdFromSeaBoundOrFallback(
+  final provinceId = capitalProvinceIdFromSeaBoundOrFallback(
     ownedProvinceIds,
     topology,
     requireSeaBound: requireSeaBound,
@@ -61,33 +52,33 @@ enum CapitalTileClass { a, b, c }
       .map((n) => n.id)
       .toSet();
 
-  final c = _scanCapitalTileCandidates(
+  final c = scanCapitalTileCandidates(
     tileMap: tileMap,
     topology: topology,
     localProvinceId: localProvinceId,
     provinceIds: provinceIds,
   );
-  final classAx = c.classAx;
-  final classAy = c.classAy;
-  final classBx = c.classBx;
-  final classBy = c.classBy;
-  final classCx = c.classCx;
-  final classCy = c.classCy;
-  final classCCoastalX = c.classCCoastalX;
-  final classCCoastalY = c.classCCoastalY;
 
-  final (x, y) = _capitalTileXYFromScan(
+  final (x, y) = capitalTileXYFromScan(
     requireSeaBound: requireSeaBound,
     provinceId: provinceId,
     regionId: regionId,
-    classAx: classAx,
-    classAy: classAy,
-    classBx: classBx,
-    classBy: classBy,
-    classCx: classCx,
-    classCy: classCy,
-    classCCoastalX: classCCoastalX,
-    classCCoastalY: classCCoastalY,
+    classAx: c.classAx,
+    classAy: c.classAy,
+    classAPlainsX: c.classAPlainsX,
+    classAPlainsY: c.classAPlainsY,
+    classBx: c.classBx,
+    classBy: c.classBy,
+    classBPlainsX: c.classBPlainsX,
+    classBPlainsY: c.classBPlainsY,
+    classCx: c.classCx,
+    classCy: c.classCy,
+    classCPlainsX: c.classCPlainsX,
+    classCPlainsY: c.classCPlainsY,
+    classCCoastalX: c.classCCoastalX,
+    classCCoastalY: c.classCCoastalY,
+    classCCoastalPlainsX: c.classCCoastalPlainsX,
+    classCCoastalPlainsY: c.classCCoastalPlainsY,
   );
   final tile = CapitalTile(
     regionId: regionId,
@@ -250,33 +241,4 @@ Game setCapitalForTribe({
   // Atomic multi-field mutation (worldState + tribes); kept as raw copyWith
   // per Issue #2836 AC 6 single-field-only helper scope.
   return game.copyWith(worldState: worldState, tribes: updatedTribes);
-}
-
-/// Classifies a province tile according to capital-choice class A/B/C.
-CapitalTileClass classifyCapitalTile({
-  required int x,
-  required int y,
-  required TileMapResult tileMap,
-  required MapTopology topology,
-  required String localProvinceId,
-  Set<String>? provinceIds,
-}) {
-  final knownProvinceIds = provinceIds ?? provinceNodeIds(topology);
-  final coastal = _isTileAdjacentToSea(
-    x,
-    y,
-    tileMap,
-    topology,
-    provinceIds: knownProvinceIds,
-  );
-  final adjacentOtherProvince = _isTileAdjacentToOtherProvince(
-    x,
-    y,
-    tileMap,
-    knownProvinceIds,
-    localProvinceId,
-  );
-  if (coastal && !adjacentOtherProvince) return CapitalTileClass.a;
-  if (!coastal && !adjacentOtherProvince) return CapitalTileClass.b;
-  return CapitalTileClass.c;
 }

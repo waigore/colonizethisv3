@@ -46,80 +46,13 @@ const String _gpRival = 'gp_rival';
 const String _minor1 = 'minor1';
 const String _minor2 = 'minor2';
 
-/// Builds a minimal `Game` where `gp_own` holds [ownProvinces] OW
-/// provinces. When [rivalGpProvinces] > 0 a second Great Power
-/// `gp_rival` is added with that many OW provinces. Each minor in
-/// [minorOwProvincesByMinorId] owns the listed OW province ids; the
-/// listed ids are also the minor's "active" provinces for the
-/// invadable scan.
-Game _ownGame({
-  required int ownProvinces,
-  int rivalGpProvinces = 0,
-  Map<String, List<String>> minorOwProvincesByMinorId = const {},
-  List<String> atWarMinorIds = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    if (rivalGpProvinces > 0)
-      for (var i = 1; i <= rivalGpProvinces; i++)
-        Province(
-          id: 'oldWorld|${_gpRival}_$i',
-          regionId: 'oldWorld',
-          ownerId: _gpRival,
-        ),
-    for (final entry in minorOwProvincesByMinorId.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    if (rivalGpProvinces > 0)
-      const Player(id: _gpRival, displayName: 'GP_RIVAL', isHuman: false),
-  ];
-
-  final minorNations = <MinorNation>[
-    for (final id in minorOwProvincesByMinorId.keys)
-      MinorNation(id: id, displayName: id),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarMinorIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-default-start-futile-minor-canonical-'
-        'own$ownProvinces-rival$rivalGpProvinces',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    diplomacyRelations: relations,
-  );
-}
-
 void main() {
   group('defaultStartFutileMinorPeaceTargets — outer guards', () {
     test('returns const [] when above the observer OW quota', () {
       // At-quota gp_own with one at-war minor that owns no invadable OW
       // (futile minor by the mixed-frontier rule), but the above-quota
       // guard fires first so the quota-met collectors own the decision.
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp,
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
@@ -145,7 +78,7 @@ void main() {
       // near-quota / stalled-band collectors own the decision in that
       // shape.
       const ownOw = kObserverDefaultStartOldWorldProvincesPerGp + 2;
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: ownOw,
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
@@ -169,7 +102,7 @@ void main() {
       // gp_own at default-start size with a futile minor in atWarWith but
       // no invadable OW provinces at all — no futile-minor diagnosis is
       // possible so the decider must short-circuit.
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
@@ -201,7 +134,7 @@ void main() {
           // NOT own the invadable OW; only gp_rival does) so the
           // GP-only arm fires and every at-war minor is peaced. The
           // returned list must be sorted ascending by minor factionId.
-          final game = _ownGame(
+          final game = buildDefaultStartFutileMinorExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             rivalGpProvinces: 1,
             minorOwProvincesByMinorId: const {_minor2: [], _minor1: []},
@@ -229,7 +162,7 @@ void main() {
           // gp_own at default-start size on a GP-only invadable frontier
           // but with no at-war minors at all — the GP-only arm runs but
           // yields no peace targets.
-          final game = _ownGame(
+          final game = buildDefaultStartFutileMinorExpandPeaceGame(
             ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
             rivalGpProvinces: 1,
             atWarMinorIds: const [],
@@ -255,7 +188,7 @@ void main() {
         // GP in `atWarWith`. On the GP-only arm, only the minor
         // factionId survives the `game.minorNations.any` filter; the
         // GP must be excluded so the GP arm is not silently broadened.
-        final game = _ownGame(
+        final game = buildDefaultStartFutileMinorExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           rivalGpProvinces: 1,
           minorOwProvincesByMinorId: const {_minor1: []},
@@ -285,7 +218,7 @@ void main() {
       // at war), minor2 owns zero invadable OW (futile minor — peace
       // it). Only minor2 must be in the result.
       const minor1InvadablePid = 'oldWorld|${_minor1}_1';
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         minorOwProvincesByMinorId: const {
           _minor1: [minor1InvadablePid],
@@ -315,7 +248,7 @@ void main() {
         // in `atWarWith` in non-sorted order so the helper's sort is
         // observable. Result must be `[minor1, minor2]` ascending.
         const minorOwnedPid = 'oldWorld|${_minor1}_active';
-        final game = _ownGame(
+        final game = buildDefaultStartFutileMinorExpandPeaceGame(
           ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
           minorOwProvincesByMinorId: const {
             _minor1: [],
@@ -348,7 +281,7 @@ void main() {
       // OW (it's owned by a different minor), but only the minor
       // qualifies for peace.
       const otherMinorInvadablePid = 'oldWorld|other_minor_active';
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         rivalGpProvinces: 1,
         minorOwProvincesByMinorId: const {
@@ -380,7 +313,7 @@ void main() {
       // qualify for the futile-minor pivot. This pins the `<=` band
       // upper bound (`ownOw > default-start + 1` short-circuits).
       const ownOw = kObserverDefaultStartOldWorldProvincesPerGp + 1;
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: ownOw,
         minorOwProvincesByMinorId: const {_minor1: []},
         atWarMinorIds: const [_minor1],
@@ -408,7 +341,7 @@ void main() {
       // arms and a sort; the same `(Game, AIWorldSnapshot)` inputs must
       // always yield the same `List<String>`.
       const minor1InvadablePid = 'oldWorld|${_minor1}_1';
-      final game = _ownGame(
+      final game = buildDefaultStartFutileMinorExpandPeaceGame(
         ownProvinces: kObserverDefaultStartOldWorldProvincesPerGp,
         minorOwProvincesByMinorId: const {
           _minor1: [minor1InvadablePid],

@@ -7,7 +7,7 @@ import 'package:colonizethis_app/features/shell/new_game_leader_dialog_builder.d
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:flutter/material.dart';
 
-import '../../support/app_shell_harness.dart';
+import '../../app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -85,13 +85,13 @@ void main() {
     });
 
     test(
-      'dialog-builders part file neither imports nor references features/shell',
+      'lifecycle dialog-builders mixin neither imports nor references features/shell',
       () {
         final source = File(
-          'lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart',
+          'lib/core/services/app_event_handler/app_event_handler_scope_lifecycle.dart',
         ).readAsStringSync();
         final shellImports = importLinesOf(
-          'lib/core/services/app_event_handler/app_event_handler_scope_dialog_builders.dart',
+          'lib/core/services/app_event_handler/app_event_handler_scope_lifecycle.dart',
         ).where((l) => l.contains('features/shell/')).toList();
 
         expect(shellImports, isEmpty);

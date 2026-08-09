@@ -4,8 +4,10 @@
 //
 // SPEC: `SPEC/ui/mobile-adaptation.md` § 7 (Minimum-viewport pin).
 
-import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/next_turn_confirmation_dialog.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show CivilianMissingWorkOrderEntry;
+import 'package:colonizethis_app/features/game/widgets/combat/quick_battle_result_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/panels/pause_menu_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_dialog.dart';
@@ -15,7 +17,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/dialogs_320dp_min_viewport_support.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
 const _gp1 = 'gp1';
 
@@ -159,6 +161,64 @@ void main() {
         size: kDialogs320WideRegressionViewport,
         expectFinders: content,
       );
+    });
+  });
+
+  group('SPEC/ui/mobile-adaptation.md § 7 — NextTurnConfirmationDialog '
+      'warning variant @ 320 dp (Refs #4140)', () {
+    const severalCivilians = [
+      CivilianMissingWorkOrderEntry(
+        unitId: 'e1',
+        type: 'explorer',
+        tileKey: 'oldWorld|p1|0|0',
+        regionId: 'oldWorld',
+        locationLabel: 'Old World — Alpha Province',
+      ),
+      CivilianMissingWorkOrderEntry(
+        unitId: 'b1',
+        type: 'builder',
+        tileKey: 'oldWorld|p2|1|0',
+        regionId: 'oldWorld',
+        locationLabel: 'Old World — Beta Province',
+      ),
+      CivilianMissingWorkOrderEntry(
+        unitId: 's1',
+        type: 'spy',
+        tileKey: 'newWorld|p3|2|1',
+        regionId: 'newWorld',
+        locationLabel: 'New World — Gamma Province',
+      ),
+    ];
+
+    const warningDialog = NextTurnConfirmationDialog(
+      currentTurn: 12,
+      civiliansMissingWork: severalCivilians,
+    );
+
+    testWidgets('AC (positive) warning variant with several civilians @ '
+        '320×640: no RenderFlex overflow; Yes/No remain visible', (
+      WidgetTester tester,
+    ) async {
+      await _pinDialog(
+        tester,
+        warningDialog,
+        size: kDialogs320MinViewport,
+        overflowReason:
+            'SPEC/ui/next-turn-confirmation.md + mobile-adaptation § 7: '
+            'the idle-civilian warning variant must not overflow horizontally '
+            'at kMinViewportWidth (320 dp) when several rows are listed.',
+        expectFinders: [
+          find.text('End turn?'),
+          find.text('No'),
+          find.text('Yes'),
+          find.text(
+            'These civilians have no work order for the next turn:',
+          ),
+        ],
+      );
+      expect(find.text('explorer'), findsOneWidget);
+      expect(find.text('builder'), findsOneWidget);
+      expect(find.text('spy'), findsOneWidget);
     });
   });
 

@@ -7,6 +7,40 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 // Extracted from `world_market_phase.dart` so the phase handler stays within
 // the function-size budget; behaviour is unchanged.
 
+Map<String, num> _embassyGpRelationsFor({
+  required Game game,
+  required Set<String> minorTribeSellerIds,
+  required Map<String, Map<String, num>> embassyRelationsCache,
+  required String sourceFactionId,
+}) {
+  if (!minorTribeSellerIds.contains(sourceFactionId)) {
+    return const <String, num>{};
+  }
+  final cached = embassyRelationsCache[sourceFactionId];
+  if (cached != null) return cached;
+  final relations = <String, num>{};
+  for (final player in game.players) {
+    if (player.id == sourceFactionId) continue;
+    if (!hasEmbassyOverture(game, player.id, sourceFactionId)) continue;
+    relations[player.id] =
+        getRelation(game, player.id, sourceFactionId)?.score ?? 0;
+  }
+  embassyRelationsCache[sourceFactionId] = relations;
+  return relations;
+}
+
+({Set<String> minorTribeSellerIds, Map<String, Map<String, num>> cache})
+_worldMarketEmbassyContext(Game game) {
+  final minorTribeSellerIds = <String>{
+    for (final m in game.minorNations) m.id,
+    for (final t in game.tribes) t.id,
+  };
+  return (
+    minorTribeSellerIds: minorTribeSellerIds,
+    cache: <String, Map<String, num>>{},
+  );
+}
+
 /// Computes the two-tier overseas profit-share credits for a resolved set of
 /// [filledDeals]: the tile-owning GP receives the full relation-linear share
 /// (R8.2) and every other embassy-holding GP receives a 10% kickback of its
@@ -22,27 +56,14 @@ FirstRightCreditsResult computeWorldMarketFirstRightCredits({
   required List<FilledDeal> filledDeals,
   required PurchasedTileIndex purchasedTileIndex,
 }) {
-  final minorTribeSellerIds = <String>{
-    for (final m in game.minorNations) m.id,
-    for (final t in game.tribes) t.id,
-  };
-  final embassyRelationsCache = <String, Map<String, num>>{};
-  Map<String, num> embassyGpRelationsFor(String sourceFactionId) {
-    if (!minorTribeSellerIds.contains(sourceFactionId)) {
-      return const <String, num>{};
-    }
-    final cached = embassyRelationsCache[sourceFactionId];
-    if (cached != null) return cached;
-    final relations = <String, num>{};
-    for (final player in game.players) {
-      if (player.id == sourceFactionId) continue;
-      if (!hasEmbassyOverture(game, player.id, sourceFactionId)) continue;
-      relations[player.id] =
-          getRelation(game, player.id, sourceFactionId)?.score ?? 0;
-    }
-    embassyRelationsCache[sourceFactionId] = relations;
-    return relations;
-  }
+  final embassyContext = _worldMarketEmbassyContext(game);
+  Map<String, num> embassyGpRelationsFor(String sourceFactionId) =>
+      _embassyGpRelationsFor(
+        game: game,
+        minorTribeSellerIds: embassyContext.minorTribeSellerIds,
+        embassyRelationsCache: embassyContext.cache,
+        sourceFactionId: sourceFactionId,
+      );
 
   return computeFirstRightCredits(
     filledDeals: filledDeals,
@@ -50,5 +71,27 @@ FirstRightCreditsResult computeWorldMarketFirstRightCredits({
     relationScoreFor: (owningGpId, sourceFactionId) =>
         getRelation(game, owningGpId, sourceFactionId)?.score ?? 0,
     embassyGpRelationsFor: embassyGpRelationsFor,
+  );
+}
+
+/// Persists per-GP overseas-profit credit rows for Deal Book / feed (Refs #4226).
+Map<String, List<OverseasProfitCreditRecord>>
+buildWorldMarketOverseasProfitCreditRecords({
+  required Game game,
+  required List<FilledDeal> filledDeals,
+  required FirstRightCreditsResult credits,
+  required PurchasedTileIndex purchasedTileIndex,
+}) {
+  final embassyContext = _worldMarketEmbassyContext(game);
+  return buildOverseasProfitCreditRecordsByGpId(
+    credits: credits,
+    filledDeals: filledDeals,
+    purchasedTileIndex: purchasedTileIndex,
+    embassyGpRelationsFor: (sourceFactionId) => _embassyGpRelationsFor(
+      game: game,
+      minorTribeSellerIds: embassyContext.minorTribeSellerIds,
+      embassyRelationsCache: embassyContext.cache,
+      sourceFactionId: sourceFactionId,
+    ),
   );
 }

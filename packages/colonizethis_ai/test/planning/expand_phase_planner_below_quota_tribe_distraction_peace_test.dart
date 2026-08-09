@@ -32,93 +32,12 @@ const String _tribeOne = 'tribe_one';
 const String _tribeTwo = 'tribe_two';
 const String _tribeThree = 'tribe_three';
 
-Game _tribeDistractionGame({
-  required int ownProvinces,
-  required int ownRegiments,
-  Map<String, List<String>> minorOwnedInvadables = const {},
-  Map<String, List<String>> tribeOwnedInvadables = const {},
-  List<String> atWarMinors = const [],
-  List<String> atWarTribes = const [],
-  List<String> atWarRivalGps = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in minorOwnedInvadables.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-    for (final entry in tribeOwnedInvadables.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in atWarRivalGps)
-      Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-  ];
-
-  final allMinorIds = <String>{...minorOwnedInvadables.keys, ...atWarMinors};
-  final minorNations = <MinorNation>[
-    for (final minorId in allMinorIds)
-      MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final tribes = <Tribe>[
-    for (final tribeId in atWarTribes) Tribe(id: tribeId, displayName: tribeId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in [...atWarMinors, ...atWarTribes, ...atWarRivalGps])
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  final armies = <Army>[
-    if (ownRegiments > 0)
-      Army(
-        id: homeArmyIdFor(_gpOwn),
-        ownerId: _gpOwn,
-        regionId: 'oldWorld',
-        stationedProvinceId: ownProvinces > 0
-            ? 'oldWorld|${_gpOwn}_1'
-            : 'oldWorld|capital',
-        regimentUnitIds: <String>[
-          for (var i = 1; i <= ownRegiments; i++) 'u_${_gpOwn}_$i',
-        ],
-        isHomeArmy: true,
-      ),
-  ];
-
-  return Game(
-    id: 'g-2847-tribe-distraction-own$ownProvinces-reg$ownRegiments',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-      armies: armies,
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
 void main() {
   group(
     'belowQuotaRegimentThinTribeDistractionPeaceTargets — outer guards',
     () {
       test('returns const [] at or above the observer OW quota', () {
-        final game = _tribeDistractionGame(
+        final game = buildTribeDistractionExpandPeaceGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp,
           ownRegiments: 2,
           minorOwnedInvadables: const {
@@ -144,7 +63,7 @@ void main() {
       });
 
       test('returns const [] when the active player has zero regiments', () {
-        final game = _tribeDistractionGame(
+        final game = buildTribeDistractionExpandPeaceGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: 0,
           minorOwnedInvadables: const {
@@ -172,7 +91,7 @@ void main() {
       test(
         'returns const [] at or above the multi-front regiment threshold',
         () {
-          final game = _tribeDistractionGame(
+          final game = buildTribeDistractionExpandPeaceGame(
             ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
             ownRegiments: kBelowQuotaPeaceMinRegimentsBeforeDeclareWar,
             minorOwnedInvadables: const {
@@ -200,7 +119,7 @@ void main() {
       );
 
       test('returns const [] when the invadable OW frontier is empty', () {
-        final game = _tribeDistractionGame(
+        final game = buildTribeDistractionExpandPeaceGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
           ownRegiments: 2,
           atWarTribes: const [_tribeOne, _tribeTwo],
@@ -226,7 +145,7 @@ void main() {
 
   group('belowQuotaRegimentThinTribeDistractionPeaceTargets — fire path', () {
     test('peaces every at-war tribe sorted ascending, dropping minors/GPs', () {
-      final game = _tribeDistractionGame(
+      final game = buildTribeDistractionExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
         ownRegiments: 2,
         minorOwnedInvadables: const {
@@ -266,7 +185,7 @@ void main() {
       // consolidation target) and is kept at war; tribe_two and
       // tribe_three own nothing (pure distractions) and are peaced. Two
       // distractions clear the multi-front dilution threshold.
-      final game = _tribeDistractionGame(
+      final game = buildTribeDistractionExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
         ownRegiments: 2,
         tribeOwnedInvadables: const {
@@ -297,7 +216,7 @@ void main() {
       // frontier set (a slow multi-hop conquest the ratchet would still
       // complete; seed-42 gp3 baseline) — owning any OW province keeps it
       // at war. tribe_two owns nothing (pure distraction) and is peaced.
-      final game = _tribeDistractionGame(
+      final game = buildTribeDistractionExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
         ownRegiments: 2,
         minorOwnedInvadables: const {
@@ -328,7 +247,7 @@ void main() {
     });
 
     test('returns identical results on repeat (determinism)', () {
-      final game = _tribeDistractionGame(
+      final game = buildTribeDistractionExpandPeaceGame(
         ownProvinces: kObserverConquestMinOwProvincesPerGp - 2,
         ownRegiments: 3,
         minorOwnedInvadables: const {

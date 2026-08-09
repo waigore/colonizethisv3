@@ -3,20 +3,9 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import '../../../../widgets/ct_slider.dart';
 import 'production_recipe_affordance.dart';
-import 'production_allocation_mutations.dart';
-import 'production_allocation_row_buttons.dart';
-
-part 'production_allocation_row_slider.dart';
-part 'production_allocation_row_controls.dart';
-
-const _uiIconProductionAllocDecrement =
-    'ui_icon_production_alloc_decrement.png';
-const _uiIconProductionAllocIncrement =
-    'ui_icon_production_alloc_increment.png';
-const _uiIconProductionAllocMaximize = 'ui_icon_production_alloc_maximize.png';
-const _uiIconProductionAllocClear = 'ui_icon_production_alloc_clear.png';
+import 'production_allocation_row_controls.dart';
+import 'production_industry_counsel_star.dart';
 
 /// Opacity applied to a tech-locked recipe row's slider sub-row (slider plus
 /// the four step/action controls) so it reads as grayed/disabled per
@@ -39,6 +28,8 @@ class ProductionAllocationRow extends StatelessWidget {
     required this.l10n,
     required this.theme,
     this.locked = false,
+    this.canEditLabour = true,
+    this.counselStar,
   });
 
   final ProductionRecipe recipe;
@@ -54,6 +45,10 @@ class ProductionAllocationRow extends StatelessWidget {
   /// so the row renders visible-but-grayed and the slider/steppers are
   /// non-interactive per `SPEC/ui/production-panel.md` § Tech-gated recipe rows.
   final bool locked;
+  final bool canEditLabour;
+
+  /// Optional industry counsel star for this recipe row.
+  final ProductionIndustryCounselStar? counselStar;
 
   int get desiredOutput => desiredOutputByRecipe[recipe.id] ?? 0;
 
@@ -74,11 +69,16 @@ class ProductionAllocationRow extends StatelessWidget {
     effectiveLabour: effectiveLabour,
   );
 
-  Widget buildHeader(RecipeAffordance rowAffordance, int maxAchievable) {
+  Widget buildHeader(
+    RecipeAffordance rowAffordance,
+    int maxAchievable, {
+    ProductionIndustryCounselStar? headerCounselStar,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(flex: 2, child: buildRecipeLabel(recipe, locked)),
+        ?headerCounselStar,
         Expanded(
           flex: 1,
           child: Text(
@@ -112,11 +112,15 @@ class ProductionAllocationRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        buildHeader(rowAffordance, maxAchievable),
-        if (locked)
+        buildHeader(
+          rowAffordance,
+          maxAchievable,
+          headerCounselStar: counselStar,
+        ),
+        if (locked || !canEditLabour)
           IgnorePointer(
             child: Opacity(
-              opacity: kProductionRecipeLockedOpacity,
+              opacity: locked ? kProductionRecipeLockedOpacity : 1,
               child: sliderRow,
             ),
           )

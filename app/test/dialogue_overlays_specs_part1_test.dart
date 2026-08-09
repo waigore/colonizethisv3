@@ -35,8 +35,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jenny/jenny.dart';
 
-import 'support/dialogue_overlays_specs_test_support.dart';
-import 'support/yarn_test_fixtures.dart';
+import 'dialogue_overlays_specs_test_support.dart';
+import 'yarn_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

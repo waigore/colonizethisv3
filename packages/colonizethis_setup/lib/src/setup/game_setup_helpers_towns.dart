@@ -5,14 +5,16 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'faction_setup_helpers.dart';
 import 'game_setup_context.dart';
+import 'game_setup_plains_conversion.dart';
 import 'game_setup_town_tile_ranking.dart';
 import 'grid_bfs.dart';
 import 'setup_road_wiring.dart';
 import 'setup_topology_adjacency.dart';
 
 /// 7d. Province town assignment. For each province, set townTileKey: capital province = capital tile;
-/// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then centroid tie-break,
-/// then shortest path to capital where applicable, then lexicographic tile key. SPEC/program/game-setup-pipeline.md.
+/// otherwise branch eligibility (seaboard, same-region BFS, overseas port) then prefer plains among
+/// candidates, then centroid/BFS/lex ranking; convert selected non-plains tile to plains.
+/// SPEC/program/game-setup-pipeline.md; SPEC/game/capital-and-connectivity.md § Town.
 Game assignProvinceTowns({
   required Game game,
   required Map<String, MapTopology> topologyByRegion,
@@ -23,26 +25,48 @@ Game assignProvinceTowns({
   final capitalData = collectCapitalMapsByOwner(game);
   final coordToKey = coordToTileKeyByRegion(tileKeysByRegion);
 
-  Province assignTownTile(Province p) {
-    final tk = _townTileKeyForProvince(
-      province: p,
-      tileKeysByRegion: tileKeysByRegion,
-      capitalProvinceIdByOwner: capitalData.capitalProvinceIdByOwner,
-      capitalTileKeyByOwner: capitalData.capitalTileKeyByOwner,
-      topologyByRegion: topologyByRegion,
-      tileMapByRegion: tileMapByRegion,
-      portsByProvinceSeaboard: ports,
-      coordToKeyByRegion: coordToKey,
-    );
-    return tk != null ? p.copyWith(townTileKey: tk) : p;
+  var outGame = game;
+
+  List<Province> assignTownsInRegion(List<Province> provinces) {
+    final next = <Province>[];
+    for (final p in provinces) {
+      final tk = _townTileKeyForProvince(
+        province: p,
+        tileKeysByRegion: tileKeysByRegion,
+        capitalProvinceIdByOwner: capitalData.capitalProvinceIdByOwner,
+        capitalTileKeyByOwner: capitalData.capitalTileKeyByOwner,
+        topologyByRegion: topologyByRegion,
+        tileMapByRegion: tileMapByRegion,
+        portsByProvinceSeaboard: ports,
+        coordToKeyByRegion: coordToKey,
+      );
+      if (tk == null) {
+        next.add(p);
+        continue;
+      }
+      final ensured = ensureTileIsPlains(
+        game: outGame,
+        tileMapByRegion: tileMapByRegion,
+        tileKey: tk,
+      );
+      outGame = ensured.game;
+      next.add(p.copyWith(townTileKey: tk));
+    }
+    return next;
   }
 
-  return game.copyWith(
-    worldState: game.worldState.mapBothRegions(
-      (_, region) => RegionData(
-        provinces: region.provinces.map(assignTownTile).toList(),
-        units: region.units,
-      ),
+  final ow = outGame.worldState.oldWorld;
+  final nw = outGame.worldState.newWorld;
+  // Run region assignment before copyWith so ensureTileIsPlains game updates
+  // (resource/improvement clears) land on [outGame] before the worldState
+  // receiver is read — evaluating assignTownsInRegion inside copyWith args
+  // would snapshot a stale worldState and drop those clears (Refs #4065).
+  final owProvinces = assignTownsInRegion(ow.provinces);
+  final nwProvinces = assignTownsInRegion(nw.provinces);
+  return outGame.copyWith(
+    worldState: outGame.worldState.copyWith(
+      oldWorld: RegionData(provinces: owProvinces, units: ow.units),
+      newWorld: RegionData(provinces: nwProvinces, units: nw.units),
     ),
   );
 }
@@ -59,8 +83,9 @@ String? _townTileKeyForProvince({
 }) {
   final ownerId = province.ownerId;
   final tiles = tileKeysByRegion[province.regionId]?[province.id] ?? [];
+  final regionMap = tileMapByRegion[province.regionId];
   if (ownerId == null) {
-    return _pickTownWithoutOwner(tiles);
+    return _pickTownWithoutOwner(tiles, regionMap);
   }
 
   final capProvinceId = capitalProvinceIdByOwner[ownerId];
@@ -105,7 +130,10 @@ String? _townTileKeyForProvince({
             )
           : const <String, int>{};
       return pickTownTileByCentroidAndBfs(
-        candidates: coastalCandidates,
+        candidates: preferPlainsTownCandidates(
+          candidates: coastalCandidates,
+          tileMap: regionMap,
+        ),
         centroidX: centroid.x,
         centroidY: centroid.y,
         bfsFromCapital: distances,
@@ -123,7 +151,10 @@ String? _townTileKeyForProvince({
       coordToKeyByRegion: coordToKeyByRegion,
     );
     return pickTownTileByCentroidAndBfs(
-      candidates: tiles,
+      candidates: preferPlainsTownCandidates(
+        candidates: tiles,
+        tileMap: regionMap,
+      ),
       centroidX: centroid.x,
       centroidY: centroid.y,
       bfsFromCapital: distances,
@@ -137,20 +168,26 @@ String? _townTileKeyForProvince({
     return portTile;
   }
   return pickTownTileByCentroidAndBfs(
-    candidates: tiles,
+    candidates: preferPlainsTownCandidates(
+      candidates: tiles,
+      tileMap: regionMap,
+    ),
     centroidX: centroid.x,
     centroidY: centroid.y,
     bfsFromCapital: const {},
   );
 }
 
-String? _pickTownWithoutOwner(List<String> tiles) {
+String? _pickTownWithoutOwner(List<String> tiles, TileMapResult? tileMap) {
   if (tiles.isEmpty) {
     return null;
   }
   final centroid = provinceTownCentroidFromTileKeys(tiles);
   return pickTownTileByCentroidAndBfs(
-    candidates: tiles,
+    candidates: preferPlainsTownCandidates(
+      candidates: tiles,
+      tileMap: tileMap,
+    ),
     centroidX: centroid.x,
     centroidY: centroid.y,
     bfsFromCapital: const {},

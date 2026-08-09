@@ -65,12 +65,31 @@ void main() {
       expect(used, contains(name));
     });
 
+    test('positive: same seed and empty set yields same name', () {
+      expect(
+        generateUniqueProvinceName(42, <String>{}),
+        generateUniqueProvinceName(42, <String>{}),
+      );
+    });
+
     test('positive: appends numbered suffix when first candidate is taken', () {
       final used = <String>{};
       final first = generateUniqueProvinceName(42, used);
       final second = generateUniqueProvinceName(42, used);
       expect(second, isNot(equals(first)));
       expect(second, startsWith(first));
+    });
+
+    test('positive: many consecutive calls yield unique non-empty names', () {
+      final used = <String>{};
+      final names = <String>[];
+      for (var i = 0; i < 50; i++) {
+        final name = generateUniqueProvinceName(1000 + i, used);
+        expect(name, isNotEmpty);
+        names.add(name);
+      }
+      expect(used.length, 50);
+      expect(names.toSet().length, 50);
     });
 
     test('positive: seed-based fallback when numbered suffixes are exhausted', () {

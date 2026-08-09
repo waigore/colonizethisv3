@@ -1,10 +1,13 @@
 import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart';
 
-part 'game_map_area_civilian_draft_projection_helpers.dart';
+import 'game_map_area_draft_projection_shared.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Civilian-marker draft projection for the human player.
 ///
@@ -124,4 +127,121 @@ class GameMapAreaCivilianDraftProjection {
       projectedMarkers: projectedMarkers,
     );
   }
+}
+
+bool _isCivilianUnitType(String unitType) {
+  final role = unitRoleForType(unitType);
+  if (role == null) return false;
+  return role != UnitRole.military && role != UnitRole.naval;
+}
+
+String _normalizeCivilianTypeForPriority(String type) {
+  return type.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+}
+
+int _civilianIconPriorityForType(String type) {
+  final normalized = _normalizeCivilianTypeForPriority(type);
+  switch (normalized) {
+    case 'builder':
+      return 0;
+    case 'engineer':
+      return 1;
+    case 'railbuilder':
+      return 2;
+    case 'explorer':
+      return 3;
+    case 'merchant':
+      return 4;
+    case 'spy':
+      return 5;
+    default:
+      return 999;
+  }
+}
+
+class _ProjectedCivilianUnit {
+  const _ProjectedCivilianUnit({
+    required this.unitId,
+    required this.unitType,
+    required this.pendingTargetTileKey,
+    required this.assignedTileKey,
+    required this.status,
+  });
+
+  final String unitId;
+  final String unitType;
+  final String? pendingTargetTileKey;
+  final String? assignedTileKey;
+  final ct_models.UnitStatus status;
+}
+
+RegionMapViewData _regionWithEmptyCivilianMarkers(RegionMapViewData region) {
+  return GameMapAreaDraftProjectionShared.copyRegionMapViewDataMarkerLayers(
+    region: region,
+    civilianTileMarkers: const [],
+  );
+}
+
+List<CivilianTileMarkerView> _buildProjectedCivilianMarkers({
+  required Map<String, List<_ProjectedCivilianUnit>> projectedByTile,
+  required Map<String, String> visibilityByTile,
+}) {
+  final projectedMarkers = <CivilianTileMarkerView>[];
+  for (final entry in projectedByTile.entries) {
+    final tileKey = entry.key;
+    final units = entry.value.toList()
+      ..sort((a, b) {
+        final p = _civilianIconPriorityForType(
+          a.unitType,
+        ).compareTo(_civilianIconPriorityForType(b.unitType));
+        if (p != 0) return p;
+        return a.unitId.compareTo(b.unitId);
+      });
+    final parsed = tryParseTileKey(tileKey);
+    if (parsed == null) continue;
+    final x = parsed.x;
+    final y = parsed.y;
+    final representative = units.first;
+    final representativeIsAssigned =
+        representative.pendingTargetTileKey == tileKey ||
+        (representative.assignedTileKey == tileKey &&
+            representative.status == ct_models.UnitStatus.working);
+    final applyCivilianRevealHalo = units.any((u) {
+      final isAssignedToTile =
+          u.pendingTargetTileKey == tileKey ||
+          (u.assignedTileKey == tileKey &&
+              u.status == ct_models.UnitStatus.working);
+      if (!isAssignedToTile) return false;
+      return visibilityByTile[tileKey] == VisibilityLevel.fogged.name;
+    });
+    projectedMarkers.add(
+      CivilianTileMarkerView(
+        tileKey: tileKey,
+        x: x,
+        y: y,
+        localProvinceId: parsed.provinceLocalId,
+        unitIds: units.map((u) => u.unitId).toList(),
+        unitTypes: {for (final u in units) u.unitId: u.unitType},
+        representativeUnitType: representative.unitType,
+        stackCount: units.length,
+        representativeIsAssigned: representativeIsAssigned,
+        applyCivilianRevealHalo: applyCivilianRevealHalo,
+      ),
+    );
+  }
+
+  GameMapAreaDraftProjectionShared.sortCivilianTileMarkersByMapPosition(
+    projectedMarkers,
+  );
+  return projectedMarkers;
+}
+
+RegionMapViewData _regionWithProjectedCivilianMarkers({
+  required RegionMapViewData region,
+  required List<CivilianTileMarkerView> projectedMarkers,
+}) {
+  return GameMapAreaDraftProjectionShared.copyRegionMapViewDataMarkerLayers(
+    region: region,
+    civilianTileMarkers: projectedMarkers,
+  );
 }

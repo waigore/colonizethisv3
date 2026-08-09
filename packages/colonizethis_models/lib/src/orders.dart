@@ -1,11 +1,14 @@
+import 'model_collection_equality.dart';
 import 'diplomacy.dart';
-import 'model_validation_exception.dart';
-import 'province_id.dart';
-import 'worker_tier.dart';
+import 'orders_serialization.dart';
 import 'world_market.dart';
 
-part 'orders/move_orders.dart';
-part 'orders/build_work_orders.dart';
+import 'orders/build_work_orders.dart';
+import 'orders/move_orders.dart';
+
+export 'orders/build_work_orders.dart';
+export 'orders/move_orders.dart';
+
 
 /// Per-player orders for the current turn.
 /// SPEC/game/world-model.
@@ -62,257 +65,52 @@ class Orders {
   /// SPEC/game/world-market.md.
   final Map<String, List<TradeOrder>> tradeOrdersByPlayerId;
 
-  Map<String, dynamic> toJson() => {
-    'moveOrdersByPlayerId': moveOrdersByPlayerId.map(
-      (playerId, orders) =>
-          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-    ),
-    if (armyMoveOrdersByPlayerId.isNotEmpty)
-      'armyMoveOrdersByPlayerId': armyMoveOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    'buildUnitOrdersByPlayerId': buildUnitOrdersByPlayerId.map(
-      (playerId, orders) =>
-          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-    ),
-    'workOrdersByPlayerId': workOrdersByPlayerId.map(
-      (playerId, orders) =>
-          MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-    ),
-    if (diplomaticOrdersByPlayerId.isNotEmpty)
-      'diplomaticOrdersByPlayerId': diplomaticOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    if (researchOrdersByPlayerId.isNotEmpty)
-      'researchOrdersByPlayerId': researchOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    if (navalMoveOrdersByPlayerId.isNotEmpty)
-      'navalMoveOrdersByPlayerId': navalMoveOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    if (navalMissionOrdersByPlayerId.isNotEmpty)
-      'navalMissionOrdersByPlayerId': navalMissionOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    if (recruitWorkerOrdersByPlayerId.isNotEmpty)
-      'recruitWorkerOrdersByPlayerId': recruitWorkerOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-    if (tradeOrdersByPlayerId.isNotEmpty)
-      'tradeOrdersByPlayerId': tradeOrdersByPlayerId.map(
-        (playerId, orders) =>
-            MapEntry(playerId, orders.map((o) => o.toJson()).toList()),
-      ),
-  };
+  Map<String, dynamic> toJson() => encodeOrdersToJson(this);
 
-  static Orders fromJson(Map<String, dynamic> json) {
-    final moveRaw =
-        json['moveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final moveByPlayerId = <String, List<MoveOrder>>{};
-    moveRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => MoveOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      moveByPlayerId[playerId] = list;
-    });
-
-    final armyMoveRaw =
-        json['armyMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final armyMoveByPlayerId = <String, List<ArmyMoveOrder>>{};
-    armyMoveRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => ArmyMoveOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      armyMoveByPlayerId[playerId] = list;
-    });
-
-    final buildRaw =
-        json['buildUnitOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final buildByPlayerId = <String, List<BuildUnitOrder>>{};
-    buildRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => BuildUnitOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      buildByPlayerId[playerId] = list;
-    });
-
-    final workRaw =
-        json['workOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final workByPlayerId = <String, List<WorkOrder>>{};
-    workRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => WorkOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      workByPlayerId[playerId] = list;
-    });
-
-    final diploRaw =
-        json['diplomaticOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final diploByPlayerId = <String, List<DiplomaticOrder>>{};
-    diploRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => DiplomaticOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      diploByPlayerId[playerId] = list;
-    });
-
-    final researchRaw =
-        json['researchOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final researchByPlayerId = <String, List<ResearchOrder>>{};
-    researchRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => ResearchOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      researchByPlayerId[playerId] = list;
-    });
-
-    final navalRaw =
-        json['navalMoveOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final navalByPlayerId = <String, List<NavalMoveOrder>>{};
-    navalRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => NavalMoveOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      navalByPlayerId[playerId] = list;
-    });
-
-    final missionRaw =
-        json['navalMissionOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final missionByPlayerId = <String, List<NavalMissionOrder>>{};
-    missionRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => NavalMissionOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      missionByPlayerId[playerId] = list;
-    });
-
-    final recruitWorkerRaw =
-        json['recruitWorkerOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final recruitWorkerByPlayerId = <String, List<RecruitWorkerOrder>>{};
-    recruitWorkerRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => RecruitWorkerOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      recruitWorkerByPlayerId[playerId] = list;
-    });
-
-    final tradeRaw =
-        json['tradeOrdersByPlayerId'] as Map<dynamic, dynamic>? ?? {};
-    final tradeByPlayerId = <String, List<TradeOrder>>{};
-    tradeRaw.forEach((key, value) {
-      final playerId = key.toString();
-      final list = (value as List<dynamic>? ?? [])
-          .map(
-            (e) => TradeOrder.fromJson(
-              Map<String, dynamic>.from(e as Map<Object?, Object?>),
-            ),
-          )
-          .toList();
-      tradeByPlayerId[playerId] = list;
-    });
-
-    return Orders(
-      moveOrdersByPlayerId: moveByPlayerId,
-      armyMoveOrdersByPlayerId: armyMoveByPlayerId,
-      buildUnitOrdersByPlayerId: buildByPlayerId,
-      workOrdersByPlayerId: workByPlayerId,
-      recruitWorkerOrdersByPlayerId: recruitWorkerByPlayerId,
-      diplomaticOrdersByPlayerId: diploByPlayerId,
-      researchOrdersByPlayerId: researchByPlayerId,
-      navalMoveOrdersByPlayerId: navalByPlayerId,
-      navalMissionOrdersByPlayerId: missionByPlayerId,
-      tradeOrdersByPlayerId: tradeByPlayerId,
-    );
-  }
+  static Orders fromJson(Map<String, dynamic> json) => decodeOrdersFromJson(json);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Orders &&
           runtimeType == other.runtimeType &&
-          _mapEquals(moveOrdersByPlayerId, other.moveOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            moveOrdersByPlayerId,
+            other.moveOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             armyMoveOrdersByPlayerId,
             other.armyMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             buildUnitOrdersByPlayerId,
             other.buildUnitOrdersByPlayerId,
           ) &&
-          _mapEquals(workOrdersByPlayerId, other.workOrdersByPlayerId) &&
-          _mapEquals(
+          modelMapOfListEquals(
+            workOrdersByPlayerId,
+            other.workOrdersByPlayerId,
+          ) &&
+          modelMapOfListEquals(
             diplomaticOrdersByPlayerId,
             other.diplomaticOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             researchOrdersByPlayerId,
             other.researchOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMoveOrdersByPlayerId,
             other.navalMoveOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             navalMissionOrdersByPlayerId,
             other.navalMissionOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             recruitWorkerOrdersByPlayerId,
             other.recruitWorkerOrdersByPlayerId,
           ) &&
-          _mapEquals(
+          modelMapOfListEquals(
             tradeOrdersByPlayerId,
             other.tradeOrdersByPlayerId,
           );
@@ -380,21 +178,6 @@ class Orders {
         navalMoveOrdersByPlayerId ?? this.navalMoveOrdersByPlayerId,
     navalMissionOrdersByPlayerId:
         navalMissionOrdersByPlayerId ?? this.navalMissionOrdersByPlayerId,
-    tradeOrdersByPlayerId:
-        tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
+    tradeOrdersByPlayerId: tradeOrdersByPlayerId ?? this.tradeOrdersByPlayerId,
   );
-
-  static bool _mapEquals<K, V>(Map<K, List<V>> a, Map<K, List<V>> b) {
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      final otherList = b[entry.key];
-      if (otherList == null || otherList.length != entry.value.length) {
-        return false;
-      }
-      for (var i = 0; i < entry.value.length; i++) {
-        if (entry.value[i] != otherList[i]) return false;
-      }
-    }
-    return true;
-  }
 }

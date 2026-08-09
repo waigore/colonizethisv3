@@ -26,7 +26,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
+
+const _kTestInterveneEffect =
+    'Effect: Enter war with Aggressor this turn. Embassy with Defender stays.';
+const _kTestDoNothingEffect =
+    'Effect: Stay at peace with Aggressor. Lose Embassy and all overtures with Defender. Purchased land remains until normal conquest rules apply.';
+const _kTestProtestEffect =
+    'Effect: Stay at peace. Relations with Aggressor worsen (−10). Embassy and purchased land with Defender stay.';
 
 Future<void> _pumpPicker(
   WidgetTester tester, {
@@ -38,7 +45,12 @@ Future<void> _pumpPicker(
       body: Center(
         child: SizedBox(
           width: 360,
-          child: InterventionChoiceButtons(onPick: onPick),
+          child: InterventionChoiceButtons(
+            onPick: onPick,
+            interveneEffect: _kTestInterveneEffect,
+            doNothingEffect: _kTestDoNothingEffect,
+            protestEffect: _kTestProtestEffect,
+          ),
         ),
       ),
     ),

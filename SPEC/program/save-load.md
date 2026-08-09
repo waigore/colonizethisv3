@@ -7,7 +7,7 @@
 ## Responsibility
 
 - Define the save/load contract implemented by `colonizethis_save` (GameSaveAdapter): storage backend, key convention, schema, required map data, and behaviour on load for the current schema.
-- Cross-referenced by: [world-model.md](../game/world-model.md) (serialization), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve; auto-save mirror on complete), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) (GP colour override persisted on Game), [main-menu.md](../ui/main-menu.md) (Resume game).
+- Cross-referenced by: [world-model.md](../game/world-model.md) (serialization; GP colour override on Game), [ctdev-app.md](ctdev-app.md) (Load Savegame flow), [init-game-tool.md](init-game-tool.md) (save output), [turn-resolution.md](turn-resolution.md) (persist after resolve; auto-save mirror on complete), [game-setup-pipeline.md](game-setup-pipeline.md) (persist or pass), [map-visualization.md](map-visualization.md) (greatPowerColorOverride display flow), [main-menu.md](../ui/main-menu.md) (Resume game).
 - **In-memory session wipe before load/resume/new-game/exit:** [save-load-session-clear.md](save-load-session-clear.md) (`clearActiveGameSession`, ordered activate sequence, pause disabled while turn resolution blocks).
 
 ---
@@ -67,7 +67,7 @@
 | init_game save output (`--output-game`) | [init-game-tool.md](init-game-tool.md) |
 | Persist after turn resolve | [turn-resolution.md](turn-resolution.md) |
 | Persist or pass after game setup | [game-setup-pipeline.md](game-setup-pipeline.md) |
-| GP colour override on Game | [plan-update-gp-colours-save-load.md](../project/plan-update-gp-colours-save-load.md) |
+| GP colour override on Game | [world-model.md](../game/world-model.md), [map-visualization.md](map-visualization.md) |
 
 ---
 
@@ -104,5 +104,5 @@
 
 ## Province last-turn extraction snapshot
 
-`WorldState.lastTurnProvinceExtractionByProvinceId` round-trips with the game save (JSON key of the same name). Missing field → empty map. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4002.
+Legacy saves may still contain JSON key `lastTurnProvinceExtractionByProvinceId`; load **ignores** it. Province Extraction UI uses display-time projection. Normative rules and ACs: [province-extraction-snapshot.md](province-extraction-snapshot.md). Refs #4064.
 

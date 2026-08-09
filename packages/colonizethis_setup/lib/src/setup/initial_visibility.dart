@@ -79,8 +79,7 @@ Game applyInitialVisibility({
 
   final ownerById = <String, String?>{
     for (final p in allProvinces(game.worldState))
-      (ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId, p.id)):
-          p.ownerId,
+      ProvinceId.prefixedFrom(p.regionId, p.id): p.ownerId,
   };
 
   final playerVisibilityByTile = <String, Map<String, String>>{};

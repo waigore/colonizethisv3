@@ -1,22 +1,18 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app_fixtures/config/ct_debug_console.dart';
-import 'package:colonizethis_app/package_logger.dart';
-import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_setup/colonizethis_setup.dart'
-    show applyAdvancedStartBootstrap, assignHiddenAgendasForGame;
-import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:hive/hive.dart';
 
-part 'game_service_map_cache.dart';
-part 'game_service_new_game_setup.dart';
-part 'game_service_new_game_setup_pipeline.dart';
-part 'game_service_new_game_setup_maps.dart';
-part 'game_service_turn_resume.dart';
-part 'game_service_turn_trace.dart';
-part 'game_service_turn_trace_ai_sections.dart';
+import 'game_service_map_cache.dart';
+import 'game_service_new_game_setup.dart';
+import 'game_service_turn_resume.dart';
+import 'game_service_turn_trace.dart';
+
+export 'game_service_map_cache.dart' show GameMapCache, GameMapData, TurnTraceSession;
+export 'try_get_game_map_data.dart';
 
 /// Loads/saves games and advances turn. SPEC/project/phase-1: app invokes TurnResolver and persists via colonizethis_save.
 /// Phase 2: createNewGame uses full game-setup pipeline; nextTurn requires cached/persisted map data.
@@ -24,22 +20,26 @@ class GameService {
   /// Number of coarse progress steps reported by [createNewGameAsync]. SPEC/ui/game-initializing.md.
   static const int newGameSetupProgressStepCount = 5;
   GameService(
-    this._box,
-    this._adapter, {
+    Box<dynamic> box,
+    GameSaveAdapter adapter, {
     bool? turnTraceEnabled,
     String? turnTraceRootDirectory,
-  }) : _turnTraceEnabled = turnTraceEnabled ?? kCtDebugConsoleEnabled,
-       turnTraceRootDirectory =
-           turnTraceRootDirectory ?? kCtTurnTraceDirectory;
+  }) : state = GameServiceState(
+         box: box,
+         adapter: adapter,
+         turnTraceEnabled: turnTraceEnabled ?? kCtDebugConsoleEnabled,
+         turnTraceRootDirectory:
+             turnTraceRootDirectory ?? kCtTurnTraceDirectory,
+       );
 
-  final Box<dynamic> _box;
-  final GameSaveAdapter _adapter;
-  final bool _turnTraceEnabled;
-  final String turnTraceRootDirectory;
-  final Map<String, _TurnTraceSession> _turnTraceSessionsByGameId = {};
+  /// Session fields shared by de-parted implementation libraries (Refs #4117).
+  final GameServiceState state;
 
   /// Whether merged JSON turn traces are emitted (app debug console gate).
-  bool get isTurnTraceEnabled => _turnTraceEnabled;
+  bool get isTurnTraceEnabled => state.turnTraceEnabled;
+
+  /// Root directory for merged turn-trace JSON exports.
+  String get turnTraceRootDirectory => state.turnTraceRootDirectory;
 
   /// Optional app-level bus for [GameToUIEvent] (turn complete, new game, overtures, etc.).
   /// When set, those events are emitted from turn resolution and [createNewGame].
@@ -51,31 +51,27 @@ class GameService {
   /// When set, runTurnResolution passes it to resolveTurnForGame.
   GameEventBus? logicEventBus;
 
-  /// In-memory cache: game id -> map data for resolveTurnForGame and map rendering.
-  /// Populated when creating a new game or when loading a game with persisted map data.
-  final Map<String, _GameMapCache> _mapCache = {};
-
   /// Optional strip for session-only observe control overrides before persist.
   Game Function(Game)? prepareGameForPersistence;
 
   /// Clears map cache and turn-trace sessions. SPEC/program/save-load-session-clear.md.
   void clearSessionCaches() {
-    _mapCache.clear();
-    _turnTraceSessionsByGameId.clear();
+    state.mapCache.clear();
+    state.turnTraceSessionsByGameId.clear();
   }
 
   /// Whether [gameId] is present in the in-memory map cache (tests / diagnostics).
-  bool hasMapCacheEntry(String gameId) => _mapCache.containsKey(gameId);
+  bool hasMapCacheEntry(String gameId) => state.mapCache.containsKey(gameId);
 
   /// Count of in-memory map-cache entries (tests / diagnostics).
-  int get mapCacheEntryCount => _mapCache.length;
+  int get mapCacheEntryCount => state.mapCache.length;
 
   /// Count of turn-trace sessions (tests / diagnostics).
-  int get turnTraceSessionCount => _turnTraceSessionsByGameId.length;
+  int get turnTraceSessionCount => state.turnTraceSessionsByGameId.length;
 
   /// Cache-only map fingerprint for session-clear isolation tests.
   String? cachedMapContentFingerprint(String gameId) {
-    final cached = _mapCache[gameId];
+    final cached = state.mapCache[gameId];
     if (cached == null) return null;
     final ids = cached.tileMapByRegion.keys.toList()..sort();
     return [
@@ -93,23 +89,23 @@ class GameService {
 
   /// Seeds a turn-trace session for tests (no export / resolution).
   void debugSeedTurnTraceSession(String gameId) =>
-      _turnTraceSessionsByGameId.putIfAbsent(
+      state.turnTraceSessionsByGameId.putIfAbsent(
         gameId,
-        () => _TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
+        () => TurnTraceSession(startedAtUtc: DateTime.now().toUtc()),
       );
 
   /// Loads game by id. Returns null if not found or required map data is missing/invalid.
-  Game? loadGame(String gameId) => _gameServiceLoadGame(this, gameId);
+  Game? loadGame(String gameId) => gameServiceLoadGame(this, gameId);
 
   /// Loads game plus mid-turn draft envelope fields.
   GameSaveSession? loadGameSession(String gameId) =>
-      _gameServiceLoadGameSession(this, gameId);
+      gameServiceLoadGameSession(this, gameId);
 
   /// Returns map data for [gameId] from cache or storage.
-  GameMapData? getMapData(String gameId) => _gameServiceGetMapData(this, gameId);
+  GameMapData? getMapData(String gameId) => gameServiceGetMapData(this, gameId);
 
   /// Saves game to storage (empty mid-turn drafts unless [saveGameSession] is used).
-  void saveGame(Game game) => _gameServiceSaveGame(this, game);
+  void saveGame(Game game) => gameServiceSaveGame(this, game);
 
   /// Saves a named (or same-id) slot from the live [sessionGame], writing Hive
   /// key / embedded [Game.id] as [saveGameId], including mid-turn drafts.
@@ -123,7 +119,7 @@ class GameService {
     String? displayName,
     bool mirrorAutoSave = true,
   }) =>
-      _gameServiceSaveGameSession(
+      gameServiceSaveGameSession(
         this,
         sessionGame: sessionGame,
         saveGameId: saveGameId,
@@ -134,35 +130,35 @@ class GameService {
       );
 
   /// Lists all saved game ids.
-  List<String> listGameIds() => _gameServiceListGameIds(this);
+  List<String> listGameIds() => gameServiceListGameIds(this);
 
   /// Manual saves plus optional auto-save row for the load dialog.
   List<LoadableSaveEntry> listLoadableSaves() =>
-      _gameServiceListLoadableSaves(this);
+      gameServiceListLoadableSaves(this);
 
   /// Count of manual named saves (auto-save excluded).
-  int manualSaveCount() => _adapter.manualSaveCount(_box);
+  int manualSaveCount() => state.adapter.manualSaveCount(state.box);
 
   /// Whether a new sanitized manual id may be created (count < [kMaxManualSaves]).
-  bool canCreateNewManualSave() => _adapter.canCreateNewManualSave(_box);
+  bool canCreateNewManualSave() => state.adapter.canCreateNewManualSave(state.box);
 
   /// Deletes a manual save or the auto-save slot (game + map keys).
   void deleteSave(String storageId) {
-    _adapter.delete(_box, storageId);
+    state.adapter.delete(state.box, storageId);
     if (storageId != kAutoSaveSlotId) {
-      _mapCache.remove(storageId);
+      state.mapCache.remove(storageId);
     }
   }
 
   /// Whether the Hive auto-save slot is playable.
-  bool hasValidAutoSave() => _gameServiceHasValidAutoSave(this);
+  bool hasValidAutoSave() => gameServiceHasValidAutoSave(this);
 
   /// Loads the auto-save slot into memory cache under [Game.id].
-  Game? loadAutoSaveGame() => _gameServiceLoadAutoSaveGame(this);
+  Game? loadAutoSaveGame() => gameServiceLoadAutoSaveGame(this);
 
   /// Loads auto-save with mid-turn draft fields.
   GameSaveSession? loadAutoSaveSession() =>
-      _gameServiceLoadAutoSaveSession(this);
+      gameServiceLoadAutoSaveSession(this);
 
   /// Resolves one turn. Returns [TurnResolutionComplete] with new game (and persists),
   /// or a pending result: [TurnResolutionPendingOvertures], [TurnResolutionPendingIntervention],
@@ -180,7 +176,7 @@ class GameService {
     Map<String, TileMapResult>? tileMapByRegion,
     void Function(GameEvent)? onGameEvent,
   }) =>
-      _gameServiceRunTurnResolution(
+      gameServiceRunTurnResolution(
         this,
         current,
         orders: orders,
@@ -198,7 +194,7 @@ class GameService {
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) =>
-      _gameServiceResumeTurnFromDiplomacy(
+      gameServiceResumeTurnFromDiplomacy(
         this,
         game,
         orders,
@@ -211,12 +207,12 @@ class GameService {
   /// When [TurnResolutionComplete], saves the game. SPEC/program/dialogue-system.md.
   TurnResolutionResult resumeOvertureDecisions(
     Game game,
-    List<OvertureOffer> _pendingOvertures,
+    List<OvertureOffer> pendingOvertures,
     List<OvertureDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) =>
-      _gameServiceResumeTurnFromDiplomacy(
+      gameServiceResumeTurnFromDiplomacy(
         this,
         game,
         orders,
@@ -227,12 +223,12 @@ class GameService {
   /// Resumes turn resolution after FTP accept/reject decisions (Diplomacy phase).
   TurnResolutionResult resumeFtpDecisions(
     Game game,
-    List<FtpOffer> _pendingFtpOffers,
+    List<FtpOffer> pendingFtpOffers,
     List<FtpDecision> decisions,
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) =>
-      _gameServiceResumeTurnFromDiplomacy(
+      gameServiceResumeTurnFromDiplomacy(
         this,
         game,
         orders,
@@ -247,7 +243,7 @@ class GameService {
     Orders orders, {
     void Function(GameEvent)? onGameEvent,
   }) =>
-      _gameServiceResumeTurnFromDiplomacy(
+      gameServiceResumeTurnFromDiplomacy(
         this,
         game,
         orders,
@@ -276,11 +272,11 @@ class GameService {
 
   /// Emits app-level events and persistence side effects for externally resolved turns.
   void handleExternallyResolvedTurnResult(TurnResolutionResult result) =>
-      _gameServiceEmitTurnResolutionEvents(this, result);
+      gameServiceEmitTurnResolutionEvents(this, result);
 
   /// Creates a new game via the full game-setup pipeline (map gen, province assignment, capital auto-choice).
   Game createNewGame({String? id, GameSetupConfig? config}) =>
-      _gameServiceCreateNewGame(this, id: id, config: config);
+      gameServiceCreateNewGame(this, id: id, config: config);
 
   /// Same pipeline as [createNewGame], but yields between coarse steps so the UI isolate can paint.
   Future<Game> createNewGameAsync({
@@ -288,7 +284,7 @@ class GameService {
     GameSetupConfig? config,
     void Function(int stepIndex, int totalSteps)? onProgress,
   }) =>
-      _gameServiceCreateNewGameAsync(
+      gameServiceCreateNewGameAsync(
         this,
         id: id,
         config: config,
@@ -304,10 +300,10 @@ class GameService {
     required List<TurnTraceAiSection> ai,
     required DateTime turnStartAtUtc,
   }) {
-    if (!_turnTraceEnabled) {
+    if (!state.turnTraceEnabled) {
       return;
     }
-    _gameServiceExportTurnTrace(
+    gameServiceExportTurnTrace(
       this,
       gameAtResolutionStart: gameAtResolutionStart,
       turnEndState: turnEndState,

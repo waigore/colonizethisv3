@@ -8,12 +8,14 @@ void main() {
         id: 'oldWorld|prov1',
         regionId: 'oldWorld',
         ownerId: 'p1',
+        originalOwnerId: 'p1',
       );
       final json = p.toJson();
       final p2 = Province.fromJson(json);
       expect(p2.id, 'oldWorld|prov1');
       expect(p2.regionId, 'oldWorld');
       expect(p2.ownerId, 'p1');
+      expect(p2.originalOwnerId, 'p1');
     });
     test('toJson/fromJson round-trip without owner', () {
       const p = Province(

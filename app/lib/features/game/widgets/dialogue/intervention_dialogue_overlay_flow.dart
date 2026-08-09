@@ -2,9 +2,23 @@
 // Split from `intervention_dialogue_overlay.dart` to keep the overlay host
 // under the repo file-size target (Refs #3878).
 
-part of 'intervention_dialogue_overlay.dart';
+import 'dart:async';
 
-mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
+import 'package:colonizethis_app/config/app_assets.dart';
+import 'package:colonizethis_app/package_logger.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:jenny/jenny.dart';
+
+import 'ct_dialogue_view.dart';
+import 'intervention_dialogue_overlay.dart';
+import 'yarn_dialogue_bootstrap.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+
+mixin InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
   YarnProject? get interventionProject;
   set interventionProject(YarnProject? value);
   DialogueRunner? get interventionRunner;
@@ -32,18 +46,18 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
         bundle: bundle,
         assetPath: kDialogueInterventionAsset,
         logger: log,
-        createView: _createInterventionDialogueView,
+        createView: createInterventionDialogueView,
         beforeParse: (project) {
           project.variables.setVariable(r'$aggressorName', '');
           project.variables.setVariable(r'$defenderName', '');
           project.variables.setVariable(r'$interveningName', '');
         },
         requiredNodes: const [
-          _kIntro,
-          _kSituation,
-          _kReactIntervene,
-          _kReactNothing,
-          _kReactProtest,
+          kInterventionIntroNode,
+          kInterventionSituationNode,
+          kInterventionReactInterveneNode,
+          kInterventionReactNothingNode,
+          kInterventionReactProtestNode,
         ],
       );
       final project = session.project;
@@ -66,7 +80,7 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
 
       if (!widget.skipIntroForTest) {
         setState(() => interventionYarnUiActive = true);
-        await runner.startDialogue(_kIntro);
+        await runner.startDialogue(kInterventionIntroNode);
         if (!mounted) return;
       }
 
@@ -76,7 +90,7 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
         final prompt = widget.prompts[i];
         setInterventionFactionVariables(project, prompt);
         setState(() => interventionYarnUiActive = true);
-        await runner.startDialogue(_kSituation);
+        await runner.startDialogue(kInterventionSituationNode);
         if (!mounted) return;
 
         final completer = Completer<InterventionChoice>();
@@ -164,11 +178,11 @@ mixin _InterventionDialogueOverlayFlow on State<InterventionDialogueOverlay> {
 String reactionNodeForInterventionChoice(InterventionChoice choice) {
   switch (choice) {
     case InterventionChoice.intervene:
-      return _kReactIntervene;
+      return kInterventionReactInterveneNode;
     case InterventionChoice.doNothing:
-      return _kReactNothing;
+      return kInterventionReactNothingNode;
     case InterventionChoice.protest:
-      return _kReactProtest;
+      return kInterventionReactProtestNode;
   }
 }
 
@@ -185,11 +199,11 @@ String interventionFactionDisplayName(Game game, String factionId) {
   return factionId;
 }
 
-const String _kIntro = 'DialoguePoint/intervention_intro';
-const String _kSituation = 'DialoguePoint/intervention_situation';
-const String _kReactIntervene =
+const String kInterventionIntroNode = 'DialoguePoint/intervention_intro';
+const String kInterventionSituationNode = 'DialoguePoint/intervention_situation';
+const String kInterventionReactInterveneNode =
     'DialoguePoint/intervention_reaction_intervene';
-const String _kReactNothing =
+const String kInterventionReactNothingNode =
     'DialoguePoint/intervention_reaction_do_nothing';
-const String _kReactProtest =
+const String kInterventionReactProtestNode =
     'DialoguePoint/intervention_reaction_protest';

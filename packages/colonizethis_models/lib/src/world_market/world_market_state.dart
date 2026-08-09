@@ -1,4 +1,12 @@
-part of '../world_market.dart';
+/// Persisted world-market aggregate state.
+///
+/// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
+
+import '../model_collection_equality.dart';
+import '../stockpile.dart';
+import 'market_activity.dart';
+import 'overseas_profit_credit_record.dart';
+import 'trade_order.dart';
 
 /// Aggregate market state stored on `Game` between turns.
 ///
@@ -14,11 +22,11 @@ class WorldMarketState {
   const WorldMarketState({
     this.prices = const <CommodityId, int>{},
     this.lastTurnActivity = const <CommodityId, MarketActivity>{},
-    this.carryForwardOffersByFactionId =
-        const <String, List<TradeOrder>>{},
-    this.carryForwardBidsByFactionId =
-        const <String, List<TradeOrder>>{},
+    this.carryForwardOffersByFactionId = const <String, List<TradeOrder>>{},
+    this.carryForwardBidsByFactionId = const <String, List<TradeOrder>>{},
     this.completedTradePairKeys = const <String>{},
+    this.lastTurnOverseasProfitCreditsByGpId =
+        const <String, List<OverseasProfitCreditRecord>>{},
   });
 
   final Map<CommodityId, int> prices;
@@ -45,6 +53,12 @@ class WorldMarketState {
   /// SPEC/program/world-market-resolution.md § Step F.
   final Set<String> completedTradePairKeys;
 
+  /// Per-GP overseas-profit credit rows from the last resolved world-market
+  /// phase (tile-owner share + embassy kickback). Replaced each phase pass.
+  /// Refs #4226.
+  final Map<String, List<OverseasProfitCreditRecord>>
+  lastTurnOverseasProfitCreditsByGpId;
+
   static const empty = WorldMarketState();
 
   /// Builds an initial state seeded from `defaultMarketPrice` integers
@@ -62,6 +76,8 @@ class WorldMarketState {
     Map<String, List<TradeOrder>>? carryForwardOffersByFactionId,
     Map<String, List<TradeOrder>>? carryForwardBidsByFactionId,
     Set<String>? completedTradePairKeys,
+    Map<String, List<OverseasProfitCreditRecord>>?
+    lastTurnOverseasProfitCreditsByGpId,
   }) {
     return WorldMarketState(
       prices: prices ?? this.prices,
@@ -72,6 +88,9 @@ class WorldMarketState {
           carryForwardBidsByFactionId ?? this.carryForwardBidsByFactionId,
       completedTradePairKeys:
           completedTradePairKeys ?? this.completedTradePairKeys,
+      lastTurnOverseasProfitCreditsByGpId:
+          lastTurnOverseasProfitCreditsByGpId ??
+          this.lastTurnOverseasProfitCreditsByGpId,
     );
   }
 
@@ -91,6 +110,9 @@ class WorldMarketState {
       ),
     if (completedTradePairKeys.isNotEmpty)
       'completedTradePairKeys': completedTradePairKeys.toList(),
+    if (lastTurnOverseasProfitCreditsByGpId.isNotEmpty)
+      'lastTurnOverseasProfitCreditsByGpId':
+          _serializeOverseasProfitCredits(lastTurnOverseasProfitCreditsByGpId),
   };
 
   static WorldMarketState fromJson(Map<String, dynamic> json) {
@@ -127,6 +149,10 @@ class WorldMarketState {
       completedTradePairKeys: _deserializeCompletedTradePairKeys(
         json['completedTradePairKeys'],
       ),
+      lastTurnOverseasProfitCreditsByGpId:
+          _deserializeOverseasProfitCredits(
+            json['lastTurnOverseasProfitCreditsByGpId'],
+          ),
     );
   }
 
@@ -154,17 +180,21 @@ class WorldMarketState {
       identical(this, other) ||
       other is WorldMarketState &&
           runtimeType == other.runtimeType &&
-          _mapEquals(prices, other.prices) &&
-          _mapEquals(lastTurnActivity, other.lastTurnActivity) &&
-          _carryMapEquals(
+          modelMapEquals(prices, other.prices) &&
+          modelMapEquals(lastTurnActivity, other.lastTurnActivity) &&
+          modelMapOfListEquals(
             carryForwardOffersByFactionId,
             other.carryForwardOffersByFactionId,
           ) &&
-          _carryMapEquals(
+          modelMapOfListEquals(
             carryForwardBidsByFactionId,
             other.carryForwardBidsByFactionId,
           ) &&
-          _setEquals(completedTradePairKeys, other.completedTradePairKeys);
+          modelSetEquals(completedTradePairKeys, other.completedTradePairKeys) &&
+          modelMapOfListEquals(
+            lastTurnOverseasProfitCreditsByGpId,
+            other.lastTurnOverseasProfitCreditsByGpId,
+          );
 
   @override
   int get hashCode {
@@ -180,17 +210,48 @@ class WorldMarketState {
       Object.hashAll(carryForwardOffersByFactionId.keys),
       Object.hashAll(carryForwardBidsByFactionId.keys),
       Object.hashAll(completedTradePairKeys),
+      Object.hashAll(lastTurnOverseasProfitCreditsByGpId.keys),
     );
   }
 }
 
-bool _setEquals(Set<String> a, Set<String> b) {
-  if (identical(a, b)) return true;
-  if (a.length != b.length) return false;
-  for (final e in a) {
-    if (!b.contains(e)) return false;
+Map<String, List<Map<String, dynamic>>> _serializeOverseasProfitCredits(
+  Map<String, List<OverseasProfitCreditRecord>> map,
+) {
+  final result = <String, List<Map<String, dynamic>>>{};
+  for (final entry in map.entries) {
+    result[entry.key] = entry.value.map((r) => r.toJson()).toList();
   }
-  return true;
+  return result;
+}
+
+Map<String, List<OverseasProfitCreditRecord>> _deserializeOverseasProfitCredits(
+  Object? raw,
+) {
+  if (raw is! Map<dynamic, dynamic>) {
+    return const <String, List<OverseasProfitCreditRecord>>{};
+  }
+  final result = <String, List<OverseasProfitCreditRecord>>{};
+  raw.forEach((key, value) {
+    if (value is List<dynamic>) {
+      final records = <OverseasProfitCreditRecord>[];
+      for (final entry in value) {
+        if (entry is Map<dynamic, dynamic>) {
+          records.add(
+            OverseasProfitCreditRecord.fromJson(
+              Map<String, dynamic>.from(entry),
+            ),
+          );
+        }
+      }
+      if (records.isNotEmpty) {
+        result[key.toString()] = List<OverseasProfitCreditRecord>.unmodifiable(
+          records,
+        );
+      }
+    }
+  });
+  return Map.unmodifiable(result);
 }
 
 Set<String> _deserializeCompletedTradePairKeys(Object? raw) {
@@ -223,9 +284,7 @@ Map<String, List<TradeOrder>> _deserializeCarryForward(Object? raw) {
       final orders = <TradeOrder>[];
       for (final entry in value) {
         if (entry is Map<dynamic, dynamic>) {
-          orders.add(
-            TradeOrder.fromJson(Map<String, dynamic>.from(entry)),
-          );
+          orders.add(TradeOrder.fromJson(Map<String, dynamic>.from(entry)));
         }
       }
       if (orders.isNotEmpty) {

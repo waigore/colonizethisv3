@@ -23,7 +23,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -243,6 +243,41 @@ void main() {
         );
         expect(empty.entries, isEmpty);
         expect(empty.narrow, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Player Turn Event Feed Card folder exposes market summary variants '
+      '(Refs #4270)',
+      (WidgetTester tester) async {
+        final market = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
+          playerTurnEventFeedCardDirectories,
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Market summary — tappable link to Deal Book',
+        );
+        expect(market.entries.length, 1);
+        expect(market.entries.first.linkAffordance, isTrue);
+        expect(
+          market.entries.first.text,
+          'Market: bought £240 · sold £160 · 2 orders carried',
+        );
+
+        final combined = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          tester,
+          playerTurnEventFeedCardDirectories,
+          folder: 'Player Turn Event Feed Card',
+          useCase: 'Market + overseas profit — separate rows',
+        );
+        expect(combined.entries.length, 2);
+        expect(
+          combined.entries.map((entry) => entry.text).toList(),
+          [
+            'Overseas profit credited: £120 from 2 rival purchase(s). '
+                'Tap to open Deal Book.',
+            'Market: bought £240 · sold £160',
+          ],
+        );
       },
     );
 
