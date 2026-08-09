@@ -11,7 +11,7 @@ Ships are either **in port** at an owned province or **at sea** in a sea zone. P
 ### Raise ships for the realm
 
 1. From **Naval units panel**, select **Train** to open **Train naval dialog**.
-2. Each ship requires treasury, its listed materials, and one available Peasant. The dialog subtracts pending choices from its resource bar, so queue only ships the realm can afford together.
+2. Each ship requires treasury, its listed materials, and one available Peasant. Each row also shows its **role** (Merchant or Warship) and a one-line capability gist — cargo holds for merchants, combat role for warships — so you can choose hulls before committing. The dialog subtracts pending choices from its resource bar, so queue only ships the realm can afford together.
 3. A locked row names its required technology. Research it before queuing the hull; the **Carrack** is the sole starting merchant and needs no technology.
 4. Close the dialog to commit the chosen build orders. During turn resolution, successful builds deduct their costs and place their new hulls in the Home Fleet at the capital.
 
