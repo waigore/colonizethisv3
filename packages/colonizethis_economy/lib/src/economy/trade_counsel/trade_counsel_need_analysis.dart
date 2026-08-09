@@ -4,89 +4,11 @@ library;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import '../industry_counsel/industry_counsel_constants.dart'
-    show kIndustryCounselShortageThreshold;
-import 'trade_counsel_constants.dart';
 import 'trade_counsel_market_pricing.dart';
+import 'trade_counsel_stockpile_projection.dart';
 
-Stockpile tradeCounselProjectStockpileAfterProduction({
-  required Stockpile stockpile,
-  required List<AssignedRecipe> productionAssignments,
-}) {
-  var projected = stockpile;
-  for (final assignment in productionAssignments) {
-    final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
-    if (recipe == null || assignment.assignedLabour <= 0) continue;
-    final runs = assignment.assignedLabour ~/ recipe.labourPerOutput;
-    if (runs <= 0) continue;
-    for (final entry in recipe.inputQuantities.entries) {
-      projected = projected.applyDelta(entry.key, -entry.value * runs);
-    }
-    projected = projected.applyDelta(
-      recipe.outputCommodityId,
-      recipe.outputQuantity * runs,
-    );
-  }
-  return projected;
-}
-
-Set<CommodityId> tradeCounselTrackedCommodityIds({
-  required Stockpile stockpile,
-  required Stockpile projected,
-  required Map<CommodityId, int> inputNeeds,
-  required List<AssignedRecipe> productionAssignments,
-}) {
-  final ids = <CommodityId>{...inputNeeds.keys};
-  for (final entry in stockpile.quantities.entries) {
-    if (entry.value > 0) ids.add(entry.key);
-  }
-  for (final entry in projected.quantities.entries) {
-    if (entry.value > 0) ids.add(entry.key);
-  }
-  for (final assignment in productionAssignments) {
-    final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
-    if (recipe == null) continue;
-    ids.add(recipe.outputCommodityId);
-    ids.addAll(recipe.inputQuantities.keys);
-  }
-  for (final commodity in CommodityCatalog.all) {
-    if (commodity.category == CommodityCategory.food) {
-      ids.add(commodity.id);
-    }
-  }
-  return ids;
-}
-
-int tradeCounselConsumptionForecast({
-  required CommodityId commodityId,
-  required Commodity commodity,
-  required Map<CommodityId, int> inputNeeds,
-}) {
-  if (inputNeeds.containsKey(commodityId)) {
-    return inputNeeds[commodityId]!.clamp(1, kIndustryCounselShortageThreshold);
-  }
-  if (commodity.category == CommodityCategory.food) {
-    return kIndustryCounselShortageThreshold;
-  }
-  return (kIndustryCounselShortageThreshold ~/ 2)
-      .clamp(1, kIndustryCounselShortageThreshold);
-}
-
-Map<CommodityId, int> tradeCounselInputNeedsFromAssignments(
-  List<AssignedRecipe> productionAssignments,
-) {
-  final needs = <CommodityId, int>{};
-  for (final assignment in productionAssignments) {
-    final recipe = ProductionRecipesCatalog.byId[assignment.recipeId];
-    if (recipe == null || assignment.assignedLabour <= 0) continue;
-    final runs = assignment.assignedLabour ~/ recipe.labourPerOutput;
-    if (runs <= 0) continue;
-    for (final entry in recipe.inputQuantities.entries) {
-      needs[entry.key] = (needs[entry.key] ?? 0) + entry.value * runs;
-    }
-  }
-  return needs;
-}
+export 'trade_counsel_speculative_bids.dart';
+export 'trade_counsel_stockpile_projection.dart';
 
 final class TradeCounselSurplusNeedMapsInput {
   const TradeCounselSurplusNeedMapsInput({
@@ -197,64 +119,4 @@ int tradeCounselExpectedOfferInflow({
   }
   if (!inflow.isFinite) return 0;
   return inflow.round();
-}
-
-void tradeCounselAddSpeculativeBidNeeds({
-  required Map<CommodityId, int> need,
-  required Map<CommodityId, int> available,
-  required Stockpile projected,
-  required Map<CommodityId, int> carryForwardBids,
-  required WorldMarketState state,
-}) {
-  bool eligible(CommodityId id) {
-    if (richesCommodityIds.contains(id)) return false;
-    if (need.containsKey(id)) return false;
-    if (available.containsKey(id)) return false;
-    final projectedQty = projected.quantityOf(id);
-    final carryQty = carryForwardBids[id] ?? 0;
-    return kTradeCounselSpeculativeBidStockpileTarget -
-            projectedQty -
-            carryQty >
-        0;
-  }
-
-  int gapFor(CommodityId id) {
-    final projectedQty = projected.quantityOf(id);
-    final carryQty = carryForwardBids[id] ?? 0;
-    return kTradeCounselSpeculativeBidStockpileTarget - projectedQty - carryQty;
-  }
-
-  int offerVolumeFor(CommodityId id) =>
-      state.lastTurnActivity[id]?.totalOfferQuantity ?? 0;
-
-  final eligibleIds = CommodityCatalog.all
-      .map((c) => c.id)
-      .where(eligible)
-      .toList(growable: false);
-  if (eligibleIds.isEmpty) return;
-
-  CommodityId pick;
-  final liquid = eligibleIds.where((id) => offerVolumeFor(id) > 0).toList()
-    ..sort((a, b) {
-      final volCmp = offerVolumeFor(b).compareTo(offerVolumeFor(a));
-      if (volCmp != 0) return volCmp;
-      return a.compareTo(b);
-    });
-  if (liquid.isNotEmpty) {
-    pick = liquid.first;
-  } else {
-    final foods = eligibleIds
-        .where(
-          (id) => CommodityCatalog.byId[id]?.category == CommodityCategory.food,
-        )
-        .toList()
-      ..sort();
-    if (foods.isNotEmpty) {
-      pick = foods.first;
-    } else {
-      final sortedEligible = [...eligibleIds]..sort();
-      pick = sortedEligible.first;
-    }
-  }
-  need[pick] = gapFor(pick);
 }

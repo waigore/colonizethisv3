@@ -13,7 +13,7 @@ void _writeFile(Directory root, String relative, String source) {
 
 void main() {
   group('runCheckEconomySourceFileSize', () {
-    test('passes on current repo tree under phase-7 ceiling', () {
+    test('passes on current repo tree under phase-8 ceiling', () {
       expect(runCheckEconomySourceFileSize('.'), 0);
     });
 
