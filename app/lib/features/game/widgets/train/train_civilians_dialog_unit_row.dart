@@ -1,9 +1,17 @@
 // Per-unit-type row for [TrainCiviliansDialog]. Refs #3878.
 
-part of 'train_civilians_dialog.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:flutter/material.dart';
 
-class _UnitTypeRow extends StatelessWidget {
-  const _UnitTypeRow({
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../core/utils/currency_format.dart';
+import '../../../../widgets/ct_gap.dart';
+import 'train_dialog_chrome.dart';
+
+/// One trainable civilian unit row with treasury + paper cost line.
+class TrainCiviliansDialogUnitRow extends StatelessWidget {
+  const TrainCiviliansDialogUnitRow({
+    super.key,
     required this.econ,
     required this.count,
     required this.isLocked,

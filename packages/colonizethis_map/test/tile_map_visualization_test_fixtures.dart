@@ -1,4 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_test/test.dart';
+import 'package:image/image.dart' as img;
 
 import 'support/init_game_map_view_fixtures.dart';
 
@@ -48,3 +53,67 @@ final TileMapResult visualizationResultWithTerrainAndResources = mapTileGrid(
     [Resource.iron, null, null, null],
   ],
 );
+
+/// Sea color and plains color from tile_map_visualization (for pixel assertions).
+const (int, int, int) visualizationSeaRgb = (20, 60, 140);
+const (int, int, int) visualizationPlainsRgb = (200, 220, 160);
+const (int, int, int) visualizationSeaZoneBorderRgb = (173, 216, 230);
+const int visualizationColorTolerance = 2;
+
+img.Image decodeRenderedPng(List<int> bytes) {
+  final decoded = img.decodeImage(Uint8List.fromList(bytes));
+  expect(decoded, isNotNull);
+  return decoded!;
+}
+
+(int, int) cellCenterPixel(int col, int row, int cellSize) =>
+    (col * cellSize + cellSize ~/ 2, row * cellSize + cellSize ~/ 2);
+
+void expectPixelNearRgb(
+  img.Image image,
+  int x,
+  int y,
+  (int, int, int) rgb, {
+  int tolerance = visualizationColorTolerance,
+}) {
+  final pixel = image.getPixel(x, y);
+  expect((pixel.r - rgb.$1).abs(), lessThanOrEqualTo(tolerance));
+  expect((pixel.g - rgb.$2).abs(), lessThanOrEqualTo(tolerance));
+  expect((pixel.b - rgb.$3).abs(), lessThanOrEqualTo(tolerance));
+}
+
+List<int> renderTileMapPngBytes(
+  TileMapResult result,
+  MapTopology topology, {
+  int cellSize = 8,
+  List<(int, int)>? landSeedPositions,
+  List<int>? landSeedContinentIndices,
+  List<(int, int)>? continentSeedPositions,
+}) =>
+    renderTileMapToPng(
+      result,
+      topology,
+      cellSize: cellSize,
+      landSeedPositions: landSeedPositions,
+      landSeedContinentIndices: landSeedContinentIndices,
+      continentSeedPositions: continentSeedPositions,
+    );
+
+img.Image decodeRenderTileMapToPng(
+  TileMapResult result,
+  MapTopology topology, {
+  int cellSize = 8,
+  List<(int, int)>? landSeedPositions,
+  List<int>? landSeedContinentIndices,
+  List<(int, int)>? continentSeedPositions,
+}) =>
+    decodeRenderedPng(
+      renderTileMapPngBytes(
+        result,
+        topology,
+        cellSize: cellSize,
+        landSeedPositions: landSeedPositions,
+        landSeedContinentIndices: landSeedContinentIndices,
+        continentSeedPositions: continentSeedPositions,
+      ),
+    );

@@ -1,176 +1,18 @@
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
-import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
+import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/debug_console_overlay_panel.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
     show kPlayerTurnFeedToggleButtonKey;
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/debug_console_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_view_provider.dart';
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show kTechIdCropRotation, kWorkTargetExplore, techDisplayName;
 import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/map_view_test_fixtures.dart';
-import 'support/panel_test_fixtures.dart';
-
-class _MapAreaHost extends StatefulWidget {
-  const _MapAreaHost({required this.game, required this.mapViewData});
-
-  final Game game;
-  final InitGameMapViewData mapViewData;
-
-  @override
-  State<_MapAreaHost> createState() => _MapAreaHostState();
-}
-
-class _MapAreaHostState extends State<_MapAreaHost> {
-  bool _showMapArea = true;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          TextButton(
-            onPressed: () => setState(() => _showMapArea = false),
-            child: const Text('dispose-map-area'),
-          ),
-          Expanded(
-            child: _showMapArea
-                ? GameMapArea(
-                    game: widget.game,
-                    mapViewData: widget.mapViewData,
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EventFeedHarness {
-  _EventFeedHarness(this.game, this.mapViewData, this.bus)
-    : humanId = game.players.firstWhere((p) => p.isHuman).id {
-    opponentId = game.players.firstWhere((p) => p.id != humanId).id;
-  }
-
-  final Game game;
-  final InitGameMapViewData mapViewData;
-  final AppEventBus bus;
-  final String humanId;
-  late final String opponentId;
-
-  String get playerDisplayName =>
-      game.players.firstWhere((p) => p.id == humanId).displayName;
-
-  String get opponentDisplayName =>
-      game.players.firstWhere((p) => p.id == opponentId).displayName;
-}
-
-_EventFeedHarness _newHarness({bool disposeBus = true}) {
-  final harness = _EventFeedHarness(
-    buildMapAreaEventFeedTestGame(),
-    buildLightweightMapViewData(),
-    AppEventBus.create(),
-  );
-  if (disposeBus) {
-    addTearDown(harness.bus.dispose);
-  }
-  return harness;
-}
-
-Future<void> _pumpMapArea(
-  WidgetTester tester, {
-  required Box<dynamic> gamesBox,
-  required _EventFeedHarness harness,
-  Widget? home,
-  bool debugConsoleEnabled = false,
-  Size? mediaQuerySize,
-}) async {
-  // Editorial shell via buildAppShell (Refs #4035 — no inline MaterialApp).
-  await tester.pumpWidget(
-    buildAppShell(
-      overrides: [
-        appEventBusProvider.overrideWith((ref) => harness.bus),
-        currentGameProvider.overrideWith(
-          () => CurrentGameNotifier(harness.game),
-        ),
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => GameService(gamesBox, GameSaveAdapter()),
-        ),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
-        ),
-        mapViewDataProvider.overrideWith((ref) => harness.mapViewData),
-        if (debugConsoleEnabled)
-          debugConsoleEnabledProvider.overrideWithValue(true),
-      ],
-      viewport: mediaQuerySize,
-      child:
-          home ??
-          Scaffold(
-            body: GameMapArea(
-              game: harness.game,
-              mapViewData: harness.mapViewData,
-            ),
-          ),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
-
-Future<void> _commitTurnEvents(
-  WidgetTester tester,
-  _EventFeedHarness harness,
-  List<AppEvent> events, {
-  required int turnNumber,
-  bool openFeed = true,
-}) async {
-  for (final event in events) {
-    harness.bus.emit(event);
-  }
-  harness.bus.emit(
-    TurnResolutionCompleteEvent(
-      gameId: harness.game.id,
-      turnNumber: turnNumber,
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-  if (openFeed) {
-    await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-    await tester.pump();
-  }
-}
-
-List<LocateMapTileEvent> _listenLocateEvents(_EventFeedHarness harness) {
-  final locateEvents = <LocateMapTileEvent>[];
-  final sub = harness.bus.on<LocateMapTileEvent>().listen(locateEvents.add);
-  addTearDown(() async {
-    await sub.cancel();
-    harness.bus.dispose();
-  });
-  return locateEvents;
-}
-
-Future<void> _openFeedToggle(WidgetTester tester) async {
-  await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 16));
-}
+import 'game_map_area_event_feed_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();
@@ -185,18 +27,18 @@ void main() {
   testWidgets('GameMapArea dispose cancels AppEventBus subscriptions', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness(disposeBus: false);
+    final harness = newEventFeedHarness(disposeBus: false);
     final sampleUnitId = harness.game.worldState.oldWorld.units.isNotEmpty
         ? harness.game.worldState.oldWorld.units.first.id
         : harness.game.worldState.newWorld.units.isNotEmpty
         ? harness.game.worldState.newWorld.units.first.id
         : 'missing-unit-id';
 
-    await _pumpMapArea(
+    await pumpEventFeedMapArea(
       tester,
       gamesBox: gamesBox,
       harness: harness,
-      home: _MapAreaHost(game: harness.game, mapViewData: harness.mapViewData),
+      home: MapAreaHost(game: harness.game, mapViewData: harness.mapViewData),
     );
 
     await tester.tap(find.text('dispose-map-area'));
@@ -225,8 +67,8 @@ void main() {
   testWidgets('debug console overlay toggles when feature is enabled', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(
       tester,
       gamesBox: gamesBox,
       harness: harness,
@@ -247,33 +89,93 @@ void main() {
   testWidgets('Player turn event feed commits batch on turn complete', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await _commitTurnEvents(tester, harness, [
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await commitEventFeedTurnEvents(tester, harness, [
       AppResearchCompleteEvent(
         playerId: harness.humanId,
-        techId: 'agri_1',
+        techId: kTechIdCropRotation,
         turnNumber: 1,
       ),
     ], turnNumber: 2);
 
     expect(
-      find.textContaining('Research complete! agri_1 unlocked!'),
+      find.text(
+        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
+      ),
       findsOneWidget,
     );
+    expect(find.textContaining(kTechIdCropRotation), findsNothing);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
   });
 
   testWidgets(
-    'Player turn event feed naval line emits LocateMapTileEvent on tap',
+    'Player turn event feed research line emits NavigateToRouteEvent on tap',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppResearchCompleteEvent(
+          playerId: harness.humanId,
+          techId: kTechIdCropRotation,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final researchLine = find.text(
+        'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked',
+      );
+      expect(researchLine, findsOneWidget);
+      await tester.tap(researchLine);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.technology);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed unknown research tech is non-tappable',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppResearchCompleteEvent(
+          playerId: harness.humanId,
+          techId: 'agri_1',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const fallbackLine = 'Research complete — technology unlocked!';
+      expect(find.text(fallbackLine), findsOneWidget);
+      expect(find.textContaining('agri_1'), findsNothing);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+
+      await tester.tap(find.text(fallbackLine));
+      await tester.pump();
+      expect(navigateEvents, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed naval line emits locate and overlay on tap',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
       final seaKey = harness.game.worldState.portsByProvinceSeaboard.keys.first;
       final seaParts = seaKey.split('|');
       final seaZoneId = '${seaParts.first}|${seaParts.last}';
-      final locateEvents = _listenLocateEvents(harness);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: seaZoneId,
           side1OwnerId: harness.humanId,
@@ -289,19 +191,19 @@ void main() {
       await tester.pump();
 
       expect(locateEvents, hasLength(1));
-      expect(locateEvents.single.tileKey, isNotEmpty);
-      expect(locateEvents.single.regionId, isNotEmpty);
+      expect(overlayEvents, hasLength(1));
+      expect(overlayEvents.single.tileKey, locateEvents.single.tileKey);
     },
   );
 
   testWidgets(
     'Player turn event feed unresolved naval anchor is non-tappable',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppNavalCombatResultEvent(
           seaZoneId: 'missing_zone_anchor',
           side1OwnerId: harness.humanId,
@@ -321,16 +223,17 @@ void main() {
   );
 
   testWidgets(
-    'Player turn event feed renders work completion and taps map tile',
+    'Player turn event feed renders work completion and opens civilian panel',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
-      final locateEvents = _listenLocateEvents(harness);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final panelEvents = listenEventFeedOpenCivilianPanelEvents(harness);
 
-      await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-      await _commitTurnEvents(tester, harness, [
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
         AppWorkOrderCompletedEvent(
           playerId: harness.humanId,
-          unitId: 'u1',
+          unitId: 'civ_explorer',
           workTarget: kWorkTargetBuildRoad,
           targetTileKey: 'oldWorld|1|0|0',
           provinceId: 'oldWorld|1',
@@ -338,23 +241,384 @@ void main() {
         ),
       ], turnNumber: 2);
 
-      final line = find.textContaining('work completed');
+      final line = find.textContaining('Build road finished!');
       expect(line, findsOneWidget);
+      expect(find.textContaining('BUILD_ROAD'), findsNothing);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
       await tester.tap(line);
       await tester.pump();
 
       expect(locateEvents, hasLength(1));
       expect(locateEvents.single.tileKey, 'oldWorld|1|0|0');
-      expect(locateEvents.single.regionId, 'oldWorld');
+      expect(panelEvents, hasLength(1));
+      expect(panelEvents.single.initialSelectedUnitId, 'civ_explorer');
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed overseas profit line opens Deal Book on tap (Refs #4226)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const line =
+          'Overseas profit credited: £42 from 2 rival purchase(s). '
+          'Tap to open Deal Book.';
+      expect(find.text(line), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(find.text(line));
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.trade);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+      expect(args['initialTabIndex'], 1);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed overseas profit line is omitted for other players',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.opponentId,
+          totalTreasuryCredit: 99,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary line shows fill totals (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 160,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.text('Market: bought £240 · sold £160'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary carry-forward-only line (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 0,
+          totalReceived: 0,
+          carryForwardOrderCount: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.text('Market: 2 orders carried forward'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary line opens Deal Book on tap (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 0,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      const line = 'Market: bought £240';
+      expect(find.text(line), findsOneWidget);
+      await tester.tap(find.text(line));
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, Routes.trade);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['humanPlayerId'], harness.humanId);
+      expect(args['initialTabIndex'], 1);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed market summary line is omitted for other players (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppMarketTurnSummaryEvent(
+          playerId: harness.opponentId,
+          totalSpent: 500,
+          totalReceived: 0,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Market:'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed shows separate overseas profit and market rows (Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+        AppMarketTurnSummaryEvent(
+          playerId: harness.humanId,
+          totalSpent: 240,
+          totalReceived: 160,
+          carryForwardOrderCount: 0,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsOneWidget);
+      expect(find.text('Market: bought £240 · sold £160'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed omits market summary on overseas-profit-only turn '
+    '(Refs #4270)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppOverseasProfitCreditedEvent(
+          playerId: harness.humanId,
+          totalTreasuryCredit: 42,
+          creditCount: 1,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('Overseas profit credited'), findsOneWidget);
+      expect(find.textContaining('Market:'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed general medal line shows for human (Refs #4234)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppGeneralMedalGainedEvent(
+          playerId: harness.humanId,
+          generalId: 'g1',
+          provinceId: 'oldWorld|cap',
+          newMedals: 2,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(
+        find.textContaining('a general earned a medal (now 2)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('commander'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed general medal line is omitted for other players (Refs #4234)',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppGeneralMedalGainedEvent(
+          playerId: harness.opponentId,
+          generalId: 'g-ai',
+          provinceId: 'oldWorld|cap',
+          newMedals: 3,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      expect(find.textContaining('earned a medal'), findsNothing);
+    },
+  );
+
+  for (final case_ in eventFeedDiplomacyDetailNavigateCases()) {
+    testWidgets(case_.name, (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(
+        tester,
+        harness,
+        case_.buildEvents(harness),
+        turnNumber: 2,
+      );
+
+      final line = find.textContaining(case_.lineMatch);
+      expect(line, findsOneWidget);
+      if (case_.lineMatch == 'Overture advanced!') {
+        expect(find.textContaining(': Embassy!'), findsOneWidget);
+      }
+      if (case_.expectChevron) {
+        expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      }
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(navigateEvents, hasLength(1));
+      expect(navigateEvents.single.route, case_.expectedRoute);
+      final args = navigateEvents.single.arguments as Map<String, Object?>;
+      expect(args['factionId'], harness.opponentId);
+      if (case_.lineMatch.contains('declared war')) {
+        expect(args['humanPlayerId'], harness.humanId);
+      }
+    });
+  }
+
+  testWidgets(
+    'Player turn event feed unresolved spy counterpart is non-tappable',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final navigateEvents = listenEventFeedNavigateEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppSpyCaughtEvent(
+          unitId: 'spy_1',
+          spyOwnerId: 'unknown_spy_owner',
+          territoryOwnerId: harness.humanId,
+          provinceId: 'oldWorld|cap',
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('enemy spy from');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      await tester.tap(line);
+      await tester.pump();
+      expect(navigateEvents, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed land combat line emits locate and overlay on tap',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppCombatResultEvent(
+          provinceId: 'oldWorld|cap',
+          attackerId: harness.humanId,
+          defenderId: harness.opponentId,
+          winnerId: harness.humanId,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('battle resolved!');
+      expect(line, findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(overlayEvents, hasLength(1));
+      expect(overlayEvents.single.tileKey, locateEvents.single.tileKey);
+    },
+  );
+
+  testWidgets(
+    'Player turn event feed province captured line emits locate and overlay on tap',
+    (WidgetTester tester) async {
+      final harness = newEventFeedHarness(disposeBus: false);
+      final locateEvents = listenEventFeedLocateEvents(harness);
+      final overlayEvents = listenEventFeedOpenMapTileDetailEvents(harness);
+
+      await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+      await commitEventFeedTurnEvents(tester, harness, [
+        AppProvinceCapturedEvent(
+          provinceId: 'oldWorld|cap',
+          previousOwnerId: harness.opponentId,
+          newOwnerId: harness.humanId,
+          turnNumber: 1,
+        ),
+      ], turnNumber: 2);
+
+      final line = find.textContaining('captured!');
+      expect(line, findsOneWidget);
+      await tester.tap(line);
+      await tester.pump();
+
+      expect(locateEvents, hasLength(1));
+      expect(overlayEvents, hasLength(1));
+      expect(overlayEvents.single.tileKey, locateEvents.single.tileKey);
     },
   );
 
   testWidgets('Player turn event feed renders diplomacy/discovery/overture copy', (
     WidgetTester tester,
   ) async {
-    final harness = _newHarness();
-    await _pumpMapArea(tester, gamesBox: gamesBox, harness: harness);
-    await _commitTurnEvents(tester, harness, [
+    final harness = newEventFeedHarness();
+    await pumpEventFeedMapArea(tester, gamesBox: gamesBox, harness: harness);
+    await commitEventFeedTurnEvents(tester, harness, [
       AppDiplomacyChangeEvent(
         actorId: harness.humanId,
         targetId: harness.opponentId,
@@ -383,32 +647,36 @@ void main() {
     );
     expect(find.textContaining('discovered!'), findsOneWidget);
     expect(find.textContaining('Overture advanced!'), findsOneWidget);
+    expect(find.textContaining(': Embassy!'), findsOneWidget);
+    expect(find.textContaining('EMBASSY'), findsNothing);
   });
 
   testWidgets(
     'Player turn event feed toggles visibility and replaces prior turn batch',
     (WidgetTester tester) async {
-      final harness = _newHarness(disposeBus: false);
+      final harness = newEventFeedHarness(disposeBus: false);
+      final civilianEvents = listenEventFeedOpenCivilianPanelEvents(harness);
       addTearDown(() async {
         await tester.binding.setSurfaceSize(null);
         harness.bus.dispose();
       });
-      await _pumpMapArea(
+      await pumpEventFeedMapArea(
         tester,
         gamesBox: gamesBox,
         harness: harness,
         mediaQuerySize: const Size(500, 900),
       );
-      const researchLine = 'Research complete! agri_1 unlocked!';
+      final researchLine =
+          'Research complete: ${techDisplayName(kTechIdCropRotation)} unlocked';
       final researchFinder = find.textContaining(researchLine);
 
-      await _commitTurnEvents(
+      await commitEventFeedTurnEvents(
         tester,
         harness,
         [
           AppResearchCompleteEvent(
             playerId: harness.humanId,
-            techId: 'agri_1',
+            techId: kTechIdCropRotation,
             turnNumber: 1,
           ),
         ],
@@ -421,19 +689,20 @@ void main() {
       expect(researchFinder, findsNothing);
       expect(find.text('Events'), findsNothing);
 
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(researchFinder, findsOneWidget);
       expect(find.text('Events'), findsNothing);
 
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(researchFinder, findsNothing);
 
-      await _commitTurnEvents(
+      await commitEventFeedTurnEvents(
         tester,
         harness,
         [
           AppOrderRejectedEvent(
             playerId: harness.humanId,
+            orderKind: OrderKind.work,
             orderSummary: 'Build road',
             reasonCode: 'insufficient_treasury',
           ),
@@ -442,11 +711,27 @@ void main() {
         openFeed: false,
       );
       expect(researchFinder, findsNothing);
-      await _openFeedToggle(tester);
+      await openEventFeedToggle(tester);
       expect(
-        find.textContaining('Order rejected! Reason: insufficient_treasury!'),
+        find.textContaining('Order rejected: insufficient treasury.'),
         findsOneWidget,
       );
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      await tester.tap(
+        find.textContaining('Order rejected: insufficient treasury.'),
+      );
+      await tester.pump();
+      expect(civilianEvents, hasLength(1));
     },
   );
+
+  for (final case_ in eventFeedRejectedOrderNavigateCases()) {
+    testWidgets(case_.name, (WidgetTester tester) async {
+      await pumpEventFeedRejectedOrderNavigateCase(
+        tester,
+        gamesBox: gamesBox,
+        case_: case_,
+      );
+    });
+  }
 }

@@ -8,59 +8,7 @@ import 'order_suggestion_work_logging_fixtures.dart';
 import 'work_suggestion_pipeline_fixtures.dart';
 // dart format off
 
-void oswlRunEmitsSummariesForCivilianTypes() {
-  withWspLogCapture((events) {
-    final fixture = osgwFourCivilianUnitsGame();
-    suggestWorkOrders(
-      fixture.view,
-      fixture.game,
-      fixture.topology,
-      const Orders(),
-    );
-
-    final lines = wspSuggestWorkLines(events);
-    expect(lines, isNotEmpty);
-    expect(
-      lines.any(
-        (m) =>
-            m.contains('unitId=u_explorer') &&
-            m.contains('target=explore') &&
-            m.contains('outcome='),
-      ),
-      isTrue,
-    );
-    expect(
-      lines.any(
-        (m) =>
-            m.contains('unitId=u_builder') &&
-            m.contains('target=build_improvement') &&
-            m.contains('outcome=') &&
-            m.contains('reason='),
-      ),
-      isTrue,
-    );
-    expect(
-      lines.any(
-        (m) =>
-            m.contains('unitId=u_spy') &&
-            m.contains('target=counter_spy') &&
-            m.contains('outcome='),
-      ),
-      isTrue,
-    );
-    expect(
-      lines.any(
-        (m) =>
-            m.contains('unitId=u_merchant') &&
-            m.contains('target=purchase_land') &&
-            m.contains('outcome=') &&
-            m.contains('reason='),
-      ),
-      isTrue,
-    );
-    expect(lines.length, lessThan(80), reason: 'summary-only, no tile spam');
-  });
-}
+void oswlRunEmitsSummariesForCivilianTypes() {withWspLogCapture((events) { final fixture = osgwFourCivilianUnitsGame(); suggestWorkOrders( fixture.view, fixture.game, fixture.topology, const Orders(), ); final lines = wspSuggestWorkLines(events); expect(lines, isNotEmpty); expect( lines.any( (m) => m.contains('unitId=u_explorer') && m.contains('target=explore') && m.contains('outcome='), ), isTrue, ); expect( lines.any( (m) => m.contains('unitId=u_builder') && m.contains('target=build_improvement') && m.contains('outcome=') && m.contains('reason='), ), isTrue, ); expect( lines.any( (m) => m.contains('unitId=u_spy') && m.contains('target=counter_spy') && m.contains('outcome='), ), isTrue, ); expect( lines.any( (m) => m.contains('unitId=u_merchant') && m.contains('target=purchase_land') && m.contains('outcome=') && m.contains('reason='), ), isTrue, ); expect(lines.length, lessThan(80), reason: 'summary-only, no tile spam'); });}
 
 void oswlRunLoggerLinesNeverEmitUnboundedFullListPayload() {withWspLogCapture((events) {final fixture = osgwSingleExplorerGame(); suggestWorkOrders(fixture.view,fixture.game,fixture.topology,const Orders(),); for (final e in events) {if (e.message.contains('suggestWorkOrders')) {expect(e.message,isNot(contains('full list')),reason: 'bounded preview only (Refs #2133)',); } } });}
 

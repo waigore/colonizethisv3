@@ -22,14 +22,12 @@
 // the cross-cutting `Refs #2870` mobile-adaptation issue.
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:widgetbook/widgetbook.dart';
 
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
-import 'support/widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'widget_test_assets.dart';
+import 'widgetbook_test_harness.dart';
 
 
 void main() {

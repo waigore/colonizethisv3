@@ -1,61 +1,65 @@
 // Layout chrome for [CtTransferList] side panels and confirm row.
-// Split from `ct_transfer_list.dart` to keep each widget library part
-// under the repo file-size target (Refs #3878).
 
-part of 'ct_transfer_list.dart';
+import 'package:flutter/material.dart';
 
-extension _CtTransferListLayout on _CtTransferListState {
-  String _itemLabel(String itemId) {
+import 'ct_nine_patch_button.dart';
+import 'ct_transfer_list.dart';
+import 'ct_transfer_list_mutations.dart';
+import 'ct_transfer_list_side_panel.dart';
+import 'ct_transfer_list_state_base.dart';
+
+mixin CtTransferListLayout on CtTransferListStateBase, CtTransferListMutations {
+  String itemLabel(String itemId) {
     final builder = widget.itemLabelBuilder;
     if (builder == null) return itemId;
     return builder(itemId);
   }
 
-  Widget _leftPanel() {
-    return _TransferSidePanel(
+  Widget leftPanel() {
+    return CtTransferListSidePanel(
       title: widget.leftTitle,
       subtitle: widget.leftSubtitle,
-      counts: _leftCounts,
-      total: _leftTotal,
+      counts: leftCounts,
+      total: leftTotal,
       listHeight: widget.listHeight,
       emptyLabel: widget.leftEmptyLabel,
-      itemLabelBuilder: _itemLabel,
+      itemLabelBuilder: itemLabel,
       totalLabelBuilder: widget.totalLabelBuilder,
       placeActionsAfterLabel: true,
       moveAllToLeftLabel: widget.moveAllToLeftLabel,
       moveOneToLeftLabel: widget.moveOneToLeftLabel,
       moveOneToRightLabel: widget.moveOneToRightLabel,
       moveAllToRightLabel: widget.moveAllToRightLabel,
-      onMoveOneToRight: _moveOneToRight,
-      onMoveAllToRight: _moveAllToRight,
-      onMoveOneToLeft: _moveOneToLeft,
-      onMoveAllToLeft: _moveAllToLeft,
+      onMoveOneToRight: moveOneToRight,
+      onMoveAllToRight: moveAllToRight,
+      onMoveOneToLeft: moveOneToLeft,
+      onMoveAllToLeft: moveAllToLeft,
     );
   }
 
-  Widget _rightPanel() {
-    return _TransferSidePanel(
+  Widget rightPanel() {
+    return CtTransferListSidePanel(
       title: widget.rightTitle,
       subtitle: widget.rightSubtitle,
-      counts: _rightCounts,
-      total: _rightTotal,
+      counts: rightCounts,
+      total: rightTotal,
       listHeight: widget.listHeight,
       emptyLabel: widget.rightEmptyLabel,
-      itemLabelBuilder: _itemLabel,
+      itemLabelBuilder: itemLabel,
       totalLabelBuilder: widget.totalLabelBuilder,
       placeActionsAfterLabel: false,
       moveAllToLeftLabel: widget.moveAllToLeftLabel,
       moveOneToLeftLabel: widget.moveOneToLeftLabel,
       moveOneToRightLabel: widget.moveOneToRightLabel,
       moveAllToRightLabel: widget.moveAllToRightLabel,
-      onMoveOneToRight: _moveOneToRight,
-      onMoveAllToRight: _moveAllToRight,
-      onMoveOneToLeft: _moveOneToLeft,
-      onMoveAllToLeft: _moveAllToLeft,
+      onMoveOneToRight: moveOneToRight,
+      onMoveAllToRight: moveAllToRight,
+      onMoveOneToLeft: moveOneToLeft,
+      onMoveAllToLeft: moveAllToLeft,
     );
   }
 
-  Widget _actionRow(BuildContext context, {required bool useWrap}) {
+  Widget actionRow(BuildContext context, {required bool useWrap}) {
     // At the minimum supported viewport (`kMinViewportWidth = 320` dp) the
     // Cinzel engraved-label text in `CtNinePatchButton` overflows a single
     // right-aligned `Row` for `Cancel` + a long `confirmLabel` (e.g.
@@ -70,8 +74,8 @@ extension _CtTransferListLayout on _CtTransferListState {
             child: Text(widget.cancelLabel),
           );
     final confirm = CtNinePatchButton(
-      onPressed: _handleConfirm,
-      enabled: _canConfirm,
+      onPressed: handleConfirm,
+      enabled: canConfirm,
       child: Text(widget.confirmLabel),
     );
     if (useWrap) {
@@ -106,11 +110,11 @@ extension _CtTransferListLayout on _CtTransferListState {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _leftPanel(),
+              leftPanel(),
               const SizedBox(height: 16),
-              _rightPanel(),
+              rightPanel(),
               const SizedBox(height: 16),
-              _actionRow(context, useWrap: true),
+              actionRow(context, useWrap: true),
             ],
           );
         }
@@ -121,13 +125,13 @@ extension _CtTransferListLayout on _CtTransferListState {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _leftPanel()),
+                Expanded(child: leftPanel()),
                 const SizedBox(width: 16),
-                Expanded(child: _rightPanel()),
+                Expanded(child: rightPanel()),
               ],
             ),
             const SizedBox(height: 16),
-            _actionRow(context, useWrap: false),
+            actionRow(context, useWrap: false),
           ],
         );
       },

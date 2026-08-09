@@ -1,9 +1,9 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show fleetsInPortAtProvince, WorldStateProvinceLookup, WorldStateUnitLookup;
+
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'province_panel_labels.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show WorldStateProvinceLookup, WorldStateUnitLookup, fleetsInPortAtProvince;
 
 String _destinationProvinceLabel(Game game, String provinceId) =>
     game.worldState.allProvincesById[provinceId]?.displayName ?? provinceId;

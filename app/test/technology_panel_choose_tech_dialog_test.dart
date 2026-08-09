@@ -14,8 +14,8 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/features/game/widgets/technology/technology_panel_orders.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-import 'support/panel_test_fixtures.dart';
-import 'support/technology_panel_test_support.dart';
+import 'panel_test_fixtures.dart';
+import 'technology_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -165,7 +165,17 @@ void main() {
         await openChooseTechDialog(tester);
 
         expect(find.byType(ChooseTechDialog), findsOneWidget);
-        await tester.tap(find.text('Close'));
+        final closeButton = find.descendant(
+          of: find.byType(ChooseTechDialog),
+          matching: find.text('Close'),
+        );
+        await tester.scrollUntilVisible(
+          closeButton,
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(closeButton);
         await tester.pumpAndSettle();
 
         expect(find.byType(ChooseTechDialog), findsNothing);
@@ -194,7 +204,12 @@ void main() {
         await openChooseTechDialog(tester);
 
         expect(find.text('No techs available to research'), findsOneWidget);
-        await tester.tap(find.text('Close'));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(ChooseTechDialog),
+            matching: find.text('Close'),
+          ),
+        );
         await tester.pumpAndSettle();
 
         expect(find.byType(ChooseTechDialog), findsNothing);

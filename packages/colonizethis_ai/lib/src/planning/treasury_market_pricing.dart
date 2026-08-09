@@ -1,4 +1,6 @@
-part of 'treasury_planner.dart';
+
+import 'planning_imports.dart';
+import 'treasury_planner_constants.dart';
 
 // Market-pricing, per-commodity bid-priority, and supplier offer-tier helpers
 // for the treasury planner (Refs #2994 F3/F4 + #2847 H8-supply), extracted from
@@ -7,7 +9,7 @@ part of 'treasury_planner.dart';
 // treasury-planner library), so imports, shared helpers, and visibility are
 // unchanged.
 
-bool _marketPriceBelowProductionCost(
+bool marketPriceBelowProductionCost(
   CommodityId commodityId,
   Map<CommodityId, int> marketPrices,
 ) {
@@ -27,7 +29,7 @@ bool _marketPriceBelowProductionCost(
   return marketPrice < bestCost;
 }
 
-int _bidPriorityForCommodity(CommodityId commodityId) {
+int bidPriorityForCommodity(CommodityId commodityId) {
   final commodity = CommodityCatalog.byId[commodityId];
   if (commodity == null) return kTreasuryBidPriorityRawMaterial;
   return switch (commodity.category) {
@@ -48,7 +50,7 @@ int _bidPriorityForCommodity(CommodityId commodityId) {
 /// market, a locked seller bids `castIron` **directly** instead of routing to
 /// domestic production from feedstock it cannot extract. Pure read of
 /// [WorldMarketState.carryForwardOffersByFactionId]; deterministic.
-bool _marketHasStandingOfferSupplyFromOthers({
+bool marketHasStandingOfferSupplyFromOthers({
   required WorldMarketState state,
   required CommodityId commodityId,
   required String excludePlayerId,
@@ -67,7 +69,7 @@ bool _marketHasStandingOfferSupplyFromOthers({
 /// Food commodity with the highest prior-turn offer volume on the world
 /// market; used as the lock-recovery bid target when every GP is selling
 /// surplus food under urgent offers. Refs #2924 F11.
-CommodityId _lockRecoveryLiquidityCommodity(WorldMarketState state) {
+CommodityId lockRecoveryLiquidityCommodity(WorldMarketState state) {
   CommodityId? bestId;
   var bestVolume = 0;
   for (final entry in state.lastTurnActivity.entries) {
@@ -99,7 +101,7 @@ CommodityId _lockRecoveryLiquidityCommodity(WorldMarketState state) {
 
 /// Commodity ids affluent GPs release when any lock-recovery seller needs the
 /// H8 bootstrap path (Refs #2847 H8-supply market).
-const Set<CommodityId> _regimentBuildInputSupplyCommodityIds = {
+const Set<CommodityId> regimentBuildInputSupplyCommodityIds = {
   'wool',
   'cotton',
   'fabric',
@@ -111,24 +113,24 @@ const Set<CommodityId> _regimentBuildInputSupplyCommodityIds = {
 
 /// Re-tags a lock-recovery supplier's build-input supply offers so each lands
 /// in the **same** integer priority tier the locked buyer bids that commodity
-/// at (`_bidPriorityForCommodity`), enabling the per-commodity offer/bid cross
+/// at (`bidPriorityForCommodity`), enabling the per-commodity offer/bid cross
 /// the DealMatcher otherwise blocks across mismatched tiers
 /// (SPEC/program/world-market-resolution.md § Step C; Refs #2847 H8-supply
 /// market order matching). Only offers whose commodity is in
-/// [_regimentBuildInputSupplyCommodityIds] are retuned; all other offers (for
+/// [regimentBuildInputSupplyCommodityIds] are retuned; all other offers (for
 /// example the urgent liquidity-food offer) keep their computed priority. The
 /// original list is returned unchanged when no tier actually moves so equal
 /// inputs keep their identity (determinism).
-List<TradeOrder> _alignBuildInputSupplyOfferTiers(List<TradeOrder> offers) {
+List<TradeOrder> alignBuildInputSupplyOfferTiers(List<TradeOrder> offers) {
   if (offers.isEmpty) return offers;
   var changed = false;
   final result = <TradeOrder>[];
   for (final offer in offers) {
-    if (!_regimentBuildInputSupplyCommodityIds.contains(offer.commodityId)) {
+    if (!regimentBuildInputSupplyCommodityIds.contains(offer.commodityId)) {
       result.add(offer);
       continue;
     }
-    final alignedPriority = _bidPriorityForCommodity(offer.commodityId);
+    final alignedPriority = bidPriorityForCommodity(offer.commodityId);
     if (alignedPriority == offer.priority) {
       result.add(offer);
       continue;

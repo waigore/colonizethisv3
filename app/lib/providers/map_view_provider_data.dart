@@ -1,4 +1,18 @@
-part of 'map_view_provider.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
+import 'package:colonizethis_app_fixtures/runtime/map_terrain_config.dart';
+import '../features/game/flame/region_map/region_map.dart'
+    show CtMapVisibilityMode;
+import '../features/game/flame/map_state/map_view_fort_visibility.dart';
+import '../features/game/widgets/shell/shell_player_context.dart';
+import 'game_service_provider.dart';
+import 'games_provider_current_game.dart';
+import 'map_view_provider_extraction.dart';
 
 /// Map view data for the current game with player-constrained visibility.
 /// Null when no game or loading.
@@ -56,13 +70,9 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       topology: topology,
     );
     final connectivityForHuman = connectivity[mapPlayer.id];
-    _MapResourceExtractionMaps extractionMaps = const _MapResourceExtractionMaps(
-      unitsByTile: {},
-      effectiveUnitsByTile: {},
-      blockedUnitsByTile: {},
-    );
+    var extractionMaps = MapResourceExtractionMaps.empty;
     if (connectivityForHuman != null) {
-      extractionMaps = _mapViewBuildResourceExtractionMaps(
+      extractionMaps = mapViewBuildResourceExtractionMaps(
         game: game,
         mapPlayer: mapPlayer,
         tileMapByRegion: mapData.tileMapByRegion,
@@ -70,7 +80,7 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
       );
     }
 
-    return buildInitGameMapViewData(
+    final base = buildInitGameMapViewData(
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
@@ -83,6 +93,13 @@ final mapViewDataProvider = Provider<InitGameMapViewData?>((ref) {
           extractionMaps.effectiveUnitsByTile,
       resourceExtractionBlockedUnitsByTile: extractionMaps.blockedUnitsByTile,
       civilianMarkerOwnerIds: civilianMarkerOwnerIdsFor(shell, game),
+    );
+    return applyMapFortVisibility(
+      data: base,
+      game: game,
+      view: view,
+      humanPlayerId: mapPlayerId,
+      revealAllForts: useFullVisibility,
     );
   });
 });

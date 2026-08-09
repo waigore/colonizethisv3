@@ -1,8 +1,7 @@
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/src/turn/spy_resolver.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolution_events.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 void main() {
   group('emitSpyResolutionEvents', () {

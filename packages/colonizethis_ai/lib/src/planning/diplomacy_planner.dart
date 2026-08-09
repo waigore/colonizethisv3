@@ -9,14 +9,12 @@ import 'planning_helpers.dart'
         anyInvadableProvinceOwnedByMinor,
         gpFactionIdsAtWarWith,
         isAtWarWithAnyGreatPower;
-import '../util/ai_random_utils.dart';
 import '../util/orders_extensions.dart';
-import 'diplomacy_planner_declare_war_targets.dart';
+import 'diplomacy_planner_pass_helpers.dart';
 import 'diplomatic_candidate_scoring.dart';
 import 'diplomacy_planner_result.dart';
-import 'phase_planner_declare_war_targets.dart';
 import 'phase_planner_dispatch.dart';
-import 'phase_planner_peace_targets.dart';
+import 'diplomacy_planner_pass_filter.dart';
 
 // Public peace-target / OW frontier helper re-exports below replace the legacy
 // `colonial_pressure.dart` and `diplomacy_planner_peace_targets.dart`
@@ -78,9 +76,7 @@ export 'war_desire_calculator.dart' show computeWarDesireScore;
 export 'diplomacy_planner_result.dart'
     show DiplomacyPlannerPass, DiplomacyPlannerResult;
 
-part 'diplomacy_planner_pass_helpers.dart';
-
-final _log = packageLogger();
+final _log = packageLogger('diplomacy_planner');
 
 // Top-level declare-war target helpers live in
 // `diplomacy_planner_declare_war_targets.dart` and are re-exported by this
@@ -163,132 +159,6 @@ List<DiplomaticOrder> _suggestDiplomacyCandidates({
         ctx.orders,
       );
 
-List<DiplomaticOrder> _filterDiplomacyCandidatesForPass({
-  required PlannerContext ctx,
-  required AIWorldSnapshot snapshot,
-  required DiplomacyPlannerPass pass,
-  required List<DiplomaticOrder> candidates,
-}) {
-  var filtered = candidates;
-  if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, snapshot);
-    if (atWarWithGp) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                !isTribeFaction(ctx.game, o.targetFactionId),
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly &&
-      isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned)) {
-    final provinceOwner = getProvinceOwnerMap(ctx.game);
-    final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
-      game: ctx.game,
-      snapshot: snapshot,
-      provinceOwner: provinceOwner,
-    );
-    if (minorsOwnInvadable) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                !isTribeFaction(ctx.game, o.targetFactionId),
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final gpWars = gpFactionIdsAtWarWith(ctx.game, snapshot);
-    final blocker = primaryInvadableOldWorldGpBlocker(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    final consolidateGpFronts =
-        gpWars.length > 1 ||
-        (isStalledOldWorldExpansion(snapshot.conquest.oldWorldProvincesOwned) &&
-            gpWars.isNotEmpty);
-    final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    if (blocker != null && gpOnlyFrontier) {
-      final mutualPlateauBlocker = isMutualBelowQuotaPlateauPeer(
-        ownOw: snapshot.conquest.oldWorldProvincesOwned,
-        partnerOw: provinceCountOwnedBy(ctx.game, blocker),
-      );
-      if (!mutualPlateauBlocker) {
-        filtered = filtered
-            .where(
-              (o) =>
-                  o.type != DiplomaticOrderType.declareWar ||
-                  o.targetFactionId == blocker,
-            )
-            .toList();
-      }
-    } else if (blocker != null && consolidateGpFronts) {
-      filtered = filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar ||
-                ctx.game.playerById(o.targetFactionId) == null ||
-                o.targetFactionId == blocker,
-          )
-          .toList();
-    }
-  }
-  if (pass == DiplomacyPlannerPass.nonDeclareWarOnly &&
-      isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned) &&
-      isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-    final blocker = primaryInvadableOldWorldGpBlocker(
-      game: ctx.game,
-      snapshot: snapshot,
-    );
-    final allowBlockerPeace =
-        blocker != null &&
-        unwinnableSoleGpFrontierPeaceTarget(
-              game: ctx.game,
-              snapshot: snapshot,
-            ) ==
-            blocker;
-    filtered = filtered
-        .where(
-          (o) =>
-              o.type != DiplomaticOrderType.alliance &&
-              !(o.type == DiplomaticOrderType.offerPeace &&
-                  o.targetFactionId == blocker &&
-                  !allowBlockerPeace),
-        )
-        .toList();
-  }
-  final existingThisTurn =
-      ctx.orders.diplomaticOrdersByPlayerId[ctx.nationId] ?? const [];
-  final declaredThisTurn = <String>{
-    for (final o in existingThisTurn)
-      if (o.type == DiplomaticOrderType.declareWar) o.targetFactionId,
-  };
-  switch (pass) {
-    case DiplomacyPlannerPass.declareWarOnly:
-    case DiplomacyPlannerPass.all:
-      return filtered;
-    case DiplomacyPlannerPass.nonDeclareWarOnly:
-      return filtered
-          .where(
-            (o) =>
-                o.type != DiplomaticOrderType.declareWar &&
-                !declaredThisTurn.contains(o.targetFactionId) &&
-                !existingThisTurn.any(
-                  (existing) =>
-                      existing.type == o.type &&
-                      existing.targetFactionId == o.targetFactionId,
-                ),
-          )
-          .toList();
-  }
-}
-
 DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   required PlannerContext ctx,
   required AIWorldSnapshot snapshot,
@@ -298,7 +168,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
   // Survival peace must run even when diplomacy weight is low or suggestion
   // APIs return no candidates (observer seed-42 gp3/gp6; Refs #2509).
   if (pass != DiplomacyPlannerPass.declareWarOnly) {
-    final peaceResult = _stalledPeacePlannerResultIfNeeded(
+    final peaceResult = stalledPeacePlannerResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,
       pass: pass,
@@ -309,7 +179,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     }
   }
   if (pass == DiplomacyPlannerPass.declareWarOnly) {
-    final phaseDeclareResult = _phasePlannerDeclareWarPlannerResultIfNeeded(
+    final phaseDeclareResult = phasePlannerDeclareWarPlannerResultIfNeeded(
       ctx: ctx,
       pass: pass,
       phasePlan: phasePlan,
@@ -325,8 +195,8 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     // and `war_declaration_target_scoring_warmonger_test.dart`; the legacy
     // `colonial_pressure.dart` host was deleted in S1, the surviving
     // helpers are canonical in `expand_phase_planner.dart`).
-    for (final shortcut in _legacyMinorDeclareWarShortcuts) {
-      final shortcutResult = _legacyDeclareWarShortcutResultIfNeeded(
+    for (final shortcut in legacyMinorDeclareWarShortcuts) {
+      final shortcutResult = legacyDeclareWarShortcutResultIfNeeded(
         ctx: ctx,
         snapshot: snapshot,
         pass: pass,
@@ -337,21 +207,21 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
       }
     }
     if (isOldWorldGpOnlyInvadableFrontier(game: ctx.game, snapshot: snapshot)) {
-      final blockerDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+      final blockerDeclareResult = legacyDeclareWarShortcutResultIfNeeded(
         ctx: ctx,
         snapshot: snapshot,
         pass: pass,
-        shortcut: _legacyGpBlockerDeclareWarShortcut,
+        shortcut: legacyGpBlockerDeclareWarShortcut,
       );
       if (blockerDeclareResult != null) {
         return blockerDeclareResult;
       }
     }
-    final stalledGpDeclareResult = _legacyDeclareWarShortcutResultIfNeeded(
+    final stalledGpDeclareResult = legacyDeclareWarShortcutResultIfNeeded(
       ctx: ctx,
       snapshot: snapshot,
       pass: pass,
-      shortcut: _legacyStalledGpDeclareWarShortcut,
+      shortcut: legacyStalledGpDeclareWarShortcut,
     );
     if (stalledGpDeclareResult != null) {
       return stalledGpDeclareResult;
@@ -369,7 +239,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     return DiplomacyPlannerResult(orders: ctx.orders);
   }
 
-  final filtered = _filterDiplomacyCandidatesForPass(
+  final filtered = filterDiplomacyCandidatesForPass(
     ctx: ctx,
     snapshot: snapshot,
     pass: pass,
@@ -405,7 +275,7 @@ DiplomacyPlannerResult runDiplomacyPlannerWithResult({
     );
   }
 
-  final chosen = _chooseDiplomaticOrder(
+  final chosen = chooseDiplomaticOrder(
     ctx: ctx,
     snapshot: snapshot,
     pass: pass,

@@ -21,7 +21,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
         sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Set<String> _sectionLabelTexts(WidgetTester tester) {
   return tester

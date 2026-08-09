@@ -6,7 +6,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_app/features/game/screens/combat/quick_battle_screen.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   suppressLogsForTests();

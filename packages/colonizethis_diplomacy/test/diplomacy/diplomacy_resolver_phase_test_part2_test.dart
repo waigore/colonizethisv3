@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
+import 'diplomacy_resolver_phase_scenarios.dart';
 
 void main() {
   group('resolveDiplomacyPhase part2', () {

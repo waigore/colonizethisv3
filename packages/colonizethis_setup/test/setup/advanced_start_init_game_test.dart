@@ -8,22 +8,19 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'init_game_orchestrator_test_support.dart';
 
 int _countUnitsOfType(Game game, String ownerId, String type) {
-  return allUnitsFromWorld(game.worldState)
-      .where((u) => u.ownerId == ownerId && u.type == type)
-      .length;
+  return allUnitsFromWorld(
+    game.worldState,
+  ).where((u) => u.ownerId == ownerId && u.type == type).length;
 }
 
 int _countMilitaryRegiments(Game game, String ownerId) {
-  return allUnitsFromWorld(game.worldState)
-      .where((u) => u.ownerId == ownerId && isMilitaryUnit(u.type))
-      .length;
+  return allUnitsFromWorld(
+    game.worldState,
+  ).where((u) => u.ownerId == ownerId && isMilitaryUnit(u.type)).length;
 }
 
 int _unlockedTechCount(Player player) {
-  return player.techUnlocked?.entries
-          .where((e) => e.value)
-          .length ??
-      0;
+  return player.techUnlocked?.entries.where((e) => e.value).length ?? 0;
 }
 
 Set<String> _unlockedTechIds(Player player) {
@@ -42,20 +39,17 @@ int _countGpOwnedNwProvinces(Game game, String gpId) {
 int _countFullyVisibleNwProvinces(Game game, String playerId) {
   final visibility =
       game.worldState.playerVisibilityByTile[playerId] ?? const {};
-  return game.worldState.newWorld.provinces
-      .where((p) {
-        final provinceKey = ProvinceId.isPrefixed(p.id)
-            ? p.id
-            : ProvinceId.full(p.regionId, p.id);
-        final tileKeys = game
-                .worldState
-                .tileKeysByRegionAndProvince[kRegionNewWorld]?[provinceKey] ??
-            const [];
-        return tileKeys.any(
-          (tk) => visibility[tk] == VisibilityLevel.fullyVisible.name,
-        );
-      })
-      .length;
+  return game.worldState.newWorld.provinces.where((p) {
+    final provinceKey = ProvinceId.prefixedFrom(p.regionId, p.id);
+    final tileKeys =
+        game
+            .worldState
+            .tileKeysByRegionAndProvince[kRegionNewWorld]?[provinceKey] ??
+        const [];
+    return tileKeys.any(
+      (tk) => visibility[tk] == VisibilityLevel.fullyVisible.name,
+    );
+  }).length;
 }
 
 void _expectTierCivilians(Game game, Player player, AdvancedStartType type) {
@@ -91,47 +85,53 @@ void _expectEmbassiesWithAllMinors(Game game, String gpId) {
 
 void main() {
   group('runInitGame advanced start units slice', () {
-    test('turns50 locked profile applies tier civilians regiments and galleon', () {
-      final result = runInitGame(
-        config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
-        options: defaultInitOptions,
-      );
-      final game = result.game;
-      expect(game.advancedStartType, AdvancedStartType.turns50);
-      expect(game.worldState.turnState.turnNumber, 50);
+    test(
+      'turns50 locked profile applies tier civilians regiments and galleon',
+      () {
+        final result = sharedInitGameResult(
+          configWithOverrides(advancedStart: AdvancedStartType.turns50),
+        );
+        final game = result.game;
+        expect(game.advancedStartType, AdvancedStartType.turns50);
+        expect(game.worldState.turnState.turnNumber, 50);
 
-      for (final player in game.players) {
-        expect(_countUnitsOfType(game, player.id, kUnitTypeExplorer), 3);
-        expect(_countUnitsOfType(game, player.id, kUnitTypeBuilder), 3);
-        expect(_countUnitsOfType(game, player.id, kUnitTypeEngineer), 2);
-        expect(_countUnitsOfType(game, player.id, kUnitTypeSpy), 1);
-        expect(_countUnitsOfType(game, player.id, kUnitTypeMerchant), 1);
-        expect(_countMilitaryRegiments(game, player.id), 6);
-        final homeFleet = game.worldState.fleets
-            .where((f) => f.id == homeFleetIdFor(player.id))
-            .singleOrNull;
-        expect(homeFleet, isNotNull);
-        expect(
-          homeFleet!.ships.where((s) => s.typeId == kAdvancedStartCargoShipTypeId),
-          hasLength(1),
-        );
-        expect(
-          getOverture(game, player.id, game.minorNations.first.id)!.stage,
-          OvertureStage.tradeConsulate,
-        );
-      }
-    });
+        for (final player in game.players) {
+          expect(_countUnitsOfType(game, player.id, kUnitTypeExplorer), 3);
+          expect(_countUnitsOfType(game, player.id, kUnitTypeBuilder), 3);
+          expect(_countUnitsOfType(game, player.id, kUnitTypeEngineer), 2);
+          expect(_countUnitsOfType(game, player.id, kUnitTypeSpy), 1);
+          expect(_countUnitsOfType(game, player.id, kUnitTypeMerchant), 1);
+          expect(_countMilitaryRegiments(game, player.id), 6);
+          final homeFleet = game.worldState.fleets
+              .where((f) => f.id == homeFleetIdFor(player.id))
+              .singleOrNull;
+          expect(homeFleet, isNotNull);
+          expect(
+            homeFleet!.ships.where(
+              (s) => s.typeId == kAdvancedStartCargoShipTypeId,
+            ),
+            hasLength(1),
+          );
+          expect(
+            getOverture(game, player.id, game.minorNations.first.id)!.stage,
+            OvertureStage.tradeConsulate,
+          );
+        }
+      },
+    );
 
     test('turns50 locked profile reveals NW tiles for each GP', () {
-      final result = runInitGame(
-        config: configWithOverrides(advancedStart: AdvancedStartType.turns50),
-        options: defaultInitOptions,
+      final result = sharedInitGameResult(
+        configWithOverrides(advancedStart: AdvancedStartType.turns50),
       );
       final game = result.game;
       final totalNwProvinces = game.worldState.newWorld.provinces.length;
 
       for (final player in game.players) {
-        final visibleNwProvinces = _countFullyVisibleNwProvinces(game, player.id);
+        final visibleNwProvinces = _countFullyVisibleNwProvinces(
+          game,
+          player.id,
+        );
         expect(visibleNwProvinces, greaterThan(0));
         expect(visibleNwProvinces, lessThanOrEqualTo(totalNwProvinces));
       }
@@ -185,10 +185,7 @@ void main() {
         _expectTierCivilians(game, player, AdvancedStartType.turns50);
         expect(_countMilitaryRegiments(game, player.id), 6);
         expect(_countGpOwnedNwProvinces(game, player.id), 0);
-        expect(
-          _countFullyVisibleNwProvinces(game, player.id),
-          greaterThan(0),
-        );
+        expect(_countFullyVisibleNwProvinces(game, player.id), greaterThan(0));
         _expectConsulatesWithAllMinors(game, player.id);
       }
     });
@@ -219,10 +216,7 @@ void main() {
         _expectTierCivilians(game, player, AdvancedStartType.turns100);
         expect(_countMilitaryRegiments(game, player.id), 12);
         totalGpOwnedNw += _countGpOwnedNwProvinces(game, player.id);
-        expect(
-          _countFullyVisibleNwProvinces(game, player.id),
-          greaterThan(0),
-        );
+        expect(_countFullyVisibleNwProvinces(game, player.id), greaterThan(0));
         _expectEmbassiesWithAllMinors(game, player.id);
       }
 

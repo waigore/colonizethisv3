@@ -190,6 +190,28 @@ in [economy-planner.md](economy-planner.md) (seller / supplier feedstock
 extraction) and [growth-stage-planner.md](growth-stage-planner.md) (fabric /
 infrastructure feedstock routing).
 
+## Connectivity-aware development targets (Refs #4176)
+
+When `suggestWorkOrders` receives `tileMapByRegion`, the pass builds one
+[ConnectivityDevSnapshot](../program/order-suggestions.md) per player via
+`resolveConnectivity` and applies deterministic candidate reordering for
+`build_road`, `build_rail`, `build_improvement`, and `build_port` before the
+worker probe loop. Selection-layer scoring in
+`selectFullAiCivilianWorkOrders` mirrors the same connectivity signals via
+GA-tunable bonuses (`kEngineerFrontierRoadExtensionBonus`,
+`kBuildImprovementConnectedBonus`, `kBuildRailBottleneckYieldBonus`,
+`kEngineerPortOverseasLinkageBonus`, etc.).
+
+### GA-tunable connectivity parameters
+
+| Parameter | Default | Applies to |
+|-----------|---------|------------|
+| `kEngineerFrontierRoadExtensionBonus` | 280 | `build_road` on a frontier-extension tile when unconnected dev targets exist |
+| `kBuildImprovementConnectedBonus` | 240 | `build_improvement` on a capital-connected tile |
+| `kBuildImprovementAdjacentToConnectedBonus` | 80 | `build_improvement` on a tile 4-adjacent to the connected set |
+| `kBuildRailBottleneckYieldBonus` | 260 | `build_rail` on a connected bottleneck path tile |
+| `kEngineerPortOverseasLinkageBonus` | 220 | `build_port` in a province with unconnected dev targets and capital-reachable sea |
+
 ## Acceptance criteria
 
 - **AC1 (parameters registered):**

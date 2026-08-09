@@ -1,27 +1,19 @@
-import 'dart:math';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
-import 'capital_choice.dart';
+
 import 'game_setup_context.dart';
+import 'game_setup_create_capitals.dart';
+import 'game_setup_create_initial_game.dart';
+import 'game_setup_create_ownership.dart';
 import 'game_setup_helpers.dart';
-import 'game_setup_ownership.dart';
-import 'game_setup_topology.dart';
 import 'gp_old_world_resource_redistribution.dart';
 import 'gp_old_world_terrain_redistribution.dart';
+import 'gp_ow_terrain_count_restore.dart';
 import 'gp_starting_grain.dart';
-import 'minor_tribe_starting_development.dart';
 import 'init_town_roads.dart';
 import 'initial_visibility.dart';
-import 'setup_exceptions.dart';
-import 'town_capital_occupancy.dart';
-
-part 'game_setup_create_ownership.dart';
-part 'game_setup_create_initial_game.dart';
-part 'game_setup_create_capitals.dart';
+import 'minor_tribe_starting_development.dart';
 
 /// Result of game setup: the Game and the map data needed for turn resolution.
 class GameSetupResult {
@@ -77,7 +69,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final links = warpLinks ?? [];
   final perturbBase = assignmentPerturbationBase ?? namingSeed ?? config.seed;
   final initialMapZoomMultiplier = _resolveInitialMapZoomMultiplier(config);
-  final ownership = _assignInitialOwnership(
+  final ownership = assignInitialOwnership(
     config: config,
     topologyOldWorld: topologyOldWorld,
     topologyNewWorld: topologyNewWorld,
@@ -87,7 +79,7 @@ GameSetupResult createGameFromGeneratedMaps({
   final gpIds = ownership.gpIds;
   final minorIds = ownership.minorIds;
   final tribeIds = ownership.tribeIds;
-  var game = _buildInitialGame(
+  var game = buildInitialGame(
     config: config,
     gameId: gameId,
     oldWorldProvinces: oldWorldProvinces,
@@ -98,7 +90,23 @@ GameSetupResult createGameFromGeneratedMaps({
     initialMapZoomMultiplier: initialMapZoomMultiplier,
   );
 
-  game = _assignAllCapitals(
+  // §7d.terrain GP Old World terrain redistribution — after ownership, before capitals/towns.
+  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
+  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    setupSeedBase: perturbBase,
+  );
+  game = gpTerrainRedist.game;
+  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
+  // Snapshot N_T after §7d.terrain so §7d.terrain-restore can relocate labels
+  // destroyed by settlement plains conversion (keeps §7d.redist capacity feasible).
+  final gpOwTerrainTargets = countGpOwTerrainByType(
+    game: game,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+  );
+
+  game = assignAllCapitals(
     game: game,
     gpIds: gpIds,
     minorIds: minorIds,
@@ -107,8 +115,8 @@ GameSetupResult createGameFromGeneratedMaps({
     newWorldProvinces: newWorldProvinces,
     topologyOldWorld: topologyOldWorld,
     topologyNewWorld: topologyNewWorld,
-    tileMapOldWorld: tileMapOldWorld,
-    tileMapNewWorld: tileMapNewWorld,
+    tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
+    tileMapNewWorld: tileMapByRegion[kRegionNewWorld]!,
     tileMapByRegion: tileMapByRegion,
   );
 
@@ -142,15 +150,13 @@ GameSetupResult createGameFromGeneratedMaps({
     }
   }
 
-  // §7d.terrain GP Old World terrain redistribution (always-on when OW grids exist), then §7d.redist resources.
-  // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.
-  final gpTerrainRedist = applyGreatPowerOldWorldTerrainRedistribution(
+  // §7d.terrain-restore — relocate non-plains labels lost to settlement plains
+  // conversion onto non-settlement plains so §7d.redist capacity stays feasible.
+  tileMapByRegion[kRegionOldWorld] = restoreGpOwTerrainCountsAfterSettlementPlains(
     game: game,
     tileMapOldWorld: tileMapByRegion[kRegionOldWorld]!,
-    setupSeedBase: perturbBase,
+    targetCounts: gpOwTerrainTargets,
   );
-  game = gpTerrainRedist.game;
-  tileMapByRegion[kRegionOldWorld] = gpTerrainRedist.tileMap;
 
   // §7d.redist GP Old World terrain resource redistribution (always-on when OW grids exist).
   // SPEC/program/game-setup-pipeline.md; SPEC/game/tile-map-and-generation.md.

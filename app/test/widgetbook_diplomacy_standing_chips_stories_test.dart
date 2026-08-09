@@ -22,9 +22,9 @@ import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:widgetbook_host/catalogs/catalog.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/widget_test_assets.dart';
-import 'support/widgetbook_test_harness.dart';
+import 'app_shell_harness.dart';
+import 'widget_test_assets.dart';
+import 'widgetbook_test_harness.dart';
 
 const String _kFolder = 'Diplomatic Standing Chips';
 

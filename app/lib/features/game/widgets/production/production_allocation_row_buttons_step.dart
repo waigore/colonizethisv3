@@ -1,4 +1,10 @@
-part of 'production_allocation_row_buttons.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import '../../../../config/app_assets.dart';
+import 'production_allocation_repeat_timing.dart';
+import 'production_allocation_row_buttons.dart';
 
 /// **+** or **−** with tap and long-press repeat per SPEC/ui/production-panel.md.
 ///

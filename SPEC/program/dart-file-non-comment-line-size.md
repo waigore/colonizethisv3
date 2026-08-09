@@ -19,9 +19,12 @@ library's private scope. Part fragments keep the extracted code implicitly
 coupled to the host (shared imports and private members), which defeats the
 testability and decoupling goal the size gate exists to encourage. The
 `colonizethis_turn` (`repo.turn_no_part_directives`, Refs #3416),
-`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419), and
-`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543) packages
-already forbid `part` directives in their `lib/` trees; other packages SHOULD
+`colonizethis_diplomacy` (`repo.diplomacy_no_part_of`, Refs #3419),
+`colonizethis_orders` (`repo.orders_no_part_directives`, Refs #3543),
+`colonizethis_world` (`repo.world_no_part_directives`, Refs #3968),
+`colonizethis_economy` (`repo.economy_no_part_directives`, Refs #3979), and
+`colonizethis_models` (`repo.models_no_part_directives`, Refs #4068) packages
+forbid `part` directives in their `lib/` trees; other packages SHOULD
 prefer the same standalone-library shape when extracting for size, and MAY add an
 equivalent no-`part` gate once their `lib/` tree is part-free.
 
@@ -49,8 +52,11 @@ rule is **scope wiring**, not a keyed violation waiver.
 The checker skips any repo-relative path that:
 
 - Ends with `.g.dart`, `.freezed.dart`, `.mocks.dart`, or `.gen.dart`, or
-- Contains the substring `app/lib/l10n/app_localizations_`, or
-- Contains the substring `app/lib/l10n/gen/app_l10n_flutter_gen_`.
+- Contains the substring
+  `packages/colonizethis_app_l10n/lib/l10n/app_localizations_`, or
+- Contains the substring
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen` (delegate
+  `app_l10n_flutter_gen.dart` and per-locale `app_l10n_flutter_gen_*.dart`).
 
 There is **no** YAML or keyed table that raises the effective line cap for a
 specific hand-written library file.
@@ -69,9 +75,16 @@ specific hand-written library file.
   exits zero and does not list that file as a violation.
 
 - Given a temporary workspace containing only
-  `app/lib/l10n/gen/app_l10n_flutter_gen_en.dart` with more than 1000 non-comment
-  lines, when the System runs `runCheckDartFileNonCommentLineSize`, then the
-  checker exits zero and does not list that path as a violation.
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen_en.dart`
+  with more than 1000 non-comment lines, when the System runs
+  `runCheckDartFileNonCommentLineSize`, then the checker exits zero and does not
+  list that path as a violation.
+
+- Given a temporary workspace containing only
+  `packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen.dart` with
+  more than 1000 non-comment lines, when the System runs
+  `runCheckDartFileNonCommentLineSize`, then the checker exits zero and does not
+  list that path as a violation.
 
 - Given the repository root as cwd, when CI runs
   `dart run tool/ct_repo_lint.dart` and rule `repo.dart_file_non_comment_line_size`
@@ -113,18 +126,34 @@ lines) for the split domain packages.
 
 - Phase 5 split the three largest hand-written offenders (`app_events.dart`,
   `world_market.dart`, `orders.dart`) into `part` files below the cap.
-- `game.dart` (554 non-comment lines) is dominated by the single `Game`
-  aggregate class, which cannot be reduced under the cap by simple `part`
-  extraction; it is recorded in `modelsFileSizeGrandfatheredForTests` as a
-  documented baseline pending a follow-up API-shaping split. The checker asserts
-  each grandfathered path still exists so the allowlist cannot silently rot.
+- Slice A (Refs #4068) extracted `VictoryType` / `VictoryState` into
+  `victory.dart` and shared collection equality into
+  `model_collection_equality.dart`, so `game.dart` is at or below 500
+  non-comment lines. `modelsFileSizeGrandfatheredForTests` is therefore
+  **empty**; the checker still accepts an explicit override list for tests and
+  fails on stale allowlist paths that no longer exist.
+- Slice B (Refs #4068) splits former monolithic `diplomacy.dart` into
+  first-class concern libraries under `lib/src/diplomacy/` (relations,
+  overtures, orders, treaty states, events, debug tokens). The host
+  `diplomacy.dart` is a barrel re-export only; public import paths via the
+  models barrel stay stable.
+- Slice C (Refs #4068) promotes former `part` trees under `orders/`,
+  `world_state/`, `world_market/`, and `app_events/` to first-class
+  libraries with explicit imports; `repo.models_no_part_directives`
+  (`SPEC/program/models-no-part-directives.md`) forbids reintroducing
+  `part` / `part of` under `packages/colonizethis_models/lib/`.
+- Slice D (Refs #4068) densifies oversized models suites
+  (`world_market_test`, `game_test`, `app_events_test`,
+  `diplomacy_models_test`) into concern-split files at or below 400
+  physical lines, with a shared `test/support/minimal_game.dart`
+  scaffold; `repo.models_test_file_size` enforces the ceiling.
 
 ### Acceptance criteria
 
 - Given the repository root as cwd, when the System runs
   `runCheckModelsFileSize`, then the checker exits zero because every
-  non-grandfathered `colonizethis_models/lib/src` Dart file is at or below 500
-  non-comment lines.
+  `colonizethis_models/lib/src` Dart file is at or below 500 non-comment lines
+  (no active grandfather baseline).
 
 - Given a temporary workspace whose only models source file is a hand-written
   `packages/colonizethis_models/lib/src/huge.dart` with more than 500
@@ -144,6 +173,113 @@ lines) for the split domain packages.
 - Given a grandfather allowlist entry that names a file which does not exist in
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
+
+## colonizethis_models 400 physical-line lib gate (Refs #4136)
+
+`colonizethis_models` is the shared leaf value-model package consumed by every
+domain package and the app. Wave 2 adds a **stricter 400 physical-line cap** on
+`packages/colonizethis_models/lib/**` under `repo.models_lib_physical_file_size`,
+tighter than `repo.domain_package_source_file_size` (500 physical) for split
+domain packages and complementary to `repo.models_file_size` (500 NCL).
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_models_lib_physical_file_size.dart` | Walker, physical line counter, CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.models_lib_physical_file_size` |
+
+### Scan scope and measurement
+
+- The checker walks `packages/colonizethis_models/lib/**` recursively and
+  considers only `*.dart` files, skipping generated suffixes (`.g.dart`,
+  `.freezed.dart`, `.mocks.dart`, `.gen.dart`).
+- **Failure threshold:** strictly **greater than 400** physical lines fails the
+  file (400 inclusive passes), counting every line in the file (including
+  comments and blanks).
+- **Shrink-only grandfather:** during wave-2 aggregate splits, over-cap files
+  may appear in `modelsLibPhysicalFileSizeGrandfatheredForTests` until their
+  slice lands. The checker fails when a grandfather entry names a missing file or
+  a file that is now at or below 400 physical lines (must remove from allowlist).
+
+### Relationship to other gates
+
+- `repo.models_file_size` (500 NCL) remains the historical models soft-structure
+  gate; a file may pass NCL while failing physical 400 when comment/blank density
+  is low.
+- `repo.domain_package_source_file_size` (500 physical) does not apply to
+  `colonizethis_models` because it is not one of the eight split domain packages.
+
+### Wave-2 slice progress (Refs #4136)
+
+- **Slice A:** `world_state_serialization.dart` extracted from `world_state.dart`;
+  physical ratchet registered with shrink-only grandfather for remaining offenders.
+- **Slice B:** `session_command_events.dart` partitioned into domain libraries under
+  `lib/src/app_events/session_*` (civilian work, naval, army, train, debug, observe,
+  diplomatic order) with a thin barrel re-export; grandfather cleared.
+- **Slice C:** `orders_serialization.dart` extracted from `orders.dart`; `game_equality.dart`
+  extracted from `game.dart`; `quick_battle/` cluster split (`types.dart`, `deployment.dart`,
+  `result.dart`) with thin `quick_battle.dart` barrel re-export.
+- **Slice D:** `orders_test.dart` densified via `test/support/orders_fixtures.dart` table-driven
+  cases (210 physical lines, durable headroom under the 400 test gate).
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits zero because every
+  non-grandfathered `colonizethis_models/lib` Dart file is at or below 400
+  physical lines.
+
+- Given a temporary workspace whose only models source file is a hand-written
+  `packages/colonizethis_models/lib/src/huge.dart` with more than 400 physical
+  lines and an empty grandfather list, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits non-zero and names
+  `huge.dart` with a count strictly greater than 400.
+
+- Given a temporary workspace whose over-cap models file is listed in the
+  shrink-only grandfather allowlist, when the System runs
+  `runCheckModelsLibPhysicalFileSize`, then the checker exits zero and does not
+  list that file.
+
+- Given a grandfather allowlist entry for a file that is now at or below 400
+  physical lines, when the System runs `runCheckModelsLibPhysicalFileSize`, then
+  the checker exits non-zero and reports that the entry must be removed from the
+  allowlist.
+
+## colonizethis_data 400 physical-line gate (Refs #4072, #4292)
+
+`colonizethis_data` holds ruleset constants and catalogs consumed by logic and
+AI, so it carries a **peer-aligned 400 physical-line soft cap** under
+`repo.data_lib_file_size` (mirroring economy/models/diplomacy packages).
+
+| Artifact | Role |
+|----------|------|
+| `tool/check_data_lib_file_size.dart` | Walker, counter, CLI |
+| `tool/ct_repo_lint_manifest.yaml` | Registers rule `repo.data_lib_file_size` |
+
+### Scan scope
+
+- Walks `packages/colonizethis_data/lib/src/**` recursively; only `*.dart`.
+- Skips generated suffixes (`.g.dart`, `.freezed.dart`, `.mocks.dart`,
+  `.gen.dart`) including `tech_effect_summary_embed.gen.dart`.
+- **Failure threshold:** strictly greater than 400 physical lines fails
+  (400 inclusive passes).
+- `dataFileSizeGrandfatheredForTests` is **empty** after the #4292 wave-5 splits.
+
+### Acceptance criteria
+
+- Given the repository root as cwd, when the System runs
+  `runCheckDataLibFileSize`, then the checker exits zero because every
+  hand-written `colonizethis_data/lib/src` Dart file is at or below 400
+  physical lines.
+
+- Given a temporary workspace whose only data source file is a hand-written
+  `packages/colonizethis_data/lib/src/huge.dart` with more than 400
+  physical lines and an empty grandfather list, when the System runs
+  `runCheckDataLibFileSize`, then the checker exits non-zero and names
+  `huge.dart`.
+
+- Given a temporary workspace whose only data source file is
+  `tech_effect_summary_embed.gen.dart` and exceeds 400 physical lines, when the
+  System runs `runCheckDataLibFileSize`, then the checker exits zero.
 
 ## app flame 600 non-comment-line gate (Refs #3878)
 

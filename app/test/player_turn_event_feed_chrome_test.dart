@@ -9,7 +9,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Tests for the dark editorial-monocle restyle of the news feed card and
 /// newspaper toggle button (issue #2861 S7).
@@ -235,6 +235,60 @@ void main() {
         findsNothing,
       );
     });
+
+    testWidgets(
+      'link-affordance row shows trailing chevron and fires onTap',
+      (WidgetTester tester) async {
+        bool tapped = false;
+        await tester.pumpWidget(
+          hostFeedCard(
+            entries: <PlayerTurnEventFeedEntry>[
+              PlayerTurnEventFeedEntry(
+                text: 'Research complete: Crop Rotation unlocked',
+                linkAffordance: true,
+                onTap: () => tapped = true,
+              ),
+            ],
+          ),
+        );
+        await tester.pump();
+
+        expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+        await tester.tap(find.text('Research complete: Crop Rotation unlocked'));
+        await tester.pump();
+        expect(tapped, isTrue);
+      },
+    );
+
+    testWidgets(
+      'tappable row on narrow viewport enforces 44 dp minimum height',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MediaQuery(
+            data: const MediaQueryData(size: Size(360, 800)),
+            child: hostFeedCard(
+              entries: <PlayerTurnEventFeedEntry>[
+                PlayerTurnEventFeedEntry(
+                  text: 'Research complete: Crop Rotation unlocked',
+                  linkAffordance: true,
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final inkWellFinder = find.descendant(
+          of: find.byKey(PlayerTurnEventFeedCard.surfaceKey),
+          matching: find.byType(InkWell),
+        );
+        expect(
+          tester.getSize(inkWellFinder).height,
+          greaterThanOrEqualTo(PlayerTurnEventFeedCard.narrowTappableRowMinHeight),
+        );
+      },
+    );
   });
 
   group('PlayerTurnEventsFeedToggleButton chrome', () {

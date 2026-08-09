@@ -1,4 +1,9 @@
-part of 'military_tree_builder.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../../flame/map_state/map_location_resolver.dart';
+import 'military_tree_builder.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 List<RegimentTypeRow> rowsForArmyUnits(
   Game game,
@@ -40,7 +45,7 @@ List<RegimentTypeRow> rowsForArmyUnits(
   return rows;
 }
 
-List<Army> _armiesForMilitaryPanel(Game game, String humanPlayerId) {
+List<Army> militaryTreeArmiesForPanel(Game game, String humanPlayerId) {
   return game.worldState.armies
       .where((a) => a.ownerId == humanPlayerId)
       .where((a) => a.isHomeArmy || a.regimentUnitIds.isNotEmpty)
@@ -53,7 +58,7 @@ List<Army> _armiesForMilitaryPanel(Game game, String humanPlayerId) {
     });
 }
 
-List<ProvinceArmiesNode> _provinceArmyNodesForRegion({
+List<ProvinceArmiesNode> militaryTreeProvinceArmyNodesForRegion({
   required Game game,
   required String regionKey,
   required RegionData regionData,

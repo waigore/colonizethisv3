@@ -1,68 +1,66 @@
 // Count-transfer mutation helpers for [CtTransferList].
-// Split from `ct_transfer_list.dart` to keep each widget library part
-// under the repo file-size target (Refs #3878).
 
-part of 'ct_transfer_list.dart';
+import 'ct_transfer_list_state_base.dart';
 
-extension _CtTransferListMutations on _CtTransferListState {
-  void _notifyChanged() {
-    widget.onChanged?.call(_leftCounts, _rightCounts);
+mixin CtTransferListMutations on CtTransferListStateBase {
+  void notifyChanged() {
+    widget.onChanged?.call(leftCounts, rightCounts);
   }
 
-  void _cleanupZeros() {
-    _leftCounts.removeWhere((_, v) => v <= 0);
-    _rightCounts.removeWhere((_, v) => v <= 0);
+  void cleanupZeros() {
+    leftCounts.removeWhere((_, v) => v <= 0);
+    rightCounts.removeWhere((_, v) => v <= 0);
   }
 
-  void _moveOneToRight(String itemId) {
-    final from = _leftCounts[itemId] ?? 0;
+  void moveOneToRight(String itemId) {
+    final from = leftCounts[itemId] ?? 0;
     if (from <= 0) return;
     setState(() {
-      _leftCounts[itemId] = from - 1;
-      _rightCounts[itemId] = (_rightCounts[itemId] ?? 0) + 1;
-      _cleanupZeros();
+      leftCounts[itemId] = from - 1;
+      rightCounts[itemId] = (rightCounts[itemId] ?? 0) + 1;
+      cleanupZeros();
     });
-    _notifyChanged();
+    notifyChanged();
   }
 
-  void _moveOneToLeft(String itemId) {
-    final from = _rightCounts[itemId] ?? 0;
+  void moveOneToLeft(String itemId) {
+    final from = rightCounts[itemId] ?? 0;
     if (from <= 0) return;
     setState(() {
-      _rightCounts[itemId] = from - 1;
-      _leftCounts[itemId] = (_leftCounts[itemId] ?? 0) + 1;
-      _cleanupZeros();
+      rightCounts[itemId] = from - 1;
+      leftCounts[itemId] = (leftCounts[itemId] ?? 0) + 1;
+      cleanupZeros();
     });
-    _notifyChanged();
+    notifyChanged();
   }
 
-  void _moveAllToRight(String itemId) {
-    final from = _leftCounts[itemId] ?? 0;
+  void moveAllToRight(String itemId) {
+    final from = leftCounts[itemId] ?? 0;
     if (from <= 0) return;
     setState(() {
-      _rightCounts[itemId] = (_rightCounts[itemId] ?? 0) + from;
-      _leftCounts.remove(itemId);
-      _cleanupZeros();
+      rightCounts[itemId] = (rightCounts[itemId] ?? 0) + from;
+      leftCounts.remove(itemId);
+      cleanupZeros();
     });
-    _notifyChanged();
+    notifyChanged();
   }
 
-  void _moveAllToLeft(String itemId) {
-    final from = _rightCounts[itemId] ?? 0;
+  void moveAllToLeft(String itemId) {
+    final from = rightCounts[itemId] ?? 0;
     if (from <= 0) return;
     setState(() {
-      _leftCounts[itemId] = (_leftCounts[itemId] ?? 0) + from;
-      _rightCounts.remove(itemId);
-      _cleanupZeros();
+      leftCounts[itemId] = (leftCounts[itemId] ?? 0) + from;
+      rightCounts.remove(itemId);
+      cleanupZeros();
     });
-    _notifyChanged();
+    notifyChanged();
   }
 
-  void _handleConfirm() {
-    if (!_canConfirm) return;
+  void handleConfirm() {
+    if (!canConfirm) return;
     widget.onConfirm(
-      Map<String, int>.from(_leftCounts),
-      Map<String, int>.from(_rightCounts),
+      Map<String, int>.from(leftCounts),
+      Map<String, int>.from(rightCounts),
     );
   }
 }

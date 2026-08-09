@@ -1,6 +1,17 @@
 /// Row-builder pipeline for diplomacy panel faction lists.
+library;
 
-part of 'diplomacy_panel_rows.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'diplomacy_panel_rows.dart';
+import 'diplomacy_panel_rows_builder_helpers.dart';
 
 /// Builds list of discovered factions and their available actions.
 ///
@@ -70,7 +81,7 @@ List<DiplomacyRowData> buildDiplomacyRows(
   final minorIds = <String>[];
   final tribeIds = <String>[];
   for (final id in discoveredIds) {
-    _appendDiscoveredFactionId(
+    appendDiscoveredFactionId(
       game,
       humanPlayerId,
       id,
@@ -106,9 +117,9 @@ List<DiplomacyRowData> buildDiplomacyRows(
   final rows = <DiplomacyRowData>[];
   final playerPower = greatPowerPowerScore(game, humanPlayerId);
   for (final id in gpIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
+    final econ = pendingEconomicAmounts(pendingList, id);
     rows.add(
-      _buildDiplomacyRowData(
+      buildDiplomacyRowData(
         game: game,
         humanPlayerId: humanPlayerId,
         factionId: id,
@@ -127,14 +138,14 @@ List<DiplomacyRowData> buildDiplomacyRows(
     );
   }
   minorIds.sort(
-    (a, b) => _displayNameForFaction(game, a).compareTo(
-      _displayNameForFaction(game, b),
+    (a, b) => displayNameForFaction(game, a).compareTo(
+      displayNameForFaction(game, b),
     ),
   );
   for (final id in minorIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
+    final econ = pendingEconomicAmounts(pendingList, id);
     rows.add(
-      _buildDiplomacyRowData(
+      buildDiplomacyRowData(
         game: game,
         humanPlayerId: humanPlayerId,
         factionId: id,
@@ -151,14 +162,14 @@ List<DiplomacyRowData> buildDiplomacyRows(
     );
   }
   tribeIds.sort(
-    (a, b) => _displayNameForFaction(game, a).compareTo(
-      _displayNameForFaction(game, b),
+    (a, b) => displayNameForFaction(game, a).compareTo(
+      displayNameForFaction(game, b),
     ),
   );
   for (final id in tribeIds) {
-    final econ = _pendingEconomicAmounts(pendingList, id);
+    final econ = pendingEconomicAmounts(pendingList, id);
     rows.add(
-      _buildDiplomacyRowData(
+      buildDiplomacyRowData(
         game: game,
         humanPlayerId: humanPlayerId,
         factionId: id,

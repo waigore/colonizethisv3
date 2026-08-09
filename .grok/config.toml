@@ -1,3 +1,24 @@
 # Project-scoped Grok configuration (ColonizeThis)
 # Thin skill shims live in .grok/skills/ and delegate to the source of truth
 # under .cursor/skills/. No extra paths or disables are required for normal use.
+#
+# MCP: dart/flutter. Set FLUTTER_ROOT to your SDK install (Grok expands ${VAR}
+# in command/args). Same server name in ~/.grok/config.toml is replaced while
+# working in this repo.
+
+[mcp_servers.dart]
+command = "${FLUTTER_ROOT}/bin/dart"
+args = [
+    "mcp-server",
+    "--flutter-sdk",
+    "${FLUTTER_ROOT}",
+    "--force-roots-fallback",
+]
+enabled = true
+startup_timeout_sec = 60
+
+[mcp_servers.marionette]
+command = "marionette_mcp"
+args = []
+enabled = true
+startup_timeout_sec = 60

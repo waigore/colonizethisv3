@@ -1,22 +1,15 @@
 // Move army dialog. SPEC/ui/move-army-dialog.md, SPEC/program/app-ui-wiring.md.
 
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show ArmyMovePickerDestination, IncrementalCandidateValidator;
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_section_label.dart';
-import '../../../../widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'move_units_dialog_base.dart';
-
-part 'move_army_dialog_declare_war.dart';
-part 'move_army_dialog_destinations.dart';
-part 'move_army_dialog_state.dart';
+import 'move_army_dialog_state.dart';
 
 String moveArmyFactionGroupHeaderLabel(
   Game game,
@@ -68,71 +61,5 @@ class MoveArmyDialog extends StatefulWidget {
   final PlayerView? playerView;
 
   @override
-  State<MoveArmyDialog> createState() => _MoveArmyDialogState();
-}
-
-class _MoveArmyDialogState extends MoveUnitsDialogState<MoveArmyDialog> {
-  String? _selected;
-  IncrementalCandidateValidator? _sharedCandidateValidator;
-  List<ArmyMovePickerDestination>? _cachedDestinations;
-  Orders? _cachedDestinationsOrders;
-  String? _cachedDestinationsArmyId;
-
-  @override
-  void initState() {
-    super.initState();
-    _syncSharedValidatorAndDestinations();
-    final entries = _destinationEntries();
-    if (entries.isNotEmpty) {
-      _selected = entries.first.fullProvinceId;
-    }
-  }
-
-  @override
-  void didUpdateWidget(MoveArmyDialog oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.draftOrders != widget.draftOrders ||
-        oldWidget.game != widget.game ||
-        oldWidget.army != widget.army ||
-        oldWidget.playerView != widget.playerView) {
-      _syncSharedValidatorAndDestinations(
-        rebuildValidator:
-            oldWidget.game != widget.game ||
-            oldWidget.playerView != widget.playerView,
-      );
-      final entries = _destinationEntries();
-      if (_selected == null ||
-          !entries.any((e) => e.fullProvinceId == _selected)) {
-        _selected = entries.isEmpty ? null : entries.first.fullProvinceId;
-      }
-    }
-  }
-
-  @override
-  String get moveDialogTitle => appL10n(context).moveArmy_title(widget.army.id);
-
-  @override
-  bool get moveDialogHasDestinations => _destinationEntries().isNotEmpty;
-
-  @override
-  String get moveDialogEmptyText =>
-      appL10n(context).moveArmy_noValidDestinations;
-
-  @override
-  bool get moveDialogCanConfirm => _selected != null;
-
-  @override
-  void onMoveDialogConfirm() {
-    _onConfirmPressed();
-  }
-
-  @override
-  void onMoveDialogCancel() => Navigator.of(context).pop();
-
-  @override
-  Widget buildMoveDialogDestinations(BuildContext context) =>
-      _buildMoveDialogDestinationsBody(context);
-
-  @override
-  Widget build(BuildContext context) => buildMoveDialogScaffold(context);
+  State<MoveArmyDialog> createState() => MoveArmyDialogState();
 }

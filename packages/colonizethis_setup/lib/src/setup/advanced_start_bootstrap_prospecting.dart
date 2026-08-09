@@ -4,17 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'advanced_start_selection.dart';
 import 'setup_logging.dart';
-
-Set<String> _selectProspectFraction({
-  required Iterable<String> prospectableTileKeys,
-  required double prospectFraction,
-}) {
-  final prospectable = prospectableTileKeys.toList()..sort();
-  if (prospectable.isEmpty) return const {};
-  final target = (prospectable.length * prospectFraction).ceil();
-  return prospectable.take(target).toSet();
-}
 
 Set<String> _prospectRequiredTileKeys(
   Iterable<String> tileKeys,
@@ -69,10 +60,10 @@ Game applyAdvancedStartProspecting({
       ownerId: player.id,
       regionIds: const [kRegionOldWorld, kRegionNewWorld],
     );
-    final selected = _selectProspectFraction(
-      prospectableTileKeys: pool,
-      prospectFraction: prospectFraction,
-    );
+    final selected = selectByFractionCeil(
+      pool.toList()..sort(),
+      prospectFraction,
+    ).toSet();
     if (selected.isEmpty) continue;
     prospectedByPlayer
         .putIfAbsent(player.id, () => <String>{})
@@ -82,16 +73,16 @@ Game applyAdvancedStartProspecting({
   if (game.players.isNotEmpty) {
     for (var i = 0; i < game.minorNations.length; i++) {
       final minor = game.minorNations[i];
-      final buyerId = game.players[i % game.players.length].id;
+      final buyerId = minorBuyerIdRoundRobin(game, i);
       final pool = _ownedProspectableTileKeys(
         game: game,
         ownerId: minor.id,
         regionIds: const [kRegionOldWorld],
       );
-      final selected = _selectProspectFraction(
-        prospectableTileKeys: pool,
-        prospectFraction: prospectFraction,
-      );
+      final selected = selectByFractionCeil(
+        pool.toList()..sort(),
+        prospectFraction,
+      ).toSet();
       if (selected.isEmpty) continue;
       prospectedByPlayer
           .putIfAbsent(buyerId, () => <String>{})

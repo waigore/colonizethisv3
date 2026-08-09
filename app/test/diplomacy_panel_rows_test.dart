@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
-import 'support/panel_test_fixtures.dart';
+import 'panel_test_fixtures.dart';
 
 /// Old World coastal province sea-connected to an unrevealed New World tribe
 /// colony, with **zero** New World tile visibility (Refs #3620 AC-1). Mirrors

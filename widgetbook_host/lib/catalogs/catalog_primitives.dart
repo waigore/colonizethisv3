@@ -1029,9 +1029,9 @@ class _CtTopBarStory extends StatelessWidget {
   }
 }
 
-/// Showcases [CtDropdown] R5d chevron rotation under the dark
-/// editorial-monocle theme. See SPEC/ui/pixel-art-ui-catalog.md
-/// § Pixel-art component catalog (CtDropdown) and issue #2859 R5d / S6.
+/// Showcases [CtDropdown] compact flat trigger + R5d chevron rotation under
+/// the dark editorial-monocle theme. See SPEC/ui/pixel-art-ui-catalog.md
+/// § Pixel-art component catalog (CtDropdown), issue #4062, and #2859 R5d / S6.
 class _CtDropdownStory extends StatefulWidget {
   const _CtDropdownStory();
 

@@ -1,58 +1,34 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+
+import 'support/civilian_work_selection_fixture.dart';
 
 void main() {
   group('selectFullAiCivilianWorkOrders', () {
     test(
       'non-Explorer picks lexicographically smallest (target, targetTileKey)',
       () {
-        const playerId = 'gp1';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: playerId, displayName: 'GP', isHuman: false),
-          ],
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = PlayerView(
-          playerId: playerId,
-          player: game.players.single,
-          ownUnitsById: {
-            'b1': Unit(
-              id: 'b1',
-              type: kUnitTypeBuilder,
-              ownerId: playerId,
-              locationProvinceId: 'oldWorld|p1',
-            ),
-          },
-          provincesById: const {},
-          visibilityByTile: const {},
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
-        );
-        final suggestions = [
-          const WorkOrder(
-            unitId: 'b1',
-            target: kWorkTargetBuildRoad,
-            targetTileKey: 'oldWorld|p1|1|0',
-          ),
-          const WorkOrder(
-            unitId: 'b1',
-            target: kWorkTargetBuildImprovement,
-            targetTileKey: 'oldWorld|p1|0|0',
-          ),
-        ];
+        final game = civilianWorkSelectionGame();
         final r = selectFullAiCivilianWorkOrders(
-          workSuggestions: suggestions,
-          view: view,
+          workSuggestions: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildRoad,
+              targetTileKey: 'oldWorld|p1|1|0',
+            ),
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+          view: civilianWorkSelectionView(
+            game: game,
+            unitId: 'b1',
+            unitType: kUnitTypeBuilder,
+          ),
           game: game,
         );
         expect(r.workOrders, hasLength(1));
@@ -61,129 +37,89 @@ void main() {
       },
     );
 
-    test('Builder prefers unimproved resource tile over lexicographically smaller road', () {
-      const playerId = 'gp1';
-      const tileRoad = 'oldWorld|p1|0|0';
-      const tileResource = 'oldWorld|p1|1|0';
-      final game = Game(
-        id: 'g',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
+    test(
+      'Builder prefers unimproved resource tile over lexicographically smaller road',
+      () {
+        const tileRoad = 'oldWorld|p1|0|0';
+        const tileResource = 'oldWorld|p1|1|0';
+        final game = civilianWorkSelectionGame(
           resourceByTileKey: {tileResource: 'grain'},
-        ),
-        players: const [
-          Player(id: playerId, displayName: 'GP', isHuman: false),
-        ],
-      );
-      final view = PlayerView(
-        playerId: playerId,
-        player: game.players.single,
-        ownUnitsById: {
-          'b1': Unit(
-            id: 'b1',
-            type: kUnitTypeBuilder,
-            ownerId: playerId,
-            locationProvinceId: 'oldWorld|p1',
-          ),
-        },
-        provincesById: const {},
-        visibilityByTile: const {},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: [
-          const WorkOrder(
+        );
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildRoad,
+              targetTileKey: tileRoad,
+            ),
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: tileResource,
+            ),
+          ],
+          view: civilianWorkSelectionView(
+            game: game,
             unitId: 'b1',
-            target: kWorkTargetBuildRoad,
-            targetTileKey: tileRoad,
+            unitType: kUnitTypeBuilder,
           ),
-          const WorkOrder(
-            unitId: 'b1',
-            target: kWorkTargetBuildImprovement,
-            targetTileKey: tileResource,
-          ),
-        ],
-        view: view,
-        game: game,
-      );
-      expect(r.workOrders.single.targetTileKey, tileResource);
-    });
+          game: game,
+        );
+        expect(r.workOrders.single.targetTileKey, tileResource);
+      },
+    );
 
     test(
       'Explorer with two equal E_score explores picks lexicographically smaller tile',
       () {
-        const playerId = 'gp1';
         const ow = 'oldWorld';
         const pA = '$ow|pA';
         const pB = '$ow|pB';
         const tileB = 'oldWorld|pB|0|0';
         const tileA = 'oldWorld|pA|0|0';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: RegionData(
-              provinces: [
-                Province(id: pA, regionId: ow, ownerId: 'tribe1'),
-                Province(id: pB, regionId: ow, ownerId: 'tribe1'),
-              ],
-              units: const [],
-            ),
-            newWorld: const RegionData(),
-            playerVisibilityByTile: const {
-              playerId: {tileA: 'unknown', tileB: 'unknown'},
-            },
-            tileKeysByRegionAndProvince: const {
-              ow: {
-                pA: [tileA],
-                pB: [tileB],
-              },
-            },
+        final game = civilianWorkSelectionGame(
+          oldWorld: RegionData(
+            provinces: [
+              Province(id: pA, regionId: ow, ownerId: 'tribe1'),
+              Province(id: pB, regionId: ow, ownerId: 'tribe1'),
+            ],
+            units: const [],
           ),
-          players: const [
-            Player(id: playerId, displayName: 'GP', isHuman: false),
-          ],
+          playerVisibilityByTile: const {
+            'gp1': {tileA: 'unknown', tileB: 'unknown'},
+          },
+          tileKeysByRegionAndProvince: const {
+            ow: {
+              pA: [tileA],
+              pB: [tileB],
+            },
+          },
           tribes: const [Tribe(id: 'tribe1', displayName: 'T')],
         );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = PlayerView(
-          playerId: playerId,
-          player: game.players.single,
-          ownUnitsById: {
-            'e1': Unit(
-              id: 'e1',
-              type: kUnitTypeExplorer,
-              ownerId: playerId,
-              locationProvinceId: pA,
-              tileKey: tileA,
-            ),
-          },
-          provincesById: const {},
-          visibilityByTile: const {
-            tileA: VisibilityLevel.unknown,
-            tileB: VisibilityLevel.unknown,
-          },
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
-        );
-        final suggestions = [
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetExplore,
-            targetTileKey: tileB,
-          ),
-          WorkOrder(
-            unitId: 'e1',
-            target: kWorkTargetExplore,
-            targetTileKey: tileA,
-          ),
-        ];
         final r = selectFullAiCivilianWorkOrders(
-          workSuggestions: suggestions,
-          view: view,
+          workSuggestions: [
+            WorkOrder(
+              unitId: 'e1',
+              target: kWorkTargetExplore,
+              targetTileKey: tileB,
+            ),
+            WorkOrder(
+              unitId: 'e1',
+              target: kWorkTargetExplore,
+              targetTileKey: tileA,
+            ),
+          ],
+          view: civilianWorkSelectionView(
+            game: game,
+            unitId: 'e1',
+            unitType: kUnitTypeExplorer,
+            locationProvinceId: pA,
+            tileKey: tileA,
+            visibilityByTile: const {
+              tileA: VisibilityLevel.unknown,
+              tileB: VisibilityLevel.unknown,
+            },
+          ),
           game: game,
         );
         expect(r.workOrders.single.targetTileKey, tileA);
@@ -194,38 +130,14 @@ void main() {
     test(
       'idle Explorer with empty explore/prospect suggestions logs no_suggestions',
       () {
-        const playerId = 'gp1';
-        final game = Game(
-          id: 'g',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
-          ),
-          players: const [
-            Player(id: playerId, displayName: 'GP', isHuman: false),
-          ],
-        );
-        const topology = MapTopology(nodes: [], edges: []);
-        final view = PlayerView(
-          playerId: playerId,
-          player: game.players.single,
-          ownUnitsById: {
-            'e1': Unit(
-              id: 'e1',
-              type: kUnitTypeExplorer,
-              ownerId: playerId,
-              locationProvinceId: 'oldWorld|p1',
-            ),
-          },
-          provincesById: const {},
-          visibilityByTile: const {},
-          prospectedTiles: const {},
-          diplomacyByOtherId: const {},
-        );
+        final game = civilianWorkSelectionGame();
         final r = selectFullAiCivilianWorkOrders(
           workSuggestions: const [],
-          view: view,
+          view: civilianWorkSelectionView(
+            game: game,
+            unitId: 'e1',
+            unitType: kUnitTypeExplorer,
+          ),
           game: game,
         );
         expect(r.workOrders, isEmpty);
@@ -237,38 +149,9 @@ void main() {
   });
 
   group('growth-stage feedstock build routing (Refs #3371 AC1/AC2)', () {
-    const playerId = 'gp1';
     const grainTile = 'oldWorld|p1|0|0';
     const woolTile = 'oldWorld|p1|1|0';
     const timberTile = 'oldWorld|p1|2|0';
-
-    Game gameWith(Map<String, String> resourceByTileKey) => Game(
-      id: 'g',
-      worldState: WorldState(
-        turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-        oldWorld: const RegionData(),
-        newWorld: const RegionData(),
-        resourceByTileKey: resourceByTileKey,
-      ),
-      players: const [Player(id: playerId, displayName: 'GP', isHuman: false)],
-    );
-
-    PlayerView viewWith(Game game) => PlayerView(
-      playerId: playerId,
-      player: game.players.single,
-      ownUnitsById: {
-        'b1': Unit(
-          id: 'b1',
-          type: kUnitTypeBuilder,
-          ownerId: playerId,
-          locationProvinceId: 'oldWorld|p1',
-        ),
-      },
-      provincesById: const {},
-      visibilityByTile: const {},
-      prospectedTiles: const {},
-      diplomacyByOtherId: const {},
-    );
 
     const grainSuggestion = WorkOrder(
       unitId: 'b1',
@@ -286,46 +169,58 @@ void main() {
       targetTileKey: timberTile,
     );
 
-    test('negative: without growth-stage sets, lex-first grain tile wins', () {
-      final game = gameWith({grainTile: 'grain', woolTile: 'wool'});
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: const [grainSuggestion, woolSuggestion],
-        view: viewWith(game),
+    FullAiCivilianWorkSelectionResult selectOn(
+      Map<String, String> resources, {
+      Set<String> fabric = const {},
+      Set<String> infra = const {},
+      required List<WorkOrder> suggestions,
+    }) {
+      final game = civilianWorkSelectionGame(resourceByTileKey: resources);
+      return selectFullAiCivilianWorkOrders(
+        workSuggestions: suggestions,
+        view: civilianWorkSelectionView(
+          game: game,
+          unitId: 'b1',
+          unitType: kUnitTypeBuilder,
+        ),
         game: game,
+        growthStageFabricFeedstockResourceIds: fabric,
+        growthStageInfraFeedstockResourceIds: infra,
+      );
+    }
+
+    test('negative: without growth-stage sets, lex-first grain tile wins', () {
+      final r = selectOn(
+        {grainTile: 'grain', woolTile: 'wool'},
+        suggestions: const [grainSuggestion, woolSuggestion],
       );
       expect(r.workOrders.single.targetTileKey, grainTile);
     });
 
     test('positive: fabric feedstock set routes Builder to wool over grain', () {
-      final game = gameWith({grainTile: 'grain', woolTile: 'wool'});
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: const [grainSuggestion, woolSuggestion],
-        view: viewWith(game),
-        game: game,
-        growthStageFabricFeedstockResourceIds: const {'wool', 'cotton'},
+      final r = selectOn(
+        {grainTile: 'grain', woolTile: 'wool'},
+        fabric: const {'wool', 'cotton'},
+        suggestions: const [grainSuggestion, woolSuggestion],
       );
       expect(r.workOrders.single.targetTileKey, woolTile);
     });
 
     test('positive: fabric feedstock outranks infrastructure feedstock', () {
-      final game = gameWith({woolTile: 'wool', timberTile: 'timber'});
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: const [timberSuggestion, woolSuggestion],
-        view: viewWith(game),
-        game: game,
-        growthStageFabricFeedstockResourceIds: const {'wool', 'cotton'},
-        growthStageInfraFeedstockResourceIds: const {'timber', 'iron', 'coal'},
+      final r = selectOn(
+        {woolTile: 'wool', timberTile: 'timber'},
+        fabric: const {'wool', 'cotton'},
+        infra: const {'timber', 'iron', 'coal'},
+        suggestions: const [timberSuggestion, woolSuggestion],
       );
       expect(r.workOrders.single.targetTileKey, woolTile);
     });
 
     test('positive: infrastructure feedstock set routes Builder to timber', () {
-      final game = gameWith({grainTile: 'grain', timberTile: 'timber'});
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: const [grainSuggestion, timberSuggestion],
-        view: viewWith(game),
-        game: game,
-        growthStageInfraFeedstockResourceIds: const {'timber', 'iron', 'coal'},
+      final r = selectOn(
+        {grainTile: 'grain', timberTile: 'timber'},
+        infra: const {'timber', 'iron', 'coal'},
+        suggestions: const [grainSuggestion, timberSuggestion],
       );
       expect(r.workOrders.single.targetTileKey, timberTile);
     });

@@ -21,32 +21,25 @@ void main() {
   });
 
   group('runInitGame human/AI slot assignment', () {
-    test(
-      'default (omitted) => exactly one human (gp1) and aiControlByGpId '
-      '{gp1:false, gp2..gpN:true}',
-      () {
-        final result = runInitGame(
-          config: lockedConfig(),
-          options: defaultInitOptions,
+    test('default (omitted) => exactly one human (gp1) and aiControlByGpId '
+        '{gp1:false, gp2..gpN:true}', () {
+      final result = sharedInitGameResult(lockedConfig());
+      final game = result.game;
+
+      final humans = game.players.where((p) => p.isHuman).toList();
+      expect(humans, hasLength(1));
+      expect(humans.single.id, 'gp1');
+
+      expect(game.aiControlByGpId['gp1'], isFalse);
+      for (final p in game.players.where((p) => p.id != 'gp1')) {
+        expect(p.isHuman, isFalse, reason: '${p.id} should be AI');
+        expect(
+          game.aiControlByGpId[p.id],
+          isTrue,
+          reason: '${p.id} should be AI-controlled',
         );
-        final game = result.game;
-
-        final humans = game.players.where((p) => p.isHuman).toList();
-        expect(humans, hasLength(1));
-        expect(humans.single.id, 'gp1');
-
-        expect(game.aiControlByGpId['gp1'], isFalse);
-        for (final p in game.players.where((p) => p.id != 'gp1')) {
-          expect(p.isHuman, isFalse, reason: '${p.id} should be AI');
-          expect(
-            game.aiControlByGpId[p.id],
-            isTrue,
-            reason: '${p.id} should be AI-controlled',
-          );
-        }
-      },
-      timeout: const Timeout(Duration(minutes: 2)),
-    );
+      }
+    }, timeout: const Timeout(Duration(minutes: 2)));
 
     test(
       'empty set => every Great Power isHuman:false and aiControlByGpId:true',
@@ -92,26 +85,23 @@ void main() {
       timeout: const Timeout(Duration(minutes: 2)),
     );
 
-    test(
-      'index >= greatPowerCount throws human_slot_index_out_of_range and '
-      'produces no game',
-      () {
-        // greatPowerCount is 6 (default selection); index 6 is out of range.
-        expect(
-          () => runInitGame(
-            config: lockedConfig(humanSlots: const {6}),
-            options: defaultInitOptions,
+    test('index >= greatPowerCount throws human_slot_index_out_of_range and '
+        'produces no game', () {
+      // greatPowerCount is 6 (default selection); index 6 is out of range.
+      expect(
+        () => runInitGame(
+          config: lockedConfig(humanSlots: const {6}),
+          options: defaultInitOptions,
+        ),
+        throwsA(
+          isA<SetupConfigConstraintException>().having(
+            (e) => e.code,
+            'code',
+            'human_slot_index_out_of_range',
           ),
-          throwsA(
-            isA<SetupConfigConstraintException>().having(
-              (e) => e.code,
-              'code',
-              'human_slot_index_out_of_range',
-            ),
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
 
     test(
       'negative index throws human_slot_index_out_of_range and produces no game',

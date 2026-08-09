@@ -15,8 +15,8 @@ import 'package:colonizethis_app/widgets/ct_back_button.dart';
 import 'package:colonizethis_app/widgets/ct_screen_shell.dart';
 import 'package:colonizethis_app/widgets/ct_top_bar.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

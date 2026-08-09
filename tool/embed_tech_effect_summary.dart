@@ -1,5 +1,5 @@
 // Reads packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml and writes
-// packages/colonizethis_data/lib/src/tech_effect_summary_embed.dart (const string).
+// packages/colonizethis_data/lib/src/tech_effect_summary_embed.gen.dart (const string).
 //
 // Run from repo root: dart tool/embed_tech_effect_summary.dart
 
@@ -11,7 +11,7 @@ void main() {
     '$root/packages/colonizethis_data/lib/src/data/tech_effect_summary.yaml',
   );
   final outFile = File(
-    '$root/packages/colonizethis_data/lib/src/tech_effect_summary_embed.dart',
+    '$root/packages/colonizethis_data/lib/src/tech_effect_summary_embed.gen.dart',
   );
   final yaml = yamlFile.readAsStringSync();
   if (yaml.contains("'''")) {

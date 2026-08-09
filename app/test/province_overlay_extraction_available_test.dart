@@ -1,6 +1,7 @@
 import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, demoRegionForOverlay;
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show ProvinceImprovableCommodityCount, buildPlayerView;
@@ -11,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 String _foreignOwnedProvinceId({
   required Game game,
@@ -29,9 +30,13 @@ String _foreignOwnedProvinceId({
   );
 }
 
-ProvinceExtractionSnapshot _sampleExtractionSnapshot(String ownerId) {
+ProvinceExtractionSnapshot _sampleExtractionSnapshot(
+  String ownerId, {
+  int capitalGrainBonus = 0,
+}) {
   return ProvinceExtractionSnapshot(
     ownerId: ownerId,
+    capitalGrainBonus: capitalGrainBonus,
     byCommodity: {
       'grain': const ProvinceExtractionCommodityTotals(
         effective: 1,
@@ -101,7 +106,79 @@ void main() {
   );
 
   testWidgets(
-    'empty Extraction/Available show dash placeholders (Refs #4002)',
+    'partial Extraction shows muted reason line under condensed line (Refs #4150)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(humanId),
+        availableByCommodity: _sampleAvailable,
+      );
+
+      expect(
+        find.text(
+          'Some improved tiles are not linked to your capital, or the road/port path is too weak.',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'full-yield Extraction omits partial reason line (Refs #4150)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: ProvinceExtractionSnapshot(
+          ownerId: humanId,
+          byCommodity: {
+            'grain': const ProvinceExtractionCommodityTotals(
+              effective: 5,
+              full: 5,
+              tileKeys: ['oldWorld|p1|0|0'],
+            ),
+          },
+        ),
+      );
+
+      expect(
+        find.text(
+          'Some improved tiles are not linked to your capital, or the road/port path is too weak.',
+        ),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'empty Extraction shows dash placeholders (Refs #4002)',
     (tester) async {
       final game = demoGameForOverlay;
       final humanId = game.players.first.id;
@@ -254,6 +331,95 @@ void main() {
           .widgetList<Text>(find.byType(Text))
           .where((t) => t.overflow == TextOverflow.ellipsis);
       expect(ellipsized, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'capital grain bonus annotation is muted and distinct (Refs #4064)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(
+          humanId,
+          capitalGrainBonus: 2,
+        ),
+        availableByCommodity: _sampleAvailable,
+      );
+
+      expect(
+        find.textContaining('incl. +2 capital grain bonus'),
+        findsOneWidget,
+      );
+      final annotation = tester.widget<Text>(
+        find.textContaining('incl. +2 capital grain bonus'),
+      );
+      expect(annotation.style?.color, EditorialMonoclePalette.muted);
+    },
+  );
+
+  testWidgets(
+    'capital grain bonus annotation is not a hover-highlight target '
+    '(Refs #4064)',
+    (tester) async {
+      final game = demoGameForOverlay;
+      final humanId = game.players.first.id;
+      final provinceId = ownedProvinceIdInOldWorld(
+        game: game,
+        ownerId: humanId,
+      );
+      final playerView = buildPlayerView(game, const MapTopology(), humanId);
+      Iterable<String>? highlighted;
+
+      await pumpProvinceOverlayAtDarkTheme(
+        tester,
+        game: game,
+        displayId: provinceId,
+        region: demoRegionForOverlay,
+        humanPlayerId: humanId,
+        playerView: playerView,
+        omniscientDetail: true,
+        extractionSnapshot: _sampleExtractionSnapshot(
+          humanId,
+          capitalGrainBonus: 2,
+        ),
+        availableByCommodity: _sampleAvailable,
+        onHighlightTiles: (keys) {
+          highlighted = keys;
+        },
+      );
+
+      final bonus = find.textContaining('incl. +2 capital grain bonus');
+      expect(bonus, findsOneWidget);
+      expect(
+        find.ancestor(of: bonus, matching: find.byType(MouseRegion)),
+        findsNothing,
+      );
+
+      final grainSegment = find.textContaining('1 (5)');
+      expect(grainSegment, findsOneWidget);
+      final grainRegions = find.ancestor(
+        of: grainSegment,
+        matching: find.byType(MouseRegion),
+      );
+      expect(grainRegions, findsWidgets);
+      tester.widget<MouseRegion>(grainRegions.first).onEnter!(
+        const PointerEnterEvent(),
+      );
+      expect(highlighted, ['oldWorld|p1|0|0', 'oldWorld|p1|0|1']);
     },
   );
 

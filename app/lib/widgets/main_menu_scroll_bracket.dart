@@ -2,25 +2,24 @@
 // split out from `main_menu.dart` to keep the host file under the repo-lint
 // non-comment line limit per
 // `SPEC/program/dart-file-non-comment-line-size.md`.
-//
-// All classes here are library-private (`_PixelArtButtonsRegion`,
-// `_PixelArtScrollBracket`, `_PixelArtScrollBracketPainter`) and consumed only
-// by the main-menu buttons region inside the parent library; they continue to
-// reference the `kMainMenuScrollBracket*` constants declared in the host file.
 
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
 
-/// Side enumeration for a [_PixelArtScrollBracket]. Encodes which gutter
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+
+import 'main_menu_constants.dart';
+
+/// Side enumeration for a [PixelArtScrollBracket]. Encodes which gutter
 /// (left or right of the buttons region) the bracket flanks; controls the
 /// horizontal offset direction of the ornamental dots and the canonical
 /// stable `Key` value applied to the bracket widget so widget tests can
 /// distinguish the two bracket positions independently.
-enum _ScrollBracketSide { left, right }
+enum ScrollBracketSide { left, right }
 
 /// Buttons-region wrapper for the `pixelArt` main-menu variant.
 ///
 /// Stacks the wood-panel button column under two ornamental
-/// [_PixelArtScrollBracket]s positioned [kMainMenuScrollBracketGutter]
+/// [PixelArtScrollBracket]s positioned [kMainMenuScrollBracketGutter]
 /// logical pixels outside the left and right edges of the column. The
 /// brackets paint across the middle
 /// `1 - 2 * kMainMenuScrollBracketVerticalInset` of the column height per
@@ -28,8 +27,8 @@ enum _ScrollBracketSide { left, right }
 /// `.buttons-region::before` / `::after` rules. `Clip.none` lets the
 /// brackets render outside the column bounds without being clipped by the
 /// outer scroll view.
-class _PixelArtButtonsRegion extends StatelessWidget {
-  const _PixelArtButtonsRegion({required this.child});
+class PixelArtButtonsRegion extends StatelessWidget {
+  const PixelArtButtonsRegion({required this.child, super.key});
 
   final Widget child;
 
@@ -44,9 +43,9 @@ class _PixelArtButtonsRegion extends StatelessWidget {
           top: 0,
           bottom: 0,
           width: kMainMenuScrollBracketWidth,
-          child: const _PixelArtScrollBracket(
+          child: const PixelArtScrollBracket(
             key: Key(kMainMenuScrollBracketLeftKey),
-            side: _ScrollBracketSide.left,
+            side: ScrollBracketSide.left,
           ),
         ),
         Positioned(
@@ -55,9 +54,9 @@ class _PixelArtButtonsRegion extends StatelessWidget {
           top: 0,
           bottom: 0,
           width: kMainMenuScrollBracketWidth,
-          child: const _PixelArtScrollBracket(
+          child: const PixelArtScrollBracket(
             key: Key(kMainMenuScrollBracketRightKey),
-            side: _ScrollBracketSide.right,
+            side: ScrollBracketSide.right,
           ),
         ),
       ],
@@ -77,17 +76,17 @@ class _PixelArtButtonsRegion extends StatelessWidget {
 /// height; the [side] discriminator flips the ornamental-dot horizontal
 /// offset so the dots align with the corresponding mockup `box-shadow`
 /// direction (`-2px` for left, `+2px` for right).
-class _PixelArtScrollBracket extends StatelessWidget {
-  const _PixelArtScrollBracket({super.key, required this.side});
+class PixelArtScrollBracket extends StatelessWidget {
+  const PixelArtScrollBracket({super.key, required this.side});
 
-  final _ScrollBracketSide side;
+  final ScrollBracketSide side;
 
   @override
   Widget build(BuildContext context) {
     return Opacity(
       opacity: kMainMenuScrollBracketOpacity,
       child: CustomPaint(
-        painter: _PixelArtScrollBracketPainter(
+        painter: PixelArtScrollBracketPainter(
           side: side,
           accent: EditorialMonoclePalette.accent,
           accentDim: EditorialMonoclePalette.accentDim,
@@ -97,14 +96,14 @@ class _PixelArtScrollBracket extends StatelessWidget {
   }
 }
 
-class _PixelArtScrollBracketPainter extends CustomPainter {
-  _PixelArtScrollBracketPainter({
+class PixelArtScrollBracketPainter extends CustomPainter {
+  PixelArtScrollBracketPainter({
     required this.side,
     required this.accent,
     required this.accentDim,
   });
 
-  final _ScrollBracketSide side;
+  final ScrollBracketSide side;
   final Color accent;
   final Color accentDim;
 
@@ -145,7 +144,7 @@ class _PixelArtScrollBracketPainter extends CustomPainter {
     canvas.drawRRect(barRRect, barPaint);
 
     final Paint dotPaint = Paint()..color = accentDim;
-    final double horizontalOffset = side == _ScrollBracketSide.left
+    final double horizontalOffset = side == ScrollBracketSide.left
         ? -_dotHorizontalOffsetFromCenter
         : _dotHorizontalOffsetFromCenter;
     final double dotX = size.width / 2 + horizontalOffset;
@@ -168,7 +167,7 @@ class _PixelArtScrollBracketPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _PixelArtScrollBracketPainter oldDelegate) {
+  bool shouldRepaint(covariant PixelArtScrollBracketPainter oldDelegate) {
     return oldDelegate.side != side ||
         oldDelegate.accent != accent ||
         oldDelegate.accentDim != accentDim;

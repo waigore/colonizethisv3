@@ -16,10 +16,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/game_fixture.dart';
-import 'support/map_view_fixture.dart';
-import 'support/tile_map_fixture.dart';
+import 'app_shell_harness.dart';
+import 'game_fixture.dart';
+import 'map_view_fixture.dart';
+import 'tile_map_fixture.dart';
 
 void main() {
   suppressLogsForTests();

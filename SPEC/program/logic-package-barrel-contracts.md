@@ -50,6 +50,29 @@ The rule is registered in `tool/ct_repo_lint_manifest.yaml` and dispatched in-pr
 - **Given** the `packages/colonizethis_logic/lib/ai_api.dart` file is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports `Missing AI contract file`.
 - **Given** a domain referenced by an `ai_api.dart` deep export whose barrel file `lib/<domain>.dart` is missing, **when** `runCheckAiApiNarrowSurface` runs, **then** it returns exit code `1` and reports the missing barrel.
 
+## Enforcement: `repo.app_narrow_logic_import` (Refs #4240 Slice A)
+
+`tool/check_app_narrow_logic_import.dart` (rule `repo.app_narrow_logic_import`) scans `app/lib/core/services/**`, `app/lib/providers/**`, the full `app/lib/features/**` tree (wave-12 slice A follow-up, Refs #4240 AC1), `app/lib/widgets/**`, and `app/lib/config/**` (wave-13 slice A, Refs #4269) and flags any `import 'package:colonizethis_logic/colonizethis_logic.dart'` directive (with or without `show`/`hide` combinators). Consumers in these trees must import domain barrels (`colonizethis_world`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_combat`, `colonizethis_diplomacy`, `colonizethis_economy`, `colonizethis_setup`) or narrow logic contract entrypoints (`ai_api.dart`, `order_suggestion_api.dart`, `industry_counsel_api.dart`, `debug_console_api.dart`, `turn_time_api.dart`, `civilian_intel_api.dart`) instead of the broad logic barrel. Deep `package:colonizethis_<domain>/src/...` imports under `app/lib/**` are forbidden by `repo.app_lib_no_src_imports` (wave-13 slice B, Refs #4269).
+
+The rule supersedes `repo.app_core_services_narrow_logic_import` (Slice C of #4224) by widening the same predicate to providers and high-churn feature subtrees. `tool/check_app_core_services_narrow_logic_import.dart` remains for Slice C unit tests. The rule is registered in `tool/ct_repo_lint_manifest.yaml`; repository tests `test/check_app_narrow_logic_import_test.dart` and `test/check_app_core_services_narrow_logic_import_test.dart` assert green fixtures.
+
+### Acceptance criteria (`repo.app_narrow_logic_import`)
+
+- **Given** wave 12 slice A follow-up of #4240 is merged, **when** `rg 'package:colonizethis_logic/colonizethis_logic.dart' app/lib/providers app/lib/features` runs on `dev`, **then** zero matches are returned.
+- **Given** wave 13 slice A of #4269 is merged, **when** `rg 'package:colonizethis_logic/colonizethis_logic.dart' app/lib` runs on `dev`, **then** zero matches are returned and `repo.app_narrow_logic_import` covers `app/lib/widgets/**` and `app/lib/config/**`.
+- **Given** `repo.app_narrow_logic_import` is registered, **when** a file under any scoped tree adds a broad logic barrel import, **then** CI fails with a file:line violation.
+
+## Enforcement: `repo.app_core_services_narrow_logic_import` (Refs #4224 Slice C; superseded by `repo.app_narrow_logic_import`)
+
+`tool/check_app_core_services_narrow_logic_import.dart` (rule `repo.app_core_services_narrow_logic_import`) scans `app/lib/core/services/**` and flags any `import 'package:colonizethis_logic/colonizethis_logic.dart'` directive (with or without `show`/`hide` combinators). Consumers in this tree must import domain barrels (`colonizethis_world`, `colonizethis_orders`, `colonizethis_turn`, `colonizethis_combat`, `colonizethis_diplomacy`, `colonizethis_economy`, `colonizethis_setup`) or narrow logic contract entrypoints (`ai_api.dart`, `order_suggestion_api.dart`, `industry_counsel_api.dart`, `debug_console_api.dart`) instead of the broad logic barrel.
+
+The rule is registered in `tool/ct_repo_lint_manifest.yaml`; the repository test `test/check_app_core_services_narrow_logic_import_test.dart` asserts the real workspace stays green and exercises positive/negative fixtures.
+
+### Acceptance criteria (`repo.app_core_services_narrow_logic_import`)
+
+- **Given** Slice C of #4224 is merged, **when** `rg 'package:colonizethis_logic/colonizethis_logic.dart' app/lib/core/services` runs on `dev`, **then** zero matches are returned.
+- **Given** `repo.app_core_services_narrow_logic_import` is registered, **when** a file under `app/lib/core/services/**` adds a broad logic barrel import, **then** CI fails with a file:line violation.
+
 ## Enforcement: `repo.domain_package_barrel_import` (Phase 1)
 
 `tool/check_domain_package_barrel_import.dart` (rule `repo.domain_package_barrel_import`) enforces the "consume siblings through barrels" principle for **deep `import` directives** between split domain packages, complementing the `ai_api.dart`-scoped Phase 3 rule.

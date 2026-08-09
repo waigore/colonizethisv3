@@ -1,8 +1,8 @@
-part of 'production_panel.dart';
+import 'package:flutter/material.dart';
 
 /// Public layout key planted on the narrow (`< [kNarrowBreakpoint]` dp) variant
 /// of [ProductionPanel] so widget tests and Widgetbook pinning can confirm
-/// that the screen has selected its `_ProductionPanelNarrowLayout` branch
+/// that the screen has selected its [ProductionPanelNarrowLayout] branch
 /// (Available stacked above Allocation, scrollable container) at narrow
 /// viewports.
 ///

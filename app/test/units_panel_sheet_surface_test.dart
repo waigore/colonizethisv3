@@ -19,7 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_sheet_surface.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Resolves the [BoxDecoration] painted by the [UnitsPanelSheetSurface]
 /// `DecoratedBox` that directly wraps the surface child.

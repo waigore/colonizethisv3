@@ -1,12 +1,32 @@
-/// Available subpanel for production screen. SPEC/ui/production-panel.md.
+// Available subpanel for production screen. SPEC/ui/production-panel.md.
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-part of 'production_panel.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/ct_panel.dart';
+import '../../../../widgets/ct_resource_cell.dart';
+import '../../../../widgets/ct_section_label.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/resource_icon.dart';
+import 'commodity_ui_helpers.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'production_available_grid.dart';
+import 'production_forces_food_readiness_summary.dart';
+import 'production_labour_readiness_summary.dart';
+import 'production_labour_helpers.dart';
+import 'production_labour_section.dart';
+import 'production_panel_constants.dart';
 
-class _AvailableSubpanel extends StatelessWidget {
-  const _AvailableSubpanel({
+/// Left-hand Available subpanel on the production screen.
+class ProductionPanelAvailableSubpanel extends StatelessWidget {
+  const ProductionPanelAvailableSubpanel({
     required this.game,
     required this.player,
-    required this.effectiveLabour,
+    required this.labourReadiness,
+    required this.forcesFeeding,
     required this.inputCommodityIds,
     required this.outputCommodityIds,
     required this.netDeltasByCommodity,
@@ -15,11 +35,13 @@ class _AvailableSubpanel extends StatelessWidget {
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    super.key,
   });
 
   final Game game;
   final Player player;
-  final int effectiveLabour;
+  final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
   final Set<String> inputCommodityIds;
   final Set<String> outputCommodityIds;
   final Map<String, int> netDeltasByCommodity;
@@ -103,6 +125,145 @@ class _AvailableSubpanel extends StatelessWidget {
       default:
         return workerType;
     }
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            l10n.production_available,
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        if (onOpenCommodityBreakdown != null)
+          CtActionTextButton(
+            onPressed: onOpenCommodityBreakdown,
+            label: l10n.production_breakdown,
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildFoodSection(
+    List<Commodity> availableFood,
+    Map<String, int> netChanges,
+    Map<CommodityId, int> sellableByCommodityId,
+  ) {
+    if (availableFood.isEmpty) {
+      return const <Widget>[];
+    }
+    return <Widget>[
+      CtSectionLabel(l10n.production_food),
+      const SizedBox(height: 6),
+      _buildCommodityGrid(availableFood, netChanges, sellableByCommodityId),
+      CtGap.ml,
+    ];
+  }
+
+  List<Widget> _buildMaterialsSection(
+    List<Commodity> rawMaterials,
+    List<Commodity> manufactured,
+    Map<String, int> netChanges,
+    Map<CommodityId, int> sellableByCommodityId,
+  ) {
+    final children = <Widget>[
+      CtSectionLabel(l10n.production_rawMaterials),
+      const SizedBox(height: 6),
+      _buildCommodityGrid(rawMaterials, netChanges, sellableByCommodityId),
+    ];
+    if (manufactured.isNotEmpty) {
+      children.addAll([
+        CtGap.ml,
+        CtSectionLabel(l10n.production_manufactured),
+        const SizedBox(height: 6),
+        _buildCommodityGrid(manufactured, netChanges, sellableByCommodityId),
+      ]);
+    }
+    return children;
+  }
+
+  List<Widget> _buildWorkerSection(ThemeData theme) {
+    final children = <Widget>[
+      CtGap.ml,
+      CtSectionLabel(l10n.production_workers),
+      const SizedBox(height: 6),
+      AvailableCellGrid(
+        key: kProductionAvailableWorkerGridKey,
+        columnCount: kProductionAvailableWorkerGridColumns,
+        cells: <Widget>[
+          _buildWorkerCell('peasant', player.workerPool.peasants),
+          _buildWorkerCell('apprentice', player.workerPool.apprentices),
+          _buildWorkerCell('journeyman', player.workerPool.journeymen),
+          _buildWorkerCell('master', player.workerPool.masters),
+        ],
+      ),
+      CtGap.m,
+      ProductionLabourReadinessSummary(
+        snapshot: labourReadiness,
+        l10n: l10n,
+        theme: theme,
+      ),
+      CtGap.m,
+      ProductionForcesFoodReadinessSummary(
+        snapshot: forcesFeeding,
+        l10n: l10n,
+        theme: theme,
+      ),
+    ];
+    if (currentOrders != null && labourCallbacks != null) {
+      children.addAll(<Widget>[
+        CtGap.ml,
+        CtSectionLabel(l10n.production_labourControlsSectionLabel),
+        const SizedBox(height: 6),
+        ProductionLabourSection(
+          player: player,
+          currentOrders: currentOrders!,
+          canEdit: canEditLabour,
+          callbacks: labourCallbacks!,
+        ),
+      ]);
+    }
+    return children;
+  }
+
+  List<Widget> _buildBodyChildren(ThemeData theme) {
+    final netChanges = netDeltasByCommodity;
+    final sellableByCommodityId = sellableHeadroomByCommodityId(
+      game: game,
+      playerId: player.id,
+      orders: currentOrders ?? const Orders(),
+    );
+    final rawMaterials = CommodityCatalog.all
+        .where(
+          (c) =>
+              c.category == CommodityCategory.rawMaterial &&
+              inputCommodityIds.contains(c.id),
+        )
+        .toList();
+    final manufactured = CommodityCatalog.all
+        .where((c) => c.category == CommodityCategory.manufactured)
+        .toList();
+    final availableFood = CommodityCatalog.all
+        .where((c) => c.category == CommodityCategory.food)
+        .toList();
+    return <Widget>[
+      _buildHeader(theme),
+      CtGap.m,
+      ..._buildFoodSection(
+        availableFood,
+        netChanges,
+        sellableByCommodityId,
+      ),
+      ..._buildMaterialsSection(
+        rawMaterials,
+        manufactured,
+        netChanges,
+        sellableByCommodityId,
+      ),
+      ..._buildWorkerSection(theme),
+    ];
   }
 
   @override

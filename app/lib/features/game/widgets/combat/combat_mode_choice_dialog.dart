@@ -27,6 +27,7 @@ class CombatModeChoiceDialog extends StatelessWidget {
     required this.bus,
     required this.provinceName,
     required this.isCapitalSiege,
+    this.landForceFeedingWarning,
   });
 
   static const screenId = UiScreenIds.combatModeChoiceDialog;
@@ -38,6 +39,9 @@ class CombatModeChoiceDialog extends StatelessWidget {
   final AppEventBus bus;
   final String provinceName;
   final bool isCapitalSiege;
+
+  /// Soft informational line when the human's land forces are underfed (#4242).
+  final String? landForceFeedingWarning;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +77,25 @@ class CombatModeChoiceDialog extends StatelessWidget {
     final text = isCapitalSiege
         ? l10n.quickBattle_capitalSiegeQuickBattleOnly
         : l10n.quickBattle_chooseCombatMode;
-    return Text(text, style: style);
+    final warning = landForceFeedingWarning;
+    if (warning == null || warning.isEmpty) {
+      return Text(text, style: style);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text, style: style),
+        const SizedBox(height: 4),
+        Text(
+          warning,
+          style: (theme.textTheme.bodySmall ?? const TextStyle()).copyWith(
+            color: EditorialMonoclePalette.muted,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildActionRow(

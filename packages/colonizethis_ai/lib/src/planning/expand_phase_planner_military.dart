@@ -1,11 +1,8 @@
-part of 'expand_phase_planner.dart';
-
-// EXPAND-phase conquest destination filter ([planExpandMilitary] /
-// [ExpandMilitaryPlan]) and the same-turn declare-war coordination helpers,
-// extracted from `expand_phase_planner.dart` for maintainability
-// (Refs #3278 file-split). Behaviour-preserving move: same library scope
-// (this is a `part of` the EXPAND planner library), so imports, shared
-// helpers, and visibility are unchanged.
+import '../perception/perception_snapshot.dart';
+import 'phase_destination_result.dart';
+import 'planning_helpers.dart';
+import 'planning_imports.dart';
+import 'region_military_destination_filter.dart';
 
 /// EXPAND-phase conquest destination filter returned by [planExpandMilitary].
 ///

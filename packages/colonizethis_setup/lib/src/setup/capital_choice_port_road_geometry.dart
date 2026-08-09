@@ -1,6 +1,12 @@
-part of 'capital_choice.dart';
+// SPEC/game/capital-choice-phase — port/road adjacency geometry helpers
+// (Refs #4086 Slice B de-part).
 
-bool _isTileAdjacentToSea(
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import 'setup_topology_adjacency.dart';
+
+bool isTileAdjacentToSea(
   int x,
   int y,
   TileMapResult map,
@@ -11,7 +17,7 @@ bool _isTileAdjacentToSea(
   return anyCardinalNeighborCell(x, y, map, (cellId) => !ids.contains(cellId));
 }
 
-bool _isTileAdjacentToOtherProvince(
+bool isTileAdjacentToOtherProvince(
   int x,
   int y,
   TileMapResult map,

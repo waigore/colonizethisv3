@@ -113,58 +113,7 @@ void main() {
       'mixed GP↔GP and GP↔minor matching never increases the Great-Power pool '
       '(non-increasing invariant) and is deterministic across runs',
       () {
-        Game freshGame() {
-          final minorProvince = const Province(
-            id: 'oldWorld|m1',
-            regionId: 'oldWorld',
-            ownerId: 'm1',
-            townDevelopmentLevel: 1,
-          );
-          return Game(
-            id: 'g_mixed',
-            players: <Player>[
-              Player(
-                id: 'gpSeller',
-                displayName: 'Seller',
-                isHuman: false,
-                stockpile: const Stockpile().applyDelta('timber', 10),
-                treasury: 400,
-              ),
-              Player(
-                id: 'gpBuyer',
-                displayName: 'Buyer',
-                isHuman: false,
-                stockpile: Stockpile.empty,
-                treasury: 400,
-              ),
-            ],
-            minorNations: const [
-              MinorNation(
-                id: 'm1',
-                capitalProvinceId: 'oldWorld|m1',
-                capitalTile: CapitalTile(
-                  regionId: 'oldWorld',
-                  provinceId: 'oldWorld|m1',
-                  x: 0,
-                  y: 0,
-                ),
-              ),
-            ],
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.worldMarket,
-                turnNumber: 3,
-              ),
-              oldWorld: RegionData(provinces: [minorProvince]),
-              newWorld: const RegionData(),
-              tileState: TileMapState()
-                  .setImprovement('oldWorld|m1|0|0', 1)
-                  .setRoadLevel('oldWorld|m1|0|0', 1),
-            ),
-            worldMarketState:
-                WorldMarketState.empty.copyWith(prices: const {'timber': 30}),
-          );
-        }
+        Game freshGame() => mixedGpMinorTreasuryConservationGame();
 
         final orders = Orders(
           tradeOrdersByPlayerId: {
@@ -224,15 +173,9 @@ Game _runGpPhase({
   required Orders orders,
 }) {
   return runWorldMarketPhase(
-    game: Game(
-      id: 'g_conservation',
+    game: worldMarketGpPoolGame(
       players: players,
-      worldState: const WorldState(
-        turnState: TurnState(phase: TurnPhase.worldMarket, turnNumber: 3),
-        oldWorld: RegionData(),
-        newWorld: RegionData(),
-      ),
-      worldMarketState: WorldMarketState.empty.copyWith(prices: marketPrices),
+      marketPrices: marketPrices,
     ),
     orders: orders,
   );

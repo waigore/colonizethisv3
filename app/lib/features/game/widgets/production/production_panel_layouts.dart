@@ -1,7 +1,10 @@
-part of 'production_panel.dart';
+import 'package:flutter/material.dart';
 
-class _ProductionPanelNarrowLayout extends StatelessWidget {
-  const _ProductionPanelNarrowLayout({
+import '../../../../widgets/ct_spacing.dart';
+
+/// Narrow (`< kNarrowBreakpoint`) layout: Available stacked above Allocation.
+class ProductionPanelNarrowLayout extends StatelessWidget {
+  const ProductionPanelNarrowLayout({
     super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,
@@ -26,8 +29,9 @@ class _ProductionPanelNarrowLayout extends StatelessWidget {
   }
 }
 
-class _ProductionPanelWideLayout extends StatelessWidget {
-  const _ProductionPanelWideLayout({
+/// Wide (`≥ kNarrowBreakpoint`) layout: Available and Allocation side by side.
+class ProductionPanelWideLayout extends StatelessWidget {
+  const ProductionPanelWideLayout({
     super.key,
     required this.availableSubpanel,
     required this.allocationSubpanel,

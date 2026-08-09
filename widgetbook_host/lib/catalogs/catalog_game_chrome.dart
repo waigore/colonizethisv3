@@ -154,6 +154,48 @@ List<WidgetbookNode> get gameTabBarDirectories => [
         name: 'Players bar toggle — off (dim)',
         builder: (context) => _gameTabBarStoryFrame(showPlayersBar: false),
       ),
+      WidgetbookUseCase(
+        name: 'Cargo — tight (accent numeric)',
+        builder: (context) => _gameTabBarStoryFrame(
+          cargoUsed: 10,
+          cargoCapacity: 12,
+          cargoHoldLabel: '10/12',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Cargo — full (danger numeric)',
+        builder: (context) => _gameTabBarStoryFrame(
+          cargoUsed: 12,
+          cargoCapacity: 12,
+          cargoHoldLabel: '12/12',
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Cargo details panel — default breakdown',
+        builder: (context) => widgetbookEditorialMonocleApp(
+          localizationsDelegates:
+              AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          scaffoldBackgroundColor: EditorialMonoclePalette.bgDeep,
+          child: Builder(
+            builder: (BuildContext ctx) {
+              final l10n = appL10n(ctx);
+              return Center(
+                child: SizedBox(
+                  width: 280,
+                  child: CargoHoldDetailsPanel(
+                    l10n: l10n,
+                    cargoUsed: 3,
+                    cargoCapacity: 12,
+                    isCargoUsedReliable: true,
+                    onClose: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     ],
   ),
 ];
@@ -296,6 +338,9 @@ Widget _gameTabBarStoryFrame({
   int unreadBadgeCount = 0,
   bool showFeed = false,
   bool showPlayersBar = true,
+  int cargoUsed = 3,
+  int cargoCapacity = 12,
+  String cargoHoldLabel = '3/12',
 }) {
   return widgetbookEditorialMonocleApp(
     localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
@@ -315,6 +360,9 @@ Widget _gameTabBarStoryFrame({
               unreadBadgeCount: unreadBadgeCount,
               showFeed: showFeed,
               showPlayersBar: showPlayersBar,
+              cargoUsed: cargoUsed,
+              cargoCapacity: cargoCapacity,
+              cargoHoldLabel: cargoHoldLabel,
             ),
           ],
         ),
@@ -331,6 +379,9 @@ class _GameTabBarStoryShell extends StatefulWidget {
     required this.unreadBadgeCount,
     required this.showFeed,
     required this.showPlayersBar,
+    required this.cargoUsed,
+    required this.cargoCapacity,
+    required this.cargoHoldLabel,
   });
 
   final int regionIndex;
@@ -339,6 +390,9 @@ class _GameTabBarStoryShell extends StatefulWidget {
   final int unreadBadgeCount;
   final bool showFeed;
   final bool showPlayersBar;
+  final int cargoUsed;
+  final int cargoCapacity;
+  final String cargoHoldLabel;
 
   @override
   State<_GameTabBarStoryShell> createState() => _GameTabBarStoryShellState();
@@ -362,12 +416,11 @@ class _GameTabBarStoryShellState extends State<_GameTabBarStoryShell> {
       treasury: widget.treasury,
       treasuryDelta: widget.treasuryDelta,
       treasuryNotDefined: false,
-      cargoUsed: 3,
-      cargoCapacity: 12,
+      cargoUsed: widget.cargoUsed,
+      cargoCapacity: widget.cargoCapacity,
       cargoNotDefined: false,
       isCargoUsedReliable: true,
-      // ignore: avoid_hardcoded_strings_in_widgets
-      cargoHoldLabel: '3/12',
+      cargoHoldLabel: widget.cargoHoldLabel,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[

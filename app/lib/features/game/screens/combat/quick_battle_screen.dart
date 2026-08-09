@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -9,8 +9,8 @@ import '../../../../widgets/ct_dialog_shell.dart';
 import '../../../../widgets/ct_nine_patch_button.dart';
 import '../../widgets/combat/quick_battle_action_selector.dart';
 import '../../widgets/combat/quick_battle_deployment_view.dart';
-
-part 'quick_battle_screen_result.dart';
+import 'quick_battle_screen_result.dart';
+import 'package:colonizethis_combat/colonizethis_combat.dart';
 
 /// Quick Battle flow: deployment → rounds → result. SPEC/game/quick-battle.md.
 /// Uses default actions (Volley Fire) when run in headless/AI mode.
@@ -76,7 +76,7 @@ class _QuickBattleScreenState extends State<QuickBattleScreen> {
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     if (_result != null) {
-      return _ResultView(
+      return QuickBattleResultView(
         result: _result!,
         onDismiss: () {
           widget.onComplete(_result!);

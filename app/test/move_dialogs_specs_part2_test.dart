@@ -2,9 +2,6 @@
 // - SPEC/ui/move-fleet-dialog.md
 // Split under repo.app_test_file_size (Refs #4013).
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart'
-    show editorialMonocleDisplayFontFamily;
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
@@ -14,10 +11,9 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 
-import 'support/move_dialogs_specs_test_support.dart';
+import 'move_dialogs_specs_test_support.dart';
 
 void main() {
   suppressLogsForTests();

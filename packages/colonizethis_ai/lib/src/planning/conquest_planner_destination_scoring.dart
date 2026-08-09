@@ -1,7 +1,12 @@
-part of 'conquest_planner.dart';
+import 'conquest_move_scoring_context.dart';
+import 'conquest_planner_stalled_scoring.dart';
+import 'phase_priority_weights.dart'
+    show kPhasePriorityNwInvadablePursuitWeightThreshold;
+import 'planning_helpers.dart' show clampPhaseWeightUpperUnit;
+import 'planning_imports.dart';
 
 // Destination scoring for conquest army moves (OW/NW weight scaling
-// and _scoreArmyMoveDestination) — Refs #3967 step 4.
+// and scoreArmyMoveDestination) — Refs #3967 step 4.
 
 /// Scales an OW army-move additive score term by the soft-phase
 /// [oldWorldInvasionWeight] (Refs #2847 Phase 3 conquest OW-invasion wiring).
@@ -61,7 +66,7 @@ double conquestNwInvadableArmyMoveBonus({
   return signedBonus * nwInvasionWeight;
 }
 
-double _scoreArmyMoveDestination(
+double scoreArmyMoveDestination(
   ConquestMoveScoringContext ctx,
   ArmyMoveOrder move,
 ) {
@@ -105,8 +110,8 @@ double _scoreArmyMoveDestination(
   );
   var score = 1.0;
   if (stalledExpansion) {
-    final delta = _stalledExpansionArmyMoveScoreDelta(
-      _StalledExpansionArmyMoveScoreDeltaInput(
+    final delta = stalledExpansionArmyMoveScoreDelta(
+      StalledExpansionArmyMoveScoreDeltaInput(
         move: move,
         nationId: nationId,
         game: game,

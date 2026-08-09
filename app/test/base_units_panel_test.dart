@@ -16,7 +16,7 @@ import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/shared/base_units_panel.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 /// Minimal panel exercising [BaseUnitsPanelState.buildUnitsPanel] and the shared
 /// selection-dispatch surface without pulling in the full military/naval trees.

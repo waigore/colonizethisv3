@@ -23,6 +23,7 @@ import 'package:colonizethis_ai/src/planning/treasury_planner.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
+import 'treasury_planner_satellite_support.dart';
 
 const _ow = 'oldWorld';
 const _gp = 'gpC';
@@ -49,45 +50,7 @@ TradeOrder _standingOffer(String commodityId) => TradeOrder(
   priority: 5,
 );
 
-Game _game({
-  required List<MinorNation> minors,
-  required Map<String, List<TradeOrder>> standingOffers,
-  List<SubsidyState> subsidyStates = const [],
-  List<OvertureState> overtureStates = const [],
-}) {
-  return Game(
-    id: 'g_trade_deal_pref',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: '$_ow|p1', regionId: _ow, ownerId: _gp),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(
-        id: _gp,
-        displayName: 'Castile',
-        isHuman: false,
-        capitalProvinceId: '$_ow|p1',
-        // Empty stockpile: the bronze recipe's copper + tin inputs are an
-        // unmet deficit, so both surface as bid needs (F1–F3 input path).
-        stockpile: const Stockpile(),
-        treasury: cheapestRegimentBuildTreasuryCost() + 50000,
-      ),
-    ],
-    minorNations: minors,
-    subsidyStates: subsidyStates,
-    overtureStates: overtureStates,
-    worldMarketState: WorldMarketState.withDefaultPrices(const {
-      _defaultAdmitted: 100,
-      _defaultDropped: 100,
-      _defaultDroppedAlt: 100,
-    }).copyWith(carryForwardOffersByFactionId: standingOffers),
-  );
-}
+
 
 /// Embassy with [targetId] (bumps the bid-type cap to 3 so both copper and tin
 /// bids can be admitted, and supplies the embassy boost term for [targetId]).
@@ -141,7 +104,7 @@ void main() {
           // commodity (tin) the default cap drops; minorC (score 50, neutral)
           // offers the early-sorting one (copper) the default cap keeps. The
           // preference moves tin to the front so it is admitted instead.
-          final game = _game(
+          final game = treasuryPlannerTradeDealRelationBoostGame(
             minors: const [MinorNation(id: 'minorB'), MinorNation(id: 'minorC')],
             standingOffers: {
               'minorB': [_standingOffer(_defaultDropped)],
@@ -181,7 +144,7 @@ void main() {
           // minorB has neither (boost 2.0) and offers wool. Both sort after the
           // default-admitted copper, so only the preferred one is admitted: the
           // higher-boost minorD's tin, not minorB's wool.
-          final game = _game(
+          final game = treasuryPlannerTradeDealRelationBoostGame(
             minors: const [MinorNation(id: 'minorD'), MinorNation(id: 'minorB')],
             standingOffers: {
               'minorD': [_standingOffer(_defaultDropped)],
@@ -222,7 +185,7 @@ void main() {
           // minorB (would-be qualifier) is at war; minorC is neutral. No partner
           // qualifies, so the preference resolves to null and the default cap
           // order applies unchanged.
-          final game = _game(
+          final game = treasuryPlannerTradeDealRelationBoostGame(
             minors: const [MinorNation(id: 'minorB'), MinorNation(id: 'minorC')],
             standingOffers: {
               'minorB': [_standingOffer(_defaultDropped)],
@@ -253,7 +216,7 @@ void main() {
       );
 
       test('is deterministic for identical inputs', () {
-        Game build() => _game(
+        Game build() => treasuryPlannerTradeDealRelationBoostGame(
           minors: const [MinorNation(id: 'minorD'), MinorNation(id: 'minorB')],
           standingOffers: {
             'minorD': [_standingOffer(_defaultDropped)],

@@ -7,6 +7,8 @@ import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+
 void main() {
   group('processFtpProposals', () {
     test('establishes FTP when embassy both ways and score >= 65', () {

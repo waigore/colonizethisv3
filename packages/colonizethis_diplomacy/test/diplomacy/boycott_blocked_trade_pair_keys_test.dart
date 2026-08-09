@@ -4,6 +4,8 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
 
+import 'diplomacy_game_fixtures_scenarios.dart';
+
 /// Tests `boycottBlockedTradePairKeys` (Refs #3753 R6 boycott colony trade
 /// embargo): the helper maps `Game.boycottStates` × `Game.colonyStates` to the
 /// canonical `pairKey` set the World Market deal matcher uses to refuse trade

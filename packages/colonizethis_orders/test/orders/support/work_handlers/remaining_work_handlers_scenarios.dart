@@ -19,48 +19,7 @@ void rwhRunSupportsOnlyProspect() {final h = prospectWorkOrderHandler; expect(h.
 
 void rwhRunTryApplyProspectNonMineral() {final explorer = Unit(id: 'ex1',type: kUnitTypeExplorer,ownerId: 'p1',locationProvinceId: remainingWorkHandlersProvinceId,tileKey: remainingWorkHandlersTileKey,); final game = remainingWorkHandlersProspectGame(explorer); final context = remainingWorkHandlersContext(game: game,oldWorldUnits: {'ex1': explorer},); final handler = prospectWorkOrderHandler; const order = WorkOrder(unitId: 'ex1',target: kWorkTargetProspect,targetTileKey: remainingWorkHandlersTileKey,); expect(handler.tryApply(context,order,explorer,remainingWorkHandlersTileKey,true,),isFalse,); expect(context.state.game.worldState.playerProspectedTiles['p1'] ?? const <String>{},isEmpty,);}
 
-void rwhRunStandardWorkOrderAlreadyWorking() {
-  final unit = Unit(
-    id: 'b1',
-    type: kUnitTypeBuilder,
-    ownerId: 'p1',
-    locationProvinceId: remainingWorkHandlersProvinceId,
-    tileKey: remainingWorkHandlersTileKey,
-    currentWork: const CurrentWork(
-      workTarget: kWorkTargetBuildRoad,
-      tileKey: remainingWorkHandlersTileKey,
-      totalTurns: 2,
-      remainingTurns: 1,
-    ),
-  );
-  final game = Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)],
-  );
-  final applied = applyStandardWorkOrder(
-    game: game,
-    order: const WorkOrder(
-      unitId: 'b1',
-      target: kWorkTargetBuildImprovement,
-      targetTileKey: remainingWorkHandlersTileKey,
-    ),
-    unit: unit,
-    targetTileKey: remainingWorkHandlersTileKey,
-    hasValidTarget: true,
-    orderTarget: kWorkTargetBuildImprovement,
-    tileState: TileMapState(),
-    provincesById: const {},
-    canAffordMaterialCost: (_) => true,
-    deductMaterialCost: (_) {},
-    updateUnit: (_, __) => fail('no update'),
-  );
-  expect(applied, isFalse);
-}
+void rwhRunStandardWorkOrderAlreadyWorking() {final unit = Unit( id: 'b1', type: kUnitTypeBuilder, ownerId: 'p1', locationProvinceId: remainingWorkHandlersProvinceId, tileKey: remainingWorkHandlersTileKey, currentWork: const CurrentWork( workTarget: kWorkTargetBuildRoad, tileKey: remainingWorkHandlersTileKey, totalTurns: 2, remainingTurns: 1, ), ); final game = Game( id: 'g', worldState: WorldState( turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0), oldWorld: const RegionData(), newWorld: const RegionData(), ), players: const [Player(id: 'p1', displayName: 'P1', isHuman: true)], ); final applied = applyStandardWorkOrder( game: game, order: const WorkOrder( unitId: 'b1', target: kWorkTargetBuildImprovement, targetTileKey: remainingWorkHandlersTileKey, ), unit: unit, targetTileKey: remainingWorkHandlersTileKey, hasValidTarget: true, orderTarget: kWorkTargetBuildImprovement, tileState: TileMapState(), provincesById: const {}, canAffordMaterialCost: (_) => true, deductMaterialCost: (_) {}, updateUnit: (_, __) => fail('no update'), ); expect(applied, isFalse);}
 
 void rwhRunSkipFortMissingTech() {final province = Province(id: remainingWorkHandlersProvinceId,regionId: remainingWorkHandlersOw,ownerId: 'p1',fortLevel: 1,); expect(shouldSkipBuildFortForMissingTech(province: province,techUnlocked: const {},),isTrue,);}
 

@@ -20,7 +20,7 @@ import 'package:colonizethis_app/features/game/widgets/province_overlay/province
     show kProvinceOverlayTileInlineActionDisabledAlpha;
 import 'package:colonizethis_app_l10n/l10n/app_localizations_en.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 Color _expectedDisabledIconColor() {
   return EditorialMonoclePalette.muted.withValues(
@@ -121,7 +121,8 @@ void main() {
         ),
       ),
       (
-        tooltip: 'Build improvement',
+        tooltip: AppLocalizationsEn()
+            .provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip,
         shell: () => buildProvinceOverlayWithRoadLevelDemoFixture(
           roadLevel: 0,
           showBuildImprovementActionIcon: true,
@@ -162,10 +163,11 @@ void main() {
         alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
       );
 
-      for (final tooltip in const <String>[
+      final l10n = AppLocalizationsEn();
+      for (final tooltip in <String>[
         'Explore with explorer',
         'Prospect with explorer',
-        'Build improvement',
+        l10n.provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip,
       ]) {
         final icon = tester.widget<Icon>(
           find.descendant(

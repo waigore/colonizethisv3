@@ -7,14 +7,14 @@
 // groups, trailing Cancel/Confirm Wrap] over the same 1 px/2 px
 // `--border`/`--accent` radio-row outline contract (#2867 R1/R7).
 
-import 'package:flutter/material.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+library;
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_dialog_shell.dart';
-import '../../../../widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
-part 'move_units_dialog_base_styles.dart';
-part 'move_units_dialog_base_scaffold.dart';
-part 'move_units_dialog_base_row.dart';
+export 'move_units_dialog_base_row.dart'
+    show MoveDialogDestinationRow, MoveDialogRadioDot;
+export 'move_units_dialog_base_scaffold.dart' show MoveUnitsDialogState;
+export 'move_units_dialog_base_styles.dart'
+    show
+        moveDialogEmptyTextStyle,
+        moveDialogRowLabelStyle,
+        moveDialogTitleTextStyle;

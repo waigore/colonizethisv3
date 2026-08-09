@@ -1,16 +1,10 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../core/services/region_map/region_map_widget_bindings.dart';
-import '../core/services/subscription_tracker.dart';
-
-part 'ct_region_map_state_handlers.dart';
-part 'ct_region_map_state.dart';
-part 'ct_region_map_viewport.dart';
+import 'ct_region_map_state.dart';
 
 /// Flutter wrapper for the region map; renders via Flame. SPEC/ui/map-widget.md.
 class CtRegionMap extends StatefulWidget {
@@ -43,6 +37,8 @@ class CtRegionMap extends StatefulWidget {
     this.playerViewForResources,
     this.onViewportSnapshotChanged,
     this.zoomMultiplier,
+    this.showPlayerTerritoryOutline = false,
+    this.playerTerritoryTileKeys,
   });
 
   final RegionMapViewData region;
@@ -82,7 +78,9 @@ class CtRegionMap extends StatefulWidget {
   final void Function(RegionMapViewportSnapshot viewport)?
   onViewportSnapshotChanged;
   final double? zoomMultiplier;
+  final bool showPlayerTerritoryOutline;
+  final Set<String>? playerTerritoryTileKeys;
 
   @override
-  State<CtRegionMap> createState() => _CtRegionMapState();
+  State<CtRegionMap> createState() => CtRegionMapState();
 }

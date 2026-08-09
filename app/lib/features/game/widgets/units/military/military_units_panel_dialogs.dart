@@ -1,13 +1,25 @@
 /// Dialog openers and combine mutations for military army actions.
 /// SPEC/ui/military-units-panel.md.
+library;
 
-part of 'military_units_panel.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView;
 
-extension _MilitaryUnitsPanelDialogs on _MilitaryUnitsPanelState {
-  Iterable<String> _armyIds(List<ArmyBlock> flat) =>
-      flat.map((b) => b.army.id);
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-  void _performCombine(List<ArmyBlock> flat) {
+import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
+    show trainMilitaryDialogId;
+import '../../panels/tree_builders/military_tree_builder.dart';
+import '../../unit_orders/move_army_dialog.dart';
+import '../../unit_orders/split_army_dialog.dart';
+import '../shared/base_units_panel.dart';
+import 'military_units_panel.dart';
+
+mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
+  Iterable<String> armyIds(List<ArmyBlock> flat) => flat.map((b) => b.army.id);
+
+  void performCombine(List<ArmyBlock> flat) {
     if (!canCombineArmySelection(flat, selection.selectedIds)) return;
     final ids = selection.selectedIds.toList()..sort();
     widget.bus.emit(
@@ -19,11 +31,11 @@ extension _MilitaryUnitsPanelDialogs on _MilitaryUnitsPanelState {
     clearSelection();
   }
 
-  void _openTrainDialog() {
+  void openTrainDialog() {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainMilitaryDialogId));
   }
 
-  void _openSplitDialog(ArmyBlock block) {
+  void openSplitDialog(ArmyBlock block) {
     showDialog<void>(
       context: context,
       builder: (ctx) => SplitArmyDialog(
@@ -36,7 +48,7 @@ extension _MilitaryUnitsPanelDialogs on _MilitaryUnitsPanelState {
     );
   }
 
-  void _openMoveDialog(ArmyBlock block) {
+  void openMoveDialog(ArmyBlock block) {
     final playerView = buildPlayerView(
       widget.game,
       widget.topology,

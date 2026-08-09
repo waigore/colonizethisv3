@@ -27,6 +27,9 @@ class GameEventLogger {
         'turn=${e.turnNumber} provinceId=${e.provinceId} attackerId=${e.attackerId} '
             'defenderId=${e.defenderId} winnerId=${e.winnerId} '
             'casualtyEntries=${e.casualties.length}',
+      GeneralMedalGainedEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} generalId=${e.generalId} '
+            'provinceId=${e.provinceId} newMedals=${e.newMedals}',
       NavalCombatResultEvent e =>
         'turn=${e.turnNumber} seaZoneId=${e.seaZoneId} outcome=${e.outcomeName} '
             'winnerOwnerId=${e.winnerOwnerId} side1=${e.side1OwnerId} side2=${e.side2OwnerId}',
@@ -40,7 +43,7 @@ class GameEventLogger {
       VictorySetEvent e =>
         'turn=${e.turnNumber} winnerPlayerId=${e.winnerPlayerId} victoryType=${e.victoryType}',
       OrderRejectedEvent e =>
-        'playerId=${e.playerId} reasonCode=${e.reasonCode} orderSummary=${e.orderSummary}',
+        'playerId=${e.playerId} orderKind=${e.orderKind.name} reasonCode=${e.reasonCode} orderSummary=${e.orderSummary}',
       WorkOrderCompletedEvent e =>
         'turn=${e.turnNumber} playerId=${e.playerId} unitId=${e.unitId} '
             'workTarget=${e.workTarget} targetTileKey=${e.targetTileKey} provinceId=${e.provinceId}',
@@ -57,6 +60,13 @@ class GameEventLogger {
       SpyDefectedEvent e =>
         'turn=${e.turnNumber} unitId=${e.unitId} previousOwnerId=${e.previousOwnerId} '
             'newOwnerId=${e.newOwnerId} provinceId=${e.provinceId}',
+      OverseasProfitCreditedEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'totalTreasuryCredit=${e.totalTreasuryCredit} creditCount=${e.creditCount}',
+      MarketTurnSummaryEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'totalSpent=${e.totalSpent} totalReceived=${e.totalReceived} '
+            'carryForwardOrderCount=${e.carryForwardOrderCount}',
     };
   }
 }

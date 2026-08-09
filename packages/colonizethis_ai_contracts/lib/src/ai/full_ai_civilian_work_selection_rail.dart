@@ -1,11 +1,17 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
+
+import '../constants.dart';
+import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
+import 'full_ai_civilian_work_selection_shared.dart';
 
 // Rail Builder (`build_rail`) candidate scoring / row selection and the Rail
 // Builder path appender. Replaces the lexicographic fallback (which always
 // picked the alphabetically-smallest tile) with a unified scored pool over the
 // unit's `build_rail` candidates. Split out of
 // full_ai_civilian_work_selection.dart by concern to keep each library file
-// small; shares the parent library's private scope via `part`.
+// small.
 //
 // Normative SPEC: SPEC/ai/civilian-work-planner.md § Rail Builder (Refs #3794
 // AC6). Scoring factors (all GA-tunable via ai_victory_config.dart):
@@ -23,6 +29,7 @@ int _buildRailWorkScore(
   WorkOrder w,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   if (w.target != kWorkTargetBuildRail) return 0;
   var score = kBuildRailBaseWorkScore;
@@ -39,6 +46,11 @@ int _buildRailWorkScore(
   }
   if (Unit.regionIdFromTileKey(w.targetTileKey) == kNewWorldRegionId) {
     score += kBuildRailNewWorldBonus;
+  }
+  if (connectivityDev != null &&
+      connectivityDev.hasUnconnectedDevTargets &&
+      connectivityDev.bottleneckRailTiles.contains(w.targetTileKey)) {
+    score += kBuildRailBottleneckYieldBonus;
   }
   return score;
 }
@@ -59,16 +71,27 @@ WorkOrder? _bestBuildRailRow(
   List<WorkOrder> candidates,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final rails = candidates
       .where((w) => w.target == kWorkTargetBuildRail)
       .toList();
   if (rails.isEmpty) return null;
   var best = rails.first;
-  var bestScore = _buildRailWorkScore(best, game, playerId: playerId);
+  var bestScore = _buildRailWorkScore(
+    best,
+    game,
+    playerId: playerId,
+    connectivityDev: connectivityDev,
+  );
   for (var i = 1; i < rails.length; i++) {
     final w = rails[i];
-    final s = _buildRailWorkScore(w, game, playerId: playerId);
+    final s = _buildRailWorkScore(
+      w,
+      game,
+      playerId: playerId,
+      connectivityDev: connectivityDev,
+    );
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -81,16 +104,23 @@ WorkOrder? _bestBuildRailRow(
   return best;
 }
 
-void _appendRailBuilderPathResult({
+void appendRailBuilderPathResult({
   required Unit? unit,
   required List<WorkOrder> w,
   required Game game,
   required String playerId,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final chosen =
-      _bestBuildRailRow(w, game, playerId: playerId) ?? _pickLexicographic(w);
+      _bestBuildRailRow(
+        w,
+        game,
+        playerId: playerId,
+        connectivityDev: connectivityDev,
+      ) ??
+      pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;

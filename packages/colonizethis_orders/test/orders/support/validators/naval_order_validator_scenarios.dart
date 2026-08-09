@@ -1,5 +1,6 @@
 // Table-driven NavalOrderValidator scenarios (Refs #3949 wave 3).
 
+import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/order_validation_result.dart';
 import '../scenario_runner.dart';
@@ -49,9 +50,92 @@ void novRunValidateNavalMissionBlockadeRequiresTargetProvince() {novExpectNavalM
 
 void novRunValidateNavalMissionBlockadeRejectWhenTargetNotPrefixed() {novExpectNavalMission(validator: novAtSeaMissionValidator(),order: NavalMissionOrder(fleetId: 'f1',mission: FleetMission.blockade.name,targetProvinceId: 'P2',),status: OrderValidationStatus.rejected,reasonExact: 'Blockade requires a target province',);}
 
-void novRunValidateNavalMissionBlockadeRejectWhenBlockadingOwnProvince() {novExpectNavalMission(validator: novAtSeaMissionValidator(oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],),order: NavalMissionOrder(fleetId: 'f1',mission: FleetMission.blockade.name,targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId,'P1'),),status: OrderValidationStatus.rejected,reasonExact: 'Cannot blockade own province',);}
+void novRunValidateNavalMissionBlockadeRejectWhenBlockadingOwnProvince() {novExpectNavalMission(validator: novAtSeaMissionValidator(oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1')],),order: NavalMissionOrder(fleetId: 'f1',mission: FleetMission.blockade.name,targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId,'P1'),),status: OrderValidationStatus.rejected,reasonExact: 'Blockade target province not legal',);}
 
 void novRunValidateNavalMissionAcceptNonBlockadeMissionWhenFleetAtSea() {novExpectNavalMission(validator: novAtSeaMissionValidator(),order: const NavalMissionOrder(fleetId: 'f1',mission: 'patrol'),status: OrderValidationStatus.accepted,reasonIsNull: true,);}
+
+void novRunValidateNavalMissionBeachheadRequiresTargetProvince() {novExpectNavalMission(validator: novAtSeaMissionValidator(),order: NavalMissionOrder(fleetId: 'f1',mission: FleetMission.beachhead.name,targetProvinceId: null,),status: OrderValidationStatus.rejected,reasonExact: 'Beachhead requires a hostile coastal target province',);}
+
+void novRunValidateNavalMissionRejectsWhenFleetInPort() {novExpectNavalMission(validator: novValidatorInPort(topology: novSeaProvinceAdjacent()),order: const NavalMissionOrder(fleetId: 'f1',mission: 'patrol'),status: OrderValidationStatus.rejected,reasonExact: 'Mission only allowed when fleet is at sea',);}
+
+void novRunValidateNavalMissionBlockadeRejectsNonAdjacentEnemy() {
+  final topology = navalOrderValidatorTestTopology(
+    nodes: [
+      navalOrderValidatorTestSeaNode('sea1'),
+      navalOrderValidatorTestSeaNode('sea2'),
+      navalOrderValidatorTestProvinceNode('P1'),
+      navalOrderValidatorTestProvinceNode('P2'),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'sea1', id2: 'P1'),
+      TopologyEdge(id1: 'sea2', id2: 'P2'),
+    ],
+  );
+  final validator = navalOrderValidatorForTest(
+    game: navalOrderValidatorTestGame(
+      fleets: [navalOrderValidatorTestFleetAtSea(seaZoneId: 'sea1')],
+      oldWorldProvinces: [
+        navalOrderValidatorTestOwnedProvince('P1'),
+        navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2'),
+      ],
+      players: novTwoHumanPlayers,
+    ),
+    topology: topology,
+  );
+  novExpectNavalMission(
+    validator: validator,
+    order: NavalMissionOrder(
+      fleetId: 'f1',
+      mission: FleetMission.blockade.name,
+      targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2'),
+    ),
+    status: OrderValidationStatus.rejected,
+    reasonExact: 'Blockade target province not legal',
+  );
+}
+
+void novRunValidateNavalMissionBlockadeAcceptsAdjacentWarEnemy() {
+  final topology = navalOrderValidatorTestTopology(
+    nodes: [
+      navalOrderValidatorTestSeaNode('sea1'),
+      navalOrderValidatorTestProvinceNode('P1'),
+      navalOrderValidatorTestProvinceNode('P2'),
+    ],
+    edges: const [
+      TopologyEdge(id1: 'sea1', id2: 'P1'),
+      TopologyEdge(id1: 'sea1', id2: 'P2'),
+    ],
+  );
+  final validator = navalOrderValidatorForTest(
+    game: navalOrderValidatorTestGame(
+      fleets: [navalOrderValidatorTestFleetAtSea()],
+      oldWorldProvinces: [
+        navalOrderValidatorTestOwnedProvince('P1'),
+        navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2'),
+      ],
+      players: novTwoHumanPlayers,
+    ).copyWith(
+      diplomacyRelations: const [
+        DiplomacyRelation(
+          factionId1: 'p1',
+          factionId2: 'p2',
+          state: RelationState.atWar,
+        ),
+      ],
+    ),
+    topology: topology,
+  );
+  novExpectNavalMission(
+    validator: validator,
+    order: NavalMissionOrder(
+      fleetId: 'f1',
+      mission: FleetMission.blockade.name,
+      targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2'),
+    ),
+    status: OrderValidationStatus.accepted,
+    reasonIsNull: true,
+  );
+}
 
 /// One row in [navalMoveValidatorScenarios] / [navalMissionValidatorScenarios].
 
@@ -84,4 +168,8 @@ List<RunnableScenario> navalMissionValidatorScenarios() => [
   rs('validateNavalMission blockade reject when target not prefixed', novRunValidateNavalMissionBlockadeRejectWhenTargetNotPrefixed),
   rs('validateNavalMission blockade reject when blockading own province', novRunValidateNavalMissionBlockadeRejectWhenBlockadingOwnProvince),
   rs('validateNavalMission accept non-blockade mission when fleet at sea', novRunValidateNavalMissionAcceptNonBlockadeMissionWhenFleetAtSea),
+  rs('validateNavalMission beachhead requires target province', novRunValidateNavalMissionBeachheadRequiresTargetProvince),
+  rs('validateNavalMission rejects when fleet in port', novRunValidateNavalMissionRejectsWhenFleetInPort),
+  rs('validateNavalMission blockade rejects non-adjacent enemy province', novRunValidateNavalMissionBlockadeRejectsNonAdjacentEnemy),
+  rs('validateNavalMission blockade accepts adjacent war enemy province', novRunValidateNavalMissionBlockadeAcceptsAdjacentWarEnemy),
 ];

@@ -20,6 +20,9 @@ The in-game screen (game_screen.dart) has a toolbar with buttons for Civilian Un
 | `naval_units` | Naval Units | Ship/anchor icon for naval fleets | 32×32 |
 | `diplomacy` | Diplomacy | Dove with olive branch | 32×32 |
 | `technology` | Technology | Book/scroll or beaker icon | 32×32 |
+| `trade` | Trade | Market / deal book icon | 32×32 |
+| `development` | Development | Hammer/builder icon for empire development | 32×32 |
+| `victory` | Victory | Laurel wreath / crown icon for victory standings | 32×32 |
 | `layer_toggle` | Base Layer Cycle | Stacked layers/sheets icon for map layer toggle | 32×32 |
 | `home_capital` | Home to Capital | Flag/pole icon for centering on capital |32×32 |
 | `map_options` | Map Display Options | Gear/cog icon for map display settings | 32×32 |

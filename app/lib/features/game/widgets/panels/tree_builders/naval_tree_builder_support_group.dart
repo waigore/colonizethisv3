@@ -1,7 +1,16 @@
-part of 'naval_tree_builder.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import '../../province_overlay/sea_zone_name_resolver.dart';
+import 'naval_tree_builder_models.dart';
+import 'naval_tree_builder_support_rows.dart';
+import 'naval_tree_builder_support_scope.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 ({String regionId, FleetRow? homeFleet, List<NavalTreeLocationNode> locations})?
-_navalTreeGroupForRegion({
+navalTreeGroupForRegion({
   required Game game,
   required String humanPlayerId,
   required MapTopology topology,
@@ -26,7 +35,7 @@ _navalTreeGroupForRegion({
         if (locationScopeKeyFilter == null) {
           return fleet.regionId == regionId;
         }
-        final projectedScope = _navalProjectedLocationScopeForFleet(
+        final projectedScope = navalTreeProjectedLocationScopeForFleet(
           game: game,
           topology: topology,
           fleet: fleet,
@@ -35,7 +44,7 @@ _navalTreeGroupForRegion({
         if (projectedScope != locationScopeKeyFilter) {
           return false;
         }
-        final scopeRegionId = _navalRegionIdFromScopeKey(projectedScope);
+        final scopeRegionId = navalTreeRegionIdFromScopeKey(projectedScope);
         return scopeRegionId == regionId;
       })
       .toList();
@@ -50,7 +59,7 @@ _navalTreeGroupForRegion({
   for (final fleet in fleetsInRegion) {
     final isAtSea = fleet.isAtSea && fleet.seaZoneId != null;
     final inPortId = fleet.inPortAtProvinceId;
-    final projectedScope = _navalProjectedLocationScopeForFleet(
+    final projectedScope = navalTreeProjectedLocationScopeForFleet(
       game: game,
       topology: topology,
       fleet: fleet,
@@ -60,14 +69,14 @@ _navalTreeGroupForRegion({
         projectedScope != locationScopeKeyFilter) {
       continue;
     }
-    final projectedScopeRegionId = _navalRegionIdFromScopeKey(projectedScope);
+    final projectedScopeRegionId = navalTreeRegionIdFromScopeKey(projectedScope);
     final rowRegionId = locationScopeKeyFilter != null
         ? (projectedScopeRegionId ?? regionId)
         : regionId;
     final rowTileMap = tileMapByRegion?[rowRegionId];
     final rowTopology = topologyByRegion?[rowRegionId];
 
-    final agg = _navalFleetShipAggregates(fleet);
+    final agg = navalTreeFleetShipAggregates(fleet);
 
     final atPlayerCapitalPort =
         capitalRegionId != null &&
@@ -81,7 +90,7 @@ _navalTreeGroupForRegion({
         fleet.id == homeFleetIdFor(humanPlayerId) && atPlayerCapitalPort;
 
     if (isAtSea) {
-      _appendNavalAtSeaFleetRow(
+      navalTreeAppendAtSeaFleetRow(
         game: game,
         topology: topology,
         l10n: l10n,
@@ -99,7 +108,7 @@ _navalTreeGroupForRegion({
       );
     } else if (inPortId != null) {
       final provinceMap = provinceByRegionAndId[rowRegionId] ?? const {};
-      _appendNavalInPortFleetRow(
+      navalTreeAppendInPortFleetRow(
         game: game,
         topology: topology,
         l10n: l10n,

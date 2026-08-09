@@ -1,8 +1,31 @@
 /// Province tab content assembly for [ProvinceSeaZoneDetailOverlay].
+library;
 
-part of 'province_sea_zone_detail_overlay.dart';
 
-_OverlayContent _provinceContent({
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
+    show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+
+import 'province_overlay_unit_partition.dart';
+import 'province_sea_zone_detail_overlay_civilian_naval_sections.dart';
+import 'province_sea_zone_detail_overlay_designation.dart';
+import 'province_sea_zone_detail_overlay_economic_section.dart';
+import 'province_sea_zone_detail_overlay_military_section.dart';
+import 'province_sea_zone_detail_overlay_province_content_intel.dart';
+import 'province_sea_zone_detail_overlay_province_content_unrevealed.dart';
+import 'province_sea_zone_detail_overlay_sections_political.dart';
+import 'province_sea_zone_detail_overlay_support.dart';
+import 'province_sea_zone_detail_overlay_tile_section.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, fleetsInPortAtProvince, kRegionNewWorld, provincePanelShowsFullTileDerivedIntel;
+
+OverlayContent provinceContent({
   required BuildContext context,
   required AppLocalizations l10n,
   required Game game,
@@ -21,13 +44,27 @@ _OverlayContent _provinceContent({
   VoidCallback? onExploreWithExplorerTap,
   required bool showBuildImprovementActionIcon,
   required bool buildImprovementActionEnabled,
+  required bool buildImprovementActionHasBuilderUnits,
   VoidCallback? onBuildImprovementTap,
+  required bool showBuildRoadActionIcon,
+  required bool buildRoadActionEnabled,
+  required bool buildRoadActionHasEngineerUnits,
+  VoidCallback? onBuildRoadTap,
+  required bool showBuildFortActionIcon,
+  required bool buildFortActionEnabled,
+  required bool buildFortActionHasEngineerUnits,
+  VoidCallback? onBuildFortTap,
+  required bool showPurchaseLandActionIcon,
+  required bool purchaseLandActionEnabled,
+  required bool purchaseLandActionHasMerchantUnits,
+  VoidCallback? onPurchaseLandTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
   Map<String, ProvinceImprovableCommodityCount> availableByCommodity =
       const {},
   void Function(Iterable<String>?)? onHighlightTiles,
+  ProvinceTileConnectivityDisplay? tileConnectivity,
 }) {
   final regionId = prefixedIdRegionSegment(provinceId) ?? region.regionId;
   final localProvinceId = prefixedIdLocalSegment(provinceId);
@@ -40,9 +77,9 @@ _OverlayContent _provinceContent({
             c.visibility != TileVisibility.unrevealed,
       );
   if (isFullyUnrevealed) {
-    return _provinceContentUnrevealed(l10n: l10n);
+    return provinceContentUnrevealed(l10n: l10n);
   }
-  final province = _findProvince(game, provinceId);
+  final province = findProvinceForSeaZoneOverlay(game, provinceId);
   final regionData = provinceId.startsWith(kRegionNewWorld)
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
@@ -69,7 +106,7 @@ _OverlayContent _provinceContent({
         provinceId: provinceId,
         provinceTileKeys: tileKeys,
       );
-  final tileIntel = _aggregateProvinceTileIntel(
+  final tileIntel = aggregateProvinceTileIntel(
     l10n: l10n,
     game: game,
     region: region,
@@ -80,7 +117,7 @@ _OverlayContent _provinceContent({
     omniscientDetail: omniscientDetail,
   );
 
-  final tileSection = _buildTileSection(
+  final tileSection = buildTileSection(
     context: context,
     l10n: l10n,
     game: game,
@@ -98,19 +135,30 @@ _OverlayContent _provinceContent({
     onExploreWithExplorerTap: onExploreWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
+    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
+    currentOrders: draftOrders,
+    showBuildRoadActionIcon: showBuildRoadActionIcon,
+    buildRoadActionEnabled: buildRoadActionEnabled,
+    buildRoadActionHasEngineerUnits: buildRoadActionHasEngineerUnits,
+    onBuildRoadTap: onBuildRoadTap,
+    showPurchaseLandActionIcon: showPurchaseLandActionIcon,
+    purchaseLandActionEnabled: purchaseLandActionEnabled,
+    purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
+    onPurchaseLandTap: onPurchaseLandTap,
+    tileConnectivity: tileConnectivity,
   );
-  final political = _buildPoliticalSection(
+  final political = buildPoliticalSection(
     l10n: l10n,
     name: province?.displayName ?? provinceId,
-    ownerName: _ownerName(l10n, game, province?.ownerId),
+    ownerName: ownerNameForProvinceOverlay(l10n, game, province?.ownerId),
     regionLabel: provinceOverlayRegionLabel(l10n, regionId),
     isCapital: provinceOverlayIsCapital(game, provinceId),
     townDevelopmentLevel: province?.townDevelopmentLevel ??
         kTownDevelopmentLevelMin,
   );
   final economic = showsFullIntel
-      ? _buildEconomicSection(
+      ? buildEconomicSection(
           l10n: l10n,
           resourceKeysSorted: tileIntel.resourceKeysSorted,
           byResImproved: tileIntel.byResImproved,
@@ -121,25 +169,41 @@ _OverlayContent _provinceContent({
           availableByCommodity: availableByCommodity,
           townProductionBonusByCommodity: townProductionBonusByCommodity,
         )
-      : _buildSection(
+      : buildOverlaySection(
           l10n.provinceOverlay_sectionEconomic,
-          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final militarySection = showsFullIntel
-      ? _buildMilitarySectionByOwner(
+      ? buildMilitarySectionByOwner(
           l10n: l10n,
           game: game,
           military: military,
           humanPlayerId: humanPlayerId,
           provinceId: provinceId,
           draftOrders: draftOrders,
+          fortLevel: province?.fortLevel ?? 0,
+          showBuildFortActionIcon: showBuildFortActionIcon,
+          buildFortActionEnabled: buildFortActionEnabled,
+          buildFortActionHasEngineerUnits: buildFortActionHasEngineerUnits,
+          buildFortTooltip: selectedTileKey == null
+              ? l10n.provinceOverlay_tileBuildFortDisabledTooltip
+              : provinceOverlayBuildFortTooltip(
+                  l10n: l10n,
+                  game: game,
+                  humanPlayerId: humanPlayerId,
+                  currentOrders: draftOrders,
+                  selectedTileKey: selectedTileKey,
+                  enabled: buildFortActionEnabled,
+                  hasEngineerUnits: buildFortActionHasEngineerUnits,
+                ),
+          onBuildFortTap: onBuildFortTap,
         )
-      : _buildSection(
+      : buildOverlaySection(
           l10n.provinceOverlay_sectionMilitary,
-          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final civilianSection = showsFullIntel
-      ? _buildCivilianSectionFiltered(
+      ? buildCivilianSectionFiltered(
           l10n: l10n,
           game: game,
           civilian: civilian,
@@ -147,12 +211,12 @@ _OverlayContent _provinceContent({
           playerView: playerView,
           draftOrders: draftOrders,
         )
-      : _buildSection(
+      : buildOverlaySection(
           l10n.provinceOverlay_sectionCivilian,
-          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
   final naval = showsFullIntel
-      ? _buildNavalSection(
+      ? buildNavalSection(
           l10n: l10n,
           game: game,
           fleets: fleetsInPort,
@@ -160,9 +224,9 @@ _OverlayContent _provinceContent({
           draftOrders: draftOrders,
           pendingNavalPortProvinceId: provinceId,
         )
-      : _buildSection(
+      : buildOverlaySection(
           l10n.provinceOverlay_sectionNaval,
-          _obfuscatedBodyText(l10n.provinceOverlay_unknown),
+          overlayObfuscatedBodyText(l10n.provinceOverlay_unknown),
         );
 
   final tabLabels = [
@@ -193,7 +257,7 @@ _OverlayContent _provinceContent({
       naval,
     ],
   );
-  return _OverlayContent(
+  return OverlayContent(
     tabLabels: tabLabels,
     tabViews: tabViews,
     sections: sections,

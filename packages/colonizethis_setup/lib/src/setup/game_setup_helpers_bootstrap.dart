@@ -4,37 +4,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'faction_setup_helpers.dart';
-
-
-void _spawnCivilianUnitsOfType({
-  required Map<String, List<Unit>> unitsByRegion,
-  required String ownerId,
-  required String capitalProvinceId,
-  required String capitalTileKey,
-  required String capitalRegionId,
-  required String unitType,
-  required int count,
-}) {
-  final destination = unitsByRegion[capitalRegionId];
-  if (destination == null) {
-    throw StateError(
-      'Unknown capital region "$capitalRegionId" for owner=$ownerId; '
-      'expected one of $kRegionOldWorld / $kRegionNewWorld.',
-    );
-  }
-  for (var k = 1; k <= count; k++) {
-    destination.add(
-      Unit(
-        id: '${ownerId}_${unitType.toLowerCase()}_$k',
-        type: unitType,
-        ownerId: ownerId,
-        locationProvinceId: capitalProvinceId,
-        status: UnitStatus.idle,
-        tileKey: capitalTileKey,
-      ),
-    );
-  }
-}
+import 'setup_unit_spawn.dart';
 
 /// Adds starting civilian units for each civilian-owning faction at its capital tile.
 Game addStartingUnits({required Game game, required GameSetupConfig config}) {
@@ -73,7 +43,7 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
 
     final unitConfig = config.startingResources.startingCivilianUnits;
     for (final entry in unitConfig.entries) {
-      _spawnCivilianUnitsOfType(
+      spawnCivilianUnitsOfType(
         unitsByRegion: unitsByRegion,
         ownerId: ownerId,
         capitalProvinceId: capitalProvinceId,
@@ -81,6 +51,8 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
         capitalRegionId: capitalRegionId,
         unitType: entry.key,
         count: entry.value,
+        unitIdFor: baseSetupCivilianUnitId,
+        includeExpectedRegionsInError: true,
       );
     }
   }
@@ -90,74 +62,6 @@ Game addStartingUnits({required Game game, required GameSetupConfig config}) {
       (rid, _) => unitsByRegion[rid]!,
     ),
   );
-}
-
-void _addStartingRegimentsForPlayer({
-  required Player player,
-  required String capitalProvinceId,
-  required String regionId,
-  required int regimentCount,
-  required Map<String, List<Unit>> unitsByRegion,
-}) {
-  if (regimentCount <= 0) return;
-  final destination = unitsByRegion[regionId];
-  if (destination == null) {
-    throw StateError(
-      'Unknown capital region "$regionId" for player=${player.id}; '
-      'expected one of $kRegionOldWorld / $kRegionNewWorld.',
-    );
-  }
-  final regimentTypeId = startingRegimentTypeForPlayer(player);
-  for (var i = 0; i < regimentCount; i++) {
-    destination.add(
-      Unit(
-        id: '${player.id}_${regimentTypeId}_reg${i + 1}',
-        type: regimentTypeId,
-        ownerId: player.id,
-        locationProvinceId: capitalProvinceId,
-        status: UnitStatus.idle,
-      ),
-    );
-  }
-}
-
-int _mergeHomeFleetShipsForPlayer({
-  required Player player,
-  required String regionId,
-  required String localProvinceId,
-  required int shipCount,
-  required List<Fleet> fleets,
-  required Map<String, int> fleetIndexById,
-  required int nextSeq,
-}) {
-  if (shipCount <= 0 || regionId != kRegionOldWorld) return nextSeq;
-  final fullProvinceId = '$regionId|$localProvinceId';
-  final homeFleetId = homeFleetIdFor(player.id);
-  final existingIndex = fleetIndexById[homeFleetId];
-  final existingFleet =
-      existingIndex != null ? fleets[existingIndex] : null;
-  final existingShips = existingFleet?.ships ?? const <ShipInstance>[];
-  final shipTypeId = startingShipTypeForPlayer(player);
-  final (seqAfter, newInstances) = mintShipInstances(
-    nextShipInstanceSeq: nextSeq,
-    typeIds: [for (var i = 0; i < shipCount; i++) shipTypeId],
-  );
-
-  final homeFleet = Fleet(
-    id: homeFleetId,
-    ownerId: player.id,
-    seaZoneId: null,
-    inPortAtProvinceId: fullProvinceId,
-    regionId: regionId,
-    ships: [...existingShips, ...newInstances],
-  );
-  if (existingFleet == null) {
-    fleets.add(homeFleet);
-    fleetIndexById[homeFleetId] = fleets.length - 1;
-  } else {
-    fleets[existingIndex!] = homeFleet;
-  }
-  return seqAfter;
 }
 
 /// Adds starting land regiments and home-fleet ships for each Great Power.
@@ -173,13 +77,10 @@ Game addStartingMilitaryAndNaval({
   if (regimentCount <= 0 && shipCount <= 0) return game;
 
   final unitsByRegion = game.worldState.mutableUnitListsByRegion();
-  var fleets = List<Fleet>.from(game.worldState.fleets);
-  final fleetIndexById = <String, int>{
-    for (var i = 0; i < fleets.length; i++) fleets[i].id: i,
-  };
-  var nextSeq = game.worldState.nextShipInstanceSeq;
-  final inferredStart = inferNextShipInstanceSeqFromFleets(fleets);
-  if (nextSeq < inferredStart) nextSeq = inferredStart;
+  final scratch = prepareHomeFleetMergeScratch(game.worldState);
+  final fleets = scratch.fleets;
+  final fleetIndexById = scratch.fleetIndexById;
+  var nextSeq = scratch.nextSeq;
 
   for (final player in game.players) {
     final capitalProvinceId = player.capitalProvinceId;
@@ -188,22 +89,29 @@ Game addStartingMilitaryAndNaval({
     final regionId = ProvinceId.regionIdFrom(capitalProvinceId);
     final localProvinceId = ProvinceId.localIdFrom(capitalProvinceId);
 
-    _addStartingRegimentsForPlayer(
-      player: player,
-      capitalProvinceId: capitalProvinceId,
-      regionId: regionId,
-      regimentCount: regimentCount,
-      unitsByRegion: unitsByRegion,
-    );
+    if (regimentCount > 0) {
+      final regimentTypeId = startingRegimentTypeForPlayer(player);
+      spawnRegimentsAtCapital(
+        ownerId: player.id,
+        capitalProvinceId: capitalProvinceId,
+        regionId: regionId,
+        regimentTypeIds: List<String>.filled(regimentCount, regimentTypeId),
+        unitsByRegion: unitsByRegion,
+        unitIdFor: baseSetupRegimentUnitId,
+        includeExpectedRegionsInError: true,
+      );
+    }
 
-    nextSeq = _mergeHomeFleetShipsForPlayer(
-      player: player,
+    nextSeq = mergeHomeFleetShips(
+      ownerId: player.id,
       regionId: regionId,
       localProvinceId: localProvinceId,
       shipCount: shipCount,
+      shipTypeId: startingShipTypeForPlayer(player),
       fleets: fleets,
       fleetIndexById: fleetIndexById,
       nextSeq: nextSeq,
+      appendExistingShips: true,
     );
   }
 

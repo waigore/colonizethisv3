@@ -1,7 +1,8 @@
-part of 'game_map_players_bar.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-class _PlayerChip extends StatelessWidget {
-  const _PlayerChip({
+class GameMapPlayersBarChip extends StatelessWidget {
+  const GameMapPlayersBarChip({
     super.key,
     required this.name,
     required this.score,

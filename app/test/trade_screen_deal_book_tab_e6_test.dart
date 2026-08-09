@@ -26,7 +26,7 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 const List<Player> _players = <Player>[
   // ignore: avoid_hardcoded_strings_in_widgets
@@ -373,10 +373,8 @@ void main() {
           ),
           findsOneWidget,
         );
-        // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('FRR'), findsOneWidget);
-        // ignore: avoid_hardcoded_strings_in_widgets
-        expect(find.text('FTP'), findsOneWidget);
+        expect(find.text('First right'), findsOneWidget);
+        expect(find.text('Favored partner'), findsOneWidget);
         _expectTotals(tester, bids: 180);
       },
     );

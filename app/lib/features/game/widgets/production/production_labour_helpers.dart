@@ -1,14 +1,13 @@
 // Pure helpers for the Production panel Labour controls section.
 // SPEC/ui/production-panel.md § Labour Controls, SPEC/game/workers-and-population.md.
 
-library;
+export 'production_labour_recruit_economy_mutations.dart';
+export 'production_labour_recruit_economy_projection.dart';
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-part 'production_labour_recruit_economy_projection.dart';
-part 'production_labour_recruit_economy_mutations.dart';
+import 'production_labour_recruit_economy_projection.dart';
 
 /// Pure predicate that returns `true` iff every tech id required to recruit
 /// or train [tier] (per `SPEC/game/workers-and-population.md` § Tech gates,

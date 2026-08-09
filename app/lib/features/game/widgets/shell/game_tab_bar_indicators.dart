@@ -1,7 +1,14 @@
-part of 'game_tab_bar.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-class _TreasuryIndicator extends StatelessWidget {
-  const _TreasuryIndicator({
+import '../../../../config/app_assets.dart';
+import '../../../../widgets/ct_spacing.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import '../../screens/game/game_screen_shared.dart' show kCargoHoldIndicatorKey;
+
+class GameTabBarTreasuryIndicator extends StatelessWidget {
+  const GameTabBarTreasuryIndicator({
+    super.key,
     required this.treasuryLabel,
     required this.deltaLabel,
     required this.deltaColor,
@@ -41,20 +48,29 @@ class _TreasuryIndicator extends StatelessWidget {
   }
 }
 
-class _CargoHoldIndicator extends StatelessWidget {
-  const _CargoHoldIndicator({
+class GameTabBarCargoHoldIndicator extends StatelessWidget {
+  const GameTabBarCargoHoldIndicator({
+    super.key,
     required this.cargoHoldLabel,
     required this.labelStyle,
+    required this.numericColor,
+    this.tooltip,
+    this.semanticsLabel,
+    this.onTap,
   });
 
   final String cargoHoldLabel;
   final TextStyle labelStyle;
+  final Color numericColor;
+  final String? tooltip;
+  final String? semanticsLabel;
+  final VoidCallback? onTap;
 
   static const double _iconSize = 18;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final Widget indicator = Container(
       key: kCargoHoldIndicatorKey,
       padding: const EdgeInsets.symmetric(horizontal: CtSpacing.m),
       decoration: BoxDecoration(
@@ -75,9 +91,32 @@ class _CargoHoldIndicator extends StatelessWidget {
             height: _iconSize,
           ),
           const SizedBox(width: 4),
-          Text(cargoHoldLabel, style: labelStyle),
+          Text(
+            cargoHoldLabel,
+            style: labelStyle.copyWith(color: numericColor),
+          ),
         ],
       ),
     );
+
+    Widget wrapped = indicator;
+    if (onTap != null) {
+      wrapped = GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: wrapped,
+      );
+    }
+    if (tooltip != null) {
+      wrapped = Tooltip(message: tooltip, child: wrapped);
+    }
+    if (semanticsLabel != null) {
+      wrapped = Semantics(
+        button: onTap != null,
+        label: semanticsLabel,
+        child: wrapped,
+      );
+    }
+    return wrapped;
   }
 }

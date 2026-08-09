@@ -81,6 +81,10 @@ const Key kCtE2EFleetMoveActionKey = Key('ct_e2e_fleet_move_action');
 const Key kCtE2EFleetSplitActionKey = Key('ct_e2e_fleet_split_action');
 
 // ignore: public_member_api_docs
+/// Stable locator for the fleet-row **Mission** action button (Refs #4213).
+const Key kCtE2EFleetMissionActionKey = Key('ct_e2e_fleet_mission_action');
+
+// ignore: public_member_api_docs
 /// Prefix for the per-destination-row keys inside [MoveFleetDialog]. The
 /// production dialog renders custom destination rows (`_MoveFleetDestinationRow`,
 /// a `CtDialogShell` body) rather than Material `RadioListTile`, so the

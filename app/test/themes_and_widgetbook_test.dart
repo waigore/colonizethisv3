@@ -6,7 +6,7 @@ import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/themes.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 int _argb(Color c) {
   final int a = (c.a * 255.0).round() & 0xFF;

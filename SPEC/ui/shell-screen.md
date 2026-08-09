@@ -79,7 +79,7 @@ The shell never renders an "afterVictory" subtitle by itself — that detail is 
 | New Game (`onNewGame`) | Always | `OpenDialogEvent(newGameLeaderSelectionDialogId)` on `AppEventBus` | Opens leader-selection dialog per [`app-ui-wiring.md`](../program/app-ui-wiring.md); no `Navigator.pushNamed` from shell. |
 | Resume game (`onResumeGame`) | `resumeGameVisible == true` | `NavigateToRouteEvent(Routes.game)` after `loadAutoSaveSession()` | Resets `observeSessionProvider`; sets `currentGameProvider`; restores `currentOrdersProvider` and `productionDesiredOutputProvider` from the session draft envelope. |
 | Load game (`onLoadGame`) | Always enabled on the product path | `OpenDialogEvent(load_game_list)` | Opens [load-game-list-dialog.md](load-game-list-dialog.md); empty store shows empty list. |
-| Settings (`onSettings`) | Always (stub) | — | No-op today; reserved for Settings flow. |
+| Settings (`onSettings`) | Always | `OpenDialogEvent(settings)` | Opens [`settings-dialog.md`](settings-dialog.md) (`DLG90001`). |
 | Quit (`onQuit`) | Always | `SystemNavigator.pop()` | Exits app; no bus events. |
 
 All cross-screen transitions use `AppEventBus` per [`app-ui-wiring.md`](../program/app-ui-wiring.md) (no `Navigator.pushNamed` from this widget).

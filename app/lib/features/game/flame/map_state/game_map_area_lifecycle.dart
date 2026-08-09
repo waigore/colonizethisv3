@@ -1,20 +1,38 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/debug_console_provider.dart';
+import '../../../../providers/observe_session_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../../../../providers/region_minimap_provider.dart';
+
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'game_map_area_selection.dart';
+import 'game_map_area_relocate_selection.dart';
+import 'game_map_area_view.dart';
+import 'game_map_area_events.dart';
 
 /// State lifecycle for [GameMapArea]: bus-subscription wiring in [initState],
 /// observe-mode listeners, teardown in [dispose], and the per-game reset /
 /// work-target refresh in [didUpdateWidget] (Refs #3699 Theme 3).
-mixin _GameMapAreaLifecycle
+mixin GameMapAreaLifecycle
     on
         ConsumerState<GameMapArea>,
-        _GameMapAreaStateBase,
-        _GameMapAreaSelection,
-        _GameMapAreaView,
-        _GameMapAreaEvents {
+        GameMapAreaStateBase,
+        GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
+        GameMapAreaView,
+        GameMapAreaEvents {
   @override
   void initState() {
     super.initState();
-    _mapViewState = widget.game.mapViewState;
-    _refreshWorkTargetSelectionCache(widget.game);
+    mapViewState = widget.game.mapViewState;
+    refreshWorkTargetSelectionCache(widget.game);
     final bus = ref.read(appEventBusProvider);
     for (final subscription in [
       bus.on<ct_models.OpenProvinceDetailPanelEvent>().listen((_) {
@@ -24,64 +42,76 @@ mixin _GameMapAreaLifecycle
         });
       }),
       bus.on<ct_models.LocateMapTileEvent>().listen(
-        (e) => _locateTile(e.tileKey, e.regionId),
+        (e) => locateTile(e.tileKey, e.regionId),
       ),
       bus.on<ct_models.StartCivilianWorkTargetSelectionEvent>().listen(
-        (e) => _startWorkTargetSelection(e.unitId, e.workTarget),
+        (e) => startWorkTargetSelection(e.unitId, e.workTarget),
+      ),
+      bus.on<ct_models.StartCivilianRelocateSelectionEvent>().listen(
+        (e) => startCivilianRelocateSelection(e.unitId),
       ),
       bus.on<ct_models.UnitsPanelClosedEvent>().listen((_) {
         ref.read(mapProvincePanelProvider.notifier).setSecondaryHighlight(null);
       }),
       bus.on<ct_models.OpenMapTileDetailEvent>().listen(
-        (e) => _openMapTileDetail(e.tileKey),
+        (e) => openMapTileDetail(e.tileKey),
       ),
-      bus.on<ct_models.AppCombatResultEvent>().listen(_onAppCombatResultEvent),
+      bus.on<ct_models.AppCombatResultEvent>().listen(onAppCombatResultEvent),
       bus.on<ct_models.AppNavalCombatResultEvent>().listen(
-        _onAppNavalCombatResultEvent,
+        onAppNavalCombatResultEvent,
       ),
       bus.on<ct_models.AppProvinceCapturedEvent>().listen(
-        _onAppProvinceCapturedEvent,
+        onAppProvinceCapturedEvent,
       ),
       bus.on<ct_models.AppDiplomacyChangeEvent>().listen(
-        _onAppDiplomacyChangeEvent,
+        onAppDiplomacyChangeEvent,
       ),
       bus.on<ct_models.AppResearchCompleteEvent>().listen(
-        _onAppResearchCompleteEvent,
+        onAppResearchCompleteEvent,
       ),
       bus.on<ct_models.AppOrderRejectedEvent>().listen(
-        _onAppOrderRejectedEvent,
+        onAppOrderRejectedEvent,
       ),
       bus.on<ct_models.AppWorkOrderCompletedEvent>().listen(
-        _onAppWorkOrderCompletedEvent,
+        onAppWorkOrderCompletedEvent,
+      ),
+      bus.on<ct_models.AppOverseasProfitCreditedEvent>().listen(
+        onAppOverseasProfitCreditedEvent,
+      ),
+      bus.on<ct_models.AppMarketTurnSummaryEvent>().listen(
+        onAppMarketTurnSummaryEvent,
       ),
       bus.on<ct_models.AppPlayerProvinceDiscoveredEvent>().listen(
-        _onAppPlayerProvinceDiscoveredEvent,
+        onAppPlayerProvinceDiscoveredEvent,
       ),
       bus.on<ct_models.AppPlayerSeaZoneDiscoveredEvent>().listen(
-        _onAppPlayerSeaZoneDiscoveredEvent,
+        onAppPlayerSeaZoneDiscoveredEvent,
       ),
       bus.on<ct_models.AppOvertureAdvancedEvent>().listen(
-        _onAppOvertureAdvancedEvent,
+        onAppOvertureAdvancedEvent,
       ),
-      bus.on<ct_models.AppSpyCaughtEvent>().listen(_onAppSpyCaughtEvent),
-      bus.on<ct_models.AppSpyDefectedEvent>().listen(_onAppSpyDefectedEvent),
+      bus.on<ct_models.AppSpyCaughtEvent>().listen(onAppSpyCaughtEvent),
+      bus.on<ct_models.AppSpyDefectedEvent>().listen(onAppSpyDefectedEvent),
+      bus.on<ct_models.AppGeneralMedalGainedEvent>().listen(
+        onAppGeneralMedalGainedEvent,
+      ),
       bus.on<ct_models.TurnResolutionCompleteEvent>().listen(
-        _onTurnResolutionCompleteEvent,
+        onTurnResolutionCompleteEvent,
       ),
       bus.on<ct_models.OpenDebugConsolePanelEvent>().listen((_) {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
-        setState(() => _debugConsoleOpen = true);
+        setState(() => debugConsoleOpen = true);
       }),
       bus.on<ct_models.CloseDebugConsolePanelEvent>().listen((_) {
         if (!mounted) return;
-        setState(() => _debugConsoleOpen = false);
+        setState(() => debugConsoleOpen = false);
       }),
       bus.on<ct_models.ToggleDebugConsolePanelEvent>().listen((_) {
         if (!mounted || !ref.read(debugConsoleEnabledProvider)) return;
-        setState(() => _debugConsoleOpen = !_debugConsoleOpen);
+        setState(() => debugConsoleOpen = !debugConsoleOpen);
       }),
     ]) {
-      _busSubscriptions.track(subscription);
+      busSubscriptions.track(subscription);
     }
     ref.listenManual(observeSessionProvider, (previous, next) {
       if (!mounted) return;
@@ -90,20 +120,20 @@ mixin _GameMapAreaLifecycle
       final switchedMode =
           next.isObserving && previous?.mode != next.mode;
       if (enteredObserve || switchedMode) {
-        _cancelWorkTargetSelection();
+        cancelAnyMapTileSelection();
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _maybeAutoCenterOnShellEntry();
+      maybeAutoCenterOnShellEntry();
     });
   }
 
   @override
   void dispose() {
-    _turnResolutionProgressSub?.cancel();
-    _turnResolutionProgressSub = null;
-    _busSubscriptions.cancelAll();
+    turnResolutionProgressSub?.cancel();
+    turnResolutionProgressSub = null;
+    busSubscriptions.cancelAll();
     super.dispose();
   }
 
@@ -114,24 +144,24 @@ mixin _GameMapAreaLifecycle
       ref.read(mapProvincePanelProvider.notifier).reset();
       ref.read(regionMinimapVisibleProvider.notifier).reset();
       setState(() {
-        _refreshWorkTargetSelectionCache(widget.game);
-        _mapViewState = widget.game.mapViewState;
-        _regionViewportSnapshot = null;
-        _pendingRegionViewport = null;
-        _regionViewportFrameScheduled = false;
-        _didAutoCenterOnEntry = false;
+        refreshWorkTargetSelectionCache(widget.game);
+        mapViewState = widget.game.mapViewState;
+        regionViewportSnapshot = null;
+        pendingRegionViewport = null;
+        regionViewportFrameScheduled = false;
+        didAutoCenterOnEntry = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _maybeAutoCenterOnShellEntry();
+        maybeAutoCenterOnShellEntry();
       });
     } else if (oldWidget.game.mapViewState != widget.game.mapViewState) {
-      _mapViewState = widget.game.mapViewState;
+      mapViewState = widget.game.mapViewState;
     }
     if (oldWidget.game.worldState.turnState.turnNumber !=
         widget.game.worldState.turnState.turnNumber) {
       setState(() {
-        _refreshWorkTargetSelectionCache(widget.game);
+        refreshWorkTargetSelectionCache(widget.game);
       });
     }
   }

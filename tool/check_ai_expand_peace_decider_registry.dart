@@ -2,10 +2,10 @@
 /// peace aggregators stay composed from ordered `ExpandPeaceDecider` data
 /// instead of regressing to hand-unrolled `yield*` decider chains.
 ///
-/// `observer_goal_phase.dart` hosts the `ExpandPeaceDecider` typedef, the two
-/// ordered registry constants (`kSurvivalGreatPowerPeaceDeciders`,
-/// `kExpandRatchetGreatPowerPeaceDeciders`), and the two aggregators that fold
-/// them (`survivalGreatPowerPeaceTargets`,
+/// `observer_goal_phase_peace_aggregators.dart` hosts the `ExpandPeaceDecider`
+/// typedef, the two ordered registry constants
+/// (`kSurvivalGreatPowerPeaceDeciders`, `kExpandRatchetGreatPowerPeaceDeciders`),
+/// and the two aggregators that fold them (`survivalGreatPowerPeaceTargets`,
 /// `expandRatchetGreatPowerPeaceTargets`). Each aggregator must iterate its
 /// registry and `yield* decider(...)`; a regression that re-inlines a
 /// `yield* someSpecificPeaceTargets(...)` chain (bypassing the registry) is a
@@ -17,7 +17,7 @@ import 'dart:io';
 
 /// Repo-relative path of the canonical expand-peace decider registry host.
 const String expandPeaceDeciderRegistryHostFile =
-    'packages/colonizethis_ai/lib/src/planning/observer_goal_phase.dart';
+    'packages/colonizethis_ai/lib/src/planning/observer_goal_phase_peace_aggregators.dart';
 
 /// The `ExpandPeaceDecider` function-type alias that every registered decider
 /// must satisfy.

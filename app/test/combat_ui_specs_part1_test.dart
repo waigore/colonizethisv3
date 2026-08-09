@@ -17,7 +17,7 @@ import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 
 
-import 'support/combat_ui_specs_test_support.dart';
+import 'combat_ui_specs_test_support.dart';
 
 QuickBattleGroup _centerFront({
   required List<String> unitIds,
@@ -355,6 +355,32 @@ void main() {
         }
       },
     );
+
+    testWidgets('shows land underfed soft warning when provided', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        combatUiSpecsDarkFrame(
+          CombatModeChoiceDialog(
+            bus: AppEventBus.create(),
+            provinceName: 'Lisbon',
+            isCapitalSiege: false,
+            landForceFeedingWarning:
+                'Your armies are short on rations — they will fight somewhat weaker this turn.',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          'Your armies are short on rations — they will fight somewhat weaker this turn.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Auto-Resolve'), findsOneWidget);
+      expect(find.textContaining('Quick Battle'), findsOneWidget);
+    });
 
     testWidgets('capital siege variant only renders Quick Battle button', (
       WidgetTester tester,

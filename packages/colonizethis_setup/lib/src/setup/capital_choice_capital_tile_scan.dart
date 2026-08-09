@@ -1,14 +1,34 @@
-part of 'capital_choice.dart';
+// SPEC/game/capital-choice-phase — capital tile candidate scan
+// (Refs #4086 Slice B de-part).
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'capital_choice_classify.dart';
+import 'capital_choice_port_road_geometry.dart';
+import 'setup_exceptions.dart';
+import 'tile_cell_scan.dart';
 
 final class _CapitalTileCandidateScan {
   int? classAx;
   int? classAy;
+  int? classAPlainsX;
+  int? classAPlainsY;
   int? classBx;
   int? classBy;
+  int? classBPlainsX;
+  int? classBPlainsY;
   int? classCx;
   int? classCy;
+  int? classCPlainsX;
+  int? classCPlainsY;
   int? classCCoastalX;
   int? classCCoastalY;
+  int? classCCoastalPlainsX;
+  int? classCCoastalPlainsY;
+
+  bool _isPlains(TileMapResult tileMap, int x, int y) =>
+      tileMap.terrainAt(x, y) == TerrainType.plains;
 
   void mergeClassC(
     int x,
@@ -21,16 +41,25 @@ final class _CapitalTileCandidateScan {
       classCx = x;
       classCy = y;
     }
-    if (_isTileAdjacentToSea(
+    if (_isPlains(tileMap, x, y) && classCPlainsX == null) {
+      classCPlainsX = x;
+      classCPlainsY = y;
+    }
+    if (isTileAdjacentToSea(
           x,
           y,
           tileMap,
           topology,
           provinceIds: provinceIds,
-        ) &&
-        classCCoastalX == null) {
-      classCCoastalX = x;
-      classCCoastalY = y;
+        )) {
+      if (classCCoastalX == null) {
+        classCCoastalX = x;
+        classCCoastalY = y;
+      }
+      if (_isPlains(tileMap, x, y) && classCCoastalPlainsX == null) {
+        classCCoastalPlainsX = x;
+        classCCoastalPlainsY = y;
+      }
     }
   }
 
@@ -47,12 +76,20 @@ final class _CapitalTileCandidateScan {
         classAx = x;
         classAy = y;
       }
+      if (_isPlains(tileMap, x, y) && classAPlainsX == null) {
+        classAPlainsX = x;
+        classAPlainsY = y;
+      }
       return;
     }
     if (tileClass == CapitalTileClass.b) {
       if (classBx == null) {
         classBx = x;
         classBy = y;
+      }
+      if (_isPlains(tileMap, x, y) && classBPlainsX == null) {
+        classBPlainsX = x;
+        classBPlainsY = y;
       }
       return;
     }
@@ -63,14 +100,22 @@ final class _CapitalTileCandidateScan {
 ({
   int? classAx,
   int? classAy,
+  int? classAPlainsX,
+  int? classAPlainsY,
   int? classBx,
   int? classBy,
+  int? classBPlainsX,
+  int? classBPlainsY,
   int? classCx,
   int? classCy,
+  int? classCPlainsX,
+  int? classCPlainsY,
   int? classCCoastalX,
   int? classCCoastalY,
+  int? classCCoastalPlainsX,
+  int? classCCoastalPlainsY,
 })
-_scanCapitalTileCandidates({
+scanCapitalTileCandidates({
   required TileMapResult tileMap,
   required MapTopology topology,
   required String localProvinceId,
@@ -91,16 +136,24 @@ _scanCapitalTileCandidates({
   return (
     classAx: acc.classAx,
     classAy: acc.classAy,
+    classAPlainsX: acc.classAPlainsX,
+    classAPlainsY: acc.classAPlainsY,
     classBx: acc.classBx,
     classBy: acc.classBy,
+    classBPlainsX: acc.classBPlainsX,
+    classBPlainsY: acc.classBPlainsY,
     classCx: acc.classCx,
     classCy: acc.classCy,
+    classCPlainsX: acc.classCPlainsX,
+    classCPlainsY: acc.classCPlainsY,
     classCCoastalX: acc.classCCoastalX,
     classCCoastalY: acc.classCCoastalY,
+    classCCoastalPlainsX: acc.classCCoastalPlainsX,
+    classCCoastalPlainsY: acc.classCCoastalPlainsY,
   );
 }
 
-String _capitalProvinceIdFromSeaBoundOrFallback(
+String capitalProvinceIdFromSeaBoundOrFallback(
   List<String> ownedProvinceIds,
   MapTopology topology, {
   required bool requireSeaBound,
@@ -122,23 +175,39 @@ String _capitalProvinceIdFromSeaBoundOrFallback(
   return (List<String>.from(ownedProvinceIds)..sort()).first;
 }
 
-(int, int) _capitalTileXYFromScan({
+(int, int) capitalTileXYFromScan({
   required bool requireSeaBound,
   required String provinceId,
   required String regionId,
   required int? classAx,
   required int? classAy,
+  required int? classAPlainsX,
+  required int? classAPlainsY,
   required int? classBx,
   required int? classBy,
+  required int? classBPlainsX,
+  required int? classBPlainsY,
   required int? classCx,
   required int? classCy,
+  required int? classCPlainsX,
+  required int? classCPlainsY,
   required int? classCCoastalX,
   required int? classCCoastalY,
+  required int? classCCoastalPlainsX,
+  required int? classCCoastalPlainsY,
 }) {
+  // Within each class, prefer the first plains tile (row-major); else first tile.
+  // Class A still beats Class B regardless of terrain (plains is tertiary).
+  if (classAPlainsX != null && classAPlainsY != null) {
+    return (classAPlainsX, classAPlainsY);
+  }
   if (classAx != null && classAy != null) {
     return (classAx, classAy);
   }
   if (requireSeaBound) {
+    if (classCCoastalPlainsX != null && classCCoastalPlainsY != null) {
+      return (classCCoastalPlainsX, classCCoastalPlainsY);
+    }
     if (classCCoastalX != null && classCCoastalY != null) {
       return (classCCoastalX, classCCoastalY);
     }
@@ -147,8 +216,14 @@ String _capitalProvinceIdFromSeaBoundOrFallback(
           'No coastal tile found in sea-bound province $provinceId in region $regionId',
     );
   }
+  if (classBPlainsX != null && classBPlainsY != null) {
+    return (classBPlainsX, classBPlainsY);
+  }
   if (classBx != null && classBy != null) {
     return (classBx, classBy);
+  }
+  if (classCPlainsX != null && classCPlainsY != null) {
+    return (classCPlainsX, classCPlainsY);
   }
   if (classCx != null && classCy != null) {
     return (classCx, classCy);

@@ -36,9 +36,7 @@
 // Refs #2870 S8 (dialogs scale at narrow widths) + S10 (no horizontal
 // overflow at 320 dp on every covered surface).
 
-import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/shell/new_game_setup_flow.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
 import 'package:colonizethis_app/widgets/ct_loading_indicator.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
@@ -46,11 +44,11 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
-const Size _kWideRegressionViewport = Size(1024, 768);
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 /// Canonical English labels for the [NewGameErrorCard] sentinel — mirror
 /// the production l10n values from `app/lib/l10n/arb/app_en.arb`
@@ -76,33 +74,6 @@ const List<String> _kProgressPhaseLabels = <String>[
   'Saving game…',
 ];
 
-/// Pumps [child] inside a [MaterialApp] using `AppThemes.editorialMonocle`
-/// and the app localisation delegates at exactly [size].
-///
-/// When [settle] is `true` the helper drives `pumpAndSettle()`. When
-/// `false` it pumps a single layout frame instead — the progress view
-/// hosts a `CircularProgressIndicator` ticker that never settles, so
-/// `pumpAndSettle` would time out without adding overflow signal.
-Future<void> _pumpSurface(
-  WidgetTester tester,
-  Widget child, {
-  required Size size,
-  bool settle = true,
-}) async {
-  // `settle: false` keeps the harness on a single layout frame — enough
-  // to surface a `RenderFlex` overflow through
-  // `WidgetTester.takeException()` without waiting on the indeterminate
-  // spinner ticker the progress view hosts.
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: child)),
-    settle: settle,
-  );
-}
-
 /// Renders [NewGameErrorCard] inside the same [CtDialogShell] chrome the
 /// production `_showNewGameErrorDialog` flow wraps it in, so the 320 dp
 /// pin exercises the actual shell layout (1 px `--danger` border inside
@@ -121,156 +92,142 @@ Widget _hostedErrorCard() {
 void main() {
   suppressLogsForTests();
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — NewGameSetupProgressView @ 320 dp '
-    '(Refs #2870 S8/S10; SHEL30001)',
-    () {
-      for (var index = 0; index < _kProgressPhaseLabels.length; index++) {
-        final int stepIndex = index;
-        final String phaseLabel = _kProgressPhaseLabels[index];
-        testWidgets(
-          'AC (positive) NewGameSetupProgressView (phase $stepIndex) @ '
+  group('SPEC/ui/mobile-adaptation.md § 7 — NewGameSetupProgressView @ 320 dp '
+      '(Refs #2870 S8/S10; SHEL30001)', () {
+    for (var index = 0; index < _kProgressPhaseLabels.length; index++) {
+      final int stepIndex = index;
+      final String phaseLabel = _kProgressPhaseLabels[index];
+      testWidgets('AC (positive) NewGameSetupProgressView (phase $stepIndex) @ '
           '320×640: no RenderFlex overflow exception, "Creating game" title '
           '+ "$phaseLabel" phase label + 48 dp accent spinner all render '
-          'inside the CtDialogShell content column',
-          (WidgetTester tester) async {
-            await _pumpSurface(
-              tester,
-              NewGameSetupProgressView(stepIndex: stepIndex),
-              size: _kMinViewport,
-              settle: false,
-            );
-
-            expect(
-              tester.takeException(),
-              isNull,
-              reason:
-                  'SPEC/ui/mobile-adaptation.md § 7: NewGameSetupProgressView '
-                  '(phase $stepIndex) must not emit a RenderFlex overflow '
-                  'exception at kMinViewportWidth (320 dp). The CtDialogShell '
-                  '`maxWidth: 400` is dominated by `Dialog.insetPadding` at '
-                  '320 dp — the centered Column (title / spinner / phase '
-                  'label) must wrap within the ~288 dp shell content width.',
-            );
-            expect(find.byType(CtDialogShell), findsOneWidget);
-            expect(find.byType(CtLoadingIndicator), findsOneWidget);
-            expect(find.text(_kProgressTitle), findsOneWidget);
-            expect(
-              find.text(phaseLabel),
-              findsOneWidget,
-              reason:
-                  'SPEC/ui/game-initializing.md § Dark-theme visual contract '
-                  '(R33): phase $stepIndex must surface its localised label '
-                  '"$phaseLabel" at the narrow viewport.',
-            );
-          },
+          'inside the CtDialogShell content column', (
+        WidgetTester tester,
+      ) async {
+        await pumpDialogs320At(
+          tester,
+          NewGameSetupProgressView(stepIndex: stepIndex),
+          size: _kMinViewport,
+          settle: false,
         );
-      }
 
-      testWidgets(
-        'AC (positive) NewGameSetupProgressView (out-of-range fallback '
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: NewGameSetupProgressView '
+              '(phase $stepIndex) must not emit a RenderFlex overflow '
+              'exception at kMinViewportWidth (320 dp). The CtDialogShell '
+              '`maxWidth: 400` is dominated by `Dialog.insetPadding` at '
+              '320 dp — the centered Column (title / spinner / phase '
+              'label) must wrap within the ~288 dp shell content width.',
+        );
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(CtLoadingIndicator), findsOneWidget);
+        expect(find.text(_kProgressTitle), findsOneWidget);
+        expect(
+          find.text(phaseLabel),
+          findsOneWidget,
+          reason:
+              'SPEC/ui/game-initializing.md § Dark-theme visual contract '
+              '(R33): phase $stepIndex must surface its localised label '
+              '"$phaseLabel" at the narrow viewport.',
+        );
+      });
+    }
+
+    testWidgets('AC (positive) NewGameSetupProgressView (out-of-range fallback '
         'stepIndex = 7) @ 320×640: no RenderFlex overflow exception, '
         'localised "Creating game" generic title is used as the body '
         'fallback per `_stepLabel` so the dialog still renders within the '
-        '~288 dp CtDialogShell content column',
-        (WidgetTester tester) async {
-          await _pumpSurface(
-            tester,
-            const NewGameSetupProgressView(stepIndex: 7),
-            size: _kMinViewport,
-            settle: false,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.byType(CtDialogShell), findsOneWidget);
-          // Fallback path uses `shell_newGameProgress_title` for both the
-          // header and the body label, so the canonical "Creating game"
-          // string surfaces at least twice (header + fallback body).
-          expect(find.text(_kProgressTitle), findsAtLeastNWidgets(2));
-        },
+        '~288 dp CtDialogShell content column', (WidgetTester tester) async {
+      await pumpDialogs320At(
+        tester,
+        const NewGameSetupProgressView(stepIndex: 7),
+        size: _kMinViewport,
+        settle: false,
       );
 
-      testWidgets(
-        'Negative control: NewGameSetupProgressView (phase 0) @ 1024×768 '
-        'also pumps without exception (regression sentinel for the overflow '
-        'contract — keeps the 320 dp positive pins meaningful)',
-        (WidgetTester tester) async {
-          await _pumpSurface(
-            tester,
-            const NewGameSetupProgressView(stepIndex: 0),
-            size: _kWideRegressionViewport,
-            settle: false,
-          );
+      expect(tester.takeException(), isNull);
+      expect(find.byType(CtDialogShell), findsOneWidget);
+      // Fallback path uses `shell_newGameProgress_title` for both the
+      // header and the body label, so the canonical "Creating game"
+      // string surfaces at least twice (header + fallback body).
+      expect(find.text(_kProgressTitle), findsAtLeastNWidgets(2));
+    });
 
-          expect(tester.takeException(), isNull);
-          expect(find.text(_kProgressTitle), findsOneWidget);
-          expect(find.text(_kProgressPhaseLabels[0]), findsOneWidget);
-        },
-      );
-    },
-  );
+    testWidgets(
+      'Negative control: NewGameSetupProgressView (phase 0) @ 1024×768 '
+      'also pumps without exception (regression sentinel for the overflow '
+      'contract — keeps the 320 dp positive pins meaningful)',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          const NewGameSetupProgressView(stepIndex: 0),
+          size: _kWideRegressionViewport,
+          settle: false,
+        );
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — NewGameErrorCard @ 320 dp '
-    '(Refs #2870 S8/S10; SHEL30001 § Failure and retry)',
-    () {
-      testWidgets(
-        'AC (positive) NewGameErrorCard @ 320×640: no RenderFlex overflow '
-        'exception, error title + body message + Retry + Close render — '
-        'the end-aligned Close + 8 dp gap + Retry CtNinePatchButton pair '
-        'must fit within the ~288 dp CtDialogShell content column at '
-        'kMinViewportWidth (320 dp)',
-        (WidgetTester tester) async {
-          await _pumpSurface(
-            tester,
-            _hostedErrorCard(),
-            size: _kMinViewport,
-          );
+        expect(tester.takeException(), isNull);
+        expect(find.text(_kProgressTitle), findsOneWidget);
+        expect(find.text(_kProgressPhaseLabels[0]), findsOneWidget);
+      },
+    );
+  });
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: NewGameErrorCard must not '
-                'emit a RenderFlex overflow exception at kMinViewportWidth '
-                '(320 dp). The 1 px `--danger` framed Column (title + '
-                'SelectableText body + trailing Close / Retry '
-                'CtNinePatchButton Row) from SPEC/ui/game-initializing.md '
-                '§ Failure and retry must wrap within the ~288 dp '
-                'CtDialogShell content column without horizontal overflow.',
-          );
-          expect(find.byType(CtDialogShell), findsOneWidget);
-          expect(find.byType(NewGameErrorCard), findsOneWidget);
-          expect(find.byType(CtNinePatchButton), findsNWidgets(2));
-          expect(find.text(_kErrorTitle), findsOneWidget);
-          expect(find.text(_kErrorCloseLabel), findsOneWidget);
-          expect(find.text(_kErrorRetryLabel), findsOneWidget);
-          // The exception body (SelectableText) renders the full message so
-          // the narrow pin exercises the body wrap path rather than a
-          // truncated string. Without horizontal overflow the long
-          // `StateError: …` line must wrap onto multiple lines instead of
-          // overflowing the shell.
-          expect(find.text(_kErrorMessage), findsOneWidget);
-        },
-      );
+  group('SPEC/ui/mobile-adaptation.md § 7 — NewGameErrorCard @ 320 dp '
+      '(Refs #2870 S8/S10; SHEL30001 § Failure and retry)', () {
+    testWidgets(
+      'AC (positive) NewGameErrorCard @ 320×640: no RenderFlex overflow '
+      'exception, error title + body message + Retry + Close render — '
+      'the end-aligned Close + 8 dp gap + Retry CtNinePatchButton pair '
+      'must fit within the ~288 dp CtDialogShell content column at '
+      'kMinViewportWidth (320 dp)',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(tester, _hostedErrorCard(), size: _kMinViewport);
 
-      testWidgets(
-        'Negative control: NewGameErrorCard @ 1024×768 also pumps without '
-        'exception (regression sentinel for the overflow contract — keeps '
-        'the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpSurface(
-            tester,
-            _hostedErrorCard(),
-            size: _kWideRegressionViewport,
-          );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: NewGameErrorCard must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). The 1 px `--danger` framed Column (title + '
+              'SelectableText body + trailing Close / Retry '
+              'CtNinePatchButton Row) from SPEC/ui/game-initializing.md '
+              '§ Failure and retry must wrap within the ~288 dp '
+              'CtDialogShell content column without horizontal overflow.',
+        );
+        expect(find.byType(CtDialogShell), findsOneWidget);
+        expect(find.byType(NewGameErrorCard), findsOneWidget);
+        expect(find.byType(CtNinePatchButton), findsNWidgets(2));
+        expect(find.text(_kErrorTitle), findsOneWidget);
+        expect(find.text(_kErrorCloseLabel), findsOneWidget);
+        expect(find.text(_kErrorRetryLabel), findsOneWidget);
+        // The exception body (SelectableText) renders the full message so
+        // the narrow pin exercises the body wrap path rather than a
+        // truncated string. Without horizontal overflow the long
+        // `StateError: …` line must wrap onto multiple lines instead of
+        // overflowing the shell.
+        expect(find.text(_kErrorMessage), findsOneWidget);
+      },
+    );
 
-          expect(tester.takeException(), isNull);
-          expect(find.text(_kErrorTitle), findsOneWidget);
-          expect(find.text(_kErrorRetryLabel), findsOneWidget);
-          expect(find.text(_kErrorCloseLabel), findsOneWidget);
-        },
-      );
-    },
-  );
+    testWidgets(
+      'Negative control: NewGameErrorCard @ 1024×768 also pumps without '
+      'exception (regression sentinel for the overflow contract — keeps '
+      'the 320 dp positive pin meaningful)',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          _hostedErrorCard(),
+          size: _kWideRegressionViewport,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(_kErrorTitle), findsOneWidget);
+        expect(find.text(_kErrorRetryLabel), findsOneWidget);
+        expect(find.text(_kErrorCloseLabel), findsOneWidget);
+      },
+    );
+  });
 }

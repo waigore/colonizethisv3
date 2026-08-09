@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 /// must not construct the Material `DropdownButton` widget as visible chrome
 /// (commonly written with an explicit generic type argument, e.g.
 /// `DropdownButton<String>(`). Select controls must resolve through
-/// `CtDropdown` (nine-patch trigger + modal picker inside `CtDialogShell`) so
+/// `CtDropdown` (compact flat trigger + modal picker inside `CtDialogShell`) so
 /// dropdown chrome stays inside the editorial-monocle token surface end-to-end.
 ///
 /// SPEC:

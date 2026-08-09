@@ -197,6 +197,7 @@ void main() {
       logicBus.publish(
         OrderRejectedEvent(
           playerId: 'gp1',
+          orderKind: OrderKind.work,
           orderSummary: 'Build road',
           reasonCode: 'insufficient_treasury',
         ),
@@ -206,6 +207,7 @@ void main() {
       expect(received, hasLength(1));
       final evt = received.first;
       expect(evt.playerId, 'gp1');
+      expect(evt.orderKind, OrderKind.work);
       expect(evt.orderSummary, 'Build road');
       expect(evt.reasonCode, 'insufficient_treasury');
     });
@@ -380,6 +382,32 @@ void main() {
       expect(received[0], isA<AppResearchCompleteEvent>());
       expect(received[1], isA<AppDiplomacyChangeEvent>());
       expect(received[2], isA<AppCombatResultEvent>());
+    });
+
+    test('forwards GeneralMedalGainedEvent', () async {
+      final received = <GameToUIEvent>[];
+      appBus.on<GameToUIEvent>().listen(received.add);
+      bridge.start();
+
+      logicBus.publish(
+        const GeneralMedalGainedEvent(
+          playerId: 'gp1',
+          generalId: 'g1',
+          provinceId: 'oldWorld|cap',
+          newMedals: 2,
+          turnNumber: 4,
+        ),
+      );
+      await pumpEventQueue();
+
+      expect(received, hasLength(1));
+      expect(received.single, isA<AppGeneralMedalGainedEvent>());
+      final evt = received.single as AppGeneralMedalGainedEvent;
+      expect(evt.playerId, 'gp1');
+      expect(evt.generalId, 'g1');
+      expect(evt.provinceId, 'oldWorld|cap');
+      expect(evt.newMedals, 2);
+      expect(evt.turnNumber, 4);
     });
 
     test('dispose after stop is safe', () {

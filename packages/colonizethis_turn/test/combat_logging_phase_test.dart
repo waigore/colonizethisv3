@@ -1,9 +1,8 @@
-import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/test.dart';
 import 'package:logger/logger.dart';
 
+import 'combat_logging_phase_cases.dart';
 import 'support/combat_logging_test_support.dart';
 import 'support/turn_resolver_test_harness.dart';
 
@@ -15,76 +14,13 @@ void main() {
       'Combat phase logs conflict_detection and battle_start for moved-in attack',
       () {
         final capture = getCapture();
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            const TopologyNode(
-              id: 'P2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-        );
-
-        const ow = 'oldWorld';
-        final game = ensureMilitaryArmiesForGame(
-          Game(
-            id: 'g1',
-            worldState: WorldState(
-              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'u1',
-                    type: 'grenadiers',
-                    ownerId: 'p1',
-                    locationProvinceId: '$ow|P1',
-                    medals: 2,
-                  ),
-                  Unit(
-                    id: 'u2',
-                    type: 'peasant_levies',
-                    ownerId: 'p2',
-                    locationProvinceId: '$ow|P2',
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
-            players: [
-              Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-              Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
-            ],
-          ),
-        );
-
-        final orders = Orders(
-          armyMoveOrdersByPlayerId: {
-            'p1': [
-              ArmyMoveOrder(
-                armyId: fieldArmyIdFor('p1', '$ow|P1'),
-                destinationProvinceId: '$ow|P2',
-              ),
-            ],
-          },
-        );
-
         resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          );
+          game: combatLoggingTwoProvinceBattleGame(),
+          topology: combatLoggingTwoProvinceTopology(),
+          orders: combatLoggingAttackOrders(),
+          extractedByPlayerId: const {},
+          defaultAssignments: const [],
+        );
 
         final combat = capture.combat;
         expect(
@@ -146,77 +82,15 @@ void main() {
       'Quick Battle path logs battle_apply quickBattle not auto engagement',
       () {
         final capture = getCapture();
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-            const TopologyNode(
-              id: 'P2',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: [const TopologyEdge(id1: 'P1', id2: 'P2')],
-        );
-
-        const ow = 'oldWorld';
-        final game = ensureMilitaryArmiesForGame(
-          Game(
-            id: 'g1',
-            defaultCombatMode: CombatMode.quickBattle,
-            worldState: WorldState(
-              turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p1'),
-                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'u1',
-                    type: 'grenadiers',
-                    ownerId: 'p1',
-                    locationProvinceId: '$ow|P1',
-                    medals: 2,
-                  ),
-                  Unit(
-                    id: 'u2',
-                    type: 'peasant_levies',
-                    ownerId: 'p2',
-                    locationProvinceId: '$ow|P2',
-                  ),
-                ],
-              ),
-              newWorld: const RegionData(),
-            ),
-            players: [
-              Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-              Player(id: 'p2', displayName: 'B', isHuman: true, militaryLevel: 1),
-            ],
-          ),
-        );
-
-        final orders = Orders(
-          armyMoveOrdersByPlayerId: {
-            'p1': [
-              ArmyMoveOrder(
-                armyId: fieldArmyIdFor('p1', '$ow|P1'),
-                destinationProvinceId: '$ow|P2',
-              ),
-            ],
-          },
-        );
-
         resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: orders,
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          );
+          game: combatLoggingTwoProvinceBattleGame(
+            defaultCombatMode: CombatMode.quickBattle,
+          ),
+          topology: combatLoggingTwoProvinceTopology(),
+          orders: combatLoggingAttackOrders(),
+          extractedByPlayerId: const {},
+          defaultAssignments: const [],
+        );
 
         final combat = capture.combat;
         expect(
@@ -247,48 +121,13 @@ void main() {
       'no land battles still logs conflict_detection end with battleContexts=0',
       () {
         final capture = getCapture();
-        final topology = MapTopology(
-          nodes: [
-            const TopologyNode(
-              id: 'P1',
-              regionId: 'oldWorld',
-              type: TopologyNodeType.province,
-            ),
-          ],
-          edges: const [],
-        );
-
-        const ow = 'oldWorld';
-        final game = Game(
-          id: 'g1',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-            oldWorld: RegionData(
-              provinces: [Province(id: '$ow|P1', regionId: ow, ownerId: 'p1')],
-              units: [
-                Unit(
-                  id: 'u1',
-                  type: 'grenadiers',
-                  ownerId: 'p1',
-                  locationProvinceId: '$ow|P1',
-                  medals: 2,
-                ),
-              ],
-            ),
-            newWorld: const RegionData(),
-          ),
-          players: [
-            Player(id: 'p1', displayName: 'A', isHuman: true, militaryLevel: 3),
-          ],
-        );
-
         resolveTurnComplete(
-            game: game,
-            topology: topology,
-            orders: const Orders(),
-            extractedByPlayerId: const {},
-            defaultAssignments: const [],
-          );
+          game: combatLoggingSingleProvinceGame(),
+          topology: turnTestOwSingleProvinceTopology(),
+          orders: const Orders(),
+          extractedByPlayerId: const {},
+          defaultAssignments: const [],
+        );
 
         final combat = capture.combat;
         expect(

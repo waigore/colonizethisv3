@@ -3,6 +3,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'economy_stockpile_preview_recruit_worker_cases.dart';
 import 'support/economy_stockpile_preview_test_support.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 
@@ -13,28 +14,10 @@ import 'package:colonizethis_test/game_test_fixtures.dart';
 void main() {
   suppressLogsForTests();
 
-  Player playerWithStockpile({
-    String id = 'p1',
-    Stockpile stockpile = const Stockpile(),
-    WorkerPool workerPool = const WorkerPool(),
-    int treasury = 0,
-    Map<String, bool>? techUnlocked,
-  }) {
-    return Player(
-      id: id,
-      displayName: 'A',
-      isHuman: true,
-      stockpile: stockpile,
-      workerPool: workerPool,
-      treasury: treasury,
-      techUnlocked: techUnlocked,
-    );
-  }
-
   group('previewStockpileNetDeltaByCommodityForPlayer recruit worker '
       '(#2692 S5)', () {
     test('peasant recruit deducts fabric in pending build costs phase', () {
-      final player = playerWithStockpile(
+      final player = economyPreviewRecruitWorkerPlayer(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.fabric.id, 3),
       );
       final game = TestFixtures.singlePlayerGame(player);
@@ -72,14 +55,11 @@ void main() {
 
     test('apprentice recruit deducts paper and projects worker tier on the '
         'preview clone (treasury also debited)', () {
-      final player = playerWithStockpile(
+      final player = economyPreviewRecruitWorkerPlayer(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.paper.id, 4),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 500,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: economyPreviewRecruitApprenticeTechUnlocked,
       );
       final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
@@ -126,14 +106,11 @@ void main() {
     });
 
     test('unaffordable recruit (no peasant) contributes no preview deltas', () {
-      final player = playerWithStockpile(
+      final player = economyPreviewRecruitWorkerPlayer(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.paper.id, 10),
         workerPool: const WorkerPool(peasants: 0),
         treasury: 1000,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: economyPreviewRecruitApprenticeTechUnlocked,
       );
       final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(
@@ -175,7 +152,7 @@ void main() {
 
     test('tech-locked recruit (apprentice tier without unlocks) contributes '
         'no preview deltas', () {
-      final player = playerWithStockpile(
+      final player = economyPreviewRecruitWorkerPlayer(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.paper.id, 10),
         workerPool: const WorkerPool(peasants: 5),
         treasury: 1000,
@@ -209,12 +186,6 @@ void main() {
 
     test('recruit-worker order is applied before BuildUnitOrder in preview '
         '(matches live Build / work resolver order)', () {
-      // Only one peasant is available. Both a recruit (peasant->apprentice)
-      // and a peasant_levies military build want to consume that peasant.
-      // The live resolver runs the worker pool sub-phase first, so the
-      // recruit consumes the peasant and the build then fails affordability.
-      // The preview must agree with that ordering so the production panel
-      // does not double-count.
       const ownedProvinceId = 'oldWorld|p1';
       final player = Player(
         id: 'p1',
@@ -226,10 +197,7 @@ void main() {
             .applyDelta(CommodityCatalog.paper.id, 5),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 5000,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: economyPreviewRecruitApprenticeTechUnlocked,
       );
       final game = TestFixtures.minimalGame(
         players: [player],
@@ -266,29 +234,20 @@ void main() {
       );
       final updated = preview.playerById('p1')!;
 
-      // Recruit consumed the peasant and paid 200 treasury + 2 paper.
       expect(updated.workerPool.peasants, 0);
       expect(updated.workerPool.apprentices, 1);
       expect(updated.treasury, 5000 - 200);
       expect(updated.stockpile.quantityOf(CommodityCatalog.paper.id), 3);
-
-      // Subsequent peasant_levies build saw zero peasants and was skipped:
-      // fabric is untouched (build would have cost 1 fabric + 2000 treasury).
       expect(updated.stockpile.quantityOf(CommodityCatalog.fabric.id), 5);
     });
 
     test('preview parity: sequential apprentice + peasant recruits deduct '
         'correctly when the second cannot afford', () {
-      // Player has only 1 peasant and only 2 paper. Order list has TWO
-      // apprentice recruits; only the first should be applied in the preview.
-      final player = playerWithStockpile(
+      final player = economyPreviewRecruitWorkerPlayer(
         stockpile: const Stockpile().applyDelta(CommodityCatalog.paper.id, 2),
         workerPool: const WorkerPool(peasants: 1),
         treasury: 250,
-        techUnlocked: const {
-          kTechIdApprenticeWorkers: true,
-          kTechIdSugarRefining: true,
-        },
+        techUnlocked: economyPreviewRecruitApprenticeTechUnlocked,
       );
       final game = TestFixtures.singlePlayerGame(player);
       final currentOrders = Orders(

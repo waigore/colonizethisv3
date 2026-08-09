@@ -1,0 +1,70 @@
+{
+  "groups": {
+    "terrain": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_terrain_default",
+          "tileset_config": "assets/data/map_terrain_tilesets.json",
+          "standalone_tile_prefix": "assets/images/terrain/tile_"
+        },
+        {
+          "id": "sepia",
+          "name_l10n_key": "mapTheme_terrain_sepia",
+          "tileset_config": "assets/themes/sepia/data/map_terrain_tilesets.json",
+          "standalone_tile_prefix": "assets/themes/sepia/images/terrain/tile_"
+        }
+      ]
+    },
+    "civilian_icons": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_civilian_default",
+          "icon_prefix": "assets/icons/64/"
+        },
+        {
+          "id": "sepia",
+          "name_l10n_key": "mapTheme_civilian_sepia",
+          "icon_prefix": "assets/themes/sepia/icons/64/"
+        }
+      ]
+    },
+    "town_icons": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_town_default",
+          "icon_prefix": "assets/icons/64/"
+        }
+      ]
+    },
+    "resource_icons": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_resource_default",
+          "icon_prefix": "assets/icons/64/"
+        }
+      ]
+    },
+    "fleet_icons": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_fleet_default",
+          "icon_prefix": "assets/icons/64/"
+        }
+      ]
+    },
+    "province_label_icons": {
+      "themes": [
+        {
+          "id": "default",
+          "name_l10n_key": "mapTheme_provinceLabel_default",
+          "icon_prefix": "assets/icons/64/"
+        }
+      ]
+    }
+  }
+}

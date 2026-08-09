@@ -12,7 +12,7 @@ import 'package:path/path.dart' as p;
 /// re-declared an identical private `_pump<Thing>AtSize(...)` helper that
 /// repeated the same `setSurfaceSize` + `MaterialApp(theme:
 /// AppThemes.editorialMonocle, home: MediaQuery(...))` viewport shell. That
-/// boilerplate now lives once in `app/test/support/min_viewport_harness.dart`
+/// boilerplate now lives once in `app/test/min_viewport_harness.dart`
 /// (`pumpAtMinViewport` / `buildMinViewportApp`). This gate keeps the
 /// duplication from creeping back into that family.
 ///
@@ -21,7 +21,9 @@ import 'package:path/path.dart' as p;
 /// distinct helpers elsewhere in `app/test/` (golden capture, mockup-fidelity,
 /// widgetbook viewport stories, main-menu responsive `pumpAtSize`, etc.) that
 /// also force a surface size and/or use the editorial theme for unrelated
-/// reasons. The shared harness under `app/test/support/` is always exempt.
+/// reasons. Canonical harness modules under `app/test/` (see
+/// `SPEC/program/repo-lint.md` § Approved app test harness modules) are exempt
+/// when scanned as governed families; `app/test/support/` holds JSON fixtures only.
 ///
 /// **Violations.** Inside a governed file, any of the following is flagged
 /// because it indicates a re-introduced bespoke viewport shell instead of the
@@ -70,6 +72,12 @@ int runCheckAppTestNoDuplicateScaffolding(
         violations: violations,
       );
       parsed.unit.accept(visitor);
+      final centerHostVisitor = _Dialogs320CenterHostVisitor(
+        relativePath: relativePath,
+        lineInfo: parsed.unit.lineInfo,
+        violations: violations,
+      );
+      parsed.unit.accept(centerHostVisitor);
     }
     if (_isGovernedWidgetbookUseCaseFile(relativePath)) {
       final visitor = _WidgetbookUseCaseVisitor(
@@ -149,9 +157,9 @@ int runCheckAppTestNoDuplicateScaffolding(
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_scaffolding: no duplicated min-viewport, '
-      'widgetbook use-case, trade-screen host, units-panel Game, naval/military/'
-      'technology pump, panel MaterialApp, or debug-handler Game scaffolding '
-      'found.',
+      '320 dp Center-host dialog, widgetbook use-case, trade-screen host, '
+      'units-panel Game, naval/military/technology pump, panel MaterialApp, or '
+      'debug-handler Game scaffolding found.',
     );
     return 0;
   }
@@ -166,11 +174,16 @@ int runCheckAppTestNoDuplicateScaffolding(
   }
   logE(
     '   Min-viewport: use pumpAtMinViewport / buildMinViewportApp from '
-    'app/test/support/min_viewport_harness.dart. '
+    'app/test/min_viewport_harness.dart (re-exported from '
+    'app/test/min_viewport_harness.dart). '
+    '320 dp dialog/overlay Center-host: use pumpDialogs320At from '
+    'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart. '
     'Widgetbook: use findWidgetbookUseCase from '
-    'app/test/support/widgetbook_test_harness.dart. '
-    'Trade: use buildTradeTestGame / pumpTradeScreen* from '
-    'app/test/support/trade_screen_test_support.dart. '
+    'app/test/widgetbook_test_harness.dart. '
+    'Trade: use buildTradeTestGame from '
+    'app/test/trade_screen_test_game_builders.dart (re-exported from '
+    'trade_screen_test_support.dart) and pumpTradeScreen* from '
+    'app/test/trade_screen_test_support.dart. '
     'Units-panel: use shared factories in '
     'civilian_units_panel_test_support.dart / '
     'military_units_panel_test_support.dart / '
@@ -186,7 +199,7 @@ int runCheckAppTestNoDuplicateScaffolding(
     'buildMilitaryPanel / buildTechnologyPanel / '
     'buildAppShell (no inline MaterialApp). '
     'Debug handler suites: use buildDebugHandler* from '
-    'app/test/support/debug_handler_test_fixtures.dart '
+    'app/test/debug_handler_test_fixtures.dart '
     '(no private _gameWithCapital / _gameWithPlayer / _gameWith / _buildGame).',
   );
   return 1;
@@ -248,8 +261,7 @@ bool _isGovernedUnitsPanelPartFile(String relativePath) {
       name.startsWith('military_units_panel_army') ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
-      name == 'civilian_units_panel_row_card_r30_test.dart' ||
-      name == 'naval_units_panel_mockup_fidelity_test.dart') {
+      name == 'civilian_units_panel_row_card_r30_test.dart') {
     return true;
   }
   return false;
@@ -423,7 +435,6 @@ bool _isGovernedAppShellHostFamilyFile(String relativePath) {
       name.startsWith('naval_units_panel_part') ||
       name.startsWith('civilian_units_panel_part') ||
       name == 'civilian_units_panel_row_card_r30_test.dart' ||
-      name == 'naval_units_panel_mockup_fidelity_test.dart' ||
       name == 'game_map_narrow_detail_overlay_test.dart' ||
       name == 'military_units_panel_test.dart' ||
       name == 'military_units_panel_display_test.dart' ||
@@ -618,6 +629,77 @@ bool _isGovernedDebugHandlerFile(String relativePath) {
   final name = p.basename(relativePath);
   return name.startsWith('app_event_handler_debug_') &&
       name.endsWith('_test.dart');
+}
+
+/// Flags `Scaffold(body: Center(...))` dialog-host clones in governed 320 dp
+/// suites (Refs #4058). Canonical host is [pumpDialogs320At]. ShowDialog-launcher
+/// suites (e.g. production commodity breakdown) use `Scaffold(body: Builder)` and
+/// are not matched.
+class _Dialogs320CenterHostVisitor extends RecursiveAstVisitor<void> {
+  _Dialogs320CenterHostVisitor({
+    required this.relativePath,
+    required this.lineInfo,
+    required this.violations,
+  });
+
+  final String relativePath;
+  final LineInfo lineInfo;
+  final List<String> violations;
+
+  void _report(int offset, String detail) {
+    final line = lineInfo.getLocation(offset).lineNumber;
+    violations.add('$relativePath:$line: $detail');
+  }
+
+  bool _isCenterExpr(Expression expr) {
+    if (expr is InstanceCreationExpression) {
+      // ignore: deprecated_member_use
+      return expr.constructorName.type.name.lexeme == 'Center';
+    }
+    if (expr is MethodInvocation && expr.target == null) {
+      return expr.methodName.name == 'Center';
+    }
+    return false;
+  }
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    // ignore: deprecated_member_use
+    if (node.constructorName.type.name.lexeme == 'Scaffold') {
+      for (final arg in node.argumentList.arguments) {
+        if (arg is! NamedExpression || arg.name.label.name != 'body') {
+          continue;
+        }
+        if (_isCenterExpr(arg.expression)) {
+          _report(
+            node.offset,
+            'Scaffold(body: Center(...)) dialog-host clone; use '
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
+          );
+        }
+      }
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitMethodInvocation(MethodInvocation node) {
+    if (node.target == null && node.methodName.name == 'Scaffold') {
+      for (final arg in node.argumentList.arguments) {
+        if (arg is! NamedExpression || arg.name.label.name != 'body') {
+          continue;
+        }
+        if (_isCenterExpr(arg.expression)) {
+          _report(
+            node.methodName.offset,
+            'Scaffold(body: Center(...)) dialog-host clone; use '
+            'pumpDialogs320At from app/test/dialogs_320dp_min_viewport_support.dart',
+          );
+        }
+      }
+    }
+    super.visitMethodInvocation(node);
+  }
 }
 
 class _ScaffoldingVisitor extends RecursiveAstVisitor<void> {
@@ -866,7 +948,7 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
         'buildNavalPanel / buildCivilianPanel / buildMilitaryPanel / '
         'buildTechnologyPanel / buildAppShell / buildAppShellWithContainer / '
         'buildAppShellMaterialApp / ctRegionMapTestHarness '
-        'from app/test/support/ (or app/test/ct_region_map_test_support.dart)',
+        'from app/test/ (or app/test/ct_region_map_test_support.dart)',
       );
     }
   }
@@ -889,7 +971,7 @@ class _InlineMaterialAppVisitor extends RecursiveAstVisitor<void> {
 
 /// Flags private capital/empty Game factory reintroductions in debug-handler
 /// suites (Refs #4048). Canonical APIs live in
-/// `app/test/support/debug_handler_test_fixtures.dart`.
+/// `app/test/debug_handler_test_fixtures.dart`.
 class _DebugHandlerLocalGameFactoryVisitor extends RecursiveAstVisitor<void> {
   _DebugHandlerLocalGameFactoryVisitor({
     required this.relativePath,

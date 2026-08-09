@@ -162,6 +162,17 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
   }
 
   @override
+  String get game_nextTurnConfirm_idleCiviliansSection =>
+      'These civilians have no work order for the next turn:';
+
+  @override
+  String get game_nextTurnConfirm_noWorkOrder => 'No work order';
+
+  @override
+  String get game_nextTurnConfirm_dontShowAgain =>
+      "Don't show this warning again";
+
+  @override
   String get game_turnResolutionProcessingTitle => 'Processing Turn';
 
   @override
@@ -266,6 +277,23 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
 
   @override
   String get map_selectionMode_cancel => 'cancel';
+
+  @override
+  String get map_selectionMode_relocatePrompt =>
+      'Select a destination for your Spy, or click cancel';
+
+  @override
+  String get map_relocate_leaveIntel_title => 'Leave intel?';
+
+  @override
+  String get map_relocate_leaveIntel_message =>
+      'This is the last Spy holding intel in this province. Full intel there will fog after end of turn.';
+
+  @override
+  String get map_relocate_leaveIntel_confirm => 'Relocate anyway';
+
+  @override
+  String get map_relocate_leaveIntel_cancel => 'Stay';
 
   @override
   String get common_start => 'Start';
@@ -416,6 +444,37 @@ mixin _AppLocalizationsEnStrings1 on AppLocalizations {
     String intervening,
   ) {
     return '$aggressor against $defender. Thou speakest for $intervening.';
+  }
+
+  @override
+  String game_intervention_choiceSituation(String aggressor, String defender) {
+    return '$aggressor declared war on $defender.';
+  }
+
+  @override
+  String get game_intervention_holdReasonEmbassy => 'You hold: Embassy';
+
+  @override
+  String get game_intervention_holdReasonPurchasedLand =>
+      'You hold: purchased land';
+
+  @override
+  String get game_intervention_holdReasonEmbassyAndPurchasedLand =>
+      'You hold: Embassy and purchased land';
+
+  @override
+  String game_intervention_effectIntervene(String aggressor, String defender) {
+    return 'Effect: Enter war with $aggressor this turn. Embassy with $defender stays.';
+  }
+
+  @override
+  String game_intervention_effectDoNothing(String aggressor, String defender) {
+    return 'Effect: Stay at peace with $aggressor. Lose Embassy and all overtures with $defender. Purchased land remains until normal conquest rules apply.';
+  }
+
+  @override
+  String game_intervention_effectProtest(String aggressor, String defender) {
+    return 'Effect: Stay at peace. Relations with $aggressor worsen (−10). Embassy and purchased land with $defender stay.';
   }
 
   @override

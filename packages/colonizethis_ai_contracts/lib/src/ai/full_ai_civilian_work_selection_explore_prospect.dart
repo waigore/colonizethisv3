@@ -1,10 +1,19 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'dart:math' as math;
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_orders/colonizethis_orders.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+
+import '../constants.dart';
+import 'full_ai_civilian_work_selection_feedstock_predicates.dart';
 
 // Explorer / prospect candidate scoring and per-row selection for Full AI
 // civilian work (mineral exposure balancing, explore/prospect scoring, and the
 // best-explore / best-prospect / combined explorer-candidate pickers). Split
 // out of full_ai_civilian_work_selection.dart by concern to keep each library
-// file small; shares the parent library's private scope via `part`.
+// file small.
 
 bool _observationEligible(
   PlayerView view,
@@ -179,25 +188,6 @@ bool _tileCanHostAnyMineralInSet(
 // ahead of ordinary explore / prospect work; behaviour is normative in
 // SPEC/ai/civilian-work-planner.md.
 
-/// True when [tileKey] hosts a **mineral** resource in [feedstockIds] that
-/// [playerId] has **not** prospected — the Explorer prospect target the H8
-/// feedstock-extraction gate must route a unit onto before the Builder can
-/// improve it. Read-only and deterministic over `(game, playerId, tileKey)`.
-bool _isUnprospectedMineralFeedstockTile(
-  Game game,
-  String playerId,
-  String tileKey,
-  Set<String> feedstockIds,
-) {
-  if (feedstockIds.isEmpty) return false;
-  final resourceId = game.worldState.resourceByTileKey[tileKey];
-  if (resourceId == null || !feedstockIds.contains(resourceId)) return false;
-  if (!kMineralResourceIds.contains(resourceId)) return false;
-  final prospected =
-      game.worldState.playerProspectedTiles[playerId] ?? const <String>{};
-  return !prospected.contains(tileKey);
-}
-
 int _pScore(
   WorkOrder w,
   Game game,
@@ -223,7 +213,7 @@ int _pScore(
       : 0;
   final feedstock =
       w.target == kWorkTargetProspect &&
-          _isUnprospectedMineralFeedstockTile(
+          isUnprospectedMineralFeedstockTile(
             game,
             playerId,
             w.targetTileKey,
@@ -309,7 +299,7 @@ WorkOrder? _bestProspectRow(
   return best;
 }
 
-WorkOrder? _pickExplorerCandidateSet(
+WorkOrder? pickExplorerCandidateSet(
   List<WorkOrder> c,
   Game game,
   PlayerView view,

@@ -10,9 +10,9 @@ import 'package:colonizethis_app/core/services/app_event_handler/app_event_handl
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show kWorkTargetBuildImprovement, kWorkTargetExplore, kWorkTargetProspect;
+    show kWorkTargetBuildImprovement, kWorkTargetBuildRoad, kWorkTargetExplore, kWorkTargetProspect, kWorkTargetPurchaseLand;
 
-import 'support/civilian_units_panel_test_support.dart';
+import 'civilian_units_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -213,10 +213,15 @@ void main() {
       bool builderFirst = false,
       bool explorerOnly = false,
       bool builderOnly = false,
+      bool engineerOnly = false,
+      bool merchantOnly = false,
       String? prospectShortcutTargetTileKey,
       String? exploreShortcutTargetTileKey,
       String? buildImprovementShortcutTargetTileKey,
+      String? buildRoadShortcutTargetTileKey,
+      String? purchaseLandShortcutTargetTileKey,
       bool expectCloseBeforeUpsert = true,
+      Game Function(String id)? customGameBuilder,
     }) async {
       const human = 'h1';
       const tileKey = 'oldWorld|p1|0|0';
@@ -229,20 +234,26 @@ void main() {
       );
       await tester.pumpWidget(
         buildCivilianPanel(
-          game: buildCivilianExplorerBuilderShortcutGame(
-            id: gameId,
-            humanId: human,
-            tileKey: tileKey,
-            builderFirst: builderFirst,
-          ),
+          game: customGameBuilder != null
+              ? customGameBuilder(gameId)
+              : buildCivilianExplorerBuilderShortcutGame(
+                  id: gameId,
+                  humanId: human,
+                  tileKey: tileKey,
+                  builderFirst: builderFirst,
+                ),
           humanPlayerId: human,
           bus: bus,
           explorerOnly: explorerOnly,
           builderOnly: builderOnly,
+          engineerOnly: engineerOnly,
+          merchantOnly: merchantOnly,
           prospectShortcutTargetTileKey: prospectShortcutTargetTileKey,
           exploreShortcutTargetTileKey: exploreShortcutTargetTileKey,
           buildImprovementShortcutTargetTileKey:
               buildImprovementShortcutTargetTileKey,
+          buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
+          purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
           availableWorkTargets: {
             unitId: [workTarget],
           },
@@ -320,6 +331,48 @@ void main() {
           builderOnly: true,
           buildImprovementShortcutTargetTileKey: 'oldWorld|p1|0|0',
           expectCloseBeforeUpsert: false,
+        );
+      },
+    );
+
+    testWidgets(
+      'build-road shortcut mode filters engineers and commits',
+      (WidgetTester tester) async {
+        await expectShortcutCommit(
+          tester,
+          gameId: 'g_civ_build_road_shortcut',
+          visibleType: kUnitTypeEngineer,
+          hiddenType: kUnitTypeBuilder,
+          unitId: 'e_eng',
+          workTarget: kWorkTargetBuildRoad,
+          engineerOnly: true,
+          buildRoadShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          expectCloseBeforeUpsert: false,
+          customGameBuilder: (id) => buildCivilianEngineerBuilderShortcutGame(
+            id: id,
+            engineerFirst: true,
+          ),
+        );
+      },
+    );
+
+    testWidgets(
+      'purchase-land shortcut mode filters merchants and commits',
+      (WidgetTester tester) async {
+        await expectShortcutCommit(
+          tester,
+          gameId: 'g_civ_purchase_land_shortcut',
+          visibleType: kUnitTypeMerchant,
+          hiddenType: kUnitTypeBuilder,
+          unitId: 'm1',
+          workTarget: kWorkTargetPurchaseLand,
+          merchantOnly: true,
+          purchaseLandShortcutTargetTileKey: 'oldWorld|p1|0|0',
+          expectCloseBeforeUpsert: false,
+          customGameBuilder: (id) => buildCivilianMerchantBuilderShortcutGame(
+            id: id,
+            merchantFirst: true,
+          ),
         );
       },
     );

@@ -9,6 +9,7 @@ import 'package:colonizethis_models/colonizethis_models.dart'
         AppEvent,
         AppEventBus,
         OpenCivilianUnitsPanelEvent,
+        OpenNavalMissionMenuEvent,
         OpenNavalUnitsPanelEvent;
 
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
@@ -266,7 +267,7 @@ void main() {
     );
 
     testWidgets(
-      'tapping fleet marker emits naval units panel event',
+      'tapping fleet marker emits naval mission menu event',
       (WidgetTester tester) async {
         const markerTileKey = 'oldWorld|sMarker|0|0';
         final region = ctRegionMapMiniLandStrip(
@@ -286,7 +287,7 @@ void main() {
             ),
           ],
         );
-        final (bus, openedPanels) = _busCapture<OpenNavalUnitsPanelEvent>();
+        final (bus, openedMenus) = _busCapture<OpenNavalMissionMenuEvent>();
         await pumpCtRegionMapTest(
           tester,
           region: region,
@@ -296,13 +297,13 @@ void main() {
           bus: bus,
         );
         await _tapMap(tester);
-        expect(openedPanels, hasLength(1));
+        expect(openedMenus, hasLength(1));
         expect(
-          openedPanels.single.locationScopeKey,
+          openedMenus.single.locationScopeKey,
           equals('sea:oldWorld|fleet_scope'),
         );
-        expect(openedPanels.single.initialSelectedFleetId, equals('fleet_1'));
-        expect(openedPanels.single.tileScopeTileKey, equals(markerTileKey));
+        expect(openedMenus.single.fleetIds, equals(['fleet_1']));
+        expect(openedMenus.single.tileScopeTileKey, equals(markerTileKey));
       },
       timeout: const Timeout(Duration(seconds: 5)),
     );

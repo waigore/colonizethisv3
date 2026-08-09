@@ -7,7 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/game_map_area_state_logic_test_support.dart';
+import 'game_map_area_state_logic_test_support.dart';
 
 /// Densified in-file helpers for part2 action-state suites (Refs #4021).
 void main() {

@@ -31,11 +31,18 @@ int runCheckAppDebugHandlerGuardHelpers(
   final logI = info ?? stdout.writeln;
   final logE = err ?? stderr.writeln;
   final servicesDir = Directory(
-    p.join(repoRoot, 'app', 'lib', 'core', 'services', 'debug'),
+    p.join(
+      repoRoot,
+      'packages',
+      'colonizethis_app_debug',
+      'lib',
+      'src',
+    ),
   );
   if (!servicesDir.existsSync()) {
     logE(
-      'check_app_debug_handler_guard_helpers: app/lib/core/services/debug not found.',
+      'check_app_debug_handler_guard_helpers: '
+      'packages/colonizethis_app_debug/lib/src not found.',
     );
     return 1;
   }

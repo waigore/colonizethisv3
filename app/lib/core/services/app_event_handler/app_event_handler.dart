@@ -20,49 +20,47 @@
 // To request navigation:
 //   eventBus.emit(const NavigateToRouteEvent('/game/settings'));
 
-import 'dart:async';
-
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_app/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../features/game/widgets/shell/shell_player_context.dart';
-import '../../../features/game/widgets/shell/shell_player_guarded_body.dart';
-
-import '../../../config/routes.dart';
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
-import '../subscription_tracker.dart';
-import '../game_session_clear.dart';
-import '../../../features/game/flame/overlays/exit_confirm_dialog.dart';
-import '../../../features/game/widgets/units/civilian/civilian_units_panel.dart';
-import '../../../features/game/widgets/units/military/military_units_panel.dart';
-import '../../../features/game/widgets/units/naval/naval_units_panel.dart';
-import '../../../features/game/widgets/panels/pause_menu_panel.dart';
-import '../../../features/game/widgets/units/shared/units_panel_sheet_surface.dart';
-import '../../../features/game/widgets/units/shared/units_panel_viewport_constraints.dart';
-import '../../../providers/app_event_bus_provider.dart';
-import '../../../providers/game_service_provider.dart';
-import '../../../providers/games_provider.dart';
 import '../../../providers/turn_resolution_blocking_provider.dart';
-import '../../../widgets/ct_confirm_dialog.dart';
-
-part 'app_event_handler_navigation.dart';
-part 'app_event_handler_unit_panels.dart';
+import '../subscription_tracker.dart';
+import 'app_event_handler_navigation.dart';
+import 'app_event_handler_unit_panels.dart';
 
 typedef DialogBuilder =
     Widget Function(BuildContext context, Map<String, Object?>? params);
 
 /// Factory for a feature-layer [DialogBuilder] that needs the app navigator
-/// key. The composition root injects the factory (a const top-level tear-off)
-/// without holding the global `appNavigatorKey`; the core scope resolves it
-/// with the navigator key so feature layers thread the key explicitly instead
-/// of reaching for the global (Refs #3546). SPEC/program/app-ui-wiring.md.
+/// key.
 typedef NavigatorKeyDialogBuilder =
     DialogBuilder Function(GlobalKey<NavigatorState> navigatorKey);
+
+/// Mutable session fields shared by de-parted [AppEventHandler] libraries.
+class AppEventHandlerState {
+  AppEventHandlerState({
+    required this.bus,
+    required this.navigatorKey,
+    required this.dialogBuilders,
+    required this.panelBuilders,
+    this.onShowSnackBar,
+    this.onShowOverlay,
+    this.onDismissOverlay,
+    this.onNotify,
+  });
+
+  final AppEventBus bus;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Map<String, DialogBuilder> dialogBuilders;
+  final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
+      panelBuilders;
+  final void Function(ShowSnackBarEvent)? onShowSnackBar;
+  final void Function(ShowOverlayEvent)? onShowOverlay;
+  final void Function(DismissOverlayEvent)? onDismissOverlay;
+  final void Function(NotifyEvent)? onNotify;
+}
 
 final _log = packageLogger('event');
 
@@ -72,36 +70,31 @@ class AppEventHandler {
     required GlobalKey<NavigatorState> navigatorKey,
     Map<String, DialogBuilder>? dialogBuilders,
     Map<String, Widget Function(BuildContext, Map<String, Object?>?)>?
-    panelBuilders,
+        panelBuilders,
     void Function(ShowSnackBarEvent)? onShowSnackBar,
     void Function(ShowOverlayEvent)? onShowOverlay,
     void Function(DismissOverlayEvent)? onDismissOverlay,
     void Function(NotifyEvent)? onNotify,
-  }) : _bus = bus,
-       _navigatorKey = navigatorKey,
-       _dialogBuilders = dialogBuilders ?? const {},
-       _panelBuilders = panelBuilders ?? const {},
-       _onShowSnackBar = onShowSnackBar,
-       _onShowOverlay = onShowOverlay,
-       _onDismissOverlay = onDismissOverlay,
-       _onNotify = onNotify;
+  }) : state = AppEventHandlerState(
+         bus: bus,
+         navigatorKey: navigatorKey,
+         dialogBuilders: dialogBuilders ?? const {},
+         panelBuilders: panelBuilders ?? const {},
+         onShowSnackBar: onShowSnackBar,
+         onShowOverlay: onShowOverlay,
+         onDismissOverlay: onDismissOverlay,
+         onNotify: onNotify,
+       );
 
-  final AppEventBus _bus;
-  final GlobalKey<NavigatorState> _navigatorKey;
-  final Map<String, DialogBuilder> _dialogBuilders;
-  final Map<String, Widget Function(BuildContext, Map<String, Object?>?)>
-  _panelBuilders;
-  final void Function(ShowSnackBarEvent)? _onShowSnackBar;
-  final void Function(ShowOverlayEvent)? _onShowOverlay;
-  final void Function(DismissOverlayEvent)? _onDismissOverlay;
-  final void Function(NotifyEvent)? _onNotify;
+  /// Session fields shared by de-parted implementation libraries (Refs #4117).
+  final AppEventHandlerState state;
 
   final SubscriptionTracker _subscriptions = SubscriptionTracker();
 
   /// Start listening to the event bus. Call from StatefulWidget.initState or main.
   void bind() {
-    _subscriptions.track(_bus.on<UIActionEvent>().listen(_handleUIAction));
-    _subscriptions.track(_bus.on<UISystemEvent>().listen(_handleUISystem));
+    _subscriptions.track(state.bus.on<UIActionEvent>().listen(_handleUIAction));
+    _subscriptions.track(state.bus.on<UISystemEvent>().listen(_handleUISystem));
   }
 
   /// Stop listening. Call from StatefulWidget.dispose or when tearing down.
@@ -113,7 +106,7 @@ class AppEventHandler {
     if (event is LocateMapTileEvent) {
       return;
     }
-    final nav = _navigatorKey.currentState;
+    final nav = state.navigatorKey.currentState;
     if (_shouldBlockUiActionDuringTurnResolution(nav, event)) {
       _log.d(
         'logic: blocked ${event.runtimeType} during active turn resolution',
@@ -122,27 +115,31 @@ class AppEventHandler {
     }
     switch (event) {
       case OpenDialogEvent():
-        _openDialog(event, nav);
+        appEventHandlerOpenDialog(this, event, nav);
       case ConfirmDialogEvent():
-        _showConfirmDialog(event, nav);
+        appEventHandlerShowConfirmDialog(this, event, nav);
+      case DevelopmentDisconnectedAssignDialogEvent():
+        appEventHandlerShowDevelopmentDisconnectedAssignDialog(this, event, nav);
       case NavigateToRouteEvent():
         nav?.pushNamed(event.route, arguments: event.arguments);
       case NavigateToShellEvent():
-        _navigateToShell(nav);
+        appEventHandlerNavigateToShell(this, nav);
       case PopNavigationEvent():
         nav?.pop();
       case RequestExitToMainMenuFlowEvent():
-        _handleRequestExitToMainMenuFlow(nav);
+        appEventHandlerRequestExitToMainMenuFlow(this, nav);
       case OpenPauseMenuPanelEvent():
-        _openPauseMenuPanel(event, nav);
+        appEventHandlerOpenPauseMenuPanel(this, event, nav);
       case OpenCivilianUnitsPanelEvent():
-        _openCivilianUnitsPanel(event, nav);
+        appEventHandlerOpenCivilianUnitsPanel(this, event, nav);
       case OpenMilitaryUnitsPanelEvent():
-        _openMilitaryUnitsPanel(event, nav);
+        appEventHandlerOpenMilitaryUnitsPanel(this, event, nav);
       case OpenNavalUnitsPanelEvent():
-        _openNavalUnitsPanel(event, nav);
+        appEventHandlerOpenNavalUnitsPanel(this, event, nav);
+      case OpenNavalMissionMenuEvent():
+        appEventHandlerOpenNavalMissionMenu(this, event, nav);
       case OpenPanelEvent():
-        _openPanel(event, nav);
+        appEventHandlerOpenPanel(this, event, nav);
       case ClosePanelEvent():
         nav?.maybePop();
       case _:
@@ -153,13 +150,13 @@ class AppEventHandler {
   void _handleUISystem(UISystemEvent event) {
     switch (event) {
       case ShowSnackBarEvent():
-        _onShowSnackBar?.call(event);
+        state.onShowSnackBar?.call(event);
       case ShowOverlayEvent():
-        _onShowOverlay?.call(event);
+        state.onShowOverlay?.call(event);
       case DismissOverlayEvent():
-        _onDismissOverlay?.call(event);
+        state.onDismissOverlay?.call(event);
       case NotifyEvent():
-        _onNotify?.call(event);
+        state.onNotify?.call(event);
     }
   }
 

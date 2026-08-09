@@ -1,9 +1,11 @@
-part of 'game_side_menu.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 
 /// Tappable scrim behind [GameSideMenu] when it is open.
 ///
-/// Lives in the same library as [GameSideMenu] so the side menu and its
-/// scrim share a single visual contract (SPEC:
+/// Lives alongside [GameSideMenu] so the side menu and its scrim share a
+/// single visual contract (SPEC:
 /// `SPEC/ui/in-game-shell-narrow.md` § Modal behaviour). Resolves the
 /// scrim colour from [EditorialMonoclePalette.dialogScrim] — the canonical
 /// `--dialog-scrim` token (`oklch(8% 0.01 30 / 0.70)`) shared with every

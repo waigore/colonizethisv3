@@ -82,136 +82,6 @@ const String _gpOwn = 'gp_own';
 const String _gpStronger = 'gp_stronger';
 const String _minor1 = 'minor1';
 
-/// Builds a minimal `Game` where:
-///
-///   * `gp_own` owns [ownProvinces] OW provinces plus a home province.
-///   * If [enemyGpId] is non-null, that GP owns [enemyOwProvinces] OW
-///     provinces plus a home province (so the GP exists via
-///     `game.playerById` and the lead-table arms of
-///     `criticalWeakGpSurvivalPeaceTargets` can compute a deterministic
-///     lead).
-///   * If [minorId] is non-null, that minor owns one OW province (so
-///     it routes through the
-///     `stalledZeroRegimentAllFactionPeaceTargets` minor/tribe arm
-///     when at war).
-///   * `gp_own`'s home army carries [ownRegimentCount] regiments;
-///     each enemy GP's home army carries [enemyRegimentCount]
-///     regiments. `0` exercises the zero-regiment guard arms.
-///   * Diplomacy: `gp_own` is at war with every faction in
-///     [atWarFactionIds].
-Game _survivalGame({
-  required int ownProvinces,
-  required int ownRegimentCount,
-  String? enemyGpId,
-  int enemyOwProvinces = 0,
-  int enemyRegimentCount = 0,
-  String? minorId,
-  List<String> atWarFactionIds = const [],
-}) {
-  final provinces = <Province>[
-    Province(
-      id: 'oldWorld|${_gpOwn}_home',
-      regionId: 'oldWorld',
-      ownerId: _gpOwn,
-    ),
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    if (enemyGpId != null) ...[
-      Province(
-        id: 'oldWorld|${enemyGpId}_home',
-        regionId: 'oldWorld',
-        ownerId: enemyGpId,
-      ),
-      for (var i = 1; i <= enemyOwProvinces; i++)
-        Province(
-          id: 'oldWorld|${enemyGpId}_$i',
-          regionId: 'oldWorld',
-          ownerId: enemyGpId,
-        ),
-    ],
-    if (minorId != null)
-      Province(
-        id: 'oldWorld|${minorId}_home',
-        regionId: 'oldWorld',
-        ownerId: minorId,
-      ),
-  ];
-
-  final armies = <Army>[
-    Army(
-      id: homeArmyIdFor(_gpOwn),
-      ownerId: _gpOwn,
-      regionId: 'oldWorld',
-      stationedProvinceId: 'oldWorld|${_gpOwn}_home',
-      regimentUnitIds: List<String>.unmodifiable(
-        List<String>.generate(ownRegimentCount, (i) => 'u_${_gpOwn}_${i + 1}'),
-      ),
-      isHomeArmy: true,
-    ),
-    if (enemyGpId != null)
-      Army(
-        id: homeArmyIdFor(enemyGpId),
-        ownerId: enemyGpId,
-        regionId: 'oldWorld',
-        stationedProvinceId: 'oldWorld|${enemyGpId}_home',
-        regimentUnitIds: List<String>.unmodifiable(
-          List<String>.generate(
-            enemyRegimentCount,
-            (i) => 'u_${enemyGpId}_${i + 1}',
-          ),
-        ),
-        isHomeArmy: true,
-      ),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    if (enemyGpId != null)
-      Player(
-        id: enemyGpId,
-        displayName: enemyGpId.toUpperCase(),
-        isHuman: false,
-      ),
-  ];
-
-  final minorNations = <MinorNation>[
-    if (minorId != null) MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarFactionIds)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-survival-aggregator-canonical-'
-        'own${ownProvinces}_${ownRegimentCount}_'
-        'enemy${enemyGpId ?? 'none'}_${enemyOwProvinces}_${enemyRegimentCount}_'
-        'minor${minorId ?? 'none'}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 80),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-      armies: armies,
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: const [],
-    diplomacyRelations: relations,
-  );
-}
-
-
 void main() {
   group('survivalGreatPowerPeaceTargets — canonical home', () {
     test('pristine state — every sub-decider short-circuits to empty', () {
@@ -219,7 +89,7 @@ void main() {
       // zero-regiment arms cannot engage; no at-war factions so the
       // critical-survival and mutual-stalemate arms also cannot
       // engage. The aggregator must therefore yield nothing.
-      final game = _survivalGame(ownProvinces: 9, ownRegimentCount: 2);
+      final game = buildSurvivalGreatPowerPeaceGame(ownProvinces: 9, ownRegimentCount: 2);
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: kStalledOldWorldProvinceThreshold + 1,
         atWarWith: const [],
@@ -246,7 +116,7 @@ void main() {
       // sides carry 1 regiment so the zero-regiment arms must not
       // engage; no minors / tribes at war so the
       // stalledZeroRegimentAllFactionPeaceTargets arm is also empty.
-      final game = _survivalGame(
+      final game = buildSurvivalGreatPowerPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold - 1,
         ownRegimentCount: 1,
         enemyGpId: _gpStronger,
@@ -281,7 +151,7 @@ void main() {
       // nor any of the GP zero-regiment / mutual-exhausted arms can
       // fire. stalledZeroRegimentAllFactionPeaceTargets is the only
       // arm that yields, returning [_minor1].
-      final game = _survivalGame(
+      final game = buildSurvivalGreatPowerPeaceGame(
         ownProvinces: 5,
         ownRegimentCount: 0,
         minorId: _minor1,
@@ -319,7 +189,7 @@ void main() {
       // is strictly less than minor1's index; this pins the yield
       // ordering through the LinkedHashSet insertion contract that
       // collectStalledGreatPowerPeaceTargets relies on.
-      final game = _survivalGame(
+      final game = buildSurvivalGreatPowerPeaceGame(
         ownProvinces: kFewOldWorldProvincesDefendThreshold - 1,
         ownRegimentCount: 0,
         enemyGpId: _gpStronger,
@@ -364,7 +234,7 @@ void main() {
     test(
       'Must-have #7 determinism — identical inputs yield identical lists',
       () {
-        final game = _survivalGame(
+        final game = buildSurvivalGreatPowerPeaceGame(
           ownProvinces: kFewOldWorldProvincesDefendThreshold - 1,
           ownRegimentCount: 0,
           enemyGpId: _gpStronger,

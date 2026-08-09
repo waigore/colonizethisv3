@@ -17,7 +17,7 @@ import 'package:hive/hive.dart';
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/providers/games_box_provider.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 TurnNewsDigest _emptyDigestForTurn(int resolvedTurn) =>
     TurnNewsDigest(resolvedTurnNumber: resolvedTurn, lines: const []);

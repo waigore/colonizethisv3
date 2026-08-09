@@ -1,4 +1,8 @@
-part of '../world_state.dart';
+/// Read-only focused accessors over [WorldState].
+///
+/// First-class library (Refs #4068 Slice C).
+
+import '../world_state.dart';
 
 /// Read-only focused accessors over [WorldState]'s internal maps so callers
 /// avoid drilling the raw collections directly (#3543 §4). Extracted into a

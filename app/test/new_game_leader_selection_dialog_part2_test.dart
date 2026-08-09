@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_dropdown.dart';
 
-import 'support/new_game_leader_selection_dialog_test_support.dart';
+import 'new_game_leader_selection_dialog_test_support.dart';
 
 const Key _kSlotPickersStackedColumnKey = ValueKey<String>(
   'newGameLeaderDialogSlotPickersColumn',

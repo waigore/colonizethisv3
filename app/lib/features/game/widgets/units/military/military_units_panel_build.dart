@@ -1,6 +1,22 @@
-part of 'military_units_panel.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../panels/tree_builders/military_tree_builder.dart';
+import '../shared/base_units_panel.dart';
+import '../shared/location_section_header.dart';
+import '../shared/region_labels.dart';
+import '../shared/region_section_header.dart';
+import 'military_units_panel.dart';
+import 'military_units_panel_dialogs.dart';
+import 'military_generals_strip.dart';
+import 'military_units_panel_support_army_tile.dart';
+import 'military_units_panel_support_detail_rows.dart';
+
+mixin MilitaryUnitsPanelBuild
+    on BaseUnitsPanelState<MilitaryUnitsPanel>, MilitaryUnitsPanelDialogs {
   Widget buildMilitaryUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
     final groups = buildMilitaryGroups(widget.game, widget.humanPlayerId);
@@ -16,44 +32,49 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
     return buildUnitsPanel(
       title: l10n.military_units_title,
       showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
-      selectableIds: _armyIds(flat),
+      selectableIds: armyIds(flat),
       selectAllTooltip: l10n.military_units_selectAllArmies,
       deselectAllTooltip: l10n.military_units_deselectAllArmies,
       combineLabel: l10n.common_combine,
       canCombine: canCombine,
-      onSelectAll: () => selectAllOrClear(_armyIds(flat)),
-      onCombine: () => _performCombine(flat),
+      onSelectAll: () => selectAllOrClear(armyIds(flat)),
+      onCombine: () => performCombine(flat),
       trailingActions: [
         CtActionTextButton(
           primary: true,
-          onPressed: readOnly ? null : _openTrainDialog,
+          onPressed: readOnly ? null : openTrainDialog,
           enabled: !readOnly,
           label: l10n.common_train,
         ),
       ],
       hasContent: hasAny,
-      listChildren: _buildListChildren(groups, l10n),
+      listChildren: militaryListChildren(groups, l10n),
       emptyMessage: l10n.military_units_empty,
     );
   }
 
-  List<Widget> _buildListChildren(
+  List<Widget> militaryListChildren(
     List<RegionMilitaryGroup> groups,
     AppLocalizations l10n,
   ) {
     return [
+      if (!widget.readOnly && groups.isNotEmpty)
+        MilitaryGeneralsStrip(
+          game: widget.game,
+          humanPlayerId: widget.humanPlayerId,
+        ),
       for (final group in groups) ...[
         RegionSectionHeader(
           label: regionDisplayLabel(group.regionKey),
           variant: RegionHeaderVariant.leftBar,
         ),
-        ..._buildProvinceLocationChildren(group, l10n),
-        ..._buildSeaLocationChildren(group, l10n),
+        ...buildProvinceLocationChildren(group, l10n),
+        ...buildSeaLocationChildren(group, l10n),
       ],
     ];
   }
 
-  List<Widget> _buildProvinceLocationChildren(
+  List<Widget> buildProvinceLocationChildren(
     RegionMilitaryGroup group,
     AppLocalizations l10n,
   ) {
@@ -63,13 +84,13 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
           label: loc.displayLabel,
           regionLabel: regionDisplayLabel(loc.regionId),
         ),
-        for (final block in loc.armies) _buildArmyTile(block, l10n),
+        for (final block in loc.armies) buildArmyTile(block, l10n),
       ],
     ];
   }
 
-  Widget _buildArmyTile(ArmyBlock block, AppLocalizations l10n) {
-    return _ArmyExpansionTile(
+  Widget buildArmyTile(ArmyBlock block, AppLocalizations l10n) {
+    return MilitaryArmyExpansionTile(
       block: block,
       l10n: l10n,
       stationedProvinceDisplayLabel: armyStationedProvinceDisplayLabel(
@@ -85,30 +106,30 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
       isSelectedForCombine: isSelected(block.army.id),
       combineSelectionEnabled: !widget.readOnly,
       onCombineSelectionToggle: () => toggleSelection(block.army.id),
-      onLocate: _armyLocateCallback(block),
+      onLocate: armyLocateCallback(block),
       onSplit: widget.readOnly || block.army.regimentUnitIds.length < 2
           ? null
-          : () => _openSplitDialog(block),
+          : () => openSplitDialog(block),
       onMove:
           widget.readOnly ||
               block.army.isHomeArmy ||
               block.army.regimentUnitIds.isEmpty
           ? null
-          : () => _openMoveDialog(block),
+          : () => openMoveDialog(block),
     );
   }
 
-  VoidCallback? _armyLocateCallback(ArmyBlock block) {
+  VoidCallback? armyLocateCallback(ArmyBlock block) {
     if (block.rows.isEmpty || block.rows.first.tileKey == null) {
       return null;
     }
-    return () => _emitLocateMapTile(
+    return () => emitLocateMapTile(
       tileKey: block.rows.first.tileKey!,
       regionId: block.regionKey,
     );
   }
 
-  List<Widget> _buildSeaLocationChildren(
+  List<Widget> buildSeaLocationChildren(
     RegionMilitaryGroup group,
     AppLocalizations l10n,
   ) {
@@ -119,12 +140,12 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
           regionLabel: regionDisplayLabel(loc.regionId),
         ),
         for (final row in loc.rows)
-          _ShipRow(
+          MilitaryShipDetailRow(
             row: row,
             l10n: l10n,
             onTap: row.tileKey == null
                 ? null
-                : () => _emitLocateMapTile(
+                : () => emitLocateMapTile(
                     tileKey: row.tileKey!,
                     regionId: row.regionId,
                   ),
@@ -133,7 +154,7 @@ extension _MilitaryUnitsPanelBuild on _MilitaryUnitsPanelState {
     ];
   }
 
-  void _emitLocateMapTile({required String tileKey, required String regionId}) {
+  void emitLocateMapTile({required String tileKey, required String regionId}) {
     widget.bus.closePanelThenEmit(
       LocateMapTileEvent(tileKey: tileKey, regionId: regionId),
     );

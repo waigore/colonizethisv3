@@ -1,5 +1,5 @@
 // Forbid private dark-token / editorial-monocle chrome expect helpers outside
-// `app/test/support/` (Refs #4013).
+// `app/test/editorial_monocle_dark_token_assertions.dart` (Refs #4013).
 import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
@@ -15,7 +15,7 @@ final RegExp _forbiddenHelperName = RegExp(
 bool _isForbiddenHelperName(String name) =>
     _forbiddenHelperName.hasMatch(name);
 
-/// Scans `app/test/**/*.dart` (excluding `app/test/support/`) and fails when
+/// Scans `app/test/**/*.dart` (excluding `editorial_monocle_dark_token_assertions.dart`) and fails when
 /// any top-level function is named `_expectMuted*` or `_expectEditorialMonocle*`.
 int runCheckAppTestNoDuplicateDarkTokenAsserts(
   String repoRoot, {
@@ -45,7 +45,7 @@ int runCheckAppTestNoDuplicateDarkTokenAsserts(
     final relativePath = p
         .relative(entity.path, from: repoRoot)
         .replaceAll('\\', '/');
-    if (relativePath.startsWith('app/test/support/')) {
+    if (relativePath == 'app/test/editorial_monocle_dark_token_assertions.dart') {
       continue;
     }
     final content = entity.readAsStringSync();
@@ -66,7 +66,7 @@ int runCheckAppTestNoDuplicateDarkTokenAsserts(
   if (violations.isEmpty) {
     logI(
       'check_app_test_no_duplicate_dark_token_asserts: no private '
-      '_expectMuted* / _expectEditorialMonocle* helpers outside support/.',
+      '_expectMuted* / _expectEditorialMonocle* helpers outside editorial_monocle_dark_token_assertions.dart.',
     );
     return 0;
   }
@@ -100,7 +100,7 @@ class _DarkTokenAssertVisitor extends RecursiveAstVisitor<void> {
       final line = lineInfo.getLocation(node.offset).lineNumber;
       violations.add(
         '$relativePath:$line declares $name — use shared helpers in '
-        'app/test/support/editorial_monocle_dark_token_assertions.dart',
+        'app/test/editorial_monocle_dark_token_assertions.dart',
       );
     }
     super.visitFunctionDeclaration(node);

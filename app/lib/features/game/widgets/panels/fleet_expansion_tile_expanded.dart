@@ -1,10 +1,14 @@
-part of 'fleet_expansion_tile.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-/// `HOME` chip rendered next to the Home Fleet name (Refs #2866 S8 R26;
-/// mockup `.home-tag`). Tokens resolved from
-/// [EditorialMonoclePalette] (`--accent-dim`, `--bg-deep`).
-class _HomeFleetChip extends StatelessWidget {
-  const _HomeFleetChip({required this.label});
+import '../../../../widgets/ct_spacing.dart';
+import 'tree_builders/naval_tree_builder.dart';
+
+/// `HOME` chip rendered next to the Home Fleet name (Refs #2866 S8 R26).
+class HomeFleetChip extends StatelessWidget {
+  const HomeFleetChip({super.key, required this.label});
 
   final String label;
 
@@ -31,22 +35,16 @@ class _HomeFleetChip extends StatelessWidget {
   }
 }
 
-/// Expanded composition view for a fleet row (Refs #2866 S8 R29; mockup
-/// `.fleet-row .f-expanded`).
-///
-/// Renders a single `Table` with one row per ship type, an optional
-/// Home-Fleet cargo line, and a single-line composition summary
-/// (`Total ships: X · Warships: Y · Merchants: Z`) plus the retained
-/// `Strength: V` line — replacing the previous per-stat `ListTile` stack.
-class _FleetExpandedContent extends StatelessWidget {
-  const _FleetExpandedContent({required this.row, required this.l10n});
+/// Expanded composition view for a fleet row (Refs #2866 S8 R29).
+class FleetExpandedContent extends StatelessWidget {
+  const FleetExpandedContent({super.key, required this.row, required this.l10n});
 
   final FleetRow row;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final styles = _ExpandedStyles.create();
+    final styles = FleetExpandedStyles.create();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -75,7 +73,7 @@ class _FleetExpandedContent extends StatelessWidget {
     );
   }
 
-  Widget _buildShipsBlock(_ExpandedStyles styles) {
+  Widget _buildShipsBlock(FleetExpandedStyles styles) {
     final ships = row.shipCountsByType;
     if (ships.isEmpty) {
       return Text(
@@ -140,8 +138,8 @@ class _FleetExpandedContent extends StatelessWidget {
   }
 }
 
-class _ExpandedStyles {
-  const _ExpandedStyles({
+class FleetExpandedStyles {
+  const FleetExpandedStyles({
     required this.label,
     required this.count,
     required this.role,
@@ -149,9 +147,9 @@ class _ExpandedStyles {
     required this.stats,
   });
 
-  factory _ExpandedStyles.create() {
+  factory FleetExpandedStyles.create() {
     const mono = 'monospace';
-    return _ExpandedStyles(
+    return FleetExpandedStyles(
       label: TextStyle(
         fontFamily: mono,
         fontSize: 9,

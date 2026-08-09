@@ -161,6 +161,15 @@ abstract class AppLocalizations {
   /// Body text of the end-turn confirmation dialog.
   String game_nextTurnConfirm_body(int turn);
 
+  /// Section header in the end-turn warning variant listing idle civilians.
+  String get game_nextTurnConfirm_idleCiviliansSection;
+
+  /// Per-row label in the end-turn idle-civilian warning list.
+  String get game_nextTurnConfirm_noWorkOrder;
+
+  /// Toggle label in the end-turn idle-civilian warning variant.
+  String get game_nextTurnConfirm_dontShowAgain;
+
   /// Title of the modal shown while next-turn resolution runs.
   String get game_turnResolutionProcessingTitle;
 
@@ -267,6 +276,21 @@ abstract class AppLocalizations {
 
   /// Lowercase inline cancel action label in the map work-target selection prompt overlay.
   String get map_selectionMode_cancel;
+
+  /// Prompt overlay when choosing a Spy relocate destination on the map.
+  String get map_selectionMode_relocatePrompt;
+
+  /// Confirm dialog title when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_title;
+
+  /// Confirm dialog body when relocating the last Spy out of a foreign province.
+  String get map_relocate_leaveIntel_message;
+
+  /// Confirm button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_confirm;
+
+  /// Cancel button on leave-intel Spy relocate warning.
+  String get map_relocate_leaveIntel_cancel;
 
   /// Generic Start button label used when beginning a flow.
   String get common_start;
@@ -395,6 +419,27 @@ abstract class AppLocalizations {
     String defender,
     String intervening,
   );
+
+  /// Plain situation strip on the intervention choice picker (Refs #4267).
+  String game_intervention_choiceSituation(String aggressor, String defender);
+
+  /// Muted hold-reason line when the intervening GP has an Embassy with the defender.
+  String get game_intervention_holdReasonEmbassy;
+
+  /// Muted hold-reason line when the intervening GP owns purchased land with the defender.
+  String get game_intervention_holdReasonPurchasedLand;
+
+  /// Muted hold-reason line when both Embassy and purchased land apply.
+  String get game_intervention_holdReasonEmbassyAndPurchasedLand;
+
+  /// First-order effect for Intervene on the choice picker.
+  String game_intervention_effectIntervene(String aggressor, String defender);
+
+  /// First-order effect for Do naught on the choice picker.
+  String game_intervention_effectDoNothing(String aggressor, String defender);
+
+  /// First-order effect for Diplomatic protest on the choice picker.
+  String game_intervention_effectProtest(String aggressor, String defender);
 
   /// Button: military intervention on behalf of the defender.
   String get game_intervention_intervene;
@@ -744,6 +789,48 @@ abstract class AppLocalizations {
   /// Victory overlay button label.
   String get victory_viewFinalState;
 
+  /// Victory panel: Old World province count win condition.
+  String victory_conditionsMilitaryThreshold(int threshold);
+
+  /// Victory panel: calendar campaign end condition copy.
+  String get victory_conditionsCalendarEnd;
+
+  /// Victory panel: infinite mode condition note.
+  String get victory_conditionsInfiniteMode;
+
+  /// Victory panel end banner when a province-count winner is set.
+  String victory_endProvinceCountWin(String winner, int turn);
+
+  /// Victory panel end banner when calendar halt names a declared winner.
+  String victory_endCalendarDeclaredWinner(String winner);
+
+  /// Victory panel end banner when calendar halt ties declared winner.
+  String get victory_endCalendarNoWinner;
+
+  /// Victory panel expanded row: calendar-end comparison intro.
+  String get victory_powerBreakdownIntro;
+
+  /// Victory panel expanded row: province component total.
+  String victory_powerBreakdownProvinces(int count);
+
+  /// Victory panel expanded row: regiment component total.
+  String victory_powerBreakdownRegiments(int strength);
+
+  /// Victory panel expanded row: ship component total.
+  String victory_powerBreakdownShips(int count);
+
+  /// Victory panel expanded row: combined calendar-end total.
+  String victory_powerBreakdownTotal(int total);
+
+  /// Victory standings row: Old World province count suffix.
+  String victory_standingOwCount(int count);
+
+  /// Victory standings row: progress label toward military OW threshold.
+  String victory_standingOwProgress(int count, int threshold);
+
+  /// Victory standings section helper linking colours to minimap selection.
+  String get victory_standingsHelper;
+
   /// Header label for player-owned province destinations in move army dialog.
   String get moveArmy_groupYourProvinces;
 
@@ -775,6 +862,36 @@ abstract class AppLocalizations {
 
   /// Field label for destination province picker in move army dialog.
   String get moveArmy_destinationProvince;
+
+  /// Own force size line on move army dialog body (#4216).
+  String moveArmy_yourArmyRegiments(int count);
+
+  /// Draft invasion count vs generals on invasion destinations (#4233).
+  String moveArmy_invasionsThisTurn(int invasions, int generals);
+
+  /// Soft warning when staged invasions exceed general count (#4233).
+  String get moveArmy_invasionOverGeneralCapacityWarning;
+
+  /// Combat-capable defender total on invasion row when full military intel (#4216).
+  String moveArmy_defendersRegiments(int count);
+
+  /// Invasion row cue when full intel shows zero combat-capable defenders (#4216).
+  String get moveArmy_unopposedCapture;
+
+  /// Invasion row cue when full military intel is unavailable (#4216).
+  String get moveArmy_defendersUnknown;
+
+  /// Fort level 0 label on invasion row under full military intel (#4216).
+  String get moveArmy_fortOpenField;
+
+  /// Fort level 1 siege label on invasion row (#4216).
+  String get moveArmy_fortWoodSiege;
+
+  /// Fort level 2 siege label on invasion row (#4216).
+  String get moveArmy_fortStoneSiege;
+
+  /// Fort level 3 siege label on invasion row (#4216).
+  String get moveArmy_fortModernSiege;
 
   /// Move fleet dialog title.
   String moveFleet_title(String fleetLabel);
@@ -811,6 +928,24 @@ abstract class AppLocalizations {
 
   /// Empty message in military units panel.
   String get military_units_empty;
+
+  /// Generals roster count vs cap on Military Units panel (#4233).
+  String military_units_generalsCount(int count, int cap);
+
+  /// Per-general medal line on Military Units generals strip (#4233).
+  String military_units_generalMedals(int index, int medals);
+
+  /// Plain-language generals summary on Military Units panel (#4233).
+  String get military_units_generalsPlainSummary;
+
+  /// Details gloss for general medals on Military Units panel (#4233).
+  String get military_units_generalsMedalGloss;
+
+  /// Toggle to show general medal gloss on Military Units panel (#4233).
+  String get military_units_generalsDetails;
+
+  /// Collapse general medal gloss on Military Units panel (#4233).
+  String get military_units_generalsHideDetails;
 
   /// Label for home army.
   String get military_units_homeArmy;
@@ -872,6 +1007,51 @@ abstract class AppLocalizations {
 
   /// Fleet mission label.
   String naval_units_mission(String mission);
+
+  /// Fleet row and menu label for assigning a naval mission.
+  String get naval_mission_assign;
+
+  /// Naval mission context menu title.
+  String naval_mission_menuTitle(String fleet);
+
+  /// Title when multiple fleets share a map marker.
+  String get naval_mission_selectFleetTitle;
+
+  /// Removes staged naval mission draft for fleet.
+  String get naval_mission_cancelPending;
+
+  /// Draft naval mission line without province target.
+  String naval_mission_pendingLine(String mission);
+
+  /// Draft naval mission line with province target.
+  String naval_mission_pendingLineWithTarget(String mission, String target);
+
+  /// Blockade/beachhead target picker title.
+  String naval_mission_selectTargetTitle(String mission);
+
+  /// Empty naval mission menu when base gates fail.
+  String get naval_mission_noMissionsAvailable;
+
+  /// Empty target picker for blockade/beachhead.
+  String get naval_mission_noTargetsAvailable;
+
+  /// Plain-language effect line for Patrol mission row (DLG31001).
+  String get naval_mission_effect_patrol;
+
+  /// Plain-language effect line for Defend mission row (DLG31001).
+  String get naval_mission_effect_defend;
+
+  /// Plain-language effect line for Blockade mission row (DLG31001).
+  String get naval_mission_effect_blockade;
+
+  /// Plain-language effect line for Beachhead mission row (DLG31001).
+  String get naval_mission_effect_beachhead;
+
+  /// Mission consequence caption on Blockade target picker (DLG31002).
+  String get naval_mission_targetCaption_blockade;
+
+  /// Mission consequence caption on Beachhead target picker (DLG31002).
+  String get naval_mission_targetCaption_beachhead;
 
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
@@ -1115,6 +1295,57 @@ abstract class AppLocalizations {
   /// Assign action button in civilian units panel.
   String get civilian_units_assign;
 
+  /// Relocate action for idle Spy units in the civilian units panel.
+  String get civilian_units_relocate;
+
+  /// Spy status when idle in a foreign province holding presence intel.
+  String civilian_units_spyStatus_holdingIntel(String province);
+
+  /// Spy status when assigned or working counter-spy.
+  String get civilian_units_spyStatus_counterEspionage;
+
+  /// Spy status when idle on owned land with no mission.
+  String get civilian_units_spyStatus_reserve;
+
+  /// Pending Spy move order destination on the civilian units panel.
+  String civilian_units_pendingRelocate(String location);
+
+  /// Section header for purchased-land scopes in the Development panel.
+  String get development_purchasedLand;
+
+  /// Empty improvable row under a province scope in the Development panel.
+  String get development_noImprovableResources;
+
+  /// Overview warning when assign-time material costs cannot be met.
+  String get development_materialsShortageForAssign;
+
+  /// Overview idle civilian counts in the Development panel.
+  String development_idleCivilians(int builders, int engineers);
+
+  /// Overview section heading for Builders/Engineers with pending or in-progress work.
+  String get development_assignedCiviliansHeading;
+
+  /// Fallback when Development panel map data cannot be loaded.
+  String get development_mapDataUnavailable;
+
+  /// Disconnected-assign warn dialog title in the Development panel.
+  String get development_disconnectedTitle;
+
+  /// Disconnected-assign warn dialog body in the Development panel.
+  String get development_disconnectedBody;
+
+  /// Road-first action in the Development disconnected-assign dialog.
+  String get development_roadFirst;
+
+  /// Improve-anyway action in the Development disconnected-assign dialog.
+  String get development_improveAnyway;
+
+  /// Show-on-map action for an improvable commodity row in the Development panel.
+  String get development_show;
+
+  /// Improvable commodity count label in the Development panel.
+  String development_improvableCount(int count, String name);
+
   /// Production commodity breakdown dialog title.
   String get production_breakdown_title;
 
@@ -1141,6 +1372,139 @@ abstract class AppLocalizations {
 
   /// Button label to open production commodity breakdown.
   String get production_breakdown;
+
+  /// Production Allocation header button to open Industry Counsel.
+  String get production_counsel;
+
+  /// Accessibility label for allocation row counsel star.
+  String production_industryCounselStarSemantic(String brief);
+
+  /// Counsel screen Industry tab label.
+  String get industryCounsel_tabIndustry;
+
+  /// Counsel Industry tab empty state.
+  String get industryCounsel_empty;
+
+  /// Fallback title for produce counsel card.
+  String get industryCounsel_title_produce;
+
+  /// Title for produce recipe counsel card.
+  String industryCounsel_title_produceRecipe(String commodity);
+
+  /// Fallback title for train counsel card.
+  String get industryCounsel_title_train;
+
+  /// Title for train worker counsel card.
+  String industryCounsel_title_trainWorker(String tier);
+
+  /// Fallback title for feedstock counsel card.
+  String get industryCounsel_title_feedstock;
+
+  /// Title for feedstock unblock counsel card.
+  String industryCounsel_title_unblockFeedstock(String commodity);
+
+  /// Brief industry counsel reason for output shortage.
+  String get industryCounsel_reason_outputShortage_brief;
+
+  /// Detail industry counsel reason for output shortage.
+  String get industryCounsel_reason_outputShortage_detail;
+
+  /// Brief industry counsel reason for chain/luxury value.
+  String get industryCounsel_reason_chainLuxury_brief;
+
+  /// Detail industry counsel reason for chain/luxury value.
+  String get industryCounsel_reason_chainLuxury_detail;
+
+  /// Brief industry counsel reason for labour deficit.
+  String get industryCounsel_reason_labourDeficit_brief;
+
+  /// Detail industry counsel reason for labour deficit.
+  String get industryCounsel_reason_labourDeficit_detail;
+
+  /// Brief industry counsel reason for luxury shortage.
+  String get industryCounsel_reason_luxuryShortage_brief;
+
+  /// Detail industry counsel reason for luxury shortage.
+  String get industryCounsel_reason_luxuryShortage_detail;
+
+  /// Brief industry counsel reason for feedstock blocked.
+  String get industryCounsel_reason_feedstockBlocked_brief;
+
+  /// Detail industry counsel reason for feedstock blocked.
+  String get industryCounsel_reason_feedstockBlocked_detail;
+
+  /// Primary action on produce counsel cards.
+  String get industryCounsel_action_applyProduceAllocation;
+
+  /// Primary action on train counsel cards.
+  String get industryCounsel_action_agreeTrain;
+
+  /// Primary action on feedstock unblock counsel cards.
+  String get industryCounsel_action_openDevelopment;
+
+  /// Shown when train Agree fails re-validation.
+  String get industryCounsel_trainAgreeFailed;
+
+  /// Counsel screen Trade tab label.
+  String get tradeCounsel_tabTrade;
+
+  /// Counsel Trade tab empty state.
+  String get tradeCounsel_empty;
+
+  /// Replaces all staged trade orders with the counsel book.
+  String get tradeCounsel_action_applyBook;
+
+  /// Stages one counsel trade line.
+  String get tradeCounsel_action_agree;
+
+  /// Shown when trade counsel Apply/Agree fails validation.
+  String get tradeCounsel_applyFailed;
+
+  /// Trade counsel card title for a bid line.
+  String tradeCounsel_title_bid(String commodity, int quantity);
+
+  /// Trade counsel card title for an offer line.
+  String tradeCounsel_title_offer(String commodity, int quantity);
+
+  /// Brief trade counsel reason for surplus offers.
+  String get tradeCounsel_reason_surplusAboveReserve_brief;
+
+  /// Brief trade counsel reason for deficit bids.
+  String get tradeCounsel_reason_industryShortage_brief;
+
+  /// Brief trade counsel reason for F10 speculative bids.
+  String get tradeCounsel_reason_speculativeInventory_brief;
+
+  /// Trade Market header button opening Trade Counsel.
+  String get tradeMarket_counsel;
+
+  /// Accessibility label for Market row trade counsel star.
+  String tradeMarket_tradeCounselStarSemantic(String brief);
+
+  /// Compact chip on Market rows where the human holds first right of refusal.
+  String get tradeMarket_firstRightChip;
+
+  /// On-request help for the Market first-right chip.
+  String get tradeMarket_firstRightTooltip;
+
+  /// Deal Book audit tag for first-right-of-refusal matches.
+  String get tradeDealBook_matchTagFirstRight;
+
+  /// Deal Book audit tag for favored-trading-partner matches.
+  String get tradeDealBook_matchTagFavoredPartner;
+
+  /// Deal Book subsection heading for last-turn overseas-profit credits.
+  String get tradeDealBook_overseasProfitHeading;
+
+  /// Single overseas-profit ledger row in Deal Book.
+  String tradeDealBook_overseasProfitRow(
+    String commodity,
+    int quantity,
+    int amount,
+  );
+
+  /// Player turn event feed line when overseas profit treasury was credited.
+  String eventFeed_overseasProfitCredited(int amount, int count);
 
   /// Production panel subheader for available resources.
   String get production_available;
@@ -1251,6 +1615,9 @@ abstract class AppLocalizations {
   /// Title row of the Choose-tech dialog opened from a slot card.
   /// Uses an em dash between 'Choose Tech' and the slot number.
   String technologyPanel_chooseTechDialogTitle(int slot);
+
+  /// Per-row Details control on the Choose-tech dialog (Refs #4222).
+  String get technologyPanel_chooseTechDetails;
 
   /// Snackbar shown when a research slot assignment is removed.
   String get technologyPanel_slotCancelled;
@@ -1463,11 +1830,91 @@ abstract class AppLocalizations {
   /// Tooltip and semantics label for province tile build-improvement shortcut action.
   String get provinceOverlay_tileBuildImprovementTooltip;
 
+  /// Enabled build-improvement shortcut tooltip with material cost hint (Refs #4262).
+  String provinceOverlay_tileBuildImprovementTooltipWithCost(String costs);
+
+  /// Disabled build-improvement shortcut when no Builder units exist.
+  String get provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip;
+
+  /// Disabled build-improvement shortcut when materials/treasury shortfall is primary.
+  String provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip(
+    String reason,
+  );
+
+  /// Plain success copy when projected stockpile/treasury covers work cost (Refs #4262).
+  String get workOrderAfford_canAfford;
+
+  /// Material shortfall line for work-order assign previews (Refs #4262).
+  String workOrderAfford_shortMaterial(String commodity, int quantity);
+
+  /// Treasury shortfall line for purchase_land assign previews (Refs #4262).
+  String workOrderAfford_shortTreasury(int amount);
+
+  /// Tooltip and semantics label for province tile build-road shortcut action when enabled.
+  String get provinceOverlay_tileBuildRoadTooltip;
+
+  /// Enabled build-road shortcut tooltip including material cost summary.
+  String provinceOverlay_tileBuildRoadTooltipWithCost(String costs);
+
+  /// Disabled build-road shortcut tooltip when the human player has no Engineer units.
+  String get provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip;
+
+  /// Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile.
+  String get provinceOverlay_tileBuildRoadDisabledTooltip;
+
+  /// Disabled build-road shortcut when materials/treasury shortfall is primary reason.
+  String provinceOverlay_tileBuildRoadDisabledMaterialsTooltip(String reason);
+
+  /// Military section fort posture line (Refs #4280).
+  String provinceOverlay_militaryFortStatus(String status);
+
+  /// Tooltip for enabled build-fort shortcut on town tile.
+  String get provinceOverlay_tileBuildFortTooltip;
+
+  /// Enabled build-fort shortcut tooltip with material cost hint.
+  String provinceOverlay_tileBuildFortTooltipWithCost(String costs);
+
+  /// Disabled build-fort shortcut when no Engineer units exist.
+  String get provinceOverlay_tileBuildFortDisabledNoEngineerTooltip;
+
+  /// Disabled build-fort shortcut when no valid Engineer assignment exists.
+  String get provinceOverlay_tileBuildFortDisabledTooltip;
+
+  /// Disabled build-fort shortcut when materials or treasury are short.
+  String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason);
+
+  /// Tooltip and semantics label for province tile purchase-land shortcut action.
+  String get provinceOverlay_tilePurchaseLandTooltip;
+
+  /// Enabled purchase-land shortcut tooltip with treasury cost hint (Refs #4274).
+  String provinceOverlay_tilePurchaseLandTooltipWithCost(int amount);
+
+  /// Disabled purchase-land shortcut when no Merchant units exist.
+  String get provinceOverlay_tilePurchaseLandDisabledNoMerchantTooltip;
+
+  /// Disabled purchase-land shortcut when embassy is missing or at war.
+  String get provinceOverlay_tilePurchaseLandDisabledEmbassyTooltip;
+
+  /// Disabled purchase-land shortcut when treasury shortfall is primary.
+  String provinceOverlay_tilePurchaseLandDisabledTreasuryTooltip(int amount);
+
   /// Tile section improvement row.
   String provinceOverlay_tileImprovement(String value);
 
   /// Tile section road/rail row when not applicable.
   String get provinceOverlay_tileRoadNone;
+
+  /// Tile section capital-link row when capital-connected (Refs #4149).
+  String get provinceOverlay_tileCapitalLinkConnected;
+
+  /// Tile section capital-link row when connected with path transport cap.
+  String provinceOverlay_tileCapitalLinkConnectedWithPath(int level);
+
+  /// Tile section capital-link row when not capital-connected (Refs #4149).
+  String get provinceOverlay_tileCapitalLinkNotConnected;
+
+  /// Tile section per-tile effective vs full extraction (Refs #4149).
+  String provinceOverlay_tileExtractionFromTile(int effective, int full);
 
   /// Tile section road/rail primary numeric line on land tiles.
   String provinceOverlay_tileRoadTransportLevel(int level);
@@ -1576,7 +2023,7 @@ abstract class AppLocalizations {
   /// Signed quantity for a projected town manufacturing bonus commodity row.
   String provinceOverlay_townProductionQuantity(int quantity);
 
-  /// Subheading for last-turn Extraction condensed line.
+  /// Subheading for Extraction condensed line (post-resolution projection).
   String get provinceOverlay_extractionHeading;
 
   /// Subheading for improvable Available condensed line.
@@ -1591,6 +2038,12 @@ abstract class AppLocalizations {
     int full,
     String name,
   );
+
+  /// Muted capital grain bonus annotation on the Extraction line.
+  String provinceOverlay_extractionCapitalGrainBonus(int bonus);
+
+  /// Muted reason when any Extraction commodity is below full yield (Refs #4150).
+  String get provinceOverlay_extractionPartialReason;
 
   /// Available improvable tile-count commodity segment text.
   String provinceOverlay_availableTileCount(int count, String name);
@@ -1621,6 +2074,24 @@ abstract class AppLocalizations {
 
   /// Cargo hold usage label on map controls (used and capacity are pre-formatted numbers or em dash).
   String mapControls_cargoHold(String used, String capacity);
+
+  /// Hover tooltip for the tab-bar cargo hold indicator.
+  String mapControls_cargoHold_tooltip(String used, String capacity);
+
+  /// Semantics label for the tab-bar cargo hold indicator.
+  String mapControls_cargoHold_semanticsLabel(String used, String capacity);
+
+  /// Cargo details popover row for overseas extraction load.
+  String mapControls_cargoHold_details_overseas(String used);
+
+  /// Cargo details popover row for Home Fleet cargo capacity.
+  String mapControls_cargoHold_details_capacity(String capacity);
+
+  /// Cargo details popover row for trade-bid headroom.
+  String mapControls_cargoHold_details_free(String free);
+
+  /// Counsel line in the cargo details popover.
+  String get mapControls_cargoHold_details_counsel;
 
   /// Tooltip for the in-game players bar show/hide toggle on the tab bar.
   String get mapControls_playersBarToggle;
@@ -1713,11 +2184,84 @@ abstract class AppLocalizations {
   /// Pending subsidy line in diplomacy row.
   String diplomacy_panel_pendingSubsidy(int amount);
 
+  /// Expands the per-faction diplomacy row to show disabled actions with
+  /// inline refusal reasons.
+  String get diplomacy_panel_moreActions;
+
+  /// Collapses the expanded per-faction diplomacy action cluster back to the
+  /// ready shortlist.
+  String get diplomacy_panel_fewerActions;
+
+  /// Accessibility label for a disabled diplomacy action shown under More with
+  /// an inline refusal reason.
+  String diplomacy_actionRejection_semanticsLabel(String action, String reason);
+
   /// Stock line for a commodity; change is empty or parenthesized delta.
   String production_commodityStock(String name, int qty, String change);
 
   /// Shows effective labour total in production panel.
   String production_effectiveLabour(int n);
+
+  /// Labour readiness total on Production Available panel.
+  String production_labourThisTurn(int n);
+
+  /// Primary labour-readiness reason when food is the main shortfall.
+  String get production_labourReasonFood;
+
+  /// Labour-readiness reason when military/navy food draw contributes.
+  String get production_labourReasonFoodWithMilitary;
+
+  /// Primary labour-readiness reason when luxury is the main shortfall.
+  String production_labourReasonLuxury(String commodity);
+
+  /// Toggle to expand per-tier labour readiness breakdown.
+  String get production_labourDetails;
+
+  /// Per-tier labour readiness detail row.
+  String production_labourTierDetail(
+    String tier,
+    int working,
+    int notWorking,
+  );
+
+  /// Forces-food default line when land military feeding is complete.
+  String get production_forcesFoodArmiesFullyFed;
+
+  /// Forces-food default line when land feeding coverage is in [0.5, 1.0).
+  String get production_forcesFoodArmiesUnderfedModerate;
+
+  /// Forces-food default line when land feeding coverage is below 0.5.
+  String get production_forcesFoodArmiesUnderfedSevere;
+
+  /// Forces-food default line when naval feeding is complete.
+  String get production_forcesFoodFleetsFullyFed;
+
+  /// Forces-food default line when naval feeding coverage is in [0.5, 1.0).
+  String get production_forcesFoodFleetsUnderfedModerate;
+
+  /// Forces-food default line when naval feeding coverage is below 0.5.
+  String get production_forcesFoodFleetsUnderfedSevere;
+
+  /// Toggle to expand forces-food readiness breakdown on Production Available.
+  String get production_forcesFoodDetails;
+
+  /// Forces-food detail row for land military feeding.
+  String production_forcesFoodDetailsArmies(int fed, int total);
+
+  /// Forces-food detail row for naval feeding.
+  String production_forcesFoodDetailsFleets(int fed, int total);
+
+  /// Forces-food detail row for combined military/navy food demand.
+  String production_forcesFoodDetailsDemand(int demand);
+
+  /// Reminder that military/navy food is reserved before worker consumption.
+  String get production_forcesFoodDetailsPriority;
+
+  /// Soft warn when land feeding coverage is in [0.5, 1.0) at invasion/combat.
+  String get forcesFood_landUnderfedModerateWarning;
+
+  /// Soft warn when land feeding coverage is below 0.5 at invasion/combat.
+  String get forcesFood_landUnderfedSevereWarning;
 
   /// Recipe affordance line (max output and limiting factor label).
   String production_recipeAffordance(int max, String limiting);
@@ -2545,4 +3089,67 @@ abstract class AppLocalizations {
 
   /// Input hint showing an example slash command in debug console overlay.
   String get debugConsole_hintSpawnCivilian;
+
+  /// Title of the app Settings dialog (DLG90001).
+  String get settingsDialog_title;
+
+  /// Section header for immediate-apply gameplay preferences in Settings.
+  String get settingsDialog_section_gameplay;
+
+  /// Toggle label for the idle-civilian end-turn warning preference.
+  String get settingsDialog_warnIdleCiviliansOnEndTurn;
+
+  /// Section header for map theme pickers in Settings.
+  String get settingsDialog_section_themes;
+
+  /// Hint that map theme changes apply after restart.
+  String get settingsDialog_restartHint;
+
+  /// Close button on the Settings dialog.
+  String get settingsDialog_close;
+
+  /// Shown when the theme catalog is not loaded.
+  String get settingsDialog_catalogUnavailable;
+
+  /// Settings dialog group label: terrain.
+  String get settingsDialog_group_terrain;
+
+  /// Settings dialog group label: civilian icons.
+  String get settingsDialog_group_civilianIcons;
+
+  /// Settings dialog group label: town icons.
+  String get settingsDialog_group_townIcons;
+
+  /// Settings dialog group label: resource icons.
+  String get settingsDialog_group_resourceIcons;
+
+  /// Settings dialog group label: fleet icons.
+  String get settingsDialog_group_fleetIcons;
+
+  /// Settings dialog group label: province label icons.
+  String get settingsDialog_group_provinceLabelIcons;
+
+  /// Default terrain theme display name.
+  String get mapTheme_terrain_default;
+
+  /// Sepia terrain theme display name.
+  String get mapTheme_terrain_sepia;
+
+  /// Default civilian icon theme display name.
+  String get mapTheme_civilian_default;
+
+  /// Sepia civilian icon theme display name.
+  String get mapTheme_civilian_sepia;
+
+  /// Default town icon theme display name.
+  String get mapTheme_town_default;
+
+  /// Default resource icon theme display name.
+  String get mapTheme_resource_default;
+
+  /// Default fleet icon theme display name.
+  String get mapTheme_fleet_default;
+
+  /// Default province-label icon theme display name.
+  String get mapTheme_provinceLabel_default;
 }

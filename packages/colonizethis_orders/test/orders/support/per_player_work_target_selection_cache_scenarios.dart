@@ -13,30 +13,7 @@ import 'per_player_work_target_selection_cache_fixtures.dart';
 import 'scenario_runner.dart';
 // dart format off
 
-void ppwtscRunDefaultStrategiesRefreshAllPaths() {
-  const playerId = 'gp1';
-  const ow = 'oldWorld';
-  const p1 = '$ow|p1';
-  const t0 = '$p1|0|0';
-  const t1 = '$p1|1|0';
-  final game = TestFixtures.minimalGame(
-    players: const [Player(id: playerId, displayName: 'GP', isHuman: true)],
-    oldWorld: RegionData(provinces: const [Province(id: p1, regionId: ow, ownerId: playerId)], units: [
-      Unit(id: 'explorer-0', type: kUnitTypeExplorer, ownerId: playerId, locationProvinceId: p1, tileKey: t0),
-      Unit(id: 'builder-0', type: kUnitTypeBuilder, ownerId: playerId, locationProvinceId: p1, tileKey: t0, status: UnitStatus.idle),
-    ]),
-    tileKeysByRegionAndProvince: {ow: {p1: [t0, t1]}},
-    playerVisibilityByTile: {playerId: {t0: 'fullyVisible', t1: 'unknown'}},
-  );
-  const topology = MapTopology(nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)], edges: []);
-  final view = buildPlayerView(game, topology, playerId);
-  final snapshot = WorkTargetSelectionSnapshot(game: game, playerId: playerId, playerView: view, topology: topology, currentOrders: const Orders(), tileMapByRegion: null);
-  final cache = PerPlayerWorkTargetSelectionCache();
-  cache.refresh(snapshot);
-  expect(cache.sorted(playerId, kWorkTargetExplore), isNotEmpty);
-  cache.clear();
-  expect(cache.get(playerId, kWorkTargetExplore), isEmpty);
-}
+void ppwtscRunDefaultStrategiesRefreshAllPaths() {const playerId = 'gp1'; const ow = 'oldWorld'; const p1 = '$ow|p1'; const t0 = '$p1|0|0'; const t1 = '$p1|1|0'; final game = TestFixtures.minimalGame( players: const [Player(id: playerId, displayName: 'GP', isHuman: true)], oldWorld: RegionData(provinces: const [Province(id: p1, regionId: ow, ownerId: playerId)], units: [ Unit(id: 'explorer-0', type: kUnitTypeExplorer, ownerId: playerId, locationProvinceId: p1, tileKey: t0), Unit(id: 'builder-0', type: kUnitTypeBuilder, ownerId: playerId, locationProvinceId: p1, tileKey: t0, status: UnitStatus.idle), ]), tileKeysByRegionAndProvince: {ow: {p1: [t0, t1]}}, playerVisibilityByTile: {playerId: {t0: 'fullyVisible', t1: 'unknown'}}, ); const topology = MapTopology(nodes: [TopologyNode(id: 'p1', regionId: ow, type: TopologyNodeType.province)], edges: []); final view = buildPlayerView(game, topology, playerId); final snapshot = WorkTargetSelectionSnapshot(game: game, playerId: playerId, playerView: view, topology: topology, currentOrders: const Orders(), tileMapByRegion: null); final cache = PerPlayerWorkTargetSelectionCache(); cache.refresh(snapshot); expect(cache.sorted(playerId, kWorkTargetExplore), isNotEmpty); cache.clear(); expect(cache.get(playerId, kWorkTargetExplore), isEmpty);}
 
 void ppwtscRunSortedDeterministicOrdering() {final cache = PerPlayerWorkTargetSelectionCache(strategies: {kWorkTargetExplore: (_) => {'oldWorld|p1|2|0','oldWorld|p1|0|0','oldWorld|p1|1|0',},},); cache.refresh(ppwtscSnapshotForPlayer('gp1')); expect(cache.sorted('gp1',kWorkTargetExplore),['oldWorld|p1|0|0','oldWorld|p1|1|0','oldWorld|p1|2|0',]);}
 

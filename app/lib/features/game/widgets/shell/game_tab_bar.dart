@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../config/app_assets.dart';
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart'
-    show kCargoHoldIndicatorKey, kTreasuryIndicatorKey;
+import 'game_tab_bar_state.dart';
 
-part 'game_tab_bar_region_tabs.dart';
-part 'game_tab_bar_indicators.dart';
-part 'game_tab_bar_state.dart';
+export 'game_tab_bar_state.dart' show GameTabBarState;
 
 /// In-game shell tab bar: 34 px dark editorial-monocle chrome with region
 /// tabs, treasury + cargo indicators, and a trailing news-toggle slot.
@@ -77,5 +68,5 @@ class GameTabBar extends StatefulWidget {
   static const Key surfaceKey = Key('game_tab_bar_surface');
 
   @override
-  State<GameTabBar> createState() => _GameTabBarState();
+  State<GameTabBar> createState() => GameTabBarState();
 }

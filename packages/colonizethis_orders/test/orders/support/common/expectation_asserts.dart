@@ -4,6 +4,26 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+/// Expects [result] status and optional reason fields (Refs #4109).
+void expectOrderValidationResult(
+  OrderValidationResult result, {
+  required OrderValidationStatus status,
+  String? reasonExact,
+  Matcher? reasonContains,
+  bool reasonIsNull = false,
+}) {
+  expect(result.status, status);
+  if (reasonExact != null) {
+    expect(result.reason, reasonExact);
+  }
+  if (reasonContains != null) {
+    expect(result.reason, reasonContains);
+  }
+  if (reasonIsNull) {
+    expect(result.reason, isNull);
+  }
+}
+
 /// Expects [unit] idle with cleared work / origin / assignment fields.
 void expectUnitIdleCleared(Unit unit, {String? tileKey}) {
   expect(unit.status, UnitStatus.idle);

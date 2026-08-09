@@ -21,6 +21,8 @@ void ospcRunCappedProbeLoopRespectsCaps() {final accepted = <int>[]; final probe
 
 void ospcRunOwnedProvinceIdsFromView() {final view = buildPlayerView(orderSuggestionPassContextOwnedProvincesGame(),orderSuggestionPassContextTopology,orderSuggestionPassContextGp1Id,); expect(ownedProvinceIdsFromView(view,orderSuggestionPassContextGp1Id),{ProvinceId.full(kOldWorldRegionId,'p1'),});}
 
+void ospcRunOwnedProvinceIdsForPlayerMatchesCache() {final game = orderSuggestionPassContextOwnedProvincesGame(); final fromHelper = ownedProvinceIdsForPlayer(game.worldState,orderSuggestionPassContextGp1Id); final fromCache = <String>{for (final p in ProvinceOwnerCache.of(game.worldState).provincesOwnedBy(orderSuggestionPassContextGp1Id)) ProvinceId.isPrefixed(p.id) ? p.id : ProvinceId.full(p.regionId,p.id),}; expect(fromHelper,fromCache); expect(fromHelper,{ProvinceId.full(kOldWorldRegionId,'p1'),});}
+
 /// Scenarios for indexExistingTargetsByEntityId.
 List<RunnableScenario> indexExistingTargetsByEntityIdScenarios() => [
   rs('indexExistingTargetsByEntityId skips empty targets when requested', ospcRunIndexSkipsEmptyTargets, '#3500'),
@@ -41,4 +43,9 @@ List<RunnableScenario> runCappedSuggestionProbeLoopScenarios() => [
 /// Scenarios for ownedProvinceIdsFromView.
 List<RunnableScenario> ownedProvinceIdsFromViewScenarios() => [
   rs('ownedProvinceIdsFromView returns full province ids for owner', ospcRunOwnedProvinceIdsFromView, '#3500'),
+];
+
+/// Scenarios for ownedProvinceIdsForPlayer.
+List<RunnableScenario> ownedProvinceIdsForPlayerScenarios() => [
+  rs('ownedProvinceIdsForPlayer matches ProvinceOwnerCache projection', ospcRunOwnedProvinceIdsForPlayerMatchesCache, '#4258'),
 ];

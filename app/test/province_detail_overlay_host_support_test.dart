@@ -10,11 +10,20 @@
 // runtime tap/emit behavior remains pinned by the host-level tests
 // (`province_*_shortcut_host_emit_event_test.dart`).
 
+import 'package:colonizethis_app/core/services/game_service/game_service.dart'
+    show GameMapData;
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support.dart';
-import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        MapTopology,
+        Resource,
+        TileMapResult,
+        TopologyNode,
+        TopologyNodeType,
+        kTechIdMoldboardPlow;
 import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show PlayerView, buildPlayerView;
+    show PlayerView, buildPlayerView, kWorkTargetBuildImprovement;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -65,6 +74,9 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool exploreEnabled,
   required bool prospectEnabled,
   required bool buildImprovementEnabled,
+  required bool buildRoadEnabled,
+  required bool buildFortEnabled,
+  required bool purchaseLandEnabled,
   required AppEventBus bus,
 }) =>
     buildProvinceDetailShortcutCallbacks(
@@ -80,6 +92,9 @@ ProvinceDetailShortcutCallbacks _callbacks({
       exploreEnabled: exploreEnabled,
       prospectEnabled: prospectEnabled,
       buildImprovementEnabled: buildImprovementEnabled,
+      buildRoadEnabled: buildRoadEnabled,
+      buildFortEnabled: buildFortEnabled,
+      purchaseLandEnabled: purchaseLandEnabled,
       bus: bus,
     );
 
@@ -120,12 +135,17 @@ void main() {
         exploreEnabled: true,
         prospectEnabled: true,
         buildImprovementEnabled: true,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: true,
         bus: bus,
       );
 
       expect(callbacks.onExploreWithExplorerTap, isNull);
       expect(callbacks.onProspectWithExplorerTap, isNull);
       expect(callbacks.onBuildImprovementTap, isNull);
+      expect(callbacks.onBuildRoadTap, isNull);
+      expect(callbacks.onPurchaseLandTap, isNull);
     });
 
     test('returns all-null callbacks when every action is disabled', () {
@@ -135,12 +155,17 @@ void main() {
         exploreEnabled: false,
         prospectEnabled: false,
         buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
 
       expect(callbacks.onExploreWithExplorerTap, isNull);
       expect(callbacks.onProspectWithExplorerTap, isNull);
       expect(callbacks.onBuildImprovementTap, isNull);
+      expect(callbacks.onBuildRoadTap, isNull);
+      expect(callbacks.onPurchaseLandTap, isNull);
     });
 
     test('exposes only the enabled action callback (per-action gating)', () {
@@ -150,11 +175,16 @@ void main() {
         exploreEnabled: true,
         prospectEnabled: false,
         buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(exploreOnly.onExploreWithExplorerTap, isNotNull);
       expect(exploreOnly.onProspectWithExplorerTap, isNull);
       expect(exploreOnly.onBuildImprovementTap, isNull);
+      expect(exploreOnly.onBuildRoadTap, isNull);
+      expect(exploreOnly.onPurchaseLandTap, isNull);
 
       final prospectOnly = _callbacks(
         game: _minimalGame(),
@@ -162,11 +192,16 @@ void main() {
         exploreEnabled: false,
         prospectEnabled: true,
         buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(prospectOnly.onExploreWithExplorerTap, isNull);
       expect(prospectOnly.onProspectWithExplorerTap, isNotNull);
       expect(prospectOnly.onBuildImprovementTap, isNull);
+      expect(prospectOnly.onBuildRoadTap, isNull);
+      expect(prospectOnly.onPurchaseLandTap, isNull);
 
       final buildOnly = _callbacks(
         game: _minimalGame(),
@@ -174,23 +209,61 @@ void main() {
         exploreEnabled: false,
         prospectEnabled: false,
         buildImprovementEnabled: true,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: false,
         bus: bus,
       );
       expect(buildOnly.onExploreWithExplorerTap, isNull);
       expect(buildOnly.onProspectWithExplorerTap, isNull);
       expect(buildOnly.onBuildImprovementTap, isNotNull);
+      expect(buildOnly.onBuildRoadTap, isNull);
+      expect(buildOnly.onPurchaseLandTap, isNull);
+
+      final buildRoadOnly = _callbacks(
+        game: _minimalGame(),
+        selectedTileKey: _kTileKey,
+        exploreEnabled: false,
+        prospectEnabled: false,
+        buildImprovementEnabled: false,
+        buildRoadEnabled: true,
+        buildFortEnabled: false,
+        purchaseLandEnabled: false,
+        bus: bus,
+      );
+      expect(buildRoadOnly.onExploreWithExplorerTap, isNull);
+      expect(buildRoadOnly.onProspectWithExplorerTap, isNull);
+      expect(buildRoadOnly.onBuildImprovementTap, isNull);
+      expect(buildRoadOnly.onBuildRoadTap, isNotNull);
+      expect(buildRoadOnly.onPurchaseLandTap, isNull);
+
+      final purchaseLandOnly = _callbacks(
+        game: _minimalGame(),
+        selectedTileKey: _kTileKey,
+        exploreEnabled: false,
+        prospectEnabled: false,
+        buildImprovementEnabled: false,
+        buildRoadEnabled: false,
+        buildFortEnabled: false,
+        purchaseLandEnabled: true,
+        bus: bus,
+      );
+      expect(purchaseLandOnly.onExploreWithExplorerTap, isNull);
+      expect(purchaseLandOnly.onProspectWithExplorerTap, isNull);
+      expect(purchaseLandOnly.onBuildImprovementTap, isNull);
+      expect(purchaseLandOnly.onBuildRoadTap, isNull);
+      expect(purchaseLandOnly.onPurchaseLandTap, isNotNull);
     });
   });
 
-  group('provinceExtractionSnapshotPreview ownership gate (Refs #4002)', () {
+  group('provinceExtractionSnapshotPreview projection (Refs #4064)', () {
     const provinceId = 'oldWorld|p1';
+    const tk = 'oldWorld|p1|0|0';
 
-    Game gameWithSnapshot({
-      required String provinceOwnerId,
-      required String snapshotOwnerId,
-    }) {
+    Game gameWithImprovedGrain({required String ownerId}) {
       return Game(
         id: 'g_extraction_preview',
+        capitalTileGrainBonusPerTurn: 0,
         worldState: WorldState(
           turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
           oldWorld: RegionData(
@@ -198,76 +271,200 @@ void main() {
               Province(
                 id: provinceId,
                 regionId: 'oldWorld',
-                ownerId: provinceOwnerId,
+                ownerId: ownerId,
+                townDevelopmentLevel: 4,
               ),
             ],
           ),
           newWorld: const RegionData(),
-          lastTurnProvinceExtractionByProvinceId: {
-            provinceId: ProvinceExtractionSnapshot(
-              ownerId: snapshotOwnerId,
-              byCommodity: const {
-                'grain': ProvinceExtractionCommodityTotals(
-                  effective: 1,
-                  full: 5,
-                  tileKeys: ['oldWorld|p1|0|0'],
-                ),
-              },
-            ),
+          tileState: TileMapState().setImprovement(tk, 2).setRoadLevel(tk, 4),
+          resourceByTileKey: const {tk: 'grain'},
+          tileKeysByRegionAndProvince: const {
+            'oldWorld': {
+              'oldWorld|p1': [tk],
+            },
           },
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
+        players: [
+          Player(
+            id: ownerId,
+            displayName: 'GP',
+            isHuman: true,
+            capitalProvinceId: provinceId,
+            capitalTile: const CapitalTile(
+              regionId: 'oldWorld',
+              provinceId: 'oldWorld|p1',
+              x: 0,
+              y: 0,
+            ),
+            techUnlocked: const {kTechIdMoldboardPlow: true},
+          ),
         ],
       );
     }
 
-    test('returns snapshot when owner matches', () {
-      final game = gameWithSnapshot(
-        provinceOwnerId: 'gp1',
-        snapshotOwnerId: 'gp1',
+    GameMapData mapDataForProjection() {
+      final tileMap = TileMapResult(
+        width: 1,
+        height: 1,
+        grid: const [
+          ['p1'],
+        ],
+        resourceGrid: const [
+          [Resource.grain],
+        ],
       );
+      return (
+        combinedTopology: const MapTopology(
+          nodes: [
+            TopologyNode(
+              id: 'p1',
+              regionId: 'oldWorld',
+              type: TopologyNodeType.province,
+            ),
+          ],
+          edges: [],
+        ),
+        tileMapByRegion: {'oldWorld': tileMap},
+        topologyByRegion: const <String, MapTopology>{},
+        warpLinks: null,
+      );
+    }
+
+    test('projects non-empty Extraction without last-turn history', () {
+      final game = gameWithImprovedGrain(ownerId: 'gp1');
       final snap = provinceExtractionSnapshotPreview(
         game: game,
         provinceId: provinceId,
+        mapData: mapDataForProjection(),
       );
       expect(snap, isNotNull);
-      expect(snap!.byCommodity['grain']!.effective, 1);
-      expect(snap.byCommodity['grain']!.full, 5);
+      expect(snap!.ownerId, 'gp1');
+      expect(snap.byCommodity['grain']!.full, greaterThan(0));
     });
 
-    test('returns null when ownership changed after last extraction', () {
-      final game = gameWithSnapshot(
-        provinceOwnerId: 'gp2',
-        snapshotOwnerId: 'gp1',
-      );
+    test(
+      'ownership change: preview attributes to new owner without Extraction write',
+      () {
+        final mapData = mapDataForProjection();
+        final before = provinceExtractionSnapshotPreview(
+          game: gameWithImprovedGrain(ownerId: 'gp1'),
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(before, isNotNull);
+        expect(before!.ownerId, 'gp1');
+        expect(before.byCommodity['grain']!.full, greaterThan(0));
+
+        final after = provinceExtractionSnapshotPreview(
+          game: gameWithImprovedGrain(ownerId: 'gp2'),
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(after, isNotNull);
+        expect(after!.ownerId, 'gp2');
+        expect(after.byCommodity['grain']!.full, greaterThan(0));
+        expect(after.ownerId, isNot(before.ownerId));
+      },
+    );
+
+    test('returns null when map data is missing', () {
+      final game = gameWithImprovedGrain(ownerId: 'gp1');
       expect(
-        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
-        isNull,
-      );
-    });
-
-    test('returns null when snapshot is absent', () {
-      final game = Game(
-        id: 'g_no_snap',
-        worldState: const WorldState(
-          turnState: TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: RegionData(
-            provinces: [
-              Province(id: provinceId, regionId: 'oldWorld', ownerId: 'gp1'),
-            ],
-          ),
-          newWorld: RegionData(),
+        provinceExtractionSnapshotPreview(
+          game: game,
+          provinceId: provinceId,
+          mapData: null,
         ),
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-        ],
-      );
-      expect(
-        provinceExtractionSnapshotPreview(game: game, provinceId: provinceId),
         isNull,
       );
     });
+
+    test(
+      'negative: draft build_improvement Orders do not change Extraction '
+      'preview (world tile state only)',
+      () {
+        // Host preview has no draftOrders parameter; staged WorkOrders must not
+        // invent yields until turn resolution updates Game.tileState.
+        final unresolved = Game(
+          id: 'g_extraction_draft_ignore',
+          capitalTileGrainBonusPerTurn: 0,
+          worldState: WorldState(
+            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 2),
+            oldWorld: RegionData(
+              provinces: [
+                Province(
+                  id: provinceId,
+                  regionId: 'oldWorld',
+                  ownerId: 'gp1',
+                  townDevelopmentLevel: 4,
+                ),
+              ],
+            ),
+            newWorld: const RegionData(),
+            // No improvement yet — draft build_improvement would raise this.
+            tileState: const TileMapState(),
+            resourceByTileKey: const {tk: 'grain'},
+            tileKeysByRegionAndProvince: const {
+              'oldWorld': {
+                'oldWorld|p1': [tk],
+              },
+            },
+          ),
+          players: [
+            Player(
+              id: 'gp1',
+              displayName: 'GP',
+              isHuman: true,
+              capitalProvinceId: provinceId,
+              capitalTile: const CapitalTile(
+                regionId: 'oldWorld',
+                provinceId: 'oldWorld|p1',
+                x: 0,
+                y: 0,
+              ),
+              techUnlocked: const {kTechIdMoldboardPlow: true},
+            ),
+          ],
+        );
+        final mapData = mapDataForProjection();
+        final beforeDraft = provinceExtractionSnapshotPreview(
+          game: unresolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(beforeDraft?.byCommodity['grain'], isNull);
+
+        // Local draft Orders exist mid-turn but are never passed into preview.
+        final draftOrders = Orders(
+          workOrdersByPlayerId: {
+            'gp1': [
+              const WorkOrder(
+                unitId: 'u_builder',
+                target: kWorkTargetBuildImprovement,
+                targetTileKey: tk,
+              ),
+            ],
+          },
+        );
+        expect(draftOrders.workOrdersByPlayerId['gp1'], isNotEmpty);
+
+        final afterDraftPresence = provinceExtractionSnapshotPreview(
+          game: unresolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(afterDraftPresence, beforeDraft);
+
+        final resolved = gameWithImprovedGrain(ownerId: 'gp1');
+        final afterResolution = provinceExtractionSnapshotPreview(
+          game: resolved,
+          provinceId: provinceId,
+          mapData: mapData,
+        );
+        expect(afterResolution, isNotNull);
+        expect(afterResolution!.byCommodity['grain']!.full, greaterThan(0));
+      },
+    );
   });
 }

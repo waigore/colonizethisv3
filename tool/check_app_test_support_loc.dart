@@ -13,10 +13,9 @@ import 'package:path/path.dart' as p;
 const String appTestSupportRelativeDir = 'app/test/support';
 
 /// Post-#4035 densify support-tree ceiling (physical LOC).
-/// Measured after bare-theme MaterialApp flag for region-map hosts ≈8806;
-/// ceiling set to measured total. Ratchet downward as later densify shrinks
-/// the tree.
-const int appTestSupportLocCeiling = 8777;
+/// Ratcheted after wave-9 slice F removed shrink-only re-export stubs; support
+/// tree holds JSON fixtures only (Refs #4117).
+const int appTestSupportLocCeiling = 0;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countAppTestSupportPhysicalLoc(Directory dir) {

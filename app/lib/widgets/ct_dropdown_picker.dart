@@ -29,7 +29,7 @@ extension _CtDropdownPicker<T> on _CtDropdownState<T> {
                   final bool isSelected =
                       widget.value != null && v == widget.value;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.only(bottom: 2),
                     child: DecoratedBox(
                       key: isSelected
                           ? CtDropdown.kCtDropdownPickerSelectedRowKey
@@ -47,26 +47,43 @@ extension _CtDropdownPicker<T> on _CtDropdownState<T> {
                           ),
                         ),
                       ),
-                      child: CtNinePatchButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop(v);
-                        },
-                        enabled: true,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              if (rowLeading != null) ...[
-                                rowLeading,
-                                const SizedBox(width: 8),
-                              ],
-                              Expanded(
-                                child: Text(
-                                  label,
-                                  overflow: TextOverflow.ellipsis,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(ctx).pop(v);
+                          },
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              minHeight: kCtDropdownPickerRowVisualMinHeight,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    if (rowLeading != null) ...[
+                                      rowLeading,
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Expanded(
+                                      child: Text(
+                                        label,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: kCtDropdownLabelFontSize,
+                                          color: EditorialMonoclePalette.fg,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),

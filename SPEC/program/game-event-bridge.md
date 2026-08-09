@@ -25,6 +25,7 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | Logic `GameEvent` | App `GameToUIEvent` | Typical UI |
 |-------------------|---------------------|------------|
 | `CombatResultEvent` | `AppCombatResultEvent` | `NotifyEvent` |
+| `GeneralMedalGainedEvent` | `AppGeneralMedalGainedEvent` | player turn feed |
 | `NavalCombatResultEvent` | `AppNavalCombatResultEvent` | `NotifyEvent` |
 | `ProvinceCapturedEvent` | `AppProvinceCapturedEvent` | `NotifyEvent` |
 | `DiplomacyChangeEvent` | `AppDiplomacyChangeEvent` | `NotifyEvent` |
@@ -32,6 +33,8 @@ Forward by copying fields; no payload transforms. Province ids remain **prefixed
 | `VictorySetEvent` | `AppVictorySetEvent` | victory screen |
 | `OrderRejectedEvent` | `AppOrderRejectedEvent` | `NotifyEvent` (warning) |
 | `WorkOrderCompletedEvent` | `AppWorkOrderCompletedEvent` | player turn feed |
+| `OverseasProfitCreditedEvent` | `AppOverseasProfitCreditedEvent` | player turn feed (tap → Trade Deal Book tab) |
+| `MarketTurnSummaryEvent` | `AppMarketTurnSummaryEvent` | player turn feed (tap → Trade Deal Book tab) |
 | `PlayerProvinceDiscoveredEvent` | `AppPlayerProvinceDiscoveredEvent` | player turn feed |
 | `PlayerSeaZoneDiscoveredEvent` | `AppPlayerSeaZoneDiscoveredEvent` | player turn feed |
 | `OvertureAdvancedEvent` | `AppOvertureAdvancedEvent` | player turn feed |

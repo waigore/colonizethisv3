@@ -1,16 +1,43 @@
-part of 'game_map_area.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:colonizethis_debug_console/colonizethis_debug_console.dart';
+
+import 'package:colonizethis_map/colonizethis_map.dart'
+    show RegionMapViewData;
+
+import '../../../../providers/app_event_bus_provider.dart';
+import '../../../../providers/map_province_panel_provider.dart';
+import '../../widgets/shell/shell_player_context.dart';
+
+import '../../screens/game/game_screen_shared.dart';
+import '../overlays/game_map_narrow_detail_overlay.dart';
+import '../overlays/debug_console_overlay_panel.dart';
+import '../../widgets/shell/player_turn_event_feed.dart';
+import 'game_map_area.dart';
+import 'game_map_area_state_base.dart';
+import 'game_map_area_view.dart';
+import 'game_map_area_selection.dart';
+import 'game_map_area_e2e.dart';
+import 'game_map_area_build_map_stack.dart';
+import 'game_map_area_relocate_selection.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
 
 /// Map play-area shell (keyboard focus, debug console, narrow detail slot).
 /// Split from [game_map_area_build.dart] for Phase 3 flame map modularization.
-mixin _GameMapAreaBuildOverlays
+mixin GameMapAreaBuildOverlays
     on
         ConsumerState<GameMapArea>,
-        _GameMapAreaStateBase,
-        _GameMapAreaView,
-        _GameMapAreaSelection,
-        _GameMapAreaE2e,
-        _GameMapAreaBuildMapStack {
-  Widget _buildMapPlayAreaStack({
+        GameMapAreaStateBase,
+        GameMapAreaView,
+        GameMapAreaSelection,
+        GameMapAreaRelocateSelection,
+        GameMapAreaE2e,
+        GameMapAreaBuildMapStack {
+  Widget buildMapPlayAreaStack({
     required BuildContext context,
     required bool isNarrow,
     required RegionMapViewData projectedRegion,
@@ -25,25 +52,25 @@ mixin _GameMapAreaBuildOverlays
       children: [
         Positioned.fill(
           child: IgnorePointer(
-            ignoring: _isTurnResolving,
+            ignoring: isTurnResolving,
             child: Focus(
               autofocus: true,
               onKeyEvent: (node, event) {
-                if (_workTargetSelection != null &&
+                if (inMapTileSelectionMode &&
                     event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.escape) {
-                  _cancelWorkTargetSelection();
+                  cancelAnyMapTileSelection();
                   return KeyEventResult.handled;
                 }
-                if (_sideMenuOpen &&
+                if (sideMenuOpen &&
                     event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.escape) {
-                  setState(() => _sideMenuOpen = false);
+                  setState(() => sideMenuOpen = false);
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.ignored;
               },
-              child: _buildMapFocusedStack(
+              child: buildMapFocusedStack(
                 context: context,
                 isNarrow: isNarrow,
                 projectedRegion: projectedRegion,
@@ -55,13 +82,13 @@ mixin _GameMapAreaBuildOverlays
             ),
           ),
         ),
-        if (debugConsoleEnabled && _debugConsoleOpen)
+        if (debugConsoleEnabled && debugConsoleOpen)
           Positioned(
             left: kEdgeSwipeStripWidth + 60,
             top: 56,
             child: DebugConsoleOverlayPanel(
               bus: ref.read(appEventBusProvider),
-              humanPlayerId: _debugConsolePlayerId ?? mapPlayerId,
+              humanPlayerId: debugConsolePlayerId ?? mapPlayerId,
               readOnlyContextProvider: () {
                 final selectedTileKey =
                     ref.read(mapProvincePanelProvider).selectedTileKey;
@@ -80,7 +107,7 @@ mixin _GameMapAreaBuildOverlays
                   players: players,
                 );
               },
-              onClose: () => setState(() => _debugConsoleOpen = false),
+              onClose: () => setState(() => debugConsoleOpen = false),
             ),
           ),
         if (isNarrow)
@@ -96,7 +123,7 @@ mixin _GameMapAreaBuildOverlays
                   playerView: mapPlayerView,
                   omniscientDetail: shell.omniscientDetail,
                   canMutateViaUi: shell.canMutateViaUi,
-                  workTargetSelectionCache: _workTargetSelectionCache,
+                  workTargetSelectionCache: workTargetSelectionCache,
                 ),
               ],
             ),

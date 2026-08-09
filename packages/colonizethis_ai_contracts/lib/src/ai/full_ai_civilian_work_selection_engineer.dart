@@ -1,11 +1,17 @@
-part of 'full_ai_civilian_work_selection.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/src/orders/connectivity_dev_snapshot.dart';
+
+import '../constants.dart';
+import 'full_ai_civilian_work_selection.dart' show FullAiCivilianWorkIdle;
+import 'full_ai_civilian_work_selection_shared.dart';
 
 // Engineer (`build_road` / `build_port` / `build_fort`) candidate scoring / row
 // selection and the Engineer path appender. Replaces the lexicographic fallback
 // (which always picked `build_fort` first because it sorts alphabetically before
 // `build_port`/`build_road`) with a unified scored pool over all three Engineer
 // targets. Split out of full_ai_civilian_work_selection.dart by concern to keep
-// each library file small; shares the parent library's private scope via `part`.
+// each library file small.
 //
 // Normative SPEC: SPEC/ai/civilian-work-planner.md § Engineer (Refs #3794).
 // Per-target base weights express the relative priority of the three targets;
@@ -25,6 +31,7 @@ int _engineerWorkScore(
   WorkOrder w,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final resourceId = game.worldState.resourceByTileKey[w.targetTileKey];
   final hasResource = resourceId != null && resourceId.isNotEmpty;
@@ -41,11 +48,24 @@ int _engineerWorkScore(
       var score = kEngineerBuildRoadBaseWorkScore;
       if (hasResource) score += kEngineerRoadResourceConnectivityBonus;
       if (inCapital) score += kEngineerRoadCapitalLogisticsBonus;
+      if (connectivityDev != null &&
+          connectivityDev.hasUnconnectedDevTargets &&
+          connectivityDev.frontierExtensionTiles.contains(w.targetTileKey)) {
+        score += kEngineerFrontierRoadExtensionBonus;
+      }
       return score;
     case kWorkTargetBuildPort:
       var score = kEngineerBuildPortBaseWorkScore;
       if (hasResource) score += kEngineerPortResourceExtractionBonus;
       if (inNewWorld) score += kEngineerPortNewWorldCoastalBonus;
+      if (connectivityDev != null &&
+          connectivityDev.hasUnconnectedDevTargets &&
+          provinceId != null &&
+          connectivityDev.provincesWithUnconnectedDevTargets.contains(
+            provinceId,
+          )) {
+        score += kEngineerPortOverseasLinkageBonus;
+      }
       return score;
     case kWorkTargetBuildFort:
       var score = kEngineerBuildFortBaseWorkScore;
@@ -79,16 +99,27 @@ WorkOrder? _bestEngineerRow(
   List<WorkOrder> candidates,
   Game game, {
   required String playerId,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final engineerCandidates = candidates
       .where((w) => _isEngineerWorkTarget(w.target))
       .toList();
   if (engineerCandidates.isEmpty) return null;
   var best = engineerCandidates.first;
-  var bestScore = _engineerWorkScore(best, game, playerId: playerId);
+  var bestScore = _engineerWorkScore(
+    best,
+    game,
+    playerId: playerId,
+    connectivityDev: connectivityDev,
+  );
   for (var i = 1; i < engineerCandidates.length; i++) {
     final w = engineerCandidates[i];
-    final s = _engineerWorkScore(w, game, playerId: playerId);
+    final s = _engineerWorkScore(
+      w,
+      game,
+      playerId: playerId,
+      connectivityDev: connectivityDev,
+    );
     if (s > bestScore) {
       bestScore = s;
       best = w;
@@ -101,16 +132,23 @@ WorkOrder? _bestEngineerRow(
   return best;
 }
 
-void _appendEngineerPathResult({
+void appendEngineerPathResult({
   required Unit? unit,
   required List<WorkOrder> w,
   required Game game,
   required String playerId,
   required List<WorkOrder> workOrders,
   required List<FullAiCivilianWorkIdle> idleEvents,
+  ConnectivityDevSnapshot? connectivityDev,
 }) {
   final chosen =
-      _bestEngineerRow(w, game, playerId: playerId) ?? _pickLexicographic(w);
+      _bestEngineerRow(
+        w,
+        game,
+        playerId: playerId,
+        connectivityDev: connectivityDev,
+      ) ??
+      pickLexicographic(w);
   if (chosen != null) {
     workOrders.add(chosen);
     return;

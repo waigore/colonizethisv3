@@ -1,9 +1,9 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'package:colonizethis_world/colonizethis_world.dart';
-import 'package:colonizethis_world/src/world/civilian_ownership_legality.dart';
 import 'diplomacy_relation_lookup.dart';
 import 'diplomacy_shared_helpers.dart';
+import 'faction_absorption_apply.dart';
 
 /// Join-Empire absorption shared between minor/tribe and GP targets.
 /// SPEC/game/diplomacy.md. Refs #2071.
@@ -19,11 +19,11 @@ abstract final class FactionAbsorptionEngine {
     String targetId,
     int turn,
   ) {
-    return _absorbIntoGp(
+    return absorbFactionIntoGp(
       game,
       gpId: gpId,
       absorbedFactionId: targetId,
-      kind: _AbsorptionKind.minorOrTribe,
+      kind: FactionAbsorptionKind.minorOrTribe,
     );
   }
 
@@ -33,11 +33,11 @@ abstract final class FactionAbsorptionEngine {
     String gpId,
     String targetGpId,
   ) {
-    return _absorbIntoGp(
+    return absorbFactionIntoGp(
       game,
       gpId: gpId,
       absorbedFactionId: targetGpId,
-      kind: _AbsorptionKind.greatPower,
+      kind: FactionAbsorptionKind.greatPower,
     );
   }
 
@@ -69,262 +69,4 @@ abstract final class FactionAbsorptionEngine {
 
     return game.withPlayers(players).copyWith(colonyStates: colonies);
   }
-}
-
-enum _AbsorptionKind { minorOrTribe, greatPower }
-
-List<String> _sortedFullProvinceIdsOwnedBy(Game game, String ownerId) {
-  // Reads the owned provinces from the shared read-only ProvinceOwnerCache
-  // projection (Phase 6b, SPEC/program/worldstate-projection.md; Refs #3393)
-  // instead of a full-world `allProvinces` owner scan. The result is sorted, so
-  // the projection's iteration order is irrelevant to the returned ids.
-  final ids = ProvinceOwnerCache.of(
-    game.worldState,
-  ).provincesOwnedBy(ownerId).map((p) => p.id).toList();
-  ids.sort();
-  return ids;
-}
-
-List<Fleet> _remapAllFleetsFromTo(
-  List<Fleet> fleets,
-  String fromId,
-  String toId,
-) {
-  return fleets
-      .map((f) => f.ownerId == fromId ? f.copyWith(ownerId: toId) : f)
-      .toList();
-}
-
-List<Unit> _remapAllUnitsFromTo(List<Unit> units, String fromId, String toId) {
-  return units
-      .map((u) => u.ownerId == fromId ? u.copyWith(ownerId: toId) : u)
-      .toList();
-}
-
-Map<String, Map<String, int>> _spyTimersWithoutPlayer(
-  Map<String, Map<String, int>> existing,
-  String playerId,
-) {
-  final next = <String, Map<String, int>>{};
-  existing.forEach((pid, byProv) {
-    if (pid == playerId) return;
-    if (byProv.isNotEmpty) {
-      next[pid] = Map<String, int>.from(byProv);
-    }
-  });
-  return next;
-}
-
-Game _absorbIntoGp(
-  Game game, {
-  required String gpId,
-  required String absorbedFactionId,
-  required _AbsorptionKind kind,
-}) {
-  final cost = joinEmpireCostForMinorOrTribe(game, absorbedFactionId);
-  var players = List<Player>.from(game.players);
-
-  // Shared id → row index (Refs #3562) replacing the bespoke index scans
-  // (originally Refs #2394 Category C). Last-wins on duplicate ids matches the
-  // prior single-pass assignment.
-  final playerIndexById = indexByKey(players, (p) => p.id);
-  if (kind == _AbsorptionKind.greatPower) {
-    final gpIdx = playerIndexById[gpId] ?? -1;
-    final targetIdx = playerIndexById[absorbedFactionId] ?? -1;
-    if (gpIdx < 0 || targetIdx < 0) return game;
-    players = debitPlayerTreasury(players, gpIdx, cost);
-    players.removeAt(targetIdx);
-  } else {
-    final gpIdx = playerIndexById[gpId] ?? -1;
-    players = debitPlayerTreasury(players, gpIdx, cost);
-  }
-
-  final provinceIds = _sortedFullProvinceIdsOwnedBy(game, absorbedFactionId);
-  var next = game.withPlayers(players);
-  final bulk = applyBulkCanonicalProvinceOwnershipTransfers(
-    next,
-    provinceIdsInOrder: provinceIds,
-    oldOwnerId: absorbedFactionId,
-    newOwnerId: gpId,
-    relocateIllegalCivilians: false,
-  );
-  next = bulk.game;
-
-  // Great Power absorption remaps GP-only game fields. Minor/Tribe targets are
-  // not GPs: Join Empire mandates province/unit/fleet transfer and relation
-  // cleanup, but does not require GP-only cleanups on the minor path
-  // (Refs #4028 extract under 200-line guideline).
-  next = kind == _AbsorptionKind.greatPower
-      ? _remapAbsorbedGreatPowerAssets(next, gpId, absorbedFactionId)
-      : _remapAbsorbedMinorOrTribeAssets(next, gpId, absorbedFactionId);
-
-  next = relocateIllegalCiviliansInChangedProvinces(
-    next,
-    changedProvinceIds: Set<String>.from(provinceIds),
-  );
-
-  next = next.withWorldState(
-    reconcileArmiesAfterUnitsChanged(next.worldState, next),
-  );
-
-  return kind == _AbsorptionKind.minorOrTribe
-      ? _cleanupAfterMinorOrTribeAbsorb(next, absorbedFactionId)
-      : _cleanupAfterGreatPowerAbsorb(next, absorbedFactionId);
-}
-
-Game _remapAbsorbedGreatPowerAssets(
-  Game next,
-  String gpId,
-  String absorbedFactionId,
-) {
-  final generals = next.generals
-      .map(
-        (g) => g.ownerId == absorbedFactionId ? g.copyWith(ownerId: gpId) : g,
-      )
-      .toList();
-
-  final purchased = <String, String>{};
-  for (final e in next.worldState.purchasedTilesByTileKey.entries) {
-    purchased[e.key] = e.value == absorbedFactionId ? gpId : e.value;
-  }
-
-  final prospected = <String, Set<String>>{};
-  for (final e in next.worldState.playerProspectedTiles.entries) {
-    if (e.key == absorbedFactionId) continue;
-    prospected[e.key] = Set<String>.from(e.value);
-  }
-  final targetPros = next.worldState.playerProspectedTiles[absorbedFactionId];
-  if (targetPros != null && targetPros.isNotEmpty) {
-    prospected.putIfAbsent(gpId, () => <String>{}).addAll(targetPros);
-  }
-
-  var ws = next.worldState.copyWith(
-    fleets: _remapAllFleetsFromTo(
-      next.worldState.fleets,
-      absorbedFactionId,
-      gpId,
-    ),
-    purchasedTilesByTileKey: purchased,
-    playerProspectedTiles: prospected,
-    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-      next.worldState.spyRevealTurnsByPlayer,
-      absorbedFactionId,
-    ),
-  );
-  ws = ws.mapBothRegionUnits(
-    (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
-  );
-  // Atomic multi-field mutation (generals + worldState); kept as raw
-  // copyWith per Issue #2836 AC 6 single-field-only helper scope.
-  return next.copyWith(generals: generals, worldState: ws);
-}
-
-Game _remapAbsorbedMinorOrTribeAssets(
-  Game next,
-  String gpId,
-  String absorbedFactionId,
-) {
-  var ws = next.worldState.copyWith(
-    fleets: _remapAllFleetsFromTo(
-      next.worldState.fleets,
-      absorbedFactionId,
-      gpId,
-    ),
-    spyRevealTurnsByPlayer: _spyTimersWithoutPlayer(
-      next.worldState.spyRevealTurnsByPlayer,
-      absorbedFactionId,
-    ),
-  );
-  ws = ws.mapBothRegionUnits(
-    (_, units) => _remapAllUnitsFromTo(units, absorbedFactionId, gpId),
-  );
-  return next.withWorldState(ws);
-}
-
-Game _cleanupAfterMinorOrTribeAbsorb(Game next, String absorbedFactionId) {
-  var minorNations = next.minorNations;
-  var tribes = next.tribes;
-  if (next.minorNations.any((m) => m.id == absorbedFactionId)) {
-    minorNations = next.minorNations
-        .where((m) => m.id != absorbedFactionId)
-        .toList();
-  }
-  if (next.tribes.any((t) => t.id == absorbedFactionId)) {
-    tribes = next.tribes.where((t) => t.id != absorbedFactionId).toList();
-  }
-
-  // Canonical full-faction overture teardown (Refs #3562 AC1).
-  final overtures =
-      clearOverturesInvolvingFaction(next, absorbedFactionId).game
-          .overtureStates;
-
-  final relations = next.diplomacyRelations
-      .where(
-        (r) =>
-            r.factionId1 != absorbedFactionId &&
-            r.factionId2 != absorbedFactionId,
-      )
-      .toList();
-
-  return next.copyWith(
-    minorNations: minorNations,
-    tribes: tribes,
-    overtureStates: overtures,
-    diplomacyRelations: relations,
-  );
-}
-
-Game _cleanupAfterGreatPowerAbsorb(Game next, String absorbedFactionId) {
-  final aiControl = Map<String, bool>.from(next.aiControlByGpId)
-    ..remove(absorbedFactionId);
-  final aiSeed = Map<String, int>.from(next.aiSeedByGpId)
-    ..remove(absorbedFactionId);
-  final hidden = Map<String, String>.from(next.hiddenAgendaByGpId)
-    ..remove(absorbedFactionId);
-  final glyphs = Map<String, String>.from(next.politicalGlyphByPlayerId)
-    ..remove(absorbedFactionId);
-
-  // Canonical full-faction overture teardown (Refs #3562 AC1).
-  final overtures =
-      clearOverturesInvolvingFaction(next, absorbedFactionId).game
-          .overtureStates;
-
-  final relations = next.diplomacyRelations
-      .where(
-        (r) =>
-            r.factionId1 != absorbedFactionId &&
-            r.factionId2 != absorbedFactionId,
-      )
-      .toList();
-
-  final subsidies = next.subsidyStates
-      .where(
-        (s) =>
-            s.payerId != absorbedFactionId && s.targetId != absorbedFactionId,
-      )
-      .toList();
-
-  // When the removed GP held colonies, those Tribes lose their suzerain.
-  // SPEC/game/diplomacy.md § GP–Tribe Rules (Refs #3753 R5.5 / R6.4).
-  final colonies = next.colonyStates
-      .where((c) => c.colonyOfGpId != absorbedFactionId)
-      .toList();
-  final boycotts = next.boycottStates
-      .where(
-        (b) =>
-            b.gpId != absorbedFactionId && b.targetGpId != absorbedFactionId,
-      )
-      .toList();
-
-  return next.copyWith(
-    overtureStates: overtures,
-    diplomacyRelations: relations,
-    subsidyStates: subsidies,
-    colonyStates: colonies,
-    boycottStates: boycotts,
-    aiControlByGpId: aiControl,
-    aiSeedByGpId: aiSeed,
-    hiddenAgendaByGpId: hidden,
-    politicalGlyphByPlayerId: glyphs,
-  );
 }

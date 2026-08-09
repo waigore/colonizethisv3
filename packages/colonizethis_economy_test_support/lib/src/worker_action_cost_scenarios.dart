@@ -3,23 +3,22 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'worker_action_cost_expectations.dart';
+
+/// Pins for [canAffordRecruitWorker] rows.
+typedef CanAffordRecruitWorkerPins = ({Map<String, bool>? tech, WorkerTier targetTier, WorkerPool workers, Map<String, int> stockpileDeltas, int treasury, bool expectedCanAfford, String? expectedReason});
+
+WorkerActionCostScenario canAffordRecruitWorkerScenario({required String label, required CanAffordRecruitWorkerPins pins, String? refs}) => (label: label, canAfford: pins, applyCost: null, apprenticeTechConsistency: false, refs: refs);
+
+/// Pins for [applyRecruitWorkerCostDeduction] rows.
+typedef ApplyRecruitWorkerCostPins = ({WorkerTier targetTier, WorkerPool initialWorkers, Map<String, int> stockpileDeltas, int treasury, WorkerPool expectedWorkers, Map<String, int> expectedStockpileQuantities, int expectedTreasury});
+
+WorkerActionCostScenario applyRecruitWorkerCostScenario({required String label, required ApplyRecruitWorkerCostPins pins, String? refs}) => (label: label, canAfford: null, applyCost: pins, apprenticeTechConsistency: false, refs: refs);
+
+WorkerActionCostScenario apprenticeTechConsistencyScenario({required String label, String? refs}) => (label: label, canAfford: null, applyCost: null, apprenticeTechConsistency: true, refs: refs);
+
 /// One row for worker-action-cost tables (Refs #3979). Exactly one family is set.
 typedef WorkerActionCostScenario = ({String label, CanAffordRecruitWorkerPins? canAfford, ApplyRecruitWorkerCostPins? applyCost, bool apprenticeTechConsistency, String? refs});
-/// Runs [scenario] via the matching expectation helper.
-void runWorkerActionCostScenario(WorkerActionCostScenario scenario) {
-  final canAfford = scenario.canAfford;
-  if (canAfford != null) {
-    runCanAffordRecruitWorkerExpectation(canAfford);
-    return;
-  }
-  final applyCost = scenario.applyCost;
-  if (applyCost != null) {
-    runApplyRecruitWorkerCostExpectation(applyCost);
-    return;
-  }
-  runApprenticeTechConsistencyExpectation();
-}
+
 /// Canonical scenarios for [canAffordRecruitWorker].
 List<WorkerActionCostScenario> canAffordRecruitWorkerScenarios() => [
   canAffordRecruitWorkerScenario(label: 'peasant recruit needs only fabric (no tech, no peasant, no treasury)', pins: (tech: null, targetTier: WorkerTier.peasant, workers: WorkerPool.empty, stockpileDeltas: {'fabric': 2}, treasury: 0, expectedCanAfford: true, expectedReason: null)),

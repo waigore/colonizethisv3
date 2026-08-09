@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/relation_meter.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Widget _host(num score) => buildAppShell(
   child: Scaffold(body: Center(child: RelationMeter(score: score))),

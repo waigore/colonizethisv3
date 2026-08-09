@@ -1,4 +1,6 @@
-part of 'main_menu.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app/widgets/ct_spacing.dart';
 
 /// Narrow-viewport breakpoint for the main menu in logical pixels.
 ///
@@ -103,3 +105,14 @@ const double kMainMenuScrollBracketVerticalInset = 0.10;
 /// dots). Mirrors mockup `.buttons-region::before { opacity: 0.45 }` so the
 /// bracket reads as a faint chrome flourish, not a structural rule.
 const double kMainMenuScrollBracketOpacity = 0.45;
+
+enum MainMenuVariant {
+  plain,
+  pixelArt,
+}
+
+enum MainMenuState {
+  default_,
+  afterVictory,
+  noSaves,
+}

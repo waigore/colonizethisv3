@@ -24,8 +24,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/civilian_units_panel_test_support.dart';
+import 'app_shell_harness.dart';
+import 'civilian_units_panel_test_support.dart';
 
 int _argb(Color c) {
   final int a = (c.a * 255.0).round() & 0xFF;

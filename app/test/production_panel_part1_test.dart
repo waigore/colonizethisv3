@@ -16,7 +16,7 @@ import 'package:colonizethis_app/widgets/ct_resource_cell.dart';
 import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -112,7 +112,7 @@ void main() {
       expect(find.text('RAW MATERIALS'), findsOneWidget);
       expect(find.text('MANUFACTURED'), findsOneWidget);
       expect(find.text('WORKERS'), findsOneWidget);
-      expect(find.textContaining('Effective labour:'), findsOneWidget);
+      expect(find.textContaining('Labour this turn:'), findsOneWidget);
     });
 
     testWidgets('Available subpanel shows raw materials used as inputs', (

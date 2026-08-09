@@ -55,27 +55,26 @@
 
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/dialogue/game_start_intro_overlay.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/yarn_test_fixtures.dart';
+import 'yarn_test_fixtures.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing screen-, panel-, and dialog-level pin files.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same overlay renders its default layout. Mirrors
 /// the contract used by `dialogs_320dp_min_viewport_test.dart`,
 /// `overture_dialogue_overlay_320dp_min_viewport_test.dart`, and
 /// `intervention_dialogue_overlay_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 /// English l10n sentinels for the overlay title + degraded-path body
 /// lines. Pinned here so the narrow-pin breaks if those strings change
@@ -113,37 +112,26 @@ Future<void> _pumpOverlay(
   Widget overlay, {
   required Size size,
 }) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: overlay)),
-  );
-  // The harness pumps the first frame (for the failed `loadString`
-  // future); a second timed pump drives the post-microtask
-  // `setState(_loadError = ...)` rebuild that mounts the degraded panel
-  // (mirrors the existing intervention degraded-path tests).
+  await pumpDialogs320At(tester, overlay, size: size, settle: false);
   await tester.pump(const Duration(milliseconds: 200));
 }
 
 void main() {
   suppressLogsForTests();
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — GameStartIntroOverlay @ '
-        '320 dp (Refs #2870 S8/S10)',
-    () {
-      Widget buildOverlay() {
-        return GameStartIntroOverlay(
-          assetBundle: YarnThrowingAssetBundle(error: StateError('missing game intro yarn')),
-          onDismissed: () {},
-          child: const SizedBox.expand(),
-        );
-      }
+  group('SPEC/ui/mobile-adaptation.md § 7 — GameStartIntroOverlay @ '
+      '320 dp (Refs #2870 S8/S10)', () {
+    Widget buildOverlay() {
+      return GameStartIntroOverlay(
+        assetBundle: YarnThrowingAssetBundle(
+          error: StateError('missing game intro yarn'),
+        ),
+        onDismissed: () {},
+        child: const SizedBox.expand(),
+      );
+    }
 
-      testWidgets(
-        'AC (positive) GameStartIntroOverlay degraded panel @ '
+    testWidgets('AC (positive) GameStartIntroOverlay degraded panel @ '
         '320×640: no RenderFlex overflow exception, "A New World '
         'Awaits" title + CtBrassDivider + load-error body + '
         '"Continue" action label render — the '
@@ -159,63 +147,47 @@ void main() {
         'variants (every non-dismissed state composes its body inside '
         'the same CtFullScreenDialogueShell scaffold above the same '
         'title + brass-divider header), this positive pin proves the '
-        'chrome contract for every state.',
-        (WidgetTester tester) async {
-          await _pumpOverlay(
-            tester,
-            buildOverlay(),
-            size: _kMinViewport,
-          );
+        'chrome contract for every state.', (WidgetTester tester) async {
+      await _pumpOverlay(tester, buildOverlay(), size: _kMinViewport);
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: '
-                'GameStartIntroOverlay must not emit a RenderFlex '
-                'overflow exception at kMinViewportWidth (320 dp). '
-                'The CtFullScreenDialogueShell scrim + centered '
-                'CtDialogShell + "A New World Awaits" title + '
-                'CtBrassDivider + degraded body must wrap within '
-                'the ~288 dp content column.',
-          );
-
-          // Title + chrome anchors render via the
-          // CtFullScreenDialogueShell scaffold.
-          expect(find.text(_kOverlayTitle), findsOneWidget);
-          expect(find.byType(CtBrassDivider), findsOneWidget);
-
-          // Degraded body labels render end-to-end.
-          expect(
-            find.textContaining(_kLoadErrorPrefix),
-            findsOneWidget,
-          );
-          expect(find.text(_kContinueLabel), findsOneWidget);
-        },
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'SPEC/ui/mobile-adaptation.md § 7: '
+            'GameStartIntroOverlay must not emit a RenderFlex '
+            'overflow exception at kMinViewportWidth (320 dp). '
+            'The CtFullScreenDialogueShell scrim + centered '
+            'CtDialogShell + "A New World Awaits" title + '
+            'CtBrassDivider + degraded body must wrap within '
+            'the ~288 dp content column.',
       );
 
-      testWidgets(
-        'Negative control: GameStartIntroOverlay degraded panel @ '
+      // Title + chrome anchors render via the
+      // CtFullScreenDialogueShell scaffold.
+      expect(find.text(_kOverlayTitle), findsOneWidget);
+      expect(find.byType(CtBrassDivider), findsOneWidget);
+
+      // Degraded body labels render end-to-end.
+      expect(find.textContaining(_kLoadErrorPrefix), findsOneWidget);
+      expect(find.text(_kContinueLabel), findsOneWidget);
+    });
+
+    testWidgets('Negative control: GameStartIntroOverlay degraded panel @ '
         '1024×768 also pumps without exception (regression sentinel '
         'for the overflow contract — keeps the 320 dp positive pin '
-        'meaningful).',
-        (WidgetTester tester) async {
-          await _pumpOverlay(
-            tester,
-            buildOverlay(),
-            size: _kWideRegressionViewport,
-          );
-
-          expect(tester.takeException(), isNull);
-          expect(find.text(_kOverlayTitle), findsOneWidget);
-          expect(find.byType(CtBrassDivider), findsOneWidget);
-          expect(
-            find.textContaining(_kLoadErrorPrefix),
-            findsOneWidget,
-          );
-          expect(find.text(_kContinueLabel), findsOneWidget);
-        },
+        'meaningful).', (WidgetTester tester) async {
+      await _pumpOverlay(
+        tester,
+        buildOverlay(),
+        size: _kWideRegressionViewport,
       );
-    },
-  );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text(_kOverlayTitle), findsOneWidget);
+      expect(find.byType(CtBrassDivider), findsOneWidget);
+      expect(find.textContaining(_kLoadErrorPrefix), findsOneWidget);
+      expect(find.text(_kContinueLabel), findsOneWidget);
+    });
+  });
 }

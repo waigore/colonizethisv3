@@ -11,117 +11,97 @@ void _writeGovernedFile(Directory temp, String name, String contents) {
 }
 
 void main() {
-  test(
-    'fails when production labour step-surface suite '
-    'reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_step_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(
-        temp,
-        'production_labour_section_step_surface_test.dart',
-        '''
+  test('fails when production labour step-surface suite '
+      'reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_step_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'production_labour_section_step_surface_test.dart',
+      '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''',
-      );
+    );
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when production labour expected-lines suite '
-    'reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_lines_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(
-        temp,
-        'production_labour_controls_expected_lines_test.dart',
-        '''
+  test('fails when production labour expected-lines suite '
+      'reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_lines_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'production_labour_controls_expected_lines_test.dart',
+      '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''',
-      );
+    );
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when production allocation-row buttons suite '
-    'reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_alloc_btn_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(
-        temp,
-        'production_allocation_row_buttons_test.dart',
-        '''
+  test('fails when production allocation-row buttons suite '
+      'reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_alloc_btn_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'production_allocation_row_buttons_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
-''',
-      );
+''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when production allocation-row chrome suite '
-    'reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_prod_alloc_chrome_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(
-        temp,
-        'production_allocation_row_chrome_test.dart',
-        '''
+  test('fails when production allocation-row chrome suite '
+      'reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_prod_alloc_chrome_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'production_allocation_row_chrome_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
-''',
-      );
+''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
   test(
     'passes when production labour step-surface suite uses buildAppShell',
@@ -134,7 +114,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'production_labour_section_step_surface_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -151,28 +131,25 @@ void main() {
     },
   );
 
-  test(
-    'fails when train naval dialog suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_train_naval_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'train_naval_dialog_test.dart', '''
+  test('fails when train naval dialog suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_train_naval_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'train_naval_dialog_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
   test(
     'fails when train military dialog suite reintroduces MaterialApp host',
@@ -243,15 +220,13 @@ Widget host() => MaterialApp(home: const Placeholder());
     },
   );
 
-  test(
-    'passes when train naval dialog suite uses buildAppShell only',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_train_naval_ok_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'train_naval_dialog_test.dart', '''
-import 'support/app_shell_harness.dart';
+  test('passes when train naval dialog suite uses buildAppShell only', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_train_naval_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'train_naval_dialog_test.dart', '''
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -262,79 +237,69 @@ void main() {
 }
 ''');
 
-      final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
-      expect(code, 0);
-    },
-  );
+    final code = runCheckAppTestNoDuplicateScaffolding(temp.path);
+    expect(code, 0);
+  });
 
-  test(
-    'fails when split army dialog suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_split_army_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'split_army_dialog_test.dart', '''
+  test('fails when split army dialog suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_split_army_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'split_army_dialog_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when split fleet dialog suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_split_fleet_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'split_fleet_dialog_test.dart', '''
+  test('fails when split fleet dialog suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_split_fleet_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'split_fleet_dialog_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when move fleet dialog suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_move_fleet_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'move_fleet_dialog_test.dart', '''
+  test('fails when move fleet dialog suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_move_fleet_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'move_fleet_dialog_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
   test(
     'fails when commodity breakdown dialog spec suite reintroduces MaterialApp host',
@@ -401,7 +366,7 @@ Widget host() => MaterialApp(home: const Placeholder());
         temp,
         'production_commodity_breakdown_dialog_spec_test.dart',
         '''
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 void main() {
   testWidgets('ok', (tester) async {
@@ -425,9 +390,13 @@ void main() {
         'check_app_test_no_dup_scaffolding_transfer_home_mat_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'transfer_to_home_fleet_dialog_spec_test.dart', '''
+      _writeGovernedFile(
+        temp,
+        'transfer_to_home_fleet_dialog_spec_test.dart',
+        '''
 Widget host() => MaterialApp(home: const Placeholder());
-''');
+''',
+      );
 
       final logs = <String>[];
       final code = runCheckAppTestNoDuplicateScaffolding(
@@ -510,51 +479,45 @@ Widget host() => MaterialApp(home: const Placeholder());
     },
   );
 
-  test(
-    'fails when turn_news dialog suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_turn_news_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'turn_news_dialog_test.dart', '''
+  test('fails when turn_news dialog suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_turn_news_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'turn_news_dialog_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
-  test(
-    'fails when pause_menu_panel suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_pause_menu_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'pause_menu_panel_test.dart', '''
+  test('fails when pause_menu_panel suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_pause_menu_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'pause_menu_panel_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
   test(
     'fails when pause_menu_side_menu_specs suite reintroduces MaterialApp host',
@@ -655,9 +618,13 @@ Widget host() => MaterialApp(home: const Placeholder());
         'check_app_test_no_dup_scaffolding_turn_res_proc_mat_',
       );
       addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'turn_resolution_processing_dialog_test.dart', '''
+      _writeGovernedFile(
+        temp,
+        'turn_resolution_processing_dialog_test.dart',
+        '''
 Widget host() => MaterialApp(home: const Placeholder());
-''');
+''',
+      );
 
       final logs = <String>[];
       final code = runCheckAppTestNoDuplicateScaffolding(
@@ -671,28 +638,25 @@ Widget host() => MaterialApp(home: const Placeholder());
     },
   );
 
-  test(
-    'fails when diplomacy_dialogs suite reintroduces MaterialApp host',
-    () {
-      final temp = Directory.systemTemp.createTempSync(
-        'check_app_test_no_dup_scaffolding_diplomacy_dialogs_mat_',
-      );
-      addTearDown(() => temp.deleteSync(recursive: true));
-      _writeGovernedFile(temp, 'diplomacy_dialogs_test.dart', '''
+  test('fails when diplomacy_dialogs suite reintroduces MaterialApp host', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_diplomacy_dialogs_mat_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(temp, 'diplomacy_dialogs_test.dart', '''
 Widget host() => MaterialApp(home: const Placeholder());
 ''');
 
-      final logs = <String>[];
-      final code = runCheckAppTestNoDuplicateScaffolding(
-        temp.path,
-        info: logs.add,
-        err: logs.add,
-      );
+    final logs = <String>[];
+    final code = runCheckAppTestNoDuplicateScaffolding(
+      temp.path,
+      info: logs.add,
+      err: logs.add,
+    );
 
-      expect(code, 1);
-      expect(logs.join('\n'), contains('inline MaterialApp( host'));
-    },
-  );
+    expect(code, 1);
+    expect(logs.join('\n'), contains('inline MaterialApp( host'));
+  });
 
   test(
     'fails when tribe_first_contact overlay suite reintroduces MaterialApp host',
@@ -810,6 +774,95 @@ Widget host() => MaterialApp(home: const Placeholder());
 
       expect(code, 1);
       expect(logs.join('\n'), contains('inline MaterialApp( host'));
+    },
+  );
+
+  test(
+    'fails when governed 320 dp suite reintroduces Center-host dialog clone',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_dialogs320_center_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'choose_tech_dialog_320dp_min_viewport_test.dart',
+        '''
+Future<void> _pumpDialog(WidgetTester tester, Widget dialog) async {
+  await pumpAtMinViewport(
+    tester,
+    child: Scaffold(body: Center(child: dialog)),
+  );
+}
+''',
+      );
+
+      final logs = <String>[];
+      final code = runCheckAppTestNoDuplicateScaffolding(
+        temp.path,
+        info: logs.add,
+        err: logs.add,
+      );
+
+      expect(code, 1);
+      expect(logs.join('\n'), contains('Scaffold(body: Center(...))'));
+      expect(logs.join('\n'), contains('pumpDialogs320At'));
+    },
+  );
+
+  test('passes when governed 320 dp suite calls pumpDialogs320At', () {
+    final temp = Directory.systemTemp.createTempSync(
+      'check_app_test_no_dup_scaffolding_dialogs320_ok_',
+    );
+    addTearDown(() => temp.deleteSync(recursive: true));
+    _writeGovernedFile(
+      temp,
+      'choose_tech_dialog_320dp_min_viewport_test.dart',
+      '''
+import 'dialogs_320dp_min_viewport_support.dart';
+
+void main() {
+  testWidgets('ok', (tester) async {
+    await pumpDialogs320At(tester, const Placeholder(), size: Size.zero);
+  });
+}
+''',
+    );
+
+    expect(runCheckAppTestNoDuplicateScaffolding(temp.path), 0);
+  });
+
+  test(
+    'passes when production commodity 320 suite uses showDialog Builder host',
+    () {
+      final temp = Directory.systemTemp.createTempSync(
+        'check_app_test_no_dup_scaffolding_prod_commodity_ok_',
+      );
+      addTearDown(() => temp.deleteSync(recursive: true));
+      _writeGovernedFile(
+        temp,
+        'production_commodity_breakdown_dialog_320dp_min_viewport_test.dart',
+        '''
+Future<void> _pumpDialog(WidgetTester tester) async {
+  await pumpAtMinViewport(
+    tester,
+    child: Scaffold(
+      body: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => showDialog<void>(
+            context: context,
+            builder: (_) => const Placeholder(),
+          ),
+          child: const Text('open'),
+        ),
+      ),
+    ),
+  );
+}
+''',
+      );
+
+      expect(runCheckAppTestNoDuplicateScaffolding(temp.path), 0);
     },
   );
 }

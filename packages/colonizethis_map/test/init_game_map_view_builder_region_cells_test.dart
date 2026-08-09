@@ -4,34 +4,12 @@ import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'support/init_game_map_view_fixtures.dart';
+import 'support/init_game_map_view_region_cells_scenarios.dart';
 
 void main() {
   group('buildInitGameMapViewData region data', () {
     test('returns InitGameMapViewData with oldWorld and newWorld regions', () {
-      final game = minimalGame(
-        id: 'test',
-        turnNumber: 1,
-        oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            displayName: 'OW P1',
-            ownerId: 'gp1',
-          ),
-        ],
-        newWorldProvinces: const [
-          Province(
-            id: 'newWorld|p1',
-            regionId: 'newWorld',
-            displayName: 'NW P1',
-          ),
-        ],
-        players: const [Player(id: 'gp1', displayName: 'GP1', isHuman: false)],
-      );
-      final viewData = buildViewDataForScenario(
-        provinceSeaDualRegionScenario(game: game),
-        cellSize: 16,
-      );
+      final viewData = regionCellsBasicDualRegionView();
 
       expect(viewData.oldWorld.regionId, 'oldWorld');
       expect(viewData.newWorld.regionId, 'newWorld');
@@ -46,15 +24,11 @@ void main() {
       expect(viewData.oldWorld.greatPowerFactionIds, {'gp1'});
       expect(viewData.newWorld.greatPowerFactionIds, {'gp1'});
       expect(
-        viewData
-            .oldWorld
-            .provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
+        viewData.oldWorld.provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
         'gp1',
       );
       expect(
-        viewData
-            .newWorld
-            .provincePoliticalOwnerByPrefixedProvinceId['newWorld|p1'],
+        viewData.newWorld.provincePoliticalOwnerByPrefixedProvinceId['newWorld|p1'],
         isNull,
       );
       expect(viewData.newWorld.cells.length, 4);
@@ -63,36 +37,7 @@ void main() {
     test(
       'copies seaZoneDisplayNameById into RegionMapViewData.seaZoneDisplayNameByPrefixedId',
       () {
-        final game = minimalGame(
-          id: 'test',
-          turnNumber: 1,
-          seaZoneDisplayNameById: const {
-            'oldWorld|s1': 'Adriatic Sea',
-            'newWorld|s1': 'Caribbean Sea',
-          },
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              displayName: 'OW P1',
-              ownerId: 'gp1',
-            ),
-          ],
-          newWorldProvinces: const [
-            Province(
-              id: 'newWorld|p1',
-              regionId: 'newWorld',
-              displayName: 'NW P1',
-            ),
-          ],
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          ],
-        );
-        final viewData = buildViewDataForScenario(
-          provinceSeaDualRegionScenario(game: game),
-          cellSize: 16,
-        );
+        final viewData = regionCellsSeaZoneDisplayNameView();
 
         expect(
           viewData.oldWorld.seaZoneDisplayNameByPrefixedId['oldWorld|s1'],
@@ -106,31 +51,7 @@ void main() {
     );
 
     test('invokes with seed configSummary and greatPowerColorOverride', () {
-      final game = minimalGame(
-        id: 'g',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-        newWorldProvinces: const [
-          Province(id: 'newWorld|p1', regionId: 'newWorld'),
-        ],
-        players: const [Player(id: 'gp1', displayName: 'GP', isHuman: false)],
-      );
-      final viewData = buildViewDataForScenario(
-        dualRegionScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['p1'],
-          ],
-          oldWorldTopology: regionTopology(
-            regionId: 'oldWorld',
-            provinceIds: const ['p1'],
-          ),
-        ),
-        cellSize: 8,
-        seed: 123,
-        configSummary: 'test config',
-      );
+      final viewData = regionCellsSeedConfigView();
       expect(viewData.seed, 123);
       expect(viewData.configSummary, 'test config');
       expect(viewData.oldWorld.factionColors['gp1'], isNotNull);
@@ -145,24 +66,9 @@ void main() {
     test(
       'region setup maps owner/display and terrain palette from minimal data',
       () {
-        final game = minimalGame(
-          id: 'slice-test',
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: 'oldWorld',
-              ownerId: 'gp1',
-              displayName: 'Alpha',
-            ),
-          ],
-          newWorldProvinces: const [],
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          ],
-        );
         final view = buildViewDataForScenario(
           oldWorldFocusedScenario(
-            game: game,
+            game: regionCellsTerrainSliceGame(),
             oldWorldGrid: const [
               ['p1'],
             ],
@@ -181,48 +87,16 @@ void main() {
           isTrue,
         );
         expect(
-          view
-              .oldWorld
-              .provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
+          view.oldWorld.provincePoliticalOwnerByPrefixedProvinceId['oldWorld|p1'],
           'gp1',
         );
       },
     );
 
     test('overlay setup counts regiments, civilians, and in-port ships', () {
-      final game = minimalGame(
-        id: 'slice-test',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-        ],
-        newWorldProvinces: const [],
-        oldWorldUnits: [
-          Unit(
-            id: 'u-builder',
-            type: kUnitTypeBuilder,
-            ownerId: 'gp1',
-            locationProvinceId: 'oldWorld|p1',
-          ),
-          Unit(
-            id: 'u-regiment',
-            type: 'pikemen',
-            ownerId: 'gp1',
-            locationProvinceId: 'oldWorld|p1',
-          ),
-        ],
-        fleets: [
-          Fleet(
-            id: 'f1',
-            ownerId: 'gp1',
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|p1',
-            ships: const [ShipInstance(id: 'ship-1', typeId: 'frigate')],
-          ),
-        ],
-      );
       final view = buildViewDataForScenario(
         oldWorldFocusedScenario(
-          game: game,
+          game: regionCellsOverlaySetupGame(),
           oldWorldGrid: const [
             ['p1'],
           ],
@@ -239,55 +113,7 @@ void main() {
     });
 
     test('marker helpers expose capitals ports towns and warps', () {
-      final game = minimalGame(
-        id: 'slice-test',
-        oldWorldProvinces: const [
-          Province(
-            id: 'oldWorld|p1',
-            regionId: 'oldWorld',
-            townTileKey: 'oldWorld|p1|0|0',
-          ),
-        ],
-        newWorldProvinces: const [],
-        players: const [
-          Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: true,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|p1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-        portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
-      );
-      final view = buildViewDataForScenario(
-        oldWorldFocusedScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['p1', 's1'],
-          ],
-          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-          newWorldGrid: const [
-            ['s9'],
-          ],
-          newWorldTopology: regionTopology(
-            regionId: 'newWorld',
-            seaZoneIds: const ['s9'],
-          ),
-        ),
-        warpLinks: const [
-          WarpLink(
-            regionId: 'oldWorld',
-            seaZoneId: 's1',
-            otherRegionId: 'newWorld',
-            otherSeaZoneId: 's9',
-          ),
-        ],
-      );
+      final view = buildRegionCellsMarkerWarpView(regionCellsMarkerHelpersGame());
 
       expect(view.oldWorld.capitalMarkers.length, 1);
       expect(view.oldWorld.capitalMarkers.single.factionId, 'gp1');
@@ -302,26 +128,7 @@ void main() {
     });
 
     test('cell helper applies visibility and extraction overlays', () {
-      final game = minimalGame(
-        id: 'slice-test',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld'),
-        ],
-        newWorldProvinces: const [],
-      );
-      final view = buildViewDataForScenario(
-        oldWorldFocusedScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['p1'],
-          ],
-          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-        ),
-        visibilityByTile: const {'oldWorld|p1|0|0': TileVisibility.fogged},
-        resourceExtractionUnitsByTile: const {'oldWorld|p1|0|0': 9},
-        resourceExtractionEffectiveUnitsByTile: const {'oldWorld|p1|0|0': 7},
-        resourceExtractionBlockedUnitsByTile: const {'oldWorld|p1|0|0': 2},
-      );
+      final view = regionCellsVisibilityOverlayView();
 
       final cell = view.oldWorld.cells.single;
       expect(cell.visibility, TileVisibility.fogged);
@@ -333,97 +140,13 @@ void main() {
     test(
       'does not synthesize a Home Fleet marker when fleet entity is missing',
       () {
-        final game = minimalGame(
-          id: 'slice-test',
-          oldWorldProvinces: const [
-            Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-          ],
-          newWorldProvinces: const [],
-          players: const [
-            Player(
-              id: 'gp1',
-              displayName: 'GP1',
-              isHuman: true,
-              capitalTile: CapitalTile(
-                regionId: 'oldWorld',
-                provinceId: 'oldWorld|p1',
-                x: 0,
-                y: 0,
-              ),
-            ),
-          ],
-          portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
-        );
-        final view = buildViewDataForScenario(
-          oldWorldFocusedScenario(
-            game: game,
-            oldWorldGrid: const [
-              ['p1', 's1'],
-            ],
-            oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-            newWorldGrid: const [
-              ['s9'],
-            ],
-            newWorldTopology: regionTopology(
-              regionId: 'newWorld',
-              seaZoneIds: const ['s9'],
-            ),
-          ),
-        );
-
+        final view = buildRegionCellsHomeFleetView(withFleet: false);
         expect(view.oldWorld.fleetTileMarkers, isEmpty);
       },
     );
 
     test('keeps an empty Home Fleet marker when real fleet entity exists', () {
-      final game = minimalGame(
-        id: 'slice-test',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-        newWorldProvinces: const [],
-        fleets: [
-          Fleet(
-            id: 'fleet_gp1',
-            ownerId: 'gp1',
-            regionId: 'oldWorld',
-            inPortAtProvinceId: 'oldWorld|p1',
-            ships: [],
-            mission: FleetMission.none,
-          ),
-        ],
-        players: const [
-          Player(
-            id: 'gp1',
-            displayName: 'GP1',
-            isHuman: true,
-            capitalTile: CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: 'oldWorld|p1',
-              x: 0,
-              y: 0,
-            ),
-          ),
-        ],
-        portsByProvinceSeaboard: const {'oldWorld|p1|s1': 'oldWorld|p1|0|0'},
-      );
-      final view = buildViewDataForScenario(
-        oldWorldFocusedScenario(
-          game: game,
-          oldWorldGrid: const [
-            ['p1', 's1'],
-          ],
-          oldWorldTopology: singleProvinceAndSeaTopology('oldWorld'),
-          newWorldGrid: const [
-            ['s9'],
-          ],
-          newWorldTopology: regionTopology(
-            regionId: 'newWorld',
-            seaZoneIds: const ['s9'],
-          ),
-        ),
-      );
-
+      final view = buildRegionCellsHomeFleetView(withFleet: true);
       expect(view.oldWorld.fleetTileMarkers, hasLength(1));
       expect(view.oldWorld.fleetTileMarkers.single.fleetIds, ['fleet_gp1']);
       expect(view.oldWorld.fleetTileMarkers.single.stackCount, 1);
@@ -432,33 +155,17 @@ void main() {
 
   group('buildInitGameMapViewData visibility and unit presence', () {
     test('applies visibilityByTile map to CellViewData.visibility', () {
-      final game = minimalGame(
-        id: 'visibility',
-        oldWorldProvinces: const [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-        newWorldProvinces: const [
-          Province(id: 'newWorld|p1', regionId: 'newWorld', ownerId: 'gp2'),
-        ],
-        players: const [
-          Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-          Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-        ],
-      );
-      final scenario = dualRegionScenario(
-        game: game,
-        oldWorldGrid: const [
-          ['p1', 'p1'],
-        ],
-        oldWorldTopology: regionTopology(
-          regionId: 'oldWorld',
-          provinceIds: const ['p1'],
-        ),
-      );
-
-      // Two tiles in OW: (0,0) and (1,0). One tile in NW: (0,0).
       final viewData = buildViewDataForScenario(
-        scenario,
+        dualRegionScenario(
+          game: regionCellsVisibilityGame(),
+          oldWorldGrid: const [
+            ['p1', 'p1'],
+          ],
+          oldWorldTopology: regionTopology(
+            regionId: 'oldWorld',
+            provinceIds: const ['p1'],
+          ),
+        ),
         visibilityByTile: const {
           'oldWorld|p1|0|0': TileVisibility.visible,
           'oldWorld|p1|1|0': TileVisibility.fogged,
@@ -466,64 +173,27 @@ void main() {
         },
       );
 
-      // Old World visibility mapping.
       final owCells = viewData.oldWorld.cells;
-      final firstOwCell = owCells.singleWhere((c) => c.x == 0 && c.y == 0);
-      final secondOwCell = owCells.singleWhere((c) => c.x == 1 && c.y == 0);
-      expect(firstOwCell.visibility, TileVisibility.visible);
-      expect(secondOwCell.visibility, TileVisibility.fogged);
-
-      // New World visibility mapping.
-      final nwCell = viewData.newWorld.cells.single;
-      expect(nwCell.visibility, TileVisibility.unrevealed);
+      expect(
+        owCells.singleWhere((c) => c.x == 0 && c.y == 0).visibility,
+        TileVisibility.visible,
+      );
+      expect(
+        owCells.singleWhere((c) => c.x == 1 && c.y == 0).visibility,
+        TileVisibility.fogged,
+      );
+      expect(
+        viewData.newWorld.cells.single.visibility,
+        TileVisibility.unrevealed,
+      );
     });
 
     test(
       'province unit presence shows own province counts and hides other province without visible intel',
       () {
-        final game = minimalGame(
-          id: 'presence_hidden_other',
-          oldWorldProvinces: const [
-            Province(id: 'oldWorld|pOwn', regionId: 'oldWorld', ownerId: 'gp1'),
-            Province(
-              id: 'oldWorld|pOther',
-              regionId: 'oldWorld',
-              ownerId: 'gp2',
-            ),
-          ],
-          oldWorldUnits: [
-            Unit(
-              id: 'u_builder',
-              type: kUnitTypeBuilder,
-              ownerId: 'gp1',
-              locationProvinceId: 'oldWorld|pOwn',
-              status: UnitStatus.idle,
-            ),
-            Unit(
-              id: 'u_pikemen',
-              type: 'pikemen',
-              ownerId: 'gp2',
-              locationProvinceId: 'oldWorld|pOther',
-              status: UnitStatus.idle,
-            ),
-          ],
-          fleets: [
-            Fleet(
-              id: 'f_other',
-              ownerId: 'gp2',
-              regionId: 'oldWorld',
-              inPortAtProvinceId: 'oldWorld|pOther',
-              ships: [ShipInstance(id: 'ship_1', typeId: 'frigate')],
-            ),
-          ],
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-            Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-          ],
-        );
         final viewData = buildViewDataForScenario(
           dualRegionScenario(
-            game: game,
+            game: regionCellsPresenceHiddenOtherGame(),
             oldWorldGrid: const [
               ['pOwn', 'pOther'],
             ],
@@ -541,17 +211,14 @@ void main() {
 
         final own =
             viewData.oldWorld.provinceUnitPresenceByProvinceId['oldWorld|pOwn'];
-        final other = viewData
-            .oldWorld
-            .provinceUnitPresenceByProvinceId['oldWorld|pOther'];
+        final other =
+            viewData.oldWorld.provinceUnitPresenceByProvinceId['oldWorld|pOther'];
         expect(own, isNotNull);
         expect(other, isNotNull);
-
         expect(own!.intelVisible, isTrue);
         expect(own.civilianCount, 1);
         expect(own.regimentCount, 0);
         expect(own.shipCount, 0);
-
         expect(other!.intelVisible, isFalse);
         expect(other.civilianCount, 0);
         expect(other.regimentCount, 1);
@@ -562,48 +229,9 @@ void main() {
     test(
       'province unit presence exposes other province counts when tile is visible',
       () {
-        final game = minimalGame(
-          id: 'presence_visible_other',
-          oldWorldProvinces: const [
-            Province(
-              id: 'oldWorld|pOther',
-              regionId: 'oldWorld',
-              ownerId: 'gp2',
-            ),
-          ],
-          oldWorldUnits: [
-            Unit(
-              id: 'u_builder_other',
-              type: kUnitTypeBuilder,
-              ownerId: 'gp2',
-              locationProvinceId: 'oldWorld|pOther',
-              status: UnitStatus.idle,
-            ),
-            Unit(
-              id: 'u_pikemen_other',
-              type: 'pikemen',
-              ownerId: 'gp2',
-              locationProvinceId: 'oldWorld|pOther',
-              status: UnitStatus.idle,
-            ),
-          ],
-          fleets: [
-            Fleet(
-              id: 'f_other_visible',
-              ownerId: 'gp2',
-              regionId: 'oldWorld',
-              inPortAtProvinceId: 'oldWorld|pOther',
-              ships: [ShipInstance(id: 'ship_7', typeId: 'frigate')],
-            ),
-          ],
-          players: const [
-            Player(id: 'gp1', displayName: 'GP1', isHuman: true),
-            Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-          ],
-        );
         final viewData = buildViewDataForScenario(
           dualRegionScenario(
-            game: game,
+            game: regionCellsPresenceVisibleOtherGame(),
             oldWorldGrid: const [
               ['pOther'],
             ],
@@ -617,9 +245,8 @@ void main() {
           },
         );
 
-        final other = viewData
-            .oldWorld
-            .provinceUnitPresenceByProvinceId['oldWorld|pOther'];
+        final other =
+            viewData.oldWorld.provinceUnitPresenceByProvinceId['oldWorld|pOther'];
         expect(other, isNotNull);
         expect(other!.intelVisible, isTrue);
         expect(other.civilianCount, 1);

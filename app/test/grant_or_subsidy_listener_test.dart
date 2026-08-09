@@ -4,8 +4,8 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 void main() {
   suppressLogsForTests();

@@ -28,9 +28,10 @@ Follow **[AGENTS.md](../../../AGENTS.md)** and **[CONTRIBUTING.md](../../../CONT
 2. Extract ACs from body/comments; flag vague ACs before claiming complete.
 3. **`git fetch origin && git checkout dev && git pull`** — verify only on **latest `dev`**. Unmerged or local-only work → **Gaps remain**.
 4. Map ACs → code, SPEC, tests, merged PR(s) referencing the issue.
-5. Run relevant tests (`melos`, `cd app && flutter test …`).
-6. **UI issues** (see below): widget golden procedure + gist upload.
-7. `gh issue comment <n> --body-file …` using the template below.
+5. **Manual (player-facing issues):** When the issue changes player UX or gameplay, verify `docs/manual/` chapter updates on merged `dev` (or justified non-update in the PR). Policy: `.cursor/rules/colonizethis-game-manual.mdc`.
+6. Run relevant tests (`melos`, `cd app && flutter test …`).
+7. **UI issues** (see below): widget golden procedure + gist upload.
+8. `gh issue comment <n> --body-file …` using the template below.
 
 ### UI issues
 
@@ -50,9 +51,10 @@ Follow existing golden patterns: `AppThemes.editorialMonocle`, `suppressLogsForT
 ## Comment template
 
 ```markdown
-**Verification** (ACs / SPEC / tests)
+**Verification** (ACs / SPEC / tests / manual)
 
 - [AC bullets → code/tests; partial/missing marked]
+- Manual (if player-facing): [chapters updated on `dev` | justified non-update | gap]
 
 Implementation: [merged PR on `dev`]. Tests: [commands run].
 

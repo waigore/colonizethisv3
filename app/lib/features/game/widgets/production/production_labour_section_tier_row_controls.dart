@@ -1,9 +1,16 @@
 // Disband and stepper controls for per-tier Labour rows (Refs #3878).
 
-part of 'production_labour_section.dart';
+import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-class _DisbandTierButton extends StatelessWidget {
-  const _DisbandTierButton({
+import '../../../../config/app_assets.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'production_allocation_row_buttons.dart';
+
+class ProductionLabourDisbandTierButton extends StatelessWidget {
+  const ProductionLabourDisbandTierButton({
+    super.key,
     required this.tier,
     required this.enabled,
     required this.disbandLabel,
@@ -53,8 +60,8 @@ class _DisbandTierButton extends StatelessWidget {
 /// - Wraps the subtree in [ExcludeSemantics] + [IgnorePointer] so screen
 ///   readers do not announce a second "Disband" affordance on peasant
 ///   rows and pointer events are ignored.
-class _DisbandReservedSlot extends StatelessWidget {
-  const _DisbandReservedSlot({required this.label});
+class ProductionLabourDisbandReservedSlot extends StatelessWidget {
+  const ProductionLabourDisbandReservedSlot({super.key, required this.label});
 
   final String label;
 
@@ -92,8 +99,9 @@ class _DisbandReservedSlot extends StatelessWidget {
 /// The surface fades to [kProductionAllocationStepButtonDisabledOpacity]
 /// when [enabled] is false; tap gestures are gated by the same flag so
 /// disabled controls never dispatch [onPressed].
-class _LabourIconButton extends StatelessWidget {
-  const _LabourIconButton({
+class ProductionLabourIconButton extends StatelessWidget {
+  const ProductionLabourIconButton({
+    super.key,
     required this.enabled,
     required this.semanticLabel,
     required this.tooltip,

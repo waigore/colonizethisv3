@@ -5,11 +5,12 @@ import 'package:path/path.dart' as p;
 /// SPEC: SPEC/program/repo-lint.md (Refs #3831).
 ///
 /// Guards the shared GP-treasury roll-up result helper beside
-/// `gp_treasury_credit_accumulator.dart`. Both `first_right_credits.dart` and
-/// `purchased_tile_riches.dart` must reference `GpTreasuryCreditRollup`.
+/// `gp_treasury_credit_accumulator.dart`. Both FRR and purchased-tile riches
+/// result types must compose [GpTreasuryCreditRollup] (phase-8: type siblings
+/// `first_right_credit_records.dart` and `purchased_tile_riches_records.dart`).
 const _targetRelativePaths = <String>[
-  'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credits.dart',
-  'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches.dart',
+  'packages/colonizethis_economy/lib/src/economy/world_market/first_right_credit_records.dart',
+  'packages/colonizethis_economy/lib/src/economy/world_market/purchased_tile_riches_records.dart',
 ];
 
 const _requiredSymbol = 'GpTreasuryCreditRollup';

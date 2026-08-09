@@ -1,6 +1,8 @@
 // Game events: shared event stream for game occurrences.
 // SPEC/program/game-events.md
 
+import 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
+
 /// Base event type for game occurrences.
 sealed class GameEvent {
   const GameEvent();
@@ -26,6 +28,25 @@ class CombatResultEvent extends GameEvent {
 
   /// Casualties by player id.
   final Map<String, int> casualties;
+}
+
+/// A general's medals increased after winning a land battle (Refs #4234).
+class GeneralMedalGainedEvent extends GameEvent {
+  const GeneralMedalGainedEvent({
+    required this.playerId,
+    required this.generalId,
+    required this.provinceId,
+    required this.newMedals,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final String generalId;
+
+  /// Province id in prefixed form (regionId|localId).
+  final String provinceId;
+  final int newMedals;
+  final int turnNumber;
 }
 
 /// Naval battle resolved in a sea zone. SPEC/program/game-events.md.
@@ -125,11 +146,13 @@ class VictorySetEvent extends GameEvent {
 class OrderRejectedEvent extends GameEvent {
   const OrderRejectedEvent({
     required this.playerId,
+    required this.orderKind,
     required this.orderSummary,
     required this.reasonCode,
   });
 
   final String playerId;
+  final OrderKind orderKind;
   final String orderSummary;
   final String
   reasonCode; // 'insufficient_treasury', 'invalid_destination', etc.
@@ -236,5 +259,37 @@ class SpyDefectedEvent extends GameEvent {
 
   /// Prefixed province id (`regionId|localId`).
   final String provinceId;
+  final int turnNumber;
+}
+
+/// Overseas-profit treasury credited to a GP from world-market phase (Refs #4226).
+class OverseasProfitCreditedEvent extends GameEvent {
+  const OverseasProfitCreditedEvent({
+    required this.playerId,
+    required this.totalTreasuryCredit,
+    required this.creditCount,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int totalTreasuryCredit;
+  final int creditCount;
+  final int turnNumber;
+}
+
+/// Last-turn ordinary market fill / carry-forward summary for a GP (Refs #4270).
+class MarketTurnSummaryEvent extends GameEvent {
+  const MarketTurnSummaryEvent({
+    required this.playerId,
+    required this.totalSpent,
+    required this.totalReceived,
+    required this.carryForwardOrderCount,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int totalSpent;
+  final int totalReceived;
+  final int carryForwardOrderCount;
   final int turnNumber;
 }

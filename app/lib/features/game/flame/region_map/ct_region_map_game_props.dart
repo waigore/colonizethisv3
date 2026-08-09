@@ -1,7 +1,15 @@
-part of 'ct_region_map_game.dart';
 
-void _ctRegionMapGameUpdateProps(
-  CtRegionMapGame game, {
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
+
+import 'ct_region_map_game_mixins.dart';
+import 'region_map_component.dart';
+import 'region_map_viewport_snapshot.dart' show RegionMapViewportSnapshot;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
+
+/// Updates [CtRegionMapGame] configuration without recreating the game instance.
+void ctRegionMapGameUpdateProps(
+  CtRegionMapGameFields game, {
   RegionMapViewData? region,
   bool? showPoliticalOverlay,
   bool? showProvinceOverlay,
@@ -24,7 +32,7 @@ void _ctRegionMapGameUpdateProps(
   void Function(String tileKey)? onCivilianTileTapped,
   void Function(
     String locationScopeKey,
-    String? initialFleetId,
+    List<String> fleetIds,
     String markerTileKey,
   )?
   onFleetMarkerTapped,
@@ -32,6 +40,9 @@ void _ctRegionMapGameUpdateProps(
   required PlayerView? playerViewForResources,
   void Function(RegionMapViewportSnapshot)? onViewportSnapshotChanged,
   double? zoomMultiplier,
+  bool? showPlayerTerritoryOutline,
+  Set<String>? playerTerritoryTileKeys,
+  bool clearPlayerTerritoryTileKeys = false,
 }) {
   var regionChanged = false;
   if (region != null) {
@@ -91,7 +102,15 @@ void _ctRegionMapGameUpdateProps(
     game.onViewportSnapshotChanged = onViewportSnapshotChanged;
   }
   if (zoomMultiplier != null) {
-    game._zoomMultiplier = zoomMultiplier;
+    game.state.zoomMultiplier = zoomMultiplier;
+  }
+  if (showPlayerTerritoryOutline != null) {
+    game.showPlayerTerritoryOutline = showPlayerTerritoryOutline;
+  }
+  if (clearPlayerTerritoryTileKeys) {
+    game.playerTerritoryTileKeys = null;
+  } else if (playerTerritoryTileKeys != null) {
+    game.playerTerritoryTileKeys = playerTerritoryTileKeys;
   }
 
   assertCtMapPlayerViewRequired(
@@ -99,8 +118,8 @@ void _ctRegionMapGameUpdateProps(
     playerViewForResources: game.playerViewForResources,
   );
 
-  if (game._mapLoaded) {
-    game._mapComponent
+  if (game.state.mapLoaded) {
+    game.state.mapComponent
       ..region = game.region
       ..cellSize = game.cellSizePx
       ..showPoliticalOverlay = game.showPoliticalOverlay
@@ -115,11 +134,13 @@ void _ctRegionMapGameUpdateProps(
       ..secondaryHighlightTileKeys = game.secondaryHighlightTileKeys
       ..validTileKeys = game.validTileKeys
       ..playerViewForResources = game.playerViewForResources
+      ..showPlayerTerritoryOutline = game.showPlayerTerritoryOutline
+      ..playerTerritoryTileKeys = game.playerTerritoryTileKeys
       ..onFleetMarkerTapped = onFleetMarkerTapped;
     if (regionChanged || zoomMultiplier != null) {
-      game._syncCameraZoomFromMultiplier();
+      (game as CtRegionMapGameCamera).syncCameraZoomFromMultiplier();
     } else {
-      game._emitViewportSnapshot();
+      (game as CtRegionMapGameCamera).emitViewportSnapshot();
     }
   }
 }

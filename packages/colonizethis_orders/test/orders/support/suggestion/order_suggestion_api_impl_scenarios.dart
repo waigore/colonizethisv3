@@ -24,47 +24,7 @@ void osaiRunSuggestNavalMoveOrdersReturnsList() {final game = apiImplDefaultGame
 
 void osaiRunSuggestNavalMissionOrdersReturnsList() {final game = apiImplDefaultGame(); final view = apiImplViewFor(game,apiImplBaseTopology); final list = _api.suggestNavalMissionOrders(view,game,apiImplBaseTopology,apiImplEmptyOrders,); expect(list,isA<List<NavalMissionOrder>>());}
 
-void osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById() {
-  final game = apiImplDefaultGame();
-  final view = apiImplViewFor(game, apiImplBaseTopology);
-  final unitsById = unitsByIdFromWorld(game.worldState);
-  final moveDefault = _api.suggestNavalMoveOrders(
-    view,
-    game,
-    apiImplBaseTopology,
-    apiImplEmptyOrders,
-  );
-  final moveShared = _api.suggestNavalMoveOrders(
-    view,
-    game,
-    apiImplBaseTopology,
-    apiImplEmptyOrders,
-    resolution: orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    ),
-  );
-  expect(moveShared, moveDefault);
-  final missionDefault = _api.suggestNavalMissionOrders(
-    view,
-    game,
-    apiImplBaseTopology,
-    apiImplEmptyOrders,
-  );
-  final missionShared = _api.suggestNavalMissionOrders(
-    view,
-    game,
-    apiImplBaseTopology,
-    apiImplEmptyOrders,
-    resolution: orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    ),
-  );
-  expect(missionShared, missionDefault);
-}
+void osaiRunNavalOrdersMatchWhenCallerSuppliesUnitsById() {final game = apiImplDefaultGame(); final view = apiImplViewFor(game, apiImplBaseTopology); final unitsById = unitsByIdFromWorld(game.worldState); final moveDefault = _api.suggestNavalMoveOrders( view, game, apiImplBaseTopology, apiImplEmptyOrders, ); final moveShared = _api.suggestNavalMoveOrders( view, game, apiImplBaseTopology, apiImplEmptyOrders, resolution: orderResolutionContextFromView( view, game, unitsById: unitsById, ), ); expect(moveShared, moveDefault); final missionDefault = _api.suggestNavalMissionOrders( view, game, apiImplBaseTopology, apiImplEmptyOrders, ); final missionShared = _api.suggestNavalMissionOrders( view, game, apiImplBaseTopology, apiImplEmptyOrders, resolution: orderResolutionContextFromView( view, game, unitsById: unitsById, ), ); expect(missionShared, missionDefault);}
 
 void osaiRunSuggestDiplomaticOrdersReturnsList() {final game = apiImplDefaultGame(); final view = apiImplViewFor(game,apiImplBaseTopology); final list = _api.suggestDiplomaticOrders(view,game,apiImplBaseTopology,apiImplEmptyOrders,); expect(list,isA<List<DiplomaticOrder>>());}
 

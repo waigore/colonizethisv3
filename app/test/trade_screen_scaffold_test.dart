@@ -28,9 +28,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
-import 'support/trade_screen_test_support.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
+import 'trade_screen_test_support.dart';
 import 'widget_test_pumps.dart';
 
 void main() {
@@ -402,7 +402,7 @@ void main() {
 
   group('GameMapEmpireLeftRail Trade button (Refs #2993 E3)', () {
     testWidgets('rail exposes kEmpireTradeButtonKey between Production and '
-        'Civilian Units', (tester) async {
+        'Development', (tester) async {
       await tester.pumpWidget(buildLeftRailHost());
       await pumpSettleCapped(tester);
 
@@ -413,20 +413,20 @@ void main() {
         find.byKey(kEmpireProductionButtonKey),
       );
       final tradeTopLeft = tester.getTopLeft(trade);
-      final civilianTopLeft = tester.getTopLeft(
-        find.byKey(kEmpireCivilianUnitsButtonKey),
+      final developmentTopLeft = tester.getTopLeft(
+        find.byKey(kEmpireDevelopmentButtonKey),
       );
 
-      // Vertical stack ordering: Production -> Trade -> Civilian Units.
+      // Vertical stack ordering: Production -> Trade -> Development.
       expect(
         tradeTopLeft.dy,
         greaterThan(productionTopLeft.dy),
         reason: 'Trade button sits below Production per SPEC #2993 R4.',
       );
       expect(
-        civilianTopLeft.dy,
+        developmentTopLeft.dy,
         greaterThan(tradeTopLeft.dy),
-        reason: 'Civilian Units sits below Trade per SPEC #2993 R4.',
+        reason: 'Development sits below Trade per SPEC #4175.',
       );
     });
 

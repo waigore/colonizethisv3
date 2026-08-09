@@ -1,5 +1,5 @@
 import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

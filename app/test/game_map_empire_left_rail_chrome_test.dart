@@ -20,8 +20,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/panel_test_fixtures.dart';
+import 'app_shell_harness.dart';
+import 'panel_test_fixtures.dart';
 
 /// Tests for the dark editorial-monocle chrome contract on
 /// [GameMapEmpireLeftRail] (issue #2861 S3 / R4).
@@ -95,11 +95,13 @@ void main() {
   const List<Key> railButtonKeys = <Key>[
     kEmpireProductionButtonKey,
     kEmpireTradeButtonKey,
+    kEmpireDevelopmentButtonKey,
     kEmpireCivilianUnitsButtonKey,
     kEmpireMilitaryUnitsButtonKey,
     kEmpireNavalUnitsButtonKey,
     kEmpireDiplomacyButtonKey,
     kEmpireTechnologyButtonKey,
+    kEmpireVictoryButtonKey,
   ];
 
   testWidgets('Rail buttons paint a 36 x 36 dp surface', (
@@ -323,11 +325,13 @@ void main() {
       final Map<Key, String> expectedLabels = <Key, String>{
         kEmpireProductionButtonKey: 'Production',
         kEmpireTradeButtonKey: 'Trade',
+        kEmpireDevelopmentButtonKey: 'Development',
         kEmpireCivilianUnitsButtonKey: 'Civilian Units',
         kEmpireMilitaryUnitsButtonKey: 'Military Units',
         kEmpireNavalUnitsButtonKey: 'Naval Units',
         kEmpireDiplomacyButtonKey: 'Diplomacy',
         kEmpireTechnologyButtonKey: 'Technology',
+        kEmpireVictoryButtonKey: 'Victory',
       };
 
       for (final entry in expectedLabels.entries) {

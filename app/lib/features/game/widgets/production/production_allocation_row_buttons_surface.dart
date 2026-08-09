@@ -1,4 +1,9 @@
-part of 'production_allocation_row_buttons.dart';
+import 'package:flutter/material.dart';
+
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_gradients.dart';
+import '../../../../widgets/strict_asset_icon.dart';
+import 'production_allocation_row_buttons.dart';
 
 /// Wraps an icon child in the dark editorial-monocle step-button chrome
 /// (26 × 26 surface with [CtGradients.buttonGradient] inside a 1 px

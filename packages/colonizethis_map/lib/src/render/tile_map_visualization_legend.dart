@@ -4,7 +4,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:image/image.dart' as img;
 
 import '../tile_map_topology_helpers.dart';
-import 'tile_map_visualization_shared.dart'
+import '../tile_map_colors.dart' show regionPalette, terrainColorRgb;
+import 'tile_map_visualization_legend_layout.dart'
     show
         drawLegendContinentSeedMarker,
         drawLegendLandSeedMarker,
@@ -12,10 +13,8 @@ import 'tile_map_visualization_shared.dart'
         drawResourceLegendRows,
         legendLineHeight,
         legendPadding,
-        regionPalette,
         swatchGap,
-        swatchSize,
-        terrainColorRgb;
+        swatchSize;
 import 'tile_map_visualization_colors.dart' show seaColorRgb;
 
 const int tileMapLegendTitleLines = 2;

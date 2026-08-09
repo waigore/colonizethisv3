@@ -1,25 +1,22 @@
-part of 'gp_old_world_resource_redistribution.dart';
+// SPEC/game/tile-map-and-generation.md; SPEC/program/game-setup-pipeline.md (§7d.redist).
+// GP Old World resource-redistribution tile-scan + fairness helpers
+// (Refs #4086 Slice B de-part).
 
-// GP Old World resource-redistribution tile-scan + fairness helpers, extracted
-// from `gp_old_world_resource_redistribution.dart` for maintainability
-// (Refs #3290 Phase 0 file-split). Behaviour-preserving move: this is a
-// `part of` the redistribution library, so imports, shared helpers, the
-// `GpOldWorldResourceRedistributionInfeasibleException` type, and private
-// visibility are all unchanged.
-//
-// Wave-4 (Refs #4029): counts / fairness / eligibility derive from a single
-// per-pass inventory built via [visitGpOwLandTiles], not nested GP×resource
-// full-grid fan-out.
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
-List<Resource> _resourcesInRedistributionSet(ResourceRules rules) {
+import 'gp_old_world_tile_scan.dart';
+
+List<Resource> resourcesInRedistributionSet(ResourceRules rules) {
   return Resource.values
       .where((r) => rules.isAllowedInRegion(r, kRegionOldWorld))
       .toList();
 }
 
 /// One GP-owned Old World land tile snapshotted for a redistribution pass.
-class _GpOwTileInvEntry {
-  const _GpOwTileInvEntry({
+class GpOwTileInvEntry {
+  const GpOwTileInvEntry({
     required this.x,
     required this.y,
     required this.localProvinceId,
@@ -39,19 +36,19 @@ class _GpOwTileInvEntry {
 }
 
 /// Builds a single GP-land inventory from [map] for this redistribution pass.
-List<_GpOwTileInvEntry> _buildGpOwTileInventory({
+List<GpOwTileInvEntry> buildGpOwTileInventory({
   required TileMapResult map,
   required Map<String, String> ownerByLocal,
   required Set<String> gpIds,
 }) {
-  final out = <_GpOwTileInvEntry>[];
+  final out = <GpOwTileInvEntry>[];
   visitGpOwLandTiles(
     map: map,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
     visit: (x, y, local, owner, key) {
       out.add(
-        _GpOwTileInvEntry(
+        GpOwTileInvEntry(
           x: x,
           y: y,
           localProvinceId: local,
@@ -67,8 +64,8 @@ List<_GpOwTileInvEntry> _buildGpOwTileInventory({
 }
 
 /// Counts resource [r] on GP-owned OW land tiles (excluding town/capital).
-int _countResourceOnGpTiles({
-  required List<_GpOwTileInvEntry> inventory,
+int countResourceOnGpTiles({
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Resource resource,
 }) {
@@ -81,7 +78,7 @@ int _countResourceOnGpTiles({
 }
 
 int _countResourceTilesForGp({
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required String gp,
   required Resource r,
@@ -95,10 +92,10 @@ int _countResourceTilesForGp({
   return a;
 }
 
-double _fairnessScore({
+double fairnessScore({
   required List<String> gpIdsSorted,
   required Map<Resource, int> inventoryN,
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required List<Resource> resourceSet,
 }) {
@@ -124,7 +121,7 @@ double _fairnessScore({
 
 /// Clears resources and extraction on all GP-owned OW land tiles (including town/capital).
 (TileMapResult map, Map<String, String> resMap, TileMapState tileState)
-_clearGreatPowerOldWorldTerrainResources({
+clearGreatPowerOldWorldTerrainResources({
   required TileMapResult mapIn,
   required Game game,
   required Map<String, String> resMapIn,
@@ -154,8 +151,8 @@ _clearGreatPowerOldWorldTerrainResources({
   return (map, resMap, tileState);
 }
 
-int _eligibleEmptyCountForGp({
-  required List<_GpOwTileInvEntry> inventory,
+int eligibleEmptyCountForGp({
+  required List<GpOwTileInvEntry> inventory,
   required Resource r,
   required ResourceRules rules,
   required String gp,
@@ -176,8 +173,8 @@ int _eligibleEmptyCountForGp({
   return c;
 }
 
-String? _firstLexEligibleEmptyTileForGp({
-  required List<_GpOwTileInvEntry> inventory,
+String? firstLexEligibleEmptyTileForGp({
+  required List<GpOwTileInvEntry> inventory,
   required Resource r,
   required ResourceRules rules,
   required String gp,
@@ -199,13 +196,13 @@ String? _firstLexEligibleEmptyTileForGp({
   return candidates.isEmpty ? null : candidates.first;
 }
 
-TileMapResult _placeResourceAtKey(TileMapResult map, String key, Resource r) {
+TileMapResult placeResourceAtKey(TileMapResult map, String key, Resource r) {
   final parsed = parseTileKeyCoordinates(key);
   if (parsed == null) return map;
   return map.withResourceAt(parsed.x, parsed.y, r);
 }
 
-int _sumPlacedAll(Map<String, int> placed, List<String> gpIdsSorted) {
+int sumPlacedAll(Map<String, int> placed, List<String> gpIdsSorted) {
   var sumPlaced = 0;
   for (final id in gpIdsSorted) {
     sumPlaced += placed[id] ?? 0;

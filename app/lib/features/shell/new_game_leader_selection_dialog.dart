@@ -5,45 +5,21 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/config/ui_screen_ids.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
-import 'package:colonizethis_app/widgets/ct_dropdown.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app/widgets/ct_spacing.dart';
-import 'package:colonizethis_app/widgets/ct_toggle_switch.dart';
-import 'package:colonizethis_app/widgets/gp_default_map_color_swatch.dart';
 
-part 'new_game_leader_selection_dialog_state_base.dart';
-part 'new_game_leader_selection_dialog_slots.dart';
-part 'new_game_leader_selection_dialog_slot_row.dart';
-part 'new_game_leader_selection_dialog_slot_row_pickers.dart';
-part 'new_game_leader_selection_dialog_setup_fields_header.dart';
-part 'new_game_leader_selection_dialog_setup_fields_options.dart';
-part 'new_game_leader_selection_dialog_setup_fields_footer.dart';
+import 'new_game_leader_selection_dialog_layout.dart';
+import 'new_game_leader_selection_dialog_setup_fields_footer.dart';
+import 'new_game_leader_selection_dialog_setup_fields_header.dart';
+import 'new_game_leader_selection_dialog_setup_fields_options.dart';
+import 'new_game_leader_selection_dialog_slot_row.dart';
+import 'new_game_leader_selection_dialog_slots.dart';
+import 'new_game_leader_selection_dialog_state_base.dart';
 
-const int _kNumSlots = 6;
-
-/// Vertical gap between slot rows. Matches the mockup `.slots-list{gap:6px}`.
-const double _kSlotListGap = CtSpacing.s;
-
-/// Slot-row inner padding. Matches the mockup `.slot-row{padding:8px 10px}`
-/// (vertical 8 dp = [CtSpacing.m]; horizontal 10 dp is a per-component override
-/// not on the canonical spacing scale).
-const EdgeInsets _kSlotRowPadding = EdgeInsets.symmetric(
-  vertical: CtSpacing.m,
-  horizontal: 10,
-);
-
-/// Horizontal gap between the infinite-mode toggle and its label, also used to
-/// indent the helper text. Matches the mockup `.toggle-row{gap:10px}`.
-const double _kToggleLabelGap = 10;
-
-const String _kNormalProfileChoiceId = '';
+export 'new_game_leader_selection_dialog_layout.dart'
+    show kNewGameLeaderSelectionNumSlots;
 
 /// Shown when the shell emits `OpenDialogEvent('new_game_leader_selection')`.
 class NewGameLeaderSelectionDialog extends StatefulWidget {
@@ -121,22 +97,22 @@ class NewGameLeaderSelectionDialog extends StatefulWidget {
 
 class _NewGameLeaderSelectionDialogState extends State<NewGameLeaderSelectionDialog>
     with
-        _NewGameLeaderSelectionDialogStateBase,
-        _NewGameLeaderSelectionDialogSlots,
-        _NewGameLeaderSelectionDialogSlotRow,
-        _NewGameLeaderSelectionDialogSetupFieldsHeader,
-        _NewGameLeaderSelectionDialogSetupFieldsOptions,
-        _NewGameLeaderSelectionDialogSetupFieldsFooter {
+        NewGameLeaderSelectionDialogStateBase,
+        NewGameLeaderSelectionDialogSlots,
+        NewGameLeaderSelectionDialogSlotRow,
+        NewGameLeaderSelectionDialogSetupFieldsHeader,
+        NewGameLeaderSelectionDialogSetupFieldsOptions,
+        NewGameLeaderSelectionDialogSetupFieldsFooter {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
     final ThemeData theme = Theme.of(context);
-    final _LeaderDialogTextStyles styles = _resolveTextStyles(theme);
-    final Set<int> duplicateSlots = _duplicateSlotIndices();
+    final styles = resolveTextStyles(theme);
+    final Set<int> duplicateSlots = duplicateSlotIndices();
     final slotWidgets = <Widget>[
-      for (var i = 0; i < _kNumSlots; i++) ...[
-        if (i > 0) const SizedBox(height: _kSlotListGap),
-        _buildSlotRow(
+      for (var i = 0; i < kNewGameLeaderSelectionNumSlots; i++) ...[
+        if (i > 0) const SizedBox(height: kNewGameLeaderSelectionSlotListGap),
+        buildSlotRow(
           context,
           i,
           l10n,
@@ -152,7 +128,7 @@ class _NewGameLeaderSelectionDialogState extends State<NewGameLeaderSelectionDia
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(l10n, styles),
+          buildHeader(l10n, styles),
           const SizedBox(height: CtSpacing.l),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -160,20 +136,20 @@ class _NewGameLeaderSelectionDialogState extends State<NewGameLeaderSelectionDia
             children: slotWidgets,
           ),
           const SizedBox(height: CtSpacing.ml),
-          _buildSeedField(theme, l10n, styles),
+          buildSeedField(theme, l10n, styles),
           const SizedBox(height: CtSpacing.ml),
-          _buildAdvancedStartField(theme, l10n, styles),
+          buildAdvancedStartField(theme, l10n, styles),
           const SizedBox(height: CtSpacing.ml),
-          _buildInfiniteModeTile(theme, l10n, styles),
+          buildInfiniteModeTile(theme, l10n, styles),
           const SizedBox(height: CtSpacing.ml),
-          _buildTerrainVariationField(
+          buildTerrainVariationField(
             context,
             l10n,
             fieldLabelStyle: styles.fieldLabel,
             helperStyle: styles.helper,
           ),
           const SizedBox(height: CtSpacing.l),
-          _buildFooterButtons(l10n, context),
+          buildFooterButtons(l10n, context),
         ],
       ),
     );

@@ -1,4 +1,7 @@
-part of '../app_events.dart';
+/// App event types. First-class library (Refs #4068 Slice C).
+
+import '../app_events.dart';
+import '../combat_mode.dart';
 
 // ---------------------------------------------------------------------------
 // UIActionEvent — emitted by UI components that need other UI components to act.
@@ -93,9 +96,14 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.initialSelectedUnitId,
     this.explorerOnly = false,
     this.builderOnly = false,
+    this.engineerOnly = false,
+    this.merchantOnly = false,
     this.prospectShortcutTargetTileKey,
     this.exploreShortcutTargetTileKey,
     this.buildImprovementShortcutTargetTileKey,
+    this.buildRoadShortcutTargetTileKey,
+    this.buildFortShortcutTargetTileKey,
+    this.purchaseLandShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -111,6 +119,12 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
   /// Optional panel filter mode for builder-only rows.
   final bool builderOnly;
 
+  /// Optional panel filter mode for engineer-only rows.
+  final bool engineerOnly;
+
+  /// Optional panel filter mode for merchant-only rows.
+  final bool merchantOnly;
+
   /// Optional tile key used by the province prospect shortcut flow.
   final String? prospectShortcutTargetTileKey;
 
@@ -119,6 +133,15 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province build-improvement shortcut flow.
   final String? buildImprovementShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-road shortcut flow.
+  final String? buildRoadShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-fort shortcut flow.
+  final String? buildFortShortcutTargetTileKey;
+
+  /// Optional tile key used by the province purchase-land shortcut flow.
+  final String? purchaseLandShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.
@@ -141,6 +164,21 @@ class OpenNavalUnitsPanelEvent extends UIActionEvent {
   final String? initialSelectedFleetId;
 
   /// Optional map tile key (`regionId|cellId|x|y`) for tile-scoped panel chrome (Locate / title).
+  final String? tileScopeTileKey;
+}
+
+/// Map fleet-marker shortcut: mission assign context menu (Refs #4213).
+class OpenNavalMissionMenuEvent extends UIActionEvent {
+  const OpenNavalMissionMenuEvent({
+    required this.locationScopeKey,
+    required this.fleetIds,
+    this.initialSelectedFleetId,
+    this.tileScopeTileKey,
+  });
+
+  final String locationScopeKey;
+  final List<String> fleetIds;
+  final String? initialSelectedFleetId;
   final String? tileScopeTileKey;
 }
 
@@ -228,6 +266,14 @@ class StartCivilianWorkTargetSelectionEvent extends UIActionEvent {
   final String workTarget;
 }
 
+/// Request to start Spy relocate destination selection from the units panel.
+/// Emit [ClosePanelEvent] first when the civilian units sheet should close.
+class StartCivilianRelocateSelectionEvent extends UIActionEvent {
+  const StartCivilianRelocateSelectionEvent({required this.unitId});
+
+  final String unitId;
+}
+
 /// Emitted when a typed units panel route is dismissed.
 class UnitsPanelClosedEvent extends UIActionEvent {
   const UnitsPanelClosedEvent(this.panel);
@@ -259,6 +305,31 @@ class CombatModeChosenEvent extends UIActionEvent {
   const CombatModeChosenEvent(this.mode);
 
   final CombatMode mode;
+}
+
+/// Player choice from the Development panel disconnected-improve warn dialog.
+/// SPEC/ui/development-panel.md — disconnected warn dialog.
+enum DevelopmentDisconnectedAssignChoice {
+  improveAnyway,
+  roadFirst,
+  cancel,
+}
+
+/// Request the disconnected-improve warn dialog; returns choice via callback.
+/// Handled by the shell-level event handler (app layer).
+class DevelopmentDisconnectedAssignDialogEvent extends UIActionEvent {
+  const DevelopmentDisconnectedAssignDialogEvent({
+    required this.roadFirstEnabled,
+    this.roadFirstDisabledReason,
+    void Function(DevelopmentDisconnectedAssignChoice)? onResult,
+  }) : _onResult = onResult;
+
+  final bool roadFirstEnabled;
+  final String? roadFirstDisabledReason;
+  final void Function(DevelopmentDisconnectedAssignChoice)? _onResult;
+
+  void result(DevelopmentDisconnectedAssignChoice choice) =>
+      _onResult?.call(choice);
 }
 
 /// Request to open the province/sea zone detail overlay for [provinceId].

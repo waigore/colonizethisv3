@@ -5,8 +5,10 @@ import 'package:path/path.dart' as p;
 import 'ct_repo_lint_scan_contract.dart';
 
 /// Physical-line ceiling for EXPAND-peace `*_test.dart` contracts once
-/// Phase-6 case extraction has landed (Refs #3977).
-const int expandPeacePinSuitePhysicalLineCeiling = 650;
+/// Phase-6 case extraction has landed (Refs #3977). Phase-10 Slice C
+/// densify ratchets 650→600 (Refs #4104); Phase-11 Slice C →550 (#4239);
+/// Phase-12 Slice D →500 (Refs #4291).
+const int expandPeacePinSuitePhysicalLineCeiling = 500;
 
 /// Repo-relative path prefix for EXPAND peace unit pins.
 const String _expandPeaceTestPathPrefix =

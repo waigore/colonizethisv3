@@ -8,23 +8,10 @@ import 'package:colonizethis_test/test.dart';
 import 'combat_resolver_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a battle general assignment scenario table.
-class BattleGeneralAssignmentScenario implements LabeledScenario {
-  const BattleGeneralAssignmentScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<BattleGeneralAssignmentScenario> battleGeneralAssignmentScenarios() => [
-  BattleGeneralAssignmentScenario(
+List<RunnableScenario> battleGeneralAssignmentScenarios() => [
+  RunnableScenario(
     scenarioId: 'bga-second-attack-excludes-general',
     label: 'second attack in same phase excludes general already used as attacker',
     run: () {
@@ -78,7 +65,7 @@ List<BattleGeneralAssignmentScenario> battleGeneralAssignmentScenarios() => [
       );
     },
   ),
-  BattleGeneralAssignmentScenario(
+  RunnableScenario(
     scenarioId: 'bga-defender-pool-not-filtered',
     label: 'defender pool not filtered by attack ledger for same faction',
     run: () {
@@ -111,7 +98,7 @@ List<BattleGeneralAssignmentScenario> battleGeneralAssignmentScenarios() => [
       expect(a.defenderMedals, 1);
     },
   ),
-  BattleGeneralAssignmentScenario(
+  RunnableScenario(
     scenarioId: 'bga-battle-rng-matches',
     label: 'battleAssignmentRng matches for auto and QB same context',
     run: () {

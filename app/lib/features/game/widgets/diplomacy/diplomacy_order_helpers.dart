@@ -1,5 +1,5 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart'
-    show ordersWithAppendedDiplomaticOrder;
+import 'package:colonizethis_orders/colonizethis_orders.dart' show ordersWithAppendedDiplomaticOrder;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 /// Shared short label for diplomacy action buttons and confirmation prompts.

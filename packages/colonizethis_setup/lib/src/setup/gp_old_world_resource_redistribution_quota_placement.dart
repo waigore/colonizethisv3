@@ -1,11 +1,14 @@
-part of 'gp_old_world_resource_redistribution.dart';
+// SPEC/game/tile-map-and-generation.md; SPEC/program/game-setup-pipeline.md (§7d.redist).
+// GP Old World resource-redistribution placement-pass + quota-pool logic
+// (Refs #4086 Slice B de-part).
 
-// GP Old World resource-redistribution placement-pass + quota-pool logic,
-// extracted from `gp_old_world_resource_redistribution.dart` for
-// maintainability (Refs #3290 Phase 0 file-split). Behaviour-preserving move:
-// this is a `part of` the redistribution library, so imports, shared tile-scan
-// helpers, the `GpOldWorldResourceRedistributionInfeasibleException` type, and
-// private visibility are all unchanged.
+import 'dart:math';
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+
+import 'gp_old_world_resource_redistribution_tile_scans.dart';
+import 'gp_old_world_resource_redistribution_types.dart';
+import 'seed_perturbation.dart';
 
 /// One pass: place resources for each GP until targets met or no eligible tile.
 TileMapResult _runGpPlacementPass({
@@ -17,14 +20,14 @@ TileMapResult _runGpPlacementPass({
   required Set<String> used,
   required Resource r,
   required ResourceRules resourceRules,
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
 }) {
   var map = mapIn;
   for (final gp in shuffled) {
     while (true) {
       if ((targets[gp] ?? 0) <= (placed[gp] ?? 0)) break;
-      final key = _firstLexEligibleEmptyTileForGp(
+      final key = firstLexEligibleEmptyTileForGp(
         inventory: inventory,
         r: r,
         rules: resourceRules,
@@ -33,7 +36,7 @@ TileMapResult _runGpPlacementPass({
         used: used,
       );
       if (key == null) break;
-      map = _placeResourceAtKey(map, key, r);
+      map = placeResourceAtKey(map, key, r);
       used.add(key);
       placed[gp] = (placed[gp] ?? 0) + 1;
       resMap[key] = r.name;
@@ -49,7 +52,7 @@ int _accumulateSpilloverPool({
   required Map<String, int> placed,
   required Resource r,
   required ResourceRules resourceRules,
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
 }) {
@@ -59,7 +62,7 @@ int _accumulateSpilloverPool({
     final pl = placed[gp] ?? 0;
     final deficit = tgt - pl;
     if (deficit <= 0) continue;
-    final eg = _eligibleEmptyCountForGp(
+    final eg = eligibleEmptyCountForGp(
       inventory: inventory,
       r: r,
       rules: resourceRules,
@@ -82,7 +85,7 @@ int _accumulateSpilloverPool({
   required Map<String, int> placed,
   required Resource r,
   required ResourceRules resourceRules,
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
 }) {
@@ -92,7 +95,7 @@ int _accumulateSpilloverPool({
     if (p <= 0) break;
     final pl = placed[h] ?? 0;
     final tgt = targets[h] ?? 0;
-    final eg = _eligibleEmptyCountForGp(
+    final eg = eligibleEmptyCountForGp(
       inventory: inventory,
       r: r,
       rules: resourceRules,
@@ -116,7 +119,7 @@ void _distributeQuotaPool({
   required Map<String, int> placed,
   required Resource r,
   required ResourceRules resourceRules,
-  required List<_GpOwTileInvEntry> inventory,
+  required List<GpOwTileInvEntry> inventory,
   required Set<String> forbidden,
   required Set<String> used,
   required int sumPlaced,
@@ -146,7 +149,7 @@ void _distributeQuotaPool({
   }
 }
 
-({TileMapResult map, Map<String, String> resMap}) _redistributeOneResource({
+({TileMapResult map, Map<String, String> resMap}) redistributeOneResource({
   required TileMapResult mapIn,
   required Map<String, String> resMapIn,
   required Resource r,
@@ -182,7 +185,7 @@ void _distributeQuotaPool({
 
   // One inventory for this resource pass (Refs #4029); `used` covers placements
   // within the pass so snapshot resource fields stay valid for emptiness checks.
-  final inventory = _buildGpOwTileInventory(
+  final inventory = buildGpOwTileInventory(
     map: map,
     ownerByLocal: ownerByLocal,
     gpIds: gpIds,
@@ -190,7 +193,7 @@ void _distributeQuotaPool({
 
   var totalCapacity = 0;
   for (final gp in gpIdsSorted) {
-    totalCapacity += _eligibleEmptyCountForGp(
+    totalCapacity += eligibleEmptyCountForGp(
       inventory: inventory,
       r: r,
       rules: resourceRules,
@@ -221,7 +224,7 @@ void _distributeQuotaPool({
       forbidden: forbidden,
     );
 
-    final sumPlaced = _sumPlacedAll(placed, gpIdsSorted);
+    final sumPlaced = sumPlacedAll(placed, gpIdsSorted);
     if (sumPlaced >= nR) {
       return (map: map, resMap: resMap);
     }

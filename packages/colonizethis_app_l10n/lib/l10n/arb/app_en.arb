@@ -74,7 +74,91 @@
   },
   "game_pauseMenu_settings": "Settings",
   "@game_pauseMenu_settings": {
-    "description": "Pause menu option label to open the settings screen (disabled placeholder; backing flow not yet wired)."
+    "description": "Pause menu option label to open the Settings dialog."
+  },
+  "settingsDialog_title": "Settings",
+  "@settingsDialog_title": {
+    "description": "Title of the app Settings dialog (DLG90001)."
+  },
+  "settingsDialog_section_gameplay": "Gameplay",
+  "@settingsDialog_section_gameplay": {
+    "description": "Section header for immediate-apply gameplay preferences in Settings."
+  },
+  "settingsDialog_warnIdleCiviliansOnEndTurn": "Warn when civilians have no work order on end turn",
+  "@settingsDialog_warnIdleCiviliansOnEndTurn": {
+    "description": "Toggle label for the idle-civilian end-turn warning preference."
+  },
+  "settingsDialog_section_themes": "Map themes",
+  "@settingsDialog_section_themes": {
+    "description": "Section header for map theme pickers in Settings."
+  },
+  "settingsDialog_restartHint": "Theme changes take effect after restart.",
+  "@settingsDialog_restartHint": {
+    "description": "Hint that map theme pickers apply on next app start."
+  },
+  "settingsDialog_close": "Close",
+  "@settingsDialog_close": {
+    "description": "Close button on the Settings dialog."
+  },
+  "settingsDialog_catalogUnavailable": "Theme catalog is not loaded.",
+  "@settingsDialog_catalogUnavailable": {
+    "description": "Shown when Settings opens before the map theme catalog is ready."
+  },
+  "settingsDialog_group_terrain": "Terrain",
+  "@settingsDialog_group_terrain": {
+    "description": "Settings dialog label for the terrain theme picker."
+  },
+  "settingsDialog_group_civilianIcons": "Civilian icons",
+  "@settingsDialog_group_civilianIcons": {
+    "description": "Settings dialog label for the civilian icon theme picker."
+  },
+  "settingsDialog_group_townIcons": "Town icons",
+  "@settingsDialog_group_townIcons": {
+    "description": "Settings dialog label for the town icon theme picker."
+  },
+  "settingsDialog_group_resourceIcons": "Resource icons",
+  "@settingsDialog_group_resourceIcons": {
+    "description": "Settings dialog label for the resource icon theme picker."
+  },
+  "settingsDialog_group_fleetIcons": "Fleet icons",
+  "@settingsDialog_group_fleetIcons": {
+    "description": "Settings dialog label for the fleet icon theme picker."
+  },
+  "settingsDialog_group_provinceLabelIcons": "Province label icons",
+  "@settingsDialog_group_provinceLabelIcons": {
+    "description": "Settings dialog label for the province-label icon theme picker."
+  },
+  "mapTheme_terrain_default": "Default",
+  "@mapTheme_terrain_default": {
+    "description": "Display name for the default terrain map theme."
+  },
+  "mapTheme_terrain_sepia": "Sepia",
+  "@mapTheme_terrain_sepia": {
+    "description": "Display name for the sepia terrain map theme."
+  },
+  "mapTheme_civilian_default": "Default",
+  "@mapTheme_civilian_default": {
+    "description": "Display name for the default civilian icon theme."
+  },
+  "mapTheme_civilian_sepia": "Sepia",
+  "@mapTheme_civilian_sepia": {
+    "description": "Display name for the sepia civilian icon theme."
+  },
+  "mapTheme_town_default": "Default",
+  "@mapTheme_town_default": {
+    "description": "Display name for the default town icon theme."
+  },
+  "mapTheme_resource_default": "Default",
+  "@mapTheme_resource_default": {
+    "description": "Display name for the default resource icon theme."
+  },
+  "mapTheme_fleet_default": "Default",
+  "@mapTheme_fleet_default": {
+    "description": "Display name for the default fleet icon theme."
+  },
+  "mapTheme_provinceLabel_default": "Default",
+  "@mapTheme_provinceLabel_default": {
+    "description": "Display name for the default province-label icon theme."
   },
   "game_pauseMenu_exitToMainMenu": "Exit to Main Menu",
   "@game_pauseMenu_exitToMainMenu": {
@@ -232,6 +316,18 @@
       }
     }
   },
+  "game_nextTurnConfirm_idleCiviliansSection": "These civilians have no work order for the next turn:",
+  "@game_nextTurnConfirm_idleCiviliansSection": {
+    "description": "Section header in the end-turn warning variant listing idle civilians without work orders."
+  },
+  "game_nextTurnConfirm_noWorkOrder": "No work order",
+  "@game_nextTurnConfirm_noWorkOrder": {
+    "description": "Per-row label in the end-turn idle-civilian warning list."
+  },
+  "game_nextTurnConfirm_dontShowAgain": "Don't show this warning again",
+  "@game_nextTurnConfirm_dontShowAgain": {
+    "description": "Toggle label in the end-turn idle-civilian warning variant."
+  },
   "game_turnResolutionFailedMessage": "Turn resolution failed.",
   "@game_turnResolutionFailedMessage": {
     "description": "Snackbar shown when turn resolution throws an error."
@@ -372,6 +468,56 @@
   "map_selectionMode_cancel": "cancel",
   "@map_selectionMode_cancel": {
     "description": "Lowercase inline cancel action label in the map work-target selection prompt overlay."
+  },
+  "map_selectionMode_relocatePrompt": "Select a destination for your Spy, or click cancel",
+  "@map_selectionMode_relocatePrompt": {
+    "description": "Prompt overlay when the human player is choosing a Spy relocate destination on the map."
+  },
+  "map_relocate_leaveIntel_title": "Leave intel?",
+  "@map_relocate_leaveIntel_title": {
+    "description": "Confirm dialog title when relocating the last Spy out of a foreign province."
+  },
+  "map_relocate_leaveIntel_message": "This is the last Spy holding intel in this province. Full intel there will fog after end of turn.",
+  "@map_relocate_leaveIntel_message": {
+    "description": "Confirm dialog body when relocating the last Spy out of a foreign province."
+  },
+  "map_relocate_leaveIntel_confirm": "Relocate anyway",
+  "@map_relocate_leaveIntel_confirm": {
+    "description": "Confirm button on leave-intel Spy relocate warning."
+  },
+  "map_relocate_leaveIntel_cancel": "Stay",
+  "@map_relocate_leaveIntel_cancel": {
+    "description": "Cancel button on leave-intel Spy relocate warning."
+  },
+  "civilian_units_relocate": "Relocate",
+  "@civilian_units_relocate": {
+    "description": "Relocate action for idle Spy units in the civilian units panel."
+  },
+  "civilian_units_spyStatus_holdingIntel": "Holding intel: {province}",
+  "@civilian_units_spyStatus_holdingIntel": {
+    "description": "Spy status when idle in a foreign province holding presence intel.",
+    "placeholders": {
+      "province": {
+        "type": "String"
+      }
+    }
+  },
+  "civilian_units_spyStatus_counterEspionage": "Counter-espionage",
+  "@civilian_units_spyStatus_counterEspionage": {
+    "description": "Spy status when assigned or working counter-spy."
+  },
+  "civilian_units_spyStatus_reserve": "Reserve",
+  "@civilian_units_spyStatus_reserve": {
+    "description": "Spy status when idle on owned land with no mission."
+  },
+  "civilian_units_pendingRelocate": "Relocating to: {location}",
+  "@civilian_units_pendingRelocate": {
+    "description": "Pending Spy move order destination on the civilian units panel.",
+    "placeholders": {
+      "location": {
+        "type": "String"
+      }
+    }
   },
   "common_start": "Start",
   "@common_start": {
@@ -584,7 +730,7 @@
   },
   "game_intervention_situation": "{aggressor} against {defender}. Thou speakest for {intervening}.",
   "@game_intervention_situation": {
-    "description": "One-line summary of the war and which GP the player decides for.",
+    "description": "Legacy Yarn-era summary; choice picker uses game_intervention_choiceSituation instead.",
     "placeholders": {
       "aggressor": {
         "type": "String"
@@ -593,6 +739,66 @@
         "type": "String"
       },
       "intervening": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_choiceSituation": "{aggressor} declared war on {defender}.",
+  "@game_intervention_choiceSituation": {
+    "description": "Plain situation strip on the intervention choice picker (Refs #4267).",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_holdReasonEmbassy": "You hold: Embassy",
+  "@game_intervention_holdReasonEmbassy": {
+    "description": "Muted hold-reason line when the intervening GP has an Embassy with the defender."
+  },
+  "game_intervention_holdReasonPurchasedLand": "You hold: purchased land",
+  "@game_intervention_holdReasonPurchasedLand": {
+    "description": "Muted hold-reason line when the intervening GP owns purchased land with the defender."
+  },
+  "game_intervention_holdReasonEmbassyAndPurchasedLand": "You hold: Embassy and purchased land",
+  "@game_intervention_holdReasonEmbassyAndPurchasedLand": {
+    "description": "Muted hold-reason line when both Embassy and purchased land apply."
+  },
+  "game_intervention_effectIntervene": "Effect: Enter war with {aggressor} this turn. Embassy with {defender} stays.",
+  "@game_intervention_effectIntervene": {
+    "description": "First-order effect for Intervene on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_effectDoNothing": "Effect: Stay at peace with {aggressor}. Lose Embassy and all overtures with {defender}. Purchased land remains until normal conquest rules apply.",
+  "@game_intervention_effectDoNothing": {
+    "description": "First-order effect for Do naught on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
+        "type": "String"
+      }
+    }
+  },
+  "game_intervention_effectProtest": "Effect: Stay at peace. Relations with {aggressor} worsen (−10). Embassy and purchased land with {defender} stay.",
+  "@game_intervention_effectProtest": {
+    "description": "First-order effect for Diplomatic protest on the choice picker.",
+    "placeholders": {
+      "aggressor": {
+        "type": "String"
+      },
+      "defender": {
         "type": "String"
       }
     }
@@ -1228,6 +1434,113 @@
   "@victory_viewFinalState": {
     "description": "Victory overlay button label."
   },
+  "victory_conditionsMilitaryThreshold": "Control {threshold} or more Old World provinces to win.",
+  "@victory_conditionsMilitaryThreshold": {
+    "description": "Victory panel: Old World province count win condition.",
+    "placeholders": {
+      "threshold": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_conditionsCalendarEnd": "If no one wins by province count, the campaign can halt near 1800 (turn 201 under the default calendar). The Great Power with the strongest overall realm may be named the declared winner; a tie names no one.",
+  "@victory_conditionsCalendarEnd": {
+    "description": "Victory panel: calendar campaign end condition copy."
+  },
+  "victory_conditionsInfiniteMode": "Infinite mode is on: the calendar halt is bypassed. Only reaching the province win or leaving the campaign ends play.",
+  "@victory_conditionsInfiniteMode": {
+    "description": "Victory panel: infinite mode condition note."
+  },
+  "victory_endProvinceCountWin": "{winner} won on turn {turn} by controlling enough Old World provinces.",
+  "@victory_endProvinceCountWin": {
+    "description": "Victory panel end banner when a province-count winner is set.",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      },
+      "turn": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_endCalendarDeclaredWinner": "Calendar campaign ended. {winner} had the strongest overall realm when play stopped.",
+  "@victory_endCalendarDeclaredWinner": {
+    "description": "Victory panel end banner when calendar halt names a declared winner.",
+    "placeholders": {
+      "winner": {
+        "type": "String"
+      }
+    }
+  },
+  "victory_endCalendarNoWinner": "Calendar campaign ended with no declared winner (tied overall strength).",
+  "@victory_endCalendarNoWinner": {
+    "description": "Victory panel end banner when calendar halt ties declared winner."
+  },
+  "victory_powerBreakdownIntro": "These totals matter only if the campaign runs to the calendar end without a province-count winner.",
+  "@victory_powerBreakdownIntro": {
+    "description": "Victory panel expanded row: calendar-end comparison intro."
+  },
+  "victory_powerBreakdownProvinces": "Provinces (all worlds): {count}",
+  "@victory_powerBreakdownProvinces": {
+    "description": "Victory panel expanded row: province component total.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownRegiments": "Regiment strength: {strength}",
+  "@victory_powerBreakdownRegiments": {
+    "description": "Victory panel expanded row: regiment component total.",
+    "placeholders": {
+      "strength": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownShips": "Ships: {count}",
+  "@victory_powerBreakdownShips": {
+    "description": "Victory panel expanded row: ship component total.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_powerBreakdownTotal": "Overall strength total: {total}",
+  "@victory_powerBreakdownTotal": {
+    "description": "Victory panel expanded row: combined calendar-end total.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_standingOwCount": "{count} OW",
+  "@victory_standingOwCount": {
+    "description": "Victory standings row: Old World province count suffix.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_standingOwProgress": "{count} / {threshold} Old World provinces",
+  "@victory_standingOwProgress": {
+    "description": "Victory standings row: progress label toward military OW threshold.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "threshold": {
+        "type": "int"
+      }
+    }
+  },
+  "victory_standingsHelper": "Colours match the map. Select a Great Power to see their Old World lands.",
+  "@victory_standingsHelper": {
+    "description": "Victory standings section helper linking colours to minimap selection."
+  },
   "moveArmy_groupYourProvinces": "Your provinces",
   "@moveArmy_groupYourProvinces": {
     "description": "Header label for player-owned province destinations in move army dialog."
@@ -1282,6 +1595,64 @@
   "moveArmy_destinationProvince": "Destination province",
   "@moveArmy_destinationProvince": {
     "description": "Field label for destination province picker in move army dialog."
+  },
+  "moveArmy_yourArmyRegiments": "Your army: {count} regiments",
+  "@moveArmy_yourArmyRegiments": {
+    "description": "Own force size line on move army dialog body (#4216).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_invasionsThisTurn": "Invasions this turn: {invasions} · Generals: {generals}",
+  "@moveArmy_invasionsThisTurn": {
+    "description": "Draft invasion count vs available generals on invasion destinations (#4233).",
+    "placeholders": {
+      "invasions": {
+        "type": "int"
+      },
+      "generals": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_invasionOverGeneralCapacityWarning": "More invasions than generals — extra armies fight with weaker command.",
+  "@moveArmy_invasionOverGeneralCapacityWarning": {
+    "description": "Soft warning when staged invasions exceed general count; Confirm stays enabled (#4233)."
+  },
+  "moveArmy_defendersRegiments": "Defenders: {count} regiments",
+  "@moveArmy_defendersRegiments": {
+    "description": "Combat-capable defender total on invasion row when full military intel (#4216).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "moveArmy_unopposedCapture": "Unopposed capture",
+  "@moveArmy_unopposedCapture": {
+    "description": "Invasion row cue when full intel shows zero combat-capable defenders (#4216)."
+  },
+  "moveArmy_defendersUnknown": "Defenders unknown",
+  "@moveArmy_defendersUnknown": {
+    "description": "Invasion row cue when full military intel is unavailable (#4216)."
+  },
+  "moveArmy_fortOpenField": "Open field",
+  "@moveArmy_fortOpenField": {
+    "description": "Fort level 0 label on invasion row under full military intel (#4216)."
+  },
+  "moveArmy_fortWoodSiege": "Wood fort siege",
+  "@moveArmy_fortWoodSiege": {
+    "description": "Fort level 1 siege label on invasion row (#4216)."
+  },
+  "moveArmy_fortStoneSiege": "Stone fort siege",
+  "@moveArmy_fortStoneSiege": {
+    "description": "Fort level 2 siege label on invasion row (#4216)."
+  },
+  "moveArmy_fortModernSiege": "Modern fort siege",
+  "@moveArmy_fortModernSiege": {
+    "description": "Fort level 3 siege label on invasion row (#4216)."
   },
   "moveFleet_title": "Move fleet — {fleetLabel}",
   "@moveFleet_title": {
@@ -1348,6 +1719,46 @@
   "military_units_empty": "No military units",
   "@military_units_empty": {
     "description": "Empty message in military units panel."
+  },
+  "military_units_generalsCount": "Generals: {count} of {cap}",
+  "@military_units_generalsCount": {
+    "description": "Generals roster count vs cap on Military Units panel (#4233).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "int"
+      }
+    }
+  },
+  "military_units_generalMedals": "General {index}: {medals} medals",
+  "@military_units_generalMedals": {
+    "description": "Per-general medal line on Military Units generals strip (#4233).",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "medals": {
+        "type": "int"
+      }
+    }
+  },
+  "military_units_generalsPlainSummary": "Each general can lead one invasion this turn. More medals mean a stronger fight.",
+  "@military_units_generalsPlainSummary": {
+    "description": "Plain-language generals summary on Military Units panel (#4233)."
+  },
+  "military_units_generalsMedalGloss": "Medals let more regiments fight, help troops hold the line, and can decide who strikes first.",
+  "@military_units_generalsMedalGloss": {
+    "description": "Details gloss for general medals on Military Units panel (#4233)."
+  },
+  "military_units_generalsDetails": "Details",
+  "@military_units_generalsDetails": {
+    "description": "Toggle to show general medal gloss on Military Units panel (#4233)."
+  },
+  "military_units_generalsHideDetails": "Hide",
+  "@military_units_generalsHideDetails": {
+    "description": "Collapse general medal gloss on Military Units panel (#4233)."
   },
   "military_units_homeArmy": "Home Army",
   "@military_units_homeArmy": {
@@ -1494,6 +1905,89 @@
         "type": "String"
       }
     }
+  },
+  "naval_mission_assign": "Mission",
+  "@naval_mission_assign": {
+    "description": "Fleet row and menu label for assigning a naval mission."
+  },
+  "naval_mission_menuTitle": "Assign mission — {fleet}",
+  "@naval_mission_menuTitle": {
+    "description": "Naval mission context menu title.",
+    "placeholders": {
+      "fleet": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_selectFleetTitle": "Select fleet",
+  "@naval_mission_selectFleetTitle": {
+    "description": "Title when multiple fleets share a map marker."
+  },
+  "naval_mission_cancelPending": "Cancel pending mission",
+  "@naval_mission_cancelPending": {
+    "description": "Removes staged naval mission draft for fleet."
+  },
+  "naval_mission_pendingLine": "On mission: {mission}",
+  "@naval_mission_pendingLine": {
+    "description": "Draft naval mission line without province target.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_pendingLineWithTarget": "On mission: {mission} → {target}",
+  "@naval_mission_pendingLineWithTarget": {
+    "description": "Draft naval mission line with province target.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_selectTargetTitle": "Select target — {mission}",
+  "@naval_mission_selectTargetTitle": {
+    "description": "Blockade/beachhead target picker title.",
+    "placeholders": {
+      "mission": {
+        "type": "String"
+      }
+    }
+  },
+  "naval_mission_noMissionsAvailable": "No missions available for this fleet.",
+  "@naval_mission_noMissionsAvailable": {
+    "description": "Empty naval mission menu when base gates fail."
+  },
+  "naval_mission_noTargetsAvailable": "No legal targets for this mission.",
+  "@naval_mission_noTargetsAvailable": {
+    "description": "Empty target picker for blockade/beachhead."
+  },
+  "naval_mission_effect_patrol": "Stay here and try to intercept hostile fleets moving through this sea zone.",
+  "@naval_mission_effect_patrol": {
+    "description": "Plain-language effect line for Patrol mission row (DLG31001)."
+  },
+  "naval_mission_effect_defend": "Stay in place without seeking combat; you can still be attacked or pulled into a fight.",
+  "@naval_mission_effect_defend": {
+    "description": "Plain-language effect line for Defend mission row (DLG31001)."
+  },
+  "naval_mission_effect_blockade": "Stronger intercept chance on fleets entering this zone, including ships leaving the target port.",
+  "@naval_mission_effect_blockade": {
+    "description": "Plain-language effect line for Blockade mission row (DLG31001)."
+  },
+  "naval_mission_effect_beachhead": "Stage a landing site so your armies can invade that coast next turn; marker then expires.",
+  "@naval_mission_effect_beachhead": {
+    "description": "Plain-language effect line for Beachhead mission row (DLG31001)."
+  },
+  "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
+  "@naval_mission_targetCaption_blockade": {
+    "description": "Mission consequence caption on Blockade target picker (DLG31002)."
+  },
+  "naval_mission_targetCaption_beachhead": "Landing site supports invasion on the following turn and expires after that turn if unused.",
+  "@naval_mission_targetCaption_beachhead": {
+    "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
   },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
@@ -1888,6 +2382,70 @@
   "@civilian_units_assign": {
     "description": "Assign action button in civilian units panel."
   },
+  "development_purchasedLand": "Purchased land",
+  "@development_purchasedLand": {
+    "description": "Section header for purchased-land scopes in the Development panel."
+  },
+  "development_noImprovableResources": "No improvable resources",
+  "@development_noImprovableResources": {
+    "description": "Empty improvable row under a province scope in the Development panel."
+  },
+  "development_materialsShortageForAssign": "Materials shortage for assign:",
+  "@development_materialsShortageForAssign": {
+    "description": "Overview warning when assign-time material costs cannot be met."
+  },
+  "development_idleCivilians": "Idle Builders: {builders} · Idle Engineers: {engineers}",
+  "@development_idleCivilians": {
+    "description": "Overview idle civilian counts in the Development panel.",
+    "placeholders": {
+      "builders": {
+        "type": "int"
+      },
+      "engineers": {
+        "type": "int"
+      }
+    }
+  },
+  "development_assignedCiviliansHeading": "Assigned civilians",
+  "@development_assignedCiviliansHeading": {
+    "description": "Overview section heading for Builders/Engineers with pending or in-progress work."
+  },
+  "development_mapDataUnavailable": "Map data unavailable",
+  "@development_mapDataUnavailable": {
+    "description": "Fallback when Development panel map data cannot be loaded."
+  },
+  "development_disconnectedTitle": "Not connected to capital",
+  "@development_disconnectedTitle": {
+    "description": "Disconnected-assign warn dialog title in the Development panel."
+  },
+  "development_disconnectedBody": "The chosen tile is not linked to your capital. Improve anyway, build a road step toward the capital first, or cancel.",
+  "@development_disconnectedBody": {
+    "description": "Disconnected-assign warn dialog body in the Development panel."
+  },
+  "development_roadFirst": "Road first",
+  "@development_roadFirst": {
+    "description": "Road-first action in the Development disconnected-assign dialog."
+  },
+  "development_improveAnyway": "Improve anyway",
+  "@development_improveAnyway": {
+    "description": "Improve-anyway action in the Development disconnected-assign dialog."
+  },
+  "development_show": "Show",
+  "@development_show": {
+    "description": "Show-on-map action for an improvable commodity row in the Development panel."
+  },
+  "development_improvableCount": "{count} {name}",
+  "@development_improvableCount": {
+    "description": "Improvable commodity count label in the Development panel.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "production_breakdown_title": "Commodity breakdown",
   "@production_breakdown_title": {
     "description": "Production commodity breakdown dialog title."
@@ -2131,6 +2689,10 @@
         "type": "int"
       }
     }
+  },
+  "technologyPanel_chooseTechDetails": "Details",
+  "@technologyPanel_chooseTechDetails": {
+    "description": "Per-row Details control on the Choose-tech dialog; opens full effect/prerequisite content without assigning (Refs #4222)."
   },
   "technologyPanel_slotCancelled": "Research slot cancelled",
   "@technologyPanel_slotCancelled": {
@@ -2487,6 +3049,122 @@
   "@provinceOverlay_tileBuildImprovementTooltip": {
     "description": "Tooltip and semantics label for province tile build-improvement shortcut action."
   },
+  "provinceOverlay_tileBuildImprovementTooltipWithCost": "Build improvement ({costs})",
+  "@provinceOverlay_tileBuildImprovementTooltipWithCost": {
+    "description": "Enabled build-improvement shortcut tooltip with material cost hint (Refs #4262).",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRoadTooltip": "Build road",
+  "@provinceOverlay_tileBuildRoadTooltip": {
+    "description": "Tooltip and semantics label for province tile build-road shortcut action when enabled."
+  },
+  "provinceOverlay_tileBuildRoadTooltipWithCost": "Build road ({costs})",
+  "@provinceOverlay_tileBuildRoadTooltipWithCost": {
+    "description": "Enabled build-road shortcut tooltip including material cost summary.",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": "No idle Builders",
+  "@provinceOverlay_tileBuildImprovementDisabledNoBuilderTooltip": {
+    "description": "Disabled build-improvement shortcut when no Builder units exist."
+  },
+  "provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildImprovementDisabledMaterialsTooltip": {
+    "description": "Disabled build-improvement shortcut when materials/treasury shortfall is primary reason (Refs #4262).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "workOrderAfford_canAfford": "Can afford",
+  "@workOrderAfford_canAfford": {
+    "description": "Plain success copy when projected stockpile/treasury covers a work-order cost at assign time (Refs #4262)."
+  },
+  "workOrderAfford_shortMaterial": "Short: {commodity} ×{quantity}",
+  "@workOrderAfford_shortMaterial": {
+    "description": "Material shortfall line for work-order assign previews (Refs #4262).",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "int"
+      }
+    }
+  },
+  "workOrderAfford_shortTreasury": "Short: treasury ×{amount}",
+  "@workOrderAfford_shortTreasury": {
+    "description": "Treasury shortfall line for purchase_land assign previews (Refs #4262).",
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip": "No Engineer available to build road",
+  "@provinceOverlay_tileBuildRoadDisabledNoEngineerTooltip": {
+    "description": "Disabled build-road shortcut tooltip when the human player has no Engineer units."
+  },
+  "provinceOverlay_tileBuildRoadDisabledTooltip": "No Engineer can assign road work here this turn",
+  "@provinceOverlay_tileBuildRoadDisabledTooltip": {
+    "description": "Disabled build-road shortcut tooltip when Engineers exist but none can legally assign build_road to this tile."
+  },
+  "provinceOverlay_tileBuildRoadDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildRoadDisabledMaterialsTooltip": {
+    "description": "Disabled build-road shortcut when materials/treasury shortfall is primary reason (Refs #4262).",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_militaryFortStatus": "Fort: {status}",
+  "@provinceOverlay_militaryFortStatus": {
+    "description": "Military section fort posture line for province management (Refs #4280).",
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildFortTooltip": "Build fort",
+  "@provinceOverlay_tileBuildFortTooltip": {
+    "description": "Tooltip for enabled build-fort shortcut on town tile (Refs #4280)."
+  },
+  "provinceOverlay_tileBuildFortTooltipWithCost": "Build fort ({costs})",
+  "@provinceOverlay_tileBuildFortTooltipWithCost": {
+    "description": "Enabled build-fort shortcut tooltip with material cost hint.",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildFortDisabledNoEngineerTooltip": "No Engineer available to build fort",
+  "@provinceOverlay_tileBuildFortDisabledNoEngineerTooltip": {
+    "description": "Disabled build-fort shortcut when no Engineer units exist."
+  },
+  "provinceOverlay_tileBuildFortDisabledTooltip": "No Engineer can assign fort work here this turn",
+  "@provinceOverlay_tileBuildFortDisabledTooltip": {
+    "description": "Disabled build-fort shortcut when no valid Engineer assignment exists."
+  },
+  "provinceOverlay_tileBuildFortDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildFortDisabledMaterialsTooltip": {
+    "description": "Disabled build-fort shortcut when materials or treasury are short.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",
@@ -2499,6 +3177,35 @@
   "provinceOverlay_tileRoadNone": "Road / railroad: -",
   "@provinceOverlay_tileRoadNone": {
     "description": "Tile section road/rail row when not applicable."
+  },
+  "provinceOverlay_tileCapitalLinkConnected": "Capital link: Connected",
+  "@provinceOverlay_tileCapitalLinkConnected": {
+    "description": "Tile section capital-link row when the selected human-owned tile is capital-connected (Refs #4149)."
+  },
+  "provinceOverlay_tileCapitalLinkConnectedWithPath": "Capital link: Connected (path transport level {level})",
+  "@provinceOverlay_tileCapitalLinkConnectedWithPath": {
+    "description": "Tile section capital-link row when connected with a recorded path transport cap (Refs #4149).",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_tileCapitalLinkNotConnected": "Capital link: Not connected — will not extract",
+  "@provinceOverlay_tileCapitalLinkNotConnected": {
+    "description": "Tile section capital-link row when the selected human-owned tile is not capital-connected (Refs #4149)."
+  },
+  "provinceOverlay_tileExtractionFromTile": "Extraction from this tile: {effective} of {full}",
+  "@provinceOverlay_tileExtractionFromTile": {
+    "description": "Tile section per-tile effective vs full extraction when production F > 0 (Refs #4149).",
+    "placeholders": {
+      "effective": {
+        "type": "int"
+      },
+      "full": {
+        "type": "int"
+      }
+    }
   },
   "provinceOverlay_tileRoadTransportLevel": "Road / railroad: transport level {level}",
   "@provinceOverlay_tileRoadTransportLevel": {
@@ -2745,6 +3452,19 @@
       }
     }
   },
+  "provinceOverlay_extractionCapitalGrainBonus": " (incl. +{bonus} capital grain bonus)",
+  "@provinceOverlay_extractionCapitalGrainBonus": {
+    "description": "Muted annotation (leading space) that capital grain bonus units are a special non-tile case on the Extraction line.",
+    "placeholders": {
+      "bonus": {
+        "type": "int"
+      }
+    }
+  },
+  "provinceOverlay_extractionPartialReason": "Some improved tiles are not linked to your capital, or the road/port path is too weak.",
+  "@provinceOverlay_extractionPartialReason": {
+    "description": "Muted reason line under Extraction when any commodity effective is below full (Refs #4150)."
+  },
   "provinceOverlay_availableTileCount": "{count} {name}",
   "@provinceOverlay_availableTileCount": {
     "description": "Available improvable resource tile count commodity segment.",
@@ -2800,6 +3520,61 @@
         "type": "String"
       }
     }
+  },
+  "mapControls_cargoHold_tooltip": "Cargo: {used} overseas of {capacity} Home Fleet holds",
+  "@mapControls_cargoHold_tooltip": {
+    "description": "Hover tooltip for the tab-bar cargo hold indicator.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_semanticsLabel": "Cargo hold: {used} overseas, {capacity} Home Fleet holds",
+  "@mapControls_cargoHold_semanticsLabel": {
+    "description": "Semantics label for the tab-bar cargo hold indicator.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      },
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_overseas": "Overseas extraction: {used}",
+  "@mapControls_cargoHold_details_overseas": {
+    "description": "Cargo details popover row for overseas extraction load.",
+    "placeholders": {
+      "used": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_capacity": "Home Fleet holds: {capacity}",
+  "@mapControls_cargoHold_details_capacity": {
+    "description": "Cargo details popover row for Home Fleet cargo capacity.",
+    "placeholders": {
+      "capacity": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_free": "Free for trade bids: {free}",
+  "@mapControls_cargoHold_details_free": {
+    "description": "Cargo details popover row for trade-bid headroom.",
+    "placeholders": {
+      "free": {
+        "type": "String"
+      }
+    }
+  },
+  "mapControls_cargoHold_details_counsel": "Merchant ships in your Home Fleet carry overseas goods; remaining holds are open for trade bids.",
+  "@mapControls_cargoHold_details_counsel": {
+    "description": "Counsel line in the cargo details popover."
   },
   "mapControls_playersBarToggle": "Players bar",
   "@mapControls_playersBarToggle": {
@@ -2978,6 +3753,26 @@
       }
     }
   },
+  "diplomacy_panel_moreActions": "More actions",
+  "@diplomacy_panel_moreActions": {
+    "description": "Expands the per-faction diplomacy row to show disabled actions with inline refusal reasons."
+  },
+  "diplomacy_panel_fewerActions": "Fewer actions",
+  "@diplomacy_panel_fewerActions": {
+    "description": "Collapses the expanded per-faction diplomacy action cluster back to the ready shortlist."
+  },
+  "diplomacy_actionRejection_semanticsLabel": "{action}. {reason}",
+  "@diplomacy_actionRejection_semanticsLabel": {
+    "description": "Accessibility label for a disabled diplomacy action shown under More with an inline refusal reason.",
+    "placeholders": {
+      "action": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "production_commodityStock": "{name}: {qty}{change}",
   "@production_commodityStock": {
     "description": "Stock line for a commodity; change is empty or parenthesized delta.",
@@ -3001,6 +3796,124 @@
         "type": "int"
       }
     }
+  },
+  "production_labourThisTurn": "Labour this turn: {n}",
+  "@production_labourThisTurn": {
+    "description": "Labour readiness total line on Production Available panel.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "production_labourReasonFood": "Some workers are not working — food is short.",
+  "@production_labourReasonFood": {
+    "description": "Primary labour-readiness reason when food is the main shortfall."
+  },
+  "production_labourReasonFoodWithMilitary": "Some workers are not working — armies and fleets are fed first, then food runs short.",
+  "@production_labourReasonFoodWithMilitary": {
+    "description": "Labour-readiness reason when military/navy food draw contributes to worker shortfall."
+  },
+  "production_labourReasonLuxury": "Some workers are not working — short of {commodity}.",
+  "@production_labourReasonLuxury": {
+    "description": "Primary labour-readiness reason when a trained tier lacks luxury.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "production_labourDetails": "Labour details",
+  "@production_labourDetails": {
+    "description": "Toggle to expand per-tier labour readiness breakdown."
+  },
+  "production_labourTierDetail": "{tier}: {working} working, {notWorking} not working",
+  "@production_labourTierDetail": {
+    "description": "Per-tier labour readiness detail row.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      },
+      "working": {
+        "type": "int"
+      },
+      "notWorking": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodArmiesFullyFed": "Armies fully fed this turn.",
+  "@production_forcesFoodArmiesFullyFed": {
+    "description": "Forces-food default line when land military feeding is complete."
+  },
+  "production_forcesFoodArmiesUnderfedModerate": "Armies short on rations — land battles somewhat weaker.",
+  "@production_forcesFoodArmiesUnderfedModerate": {
+    "description": "Forces-food default line when land feeding coverage is in [0.5, 1.0)."
+  },
+  "production_forcesFoodArmiesUnderfedSevere": "Armies very short on rations — land battles much weaker.",
+  "@production_forcesFoodArmiesUnderfedSevere": {
+    "description": "Forces-food default line when land feeding coverage is below 0.5."
+  },
+  "production_forcesFoodFleetsFullyFed": "Fleets fully fed this turn.",
+  "@production_forcesFoodFleetsFullyFed": {
+    "description": "Forces-food default line when naval feeding is complete."
+  },
+  "production_forcesFoodFleetsUnderfedModerate": "Fleets short on rations — naval battles somewhat weaker.",
+  "@production_forcesFoodFleetsUnderfedModerate": {
+    "description": "Forces-food default line when naval feeding coverage is in [0.5, 1.0)."
+  },
+  "production_forcesFoodFleetsUnderfedSevere": "Fleets very short on rations — naval battles much weaker.",
+  "@production_forcesFoodFleetsUnderfedSevere": {
+    "description": "Forces-food default line when naval feeding coverage is below 0.5."
+  },
+  "production_forcesFoodDetails": "Forces food details",
+  "@production_forcesFoodDetails": {
+    "description": "Toggle to expand forces-food readiness breakdown on Production Available."
+  },
+  "production_forcesFoodDetailsArmies": "Armies: {fed} of {total} regiments fed",
+  "@production_forcesFoodDetailsArmies": {
+    "description": "Forces-food detail row for land military feeding.",
+    "placeholders": {
+      "fed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsFleets": "Fleets: {fed} of {total} ships fed",
+  "@production_forcesFoodDetailsFleets": {
+    "description": "Forces-food detail row for naval feeding.",
+    "placeholders": {
+      "fed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsDemand": "Forces food demand this turn: {demand}",
+  "@production_forcesFoodDetailsDemand": {
+    "description": "Forces-food detail row for combined military/navy food demand.",
+    "placeholders": {
+      "demand": {
+        "type": "int"
+      }
+    }
+  },
+  "production_forcesFoodDetailsPriority": "Armies and fleets eat before workers.",
+  "@production_forcesFoodDetailsPriority": {
+    "description": "Reminder that military/navy food is reserved before worker consumption."
+  },
+  "forcesFood_landUnderfedModerateWarning": "Your armies are short on rations — they will fight somewhat weaker this turn.",
+  "@forcesFood_landUnderfedModerateWarning": {
+    "description": "Soft warn at invasion/combat decision points when land feeding coverage is in [0.5, 1.0)."
+  },
+  "forcesFood_landUnderfedSevereWarning": "Your armies are very short on rations — they will fight much weaker this turn.",
+  "@forcesFood_landUnderfedSevereWarning": {
+    "description": "Soft warn at invasion/combat decision points when land feeding coverage is below 0.5."
   },
   "production_recipeAffordance": "{max} · {limiting}",
   "@production_recipeAffordance": {
@@ -4257,5 +5170,217 @@
   "techEffectSummary_wind_saw_mill_1": "Unlocks: Circular Saw",
   "@techEffectSummary_wind_saw_mill_1": {
     "description": "Tech tree dialog effect line (techEffectSummary_wind_saw_mill_1)."
+  },
+  "production_counsel": "Counsel",
+  "@production_counsel": {
+    "description": "Production Allocation header button to open Industry Counsel."
+  },
+  "production_industryCounselStarSemantic": "Industry counsel: {brief}",
+  "@production_industryCounselStarSemantic": {
+    "description": "Accessibility label for allocation row counsel star.",
+    "placeholders": {
+      "brief": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_tabIndustry": "Industry",
+  "@industryCounsel_tabIndustry": {
+    "description": "Counsel screen Industry tab label."
+  },
+  "industryCounsel_empty": "No pressing industry advice this turn.",
+  "@industryCounsel_empty": {
+    "description": "Counsel Industry tab empty state."
+  },
+  "industryCounsel_title_produce": "Produce goods",
+  "@industryCounsel_title_produce": {
+    "description": "Fallback title for produce counsel card."
+  },
+  "industryCounsel_title_produceRecipe": "Produce {commodity}",
+  "@industryCounsel_title_produceRecipe": {
+    "description": "Title for produce recipe counsel card.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_title_train": "Train workers",
+  "@industryCounsel_title_train": {
+    "description": "Fallback title for train counsel card."
+  },
+  "industryCounsel_title_trainWorker": "Train {tier}",
+  "@industryCounsel_title_trainWorker": {
+    "description": "Title for train worker counsel card.",
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_title_feedstock": "Unblock feedstock",
+  "@industryCounsel_title_feedstock": {
+    "description": "Fallback title for feedstock counsel card."
+  },
+  "industryCounsel_title_unblockFeedstock": "Improve {commodity} extraction",
+  "@industryCounsel_title_unblockFeedstock": {
+    "description": "Title for feedstock unblock counsel card.",
+    "placeholders": {
+      "commodity": {
+        "type": "String"
+      }
+    }
+  },
+  "industryCounsel_reason_outputShortage_brief": "Your stocks of this output are low — the plan favours producing it now.",
+  "@industryCounsel_reason_outputShortage_brief": {
+    "description": "Brief industry counsel reason for output shortage."
+  },
+  "industryCounsel_reason_outputShortage_detail": "Short output stocks raise the priority of this recipe in the neutral industry plan.",
+  "@industryCounsel_reason_outputShortage_detail": {
+    "description": "Detail industry counsel reason for output shortage."
+  },
+  "industryCounsel_reason_chainLuxury_brief": "This output feeds training or downstream industry — worth prioritising.",
+  "@industryCounsel_reason_chainLuxury_brief": {
+    "description": "Brief industry counsel reason for chain/luxury value."
+  },
+  "industryCounsel_reason_chainLuxury_detail": "Chain outputs and worker luxuries score higher when your workforce can use them.",
+  "@industryCounsel_reason_chainLuxury_detail": {
+    "description": "Detail industry counsel reason for chain/luxury value."
+  },
+  "industryCounsel_reason_labourDeficit_brief": "Recruit peasants — planned labour exceeds effective workers.",
+  "@industryCounsel_reason_labourDeficit_brief": {
+    "description": "Brief industry counsel reason for labour deficit."
+  },
+  "industryCounsel_reason_labourDeficit_detail": "The core allocation assigns more labour than your effective pool can supply this turn.",
+  "@industryCounsel_reason_labourDeficit_detail": {
+    "description": "Detail industry counsel reason for labour deficit."
+  },
+  "industryCounsel_reason_luxuryShortage_brief": "Train this tier — luxury goods for them are scarce.",
+  "@industryCounsel_reason_luxuryShortage_brief": {
+    "description": "Brief industry counsel reason for luxury shortage."
+  },
+  "industryCounsel_reason_luxuryShortage_detail": "Soft luxury caps favour training when refined luxuries are below sustainable levels.",
+  "@industryCounsel_reason_luxuryShortage_detail": {
+    "description": "Detail industry counsel reason for luxury shortage."
+  },
+  "industryCounsel_reason_feedstockBlocked_brief": "Improve feedstock tiles to unblock starred production inputs.",
+  "@industryCounsel_reason_feedstockBlocked_brief": {
+    "description": "Brief industry counsel reason for feedstock blocked."
+  },
+  "industryCounsel_reason_feedstockBlocked_detail": "Production is input-starved while improvable tiles can raise the blocking commodity.",
+  "@industryCounsel_reason_feedstockBlocked_detail": {
+    "description": "Detail industry counsel reason for feedstock blocked."
+  },
+  "industryCounsel_action_applyProduceAllocation": "Apply recommended industry allocation",
+  "@industryCounsel_action_applyProduceAllocation": {
+    "description": "Primary action on produce counsel cards — applies full core assignment snapshot."
+  },
+  "industryCounsel_action_agreeTrain": "Agree",
+  "@industryCounsel_action_agreeTrain": {
+    "description": "Primary action on train counsel cards — queues one recruit order."
+  },
+  "industryCounsel_action_openDevelopment": "Open Development",
+  "@industryCounsel_action_openDevelopment": {
+    "description": "Primary action on feedstock unblock counsel cards."
+  },
+  "industryCounsel_trainAgreeFailed": "Cannot train that worker tier right now — check stockpile and queued orders.",
+  "@industryCounsel_trainAgreeFailed": {
+    "description": "Shown when train Agree fails re-validation."
+  },
+  "tradeCounsel_tabTrade": "Trade",
+  "@tradeCounsel_tabTrade": {
+    "description": "Counsel screen Trade tab label."
+  },
+  "tradeCounsel_empty": "No pressing market advice this turn.",
+  "@tradeCounsel_empty": {
+    "description": "Counsel Trade tab empty state."
+  },
+  "tradeCounsel_action_applyBook": "Apply recommended market book",
+  "@tradeCounsel_action_applyBook": {
+    "description": "Replaces all staged trade orders with the counsel book."
+  },
+  "tradeCounsel_action_agree": "Agree",
+  "@tradeCounsel_action_agree": {
+    "description": "Stages one counsel trade line."
+  },
+  "tradeCounsel_applyFailed": "Cannot apply that market advice right now — check caps and treasury.",
+  "@tradeCounsel_applyFailed": {
+    "description": "Shown when trade counsel Apply/Agree fails validation."
+  },
+  "tradeCounsel_title_bid": "Bid {commodity} × {quantity}",
+  "@tradeCounsel_title_bid": {
+    "description": "Trade counsel card title for a bid line.",
+    "placeholders": {
+      "commodity": { "type": "String" },
+      "quantity": { "type": "int" }
+    }
+  },
+  "tradeCounsel_title_offer": "Offer {commodity} × {quantity}",
+  "@tradeCounsel_title_offer": {
+    "description": "Trade counsel card title for an offer line.",
+    "placeholders": {
+      "commodity": { "type": "String" },
+      "quantity": { "type": "int" }
+    }
+  },
+  "tradeCounsel_reason_surplusAboveReserve_brief": "Sell surplus above your reserve — the planner would offer this stock.",
+  "@tradeCounsel_reason_surplusAboveReserve_brief": {
+    "description": "Brief trade counsel reason for surplus offers."
+  },
+  "tradeCounsel_reason_industryShortage_brief": "Buy below production cost — industry inputs are short.",
+  "@tradeCounsel_reason_industryShortage_brief": {
+    "description": "Brief trade counsel reason for deficit bids."
+  },
+  "tradeCounsel_reason_speculativeInventory_brief": "Affluent treasury — build stock toward the planner target.",
+  "@tradeCounsel_reason_speculativeInventory_brief": {
+    "description": "Brief trade counsel reason for F10 speculative bids."
+  },
+  "tradeMarket_counsel": "Counsel",
+  "@tradeMarket_counsel": {
+    "description": "Trade Market header button opening Trade Counsel."
+  },
+  "tradeMarket_tradeCounselStarSemantic": "Trade counsel: {brief}",
+  "@tradeMarket_tradeCounselStarSemantic": {
+    "description": "Accessibility label for Market row trade counsel star.",
+    "placeholders": {
+      "brief": { "type": "String" }
+    }
+  },
+  "tradeMarket_firstRightChip": "First right",
+  "@tradeMarket_firstRightChip": {
+    "description": "Compact chip on Market rows where the human holds first right of refusal on purchased-tile commodities."
+  },
+  "tradeMarket_firstRightTooltip": "You hold first right on goods from this purchased tile. Your bids clear before rivals, and you earn overseas profit when another power buys here.",
+  "@tradeMarket_firstRightTooltip": {
+    "description": "On-request help for the Market first-right chip."
+  },
+  "tradeDealBook_matchTagFirstRight": "First right",
+  "@tradeDealBook_matchTagFirstRight": {
+    "description": "Deal Book audit tag for first-right-of-refusal matches."
+  },
+  "tradeDealBook_matchTagFavoredPartner": "Favored partner",
+  "@tradeDealBook_matchTagFavoredPartner": {
+    "description": "Deal Book audit tag for favored-trading-partner matches."
+  },
+  "tradeDealBook_overseasProfitHeading": "Overseas profit",
+  "@tradeDealBook_overseasProfitHeading": {
+    "description": "Deal Book subsection heading for last-turn overseas-profit credits."
+  },
+  "tradeDealBook_overseasProfitRow": "{commodity} × {quantity} — £{amount} credited",
+  "@tradeDealBook_overseasProfitRow": {
+    "description": "Single overseas-profit ledger row in Deal Book.",
+    "placeholders": {
+      "commodity": {"type": "String"},
+      "quantity": {"type": "int"},
+      "amount": {"type": "int"}
+    }
+  },
+  "eventFeed_overseasProfitCredited": "Overseas profit credited: £{amount} from {count} rival purchase(s). Tap to open Deal Book.",
+  "@eventFeed_overseasProfitCredited": {
+    "description": "Player turn event feed line when overseas profit treasury was credited.",
+    "placeholders": {
+      "amount": {"type": "int"},
+      "count": {"type": "int"}
+    }
   }
 }

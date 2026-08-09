@@ -30,6 +30,7 @@ workspace:
   - packages/colonizethis_debug_console
   - packages/colonizethis_map
   - packages/colonizethis_test
+  - packages/colonizethis_app_debug
   - packages/colonizethis_app_e2e_support
   - packages/colonizethis_app_fixtures
   - packages/colonizethis_app_l10n

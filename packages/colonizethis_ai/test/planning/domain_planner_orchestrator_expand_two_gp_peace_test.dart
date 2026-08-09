@@ -48,105 +48,8 @@ import '../support/domain_planner_orchestrator_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
-const String _blockerGpId = 'gp2';
-const String _nonBlockerGpId = 'gp3';
-
-// gp1 owns 8 OW provinces via [kGp1OwProvincesExpandTwoGp]
-// (below the quota of 10 -> EXPAND).
-
-// gp2 owns three OW provinces; all three appear in
-// `invadableProvinceIdsSorted` so it is the primary frontier blocker.
-const List<String> _gp2InvadableProvinces = <String>[
-  'oldWorld|gp2_0',
-  'oldWorld|gp2_1',
-  'oldWorld|gp2_2',
-];
-
-// gp3 owns one OW province that is **not** invadable from gp1, making it
-// the non-blocker target of the EXPAND multi-GP peace rule.
-const String _gp3Province = 'oldWorld|gp3_0';
-
-Game _expandTwoGpWarsScenarioGame() {
-  return Game(
-    id: 'g-2509-expand-two-gp-peace',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesExpandTwoGp)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-          for (final id in _gp2InvadableProvinces)
-            Province(id: id, regionId: 'oldWorld', ownerId: _blockerGpId),
-          const Province(
-            id: _gp3Province,
-            regionId: 'oldWorld',
-            ownerId: _nonBlockerGpId,
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      // Each GP holds a non-empty Home Army so `regimentCountForPlayer`
-      // > 0 for every faction, avoiding the zero-regiment stalemate peace
-      // paths (`stalledZeroRegimentGpPeaceTargets`,
-      // `mutualZeroRegimentGpStalematePeaceTargets`) which would
-      // unconditionally peace every at-war GP (including the blocker) for
-      // an entirely different reason than the EXPAND non-blocker rule
-      // this test is pinning.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesExpandTwoGp.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_blockerGpId),
-          ownerId: _blockerGpId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gp2InvadableProvinces.first,
-          regimentUnitIds: const ['u_gp2'],
-          isHomeArmy: true,
-        ),
-        Army(
-          id: homeArmyIdFor(_nonBlockerGpId),
-          ownerId: _nonBlockerGpId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _gp3Province,
-          regimentUnitIds: const ['u_gp3'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-      Player(id: _blockerGpId, displayName: 'GP2', isHuman: false),
-      Player(id: _nonBlockerGpId, displayName: 'GP3', isHuman: false),
-    ],
-    minorNations: const [],
-    tribes: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _blockerGpId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _nonBlockerGpId,
-        state: RelationState.atWar,
-        score: 10,
-      ),
-    ],
-  );
-}
+const String _blockerGpId = kOrchestratorExpandTwoGpBlockerId;
+const String _nonBlockerGpId = kOrchestratorExpandTwoGpNonBlockerId;
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _emptyApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -180,7 +83,7 @@ AIWorldSnapshot _expandTwoGpWarsSnapshot() {
     // is true (no minor owns any invadable province).
     conquest: ConquestSummary(
       oldWorldProvincesOwned: 8,
-      invadableProvinceIdsSorted: _gp2InvadableProvinces,
+      invadableProvinceIdsSorted: kOrchestratorExpandTwoGpBlockerInvadableProvinces,
       provincesToVictory: 24,
     ),
     colonial: ColonialSummary(),
@@ -197,7 +100,7 @@ List<String> _offerPeaceTargets(Orders orders) => <String>[
 void main() {
   group('runDomainPlanners EXPAND two-GP peace', () {
     test('peaces the non-blocker GP front', () {
-      final game = _expandTwoGpWarsScenarioGame();
+      final game = buildOrchestratorExpandTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandTwoGpWarsSnapshot();
@@ -238,7 +141,7 @@ void main() {
     });
 
     test('holds the primary invadable OW frontier blocker war', () {
-      final game = _expandTwoGpWarsScenarioGame();
+      final game = buildOrchestratorExpandTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandTwoGpWarsSnapshot();
@@ -276,7 +179,7 @@ void main() {
     });
 
     test('emits identical diplomatic orders for identical inputs', () {
-      final game = _expandTwoGpWarsScenarioGame();
+      final game = buildOrchestratorExpandTwoGpWarsScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       final snapshot = _expandTwoGpWarsSnapshot();

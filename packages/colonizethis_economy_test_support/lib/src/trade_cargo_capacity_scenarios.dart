@@ -1,12 +1,18 @@
 // dart format off
 // Table-driven trade cargo capacity scenarios (Refs #3939 phase 3 slice 35, #3979).
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'trade_cargo_capacity_expectations.dart';
+
+/// One overseas-tonnage assertion case.
+typedef OverseasTonnageCase = ({Map<String, int> overseasTotals, int homeFleetCargoHolds, int expected});
+
+/// Pins for [overseasShippedTonnageFromExtractionTotals] rows.
+typedef OverseasShippedTonnagePins = ({List<OverseasTonnageCase> cases});
+
+OverseasShippedTonnageScenario overseasShippedTonnageScenario({required String label, required OverseasShippedTonnagePins pins}) => (label: label, pins: pins, refs: null);
+
 /// One row in [overseasShippedTonnageScenarios] (Refs #3979).
 typedef OverseasShippedTonnageScenario = ({String label, OverseasShippedTonnagePins pins, String? refs});
-void runOverseasShippedTonnageScenario(OverseasShippedTonnageScenario scenario) {
-  runOverseasShippedTonnageExpectation(scenario.pins);
-}
+
 /// Canonical scenarios for [overseasShippedTonnageFromExtractionTotals].
 List<OverseasShippedTonnageScenario> overseasShippedTonnageScenarios() => [
   overseasShippedTonnageScenario(
@@ -27,13 +33,33 @@ List<OverseasShippedTonnageScenario> overseasShippedTonnageScenarios() => [
     ),
   ),
 ];
+
+/// Discriminator for GP trade-cargo capacity rows (Refs #3979).
+enum TradeCargoCapacityGpTarget { emptyTileMaps }
+
+TradeCargoCapacityForGreatPowerScenario tradeCargoCapacityEmptyTileMapsScenario({required String label}) => (label: label, target: TradeCargoCapacityGpTarget.emptyTileMaps, refs: null);
+
 /// One row in [tradeCargoCapacityForGreatPowerScenarios] (Refs #3979).
 typedef TradeCargoCapacityForGreatPowerScenario = ({String label, TradeCargoCapacityGpTarget target, String? refs});
-void runTradeCargoCapacityForGreatPowerScenario(TradeCargoCapacityForGreatPowerScenario scenario) {
-  runTradeCargoCapacityGpExpectation(scenario.target);
-}
+
 /// Canonical scenarios for [tradeCargoCapacityForGreatPower] (empty tile maps).
 List<TradeCargoCapacityForGreatPowerScenario> tradeCargoCapacityForGreatPowerScenarios() => [tradeCargoCapacityEmptyTileMapsScenario(label: 'returns full home fleet when tile maps are empty')];
+
+/// Discriminator for extractionById bypass rows (Refs #3979).
+enum ExtractionByIdBypassKind { forecast, capacity, emptyMaps }
+
+/// Pins for forecast-overseas-tonnage rows.
+typedef ForecastOverseasTonnagePins = ({String playerId, Map<String, ExtractionTotals> extractionById, Map<String, int>? deriveOverseasTotals, int? expectedExact});
+
+ExtractionByIdBypassScenario forecastOverseasTonnageScenario({required String label, required ForecastOverseasTonnagePins pins, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.forecast, forecastPins: pins, capacityPins: null, refs: refs);
+
+/// Pins for trade-cargo capacity with pre-computed extraction rows.
+typedef TradeCargoCapacityExtractionPins = ({String playerId, Map<String, ExtractionTotals> extractionById, int overseasTonnageSubtracted});
+
+ExtractionByIdBypassScenario tradeCargoCapacityExtractionScenario({required String label, required TradeCargoCapacityExtractionPins pins, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.capacity, forecastPins: null, capacityPins: pins, refs: refs);
+
+ExtractionByIdBypassScenario computeExtractionTotalsEmptyMapsScenario({required String label, String? refs}) => (label: label, kind: ExtractionByIdBypassKind.emptyMaps, forecastPins: null, capacityPins: null, refs: refs);
+
 /// One row in [extractionByIdBypassScenarios] (Refs #3979).
 typedef ExtractionByIdBypassScenario = ({
   String label,
@@ -42,16 +68,7 @@ typedef ExtractionByIdBypassScenario = ({
   TradeCargoCapacityExtractionPins? capacityPins,
   String? refs,
 });
-void runExtractionByIdBypassScenario(ExtractionByIdBypassScenario scenario) {
-  switch (scenario.kind) {
-    case ExtractionByIdBypassKind.forecast:
-      runForecastOverseasTonnageExpectation(scenario.forecastPins!);
-    case ExtractionByIdBypassKind.capacity:
-      runTradeCargoCapacityExtractionExpectation(scenario.capacityPins!);
-    case ExtractionByIdBypassKind.emptyMaps:
-      runComputeExtractionTotalsEmptyMapsExpectation();
-  }
-}
+
 /// Canonical scenarios for extractionById bypass (Refs #3517 Cluster 4).
 List<ExtractionByIdBypassScenario> extractionByIdBypassScenarios() => [
   forecastOverseasTonnageScenario(

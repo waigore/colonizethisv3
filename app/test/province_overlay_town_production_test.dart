@@ -9,7 +9,7 @@ import 'package:colonizethis_app/widgets/resource_icon.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay;
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

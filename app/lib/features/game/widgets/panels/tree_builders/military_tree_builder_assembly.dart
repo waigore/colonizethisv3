@@ -1,14 +1,20 @@
-part of 'military_tree_builder.dart';
+
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'military_tree_builder.dart';
+import 'military_tree_builder_assembly_province.dart';
+import 'military_tree_builder_assembly_sea.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
   final unitsById = game.worldState.allUnitsById;
 
-  final armies = _armiesForMilitaryPanel(game, humanPlayerId);
+  final armies = militaryTreeArmiesForPanel(game, humanPlayerId);
 
   final result = <RegionMilitaryGroup>[];
 
   game.worldState.forEachRegion((regionKey, regionData) {
-    final provinceNodes = _provinceArmyNodesForRegion(
+    final provinceNodes = militaryTreeProvinceArmyNodesForRegion(
       game: game,
       regionKey: regionKey,
       regionData: regionData,
@@ -16,7 +22,7 @@ List<RegionMilitaryGroup> buildMilitaryGroups(Game game, String humanPlayerId) {
       unitsById: unitsById,
     );
 
-    final seaLocations = _militarySeaZoneNodesForRegion(
+    final seaLocations = militaryTreeSeaZoneNodesForRegion(
       game: game,
       regionKey: regionKey,
       humanPlayerId: humanPlayerId,

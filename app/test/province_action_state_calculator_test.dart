@@ -1,6 +1,5 @@
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
 import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/features/game/flame/map_state/province_action_state_calculator.dart';
 import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show
         demoGameForOverlay,
@@ -41,6 +40,10 @@ void main() {
         expect(
           states.buildImprovement,
           GameMapAreaStateLogic.kHiddenBuilderInlineActionState,
+        );
+        expect(
+          states.buildRoad,
+          GameMapAreaStateLogic.kHiddenEngineerInlineActionState,
         );
       },
     );
@@ -95,10 +98,19 @@ void main() {
           playerView: playerView,
           workTargetSelectionCache: cache,
         );
+        final expectedBuildRoad =
+            GameMapAreaStateLogic.provinceBuildRoadActionState(
+          game: game,
+          humanPlayerId: humanPlayerId,
+          selectedTileKey: tileKey,
+          playerView: playerView,
+          workTargetSelectionCache: cache,
+        );
 
         expect(states.explore, expectedExplore);
         expect(states.prospect, expectedProspect);
         expect(states.buildImprovement, expectedBuild);
+        expect(states.buildRoad, expectedBuildRoad);
       },
     );
   });

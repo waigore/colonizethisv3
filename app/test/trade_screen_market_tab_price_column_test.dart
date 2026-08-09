@@ -13,9 +13,14 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/trade_screen_test_support.dart';
+import 'trade_screen_test_support.dart';
 
 const Size _kMinViewport = Size(kMinViewportWidth, 640);
+
+/// Below [TradeScreenMarketKeys.marketTwoColumnMinWidth] so price-column
+/// geometry pins the single-column three-line row stack (Refs #3487), not the
+/// wide two-column compact grid (Refs #4227).
+const Size _kNarrowMarketViewport = Size(599, 4096);
 
 double _priceTextRight(
   WidgetTester tester,
@@ -71,6 +76,7 @@ void main() {
             id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 5, 'iron': 220},
           ),
+          viewport: _kNarrowMarketViewport,
         );
 
         final double timberPriceRight = _priceTextRight(tester, 'timber', '5');
@@ -95,6 +101,7 @@ void main() {
             id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 30},
           ),
+          viewport: _kNarrowMarketViewport,
         );
 
         final double priceRight = _priceTextRight(tester, 'timber', '30');
@@ -121,6 +128,7 @@ void main() {
           id: 'test_trade_screen_market_tab_price_column',
           prices: const <CommodityId, int>{'timber': 30},
         ),
+        viewport: _kNarrowMarketViewport,
       );
 
       final coinFinder = find.descendant(
@@ -151,6 +159,7 @@ void main() {
             id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 30, 'refinedSugar': 70},
           ),
+          viewport: _kNarrowMarketViewport,
         );
 
         final double timberPriceRight = _priceTextRight(tester, 'timber', '30');
@@ -182,6 +191,7 @@ void main() {
             id: 'test_trade_screen_market_tab_price_column',
             prices: const <CommodityId, int>{'timber': 5},
           ),
+          viewport: _kNarrowMarketViewport,
         );
 
         final double integerPriceRight = _priceTextRight(tester, 'timber', '5');

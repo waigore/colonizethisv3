@@ -1,35 +1,23 @@
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../config/app_assets.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../providers/region_minimap_provider.dart';
 import '../region_map/region_map_viewport_snapshot.dart'
     show
         RegionMapViewportSnapshot,
         kRegionMapZoomMultiplierMax,
         kRegionMapZoomMultiplierMin;
-import '../../../../widgets/ct_slider.dart';
-import '../../../../widgets/strict_asset_icon.dart';
-import '../../screens/game/game_screen_shared.dart';
-import 'region_minimap_math.dart';
-
-part 'game_region_minimap_zoom_controls.dart';
-part 'game_region_minimap_toggle_button.dart';
-part 'game_region_minimap_painter.dart';
-part 'game_region_minimap_gestures.dart';
-part 'game_region_minimap_visible_panel.dart';
+import 'game_region_minimap_visible_panel.dart';
+import 'game_region_minimap_zoom_controls.dart';
 
 /// Dismissible region minimap (Empire overview). SPEC/ui/empire-overview.md § Region minimap.
 ///
 /// [cellSizePx] must match [RegionMapViewData.cellSize] used by the Flame-backed region map for this
 /// region so world↔minimap math matches [RegionMapViewportSnapshot] (see SPEC/ui/map-widget.md).
 ///
-/// Narrow layout (issue #2870 S3, `MediaQuery.size.width < kNarrowBreakpoint`):
+/// Narrow layout (issue #2870 S3, `MediaQuery.sizeOf(context).width < kNarrowBreakpoint`):
 /// the host constructs this widget with `narrow: true`. The minimap grid then
 /// fits the active region's aspect ratio into a 90 × 70 dp box per
 /// `SPEC/ui/mobile-adaptation.md` § In-game shell and the
@@ -124,7 +112,7 @@ class GameRegionMinimap extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (visible) ...[
-          _GameRegionMinimapVisiblePanel(
+          GameRegionMinimapVisiblePanel(
             region: region,
             cellSizePx: cellSizePx,
             bus: bus,
@@ -133,17 +121,15 @@ class GameRegionMinimap extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
         ],
-        _MinimapZoomControls(
+        GameRegionMinimapZoomControls(
           regionId: region.regionId,
           bus: bus,
           viewportMultiplier: zoomMultiplier,
           trackWidth: mapSize.width,
           theme: Theme.of(context),
-          trailing: _MinimapToggleButton(
-            visible: visible,
-            onTap: () =>
-                ref.read(regionMinimapVisibleProvider.notifier).toggle(),
-          ),
+          visible: visible,
+          onToggle: () =>
+              ref.read(regionMinimapVisibleProvider.notifier).toggle(),
         ),
       ],
     );

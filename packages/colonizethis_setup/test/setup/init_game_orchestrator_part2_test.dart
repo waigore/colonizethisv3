@@ -15,7 +15,7 @@ void main() {
           seed: GameSetupConfig.defaultConfig.seed,
         );
 
-        final result = runInitGame(config: config, options: defaultInitOptions);
+        final result = sharedInitGameResult(config);
         final game = result.game;
         expect(game.worldState.oldWorld.provinces.length, 60);
         expect(game.players.length, 6);
@@ -30,7 +30,7 @@ void main() {
       'Poland minor4 has at most one Greater Poland when locked partitions match',
       () {
         final config = lockedFullInitConfig(seed: 42);
-        final result = runInitGame(config: config, options: defaultInitOptions);
+        final result = sharedInitGameResult(config);
         final game = result.game;
         void assertDistinct(Iterable<String?> names, String label) {
           final strings = names
@@ -85,10 +85,7 @@ void main() {
           numProvincesNewWorld: 5,
         );
         expect(
-          () => runInitGame(
-            config: config,
-            options: defaultInitOptions,
-          ),
+          () => runInitGame(config: config, options: defaultInitOptions),
           throwsA(
             isA<SetupConfigConstraintException>()
                 .having(
@@ -108,16 +105,18 @@ void main() {
         expect(lockedFullInitAc11Seeds.length, 20);
         expect(lockedFullInitAc11Seeds.toSet().length, 20);
 
-        runLockedFullInitAc11SeedBatch(assertResult: (result, seed) {
-          final game = result.game;
-          expect(
-            game.worldState.oldWorld.provinces.length,
-            60,
-            reason: 'seed=$seed',
-          );
-          expect(game.players.length, 6, reason: 'seed=$seed');
-          expect(game.minorNations.length, 6, reason: 'seed=$seed');
-        });
+        runLockedFullInitAc11SeedBatch(
+          assertResult: (result, seed) {
+            final game = result.game;
+            expect(
+              game.worldState.oldWorld.provinces.length,
+              60,
+              reason: 'seed=$seed',
+            );
+            expect(game.players.length, 6, reason: 'seed=$seed');
+            expect(game.minorNations.length, 6, reason: 'seed=$seed');
+          },
+        );
       },
       timeout: const Timeout(Duration(minutes: 3)),
     );

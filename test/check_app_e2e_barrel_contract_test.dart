@@ -18,12 +18,30 @@ void main() {
       final barrel = File(p.join(supportLib, 'e2e_helpers.dart'));
       expect(barrel.existsSync(), isTrue, reason: 'AC1 barrel must exist');
       final text = barrel.readAsStringSync();
+      // Shared re-exports stay in the facade; AC1 aliases live in topic
+      // libraries re-exported from here (Refs #4075 AC3).
       for (final symbol in [
         'E2ePerfLog',
-        'Future<void> pumpFor',
-        'Future<void> waitUntilFound',
         'kE2eMaxWallClock',
         'kE2eNextTurnResolutionTimeout',
+        "export 'e2e_helpers_aliases_ui.dart';",
+        "export 'e2e_helpers_aliases_orders.dart';",
+        "export 'e2e_helpers_aliases_scenario.dart';",
+      ]) {
+        expect(
+          text,
+          contains(symbol),
+          reason: 'e2e_helpers.dart must expose $symbol for AC1 scenarios',
+        );
+      }
+      final aliasSurface = [
+        File(p.join(supportLib, 'e2e_helpers_aliases_ui.dart')),
+        File(p.join(supportLib, 'e2e_helpers_aliases_orders.dart')),
+        File(p.join(supportLib, 'e2e_helpers_aliases_scenario.dart')),
+      ].map((f) => f.readAsStringSync()).join('\n');
+      for (final symbol in [
+        'Future<void> pumpFor',
+        'Future<void> waitUntilFound',
         'bootstrapNewGameToMap',
         'openCivilianPanel',
         'openNavalPanel',
@@ -31,9 +49,9 @@ void main() {
         'advanceOneHumanTurn',
       ]) {
         expect(
-          text,
+          aliasSurface,
           contains(symbol),
-          reason: 'e2e_helpers.dart must expose $symbol for AC1 scenarios',
+          reason: 'AC1 alias libraries must define $symbol',
         );
       }
     });

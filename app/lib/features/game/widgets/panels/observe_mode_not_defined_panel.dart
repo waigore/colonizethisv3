@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/observe_session_provider.dart';
 import '../../../../widgets/ct_gap.dart';
 import '../../../../widgets/ct_panel.dart';
 import '../../../../widgets/ct_spacing.dart';
 
 /// Placeholder for P4–P17 chrome when global observe hides player-scoped data.
-/// SPEC/ui/observe-mode.md.
+/// SPEC/ui/observe-mode.md (`OVL60001`).
 class ObserveModeNotDefinedPanel extends StatelessWidget {
   const ObserveModeNotDefinedPanel({super.key, this.title});
+
+  static const screenId = UiScreenIds.observeModeOverlay;
 
   final String? title;
 

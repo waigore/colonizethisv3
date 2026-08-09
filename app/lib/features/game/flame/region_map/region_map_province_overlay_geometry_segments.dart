@@ -1,12 +1,20 @@
-part of 'region_map_province_overlay_geometry.dart';
+import 'dart:ui';
 
-ProvinceTopologyEdgeKind _topologyKind(CellViewData a, CellViewData b) {
+import 'package:colonizethis_map/colonizethis_map.dart';
+
+import 'region_map_boundary_visibility.dart';
+import 'region_map_province_overlay_geometry.dart';
+
+ProvinceTopologyEdgeKind provinceOverlayTopologyKind(
+  CellViewData a,
+  CellViewData b,
+) {
   if (a.isSea && b.isSea) return ProvinceTopologyEdgeKind.seaSea;
   if (!a.isSea && !b.isSea) return ProvinceTopologyEdgeKind.landLand;
   return ProvinceTopologyEdgeKind.landSea;
 }
 
-void _addVerticalTopologySegmentIfNeeded({
+void provinceOverlayAddVerticalTopologySegmentIfNeeded({
   required RegionMapViewData region,
   required int x,
   required int y,
@@ -37,12 +45,12 @@ void _addVerticalTopologySegmentIfNeeded({
     ProvinceTopologySegment(
       start: Offset(xLine, y * cellSizePx),
       end: Offset(xLine, (y + 1) * cellSizePx),
-      kind: _topologyKind(cell, right),
+      kind: provinceOverlayTopologyKind(cell, right),
     ),
   );
 }
 
-void _addHorizontalTopologySegmentIfNeeded({
+void provinceOverlayAddHorizontalTopologySegmentIfNeeded({
   required RegionMapViewData region,
   required int x,
   required int y,
@@ -73,7 +81,7 @@ void _addHorizontalTopologySegmentIfNeeded({
     ProvinceTopologySegment(
       start: Offset(x * cellSizePx, yLine),
       end: Offset((x + 1) * cellSizePx, yLine),
-      kind: _topologyKind(cell, bottom),
+      kind: provinceOverlayTopologyKind(cell, bottom),
     ),
   );
 }
@@ -93,7 +101,7 @@ List<ProvinceTopologySegment> computeProvinceTopologySegments({
 
   for (var y = 0; y < region.height; y++) {
     for (var x = 0; x < region.width; x++) {
-      _addVerticalTopologySegmentIfNeeded(
+      provinceOverlayAddVerticalTopologySegmentIfNeeded(
         region: region,
         x: x,
         y: y,
@@ -102,7 +110,7 @@ List<ProvinceTopologySegment> computeProvinceTopologySegments({
         gateByUnrevealedTiles: gateByUnrevealedTiles,
         out: out,
       );
-      _addHorizontalTopologySegmentIfNeeded(
+      provinceOverlayAddHorizontalTopologySegmentIfNeeded(
         region: region,
         x: x,
         y: y,

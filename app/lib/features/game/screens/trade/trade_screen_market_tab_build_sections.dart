@@ -1,9 +1,17 @@
-// Market-tab section list assembly for `_MarketTabContent`.
+// Market-tab section list assembly for `MarketTabContent`.
 // Split from `trade_screen_market_tab_build.dart` (Refs #3878).
 
-part of 'trade_screen.dart';
 
-extension _MarketTabContentBuildSections on _MarketTabContent {
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
+
+import 'trade_market_staging_context.dart';
+import 'trade_screen_contract_market.dart';
+import 'trade_screen_market_tab.dart';
+import 'trade_screen_market_tab_catalog.dart';
+
+extension MarketTabContentBuildSections on MarketTabContent {
   ({
     TextStyle nameStyle,
     TextStyle priceStyle,
@@ -11,6 +19,10 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
     TextStyle quantityStyle,
     TextStyle cargoIndicatorStyle,
     TextStyle cargoWarningStyle,
+    TextStyle bidGoodsIndicatorStyle,
+    TextStyle bidTypeWarningStyle,
+    TextStyle bidBudgetIndicatorStyle,
+    TextStyle bidBudgetWarningStyle,
   })
   marketTabTextStyles(ThemeData theme) {
     return (
@@ -27,74 +39,68 @@ extension _MarketTabContentBuildSections on _MarketTabContent {
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
               .copyWith(color: EditorialMonoclePalette.accent),
       cargoWarningStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
+      bidGoodsIndicatorStyle:
           (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
-              .copyWith(color: EditorialMonoclePalette.danger),
+              .copyWith(color: EditorialMonoclePalette.accent),
+      bidTypeWarningStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
+      bidBudgetIndicatorStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12))
+              .copyWith(color: EditorialMonoclePalette.accent),
+      bidBudgetWarningStyle:
+          (theme.textTheme.bodySmall ?? const TextStyle(fontSize: 12)),
     );
   }
 
   List<Widget> buildMarketTabSectionWidgets({
     required AppLocalizations l10n,
-    required _SectionedTradeableCommodities sectioned,
-    required WorldMarketState market,
-    required Orders orders,
-    required Map<CommodityId, int> offerCap,
-    required Map<CommodityId, int> stagedOffers,
+    required SectionedTradeableCommodities sectioned,
+    required TradeMarketStagingContext staging,
     required TextStyle nameStyle,
     required TextStyle priceStyle,
     required TextStyle volumeStyle,
     required TextStyle quantityStyle,
-    required TradeSectionHandlers sectionHandlers,
+    bool wideLayout = false,
   }) {
     return <Widget>[
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionFoodKey,
         sectionLabel: l10n.production_food,
         commodities: sectioned.food,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionRawMaterialsKey,
         sectionLabel: l10n.production_rawMaterials,
         commodities: sectioned.rawMaterials,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
-      ..._buildCommoditySectionWidgets(
+      ...buildCommoditySectionWidgets(
         sectionKey: TradeScreenMarketKeys.marketSectionManufacturedKey,
         sectionLabel: l10n.production_manufactured,
         commodities: sectioned.manufactured,
-        offerCap: offerCap,
-        stagedOffers: stagedOffers,
-        market: market,
-        orders: orders,
+        staging: staging,
         nameStyle: nameStyle,
         priceStyle: priceStyle,
         volumeStyle: volumeStyle,
         quantityStyle: quantityStyle,
-        onDirectionChanged: sectionHandlers.onDirectionChanged,
-        onQuantityDelta: sectionHandlers.onQuantityDelta,
         isFirstSection: false,
         l10n: l10n,
+        wideLayout: wideLayout,
       ),
     ];
   }

@@ -3,10 +3,8 @@ import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
-import 'package:colonizethis_turn/src/turn/phases/diplomacy_phase.dart';
-import 'package:colonizethis_turn/src/turn/turn_pipeline_state.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolution_result.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolver_config.dart';
+import 'package:colonizethis_turn/colonizethis_turn.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 void main() {
   const topology = MapTopology();

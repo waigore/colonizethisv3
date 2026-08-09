@@ -15,7 +15,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/app_shell_harness.dart';
+import '../app_shell_harness.dart';
 
 Future<void> _pumpButton(
   WidgetTester tester, {
@@ -266,7 +266,7 @@ void main() {
                 w is CustomPaint &&
                 w.painter != null &&
                 w.painter.runtimeType.toString() ==
-                    '_BrassCornerBracketsPainter',
+                    'CtNinePatchButtonBracketsPainter',
           ),
         ),
         findsOneWidget,

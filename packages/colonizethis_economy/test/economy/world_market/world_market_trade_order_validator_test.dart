@@ -77,6 +77,39 @@ void main() {
     }, labelOf: (s) => s.label);
   });
 
+  group('TradeOrderValidator.validate — rule 5 determinism (Refs #3123)', () {
+    test('identical inputs produce identical result lists across two '
+        'validate() calls (Refs #3123 AC: validator determinism)', () {
+      final context = validatorCtx(
+        treasuryBudgetForBids: 100,
+        tradeCargoCapacity: 100,
+        worldMarketState: WorldMarketState(
+          prices: {
+            CommodityCatalog.timber.id: 30,
+            CommodityCatalog.iron.id: 10,
+          },
+        ),
+      );
+      final orders = [
+        validatorBid(CommodityCatalog.timber.id, 4),
+        validatorBid(CommodityCatalog.iron.id, 1),
+      ];
+      final first = TradeOrderValidator.validate(
+        context: context,
+        proposedOrders: orders,
+      );
+      final second = TradeOrderValidator.validate(
+        context: context,
+        proposedOrders: orders,
+      );
+      expect(second, hasLength(first.length));
+      for (var i = 0; i < first.length; i++) {
+        expect(second[i].isAccepted, first[i].isAccepted);
+        expect(second[i].reason, first[i].reason);
+      }
+    });
+  });
+
   group('effectiveMarketPriceForCommodityId — catalog default coverage '
       '(Refs #3123)', () {
     test('a representative raw and manufactured commodity resolve to a '
@@ -103,6 +136,32 @@ void main() {
           effective! >= 0,
           isTrue,
           reason: 'catalog default for $commodityId must be non-negative',
+        );
+      }
+    });
+
+    test('every non-riches commodity in the catalog resolves to a non-null '
+        'effective price via the default ResourceRules (no hidden gaps that '
+        "would force a rule-5 'unknown price' rejection in normal play)", () {
+      final rules = ResourceRules.defaultRules;
+      for (final commodity in CommodityCatalog.all) {
+        if (richesCommodityIds.contains(commodity.id)) continue;
+        final effective = effectiveMarketPriceForCommodityId(
+          commodityId: commodity.id,
+          worldMarket: const WorldMarketState(),
+          resourceRules: rules,
+        );
+        expect(
+          effective,
+          isNotNull,
+          reason:
+              'commodity ${commodity.id} (non-riches) must resolve to a '
+              'non-null catalog default so rule 5 can price it',
+        );
+        expect(
+          effective! >= 0,
+          isTrue,
+          reason: 'catalog default for ${commodity.id} must be non-negative',
         );
       }
     });

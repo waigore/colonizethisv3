@@ -19,6 +19,19 @@ void main() {
       expect(topology.edges, isEmpty);
     });
 
+    test('turnTestOwProvinceStacksFixture builds mass-province OW maps', () {
+      final fixture = turnTestOwProvinceStacksFixture(
+        stacks: [
+          (ownerId: 'p1', count: 2, localIdPrefix: 'A'),
+          (ownerId: 'p2', count: 1, localIdPrefix: 'B'),
+        ],
+        turnNumber: 4,
+      );
+      expect(fixture.game.worldState.oldWorld.provinces.length, 3);
+      expect(fixture.topology.nodes.length, 3);
+      expect(fixture.game.worldState.turnState.turnNumber, 4);
+    });
+
     test('adjacentOwP1P2Game builds split-ownership OW stack', () {
       const ow = turnTestOldWorldRegionId;
       final game = adjacentOwP1P2Game(
@@ -75,6 +88,22 @@ void main() {
       expect(game.players.single.id, 'p1');
       expect(withoutArmies.worldState.armies, isEmpty);
       expect(game.worldState.armies, isNotEmpty);
+    });
+
+    test('turnTestOwTileKey builds 1x1 OW tile keys', () {
+      expect(turnTestOwTileKey('P2'), 'oldWorld|P2|0|0');
+      expect(turnTestNwTileKey('N1'), 'newWorld|N1|0|0');
+    });
+
+    test('turnTestCarrackFleet builds standard naval fixture', () {
+      final fleet = turnTestCarrackFleet(
+        seaZoneId: null,
+        inPortAtProvinceId: 'oldWorld|P1',
+        shipTypeIds: const ['fluyte'],
+      );
+      expect(fleet.shipTypeIds, ['fluyte']);
+      expect(fleet.inPortAtProvinceId, 'oldWorld|P1');
+      expect(fleet.seaZoneId, isNull);
     });
 
     test('resolveTurnComplete advances turn with minimal move order', () {

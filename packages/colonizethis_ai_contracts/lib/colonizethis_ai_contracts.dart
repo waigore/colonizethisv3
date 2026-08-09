@@ -14,5 +14,7 @@ library colonizethis_ai_contracts;
 export 'src/ai/ai_planner.dart';
 export 'src/ai/full_ai_civilian_work_ow_feedstock_localization.dart';
 export 'src/ai/full_ai_civilian_work_selection.dart';
+export 'src/ai/full_ai_civilian_work_selection_feedstock.dart';
+export 'src/ai/full_ai_civilian_work_selection_feedstock_acquisition.dart';
 export 'src/ai/sim_game_ai.dart';
 export 'src/ai/simple_ai_heuristics.dart';

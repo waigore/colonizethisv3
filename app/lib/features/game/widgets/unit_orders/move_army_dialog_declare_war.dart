@@ -1,14 +1,24 @@
-part of 'move_army_dialog.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-extension _MoveArmyDialogDeclareWar on _MoveArmyDialogState {
-  Future<void> _onConfirmPressed() async {
-    final entries = _destinationEntries();
-    final entry = _selectedEntry(entries);
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'move_army_dialog.dart';
+import 'move_army_dialog_state_logic.dart';
+import 'move_units_dialog_base.dart';
+
+mixin MoveArmyDialogDeclareWar
+    on MoveUnitsDialogState<MoveArmyDialog>, MoveArmyDialogStateLogic {
+  Future<void> onConfirmPressed() async {
+    final entries = destinationEntries();
+    final entry = selectedEntry(entries);
     if (entry == null) return;
     final l10n = appL10n(context);
 
     if (!entry.requiresDeclareWarOnConfirm) {
-      _emitAndClose(entry);
+      emitAndClose(entry);
       return;
     }
 
@@ -17,13 +27,13 @@ extension _MoveArmyDialogDeclareWar on _MoveArmyDialogState {
       entry,
       l10n,
     );
-    final ok = await _showDeclareWarConfirmDialog(ownerLabel, l10n);
+    final ok = await showDeclareWarConfirmDialog(ownerLabel, l10n);
     if (ok == true && context.mounted) {
-      _emitAndClose(entry);
+      emitAndClose(entry);
     }
   }
 
-  Future<bool?> _showDeclareWarConfirmDialog(
+  Future<bool?> showDeclareWarConfirmDialog(
     String ownerLabel,
     AppLocalizations l10n,
   ) {

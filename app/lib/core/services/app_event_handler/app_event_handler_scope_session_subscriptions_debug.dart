@@ -1,36 +1,53 @@
-part of 'app_event_handler_scope.dart';
+import 'dart:async';
+import 'package:colonizethis_data/colonizethis_data.dart' show MapTopology;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'app_event_handler_scope_session_helpers.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_app_debug/colonizethis_app_debug.dart'
+    show
+        applyDebugCivilianSpawnAtCapital,
+        applyDebugFlipProvinceOwnership,
+        applyDebugRegimentSpawnAtCapital,
+        applyDebugRevealProvince,
+        applyDebugSetDiplomacyRelation,
+        applyDebugShipSpawnAtCapitalHomeFleet,
+        applyDebugStockpileCredit,
+        applyDebugTreasuryCredit,
+        applyDebugWorkerPoolCredit;
 
-extension _SessionDebugListeners on _AppEventHandlerScopeState {
-  List<StreamSubscription<dynamic>> _debugSessionListeners(AppEventBus bus) {
+mixin AppEventHandlerScopeSessionDebugListeners
+    on AppEventHandlerScopeSessionHelpers {
+  List<StreamSubscription<dynamic>> debugSessionListeners(AppEventBus bus) {
     return [
       bus.on<SpawnDebugCivilianAtCapitalEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'SpawnDebugCivilianAtCapitalEvent',
           () {
             final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
+            applyDebugCommand(
               applyDebugCivilianSpawnAtCapital(currentGame: current, event: e),
             );
           },
         );
       }),
       bus.on<SpawnDebugRegimentAtCapitalEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'SpawnDebugRegimentAtCapitalEvent',
           () {
             final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
+            applyDebugCommand(
               applyDebugRegimentSpawnAtCapital(currentGame: current, event: e),
             );
           },
         );
       }),
       bus.on<SpawnDebugShipAtCapitalHomeFleetEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'SpawnDebugShipAtCapitalHomeFleetEvent',
           () {
             final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
+            applyDebugCommand(
               applyDebugShipSpawnAtCapitalHomeFleet(
                 currentGame: current,
                 event: e,
@@ -40,37 +57,34 @@ extension _SessionDebugListeners on _AppEventHandlerScopeState {
         );
       }),
       bus.on<CreditDebugTreasuryEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('CreditDebugTreasuryEvent', () {
+        unlessTurnResolutionBlocksSession('CreditDebugTreasuryEvent', () {
           final current = ref.read(currentGameProvider);
-          _applyDebugCommand(
+          applyDebugCommand(
             applyDebugTreasuryCredit(currentGame: current, event: e),
           );
         });
       }),
       bus.on<CreditDebugWorkerPoolEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
-          'CreditDebugWorkerPoolEvent',
-          () {
-            final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
-              applyDebugWorkerPoolCredit(currentGame: current, event: e),
-            );
-          },
-        );
+        unlessTurnResolutionBlocksSession('CreditDebugWorkerPoolEvent', () {
+          final current = ref.read(currentGameProvider);
+          applyDebugCommand(
+            applyDebugWorkerPoolCredit(currentGame: current, event: e),
+          );
+        });
       }),
       bus.on<CreditDebugStockpileCommodityEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'CreditDebugStockpileCommodityEvent',
           () {
             final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
+            applyDebugCommand(
               applyDebugStockpileCredit(currentGame: current, event: e),
             );
           },
         );
       }),
       bus.on<FlipDebugProvinceOwnershipEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'FlipDebugProvinceOwnershipEvent',
           () {
             final current = ref.read(currentGameProvider);
@@ -84,12 +98,12 @@ extension _SessionDebugListeners on _AppEventHandlerScopeState {
                   mapData?.combinedTopology ?? const MapTopology(),
               topologyByRegion: mapData?.topologyByRegion,
             );
-            _applyDebugCommand(result);
+            applyDebugCommand(result);
           },
         );
       }),
       bus.on<RevealDebugProvinceEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession('RevealDebugProvinceEvent', () {
+        unlessTurnResolutionBlocksSession('RevealDebugProvinceEvent', () {
           final current = ref.read(currentGameProvider);
           final mapData = current == null
               ? null
@@ -100,15 +114,15 @@ extension _SessionDebugListeners on _AppEventHandlerScopeState {
             combinedTopology: mapData?.combinedTopology ?? const MapTopology(),
             topologyByRegion: mapData?.topologyByRegion,
           );
-          _applyDebugCommand(result);
+          applyDebugCommand(result);
         });
       }),
       bus.on<SetDebugDiplomacyRelationEvent>().listen((e) {
-        _unlessTurnResolutionBlocksSession(
+        unlessTurnResolutionBlocksSession(
           'SetDebugDiplomacyRelationEvent',
           () {
             final current = ref.read(currentGameProvider);
-            _applyDebugCommand(
+            applyDebugCommand(
               applyDebugSetDiplomacyRelation(currentGame: current, event: e),
             );
           },

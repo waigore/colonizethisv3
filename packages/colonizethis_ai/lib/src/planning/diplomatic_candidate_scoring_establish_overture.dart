@@ -1,11 +1,18 @@
-part of 'diplomatic_candidate_scoring.dart';
+import 'dart:math' as math;
+
+import '../util/faction_query.dart';
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'diplomatic_scoring_context.dart';
+import 'observer_goal_phase.dart' show shouldSuppressNewWorldColonialOrders;
+import 'planning_helpers.dart' show kDiplomaticDefaultBaseScore;
+import 'planning_imports.dart';
 
 /// Pre-weighted-random score for an `establishOverture` diplomatic order
 /// candidate (0 = suppressed). Extracted from [computeDiplomaticCandidateScores]
 /// to keep that dispatcher under the function-size gate; behaviour-preserving.
 /// Combines the improve-relations urgency (decay-aware), colonial-tribe and
 /// FTP-competition bonuses, and the embassy-kickback valuation. Refs #3758.
-int _scoreEstablishOvertureDiplomaticOrder(
+int scoreEstablishOvertureDiplomaticOrder(
   DiplomaticScoringContext ctx,
   EstablishOvertureScoringParams params,
 ) {
@@ -30,7 +37,7 @@ int _scoreEstablishOvertureDiplomaticOrder(
           ))) {
     return 0;
   }
-  if (_isDecisionOnCooldown(
+  if (isDecisionOnCooldown(
     game: game,
     actorFactionId: nationId,
     targetFactionId: order.targetFactionId,
@@ -59,7 +66,7 @@ int _scoreEstablishOvertureDiplomaticOrder(
   if (rel != null &&
       rel.atPeace &&
       rel.score < relationScoreNeutral &&
-      !_pairHasScheduledRelationEventThisTurn(
+      !pairHasScheduledRelationEventThisTurn(
         sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
         nationId: nationId,
         targetFactionId: order.targetFactionId,
@@ -91,7 +98,7 @@ int _scoreEstablishOvertureDiplomaticOrder(
   // § Favoured-trading-partner competition overture.
   if (isMinorOrTribeFaction(game, order.targetFactionId) &&
       (rel == null || rel.atPeace) &&
-      _aiTrailsFavouredTradingPartner(
+      aiTrailsFavouredTradingPartner(
         game: game,
         nationId: nationId,
         targetFactionId: order.targetFactionId,
@@ -112,7 +119,7 @@ int _scoreEstablishOvertureDiplomaticOrder(
       (rel == null || rel.atPeace)) {
     final overture = getOverture(game, nationId, order.targetFactionId);
     if (overture == null || !overture.hasEmbassy) {
-      final volume = _sellerSellableResourceTileCount(
+      final volume = sellerSellableResourceTileCount(
         game: game,
         sellerId: order.targetFactionId,
         provinceOwner: provinceOwner,

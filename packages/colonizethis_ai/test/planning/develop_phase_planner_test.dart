@@ -4,10 +4,12 @@
 // Spec contract (issue #2509 § DEVELOP phase planner) is preserved in the
 // case modules; this file only registers them.
 
-import 'develop_phase_planner_civilian_cases.dart';
+import 'develop_phase_planner_civilian_pairing_cases.dart';
+import 'develop_phase_planner_civilian_tile_cases.dart';
 import 'develop_phase_planner_peace_cases.dart';
 
 void main() {
   registerDevelopPhasePlannerPeaceCases();
-  registerDevelopPhasePlannerCivilianCases();
+  registerDevelopPhasePlannerCivilianTileCases();
+  registerDevelopPhasePlannerCivilianPairingCases();
 }

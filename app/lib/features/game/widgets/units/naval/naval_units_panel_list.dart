@@ -1,9 +1,25 @@
-/// Naval panel tree list projection. SPEC/ui/naval-units-panel.md.
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-part of 'naval_units_panel.dart';
+import '../../panels/fleet_expansion_tile.dart';
+import '../../panels/tree_builders/naval_tree_builder.dart';
+import '../shared/base_units_panel.dart';
+import '../shared/location_section_header.dart';
+import '../shared/region_labels.dart';
+import '../shared/region_section_header.dart';
+import 'naval_units_panel.dart';
+import 'naval_units_panel_state_base.dart';
+import 'naval_units_panel_support_combine.dart';
+import 'naval_units_panel_support_dialogs.dart';
 
-extension _NavalUnitsPanelList on _NavalUnitsPanelState {
-  List<Widget> _navalListChildren({
+mixin NavalUnitsPanelList
+    on
+        BaseUnitsPanelState<NavalUnitsPanel>,
+        NavalUnitsPanelStateBase,
+        NavalUnitsPanelCombine,
+        NavalUnitsPanelDialogs {
+  List<Widget> navalListChildren({
     required List<
       ({
         String regionId,
@@ -34,14 +50,14 @@ extension _NavalUnitsPanelList on _NavalUnitsPanelState {
                   )
                 : null,
             isSelectedForCombine: isSelected(
-              _selectionFleetId(group.homeFleet!),
+              selectionFleetId(group.homeFleet!),
             ),
             combineSelectionEnabled: !readOnly,
             onCombineSelectionToggle: () =>
-                _toggleFleetSelection(group.homeFleet!),
+                toggleFleetSelection(group.homeFleet!),
             onSplitFleet: readOnly
                 ? null
-                : () => _openSplitDialog(group.homeFleet!),
+                : () => openSplitDialog(group.homeFleet!),
             onMoveFleet: null,
             isSplitAllowed: !readOnly,
           ),
@@ -62,11 +78,14 @@ extension _NavalUnitsPanelList on _NavalUnitsPanelState {
                       ),
                     )
                   : null,
-              isSelectedForCombine: isSelected(_selectionFleetId(row)),
+              isSelectedForCombine: isSelected(selectionFleetId(row)),
               combineSelectionEnabled: !readOnly,
-              onCombineSelectionToggle: () => _toggleFleetSelection(row),
-              onSplitFleet: readOnly ? null : () => _openSplitDialog(row),
-              onMoveFleet: readOnly ? null : () => _openMoveFleetDialog(row),
+              onCombineSelectionToggle: () => toggleFleetSelection(row),
+              onSplitFleet: readOnly ? null : () => openSplitDialog(row),
+              onMoveFleet: readOnly ? null : () => openMoveFleetDialog(row),
+              onAssignMission: readOnly || !row.isAtSea || row.isHomeFleet
+                  ? null
+                  : () => openNavalMissionDialog(row),
               isSplitAllowed: true,
             ),
         ],

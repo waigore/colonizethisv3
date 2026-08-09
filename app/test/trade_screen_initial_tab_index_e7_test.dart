@@ -27,8 +27,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart'
     show WidgetbookFolder, WidgetbookUseCase;
 
-import 'support/app_shell_harness.dart';
-import 'support/trade_screen_test_support.dart';
+import 'app_shell_harness.dart';
+import 'trade_screen_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -160,10 +160,19 @@ void main() {
         'Market tab — staged bid + offer (Refs #2993 E5b)',
         'Market tab — cargo saturated (Refs #2993 E5c)',
         'Market tab — sectioned grouping (Refs #3093)',
+        'Market tab — wide two-column (Refs #4227)',
+        'Market tab — narrow stacked rows (Refs #4227)',
+        'Market tab — first-right chip (Refs #4226)',
         'Market tab — sellable clamp (Refs #3093)',
         'Market tab — treasury bid cap (Refs #3093)',
+        'Market tab — bid budget saturated (Refs #4186)',
+        'Market tab — bid-type saturated (Refs #4170)',
+        'Market tab — bid-type cap 3 baseline (Refs #4170, #4186)',
+        'Market tab — bid-type cap 6 Trade Fairs (Refs #4170, #4186)',
+        'Market tab — trade counsel stars (Refs #4282)',
         'Deal Book tab — empty (Refs #2993 E7)',
         'Deal Book tab — mixed fills + carry-forwards (Refs #2993 E7)',
+        'Deal Book tab — overseas profit ledger (Refs #4226)',
         'Deal Book tab — mobile (stacked) (Refs #2993 E7)',
       ]);
     });

@@ -9,10 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/production/production_allocation_row.dart';
-import 'package:colonizethis_app/features/game/widgets/production/production_panel.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-import 'support/production_panel_test_support.dart';
+import 'production_panel_test_support.dart';
 import 'widget_test_pumps.dart';
 
 void main() {

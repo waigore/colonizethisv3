@@ -1,0 +1,32 @@
+{
+  "map_cell_size_px": 64,
+  "wang_tilesets": {
+    "sea_plains": {
+      "spec_json": "assets/themes/sepia/images/terrain/tilesets/tileset_sea_plains_v2_64.json",
+      "atlas_png": "assets/themes/sepia/images/terrain/tilesets/tileset_sea_plains_v2_64.png",
+      "tile_px": 64
+    },
+    "sea_desert": {
+      "spec_json": "assets/themes/sepia/images/terrain/tilesets/tileset_sea_desert.json",
+      "atlas_png": "assets/themes/sepia/images/terrain/tilesets/tileset_sea_desert.png",
+      "tile_px": 32
+    },
+    "plains_desert": {
+      "spec_json": "assets/themes/sepia/images/terrain/tilesets/tileset_plains_desert.json",
+      "atlas_png": "assets/themes/sepia/images/terrain/tilesets/tileset_plains_desert.png",
+      "tile_px": 32
+    }
+  },
+  "transport_tilesets": {
+    "road": {
+      "spec_json": "assets/themes/sepia/images/terrain/tilesets/tileset_transport_road_64.json",
+      "atlas_png": "assets/themes/sepia/images/terrain/tilesets/tileset_transport_road_64.png",
+      "tile_px": 64
+    },
+    "rail": {
+      "spec_json": "assets/themes/sepia/images/terrain/tilesets/tileset_transport_rail_64.json",
+      "atlas_png": "assets/themes/sepia/images/terrain/tilesets/tileset_transport_rail_64.png",
+      "tile_px": 64
+    }
+  }
+}

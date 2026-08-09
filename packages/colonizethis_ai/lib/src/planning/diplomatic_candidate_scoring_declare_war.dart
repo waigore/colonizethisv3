@@ -1,16 +1,24 @@
-part of 'diplomatic_candidate_scoring.dart';
+import 'diplomatic_candidate_scoring_declare_war_bonuses.dart';
+import 'diplomatic_candidate_scoring_declare_war_context.dart';
+import 'diplomatic_candidate_scoring_declare_war_suppression_adjacent_gp.dart';
+import 'diplomatic_candidate_scoring_declare_war_suppression_war_concentration.dart';
+import 'diplomatic_candidate_scoring_shared.dart';
+import 'observer_goal_phase.dart';
+import 'phase_planner_diplomacy_filter.dart';
+import 'planning_imports.dart';
 
 /// Declare-war score ladder.
 ///
-/// Entry point [_scoreDeclareWarDiplomaticOrder] accepts a prebuilt
-/// [_DeclareWarTargetContext] (see
+/// Entry point [scoreDeclareWarDiplomaticOrder] accepts a prebuilt
+/// [DeclareWarTargetContext] (see
 /// `diplomatic_candidate_scoring_declare_war_context.dart`), then walks the
 /// suppression chain ([_declareWarSuppressedScore]) before delegating the
 /// surviving candidates to the bonus addends
 /// (`diplomatic_candidate_scoring_declare_war_bonuses.dart`). Call sites build
-/// the context once (Refs #3967); behaviour is unchanged.
-int _scoreDeclareWarDiplomaticOrder(
-  _DeclareWarTargetContext ctx, {
+/// the context once (Refs #3967); de-parted into its own library (Refs #4079
+/// Slice A); behaviour is unchanged.
+int scoreDeclareWarDiplomaticOrder(
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   final suppressed = _declareWarSuppressedScore(
@@ -20,30 +28,30 @@ int _scoreDeclareWarDiplomaticOrder(
   if (suppressed != null) {
     return suppressed;
   }
-  return _scoreDeclareWarBonuses(ctx);
+  return scoreDeclareWarBonuses(ctx);
 }
 
 /// Returns a suppressed score when declare-war should not proceed; null = score.
 int? _declareWarSuppressedScore(
-  _DeclareWarTargetContext ctx, {
+  DeclareWarTargetContext ctx, {
   Orders? sameTurnPriorDiplomaticOrders,
 }) {
   return _declareWarSuppressedDevelopPhaseScore(ctx) ??
       _declareWarSuppressedColonialLiteScore(ctx) ??
       _declareWarSuppressedExpandColonialScore(ctx) ??
       _declareWarSuppressedStalledOwFrontierScore(ctx) ??
-      _declareWarSuppressedAdjacentGpScore(
+      declareWarSuppressedAdjacentGpScore(
         ctx,
         sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
       ) ??
-      _declareWarSuppressedWarConcentrationScore(
+      declareWarSuppressedWarConcentrationScore(
         ctx,
         sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
       ) ??
       _declareWarSuppressedRelationAndCooldownScore(ctx);
 }
 
-int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedDevelopPhaseScore(DeclareWarTargetContext ctx) {
   // Refs #2509 S5: derive DEVELOP suppression from the dispatched phase
   // plan instead of recomputing `observerGoalPhaseFor` per declare-war
   // candidate via `isObserverDevelopPhase`. The phase dispatcher already
@@ -83,7 +91,7 @@ int? _declareWarSuppressedDevelopPhaseScore(_DeclareWarTargetContext ctx) {
 /// the suppression ordering in `_declareWarSuppressedScore` and the
 /// independent Phase 4 retirement paths for the EXPAND / COLONIAL-lite Phase 2
 /// resolvers are unchanged.
-int? _declareWarSuppressedNwColonialScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedNwColonialScore(DeclareWarTargetContext ctx) {
   if (ctx.nwAcquisitionWeight > 0.0) {
     return null;
   }
@@ -93,7 +101,7 @@ int? _declareWarSuppressedNwColonialScore(_DeclareWarTargetContext ctx) {
   return null;
 }
 
-int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedExpandColonialScore(DeclareWarTargetContext ctx) {
   // Refs #2847 Phase 3 diplomacy wiring: derive EXPAND NW-colonial
   // suppression from the soft-phase NW acquisition weight on the
   // dispatched phase plan instead of the boolean
@@ -105,7 +113,7 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
   // floor at OW<=7, so EXPAND turns now keep NW declare-war candidates
   // scorable at low priority rather than structurally collapsing them.
   // Callers without a phase plan use the legacy-derived weight (1.0 /
-  // 0.0) from `_DeclareWarTargetContext.build`, preserving the
+  // 0.0) from `DeclareWarTargetContext.build`, preserving the
   // pre-soft-phase behaviour for tests and other entry points. The
   // soft-phase NW-weight predicate body is shared with the COLONIAL-lite
   // branch via `_declareWarSuppressedNwColonialScore` (Refs #3717).
@@ -132,7 +140,7 @@ int? _declareWarSuppressedExpandColonialScore(_DeclareWarTargetContext ctx) {
 // ("establishOverture, colonial naval/cargo") is unaffected and the rule
 // stays distinct from the broader DEVELOP suppression
 // (`_declareWarSuppressedDevelopPhaseScore`).
-int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedColonialLiteScore(DeclareWarTargetContext ctx) {
   // Refs #2847 Phase 3 diplomacy wiring: collapsed to the same soft-phase
   // NW-weight predicate as `_declareWarSuppressedExpandColonialScore`.
   // Under the soft-phase curve both EXPAND and COLONIAL-lite share the
@@ -148,13 +156,13 @@ int? _declareWarSuppressedColonialLiteScore(_DeclareWarTargetContext ctx) {
   // can retire the EXPAND / COLONIAL-lite Phase 2 boolean resolvers
   // independently of this scoring path. Callers without a phase plan
   // use the legacy-derived weight (1.0 / 0.0) from
-  // `_DeclareWarTargetContext.build`. The soft-phase NW-weight predicate
+  // `DeclareWarTargetContext.build`. The soft-phase NW-weight predicate
   // body is shared with the EXPAND branch via
   // `_declareWarSuppressedNwColonialScore` (Refs #3717).
   return _declareWarSuppressedNwColonialScore(ctx);
 }
 
-int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
+int? _declareWarSuppressedStalledOwFrontierScore(DeclareWarTargetContext ctx) {
   if (ctx.isTribeTarget &&
       ctx.stalledOwExpansion &&
       (ctx.minorsHoldOldWorldProvinces ||
@@ -192,7 +200,7 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
         !distantInvadableMinorOwner &&
         !(ctx.behindVictoryPace &&
             ctx.anyMinorOwnsOldWorld &&
-            _minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId))) {
+            minorOwnsOldWorldProvinces(ctx.game, ctx.order.targetFactionId))) {
       return 0;
     }
   }
@@ -214,253 +222,8 @@ int? _declareWarSuppressedStalledOwFrontierScore(_DeclareWarTargetContext ctx) {
   return null;
 }
 
-int? _declareWarSuppressedAdjacentGpScore(
-  _DeclareWarTargetContext ctx, {
-  Orders? sameTurnPriorDiplomaticOrders,
-}) {
-  if (ctx.order.type == DiplomaticOrderType.declareWar && ctx.isAdjacentGp) {
-    final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-    final targetOw = ctx.targetProvinceCount;
-    if (ctx.targetIsGreatPower) {
-      if (regimentCountForPlayer(ctx.game, ctx.nationId) == 0 &&
-          isBelowObserverConquestQuota(attackerOw)) {
-        return 0;
-      }
-      if (ctx.targetNotAlreadyAtWar &&
-          isMutualBelowQuotaPlateauPeer(
-            ownOw: attackerOw,
-            partnerOw: targetOw,
-          ) &&
-          targetOw <= attackerOw + 1) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(targetOw) &&
-          isBelowObserverConquestQuota(attackerOw) &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar &&
-          attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp &&
-          targetOw <= attackerOw) {
-        return 0;
-      }
-      final minorsOwnInvadable = anyInvadableProvinceOwnedByMinor(
-        game: ctx.game,
-        snapshot: ctx.snapshot,
-        provinceOwner: ctx.provinceOwner,
-      );
-      if (minorsOwnInvadable &&
-          isBelowObserverConquestQuota(attackerOw) &&
-          isBelowObserverConquestQuota(targetOw) &&
-          (targetOw - attackerOw).abs() <= 2 &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp &&
-          isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
-          !ctx.invadableGpBlocker) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(attackerOw) &&
-          pendingDeclareWarFrom(
-            sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-            declarerFactionId: ctx.order.targetFactionId,
-            targetFactionId: ctx.nationId,
-          )) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kFewOldWorldProvincesDefendThreshold &&
-          !isBelowObserverConquestQuota(attackerOw) &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (!ctx.invadableGpBlocker &&
-          isBelowObserverConquestQuota(targetOw) &&
-          regimentCountForPlayer(ctx.game, ctx.order.targetFactionId) == 0 &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(targetOw) &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar &&
-          ((!isBelowObserverConquestQuota(attackerOw)) ||
-              (ctx.currentTurn <= kDeclareWarEarlyAntiDogpileMaxTurn &&
-                  attackerOw > targetOw))) {
-        return 0;
-      }
-      final belowQuotaSuppressLead =
-          targetOw <= kFewOldWorldProvincesDefendThreshold
-          ? 1
-          : kUnwinnableSoleGpMinProvinceDeficit;
-      if (isBelowObserverConquestQuota(targetOw) &&
-          !ctx.invadableGpBlocker &&
-          attackerOw >= targetOw + belowQuotaSuppressLead) {
-        return 0;
-      }
-      if (targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
-          attackerOw > targetOw &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
-          attackerOw >= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
-          !ctx.invadableGpBlocker) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
-          !isBelowObserverConquestQuota(attackerOw) &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kObserverDefaultStartOldWorldProvincesPerGp &&
-          attackerOw > targetOw &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (!isBelowObserverConquestQuota(attackerOw) &&
-          isBelowObserverConquestQuota(targetOw) &&
-          targetOw <= kStalledOldWorldProvinceThreshold &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetNotAlreadyAtWar) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(attackerOw) &&
-          targetOw >= attackerOw + kUnwinnableSoleGpMinProvinceDeficit) {
-        return 0;
-      }
-      if (isBelowObserverConquestQuota(attackerOw) &&
-          attackerOw <= kObserverDefaultStartOldWorldProvincesPerGp + 1 &&
-          ctx.isAdjacentGp &&
-          !ctx.invadableGpBlocker &&
-          ctx.targetIsInvadableOwner &&
-          targetOw > attackerOw) {
-        return 0;
-      }
-    }
-    if (!ctx.invadableGpBlocker &&
-        attackerOw <= kFewOldWorldProvincesDefendThreshold &&
-        targetOw > attackerOw) {
-      return 0;
-    }
-    if (!ctx.invadableGpBlocker &&
-        attackerOw <= kFewOldWorldProvincesDefendThreshold &&
-        ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-        ctx.targetNotAlreadyAtWar) {
-      return 0;
-    }
-  }
-  if (ctx.order.type == DiplomaticOrderType.declareWar &&
-      ctx.isAdjacentGp &&
-      ctx.targetIsGreatPower &&
-      ctx.stalledOwExpansion) {
-    final targetOw = ctx.targetProvinceCount;
-    if (!ctx.invadableGpBlocker &&
-        targetOw <= kFewOldWorldProvincesDefendThreshold &&
-        ctx.snapshot.conquest.oldWorldProvincesOwned >=
-            targetOw + kDeclareWarAggressorSuppressWeakGpLeadThreshold) {
-      return 0;
-    }
-  }
-  return null;
-}
-
-int? _declareWarSuppressedWarConcentrationScore(
-  _DeclareWarTargetContext ctx, {
-  Orders? sameTurnPriorDiplomaticOrders,
-}) {
-  final atWarWithGp = isAtWarWithAnyGreatPower(ctx.game, ctx.snapshot);
-  if (ctx.stalledOwExpansion &&
-      atWarWithGp &&
-      ctx.isAdjacentGp &&
-      ctx.targetIsGreatPower &&
-      ctx.targetNotAlreadyAtWar) {
-    return 0;
-  }
-  if (ctx.isAdjacentGp && ctx.targetIsGreatPower && ctx.targetNotAlreadyAtWar) {
-    final attackerGpWarCount = gpFactionIdsAtWarWith(
-      ctx.game,
-      ctx.snapshot,
-    ).length;
-    if (attackerGpWarCount >= 2) {
-      return 0;
-    }
-    final targetGpId = ctx.order.targetFactionId;
-    final targetOw = ctx.targetProvinceCount;
-    final targetGpWarCount = greatPowerWarCountOnTarget(
-      game: ctx.game,
-      targetGpId: targetGpId,
-      sameTurnPriorDiplomaticOrders: sameTurnPriorDiplomaticOrders,
-    );
-    if (targetGpWarCount >= 2) {
-      return 0;
-    }
-    final attackerOw = ctx.snapshot.conquest.oldWorldProvincesOwned;
-    if (isBelowObserverConquestQuota(targetOw) && targetGpWarCount >= 1) {
-      return 0;
-    }
-    if (isBelowObserverConquestQuota(targetOw) &&
-        attackerOw >= targetOw + 2 &&
-        !ctx.invadableGpBlocker) {
-      return 0;
-    }
-  }
-  // While an invadable OW frontier has a GP blocker, do not open (or stack)
-  // wars on other adjacent GPs — applies above the stalled OW band (seed-42 gp4).
-  final primaryGpBlocker = primaryInvadableOldWorldGpBlocker(
-    game: ctx.game,
-    snapshot: ctx.snapshot,
-  );
-  if (atWarWithGp &&
-      ctx.isAdjacentGp &&
-      ctx.targetIsGreatPower &&
-      ctx.targetNotAlreadyAtWar &&
-      ctx.snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      primaryGpBlocker != null &&
-      ctx.order.targetFactionId != primaryGpBlocker) {
-    return 0;
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.invadableGpBlocker &&
-      ctx.targetProvinceCount > ctx.snapshot.conquest.oldWorldProvincesOwned &&
-      ctx.hasInvadableMinorOwner) {
-    return 0;
-  }
-  if (ctx.stalledOwExpansion &&
-      ctx.isTribeTarget &&
-      !ctx.tribeOwnsOwInvadable &&
-      !(ctx.colonialPressure && ctx.ownsInvadableNw) &&
-      (ctx.behindVictoryPace ||
-          ctx.hasInvadableMinorOwner ||
-          ctx.atWarInvadableOwMinor)) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  if (ctx.suppressGpDeclareWar &&
-      ctx.isAdjacentGp &&
-      !ctx.invadableGpBlocker &&
-      !(ctx.stalledOwExpansion && ctx.invadableGpBlockerWeaker)) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  if (ctx.suppressGpDeclareWar &&
-      ctx.isAdjacentGp &&
-      ctx.stalledOwExpansion &&
-      ctx.behindVictoryPace &&
-      ctx.hasInvadableMinorOwner &&
-      !ctx.invadableGpBlocker &&
-      !ctx.invadableGpBlockerWeaker &&
-      ctx.lowWarLikelihood) {
-    return kDeclareWarNonAdjacentSuppressedScore;
-  }
-  return null;
-}
-
 int? _declareWarSuppressedRelationAndCooldownScore(
-  _DeclareWarTargetContext ctx,
+  DeclareWarTargetContext ctx,
 ) {
   final effectiveMaxRelation = ctx.behindVictoryPace && ctx.isMinorTarget
       ? kDeclareWarMinorMaxRelationWhenFarFromVictory
@@ -470,7 +233,7 @@ int? _declareWarSuppressedRelationAndCooldownScore(
   if (ctx.relationScore > effectiveMaxRelation) {
     return 0;
   }
-  if (_isDecisionOnCooldown(
+  if (isDecisionOnCooldown(
     game: ctx.game,
     actorFactionId: ctx.nationId,
     targetFactionId: ctx.order.targetFactionId,

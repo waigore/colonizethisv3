@@ -16,7 +16,8 @@ const _generatedSuffixes = <String>[
 ];
 const _generatedPathPatterns = <Pattern>[
   'packages/colonizethis_app_l10n/lib/l10n/app_localizations_',
-  'packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen_',
+  // Delegate + per-locale outputs from flutter gen-l10n (Refs #2074, #4226).
+  'packages/colonizethis_app_l10n/lib/l10n/gen/app_l10n_flutter_gen',
 ];
 const _excludedDirectoryNames = <String>{
   '.git',

@@ -19,24 +19,11 @@ BattleContext _bindPhaseCtx(String provinceId) => BattleContext(
   terrain: 'plains',
 );
 
-/// One row in a bind-generals-for-combat-phase scenario table.
-class BattleGeneralAssignmentBindPhaseScenario implements LabeledScenario {
-  const BattleGeneralAssignmentBindPhaseScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
-List<BattleGeneralAssignmentBindPhaseScenario>
+List<RunnableScenario>
 battleGeneralAssignmentBindPhaseScenarios() => [
-  BattleGeneralAssignmentBindPhaseScenario(
+  RunnableScenario(
     scenarioId: 'bgb-binds-distinct-then-fallback',
     label:
         'binds distinct attacker/defender generals per context, then falls back '
@@ -90,7 +77,7 @@ battleGeneralAssignmentBindPhaseScenarios() => [
       expect(bound[2].defenderGeneralId, isNull);
     },
   ),
-  BattleGeneralAssignmentBindPhaseScenario(
+  RunnableScenario(
     scenarioId: 'bgb-respects-pre-bound-ledger',
     label: 'respects generals already bound in the ledger before this pass',
     run: () {

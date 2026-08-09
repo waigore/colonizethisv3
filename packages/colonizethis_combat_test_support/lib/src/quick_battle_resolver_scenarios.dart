@@ -7,24 +7,11 @@ import 'package:colonizethis_test/test.dart';
 import 'quick_battle_input_test_support.dart';
 import 'scenario_runner.dart';
 
-/// One row in a Quick Battle resolver scenario table.
-class QuickBattleResolverScenario implements LabeledScenario {
-  const QuickBattleResolverScenario({
-    required this.scenarioId,
-    required this.label,
-    required this.run,
-  });
-
-  final String scenarioId;
-  @override
-  final String label;
-  final void Function() run;
-}
 
 
 /// Scenarios for [resolveQuickBattle].
-List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
-  QuickBattleResolverScenario(
+List<RunnableScenario> resolveQuickBattleScenarios() => [
+  RunnableScenario(
     scenarioId: 'qbr-deterministic-seed',
     label: 'deterministic for same seed',
     run: () {
@@ -41,7 +28,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       expect(r1.defenderCasualties.length, r2.defenderCasualties.length);
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-stronger-attacker-wins',
     label: 'stronger attacker tends to win',
     run: () {
@@ -56,7 +43,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       expect(result.provinceFlips, true);
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-custom-round-actions',
     label: 'custom roundActions override default Volley Fire',
     run: () {
@@ -85,7 +72,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       expect(result.defenderCasualties, isNotNull);
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-fort-level',
     label: 'fort level applies wall and damage reduction',
     run: () {
@@ -100,7 +87,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       expect(result.winner, isNotNull);
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-stronger-defender-holds',
     label: 'stronger defender tends to hold',
     run: () {
@@ -115,7 +102,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       expect(result.provinceFlips, false);
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-lane-terrain-actions',
     label: 'uses lane terrain modifiers and actions',
     run: () {
@@ -154,7 +141,7 @@ List<QuickBattleResolverScenario> resolveQuickBattleScenarios() => [
       );
     },
   ),
-  QuickBattleResolverScenario(
+  RunnableScenario(
     scenarioId: 'qbr-initiative-ordering',
     label: 'initiative ordering is deterministic and affects sequencing',
     run: () {

@@ -1,6 +1,26 @@
-part of 'naval_units_panel.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:flutter/material.dart';
 
-extension _NavalUnitsPanelBuild on _NavalUnitsPanelState {
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import '../../../../../core/services/app_event_bus_panel_nav.dart';
+import '../../panels/tree_builders/naval_tree_builder.dart';
+import '../shared/base_units_panel.dart';
+import 'naval_units_panel.dart';
+import 'naval_units_panel_list.dart';
+import 'naval_units_panel_state_base.dart';
+import 'naval_units_panel_support_combine.dart';
+import 'naval_units_panel_support_dialogs.dart';
+
+mixin NavalUnitsPanelBuild
+    on
+        BaseUnitsPanelState<NavalUnitsPanel>,
+        NavalUnitsPanelStateBase,
+        NavalUnitsPanelCombine,
+        NavalUnitsPanelDialogs,
+        NavalUnitsPanelList {
   Widget buildNavalUnitsPanel(BuildContext context) {
     final l10n = appL10n(context);
     final tileScopeActive =
@@ -16,12 +36,12 @@ extension _NavalUnitsPanelBuild on _NavalUnitsPanelState {
       locationScopeKeyFilter: widget.locationScopeKey,
     );
     final flat = flattenNavalTree(tree);
-    _visibleScopedFleetIds.clear();
-    _visibleScopedFleetIds.addAll(flat.map((row) => row.fleetId));
+    visibleScopedFleetIds.clear();
+    visibleScopedFleetIds.addAll(flat.map((row) => row.fleetId));
     final hasAny = tree.any(
       (group) => group.homeFleet != null || group.locations.isNotEmpty,
     );
-    final canCombine = !widget.readOnly && _canCombineSelection(flat);
+    final canCombine = !widget.readOnly && canCombineSelection(flat);
     final readOnly = widget.readOnly;
 
     // Header actions render as compact **primary** pills
@@ -52,21 +72,21 @@ extension _NavalUnitsPanelBuild on _NavalUnitsPanelState {
       trailingActions: [
         CtActionTextButton(
           primary: true,
-          onPressed: readOnly ? null : _openTrainDialog,
+          onPressed: readOnly ? null : openTrainDialog,
           enabled: !readOnly,
           label: l10n.common_train,
         ),
       ],
       showCombineCluster: hasAny && flat.isNotEmpty && !readOnly,
-      selectableIds: _fleetSelectionIds(flat),
+      selectableIds: fleetSelectionIds(flat),
       selectAllTooltip: l10n.naval_units_selectAllFleets,
       deselectAllTooltip: l10n.naval_units_deselectAllFleets,
       combineLabel: l10n.common_combine,
       canCombine: canCombine,
-      onSelectAll: () => _onHeaderSelectAllTapped(flat),
-      onCombine: () => _performCombine(flat),
+      onSelectAll: () => onHeaderSelectAllTapped(flat),
+      onCombine: () => performCombine(flat),
       hasContent: hasAny,
-      listChildren: _navalListChildren(
+      listChildren: navalListChildren(
         tree: tree,
         l10n: l10n,
         readOnly: readOnly,

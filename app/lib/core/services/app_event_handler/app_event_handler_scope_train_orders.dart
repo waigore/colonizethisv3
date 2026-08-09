@@ -1,7 +1,10 @@
-part of 'app_event_handler_scope.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show applyVoluntaryAllianceBreak, getRelation;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show DiplomacyFactionMembership, GamePlayerLookup;
 
-/// Applies a chosen combat mode to the current game session state.
-@visibleForTesting
 Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
   if (currentGame == null) {
     return null;
@@ -12,34 +15,80 @@ Game? applyCombatModeChoiceToGame(Game? currentGame, CombatMode chosenMode) {
   return currentGame.copyWith(defaultCombatMode: chosenMode);
 }
 
-/// Replaces pending train-at-capital civilian [BuildUnitOrder]s for [humanPlayerId];
-/// keeps military, naval, and other build orders. Matches [TrainCiviliansDialog] semantics.
-Orders _mergeTrainCivilianOrdersForPlayer({
+Orders mergeTrainCivilianOrdersForPlayer({
   required Orders current,
   required Game game,
   required String humanPlayerId,
   required List<BuildUnitOrder> newFromDialog,
+}) => _mergeTrainBuildOrdersForPlayer(
+  current: current,
+  game: game,
+  humanPlayerId: humanPlayerId,
+  newFromDialog: newFromDialog,
+  isDialogManaged: (order, capital, catalogIds) =>
+      !order.isMilitary &&
+      catalogIds.contains(order.unitType) &&
+      capital != null &&
+      order.spawnProvinceId == capital,
+  catalogIds: CivilianEconomyCatalog.byId.keys.toSet(),
+);
+
+Orders mergeTrainMilitaryOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+}) => _mergeTrainBuildOrdersForPlayer(
+  current: current,
+  game: game,
+  humanPlayerId: humanPlayerId,
+  newFromDialog: newFromDialog,
+  isDialogManaged: (order, capital, catalogIds) =>
+      order.isMilitary &&
+      catalogIds.contains(order.unitType) &&
+      capital != null &&
+      order.spawnProvinceId == capital,
+  catalogIds: RegimentEconomyCatalog.byId.keys.toSet(),
+);
+
+Orders mergeTrainNavalOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+}) => _mergeTrainBuildOrdersForPlayer(
+  current: current,
+  game: game,
+  humanPlayerId: humanPlayerId,
+  newFromDialog: newFromDialog,
+  isDialogManaged: (order, capital, catalogIds) =>
+      !order.isMilitary &&
+      catalogIds.contains(order.unitType) &&
+      capital != null &&
+      order.spawnProvinceId == capital,
+  catalogIds: ShipEconomyCatalog.byId.keys.toSet(),
+);
+
+Orders _mergeTrainBuildOrdersForPlayer({
+  required Orders current,
+  required Game game,
+  required String humanPlayerId,
+  required List<BuildUnitOrder> newFromDialog,
+  required bool Function(
+    BuildUnitOrder order,
+    String? capital,
+    Set<String> catalogIds,
+  )
+  isDialogManaged,
+  required Set<String> catalogIds,
 }) {
-  Player? player;
-  for (final p in game.players) {
-    if (p.id == humanPlayerId) {
-      player = p;
-      break;
-    }
-  }
-  final capital = player?.capitalProvinceId;
-  final civilianUnitIds = CivilianEconomyCatalog.byId.keys.toSet();
+  final capital = game.playerById(humanPlayerId)?.capitalProvinceId;
   final existingList =
       current.buildUnitOrdersByPlayerId[humanPlayerId] ??
       const <BuildUnitOrder>[];
   final kept = <BuildUnitOrder>[];
   for (final order in existingList) {
-    final isDialogManaged =
-        !order.isMilitary &&
-        civilianUnitIds.contains(order.unitType) &&
-        capital != null &&
-        order.spawnProvinceId == capital;
-    if (isDialogManaged) {
+    if (isDialogManaged(order, capital, catalogIds)) {
       continue;
     }
     kept.add(order);
@@ -52,85 +101,47 @@ Orders _mergeTrainCivilianOrdersForPlayer({
   );
 }
 
-/// Replaces pending train-at-capital military [BuildUnitOrder]s for [humanPlayerId];
-/// keeps civilian, naval, and other build orders. Matches [TrainMilitaryDialog] semantics.
-Orders _mergeTrainMilitaryOrdersForPlayer({
-  required Orders current,
-  required Game game,
-  required String humanPlayerId,
-  required List<BuildUnitOrder> newFromDialog,
+({Game? game, String? message}) applyBreakAllianceImmediately({
+  required Game? currentGame,
+  required BreakAllianceImmediatelyEvent event,
 }) {
-  Player? player;
-  for (final p in game.players) {
-    if (p.id == humanPlayerId) {
-      player = p;
-      break;
-    }
+  if (currentGame == null) {
+    return (game: null, message: 'Break Alliance ignored: no active game.');
   }
-  final capital = player?.capitalProvinceId;
-  final regimentIds = RegimentEconomyCatalog.byId.keys.toSet();
-  final existingList =
-      current.buildUnitOrdersByPlayerId[humanPlayerId] ??
-      const <BuildUnitOrder>[];
-  final kept = <BuildUnitOrder>[];
-  for (final order in existingList) {
-    final isDialogManaged =
-        order.isMilitary &&
-        regimentIds.contains(order.unitType) &&
-        capital != null &&
-        order.spawnProvinceId == capital;
-    if (isDialogManaged) {
-      continue;
-    }
-    kept.add(order);
+  final game = currentGame;
+  if (game.worldState.turnState.phase != TurnPhase.orders) {
+    return (
+      game: null,
+      message:
+          'Break Alliance rejected: allowed only during human Orders phase.',
+    );
   }
-  return current.copyWith(
-    buildUnitOrdersByPlayerId: {
-      ...current.buildUnitOrdersByPlayerId,
-      humanPlayerId: [...kept, ...newFromDialog],
-    },
-  );
-}
 
-/// Replaces pending train-at-capital naval [BuildUnitOrder]s for [humanPlayerId];
-/// keeps civilian, military, and other build orders. Naval shares the
-/// `isMilitary: false` flag with civilians, so dialog-managed orders are
-/// additionally filtered by [ShipEconomyCatalog] ship ids. Matches
-/// [TrainNavalDialog] semantics.
-Orders _mergeTrainNavalOrdersForPlayer({
-  required Orders current,
-  required Game game,
-  required String humanPlayerId,
-  required List<BuildUnitOrder> newFromDialog,
-}) {
-  Player? player;
-  for (final p in game.players) {
-    if (p.id == humanPlayerId) {
-      player = p;
-      break;
-    }
+  final rel = getRelation(game, event.playerId, event.targetFactionId);
+  if (!(rel?.formalAlliance ?? false)) {
+    return (
+      game: null,
+      message: 'Break Alliance rejected: no formal alliance with that faction.',
+    );
   }
-  final capital = player?.capitalProvinceId;
-  final shipIds = ShipEconomyCatalog.byId.keys.toSet();
-  final existingList =
-      current.buildUnitOrdersByPlayerId[humanPlayerId] ??
-      const <BuildUnitOrder>[];
-  final kept = <BuildUnitOrder>[];
-  for (final order in existingList) {
-    final isDialogManaged =
-        !order.isMilitary &&
-        shipIds.contains(order.unitType) &&
-        capital != null &&
-        order.spawnProvinceId == capital;
-    if (isDialogManaged) {
-      continue;
-    }
-    kept.add(order);
+
+  final membership = DiplomacyFactionMembership.from(game);
+  final turn = game.worldState.turnState.turnNumber;
+  final next = applyVoluntaryAllianceBreak(
+    game,
+    breakerId: event.playerId,
+    brokenWithAllyId: event.targetFactionId,
+    turn: turn,
+    factionMembership: membership,
+  );
+  if (identical(next, game)) {
+    return (
+      game: null,
+      message: 'Break Alliance rejected: no formal alliance with that faction.',
+    );
   }
-  return current.copyWith(
-    buildUnitOrdersByPlayerId: {
-      ...current.buildUnitOrdersByPlayerId,
-      humanPlayerId: [...kept, ...newFromDialog],
-    },
+  return (
+    game: next,
+    message: 'Alliance with ${event.targetFactionId} broken.',
   );
 }

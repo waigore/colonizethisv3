@@ -7,6 +7,8 @@
 ///
 /// Map of commodity id → quantity, where [CommodityId] is the canonical string
 /// id from `SPEC/game/commodity-catalog.md`.
+import 'model_collection_equality.dart';
+
 typedef CommodityId = String;
 
 class Stockpile {
@@ -27,7 +29,8 @@ class Stockpile {
   /// is the single sanctioned replacement for the raw
   /// `Map<String, int>.from(stockpile.quantities)` pattern; it deliberately
   /// returns a growable, modifiable map rather than an unmodifiable view.
-  Map<CommodityId, int> copyQuantities() => Map<CommodityId, int>.from(quantities);
+  Map<CommodityId, int> copyQuantities() =>
+      Map<CommodityId, int>.from(quantities);
 
   /// Returns a new [Stockpile] with [delta] applied for [commodityId].
   ///
@@ -83,7 +86,7 @@ class Stockpile {
       identical(this, other) ||
       other is Stockpile &&
           runtimeType == other.runtimeType &&
-          _mapEquals(quantities, other.quantities);
+          modelMapEquals(quantities, other.quantities);
 
   @override
   int get hashCode => Object.hashAll(
@@ -91,15 +94,4 @@ class Stockpile {
         .map((e) => Object.hash(e.key, e.value))
         .toList(growable: false),
   );
-
-  static bool _mapEquals<K, V>(Map<K, V> a, Map<K, V> b) {
-    if (identical(a, b)) return true;
-    if (a.length != b.length) return false;
-    for (final entry in a.entries) {
-      if (!b.containsKey(entry.key) || b[entry.key] != entry.value) {
-        return false;
-      }
-    }
-    return true;
-  }
 }

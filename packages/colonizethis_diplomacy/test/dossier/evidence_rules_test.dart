@@ -6,7 +6,7 @@
 
 import 'package:colonizethis_test/test.dart';
 
-import 'package:colonizethis_diplomacy_test_support/colonizethis_diplomacy_test_support.dart';
+import 'evidence_rules_scenarios.dart';
 
 void main() {
   group('evidenceForLandBattleVictory', () {

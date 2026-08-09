@@ -11,7 +11,7 @@ void registerSpyFogEndOfTurnTests() {
         'endOfTurn fog decay does not apply when Explorer is in other-faction province',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP2 = turnTestOwTileKey('P2');
           final game = adjacentOwP1P2Game(
             phase: TurnPhase.endOfTurn,
             turnNumber: 1,
@@ -30,7 +30,7 @@ void registerSpyFogEndOfTurnTests() {
             },
             tileKeysByRegionAndProvince: {
               ow: {
-                'P1': ['oldWorld|P1|0|0'],
+                'P1': [turnTestOwTileKey('P1')],
                 'P2': [tileKeyP2],
               },
             },
@@ -55,82 +55,22 @@ void registerSpyFogEndOfTurnTests() {
       test(
         'endOfTurn fog decay uses full province id: same local id in two regions',
         () {
-          const ow = 'oldWorld';
-          const nw = 'newWorld';
-          const tileKeyOwP1 = 'oldWorld|P1|0|0';
-          const tileKeyNwP1 = 'newWorld|P1|0|0';
-          final game = Game(
-            id: 'g1',
-            globalGameSeed: turnTestSpyFogGameSeed,
-            worldState: WorldState(
-              turnState: const TurnState(
-                phase: TurnPhase.endOfTurn,
-                turnNumber: 1,
+          final tileKeyOwP1 = turnTestOwTileKey('P1');
+          final tileKeyNwP1 = turnTestNwTileKey('P1');
+          const ow = kRegionOldWorld;
+          final game = turnTestSpyFogOwNwSameLocalIdGame(
+            owUnits: [
+              Unit(
+                id: 'explorer1',
+                type: kUnitTypeExplorer,
+                ownerId: 'p1',
+                locationProvinceId: '$ow|P1',
               ),
-              oldWorld: RegionData(
-                provinces: [
-                  Province(id: '$ow|P1', regionId: ow, ownerId: 'p2'),
-                  Province(id: '$ow|P2', regionId: ow, ownerId: 'p2'),
-                ],
-                units: [
-                  Unit(
-                    id: 'explorer1',
-                    type: kUnitTypeExplorer,
-                    ownerId: 'p1',
-                    locationProvinceId: '$ow|P1',
-                  ),
-                ],
-              ),
-              newWorld: RegionData(
-                provinces: [
-                  Province(id: '$nw|P1', regionId: nw, ownerId: 'p2'),
-                ],
-                units: [],
-              ),
-              playerVisibilityByTile: {
-                'p1': {
-                  tileKeyOwP1: VisibilityLevel.fullyVisible.name,
-                  tileKeyNwP1: VisibilityLevel.fullyVisible.name,
-                },
-                'p2': {},
-              },
-              tileKeysByRegionAndProvince: {
-                ow: {
-                  'P1': [tileKeyOwP1],
-                  'P2': ['oldWorld|P2|0|0'],
-                },
-                nw: {
-                  'P1': [tileKeyNwP1],
-                },
-              },
-            ),
-            players: const [
-              Player(id: 'p1', displayName: 'P1', isHuman: true),
-              Player(id: 'p2', displayName: 'P2', isHuman: false),
             ],
           );
           final next = resolveTurnComplete(
             game: game,
-            topology: MapTopology(
-              nodes: const [
-                TopologyNode(
-                  id: 'P1',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-                TopologyNode(
-                  id: 'P2',
-                  regionId: ow,
-                  type: TopologyNodeType.province,
-                ),
-                TopologyNode(
-                  id: 'P1',
-                  regionId: nw,
-                  type: TopologyNodeType.province,
-                ),
-              ],
-              edges: const [],
-            ),
+            topology: turnTestSpyFogOwNwSameLocalIdTopology(),
             orders: const Orders(),
             startFromPhase: TurnPhase.endOfTurn,
           );
@@ -152,15 +92,15 @@ void registerSpyFogEndOfTurnTests() {
         'endOfTurn fogs province immediately when no Explorer/Spy remains',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP2 = turnTestOwTileKey('P2');
           final game = adjacentOwP1P2Game(
             phase: TurnPhase.endOfTurn,
             turnNumber: 1,
             globalGameSeed: turnTestSpyFogGameSeed,
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {tileKeyP2: 'fullyVisible'},
             },
-            tileKeysByRegionAndProvince: const {
+            tileKeysByRegionAndProvince: {
               ow: {
                 'P2': [tileKeyP2],
               },
@@ -189,7 +129,7 @@ void registerSpyFogEndOfTurnTests() {
         'endOfTurn retains visibility while a Spy remains in the province',
         () {
           const ow = turnTestOldWorldRegionId;
-          const tileKeyP2 = 'oldWorld|P2|0|0';
+          final tileKeyP2 = turnTestOwTileKey('P2');
           final game = adjacentOwP1P2Game(
             phase: TurnPhase.endOfTurn,
             turnNumber: 1,
@@ -203,10 +143,10 @@ void registerSpyFogEndOfTurnTests() {
                 tileKey: tileKeyP2,
               ),
             ],
-            playerVisibilityByTile: const {
+            playerVisibilityByTile: {
               'p1': {tileKeyP2: 'fullyVisible'},
             },
-            tileKeysByRegionAndProvince: const {
+            tileKeysByRegionAndProvince: {
               ow: {
                 'P2': [tileKeyP2],
               },

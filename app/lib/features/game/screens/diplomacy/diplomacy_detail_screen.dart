@@ -1,6 +1,10 @@
 // Diplomacy detail: history + dossier for one faction. SPEC/ui/diplomacy-detail-screen.md.
 
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_diplomacy/colonizethis_diplomacy.dart'
+    show diplomaticHistoryForPair, getOverture, greatPowerPowerScore;
+import 'package:colonizethis_economy/colonizethis_economy.dart' show PurchasedTileIndex;
+import 'package:colonizethis_logic/turn_time_api.dart' show turnToYear;
+
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,15 +14,14 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import '../../../../config/ui_screen_ids.dart';
 import '../../../../providers/app_event_bus_provider.dart';
 import '../../../../widgets/ct_game_feature_screen_shell.dart';
-import '../../../../widgets/ct_spacing.dart';
 import '../../../../widgets/ct_top_bar.dart';
-import '../../../../widgets/relation_meter.dart';
 import '../../widgets/diplomacy/diplomacy_panel.dart';
+import 'diplomacy_detail_screen_format.dart';
+import 'diplomacy_detail_screen_widgets_cards.dart';
+import 'diplomacy_detail_screen_widgets_relation.dart';
+import 'diplomacy_detail_screen_widgets_sections.dart';
 
-part 'diplomacy_detail_screen_format.dart';
-part 'diplomacy_detail_screen_widgets_cards.dart';
-part 'diplomacy_detail_screen_widgets_relation.dart';
-part 'diplomacy_detail_screen_widgets_sections.dart';
+export 'diplomacy_detail_screen_format.dart';
 
 /// Full-screen diplomacy detail. Dark editorial-monocle chrome per
 /// `SPEC/ui/diplomacy-detail-screen.md` and `SPEC/ui/mockups/GAME30002-…html`.
@@ -98,7 +101,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                 vertical: contentPadding,
               ),
               children: <Widget>[
-                _DetailCard(
+                DiplomacyDetailCard(
                   title: l10n.diplomacy_detail_currentRelation,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -108,7 +111,7 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                         RelativePowerLine(pct: relativePowerPct),
                         const SizedBox(height: 8),
                       ],
-                      _RelationSummary(
+                      DiplomacyDetailRelationSummary(
                         relation: relation,
                         l10n: l10n,
                         standingChips: standingChips,
@@ -117,9 +120,9 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: cardSpacing),
-                _DetailCard(
+                DiplomacyDetailCard(
                   title: l10n.diplomacy_detail_historyTitle,
-                  child: _HistorySection(
+                  child: DiplomacyDetailHistorySection(
                     history: history,
                     formatYear: year,
                     formatSentence: (e) =>
@@ -129,9 +132,9 @@ class DiplomacyDetailScreen extends ConsumerWidget {
                 ),
                 if (kind == FactionKind.greatPower) ...<Widget>[
                   const SizedBox(height: cardSpacing),
-                  _DetailCard(
+                  DiplomacyDetailCard(
                     title: l10n.diplomacy_detail_dossierTitle,
-                    child: _DossierSection(
+                    child: DiplomacyDetailDossierSection(
                       game: game,
                       observerId: humanPlayerId,
                       subjectId: factionId,

@@ -7,7 +7,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/split_fleet_d
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 Widget _openDialogButton(VoidCallback onOpen) {
   return TextButton(onPressed: onOpen, child: const Text('open'));

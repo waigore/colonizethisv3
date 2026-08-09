@@ -85,6 +85,8 @@ class WorldMarketState {
   final Map<CommodityId, MarketActivity> lastTurnActivity;
   final Map<String, List<TradeOrder>> carryForwardOffersByFactionId;
   final Map<String, List<TradeOrder>> carryForwardBidsByFactionId;
+  final Map<String, List<OverseasProfitCreditRecord>>
+      lastTurnOverseasProfitCreditsByGpId; // Refs #4226
 }
 
 class FilledDeal {
@@ -329,6 +331,10 @@ Edge cases:
 - `ftpPairKeys` is consulted as a set; ordering of pairs inside the set does not affect output. The canonical `pairKey` ensures the input set need not be duplicated for both `(a,b)` and `(b,a)`.
 - First right of refusal **is** handled by this engine when `purchasedTileIndex` is supplied (see Issue D / #2992 D2). Offers without an `originTileKey`, offers whose `originTileKey` is not in the index, and runs with a `null` index all skip the FRR pre-pass and behave exactly as the legacy tier loop. The D4 treasury transfer (overseas-profit credit to the owning GP) is a separate phase-handler responsibility — it consumes `FilledDeal.isFirstRightOfRefusalMatch` to identify FRR-applied flows and looks up the owning GP via the same `purchasedTileIndex` row to compute the relation-based profit per `SPEC/game/world-market-first-right-of-refusal.md` § Treasury transfer (D4).
 
+### Phase-handler overseas-profit ledger — `lastTurnOverseasProfitCreditsByGpId` (Refs #4226)
+
+`worldMarketTurnPhaseHandler` is the sole writer of `WorldMarketState.lastTurnOverseasProfitCreditsByGpId`. During Step F settlement, after D4 treasury credits are applied, the handler replaces the map with the output of `buildOverseasProfitCreditRecordsByGpId` (`packages/colonizethis_economy/lib/src/economy/world_market/overseas_profit_credit_records.dart`) fed by `FirstRightCreditsResult` (tile-owner `creditedDeals` + per-deal embassy kickback rows). Each `OverseasProfitCreditRecord` carries `creditKind` (`tileOwnerShare` | `embassyKickback`), `commodityId`, `quantity`, rounded `profitTreasury`, and optional `buyerFactionId` / `sourceFactionId`. Rows with `profitTreasury <= 0` after rounding are omitted at persistence time. The map is replaced wholesale each phase pass (same lifecycle as `lastTurnActivity`); nested lists are stored unmodifiable. Deal Book and the turn event feed read persisted rows only — they do not re-derive credits from live treasury deltas. When a GP's combined tile-owner + embassy credits for the turn sum to `> 0`, the handler also publishes `OverseasProfitCreditedEvent` (bridged to `AppOverseasProfitCreditedEvent` per `SPEC/program/game-event-bridge.md`).
+
 ---
 
 ## Trade order validation
@@ -385,11 +391,10 @@ Rules 1–2 are intrinsic to the order. Rules 3–4 are computed from the submit
 `worldMarketBidTypeCap(Game game, String playerId)` lives in `packages/colonizethis_logic/lib/src/economy/world_market/bid_type_cap.dart` (a pure world-market helper with no diplomacy-domain dependency, Refs #3290). Per-target trade-agreement slots remain governed by `tradeSlotsForGp` in `diplomacy_subsidies_relations_resolver.dart` ([diplomacy-resolution.md](diplomacy-resolution.md)):
 
 - `0` only when [playerId] is not a known player (`Game.playerById` returns `null`).
-- `kWorldMarketBaselineBidTypeCap` (= **1**) when the player exists and has no embassy (`OvertureStage.embassy` or stronger) with **any** target faction. This baseline keeps the global market liquid for every Great Power — including EXPAND-phase GPs that are structurally blocked from emitting NW-only `establishOverture` orders (`SPEC/ai/phase-planner-architecture.md` § EXPAND planner suppressions) — so treasury can still redistribute through legitimate trade per [world-market.md](../game/world-market.md) § Bid type cap.
-- `3` when the player has at least one embassy and has not unlocked `kTechIdTradeFairs`.
-- `6` when the player has at least one embassy **and** has unlocked `kTechIdTradeFairs`.
+- `kWorldMarketBaselineBidTypeCap` (= **3**) when the player exists and has not unlocked `kTechIdTradeFairs`. Embassy presence does **not** affect this cap (Refs #4186).
+- `6` when the player has unlocked `kTechIdTradeFairs` (regardless of embassy state).
 
-This is the **world-market**-scoped analogue of `tradeSlotsForGp` (which is per-target). The market is global, so the cap aggregates across all of the player's embassies. The baseline `1`-cap step preserves the embassy gradient (`1 → 3 → 6`): diplomatic investment still multiplies trade reach.
+This is the **world-market**-scoped distinct-commodity bid cap. Per-target trade-agreement slots remain governed by `tradeSlotsForGp` in `diplomacy_subsidies_relations_resolver.dart` ([diplomacy-resolution.md](diplomacy-resolution.md)).
 
 ---
 
@@ -570,10 +575,9 @@ The pure helpers (`computeNextPrice`, `computeMarketActivity`, `DealMatcher.matc
 - Given a live `Game` where `Player.treasury == -25` for `playerId` (already negative from earlier phases) and no staged orders or topology supplied, when `tradeOrderValidationContextFromGame(game, playerId)` builds the context, then `TradeOrderValidationContext.treasuryBudgetForBids == 0` (`treasuryAvailableForBidsByPlayer` clamps negative treasury at zero per `SPEC/game/world-market.md` § Treasury budget for bids) (Refs #3123).
 - Given `tradeCargoCapacity = 10` and a single `TradeOrder(timber, bid, 12, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.bidExceedsCargoCapacity`.
 - Given `availableStockpileByCommodityId: {'timber': 5}` and `TradeOrder(timber, offer, 10, 1)`, when validation runs, then the order is rejected with reason `TradeOrderRejectionReasons.offerExceedsStockpile`. The validator does **not** silently cap the quantity — callers (suggestion API, UI) must clamp before submission per `SPEC/game/world-market.md` rule 4.
-- Given `worldMarketBidTypeCap(game, playerId)` for a player with **no** overtures or only `OvertureStage.tradeConsulate` overtures, when the helper runs, then the cap is `kWorldMarketBaselineBidTypeCap` (`1`) — baseline participation in the global market for any known Great Power.
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with `kTechIdTradeFairs` **not** unlocked, when the helper runs, then the cap is `kWorldMarketBaselineBidTypeCap` (`3`) — regardless of embassy state (Refs #4186).
 - Given `worldMarketBidTypeCap(game, playerId)` for a `playerId` that does not exist in `game.players`, when the helper runs, then the cap is `0` (ghost-player guard; baseline cap applies only to known players).
-- Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one `OvertureStage.embassy` (or `nap` / `joinEmpire`) overture and `kTechIdTradeFairs` **not** unlocked, when the helper runs, then the cap is `3`.
-- Given `worldMarketBidTypeCap(game, playerId)` for a player with at least one embassy-tier overture and `techUnlocked[kTechIdTradeFairs] == true`, when the helper runs, then the cap is `6`.
+- Given `worldMarketBidTypeCap(game, playerId)` for a player with `techUnlocked[kTechIdTradeFairs] == true`, when the helper runs, then the cap is `6` — regardless of embassy state.
 
 ### Suggestion API (issue #2989)
 

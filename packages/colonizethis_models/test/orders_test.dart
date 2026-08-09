@@ -1,6 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'support/orders_fixtures.dart';
+
 void main() {
   group('Orders', () {
     test('toJson/fromJson round-trip empty', () {
@@ -8,33 +10,9 @@ void main() {
       final o2 = Orders.fromJson(o.toJson());
       expect(o2.moveOrdersByPlayerId, isEmpty);
     });
+
     test('toJson/fromJson round-trip with data', () {
-      const o = Orders(
-        moveOrdersByPlayerId: {
-          'p1': [
-            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0'),
-          ],
-        },
-        buildUnitOrdersByPlayerId: {
-          'p1': [
-            BuildUnitOrder(
-              unitType: 'Regiment',
-              isMilitary: true,
-              spawnProvinceId: 'oldWorld|prov1',
-            ),
-          ],
-        },
-        workOrdersByPlayerId: {
-          'p1': [
-            WorkOrder(
-              unitId: 'u1',
-              target: 'build_mine',
-              targetTileKey: 'oldWorld|prov1|0|0',
-            ),
-          ],
-        },
-      );
-      final o2 = Orders.fromJson(o.toJson());
+      final o2 = Orders.fromJson(sampleOrdersWithBasics.toJson());
       expect(o2.moveOrdersByPlayerId['p1']!.single.unitId, 'u1');
       expect(
         o2.moveOrdersByPlayerId['p1']!.single.destinationTileKey,
@@ -43,74 +21,30 @@ void main() {
       expect(o2.buildUnitOrdersByPlayerId['p1']!.single.unitType, 'Regiment');
       expect(o2.workOrdersByPlayerId['p1']!.single.target, 'build_mine');
     });
+
     test('equality', () {
-      const a = Orders(
-        moveOrdersByPlayerId: {
-          'p1': [
-            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0'),
-          ],
-        },
-        buildUnitOrdersByPlayerId: {
-          'p1': [
-            BuildUnitOrder(
-              unitType: 'Regiment',
-              isMilitary: true,
-              spawnProvinceId: 'oldWorld|prov1',
-            ),
-          ],
-        },
-        workOrdersByPlayerId: {
-          'p1': [
-            WorkOrder(
-              unitId: 'u1',
-              target: 'build_mine',
-              targetTileKey: 'oldWorld|prov1|0|0',
-            ),
-          ],
-        },
-      );
-      const b = Orders(
-        moveOrdersByPlayerId: {
-          'p1': [
-            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0'),
-          ],
-        },
-        buildUnitOrdersByPlayerId: {
-          'p1': [
-            BuildUnitOrder(
-              unitType: 'Regiment',
-              isMilitary: true,
-              spawnProvinceId: 'oldWorld|prov1',
-            ),
-          ],
-        },
-        workOrdersByPlayerId: {
-          'p1': [
-            WorkOrder(
-              unitId: 'u1',
-              target: 'build_mine',
-              targetTileKey: 'oldWorld|prov1|0|0',
-            ),
-          ],
-        },
-      );
+      const a = sampleOrdersWithBasics;
+      const b = sampleOrdersWithBasics;
       expect(a, b);
       expect(a.hashCode, b.hashCode);
     });
+
     test('fromJson with null or missing byPlayerId', () {
-      final o = Orders.fromJson({});
-      expect(o.moveOrdersByPlayerId, isEmpty);
-      expect(o.buildUnitOrdersByPlayerId, isEmpty);
-      expect(o.workOrdersByPlayerId, isEmpty);
-      final o2 = Orders.fromJson({'moveOrdersByPlayerId': null});
-      expect(o2.moveOrdersByPlayerId, isEmpty);
+      for (final json in [
+        <String, dynamic>{},
+        <String, dynamic>{'moveOrdersByPlayerId': null},
+      ]) {
+        final o = Orders.fromJson(json);
+        expect(o.moveOrdersByPlayerId, isEmpty);
+        expect(o.buildUnitOrdersByPlayerId, isEmpty);
+        expect(o.workOrdersByPlayerId, isEmpty);
+      }
     });
+
     test('equality false when different', () {
       const a = Orders(
         moveOrdersByPlayerId: {
-          'p1': [
-            MoveOrder(unitId: 'u1', destinationTileKey: 'oldWorld|prov1|0|0'),
-          ],
+          'p1': [sampleMoveOrder],
         },
       );
       const b = Orders(
@@ -124,25 +58,16 @@ void main() {
       expect(a == Object(), false);
     });
 
-    test(
-      'fromJson throws for unprefixed army move destination province id',
-      () {
-        expect(
-          () => Orders.fromJson({
-            'armyMoveOrdersByPlayerId': {
-              'p1': [
-                {'armyId': 'a1', 'destinationProvinceId': 'p1'},
-              ],
-            },
-          }),
-          throwsA(isA<ArgumentError>()),
-        );
-      },
-    );
-
-    test('fromJson throws for unprefixed build-unit spawn province id', () {
-      expect(
-        () => Orders.fromJson({
+    test('fromJson throws for unprefixed province ids', () {
+      for (final json in [
+        {
+          'armyMoveOrdersByPlayerId': {
+            'p1': [
+              {'armyId': 'a1', 'destinationProvinceId': 'p1'},
+            ],
+          },
+        },
+        {
           'buildUnitOrdersByPlayerId': {
             'p1': [
               {
@@ -152,35 +77,21 @@ void main() {
               },
             ],
           },
-        }),
-        throwsA(isA<ArgumentError>()),
-      );
+        },
+      ]) {
+        expect(() => Orders.fromJson(json), throwsA(isA<ArgumentError>()));
+      }
     });
 
     test('round-trips recruitWorkerOrdersByPlayerId for every tier', () {
-      const o = Orders(
-        recruitWorkerOrdersByPlayerId: {
-          'p1': [
-            RecruitWorkerOrder(targetTier: WorkerTier.peasant),
-            RecruitWorkerOrder(targetTier: WorkerTier.apprentice),
-            RecruitWorkerOrder(targetTier: WorkerTier.journeyman),
-            RecruitWorkerOrder(targetTier: WorkerTier.master),
-          ],
-        },
-      );
-      final o2 = Orders.fromJson(o.toJson());
+      final o2 = Orders.fromJson(allWorkerTierRecruitOrders.toJson());
       expect(o2.recruitWorkerOrdersByPlayerId['p1']!.length, 4);
       expect(
         o2.recruitWorkerOrdersByPlayerId['p1']!.map((e) => e.targetTier),
-        [
-          WorkerTier.peasant,
-          WorkerTier.apprentice,
-          WorkerTier.journeyman,
-          WorkerTier.master,
-        ],
+        WorkerTier.values,
       );
-      expect(o2, o);
-      expect(o2.hashCode, o.hashCode);
+      expect(o2, allWorkerTierRecruitOrders);
+      expect(o2.hashCode, allWorkerTierRecruitOrders.hashCode);
     });
 
     test('toJson omits recruitWorkerOrdersByPlayerId when empty', () {
@@ -202,23 +113,16 @@ void main() {
       expect(a == b, isFalse);
     });
 
-    test('copyWith preserves recruit worker orders by default', () {
+    test('copyWith recruit worker orders', () {
       const original = Orders(
         recruitWorkerOrdersByPlayerId: {
           'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
         },
       );
-      final copy = original.copyWith();
-      expect(copy, original);
-      expect(copy.recruitWorkerOrdersByPlayerId, isNotEmpty);
-    });
+      final preserved = original.copyWith();
+      expect(preserved, original);
+      expect(preserved.recruitWorkerOrdersByPlayerId, isNotEmpty);
 
-    test('copyWith can replace recruit worker orders', () {
-      const original = Orders(
-        recruitWorkerOrdersByPlayerId: {
-          'p1': [RecruitWorkerOrder(targetTier: WorkerTier.apprentice)],
-        },
-      );
       final updated = original.copyWith(
         recruitWorkerOrdersByPlayerId: const {
           'p1': [RecruitWorkerOrder(targetTier: WorkerTier.master)],
@@ -231,37 +135,17 @@ void main() {
       expect(updated == original, isFalse);
     });
 
-    test(
-      'RecruitWorkerOrder.fromJson throws on missing targetTier',
-      () {
+    test('RecruitWorkerOrder.fromJson validation', () {
+      for (final json in [
+        <String, dynamic>{},
+        <String, dynamic>{'targetTier': ''},
+        <String, dynamic>{'targetTier': 'engineers'},
+      ]) {
         expect(
-          () => RecruitWorkerOrder.fromJson(<String, dynamic>{}),
+          () => RecruitWorkerOrder.fromJson(json),
           throwsA(isA<ArgumentError>()),
         );
-      },
-    );
-
-    test(
-      'RecruitWorkerOrder.fromJson throws on empty targetTier',
-      () {
-        expect(
-          () => RecruitWorkerOrder.fromJson({'targetTier': ''}),
-          throwsA(isA<ArgumentError>()),
-        );
-      },
-    );
-
-    test(
-      'RecruitWorkerOrder.fromJson throws on unknown targetTier id',
-      () {
-        expect(
-          () => RecruitWorkerOrder.fromJson({'targetTier': 'engineers'}),
-          throwsA(isA<ArgumentError>()),
-        );
-      },
-    );
-
-    test('RecruitWorkerOrder.toJson uses canonical WorkerTier id', () {
+      }
       expect(
         const RecruitWorkerOrder(targetTier: WorkerTier.apprentice).toJson(),
         {'targetTier': 'apprentices'},
@@ -277,33 +161,7 @@ void main() {
     });
 
     test('round-trips multiple bids/offers across players via JSON', () {
-      final o = Orders(
-        tradeOrdersByPlayerId: {
-          'p1': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 10,
-              priority: 1,
-            ),
-            TradeOrder(
-              commodityId: 'iron',
-              type: TradeOrderType.bid,
-              quantity: 3,
-              priority: 2,
-            ),
-          ],
-          'p2': [
-            TradeOrder(
-              commodityId: 'silk',
-              type: TradeOrderType.bid,
-              quantity: 5,
-              priority: 1,
-              isFtp: true,
-            ),
-          ],
-        },
-      );
+      final o = sampleTradeOrders();
       final restored = Orders.fromJson(o.toJson());
       expect(restored.tradeOrdersByPlayerId.keys, {'p1', 'p2'});
       expect(restored.tradeOrdersByPlayerId['p1']!.length, 2);
@@ -314,64 +172,17 @@ void main() {
     });
 
     test('equality false when trade orders differ', () {
-      final a = Orders(
-        tradeOrdersByPlayerId: {
-          'p1': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 5,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final b = Orders(
-        tradeOrdersByPlayerId: {
-          'p1': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 10,
-              priority: 1,
-            ),
-          ],
-        },
-      );
+      final a = sampleTradeOrders();
+      final b = sampleTradeOrders(player1OfferQuantity: 20);
       expect(a == b, isFalse);
     });
 
-    test('copyWith preserves trade orders by default', () {
-      final original = Orders(
-        tradeOrdersByPlayerId: {
-          'p1': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 5,
-              priority: 1,
-            ),
-          ],
-        },
-      );
-      final copy = original.copyWith();
-      expect(copy, original);
-      expect(copy.tradeOrdersByPlayerId, isNotEmpty);
-    });
+    test('copyWith trade orders', () {
+      final original = sampleTradeOrders();
+      final preserved = original.copyWith();
+      expect(preserved, original);
+      expect(preserved.tradeOrdersByPlayerId, isNotEmpty);
 
-    test('copyWith can replace trade orders', () {
-      final original = Orders(
-        tradeOrdersByPlayerId: {
-          'p1': [
-            TradeOrder(
-              commodityId: 'timber',
-              type: TradeOrderType.offer,
-              quantity: 5,
-              priority: 1,
-            ),
-          ],
-        },
-      );
       final updated = original.copyWith(
         tradeOrdersByPlayerId: {
           'p1': [

@@ -1,36 +1,21 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../config/constants.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../config/ui_screen_ids.dart';
-import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
-import '../../../../widgets/ct_gap.dart';
-import '../../../../widgets/ct_panel.dart';
-import '../../../../widgets/ct_resource_cell.dart';
-import '../../../../widgets/ct_section_label.dart';
-import '../../../../widgets/ct_spacing.dart';
-import '../../../../widgets/resource_icon.dart';
-import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
-import 'package:colonizethis_app/widgets/ct_danger_text_button.dart';
-import 'commodity_ui_helpers.dart';
-import 'production_allocation_row.dart';
-import 'production_allocation_row_chrome.dart';
-import 'production_available_grid.dart';
 import 'production_labour_helpers.dart';
-import 'production_labour_section.dart';
+import 'production_panel_constants.dart';
+import 'production_panel_layouts.dart';
+import 'production_panel_support_allocation.dart';
+import 'production_panel_support_available.dart';
 
-part 'production_panel_constants.dart';
-part 'production_panel_layouts.dart';
-part 'production_panel_support_available.dart';
-part 'production_panel_support_available_sections.dart';
-part 'production_panel_support_allocation.dart';
-part 'production_panel_support_allocation_rows.dart';
-part 'production_panel_support_allocation_summary.dart';
+export 'production_panel_constants.dart';
 
+/// Production screen panel: Available stockpile + Allocation recipe rows.
+/// SPEC/ui/production-panel.md.
 class ProductionPanel extends StatelessWidget {
   const ProductionPanel({
     super.key,
@@ -38,11 +23,15 @@ class ProductionPanel extends StatelessWidget {
     required this.player,
     required this.desiredOutputByRecipe,
     required this.netDeltasByCommodity,
+    required this.labourReadiness,
+    required this.forcesFeeding,
     required this.onDesiredOutputChanged,
     this.onOpenCommodityBreakdown,
     this.currentOrders,
     this.labourCallbacks,
     this.canEditLabour = false,
+    this.starredProduceRecommendationsByRecipeId = const {},
+    this.onOpenCounsel,
   });
 
   /// SPEC/ui/production-panel.md — [UiScreenIds.productionScreen]. Hosted by
@@ -53,6 +42,8 @@ class ProductionPanel extends StatelessWidget {
   final Player player;
   final Map<String, int> desiredOutputByRecipe;
   final Map<String, int> netDeltasByCommodity;
+  final LabourReadinessSnapshot labourReadiness;
+  final ForceFeedingSnapshot forcesFeeding;
   final ValueChanged<Map<String, int>> onDesiredOutputChanged;
 
   /// When set, Available header shows a text button that opens the breakdown dialog.
@@ -66,9 +57,14 @@ class ProductionPanel extends StatelessWidget {
   /// controls render in read-only mode (no +/-/Disband buttons).
   final ProductionLabourCallbacks? labourCallbacks;
 
-  /// True when the viewed player may mutate orders or pool via the Labour
-  /// controls. Combined with [labourCallbacks] presence to gate buttons.
+  /// True when Labour and Allocation controls may mutate state; counsel stars
+  /// stay tappable when false (turn-resolution read-only).
   final bool canEditLabour;
+
+  final Map<String, IndustryCounselRecommendation>
+  starredProduceRecommendationsByRecipeId;
+
+  final ProductionOpenCounselCallback? onOpenCounsel;
 
   static Set<String> get _inputCommodityIds {
     final inputIds = <String>{};
@@ -85,26 +81,15 @@ class ProductionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = appL10n(context);
-    final regimentCounts = regimentTypeCountsForPlayer(
-      game.worldState,
-      player.id,
-    );
-    final shipCounts = shipTypeCountsForPlayer(game.worldState, player.id);
-    final effectiveLabour = effectiveLabourForWorkers(
-      workers: player.workerPool,
-      stockpile: player.stockpile,
-      foodCounts: MilitaryNavyFoodCounts(
-        regimentCountsById: regimentCounts,
-        shipCountsById: shipCounts,
-      ),
-    );
+    final effectiveLabour = labourReadiness.effectiveLabour;
     final inputCommodityIds = _inputCommodityIds;
     final outputCommodityIds = _outputCommodityIds;
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-    final availableSubpanel = _AvailableSubpanel(
+    final availableSubpanel = ProductionPanelAvailableSubpanel(
       game: game,
       player: player,
-      effectiveLabour: effectiveLabour,
+      labourReadiness: labourReadiness,
+      forcesFeeding: forcesFeeding,
       inputCommodityIds: inputCommodityIds,
       outputCommodityIds: outputCommodityIds,
       netDeltasByCommodity: netDeltasByCommodity,
@@ -114,23 +99,27 @@ class ProductionPanel extends StatelessWidget {
       labourCallbacks: labourCallbacks,
       canEditLabour: canEditLabour,
     );
-    final allocationSubpanel = _AllocationSubpanel(
+    final allocationSubpanel = ProductionPanelAllocationSubpanel(
       player: player,
       effectiveLabour: effectiveLabour,
       desiredOutputByRecipe: desiredOutputByRecipe,
       onDesiredOutputChanged: onDesiredOutputChanged,
       l10n: l10n,
+      canEditLabour: canEditLabour,
+      starredProduceRecommendationsByRecipeId:
+          starredProduceRecommendationsByRecipeId,
+      onOpenCounsel: onOpenCounsel,
     );
 
     if (isNarrow) {
-      return _ProductionPanelNarrowLayout(
+      return ProductionPanelNarrowLayout(
         key: kProductionPanelNarrowLayoutKey,
         availableSubpanel: availableSubpanel,
         allocationSubpanel: allocationSubpanel,
       );
     }
 
-    return _ProductionPanelWideLayout(
+    return ProductionPanelWideLayout(
       key: kProductionPanelWideLayoutKey,
       availableSubpanel: availableSubpanel,
       allocationSubpanel: allocationSubpanel,

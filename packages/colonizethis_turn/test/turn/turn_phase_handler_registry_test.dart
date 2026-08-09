@@ -1,7 +1,6 @@
 import 'dart:io';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
-import 'package:colonizethis_turn/src/turn/turn_phase_handler_registry.dart';
-import 'package:colonizethis_turn/src/turn/turn_resolution_sequence.dart';
 import 'package:colonizethis_test/test.dart';
 
 void main() {

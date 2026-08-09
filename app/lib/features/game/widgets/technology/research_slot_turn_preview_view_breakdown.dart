@@ -1,10 +1,15 @@
-part of 'research_slot_turn_preview_view.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-/// Opens the research-funding breakdown dialog explaining the anticipated RP
-/// (base funding RP, the +20% industrial bonus when applicable, the effective
-/// total, the treasury cost, and a debt-block note when the spend is blocked).
-///
-/// SPEC/ui/technology-panel.md § Slot turn preview.
+import '../../../../widgets/ct_dialog_shell.dart';
+import '../../../../widgets/ct_nine_patch_button.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'research_slot_preview.dart';
+import 'research_slot_turn_preview_view_styles.dart';
+import 'technology_slot_funding_toggles.dart';
+
+/// Opens the research-funding breakdown dialog (Refs #4117 de-part).
 void showResearchFundingBreakdownDialog({
   required BuildContext context,
   required ResearchSlotTurnPreview preview,
@@ -119,7 +124,7 @@ class _BreakdownRow extends StatelessWidget {
           const SizedBox(width: CtSpacing.m),
           Text(
             value,
-            style: _monoStyle(
+            style: researchSlotTurnPreviewMonoStyle(
               emphasised
                   ? EditorialMonoclePalette.accentBright
                   : EditorialMonoclePalette.accentDim,

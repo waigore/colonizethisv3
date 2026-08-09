@@ -30,9 +30,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'support/app_shell_harness.dart';
-import 'support/game_fixture.dart';
-import 'support/map_view_fixture.dart';
+import 'app_shell_harness.dart';
+import 'game_fixture.dart';
+import 'map_view_fixture.dart';
 
 /// Loads the committed seed-42 `Game` + map-view fixtures instead of paying the
 /// ~7-11s `getDebugInitGameResult()` procedural map generation per isolate. This

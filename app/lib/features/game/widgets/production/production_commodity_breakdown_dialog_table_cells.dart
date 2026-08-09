@@ -1,8 +1,11 @@
-/// Cell chrome helpers for [ProductionBreakdownTableBody].
+import 'package:flutter/material.dart';
 
-part of 'production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import '../../../../widgets/ct_resource_cell.dart';
+import '../../../../widgets/ct_spacing.dart';
+import 'production_commodity_breakdown_dialog.dart';
 
-TextStyle _productionBreakdownHeadingStyle(BuildContext context) {
+TextStyle productionBreakdownHeadingStyle(BuildContext context) {
   final TextStyle base =
       Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11);
   return base.copyWith(
@@ -11,7 +14,7 @@ TextStyle _productionBreakdownHeadingStyle(BuildContext context) {
   );
 }
 
-TextStyle _productionBreakdownSectionHeaderStyle(BuildContext context) {
+TextStyle productionBreakdownSectionHeaderStyle(BuildContext context) {
   final TextStyle base =
       Theme.of(context).textTheme.labelSmall ?? const TextStyle(fontSize: 11);
   return base.copyWith(
@@ -21,13 +24,13 @@ TextStyle _productionBreakdownSectionHeaderStyle(BuildContext context) {
   );
 }
 
-TextStyle _productionBreakdownCommodityNameStyle(BuildContext context) {
+TextStyle productionBreakdownCommodityNameStyle(BuildContext context) {
   final TextStyle base =
       Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
   return base.copyWith(color: EditorialMonoclePalette.fg);
 }
 
-TextStyle _productionBreakdownDeltaCellStyle(BuildContext context, int value) {
+TextStyle productionBreakdownDeltaCellStyle(BuildContext context, int value) {
   final TextStyle base =
       Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
   final Color? color = CtResourceCell.deltaColor(value);
@@ -38,15 +41,15 @@ TextStyle _productionBreakdownDeltaCellStyle(BuildContext context, int value) {
   );
 }
 
-Widget _productionBreakdownDeltaCell(BuildContext context, int value) {
+Widget productionBreakdownDeltaCell(BuildContext context, int value) {
   return Text(
     ProductionCommodityBreakdownDialog.formatDelta(value),
     maxLines: 1,
-    style: _productionBreakdownDeltaCellStyle(context, value),
+    style: productionBreakdownDeltaCellStyle(context, value),
   );
 }
 
-Widget _productionBreakdownSectionHeaderCell(
+Widget productionBreakdownSectionHeaderCell(
   BuildContext context,
   String label,
 ) {
@@ -63,7 +66,7 @@ Widget _productionBreakdownSectionHeaderCell(
       padding: const EdgeInsets.only(bottom: CtSpacing.xs),
       child: Text(
         label.toUpperCase(),
-        style: _productionBreakdownSectionHeaderStyle(context),
+        style: productionBreakdownSectionHeaderStyle(context),
       ),
     ),
   );

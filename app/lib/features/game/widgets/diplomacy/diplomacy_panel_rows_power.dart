@@ -1,6 +1,7 @@
 /// Great Power relative-strength helpers for diplomacy panel rows.
+library;
 
-part of 'diplomacy_panel_rows.dart';
+import 'dart:math' as math;
 
 /// Computes the relative Great Power power-comparison percentage used by
 /// `SPEC/ui/diplomacy-panel.md` § Power comparison percentage.

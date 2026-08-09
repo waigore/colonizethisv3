@@ -1,10 +1,17 @@
-part of 'train_commodity_cost_dialog_base.dart';
+import 'package:flutter/material.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import '../../../../widgets/ct_gap.dart';
+import '../../../../widgets/resource_icon.dart';
+import '../production/commodity_ui_helpers.dart';
+import 'train_dialog_chrome.dart';
 
 /// A single commodity-cost trainable unit row (name over a cost wrap, with the
 /// shared [TrainDialogStepper] on the right) shared by the military and naval
 /// train dialogs.
-class _CommodityCostUnitRow extends StatelessWidget {
-  const _CommodityCostUnitRow({
+class CommodityCostTrainDialogUnitRow extends StatelessWidget {
+  const CommodityCostTrainDialogUnitRow({
+    super.key,
     required this.displayName,
     required this.buildTreasuryCost,
     required this.buildInputs,

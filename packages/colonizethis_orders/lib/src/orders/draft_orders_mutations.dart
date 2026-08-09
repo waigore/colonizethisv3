@@ -18,6 +18,57 @@ Orders ordersWithAppendedDiplomaticOrder(
   );
 }
 
+/// Applies a human naval mission to the turn draft: replaces any prior naval
+/// mission for the same [fleetId] and removes naval move orders for that fleet.
+/// SPEC/program/naval-movement-resolution.md; Refs #4213.
+Orders applyNavalMissionOrderForPlayer(
+  Orders orders,
+  String playerId,
+  NavalMissionOrder newOrder,
+) {
+  final nextMissions = List<NavalMissionOrder>.from(
+    orders.navalMissionOrdersByPlayerId[playerId] ?? const [],
+  )..removeWhere((o) => o.fleetId == newOrder.fleetId);
+  nextMissions.add(newOrder);
+
+  final nextMoves = List<NavalMoveOrder>.from(
+    orders.navalMoveOrdersByPlayerId[playerId] ?? const [],
+  )..removeWhere((o) => o.fleetId == newOrder.fleetId);
+
+  return orders.copyWith(
+    navalMissionOrdersByPlayerId: {
+      ...orders.navalMissionOrdersByPlayerId,
+      playerId: nextMissions,
+    },
+    navalMoveOrdersByPlayerId: {
+      ...orders.navalMoveOrdersByPlayerId,
+      playerId: nextMoves,
+    },
+  );
+}
+
+/// Removes a pending naval mission for [fleetId] from the turn draft.
+/// No-op when no mission is staged. Refs #4213.
+Orders removeNavalMissionOrderForPlayer(
+  Orders orders,
+  String playerId,
+  String fleetId,
+) {
+  final prior =
+      orders.navalMissionOrdersByPlayerId[playerId] ?? const <NavalMissionOrder>[];
+  final next = [
+    for (final NavalMissionOrder o in prior)
+      if (o.fleetId != fleetId) o,
+  ];
+  if (next.length == prior.length) return orders;
+  return orders.copyWith(
+    navalMissionOrdersByPlayerId: {
+      ...orders.navalMissionOrdersByPlayerId,
+      playerId: next,
+    },
+  );
+}
+
 /// Applies a human naval move to the turn draft: replaces any prior naval move for
 /// the same [fleetId] and removes naval mission orders for that fleet.
 /// SPEC/program/naval-movement-resolution.md.
@@ -43,6 +94,35 @@ Orders applyNavalMoveOrderForPlayer(
     navalMissionOrdersByPlayerId: {
       ...orders.navalMissionOrdersByPlayerId,
       playerId: nextMissions,
+    },
+  );
+}
+
+/// Replaces any prior civilian move for the same [unitId] and clears a
+/// conflicting pending [WorkOrder] for that unit (move xor work draft rule).
+/// SPEC/program/orders.md.
+Orders applyCivilianMoveOrderForPlayer(
+  Orders orders,
+  String playerId,
+  MoveOrder newOrder,
+) {
+  final nextMoves = List<MoveOrder>.from(
+    orders.moveOrdersByPlayerId[playerId] ?? const <MoveOrder>[],
+  )..removeWhere((o) => o.unitId == newOrder.unitId);
+  nextMoves.add(newOrder);
+
+  final nextWorks = List<WorkOrder>.from(
+    orders.workOrdersByPlayerId[playerId] ?? const <WorkOrder>[],
+  )..removeWhere((o) => o.unitId == newOrder.unitId);
+
+  return orders.copyWith(
+    moveOrdersByPlayerId: {
+      ...orders.moveOrdersByPlayerId,
+      playerId: nextMoves,
+    },
+    workOrdersByPlayerId: {
+      ...orders.workOrdersByPlayerId,
+      playerId: nextWorks,
     },
   );
 }

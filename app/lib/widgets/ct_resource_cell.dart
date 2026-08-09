@@ -25,11 +25,13 @@ part 'ct_resource_cell_trailing.dart';
 ///   * `delta > 0`  → `+N`, colour `--success`
 ///   * `delta < 0`  → `-N` (numeric sign), colour `--danger`
 ///   * `delta == 0` → `0`, colour `--muted`
-///   * `delta == null` → delta glyphs omitted; fixed-width delta **slot** still
-///     reserved for panel-wide quantity alignment (Refs #3999)
+///   * `delta == null` → delta glyphs omitted (no empty reserved slot after
+///     the quantity — wide-layout inset parity, Refs #3999)
 ///
-/// Trailing quantity + reserved delta use intrinsic width + [FittedBox]
+/// Trailing quantity (+ optional delta) use intrinsic width + [FittedBox]
 /// scale-down so amounts stay visible at Available grid widths (Refs #3999).
+/// The painted trailing cluster is right-pinned so its right inset matches
+/// the leading icon inset ([CtSpacing.s]).
 ///
 /// All colors resolve from [EditorialMonoclePalette] tokens (issue #2858);
 /// no hard-coded hex literals.
@@ -109,9 +111,6 @@ class CtResourceCell extends StatelessWidget {
 
   /// Delta [Text] key when a non-null [delta] is painted.
   static const Key deltaTextKey = ValueKey<String>('ct_resource_cell_delta');
-
-  /// Reserved delta slot width (fits `-999` at [deltaFontSize]; Refs #3999).
-  static const double reservedDeltaSlotWidth = 28;
 
   @override
   Widget build(BuildContext context) {

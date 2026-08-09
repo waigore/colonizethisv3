@@ -1,8 +1,13 @@
 // dart format off
 // Table-driven economy extraction scenarios (Refs #3939 phase 3 slice 34, #3979).
+
 import 'package:colonizethis_models/colonizethis_models.dart';
+
 import 'core_economy_test_support.dart';
-import 'economy_extraction_expectations.dart';
+
+/// Expected commodity quantities on a stockpile after extraction.
+typedef StockpileQuantityPins = Map<String, int>;
+
 /// One row in [applyExtractionToStockpileScenarios] (Refs #3979).
 typedef ApplyExtractionToStockpileScenario = ({
   String label,
@@ -12,14 +17,16 @@ typedef ApplyExtractionToStockpileScenario = ({
   StockpileQuantityPins expectedQuantities,
   String? refs,
 });
-void runApplyExtractionToStockpileScenario(ApplyExtractionToStockpileScenario scenario) {
-  runApplyExtractionToStockpileExpectation(
-    initialStockpile: scenario.initialStockpile,
-    initialDeltas: scenario.initialDeltas,
-    extracted: scenario.extracted,
-    expectedQuantities: scenario.expectedQuantities,
-  );
-}
+
+ApplyExtractionToStockpileScenario applyExtractionToStockpileScenario({
+  required String label,
+  Map<String, int>? initialDeltas,
+  Stockpile? initialStockpile,
+  required Map<String, int> extracted,
+  required StockpileQuantityPins expectedQuantities,
+}) =>
+    (label: label, initialDeltas: initialDeltas, initialStockpile: initialStockpile, extracted: extracted, expectedQuantities: expectedQuantities, refs: null);
+
 /// Canonical scenarios for [applyExtractionToStockpile].
 List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() => [
   applyExtractionToStockpileScenario(label: 'adds extracted quantities to stockpile', extracted: {'grain': 5, 'iron': 2}, expectedQuantities: {'grain': 5, 'iron': 2}),
@@ -29,6 +36,10 @@ List<ApplyExtractionToStockpileScenario> applyExtractionToStockpileScenarios() =
   applyExtractionToStockpileScenario(label: 'empty extracted returns same stockpile', initialDeltas: {'grain': 5}, extracted: const {}, expectedQuantities: {'grain': 5}),
   applyExtractionToStockpileScenario(label: 'adds large extraction without storage cap (unbounded strategic stockpile)', initialDeltas: {'grain': 1000000}, extracted: {'grain': 500000}, expectedQuantities: {'grain': 1500000}),
 ];
+
+/// One player's expected stockpile commodity quantity after [applyExtractionForPlayers].
+typedef PlayerStockpilePin = ({int playerIndex, String commodityId, int quantity});
+
 /// One row in [applyExtractionForPlayersScenarios] (Refs #3979).
 typedef ApplyExtractionForPlayersScenario = ({
   String label,
@@ -38,14 +49,16 @@ typedef ApplyExtractionForPlayersScenario = ({
   bool expectUnchangedPlayers,
   String? refs,
 });
-void runApplyExtractionForPlayersScenario(ApplyExtractionForPlayersScenario scenario) {
-  runApplyExtractionForPlayersExpectation(
-    game: scenario.game,
-    extractedByPlayerId: scenario.extractedByPlayerId,
-    stockpilePins: scenario.stockpilePins,
-    expectUnchangedPlayers: scenario.expectUnchangedPlayers,
-  );
-}
+
+ApplyExtractionForPlayersScenario applyExtractionForPlayersScenario({
+  required String label,
+  required Game game,
+  required Map<String, Map<String, int>> extractedByPlayerId,
+  List<PlayerStockpilePin>? stockpilePins,
+  bool expectUnchangedPlayers = false,
+}) =>
+    (label: label, game: game, extractedByPlayerId: extractedByPlayerId, stockpilePins: stockpilePins, expectUnchangedPlayers: expectUnchangedPlayers, refs: null);
+
 /// Canonical scenarios for [applyExtractionForPlayers].
 List<ApplyExtractionForPlayersScenario> applyExtractionForPlayersScenarios() => [
   applyExtractionForPlayersScenario(

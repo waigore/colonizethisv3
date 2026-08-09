@@ -1,6 +1,13 @@
-/// Breakdown DataTable body for [ProductionCommodityBreakdownDialog].
+// Breakdown DataTable body for [ProductionCommodityBreakdownDialog].
 
-part of 'production_commodity_breakdown_dialog.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show EconomyPreviewStockpilePhase;
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
+
+import 'production_commodity_breakdown_dialog_layout.dart';
+import 'production_commodity_breakdown_dialog_table_data.dart';
 
 /// Viewport-adaptive breakdown table for the production commodity dialog.
 class ProductionBreakdownTableBody extends StatelessWidget {
@@ -19,17 +26,17 @@ class ProductionBreakdownTableBody extends StatelessWidget {
   final bool isWideViewport;
   final ScrollController horizontalScrollController;
 
-  static const double _tableColumnSpacing = 24;
-  static const double _tableHorizontalMargin = 12;
+  static const double tableColumnSpacing = 24;
+  static const double tableHorizontalMargin = 12;
 
-  int _phaseValue(String commodityId, EconomyPreviewStockpilePhase phase) {
+  int phaseValue(String commodityId, EconomyPreviewStockpilePhase phase) {
     return phaseDeltas[phase]?[commodityId] ?? 0;
   }
 
-  int _rowTotal(String commodityId) {
+  int rowTotal(String commodityId) {
     var t = 0;
     for (final p in EconomyPreviewStockpilePhase.values) {
-      t += _phaseValue(commodityId, p);
+      t += phaseValue(commodityId, p);
     }
     return t;
   }
@@ -44,8 +51,8 @@ class ProductionBreakdownTableBody extends StatelessWidget {
           final widths = productionBreakdownWideColumnContentWidths(
             availableWidth: constraints.maxWidth,
             phaseColumnCount: phaseColCount,
-            columnSpacing: _tableColumnSpacing,
-            horizontalMargin: _tableHorizontalMargin,
+            columnSpacing: tableColumnSpacing,
+            horizontalMargin: tableHorizontalMargin,
           );
           return buildProductionBreakdownDataTable(context, widths);
         },

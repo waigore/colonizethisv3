@@ -11,12 +11,15 @@
 | Order | Id | Label | Action |
 |-------|-----|--------|--------|
 | 1 | production | Production | Opens Production panel/screen |
-| 2 | civilian_units | Civilian Units | Opens Civilian Units panel (e.g. bottom sheet or route) |
-| 3 | military_units | Military Units | Opens Military Units panel |
-| 4 | naval_units | Naval Units | Opens Naval Units panel |
-| 5 | diplomacy | Diplomacy | Opens Diplomacy screen |
-| 6 | technology | Technology | Opens Technology screen |
-| 7 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
+| 2 | trade | Trade | Opens Trade screen |
+| 3 | development | Development | Opens Development screen (`GAME80001`) |
+| 4 | civilian_units | Civilian Units | Opens Civilian Units panel (e.g. bottom sheet or route) |
+| 5 | military_units | Military Units | Opens Military Units panel |
+| 6 | naval_units | Naval Units | Opens Naval Units panel |
+| 7 | diplomacy | Diplomacy | Opens Diplomacy screen |
+| 8 | technology | Technology | Opens Technology screen |
+| 9 | victory | Victory | Opens Victory screen (`GAME70001`) |
+| 10 (debug only) | debug_console | Debug Console | Toggles non-modal in-map debug console overlay |
 
 Icons and assets: [game-toolbar-icons.md](game-toolbar-icons.md) — files live in `app/assets/icons/` as `ui_icon_<id>.png` (32×32 source; display at 24×24 inside the 36×36 dp wide-layout rail button per § Styling below, narrow rail measurements per [mobile-adaptation.md](mobile-adaptation.md)). The `naval_units` button uses `ui_icon_naval_units.png` and opens the Naval Units panel defined in [naval-units-panel.md](naval-units-panel.md).
 

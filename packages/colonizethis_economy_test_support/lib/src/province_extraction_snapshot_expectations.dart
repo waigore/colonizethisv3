@@ -22,12 +22,14 @@ void assertProvinceExtractionSnapshot(ProvinceExtractionSnapshotScenario scenari
     connectivityResult: scenario.connectivity,
     techCapForPlayer: (_) => 4,
   );
-  final grain = snaps['oldWorld|p1']!.byCommodity['grain']!;
+  final provinceSnap = snaps['oldWorld|p1']!;
+  final grain = provinceSnap.byCommodity['grain']!;
   expect(grain.effective, scenario.expectEffective);
   expect(grain.full, scenario.expectFull);
   if (scenario.expectTileKeys != null) {
     expect(grain.tileKeys, scenario.expectTileKeys);
   }
+  expect(provinceSnap.capitalGrainBonus, scenario.capitalBonus);
 }
 
 /// Pins for Available/improvable-count rows (no local `void Function() run`).

@@ -41,24 +41,23 @@
 import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'support/min_viewport_harness.dart';
+import 'dialogs_320dp_min_viewport_support.dart';
 
 /// Minimum supported viewport dimensions for `SPEC/ui/mobile-adaptation.md`
 /// § 7. Width matches [kMinViewportWidth]; height (640 dp) mirrors the
 /// existing dialog-level pin file `dialogs_320dp_min_viewport_test.dart`.
-const Size _kMinViewport = Size(kMinViewportWidth, 640);
+const Size _kMinViewport = kDialogs320MinViewport;
 
 /// Wide regression sentinel — comfortably above every per-screen
 /// breakpoint so the same dialog renders its default layout. Mirrors
 /// the contract used by `dialogs_320dp_min_viewport_test.dart`.
-const Size _kWideRegressionViewport = Size(1024, 768);
+const Size _kWideRegressionViewport = kDialogs320WideRegressionViewport;
 
 const String _humanPlayerId = 'gp_move_320_human';
 const String _rivalPlayerId = 'gp_move_320_rival';
@@ -70,33 +69,6 @@ const String _invasionDest = 'oldWorld|p_320_invasion_dest';
 const String _originSea = 'sea_320_origin';
 const String _adjacentSea = 'sea_320_adjacent';
 const String _capitalProvince = 'oldWorld|p_320_capital';
-
-/// Pumps [dialog] at [size] under the running editorial-monocle theme.
-///
-/// Sets the surface size (so the binding's render-flex math sees the
-/// minimum viewport) and overrides MediaQuery so dialog code that reads
-/// `MediaQuery.sizeOf(context).width` resolves to the same value — the
-/// pattern already used by `dialogs_320dp_min_viewport_test.dart`.
-///
-/// Embeds [dialog] directly in the Scaffold body rather than driving
-/// the real `showDialog` flow because the contract under test is the
-/// dialog's own [CtDialogShell] layout at the narrow viewport, not the
-/// barrier / overlay route plumbing (which is already covered by
-/// `move_dialogs_specs_part*_test.dart`).
-Future<void> _pumpDialog(
-  WidgetTester tester,
-  Widget dialog, {
-  required Size size,
-}) async {
-  await pumpAtMinViewport(
-    tester,
-    size: size,
-    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    child: Scaffold(body: Center(child: dialog)),
-    settle: true,
-  );
-}
 
 MapTopology _buildArmyTopology() {
   return const MapTopology(
@@ -302,116 +274,110 @@ MoveFleetDialog _buildMoveFleetDialog() {
 void main() {
   suppressLogsForTests();
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — MoveArmyDialog @ 320 dp '
-    '(Refs #2870 S8/S10)',
-    () {
-      testWidgets(
-        'AC (positive) MoveArmyDialog @ 320×640: no RenderFlex overflow '
-        'exception, title + YOUR PROVINCES + Cancel + Confirm all render',
-        (WidgetTester tester) async {
-          await _pumpDialog(
-            tester,
-            _buildMoveArmyDialog(),
-            size: _kMinViewport,
-          );
+  group('SPEC/ui/mobile-adaptation.md § 7 — MoveArmyDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    testWidgets(
+      'AC (positive) MoveArmyDialog @ 320×640: no RenderFlex overflow '
+      'exception, title + YOUR PROVINCES + Cancel + Confirm all render',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          _buildMoveArmyDialog(),
+          size: _kMinViewport,
+        );
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: MoveArmyDialog must not '
-                'emit a RenderFlex overflow exception at kMinViewportWidth '
-                '(320 dp). CtDialogShell at 320 dp collapses to ~288 dp '
-                'content width — the title row, both CtSectionLabel '
-                'headers, the destination radio rows, and the trailing '
-                'Cancel + Confirm action row must all wrap within that.',
-          );
-          expect(find.byType(MoveArmyDialog), findsOneWidget);
-          expect(find.textContaining('Move army'), findsOneWidget);
-          // CtSectionLabel renders text upper-cased.
-          expect(find.text('YOUR PROVINCES'), findsOneWidget);
-          expect(find.text('INVASION TARGETS'), findsOneWidget);
-          expect(find.text('Cancel'), findsOneWidget);
-          expect(find.text('Confirm'), findsOneWidget);
-        },
-      );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: MoveArmyDialog must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). CtDialogShell at 320 dp collapses to ~288 dp '
+              'content width — the title row, both CtSectionLabel '
+              'headers, the destination radio rows, and the trailing '
+              'Cancel + Confirm action row must all wrap within that.',
+        );
+        expect(find.byType(MoveArmyDialog), findsOneWidget);
+        expect(find.textContaining('Move army'), findsOneWidget);
+        // CtSectionLabel renders text upper-cased.
+        expect(find.text('YOUR PROVINCES'), findsOneWidget);
+        expect(find.text('INVASION TARGETS'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Confirm'), findsOneWidget);
+      },
+    );
 
-      testWidgets(
-        'Negative control: MoveArmyDialog @ 1024×768 also pumps without '
-        'exception (regression sentinel for the overflow contract — '
-        'keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpDialog(
-            tester,
-            _buildMoveArmyDialog(),
-            size: _kWideRegressionViewport,
-          );
+    testWidgets(
+      'Negative control: MoveArmyDialog @ 1024×768 also pumps without '
+      'exception (regression sentinel for the overflow contract — '
+      'keeps the 320 dp positive pin meaningful)',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          _buildMoveArmyDialog(),
+          size: _kWideRegressionViewport,
+        );
 
-          expect(tester.takeException(), isNull);
-          expect(find.byType(MoveArmyDialog), findsOneWidget);
-          expect(find.textContaining('Move army'), findsOneWidget);
-          expect(find.text('Cancel'), findsOneWidget);
-          expect(find.text('Confirm'), findsOneWidget);
-        },
-      );
-    },
-  );
+        expect(tester.takeException(), isNull);
+        expect(find.byType(MoveArmyDialog), findsOneWidget);
+        expect(find.textContaining('Move army'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Confirm'), findsOneWidget);
+      },
+    );
+  });
 
-  group(
-    'SPEC/ui/mobile-adaptation.md § 7 — MoveFleetDialog @ 320 dp '
-    '(Refs #2870 S8/S10)',
-    () {
-      testWidgets(
-        'AC (positive) MoveFleetDialog @ 320×640: no RenderFlex overflow '
-        'exception, title + SEA ZONES + Cancel + Confirm all render',
-        (WidgetTester tester) async {
-          await _pumpDialog(
-            tester,
-            _buildMoveFleetDialog(),
-            size: _kMinViewport,
-          );
+  group('SPEC/ui/mobile-adaptation.md § 7 — MoveFleetDialog @ 320 dp '
+      '(Refs #2870 S8/S10)', () {
+    testWidgets(
+      'AC (positive) MoveFleetDialog @ 320×640: no RenderFlex overflow '
+      'exception, title + SEA ZONES + Cancel + Confirm all render',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          _buildMoveFleetDialog(),
+          size: _kMinViewport,
+        );
 
-          expect(
-            tester.takeException(),
-            isNull,
-            reason:
-                'SPEC/ui/mobile-adaptation.md § 7: MoveFleetDialog must not '
-                'emit a RenderFlex overflow exception at kMinViewportWidth '
-                '(320 dp). CtDialogShell at 320 dp collapses to ~288 dp '
-                'content width — the title row, the SEA ZONES '
-                'CtSectionLabel, the sea-zone radio rows, and the trailing '
-                'Cancel + Confirm action row must all wrap within that.',
-          );
-          expect(find.byType(MoveFleetDialog), findsOneWidget);
-          expect(find.textContaining('Move fleet'), findsOneWidget);
-          // CtSectionLabel renders text upper-cased; SEA ZONES is the
-          // guaranteed section for the single-sea-zone destination
-          // fixture.
-          expect(find.text('SEA ZONES'), findsOneWidget);
-          expect(find.text('Cancel'), findsOneWidget);
-          expect(find.text('Confirm'), findsOneWidget);
-        },
-      );
+        expect(
+          tester.takeException(),
+          isNull,
+          reason:
+              'SPEC/ui/mobile-adaptation.md § 7: MoveFleetDialog must not '
+              'emit a RenderFlex overflow exception at kMinViewportWidth '
+              '(320 dp). CtDialogShell at 320 dp collapses to ~288 dp '
+              'content width — the title row, the SEA ZONES '
+              'CtSectionLabel, the sea-zone radio rows, and the trailing '
+              'Cancel + Confirm action row must all wrap within that.',
+        );
+        expect(find.byType(MoveFleetDialog), findsOneWidget);
+        expect(find.textContaining('Move fleet'), findsOneWidget);
+        // CtSectionLabel renders text upper-cased; SEA ZONES is the
+        // guaranteed section for the single-sea-zone destination
+        // fixture.
+        expect(find.text('SEA ZONES'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Confirm'), findsOneWidget);
+      },
+    );
 
-      testWidgets(
-        'Negative control: MoveFleetDialog @ 1024×768 also pumps without '
-        'exception (regression sentinel for the overflow contract — '
-        'keeps the 320 dp positive pin meaningful)',
-        (WidgetTester tester) async {
-          await _pumpDialog(
-            tester,
-            _buildMoveFleetDialog(),
-            size: _kWideRegressionViewport,
-          );
+    testWidgets(
+      'Negative control: MoveFleetDialog @ 1024×768 also pumps without '
+      'exception (regression sentinel for the overflow contract — '
+      'keeps the 320 dp positive pin meaningful)',
+      (WidgetTester tester) async {
+        await pumpDialogs320At(
+          tester,
+          _buildMoveFleetDialog(),
+          size: _kWideRegressionViewport,
+        );
 
-          expect(tester.takeException(), isNull);
-          expect(find.byType(MoveFleetDialog), findsOneWidget);
-          expect(find.textContaining('Move fleet'), findsOneWidget);
-          expect(find.text('Cancel'), findsOneWidget);
-          expect(find.text('Confirm'), findsOneWidget);
-        },
-      );
-    },
-  );
+        expect(tester.takeException(), isNull);
+        expect(find.byType(MoveFleetDialog), findsOneWidget);
+        expect(find.textContaining('Move fleet'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Confirm'), findsOneWidget);
+      },
+    );
+  });
 }

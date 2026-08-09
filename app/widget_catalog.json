@@ -48,7 +48,7 @@
     "id": "ct_civilian_units_panel",
     "name": "CivilianUnitsPanel",
     "dart_file_path": "lib/features/game/widgets/units/civilian/civilian_units_panel.dart",
-    "constructor_props": "game: Game, humanPlayerId: String, civilianOwnerIds: Set<String>?, bus: AppEventBus, currentOrders: Orders, tileScopeTileKey: String?, initialSelectedUnitId: String?, explorerOnly: bool, builderOnly: bool, prospectShortcutTargetTileKey: String?, exploreShortcutTargetTileKey: String?, buildImprovementShortcutTargetTileKey: String?, readOnly: bool",
+    "constructor_props": "game: Game, humanPlayerId: String, civilianOwnerIds: Set<String>?, bus: AppEventBus, currentOrders: Orders, tileScopeTileKey: String?, initialSelectedUnitId: String?, explorerOnly: bool, builderOnly: bool, engineerOnly: bool, prospectShortcutTargetTileKey: String?, exploreShortcutTargetTileKey: String?, buildImprovementShortcutTargetTileKey: String?, buildRoadShortcutTargetTileKey: String?, readOnly: bool",
     "category": "game/panel",
     "source": "pipeline",
     "widgetbook_story_path": "Civilian Units Panel"

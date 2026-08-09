@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
-import 'support/app_shell_harness.dart';
+import 'app_shell_harness.dart';
 
 const MapTopology _emptyTopology = MapTopology(nodes: [], edges: []);
 

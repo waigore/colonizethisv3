@@ -1,7 +1,9 @@
-part of 'trade_screen.dart';
-
 /// Public Deal Book keys/literals for the trade screen.
 /// Tests and Deal Book UI parts use this type directly (Refs #4035 trade API collapse).
+library;
+
+import 'package:flutter/material.dart';
+
 abstract final class TradeScreenDealBookKeys {
   TradeScreenDealBookKeys._();
 
@@ -9,7 +11,7 @@ abstract final class TradeScreenDealBookKeys {
   /// tests asserting the Deal Book tab body is present in the tab
   /// strip's `IndexedStack` (visible when the Deal Book tab is selected
   /// after the user taps the Deal Book label). Refs #2993 E6 swapped
-  /// the placeholder for `_DealBookTabContent` — the key is intentionally
+  /// the placeholder for `DealBookTabContent` — the key is intentionally
   /// stable so existing tab-switch tests keep pinning the same body root.
   static const Key dealBookTabBodyKey =
       ValueKey<String>('tradeScreenDealBookTabBody');
@@ -149,4 +151,8 @@ abstract final class TradeScreenDealBookKeys {
   /// Layout / wireframe pins the literal `"Deal Book"`.
   // ignore: avoid_hardcoded_strings_in_widgets
   static const String dealBookTabLabel = 'Deal Book';
+
+  /// Per-row key for overseas-profit ledger rows (Refs #4226).
+  static Key dealBookOverseasProfitRowKey(int index) =>
+      ValueKey<String>('tradeScreenDealBookOverseasProfitRow:$index');
 }

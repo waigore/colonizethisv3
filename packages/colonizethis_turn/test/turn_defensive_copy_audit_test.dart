@@ -1,6 +1,6 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_turn/src/turn/phases/world_market_phase_carry_forward.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_turn/colonizethis_turn_testing.dart';
 
 /// Guards the turn-package defensive-copy audit (#3416,
 /// SPEC/program/turn-defensive-copy-audit.md). The pass-through branches of

@@ -2,14 +2,13 @@
 /// overlay. See SPEC/ui/province-sea-zone-detail-overlay.md § Province overlay
 /// content `Tile` (town / capital designation) and `Political / Economic /
 /// Naval` (Capital row).
+library;
 
-part of 'province_sea_zone_detail_overlay.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
-/// Whether [provinceId] is the capital province of any faction (player,
-/// minor nation, or tribe). Capital status is always-exact political intel
-/// (Refs #2865, SPEC § Province overlay content `Political / Economic /
-/// Naval`).
-@visibleForTesting
+import 'province_sea_zone_detail_overlay_sections_political.dart';
+
 bool provinceOverlayIsCapital(Game game, String provinceId) {
   for (final p in game.players) {
     if (p.capitalProvinceId == provinceId) return true;
@@ -23,11 +22,7 @@ bool provinceOverlayIsCapital(Game game, String provinceId) {
   return false;
 }
 
-/// Display name of the faction (player, minor nation, or tribe) whose
-/// `capitalTile` resolves to [tileKey], or null when no faction's capital tile
-/// matches. Faction display-name resolution mirrors the Political `Owner`
-/// family (player `displayName`; minor/tribe `displayName` falling back to id).
-String? _capitalHolderDisplayNameForTile(Game game, String tileKey) {
+String? capitalHolderDisplayNameForTile(Game game, String tileKey) {
   for (final p in game.players) {
     if (p.capitalTile?.toTileKey() == tileKey) return p.displayName;
   }
@@ -40,20 +35,15 @@ String? _capitalHolderDisplayNameForTile(Game game, String tileKey) {
   return null;
 }
 
-/// Optional Tile-section designation line for [selectedTileKey] (between the
-/// Terrain and Resource rows). Capital takes priority over town; ordinary land
-/// tiles return null so no line renders. See SPEC/ui/province-sea-zone-detail-
-/// overlay.md § Tile town / capital designation.
-@visibleForTesting
 String? provinceOverlayTileDesignationLine({
   required AppLocalizations l10n,
   required Game game,
   required String provinceId,
   required String selectedTileKey,
 }) {
-  final province = _findProvince(game, provinceId);
+  final province = findProvinceForSeaZoneOverlay(game, provinceId);
   final provinceName = province?.displayName ?? provinceId;
-  final capitalFactionName = _capitalHolderDisplayNameForTile(
+  final capitalFactionName = capitalHolderDisplayNameForTile(
     game,
     selectedTileKey,
   );

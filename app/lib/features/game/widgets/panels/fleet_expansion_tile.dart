@@ -1,16 +1,12 @@
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:flutter/material.dart';
 
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'tree_builders/naval_tree_builder.dart';
 import '../units/shared/units_entity_action_row.dart';
 import '../units/shared/units_entity_card.dart';
-
-part 'fleet_expansion_tile_expanded.dart';
-part 'fleet_expansion_tile_title.dart';
+import 'fleet_expansion_tile_expanded.dart';
+import 'fleet_expansion_tile_title.dart';
 
 /// Naval-units fleet row.
 ///
@@ -18,7 +14,7 @@ part 'fleet_expansion_tile_title.dart';
 /// `SPEC/ui/naval-units-panel.md` § *Naval mockup fidelity (R25–R29)* and
 /// `SPEC/ui/mockups/UNIT30001-naval-units-panel.html`):
 /// - R25 — actions render through [UnitsEntityActionRow] with
-///   `dense: true`, so Move / Split / Locate stay on a single inline row
+///   `dense: true`, so Move / Mission / Split / Locate stay on a single inline row
 ///   at the default panel width.
 /// - R26 — when [FleetRow.isHomeFleet] is `true`, the title appends a
 ///   compact uppercase `HOME` chip styled with `--accent-dim` / `--bg-deep`
@@ -58,6 +54,7 @@ class FleetExpansionTile extends StatelessWidget {
     required this.onCombineSelectionToggle,
     this.onSplitFleet,
     this.onMoveFleet,
+    this.onAssignMission,
     this.isSplitAllowed = false,
   });
 
@@ -69,6 +66,7 @@ class FleetExpansionTile extends StatelessWidget {
   final VoidCallback onCombineSelectionToggle;
   final VoidCallback? onSplitFleet;
   final VoidCallback? onMoveFleet;
+  final VoidCallback? onAssignMission;
   final bool isSplitAllowed;
 
   @override
@@ -92,7 +90,7 @@ class FleetExpansionTile extends StatelessWidget {
           CtSpacing.l,
           CtSpacing.m,
         ),
-        child: _FleetExpandedContent(row: row, l10n: l10n),
+        child: FleetExpandedContent(row: row, l10n: l10n),
       ),
     ];
   }

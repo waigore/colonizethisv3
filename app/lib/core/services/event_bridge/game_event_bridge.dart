@@ -1,4 +1,4 @@
-import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 class GameEventBridge {
@@ -90,6 +90,7 @@ class GameEventBridge {
         _appBus.emit(
           AppOrderRejectedEvent(
             playerId: event.playerId,
+            orderKind: event.orderKind,
             orderSummary: event.orderSummary,
             reasonCode: event.reasonCode,
           ),
@@ -147,6 +148,35 @@ class GameEventBridge {
             previousOwnerId: event.previousOwnerId,
             newOwnerId: event.newOwnerId,
             provinceId: event.provinceId,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case OverseasProfitCreditedEvent():
+        _appBus.emit(
+          AppOverseasProfitCreditedEvent(
+            playerId: event.playerId,
+            totalTreasuryCredit: event.totalTreasuryCredit,
+            creditCount: event.creditCount,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case MarketTurnSummaryEvent():
+        _appBus.emit(
+          AppMarketTurnSummaryEvent(
+            playerId: event.playerId,
+            totalSpent: event.totalSpent,
+            totalReceived: event.totalReceived,
+            carryForwardOrderCount: event.carryForwardOrderCount,
+            turnNumber: event.turnNumber,
+          ),
+        );
+      case GeneralMedalGainedEvent():
+        _appBus.emit(
+          AppGeneralMedalGainedEvent(
+            playerId: event.playerId,
+            generalId: event.generalId,
+            provinceId: event.provinceId,
+            newMedals: event.newMedals,
             turnNumber: event.turnNumber,
           ),
         );

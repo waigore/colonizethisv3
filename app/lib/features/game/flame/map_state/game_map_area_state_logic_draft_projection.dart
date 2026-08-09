@@ -1,4 +1,9 @@
-part of 'game_map_area_state_logic.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import 'game_map_area_civilian_draft_projection.dart';
+import 'game_map_area_fleet_draft_projection.dart';
 
 /// Civilian and fleet draft marker projection helpers for [GameMapAreaStateLogic].
 abstract final class GameMapAreaStateLogicDraftProjection {

@@ -5,7 +5,6 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show buildPlayerView;
-import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
@@ -16,8 +15,8 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
-import 'support/golden_capture_harness.dart';
-import 'support/province_overlay_test_harness.dart';
+import 'golden_capture_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 void main() {
   suppressLogsForTests();

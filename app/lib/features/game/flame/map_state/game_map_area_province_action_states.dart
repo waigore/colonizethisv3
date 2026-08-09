@@ -1,12 +1,17 @@
-import 'package:colonizethis_app/core/utils/prefixed_id.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/colonizethis_logic.dart';
-import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
-import 'package:colonizethis_map/colonizethis_map.dart';
 
-part 'game_map_area_province_action_states_prospect.dart';
-part 'game_map_area_province_action_states_explore.dart';
-part 'game_map_area_province_action_states_build_improvement.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
+
+import 'game_map_area_province_action_states_build_improvement.dart';
+import 'game_map_area_province_action_states_build_road.dart';
+import 'game_map_area_province_action_states_build_fort.dart';
+import 'game_map_area_province_action_states_explore.dart';
+import 'game_map_area_province_action_states_prospect.dart';
+import 'game_map_area_province_action_states_purchase_land.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
+import 'package:colonizethis_logic/ai_api.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 
 /// Province-overlay action visibility/enablement computations for prospect,
 /// explore, and build-improvement shortcuts.
@@ -31,6 +36,18 @@ class GameMapAreaProvinceActionStates {
     showIcon: false,
     enabled: false,
     hasBuilderUnits: false,
+  );
+  static const ({bool showIcon, bool enabled, bool hasEngineerUnits})
+  kHiddenEngineerInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasEngineerUnits: false,
+  );
+  static const ({bool showIcon, bool enabled, bool hasMerchantUnits})
+  kHiddenMerchantInlineActionState = (
+    showIcon: false,
+    enabled: false,
+    hasMerchantUnits: false,
   );
 
   /// Returns province-overlay prospect action visibility + enablement.
@@ -99,6 +116,69 @@ class GameMapAreaProvinceActionStates {
     Map<String, TileMapResult>? tileMapByRegion,
   }) =>
       GameMapAreaProvinceActionStatesBuildImprovement.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildRoad({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesBuildRoad.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasEngineerUnits}) buildFort({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesBuildFort.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({bool showIcon, bool enabled, bool hasMerchantUnits}) purchaseLand({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String selectedTileKey,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesPurchaseLand.compute(
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,

@@ -130,6 +130,9 @@ class InitGameMapViewLandMarkers {
           ),
           portIconX: portIconX,
           portIconY: portIconY,
+          worldFortLevel: p.fortLevel,
+          mapVisibleFortLevel:
+              p.fortLevel >= 1 ? p.fortLevel.clamp(1, 3) : null,
         ),
       );
     }

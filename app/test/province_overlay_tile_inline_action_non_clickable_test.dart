@@ -26,7 +26,7 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
     show demoGameForOverlay, sampleProvinceIdForOverlay, sampleTileKeyForProvinceOverlay;
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 
-import 'support/province_overlay_test_harness.dart';
+import 'province_overlay_test_harness.dart';
 
 /// Builds the overlay with the Tile section inline actions shown and a
 /// configurable enabled state plus tap-recording callbacks. Editorial shell
@@ -41,6 +41,7 @@ Widget _overlayWithInlineActions({
   VoidCallback? onProspectWithExplorerTap,
   bool showBuildImprovementActionIcon = false,
   bool buildImprovementActionEnabled = false,
+  bool buildImprovementActionHasBuilderUnits = false,
   VoidCallback? onBuildImprovementTap,
 }) {
   return buildProvinceOverlayDarkThemeShell(
@@ -55,6 +56,7 @@ Widget _overlayWithInlineActions({
     onProspectWithExplorerTap: onProspectWithExplorerTap,
     showBuildImprovementActionIcon: showBuildImprovementActionIcon,
     buildImprovementActionEnabled: buildImprovementActionEnabled,
+    buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
     onBuildImprovementTap: onBuildImprovementTap,
   );
 }
@@ -66,6 +68,14 @@ CtIconAction _iconActionByTooltip(WidgetTester tester, String tooltip) {
   return tester.widget<CtIconAction>(
     find.byWidgetPredicate(
       (widget) => widget is CtIconAction && widget.tooltip == tooltip,
+    ),
+  );
+}
+
+CtIconAction _buildImprovementIconAction(WidgetTester tester) {
+  return tester.widget<CtIconAction>(
+    find.byWidgetPredicate(
+      (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
     ),
   );
 }
@@ -180,14 +190,16 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          final tooltip = find.byTooltip('Build improvement');
+          final tooltip = find.byWidgetPredicate(
+            (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
+          );
           expect(tooltip, findsOneWidget);
           expect(
             find.descendant(of: tooltip, matching: find.byType(IgnorePointer)),
             findsOneWidget,
           );
 
-          final action = _iconActionByTooltip(tester, 'Build improvement');
+          final action = _buildImprovementIconAction(tester);
           expect(action.enabled, isFalse);
           expect(action.onPressed, isNull);
 
@@ -221,6 +233,7 @@ void main() {
               onProspectWithExplorerTap: () => prospectTapped = true,
               showBuildImprovementActionIcon: true,
               buildImprovementActionEnabled: true,
+              buildImprovementActionHasBuilderUnits: true,
               onBuildImprovementTap: () => buildTapped = true,
             ),
           );
@@ -229,7 +242,6 @@ void main() {
           for (final tooltip in const <String>[
             'Explore with explorer',
             'Prospect with explorer',
-            'Build improvement',
           ]) {
             final finder = find.byTooltip(tooltip);
             expect(finder, findsOneWidget);
@@ -245,9 +257,27 @@ void main() {
             expect(action.onPressed, isNotNull);
           }
 
+          final buildImprovementFinder = find.byWidgetPredicate(
+            (widget) => widget is CtIconAction && widget.icon == Icons.handyman,
+          );
+          expect(buildImprovementFinder, findsOneWidget);
+          expect(
+            find.descendant(
+              of: buildImprovementFinder,
+              matching: find.byType(IgnorePointer),
+            ),
+            findsNothing,
+            reason:
+                'An enabled Build improvement inline action must remain '
+                'interactive (no IgnorePointer wrapper).',
+          );
+          final buildAction = _buildImprovementIconAction(tester);
+          expect(buildAction.enabled, isTrue);
+          expect(buildAction.onPressed, isNotNull);
+
           await tester.tap(find.byTooltip('Explore with explorer'));
           await tester.tap(find.byTooltip('Prospect with explorer'));
-          await tester.tap(find.byTooltip('Build improvement'));
+          await tester.tap(buildImprovementFinder);
           await tester.pumpAndSettle();
 
           expect(exploreTapped, isTrue);

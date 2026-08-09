@@ -1,13 +1,22 @@
 /// Tile-derived economic intel aggregation for province tab content.
+library;
 
-part of 'province_sea_zone_detail_overlay.dart';
+
+import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+
+import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, VisibilityLevel, kProspectRequiredResourceIds, resourceIdVisibleInPlayerView;
 
 ({
   Map<String, List<({String tileKey, String terrain, String impBase})>>
   byResImproved,
   Map<String, List<({String tileKey, String terrain})>> byResImprovable,
   List<String> resourceKeysSorted,
-}) _aggregateProvinceTileIntel({
+}) aggregateProvinceTileIntel({
   required AppLocalizations l10n,
   required Game game,
   required RegionMapViewData region,
@@ -37,9 +46,9 @@ part of 'province_sea_zone_detail_overlay.dart';
         ? res
         : resourceIdVisibleInPlayerView(playerView, tk, res);
     if (visibleRes == null) continue;
-    final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
+    final terrain = economicTerrainTitleForTile(region, tk) ?? '—';
     if (imp > 0) {
-      final impBase = _improvementBaseNameForPlayer(
+      final impBase = improvementBaseNameForPlayer(
         l10n: l10n,
         visLevel: visLevel,
         rawResourceId: res,

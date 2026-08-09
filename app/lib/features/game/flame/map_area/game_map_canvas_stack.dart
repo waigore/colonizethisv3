@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:colonizethis_logic/colonizethis_logic.dart' show PlayerView;
+
 import 'package:colonizethis_models/colonizethis_models.dart' as ct_models;
 import 'package:colonizethis_map/colonizethis_map.dart' show RegionMapViewData;
 
+import '../../../../providers/games_provider.dart';
 import '../../../../providers/map_province_panel_provider.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart';
 import '../region_map/region_map_component.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import '../../../../widgets/ct_region_map.dart' show CtRegionMap;
@@ -14,6 +16,7 @@ import '../overlays/game_map_province_detail_side_panel.dart';
 import 'game_map_canvas_stack_selection_prompt.dart';
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../region_map/region_map_viewport_snapshot.dart';
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 /// Compact minimum tap-target height applied to the selection-prompt
 /// banner's `cancel` [CtNinePatchButton]. Pinned to keep the inline
@@ -49,6 +52,11 @@ class GameMapCanvasStack extends ConsumerWidget {
     required this.onTileSelectedForWork,
     required this.onWorkTargetSelectionCancelled,
     required this.selectedCivilianTileKey,
+    this.selectionPromptUsesRelocateCopy = false,
+    this.workTargetForSelection,
+    this.hoveredWorkTargetTileKey,
+    this.lastValidHoveredWorkTargetTileKey,
+    this.onWorkTargetTileHovered,
     required this.onCivilianTileStateChanged,
     required this.onCivilianTileSelectionCleared,
     required this.onRegionViewportSnapshot,
@@ -75,6 +83,11 @@ class GameMapCanvasStack extends ConsumerWidget {
 
   final void Function(String tileKey)? onTileSelectedForWork;
   final VoidCallback? onWorkTargetSelectionCancelled;
+  final bool selectionPromptUsesRelocateCopy;
+  final String? workTargetForSelection;
+  final String? hoveredWorkTargetTileKey;
+  final String? lastValidHoveredWorkTargetTileKey;
+  final void Function(String? tileKey)? onWorkTargetTileHovered;
   final String? selectedCivilianTileKey;
   final void Function(String tileKey)? onCivilianTileStateChanged;
   final VoidCallback? onCivilianTileSelectionCleared;
@@ -119,7 +132,9 @@ class GameMapCanvasStack extends ConsumerWidget {
                             .read(mapProvincePanelProvider.notifier)
                             .reportMapTileTapped(tk),
                   onProvinceHovered: (_) {},
-                  onTileHovered: (_) {},
+                  onTileHovered: inWorkTargetSelectionMode
+                      ? onWorkTargetTileHovered
+                      : (_) {},
                   onCivilianTileStateChanged: inWorkTargetSelectionMode
                       ? null
                       : onCivilianTileStateChanged,
@@ -160,10 +175,29 @@ class GameMapCanvasStack extends ConsumerWidget {
                 final overlayOpen = ref.watch(
                   mapProvincePanelProvider.select((s) => s.overlayOpen),
                 );
+                final orders = ref.watch(currentOrdersProvider);
+                final previewTileKey =
+                    hoveredWorkTargetTileKey ??
+                    lastValidHoveredWorkTargetTileKey;
+                final workTarget = workTargetForSelection;
+                final affordPreview =
+                    workTarget != null &&
+                        previewTileKey != null &&
+                        !selectionPromptUsesRelocateCopy
+                    ? previewWorkOrderAffordAtTile(
+                        game: game,
+                        playerId: humanPlayerId,
+                        currentOrders: orders,
+                        workTarget: workTarget,
+                        targetTileKey: previewTileKey,
+                      )
+                    : null;
                 return GameMapCanvasStackSelectionPrompt(
                   isNarrow: isNarrow,
                   overlayOpen: overlayOpen,
                   onCancel: onWorkTargetSelectionCancelled,
+                  usesRelocateCopy: selectionPromptUsesRelocateCopy,
+                  affordPreview: affordPreview,
                 );
               },
             ),

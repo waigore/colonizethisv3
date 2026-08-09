@@ -1,11 +1,10 @@
-part of 'research_slot_turn_preview_view.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+import 'package:flutter/material.dart';
 
-/// Dual-segment research progress bar: committed RP (segment A, `--accent`)
-/// followed by anticipated RP this turn (segment B, a subtler `--accent` tint
-/// animated on width). Mirrors the single-segment `CtProgressBar` geometry
-/// (12 dp tall, 1 px `--accent-dim` border, `--surface` track).
-class _ResearchDualSegmentBar extends StatelessWidget {
-  const _ResearchDualSegmentBar({
+/// Dual-segment research progress bar (Refs #4117 de-part).
+class ResearchDualSegmentBar extends StatelessWidget {
+  const ResearchDualSegmentBar({
+    super.key,
     required this.committedFraction,
     required this.anticipatedFraction,
     required this.anticipatedSegmentKey,
@@ -57,7 +56,6 @@ class _ResearchDualSegmentBar extends StatelessWidget {
   }
 }
 
-/// Static track (surface fill + `--accent-dim` border) behind both segments.
 class _DualSegmentTrack extends StatelessWidget {
   const _DualSegmentTrack();
 
@@ -68,7 +66,7 @@ class _DualSegmentTrack extends StatelessWidget {
         color: EditorialMonoclePalette.surface,
         border: Border.all(
           color: EditorialMonoclePalette.accentDim,
-          width: _ResearchDualSegmentBar.borderWidth,
+          width: ResearchDualSegmentBar.borderWidth,
         ),
       ),
       child: const SizedBox.expand(),
@@ -76,8 +74,6 @@ class _DualSegmentTrack extends StatelessWidget {
   }
 }
 
-/// Committed (segment A) + anticipated (segment B, animated) fill row, inset by
-/// the track border so the segments sit inside the 1 px frame.
 class _DualSegmentFill extends StatelessWidget {
   const _DualSegmentFill({
     required this.committedWidth,
@@ -92,7 +88,7 @@ class _DualSegmentFill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(_ResearchDualSegmentBar.borderWidth),
+      padding: const EdgeInsets.all(ResearchDualSegmentBar.borderWidth),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Row(
@@ -107,7 +103,7 @@ class _DualSegmentFill extends StatelessWidget {
             if (anticipatedWidth > 0)
               AnimatedContainer(
                 key: anticipatedSegmentKey,
-                duration: _ResearchDualSegmentBar.animationDuration,
+                duration: ResearchDualSegmentBar.animationDuration,
                 curve: Curves.easeOut,
                 width: anticipatedWidth,
                 height: double.infinity,
