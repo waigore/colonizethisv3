@@ -36,13 +36,14 @@
 // raised for GAME90001 Trade Counsel tab + GAME60001 Market counsel entry (Refs #4282).
 // raised for MAP fort icons + MAP20001 fort status and Build fort shortcut (Refs #4280);
 // raised for combined Trade Counsel + fort merge headroom after dev integration (Refs #4282).
+// raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 70700;
+const _maxMainLines = 70800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
