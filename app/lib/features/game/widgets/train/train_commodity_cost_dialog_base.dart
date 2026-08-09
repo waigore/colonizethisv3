@@ -4,6 +4,7 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import '../../../../widgets/ct_nine_patch_button.dart';
@@ -35,6 +36,17 @@ class CommodityCostUnitEntry {
   final Map<String, int> buildInputs;
 }
 
+/// Optional per-row role and capability copy (naval train dialog).
+class CommodityCostTrainDialogUnitRowExtras {
+  const CommodityCostTrainDialogUnitRowExtras({
+    required this.roleLabel,
+    required this.capabilityLine,
+  });
+
+  final String roleLabel;
+  final String capabilityLine;
+}
+
 /// Shared [TrainDialogBaseState] for the **commodity-cost** train dialogs
 /// (military / naval), whose cost model is treasury + 1 peasant + commodity
 /// inputs and whose presentation is a chip resource bar + per-unit cost rows.
@@ -58,6 +70,13 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
   /// Not derivable from [commodityCostEntries] alone (it pins chip order and
   /// the goldens), so each subclass supplies it explicitly.
   List<String> get resourceBarCommodityIds;
+
+  /// Optional per-row extras (naval role/capability gist). Military leaves null.
+  @protected
+  CommodityCostTrainDialogUnitRowExtras? unitRowExtrasFor(
+    CommodityCostUnitEntry entry,
+  ) =>
+      null;
 
   late final List<CommodityCostUnitEntry> _entries = commodityCostEntries;
   late final Map<String, CommodityCostUnitEntry> _entriesById = {
@@ -131,6 +150,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
         if (!locked && remainingCommodity(input.key, committed) < input.value)
           input.key,
     };
+    final extras = unitRowExtrasFor(econ);
     return CommodityCostTrainDialogUnitRow(
       displayName: econ.displayName,
       buildTreasuryCost: econ.buildTreasuryCost,
@@ -146,6 +166,8 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
       insufficientCommodityIds: insufficientCommodityIds,
       onIncrement: () => increment(econ.unitTypeId),
       onDecrement: () => decrement(econ.unitTypeId),
+      roleLabel: extras?.roleLabel,
+      capabilityLine: extras?.capabilityLine,
     );
   }
 }

@@ -2123,6 +2123,35 @@
   "@trainNaval_title": {
     "description": "Train naval dialog title."
   },
+  "trainNaval_merchantCargoHolds": "+{count} cargo holds",
+  "@trainNaval_merchantCargoHolds": {
+    "description": "Merchant ship capability line on Train Naval rows. SPEC/ui/train-naval-dialog.md.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trainNaval_warshipRoleFastInterceptor": "Fast interceptor",
+  "@trainNaval_warshipRoleFastInterceptor": {
+    "description": "Warship combat-role gist for sloop, frigate, raider. SPEC/game/tech-tree-naval.md § Notes."
+  },
+  "trainNaval_warshipRoleBattleShip": "Battle ship",
+  "@trainNaval_warshipRoleBattleShip": {
+    "description": "Warship combat-role gist for ship_of_the_line, ironclad. SPEC/game/tech-tree-naval.md § Notes."
+  },
+  "trainNaval_roleCapabilityGist": "{role} · {capability}",
+  "@trainNaval_roleCapabilityGist": {
+    "description": "Muted role and capability gist line on Train Naval rows. SPEC/ui/train-naval-dialog.md.",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      },
+      "capability": {
+        "type": "String"
+      }
+    }
+  },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
     "description": "Error text when player has no capital in train dialogs."

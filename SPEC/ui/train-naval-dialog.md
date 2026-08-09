@@ -29,6 +29,7 @@ The Train Naval dialog lets the player queue ship build orders in a single modal
 - **Deficit hint:** Same wording style as civilian/military — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`) below the box.
 - **Rows:** One row per `ShipEconomyCatalog.all` entry (all 12 ship types) as a single line — left info `Column` (ship name above the icon-bearing cost summary) plus the stepper on the right.
   - primary label: **ship display name** via `shipTypeDisplayName` in `colonizethis_data` (e.g. `Ship of the Line`, not `ship_of_the_line`).
+  - **role + capability line** (always visible, muted `10` px body): `Merchant` / `Warship` (`naval_units_compositionRoleMerchant` / `naval_units_compositionRoleWarship`) from `NavalStatsCatalog.get(shipTypeId).cargoHold` (`cargoHold == 0` → Warship, else Merchant), then ` · `, then one capability gist — merchants: `+{N} cargo holds` from `cargoHold`; warships: authored combat-role gist per `ship_type_id` (`Fast interceptor` for `sloop`, `frigate`, `raider`; `Battle ship` for `ship_of_the_line`, `ironclad`; see `SPEC/game/tech-tree-naval.md` § Notes). Warships never show a cargo-holds line. Locked rows keep role/capability visible (muted at row opacity).
   - cost summary: treasury + 1 peasant + commodity requirements with icons.
   - locked state + `Requires: {tech}` when unlocking tech is missing.
   - `[-] count [+]` stepper on the right.
@@ -129,3 +130,13 @@ The dialog uses the shared `app/lib/features/game/widgets/train/train_unit_dialo
 - **Given** any cost icon in a ship row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
 
 - **Given** the Train Naval dialog is open and two or more resources are insufficient for the queued ships (e.g. treasury and lumber), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Lumber low`), with no `" and "` connector.
+
+- **Given** Train Naval is open and Carrack is listed, **when** the Carrack row renders, **then** the UI layer shows `Merchant` and `+3 cargo holds` (matching `NavalStatsCatalog` for `carrack`) on the default muted role/capability line without external docs.
+
+- **Given** a warship row (e.g. Sloop) renders, **when** the default surface is read, **then** the UI layer shows `Warship · Fast interceptor` and does **not** show a cargo-holds sell line.
+
+- **Given** Ship of the Line is listed, **when** its row renders, **then** the UI layer shows `Warship · Battle ship` on the default role/capability line.
+
+- **Given** a tech-locked ship row, **when** it renders, **then** role/capability remain visible (muted at locked row opacity) with existing `Requires: {tech}` and disabled steppers.
+
+- **Given** any ship row on Train Naval, **when** the default row renders, **then** the UI layer does **not** dump the full FRP/RNG/ARM/HULL/MV stat list as always-visible primary content and does **not** include a Details control or full-stat tooltip (deferred follow-up).
