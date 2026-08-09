@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
@@ -25,6 +26,8 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
     required this.insufficientCommodityIds,
     required this.onIncrement,
     required this.onDecrement,
+    this.roleLabel,
+    this.capabilityLine,
   });
 
   final String displayName;
@@ -48,6 +51,12 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
 
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
+
+  /// Optional role tag (e.g. Merchant / Warship) for naval train rows.
+  final String? roleLabel;
+
+  /// Optional one-line capability gist (cargo holds or combat role).
+  final String? capabilityLine;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +89,10 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TrainDialogUnitNameLine(name: displayName, isLocked: isLocked),
+        if (roleLabel != null && capabilityLine != null) ...[
+          const SizedBox(height: 2),
+          _buildRoleCapabilityLine(),
+        ],
         const SizedBox(height: 2),
         _buildCostWrap(l10n),
         TrainDialogLockedHint(
@@ -87,6 +100,16 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
           techRequiredLabel: techRequiredLabel,
         ),
       ],
+    );
+  }
+
+  Widget _buildRoleCapabilityLine() {
+    return Text(
+      '$roleLabel · $capabilityLine',
+      style: TextStyle(
+        fontSize: 10,
+        color: EditorialMonoclePalette.muted,
+      ),
     );
   }
 

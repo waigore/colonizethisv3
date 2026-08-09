@@ -662,6 +662,17 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainNaval_title => 'Train Naval';
 
   @override
+  String trainNaval_merchantCargoHolds(int count) {
+    return '+$count cargo holds';
+  }
+
+  @override
+  String get trainNaval_warshipRoleFastInterceptor => 'Fast interceptor';
+
+  @override
+  String get trainNaval_warshipRoleBattleShip => 'Battle ship';
+
+  @override
   String get trainUnits_noCapital => 'No capital set — cannot train units';
 
   @override

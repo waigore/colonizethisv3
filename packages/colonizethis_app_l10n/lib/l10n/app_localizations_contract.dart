@@ -1124,6 +1124,15 @@ abstract class AppLocalizations {
   /// Train naval dialog title.
   String get trainNaval_title;
 
+  /// Merchant ship capability line on Train Naval rows.
+  String trainNaval_merchantCargoHolds(int count);
+
+  /// Warship combat-role gist for sloop, frigate, raider.
+  String get trainNaval_warshipRoleFastInterceptor;
+
+  /// Warship combat-role gist for ship_of_the_line, ironclad.
+  String get trainNaval_warshipRoleBattleShip;
+
   /// Error text when player has no capital in train dialogs.
   String get trainUnits_noCapital;
 

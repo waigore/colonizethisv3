@@ -6,6 +6,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'train_commodity_cost_dialog_base.dart';
 import 'train_dialog_base.dart';
+import 'train_naval_ship_role_display.dart';
 
 /// Train-at-capital dialog for naval (ship) units. Mirrors the civilian and
 /// military train dialogs: a `remaining / total` resource bar, per-row cost
@@ -62,6 +63,20 @@ class _TrainNavalDialogState
         buildInputs: e.buildInputs,
       ),
   ];
+
+  @override
+  CommodityCostTrainDialogUnitRowExtras? unitRowExtrasFor(
+    CommodityCostUnitEntry entry,
+  ) {
+    final l10n = appL10n(context);
+    return CommodityCostTrainDialogUnitRowExtras(
+      roleLabel: TrainNavalShipRoleDisplay.roleLabel(l10n, entry.unitTypeId),
+      capabilityLine: TrainNavalShipRoleDisplay.capabilityLine(
+        l10n,
+        entry.unitTypeId,
+      ),
+    );
+  }
 
   @override
   void emitCommittedOrders(List<BuildUnitOrder> orders) {
