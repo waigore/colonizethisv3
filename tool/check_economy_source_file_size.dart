@@ -7,16 +7,16 @@
 // libraries (`treasury_bid_budget.dart`, `town_manufacturing_bonus.dart`,
 // `first_right_credits.dart`, `tile_extraction_pipeline.dart`) into
 // single-concern siblings, leaving every economy lib file at or below
-// ~302 physical lines. This tighter economy-only ceiling keeps the splits
-// from silently re-growing back toward the shared 500-line cap.
+// ~302 physical lines. Phase 8 (#4299) lowered the ceiling to 260 after
+// near-cap splits. This tighter economy-only ceiling keeps the splits from
+// silently re-growing back toward the shared 500-line cap.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-/// Ratchet ceiling chosen just above the post-split largest file
-/// (`world_market/first_right_credits.dart`, 302 physical lines at #4049).
-const int economySourceFileSizeCeiling = 310;
+/// Ratchet ceiling for phase-8 economy lib files (Refs #4299).
+const int economySourceFileSizeCeiling = 260;
 
 const String _economyLibRelativePath = 'packages/colonizethis_economy/lib';
 
@@ -53,14 +53,14 @@ int runCheckEconomySourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_economy_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4049).',
+      '(ceiling $ceiling; Refs #4299).',
     );
     return 0;
   }
 
   logE(
     'check_economy_source_file_size: found ${violations.length} violation(s) '
-    'under $_economyLibRelativePath (phase-7 ceiling $ceiling; Refs #4049):',
+    'under $_economyLibRelativePath (phase-8 ceiling $ceiling; Refs #4299):',
   );
   for (final violation in violations) {
     logE(' - $violation');
