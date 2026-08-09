@@ -673,6 +673,11 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainNaval_warshipRoleBattleShip => 'Battle ship';
 
   @override
+  String trainNaval_roleCapabilityGist(String role, String capability) {
+    return '$role · $capability';
+  }
+
+  @override
   String get trainUnits_noCapital => 'No capital set — cannot train units';
 
   @override

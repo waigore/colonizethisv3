@@ -2140,6 +2140,18 @@
   "@trainNaval_warshipRoleBattleShip": {
     "description": "Warship combat-role gist for ship_of_the_line, ironclad. SPEC/game/tech-tree-naval.md § Notes."
   },
+  "trainNaval_roleCapabilityGist": "{role} · {capability}",
+  "@trainNaval_roleCapabilityGist": {
+    "description": "Muted role and capability gist line on Train Naval rows. SPEC/ui/train-naval-dialog.md.",
+    "placeholders": {
+      "role": {
+        "type": "String"
+      },
+      "capability": {
+        "type": "String"
+      }
+    }
+  },
   "trainUnits_noCapital": "No capital set — cannot train units",
   "@trainUnits_noCapital": {
     "description": "Error text when player has no capital in train dialogs."

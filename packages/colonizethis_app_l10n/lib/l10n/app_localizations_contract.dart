@@ -1133,6 +1133,9 @@ abstract class AppLocalizations {
   /// Warship combat-role gist for ship_of_the_line, ironclad.
   String get trainNaval_warshipRoleBattleShip;
 
+  /// Muted role and capability gist line on Train Naval rows.
+  String trainNaval_roleCapabilityGist(String role, String capability);
+
   /// Error text when player has no capital in train dialogs.
   String get trainUnits_noCapital;
 

@@ -91,7 +91,7 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
         TrainDialogUnitNameLine(name: displayName, isLocked: isLocked),
         if (roleLabel != null && capabilityLine != null) ...[
           const SizedBox(height: 2),
-          _buildRoleCapabilityLine(),
+          _buildRoleCapabilityLine(l10n),
         ],
         const SizedBox(height: 2),
         _buildCostWrap(l10n),
@@ -103,9 +103,9 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
     );
   }
 
-  Widget _buildRoleCapabilityLine() {
+  Widget _buildRoleCapabilityLine(AppLocalizations l10n) {
     return Text(
-      '$roleLabel · $capabilityLine',
+      l10n.trainNaval_roleCapabilityGist(roleLabel!, capabilityLine!),
       style: TextStyle(
         fontSize: 10,
         color: EditorialMonoclePalette.muted,
