@@ -260,10 +260,17 @@ rules:
 
   - rule_id: repo.economy_source_file_size
     group: structure
-    title: colonizethis_economy lib files must stay at or below the phase-7 310 physical-line ceiling (Refs #4049)
+    title: colonizethis_economy lib files must stay at or below the phase-8 260 physical-line ceiling (Refs #4299)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_economy_source_file_size.dart
+
+  - rule_id: repo.economy_test_mirrors_lib
+    group: testing
+    title: colonizethis_economy tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #4299)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_economy_test_mirrors_lib.dart
 
   - rule_id: repo.save_source_file_size
     group: structure
