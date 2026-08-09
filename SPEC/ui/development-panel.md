@@ -71,7 +71,9 @@ Road-step selection: BFS on owned land tiles from the improve target toward any 
 | Use case | Proves |
 |----------|--------|
 | Default — Old World | Overview + owned rows + map. |
-| Narrow (360 dp) | Stacked list/map. |
+| Default — Old World (mobile / wide) | Narrow stacked list/map and wide side-by-side layout. |
+| Fog map — player-constrained visibility | Panel map with `fullyVisible`, `fogged`, and unrevealed tiles; territory perimeter outline; improvable counts exclude unrevealed intel. |
+| Assigned civilians — overview rows | Overview lists pending Builder improve and in-progress Engineer road work with target + turn progress. |
 | Disconnected dialog | Road first disabled reason + Improve anyway affordance. |
 
 ---
