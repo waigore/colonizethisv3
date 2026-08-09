@@ -30,7 +30,7 @@ class TrainNavalShipRoleDisplay {
       case 'frigate':
       case 'raider':
         return l10n.trainNaval_warshipRoleFastInterceptor;
-      case 'ship_of_the_line':
+      case kTechIdShipOfTheLine:
       case 'ironclad':
         return l10n.trainNaval_warshipRoleBattleShip;
       default:

@@ -35,7 +35,7 @@ void main() {
 
     test('ship of the line shows battle ship gist', () {
       expect(
-        TrainNavalShipRoleDisplay.capabilityLine(l10n, 'ship_of_the_line'),
+        TrainNavalShipRoleDisplay.capabilityLine(l10n, kTechIdShipOfTheLine),
         l10n.trainNaval_warshipRoleBattleShip,
       );
     });
