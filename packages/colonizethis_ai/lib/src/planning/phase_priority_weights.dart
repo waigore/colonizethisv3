@@ -32,8 +32,12 @@ library;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../perception/perception_snapshot.dart';
-import 'army_conquest_prep.dart' show regimentCountForPlayer;
 import 'expand_phase_planner.dart' show ExpandEconomyPlan, planExpandEconomy;
+import 'phase_priority_weights_curve.dart';
+import 'phase_priority_weights_overrides.dart';
+
+export 'phase_priority_weights_curve.dart';
+export 'phase_priority_weights_overrides.dart';
 
 /// Per-domain priority weights for one phase-planner dispatch (Refs
 /// #2847 § Soft-phase priority weights).
@@ -182,8 +186,8 @@ PhasePriorityWeights computePhasePriorityWeights({
   required ExpandEconomyPlan expandEconomyPlan,
 }) {
   final ow = snapshot.conquest.oldWorldProvincesOwned;
-  final curve = _curveWeightsForOw(ow);
-  final nwFloor = _nwAcquisitionFloor(
+  final curve = curveWeightsForOw(ow);
+  final nwFloor = nwAcquisitionFloor(
     snapshot: snapshot,
     game: game,
     expandEconomyPlan: expandEconomyPlan,
@@ -234,112 +238,3 @@ double goalColonialPressureWeightFor({
   game: game,
   expandEconomyPlan: planExpandEconomy(game: game, snapshot: snapshot),
 ).newWorldAcquisition;
-
-PhasePriorityWeights _curveWeightsForOw(int ow) {
-  if (ow <= kPhasePriorityCurveEarlySprintCeiling) {
-    return PhasePriorityWeights.earlySprintDefault;
-  }
-  switch (ow) {
-    case 8:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.90,
-        newWorldAcquisition: 0.10,
-        oldWorldCivilian: 0.85,
-        newWorldCivilian: 0.15,
-      );
-    case 9:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.80,
-        newWorldAcquisition: 0.20,
-        oldWorldCivilian: 0.75,
-        newWorldCivilian: 0.25,
-      );
-    case 10:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.60,
-        newWorldAcquisition: 0.40,
-        oldWorldCivilian: 0.55,
-        newWorldCivilian: 0.45,
-      );
-    case 11:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.40,
-        newWorldAcquisition: 0.60,
-        oldWorldCivilian: 0.35,
-        newWorldCivilian: 0.65,
-      );
-    case 12:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.20,
-        newWorldAcquisition: 0.80,
-        oldWorldCivilian: 0.15,
-        newWorldCivilian: 0.85,
-      );
-    default:
-      return const PhasePriorityWeights(
-        oldWorldConquest: 0.10,
-        newWorldAcquisition: 0.90,
-        oldWorldCivilian: 0.05,
-        newWorldCivilian: 0.95,
-      );
-  }
-}
-
-/// True when the § Resource-need overrides treasury-recovery predicate
-/// is active for this dispatch (Refs #2847).
-///
-/// Predicate: `economy.treasury == 0` **and**
-/// `colonial.newWorldProvincesOwned == 0` **and**
-/// `expandEconomyPlan.boostTreasuryRecoveryCargo == true`.
-///
-/// Used for the `newWorldAcquisition` weight floor only. Path E colonial
-/// dispatch uses [isNwLockRecoveryPathEActive] so the NW chain stays armed
-/// after Path F world-market credits raise treasury above zero.
-bool isNwTreasuryRecoveryOverrideActive({
-  required AIWorldSnapshot snapshot,
-  required ExpandEconomyPlan expandEconomyPlan,
-}) =>
-    snapshot.economy.treasury == 0 &&
-    snapshot.colonial.newWorldProvincesOwned == 0 &&
-    expandEconomyPlan.boostTreasuryRecoveryCargo;
-
-/// True when the EXPAND lock-recovery Path E chain should stay active
-/// (Refs #2924).
-///
-/// Predicate: `colonial.newWorldProvincesOwned == 0` **and** at least one of
-/// `expandEconomyPlan.boostTreasuryRecoveryCargo` (treasury still below the
-/// cheapest regiment build cost) or `expandEconomyPlan.forceCheapestRegimentBuild`
-/// (geographic peer-war lock Arm D). Without this broader gate,
-/// `planColonialMilitary` / `planColonialNaval` revert to `defaultPlan` as
-/// soon as treasury rises above zero even though the GP still owns no NW
-/// provinces and the beachhead / invasion chain is unfinished.
-bool isNwLockRecoveryPathEActive({
-  required AIWorldSnapshot snapshot,
-  required ExpandEconomyPlan expandEconomyPlan,
-}) =>
-    snapshot.colonial.newWorldProvincesOwned == 0 &&
-    (expandEconomyPlan.boostTreasuryRecoveryCargo ||
-        expandEconomyPlan.forceCheapestRegimentBuild);
-
-double _nwAcquisitionFloor({
-  required AIWorldSnapshot snapshot,
-  required Game game,
-  required ExpandEconomyPlan expandEconomyPlan,
-}) {
-  var floor = 0.0;
-  if (isNwTreasuryRecoveryOverrideActive(
-    snapshot: snapshot,
-    expandEconomyPlan: expandEconomyPlan,
-  )) {
-    if (kPhasePriorityNwTreasuryRecoveryFloor > floor) {
-      floor = kPhasePriorityNwTreasuryRecoveryFloor;
-    }
-  }
-  if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty &&
-      regimentCountForPlayer(game, snapshot.playerId) == 0) {
-    if (kPhasePriorityNwZeroRegimentFloor > floor) {
-      floor = kPhasePriorityNwZeroRegimentFloor;
-    }
-  }
-  return floor;
-}
