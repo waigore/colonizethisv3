@@ -18,6 +18,7 @@ import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -97,7 +98,7 @@ void main() {
 
       expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
       expect(find.byKey(DevelopmentPanelKeys.scopeListKey), findsOneWidget);
-      expect(find.byKey(DevelopmentPanelKeys.panelMapKey), findsOneWidget);
+      expect(find.byKey(DevelopmentPanelKeys.panelMapKeyForRegion(kRegionOldWorld)), findsOneWidget);
       expect(find.text('Avalon'), findsOneWidget);
       expect(find.text('Barren'), findsOneWidget);
       expect(find.text('No improvable resources'), findsOneWidget);

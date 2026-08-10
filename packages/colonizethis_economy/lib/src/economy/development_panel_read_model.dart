@@ -16,22 +16,34 @@ import 'package:colonizethis_world/colonizethis_world.dart';
 import 'development_panel_assigned_civilians.dart';
 import 'development_panel_model.dart';
 import 'development_panel_read_model_scopes.dart';
-import 'development_panel_visibility.dart';
-import 'game_lookup_helpers.dart';
 import 'province_improvable_resource_counts.dart';
 
 export 'development_panel_model.dart';
 
-/// Builds the empire Development panel read model from post-resolution state.
-DevelopmentPanelModel buildDevelopmentPanelModel({
+/// Shared inputs for per-region Development panel projections (Slice E).
+class DevelopmentPanelBuildContext {
+  const DevelopmentPanelBuildContext({
+    required this.connectedTileKeys,
+    required this.idleBuilderCount,
+    required this.idleEngineerCount,
+    required this.ownerCache,
+    required this.playerConnectivity,
+  });
+
+  final Set<String> connectedTileKeys;
+  final int idleBuilderCount;
+  final int idleEngineerCount;
+  final ProvinceOwnerCache ownerCache;
+  final ConnectivityResult? playerConnectivity;
+}
+
+/// Connectivity, idle counts, and owner cache — once per panel rebuild.
+DevelopmentPanelBuildContext buildDevelopmentPanelBuildContext({
   required Game game,
   required String playerId,
   required Map<String, TileMapResult> tileMapByRegion,
   required MapTopology topology,
   required Orders currentOrders,
-  required Map<String, String> provinceDisplayNamesById,
-  required Map<String, String> playerDisplayNamesById,
-  PlayerView? playerView,
 }) {
   final connectivity = resolveConnectivity(
     game: game,
@@ -44,53 +56,92 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
     playerId: playerId,
     pendingUnitIds: pendingUnitIds,
   );
+  return DevelopmentPanelBuildContext(
+    connectedTileKeys:
+        connectivity[playerId]?.connected ?? const <String>{},
+    idleBuilderCount: idleCounts.builders,
+    idleEngineerCount: idleCounts.engineers,
+    ownerCache: ProvinceOwnerCache.of(game.worldState),
+    playerConnectivity: connectivity[playerId],
+  );
+}
 
-  final ownerCache = ProvinceOwnerCache.of(game.worldState);
-
-  final connectedTileKeys = connectivity[playerId]?.connected ?? const <String>{};
-
+/// Builds the empire Development panel read model from post-resolution state.
+DevelopmentPanelModel buildDevelopmentPanelModel({
+  required Game game,
+  required String playerId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+  required Orders currentOrders,
+  required Map<String, String> provinceDisplayNamesById,
+  required Map<String, String> playerDisplayNamesById,
+  PlayerView? playerView,
+}) {
+  final shared = buildDevelopmentPanelBuildContext(
+    game: game,
+    playerId: playerId,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+    currentOrders: currentOrders,
+  );
   return DevelopmentPanelModel(
-    connectedTileKeys: connectedTileKeys,
-    oldWorld: _buildRegionModel(
+    connectedTileKeys: shared.connectedTileKeys,
+    oldWorld: buildDevelopmentPanelRegionModel(
+      shared: shared,
       game: game,
       playerId: playerId,
       regionId: kRegionOldWorld,
       tileMapByRegion: tileMapByRegion,
-      landExtractionByCommodity: developmentExtractionProjectionForRegion(
-        game: game,
-        playerId: playerId,
-        regionId: kRegionOldWorld,
-        tileMapByRegion: tileMapByRegion,
-        connectivity: connectivity[playerId],
-      ),
-      idleBuilderCount: idleCounts.builders,
-      idleEngineerCount: idleCounts.engineers,
+      currentOrders: currentOrders,
       provinceDisplayNamesById: provinceDisplayNamesById,
       playerDisplayNamesById: playerDisplayNamesById,
-      ownerCache: ownerCache,
-      currentOrders: currentOrders,
       playerView: playerView,
     ),
-    newWorld: _buildRegionModel(
+    newWorld: buildDevelopmentPanelRegionModel(
+      shared: shared,
       game: game,
       playerId: playerId,
       regionId: kRegionNewWorld,
       tileMapByRegion: tileMapByRegion,
-      landExtractionByCommodity: developmentExtractionProjectionForRegion(
-        game: game,
-        playerId: playerId,
-        regionId: kRegionNewWorld,
-        tileMapByRegion: tileMapByRegion,
-        connectivity: connectivity[playerId],
-      ),
-      idleBuilderCount: idleCounts.builders,
-      idleEngineerCount: idleCounts.engineers,
+      currentOrders: currentOrders,
       provinceDisplayNamesById: provinceDisplayNamesById,
       playerDisplayNamesById: playerDisplayNamesById,
-      ownerCache: ownerCache,
-      currentOrders: currentOrders,
       playerView: playerView,
     ),
+  );
+}
+
+/// One region slice; call per visited tab on panel open (Slice E).
+DevelopmentPanelRegionModel buildDevelopmentPanelRegionModel({
+  required DevelopmentPanelBuildContext shared,
+  required Game game,
+  required String playerId,
+  required String regionId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Orders currentOrders,
+  required Map<String, String> provinceDisplayNamesById,
+  required Map<String, String> playerDisplayNamesById,
+  PlayerView? playerView,
+}) {
+  return _buildRegionModel(
+    game: game,
+    playerId: playerId,
+    regionId: regionId,
+    tileMapByRegion: tileMapByRegion,
+    landExtractionByCommodity: developmentExtractionProjectionForRegion(
+      game: game,
+      playerId: playerId,
+      regionId: regionId,
+      tileMapByRegion: tileMapByRegion,
+      connectivity: shared.playerConnectivity,
+    ),
+    idleBuilderCount: shared.idleBuilderCount,
+    idleEngineerCount: shared.idleEngineerCount,
+    provinceDisplayNamesById: provinceDisplayNamesById,
+    playerDisplayNamesById: playerDisplayNamesById,
+    ownerCache: shared.ownerCache,
+    currentOrders: currentOrders,
+    playerView: playerView,
   );
 }
 

@@ -318,4 +318,31 @@ void main() {
       expect(find.text('View 2'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'onTabIndexChanged fires when a different tab is selected',
+    (WidgetTester tester) async {
+      var lastIndex = -1;
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            height: 200,
+            child: CtTabStrip(
+              tabLabels: const ['First', 'Second'],
+              tabViews: const [
+                Text('View 1'),
+                Text('View 2'),
+              ],
+              onTabIndexChanged: (index) => lastIndex = index,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Second'));
+      await tester.pump();
+
+      expect(lastIndex, 1);
+    },
+  );
 }
