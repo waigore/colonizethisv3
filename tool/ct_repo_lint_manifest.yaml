@@ -1654,6 +1654,13 @@ rules:
     runner: dart
     script: tool/check_ai_treasury_satellite_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_planning_invadable_owners_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning invadable-owner pins must import shared Game fixtures (no local _gameWithGps / gameWithTwoMinors) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_invadable_owners_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)

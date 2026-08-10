@@ -57,6 +57,8 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'phase_planner_peace_targets_test.dart',
   'colonial_phase_planner_test.dart',
   'phase_planner_naval_wiring_test.dart',
+  // Phase-13 Slice D ungated ≥500 densify (Refs #4310).
+  'planning_invadable_owners_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {
