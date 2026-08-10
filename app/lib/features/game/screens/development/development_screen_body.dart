@@ -17,7 +17,7 @@ import 'package:colonizethis_world/colonizethis_world.dart'
         buildPlayerView,
         kRegionNewWorld,
         kRegionOldWorld,
-        resolveConnectivity;
+        PlayerView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -75,12 +75,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
       playerDisplayNamesById: playerNames,
       playerView: playerView,
     );
-    final connectivity = resolveConnectivity(
-      game: game,
-      tileMapByRegion: mapData.tileMapByRegion,
-      topology: mapData.combinedTopology,
-    )[humanPlayerId];
-    final connectedTileKeys = connectivity?.connected ?? const <String>{};
+    final connectedTileKeys = model.connectedTileKeys;
     final bus = ref.read(appEventBusProvider);
     final l10n = appL10n(context);
 
@@ -90,6 +85,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
         padding: const EdgeInsets.all(CtSpacing.l),
         child: CtTabStrip(
           key: DevelopmentPanelKeys.tabsBodyKey,
+          lazyTabBodies: true,
           tabLabels: [l10n.region_oldWorld, l10n.region_newWorld],
           tabViews: [
             _DevelopmentRegionTab(
@@ -97,6 +93,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               regionId: kRegionOldWorld,
               regionModel: model.oldWorld,
+              playerView: playerView,
               topology: mapData.combinedTopology,
               tileMapByRegion: mapData.tileMapByRegion,
               currentOrders: orders,
@@ -121,6 +118,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               humanPlayerId: humanPlayerId,
               regionId: kRegionNewWorld,
               regionModel: model.newWorld,
+              playerView: playerView,
               topology: mapData.combinedTopology,
               tileMapByRegion: mapData.tileMapByRegion,
               currentOrders: orders,
@@ -212,6 +210,7 @@ class _DevelopmentRegionTab extends StatefulWidget {
     required this.humanPlayerId,
     required this.regionId,
     required this.regionModel,
+    required this.playerView,
     required this.topology,
     required this.tileMapByRegion,
     required this.currentOrders,
@@ -225,6 +224,7 @@ class _DevelopmentRegionTab extends StatefulWidget {
   final String humanPlayerId;
   final String regionId;
   final DevelopmentPanelRegionModel regionModel;
+  final PlayerView playerView;
   final MapTopology topology;
   final Map<String, TileMapResult> tileMapByRegion;
   final Orders currentOrders;
@@ -299,6 +299,7 @@ class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,
       regionId: widget.regionId,
+      playerView: widget.playerView,
       highlightTileKeys: _highlightTileKeys,
     );
 

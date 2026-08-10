@@ -80,3 +80,23 @@ InitGameMapViewData buildInitGameMapViewData({
     configSummary: configSummary,
   );
 }
+
+/// Builds [RegionMapViewData] for one region without assembling the full
+/// dual-region [InitGameMapViewData] (lighter path for panel minimaps).
+RegionMapViewData buildInitGameMapRegionViewData({
+  required String regionId,
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, MapTopology> topologyByRegion,
+  required int cellSize,
+  Map<String, TileVisibility>? visibilityByTile,
+}) {
+  return buildRegionViewData(
+    regionId: regionId,
+    tileMap: tileMapByRegion[regionId]!,
+    topology: topologyByRegion[regionId]!,
+    game: game,
+    cellSize: cellSize,
+    visibilityByTile: visibilityByTile,
+  );
+}

@@ -28,6 +28,15 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 
 `buildDevelopmentAssignedCiviliansForRegion` scans `oldWorld.units` / `newWorld.units` for `kUnitTypeBuilder` and `kUnitTypeEngineer` owned by the player in the active region. Include a unit when it has a pending `WorkOrder` in `currentOrders` for that unit id, or `status == working` with non-null `currentWork`. Pending takes precedence over in-progress when both exist.
 
+## Open-path performance (Slice E)
+
+- `buildDevelopmentPanelModel` performs a single `resolveConnectivity` pass and exposes `connectedTileKeys` on `DevelopmentPanelModel` for assign affordance (no duplicate connectivity resolution on panel open).
+- `DevelopmentScreenBody` builds `PlayerView` once per frame and passes it to the read model and each region map panel (no per-map `buildPlayerView`).
+- Region tabs use `CtTabStrip.lazyTabBodies` so the inactive region tab (including its map) is not built until first selection.
+- Panel maps call `buildInitGameMapRegionViewData` for the active region only (not full dual-region `buildInitGameMapViewData`).
+
+Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs.
+
 ## Acceptance criteria
 
 - Given owned province P with three improvable grain tiles, when the read model builds, then P’s owned scope lists grain count 3 with sorted tile keys.
