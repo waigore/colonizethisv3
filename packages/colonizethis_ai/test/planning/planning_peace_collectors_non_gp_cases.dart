@@ -4,46 +4,11 @@
 // Unit tests for `planning_peace_collectors.dart` (Refs #3941 topic split).
 // Pins GP / minor / tribe / non-GP at-war peace collectors and GP-war presence.
 
-import 'package:colonizethis_ai/src/perception/perception_snapshot.dart';
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _minor1 = 'minor1';
-
-Game _gameWithGps() {
-  return Game(
-    id: 'g-3278-planning-helpers',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: const RegionData(provinces: []),
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-      Player(id: _gp3, displayName: 'GP3', isHuman: false),
-    ],
-    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
-  );
-}
-
-AIWorldSnapshot _snapshotWithAtWar(List<String> atWarWith) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: const ConquestSummary(),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
+import '../support/planning_peace_collectors_test_support.dart';
 
 void registerPlanningPeaceCollectorsNonGpCases() {
   group('minorAtWarPeaceTargetsWhere (Refs #3717)', () {
@@ -54,22 +19,30 @@ void registerPlanningPeaceCollectorsNonGpCases() {
         oldWorld: const RegionData(provinces: []),
         newWorld: const RegionData(provinces: []),
       ),
-      players: const [Player(id: _gp1, displayName: 'GP1', isHuman: false)],
+      players: const [
+        Player(
+          id: planningPeaceCollectorsGp1,
+          displayName: 'GP1',
+          isHuman: false,
+        ),
+      ],
       minorNations: const [
         MinorNation(id: 'minorA', displayName: 'MinorA'),
         MinorNation(id: 'minorB', displayName: 'MinorB'),
         MinorNation(id: 'minorC', displayName: 'MinorC'),
       ],
-      tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+      tribes: const [
+        Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
+      ],
     );
 
     test('keep == null keeps every at-war minor, sorted ascending', () {
       final game = gameWithMinors();
-      final snapshot = _snapshotWithAtWar([
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorC',
-        _gp1,
+        planningPeaceCollectorsGp1,
         'minorA',
-        _tribe1,
+        planningPeaceCollectorsTribe1,
         'minorB',
       ]);
       expect(minorAtWarPeaceTargetsWhere(game: game, snapshot: snapshot), [
@@ -81,7 +54,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('keeps only minors matching the predicate, sorted', () {
       final game = gameWithMinors();
-      final snapshot = _snapshotWithAtWar(['minorC', 'minorA', 'minorB']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'minorC',
+        'minorA',
+        'minorB',
+      ]);
       expect(
         minorAtWarPeaceTargetsWhere(
           game: game,
@@ -94,7 +71,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('never offers a GP or tribe even with a keep-all predicate', () {
       final game = gameWithMinors();
-      final snapshot = _snapshotWithAtWar([_gp1, _tribe1, 'minorA']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        planningPeaceCollectorsTribe1,
+        'minorA',
+      ]);
       expect(
         minorAtWarPeaceTargetsWhere(
           game: game,
@@ -107,7 +88,10 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('keep-none returns empty', () {
       final game = gameWithMinors();
-      final snapshot = _snapshotWithAtWar(['minorA', 'minorB']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'minorA',
+        'minorB',
+      ]);
       expect(
         minorAtWarPeaceTargetsWhere(
           game: game,
@@ -120,7 +104,10 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('returns empty when no at-war minor is present', () {
       final game = gameWithMinors();
-      final snapshot = _snapshotWithAtWar([_gp1, _tribe1]);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        planningPeaceCollectorsTribe1,
+      ]);
       expect(
         minorAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
         isEmpty,
@@ -132,7 +119,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
       expect(
         minorAtWarPeaceTargetsWhere(
           game: game,
-          snapshot: _snapshotWithAtWar(['minorC', 'minorA', 'minorB']),
+          snapshot: planningPeaceCollectorsSnapshotWithAtWar([
+            'minorC',
+            'minorA',
+            'minorB',
+          ]),
         ),
         ['minorA', 'minorB', 'minorC'],
       );
@@ -147,7 +138,13 @@ void registerPlanningPeaceCollectorsNonGpCases() {
         oldWorld: const RegionData(provinces: []),
         newWorld: const RegionData(provinces: []),
       ),
-      players: const [Player(id: _gp1, displayName: 'GP1', isHuman: false)],
+      players: const [
+        Player(
+          id: planningPeaceCollectorsGp1,
+          displayName: 'GP1',
+          isHuman: false,
+        ),
+      ],
       minorNations: const [MinorNation(id: 'minorA', displayName: 'MinorA')],
       tribes: const [
         Tribe(id: 'tribeA', displayName: 'TribeA'),
@@ -158,9 +155,9 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('keep == null keeps every at-war tribe, sorted ascending', () {
       final game = gameWithTribes();
-      final snapshot = _snapshotWithAtWar([
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'tribeC',
-        _gp1,
+        planningPeaceCollectorsGp1,
         'tribeA',
         'minorA',
         'tribeB',
@@ -174,7 +171,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('keeps only tribes matching the predicate, sorted', () {
       final game = gameWithTribes();
-      final snapshot = _snapshotWithAtWar(['tribeC', 'tribeA', 'tribeB']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'tribeC',
+        'tribeA',
+        'tribeB',
+      ]);
       expect(
         tribeAtWarPeaceTargetsWhere(
           game: game,
@@ -187,7 +188,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('never offers a GP or minor even with a keep-all predicate', () {
       final game = gameWithTribes();
-      final snapshot = _snapshotWithAtWar([_gp1, 'minorA', 'tribeA']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        'minorA',
+        'tribeA',
+      ]);
       expect(
         tribeAtWarPeaceTargetsWhere(
           game: game,
@@ -200,7 +205,10 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('keep-none returns empty', () {
       final game = gameWithTribes();
-      final snapshot = _snapshotWithAtWar(['tribeA', 'tribeB']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'tribeA',
+        'tribeB',
+      ]);
       expect(
         tribeAtWarPeaceTargetsWhere(
           game: game,
@@ -213,7 +221,10 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('returns empty when no at-war tribe is present', () {
       final game = gameWithTribes();
-      final snapshot = _snapshotWithAtWar([_gp1, 'minorA']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        'minorA',
+      ]);
       expect(
         tribeAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
         isEmpty,
@@ -225,7 +236,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
       expect(
         tribeAtWarPeaceTargetsWhere(
           game: game,
-          snapshot: _snapshotWithAtWar(['tribeC', 'tribeA', 'tribeB']),
+          snapshot: planningPeaceCollectorsSnapshotWithAtWar([
+            'tribeC',
+            'tribeA',
+            'tribeB',
+          ]),
         ),
         ['tribeA', 'tribeB', 'tribeC'],
       );
@@ -241,28 +256,38 @@ void registerPlanningPeaceCollectorsNonGpCases() {
         newWorld: const RegionData(provinces: []),
       ),
       players: const [
-        Player(id: _gp1, displayName: 'GP1', isHuman: false),
-        Player(id: _gp2, displayName: 'GP2', isHuman: false),
+        Player(
+          id: planningPeaceCollectorsGp1,
+          displayName: 'GP1',
+          isHuman: false,
+        ),
+        Player(
+          id: planningPeaceCollectorsGp2,
+          displayName: 'GP2',
+          isHuman: false,
+        ),
       ],
       minorNations: const [
         MinorNation(id: 'minorA', displayName: 'MinorA'),
         MinorNation(id: 'minorB', displayName: 'MinorB'),
       ],
-      tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
+      tribes: const [
+        Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
+      ],
     );
 
     test('keep == null keeps every at-war non-GP faction, sorted ascending', () {
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar([
-        _tribe1,
-        _gp2,
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsTribe1,
+        planningPeaceCollectorsGp2,
         'minorB',
-        _gp1,
+        planningPeaceCollectorsGp1,
         'minorA',
       ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
-        ['minorA', 'minorB', _tribe1],
+        ['minorA', 'minorB', planningPeaceCollectorsTribe1],
       );
     });
 
@@ -271,7 +296,11 @@ void registerPlanningPeaceCollectorsNonGpCases() {
       // minor/tribe membership collectors: an absorbed faction id still in
       // `atWarWith` is non-GP and must be retained.
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar(['absorbedX', _gp1, 'minorA']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'absorbedX',
+        planningPeaceCollectorsGp1,
+        'minorA',
+      ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
         ['absorbedX', 'minorA'],
@@ -280,33 +309,45 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('never offers a Great Power even with a keep-all predicate', () {
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar([_gp1, _gp2, 'minorA', _tribe1]);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        planningPeaceCollectorsGp2,
+        'minorA',
+        planningPeaceCollectorsTribe1,
+      ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(
           game: game,
           snapshot: snapshot,
           keep: (_) => true,
         ),
-        ['minorA', _tribe1],
+        ['minorA', planningPeaceCollectorsTribe1],
       );
     });
 
     test('keeps only non-GP factions matching the predicate, sorted', () {
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar(['minorB', _tribe1, 'minorA']);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'minorB',
+        planningPeaceCollectorsTribe1,
+        'minorA',
+      ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(
           game: game,
           snapshot: snapshot,
           keep: (factionId) => factionId != 'minorB',
         ),
-        ['minorA', _tribe1],
+        ['minorA', planningPeaceCollectorsTribe1],
       );
     });
 
     test('keep-none returns empty', () {
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar(['minorA', _tribe1]);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        'minorA',
+        planningPeaceCollectorsTribe1,
+      ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(
           game: game,
@@ -319,7 +360,10 @@ void registerPlanningPeaceCollectorsNonGpCases() {
 
     test('returns empty when only Great Powers are at war', () {
       final game = gameWithMixedFactions();
-      final snapshot = _snapshotWithAtWar([_gp1, _gp2]);
+      final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
+        planningPeaceCollectorsGp1,
+        planningPeaceCollectorsGp2,
+      ]);
       expect(
         nonGreatPowerAtWarPeaceTargetsWhere(game: game, snapshot: snapshot),
         isEmpty,
@@ -331,36 +375,51 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     test('excludes the blocker and sorts ascending', () {
       expect(
         peaceTargetsExcludingBlocker(
-          factionIds: [_gp3, _gp1, _gp2],
-          blocker: _gp2,
+          factionIds: [
+            planningPeaceCollectorsGp3,
+            planningPeaceCollectorsGp1,
+            planningPeaceCollectorsGp2,
+          ],
+          blocker: planningPeaceCollectorsGp2,
         ),
-        [_gp1, _gp3],
+        [planningPeaceCollectorsGp1, planningPeaceCollectorsGp3],
       );
     });
 
     test('null blocker keeps every faction, sorted ascending', () {
       expect(
         peaceTargetsExcludingBlocker(
-          factionIds: [_gp3, _gp1, _gp2],
+          factionIds: [
+            planningPeaceCollectorsGp3,
+            planningPeaceCollectorsGp1,
+            planningPeaceCollectorsGp2,
+          ],
           blocker: null,
         ),
-        [_gp1, _gp2, _gp3],
+        [
+          planningPeaceCollectorsGp1,
+          planningPeaceCollectorsGp2,
+          planningPeaceCollectorsGp3,
+        ],
       );
     });
 
     test('blocker absent from the list keeps every faction, sorted', () {
       expect(
         peaceTargetsExcludingBlocker(
-          factionIds: [_gp3, _gp1],
-          blocker: _gp2,
+          factionIds: [planningPeaceCollectorsGp3, planningPeaceCollectorsGp1],
+          blocker: planningPeaceCollectorsGp2,
         ),
-        [_gp1, _gp3],
+        [planningPeaceCollectorsGp1, planningPeaceCollectorsGp3],
       );
     });
 
     test('empty input returns empty', () {
       expect(
-        peaceTargetsExcludingBlocker(factionIds: const [], blocker: _gp1),
+        peaceTargetsExcludingBlocker(
+          factionIds: const [],
+          blocker: planningPeaceCollectorsGp1,
+        ),
         isEmpty,
       );
     });
@@ -368,12 +427,20 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     test('result order is independent of input order', () {
       expect(
         peaceTargetsExcludingBlocker(
-          factionIds: [_gp1, _gp3, _gp2],
-          blocker: _gp2,
+          factionIds: [
+            planningPeaceCollectorsGp1,
+            planningPeaceCollectorsGp3,
+            planningPeaceCollectorsGp2,
+          ],
+          blocker: planningPeaceCollectorsGp2,
         ),
         peaceTargetsExcludingBlocker(
-          factionIds: [_gp3, _gp2, _gp1],
-          blocker: _gp2,
+          factionIds: [
+            planningPeaceCollectorsGp3,
+            planningPeaceCollectorsGp2,
+            planningPeaceCollectorsGp1,
+          ],
+          blocker: planningPeaceCollectorsGp2,
         ),
       );
     });
@@ -381,12 +448,15 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     test('accepts a Set (threats.atWarWith) input and excludes blocker', () {
       expect(
         peaceTargetsExcludingBlocker(
-          factionIds: <String>{_gp2, _minor1, _gp1},
-          blocker: _gp2,
+          factionIds: <String>{
+            planningPeaceCollectorsGp2,
+            planningPeaceCollectorsMinor1,
+            planningPeaceCollectorsGp1,
+          },
+          blocker: planningPeaceCollectorsGp2,
         ),
-        [_gp1, _minor1],
+        [planningPeaceCollectorsGp1, planningPeaceCollectorsMinor1],
       );
     });
   });
-
 }

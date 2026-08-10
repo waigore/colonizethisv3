@@ -1661,6 +1661,13 @@ rules:
     runner: dart
     script: tool/check_ai_planning_invadable_owners_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_planning_peace_collectors_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning peace-collector pins must import shared Game fixtures (no local _gameWithGps / _snapshotWithAtWar) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_peace_collectors_test_shared_fixtures.dart
+
   - rule_id: repo.ai_planning_ow_tech_helpers_test_shared_fixtures
     group: testing
     title: colonizethis_ai planning OW / tech helper pins must import shared Game fixtures (no local _gameOwning / _gameWithTechs / _gameWithExhaustedGp) (Refs #4310)
