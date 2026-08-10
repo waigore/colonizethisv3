@@ -120,6 +120,15 @@ mixin GameMapAreaTurnFeedTaps
         );
   }
 
+  void Function()? productionPanelTap() {
+    return () => ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.production, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+          }),
+        );
+  }
+
   void Function()? orderRejectedTapForKind(ct_models.OrderKind orderKind) {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);
@@ -140,12 +149,7 @@ mixin GameMapAreaTurnFeedTaps
               const ct_models.OpenNavalUnitsPanelEvent(),
             );
       case ct_models.OrderKind.buildUnit:
-        return () => ref.read(appEventBusProvider).emit(
-              ct_models.NavigateToRouteEvent(Routes.production, {
-                'game': widget.game,
-                'humanPlayerId': mapPlayerId,
-              }),
-            );
+        return productionPanelTap();
       case ct_models.OrderKind.trade:
         return () => ref.read(appEventBusProvider).emit(
               ct_models.NavigateToRouteEvent(Routes.trade, {

@@ -81,6 +81,9 @@ mixin GameMapAreaLifecycle
       bus.on<ct_models.AppMarketTurnSummaryEvent>().listen(
         onAppMarketTurnSummaryEvent,
       ),
+      bus.on<ct_models.AppEconomyTurnSummaryEvent>().listen(
+        onAppEconomyTurnSummaryEvent,
+      ),
       bus.on<ct_models.AppPlayerProvinceDiscoveredEvent>().listen(
         onAppPlayerProvinceDiscoveredEvent,
       ),

@@ -1,6 +1,7 @@
 import 'turn_logging.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import 'economy_turn_summary_events.dart';
 import 'turn_news_digest.dart';
 import 'turn_phase_handler_registry.dart';
 import 'turn_pipeline_state.dart';
@@ -28,6 +29,12 @@ TurnResolutionResult runTurnResolutionPipeline({
       config.eventSink,
       beforeIndex: haltedIndex,
       afterIndex: haltedIndex,
+    );
+    emitEconomyTurnSummaryEvents(
+      start: gameAtResolutionStart,
+      end: gameAtResolutionStart,
+      turn: turn,
+      sink: config.eventSink,
     );
     final news = buildTurnNewsDigestForComplete(
       start: gameAtResolutionStart,
@@ -100,6 +107,12 @@ TurnResolutionResult runTurnResolutionPipeline({
     config.eventSink,
     beforeIndex: beforeIndex,
     afterIndex: afterIndex,
+  );
+  emitEconomyTurnSummaryEvents(
+    start: gameAtResolutionStart,
+    end: acc.game,
+    turn: turn,
+    sink: config.eventSink,
   );
   final news = buildTurnNewsDigestForComplete(
     start: gameAtResolutionStart,
