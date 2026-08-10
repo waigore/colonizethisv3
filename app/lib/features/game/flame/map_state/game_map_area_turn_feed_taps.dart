@@ -120,7 +120,7 @@ mixin GameMapAreaTurnFeedTaps
         );
   }
 
-  void Function()? economyTurnSummaryTap() {
+  void Function()? productionPanelTap() {
     return () => ref.read(appEventBusProvider).emit(
           ct_models.NavigateToRouteEvent(Routes.production, {
             'game': widget.game,
@@ -149,12 +149,7 @@ mixin GameMapAreaTurnFeedTaps
               const ct_models.OpenNavalUnitsPanelEvent(),
             );
       case ct_models.OrderKind.buildUnit:
-        return () => ref.read(appEventBusProvider).emit(
-              ct_models.NavigateToRouteEvent(Routes.production, {
-                'game': widget.game,
-                'humanPlayerId': mapPlayerId,
-              }),
-            );
+        return productionPanelTap();
       case ct_models.OrderKind.trade:
         return () => ref.read(appEventBusProvider).emit(
               ct_models.NavigateToRouteEvent(Routes.trade, {

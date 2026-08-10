@@ -42,7 +42,7 @@ mixin GameMapAreaTurnFeed
         navalCombatTapForSeaZone: navalCombatTapForSeaZone,
         workOrderCompletedTap: workOrderCompletedTap,
         overseasProfitCreditedTap: overseasProfitCreditedTap(),
-        economyTurnSummaryTap: economyTurnSummaryTap(),
+        economyTurnSummaryTap: productionPanelTap(),
         commodityDisplayName: (commodityId) =>
             commodityDisplayName(appL10n(context), commodityId),
         orderRejectedTapForKind: orderRejectedTapForKind,

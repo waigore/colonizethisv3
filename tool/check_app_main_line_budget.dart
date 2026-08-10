@@ -37,13 +37,14 @@
 // raised for MAP fort icons + MAP20001 fort status and Build fort shortcut (Refs #4280);
 // raised for combined Trade Counsel + fort merge headroom after dev integration (Refs #4282).
 // raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
+// raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 70800;
+const _maxMainLines = 70900;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
