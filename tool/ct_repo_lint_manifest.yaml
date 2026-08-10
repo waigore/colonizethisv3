@@ -1696,6 +1696,13 @@ rules:
     runner: dart
     script: tool/check_ai_primary_gp_blocker_tiebreak_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_phase_priority_weights_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai phase_priority_weights_*_cases.dart must import shared Game/snapshot fixtures (no local _gameWithRegiments / _snapshot) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_priority_weights_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)
