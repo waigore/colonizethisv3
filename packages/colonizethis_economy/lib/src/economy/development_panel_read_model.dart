@@ -47,7 +47,10 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
 
   final ownerCache = ProvinceOwnerCache.of(game.worldState);
 
+  final connectedTileKeys = connectivity[playerId]?.connected ?? const <String>{};
+
   return DevelopmentPanelModel(
+    connectedTileKeys: connectedTileKeys,
     oldWorld: _buildRegionModel(
       game: game,
       playerId: playerId,

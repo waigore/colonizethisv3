@@ -282,4 +282,40 @@ void main() {
       },
     );
   });
+
+  testWidgets(
+    'lazyTabBodies defers off-tab body until first selection (Refs #4175 Slice E)',
+    (WidgetTester tester) async {
+      var secondaryBuilds = 0;
+      await tester.pumpWidget(
+        _host(
+          SizedBox(
+            height: 200,
+            child: CtTabStrip(
+              lazyTabBodies: true,
+              tabLabels: const ['First', 'Second'],
+              tabViews: [
+                const Text('View 1'),
+                Builder(
+                  builder: (context) {
+                    secondaryBuilds++;
+                    return const Text('View 2');
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(secondaryBuilds, 0);
+      expect(find.text('View 2'), findsNothing);
+
+      await tester.tap(find.text('Second'));
+      await tester.pump();
+
+      expect(secondaryBuilds, greaterThan(0));
+      expect(find.text('View 2'), findsOneWidget);
+    },
+  );
 }

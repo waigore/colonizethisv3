@@ -16,12 +16,14 @@ class DevelopmentPanelMapPanel extends ConsumerWidget {
     required this.game,
     required this.humanPlayerId,
     required this.regionId,
+    required this.playerView,
     this.highlightTileKeys,
   });
 
   final Game game;
   final String humanPlayerId;
   final String regionId;
+  final PlayerView playerView;
   final Set<String>? highlightTileKeys;
 
   @override
@@ -31,25 +33,18 @@ class DevelopmentPanelMapPanel extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final playerView = buildPlayerView(
-      game,
-      mapData.combinedTopology,
-      humanPlayerId,
-    );
     final visibilityByTile = developmentPanelVisibilityByTile(
       game: game,
       playerView: playerView,
     );
-    final viewData = buildInitGameMapViewData(
+    final region = buildInitGameMapRegionViewData(
+      regionId: regionId,
       game: game,
       tileMapByRegion: mapData.tileMapByRegion,
       topologyByRegion: mapData.topologyByRegion,
       cellSize: 12,
       visibilityByTile: visibilityByTile,
     );
-    final region = regionId == kRegionNewWorld
-        ? viewData.newWorld
-        : viewData.oldWorld;
     final playerTerritoryTileKeys = developmentPanelPlayerTerritoryTileKeys(
       game: game,
       playerId: humanPlayerId,

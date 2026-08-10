@@ -89,10 +89,14 @@ class DevelopmentPanelModel {
   const DevelopmentPanelModel({
     required this.oldWorld,
     required this.newWorld,
+    required this.connectedTileKeys,
   });
 
   final DevelopmentPanelRegionModel oldWorld;
   final DevelopmentPanelRegionModel newWorld;
+
+  /// Capital-connected tile keys for the human player (single connectivity pass).
+  final Set<String> connectedTileKeys;
 
   DevelopmentPanelRegionModel forRegion(String regionId) =>
       regionId == kRegionNewWorld ? newWorld : oldWorld;
