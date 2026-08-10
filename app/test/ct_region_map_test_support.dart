@@ -3,4 +3,5 @@
 
 export 'ct_region_map_test_support_core.dart';
 export 'ct_region_map_test_support_harness.dart';
+export 'ct_region_map_test_support_interaction.dart';
 export 'ct_region_map_test_support_view_data.dart';
