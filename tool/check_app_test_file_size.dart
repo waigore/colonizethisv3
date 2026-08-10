@@ -2,21 +2,44 @@
 //
 // SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021.
 //
-// Cap is 800 physical lines. Files currently over the cap are listed in
-// [appTestFileSizeAllowlistForTests] (shrink-only). A stale allowlist entry
-// (missing file, or file now ≤ cap) fails so the backlog cannot retain slack.
+// Cap is 500 physical lines (Refs #4305 Slice D). Files currently over the cap
+// are listed in [appTestFileSizeAllowlistForTests] (shrink-only). A stale
+// allowlist entry (missing file, or file now ≤ cap) fails so the backlog cannot
+// retain slack.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 800;
+const _maxPhysicalLines = 500;
 
 const String _appTestsRelativePath = 'app/test';
 
-/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4021).
+/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4305).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
-const List<String> appTestFileSizeAllowlistForTests = <String>[];
+const List<String> appTestFileSizeAllowlistForTests = <String>[
+  'app/test/ct_region_map_test_support.dart',
+  'app/test/ct_region_map_widget_part1_test.dart',
+  'app/test/ct_region_map_widget_part2_test.dart',
+  'app/test/dialogs_320dp_min_viewport_part2_test.dart',
+  'app/test/diplomacy_panel_confirm_preview_test.dart',
+  'app/test/diplomacy_panel_goldens_test.dart',
+  'app/test/diplomacy_panel_rows_test.dart',
+  'app/test/game_map_area_event_feed_test.dart',
+  'app/test/game_map_area_state_logic_part2_test.dart',
+  'app/test/game_map_area_state_logic_part3_test.dart',
+  'app/test/game_region_minimap_widget_test.dart',
+  'app/test/new_game_leader_selection_dialog_part1_test.dart',
+  'app/test/player_turn_event_feed_chrome_test.dart',
+  'app/test/production_labour_helpers_test.dart',
+  'app/test/production_labour_section_test.dart',
+  'app/test/province_overlay_test.dart',
+  'app/test/province_overlay_tile_capital_link_test_fixtures.dart',
+  'app/test/province_overlay_tile_designation_test.dart',
+  'app/test/train_civilians_dialog_test.dart',
+  'app/test/train_naval_dialog_test.dart',
+  'app/test/widgetbook_in_game_shell_chrome_test.dart',
+];
 
 int runCheckAppTestFileSize(
   String repoRoot, {
