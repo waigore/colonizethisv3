@@ -1668,6 +1668,41 @@ rules:
     runner: dart
     script: tool/check_ai_planning_peace_collectors_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_build_planner_civilian_scoring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai build_planner_civilian_scoring pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_build_planner_civilian_scoring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_civilian_build_live_wiring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai civilian_build_live_wiring pin must import shared Game fixtures (no local _gameWithLeader) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_civilian_build_live_wiring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_phase_planner_focus_minor_target_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai focus-minor target case modules must import shared Game fixtures (no local _focusMinorGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_phase_planner_focus_minor_target_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_faction_query_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai faction_query util pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_faction_query_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_region_military_destination_filter_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai region_military_destination_filter pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_region_military_destination_filter_test_shared_fixtures.dart
+
   - rule_id: repo.ai_diplomatic_candidate_scoring_colonial_test_shared_fixtures
     group: testing
     title: colonizethis_ai diplomatic candidate scoring COLONIAL pins must import shared Game fixtures (no local _colonialScenarioGame / _colonialTribeScenarioGame) (Refs #4310)
@@ -1712,7 +1747,7 @@ rules:
 
   - rule_id: repo.ai_phase_priority_weights_test_shared_fixtures
     group: testing
-    title: colonizethis_ai phase_priority_weights_*_cases.dart must import shared Game/snapshot fixtures (no local _gameWithRegiments / _snapshot) (Refs #4310)
+    title: colonizethis_ai phase_priority_weights pins must import shared Game/snapshot fixtures (no local _gameWithRegiments / _game / _snapshot) (Refs #4310)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_phase_priority_weights_test_shared_fixtures.dart

@@ -16,10 +16,14 @@ const String _planningTestDir = 'packages/colonizethis_ai/test/planning/';
 const Set<String> phasePriorityWeightsSharedFixtureAdopterBasenames = {
   'phase_priority_weights_curve_cases.dart',
   'phase_priority_weights_override_cases.dart',
+  'goal_colonial_pressure_weight_for_test.dart',
 };
 
 final RegExp _localGameWithRegimentsDecl =
     RegExp(r'Game\s+_gameWithRegiments\b');
+final RegExp _localGoalColonialGameDecl = RegExp(
+  r'Game\s+_game\(\{required int regimentCount',
+);
 final RegExp _localSnapshotDecl = RegExp(r'AIWorldSnapshot\s+_snapshot\b');
 
 bool _isPhasePriorityWeightsAdopterPath(String normalized) {
@@ -50,6 +54,11 @@ String? aiPhasePriorityWeightsSharedFixturesViolationReason(
   if (_localGameWithRegimentsDecl.hasMatch(content)) {
     return 'redeclares local `_gameWithRegiments`; import '
         '`phasePriorityWeightsGameWithRegiments` from '
+        '`$phasePriorityWeightsSharedFixturesSupportFile` (Refs #4310)';
+  }
+  if (_localGoalColonialGameDecl.hasMatch(content)) {
+    return 'redeclares local `_game`; import '
+        '`phasePriorityWeightsGameWithRegimentsAndTreasury` from '
         '`$phasePriorityWeightsSharedFixturesSupportFile` (Refs #4310)';
   }
   if (_localSnapshotDecl.hasMatch(content)) {

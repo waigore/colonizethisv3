@@ -22,8 +22,18 @@ const ExpandEconomyPlan kPhasePriorityWeightsBoostCargoPlan = ExpandEconomyPlan(
 );
 
 Game phasePriorityWeightsGameWithRegiments(int regimentCount) {
+  return phasePriorityWeightsGameWithRegimentsAndTreasury(
+    regimentCount: regimentCount,
+    treasury: 0,
+  );
+}
+
+Game phasePriorityWeightsGameWithRegimentsAndTreasury({
+  required int regimentCount,
+  required int treasury,
+}) {
   return Game(
-    id: 'g-2847-phase-priority-weights-r$regimentCount',
+    id: 'g-2847-phase-priority-weights-r${regimentCount}_t$treasury',
     worldState: WorldState(
       turnState: const TurnState(turnNumber: 30, phase: TurnPhase.orders),
       oldWorld: const RegionData(
@@ -40,14 +50,14 @@ Game phasePriorityWeightsGameWithRegiments(int regimentCount) {
           ? [homeArmyWithRegiments(kPhasePriorityWeightsGp1, regimentCount)]
           : const [],
     ),
-    players: const [
+    players: [
       Player(
         id: kPhasePriorityWeightsGp1,
         displayName: 'GP1',
         isHuman: false,
-        treasury: 0,
+        treasury: treasury,
       ),
-      Player(
+      const Player(
         id: kPhasePriorityWeightsGp2,
         displayName: 'GP2',
         isHuman: false,
