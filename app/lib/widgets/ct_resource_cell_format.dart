@@ -1,19 +1,23 @@
-part of 'ct_resource_cell.dart';
+import 'package:flutter/material.dart';
 
-String? _ctResourceCellFormattedDeltaText(int? delta) {
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
+
+import 'ct_resource_cell.dart';
+
+String? ctResourceCellFormattedDeltaText(int? delta) {
   if (delta == null) return null;
   if (delta > 0) return '+$delta';
   return '$delta';
 }
 
-Color? _ctResourceCellDeltaColor(int? delta) {
+Color? ctResourceCellDeltaColor(int? delta) {
   if (delta == null) return null;
   if (delta > 0) return EditorialMonoclePalette.success;
   if (delta < 0) return EditorialMonoclePalette.danger;
   return EditorialMonoclePalette.muted;
 }
 
-String _ctResourceCellFormatQuantity(int value) {
+String ctResourceCellFormatQuantity(int value) {
   final String raw = value.abs().toString();
   final StringBuffer out = StringBuffer();
   for (int i = 0; i < raw.length; i++) {
@@ -25,28 +29,26 @@ String _ctResourceCellFormatQuantity(int value) {
   return out.toString();
 }
 
-extension _CtResourceCellFormat on CtResourceCell {
-  TextStyle nameStyle(BuildContext context) {
-    final TextStyle base =
-        Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
-    return base.copyWith(
-      color: EditorialMonoclePalette.fg,
-      fontSize: CtResourceCell.nameFontSize,
-    );
-  }
+TextStyle ctResourceCellNameStyle(BuildContext context) {
+  final TextStyle base =
+      Theme.of(context).textTheme.bodySmall ?? const TextStyle(fontSize: 12);
+  return base.copyWith(
+    color: EditorialMonoclePalette.fg,
+    fontSize: CtResourceCell.nameFontSize,
+  );
+}
 
-  TextStyle monoStyle(
-    BuildContext context, {
-    required Color color,
-    required double fontSize,
-  }) {
-    final TextStyle base =
-        Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
-    return base.copyWith(
-      color: color,
-      fontSize: fontSize,
-      fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
-      fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-    );
-  }
+TextStyle ctResourceCellMonoStyle(
+  BuildContext context, {
+  required Color color,
+  required double fontSize,
+}) {
+  final TextStyle base =
+      Theme.of(context).textTheme.labelMedium ?? const TextStyle(fontSize: 12);
+  return base.copyWith(
+    color: color,
+    fontSize: fontSize,
+    fontFamilyFallback: const <String>['SF Mono', 'Menlo', 'monospace'],
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
 }
