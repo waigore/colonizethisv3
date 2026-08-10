@@ -5,6 +5,7 @@
 import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/shell/new_game_leader_selection_dialog.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
+import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -102,4 +103,117 @@ Future<void> ensureTapNewGameLeaderSelectionCancel(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(cancelButton);
   await tester.pumpAndSettle();
+}
+
+const Size kNewGameLeaderLargeViewport = Size(900, 2000);
+const Size kNewGameLeaderDuplicateSurface = Size(900, 1600);
+const List<String> kNewGameLeaderDuplicateEnglandIds = <String>[
+  'england',
+  'france',
+  'spain',
+  'portugal',
+  'netherlands',
+  'england',
+];
+
+GameSetupConfig get newGameLeaderDuplicateEnglandConfig =>
+    GameSetupConfig(selectedGreatPowerIds: kNewGameLeaderDuplicateEnglandIds);
+
+Future<void> enterNewGameLeaderSeed(WidgetTester tester, String value) async {
+  final field = find.byType(TextField);
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+  await tester.enterText(field, value);
+  await tester.pump();
+}
+
+Future<void> tapNewGameLeaderSliderEdge(
+  WidgetTester tester, {
+  required bool left,
+}) async {
+  final slider = find.byType(CtSlider);
+  await tester.ensureVisible(slider);
+  await tester.pumpAndSettle();
+  final rect = tester.getRect(slider);
+  await tester.tapAt(
+    Offset(left ? rect.left + 1 : rect.right - 1, rect.center.dy),
+  );
+  await tester.pumpAndSettle();
+}
+
+CtNinePatchButton newGameLeaderStartButton(WidgetTester tester) {
+  return tester.widget<CtNinePatchButton>(
+    find.ancestor(
+      of: find.text('Start'),
+      matching: find.byType(CtNinePatchButton),
+    ),
+  );
+}
+
+void expectNewGameLeaderDialogChromeTexts(Iterable<String> texts) {
+  for (final text in texts) {
+    expect(find.text(text), findsOneWidget);
+  }
+}
+
+Finder newGameLeaderKeyedFinder(String key) => find.byKey(ValueKey<String>(key));
+
+Text newGameLeaderKeyedText(WidgetTester tester, String key) =>
+    tester.widget<Text>(newGameLeaderKeyedFinder(key));
+
+Future<void> pumpNewGameLeaderDuplicateEngland(WidgetTester tester) {
+  return pumpNewGameLeaderSelectionDialog(
+    tester,
+    baseConfig: newGameLeaderDuplicateEnglandConfig,
+    surfaceSize: kNewGameLeaderDuplicateSurface,
+  );
+}
+
+Future<int?> confirmNewGameLeaderWithSeed(WidgetTester tester, String seed) async {
+  int? gotSeed;
+  await pumpNewGameLeaderSelectionDialog(
+    tester,
+    onConfirmed: (_, _, s, _, _, _, _) => gotSeed = s,
+  );
+  await enterNewGameLeaderSeed(tester, seed);
+  await ensureTapNewGameLeaderSelectionStart(tester);
+  return gotSeed;
+}
+
+Future<double?> confirmNewGameLeaderTerrain(
+  WidgetTester tester, {
+  bool? dragLeft,
+}) async {
+  double? gotTerrainVariation;
+  await pumpNewGameLeaderSelectionDialog(
+    tester,
+    onConfirmed: (_, _, _, _, terrainVariation, _, _) =>
+        gotTerrainVariation = terrainVariation,
+  );
+  if (dragLeft != null) {
+    await tapNewGameLeaderSliderEdge(tester, left: dragLeft);
+  }
+  await ensureTapNewGameLeaderSelectionStart(tester);
+  return gotTerrainVariation;
+}
+
+Future<AdvancedStartType?> confirmNewGameLeaderAdvancedStart(
+  WidgetTester tester, {
+  Size surfaceSize = const Size(800, 1300),
+  GameSetupConfig? baseConfig,
+  Future<void> Function(WidgetTester tester)? beforeStart,
+}) async {
+  AdvancedStartType? gotAdvancedStart;
+  await pumpNewGameLeaderSelectionDialog(
+    tester,
+    surfaceSize: surfaceSize,
+    baseConfig: baseConfig,
+    onConfirmed: (_, _, _, _, _, _, advancedStart) =>
+        gotAdvancedStart = advancedStart,
+  );
+  if (beforeStart != null) {
+    await beforeStart(tester);
+  }
+  await ensureTapNewGameLeaderSelectionStart(tester);
+  return gotAdvancedStart;
 }
