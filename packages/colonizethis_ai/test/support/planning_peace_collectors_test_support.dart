@@ -59,3 +59,86 @@ AIWorldSnapshot planningPeaceCollectorsSnapshotWithAtWar(
     relations: const {},
   );
 }
+
+/// Three minors (A/B/C) plus tribe1 for minor-at-war collector pins.
+Game planningPeaceCollectorsGameWithMinors() {
+  return Game(
+    id: 'g-3717-minor-peace',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: const [
+      Player(
+        id: planningPeaceCollectorsGp1,
+        displayName: 'GP1',
+        isHuman: false,
+      ),
+    ],
+    minorNations: const [
+      MinorNation(id: 'minorA', displayName: 'MinorA'),
+      MinorNation(id: 'minorB', displayName: 'MinorB'),
+      MinorNation(id: 'minorC', displayName: 'MinorC'),
+    ],
+    tribes: const [
+      Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
+    ],
+  );
+}
+
+/// Three tribes (A/B/C) plus minorA for tribe-at-war collector pins.
+Game planningPeaceCollectorsGameWithTribes() {
+  return Game(
+    id: 'g-3717-tribe-peace',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: const [
+      Player(
+        id: planningPeaceCollectorsGp1,
+        displayName: 'GP1',
+        isHuman: false,
+      ),
+    ],
+    minorNations: const [MinorNation(id: 'minorA', displayName: 'MinorA')],
+    tribes: const [
+      Tribe(id: 'tribeA', displayName: 'TribeA'),
+      Tribe(id: 'tribeB', displayName: 'TribeB'),
+      Tribe(id: 'tribeC', displayName: 'TribeC'),
+    ],
+  );
+}
+
+/// Two GPs, two minors, and tribe1 for non-GP at-war collector pins.
+Game planningPeaceCollectorsGameWithMixedFactions() {
+  return Game(
+    id: 'g-3749-non-gp-peace',
+    worldState: WorldState(
+      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
+      oldWorld: const RegionData(provinces: []),
+      newWorld: const RegionData(provinces: []),
+    ),
+    players: const [
+      Player(
+        id: planningPeaceCollectorsGp1,
+        displayName: 'GP1',
+        isHuman: false,
+      ),
+      Player(
+        id: planningPeaceCollectorsGp2,
+        displayName: 'GP2',
+        isHuman: false,
+      ),
+    ],
+    minorNations: const [
+      MinorNation(id: 'minorA', displayName: 'MinorA'),
+      MinorNation(id: 'minorB', displayName: 'MinorB'),
+    ],
+    tribes: const [
+      Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
+    ],
+  );
+}

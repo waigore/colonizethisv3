@@ -55,6 +55,30 @@ void main() {
       }
     });
 
+    test('fails when cases redeclare gameWithMinors', () {
+      final temp = Directory.systemTemp.createTempSync('ai-peace-minors-');
+      try {
+        _writeSupport(temp);
+        _writeAdopter(
+          temp,
+          'planning_peace_collectors_non_gp_cases.dart',
+          'Game gameWithMinors() {\n'
+          '  throw UnimplementedError();\n'
+          '}\n',
+        );
+        final errors = <String>[];
+        final code = runCheckAiPlanningPeaceCollectorsTestSharedFixtures(
+          temp.path,
+          info: (_) {},
+          err: errors.add,
+        );
+        expect(code, 1);
+        expect(errors.join('\n'), contains('gameWithMinors'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
     test('passes when adopters use shared factories', () {
       final temp = Directory.systemTemp.createTempSync('ai-peace-ok-');
       try {

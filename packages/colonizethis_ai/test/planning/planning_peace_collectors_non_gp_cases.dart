@@ -5,39 +5,14 @@
 // Pins GP / minor / tribe / non-GP at-war peace collectors and GP-war presence.
 
 import 'package:colonizethis_ai/src/planning/planning_helpers.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/planning_peace_collectors_test_support.dart';
 
 void registerPlanningPeaceCollectorsNonGpCases() {
   group('minorAtWarPeaceTargetsWhere (Refs #3717)', () {
-    Game gameWithMinors() => Game(
-      id: 'g-3717-minor-peace',
-      worldState: WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(provinces: []),
-        newWorld: const RegionData(provinces: []),
-      ),
-      players: const [
-        Player(
-          id: planningPeaceCollectorsGp1,
-          displayName: 'GP1',
-          isHuman: false,
-        ),
-      ],
-      minorNations: const [
-        MinorNation(id: 'minorA', displayName: 'MinorA'),
-        MinorNation(id: 'minorB', displayName: 'MinorB'),
-        MinorNation(id: 'minorC', displayName: 'MinorC'),
-      ],
-      tribes: const [
-        Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
-      ],
-    );
-
     test('keep == null keeps every at-war minor, sorted ascending', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorC',
         planningPeaceCollectorsGp1,
@@ -53,7 +28,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keeps only minors matching the predicate, sorted', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorC',
         'minorA',
@@ -70,7 +45,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('never offers a GP or tribe even with a keep-all predicate', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         planningPeaceCollectorsTribe1,
@@ -87,7 +62,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keep-none returns empty', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorA',
         'minorB',
@@ -103,7 +78,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('returns empty when no at-war minor is present', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         planningPeaceCollectorsTribe1,
@@ -115,7 +90,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('result is sorted ascending regardless of atWarWith order', () {
-      final game = gameWithMinors();
+      final game = planningPeaceCollectorsGameWithMinors();
       expect(
         minorAtWarPeaceTargetsWhere(
           game: game,
@@ -131,30 +106,8 @@ void registerPlanningPeaceCollectorsNonGpCases() {
   });
 
   group('tribeAtWarPeaceTargetsWhere (Refs #3717)', () {
-    Game gameWithTribes() => Game(
-      id: 'g-3717-tribe-peace',
-      worldState: WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(provinces: []),
-        newWorld: const RegionData(provinces: []),
-      ),
-      players: const [
-        Player(
-          id: planningPeaceCollectorsGp1,
-          displayName: 'GP1',
-          isHuman: false,
-        ),
-      ],
-      minorNations: const [MinorNation(id: 'minorA', displayName: 'MinorA')],
-      tribes: const [
-        Tribe(id: 'tribeA', displayName: 'TribeA'),
-        Tribe(id: 'tribeB', displayName: 'TribeB'),
-        Tribe(id: 'tribeC', displayName: 'TribeC'),
-      ],
-    );
-
     test('keep == null keeps every at-war tribe, sorted ascending', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'tribeC',
         planningPeaceCollectorsGp1,
@@ -170,7 +123,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keeps only tribes matching the predicate, sorted', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'tribeC',
         'tribeA',
@@ -187,7 +140,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('never offers a GP or minor even with a keep-all predicate', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         'minorA',
@@ -204,7 +157,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keep-none returns empty', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'tribeA',
         'tribeB',
@@ -220,7 +173,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('returns empty when no at-war tribe is present', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         'minorA',
@@ -232,7 +185,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('result is sorted ascending regardless of atWarWith order', () {
-      final game = gameWithTribes();
+      final game = planningPeaceCollectorsGameWithTribes();
       expect(
         tribeAtWarPeaceTargetsWhere(
           game: game,
@@ -248,36 +201,8 @@ void registerPlanningPeaceCollectorsNonGpCases() {
   });
 
   group('nonGreatPowerAtWarPeaceTargetsWhere (Refs #3749)', () {
-    Game gameWithMixedFactions() => Game(
-      id: 'g-3749-non-gp-peace',
-      worldState: WorldState(
-        turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-        oldWorld: const RegionData(provinces: []),
-        newWorld: const RegionData(provinces: []),
-      ),
-      players: const [
-        Player(
-          id: planningPeaceCollectorsGp1,
-          displayName: 'GP1',
-          isHuman: false,
-        ),
-        Player(
-          id: planningPeaceCollectorsGp2,
-          displayName: 'GP2',
-          isHuman: false,
-        ),
-      ],
-      minorNations: const [
-        MinorNation(id: 'minorA', displayName: 'MinorA'),
-        MinorNation(id: 'minorB', displayName: 'MinorB'),
-      ],
-      tribes: const [
-        Tribe(id: planningPeaceCollectorsTribe1, displayName: 'Tribe1'),
-      ],
-    );
-
     test('keep == null keeps every at-war non-GP faction, sorted ascending', () {
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsTribe1,
         planningPeaceCollectorsGp2,
@@ -295,7 +220,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
       // Pins the `playerById == null` semantics (non-GP), distinct from the
       // minor/tribe membership collectors: an absorbed faction id still in
       // `atWarWith` is non-GP and must be retained.
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'absorbedX',
         planningPeaceCollectorsGp1,
@@ -308,7 +233,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('never offers a Great Power even with a keep-all predicate', () {
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         planningPeaceCollectorsGp2,
@@ -326,7 +251,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keeps only non-GP factions matching the predicate, sorted', () {
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorB',
         planningPeaceCollectorsTribe1,
@@ -343,7 +268,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('keep-none returns empty', () {
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         'minorA',
         planningPeaceCollectorsTribe1,
@@ -359,7 +284,7 @@ void registerPlanningPeaceCollectorsNonGpCases() {
     });
 
     test('returns empty when only Great Powers are at war', () {
-      final game = gameWithMixedFactions();
+      final game = planningPeaceCollectorsGameWithMixedFactions();
       final snapshot = planningPeaceCollectorsSnapshotWithAtWar([
         planningPeaceCollectorsGp1,
         planningPeaceCollectorsGp2,

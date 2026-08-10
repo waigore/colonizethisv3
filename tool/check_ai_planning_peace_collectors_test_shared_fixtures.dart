@@ -22,6 +22,10 @@ const Set<String> planningPeaceCollectorsSharedFixtureAdopterBasenames = {
 final RegExp _localGameWithGpsDecl = RegExp(r'Game\s+_gameWithGps\b');
 final RegExp _localSnapshotWithAtWarDecl =
     RegExp(r'AIWorldSnapshot\s+_snapshotWithAtWar\b');
+final RegExp _localGameWithMinorsDecl = RegExp(r'Game\s+gameWithMinors\b');
+final RegExp _localGameWithTribesDecl = RegExp(r'Game\s+gameWithTribes\b');
+final RegExp _localGameWithMixedFactionsDecl =
+    RegExp(r'Game\s+gameWithMixedFactions\b');
 
 bool _isPlanningPeaceCollectorsAdopterPath(String normalized) {
   if (!normalized.startsWith(_planningTestDir)) {
@@ -56,6 +60,21 @@ String? aiPlanningPeaceCollectorsSharedFixturesViolationReason(
   if (_localSnapshotWithAtWarDecl.hasMatch(content)) {
     return 'redeclares local `_snapshotWithAtWar`; import '
         '`planningPeaceCollectorsSnapshotWithAtWar` from '
+        '`$planningPeaceCollectorsSharedFixturesSupportFile` (Refs #4310)';
+  }
+  if (_localGameWithMinorsDecl.hasMatch(content)) {
+    return 'redeclares local `gameWithMinors`; import '
+        '`planningPeaceCollectorsGameWithMinors` from '
+        '`$planningPeaceCollectorsSharedFixturesSupportFile` (Refs #4310)';
+  }
+  if (_localGameWithTribesDecl.hasMatch(content)) {
+    return 'redeclares local `gameWithTribes`; import '
+        '`planningPeaceCollectorsGameWithTribes` from '
+        '`$planningPeaceCollectorsSharedFixturesSupportFile` (Refs #4310)';
+  }
+  if (_localGameWithMixedFactionsDecl.hasMatch(content)) {
+    return 'redeclares local `gameWithMixedFactions`; import '
+        '`planningPeaceCollectorsGameWithMixedFactions` from '
         '`$planningPeaceCollectorsSharedFixturesSupportFile` (Refs #4310)';
   }
   return null;
