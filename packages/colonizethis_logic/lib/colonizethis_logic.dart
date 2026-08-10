@@ -7,6 +7,7 @@ export 'package:colonizethis_models/colonizethis_models.dart'
 export 'package:colonizethis_world/colonizethis_world.dart';
 export 'order_suggestion_api.dart';
 export 'industry_counsel_api.dart';
+export 'military_counsel_api.dart';
 export 'src/constants.dart';
 export 'src/civilians/civilians_missing_work_orders.dart';
 export 'src/civilians/spy_relocate_intel.dart';
