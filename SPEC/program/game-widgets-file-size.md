@@ -23,8 +23,8 @@ allowlists**).
 
 - **Physical lines:** `LineSplitter` line count of the file’s UTF-8 text (same
   as `const LineSplitter().convert(content).length` in the checker).
-- **Threshold:** each scanned file must have **700** physical lines or fewer
-  (701 or more fails).
+- **Threshold:** each scanned file must have **400** physical lines or fewer
+  (401 or more fails).
 
 There is **no** YAML, keyed table, or per-file exemption that raises the
 effective cap for a specific path.
@@ -32,13 +32,13 @@ effective cap for a specific path.
 ## Acceptance criteria
 
 - Given a temporary workspace that contains
-  `app/lib/features/game/widgets/over.dart` with **701** physical lines and no
+  `app/lib/features/game/widgets/over.dart` with **401** physical lines and no
   other violating files, when the System runs `runCheckGameWidgetsFileSize` with
   that workspace root, then the checker exits non-zero and the error output
-  names `over.dart` and reports a line count strictly greater than 700.
+  names `over.dart` and reports a line count strictly greater than 400.
 
 - Given a temporary workspace whose only matching file is
-  `app/lib/features/game/widgets/ok.dart` with exactly **700** physical lines,
+  `app/lib/features/game/widgets/ok.dart` with exactly **400** physical lines,
   when the System runs `runCheckGameWidgetsFileSize`, then the checker exits
   zero.
 
@@ -53,7 +53,7 @@ effective cap for a specific path.
   waiver data to waive failures for in-scope Dart files.
 
 - Given a temporary workspace that contains
-  `app/lib/features/game/widgets/huge.dart` with **701** physical lines and a
+  `app/lib/features/game/widgets/huge.dart` with **401** physical lines and a
   decoy file `tool/legacy_game_widgets_waiver_table.yaml` shaped like historical
   keyed waiver YAML (for example listing `huge.dart` under `exempt_files`), when
   the System runs `runCheckGameWidgetsFileSize` with that workspace root, then

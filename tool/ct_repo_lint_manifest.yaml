@@ -624,6 +624,14 @@ rules:
     script: tool/check_app_flame_lib_physical_file_size.dart
     pr_incremental: true
 
+  - rule_id: repo.app_features_screens_lib_physical_file_size
+    group: structure
+    title: app/lib/features/game/screens files must stay at or below 400 physical lines (shrink-only grandfather)
+    spec: SPEC/program/app-features-screens-file-size.md
+    runner: dart
+    script: tool/check_app_features_screens_lib_physical_file_size.dart
+    pr_incremental: true
+
   - rule_id: repo.app_event_bus_decoupling
     group: architecture
     title: app/lib must decouple via AppEventBus / appNavigatorKey choke point (Refs #2626)
@@ -1069,7 +1077,7 @@ rules:
 
   - rule_id: repo.game_widgets_file_size
     group: structure
-    title: app/lib/features/game/widgets files must stay at or below 700 lines
+    title: app/lib/features/game/widgets files must stay at or below 400 physical lines
     spec: SPEC/program/game-widgets-file-size.md
     runner: dart
     script: tool/check_game_widgets_file_size.dart

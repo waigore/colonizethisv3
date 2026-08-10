@@ -5,10 +5,11 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 700;
+/// Ratchet ceiling for game feature widgets (wave-14 #4305 Slice C).
+const int gameWidgetsFileSizeCeiling = 400;
 
 /// PR-blocking structural check: files under
-/// `app/lib/features/game/widgets/**` must stay at or below 700 physical lines.
+/// `app/lib/features/game/widgets/**` must stay at or below 400 physical lines.
 int runCheckGameWidgetsFileSize(
   String repoRoot, {
   void Function(String line)? info,
@@ -38,11 +39,11 @@ int runCheckGameWidgetsFileSize(
     final physicalLines = const LineSplitter()
         .convert(entity.readAsStringSync())
         .length;
-    if (physicalLines <= _maxPhysicalLines) {
+    if (physicalLines <= gameWidgetsFileSizeCeiling) {
       continue;
     }
     violations.add(
-      '$relativePath ($physicalLines physical lines > $_maxPhysicalLines)',
+      '$relativePath ($physicalLines physical lines > $gameWidgetsFileSizeCeiling)',
     );
   }
 

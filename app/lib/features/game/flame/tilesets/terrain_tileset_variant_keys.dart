@@ -1,4 +1,8 @@
-part of 'terrain_tileset.dart';
+import 'package:colonizethis_app/core/errors/ui_validation_exception.dart';
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_map/colonizethis_map.dart' show CellViewData;
+
+import 'terrain_tileset_tile_ids.dart';
 
 String? terrainVariantTileKey({
   required TerrainType terrain,
@@ -9,19 +13,19 @@ String? terrainVariantTileKey({
     case TerrainType.plains:
       switch (resourceId) {
         case 'grain':
-          return _tilePlainsGrain;
+          return tilePlainsGrain;
         case 'meat':
-          return _tilePlainsMeat;
+          return tilePlainsMeat;
         case 'horses':
-          return _tilePlainsHorses;
+          return tilePlainsHorses;
         case 'sugarCane':
-          return _tilePlainsSugarCane;
+          return tilePlainsSugarCane;
         case 'tobacco':
-          return _tilePlainsTobacco;
+          return tilePlainsTobacco;
         case 'cotton':
-          return _tilePlainsCotton;
+          return tilePlainsCotton;
         case 'spices':
-          return _tilePlainsSpices;
+          return tilePlainsSpices;
         default:
           return null;
       }
@@ -29,21 +33,21 @@ String? terrainVariantTileKey({
       return null;
     case TerrainType.hardwoodForest:
       return resourceId == 'timber'
-          ? _tileHardwoodForestTimber
-          : _tileHardwoodForest;
+          ? tileHardwoodForestTimber
+          : tileHardwoodForest;
     case TerrainType.scrubForest:
       return resourceId == 'timber'
-          ? _tileScrubForestTimber
-          : _tileScrubForest;
+          ? tileScrubForestTimber
+          : tileScrubForest;
     case TerrainType.hills:
       if ((improvementLevel ?? 0) > 0 && _isMineResourceId(resourceId)) {
-        return _tileHillsMine;
+        return tileHillsMine;
       }
-      return resourceId == 'wool' ? _tileHillsWool : _tileHills;
+      return resourceId == 'wool' ? tileHillsWool : tileHills;
     case TerrainType.mountain:
-      return _tileMountain;
+      return tileMountain;
     case TerrainType.swamp:
-      return _tileSwamp;
+      return tileSwamp;
   }
 }
 
