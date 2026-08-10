@@ -28,6 +28,7 @@ class CtTabStrip extends StatefulWidget {
     EdgeInsets? contentPadding,
     this.initialTabIndex = 0,
     this.lazyTabBodies = false,
+    this.onTabIndexChanged,
   })  : assert(tabLabels.length == tabViews.length),
         assert(tabLabels.isNotEmpty),
         assert(
@@ -53,6 +54,9 @@ class CtTabStrip extends StatefulWidget {
   /// When true, off-tab bodies are not built until their tab is selected
   /// for the first time (reduces open-path work for heavy panel tabs).
   final bool lazyTabBodies;
+
+  /// Optional callback when the selected tab index changes.
+  final ValueChanged<int>? onTabIndexChanged;
 
   /// Inner padding applied to every tab label container.
   static const EdgeInsets tabContentPadding =
@@ -144,7 +148,11 @@ class _CtTabStripState extends State<CtTabStrip> {
     return Padding(
       padding: EdgeInsets.only(right: hasGap ? CtTabStrip.tabGap : 0),
       child: GestureDetector(
-        onTap: () => setState(() => _selectedIndex = i),
+        onTap: () {
+          if (_selectedIndex == i) return;
+          setState(() => _selectedIndex = i);
+          widget.onTabIndexChanged?.call(i);
+        },
         child: Container(
           padding: CtTabStrip.tabContentPadding,
           decoration: BoxDecoration(

@@ -37,6 +37,7 @@
 // raised for MAP fort icons + MAP20001 fort status and Build fort shortcut (Refs #4280);
 // raised for combined Trade Counsel + fort merge headroom after dev integration (Refs #4282).
 // raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
+// raised for GAME80001 lazy per-region Development panel read model (Refs #4175 perf).
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
 import 'dart:convert';
 import 'dart:io';

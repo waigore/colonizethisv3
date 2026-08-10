@@ -30,10 +30,12 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 
 ## Open-path performance (Slice E)
 
-- `buildDevelopmentPanelModel` performs a single `resolveConnectivity` pass and exposes `connectedTileKeys` on `DevelopmentPanelModel` for assign affordance (no duplicate connectivity resolution on panel open).
+- `buildDevelopmentPanelBuildContext` performs a single `resolveConnectivity` pass and exposes `connectedTileKeys` for assign affordance (no duplicate connectivity resolution on panel open).
+- `buildDevelopmentPanelRegionModel` builds one region slice at a time; `DevelopmentScreenBody` builds only visited region tabs (Old World on first open; New World on first tab selection).
 - `DevelopmentScreenBody` builds `PlayerView` once per frame and passes it to the read model and each region map panel (no per-map `buildPlayerView`).
 - Region tabs use `CtTabStrip.lazyTabBodies` so the inactive region tab (including its map) is not built until first selection.
 - Panel maps call `buildInitGameMapRegionViewData` for the active region only (not full dual-region `buildInitGameMapViewData`).
+- `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs.
 
