@@ -1703,6 +1703,27 @@ rules:
     runner: dart
     script: tool/check_ai_phase_priority_weights_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_observer_goal_phase_colonial_lite_preconditions_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai COLONIAL-lite precondition pins must import shared Game/snapshot fixtures (no local _gameWithNwOwner / _snapshotOw) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_colonial_lite_preconditions_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_nw_suppression_predicate_matrix_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai NW-suppression predicate matrix pin must import shared Game/snapshot fixtures (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_nw_suppression_predicate_matrix_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_composite_peace_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai composite peace-target pin must import shared Game/snapshot fixtures (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_composite_peace_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)
