@@ -1689,6 +1689,13 @@ rules:
     runner: dart
     script: tool/check_ai_mutual_exhausted_stalemate_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_primary_gp_blocker_tiebreak_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai primary GP blocker tiebreak pins must import shared Game fixtures (no local _gameForOwBlocker / _gameForNwBlocker / snapshot builders) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_primary_gp_blocker_tiebreak_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)
