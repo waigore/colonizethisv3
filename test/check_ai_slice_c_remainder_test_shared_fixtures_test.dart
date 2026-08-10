@@ -5,8 +5,15 @@ import 'package:test/test.dart';
 
 import '../tool/check_ai_build_planner_civilian_scoring_test_shared_fixtures.dart';
 import '../tool/check_ai_civilian_build_live_wiring_test_shared_fixtures.dart';
+import '../tool/check_ai_develop_nw_purchase_suppression_test_shared_fixtures.dart';
+import '../tool/check_ai_diplomacy_planner_boycott_break_subsidy_wiring_test_shared_fixtures.dart';
+import '../tool/check_ai_dossier_test_shared_fixtures.dart';
+import '../tool/check_ai_expand_feedstock_seller_test_shared_fixtures.dart';
 import '../tool/check_ai_expand_phase_planner_focus_minor_target_test_shared_fixtures.dart';
 import '../tool/check_ai_faction_query_test_shared_fixtures.dart';
+import '../tool/check_ai_growth_stage_industry_counsel_test_shared_fixtures.dart';
+import '../tool/check_ai_phase_planner_economy_build_pick_cargo_bonus_test_shared_fixtures.dart';
+import '../tool/check_ai_planning_diplomatic_scans_test_shared_fixtures.dart';
 import '../tool/check_ai_region_military_destination_filter_test_shared_fixtures.dart';
 
 void main() {
@@ -136,6 +143,55 @@ void main() {
           1,
         );
         expect(errors.join('\n'), contains('_game'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('planning diplomatic scans fails on local _gameWithEvents', () {
+      final temp = Directory.systemTemp.createTempSync('ai-dip-scan-');
+      try {
+        _writeSupport(temp, 'planning_diplomatic_scans_test_support.dart');
+        _writePlanningAdopter(
+          temp,
+          'planning_diplomatic_scans_test.dart',
+          'Game _gameWithEvents(List x) => throw UnimplementedError();\n',
+        );
+        final errors = <String>[];
+        expect(
+          runCheckAiPlanningDiplomaticScansTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          ),
+          1,
+        );
+        expect(errors.join('\n'), contains('_gameWithEvents'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    });
+
+    test('dossier pin fails on local _gameWithEvidence', () {
+      final temp = Directory.systemTemp.createTempSync('ai-dossier-');
+      try {
+        _writeSupport(temp, 'dossier_test_support.dart');
+        final perception = Directory(
+          p.join(temp.path, 'packages', 'colonizethis_ai', 'test', 'perception'),
+        )..createSync(recursive: true);
+        File(p.join(perception.path, 'dossier_test.dart')).writeAsStringSync(
+          'Game _gameWithEvidence(List x) => throw UnimplementedError();\n',
+        );
+        final errors = <String>[];
+        expect(
+          runCheckAiDossierTestSharedFixtures(
+            temp.path,
+            info: (_) {},
+            err: errors.add,
+          ),
+          1,
+        );
+        expect(errors.join('\n'), contains('_gameWithEvidence'));
       } finally {
         temp.deleteSync(recursive: true);
       }

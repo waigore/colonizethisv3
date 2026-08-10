@@ -1787,6 +1787,55 @@ rules:
     runner: dart
     script: tool/check_ai_economy_satellite_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_planning_diplomatic_scans_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning_diplomatic_scans pin must import shared Game fixtures (no local _gameWithEvents) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_diplomatic_scans_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_diplomacy_planner_boycott_break_subsidy_wiring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai diplomacy_planner boycott/break/subsidy wiring pin must import shared Game fixtures (no local _twoGpAtPeaceGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_diplomacy_planner_boycott_break_subsidy_wiring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_feedstock_seller_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand feedstock seller pins must import shared Game fixtures (no local _flaggedSellerGame / _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_feedstock_seller_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_phase_planner_economy_build_pick_cargo_bonus_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai phase_planner_economy_build_pick_cargo_bonus pin must import shared Game fixtures (no local _buildGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_planner_economy_build_pick_cargo_bonus_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_growth_stage_industry_counsel_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai growth_stage industry counsel pin must import shared Game fixtures (no local _feedstockTileGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_growth_stage_industry_counsel_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_develop_nw_purchase_suppression_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai develop NW purchase-suppression orchestrator pin must import shared Game fixtures (no local _developScenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_develop_nw_purchase_suppression_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_dossier_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai dossier perception pin must import shared Game fixtures (no local _gameWithEvidence) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dossier_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)

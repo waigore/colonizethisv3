@@ -29,58 +29,22 @@ import 'package:colonizethis_ai_contracts/colonizethis_ai_contracts.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _sellerId = 'gp1';
-const String _oldWorld = 'oldWorld';
+import '../support/expand_feedstock_seller_test_support.dart';
+
+const String _sellerId = kExpandFeedstockSellerId;
+const String _oldWorld = kExpandFeedstockOldWorld;
 const String _minor1 = 'minor1';
 const String _minor2 = 'minor2';
 const String _minor3 = 'minor3';
 
-const String _grainTile = 'oldWorld|p0|0|0';
-const String _woolTile = 'oldWorld|p0|2|0';
+const String _grainTile = kExpandFeedstockGrainTile;
+const String _woolTile = kExpandFeedstockWoolTile;
 
 /// Builds the flagged below-quota zero-NW lock-recovery seller (`gp1`) plus the
 /// supplied minor nations / provinces. `gp1` owns `oldWorld|p0..p4` (5 OW,
 /// below the conquest quota), holds an unimproved `wool` tile (active
 /// regiment-build-input improvement gate) and no `timber` / `iron` tile (active
 /// acquisition residual), has zero New World provinces and zero regiments.
-Game _game({
-  required Map<String, String> resourceByTileKey,
-  required List<Province> minorProvinces,
-  required List<MinorNation> minorNations,
-  int sellerTreasury = 0,
-}) {
-  final sellerProvinces = List.generate(
-    5,
-    (i) => Province(
-      id: 'oldWorld|p$i',
-      regionId: _oldWorld,
-      ownerId: _sellerId,
-    ),
-  );
-  return Game(
-    id: 'g-2847-expand-feedstock-declare-war-bias',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: RegionData(
-        provinces: [...sellerProvinces, ...minorProvinces],
-      ),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey,
-      tileState: TileMapState(),
-    ),
-    players: [
-      Player(
-        id: _sellerId,
-        displayName: 'Seller',
-        isHuman: false,
-        treasury: sellerTreasury,
-        stockpile: const Stockpile(),
-      ),
-    ],
-    minorNations: minorNations,
-  );
-}
-
 Province _minorProvince(String id, String ownerId) =>
     Province(id: id, regionId: _oldWorld, ownerId: ownerId);
 
@@ -116,7 +80,7 @@ void main() {
           // minor1 < minor2 lexicographically; only minor2 owns the invadable
           // feedstock (`timber`) province. Without the bias arm 2 would pick
           // minor1; the bias must redirect to minor2.
-          final game = _game(
+          final game = buildExpandFeedstockDeclareWarBiasGame(
             resourceByTileKey: const {
               _grainTile: 'grain',
               _woolTile: 'wool',
@@ -157,7 +121,7 @@ void main() {
         'arm 1 (adjacent not-at-war minors): biased to the feedstock-province '
         'owner over the lexicographically lower candidate',
         () {
-          final game = _game(
+          final game = buildExpandFeedstockDeclareWarBiasGame(
             resourceByTileKey: const {
               _grainTile: 'grain',
               _woolTile: 'wool',
@@ -204,7 +168,7 @@ void main() {
           // gp1 owns its own unimproved `timber` tile, so the routing gate
           // covers it and the acquisition residual is inactive. The bias must
           // not fire and arm 2 returns the lexicographically lowest candidate.
-          final game = _game(
+          final game = buildExpandFeedstockDeclareWarBiasGame(
             resourceByTileKey: const {
               _grainTile: 'grain',
               _woolTile: 'wool',
@@ -250,7 +214,7 @@ void main() {
           // only). The only feedstock province is owned by the at-war minor3
           // (arm 2). The bias must NOT cross arm precedence: arm 1 returns its
           // lexicographically lowest candidate (minor1).
-          final game = _game(
+          final game = buildExpandFeedstockDeclareWarBiasGame(
             resourceByTileKey: const {
               _grainTile: 'grain',
               _woolTile: 'wool',
@@ -292,7 +256,7 @@ void main() {
       );
 
       test('determinism: identical inputs yield identical output', () {
-        final game = _game(
+        final game = buildExpandFeedstockDeclareWarBiasGame(
           resourceByTileKey: const {
             _grainTile: 'grain',
             _woolTile: 'wool',
