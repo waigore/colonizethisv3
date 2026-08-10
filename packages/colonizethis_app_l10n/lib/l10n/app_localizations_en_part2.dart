@@ -403,6 +403,9 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get military_units_title => 'Military Units';
 
   @override
+  String get military_units_counsel => 'Counsel';
+
+  @override
   String get military_units_deselectAllArmies => 'Deselect all armies';
 
   @override

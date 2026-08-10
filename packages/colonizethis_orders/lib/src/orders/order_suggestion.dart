@@ -26,6 +26,7 @@ export 'order_suggestion_army_move.dart'
         ArmyMovePickerDestination,
         armyMoveCandidateDestinationProvinceIds,
         armyMovePickerDestinations,
+        armyMovePlayerOwnedProvinceIds,
         suggestArmyMoveOrders;
 export 'order_suggestion_move_unit.dart' show suggestMoveOrders;
 export 'order_suggestion_diplomatic.dart'

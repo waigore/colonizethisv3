@@ -1,4 +1,6 @@
-// Full-screen Counsel screen. SPEC/ui/counsel-panel.md (Refs #4190 / #4191 / #4282).
+// Full-screen Counsel screen. SPEC/ui/counsel-panel.md (Refs #4190 / #4191 / #4282 / #4307).
+
+export 'counsel_screen_tabs.dart' show CounselTab, counselTabFromRouteArg;
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
@@ -6,7 +8,11 @@ import 'package:colonizethis_logic/industry_counsel_api.dart'
     show
         rankIndustryCounselRecommendations,
         rankTradeCounselRecommendationsForHuman;
+import 'package:colonizethis_logic/military_counsel_api.dart'
+    show rankMilitaryCounselRecommendations;
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart' show OrderEngine;
+import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,15 +30,13 @@ import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
 import 'counsel_industry_apply.dart';
 import 'counsel_industry_tab_body.dart';
+import 'counsel_military_apply.dart';
+import 'counsel_military_invade_confirm.dart';
+import 'counsel_military_tab_body.dart';
+import 'counsel_screen_tabs.dart';
 import 'counsel_trade_apply.dart';
 import 'counsel_trade_tab_body.dart';
-
-enum CounselTab { industry, trade }
-
-CounselTab counselTabFromRouteArg(Object? value) {
-  if (value == 'trade') return CounselTab.trade;
-  return CounselTab.industry;
-}
+import 'military_counsel_l10n.dart';
 
 class CounselScreen extends ConsumerWidget {
   const CounselScreen({
@@ -100,6 +104,12 @@ class CounselScreen extends ConsumerWidget {
           currentOrders: currentOrders,
           topology: topology,
           tileMapByRegion: tileMapByRegion,
+        );
+        final militaryRecommendations = rankMilitaryCounselRecommendations(
+          game: displayGame,
+          playerId: humanPlayerId,
+          currentOrders: currentOrders,
+          topology: topology,
         );
         final industryCallbacks = CounselIndustryCallbacks(
           onApplyProduceAllocation: canEdit
@@ -179,41 +189,106 @@ class CounselScreen extends ConsumerWidget {
                 }
               : null,
         );
-        return DefaultTabController(
-          length: 2,
-          initialIndex: initialTab == CounselTab.trade ? 1 : 0,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TabBar(
-                tabs: [
-                  Tab(text: l10n.industryCounsel_tabIndustry),
-                  Tab(text: l10n.tradeCounsel_tabTrade),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    CounselIndustryTabBody(
-                      recommendations: industryRecommendations,
-                      highlightRecommendationId: highlightRecommendationId,
-                      l10n: l10n,
-                      canEdit: canEdit,
-                      callbacks: industryCallbacks,
-                    ),
-                    CounselTradeTabBody(
-                      recommendations: tradeCounsel.recommendations,
-                      book: tradeCounsel.book,
-                      highlightRecommendationId: highlightRecommendationId,
-                      l10n: l10n,
-                      canEdit: canEdit,
-                      callbacks: tradeCallbacks,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        final militaryCallbacks = CounselMilitaryCallbacks(
+          onAgreeTrain: canEdit
+              ? (recommendation) {
+                  final unitType = recommendation.unitType;
+                  final count = recommendation.count;
+                  if (unitType == null || count == null || count <= 0) {
+                    return;
+                  }
+                  final orders = shellRef.read(currentOrdersProvider);
+                  final next = militaryCounselOrdersAfterTrainAgree(
+                    game: displayGame,
+                    playerId: humanPlayerId,
+                    currentOrders: orders,
+                    topology: topology,
+                    unitType: unitType,
+                    count: count,
+                  );
+                  if (next == null) {
+                    bus.emit(
+                      ShowSnackBarEvent(
+                        message: l10n.militaryCounsel_trainAgreeFailed,
+                      ),
+                    );
+                    return;
+                  }
+                  shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+                }
+              : null,
+          onAgreeInvade: canEdit
+              ? (recommendation) async {
+                  final destination =
+                      militaryCounselInvadeDestinationForRecommendation(
+                        game: displayGame,
+                        playerId: humanPlayerId,
+                        currentOrders: shellRef.read(currentOrdersProvider),
+                        topology: topology,
+                        recommendation: recommendation,
+                      );
+                  if (destination == null) {
+                    bus.emit(
+                      ShowSnackBarEvent(
+                        message: l10n.militaryCounsel_invadeAgreeFailed,
+                      ),
+                    );
+                    return;
+                  }
+                  if (destination.requiresDeclareWarOnConfirm) {
+                    final ownerLabel = militaryCounselOwnerLabel(
+                      l10n,
+                      displayGame,
+                      recommendation,
+                    );
+                    final ok = await showMilitaryCounselDeclareWarConfirmDialog(
+                      context,
+                      l10n,
+                      ownerLabel,
+                    );
+                    if (ok != true || !context.mounted) return;
+                  }
+                  final orders = shellRef.read(currentOrdersProvider);
+                  final next = militaryCounselOrdersAfterInvadeAgree(
+                    currentOrders: orders,
+                    playerId: humanPlayerId,
+                    armyId: recommendation.armyId!,
+                    destination: destination,
+                  );
+                  final engine = OrderEngine(
+                    initialOrders: next,
+                    projector: projectOrderEffects,
+                  );
+                  final results = engine.validatePlayerOrdersWithContext(
+                    displayGame,
+                    topology,
+                    humanPlayerId,
+                  );
+                  if (!results.every((r) => r.isAccepted)) {
+                    bus.emit(
+                      ShowSnackBarEvent(
+                        message: l10n.militaryCounsel_invadeAgreeFailed,
+                      ),
+                    );
+                    return;
+                  }
+                  shellRef.read(currentOrdersProvider.notifier).replaceAll(next);
+                }
+              : null,
+        );
+        return CounselScreenTabs(
+          initialTab: initialTab,
+          l10n: l10n,
+          industryRecommendations: industryRecommendations,
+          tradeRecommendations: tradeCounsel.recommendations,
+          tradeBook: tradeCounsel.book,
+          militaryRecommendations: militaryRecommendations,
+          militaryGame: displayGame,
+          highlightRecommendationId: highlightRecommendationId,
+          canEdit: canEdit,
+          industryCallbacks: industryCallbacks,
+          tradeCallbacks: tradeCallbacks,
+          militaryCallbacks: militaryCallbacks,
         );
       },
     );

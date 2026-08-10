@@ -203,6 +203,68 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Affluent treasury — build stock toward the planner target.';
 
   @override
+  String get militaryCounsel_tabMilitary => 'Military';
+
+  @override
+  String get militaryCounsel_empty => 'No pressing military advice this turn.';
+
+  @override
+  String get militaryCounsel_action_agree => 'Agree';
+
+  @override
+  String get militaryCounsel_trainAgreeFailed =>
+      'Cannot raise those units right now — check treasury, stockpile, peasants, and queued orders.';
+
+  @override
+  String get militaryCounsel_invadeAgreeFailed =>
+      'Cannot stage that invasion right now — check army, destination, and diplomacy.';
+
+  @override
+  String get militaryCounsel_title_train => 'Raise units';
+
+  @override
+  String militaryCounsel_title_trainUnit(String unit, int count) {
+    return 'Raise $unit × $count';
+  }
+
+  @override
+  String get militaryCounsel_title_invade => 'Invade province';
+
+  @override
+  String militaryCounsel_title_invadeArmy(String army, String province) {
+    return 'Invade with $army → $province';
+  }
+
+  @override
+  String militaryCounsel_ownerLine(String owner) {
+    return 'Owner: $owner';
+  }
+
+  @override
+  String get militaryCounsel_cost_noMaterials => 'no extra materials';
+
+  @override
+  String militaryCounsel_costSummary(
+    int treasury,
+    String materials,
+    int peasants,
+  ) {
+    return 'Cost: $treasury treasury; $materials; $peasants peasants';
+  }
+
+  @override
+  String get militaryCounsel_reason_affordableTrain_brief =>
+      'Affordable this turn — the planner would raise these units now.';
+
+  @override
+  String get militaryCounsel_reason_atWarInvasion_brief =>
+      'Already at war — a field army can march on this province.';
+
+  @override
+  String get militaryCounsel_reason_declareWarInvasion_brief =>
+      'Invasion target — confirm war before the army marches.';
+
+  @override
   String get tradeMarket_counsel => 'Counsel';
 
   @override
