@@ -16,15 +16,10 @@ import 'package:colonizethis_app/features/game/widgets/production/production_lab
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'app_shell_harness.dart';
+import 'production_labour_test_fixtures.dart';
 import 'widget_test_pumps.dart';
 
 const _playerId = 'gp_labour_widget_test';
-
-const _trainedTiers = <WorkerTier>[
-  WorkerTier.apprentice,
-  WorkerTier.journeyman,
-  WorkerTier.master,
-];
 
 final _l10n = lookupAppLocalizations(const Locale('en'));
 
@@ -37,18 +32,14 @@ Player _gpWithPool({
   Map<String, int> stockpile = const {},
   Map<String, bool>? techUnlocked,
 }) {
-  return Player(
+  return productionLabourGpWithPool(
     id: _playerId,
-    displayName: 'Labour widget GP',
-    isHuman: true,
-    workerPool: WorkerPool(
-      peasants: peasants,
-      apprentices: apprentices,
-      journeymen: journeymen,
-      masters: masters,
-    ),
-    stockpile: Stockpile(quantities: Map<String, int>.from(stockpile)),
+    peasants: peasants,
+    apprentices: apprentices,
+    journeymen: journeymen,
+    masters: masters,
     treasury: treasury,
+    stockpile: stockpile,
     techUnlocked: techUnlocked,
   );
 }
@@ -183,7 +174,7 @@ void main() {
           );
         }
 
-        for (final tier in _trainedTiers) {
+        for (final tier in productionLabourTrainedTiers) {
           expect(
             find.byKey(_disbandKey(tier)),
             findsOneWidget,
@@ -315,7 +306,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      for (final tier in _trainedTiers) {
+      for (final tier in productionLabourTrainedTiers) {
         expect(
           find.text(
             _l10n.production_labourTierLabel(
@@ -446,7 +437,7 @@ void main() {
 
         final peasantMinus = minus(WorkerTier.peasant);
         final peasantPlus = plus(WorkerTier.peasant);
-        for (final tier in _trainedTiers) {
+        for (final tier in productionLabourTrainedTiers) {
           expect(
             minus(tier).dx,
             closeTo(peasantMinus.dx, 0.5),
