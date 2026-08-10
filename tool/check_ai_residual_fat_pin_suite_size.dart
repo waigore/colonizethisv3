@@ -65,6 +65,8 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'observer_goal_phase_transition_boundary_test.dart',
   'expand_phase_planner_stalled_distraction_peace_test.dart',
   'phase_planner_dispatch_test.dart',
+  'expand_phase_planner_great_power_war_count_and_pending_declare_war_test.dart',
+  'phase_planner_military_plans_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {
