@@ -15,12 +15,12 @@ import 'package:colonizethis_data/colonizethis_data.dart'
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _gp3 = 'gp3';
-const String _tribe1 = 'tribe1';
-const String _minor1 = 'minor1';
+import '../support/planning_ow_tech_helpers_test_support.dart';
 
+const String _gp1 = planningOwTechHelpersGp1;
+const String _gp2 = planningOwTechHelpersGp2;
+const String _gp3 = planningOwTechHelpersGp3;
+const String _gpExhausted = planningOwTechHelpersGpExhausted;
 
 AIWorldSnapshot _snapshotWithOwnOw(int oldWorldProvincesOwned) {
   return AIWorldSnapshot(
@@ -30,104 +30,6 @@ AIWorldSnapshot _snapshotWithOwnOw(int oldWorldProvincesOwned) {
     conquest: ConquestSummary(oldWorldProvincesOwned: oldWorldProvincesOwned),
     economy: const EconomySummary(),
     relations: const {},
-  );
-}
-
-// Game where [ownerCounts] maps a factionId to the number of Old World
-// provinces it owns, so `provinceCountOwnedBy` (and hence the
-// `oldWorldProvinceLeadOver` projection under test) returns those counts
-// deterministically via the memoised province-owner cache.
-Game _gameOwning(Map<String, int> ownerCounts) {
-  final provinces = <Province>[
-    for (final entry in ownerCounts.entries)
-      for (var i = 0; i < entry.value; i++)
-        Province(
-          id: 'oldWorld|${entry.key}_$i',
-          regionId: 'oldWorld',
-          ownerId: entry.key,
-        ),
-  ];
-  return Game(
-    id: 'g-3717-ow-lead',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(provinces: []),
-    ),
-    players: [
-      for (final id in ownerCounts.keys)
-        Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-    ],
-  );
-}
-
-// Game whose Great Powers each have [techCountByPlayer] unlocked techs (the
-//'techUnlocked' map carries that many `true` flags), so `unlockedTechCount`
-// and the `isPursuingTechStealPosture` deficit comparison under test resolve
-// deterministically. Minor nations and tribes carry no tech state.
-Game _gameWithTechs(Map<String, int> techCountByPlayer) {
-  Map<String, bool> techs(int count) => {
-    for (var i = 0; i < count; i++) 'tech_$i': true,
-  };
-  return Game(
-    id: 'g-3793-tech-steal',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: const RegionData(provinces: []),
-    ),
-    players: [
-      for (final entry in techCountByPlayer.entries)
-        Player(
-          id: entry.key,
-          displayName: entry.key.toUpperCase(),
-          isHuman: false,
-          techUnlocked: techs(entry.value),
-        ),
-    ],
-    minorNations: const [MinorNation(id: _minor1, displayName: 'Minor1')],
-    tribes: const [Tribe(id: _tribe1, displayName: 'Tribe1')],
-  );
-}
-
-// Single-Great-Power game whose treasury and standing-regiment totals are
-// configurable so the mutual-exhausted side qualification can be probed at its
-// economic / military exhaustion ceilings. `mutualExhaustedGpStalemateSideQualifies`
-// reads the side's Old World count from its `ow` argument (not the game), so the
-// fixture only has to back `Game.playerById` and `regimentCountForPlayer`.
-
-const String _gpExhausted = 'gpExhausted';
-
-// Single-Great-Power game whose treasury and standing-regiment totals are
-// configurable so the mutual-exhausted side qualification can be probed at its
-// economic / military exhaustion ceilings. `mutualExhaustedGpStalemateSideQualifies`
-// reads the side's Old World count from its `ow` argument (not the game), so the
-// fixture only has to back `Game.playerById` and `regimentCountForPlayer`.
-Game _gameWithExhaustedGp({int treasury = 0, int regiments = 0}) {
-  return Game(
-    id: 'g-3717-mutual-exhausted-side',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(provinces: []),
-      newWorld: const RegionData(provinces: []),
-      armies: [
-        Army(
-          id: 'army-$_gpExhausted',
-          ownerId: _gpExhausted,
-          regionId: 'ow',
-          stationedProvinceId: 'ow|home',
-          regimentUnitIds: [for (var i = 0; i < regiments; i++) 'reg$i'],
-        ),
-      ],
-    ),
-    players: [
-      Player(
-        id: _gpExhausted,
-        displayName: 'Exhausted GP',
-        isHuman: false,
-        treasury: treasury,
-      ),
-    ],
   );
 }
 
@@ -157,43 +59,43 @@ void main() {
   group('isPursuingTechStealPosture (Refs #3793, AC4c)', () {
     test('true when a rival GP leads by at least the deficit', () {
       // gp1 owns 2 techs; gp2 owns 4 → lead 2 >= deficit 1 → posture.
-      final game = _gameWithTechs({_gp1: 2, _gp2: 4, _gp3: 1});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 2, _gp2: 4, _gp3: 1});
       expect(isPursuingTechStealPosture(game, _gp1), isTrue);
     });
 
     test('true at exactly the default deficit (lead of 1)', () {
-      final game = _gameWithTechs({_gp1: 3, _gp2: 4});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 3, _gp2: 4});
       expect(isPursuingTechStealPosture(game, _gp1), isTrue);
     });
 
     test('false when the active GP leads or is tied with every rival', () {
       // gp1 is the most advanced; no rival leads it.
-      final leadGame = _gameWithTechs({_gp1: 5, _gp2: 4, _gp3: 2});
+      final leadGame = planningOwTechHelpersGameWithTechs({_gp1: 5, _gp2: 4, _gp3: 2});
       expect(isPursuingTechStealPosture(leadGame, _gp1), isFalse);
       // Parity with the top rival → lead 0 < deficit 1 → no posture.
-      final tiedGame = _gameWithTechs({_gp1: 4, _gp2: 4});
+      final tiedGame = planningOwTechHelpersGameWithTechs({_gp1: 4, _gp2: 4});
       expect(isPursuingTechStealPosture(tiedGame, _gp1), isFalse);
     });
 
     test('false when there are no rival Great Powers', () {
-      final game = _gameWithTechs({_gp1: 0});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 0});
       expect(isPursuingTechStealPosture(game, _gp1), isFalse);
     });
 
     test('false for an unknown active player id', () {
-      final game = _gameWithTechs({_gp1: 1, _gp2: 9});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 1, _gp2: 9});
       expect(isPursuingTechStealPosture(game, 'nobody'), isFalse);
     });
 
     test('ignores minor nations and tribes (not Player rivals)', () {
       // Only gp1 is a Player; minors/tribes carry no tech state and are not
       // rivals, so a lone GP is never behind.
-      final game = _gameWithTechs({_gp1: 0});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 0});
       expect(isPursuingTechStealPosture(game, _gp1), isFalse);
     });
 
     test('deterministic for fixed inputs', () {
-      final game = _gameWithTechs({_gp1: 1, _gp2: 5});
+      final game = planningOwTechHelpersGameWithTechs({_gp1: 1, _gp2: 5});
       final a = isPursuingTechStealPosture(game, _gp1);
       final b = isPursuingTechStealPosture(game, _gp1);
       expect(a, isTrue);
@@ -272,7 +174,7 @@ void main() {
 
   group('oldWorldProvinceLeadOver (Refs #3717)', () {
     test('positive when the faction owns more than the own OW count', () {
-      final game = _gameOwning({_gp2: 5});
+      final game = planningOwTechHelpersGameOwning({_gp2: 5});
       expect(
         oldWorldProvinceLeadOver(
           game: game,
@@ -284,7 +186,7 @@ void main() {
     });
 
     test('negative (deficit view) when the faction owns fewer', () {
-      final game = _gameOwning({_gp2: 1});
+      final game = planningOwTechHelpersGameOwning({_gp2: 1});
       expect(
         oldWorldProvinceLeadOver(
           game: game,
@@ -296,7 +198,7 @@ void main() {
     });
 
     test('zero when the faction owns exactly the own OW count', () {
-      final game = _gameOwning({_gp2: 4});
+      final game = planningOwTechHelpersGameOwning({_gp2: 4});
       expect(
         oldWorldProvinceLeadOver(
           game: game,
@@ -308,7 +210,7 @@ void main() {
     });
 
     test('counts only the queried faction (other owners excluded)', () {
-      final game = _gameOwning({_gp2: 6, _gp3: 9});
+      final game = planningOwTechHelpersGameOwning({_gp2: 6, _gp3: 9});
       expect(
         oldWorldProvinceLeadOver(
           game: game,
@@ -320,7 +222,7 @@ void main() {
     });
 
     test('unowned faction yields a pure deficit (count 0)', () {
-      final game = _gameOwning({_gp2: 3});
+      final game = planningOwTechHelpersGameOwning({_gp2: 3});
       expect(
         oldWorldProvinceLeadOver(
           game: game,
@@ -332,7 +234,7 @@ void main() {
     });
 
     test('deterministic for fixed inputs', () {
-      final game = _gameOwning({_gp2: 7});
+      final game = planningOwTechHelpersGameOwning({_gp2: 7});
       final snapshot = _snapshotWithOwnOw(3);
       final a = oldWorldProvinceLeadOver(
         game: game,
@@ -356,7 +258,7 @@ void main() {
     final int qualifyingOw = kMutualExhaustedGpStalemateMinOw;
 
     test('true at the min-OW / treasury / regiment exhaustion boundary', () {
-      final game = _gameWithExhaustedGp(
+      final game = planningOwTechHelpersGameWithExhaustedGp(
         treasury: kMutualExhaustedGpTreasuryMax,
         regiments: kMutualExhaustedGpRegimentMax,
       );
@@ -371,7 +273,7 @@ void main() {
     });
 
     test('false below the min-OW floor (even while stalled and below quota)', () {
-      final game = _gameWithExhaustedGp();
+      final game = planningOwTechHelpersGameWithExhaustedGp();
       expect(
         mutualExhaustedGpStalemateSideQualifies(
           game: game,
@@ -383,7 +285,7 @@ void main() {
     });
 
     test('false at the observer conquest quota (not below quota / not stalled)', () {
-      final game = _gameWithExhaustedGp();
+      final game = planningOwTechHelpersGameWithExhaustedGp();
       expect(
         mutualExhaustedGpStalemateSideQualifies(
           game: game,
@@ -395,7 +297,7 @@ void main() {
     });
 
     test('false when treasury exceeds the exhaustion ceiling', () {
-      final game = _gameWithExhaustedGp(
+      final game = planningOwTechHelpersGameWithExhaustedGp(
         treasury: kMutualExhaustedGpTreasuryMax + 1,
       );
       expect(
@@ -409,7 +311,7 @@ void main() {
     });
 
     test('false when standing regiments exceed the exhaustion ceiling', () {
-      final game = _gameWithExhaustedGp(
+      final game = planningOwTechHelpersGameWithExhaustedGp(
         regiments: kMutualExhaustedGpRegimentMax + 1,
       );
       expect(
@@ -423,7 +325,7 @@ void main() {
     });
 
     test('false for a faction id that does not resolve to a Great Power', () {
-      final game = _gameWithExhaustedGp(
+      final game = planningOwTechHelpersGameWithExhaustedGp(
         treasury: kMutualExhaustedGpTreasuryMax,
         regiments: kMutualExhaustedGpRegimentMax,
       );
@@ -437,5 +339,4 @@ void main() {
       );
     });
   });
-
 }
