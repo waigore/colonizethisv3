@@ -36,6 +36,7 @@ class DevelopmentPanelMapPanel extends ConsumerWidget {
     final visibilityByTile = developmentPanelVisibilityByTile(
       game: game,
       playerView: playerView,
+      regionId: regionId,
     );
     final region = buildInitGameMapRegionViewData(
       regionId: regionId,
