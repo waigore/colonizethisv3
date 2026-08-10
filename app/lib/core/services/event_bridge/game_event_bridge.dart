@@ -170,6 +170,15 @@ class GameEventBridge {
             turnNumber: event.turnNumber,
           ),
         );
+      case EconomyTurnSummaryEvent():
+        _appBus.emit(
+          AppEconomyTurnSummaryEvent(
+            playerId: event.playerId,
+            treasuryDelta: event.treasuryDelta,
+            stockpileDeltas: Map<String, int>.from(event.stockpileDeltas),
+            turnNumber: event.turnNumber,
+          ),
+        );
       case GeneralMedalGainedEvent():
         _appBus.emit(
           AppGeneralMedalGainedEvent(

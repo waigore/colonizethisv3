@@ -293,3 +293,21 @@ class MarketTurnSummaryEvent extends GameEvent {
   final int carryForwardOrderCount;
   final int turnNumber;
 }
+
+/// Last-turn treasury and stockpile net change for a GP (Refs #4308).
+class EconomyTurnSummaryEvent extends GameEvent {
+  const EconomyTurnSummaryEvent({
+    required this.playerId,
+    required this.treasuryDelta,
+    required this.stockpileDeltas,
+    required this.turnNumber,
+  });
+
+  final String playerId;
+  final int treasuryDelta;
+
+  /// Non-zero commodity deltas keyed by canonical commodity id; stable key order
+  /// when built by [emitEconomyTurnSummaryEvents].
+  final Map<String, int> stockpileDeltas;
+  final int turnNumber;
+}

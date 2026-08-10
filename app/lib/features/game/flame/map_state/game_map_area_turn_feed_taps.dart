@@ -120,6 +120,15 @@ mixin GameMapAreaTurnFeedTaps
         );
   }
 
+  void Function()? economyTurnSummaryTap() {
+    return () => ref.read(appEventBusProvider).emit(
+          ct_models.NavigateToRouteEvent(Routes.production, {
+            'game': widget.game,
+            'humanPlayerId': mapPlayerId,
+          }),
+        );
+  }
+
   void Function()? orderRejectedTapForKind(ct_models.OrderKind orderKind) {
     final orders = ref.read(currentOrdersProvider);
     final mapData = ref.read(gameServiceProvider).getMapData(widget.game.id);

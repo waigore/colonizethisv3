@@ -101,6 +101,18 @@ mixin GameMapAreaEvents
     pendingPlayerTurnEvents.add(event);
   }
 
+  void onAppEconomyTurnSummaryEvent(
+    ct_models.AppEconomyTurnSummaryEvent event,
+  ) {
+    if (event.playerId != mapPlayerId) {
+      return;
+    }
+    if (event.treasuryDelta == 0 && event.stockpileDeltas.isEmpty) {
+      return;
+    }
+    pendingPlayerTurnEvents.add(event);
+  }
+
   void onAppPlayerProvinceDiscoveredEvent(
     ct_models.AppPlayerProvinceDiscoveredEvent event,
   ) {

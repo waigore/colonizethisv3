@@ -1,7 +1,9 @@
 
 import 'package:colonizethis_app_ui_chrome/colonizethis_app_ui_chrome.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import '../../../../widgets/commodity_display_name.dart';
 import '../../widgets/shell/player_turn_event_feed.dart';
 import 'game_map_area.dart';
 import 'game_map_area_state_base.dart';
@@ -40,6 +42,9 @@ mixin GameMapAreaTurnFeed
         navalCombatTapForSeaZone: navalCombatTapForSeaZone,
         workOrderCompletedTap: workOrderCompletedTap,
         overseasProfitCreditedTap: overseasProfitCreditedTap(),
+        economyTurnSummaryTap: economyTurnSummaryTap(),
+        commodityDisplayName: (commodityId) =>
+            commodityDisplayName(appL10n(context), commodityId),
         orderRejectedTapForKind: orderRejectedTapForKind,
       ),
     )
