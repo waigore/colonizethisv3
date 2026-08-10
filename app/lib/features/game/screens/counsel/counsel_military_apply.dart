@@ -1,7 +1,7 @@
 // Military Counsel Agree apply handlers. SPEC/ui/counsel-panel.md (Refs #4307).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_logic/military_counsel_api.dart'
+import 'package:colonizethis_logic/industry_counsel_api.dart'
     show
         MilitaryCounselRecommendation,
         MilitaryCounselRecommendationKind,

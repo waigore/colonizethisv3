@@ -7,9 +7,8 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
     show
         rankIndustryCounselRecommendations,
+        rankMilitaryCounselRecommendations,
         rankTradeCounselRecommendationsForHuman;
-import 'package:colonizethis_logic/military_counsel_api.dart'
-    show rankMilitaryCounselRecommendations;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart' show OrderEngine;
 import 'package:colonizethis_turn/colonizethis_turn.dart' show projectOrderEffects;

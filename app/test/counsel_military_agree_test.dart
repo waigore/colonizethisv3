@@ -1,7 +1,7 @@
 // Counsel Military tab Agree actions. SPEC/ui/counsel-panel.md (Refs #4307).
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
-import 'package:colonizethis_logic/military_counsel_api.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

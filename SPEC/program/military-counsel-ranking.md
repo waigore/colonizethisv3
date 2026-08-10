@@ -8,7 +8,7 @@
 |---------|---------|------|
 | DTOs, neutral scoring, invasion intel | `colonizethis_orders` | `lib/src/orders/military_counsel_*.dart` |
 | `rankMilitaryCounselRecommendations` | `colonizethis_orders` | `lib/src/orders/military_counsel_ranking.dart` |
-| App contract export | `colonizethis_logic` | `lib/military_counsel_api.dart` |
+| App contract export | `colonizethis_logic` | `lib/industry_counsel_api.dart` (Military Counsel section) |
 
 ## Rules
 

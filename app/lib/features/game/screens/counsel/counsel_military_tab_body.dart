@@ -1,6 +1,6 @@
 // Counsel screen body — Military tab listing and Agree actions. Refs #4307.
 
-import 'package:colonizethis_logic/military_counsel_api.dart';
+import 'package:colonizethis_logic/industry_counsel_api.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
