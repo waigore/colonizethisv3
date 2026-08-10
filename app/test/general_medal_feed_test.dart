@@ -42,6 +42,8 @@ void main() {
         workOrderCompletedTap: ({required unitId, required targetTileKey}) =>
             null,
         overseasProfitCreditedTap: null,
+        economyTurnSummaryTap: null,
+        commodityDisplayName: (id) => id,
         orderRejectedTapForKind: (_) => null,
       ),
     );

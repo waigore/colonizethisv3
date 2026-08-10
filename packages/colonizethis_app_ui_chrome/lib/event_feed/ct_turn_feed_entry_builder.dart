@@ -27,6 +27,8 @@ class CtTurnFeedEntryContext {
     required this.navalCombatTapForSeaZone,
     required this.workOrderCompletedTap,
     required this.overseasProfitCreditedTap,
+    required this.economyTurnSummaryTap,
+    required this.commodityDisplayName,
     required this.orderRejectedTapForKind,
   });
 
@@ -66,6 +68,8 @@ class CtTurnFeedEntryContext {
     required String targetTileKey,
   }) workOrderCompletedTap;
   final VoidCallback? overseasProfitCreditedTap;
+  final VoidCallback? economyTurnSummaryTap;
+  final String Function(String commodityId) commodityDisplayName;
   final VoidCallback? Function(ct_models.OrderKind orderKind)
       orderRejectedTapForKind;
 }
@@ -194,6 +198,19 @@ List<CtEventFeedEntry> buildCtTurnFeedEntries({
               ),
               linkAffordance: context.overseasProfitCreditedTap != null,
               onTap: context.overseasProfitCreditedTap,
+            ),
+          ct_models.AppEconomyTurnSummaryEvent(
+            :final treasuryDelta,
+            :final stockpileDeltas,
+          ) =>
+            CtEventFeedEntry(
+              text: CtEventFeedText.economyTurnSummaryLine(
+                treasuryDelta: treasuryDelta,
+                stockpileDeltas: stockpileDeltas,
+                commodityDisplayName: context.commodityDisplayName,
+              ),
+              linkAffordance: context.economyTurnSummaryTap != null,
+              onTap: context.economyTurnSummaryTap,
             ),
           ct_models.AppPlayerProvinceDiscoveredEvent(:final provinceId) =>
             _feedEntry(

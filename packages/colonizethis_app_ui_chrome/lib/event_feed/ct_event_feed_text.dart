@@ -49,6 +49,36 @@ class CtEventFeedText {
     return 'Market: ${parts.join(' · ')}';
   }
 
+  static String economyTurnSummaryLine({
+    required int treasuryDelta,
+    required Map<String, int> stockpileDeltas,
+    required String Function(String commodityId) commodityDisplayName,
+    int maxCommodityMovers = 3,
+  }) {
+    final parts = <String>[];
+    if (treasuryDelta != 0) {
+      final sign = treasuryDelta > 0 ? '+' : '';
+      parts.add('treasury $sign£$treasuryDelta');
+    }
+    final sorted = stockpileDeltas.entries.toList()
+      ..sort((a, b) {
+        final cmp = b.value.abs().compareTo(a.value.abs());
+        if (cmp != 0) {
+          return cmp;
+        }
+        return a.key.compareTo(b.key);
+      });
+    for (final entry in sorted.take(maxCommodityMovers)) {
+      final sign = entry.value > 0 ? '+' : '';
+      parts.add('${commodityDisplayName(entry.key)} $sign${entry.value}');
+    }
+    final remaining = sorted.length - maxCommodityMovers;
+    if (remaining > 0) {
+      parts.add('+$remaining more');
+    }
+    return 'Realm: ${parts.join(' · ')}';
+  }
+
   static String generalMedalGainedLine(int newMedals) =>
       'General gained a medal (now $newMedals).';
 

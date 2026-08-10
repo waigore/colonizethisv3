@@ -305,3 +305,18 @@ class AppMarketTurnSummaryEvent extends GameToUIEvent {
   final int carryForwardOrderCount;
   final int turnNumber;
 }
+
+/// Last-turn treasury and stockpile net change. Mirrors
+/// [EconomyTurnSummaryEvent] (Refs #4308).
+class AppEconomyTurnSummaryEvent extends GameToUIEvent {
+  const AppEconomyTurnSummaryEvent({
+    required this.playerId,
+    required this.treasuryDelta,
+    required this.stockpileDeltas,
+    required this.turnNumber,
+  });
+  final String playerId;
+  final int treasuryDelta;
+  final Map<String, int> stockpileDeltas;
+  final int turnNumber;
+}

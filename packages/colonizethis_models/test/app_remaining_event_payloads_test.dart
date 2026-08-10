@@ -196,6 +196,15 @@ void main() {
         ).carryForwardOrderCount,
         2,
       );
+      expect(
+        const AppEconomyTurnSummaryEvent(
+          playerId: 'gp1',
+          treasuryDelta: 200,
+          stockpileDeltas: {'grain': -10},
+          turnNumber: 3,
+        ).stockpileDeltas['grain'],
+        -10,
+      );
     });
   });
 }

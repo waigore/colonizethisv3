@@ -67,6 +67,10 @@ class GameEventLogger {
         'turn=${e.turnNumber} playerId=${e.playerId} '
             'totalSpent=${e.totalSpent} totalReceived=${e.totalReceived} '
             'carryForwardOrderCount=${e.carryForwardOrderCount}',
+      EconomyTurnSummaryEvent e =>
+        'turn=${e.turnNumber} playerId=${e.playerId} '
+            'treasuryDelta=${e.treasuryDelta} '
+            'stockpileDeltaCount=${e.stockpileDeltas.length}',
     };
   }
 }
