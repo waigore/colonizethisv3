@@ -7,8 +7,9 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Physical-line ceiling for residual fat pin contracts after case
 /// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
 /// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
-/// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D).
-const int residualFatPinSuitePhysicalLineCeiling = 500;
+/// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D);
+/// Phase-13 Slice D →450 (Refs #4310).
+const int residualFatPinSuitePhysicalLineCeiling = 450;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
