@@ -1731,6 +1731,13 @@ rules:
     runner: dart
     script: tool/check_ai_full_ai_planner_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_economy_satellite_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai economy/orchestrator satellite pins must import shared Game fixtures from economy_satellite_test_support.dart (no local _sellerGame / _cottonOnlyGame / _brokeAtPeaceGame / _bootstrapGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_economy_satellite_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)

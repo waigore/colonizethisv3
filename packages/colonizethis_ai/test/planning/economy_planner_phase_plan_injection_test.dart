@@ -47,48 +47,11 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-const String _nationId = 'gp1';
-const String _owHomeProvince = 'oldWorld|p1';
-const String _owInvadableMinorProvince = 'oldWorld|minor1';
+import '../support/economy_satellite_test_support.dart';
 
-Game _brokeAtPeaceGame() {
-  return const Game(
-    id: 'g-2509-economy-phase-plan-injection',
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(
-            id: _owHomeProvince,
-            regionId: 'oldWorld',
-            ownerId: _nationId,
-          ),
-        ],
-      ),
-      newWorld: RegionData(),
-      armies: [
-        Army(
-          id: 'army_gp1',
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owHomeProvince,
-          regimentUnitIds: ['u1', 'u2', 'u3'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: [
-      Player(
-        id: _nationId,
-        displayName: 'France',
-        isHuman: false,
-        treasury: 0,
-        stockpile: Stockpile(),
-        workerPool: WorkerPool(peasants: 0),
-      ),
-    ],
-  );
-}
+const String _nationId = economyBrokeAtPeaceNationId;
+const String _owHomeProvince = economyBrokeAtPeaceHomeProvince;
+const String _owInvadableMinorProvince = 'oldWorld|minor1';
 
 // OW = 8 puts the GP in EXPAND (`oldWorldProvincesOwned <
 // kObserverConquestMinOwProvincesPerGp = 10`). One invadable OW minor
@@ -132,7 +95,7 @@ void main() {
         // fixture drift that pushed `none` even under the legacy path
         // would silently pass the injection assertion below; this sanity
         // pin catches it first.
-        final game = _brokeAtPeaceGame();
+        final game = economyBrokeAtPeaceGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
 
@@ -173,7 +136,7 @@ void main() {
       'below-quota peace treasury-recovery boost — cargo preference drops '
       'below the natural-EXPAND legacy compute level',
       () {
-        final game = _brokeAtPeaceGame();
+        final game = economyBrokeAtPeaceGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         const seeds = 2509401;
@@ -226,7 +189,7 @@ void main() {
         // that accidentally branched the two paths (for example by
         // letting the phase resolvers drop the treasury arm) would
         // diverge here.
-        final game = _brokeAtPeaceGame();
+        final game = economyBrokeAtPeaceGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         const seeds = 2509402;
@@ -280,7 +243,7 @@ void main() {
       'same hoisted `phasePlan` produce identical cargo preference and '
       'production assignments (Refs #2509 Must-have #7)',
       () {
-        final game = _brokeAtPeaceGame();
+        final game = economyBrokeAtPeaceGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         const seeds = 2509403;
