@@ -1668,6 +1668,13 @@ rules:
     runner: dart
     script: tool/check_ai_expand_phase_planner_sole_gp_war_helpers_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_observer_goal_phase_transition_boundary_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai observer goal phase transition boundary pins must import shared Game fixtures (no local _scenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_transition_boundary_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)
