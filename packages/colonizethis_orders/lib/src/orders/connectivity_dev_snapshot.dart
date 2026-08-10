@@ -1,10 +1,8 @@
-import 'dart:collection';
-
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-import 'order_suggestion_pass_context.dart';
+import 'owned_tile_graph.dart';
 
 /// Plan-time connectivity snapshot for development-target candidate ordering
 /// and Full-AI civilian-work scoring (Refs #4176).
@@ -88,12 +86,9 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
   final connected = result.connected;
   final pathTransportCap = result.pathTransportCap;
   final landProvinceIds = provinceNodeIds(topology);
-  final ownedProvinceIds = ownedProvinceIdsForPlayer(game.worldState, playerId);
-  final purchasedTiles = game.worldState.purchasedTilesByTileKey.keys.toSet();
-  final ownedLandTiles = _ownedLandTileKeys(
+  final ownedLandTiles = ownedLandTileKeysForPlayer(
     game: game,
-    ownedProvinceIds: ownedProvinceIds,
-    purchasedTiles: purchasedTiles,
+    playerId: playerId,
   );
 
   final frontierExtensionTiles = <String>{};
@@ -130,7 +125,7 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
 
   final extensionDistanceByTile = unconnectedTargets.isEmpty
       ? const <String, int>{}
-      : _extensionDistancesOverOwnedLand(
+      : extensionDistancesOverOwnedLand(
           startTargets: unconnectedTargets,
           ownedLandTiles: ownedLandTiles,
           tileMapByRegion: tileMapByRegion,
@@ -155,87 +150,10 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
   );
 }
 
-Set<String> _ownedLandTileKeys({
-  required Game game,
-  required Set<String> ownedProvinceIds,
-  required Set<String> purchasedTiles,
-}) {
-  final out = <String>{};
-  final tileKeysByRegion = game.worldState.tileKeysByRegionAndProvince;
-  for (final regionEntry in tileKeysByRegion.entries) {
-    final regionId = regionEntry.key;
-    for (final provinceEntry in regionEntry.value.entries) {
-      final localProvinceId = provinceEntry.key;
-      final fullProvinceId = ProvinceId.full(regionId, localProvinceId);
-      if (!ownedProvinceIds.contains(fullProvinceId)) continue;
-      out.addAll(provinceEntry.value);
-    }
-  }
-  out.addAll(purchasedTiles);
-  return out;
-}
-
 bool _isDevTargetTile(Game game, String tileKey) {
   final resourceId = game.worldState.resourceByTileKey[tileKey];
   final level = game.worldState.tileState.improvementLevel(tileKey);
   return (resourceId != null && resourceId.isNotEmpty) || level >= 1;
-}
-
-Map<String, int> _extensionDistancesOverOwnedLand({
-  required Set<String> startTargets,
-  required Set<String> ownedLandTiles,
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Set<String> landProvinceIds,
-}) {
-  final distances = <String, int>{};
-  final queue = Queue<String>();
-  for (final tk in startTargets) {
-    distances[tk] = 0;
-    queue.add(tk);
-  }
-  while (queue.isNotEmpty) {
-    final current = queue.removeFirst();
-    final currentDist = distances[current]!;
-    for (final neighbor in _cardinalNeighborTileKeys(
-      current,
-      tileMapByRegion: tileMapByRegion,
-      landProvinceIds: landProvinceIds,
-    )) {
-      if (!ownedLandTiles.contains(neighbor)) continue;
-      if (distances.containsKey(neighbor)) continue;
-      distances[neighbor] = currentDist + 1;
-      queue.add(neighbor);
-    }
-  }
-  return distances;
-}
-
-List<String> _cardinalNeighborTileKeys(
-  String tileKey, {
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Set<String> landProvinceIds,
-}) {
-  final coords = parseTileKeyCoordinates(tileKey);
-  if (coords == null) return const [];
-  if (coords.x < 0 || coords.y < 0) return const [];
-  final map = tileMapByRegion[coords.regionId];
-  if (map == null) return const [];
-  final out = <String>[];
-  final w = map.width;
-  final h = map.height;
-  for (final d in kGridNeighborsCardinal4) {
-    final nx = coords.x + d.$1;
-    final ny = coords.y + d.$2;
-    if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-    final cellId = map.cell(nx, ny);
-    final fullProvinceId = '$coords.regionId|$cellId';
-    if (!landProvinceIds.contains(cellId) &&
-        !landProvinceIds.contains(fullProvinceId)) {
-      continue;
-    }
-    out.add(CapitalTile.tileKey(coords.regionId, fullProvinceId, nx, ny));
-  }
-  return out;
 }
 
 Set<String> _seaZonesReachableFromCapital({
@@ -285,21 +203,4 @@ Set<String> _bottleneckRailTiles({
     if (servesBottleneck) out.add(tileKey);
   }
   return out;
-}
-
-/// True when [tileKey] is 4-adjacent to any tile in [connected].
-bool isTileAdjacentToConnectedSet(
-  String tileKey,
-  Set<String> connected, {
-  required Map<String, TileMapResult> tileMapByRegion,
-  required Set<String> landProvinceIds,
-}) {
-  for (final neighbor in _cardinalNeighborTileKeys(
-    tileKey,
-    tileMapByRegion: tileMapByRegion,
-    landProvinceIds: landProvinceIds,
-  )) {
-    if (connected.contains(neighbor)) return true;
-  }
-  return false;
 }
