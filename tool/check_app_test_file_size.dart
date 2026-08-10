@@ -25,7 +25,6 @@ const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/diplomacy_panel_confirm_preview_test.dart',
   'app/test/diplomacy_panel_goldens_test.dart',
   'app/test/diplomacy_panel_rows_test.dart',
-  'app/test/game_map_area_event_feed_test.dart',
   'app/test/game_map_area_state_logic_part2_test.dart',
   'app/test/game_map_area_state_logic_part3_test.dart',
   'app/test/game_region_minimap_widget_test.dart',
