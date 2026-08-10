@@ -35,7 +35,7 @@ import 'development_panel_overview.dart';
 import 'development_panel_scope_list.dart';
 
 /// Body for [DevelopmentScreen]: region tabs, overview, list + map.
-class DevelopmentScreenBody extends ConsumerWidget {
+class DevelopmentScreenBody extends ConsumerStatefulWidget {
   const DevelopmentScreenBody({
     super.key,
     required this.game,
@@ -46,7 +46,23 @@ class DevelopmentScreenBody extends ConsumerWidget {
   final String humanPlayerId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DevelopmentScreenBody> createState() =>
+      _DevelopmentScreenBodyState();
+}
+
+class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
+  final Set<String> _visitedRegionIds = {kRegionOldWorld};
+
+  void _onRegionTabSelected(int index) {
+    final regionId = index == 0 ? kRegionOldWorld : kRegionNewWorld;
+    if (_visitedRegionIds.contains(regionId)) return;
+    setState(() => _visitedRegionIds.add(regionId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final game = widget.game;
+    final humanPlayerId = widget.humanPlayerId;
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     if (mapData == null) {
       return Center(child: Text(appL10n(context).development_mapDataUnavailable));
@@ -65,17 +81,32 @@ class DevelopmentScreenBody extends ConsumerWidget {
       mapData.combinedTopology,
       humanPlayerId,
     );
-    final model = buildDevelopmentPanelModel(
+    final shared = buildDevelopmentPanelBuildContext(
       game: game,
       playerId: humanPlayerId,
       tileMapByRegion: mapData.tileMapByRegion,
       topology: mapData.combinedTopology,
       currentOrders: orders,
-      provinceDisplayNamesById: provinceNames,
-      playerDisplayNamesById: playerNames,
-      playerView: playerView,
     );
-    final connectedTileKeys = model.connectedTileKeys;
+    final connectedTileKeys = shared.connectedTileKeys;
+
+    DevelopmentPanelRegionModel regionModelFor(String regionId) {
+      if (!_visitedRegionIds.contains(regionId)) {
+        return emptyDevelopmentPanelRegionModel(regionId);
+      }
+      return buildDevelopmentPanelRegionModel(
+        shared: shared,
+        game: game,
+        playerId: humanPlayerId,
+        regionId: regionId,
+        tileMapByRegion: mapData.tileMapByRegion,
+        currentOrders: orders,
+        provinceDisplayNamesById: provinceNames,
+        playerDisplayNamesById: playerNames,
+        playerView: playerView,
+      );
+    }
+
     final bus = ref.read(appEventBusProvider);
     final l10n = appL10n(context);
 
@@ -86,13 +117,14 @@ class DevelopmentScreenBody extends ConsumerWidget {
         child: CtTabStrip(
           key: DevelopmentPanelKeys.tabsBodyKey,
           lazyTabBodies: true,
+          onTabIndexChanged: _onRegionTabSelected,
           tabLabels: [l10n.region_oldWorld, l10n.region_newWorld],
           tabViews: [
             _DevelopmentRegionTab(
               game: game,
               humanPlayerId: humanPlayerId,
               regionId: kRegionOldWorld,
-              regionModel: model.oldWorld,
+              regionModel: regionModelFor(kRegionOldWorld),
               playerView: playerView,
               topology: mapData.combinedTopology,
               tileMapByRegion: mapData.tileMapByRegion,
@@ -117,7 +149,7 @@ class DevelopmentScreenBody extends ConsumerWidget {
               game: game,
               humanPlayerId: humanPlayerId,
               regionId: kRegionNewWorld,
-              regionModel: model.newWorld,
+              regionModel: regionModelFor(kRegionNewWorld),
               playerView: playerView,
               topology: mapData.combinedTopology,
               tileMapByRegion: mapData.tileMapByRegion,
@@ -295,7 +327,7 @@ class _DevelopmentRegionTabState extends State<_DevelopmentRegionTab> {
       onAssign: widget.onAssign,
     );
     final mapPanel = DevelopmentPanelMapPanel(
-      key: DevelopmentPanelKeys.panelMapKey,
+      key: DevelopmentPanelKeys.panelMapKeyForRegion(widget.regionId),
       game: widget.game,
       humanPlayerId: widget.humanPlayerId,
       regionId: widget.regionId,

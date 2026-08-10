@@ -101,3 +101,14 @@ class DevelopmentPanelModel {
   DevelopmentPanelRegionModel forRegion(String regionId) =>
       regionId == kRegionNewWorld ? newWorld : oldWorld;
 }
+
+/// Placeholder before a lazy region tab is first selected (Slice E).
+DevelopmentPanelRegionModel emptyDevelopmentPanelRegionModel(String regionId) =>
+    DevelopmentPanelRegionModel(
+      regionId: regionId,
+      ownedScopes: const [],
+      purchasedScopes: const [],
+      landExtractionByCommodity: const {},
+      idleBuilderCount: 0,
+      idleEngineerCount: 0,
+    );

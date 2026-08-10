@@ -9,6 +9,9 @@ abstract final class DevelopmentPanelKeys {
   static const overviewKey = Key('development_panel_overview');
   static const scopeListKey = Key('development_panel_scope_list');
   static const panelMapKey = Key('development_panel_map');
+
+  static Key panelMapKeyForRegion(String regionId) =>
+      Key('development_panel_map:$regionId');
   static const ownedSectionKey = Key('development_panel_owned_section');
   static const purchasedSectionKey = Key('development_panel_purchased_section');
 
