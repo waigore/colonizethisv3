@@ -74,7 +74,19 @@ extension CtTopBarLayout on CtTopBar {
     );
     if (trailing != null) {
       children.add(const SizedBox(width: CtTopBar.trailingGap));
-      children.add(trailing!);
+      children.add(
+        Flexible(
+          fit: FlexFit.loose,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: trailing!,
+            ),
+          ),
+        ),
+      );
     }
     return children;
   }
