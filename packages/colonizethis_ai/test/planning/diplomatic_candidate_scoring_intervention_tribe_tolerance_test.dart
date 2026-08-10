@@ -75,11 +75,11 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomatic_candidate_scoring_colonial_test_support.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // COLONIAL-phase tribe target. Only a single declare-war candidate is
 // scored so the assertion can pin the tribe declare-war slot directly
@@ -109,131 +109,6 @@ const AIConfig _aiConfig = AIConfig(
   hiddenAgendaId: 'merchant',
 );
 
-/// COLONIAL-phase Full AI scenario shared by every variation.
-///
-/// One GP (`gp1`) at OW=11 (above quota — observer phase is COLONIAL via
-/// `hasColonialAcquisitionTargets`), one tribe (`tribe1`) owning a
-/// single sea-reachable NW province, peace + embassy already in place
-/// so `declareWar` is a structurally valid scoring candidate (relation
-/// 30 ≤ default agenda `declareWarMaxRelationScore` = 50, embassy
-/// satisfies the tribe-target preconditions in `OvertureState`).
-/// `gp2` / `gp3` / `gp4` are present as bystander Great Powers so the
-/// intervention-risk variant can attach embassy overtures to the tribe
-/// without changing the OW / NW topology between fixtures.
-Game _colonialTribeScenarioGame({
-  required List<OvertureState> overtureStates,
-}) {
-  return Game(
-    id: 'g-2509-intervention-tribe-tolerance',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army keeps `regimentCountForPlayer` > 0 so the
-      // zero-regiment short-circuit in
-      // `_declareWarSuppressedAdjacentGpScore` (GP target only) cannot
-      // zero the declare-war score for the tribe target this test pins.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1_home'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-      // Bystander GPs so the intervention-risk overtures resolve to a
-      // valid `playerById` and count toward `_interventionRiskPenalty`
-      // (`if (game.players.any((p) => p.id == overture.gpId)) count++`).
-      Player(
-        id: 'gp2',
-        displayName: 'GP2',
-        isHuman: false,
-        leaderKey: 'henry',
-      ),
-      Player(
-        id: 'gp3',
-        displayName: 'GP3',
-        isHuman: false,
-        leaderKey: 'napoleon',
-      ),
-      Player(
-        id: 'gp4',
-        displayName: 'GP4',
-        isHuman: false,
-        leaderKey: 'isabella',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        // Score 30 sits inside the default declare-war relation window
-        // (`kDeclareWarMaxRelationScoreDefault` = 50) so
-        // `_declareWarSuppressedRelationAndCooldownScore` does not zero
-        // the declare-war path on relation grounds.
-        state: RelationState.atPeace,
-        score: 30,
-      ),
-    ],
-    overtureStates: overtureStates,
-  );
-}
-
-/// Embassy overture from `gp1` to the tribe — keeps the tribe a valid
-/// declare-war target in COLONIAL (does **not** count toward
-/// `_interventionRiskPenalty` because the GP is `overture.gpId == nationId`).
-const OvertureState _gp1Embassy = OvertureState(
-  gpId: _nationId,
-  targetId: _tribeId,
-  stage: OvertureStage.embassy,
-);
-
-/// Embassy overtures from `gp2` / `gp3` / `gp4` to the tribe — three
-/// other GPs trigger the maximum intervention-risk penalty
-/// (`-(count * 8).clamp(0, 24)` = -24) in `_interventionRiskPenalty`.
-const List<OvertureState> _interventionEmbassies = <OvertureState>[
-  OvertureState(
-    gpId: 'gp2',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
-  OvertureState(
-    gpId: 'gp3',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
-  OvertureState(
-    gpId: 'gp4',
-    targetId: _tribeId,
-    stage: OvertureStage.embassy,
-  ),
-];
-
 /// COLONIAL-phase snapshot mirroring the AC's "tribe is a valid
 /// declare-war target, colonial-support weights are active"
 /// preconditions:
@@ -256,8 +131,12 @@ const List<OvertureState> _interventionEmbassies = <OvertureState>[
 List<int> _scoreTribeDeclareWar({
   required List<OvertureState> overtureStates,
 }) {
-  final game =
-      _colonialTribeScenarioGame(overtureStates: overtureStates);
+  final game = diplomaticCandidateScoringColonialTribeScenarioGame(
+    gameId: 'g-2509-intervention-tribe-tolerance',
+    overtureStates: overtureStates,
+    includeBystanderGreatPowers: true,
+    homeArmyRegimentUnitId: 'u_gp1_home',
+  );
   // Shared COLONIAL NW-tribe snapshot (Refs #3997). Scoring pins
   // historically omitted adjacent NW owners so adjacency bonuses cannot
   // mask intervention deltas.
@@ -288,8 +167,8 @@ void main() {
         () {
           final scores = _scoreTribeDeclareWar(
             overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
+              kDiplomaticCandidateScoringGp1TribeEmbassy,
+              ...kDiplomaticCandidateScoringInterventionEmbassies,
             ],
           );
 
@@ -324,12 +203,14 @@ void main() {
         'hard skip nor a no-op)',
         () {
           final withoutIntervention = _scoreTribeDeclareWar(
-            overtureStates: const <OvertureState>[_gp1Embassy],
+            overtureStates: const <OvertureState>[
+              kDiplomaticCandidateScoringGp1TribeEmbassy,
+            ],
           );
           final withIntervention = _scoreTribeDeclareWar(
             overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
+              kDiplomaticCandidateScoringGp1TribeEmbassy,
+              ...kDiplomaticCandidateScoringInterventionEmbassies,
             ],
           );
 
@@ -364,14 +245,14 @@ void main() {
         () {
           final first = _scoreTribeDeclareWar(
             overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
+              kDiplomaticCandidateScoringGp1TribeEmbassy,
+              ...kDiplomaticCandidateScoringInterventionEmbassies,
             ],
           );
           final second = _scoreTribeDeclareWar(
             overtureStates: <OvertureState>[
-              _gp1Embassy,
-              ..._interventionEmbassies,
+              kDiplomaticCandidateScoringGp1TribeEmbassy,
+              ...kDiplomaticCandidateScoringInterventionEmbassies,
             ],
           );
 
