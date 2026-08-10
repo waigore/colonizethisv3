@@ -18,14 +18,10 @@ const String _appTestsRelativePath = 'app/test';
 /// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4305).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
 const List<String> appTestFileSizeAllowlistForTests = <String>[
-  'app/test/ct_region_map_widget_part1_test.dart',
-  'app/test/dialogs_320dp_min_viewport_part2_test.dart',
   'app/test/diplomacy_panel_confirm_preview_test.dart',
   'app/test/diplomacy_panel_goldens_test.dart',
   'app/test/game_region_minimap_widget_test.dart',
   'app/test/new_game_leader_selection_dialog_part1_test.dart',
-  'app/test/player_turn_event_feed_chrome_test.dart',
-  'app/test/province_overlay_test.dart',
   'app/test/province_overlay_tile_designation_test.dart',
   'app/test/train_civilians_dialog_test.dart',
   'app/test/train_naval_dialog_test.dart',
