@@ -1,6 +1,7 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
+import 'economy_preview_stockpile_phases.dart';
 import 'turn_event_sink.dart';
 
 /// Emits [EconomyTurnSummaryEvent] for GPs with last-turn treasury and/or
@@ -20,7 +21,7 @@ void emitEconomyTurnSummaryEvents({
       continue;
     }
     final treasuryDelta = endPlayer.treasury - startPlayer.treasury;
-    final stockpileDeltas = _stockpileDeltas(
+    final stockpileDeltas = stockpileCommodityDeltaMap(
       startPlayer.stockpile,
       endPlayer.stockpile,
     );
@@ -36,20 +37,4 @@ void emitEconomyTurnSummaryEvents({
       ),
     );
   }
-}
-
-Map<String, int> _stockpileDeltas(Stockpile start, Stockpile end) {
-  final keys = <String>{
-    ...start.quantities.keys,
-    ...end.quantities.keys,
-  }.toList()
-    ..sort();
-  final deltas = <String, int>{};
-  for (final key in keys) {
-    final delta = end.quantityOf(key) - start.quantityOf(key);
-    if (delta != 0) {
-      deltas[key] = delta;
-    }
-  }
-  return deltas;
 }
