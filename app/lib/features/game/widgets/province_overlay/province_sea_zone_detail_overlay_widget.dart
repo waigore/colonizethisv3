@@ -52,6 +52,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.purchaseLandActionEnabled = false,
     this.purchaseLandActionHasMerchantUnits = false,
     this.onPurchaseLandTap,
+    this.showUpgradeTownControl = false,
+    this.upgradeTownEnabled = false,
+    this.upgradeTownHasBuilderUnits = false,
+    this.upgradeTownTargetTileKey,
+    this.onUpgradeTownTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -92,6 +97,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool purchaseLandActionEnabled;
   final bool purchaseLandActionHasMerchantUnits;
   final VoidCallback? onPurchaseLandTap;
+  final bool showUpgradeTownControl;
+  final bool upgradeTownEnabled;
+  final bool upgradeTownHasBuilderUnits;
+  final String? upgradeTownTargetTileKey;
+  final VoidCallback? onUpgradeTownTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -153,6 +163,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       purchaseLandActionEnabled: purchaseLandActionEnabled,
       purchaseLandActionHasMerchantUnits: purchaseLandActionHasMerchantUnits,
       onPurchaseLandTap: onPurchaseLandTap,
+      showUpgradeTownControl: showUpgradeTownControl,
+      upgradeTownEnabled: upgradeTownEnabled,
+      upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
+      upgradeTownTargetTileKey: upgradeTownTargetTileKey,
+      onUpgradeTownTap: onUpgradeTownTap,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,

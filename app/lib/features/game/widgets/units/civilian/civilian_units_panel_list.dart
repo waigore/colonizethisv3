@@ -132,6 +132,7 @@ mixin CivilianUnitsPanelList on ConsumerState<CivilianUnitsPanel> {
       buildRoadShortcutTargetTileKey: widget.buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: widget.buildFortShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: widget.purchaseLandShortcutTargetTileKey,
+      upgradeTownShortcutTargetTileKey: widget.upgradeTownShortcutTargetTileKey,
     );
   }
 
