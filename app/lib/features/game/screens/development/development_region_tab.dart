@@ -2,15 +2,13 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show
-        DevelopmentAssignRowState,
-        DevelopmentImproveAssignCandidate,
-        developmentPanelMaterialShortageCommodityIds,
-        resolveDevelopmentAssignRowState;
+    show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
+import '../../../../providers/development_panel_projection_provider.dart';
 import '../../../../widgets/ct_spacing.dart';
 import 'development_panel_keys.dart';
 import 'development_panel_map_panel.dart';
@@ -18,7 +16,7 @@ import 'development_panel_overview.dart';
 import 'development_panel_scope_list.dart';
 
 /// One region tab: overview, scope list, and panel map.
-class DevelopmentRegionTab extends StatefulWidget {
+class DevelopmentRegionTab extends ConsumerStatefulWidget {
   const DevelopmentRegionTab({
     super.key,
     required this.game,
@@ -49,27 +47,16 @@ class DevelopmentRegionTab extends StatefulWidget {
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
 
   @override
-  State<DevelopmentRegionTab> createState() => _DevelopmentRegionTabState();
+  ConsumerState<DevelopmentRegionTab> createState() =>
+      _DevelopmentRegionTabState();
 }
 
-class _DevelopmentRegionTabState extends State<DevelopmentRegionTab> {
+class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   Set<String>? _highlightTileKeys;
 
-  Iterable<({String commodityId, Set<String> tileKeys})>
-  get _improvableRows sync* {
-    for (final scope in [
-      ...widget.regionModel.ownedScopes,
-      ...widget.regionModel.purchasedScopes,
-    ]) {
-      for (final row in scope.improvableCommodities) {
-        yield (commodityId: row.commodityId, tileKeys: row.tileKeys.toSet());
-      }
-    }
-  }
-
   DevelopmentAssignRowState _assignRowStateFor(
+    String scopeKey,
     String commodityId,
-    Set<String> tileKeys,
   ) {
     if (!widget.canEdit) {
       return const DevelopmentAssignRowState(
@@ -77,28 +64,21 @@ class _DevelopmentRegionTabState extends State<DevelopmentRegionTab> {
         disabledReason: 'Orders are read-only',
       );
     }
-    return resolveDevelopmentAssignRowState(
-      game: widget.game,
-      playerId: widget.humanPlayerId,
-      currentOrders: widget.currentOrders,
-      topology: widget.topology,
-      tileMapByRegion: widget.tileMapByRegion,
-      commodityTileKeys: tileKeys,
-      connectedTileKeys: widget.connectedTileKeys,
-    );
+    final cache = ref.read(developmentPanelAssignRowStateCacheProvider(widget.regionId));
+    return cache.byScopeCommodityKey[
+            developmentPanelAssignRowStateKey(scopeKey, commodityId)] ??
+        const DevelopmentAssignRowState(
+          enabled: false,
+          disabledReason: 'No valid tile',
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= kNarrowBreakpoint;
-    final materialShortages = developmentPanelMaterialShortageCommodityIds(
-      game: widget.game,
-      playerId: widget.humanPlayerId,
-      currentOrders: widget.currentOrders,
-      topology: widget.topology,
-      tileMapByRegion: widget.tileMapByRegion,
-      improvableRows: _improvableRows,
-      connectedTileKeys: widget.connectedTileKeys,
+    ref.watch(developmentPanelAssignRowStateCacheProvider(widget.regionId));
+    final materialShortages = ref.watch(
+      developmentPanelMaterialShortageProvider(widget.regionId),
     );
     final list = DevelopmentPanelScopeList(
       key: DevelopmentPanelKeys.scopeListKey,

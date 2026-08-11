@@ -12,11 +12,14 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:colonizethis_world/colonizethis_world.dart' show kRegionOldWorld;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+
+import 'package:colonizethis_app/features/game/screens/development/development_panel_keys.dart';
 
 import 'app_shell_harness.dart';
 import 'development_panel_test_support.dart';
@@ -131,6 +134,59 @@ void main() {
       final projectionAfterBump = container.read(developmentPanelProjectionProvider);
       expect(identical(projectionAfterOpen, projectionAfterBump), isTrue);
       expect(projectionNotifications, notificationsAfterOpen);
+    },
+  );
+
+  testWidgets(
+    'developmentPanelAssignRowStateCacheProvider survives Show highlight setState (Refs #4175 Slice E)',
+    (WidgetTester tester) async {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentOverrides(game, gamesBox),
+      );
+      addTearDown(container.dispose);
+
+      var assignCacheNotifications = 0;
+      container.listen(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+        (_, _) => assignCacheNotifications++,
+        fireImmediately: true,
+      );
+
+      await tester.pumpWidget(
+        buildAppShellWithContainer(
+          container: container,
+          child: DevelopmentScreenBody(
+            game: game,
+            humanPlayerId: kPanelTestHumanPlayerId,
+          ),
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          viewport: const Size(900, 760),
+        ),
+      );
+
+      await pumpDevelopmentPanelReady(tester);
+
+      final cacheAfterOpen = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      expect(cacheAfterOpen.byScopeCommodityKey, isNotEmpty);
+      final notificationsAfterOpen = assignCacheNotifications;
+
+      await tester.tap(
+        find.byKey(
+          DevelopmentPanelKeys.showButtonKey('oldWorld|p1', 'grain'),
+        ),
+      );
+      await tester.pump();
+
+      final cacheAfterShow = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      expect(identical(cacheAfterOpen, cacheAfterShow), isTrue);
+      expect(assignCacheNotifications, notificationsAfterOpen);
     },
   );
 }
