@@ -189,8 +189,14 @@ Game buildDevelopmentPanelGoldenGame() {
   );
 }
 
-Future<Box<dynamic>> openDevelopmentPanelTestHiveBox() async {
-  Hive.init('./.dart_tool/test_hive_development_panel');
+/// Opens an isolated Hive games box for one Development panel test suite.
+///
+/// [suiteId] must be unique per `*_test.dart` file so parallel `flutter test`
+/// shards do not contend on `games.lock` (Refs #4175 Slice E).
+Future<Box<dynamic>> openDevelopmentPanelTestHiveBox({
+  required String suiteId,
+}) async {
+  Hive.init('./.dart_tool/test_hive_development_panel_$suiteId');
   return Hive.openBox<dynamic>(HiveBoxNames.games);
 }
 
