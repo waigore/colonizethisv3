@@ -37,6 +37,19 @@ class DevelopmentPanelBuildContext {
   final ConnectivityResult? playerConnectivity;
 }
 
+/// Connectivity for all players — depends on game + map only (not orders).
+Map<String, ConnectivityResult> resolveDevelopmentPanelConnectivity({
+  required Game game,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required MapTopology topology,
+}) {
+  return resolveConnectivity(
+    game: game,
+    tileMapByRegion: tileMapByRegion,
+    topology: topology,
+  );
+}
+
 /// Connectivity, idle counts, and owner cache — once per panel rebuild.
 DevelopmentPanelBuildContext buildDevelopmentPanelBuildContext({
   required Game game,
@@ -45,11 +58,26 @@ DevelopmentPanelBuildContext buildDevelopmentPanelBuildContext({
   required MapTopology topology,
   required Orders currentOrders,
 }) {
-  final connectivity = resolveConnectivity(
+  return buildDevelopmentPanelBuildContextFromConnectivity(
+    connectivity: resolveDevelopmentPanelConnectivity(
+      game: game,
+      tileMapByRegion: tileMapByRegion,
+      topology: topology,
+    ),
     game: game,
-    tileMapByRegion: tileMapByRegion,
-    topology: topology,
+    playerId: playerId,
+    currentOrders: currentOrders,
   );
+}
+
+/// Same as [buildDevelopmentPanelBuildContext] but reuses a precomputed
+/// connectivity map (Slice E — avoid duplicate resolve on order-only churn).
+DevelopmentPanelBuildContext buildDevelopmentPanelBuildContextFromConnectivity({
+  required Map<String, ConnectivityResult> connectivity,
+  required Game game,
+  required String playerId,
+  required Orders currentOrders,
+}) {
   final pendingUnitIds = _pendingWorkUnitIds(currentOrders, playerId);
   final idleCounts = _countIdleCivilians(
     game: game,
