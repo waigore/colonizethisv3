@@ -39,13 +39,14 @@
 // raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
 // raised for GAME80001 lazy per-region Development panel read model (Refs #4175 perf).
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
+// raised for GAME80001 Development panel map snapshot cache + deferred paint (Refs #4175 Slice E).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 70900;
+const _maxMainLines = 71100;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

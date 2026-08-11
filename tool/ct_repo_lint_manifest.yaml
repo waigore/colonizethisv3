@@ -1500,6 +1500,13 @@ rules:
     runner: dart
     script: tool/check_orders_dedup_development_panel.dart
 
+  - rule_id: repo.orders_dedup_owned_tile_graph
+    group: architecture
+    title: Owned-land graph helpers must delegate to owned_tile_graph.dart (Refs #4317)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_orders_dedup_owned_tile_graph.dart
+
   - rule_id: repo.orders_owned_province_projection
     group: architecture
     title: Orders lib must use ownedProvinceIdsForPlayer instead of manual region province owner loops (Refs #4258)
