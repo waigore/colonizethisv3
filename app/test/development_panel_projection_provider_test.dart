@@ -123,4 +123,36 @@ void main() {
       expect(after!.idleBuilderCount, 0);
     },
   );
+
+  test(
+    'developmentPanelConnectivityProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      // Prime providers (orders notifier must be initialized via container).
+      container.read(developmentPanelProjectionProvider);
+
+      final connectivityBefore = container.read(developmentPanelConnectivityProvider);
+      expect(connectivityBefore, isNotNull);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final connectivityAfter = container.read(developmentPanelConnectivityProvider);
+      expect(identical(connectivityBefore, connectivityAfter), isTrue);
+    },
+  );
 }
