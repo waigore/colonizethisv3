@@ -95,6 +95,7 @@ void main() {
         game: game,
         gamesBox: gamesBox,
       );
+      await pumpDevelopmentPanelReady(tester);
 
       expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
       expect(find.byKey(DevelopmentPanelKeys.scopeListKey), findsOneWidget);
@@ -123,6 +124,7 @@ void main() {
         gamesBox: gamesBox,
         viewport: _kDevelopmentNarrowViewport,
       );
+      await pumpDevelopmentPanelReady(tester);
 
       expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
       expect(

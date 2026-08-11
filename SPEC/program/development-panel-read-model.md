@@ -37,6 +37,7 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - Panel maps call `buildInitGameMapRegionViewData` for the active region only (not full dual-region `buildInitGameMapViewData`).
 - `DevelopmentPanelMapPanel` caches `DevelopmentPanelMapSnapshot` (region view data + territory outline keys) across highlight-only rebuilds; invalidates when game turn, region, player, or per-region visibility digest changes.
 - First map paint is deferred to the frame after panel mount so overview/list can paint first (post-frame `mapReady` gate).
+- `DevelopmentScreenBody` defers read-model projection (`buildPlayerView`, `buildDevelopmentPanelBuildContext`, per-region models) to the frame after mount so the tab strip can paint before connectivity and improvable scans run (post-frame `readModelReady` gate).
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs.
