@@ -40,13 +40,14 @@
 // raised for GAME80001 lazy per-region Development panel read model (Refs #4175 perf).
 // raised for GAME90001 Military Counsel tab + UNIT20001 counsel entry (Refs #4307).
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
+// raised for Military Counsel budget headroom after dev integration (Refs #4307).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 71800;
+const _maxMainLines = 72000;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
