@@ -9,6 +9,7 @@ import 'game_map_area_province_action_states_build_fort.dart';
 import 'game_map_area_province_action_states_explore.dart';
 import 'game_map_area_province_action_states_prospect.dart';
 import 'game_map_area_province_action_states_purchase_land.dart';
+import 'game_map_area_province_action_states_upgrade_town.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart';
@@ -182,6 +183,33 @@ class GameMapAreaProvinceActionStates {
         game: game,
         humanPlayerId: humanPlayerId,
         selectedTileKey: selectedTileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
+
+  static ({
+    bool showControl,
+    bool enabled,
+    bool hasBuilderUnits,
+    String? townTileKey,
+  })
+  upgradeTown({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String provinceId,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaProvinceActionStatesUpgradeTown.compute(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: provinceId,
         playerView: playerView,
         workTargetSelectionCache: workTargetSelectionCache,
         topology: topology,

@@ -330,4 +330,31 @@ abstract final class GameMapAreaStateLogic {
         currentOrders: currentOrders,
         tileMapByRegion: tileMapByRegion,
       );
+
+  static ({
+    bool showControl,
+    bool enabled,
+    bool hasBuilderUnits,
+    String? townTileKey,
+  })
+  provinceUpgradeTownActionState({
+    required ct_models.Game game,
+    required String humanPlayerId,
+    required String provinceId,
+    required PlayerView playerView,
+    PerPlayerWorkTargetSelectionCache? workTargetSelectionCache,
+    MapTopology? topology,
+    ct_models.Orders currentOrders = const ct_models.Orders(),
+    Map<String, TileMapResult>? tileMapByRegion,
+  }) =>
+      GameMapAreaStateLogicProvinceActions.provinceUpgradeTownActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        provinceId: provinceId,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: currentOrders,
+        tileMapByRegion: tileMapByRegion,
+      );
 }

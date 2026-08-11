@@ -15,10 +15,19 @@ void _appendProvincePanelPoliticalSection(
           : l10n.provinceOverlay_capitalNo,
     );
     out.add(
-      l10n.provinceOverlay_townDevelopment(
+      l10n.provinceOverlay_townDevelopmentOfMax(
         ctx.province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin,
+        kTownDevelopmentLevelMax,
       ),
     );
+    final level =
+        ctx.province?.townDevelopmentLevel ?? kTownDevelopmentLevelMin;
+    out.add(switch (level) {
+      kTownDevelopmentLevelMax => l10n.provinceOverlay_townDevelopmentGistMax,
+      2 => l10n.provinceOverlay_townDevelopmentGistBonusActiveNextAt4,
+      3 => l10n.provinceOverlay_townDevelopmentGistNextAt4,
+      _ => l10n.provinceOverlay_townDevelopmentGistNextAt2,
+    });
   });
 }
 

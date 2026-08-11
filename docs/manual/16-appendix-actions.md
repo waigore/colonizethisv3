@@ -29,7 +29,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | `explore` — Explorer | Free; province must be partly revealed and occupiable. | Reveals province on completion. |
 | `prospect` — Explorer | Free; mineral-eligible, visible, occupiable unprospected tile. | One-turn completion marks tile prospected. |
 | `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. | Raises improvement level. |
-| `upgrade_town` — Builder | Materials and valid town tile; availability reflects current validator rules. | Raises town development. |
+| `upgrade_town` — Builder | National Bureaucracy, materials, and province town tile; availability reflects current validator rules. **`MAP20001` Upgrade town** on the Political Town development row opens Builder-only assignment for the province town tile when eligible. | Raises town development. |
 | `build_road` — Engineer | Lumber + metal; terrain/road technology limits. | Raises transport level. |
 | `build_port` — Engineer | Lumber + metal; valid coastal town/river tile. | Creates port and transport level 4. |
 | `build_fort` — Engineer | Materials, town tile, and fort technology where required. **`MAP20001` Build fort** shortcut on the Military fort row opens Engineer-only assignment for the selected town tile when eligible. | Raises fort level. |
