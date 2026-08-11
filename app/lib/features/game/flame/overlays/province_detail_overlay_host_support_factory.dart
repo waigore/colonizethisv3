@@ -7,6 +7,7 @@ import '../../../../core/services/game_service/game_service.dart'
     show GameMapData;
 import '../caches/per_player_work_target_selection_cache.dart';
 import '../map_state/province_action_state_calculator.dart';
+import '../map_state/game_map_area_state_logic.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay.dart';
 import '../../widgets/province_overlay/province_sea_zone_detail_overlay_support.dart'
     show isProvinceSeaZoneOverlaySeaZone;
@@ -54,6 +55,16 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final buildRoadState = actionStates.buildRoad;
   final buildFortState = actionStates.buildFort;
   final purchaseLandState = actionStates.purchaseLand;
+  final upgradeTownState = GameMapAreaStateLogic.provinceUpgradeTownActionState(
+    game: game,
+    humanPlayerId: humanPlayerId,
+    provinceId: displayId,
+    playerView: playerView,
+    workTargetSelectionCache: workTargetSelectionCache,
+    topology: mapData?.combinedTopology,
+    currentOrders: draftOrders,
+    tileMapByRegion: mapData?.tileMapByRegion,
+  );
   final shortcuts = buildProvinceDetailShortcutCallbacks(
     game: game,
     humanPlayerId: humanPlayerId,
@@ -69,6 +80,9 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     buildRoadEnabled: buildRoadState.enabled,
     buildFortEnabled: buildFortState.enabled,
     purchaseLandEnabled: purchaseLandState.enabled,
+    provinceId: displayId,
+    upgradeTownEnabled: upgradeTownState.enabled,
+    upgradeTownTargetTileKey: upgradeTownState.townTileKey,
     bus: bus,
   );
   final townProductionBonus = provinceTownProductionBonusPreview(
@@ -155,5 +169,11 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onBuildRoadTap: shortcuts.onBuildRoadTap,
     onBuildFortTap: shortcuts.onBuildFortTap,
     onPurchaseLandTap: shortcuts.onPurchaseLandTap,
+    showUpgradeTownControl:
+        canMutateViaUi && upgradeTownState.showControl,
+    upgradeTownEnabled: canMutateViaUi && upgradeTownState.enabled,
+    upgradeTownHasBuilderUnits: upgradeTownState.hasBuilderUnits,
+    upgradeTownTargetTileKey: upgradeTownState.townTileKey,
+    onUpgradeTownTap: shortcuts.onUpgradeTownTap,
   );
 }

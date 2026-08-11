@@ -58,6 +58,11 @@ OverlayContent provinceContent({
   required bool purchaseLandActionEnabled,
   required bool purchaseLandActionHasMerchantUnits,
   VoidCallback? onPurchaseLandTap,
+  required bool showUpgradeTownControl,
+  required bool upgradeTownEnabled,
+  required bool upgradeTownHasBuilderUnits,
+  required String? upgradeTownTargetTileKey,
+  VoidCallback? onUpgradeTownTap,
   bool omniscientDetail = false,
   Map<String, int> townProductionBonusByCommodity = const {},
   ProvinceExtractionSnapshot? extractionSnapshot,
@@ -156,6 +161,20 @@ OverlayContent provinceContent({
     isCapital: provinceOverlayIsCapital(game, provinceId),
     townDevelopmentLevel: province?.townDevelopmentLevel ??
         kTownDevelopmentLevelMin,
+    showUpgradeTownControl: showUpgradeTownControl,
+    upgradeTownEnabled: upgradeTownEnabled,
+    upgradeTownTooltip: upgradeTownTargetTileKey == null
+        ? ''
+        : provinceOverlayPoliticalUpgradeTownTooltip(
+            l10n: l10n,
+            game: game,
+            humanPlayerId: humanPlayerId,
+            currentOrders: draftOrders,
+            townTileKey: upgradeTownTargetTileKey,
+            enabled: upgradeTownEnabled,
+            hasBuilderUnits: upgradeTownHasBuilderUnits,
+          ),
+    onUpgradeTownTap: onUpgradeTownTap,
   );
   final economic = showsFullIntel
       ? buildEconomicSection(

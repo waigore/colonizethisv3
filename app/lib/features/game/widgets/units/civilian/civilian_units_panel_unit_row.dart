@@ -33,6 +33,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     required this.buildRoadShortcutTargetTileKey,
     required this.buildFortShortcutTargetTileKey,
     required this.purchaseLandShortcutTargetTileKey,
+    required this.upgradeTownShortcutTargetTileKey,
     this.readOnly = false,
     super.key,
   });
@@ -53,6 +54,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   final String? buildRoadShortcutTargetTileKey;
   final String? buildFortShortcutTargetTileKey;
   final String? purchaseLandShortcutTargetTileKey;
+  final String? upgradeTownShortcutTargetTileKey;
   final bool readOnly;
 
   @override
@@ -89,6 +91,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+      upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     );
     final tileKeyForLocate = projectedTileKey;
     final regionIdForLocate = Unit.regionIdFromTileKey(tileKeyForLocate);
@@ -112,6 +115,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
+      upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     );
     final selected = isTileScope && isSelectedInTileScope;
     return CivilianUnitRowCard(
