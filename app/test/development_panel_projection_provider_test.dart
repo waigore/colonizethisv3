@@ -5,6 +5,8 @@ import 'package:colonizethis_app/features/game/widgets/shell/shell_player_contex
 import 'package:colonizethis_app/providers/development_panel_projection_provider.dart';
 import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart'
+    show kWorkTargetBuildImprovement;
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -107,7 +109,7 @@ void main() {
           kPanelTestHumanPlayerId: const [
             WorkOrder(
               unitId: 'b1',
-              target: 'build_improvement',
+              target: kWorkTargetBuildImprovement,
               targetTileKey: 'oldWorld|p1|0|0',
             ),
           ],
