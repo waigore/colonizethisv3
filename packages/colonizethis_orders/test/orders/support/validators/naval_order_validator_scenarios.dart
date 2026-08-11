@@ -58,84 +58,9 @@ void novRunValidateNavalMissionBeachheadRequiresTargetProvince() {novExpectNaval
 
 void novRunValidateNavalMissionRejectsWhenFleetInPort() {novExpectNavalMission(validator: novValidatorInPort(topology: novSeaProvinceAdjacent()),order: const NavalMissionOrder(fleetId: 'f1',mission: 'patrol'),status: OrderValidationStatus.rejected,reasonExact: 'Mission only allowed when fleet is at sea',);}
 
-void novRunValidateNavalMissionBlockadeRejectsNonAdjacentEnemy() {
-  final topology = navalOrderValidatorTestTopology(
-    nodes: [
-      navalOrderValidatorTestSeaNode('sea1'),
-      navalOrderValidatorTestSeaNode('sea2'),
-      navalOrderValidatorTestProvinceNode('P1'),
-      navalOrderValidatorTestProvinceNode('P2'),
-    ],
-    edges: const [
-      TopologyEdge(id1: 'sea1', id2: 'P1'),
-      TopologyEdge(id1: 'sea2', id2: 'P2'),
-    ],
-  );
-  final validator = navalOrderValidatorForTest(
-    game: navalOrderValidatorTestGame(
-      fleets: [navalOrderValidatorTestFleetAtSea(seaZoneId: 'sea1')],
-      oldWorldProvinces: [
-        navalOrderValidatorTestOwnedProvince('P1'),
-        navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2'),
-      ],
-      players: novTwoHumanPlayers,
-    ),
-    topology: topology,
-  );
-  novExpectNavalMission(
-    validator: validator,
-    order: NavalMissionOrder(
-      fleetId: 'f1',
-      mission: FleetMission.blockade.name,
-      targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2'),
-    ),
-    status: OrderValidationStatus.rejected,
-    reasonExact: 'Blockade target province not legal',
-  );
-}
+void novRunValidateNavalMissionBlockadeRejectsNonAdjacentEnemy() {final topology = navalOrderValidatorTestTopology(nodes: [navalOrderValidatorTestSeaNode('sea1'), navalOrderValidatorTestSeaNode('sea2'), navalOrderValidatorTestProvinceNode('P1'), navalOrderValidatorTestProvinceNode('P2')], edges: const [TopologyEdge(id1: 'sea1', id2: 'P1'), TopologyEdge(id1: 'sea2', id2: 'P2')]); final validator = navalOrderValidatorForTest(game: navalOrderValidatorTestGame(fleets: [navalOrderValidatorTestFleetAtSea(seaZoneId: 'sea1')], oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1'), navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2')], players: novTwoHumanPlayers), topology: topology); novExpectNavalMission(validator: validator, order: NavalMissionOrder(fleetId: 'f1', mission: FleetMission.blockade.name, targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2')), status: OrderValidationStatus.rejected, reasonExact: 'Blockade target province not legal');}
 
-void novRunValidateNavalMissionBlockadeAcceptsAdjacentWarEnemy() {
-  final topology = navalOrderValidatorTestTopology(
-    nodes: [
-      navalOrderValidatorTestSeaNode('sea1'),
-      navalOrderValidatorTestProvinceNode('P1'),
-      navalOrderValidatorTestProvinceNode('P2'),
-    ],
-    edges: const [
-      TopologyEdge(id1: 'sea1', id2: 'P1'),
-      TopologyEdge(id1: 'sea1', id2: 'P2'),
-    ],
-  );
-  final validator = navalOrderValidatorForTest(
-    game: navalOrderValidatorTestGame(
-      fleets: [navalOrderValidatorTestFleetAtSea()],
-      oldWorldProvinces: [
-        navalOrderValidatorTestOwnedProvince('P1'),
-        navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2'),
-      ],
-      players: novTwoHumanPlayers,
-    ).copyWith(
-      diplomacyRelations: const [
-        DiplomacyRelation(
-          factionId1: 'p1',
-          factionId2: 'p2',
-          state: RelationState.atWar,
-        ),
-      ],
-    ),
-    topology: topology,
-  );
-  novExpectNavalMission(
-    validator: validator,
-    order: NavalMissionOrder(
-      fleetId: 'f1',
-      mission: FleetMission.blockade.name,
-      targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2'),
-    ),
-    status: OrderValidationStatus.accepted,
-    reasonIsNull: true,
-  );
-}
+void novRunValidateNavalMissionBlockadeAcceptsAdjacentWarEnemy() {final topology = navalOrderValidatorTestTopology(nodes: [navalOrderValidatorTestSeaNode('sea1'), navalOrderValidatorTestProvinceNode('P1'), navalOrderValidatorTestProvinceNode('P2')], edges: const [TopologyEdge(id1: 'sea1', id2: 'P1'), TopologyEdge(id1: 'sea1', id2: 'P2')]); final validator = navalOrderValidatorForTest(game: navalOrderValidatorTestGame(fleets: [navalOrderValidatorTestFleetAtSea()], oldWorldProvinces: [navalOrderValidatorTestOwnedProvince('P1'), navalOrderValidatorTestOwnedProvince('P2', ownerId: 'p2')], players: novTwoHumanPlayers).copyWith(diplomacyRelations: const [DiplomacyRelation(factionId1: 'p1', factionId2: 'p2', state: RelationState.atWar)]), topology: topology); novExpectNavalMission(validator: validator, order: NavalMissionOrder(fleetId: 'f1', mission: FleetMission.blockade.name, targetProvinceId: ProvinceId.full(kNavalOrderValidatorTestRegionId, 'P2')), status: OrderValidationStatus.accepted, reasonIsNull: true);}
 
 /// One row in [navalMoveValidatorScenarios] / [navalMissionValidatorScenarios].
 

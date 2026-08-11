@@ -39,6 +39,7 @@
 // raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
 // raised for GAME80001 lazy per-region Development panel read model (Refs #4175 perf).
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
+// raised for GAME80001 Development panel map snapshot cache + deferred paint (Refs #4175 Slice E).
 // raised for MAP20001 Upgrade town political shortcut + level gist (Refs #4316).
 import 'dart:convert';
 import 'dart:io';

@@ -266,7 +266,7 @@ Candidate lists for `build_road`, `build_rail`, `build_improvement`, and `build_
 
 | Target | Promotion rule | Demotion rule |
 |--------|----------------|---------------|
-| `build_road` | Tiles in `frontierExtensionTiles` (4-adjacent to connected set), ascending extension distance | Non-frontier candidates sort after every frontier candidate |
+| `build_road` | Tiles in `frontierExtensionTiles` (owned, no transport yet, 4-adjacent to the road/rail/port network — not merely the logical connected set, which may include Town-rule tiles without roads), ascending extension distance | Non-frontier candidates sort after every frontier candidate |
 | `build_rail` | Connected `bottleneckRailTiles` | Disconnected candidates sort last |
 | `build_improvement` | Connected → adjacent-to-connected → far | Never hard-forbidden |
 | `build_port` | Coastal tiles in provinces with unconnected dev targets and capital-reachable sea zones | Sea-unreachable or no-unconnected-resource provinces sort last |
