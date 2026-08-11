@@ -246,7 +246,7 @@ void main() {
   );
 
   test(
-    'developmentPanelMaterialShortageProvider caches across reads with stable inputs (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider exposes material shortages (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
@@ -254,19 +254,15 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final first = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      final cache = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-      final second = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
-      );
-
-      expect(identical(first, second), isTrue);
+      expect(cache.materialShortageCommodityIds, isEmpty);
     },
   );
 
   test(
-    'developmentPanelMaterialShortageProvider invalidates when orders change (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider material shortages invalidate on orders (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final ordersNotifier = CurrentOrdersNotifier(const Orders());
@@ -279,9 +275,9 @@ void main() {
       addTearDown(container.dispose);
 
       final before = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-      expect(before, isEmpty);
+      expect(before.materialShortageCommodityIds, isEmpty);
 
       ordersNotifier.state = Orders(
         workOrdersByPlayerId: {
@@ -296,7 +292,7 @@ void main() {
       );
 
       final after = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
       expect(identical(before, after), isFalse);
     },

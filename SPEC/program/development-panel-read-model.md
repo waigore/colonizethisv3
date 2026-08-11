@@ -42,8 +42,7 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - `developmentPanelSharedContextProvider` memoizes idle counts and connectivity slice; invalidates when draft orders change.
 - `developmentPanelProjectionProvider` and `developmentPanelRegionModelProvider` compose static + shared inputs across unrelated [DevelopmentScreenBody] rebuilds.
 - `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
-- `developmentPanelMaterialShortageProvider` memoizes per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
-- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) for every improvable row in the active region; material-shortage flags derive from the same cache.
+- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) and per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs. Connectivity (`developmentPanelConnectivityProvider`) invalidates on game/map revision only — not on draft-order churn.
