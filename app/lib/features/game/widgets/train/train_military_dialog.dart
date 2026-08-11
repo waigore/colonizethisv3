@@ -6,6 +6,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import '../../../../config/ui_screen_ids.dart';
 import 'train_commodity_cost_dialog_base.dart';
 import 'train_dialog_base.dart';
+import 'train_military_regiment_role_display.dart';
 
 class TrainMilitaryDialog extends TrainDialogBase {
   const TrainMilitaryDialog({
@@ -47,6 +48,30 @@ class _TrainMilitaryDialogState
 
   @override
   List<String> get resourceBarCommodityIds => _commodityIds;
+
+  @override
+  CommodityCostTrainDialogUnitRowExtras? unitRowExtrasFor(
+    CommodityCostUnitEntry entry,
+  ) {
+    final l10n = appL10n(context);
+    final stats = regimentStatsById(entry.unitTypeId);
+    if (stats == null) return null;
+    final foodUpkeep =
+        TrainMilitaryRegimentRoleDisplay.foodUpkeepForRegiment(entry.unitTypeId);
+    return CommodityCostTrainDialogUnitRowExtras(
+      roleLabel: TrainMilitaryRegimentRoleDisplay.categoryLabel(
+        l10n,
+        stats.category,
+      ),
+      capabilityLine: TrainMilitaryRegimentRoleDisplay.combatRoleGist(
+        l10n,
+        stats.category,
+      ),
+      ongoingCostLine: foodUpkeep == null
+          ? null
+          : TrainMilitaryRegimentRoleDisplay.foodUpkeepLine(l10n, foodUpkeep),
+    );
+  }
 
   @override
   List<CommodityCostUnitEntry> get commodityCostEntries => [

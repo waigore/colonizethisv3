@@ -2119,6 +2119,87 @@
   "@trainMilitary_title": {
     "description": "Train military dialog title."
   },
+  "trainMilitary_categoryLightInfantry": "Light infantry",
+  "@trainMilitary_categoryLightInfantry": {
+    "description": "Regiment category label on Train Military rows. SPEC/game/military-units.md."
+  },
+  "trainMilitary_categoryRegularInfantry": "Regular infantry",
+  "@trainMilitary_categoryRegularInfantry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyInfantry": "Heavy infantry",
+  "@trainMilitary_categoryHeavyInfantry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryBowmen": "Bowmen",
+  "@trainMilitary_categoryBowmen": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryLightCavalry": "Light cavalry",
+  "@trainMilitary_categoryLightCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categorySpearCavalry": "Spear cavalry",
+  "@trainMilitary_categorySpearCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyCavalry": "Heavy cavalry",
+  "@trainMilitary_categoryHeavyCavalry": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryLightArtillery": "Light artillery",
+  "@trainMilitary_categoryLightArtillery": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_categoryHeavyArtillery": "Heavy artillery",
+  "@trainMilitary_categoryHeavyArtillery": {
+    "description": "Regiment category label on Train Military rows."
+  },
+  "trainMilitary_combatGistLightInfantry": "Melee skirmishers",
+  "@trainMilitary_combatGistLightInfantry": {
+    "description": "Combat-role gist for light infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistRegularInfantry": "Melee line",
+  "@trainMilitary_combatGistRegularInfantry": {
+    "description": "Combat-role gist for regular infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyInfantry": "Ranged firepower",
+  "@trainMilitary_combatGistHeavyInfantry": {
+    "description": "Combat-role gist for heavy infantry on Train Military rows."
+  },
+  "trainMilitary_combatGistBowmen": "Ranged volleys",
+  "@trainMilitary_combatGistBowmen": {
+    "description": "Combat-role gist for bowmen on Train Military rows."
+  },
+  "trainMilitary_combatGistLightCavalry": "Fast harassers",
+  "@trainMilitary_combatGistLightCavalry": {
+    "description": "Combat-role gist for light cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistSpearCavalry": "Shock cavalry",
+  "@trainMilitary_combatGistSpearCavalry": {
+    "description": "Combat-role gist for spear cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyCavalry": "Armored charge",
+  "@trainMilitary_combatGistHeavyCavalry": {
+    "description": "Combat-role gist for heavy cavalry on Train Military rows."
+  },
+  "trainMilitary_combatGistLightArtillery": "Field guns",
+  "@trainMilitary_combatGistLightArtillery": {
+    "description": "Combat-role gist for light artillery on Train Military rows."
+  },
+  "trainMilitary_combatGistHeavyArtillery": "Siege guns",
+  "@trainMilitary_combatGistHeavyArtillery": {
+    "description": "Combat-role gist for heavy artillery on Train Military rows."
+  },
+  "trainMilitary_foodUpkeepPerTurn": "{count} food / turn",
+  "@trainMilitary_foodUpkeepPerTurn": {
+    "description": "Ongoing food upkeep on Train Military rows (not paid at train time). SPEC/ui/train-military-dialog.md.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "trainNaval_title": "Train Naval",
   "@trainNaval_title": {
     "description": "Train naval dialog title."

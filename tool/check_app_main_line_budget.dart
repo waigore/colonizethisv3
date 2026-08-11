@@ -41,13 +41,14 @@
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
 // raised for GAME80001 Development panel map snapshot cache + deferred paint (Refs #4175 Slice E).
 // raised for MAP20001 Upgrade town political shortcut + level gist (Refs #4316).
+// raised for UNIT50001 Train Military benefit vs cost gist rows (Refs #4324).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 71500;
+const _maxMainLines = 71700;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
