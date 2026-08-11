@@ -24,8 +24,9 @@ const int ordersTestSupportLocCeiling = 13950;
 /// Raised to 16050 for civilian work affordance scenario suite (Refs #4262).
 /// Raised to 16100 for work-order affordance projection parity tests (Refs #4281).
 /// Raised to 16300 for trade counsel ranking scenario suite (Refs #4282).
-/// Raised to 16500 for military counsel ranking scenario suite (Refs #4307).
-const int ordersTestPackageLocCeiling = 16500;
+/// Wave-8 Slice D (#4317): support densify 16208 → 15440; ceiling lowered to 16000
+/// (military counsel ranking scenarios #4307 fit within wave-8 ceiling).
+const int ordersTestPackageLocCeiling = 16000;
 
 /// Counts physical lines of all `*.dart` files under [dir].
 int countOrdersTestSupportPhysicalLoc(Directory dir) {
@@ -97,13 +98,13 @@ int runCheckOrdersTestSupportLoc(
   if (packageLoc > packageCeiling) {
     logE(
       'check_orders_test_support_loc: package test/ LOC $packageLoc exceeds '
-      'ceiling $packageCeiling (wave-6 target ≤16500; Refs #4246, #4262, #4281, #4282, #4307).',
+      'ceiling $packageCeiling (wave-8 target ≤16000; Refs #4246, #4262, #4281, #4282, #4317, #4307).',
     );
     return 1;
   }
   logI(
     'check_orders_test_support_loc: package test/ LOC $packageLoc ≤ ceiling '
-    '$packageCeiling (wave-6 target ≤16500; Refs #4246, #4262, #4281, #4282, #4307).',
+    '$packageCeiling (wave-8 target ≤16000; Refs #4246, #4262, #4281, #4282, #4317, #4307).',
   );
   return 0;
 }
