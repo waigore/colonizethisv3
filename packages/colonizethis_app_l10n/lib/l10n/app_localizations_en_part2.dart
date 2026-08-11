@@ -659,6 +659,65 @@ mixin _AppLocalizationsEnStrings2 on AppLocalizations {
   String get trainMilitary_title => 'Train Military';
 
   @override
+  String get trainMilitary_categoryLightInfantry => 'Light infantry';
+
+  @override
+  String get trainMilitary_categoryRegularInfantry => 'Regular infantry';
+
+  @override
+  String get trainMilitary_categoryHeavyInfantry => 'Heavy infantry';
+
+  @override
+  String get trainMilitary_categoryBowmen => 'Bowmen';
+
+  @override
+  String get trainMilitary_categoryLightCavalry => 'Light cavalry';
+
+  @override
+  String get trainMilitary_categorySpearCavalry => 'Spear cavalry';
+
+  @override
+  String get trainMilitary_categoryHeavyCavalry => 'Heavy cavalry';
+
+  @override
+  String get trainMilitary_categoryLightArtillery => 'Light artillery';
+
+  @override
+  String get trainMilitary_categoryHeavyArtillery => 'Heavy artillery';
+
+  @override
+  String get trainMilitary_combatGistLightInfantry => 'Melee skirmishers';
+
+  @override
+  String get trainMilitary_combatGistRegularInfantry => 'Melee line';
+
+  @override
+  String get trainMilitary_combatGistHeavyInfantry => 'Ranged firepower';
+
+  @override
+  String get trainMilitary_combatGistBowmen => 'Ranged volleys';
+
+  @override
+  String get trainMilitary_combatGistLightCavalry => 'Fast harassers';
+
+  @override
+  String get trainMilitary_combatGistSpearCavalry => 'Shock cavalry';
+
+  @override
+  String get trainMilitary_combatGistHeavyCavalry => 'Armored charge';
+
+  @override
+  String get trainMilitary_combatGistLightArtillery => 'Field guns';
+
+  @override
+  String get trainMilitary_combatGistHeavyArtillery => 'Siege guns';
+
+  @override
+  String trainMilitary_foodUpkeepPerTurn(int count) {
+    return '$count food / turn';
+  }
+
+  @override
   String get trainNaval_title => 'Train Naval';
 
   @override
