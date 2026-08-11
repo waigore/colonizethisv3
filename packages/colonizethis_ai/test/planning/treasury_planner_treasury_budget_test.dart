@@ -2,9 +2,11 @@
 // Case bodies live in sibling `*_cases.dart` modules.
 
 import 'treasury_planner_treasury_budget_deficit_clamp_cases.dart';
+import 'treasury_planner_treasury_budget_deficit_clamp_spec_ac_cases.dart';
 import 'treasury_planner_treasury_budget_lock_recovery_speculative_cases.dart';
 
 void main() {
   registerTreasuryPlannerTreasuryBudgetDeficitClampCases();
+  registerTreasuryPlannerTreasuryBudgetDeficitClampSpecAcCases();
   registerTreasuryPlannerTreasuryBudgetLockRecoverySpeculativeCases();
 }
