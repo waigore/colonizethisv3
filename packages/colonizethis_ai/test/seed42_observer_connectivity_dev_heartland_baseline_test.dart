@@ -15,10 +15,10 @@ const int kHeartlandBaselineTurns = 10;
 
 /// Connected-tile counts per GP after seed-42 turn [kHeartlandBaselineTurns].
 /// Re-baselined after #4175 Development panel static projection split (#4328)
-/// (gp2 −2 connected tiles at turn 10 vs #4317 baseline).
+/// and current dev observer campaign resolution (gp2 at turn 10).
 const Map<String, int> kSeed42Turn10ConnectedTileCounts = {
   'gp1': 205,
-  'gp2': 207,
+  'gp2': 209,
   'gp3': 143,
   'gp4': 208,
   'gp5': 117,
