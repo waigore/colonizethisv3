@@ -1,17 +1,23 @@
 import 'package:colonizethis_app/app.dart';
+import 'package:colonizethis_app/config/constants.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
+import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
+import 'package:colonizethis_app/providers/games_box_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 
 import 'app_shell_harness.dart';
 import 'panel_test_fixtures.dart';
@@ -21,12 +27,16 @@ void main() {
 
   late Game game;
   late String humanPlayerId;
+  late Box<dynamic> gamesBox;
 
-  setUpAll(() {
+  setUpAll(() async {
     game = buildTrainPanelTestGame();
     humanPlayerId = game.players.isNotEmpty
         ? game.players.firstWhere((p) => p.isHuman).id
         : game.players.first.id;
+
+    Hive.init('./.dart_tool/test_hive_train_military_dialog');
+    gamesBox = await Hive.openBox<dynamic>(HiveBoxNames.games);
   });
 
   Player getPlayer(String pid) {
@@ -207,6 +217,10 @@ void main() {
     await tester.pumpWidget(
       buildAppShell(
         overrides: [
+          gamesBoxProvider.overrideWith((ref) => gamesBox),
+          gameServiceProvider.overrideWith(
+            (ref) => GameService(gamesBox, GameSaveAdapter()),
+          ),
           currentGameProvider.overrideWith(() => CurrentGameNotifier(richGame)),
           currentOrdersProvider.overrideWith(
             () => CurrentOrdersNotifier(const Orders()),
