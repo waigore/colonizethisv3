@@ -4,6 +4,7 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/src/orders/work_handlers/simple_work_order_handler.dart';
 import 'package:colonizethis_orders/src/orders/work_handlers/standard_work_handler.dart';
+import 'package:colonizethis_orders/src/orders/work_handlers/standard_work_handler_config.dart';
 import 'package:colonizethis_orders/src/orders/work_handlers/work_order_handler_registry.dart';
 import 'package:colonizethis_test/test.dart';
 import '../scenario_runner.dart';
