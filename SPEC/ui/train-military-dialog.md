@@ -27,9 +27,11 @@ The Train Military dialog lets the player queue military regiment build orders i
 - **Resource bar:** Renders inside the shared boxed inset strip (`TrainDialogResourceBarBox`; see [components/train-dialog-chrome.md](components/train-dialog-chrome.md)). Shows `Treasury`, `Peasants`, and regiment-input commodities `fabric`, `castIron`, `lumber`, `horses`, `steel`, `bronze` as `TrainDialogResourceChip`s with existing icons. Each chip value renders the dynamic **`remaining / total`** form (`remaining = total − committed`), updating live on every stepper toggle — e.g. `Treasury: £8,000 / £10,000`, `Peasants: 7 / 8`, `Lumber: 2 / 5`. Treasury uses `£` + comma grouping on both sides (e.g. `£10,000`), matching the civilian dialog.
 - **Per-item cost colour:** In each regiment row's inline cost summary, each cost item (treasury, peasant, commodity) renders in `--danger` independently when `remaining` for that resource is less than this regiment's per-unit cost for it (considering committed totals). Sufficient items stay in the normal colour. Only the deficient item turns red.
 - **Deficit hint:** Same wording style as civilian — each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`) below the box.
-- **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above the icon-bearing cost summary) plus the stepper on the right (vertically centered).
+- **Rows:** One row per `RegimentEconomyCatalog.all` entry as a single line — left info `Column` (regiment name above benefit/cost copy and the icon-bearing build-cost summary) plus the stepper on the right (vertically centered).
   - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
-  - cost summary: treasury + commodity requirements with icons
+  - **category + combat-role line** (always visible, muted `10` px body): localized category label from `RegimentStats.category` (`Light infantry`, `Spear cavalry`, `Heavy artillery`, etc.) then ` · ` then one category-level combat-role gist (`Melee line`, `Ranged firepower`, `Siege guns`, etc.) — not a raw FPN/FPM/RNG/DEF/MVR dump. Locked rows keep category/gist visible (muted at row opacity).
+  - **food upkeep line** (always visible, muted `10` px body): `{N} food / turn` from `RegimentEconomy.foodUpkeep` for that regiment id. Describes ongoing per-turn consumption after the unit exists; food is **not** paid at train commit. Locked rows keep food upkeep visible (muted at row opacity).
+  - build cost summary: treasury + commodity requirements with icons (existing inline cost strip).
   - locked state + `Requires: {tech}` when unlocking tech is missing
   - `[-] count [+]` stepper on the right
 - **Footer:** `Reset` button that clears all row counts to `0`.
@@ -145,3 +147,13 @@ Dialog-specific affordability and tech-lock logic remains local to each dialog.
 - **Given** any cost icon in a regiment row's cost summary, **when** its tooltip-trigger region resolves, **then** the region is at least `kMinTouchTargetSize` (44 dp) in height and width per [mobile-adaptation.md](mobile-adaptation.md) § 1.
 
 - **Given** the Train Military dialog is open and two or more resources are insufficient for the queued regiments (e.g. treasury and peasants), **when** the deficit hint renders, **then** each deficient resource renders as `{Resource} low` and the clauses join with `", "` (e.g. `Treasury low, Peasants low`), with no `" and "` connector.
+
+- **Given** Culverin is listed in Train Military, **when** the row renders, **then** the UI layer shows a benefit line with **Heavy artillery** category and a siege-guns combat gist, plus build costs and a food upkeep line matching `RegimentEconomy.foodUpkeep` for `culverin` in `{N} food / turn` wording.
+
+- **Given** Pikemen and Arquebusiers are both listed, **when** their default rows render, **then** their category/gist benefit lines differ (melee-line regular infantry vs ranged-firepower heavy infantry) so a new player can distinguish melee-line from firepower infantry without the manual.
+
+- **Given** Squires (or another cavalry type) is listed, **when** the row renders, **then** the food upkeep line equals `RegimentEconomy.foodUpkeep` for that regiment id and uses plain `food / turn` wording.
+
+- **Given** a tech-locked regiment row, **when** it renders, **then** category/gist and food upkeep lines remain visible (muted at locked row opacity) with existing `Requires: {tech}` and disabled steppers.
+
+- **Given** any unlocked regiment row, **when** the default row renders, **then** the UI layer does **not** show always-visible FPN, FPM, RNG, DEF, or MVR stat labels as primary row content.
