@@ -1,6 +1,8 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_orders/colonizethis_orders.dart'
+    show developmentPanelMaterialShortageCommodityIds;
 import 'package:colonizethis_world/colonizethis_world.dart'
     show ConnectivityResult, PlayerView, allProvinces, buildPlayerView;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -124,5 +126,37 @@ final developmentPanelRegionModelProvider =
         provinceDisplayNamesById: projection.provinceDisplayNamesById,
         playerDisplayNamesById: projection.playerDisplayNamesById,
         playerView: projection.playerView,
+      );
+    });
+
+Iterable<({String commodityId, Set<String> tileKeys})>
+_improvableRowsFromRegionModel(DevelopmentPanelRegionModel regionModel) sync* {
+  for (final scope in [
+    ...regionModel.ownedScopes,
+    ...regionModel.purchasedScopes,
+  ]) {
+    for (final row in scope.improvableCommodities) {
+      yield (commodityId: row.commodityId, tileKeys: row.tileKeys.toSet());
+    }
+  }
+}
+
+/// Material-shortage flags per region — memoized across highlight-only tab rebuilds.
+final developmentPanelMaterialShortageProvider =
+    Provider.family<Set<String>, String>((ref, regionId) {
+      final projection = ref.watch(developmentPanelProjectionProvider);
+      final regionModel = ref.watch(developmentPanelRegionModelProvider(regionId));
+      if (projection == null || regionModel == null) {
+        return const {};
+      }
+      final orders = ref.watch(currentOrdersProvider);
+      return developmentPanelMaterialShortageCommodityIds(
+        game: projection.game,
+        playerId: projection.humanPlayerId,
+        currentOrders: orders,
+        topology: projection.topology,
+        tileMapByRegion: projection.tileMapByRegion,
+        improvableRows: _improvableRowsFromRegionModel(regionModel),
+        connectedTileKeys: projection.shared.connectedTileKeys,
       );
     });
