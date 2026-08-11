@@ -2,10 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show
-        DevelopmentAssignRowState,
-        DevelopmentImproveAssignCandidate,
-        resolveDevelopmentAssignRowState;
+    show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +55,8 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   Set<String>? _highlightTileKeys;
 
   DevelopmentAssignRowState _assignRowStateFor(
+    String scopeKey,
     String commodityId,
-    Set<String> tileKeys,
   ) {
     if (!widget.canEdit) {
       return const DevelopmentAssignRowState(
@@ -67,20 +64,19 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
         disabledReason: 'Orders are read-only',
       );
     }
-    return resolveDevelopmentAssignRowState(
-      game: widget.game,
-      playerId: widget.humanPlayerId,
-      currentOrders: widget.currentOrders,
-      topology: widget.topology,
-      tileMapByRegion: widget.tileMapByRegion,
-      commodityTileKeys: tileKeys,
-      connectedTileKeys: widget.connectedTileKeys,
-    );
+    final cache = ref.read(developmentPanelAssignRowStateCacheProvider(widget.regionId));
+    return cache.byScopeCommodityKey[
+            developmentPanelAssignRowStateKey(scopeKey, commodityId)] ??
+        const DevelopmentAssignRowState(
+          enabled: false,
+          disabledReason: 'No valid tile',
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= kNarrowBreakpoint;
+    ref.watch(developmentPanelAssignRowStateCacheProvider(widget.regionId));
     final materialShortages = ref.watch(
       developmentPanelMaterialShortageProvider(widget.regionId),
     );

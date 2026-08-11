@@ -157,6 +157,63 @@ void main() {
   );
 
   test(
+    'developmentPanelAssignRowStateCacheProvider caches across reads with stable inputs (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final first = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      final second = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+
+      expect(identical(first, second), isTrue);
+      expect(first.byScopeCommodityKey, isNotEmpty);
+    },
+  );
+
+  test(
+    'developmentPanelAssignRowStateCacheProvider invalidates when orders change (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final ordersNotifier = CurrentOrdersNotifier(const Orders());
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(
+          game,
+          ordersNotifier: ordersNotifier,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final before = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+
+      ordersNotifier.state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final after = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      expect(identical(before, after), isFalse);
+    },
+  );
+
+  test(
     'developmentPanelMaterialShortageProvider caches across reads with stable inputs (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
