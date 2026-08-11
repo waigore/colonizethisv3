@@ -125,6 +125,38 @@ void main() {
   );
 
   test(
+    'developmentPanelStaticContextProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      container.read(developmentPanelProjectionProvider);
+
+      final staticBefore = container.read(developmentPanelStaticContextProvider);
+      expect(staticBefore, isNotNull);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final staticAfter = container.read(developmentPanelStaticContextProvider);
+      expect(identical(staticBefore, staticAfter), isTrue);
+      expect(identical(staticBefore!.playerView, staticAfter!.playerView), isTrue);
+    },
+  );
+
+  test(
     'developmentPanelConnectivityProvider survives order-only changes (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();

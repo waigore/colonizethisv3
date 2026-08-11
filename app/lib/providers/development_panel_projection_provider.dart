@@ -37,6 +37,27 @@ class DevelopmentPanelProjection {
   final Map<String, TileMapResult> tileMapByRegion;
 }
 
+/// Game/map/shell inputs that do not depend on draft orders.
+class DevelopmentPanelStaticContext {
+  const DevelopmentPanelStaticContext({
+    required this.game,
+    required this.humanPlayerId,
+    required this.playerView,
+    required this.provinceDisplayNamesById,
+    required this.playerDisplayNamesById,
+    required this.topology,
+    required this.tileMapByRegion,
+  });
+
+  final Game game;
+  final String humanPlayerId;
+  final PlayerView playerView;
+  final Map<String, String> provinceDisplayNamesById;
+  final Map<String, String> playerDisplayNamesById;
+  final MapTopology topology;
+  final Map<String, TileMapResult> tileMapByRegion;
+}
+
 /// Connectivity map — invalidates on game/map changes only (not draft orders).
 final developmentPanelConnectivityProvider =
     Provider<Map<String, ConnectivityResult>?>((ref) {
@@ -55,9 +76,10 @@ final developmentPanelConnectivityProvider =
       );
     });
 
-/// Connectivity, [PlayerView], and display-name maps — once per relevant input change.
-final developmentPanelProjectionProvider =
-    Provider<DevelopmentPanelProjection?>((ref) {
+/// [PlayerView], display-name maps, and map topology — invalidates on game/map/shell
+/// changes only (not draft orders).
+final developmentPanelStaticContextProvider =
+    Provider<DevelopmentPanelStaticContext?>((ref) {
       final game = ref.watch(currentGameProvider);
       if (game == null) {
         return null;
@@ -66,11 +88,6 @@ final developmentPanelProjectionProvider =
       if (mapData == null) {
         return null;
       }
-      final connectivity = ref.watch(developmentPanelConnectivityProvider);
-      if (connectivity == null) {
-        return null;
-      }
-      final orders = ref.watch(currentOrdersProvider);
       final shell = ref.watch(shellPlayerContextProvider);
       final humanPlayerId = resolveShellPanelPlayerId(shell, game);
 
@@ -88,17 +105,10 @@ final developmentPanelProjectionProvider =
         mapData.combinedTopology,
         humanPlayerId,
       );
-      final shared = buildDevelopmentPanelBuildContextFromConnectivity(
-        connectivity: connectivity,
-        game: game,
-        playerId: humanPlayerId,
-        currentOrders: orders,
-      );
 
-      return DevelopmentPanelProjection(
+      return DevelopmentPanelStaticContext(
         game: game,
         humanPlayerId: humanPlayerId,
-        shared: shared,
         playerView: playerView,
         provinceDisplayNamesById: provinceDisplayNamesById,
         playerDisplayNamesById: playerDisplayNamesById,
@@ -107,25 +117,65 @@ final developmentPanelProjectionProvider =
       );
     });
 
-/// Per-region read model; invalidates when [developmentPanelProjectionProvider]
-/// or [currentOrdersProvider] change.
+/// Idle counts and connectivity slice — invalidates when draft orders change.
+final developmentPanelSharedContextProvider =
+    Provider<DevelopmentPanelBuildContext?>((ref) {
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      if (staticContext == null) {
+        return null;
+      }
+      final connectivity = ref.watch(developmentPanelConnectivityProvider);
+      if (connectivity == null) {
+        return null;
+      }
+      final orders = ref.watch(currentOrdersProvider);
+      return buildDevelopmentPanelBuildContextFromConnectivity(
+        connectivity: connectivity,
+        game: staticContext.game,
+        playerId: staticContext.humanPlayerId,
+        currentOrders: orders,
+      );
+    });
+
+/// Combined projection for panel consumers.
+final developmentPanelProjectionProvider =
+    Provider<DevelopmentPanelProjection?>((ref) {
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final shared = ref.watch(developmentPanelSharedContextProvider);
+      if (staticContext == null || shared == null) {
+        return null;
+      }
+      return DevelopmentPanelProjection(
+        game: staticContext.game,
+        humanPlayerId: staticContext.humanPlayerId,
+        shared: shared,
+        playerView: staticContext.playerView,
+        provinceDisplayNamesById: staticContext.provinceDisplayNamesById,
+        playerDisplayNamesById: staticContext.playerDisplayNamesById,
+        topology: staticContext.topology,
+        tileMapByRegion: staticContext.tileMapByRegion,
+      );
+    });
+
+/// Per-region read model; invalidates when static inputs, shared context, or orders change.
 final developmentPanelRegionModelProvider =
     Provider.family<DevelopmentPanelRegionModel?, String>((ref, regionId) {
-      final projection = ref.watch(developmentPanelProjectionProvider);
-      if (projection == null) {
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final shared = ref.watch(developmentPanelSharedContextProvider);
+      if (staticContext == null || shared == null) {
         return null;
       }
       final orders = ref.watch(currentOrdersProvider);
       return buildDevelopmentPanelRegionModel(
-        shared: projection.shared,
-        game: projection.game,
-        playerId: projection.humanPlayerId,
+        shared: shared,
+        game: staticContext.game,
+        playerId: staticContext.humanPlayerId,
         regionId: regionId,
-        tileMapByRegion: projection.tileMapByRegion,
+        tileMapByRegion: staticContext.tileMapByRegion,
         currentOrders: orders,
-        provinceDisplayNamesById: projection.provinceDisplayNamesById,
-        playerDisplayNamesById: projection.playerDisplayNamesById,
-        playerView: projection.playerView,
+        provinceDisplayNamesById: staticContext.provinceDisplayNamesById,
+        playerDisplayNamesById: staticContext.playerDisplayNamesById,
+        playerView: staticContext.playerView,
       );
     });
 
@@ -149,9 +199,10 @@ class DevelopmentPanelAssignRowStateCache {
 
 final developmentPanelAssignRowStateCacheProvider =
     Provider.family<DevelopmentPanelAssignRowStateCache, String>((ref, regionId) {
-      final projection = ref.watch(developmentPanelProjectionProvider);
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final shared = ref.watch(developmentPanelSharedContextProvider);
       final regionModel = ref.watch(developmentPanelRegionModelProvider(regionId));
-      if (projection == null || regionModel == null) {
+      if (staticContext == null || shared == null || regionModel == null) {
         return const DevelopmentPanelAssignRowStateCache(
           byScopeCommodityKey: {},
           materialShortageCommodityIds: {},
@@ -166,13 +217,13 @@ final developmentPanelAssignRowStateCacheProvider =
       ]) {
         for (final row in scope.improvableCommodities) {
           final state = resolveDevelopmentAssignRowState(
-            game: projection.game,
-            playerId: projection.humanPlayerId,
+            game: staticContext.game,
+            playerId: staticContext.humanPlayerId,
             currentOrders: orders,
-            topology: projection.topology,
-            tileMapByRegion: projection.tileMapByRegion,
+            topology: staticContext.topology,
+            tileMapByRegion: staticContext.tileMapByRegion,
             commodityTileKeys: row.tileKeys.toSet(),
-            connectedTileKeys: projection.shared.connectedTileKeys,
+            connectedTileKeys: shared.connectedTileKeys,
           );
           byKey[developmentPanelAssignRowStateKey(scope.scopeKey, row.commodityId)] =
               state;
