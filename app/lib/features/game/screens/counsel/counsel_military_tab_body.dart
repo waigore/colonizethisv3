@@ -137,39 +137,19 @@ class CounselMilitaryRecommendationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: highlighted
-                          ? EditorialMonoclePalette.accentBright
-                          : EditorialMonoclePalette.accentDim,
-                    ),
-                  ),
-                ),
-                if (recommendation.isHighlight)
-                  Text(
-                    '★',
-                    style: TextStyle(
-                      color: EditorialMonoclePalette.accentBright,
-                    ),
-                  ),
-              ],
+            _CounselMilitaryCardTitleRow(
+              title: title,
+              highlighted: highlighted,
+              showStar: recommendation.isHighlight,
+              theme: theme,
             ),
             CtGap.m,
             Text(brief, style: theme.textTheme.bodyMedium),
-            if (detailLines.isNotEmpty) ...[
-              CtGap.m,
-              for (final line in detailLines)
-                Text(
-                  line,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: EditorialMonoclePalette.muted,
-                  ),
-                ),
-            ],
+            if (detailLines.isNotEmpty)
+              _CounselMilitaryCardDetailLines(
+                detailLines: detailLines,
+                theme: theme,
+              ),
             if (action != null) ...[
               CtGap.m,
               action,
@@ -226,6 +206,72 @@ class CounselMilitaryRecommendationCard extends StatelessWidget {
       ),
       onPressed: () => onAgree(recommendation),
       child: Text(l10n.militaryCounsel_action_agree),
+    );
+  }
+}
+
+class _CounselMilitaryCardTitleRow extends StatelessWidget {
+  const _CounselMilitaryCardTitleRow({
+    required this.title,
+    required this.highlighted,
+    required this.showStar,
+    required this.theme,
+  });
+
+  final String title;
+  final bool highlighted;
+  final bool showStar;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: highlighted
+                  ? EditorialMonoclePalette.accentBright
+                  : EditorialMonoclePalette.accentDim,
+            ),
+          ),
+        ),
+        if (showStar)
+          Text(
+            '★',
+            style: TextStyle(
+              color: EditorialMonoclePalette.accentBright,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CounselMilitaryCardDetailLines extends StatelessWidget {
+  const _CounselMilitaryCardDetailLines({
+    required this.detailLines,
+    required this.theme,
+  });
+
+  final List<String> detailLines;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CtGap.m,
+        for (final line in detailLines)
+          Text(
+            line,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.muted,
+            ),
+          ),
+      ],
     );
   }
 }
