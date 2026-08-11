@@ -7,6 +7,7 @@
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
@@ -92,7 +93,7 @@ void main() {
     playerDisplayNamesById = {playerId: 'Spain'};
   });
 
-  int _timeMicros(void Function() fn, {required int iterations}) {
+  int timeMicros(void Function() fn, {required int iterations}) {
     for (var i = 0; i < 3; i++) {
       fn();
     }
@@ -108,7 +109,7 @@ void main() {
     'lazy Old World-only read model is faster than monolithic dual-region build (Refs #4175 Slice E AC2)',
     () {
       const iterations = 50;
-      final monolithicMicros = _timeMicros(
+      final monolithicMicros = timeMicros(
         () => buildDevelopmentPanelModel(
           game: game,
           playerId: playerId,
@@ -120,7 +121,7 @@ void main() {
         ),
         iterations: iterations,
       );
-      final lazyOwMicros = _timeMicros(
+      final lazyOwMicros = timeMicros(
         () {
           final shared = buildDevelopmentPanelBuildContext(
             game: game,
@@ -177,7 +178,7 @@ void main() {
             playerId: const [
               WorkOrder(
                 unitId: 'u1',
-                target: 'build_improvement',
+                target: kWorkTargetBuildImprovement,
                 targetTileKey: 'oldWorld|p1|0|0',
               ),
             ],
