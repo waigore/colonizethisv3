@@ -137,13 +137,26 @@ class CounselMilitaryRecommendationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: highlighted
-                    ? EditorialMonoclePalette.accentBright
-                    : EditorialMonoclePalette.accentDim,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: highlighted
+                          ? EditorialMonoclePalette.accentBright
+                          : EditorialMonoclePalette.accentDim,
+                    ),
+                  ),
+                ),
+                if (recommendation.isHighlight)
+                  Text(
+                    '★',
+                    style: TextStyle(
+                      color: EditorialMonoclePalette.accentBright,
+                    ),
+                  ),
+              ],
             ),
             CtGap.m,
             Text(brief, style: theme.textTheme.bodyMedium),

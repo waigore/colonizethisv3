@@ -198,6 +198,7 @@ void main() {
         rankScore: 5,
         briefReasonKey: MilitaryCounselReasonKey.declareWarInvasion,
         detailReasonKeys: const [MilitaryCounselReasonKey.declareWarInvasion],
+        isHighlight: true,
         armyId: armyId,
         destinationProvinceId: invasionDest,
         destinationProvinceLabel: 'Enemy Border',

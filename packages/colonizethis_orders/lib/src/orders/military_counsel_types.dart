@@ -59,6 +59,7 @@ final class MilitaryCounselRecommendation {
     required this.rankScore,
     required this.briefReasonKey,
     required this.detailReasonKeys,
+    required this.isHighlight,
     this.unitType,
     this.count,
     this.costSnapshot,
@@ -75,6 +76,7 @@ final class MilitaryCounselRecommendation {
   final double rankScore;
   final MilitaryCounselReasonKey briefReasonKey;
   final List<MilitaryCounselReasonKey> detailReasonKeys;
+  final bool isHighlight;
   final String? unitType;
   final int? count;
   final MilitaryCounselBuildCostSnapshot? costSnapshot;

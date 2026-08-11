@@ -73,6 +73,7 @@ List<MilitaryCounselRecommendation> rankMilitaryCounselRecommendations({
         rankScore: score,
         briefReasonKey: MilitaryCounselReasonKey.affordableTrain,
         detailReasonKeys: const [MilitaryCounselReasonKey.affordableTrain],
+        isHighlight: false,
         unitType: order.unitType,
         count: count,
         costSnapshot: militaryCounselBuildCostSnapshotFor(order.unitType),
@@ -125,6 +126,7 @@ List<MilitaryCounselRecommendation> rankMilitaryCounselRecommendations({
           rankScore: score,
           briefReasonKey: reason,
           detailReasonKeys: [reason],
+          isHighlight: false,
           armyId: army.id,
           destinationProvinceId: destination.fullProvinceId,
           destinationProvinceLabel: destination.provinceLabel,
@@ -150,8 +152,27 @@ List<MilitaryCounselRecommendation> rankMilitaryCounselRecommendations({
     return a.recommendationId.compareTo(b.recommendationId);
   });
 
-  if (candidates.length <= _kMaxRecommendations) {
-    return candidates;
-  }
-  return candidates.sublist(0, _kMaxRecommendations);
+  final capped = candidates.length <= _kMaxRecommendations
+      ? candidates
+      : candidates.sublist(0, _kMaxRecommendations);
+  return [
+    for (final candidate in capped)
+      MilitaryCounselRecommendation(
+        recommendationId: candidate.recommendationId,
+        kind: candidate.kind,
+        rankScore: candidate.rankScore,
+        briefReasonKey: candidate.briefReasonKey,
+        detailReasonKeys: candidate.detailReasonKeys,
+        isHighlight: true,
+        unitType: candidate.unitType,
+        count: candidate.count,
+        costSnapshot: candidate.costSnapshot,
+        armyId: candidate.armyId,
+        destinationProvinceId: candidate.destinationProvinceId,
+        destinationProvinceLabel: candidate.destinationProvinceLabel,
+        ownerFactionId: candidate.ownerFactionId,
+        requiresDeclareWar: candidate.requiresDeclareWar,
+        invasionIntel: candidate.invasionIntel,
+      ),
+  ];
 }

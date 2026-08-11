@@ -265,6 +265,11 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Invasion target — confirm war before the army marches.';
 
   @override
+  String militaryCounsel_trainStarSemantic(String brief) {
+    return 'Military counsel: $brief';
+  }
+
+  @override
   String get tradeMarket_counsel => 'Counsel';
 
   @override

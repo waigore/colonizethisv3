@@ -1532,6 +1532,9 @@ abstract class AppLocalizations {
   /// Brief military counsel reason for declare-war invasions.
   String get militaryCounsel_reason_declareWarInvasion_brief;
 
+  /// Accessibility label for Train Military dialog counsel star.
+  String militaryCounsel_trainStarSemantic(String brief);
+
   /// Military Units panel header button opening Military Counsel.
   String get military_units_counsel;
 

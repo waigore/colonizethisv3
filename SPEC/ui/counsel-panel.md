@@ -78,8 +78,10 @@ Read-only while turn resolution blocking (`canMutateViaUi == false`): no primary
 ## Military tab
 
 - Lists ≤3 recommendations from `rankMilitaryCounselRecommendations`.
+- Each returned card carries a ★ (`isHighlight`); same ids drive Train Military dialog row stars on `UNIT50001`.
 - Train cards: unit display name, count, treasury/material/peasant cost summary, brief reason.
 - Invade cards: army id, destination province display name, owner, invasion intel lines (DLG20001 parity), brief reason.
+- Deep-link highlights one card (`highlightRecommendationId` + optional `counselTab: 'military'`).
 - Per-card **Agree** stages train builds or invasion move per validation rules above.
 - Empty state: “No pressing military advice this turn.”
 

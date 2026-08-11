@@ -20,6 +20,7 @@ MilitaryCounselRecommendation _trainRec() {
     rankScore: 10,
     briefReasonKey: MilitaryCounselReasonKey.affordableTrain,
     detailReasonKeys: const [MilitaryCounselReasonKey.affordableTrain],
+    isHighlight: true,
     unitType: 'peasant_levies',
     count: 2,
     costSnapshot: const MilitaryCounselBuildCostSnapshot(
@@ -37,6 +38,7 @@ MilitaryCounselRecommendation _invadeRec() {
     rankScore: 5,
     briefReasonKey: MilitaryCounselReasonKey.declareWarInvasion,
     detailReasonKeys: const [MilitaryCounselReasonKey.declareWarInvasion],
+    isHighlight: true,
     armyId: 'army1',
     destinationProvinceId: 'oldWorld|p2',
     destinationProvinceLabel: 'Border Province',
@@ -105,6 +107,17 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+
+    testWidgets('highlighted train card shows counsel star (Refs #4307 Slice C)', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTab(recommendations: [_trainRec()], callbacks: stubCallbacks),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.text('★'), findsOneWidget);
     });
 
     testWidgets('train Agree invokes callback', (WidgetTester tester) async {

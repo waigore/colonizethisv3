@@ -5440,6 +5440,15 @@
   "@militaryCounsel_reason_declareWarInvasion_brief": {
     "description": "Brief military counsel reason for declare-war invasions."
   },
+  "militaryCounsel_trainStarSemantic": "Military counsel: {brief}",
+  "@militaryCounsel_trainStarSemantic": {
+    "description": "Accessibility label for Train Military dialog counsel star.",
+    "placeholders": {
+      "brief": {
+        "type": "String"
+      }
+    }
+  },
   "military_units_counsel": "Counsel",
   "@military_units_counsel": {
     "description": "Military Units panel header button opening Military Counsel."

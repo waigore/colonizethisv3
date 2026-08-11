@@ -31,6 +31,7 @@ The Train Military dialog lets the player queue military regiment build orders i
   - primary label: **regiment display name** per [military-units.md](../game/military-units.md) via `regimentTypeDisplayName` in `colonizethis_data` (not the snake_case persistence id; e.g. `Peasant Levies` not `peasant_levies`). Text-only; no regiment icon requirement.
   - cost summary: treasury + commodity requirements with icons
   - locked state + `Requires: {tech}` when unlocking tech is missing
+  - when Military Counsel ranks this unit type in the top recommendations, a ★ opens `GAME90001` Military tab with `highlightRecommendationId` (Refs #4307 Slice C)
   - `[-] count [+]` stepper on the right
 - **Footer:** `Reset` button that clears all row counts to `0`.
 

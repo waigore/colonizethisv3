@@ -15,6 +15,7 @@
 - Neutral agenda only: no AI personality weights, H8 crisis boosts, colonial-pressure cargo nudges, or weighted-random selection.
 - Candidates come from `suggestBuildOrders` (military + naval only; civilians excluded) and invasion-oriented `armyMovePickerDestinations` (non-owned destinations; Home Army excluded).
 - Global top ≤3 among train + invade cards.
+- Each returned recommendation sets `isHighlight: true` for counsel-card and train-row ★ parity (Refs #4307 Slice C).
 - Cross-kind sort: descending `rankScore`, then kind precedence `trainUnit` < `invade`, then stable id.
 - Stable ids: `train:<unitType>`, `invade:<armyId>:<destinationProvinceId>`.
 - **Train count:** greedy multi-count of the top affordable unit type while treasury, peasants, and stockpile remain sufficient after pending recruit/build/research orders (same sequential projection as `pendingTreasuryCostsForTurn`).

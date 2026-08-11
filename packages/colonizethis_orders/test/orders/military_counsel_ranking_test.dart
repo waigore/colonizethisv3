@@ -149,6 +149,7 @@ void main() {
       expect(train.recommendationId, 'train:${train.unitType}');
       expect(train.costSnapshot?.treasuryCost, greaterThan(0));
       expect(train.briefReasonKey, MilitaryCounselReasonKey.affordableTrain);
+      expect(train.isHighlight, isTrue);
     }),
     rs('returns empty when no affordable builds and no invasions', () {
       final game = TestFixtures.minimalGame(

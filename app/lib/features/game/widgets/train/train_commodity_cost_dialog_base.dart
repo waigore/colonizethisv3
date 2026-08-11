@@ -78,6 +78,10 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
   ) =>
       null;
 
+  /// Optional Military Counsel star on train rows (military dialog only).
+  @protected
+  Widget? counselStarFor(CommodityCostUnitEntry entry) => null;
+
   late final List<CommodityCostUnitEntry> _entries = commodityCostEntries;
   late final Map<String, CommodityCostUnitEntry> _entriesById = {
     for (final e in _entries) e.unitTypeId: e,
@@ -168,6 +172,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
       onDecrement: () => decrement(econ.unitTypeId),
       roleLabel: extras?.roleLabel,
       capabilityLine: extras?.capabilityLine,
+      counselStar: counselStarFor(econ),
     );
   }
 }
