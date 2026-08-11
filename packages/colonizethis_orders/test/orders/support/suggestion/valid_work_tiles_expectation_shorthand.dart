@@ -53,96 +53,15 @@ String vwtTk(String local, int x, int y) => ValidWorkTilesTestSupport.tileKey(lo
 
 String vwtPid(String local) => ValidWorkTilesTestSupport.provinceId(local);
 
-void vwtExpectExploreVisMembership(Game game, {required Iterable<String> included, required Iterable<String> excluded}) {
-  final valid = validWorkTilesWithVisibility(
-    game: game,
-    topology: ValidWorkTilesTestSupport.emptyTopology,
-    unitId: 'u1',
-    workTarget: kWorkTargetExplore,
-  );
-  for (final tile in included) {expect(valid, contains(tile));}
-  for (final tile in excluded) {expect(valid, isNot(contains(tile)));}
-}
+void vwtExpectExploreVisMembership(Game game, {required Iterable<String> included, required Iterable<String> excluded}) {final valid = validWorkTilesWithVisibility(game: game, topology: ValidWorkTilesTestSupport.emptyTopology, unitId: 'u1', workTarget: kWorkTargetExplore); for (final tile in included) {expect(valid, contains(tile));} for (final tile in excluded) {expect(valid, isNot(contains(tile)));}}
 
-void vwtExpectExploreLatencyUnder1s() {
-  final sw = Stopwatch()..start();
-  final valid = validWorkTilesWithVisibility(
-    game: owTribeExploreLatencyGame(),
-    topology: ValidWorkTilesTestSupport.emptyTopology,
-    unitId: 'u1',
-    workTarget: kWorkTargetExplore,
-  );
-  sw.stop();
-  expect(valid, isNotEmpty);
-  expect(sw.elapsedMilliseconds, lessThan(1000));
-}
+void vwtExpectExploreLatencyUnder1s() {final sw = Stopwatch()..start(); final valid = validWorkTilesWithVisibility(game: owTribeExploreLatencyGame(), topology: ValidWorkTilesTestSupport.emptyTopology, unitId: 'u1', workTarget: kWorkTargetExplore); sw.stop(); expect(valid, isNotEmpty); expect(sw.elapsedMilliseconds, lessThan(1000));}
 
-void vwtExpectNoMoveToOtherGpProvince() {
-  final fx = owGpAdjacentMoveFixture();
-  final suggestions = suggestMoveOrders(
-    buildPlayerView(fx.game, fx.topology, ValidWorkTilesTestSupport.playerId),
-    fx.game,
-    fx.topology,
-    const Orders(),
-  );
-  expect(
-    suggestions.where((m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == fx.otherGpProvinceId),
-    isEmpty,
-  );
-}
+void vwtExpectNoMoveToOtherGpProvince() {final fx = owGpAdjacentMoveFixture(); final suggestions = suggestMoveOrders(buildPlayerView(fx.game, fx.topology, ValidWorkTilesTestSupport.playerId), fx.game, fx.topology, const Orders()); expect(suggestions.where((m) => Unit.provinceIdFromTileKey(m.destinationTileKey) == fx.otherGpProvinceId), isEmpty);}
 
-void vwtExpectBuildSuggestionsSorted(List<String> tileKeys) {
-  final buildSuggestions = suggestedWorkOrders(
-    game: owGrainBuildSuggestGame(tileKeys: tileKeys),
-    topology: owSingleProvinceTopology('p1'),
-  ).where((o) => o.target == kWorkTargetBuildImprovement).toList();
-  if (buildSuggestions.length > 1) {
-    for (var i = 0; i < buildSuggestions.length - 1; i++) {
-      expect(buildSuggestions[i].targetTileKey.compareTo(buildSuggestions[i + 1].targetTileKey), lessThanOrEqualTo(0));
-    }
-  }
-}
+void vwtExpectBuildSuggestionsSorted(List<String> tileKeys) {final buildSuggestions = suggestedWorkOrders(game: owGrainBuildSuggestGame(tileKeys: tileKeys), topology: owSingleProvinceTopology('p1')).where((o) => o.target == kWorkTargetBuildImprovement).toList(); if (buildSuggestions.length > 1) {for (var i = 0; i < buildSuggestions.length - 1; i++) {expect(buildSuggestions[i].targetTileKey.compareTo(buildSuggestions[i + 1].targetTileKey), lessThanOrEqualTo(0));}}}
 
-void vwtExpectBuildExcludesReservedTile(String reserved, String other) {
-  expect(
-    suggestedWorkOrders(
-      game: owGrainBuildSuggestGame(tileKeys: [reserved, other]),
-      topology: owSingleProvinceTopology('p1'),
-      currentOrders: Orders(
-        workOrdersByPlayerId: {
-          ValidWorkTilesTestSupport.playerId: [
-            WorkOrder(unitId: 'u1', target: kWorkTargetBuildImprovement, targetTileKey: reserved),
-          ],
-        },
-      ),
-    ).where((o) => o.target == kWorkTargetBuildImprovement && o.targetTileKey == reserved),
-    isEmpty,
-  );
-}
+void vwtExpectBuildExcludesReservedTile(String reserved, String other) {expect(suggestedWorkOrders(game: owGrainBuildSuggestGame(tileKeys: [reserved, other]), topology: owSingleProvinceTopology('p1'), currentOrders: Orders(workOrdersByPlayerId: {ValidWorkTilesTestSupport.playerId: [WorkOrder(unitId: 'u1', target: kWorkTargetBuildImprovement, targetTileKey: reserved)]})).where((o) => o.target == kWorkTargetBuildImprovement && o.targetTileKey == reserved), isEmpty);}
 
-void vwtExpectMineralProspectGate() {
-  final grain = vwtTk('p1', 0, 0);
-  final iron = vwtTk('p1', 1, 0);
-  final p1 = vwtPid('p1');
-  final provinces = [vwtOwnedProvince('p1')];
-  final tiles = {p1: [grain, iron]};
-  final resources = {grain: 'grain', iron: 'iron'};
-  final improvements = {grain: 0, iron: 0};
-  vwtExpectBuildVisMembership(
-    owBuilderVisibilityGame(provinces: provinces, tilesByProvince: tiles, resourceByTileKey: resources, builderTileKey: grain, improvementByTile: improvements),
-    included: [grain],
-    excluded: [iron],
-  );
-  vwtExpectBuildVisMembership(
-    owBuilderVisibilityGame(
-      provinces: provinces,
-      tilesByProvince: tiles,
-      resourceByTileKey: resources,
-      builderTileKey: grain,
-      improvementByTile: improvements,
-      playerProspectedTiles: {ValidWorkTilesTestSupport.playerId: {iron}},
-    ),
-    included: [grain, iron],
-  );
-}
+void vwtExpectMineralProspectGate() {final grain = vwtTk('p1', 0, 0), iron = vwtTk('p1', 1, 0), p1 = vwtPid('p1'), provinces = [vwtOwnedProvince('p1')], tiles = {p1: [grain, iron]}, resources = {grain: 'grain', iron: 'iron'}, improvements = {grain: 0, iron: 0}; vwtExpectBuildVisMembership(owBuilderVisibilityGame(provinces: provinces, tilesByProvince: tiles, resourceByTileKey: resources, builderTileKey: grain, improvementByTile: improvements), included: [grain], excluded: [iron]); vwtExpectBuildVisMembership(owBuilderVisibilityGame(provinces: provinces, tilesByProvince: tiles, resourceByTileKey: resources, builderTileKey: grain, improvementByTile: improvements, playerProspectedTiles: {ValidWorkTilesTestSupport.playerId: {iron}}), included: [grain, iron]);}
 // dart format on

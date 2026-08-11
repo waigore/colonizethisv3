@@ -6,38 +6,22 @@ export 'order_effects_projector.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'order_engine.g.dart';
 import 'order_engine_slot.dart';
-import 'order_engine_validation.dart';
+import 'order_engine_test_hooks.dart';
+export 'order_engine_test_hooks.dart';
+import 'order_engine_validation_run.dart';
 import 'order_resolution_context.dart';
+import 'order_validation_result.dart';
 import 'order_validator_factory.dart';
 export 'order_validator_factory.dart';
-import 'orders_application_context.dart' show copyUnitsById;
 import 'orders_logging.dart';
 export 'order_validation_result.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
-import 'unit_type_helpers.dart';
 export 'validator_bundle.dart'
     show
         OrderValidators,
         buildWorkOrderValidationContext,
         createOrderValidators,
         createWorkOrderValidator;
-import 'validator_bundle.dart';
-
-// --- Test-only instrumentation (Refs #2237 AC2) ---
-bool _trackValidatePlayerOrdersWithContextInvocationsForTests = false;
-int _validatePlayerOrdersWithContextInvocationCountForTests = 0;
-
-/// Test hook: when enabled, counts every call to [OrderEngine.validatePlayerOrdersWithContext].
-void setOrderEngineValidatePlayerOrdersWithContextTrackingForTests(
-  bool enabled,
-) {
-  _trackValidatePlayerOrdersWithContextInvocationsForTests = enabled;
-  _validatePlayerOrdersWithContextInvocationCountForTests = 0;
-}
-
-/// Test hook: invocations counted while tracking is enabled (Refs #2237).
-int get orderEngineValidatePlayerOrdersWithContextInvocationCountForTests =>
-    _validatePlayerOrdersWithContextInvocationCountForTests;
 
 /// One post–move/army validation round: caller constructs a fresh [OrderValidators]
 /// bundle, then invokes this to append results and propagate economy state.
@@ -174,98 +158,16 @@ class OrderEngine with OrderEngineGeneratedOrderMethods {
     String playerId, {
     Map<String, TileMapResult>? tileMapByRegion,
   }) {
-    if (_trackValidatePlayerOrdersWithContextInvocationsForTests) {
-      _validatePlayerOrdersWithContextInvocationCountForTests++;
-    }
-    final player = game.playerById(playerId);
-    if (player == null) return <OrderValidationResult>[];
-
-    final view = buildPlayerView(game, topology, playerId);
-
-    final moves = _orders.moveOrdersByPlayerId[playerId] ?? [];
-    final armyMoves = _orders.armyMoveOrdersByPlayerId[playerId] ?? [];
-    final recruitWorkers =
-        _orders.recruitWorkerOrdersByPlayerId[playerId] ?? [];
-    final builds = _orders.buildUnitOrdersByPlayerId[playerId] ?? [];
-    final works = _orders.workOrdersByPlayerId[playerId] ?? [];
-    final diplomatic = _orders.diplomaticOrdersByPlayerId[playerId] ?? [];
-    final navals = _orders.navalMoveOrdersByPlayerId[playerId] ?? [];
-    final missions = _orders.navalMissionOrdersByPlayerId[playerId] ?? [];
-    final tradeOrders = _orders.tradeOrdersByPlayerId[playerId] ?? [];
-
-    final unitsById = copyUnitsById(game.worldState.allUnitsById);
-
-    // Single per-pass [OrderResolutionContext] snapshot shared across every
-    // validator factory invocation and per-phase probe (Refs #2836 AC 3;
-    // SPEC/program/logic-validator-units-params.md). The same `view` +
-    // `unitsById` references back both the bundle factory and the per-move
-    // validation context so probes do not rebuild equivalent maps.
-    final resolution = orderResolutionContextFromView(
-      view,
-      game,
-      unitsById: unitsById,
-    );
-
-    final devExclusiveTiles = devExclusiveTilesFromWorld(
-      game.worldState,
-      playerId,
-    );
-
-    final civilianDraftMoveUnitIds = <String>{};
-    for (final m in moves) {
-      final u = unitsById[m.unitId];
-      if (u != null && u.tileKey != null && u.tileKey!.isNotEmpty) {
-        civilianDraftMoveUnitIds.add(m.unitId);
-      }
-    }
-
-    final factionMembership = DiplomacyFactionMembership.from(game);
-
-    // Single-pass army index for full-pass army-move validation (Refs #2394,
-    // SPEC/program/order-suggestions.md — same snapshot semantics as
-    // [IncrementalCandidateValidator._armiesById] for read-only [game]).
-    final armiesById = <String, Army>{
-      for (final a in game.worldState.armies) a.id: a,
-    };
-
-    // Peasant reservation ledger: each accepted RecruitWorkerOrder consumes
-    // peasants per `WorkerActionEconomyCatalog`, and the downstream build
-    // validator must see the post-recruit headcount so military/naval builds
-    // that consume a peasant respect the combined reservation (see
-    // SPEC/game/workers-and-population.md § Peasant reservation).
-    final state = OrderValidationRunState(
-      results: <OrderValidationResult>[],
-      stockpile: player.stockpile,
-      treasury: player.treasury,
-      workerPool: player.workerPool,
-    );
-
-    runOrderValidationPhases(
+    bumpOrderEngineValidatePlayerOrdersWithContextInvocationIfTracking();
+    return runOrderEnginePlayerValidation(
       validatorFactory: _validatorFactory,
       projector: _projector,
-      stagedOrdersSnapshot: copyOrdersSnapshotForEngine(_orders),
-      state: state,
+      stagedOrders: copyOrdersSnapshotForEngine(_orders),
       game: game,
-      player: player,
       playerId: playerId,
-      resolution: resolution,
       topology: topology,
       tileMapByRegion: tileMapByRegion,
-      diplomatic: diplomatic,
-      civilianDraftMoveUnitIds: civilianDraftMoveUnitIds,
-      devExclusiveTiles: devExclusiveTiles,
-      factionMembership: factionMembership,
-      armiesById: armiesById,
-      moves: moves,
-      armyMoves: armyMoves,
-      recruitWorkers: recruitWorkers,
-      builds: builds,
-      works: works,
-      navals: navals,
-      missions: missions,
-      tradeOrders: tradeOrders,
     );
-    return state.results;
   }
 
   /// Dry-run: apply orders via resolver (no mutation of [game]); return projected effects.
