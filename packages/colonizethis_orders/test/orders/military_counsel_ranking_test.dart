@@ -229,6 +229,28 @@ void main() {
         MilitaryCounselReasonKey.declareWarInvasion,
       );
     }),
+    rs('at war invade recommendation omits declare-war flag', () {
+      final ranked = _mcRank(
+        _mcInvadeGame(
+          diplomacy: const [
+            DiplomacyRelation(
+              factionId1: _gp1,
+              factionId2: _gp2,
+              state: RelationState.atWar,
+            ),
+          ],
+        ),
+        topology: _mcTopo(['P1', 'P2'], [('P1', 'P2')]),
+      );
+      final invade = ranked.singleWhere(
+        (r) => r.kind == MilitaryCounselRecommendationKind.invade,
+      );
+      expect(invade.requiresDeclareWar, isFalse);
+      expect(
+        invade.briefReasonKey,
+        MilitaryCounselReasonKey.atWarInvasion,
+      );
+    }),
     rs('sorts by descending rankScore then kind precedence', () {
       final ranked = _mcRank(
         _mcInvadeGame(
