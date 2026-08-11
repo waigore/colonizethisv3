@@ -38,10 +38,12 @@ When `playerView` is supplied to `buildDevelopmentPanelModel`, improvable commod
 - `DevelopmentPanelMapPanel` caches `DevelopmentPanelMapSnapshot` (region view data + territory outline keys) across highlight-only rebuilds; invalidates when game turn, region, player, or per-region visibility digest changes.
 - First map paint is deferred to the frame after panel mount so overview/list can paint first (post-frame `mapReady` gate).
 - `DevelopmentScreenBody` defers read-model projection (`buildPlayerView`, `buildDevelopmentPanelBuildContext`, per-region models) to the frame after mount so the tab strip can paint before connectivity and improvable scans run (post-frame `readModelReady` gate).
-- `developmentPanelProjectionProvider` and `developmentPanelRegionModelProvider` memoize shared connectivity, [PlayerView], and per-region read models across unrelated [DevelopmentScreenBody] rebuilds; invalidate when game, orders, map data, or shell player context change.
+- `developmentPanelStaticContextProvider` memoizes [PlayerView] and display-name maps across draft-order churn; invalidates on game, map data, or shell player context change only.
+- `developmentPanelSharedContextProvider` memoizes idle counts and connectivity slice; invalidates when draft orders change.
+- `developmentPanelRegionScopesProvider` memoizes improvable scope rows and land extraction per region; invalidates on game/map/shell changes only (not draft orders).
+- `developmentPanelRegionModelProvider` composes cached scopes with order-dependent idle counts and assigned civilians.
 - `developmentPanelConnectivityProvider` memoizes `resolveConnectivity` separately from draft orders so assign/cancel live updates recompute idle counts without re-running connectivity scans.
-- `developmentPanelMaterialShortageProvider` memoizes per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
-- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) for every improvable row in the active region; material-shortage flags derive from the same cache.
+- `developmentPanelAssignRowStateCacheProvider` memoizes per-scope assign affordance (`resolveDevelopmentAssignRowState`) and per-region material-shortage commodity ids so highlight-only tab rebuilds do not re-scan assign affordance for every improvable row.
 - `developmentPanelVisibilityByTile` accepts optional `regionId` so panel maps do not scan both regions when rendering one minimap.
 
 Cache invalidation: panel projections recompute when `game`, `currentOrders`, or `playerView` inputs change on rebuild; assign/cancel and fog updates remain live-immediate per Slice A–D ACs. Connectivity (`developmentPanelConnectivityProvider`) invalidates on game/map revision only — not on draft-order churn.
@@ -54,10 +56,11 @@ Representative fixture: dual-region save with two OW provinces + one NW province
 |----------------------|------------|-------------------|
 | Eager dual-region `buildDevelopmentPanelModel` on open | Per-region `buildDevelopmentPanelRegionModel` + visited-tab gate | Lazy OW-only build faster than monolithic dual-region build on timing fixture (test-guarded) |
 | Duplicate `resolveConnectivity` on order churn | `developmentPanelConnectivityProvider` + `buildDevelopmentPanelBuildContextFromConnectivity` | Connectivity map identity stable across order-only updates (provider + unit tests) |
-| Duplicate `buildPlayerView` (screen + map) | Single `playerView` on `DevelopmentPanelProjection` | Eliminated per-map rebuild |
+| Duplicate `buildPlayerView` (screen + map) | Single `playerView` on `DevelopmentPanelStaticContext` | Eliminated per-map rebuild; [PlayerView] identity stable across order-only updates |
 | `IndexedStack` mounting both region maps | `CtTabStrip.lazyTabBodies` + `_visitedRegionIds` | NW map absent until first tab visit (`development_panel_lazy_open_test.dart`) |
 | Synchronous read model on first frame | Post-frame `readModelReady` gate | Tab strip paints before connectivity/improvable scans |
 | Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row (`development_panel_projection_rebuild_guard_test.dart`) |
+| Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
 | Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
 
 DevTools timeline captures remain optional owner verification for AC1 qualitative bar; timing tests above are the CI profiling anchor for AC2.

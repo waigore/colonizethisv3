@@ -2,7 +2,10 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
+    show
+        DevelopmentAssignRowState,
+        DevelopmentImproveAssignCandidate,
+        developmentPanelAssignRowStateKey;
 import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,9 +79,8 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= kNarrowBreakpoint;
-    ref.watch(developmentPanelAssignRowStateCacheProvider(widget.regionId));
-    final materialShortages = ref.watch(
-      developmentPanelMaterialShortageProvider(widget.regionId),
+    final assignCache = ref.watch(
+      developmentPanelAssignRowStateCacheProvider(widget.regionId),
     );
     final list = DevelopmentPanelScopeList(
       key: DevelopmentPanelKeys.scopeListKey,
@@ -104,7 +106,7 @@ class _DevelopmentRegionTabState extends ConsumerState<DevelopmentRegionTab> {
         DevelopmentPanelOverview(
           key: DevelopmentPanelKeys.overviewKey,
           regionModel: widget.regionModel,
-          materialShortageCommodityIds: materialShortages,
+          materialShortageCommodityIds: assignCache.materialShortageCommodityIds,
           provinceDisplayNamesById: widget.provinceDisplayNamesById,
           game: widget.game,
           humanPlayerId: widget.humanPlayerId,

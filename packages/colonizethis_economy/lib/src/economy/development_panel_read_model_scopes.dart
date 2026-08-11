@@ -71,17 +71,16 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsFromCounts(
   PlayerView? playerView,
 }) {
   final rows = <DevelopmentImprovableCommodityRow>[];
-  for (final commodity in CommodityCatalog.all) {
-    final entry = counts[commodity.id];
-    if (entry == null || entry.count <= 0) continue;
-    var tileKeys = entry.tileKeys;
+  for (final entry in counts.entries) {
+    if (entry.value.count <= 0) continue;
+    var tileKeys = entry.value.tileKeys;
     if (playerView != null) {
       tileKeys = developmentFilterVisibilityKnownTileKeys(playerView, tileKeys);
     }
     if (tileKeys.isEmpty) continue;
     rows.add(
       DevelopmentImprovableCommodityRow(
-        commodityId: commodity.id,
+        commodityId: entry.key,
         tileKeys: List<String>.from(tileKeys),
       ),
     );
@@ -130,9 +129,9 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
   }
 
   final rows = <DevelopmentImprovableCommodityRow>[];
-  for (final commodity in CommodityCatalog.all) {
-    final keys = acc[commodity.id];
-    if (keys == null || keys.isEmpty) continue;
+  for (final entry in acc.entries) {
+    final keys = entry.value;
+    if (keys.isEmpty) continue;
     var filteredKeys = keys;
     if (playerView != null) {
       filteredKeys = developmentFilterVisibilityKnownTileKeys(playerView, keys);
@@ -141,7 +140,7 @@ List<DevelopmentImprovableCommodityRow> developmentImprovableRowsForTileKeys({
     filteredKeys.sort();
     rows.add(
       DevelopmentImprovableCommodityRow(
-        commodityId: commodity.id,
+        commodityId: entry.key,
         tileKeys: List<String>.from(filteredKeys),
       ),
     );
