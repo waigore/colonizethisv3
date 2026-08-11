@@ -123,4 +123,150 @@ void main() {
       expect(after!.idleBuilderCount, 0);
     },
   );
+
+  test(
+    'developmentPanelConnectivityProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      // Prime providers (orders notifier must be initialized via container).
+      container.read(developmentPanelProjectionProvider);
+
+      final connectivityBefore = container.read(developmentPanelConnectivityProvider);
+      expect(connectivityBefore, isNotNull);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final connectivityAfter = container.read(developmentPanelConnectivityProvider);
+      expect(identical(connectivityBefore, connectivityAfter), isTrue);
+    },
+  );
+
+  test(
+    'developmentPanelAssignRowStateCacheProvider caches across reads with stable inputs (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final first = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      final second = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+
+      expect(identical(first, second), isTrue);
+      expect(first.byScopeCommodityKey, isNotEmpty);
+    },
+  );
+
+  test(
+    'developmentPanelAssignRowStateCacheProvider invalidates when orders change (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final ordersNotifier = CurrentOrdersNotifier(const Orders());
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(
+          game,
+          ordersNotifier: ordersNotifier,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final before = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+
+      ordersNotifier.state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final after = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
+      );
+      expect(identical(before, after), isFalse);
+    },
+  );
+
+  test(
+    'developmentPanelMaterialShortageProvider caches across reads with stable inputs (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      final first = container.read(
+        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      );
+      final second = container.read(
+        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      );
+
+      expect(identical(first, second), isTrue);
+    },
+  );
+
+  test(
+    'developmentPanelMaterialShortageProvider invalidates when orders change (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final ordersNotifier = CurrentOrdersNotifier(const Orders());
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(
+          game,
+          ordersNotifier: ordersNotifier,
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final before = container.read(
+        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      );
+      expect(before, isEmpty);
+
+      ordersNotifier.state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final after = container.read(
+        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      );
+      expect(identical(before, after), isFalse);
+    },
+  );
 }
