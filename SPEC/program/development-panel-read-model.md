@@ -50,7 +50,7 @@ Cache invalidation: panel projections recompute when `game`, `currentOrders`, or
 
 ### Profiling summary (Slice E)
 
-Representative fixture: dual-region save with two OW provinces + one NW province, four improvable tiles per region (`development_panel_open_path_timing_test.dart`).
+Representative fixture: dual-region save with two OW provinces (four improvable tiles) plus an amplified NW region (ten provinces × four tiles) so monolithic dual-region cost dominates and the lazy OW-only win stays ≥25% on shared CI runners (`development_panel_open_path_timing_test.dart`; median of three 50-iteration samples).
 
 | Hotspot (pre–Slice E) | Mitigation | Measurable effect |
 |----------------------|------------|-------------------|
