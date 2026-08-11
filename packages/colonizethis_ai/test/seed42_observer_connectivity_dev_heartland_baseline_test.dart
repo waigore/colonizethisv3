@@ -14,14 +14,15 @@ import 'support/seed42_observer_campaign.dart';
 const int kHeartlandBaselineTurns = 10;
 
 /// Connected-tile counts per GP after seed-42 turn [kHeartlandBaselineTurns].
-/// Captured on PR #4258 branch (owned-province projection via ProvinceOwnerCache).
+/// Re-baselined after #4317 road-frontier uses transport-network adjacency
+/// (Town-rule connected tiles without roads are valid build_road frontiers).
 const Map<String, int> kSeed42Turn10ConnectedTileCounts = {
-  'gp1': 203,
-  'gp2': 202,
-  'gp3': 144,
-  'gp4': 207,
+  'gp1': 205,
+  'gp2': 209,
+  'gp3': 143,
+  'gp4': 208,
   'gp5': 117,
-  'gp6': 169,
+  'gp6': 167,
 };
 
 void main() {

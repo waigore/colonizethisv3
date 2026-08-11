@@ -91,20 +91,38 @@ ConnectivityDevSnapshot? buildConnectivityDevSnapshot({
     playerId: playerId,
   );
 
+  final portTileToProvinceSeaZone = portToProvinceSeaZone(game.worldState);
+  final worldState = game.worldState;
+
   final frontierExtensionTiles = <String>{};
   final adjacentToConnectedTiles = <String>{};
   for (final tileKey in ownedLandTiles) {
-    if (connected.contains(tileKey)) continue;
-    if (!isTileAdjacentToConnectedSet(
-      tileKey,
-      connected,
+    if (!connected.contains(tileKey) &&
+        isTileAdjacentToConnectedSet(
+          tileKey,
+          connected,
+          tileMapByRegion: tileMapByRegion,
+          landProvinceIds: landProvinceIds,
+        )) {
+      adjacentToConnectedTiles.add(tileKey);
+    }
+    if (transportLevelAtTile(
+          worldState,
+          tileKey,
+          portTileToProvinceSeaZone,
+        ) >
+        0) {
+      continue;
+    }
+    if (isTileAdjacentToRoadNetwork(
+      tileKey: tileKey,
+      worldState: worldState,
+      portTileToProvinceSeaZone: portTileToProvinceSeaZone,
       tileMapByRegion: tileMapByRegion,
       landProvinceIds: landProvinceIds,
     )) {
-      continue;
+      frontierExtensionTiles.add(tileKey);
     }
-    adjacentToConnectedTiles.add(tileKey);
-    frontierExtensionTiles.add(tileKey);
   }
 
   final bottleneckRailTiles = _bottleneckRailTiles(
