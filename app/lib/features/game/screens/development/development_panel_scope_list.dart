@@ -28,8 +28,8 @@ class DevelopmentPanelScopeList extends StatelessWidget {
   final DevelopmentPanelRegionModel regionModel;
   final void Function(Set<String> tileKeys) onShowTiles;
   final DevelopmentAssignRowState Function(
+    String scopeKey,
     String commodityId,
-    Set<String> tileKeys,
   )
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
@@ -97,8 +97,8 @@ class _ScopeCard extends StatelessWidget {
   final DevelopmentPanelScopeRow scope;
   final void Function(Set<String> tileKeys) onShowTiles;
   final DevelopmentAssignRowState Function(
+    String scopeKey,
     String commodityId,
-    Set<String> tileKeys,
   )
   assignRowStateFor;
   final void Function(DevelopmentImproveAssignCandidate candidate) onAssign;
@@ -168,8 +168,8 @@ class _ImprovableCommodityRow extends StatelessWidget {
   final DevelopmentImprovableCommodityRow row;
   final TextTheme textTheme;
   final DevelopmentAssignRowState Function(
+    String scopeKey,
     String commodityId,
-    Set<String> tileKeys,
   )
   assignRowStateFor;
   final void Function(Set<String> tileKeys) onShowTiles;
@@ -178,8 +178,7 @@ class _ImprovableCommodityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = commodityDisplayName(l10n, row.commodityId);
-    final tileKeys = row.tileKeys.toSet();
-    final assignState = assignRowStateFor(row.commodityId, tileKeys);
+    final assignState = assignRowStateFor(scopeKey, row.commodityId);
     final assignTooltip = assignState.disabledReason;
     final assignButton = CtActionTextButton(
       key: DevelopmentPanelKeys.assignButtonKey(scopeKey, row.commodityId),
@@ -201,7 +200,7 @@ class _ImprovableCommodityRow extends StatelessWidget {
           CtActionTextButton(
             key: DevelopmentPanelKeys.showButtonKey(scopeKey, row.commodityId),
             label: l10n.development_show,
-            onPressed: () => onShowTiles(tileKeys),
+            onPressed: () => onShowTiles(row.tileKeys.toSet()),
           ),
           const SizedBox(width: CtSpacing.s),
           if (assignTooltip != null && !assignState.enabled)
