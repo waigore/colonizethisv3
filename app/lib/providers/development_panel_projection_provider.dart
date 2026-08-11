@@ -2,7 +2,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_orders/colonizethis_orders.dart'
-    show DevelopmentAssignRowState, resolveDevelopmentAssignRowState;
+    show
+        DevelopmentPanelAssignRowStateCache,
+        buildDevelopmentPanelAssignRowStateCache;
 import 'package:colonizethis_world/colonizethis_world.dart'
     show ConnectivityResult, PlayerView, allProvinces, buildPlayerView;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +39,17 @@ class DevelopmentPanelProjection {
   final Map<String, TileMapResult> tileMapByRegion;
 }
 
+/// Game/map/shell inputs that do not depend on draft orders.
+typedef DevelopmentPanelStaticContext = ({
+  Game game,
+  String humanPlayerId,
+  PlayerView playerView,
+  Map<String, String> provinceDisplayNamesById,
+  Map<String, String> playerDisplayNamesById,
+  MapTopology topology,
+  Map<String, TileMapResult> tileMapByRegion,
+});
+
 /// Connectivity map — invalidates on game/map changes only (not draft orders).
 final developmentPanelConnectivityProvider =
     Provider<Map<String, ConnectivityResult>?>((ref) {
@@ -55,9 +68,10 @@ final developmentPanelConnectivityProvider =
       );
     });
 
-/// Connectivity, [PlayerView], and display-name maps — once per relevant input change.
-final developmentPanelProjectionProvider =
-    Provider<DevelopmentPanelProjection?>((ref) {
+/// [PlayerView], display-name maps, and map topology — invalidates on game/map/shell
+/// changes only (not draft orders).
+final developmentPanelStaticContextProvider =
+    Provider<DevelopmentPanelStaticContext?>((ref) {
       final game = ref.watch(currentGameProvider);
       if (game == null) {
         return null;
@@ -66,11 +80,6 @@ final developmentPanelProjectionProvider =
       if (mapData == null) {
         return null;
       }
-      final connectivity = ref.watch(developmentPanelConnectivityProvider);
-      if (connectivity == null) {
-        return null;
-      }
-      final orders = ref.watch(currentOrdersProvider);
       final shell = ref.watch(shellPlayerContextProvider);
       final humanPlayerId = resolveShellPanelPlayerId(shell, game);
 
@@ -88,17 +97,10 @@ final developmentPanelProjectionProvider =
         mapData.combinedTopology,
         humanPlayerId,
       );
-      final shared = buildDevelopmentPanelBuildContextFromConnectivity(
-        connectivity: connectivity,
-        game: game,
-        playerId: humanPlayerId,
-        currentOrders: orders,
-      );
 
-      return DevelopmentPanelProjection(
+      return (
         game: game,
         humanPlayerId: humanPlayerId,
-        shared: shared,
         playerView: playerView,
         provinceDisplayNamesById: provinceDisplayNamesById,
         playerDisplayNamesById: playerDisplayNamesById,
@@ -107,90 +109,97 @@ final developmentPanelProjectionProvider =
       );
     });
 
-/// Per-region read model; invalidates when [developmentPanelProjectionProvider]
-/// or [currentOrdersProvider] change.
-final developmentPanelRegionModelProvider =
-    Provider.family<DevelopmentPanelRegionModel?, String>((ref, regionId) {
-      final projection = ref.watch(developmentPanelProjectionProvider);
-      if (projection == null) {
+/// Idle counts and connectivity slice — invalidates when draft orders change.
+final developmentPanelSharedContextProvider =
+    Provider<DevelopmentPanelBuildContext?>((ref) {
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      if (staticContext == null) {
+        return null;
+      }
+      final connectivity = ref.watch(developmentPanelConnectivityProvider);
+      if (connectivity == null) {
         return null;
       }
       final orders = ref.watch(currentOrdersProvider);
-      return buildDevelopmentPanelRegionModel(
-        shared: projection.shared,
-        game: projection.game,
-        playerId: projection.humanPlayerId,
-        regionId: regionId,
-        tileMapByRegion: projection.tileMapByRegion,
+      return buildDevelopmentPanelBuildContextFromConnectivity(
+        connectivity: connectivity,
+        game: staticContext.game,
+        playerId: staticContext.humanPlayerId,
         currentOrders: orders,
-        provinceDisplayNamesById: projection.provinceDisplayNamesById,
-        playerDisplayNamesById: projection.playerDisplayNamesById,
-        playerView: projection.playerView,
       );
     });
 
-/// Stable cache key for per-scope improvable commodity assign affordance.
-String developmentPanelAssignRowStateKey(String scopeKey, String commodityId) =>
-    '$scopeKey|$commodityId';
+/// Combined projection for panel consumers.
+final developmentPanelProjectionProvider =
+    Provider<DevelopmentPanelProjection?>((ref) {
+      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final shared = ref.watch(developmentPanelSharedContextProvider);
+      if (staticContext == null || shared == null) {
+        return null;
+      }
+      return DevelopmentPanelProjection(
+        game: staticContext.game,
+        humanPlayerId: staticContext.humanPlayerId,
+        shared: shared,
+        playerView: staticContext.playerView,
+        provinceDisplayNamesById: staticContext.provinceDisplayNamesById,
+        playerDisplayNamesById: staticContext.playerDisplayNamesById,
+        topology: staticContext.topology,
+        tileMapByRegion: staticContext.tileMapByRegion,
+      );
+    });
+
+/// Per-region scopes + extraction — invalidates on game/map/shell only (Slice E).
+final developmentPanelRegionScopesProvider =
+    Provider.family<DevelopmentPanelRegionScopes?, String>((ref, regionId) {
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      final connectivity = ref.watch(developmentPanelConnectivityProvider);
+      if (ctx == null || connectivity == null) return null;
+      return buildDevelopmentPanelRegionScopesForPlayer(
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
+        regionId: regionId,
+        tileMapByRegion: ctx.tileMapByRegion,
+        provinceDisplayNamesById: ctx.provinceDisplayNamesById,
+        playerDisplayNamesById: ctx.playerDisplayNamesById,
+        connectivityByPlayer: connectivity,
+        playerView: ctx.playerView,
+      );
+    });
+
+/// Per-region read model; invalidates when static inputs, shared context, or orders change.
+final developmentPanelRegionModelProvider =
+    Provider.family<DevelopmentPanelRegionModel?, String>((ref, regionId) {
+      final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
+      final shared = ref.watch(developmentPanelSharedContextProvider);
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      if (scopes == null || shared == null || ctx == null) return null;
+      return composeDevelopmentPanelRegionModel(
+        scopes: scopes,
+        shared: shared,
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
+        currentOrders: ref.watch(currentOrdersProvider),
+      );
+    });
 
 /// Per-scope assign affordance + material-shortage flags for one region tab.
-///
-/// Memoized across highlight-only tab rebuilds so Show-tile [setState] does not
-/// re-run [resolveDevelopmentAssignRowState] for every improvable row.
-class DevelopmentPanelAssignRowStateCache {
-  const DevelopmentPanelAssignRowStateCache({
-    required this.byScopeCommodityKey,
-    required this.materialShortageCommodityIds,
-  });
-
-  final Map<String, DevelopmentAssignRowState> byScopeCommodityKey;
-  final Set<String> materialShortageCommodityIds;
-}
-
 final developmentPanelAssignRowStateCacheProvider =
     Provider.family<DevelopmentPanelAssignRowStateCache, String>((ref, regionId) {
-      final projection = ref.watch(developmentPanelProjectionProvider);
-      final regionModel = ref.watch(developmentPanelRegionModelProvider(regionId));
-      if (projection == null || regionModel == null) {
-        return const DevelopmentPanelAssignRowStateCache(
-          byScopeCommodityKey: {},
-          materialShortageCommodityIds: {},
-        );
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      final shared = ref.watch(developmentPanelSharedContextProvider);
+      final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
+      if (ctx == null || shared == null || scopes == null) {
+        return DevelopmentPanelAssignRowStateCache.empty;
       }
-      final orders = ref.watch(currentOrdersProvider);
-      final byKey = <String, DevelopmentAssignRowState>{};
-      final shortages = <String>{};
-      for (final scope in [
-        ...regionModel.ownedScopes,
-        ...regionModel.purchasedScopes,
-      ]) {
-        for (final row in scope.improvableCommodities) {
-          final state = resolveDevelopmentAssignRowState(
-            game: projection.game,
-            playerId: projection.humanPlayerId,
-            currentOrders: orders,
-            topology: projection.topology,
-            tileMapByRegion: projection.tileMapByRegion,
-            commodityTileKeys: row.tileKeys.toSet(),
-            connectedTileKeys: projection.shared.connectedTileKeys,
-          );
-          byKey[developmentPanelAssignRowStateKey(scope.scopeKey, row.commodityId)] =
-              state;
-          if (state.disabledReason == 'Insufficient materials') {
-            shortages.add(row.commodityId);
-          }
-        }
-      }
-      return DevelopmentPanelAssignRowStateCache(
-        byScopeCommodityKey: byKey,
-        materialShortageCommodityIds: shortages,
+      return buildDevelopmentPanelAssignRowStateCache(
+        ownedScopes: scopes.ownedScopes,
+        purchasedScopes: scopes.purchasedScopes,
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
+        currentOrders: ref.watch(currentOrdersProvider),
+        topology: ctx.topology,
+        tileMapByRegion: ctx.tileMapByRegion,
+        connectedTileKeys: shared.connectedTileKeys,
       );
-    });
-
-/// Material-shortage flags per region — derived from assign affordance cache.
-final developmentPanelMaterialShortageProvider =
-    Provider.family<Set<String>, String>((ref, regionId) {
-      return ref
-          .watch(developmentPanelAssignRowStateCacheProvider(regionId))
-          .materialShortageCommodityIds;
     });

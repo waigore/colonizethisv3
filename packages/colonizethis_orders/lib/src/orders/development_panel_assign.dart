@@ -26,6 +26,11 @@ export 'development_panel_assign_candidate.dart'
     show selectDevelopmentImproveAssignCandidate;
 export 'development_panel_assign_row_state.dart'
     show resolveDevelopmentAssignRowState;
+export 'development_panel_assign_row_state_cache.dart'
+    show
+        DevelopmentPanelAssignRowStateCache,
+        buildDevelopmentPanelAssignRowStateCache,
+        developmentPanelAssignRowStateKey;
 export 'development_panel_assign_types.dart'
     show DevelopmentAssignRowState, DevelopmentImproveAssignCandidate;
 

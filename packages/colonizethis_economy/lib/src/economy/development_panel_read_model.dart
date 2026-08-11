@@ -62,6 +62,75 @@ DevelopmentPanelModel buildDevelopmentPanelModel({
   );
 }
 
+/// Order-independent scopes + extraction for one region (Slice E).
+DevelopmentPanelRegionScopes buildDevelopmentPanelRegionScopes({
+  required Game game,
+  required String playerId,
+  required String regionId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, String> provinceDisplayNamesById,
+  required Map<String, String> playerDisplayNamesById,
+  required ProvinceOwnerCache ownerCache,
+  required ConnectivityResult? playerConnectivity,
+  PlayerView? playerView,
+}) {
+  final ownedScopes = _buildOwnedScopes(
+    game: game,
+    playerId: playerId,
+    regionId: regionId,
+    tileMapByRegion: tileMapByRegion,
+    provinceDisplayNamesById: provinceDisplayNamesById,
+    ownerCache: ownerCache,
+    playerView: playerView,
+  );
+  final purchasedScopes = buildDevelopmentPurchasedScopes(
+    game: game,
+    playerId: playerId,
+    regionId: regionId,
+    tileMapByRegion: tileMapByRegion,
+    provinceDisplayNamesById: provinceDisplayNamesById,
+    playerDisplayNamesById: playerDisplayNamesById,
+    ownerCache: ownerCache,
+    playerView: playerView,
+  );
+  return DevelopmentPanelRegionScopes(
+    regionId: regionId,
+    ownedScopes: ownedScopes,
+    purchasedScopes: purchasedScopes,
+    landExtractionByCommodity: developmentExtractionProjectionForRegion(
+      game: game,
+      playerId: playerId,
+      regionId: regionId,
+      tileMapByRegion: tileMapByRegion,
+      connectivity: playerConnectivity,
+    ),
+  );
+}
+
+/// Composes a region model from prebuilt scopes plus order-dependent fields.
+DevelopmentPanelRegionModel composeDevelopmentPanelRegionModel({
+  required DevelopmentPanelRegionScopes scopes,
+  required DevelopmentPanelBuildContext shared,
+  required Game game,
+  required String playerId,
+  required Orders currentOrders,
+}) {
+  return DevelopmentPanelRegionModel(
+    regionId: scopes.regionId,
+    ownedScopes: scopes.ownedScopes,
+    purchasedScopes: scopes.purchasedScopes,
+    landExtractionByCommodity: scopes.landExtractionByCommodity,
+    idleBuilderCount: shared.idleBuilderCount,
+    idleEngineerCount: shared.idleEngineerCount,
+    assignedCivilians: buildDevelopmentAssignedCiviliansForRegion(
+      game: game,
+      playerId: playerId,
+      regionId: scopes.regionId,
+      currentOrders: currentOrders,
+    ),
+  );
+}
+
 /// One region slice; call per visited tab on panel open (Slice E).
 DevelopmentPanelRegionModel buildDevelopmentPanelRegionModel({
   required DevelopmentPanelBuildContext shared,
@@ -74,40 +143,57 @@ DevelopmentPanelRegionModel buildDevelopmentPanelRegionModel({
   required Map<String, String> playerDisplayNamesById,
   PlayerView? playerView,
 }) {
-  return _buildRegionModel(
+  final scopes = buildDevelopmentPanelRegionScopes(
     game: game,
     playerId: playerId,
     regionId: regionId,
     tileMapByRegion: tileMapByRegion,
-    landExtractionByCommodity: developmentExtractionProjectionForRegion(
-      game: game,
-      playerId: playerId,
-      regionId: regionId,
-      tileMapByRegion: tileMapByRegion,
-      connectivity: shared.playerConnectivity,
-    ),
-    idleBuilderCount: shared.idleBuilderCount,
-    idleEngineerCount: shared.idleEngineerCount,
     provinceDisplayNamesById: provinceDisplayNamesById,
     playerDisplayNamesById: playerDisplayNamesById,
     ownerCache: shared.ownerCache,
-    currentOrders: currentOrders,
+    playerConnectivity: shared.playerConnectivity,
     playerView: playerView,
+  );
+  return composeDevelopmentPanelRegionModel(
+    scopes: scopes,
+    shared: shared,
+    game: game,
+    playerId: playerId,
+    currentOrders: currentOrders,
   );
 }
 
-DevelopmentPanelRegionModel _buildRegionModel({
+/// Convenience wrapper for provider wiring (Slice E).
+DevelopmentPanelRegionScopes buildDevelopmentPanelRegionScopesForPlayer({
   required Game game,
   required String playerId,
   required String regionId,
   required Map<String, TileMapResult> tileMapByRegion,
-  required Map<String, int> landExtractionByCommodity,
-  required int idleBuilderCount,
-  required int idleEngineerCount,
   required Map<String, String> provinceDisplayNamesById,
   required Map<String, String> playerDisplayNamesById,
+  required Map<String, ConnectivityResult> connectivityByPlayer,
+  PlayerView? playerView,
+}) {
+  return buildDevelopmentPanelRegionScopes(
+    game: game,
+    playerId: playerId,
+    regionId: regionId,
+    tileMapByRegion: tileMapByRegion,
+    provinceDisplayNamesById: provinceDisplayNamesById,
+    playerDisplayNamesById: playerDisplayNamesById,
+    ownerCache: ProvinceOwnerCache.of(game.worldState),
+    playerConnectivity: connectivityByPlayer[playerId],
+    playerView: playerView,
+  );
+}
+
+List<DevelopmentPanelScopeRow> _buildOwnedScopes({
+  required Game game,
+  required String playerId,
+  required String regionId,
+  required Map<String, TileMapResult> tileMapByRegion,
+  required Map<String, String> provinceDisplayNamesById,
   required ProvinceOwnerCache ownerCache,
-  required Orders currentOrders,
   PlayerView? playerView,
 }) {
   final ownedProvinces =
@@ -133,30 +219,5 @@ DevelopmentPanelRegionModel _buildRegionModel({
       ),
     );
   }
-
-  final purchasedScopes = buildDevelopmentPurchasedScopes(
-    game: game,
-    playerId: playerId,
-    regionId: regionId,
-    tileMapByRegion: tileMapByRegion,
-    provinceDisplayNamesById: provinceDisplayNamesById,
-    playerDisplayNamesById: playerDisplayNamesById,
-    ownerCache: ownerCache,
-    playerView: playerView,
-  );
-
-  return DevelopmentPanelRegionModel(
-    regionId: regionId,
-    ownedScopes: ownedScopes,
-    purchasedScopes: purchasedScopes,
-    landExtractionByCommodity: landExtractionByCommodity,
-    idleBuilderCount: idleBuilderCount,
-    idleEngineerCount: idleEngineerCount,
-    assignedCivilians: buildDevelopmentAssignedCiviliansForRegion(
-      game: game,
-      playerId: playerId,
-      regionId: regionId,
-      currentOrders: currentOrders,
-    ),
-  );
+  return ownedScopes;
 }

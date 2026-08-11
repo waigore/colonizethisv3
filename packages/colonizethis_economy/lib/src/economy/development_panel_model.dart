@@ -63,6 +63,21 @@ class DevelopmentAssignedCivilianRow {
   final int? totalTurns;
 }
 
+/// Order-independent region slice: scopes and land extraction (Slice E).
+class DevelopmentPanelRegionScopes {
+  const DevelopmentPanelRegionScopes({
+    required this.regionId,
+    required this.ownedScopes,
+    required this.purchasedScopes,
+    required this.landExtractionByCommodity,
+  });
+
+  final String regionId;
+  final List<DevelopmentPanelScopeRow> ownedScopes;
+  final List<DevelopmentPanelScopeRow> purchasedScopes;
+  final Map<String, int> landExtractionByCommodity;
+}
+
 /// Per-region Development panel projection.
 class DevelopmentPanelRegionModel {
   const DevelopmentPanelRegionModel({
