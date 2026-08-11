@@ -147,11 +147,22 @@ void main() {
 
       // Slice E open path builds one visited region; expect a measurable win vs
       // eager dual-region projection (typically ~35–55% on this fixture).
+      final improvementRatio =
+          (monolithicMicros - lazyOwMicros) / monolithicMicros;
       expect(
         lazyOwMicros,
         lessThan(monolithicMicros),
         reason:
-            'monolithic=$monolithicMicrosµs lazyOW=$lazyOwMicrosµs over $iterations iterations',
+            'monolithic=$monolithicMicrosµs lazyOW=$lazyOwMicrosµs '
+            '(${ (improvementRatio * 100).toStringAsFixed(1)}% faster) '
+            'over $iterations iterations',
+      );
+      expect(
+        improvementRatio,
+        greaterThanOrEqualTo(0.25),
+        reason:
+            'expected at least 25% read-model win on timing fixture; '
+            'monolithic=$monolithicMicrosµs lazyOW=$lazyOwMicrosµs',
       );
     },
   );
