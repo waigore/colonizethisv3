@@ -51,6 +51,30 @@ void main() {
   );
 
   testWidgets(
+    'first frame defers read model until post-frame (Refs #4175 Slice E)',
+    (WidgetTester tester) async {
+      final game = buildDevelopmentPanelGoldenGame();
+      await tester.pumpWidget(
+        buildAppShell(
+          child: _bodyHost(game),
+          overrides: _developmentOverrides(game),
+          localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+        ),
+      );
+
+      expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsNothing);
+      expect(find.byKey(DevelopmentPanelKeys.scopeListKey), findsNothing);
+
+      await tester.pump();
+
+      expect(find.byKey(DevelopmentPanelKeys.overviewKey), findsOneWidget);
+      expect(find.byKey(DevelopmentPanelKeys.scopeListKey), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'first frame builds Old World map only when New World tab is unvisited (Refs #4175 Slice E)',
     (WidgetTester tester) async {
       final game = buildDevelopmentPanelGoldenGame();
@@ -62,6 +86,8 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en'),
       );
+
+      await pumpDevelopmentPanelReady(tester);
 
       expect(
         find.byKey(DevelopmentPanelKeys.panelMapKeyForRegion(kRegionOldWorld)),
@@ -86,6 +112,8 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en'),
       );
+
+      await pumpDevelopmentPanelReady(tester);
 
       await tester.tap(find.text('New World'));
       await tester.pump();

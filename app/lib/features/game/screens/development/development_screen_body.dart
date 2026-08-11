@@ -19,6 +19,7 @@ import 'package:colonizethis_world/colonizethis_world.dart'
         kRegionOldWorld,
         PlayerView;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/constants.dart';
@@ -52,6 +53,16 @@ class DevelopmentScreenBody extends ConsumerStatefulWidget {
 
 class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
   final Set<String> _visitedRegionIds = {kRegionOldWorld};
+  bool _readModelReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _readModelReady = true);
+    });
+  }
 
   void _onRegionTabSelected(int index) {
     final regionId = index == 0 ? kRegionOldWorld : kRegionNewWorld;
@@ -66,6 +77,26 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
     final mapData = ref.read(gameServiceProvider).getMapData(game.id);
     if (mapData == null) {
       return Center(child: Text(appL10n(context).development_mapDataUnavailable));
+    }
+
+    final l10n = appL10n(context);
+    if (!_readModelReady) {
+      return Padding(
+        padding: const EdgeInsets.all(CtSpacing.l),
+        child: CtPanel(
+          padding: const EdgeInsets.all(CtSpacing.l),
+          child: CtTabStrip(
+            key: DevelopmentPanelKeys.tabsBodyKey,
+            lazyTabBodies: true,
+            onTabIndexChanged: _onRegionTabSelected,
+            tabLabels: [l10n.region_oldWorld, l10n.region_newWorld],
+            tabViews: const [
+              SizedBox.shrink(),
+              SizedBox.shrink(),
+            ],
+          ),
+        ),
+      );
     }
 
     final orders = ref.watch(currentOrdersProvider);
@@ -108,7 +139,6 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
     }
 
     final bus = ref.read(appEventBusProvider);
-    final l10n = appL10n(context);
 
     return Padding(
       padding: const EdgeInsets.all(CtSpacing.l),
