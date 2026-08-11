@@ -14,10 +14,8 @@ import '../features/game/widgets/shell/shell_player_context.dart';
 import 'game_service_provider.dart';
 import 'games_provider.dart';
 
-/// Shared Development panel inputs memoized across [DevelopmentScreenBody] rebuilds.
-///
-/// Recomputes only when game, orders, map data, or shell player context change.
-/// Refs #4175 Slice E.
+/// Shared Development panel inputs memoized across [DevelopmentScreenBody] rebuilds
+/// when game, orders, map data, or shell player context change. Refs #4175 Slice E.
 class DevelopmentPanelProjection {
   const DevelopmentPanelProjection({
     required this.game,
@@ -55,20 +53,18 @@ typedef DevelopmentPanelStaticContext = ({
 final developmentPanelConnectivityProvider =
     Provider<Map<String, ConnectivityResult>?>((ref) {
       final game = ref.watch(currentGameProvider);
-      if (game == null) {
-        return null;
-      }
-      final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-      if (mapData == null) {
-        return null;
-      }
-      return ctAppPerfSync('developmentPanel.connectivity', () {
-        return resolveDevelopmentPanelConnectivity(
+      final mapData = game == null
+          ? null
+          : ref.watch(gameServiceProvider).getMapData(game.id);
+      if (game == null || mapData == null) return null;
+      return ctAppPerfSync(
+        'developmentPanel.connectivity',
+        () => resolveDevelopmentPanelConnectivity(
           game: game,
           tileMapByRegion: mapData.tileMapByRegion,
           topology: mapData.combinedTopology,
-        );
-      });
+        ),
+      );
     });
 
 /// [PlayerView], display-name maps, and map topology — invalidates on game/map/shell
@@ -76,39 +72,28 @@ final developmentPanelConnectivityProvider =
 final developmentPanelStaticContextProvider =
     Provider<DevelopmentPanelStaticContext?>((ref) {
       final game = ref.watch(currentGameProvider);
-      if (game == null) {
-        return null;
-      }
-      final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
-      if (mapData == null) {
-        return null;
-      }
-      final shell = ref.watch(shellPlayerContextProvider);
-      final humanPlayerId = resolveShellPanelPlayerId(shell, game);
-
+      final mapData = game == null
+          ? null
+          : ref.watch(gameServiceProvider).getMapData(game.id);
+      if (game == null || mapData == null) return null;
+      final humanPlayerId = resolveShellPanelPlayerId(
+        ref.watch(shellPlayerContextProvider),
+        game,
+      );
       return ctAppPerfSync('developmentPanel.staticContext', () {
-        final provinceDisplayNamesById = <String, String>{};
-        for (final province in allProvinces(game.worldState)) {
-          provinceDisplayNamesById[province.id] =
-              province.displayName ?? province.id;
-        }
-        final playerDisplayNamesById = {
-          for (final player in game.players) player.id: player.displayName,
-        };
-
-        final playerView = buildPlayerView(
-          game,
-          mapData.combinedTopology,
-          humanPlayerId,
-        );
-
+        final topology = mapData.combinedTopology;
         return (
           game: game,
           humanPlayerId: humanPlayerId,
-          playerView: playerView,
-          provinceDisplayNamesById: provinceDisplayNamesById,
-          playerDisplayNamesById: playerDisplayNamesById,
-          topology: mapData.combinedTopology,
+          playerView: buildPlayerView(game, topology, humanPlayerId),
+          provinceDisplayNamesById: {
+            for (final p in allProvinces(game.worldState))
+              p.id: p.displayName ?? p.id,
+          },
+          playerDisplayNamesById: {
+            for (final player in game.players) player.id: player.displayName,
+          },
+          topology: topology,
           tileMapByRegion: mapData.tileMapByRegion,
         );
       });
@@ -118,22 +103,18 @@ final developmentPanelStaticContextProvider =
 final developmentPanelSharedContextProvider =
     Provider<DevelopmentPanelBuildContext?>((ref) {
       final staticContext = ref.watch(developmentPanelStaticContextProvider);
-      if (staticContext == null) {
-        return null;
-      }
       final connectivity = ref.watch(developmentPanelConnectivityProvider);
-      if (connectivity == null) {
-        return null;
-      }
+      if (staticContext == null || connectivity == null) return null;
       final orders = ref.watch(currentOrdersProvider);
-      return ctAppPerfSync('developmentPanel.sharedContext', () {
-        return buildDevelopmentPanelBuildContextFromConnectivity(
+      return ctAppPerfSync(
+        'developmentPanel.sharedContext',
+        () => buildDevelopmentPanelBuildContextFromConnectivity(
           connectivity: connectivity,
           game: staticContext.game,
           playerId: staticContext.humanPlayerId,
           currentOrders: orders,
-        );
-      });
+        ),
+      );
     });
 
 /// Combined projection for panel consumers.
@@ -141,9 +122,7 @@ final developmentPanelProjectionProvider =
     Provider<DevelopmentPanelProjection?>((ref) {
       final staticContext = ref.watch(developmentPanelStaticContextProvider);
       final shared = ref.watch(developmentPanelSharedContextProvider);
-      if (staticContext == null || shared == null) {
-        return null;
-      }
+      if (staticContext == null || shared == null) return null;
       return DevelopmentPanelProjection(
         game: staticContext.game,
         humanPlayerId: staticContext.humanPlayerId,
@@ -162,8 +141,9 @@ final developmentPanelRegionScopesProvider =
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       final connectivity = ref.watch(developmentPanelConnectivityProvider);
       if (ctx == null || connectivity == null) return null;
-      return ctAppPerfSync('developmentPanel.regionScopes.$regionId', () {
-        return buildDevelopmentPanelRegionScopesForPlayer(
+      return ctAppPerfSync(
+        'developmentPanel.regionScopes.$regionId',
+        () => buildDevelopmentPanelRegionScopesForPlayer(
           game: ctx.game,
           playerId: ctx.humanPlayerId,
           regionId: regionId,
@@ -172,8 +152,8 @@ final developmentPanelRegionScopesProvider =
           playerDisplayNamesById: ctx.playerDisplayNamesById,
           connectivityByPlayer: connectivity,
           playerView: ctx.playerView,
-        );
-      });
+        ),
+      );
     });
 
 /// Per-region read model; invalidates when static inputs, shared context, or orders change.
@@ -183,28 +163,33 @@ final developmentPanelRegionModelProvider =
       final shared = ref.watch(developmentPanelSharedContextProvider);
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       if (scopes == null || shared == null || ctx == null) return null;
-      return ctAppPerfSync('developmentPanel.regionModel.$regionId', () {
-        return composeDevelopmentPanelRegionModel(
+      return ctAppPerfSync(
+        'developmentPanel.regionModel.$regionId',
+        () => composeDevelopmentPanelRegionModel(
           scopes: scopes,
           shared: shared,
           game: ctx.game,
           playerId: ctx.humanPlayerId,
           currentOrders: ref.watch(currentOrdersProvider),
-        );
-      });
+        ),
+      );
     });
 
 /// Per-scope assign affordance + material-shortage flags for one region tab.
 final developmentPanelAssignRowStateCacheProvider =
-    Provider.family<DevelopmentPanelAssignRowStateCache, String>((ref, regionId) {
+    Provider.family<DevelopmentPanelAssignRowStateCache, String>((
+      ref,
+      regionId,
+    ) {
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       final shared = ref.watch(developmentPanelSharedContextProvider);
       final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
       if (ctx == null || shared == null || scopes == null) {
         return DevelopmentPanelAssignRowStateCache.empty;
       }
-      return ctAppPerfSync('developmentPanel.assignRowCache.$regionId', () {
-        return buildDevelopmentPanelAssignRowStateCache(
+      return ctAppPerfSync(
+        'developmentPanel.assignRowCache.$regionId',
+        () => buildDevelopmentPanelAssignRowStateCache(
           ownedScopes: scopes.ownedScopes,
           purchasedScopes: scopes.purchasedScopes,
           game: ctx.game,
@@ -213,6 +198,6 @@ final developmentPanelAssignRowStateCacheProvider =
           topology: ctx.topology,
           tileMapByRegion: ctx.tileMapByRegion,
           connectedTileKeys: shared.connectedTileKeys,
-        );
-      });
+        ),
+      );
     });
