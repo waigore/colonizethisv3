@@ -9,6 +9,7 @@ import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_economy_test_support/colonizethis_economy_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
@@ -195,6 +196,83 @@ void main() {
         isTrue,
       );
       expect(beforeOrders.ownerCache, equals(afterOrders.ownerCache));
+    },
+  );
+
+  test(
+    'composeDevelopmentPanelRegionModel reuses scopes across draft-order churn (Refs #4175 Slice E)',
+    () {
+      final unit = Unit(
+        id: 'b1',
+        type: kUnitTypeBuilder,
+        ownerId: playerId,
+        locationProvinceId: 'oldWorld|p1',
+        tileKey: 'oldWorld|p1|0|0',
+      );
+      final scopedGame = TestFixtures.oldWorldGameWithUnit(unit: unit);
+      final scopedTileMapByRegion = {
+        kRegionOldWorld: tileMapByRegion[kRegionOldWorld]!,
+      };
+      final scopedConnectivity = resolveDevelopmentPanelConnectivity(
+        game: scopedGame,
+        tileMapByRegion: scopedTileMapByRegion,
+        topology: topology,
+      );
+      final scopes = buildDevelopmentPanelRegionScopesForPlayer(
+        game: scopedGame,
+        playerId: playerId,
+        regionId: kRegionOldWorld,
+        tileMapByRegion: scopedTileMapByRegion,
+        provinceDisplayNamesById: provinceDisplayNamesById,
+        playerDisplayNamesById: playerDisplayNamesById,
+        connectivityByPlayer: scopedConnectivity,
+      );
+      const emptyOrders = Orders();
+      final pendingOrders = Orders(
+        workOrdersByPlayerId: {
+          playerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+      final sharedEmpty = buildDevelopmentPanelBuildContextFromConnectivity(
+        connectivity: scopedConnectivity,
+        game: scopedGame,
+        playerId: playerId,
+        currentOrders: emptyOrders,
+      );
+      final sharedPending = buildDevelopmentPanelBuildContextFromConnectivity(
+        connectivity: scopedConnectivity,
+        game: scopedGame,
+        playerId: playerId,
+        currentOrders: pendingOrders,
+      );
+      final composedEmpty = composeDevelopmentPanelRegionModel(
+        scopes: scopes,
+        shared: sharedEmpty,
+        game: scopedGame,
+        playerId: playerId,
+        currentOrders: emptyOrders,
+      );
+      final composedPending = composeDevelopmentPanelRegionModel(
+        scopes: scopes,
+        shared: sharedPending,
+        game: scopedGame,
+        playerId: playerId,
+        currentOrders: pendingOrders,
+      );
+
+      expect(
+        identical(composedEmpty.ownedScopes, composedPending.ownedScopes),
+        isTrue,
+      );
+      expect(composedEmpty.idleBuilderCount, 1);
+      expect(composedPending.idleBuilderCount, 0);
+      expect(composedPending.assignedCivilians, hasLength(1));
     },
   );
 }

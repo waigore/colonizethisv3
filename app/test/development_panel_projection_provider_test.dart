@@ -86,6 +86,42 @@ void main() {
   );
 
   test(
+    'developmentPanelRegionScopesProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      container.read(developmentPanelProjectionProvider);
+
+      final scopesBefore = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(scopesBefore, isNotNull);
+      expect(scopesBefore!.ownedScopes, isNotEmpty);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final scopesAfter = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(identical(scopesBefore, scopesAfter), isTrue);
+    },
+  );
+
+  test(
     'developmentPanelRegionModelProvider invalidates when orders change (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
@@ -121,6 +157,38 @@ void main() {
       );
       expect(after, isNotNull);
       expect(after!.idleBuilderCount, 0);
+    },
+  );
+
+  test(
+    'developmentPanelStaticContextProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      container.read(developmentPanelProjectionProvider);
+
+      final staticBefore = container.read(developmentPanelStaticContextProvider);
+      expect(staticBefore, isNotNull);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final staticAfter = container.read(developmentPanelStaticContextProvider);
+      expect(identical(staticBefore, staticAfter), isTrue);
+      expect(identical(staticBefore!.playerView, staticAfter!.playerView), isTrue);
     },
   );
 
@@ -214,7 +282,7 @@ void main() {
   );
 
   test(
-    'developmentPanelMaterialShortageProvider caches across reads with stable inputs (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider exposes material shortages (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final container = ProviderContainer(
@@ -222,19 +290,15 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final first = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+      final cache = container.read(
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-      final second = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
-      );
-
-      expect(identical(first, second), isTrue);
+      expect(cache.materialShortageCommodityIds, isEmpty);
     },
   );
 
   test(
-    'developmentPanelMaterialShortageProvider invalidates when orders change (Refs #4175 Slice E)',
+    'developmentPanelAssignRowStateCacheProvider material shortages invalidate on orders (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
       final ordersNotifier = CurrentOrdersNotifier(const Orders());
@@ -247,9 +311,9 @@ void main() {
       addTearDown(container.dispose);
 
       final before = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
-      expect(before, isEmpty);
+      expect(before.materialShortageCommodityIds, isEmpty);
 
       ordersNotifier.state = Orders(
         workOrdersByPlayerId: {
@@ -264,7 +328,7 @@ void main() {
       );
 
       final after = container.read(
-        developmentPanelMaterialShortageProvider(kRegionOldWorld),
+        developmentPanelAssignRowStateCacheProvider(kRegionOldWorld),
       );
       expect(identical(before, after), isFalse);
     },
