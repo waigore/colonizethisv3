@@ -41,10 +41,14 @@ class CommodityCostTrainDialogUnitRowExtras {
   const CommodityCostTrainDialogUnitRowExtras({
     required this.roleLabel,
     required this.capabilityLine,
+    this.ongoingCostLine,
   });
 
   final String roleLabel;
   final String capabilityLine;
+
+  /// Optional ongoing ownership cost (e.g. military food upkeep per turn).
+  final String? ongoingCostLine;
 }
 
 /// Shared [TrainDialogBaseState] for the **commodity-cost** train dialogs
@@ -173,6 +177,7 @@ abstract class CommodityCostTrainDialogState<T extends TrainDialogBase>
       roleLabel: extras?.roleLabel,
       capabilityLine: extras?.capabilityLine,
       counselStar: counselStarFor(econ),
+      ongoingCostLine: extras?.ongoingCostLine,
     );
   }
 }

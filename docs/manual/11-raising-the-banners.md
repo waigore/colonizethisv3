@@ -26,7 +26,7 @@ A regiment is buildable only after its unlocking technology is researched; era a
 
 1. Open `UNIT20001` **Military Units panel** from the Military Units toolbar button.
 2. Select **Train** to open `UNIT50001` **Train Military dialog**.
-3. Choose unlocked regiments with the row steppers. The dialog accounts for the combined treasury, materials, and peasant cost of all selected regiments.
+3. Choose unlocked regiments with the row steppers. Each row shows the regiment's **category and combat role** (e.g. melee line, ranged firepower, siege guns) plus **ongoing food upkeep per turn** so you can weigh battlefield role and ownership cost against treasury, materials, and peasant build costs before queuing. The dialog accounts for the combined treasury, materials, and peasant cost of all selected regiments.
 4. Close the dialog to queue the training orders. Each regiment consumes one peasant when training resolves, alongside its treasury and material cost.
 5. After turn resolution, the new regiments enter the **Home Army** at the capital. They do not appear directly in a field army.
 

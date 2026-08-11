@@ -29,6 +29,7 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
     this.roleLabel,
     this.capabilityLine,
     this.counselStar,
+    this.ongoingCostLine,
   });
 
   final String displayName;
@@ -61,6 +62,9 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
 
   /// Optional Military Counsel star (train military dialog only).
   final Widget? counselStar;
+
+  /// Optional ongoing ownership cost (e.g. food upkeep per turn).
+  final String? ongoingCostLine;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +111,10 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
           const SizedBox(height: 2),
           _buildRoleCapabilityLine(l10n),
         ],
+        if (ongoingCostLine != null) ...[
+          const SizedBox(height: 2),
+          _buildOngoingCostLine(ongoingCostLine!),
+        ],
         const SizedBox(height: 2),
         _buildCostWrap(l10n),
         TrainDialogLockedHint(
@@ -120,6 +128,16 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
   Widget _buildRoleCapabilityLine(AppLocalizations l10n) {
     return Text(
       l10n.trainNaval_roleCapabilityGist(roleLabel!, capabilityLine!),
+      style: TextStyle(
+        fontSize: 10,
+        color: EditorialMonoclePalette.muted,
+      ),
+    );
+  }
+
+  Widget _buildOngoingCostLine(String line) {
+    return Text(
+      line,
       style: TextStyle(
         fontSize: 10,
         color: EditorialMonoclePalette.muted,

@@ -1121,6 +1121,63 @@ abstract class AppLocalizations {
   /// Train military dialog title.
   String get trainMilitary_title;
 
+  /// Regiment category: light infantry.
+  String get trainMilitary_categoryLightInfantry;
+
+  /// Regiment category: regular infantry.
+  String get trainMilitary_categoryRegularInfantry;
+
+  /// Regiment category: heavy infantry.
+  String get trainMilitary_categoryHeavyInfantry;
+
+  /// Regiment category: bowmen.
+  String get trainMilitary_categoryBowmen;
+
+  /// Regiment category: light cavalry.
+  String get trainMilitary_categoryLightCavalry;
+
+  /// Regiment category: spear cavalry.
+  String get trainMilitary_categorySpearCavalry;
+
+  /// Regiment category: heavy cavalry.
+  String get trainMilitary_categoryHeavyCavalry;
+
+  /// Regiment category: light artillery.
+  String get trainMilitary_categoryLightArtillery;
+
+  /// Regiment category: heavy artillery.
+  String get trainMilitary_categoryHeavyArtillery;
+
+  /// Combat-role gist for light infantry.
+  String get trainMilitary_combatGistLightInfantry;
+
+  /// Combat-role gist for regular infantry.
+  String get trainMilitary_combatGistRegularInfantry;
+
+  /// Combat-role gist for heavy infantry.
+  String get trainMilitary_combatGistHeavyInfantry;
+
+  /// Combat-role gist for bowmen.
+  String get trainMilitary_combatGistBowmen;
+
+  /// Combat-role gist for light cavalry.
+  String get trainMilitary_combatGistLightCavalry;
+
+  /// Combat-role gist for spear cavalry.
+  String get trainMilitary_combatGistSpearCavalry;
+
+  /// Combat-role gist for heavy cavalry.
+  String get trainMilitary_combatGistHeavyCavalry;
+
+  /// Combat-role gist for light artillery.
+  String get trainMilitary_combatGistLightArtillery;
+
+  /// Combat-role gist for heavy artillery.
+  String get trainMilitary_combatGistHeavyArtillery;
+
+  /// Ongoing food upkeep per turn on Train Military rows.
+  String trainMilitary_foodUpkeepPerTurn(int count);
+
   /// Train naval dialog title.
   String get trainNaval_title;
 
