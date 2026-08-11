@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_world/colonizethis_world.dart'
-    show PlayerView, allProvinces, buildPlayerView;
+    show ConnectivityResult, PlayerView, allProvinces, buildPlayerView;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/game/widgets/shell/shell_player_context.dart';
@@ -35,6 +35,24 @@ class DevelopmentPanelProjection {
   final Map<String, TileMapResult> tileMapByRegion;
 }
 
+/// Connectivity map — invalidates on game/map changes only (not draft orders).
+final developmentPanelConnectivityProvider =
+    Provider<Map<String, ConnectivityResult>?>((ref) {
+      final game = ref.watch(currentGameProvider);
+      if (game == null) {
+        return null;
+      }
+      final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
+      if (mapData == null) {
+        return null;
+      }
+      return resolveDevelopmentPanelConnectivity(
+        game: game,
+        tileMapByRegion: mapData.tileMapByRegion,
+        topology: mapData.combinedTopology,
+      );
+    });
+
 /// Connectivity, [PlayerView], and display-name maps — once per relevant input change.
 final developmentPanelProjectionProvider =
     Provider<DevelopmentPanelProjection?>((ref) {
@@ -44,6 +62,10 @@ final developmentPanelProjectionProvider =
       }
       final mapData = ref.watch(gameServiceProvider).getMapData(game.id);
       if (mapData == null) {
+        return null;
+      }
+      final connectivity = ref.watch(developmentPanelConnectivityProvider);
+      if (connectivity == null) {
         return null;
       }
       final orders = ref.watch(currentOrdersProvider);
@@ -64,11 +86,10 @@ final developmentPanelProjectionProvider =
         mapData.combinedTopology,
         humanPlayerId,
       );
-      final shared = buildDevelopmentPanelBuildContext(
+      final shared = buildDevelopmentPanelBuildContextFromConnectivity(
+        connectivity: connectivity,
         game: game,
         playerId: humanPlayerId,
-        tileMapByRegion: mapData.tileMapByRegion,
-        topology: mapData.combinedTopology,
         currentOrders: orders,
       );
 
