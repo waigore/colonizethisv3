@@ -902,6 +902,57 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String provinceOverlay_townDevelopmentOfMax(int level, int max) {
+    return 'Town development: $level of $max';
+  }
+
+  @override
+  String get provinceOverlay_townDevelopmentGistMax =>
+      'Fully developed; manufacturing bonus at maximum.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistBonusActiveNextAt4 =>
+      'Town manufacturing bonus active; next bonus at level 4.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistNextAt4 =>
+      'Next manufacturing bonus at level 4.';
+
+  @override
+  String get provinceOverlay_townDevelopmentGistNextAt2 =>
+      'Next manufacturing bonus at level 2.';
+
+  @override
+  String get provinceOverlay_upgradeTownAction => 'Upgrade town';
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownTooltip => 'Upgrade town';
+
+  @override
+  String provinceOverlay_politicalUpgradeTownTooltipWithCost(String costs) {
+    return 'Upgrade town ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledTooltip =>
+      'Cannot upgrade town on this province now.';
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledNoBuilderTooltip =>
+      'No idle Builder available to upgrade town.';
+
+  @override
+  String get provinceOverlay_politicalUpgradeTownDisabledTechTooltip =>
+      'National Bureaucracy required to upgrade towns.';
+
+  @override
+  String provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
+    String shortfall,
+  ) {
+    return 'Cannot upgrade town: $shortfall';
+  }
+
+  @override
   String provinceOverlay_indentedCount(String label, int count) {
     return '  $label: $count';
   }

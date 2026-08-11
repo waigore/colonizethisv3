@@ -31,6 +31,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
     this.buildRoadShortcutTargetTileKey,
     this.buildFortShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
+    this.upgradeTownShortcutTargetTileKey,
     this.readOnly = false,
   });
 
@@ -86,6 +87,9 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
 
   /// Optional selected tile key for immediate merchant purchase-land assign flow.
   final String? purchaseLandShortcutTargetTileKey;
+
+  /// Optional selected tile key for immediate builder upgrade-town assign flow.
+  final String? upgradeTownShortcutTargetTileKey;
 
   /// When true, work assign/cancel and train are disabled (observe mode).
   @override

@@ -77,6 +77,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
+  required String? upgradeTownShortcutTargetTileKey,
 }) {
   if (readOnly) {
     return const <UnitsEntityAction>[];
@@ -117,6 +118,8 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
                 buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
                 purchaseLandShortcutTargetTileKey:
                     purchaseLandShortcutTargetTileKey,
+                upgradeTownShortcutTargetTileKey:
+                    upgradeTownShortcutTargetTileKey,
               )
             : () => showCivilianUnitsPanelOrderMenu(
                 context,

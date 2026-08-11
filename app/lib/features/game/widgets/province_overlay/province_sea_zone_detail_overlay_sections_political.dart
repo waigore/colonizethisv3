@@ -4,6 +4,8 @@ library;
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
+import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_support.dart';
@@ -45,6 +47,20 @@ String provinceOverlayRegionLabel(AppLocalizations l10n, String regionId) {
   };
 }
 
+@visibleForTesting
+String provinceOverlayTownDevelopmentGist(
+  AppLocalizations l10n,
+  int townDevelopmentLevel,
+) {
+  return switch (townDevelopmentLevel) {
+    kTownDevelopmentLevelMax =>
+      l10n.provinceOverlay_townDevelopmentGistMax,
+    2 => l10n.provinceOverlay_townDevelopmentGistBonusActiveNextAt4,
+    3 => l10n.provinceOverlay_townDevelopmentGistNextAt4,
+    _ => l10n.provinceOverlay_townDevelopmentGistNextAt2,
+  };
+}
+
 Widget buildPoliticalSection({
   required AppLocalizations l10n,
   required String name,
@@ -52,8 +68,16 @@ Widget buildPoliticalSection({
   required String regionLabel,
   required bool isCapital,
   required int townDevelopmentLevel,
+  required bool showUpgradeTownControl,
+  required bool upgradeTownEnabled,
+  required String upgradeTownTooltip,
+  VoidCallback? onUpgradeTownTap,
 }) {
   final bodyStyle = overlayFgBodyStyle();
+  final gistStyle = bodyStyle.copyWith(
+    color: EditorialMonoclePalette.muted,
+    fontSize: 12,
+  );
   return buildOverlaySection(
     l10n.provinceOverlay_sectionPolitical,
     Column(
@@ -70,9 +94,26 @@ Widget buildPoliticalSection({
           style: bodyStyle,
         ),
         Text(
-          l10n.provinceOverlay_townDevelopment(townDevelopmentLevel),
+          l10n.provinceOverlay_townDevelopmentOfMax(
+            townDevelopmentLevel,
+            kTownDevelopmentLevelMax,
+          ),
           style: bodyStyle,
         ),
+        Text(
+          provinceOverlayTownDevelopmentGist(l10n, townDevelopmentLevel),
+          style: gistStyle,
+        ),
+        if (showUpgradeTownControl)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: CtActionTextButton(
+              label: l10n.provinceOverlay_upgradeTownAction,
+              tooltip: upgradeTownTooltip,
+              enabled: upgradeTownEnabled,
+              onPressed: upgradeTownEnabled ? onUpgradeTownTap : null,
+            ),
+          ),
       ],
     ),
   );
