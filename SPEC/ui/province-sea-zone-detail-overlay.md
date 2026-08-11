@@ -276,6 +276,7 @@ Omit both rows when: sea-zone overlay context, tile unrevealed (`???` block), se
 |-------------------|--------------|---------------|--------------|
 | Close | Overlay open | `overlayOpen = false` | Scrim may remain per provider rules. |
 | Tile shortcuts (Explore / Prospect / Build improvement / Build road) | Province intel + unit/work gates | Opens civilian panel shortcuts / work orders | Per Interaction section. |
+| Political **Upgrade town** shortcut | Human-owned province, level &lt; 4, Builder + tech/afford gates | `OpenCivilianUnitsPanelEvent(builderOnly: true, upgradeTownShortcutTargetTileKey: <townTileKey>)` | Opens Builder-only civilian panel for direct `upgrade_town` assign. |
 | Military **Build fort** shortcut | Town tile + Military intel + fort-step gates | Opens Engineer-only civilian panel shortcut | Per Interaction section. |
 | Economic row hover | Intel allows | Sets `secondaryHighlightTileKey` | Map secondary outline. |
 
