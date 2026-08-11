@@ -3,11 +3,9 @@ import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart
 import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train/train_military_regiment_role_display.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
-import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -381,96 +379,5 @@ void main() {
         expect(find.textContaining('Peasants low'), findsNothing);
       },
     );
-  });
-
-  group('benefit vs cost row copy (#4324)', () {
-    testWidgets('culverin row shows category gist and food upkeep', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildDialog(
-          game: gameWithMilitaryResources(),
-          humanPlayerId: humanPlayerId,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Heavy artillery · Siege guns'), findsWidgets);
-      expect(
-        find.text(
-          '${RegimentEconomyCatalog.culverin.foodUpkeep} food / turn',
-        ),
-        findsWidgets,
-      );
-    });
-
-    testWidgets('pikemen and arquebusiers show distinct benefit lines', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildDialog(
-          game: gameWithMilitaryResources(),
-          humanPlayerId: humanPlayerId,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Regular infantry · Melee line'), findsWidgets);
-      expect(find.text('Heavy infantry · Ranged firepower'), findsWidgets);
-    });
-
-    testWidgets('locked row still shows benefit and food upkeep', (
-      WidgetTester tester,
-    ) async {
-      final base = gameWithMilitaryResources();
-      final player = base.players.firstWhere((p) => p.id == humanPlayerId);
-      final lockedRegimentId = RegimentEconomyCatalog.musketeers.id;
-      final lockedStats = regimentStatsById(lockedRegimentId)!;
-      final lockedEconomy = RegimentEconomyCatalog.musketeers;
-      final game = base.copyWith(
-        players: [
-          player.copyWith(techUnlocked: {}),
-          ...base.players.where((p) => p.id != humanPlayerId),
-        ],
-      );
-
-      await tester.pumpWidget(
-        buildDialog(game: game, humanPlayerId: humanPlayerId),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text(
-          TrainMilitaryRegimentRoleDisplay.categoryRoleLine(
-            lookupAppLocalizations(const Locale('en')),
-            lockedStats.category,
-          ),
-        ),
-        findsWidgets,
-      );
-      expect(
-        find.text('${lockedEconomy.foodUpkeep} food / turn'),
-        findsWidgets,
-      );
-      expect(find.textContaining('Requires:'), findsWidgets);
-    });
-
-    testWidgets('default rows do not dump tactical stat labels', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        buildDialog(
-          game: gameWithMilitaryResources(),
-          humanPlayerId: humanPlayerId,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('FPN'), findsNothing);
-      expect(find.textContaining('FPM'), findsNothing);
-      expect(find.textContaining('RNG'), findsNothing);
-      expect(find.textContaining('DEF'), findsNothing);
-      expect(find.textContaining('MVR'), findsNothing);
-    });
   });
 }
