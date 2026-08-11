@@ -57,7 +57,7 @@ Representative fixture: dual-region save with two OW provinces + one NW province
 | Duplicate `buildPlayerView` (screen + map) | Single `playerView` on `DevelopmentPanelProjection` | Eliminated per-map rebuild |
 | `IndexedStack` mounting both region maps | `CtTabStrip.lazyTabBodies` + `_visitedRegionIds` | NW map absent until first tab visit (`development_panel_lazy_open_test.dart`) |
 | Synchronous read model on first frame | Post-frame `readModelReady` gate | Tab strip paints before connectivity/improvable scans |
-| Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row |
+| Per-row material shortage scan on highlight rebuild | `developmentPanelAssignRowStateCacheProvider` + derived shortage set | Show-tile highlight `setState` does not re-run assign affordance per row (`development_panel_projection_rebuild_guard_test.dart`) |
 | Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
 
 DevTools timeline captures remain optional owner verification for AC1 qualitative bar; timing tests above are the CI profiling anchor for AC2.
