@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -61,11 +62,13 @@ final developmentPanelConnectivityProvider =
       if (mapData == null) {
         return null;
       }
-      return resolveDevelopmentPanelConnectivity(
-        game: game,
-        tileMapByRegion: mapData.tileMapByRegion,
-        topology: mapData.combinedTopology,
-      );
+      return ctAppPerfSync('developmentPanel.connectivity', () {
+        return resolveDevelopmentPanelConnectivity(
+          game: game,
+          tileMapByRegion: mapData.tileMapByRegion,
+          topology: mapData.combinedTopology,
+        );
+      });
     });
 
 /// [PlayerView], display-name maps, and map topology — invalidates on game/map/shell
@@ -83,30 +86,32 @@ final developmentPanelStaticContextProvider =
       final shell = ref.watch(shellPlayerContextProvider);
       final humanPlayerId = resolveShellPanelPlayerId(shell, game);
 
-      final provinceDisplayNamesById = <String, String>{};
-      for (final province in allProvinces(game.worldState)) {
-        provinceDisplayNamesById[province.id] =
-            province.displayName ?? province.id;
-      }
-      final playerDisplayNamesById = {
-        for (final player in game.players) player.id: player.displayName,
-      };
+      return ctAppPerfSync('developmentPanel.staticContext', () {
+        final provinceDisplayNamesById = <String, String>{};
+        for (final province in allProvinces(game.worldState)) {
+          provinceDisplayNamesById[province.id] =
+              province.displayName ?? province.id;
+        }
+        final playerDisplayNamesById = {
+          for (final player in game.players) player.id: player.displayName,
+        };
 
-      final playerView = buildPlayerView(
-        game,
-        mapData.combinedTopology,
-        humanPlayerId,
-      );
+        final playerView = buildPlayerView(
+          game,
+          mapData.combinedTopology,
+          humanPlayerId,
+        );
 
-      return (
-        game: game,
-        humanPlayerId: humanPlayerId,
-        playerView: playerView,
-        provinceDisplayNamesById: provinceDisplayNamesById,
-        playerDisplayNamesById: playerDisplayNamesById,
-        topology: mapData.combinedTopology,
-        tileMapByRegion: mapData.tileMapByRegion,
-      );
+        return (
+          game: game,
+          humanPlayerId: humanPlayerId,
+          playerView: playerView,
+          provinceDisplayNamesById: provinceDisplayNamesById,
+          playerDisplayNamesById: playerDisplayNamesById,
+          topology: mapData.combinedTopology,
+          tileMapByRegion: mapData.tileMapByRegion,
+        );
+      });
     });
 
 /// Idle counts and connectivity slice — invalidates when draft orders change.
@@ -121,12 +126,14 @@ final developmentPanelSharedContextProvider =
         return null;
       }
       final orders = ref.watch(currentOrdersProvider);
-      return buildDevelopmentPanelBuildContextFromConnectivity(
-        connectivity: connectivity,
-        game: staticContext.game,
-        playerId: staticContext.humanPlayerId,
-        currentOrders: orders,
-      );
+      return ctAppPerfSync('developmentPanel.sharedContext', () {
+        return buildDevelopmentPanelBuildContextFromConnectivity(
+          connectivity: connectivity,
+          game: staticContext.game,
+          playerId: staticContext.humanPlayerId,
+          currentOrders: orders,
+        );
+      });
     });
 
 /// Combined projection for panel consumers.
@@ -155,16 +162,18 @@ final developmentPanelRegionScopesProvider =
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       final connectivity = ref.watch(developmentPanelConnectivityProvider);
       if (ctx == null || connectivity == null) return null;
-      return buildDevelopmentPanelRegionScopesForPlayer(
-        game: ctx.game,
-        playerId: ctx.humanPlayerId,
-        regionId: regionId,
-        tileMapByRegion: ctx.tileMapByRegion,
-        provinceDisplayNamesById: ctx.provinceDisplayNamesById,
-        playerDisplayNamesById: ctx.playerDisplayNamesById,
-        connectivityByPlayer: connectivity,
-        playerView: ctx.playerView,
-      );
+      return ctAppPerfSync('developmentPanel.regionScopes.$regionId', () {
+        return buildDevelopmentPanelRegionScopesForPlayer(
+          game: ctx.game,
+          playerId: ctx.humanPlayerId,
+          regionId: regionId,
+          tileMapByRegion: ctx.tileMapByRegion,
+          provinceDisplayNamesById: ctx.provinceDisplayNamesById,
+          playerDisplayNamesById: ctx.playerDisplayNamesById,
+          connectivityByPlayer: connectivity,
+          playerView: ctx.playerView,
+        );
+      });
     });
 
 /// Per-region read model; invalidates when static inputs, shared context, or orders change.
@@ -174,13 +183,15 @@ final developmentPanelRegionModelProvider =
       final shared = ref.watch(developmentPanelSharedContextProvider);
       final ctx = ref.watch(developmentPanelStaticContextProvider);
       if (scopes == null || shared == null || ctx == null) return null;
-      return composeDevelopmentPanelRegionModel(
-        scopes: scopes,
-        shared: shared,
-        game: ctx.game,
-        playerId: ctx.humanPlayerId,
-        currentOrders: ref.watch(currentOrdersProvider),
-      );
+      return ctAppPerfSync('developmentPanel.regionModel.$regionId', () {
+        return composeDevelopmentPanelRegionModel(
+          scopes: scopes,
+          shared: shared,
+          game: ctx.game,
+          playerId: ctx.humanPlayerId,
+          currentOrders: ref.watch(currentOrdersProvider),
+        );
+      });
     });
 
 /// Per-scope assign affordance + material-shortage flags for one region tab.
@@ -192,14 +203,16 @@ final developmentPanelAssignRowStateCacheProvider =
       if (ctx == null || shared == null || scopes == null) {
         return DevelopmentPanelAssignRowStateCache.empty;
       }
-      return buildDevelopmentPanelAssignRowStateCache(
-        ownedScopes: scopes.ownedScopes,
-        purchasedScopes: scopes.purchasedScopes,
-        game: ctx.game,
-        playerId: ctx.humanPlayerId,
-        currentOrders: ref.watch(currentOrdersProvider),
-        topology: ctx.topology,
-        tileMapByRegion: ctx.tileMapByRegion,
-        connectedTileKeys: shared.connectedTileKeys,
-      );
+      return ctAppPerfSync('developmentPanel.assignRowCache.$regionId', () {
+        return buildDevelopmentPanelAssignRowStateCache(
+          ownedScopes: scopes.ownedScopes,
+          purchasedScopes: scopes.purchasedScopes,
+          game: ctx.game,
+          playerId: ctx.humanPlayerId,
+          currentOrders: ref.watch(currentOrdersProvider),
+          topology: ctx.topology,
+          tileMapByRegion: ctx.tileMapByRegion,
+          connectedTileKeys: shared.connectedTileKeys,
+        );
+      });
     });
