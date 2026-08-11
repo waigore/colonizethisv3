@@ -2000,6 +2000,44 @@ abstract class AppLocalizations {
   /// Political section town development row (integer 1–4). Refs #3870.
   String provinceOverlay_townDevelopment(int level);
 
+  /// Political section town development summary (`N of max`). Refs #4316.
+  String provinceOverlay_townDevelopmentOfMax(int level, int max);
+
+  /// Political gist when town development is at maximum. Refs #4316.
+  String get provinceOverlay_townDevelopmentGistMax;
+
+  /// Political gist when manufacturing bonus is active (level 2). Refs #4316.
+  String get provinceOverlay_townDevelopmentGistBonusActiveNextAt4;
+
+  /// Political gist when next manufacturing bonus is at level 4. Refs #4316.
+  String get provinceOverlay_townDevelopmentGistNextAt4;
+
+  /// Political gist when next manufacturing bonus is at level 2. Refs #4316.
+  String get provinceOverlay_townDevelopmentGistNextAt2;
+
+  /// Political Upgrade town shortcut label. Refs #4316.
+  String get provinceOverlay_upgradeTownAction;
+
+  /// Political Upgrade town enabled tooltip. Refs #4316.
+  String get provinceOverlay_politicalUpgradeTownTooltip;
+
+  /// Political Upgrade town enabled tooltip with material cost. Refs #4316.
+  String provinceOverlay_politicalUpgradeTownTooltipWithCost(String costs);
+
+  /// Political Upgrade town disabled generic tooltip. Refs #4316.
+  String get provinceOverlay_politicalUpgradeTownDisabledTooltip;
+
+  /// Political Upgrade town disabled — no Builder tooltip. Refs #4316.
+  String get provinceOverlay_politicalUpgradeTownDisabledNoBuilderTooltip;
+
+  /// Political Upgrade town disabled — tech gate tooltip. Refs #4316.
+  String get provinceOverlay_politicalUpgradeTownDisabledTechTooltip;
+
+  /// Political Upgrade town disabled — materials shortfall tooltip. Refs #4316.
+  String provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
+    String shortfall,
+  );
+
   /// Indented count line used in military summary lists.
   String provinceOverlay_indentedCount(String label, int count);
 

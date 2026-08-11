@@ -77,6 +77,9 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
   required bool purchaseLandEnabled,
+  bool upgradeTownEnabled = false,
+  String? upgradeTownTargetTileKey,
+  String provinceId = 'oldWorld|p1',
   required AppEventBus bus,
 }) =>
     buildProvinceDetailShortcutCallbacks(
@@ -95,6 +98,9 @@ ProvinceDetailShortcutCallbacks _callbacks({
       buildRoadEnabled: buildRoadEnabled,
       buildFortEnabled: buildFortEnabled,
       purchaseLandEnabled: purchaseLandEnabled,
+      provinceId: provinceId,
+      upgradeTownEnabled: upgradeTownEnabled,
+      upgradeTownTargetTileKey: upgradeTownTargetTileKey,
       bus: bus,
     );
 

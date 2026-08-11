@@ -275,3 +275,45 @@ String provinceOverlayPurchaseLandTooltip({
   }
   return l10n.provinceOverlay_tilePurchaseLandTooltip;
 }
+
+String provinceOverlayPoliticalUpgradeTownTooltip({
+  required AppLocalizations l10n,
+  required Game game,
+  required String humanPlayerId,
+  required Orders currentOrders,
+  required String townTileKey,
+  required bool enabled,
+  required bool hasBuilderUnits,
+}) {
+  final player = game.playerById(humanPlayerId);
+  if (player?.techUnlocked?[kTechIdNationalBureaucracy] != true) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledTechTooltip;
+  }
+  if (!hasBuilderUnits) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledNoBuilderTooltip;
+  }
+  final preview = previewWorkOrderAffordAtTile(
+    game: game,
+    playerId: humanPlayerId,
+    currentOrders: currentOrders,
+    workTarget: kWorkTargetUpgradeTown,
+    targetTileKey: townTileKey,
+  );
+  if (!enabled &&
+      preview.hasCostPreview &&
+      !preview.canAfford &&
+      preview.materialShortfalls.isNotEmpty) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledMaterialsTooltip(
+      workOrderAffordStatusLine(l10n: l10n, preview: preview),
+    );
+  }
+  if (!enabled) {
+    return l10n.provinceOverlay_politicalUpgradeTownDisabledTooltip;
+  }
+  if (enabled && preview.materialCosts != null && preview.materialCosts!.isNotEmpty) {
+    return l10n.provinceOverlay_politicalUpgradeTownTooltipWithCost(
+      formatWorkOrderMaterialCostSummary(preview.materialCosts!),
+    );
+  }
+  return l10n.provinceOverlay_politicalUpgradeTownTooltip;
+}

@@ -51,7 +51,9 @@ void main() {
         expect(_textWhere((d) => d.startsWith('Capital:')), findsOneWidget);
         expect(
           _textWhere(
-            (d) => d == 'Town development: ${province!.townDevelopmentLevel}',
+            (d) =>
+                d ==
+                'Town development: ${province!.townDevelopmentLevel} of 4',
           ),
           findsOneWidget,
           reason: 'Political body must show true town development level.',

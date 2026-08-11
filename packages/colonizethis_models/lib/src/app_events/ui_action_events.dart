@@ -104,6 +104,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.buildRoadShortcutTargetTileKey,
     this.buildFortShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
+    this.upgradeTownShortcutTargetTileKey,
   });
 
   /// Optional tile-scope key (`regionId|provinceId|x|y`) used to show only
@@ -142,6 +143,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province purchase-land shortcut flow.
   final String? purchaseLandShortcutTargetTileKey;
+
+  /// Optional tile key used by the province upgrade-town shortcut flow.
+  final String? upgradeTownShortcutTargetTileKey;
 }
 
 /// Military units bottom sheet.

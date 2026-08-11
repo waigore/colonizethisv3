@@ -19,6 +19,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildRoadTap,
   VoidCallback? onBuildFortTap,
   VoidCallback? onPurchaseLandTap,
+  VoidCallback? onUpgradeTownTap,
 });
 
 VoidCallback? _provinceDetailShortcutTap({
@@ -60,9 +61,35 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
   required bool purchaseLandEnabled,
+  required String provinceId,
+  required bool upgradeTownEnabled,
+  required String? upgradeTownTargetTileKey,
   required ct_models.AppEventBus bus,
 }) {
+  final topology = mapData?.combinedTopology;
   final String? tileKey = selectedTileKey;
+  final upgradeTownTap = upgradeTownTargetTileKey == null
+      ? null
+      : _provinceDetailShortcutTap(
+          enabled: upgradeTownEnabled,
+          revalidateEnabled: () =>
+              GameMapAreaStateLogic.provinceUpgradeTownActionState(
+                game: game,
+                humanPlayerId: humanPlayerId,
+                provinceId: provinceId,
+                playerView: playerView,
+                workTargetSelectionCache: workTargetSelectionCache,
+                topology: topology,
+                currentOrders: draftOrders,
+                tileMapByRegion: mapData?.tileMapByRegion,
+              ).enabled,
+          emit: () => bus.emit(
+            ct_models.OpenCivilianUnitsPanelEvent(
+              builderOnly: true,
+              upgradeTownShortcutTargetTileKey: upgradeTownTargetTileKey,
+            ),
+          ),
+        );
   if (tileKey == null) {
     return (
       onExploreWithExplorerTap: null,
@@ -71,9 +98,9 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildRoadTap: null,
       onBuildFortTap: null,
       onPurchaseLandTap: null,
+      onUpgradeTownTap: upgradeTownTap,
     );
   }
-  final topology = mapData?.combinedTopology;
 
   return (
     onExploreWithExplorerTap: _provinceDetailShortcutTap(
@@ -177,5 +204,6 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
         ),
       ),
     ),
+    onUpgradeTownTap: upgradeTownTap,
   );
 }

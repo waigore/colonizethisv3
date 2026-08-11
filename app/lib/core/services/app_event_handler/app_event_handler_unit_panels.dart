@@ -65,6 +65,8 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
               event.buildFortShortcutTargetTileKey,
           purchaseLandShortcutTargetTileKey:
               event.purchaseLandShortcutTargetTileKey,
+          upgradeTownShortcutTargetTileKey:
+              event.upgradeTownShortcutTargetTileKey,
         ),
       );
     },
