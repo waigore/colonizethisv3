@@ -2,7 +2,8 @@
 library;
 
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart';
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show DevelopmentPanelScopeRow;
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import 'development_panel_assign_row_state.dart';
@@ -29,7 +30,8 @@ class DevelopmentPanelAssignRowStateCache {
 }
 
 DevelopmentPanelAssignRowStateCache buildDevelopmentPanelAssignRowStateCache({
-  required DevelopmentPanelRegionModel regionModel,
+  required List<DevelopmentPanelScopeRow> ownedScopes,
+  required List<DevelopmentPanelScopeRow> purchasedScopes,
   required Game game,
   required String playerId,
   required Orders currentOrders,
@@ -40,8 +42,8 @@ DevelopmentPanelAssignRowStateCache buildDevelopmentPanelAssignRowStateCache({
   final byKey = <String, DevelopmentAssignRowState>{};
   final shortages = <String>{};
   for (final scope in [
-    ...regionModel.ownedScopes,
-    ...regionModel.purchasedScopes,
+    ...ownedScopes,
+    ...purchasedScopes,
   ]) {
     for (final row in scope.improvableCommodities) {
       final state = resolveDevelopmentAssignRowState(

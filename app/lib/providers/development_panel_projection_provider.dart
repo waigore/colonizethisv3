@@ -149,44 +149,57 @@ final developmentPanelProjectionProvider =
       );
     });
 
+/// Per-region scopes + extraction — invalidates on game/map/shell only (Slice E).
+final developmentPanelRegionScopesProvider =
+    Provider.family<DevelopmentPanelRegionScopes?, String>((ref, regionId) {
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      final connectivity = ref.watch(developmentPanelConnectivityProvider);
+      if (ctx == null || connectivity == null) return null;
+      return buildDevelopmentPanelRegionScopesForPlayer(
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
+        regionId: regionId,
+        tileMapByRegion: ctx.tileMapByRegion,
+        provinceDisplayNamesById: ctx.provinceDisplayNamesById,
+        playerDisplayNamesById: ctx.playerDisplayNamesById,
+        connectivityByPlayer: connectivity,
+        playerView: ctx.playerView,
+      );
+    });
+
 /// Per-region read model; invalidates when static inputs, shared context, or orders change.
 final developmentPanelRegionModelProvider =
     Provider.family<DevelopmentPanelRegionModel?, String>((ref, regionId) {
-      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
       final shared = ref.watch(developmentPanelSharedContextProvider);
-      if (staticContext == null || shared == null) {
-        return null;
-      }
-      final orders = ref.watch(currentOrdersProvider);
-      return buildDevelopmentPanelRegionModel(
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
+      if (scopes == null || shared == null || ctx == null) return null;
+      return composeDevelopmentPanelRegionModel(
+        scopes: scopes,
         shared: shared,
-        game: staticContext.game,
-        playerId: staticContext.humanPlayerId,
-        regionId: regionId,
-        tileMapByRegion: staticContext.tileMapByRegion,
-        currentOrders: orders,
-        provinceDisplayNamesById: staticContext.provinceDisplayNamesById,
-        playerDisplayNamesById: staticContext.playerDisplayNamesById,
-        playerView: staticContext.playerView,
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
+        currentOrders: ref.watch(currentOrdersProvider),
       );
     });
 
 /// Per-scope assign affordance + material-shortage flags for one region tab.
 final developmentPanelAssignRowStateCacheProvider =
     Provider.family<DevelopmentPanelAssignRowStateCache, String>((ref, regionId) {
-      final staticContext = ref.watch(developmentPanelStaticContextProvider);
+      final ctx = ref.watch(developmentPanelStaticContextProvider);
       final shared = ref.watch(developmentPanelSharedContextProvider);
-      final regionModel = ref.watch(developmentPanelRegionModelProvider(regionId));
-      if (staticContext == null || shared == null || regionModel == null) {
+      final scopes = ref.watch(developmentPanelRegionScopesProvider(regionId));
+      if (ctx == null || shared == null || scopes == null) {
         return DevelopmentPanelAssignRowStateCache.empty;
       }
       return buildDevelopmentPanelAssignRowStateCache(
-        regionModel: regionModel,
-        game: staticContext.game,
-        playerId: staticContext.humanPlayerId,
+        ownedScopes: scopes.ownedScopes,
+        purchasedScopes: scopes.purchasedScopes,
+        game: ctx.game,
+        playerId: ctx.humanPlayerId,
         currentOrders: ref.watch(currentOrdersProvider),
-        topology: staticContext.topology,
-        tileMapByRegion: staticContext.tileMapByRegion,
+        topology: ctx.topology,
+        tileMapByRegion: ctx.tileMapByRegion,
         connectedTileKeys: shared.connectedTileKeys,
       );
     });

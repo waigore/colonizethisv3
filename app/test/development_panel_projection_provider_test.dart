@@ -86,6 +86,42 @@ void main() {
   );
 
   test(
+    'developmentPanelRegionScopesProvider survives order-only changes (Refs #4175 Slice E)',
+    () {
+      final game = buildDevelopmentPanelGoldenGame();
+      final container = ProviderContainer(
+        overrides: _developmentPanelProviderOverrides(game),
+      );
+      addTearDown(container.dispose);
+
+      container.read(developmentPanelProjectionProvider);
+
+      final scopesBefore = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(scopesBefore, isNotNull);
+      expect(scopesBefore!.ownedScopes, isNotEmpty);
+
+      container.read(currentOrdersProvider.notifier).state = Orders(
+        workOrdersByPlayerId: {
+          kPanelTestHumanPlayerId: const [
+            WorkOrder(
+              unitId: 'b1',
+              target: kWorkTargetBuildImprovement,
+              targetTileKey: 'oldWorld|p1|0|0',
+            ),
+          ],
+        },
+      );
+
+      final scopesAfter = container.read(
+        developmentPanelRegionScopesProvider(kRegionOldWorld),
+      );
+      expect(identical(scopesBefore, scopesAfter), isTrue);
+    },
+  );
+
+  test(
     'developmentPanelRegionModelProvider invalidates when orders change (Refs #4175 Slice E)',
     () {
       final game = buildDevelopmentPanelGoldenGame();
