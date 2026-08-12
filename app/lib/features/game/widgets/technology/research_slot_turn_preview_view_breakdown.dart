@@ -47,38 +47,8 @@ class ResearchFundingBreakdownDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: CtSpacing.m),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownBaseLabel(
-              fundingLevelLabel(l10n, preview.funding),
-            ),
-            value: l10n.technologyPanel_rpValue(preview.baseRpPerTurn),
-          ),
-          if (preview.hasIndustrialBonus)
-            _BreakdownRow(
-              label: l10n.technologyPanel_rpBreakdownIndustrialLabel,
-              value: l10n.technologyPanel_rpValue(
-                preview.industrialBonusRpPerTurn,
-              ),
-            ),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownEffectiveLabel,
-            value: l10n.technologyPanel_rpValue(preview.effectiveRpPerTurn),
-            emphasised: true,
-          ),
-          _BreakdownRow(
-            label: l10n.technologyPanel_rpBreakdownTreasuryLabel,
-            value: l10n.technologyPanel_goldValue(preview.goldCostPerTurn),
-          ),
-          if (preview.debtBlocked) ...[
-            const SizedBox(height: CtSpacing.s),
-            Text(
-              l10n.technologyPanel_rpBreakdownDebtBlocked,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: EditorialMonoclePalette.danger,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
+          _BreakdownMetrics(preview: preview, l10n: l10n),
+          _BreakdownBlockedNotice(preview: preview, l10n: l10n, theme: theme),
           const SizedBox(height: CtSpacing.ml),
           CtNinePatchButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -87,6 +57,101 @@ class ResearchFundingBreakdownDialog extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _BreakdownMetrics extends StatelessWidget {
+  const _BreakdownMetrics({required this.preview, required this.l10n});
+
+  final ResearchSlotTurnPreview preview;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BreakdownRow(
+          label: l10n.technologyPanel_rpBreakdownBaseLabel(
+            fundingLevelLabel(l10n, preview.funding),
+          ),
+          value: l10n.technologyPanel_rpValue(preview.baseRpPerTurn),
+        ),
+        if (preview.hasIndustrialBonus)
+          _BreakdownRow(
+            label: l10n.technologyPanel_rpBreakdownIndustrialLabel,
+            value: l10n.technologyPanel_rpValue(
+              preview.industrialBonusRpPerTurn,
+            ),
+          ),
+        _BreakdownRow(
+          label: l10n.technologyPanel_rpBreakdownEffectiveLabel,
+          value: l10n.technologyPanel_rpValue(preview.effectiveRpPerTurn),
+          emphasised: true,
+        ),
+        _BreakdownRow(
+          label: l10n.technologyPanel_rpBreakdownTreasuryLabel,
+          value: l10n.technologyPanel_goldValue(preview.goldCostPerTurn),
+        ),
+      ],
+    );
+  }
+}
+
+class _BreakdownBlockedNotice extends StatelessWidget {
+  const _BreakdownBlockedNotice({
+    required this.preview,
+    required this.l10n,
+    required this.theme,
+  });
+
+  final ResearchSlotTurnPreview preview;
+  final AppLocalizations l10n;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    if (preview.sequentialBlocked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            l10n.technologyPanel_rpBreakdownSequentialBlocked,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.danger,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          if (preview.treasuryBeforeSlot != null)
+            Text(
+              l10n.technologyPanel_rpBreakdownResidualTreasury(
+                preview.treasuryBeforeSlot!,
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: EditorialMonoclePalette.muted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+        ],
+      );
+    }
+    if (preview.debtBlocked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: CtSpacing.s),
+          Text(
+            l10n.technologyPanel_rpBreakdownDebtBlocked,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: EditorialMonoclePalette.danger,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 

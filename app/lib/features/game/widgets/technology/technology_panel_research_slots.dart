@@ -28,6 +28,7 @@ Widget buildTechnologyResearchSlot({
   required Player player,
   required Orders currentOrders,
   required void Function(Orders orders)? onOrdersChanged,
+  ResearchSlotTurnPreview? turnPreview,
 }) {
   final isLockedFourthSlot =
       index == kTechnologyResearchSlotCount - 1 && slots < 4;
@@ -50,15 +51,10 @@ Widget buildTechnologyResearchSlot({
   final funding = assignment?.funding ?? ResearchFundingLevel.medium;
   // The turn preview accompanies the editable funding controls, so it renders
   // only on the editable (human, own-orders) panel; read-only panels keep the
-  // simple committed-progress bar. Refs #3512.
-  final turnPreview = (tech == null || !canEdit)
-      ? null
-      : computeResearchSlotTurnPreview(
-          player: player,
-          tech: tech,
-          committedProgress: techProgress,
-          funding: funding,
-        );
+  // simple committed-progress bar. Refs #3512, #4335 — sequential walk is
+  // computed once in [buildTechnologyPanelSlotsBody] and passed per slot.
+  final resolvedTurnPreview =
+      (tech == null || !canEdit) ? null : turnPreview;
   return Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: ResearchSlotCard(
@@ -68,7 +64,7 @@ Widget buildTechnologyResearchSlot({
       cost: cost,
       canEdit: canEdit,
       funding: funding,
-      turnPreview: turnPreview,
+      turnPreview: resolvedTurnPreview,
       onFundingChanged: hasTech && canEdit
           ? (level) => onOrdersChanged!(
                 applySetSlotFunding(

@@ -2908,6 +2908,48 @@
   "@technologyPanel_rpBreakdownDebtBlocked": {
     "description": "Breakdown dialog note shown when the funding spend is debt-blocked so 0 RP is applied (Refs #3512)."
   },
+  "technologyPanel_rpBreakdownSequentialBlocked": "Not enough gold remains after earlier research slots — 0 RP applied this turn.",
+  "@technologyPanel_rpBreakdownSequentialBlocked": {
+    "description": "Breakdown dialog note when a slot is debt-blocked because earlier slots consumed treasury this turn (Refs #4335)."
+  },
+  "technologyPanel_rpBreakdownResidualTreasury": "Treasury before this slot: £{gold}",
+  "@technologyPanel_rpBreakdownResidualTreasury": {
+    "description": "Breakdown dialog note showing residual treasury after earlier slots in the sequential walk (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_researchTurnFundingSummary": "Research this turn: −£{gold} · +{rp} RP",
+  "@technologyPanel_researchTurnFundingSummary": {
+    "description": "Empire-wide research funding header when at least one slot will spend (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      },
+      "rp": {
+        "type": "int"
+      }
+    }
+  },
+  "technologyPanel_researchTurnFundingEmpty": "Research this turn: no spend",
+  "@technologyPanel_researchTurnFundingEmpty": {
+    "description": "Empire-wide research funding header when no slot will spend gold or apply RP (Refs #4335)."
+  },
+  "technologyPanel_goldSequentialBlockedHint": "Not enough gold left after earlier slots",
+  "@technologyPanel_goldSequentialBlockedHint": {
+    "description": "Gold row label when a slot is blocked by earlier sequential spends (Refs #4335)."
+  },
+  "technologyPanel_goldCostAfterEarlierSlots": "Would cost £{gold} if treasury allowed",
+  "@technologyPanel_goldCostAfterEarlierSlots": {
+    "description": "Secondary gold-row hint showing the nominal per-turn cost on a sequential-blocked slot (Refs #4335).",
+    "placeholders": {
+      "gold": {
+        "type": "int"
+      }
+    }
+  },
   "technologyPanel_rpValue": "{rp} RP",
   "@technologyPanel_rpValue": {
     "description": "Monospace research-point value used in the breakdown dialog rows (Refs #3512).",

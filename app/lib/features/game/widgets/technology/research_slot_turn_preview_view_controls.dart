@@ -49,17 +49,44 @@ class GoldPreviewRow extends StatelessWidget {
         : EditorialMonoclePalette.muted;
     final String label = spends
         ? l10n.technologyPanel_goldSpendPerTurn(preview.goldCostPerTurn)
-        : l10n.technologyPanel_goldNoSpendPerTurn(preview.goldCostPerTurn);
-    return Row(
-      children: [
-        StrictAssetIcon(
-          assetPath: kResearchSlotTurnPreviewTreasuryCoinAsset,
-          width: 14,
-          height: 14,
-        ),
-        const SizedBox(width: 5),
-        Text(label, style: researchSlotTurnPreviewMonoStyle(color)),
-      ],
+        : preview.sequentialBlocked
+            ? l10n.technologyPanel_goldSequentialBlockedHint
+            : l10n.technologyPanel_goldNoSpendPerTurn(preview.goldCostPerTurn);
+    return InkWell(
+      onTap: preview.debtBlocked && !spends
+          ? () => showResearchFundingBreakdownDialog(
+                context: context,
+                preview: preview,
+              )
+          : null,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              StrictAssetIcon(
+                assetPath: kResearchSlotTurnPreviewTreasuryCoinAsset,
+                width: 14,
+                height: 14,
+              ),
+              const SizedBox(width: 5),
+              Text(label, style: researchSlotTurnPreviewMonoStyle(color)),
+            ],
+          ),
+          if (preview.sequentialBlocked && !spends) ...[
+            const SizedBox(height: 2),
+            Text(
+              l10n.technologyPanel_goldCostAfterEarlierSlots(
+                preview.goldCostPerTurn,
+              ),
+              style: researchSlotTurnPreviewMonoStyle(
+                EditorialMonoclePalette.muted,
+              ).copyWith(fontSize: 10, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
