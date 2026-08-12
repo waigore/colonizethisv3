@@ -1,5 +1,9 @@
 // Game events: shared event stream for game occurrences.
 // SPEC/program/game-events.md
+//
+// Kept in one library deliberately (Refs #4330): `sealed` subclasses must share
+// a Dart library for exhaustiveness. Cross-file splits would require `part` /
+// `part of` (forbidden by `repo.world_no_part_directives`) or dropping `sealed`.
 
 import 'package:colonizethis_models/colonizethis_models.dart' show OrderKind;
 
