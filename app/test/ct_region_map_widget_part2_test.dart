@@ -6,70 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart'
     show
-        AppEvent,
-        AppEventBus,
         OpenCivilianUnitsPanelEvent,
-        OpenNavalMissionMenuEvent,
-        OpenNavalUnitsPanelEvent;
+        OpenNavalMissionMenuEvent;
 
 import 'package:colonizethis_app/features/game/flame/caches/resource_icon_cache.dart';
 import 'package:colonizethis_app/features/game/flame/region_map/region_map.dart'
     show BaseLayerDisplayMode, CtMapVisibilityMode;
 import 'package:colonizethis_app/features/game/flame/tilesets/tilesets.dart';
-import 'package:colonizethis_app/widgets/ct_region_map.dart' show CtRegionMap;
 
 import 'ct_region_map_test_support.dart';
 
-Finder get _map => find.byType(CtRegionMap);
-
-Future<void> _tapMap(WidgetTester tester) async {
-  await tester.tap(_map);
-  await tester.pump();
-}
-
-Offset _mapCenter(WidgetTester tester) {
-  final box = tester.element(_map).renderObject! as RenderBox;
-  return box.localToGlobal(box.size.center(Offset.zero));
-}
-
-Future<void> _scrollAtMap(WidgetTester tester, double dy) async {
-  await tester.sendEventToBinding(
-    PointerScrollEvent(
-      position: _mapCenter(tester),
-      scrollDelta: Offset(0, dy),
-    ),
-  );
-  await tester.pump();
-}
-
-(AppEventBus, List<T>) _busCapture<T extends AppEvent>() {
-  final bus = AppEventBus.create();
-  final events = <T>[];
-  final sub = bus.on<T>().listen(events.add);
-  addTearDown(() {
-    sub.cancel();
-    bus.dispose();
-  });
-  return (bus, events);
-}
-
-Future<void> _preloadRoadAssets() async {
-  await terrainTilesetCache.load();
-  await transportOverlayTilesetCache.load();
-  await resourceIconCache.load();
-}
-
-Future<int> _countResourceIconAssets() async {
-  var loaded = 0;
-  for (final resourceId in kResourceIconIds) {
-    final path = 'assets/icons/64/ui_icon_com_$resourceId.png';
-    try {
-      final data = await rootBundle.load(path);
-      if (data.lengthInBytes > 0) loaded++;
-    } catch (_) {}
-  }
-  return loaded;
-}
+Finder get _map => ctRegionMapFinder();
 
 void main() {
   suppressLogsForTests();
@@ -122,7 +69,7 @@ void main() {
       (WidgetTester tester) async {
         await pumpCtRegionMapTest(tester);
         expect(_map, findsOneWidget);
-        final inside = _mapCenter(tester);
+        final inside = ctRegionMapCenter(tester);
         await tester.sendEventToBinding(PointerHoverEvent(position: inside));
         await tester.pump();
         await tester.sendEventToBinding(
@@ -139,8 +86,8 @@ void main() {
       (WidgetTester tester) async {
         await pumpCtRegionMapTest(tester);
         expect(_map, findsOneWidget);
-        await _scrollAtMap(tester, -20);
-        await _scrollAtMap(tester, 20);
+        await scrollCtRegionMap(tester, -20);
+        await scrollCtRegionMap(tester, 20);
         expect(_map, findsOneWidget);
       },
       timeout: const Timeout(Duration(seconds: 5)),
@@ -159,7 +106,7 @@ void main() {
           onMapTileTappedForDetail: (tk) => detailTileKey = tk,
         );
         expect(_map, findsOneWidget);
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(selectedId, isNotNull);
         expect(selectedId!, startsWith('${region.regionId}|'));
         expect(selectedId!.split('|').length, 2);
@@ -213,7 +160,7 @@ void main() {
           validTileKeys: {validTileKey},
           onTileSelected: (tileKey) => selectedTileKey = tileKey,
         );
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(selectedTileKey, equals(validTileKey));
       },
       timeout: const Timeout(Duration(seconds: 5)),
@@ -242,7 +189,7 @@ void main() {
         String? tappedCivilianTileKey;
         String? detailTileKey;
         String? selectedProvinceId;
-        final (bus, openedPanels) = _busCapture<OpenCivilianUnitsPanelEvent>();
+        final (bus, openedPanels) = ctRegionMapBusCapture<OpenCivilianUnitsPanelEvent>();
         await pumpCtRegionMapTest(
           tester,
           region: region,
@@ -255,7 +202,7 @@ void main() {
           onMapTileTappedForDetail: (tileKey) => detailTileKey = tileKey,
           onProvinceSelected: (id) => selectedProvinceId = id,
         );
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(tappedCivilianTileKey, equals(markerTileKey));
         expect(openedPanels, hasLength(1));
         expect(openedPanels.single.tileScopeTileKey, equals(markerTileKey));
@@ -287,7 +234,7 @@ void main() {
             ),
           ],
         );
-        final (bus, openedMenus) = _busCapture<OpenNavalMissionMenuEvent>();
+        final (bus, openedMenus) = ctRegionMapBusCapture<OpenNavalMissionMenuEvent>();
         await pumpCtRegionMapTest(
           tester,
           region: region,
@@ -296,7 +243,7 @@ void main() {
           cellSizePx: 32,
           bus: bus,
         );
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(openedMenus, hasLength(1));
         expect(
           openedMenus.single.locationScopeKey,
@@ -386,7 +333,7 @@ void main() {
           height: 64,
           cellSizePx: 32,
         );
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(selectedId, equals('oldWorld|pTown'));
         expect(detailTileKey, equals('oldWorld|pTown|0|0'));
       },
@@ -399,7 +346,7 @@ void main() {
         String? hoveredTileKey;
         await pumpCtRegionMapTest(tester, onTileHovered: (key) => hoveredTileKey = key);
         expect(_map, findsOneWidget);
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(hoveredTileKey, isNull);
       },
       timeout: const Timeout(Duration(seconds: 5)),
@@ -420,7 +367,7 @@ void main() {
           playerConstrained: true,
           onProvinceSelected: (id) => selectedId = id,
         );
-        await _tapMap(tester);
+        await tapCtRegionMap(tester);
         expect(selectedId, isNotNull);
         expect(selectedId!, startsWith('${region.regionId}|'));
       },
@@ -451,7 +398,7 @@ void main() {
         }
         var loadedCount = 0;
         await tester.runAsync(() async {
-          loadedCount = await _countResourceIconAssets();
+          loadedCount = await countLoadedCtRegionMapResourceIconAssets();
         });
         expect(
           loadedCount,
@@ -468,7 +415,7 @@ void main() {
       'map renders with resource icons across resource base-layer modes '
       '(SPEC/ui/map-widget.md § Base layer display mode)',
       (WidgetTester tester) async {
-        await tester.runAsync(_preloadRoadAssets);
+        await tester.runAsync(preloadCtRegionMapRoadAssets);
         final region = ctRegionMapTestOldWorldRegion();
         for (final mode in [
           BaseLayerDisplayMode.terrainAndResources,
@@ -485,7 +432,7 @@ void main() {
     testWidgets(
       'roads mode renders for non-64 cell sizes with transport overlay assets preloaded',
       (WidgetTester tester) async {
-        await tester.runAsync(_preloadRoadAssets);
+        await tester.runAsync(preloadCtRegionMapRoadAssets);
         final region = ctRegionMapTestOldWorldRegion();
         for (final cellSize in [16.0, 32.0, 96.0]) {
           await pumpCtRegionMapTest(

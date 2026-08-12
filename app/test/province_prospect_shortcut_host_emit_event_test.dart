@@ -18,29 +18,18 @@
 //   - This file pins the positive path and the no-explorer negative.
 
 import 'package:colonizethis_app/config/constants.dart';
-import 'package:colonizethis_app/core/services/game_service/game_service.dart';
 import 'package:colonizethis_app/features/game/flame/map_state/map_state.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_narrow_detail_overlay.dart';
-import 'package:colonizethis_app/features/game/flame/overlays/game_map_province_detail_side_panel.dart';
-import 'package:colonizethis_app/features/game/flame/caches/per_player_work_target_selection_cache.dart';
-import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
-import 'package:colonizethis_app/providers/game_service_provider.dart';
-import 'package:colonizethis_app/providers/games_box_provider.dart';
-import 'package:colonizethis_app/providers/games_provider.dart';
-import 'package:colonizethis_app/providers/map_province_panel_provider.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart' show buildPlayerView;
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'app_shell_harness.dart';
+import 'province_shortcut_host_emit_test_support.dart';
 
 const String _kGameId = 'g_prospect_shortcut_emit';
 const String _kHumanPlayerId = 'gp1';
@@ -96,27 +85,6 @@ final Map<String, TileMapResult> _tileMapByRegion = {
     ],
   ),
 };
-
-class _GameServiceProspectShortcut extends GameService {
-  _GameServiceProspectShortcut(super.box, super.adapter);
-
-  @override
-  ({
-    MapTopology combinedTopology,
-    Map<String, TileMapResult> tileMapByRegion,
-    Map<String, MapTopology> topologyByRegion,
-    List<WarpLink>? warpLinks,
-  })?
-  getMapData(String gameId) {
-    if (gameId != _kGameId) return null;
-    return (
-      combinedTopology: _combinedTopology,
-      tileMapByRegion: _tileMapByRegion,
-      topologyByRegion: _topologyByRegion,
-      warpLinks: null,
-    );
-  }
-}
 
 Game _buildGame({required bool withExplorer}) {
   return Game(
@@ -197,21 +165,6 @@ RegionMapViewData _fullyVisibleRegion() {
   );
 }
 
-PerPlayerWorkTargetSelectionCache _refreshedCache(Game game) {
-  final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-  return PerPlayerWorkTargetSelectionCache()
-    ..refresh(
-      WorkTargetSelectionSnapshot(
-        game: game,
-        playerId: _kHumanPlayerId,
-        playerView: playerView,
-        topology: _combinedTopology,
-        currentOrders: const Orders(),
-        tileMapByRegion: _tileMapByRegion,
-      ),
-    );
-}
-
 Finder _prospectAction({required bool enabledOnly}) {
   return find.byWidgetPredicate(
     (Widget w) =>
@@ -220,31 +173,6 @@ Finder _prospectAction({required bool enabledOnly}) {
         (!enabledOnly || w.onPressed != null),
   );
 }
-
-typedef _HostCase = ({
-  String label,
-  Type hostType,
-  Size surfaceSize,
-  bool selectTileTab,
-  bool wide,
-});
-
-const List<_HostCase> _hostCases = <_HostCase>[
-  (
-    label: 'The wide side panel',
-    hostType: GameMapProvinceDetailSidePanel,
-    surfaceSize: Size(720, 720),
-    selectTileTab: false,
-    wide: true,
-  ),
-  (
-    label: 'The narrow bottom-slot host',
-    hostType: GameMapNarrowDetailOverlaySlot,
-    surfaceSize: Size(400, 600),
-    selectTileTab: true,
-    wide: false,
-  ),
-];
 
 void main() {
   suppressLogsForTests();
@@ -275,71 +203,31 @@ void main() {
   Future<List<OpenCivilianUnitsPanelEvent>> pumpHostAndSelect(
     WidgetTester tester, {
     required Game game,
-    required _HostCase host,
-  }) async {
-    final region = _fullyVisibleRegion();
-    final playerView = buildPlayerView(game, _combinedTopology, _kHumanPlayerId);
-    final cache = _refreshedCache(game);
-    final Widget body = host.wide
-        ? Center(
-            child: SizedBox(
-              width: 320,
-              child: GameMapProvinceDetailSidePanel(
-                game: game,
-                region: region,
-                humanPlayerId: _kHumanPlayerId,
-                playerView: playerView,
-                workTargetSelectionCache: cache,
-              ),
-            ),
-          )
-        : Align(
-            alignment: Alignment.bottomCenter,
-            child: GameMapNarrowDetailOverlaySlot(
-              game: game,
-              region: region,
-              humanPlayerId: _kHumanPlayerId,
-              playerView: playerView,
-              workTargetSelectionCache: cache,
-            ),
-          );
-
-    final bus = AppEventBus.create();
-    addTearDown(bus.dispose);
-    final opened = <OpenCivilianUnitsPanelEvent>[];
-    final sub = bus.on<OpenCivilianUnitsPanelEvent>().listen(opened.add);
-    addTearDown(sub.cancel);
-
-    await pumpAppShell(
-      tester,
-      viewport: host.surfaceSize,
-      overrides: [
-        gamesBoxProvider.overrideWith((ref) => gamesBox),
-        gameServiceProvider.overrideWith(
-          (ref) => _GameServiceProspectShortcut(gamesBox, GameSaveAdapter()),
+    required ProvinceShortcutHostCase host,
+  }) =>
+      pumpProvinceShortcutHostAndSelect(
+        tester,
+        gamesBox: gamesBox,
+        gameService: provinceShortcutHostEmitGameService(
+          gamesBox: gamesBox,
+          gameId: _kGameId,
+          combinedTopology: _combinedTopology,
+          tileMapByRegion: _tileMapByRegion,
+          topologyByRegion: _topologyByRegion,
         ),
-        appEventBusProvider.overrideWith((ref) => bus),
-        currentGameProvider.overrideWith(() => CurrentGameNotifier(game)),
-        currentOrdersProvider.overrideWith(
-          () => CurrentOrdersNotifier(const Orders()),
+        game: game,
+        humanPlayerId: _kHumanPlayerId,
+        host: host,
+        region: _fullyVisibleRegion(),
+        combinedTopology: _combinedTopology,
+        workTargetSelectionCache: refreshedProvinceShortcutWorkTargetCache(
+          game: game,
+          humanPlayerId: _kHumanPlayerId,
+          combinedTopology: _combinedTopology,
+          tileMapByRegion: _tileMapByRegion,
         ),
-      ],
-      child: Scaffold(body: body),
-    );
-
-    final ctx = tester.element(find.byType(host.hostType));
-    ProviderScope.containerOf(ctx)
-        .read(mapProvincePanelProvider.notifier)
-        .reportMapTileTapped(_kTileKey);
-    await tester.pumpAndSettle();
-    if (host.selectTileTab) {
-      final tileTab = find.text('Tile');
-      expect(tileTab, findsOneWidget);
-      await tester.tap(tileTab);
-      await tester.pumpAndSettle();
-    }
-    return opened;
-  }
+        selectedTileKey: _kTileKey,
+      );
 
   Future<void> expectProspectShortcutEmits(
     WidgetTester tester, {
@@ -366,7 +254,7 @@ void main() {
     expect(event.buildImprovementShortcutTargetTileKey, isNull);
   }
 
-  for (final host in _hostCases) {
+  for (final host in provinceShortcutHostCases) {
     testWidgets(
       '${host.wide ? 'wide' : 'narrow'} host: tapping the enabled Prospect '
       'shortcut emits an explorer-only OpenCivilianUnitsPanelEvent targeting '
@@ -395,15 +283,7 @@ void main() {
           game: _buildGame(withExplorer: false),
           // Narrow negative originally omitted selectTileTab; keep that when the
           // shortcut stays off so the assert does not depend on Tile-tab chrome.
-          host: host.wide
-              ? host
-              : (
-                  label: host.label,
-                  hostType: host.hostType,
-                  surfaceSize: host.surfaceSize,
-                  selectTileTab: false,
-                  wide: false,
-                ),
+          host: host.wide ? host : provinceShortcutHostCaseWithoutTileTab(host),
         );
         expect(_prospectAction(enabledOnly: true), findsNothing);
         if (host.wide) {

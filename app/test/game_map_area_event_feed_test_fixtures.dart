@@ -1,5 +1,5 @@
-// Shared harness and pump helpers for `game_map_area_event_feed_test.dart`
-// (Refs #4146 — keeps the main suite under the 800-line app test gate).
+// Shared harness and pump helpers for `game_map_area_event_feed_*` suites
+// (Refs #4146, #4305 — keeps event-feed widget tests under the 500-line gate).
 
 import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_app/core/services/game_service/game_service.dart';
