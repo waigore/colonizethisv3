@@ -15,6 +15,12 @@ This chapter covers how an army attacks, how you choose between a swift resoluti
 3. End the turn. When the army finishes in an enemy-controlled province, every regiment in that army attacks together. Great Powers initiate these attacks; Minor Nations and Tribes defend.
 4. An enemy province with no combat-capable defenders can be captured without a battle when your army arrives during a war. Otherwise, the combat phase creates a battle.
 
+### Military Counsel (`GAME90001` Military tab)
+
+1. Open `UNIT20001` **Military units panel** and tap **Counsel**, or open **Counsel** from Production or Trade and select the **Military** tab.
+2. Ranked cards suggest affordable train builds (type, count, costs) and invasion targets (army, province, owner, defender intel when known). Home Army is never suggested to march.
+3. **Agree** on a train card queues that many build orders when still valid. **Agree** on an invade card stages the move; declare-war confirmation matches `DLG20001` when required.
+
 If several attackers reach the same province, they fight in initiative order. The surviving side carries its losses into the next engagement; it does not recover between them.
 
 ### Choosing the combat mode
@@ -101,6 +107,7 @@ AI-controlled Quick Battles use the non-interactive path and default actions. Yo
 - [ ] Documents `CMPT20001` Quick Battle deployment, Command Points, the five current actions, default actions, and the result flow.
 - [ ] Explains deterministic Auto-Resolve and attacker victory, defender victory, stalemate, and mutual annihilation.
 - [ ] Explains field battles, siege triggers, fort levels, wall protection, emplaced artillery, and Quick-Battle fort downgrade.
+- [ ] Documents `GAME90001` Military Counsel invasion/train Agree and declare-war confirm parity with `DLG20001`.
 - [ ] Documents `CMPT50001` outcome and casualty reading.
 - [ ] Describes other Great Powers only through their documented military planning and observable diplomatic reactions.
 
@@ -110,6 +117,8 @@ AI-controlled Quick Battles use the non-interactive path and default actions. Yo
 - `SPEC/game/quick-battle.md`
 - `SPEC/game/siege-mechanics.md`
 - `SPEC/ui/move-army-dialog.md`
+- `SPEC/ui/counsel-panel.md`
+- `SPEC/program/military-counsel-ranking.md`
 - `SPEC/ui/combat-mode-choice-dialog.md`
 - `SPEC/ui/quick-battle-screen.md`
 - `SPEC/ui/quick-battle-deployment-view.md`

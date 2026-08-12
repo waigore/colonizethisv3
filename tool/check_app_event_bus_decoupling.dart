@@ -143,6 +143,10 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // Declare-war confirm `showDialog` lives in state after wave-9 de-part
   // (Refs #4117). Same local-by-design rationale as `move_army_dialog_declare_war.dart`.
   'app/lib/features/game/widgets/unit_orders/move_army_dialog_state.dart',
+  // Military Counsel invade Agree reuses the move-army declare-war copy and
+  // chrome — same local-by-design rationale as
+  // `move_army_dialog_declare_war.dart` (Refs #4307).
+  'app/lib/features/game/screens/counsel/counsel_military_invade_confirm.dart',
   // Naval mission assign flow — fleet picker / mission menu / target picker
   // `showDialog` steps in `showNavalMissionFlow`. Same local-by-design rationale
   // as move fleet — `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
