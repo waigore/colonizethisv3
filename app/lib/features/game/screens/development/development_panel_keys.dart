@@ -5,6 +5,7 @@ abstract final class DevelopmentPanelKeys {
   DevelopmentPanelKeys._();
 
   static const topBarKey = Key('development_panel_top_bar');
+  static const counselButtonKey = Key('development_panel_counsel_button');
   static const tabsBodyKey = Key('development_panel_tabs_body');
   static const overviewKey = Key('development_panel_overview');
   static const scopeListKey = Key('development_panel_scope_list');

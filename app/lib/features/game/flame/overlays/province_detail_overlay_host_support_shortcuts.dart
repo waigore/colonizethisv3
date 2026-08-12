@@ -18,6 +18,7 @@ typedef ProvinceDetailShortcutCallbacks = ({
   VoidCallback? onBuildImprovementTap,
   VoidCallback? onBuildRoadTap,
   VoidCallback? onBuildFortTap,
+  VoidCallback? onBuildPortTap,
   VoidCallback? onPurchaseLandTap,
   VoidCallback? onUpgradeTownTap,
 });
@@ -60,6 +61,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
+  required bool buildPortEnabled,
   required bool purchaseLandEnabled,
   required String provinceId,
   required bool upgradeTownEnabled,
@@ -97,6 +99,7 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
       onBuildImprovementTap: null,
       onBuildRoadTap: null,
       onBuildFortTap: null,
+      onBuildPortTap: null,
       onPurchaseLandTap: null,
       onUpgradeTownTap: upgradeTownTap,
     );
@@ -184,6 +187,25 @@ ProvinceDetailShortcutCallbacks buildProvinceDetailShortcutCallbacks({
         ct_models.OpenCivilianUnitsPanelEvent(
           engineerOnly: true,
           buildFortShortcutTargetTileKey: tileKey,
+        ),
+      ),
+    ),
+    onBuildPortTap: _provinceDetailShortcutTap(
+      enabled: buildPortEnabled,
+      revalidateEnabled: () => GameMapAreaStateLogic.provinceBuildPortActionState(
+        game: game,
+        humanPlayerId: humanPlayerId,
+        selectedTileKey: tileKey,
+        playerView: playerView,
+        workTargetSelectionCache: workTargetSelectionCache,
+        topology: topology,
+        currentOrders: draftOrders,
+        tileMapByRegion: mapData?.tileMapByRegion,
+      ).enabled,
+      emit: () => bus.emit(
+        ct_models.OpenCivilianUnitsPanelEvent(
+          engineerOnly: true,
+          buildPortShortcutTargetTileKey: tileKey,
         ),
       ),
     ),

@@ -32,6 +32,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
     required this.buildImprovementShortcutTargetTileKey,
     required this.buildRoadShortcutTargetTileKey,
     required this.buildFortShortcutTargetTileKey,
+    required this.buildPortShortcutTargetTileKey,
     required this.purchaseLandShortcutTargetTileKey,
     required this.upgradeTownShortcutTargetTileKey,
     this.readOnly = false,
@@ -53,6 +54,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
   final String? buildImprovementShortcutTargetTileKey;
   final String? buildRoadShortcutTargetTileKey;
   final String? buildFortShortcutTargetTileKey;
+  final String? buildPortShortcutTargetTileKey;
   final String? purchaseLandShortcutTargetTileKey;
   final String? upgradeTownShortcutTargetTileKey;
   final bool readOnly;
@@ -90,6 +92,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     );
@@ -114,6 +117,7 @@ class CivilianUnitsPanelUnitRow extends ConsumerWidget {
           buildImprovementShortcutTargetTileKey,
       buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
       buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
       purchaseLandShortcutTargetTileKey: purchaseLandShortcutTargetTileKey,
       upgradeTownShortcutTargetTileKey: upgradeTownShortcutTargetTileKey,
     );

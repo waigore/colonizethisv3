@@ -3,6 +3,7 @@ library;
 
 import 'package:colonizethis_app/features/game/flame/overlays/province_detail_overlay_host_support_tile_connectivity.dart'
     show ProvinceTileConnectivityDisplay;
+import 'package:colonizethis_app/features/game/flame/map_state/game_map_area_province_action_states_build_port.dart';
 import 'package:colonizethis_app/widgets/ct_icon_action.dart';
 import 'package:colonizethis_app/features/game/widgets/units/civilian/work_order_afford_preview_ui.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -14,7 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'province_sea_zone_detail_overlay_sections_economic_labels.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_world/colonizethis_world.dart' show VisibilityLevel;
+import 'package:colonizethis_world/colonizethis_world.dart';
 
 String roadRailSupplementaryLabel(AppLocalizations l10n, int roadLevel) {
   return switch (roadLevel) {
@@ -123,10 +124,7 @@ Widget buildTileResourceLabelRow({
     children: [
       Text(l10n.provinceOverlay_tileResourcePrefix, style: bodyStyle),
       if (resourceVisible != null)
-        ResourceLabelInline(
-          commodityId: resourceVisible,
-          labelStyle: bodyStyle,
-        )
+        ResourceLabelInline(commodityId: resourceVisible, labelStyle: bodyStyle)
       else
         Text(resourceLabel, style: bodyStyle),
       if (showPurchaseLandActionIcon)
@@ -172,22 +170,28 @@ List<Widget> buildTileRoadLabelWidgets({
   required String humanPlayerId,
   required Orders currentOrders,
   required String selectedTileKey,
+  required String provinceId,
   required int? roadLevel,
   required bool showBuildRoadActionIcon,
   required bool buildRoadActionEnabled,
   required bool buildRoadActionHasEngineerUnits,
   VoidCallback? onBuildRoadTap,
+  required bool showBuildPortActionIcon,
+  required bool buildPortActionEnabled,
+  required bool buildPortActionHasEngineerUnits,
+  VoidCallback? onBuildPortTap,
 }) {
   if (roadLevel == null) {
-    return [Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle())];
+    return [
+      Text(l10n.provinceOverlay_tileRoadNone, style: overlayFgBodyStyle()),
+    ];
   }
   final theme = Theme.of(context);
-  final roadCaptionStyle = (theme.textTheme.labelSmall ??
-          const TextStyle(fontSize: 11))
-      .copyWith(
-    height: 1.25,
-    color: EditorialMonoclePalette.muted,
-  );
+  final roadCaptionStyle =
+      (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11)).copyWith(
+        height: 1.25,
+        color: EditorialMonoclePalette.muted,
+      );
   final buildRoadTooltip = provinceOverlayBuildRoadTooltip(
     l10n: l10n,
     game: game,
@@ -196,6 +200,15 @@ List<Widget> buildTileRoadLabelWidgets({
     selectedTileKey: selectedTileKey,
     enabled: buildRoadActionEnabled,
     hasEngineerUnits: buildRoadActionHasEngineerUnits,
+  );
+  final buildPortTooltip = provinceOverlayBuildPortTooltip(
+    l10n: l10n,
+    game: game,
+    humanPlayerId: humanPlayerId,
+    currentOrders: currentOrders,
+    selectedTileKey: selectedTileKey,
+    enabled: buildPortActionEnabled,
+    hasEngineerUnits: buildPortActionHasEngineerUnits,
   );
   final transportRow = Row(
     children: [
@@ -215,13 +228,38 @@ List<Widget> buildTileRoadLabelWidgets({
             alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
           ),
         ),
+      if (showBuildPortActionIcon)
+        CtIconAction(
+          tooltip: buildPortTooltip,
+          onPressed: buildPortActionEnabled ? onBuildPortTap : null,
+          icon: Icons.anchor,
+          enabled: buildPortActionEnabled,
+          disabledIconColor: EditorialMonoclePalette.muted.withValues(
+            alpha: kProvinceOverlayTileInlineActionDisabledAlpha,
+          ),
+        ),
     ],
   );
+  final province = game.worldState.tryGetProvince(provinceId);
+  final showPortStatus = province != null && province.ownerId == humanPlayerId;
+  final portPresent =
+      showPortStatus &&
+      GameMapAreaProvinceActionStatesBuildPort.provinceHasAnyPort(
+        game: game,
+        prefixedProvinceId: provinceId,
+      );
   return [
     transportRow,
     Text(roadRailSupplementaryLabel(l10n, roadLevel), style: roadCaptionStyle),
     if (roadLevel == 1)
       Text(l10n.provinceOverlay_tileRoadRailGloss, style: roadCaptionStyle),
+    if (showPortStatus)
+      Text(
+        portPresent
+            ? l10n.provinceOverlay_tilePortStatusPresent
+            : l10n.provinceOverlay_tilePortStatusNone,
+        style: overlayFgBodyStyle(),
+      ),
   ];
 }
 

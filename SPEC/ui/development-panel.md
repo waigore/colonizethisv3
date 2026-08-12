@@ -17,7 +17,7 @@
 
 ```text
 CtGameFeatureScreenShell
-  CtTopBar (← Map, ui_icon_development.png, title "Development")
+  CtTopBar (← Map, ui_icon_development.png, title "Development", trailing Counsel)
   body
     CtTabStrip [Old World | New World]
     overview_strip (Extraction projection, idle Builders/Engineers)
@@ -46,6 +46,7 @@ Below idle Builder/Engineer counts, when the active region has Builders or Engin
 
 | Control | Outcome |
 |---------|---------|
+| Counsel (header) | Emits `NavigateToRouteEvent(Routes.counsel, counselTab: 'development')` for [counsel-panel.md](counsel-panel.md) Development tab (Refs #4332). |
 | Show | Highlights commodity improvable tiles on panel map. |
 | Assign | Commits pending `build_improvement` for first idle Builder (stable unit id) on the priority tile (connected → lower level → tile key). When the chosen tile is not capital-connected, a warn dialog offers **Improve anyway**, **Road first** (Engineer `build_road` only), and **Cancel**. Disabled when no Builder, invalid target, or insufficient materials. |
 | Region tab | Switches list + map region. |

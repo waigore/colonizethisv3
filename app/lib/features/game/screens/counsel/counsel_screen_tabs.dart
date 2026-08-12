@@ -6,15 +6,17 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'counsel_development_tab_body.dart';
 import 'counsel_industry_tab_body.dart';
 import 'counsel_military_tab_body.dart';
 import 'counsel_trade_tab_body.dart';
 
-enum CounselTab { industry, trade, military }
+enum CounselTab { industry, trade, military, development }
 
 CounselTab counselTabFromRouteArg(Object? value) {
   if (value == 'trade') return CounselTab.trade;
   if (value == 'military') return CounselTab.military;
+  if (value == 'development') return CounselTab.development;
   return CounselTab.industry;
 }
 
@@ -23,6 +25,7 @@ int counselTabInitialIndex(CounselTab tab) {
     CounselTab.industry => 0,
     CounselTab.trade => 1,
     CounselTab.military => 2,
+    CounselTab.development => 3,
   };
 }
 
@@ -36,11 +39,13 @@ class CounselScreenTabs extends StatelessWidget {
     required this.tradeBook,
     required this.militaryRecommendations,
     required this.militaryGame,
+    required this.developmentRecommendations,
     required this.highlightRecommendationId,
     required this.canEdit,
     required this.industryCallbacks,
     required this.tradeCallbacks,
     required this.militaryCallbacks,
+    required this.developmentCallbacks,
   });
 
   final CounselTab initialTab;
@@ -50,25 +55,29 @@ class CounselScreenTabs extends StatelessWidget {
   final List<TradeOrder> tradeBook;
   final List<MilitaryCounselRecommendation> militaryRecommendations;
   final Game militaryGame;
+  final List<DevelopmentCounselRecommendation> developmentRecommendations;
   final String? highlightRecommendationId;
   final bool canEdit;
   final CounselIndustryCallbacks industryCallbacks;
   final CounselTradeCallbacks tradeCallbacks;
   final CounselMilitaryCallbacks militaryCallbacks;
+  final CounselDevelopmentCallbacks developmentCallbacks;
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       initialIndex: counselTabInitialIndex(initialTab),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: l10n.industryCounsel_tabIndustry),
               Tab(text: l10n.tradeCounsel_tabTrade),
               Tab(text: l10n.militaryCounsel_tabMilitary),
+              Tab(text: l10n.developmentCounsel_tabDevelopment),
             ],
           ),
           Expanded(
@@ -96,6 +105,13 @@ class CounselScreenTabs extends StatelessWidget {
                   l10n: l10n,
                   canEdit: canEdit,
                   callbacks: militaryCallbacks,
+                ),
+                CounselDevelopmentTabBody(
+                  recommendations: developmentRecommendations,
+                  highlightRecommendationId: highlightRecommendationId,
+                  l10n: l10n,
+                  canEdit: canEdit,
+                  callbacks: developmentCallbacks,
                 ),
               ],
             ),

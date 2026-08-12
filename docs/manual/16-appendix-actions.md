@@ -31,7 +31,7 @@ Use this ledger to issue every decree available to your court, check its price a
 | `build_improvement` — Builder | Lumber + cast iron; resource required; mineral must be prospected; level/tech cap applies. | Raises improvement level. |
 | `upgrade_town` — Builder | National Bureaucracy, materials, and province town tile; availability reflects current validator rules. **`MAP20001` Upgrade town** on the Political Town development row opens Builder-only assignment for the province town tile when eligible. | Raises town development. |
 | `build_road` — Engineer | Lumber + metal; terrain/road technology limits. | Raises transport level. |
-| `build_port` — Engineer | Lumber + metal; valid coastal town/river tile. | Creates port and transport level 4. |
+| `build_port` — Engineer | Lumber + metal; valid coastal/river tile. **`MAP20001` Build port** shortcut on the Road / transport row opens Engineer-only assignment for the selected coastal tile when eligible; Port status reads None or Present. **`GAME80001` Counsel** → `GAME90001` Development tab can **Agree** a ranked port when the courts would dig one this turn. | Creates port and transport level 4. |
 | `build_fort` — Engineer | Materials, town tile, and fort technology where required. **`MAP20001` Build fort** shortcut on the Military fort row opens Engineer-only assignment for the selected town tile when eligible. | Raises fort level. |
 | `build_rail` — Rail Builder | Steel ×2 + lumber ×2; road level 1–2, known terrain, matching rail technology. | Sets railroad transport level 4. |
 | `counter_spy` — Spy | Free; owned province. | Ongoing empire-wide counter-espionage effect; spy checks occur in **Spy resolution**. |
