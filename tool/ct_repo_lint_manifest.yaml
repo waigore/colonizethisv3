@@ -865,14 +865,14 @@ rules:
 
   - rule_id: repo.colonizethis_world_lib_file_size
     group: structure
-    title: colonizethis_world lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4125)
+    title: colonizethis_world lib files must stay at or below the wave-6 320 physical-line ceiling (Refs #4330)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_lib_file_size.dart
 
   - rule_id: repo.colonizethis_world_test_file_size
     group: testing
-    title: colonizethis_world non-support test files must stay at or below the wave-5 400 physical-line ceiling (Refs #4125)
+    title: colonizethis_world non-support test files must stay at or below the wave-6 320 physical-line ceiling (Refs #4330)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_world_test_file_size.dart
