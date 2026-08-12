@@ -106,7 +106,7 @@ int runCheckAiSourceFileSize(
   if (violations.isEmpty) {
     logI(
       'check_ai_source_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4239).',
+      '(ceiling $ceiling; Refs #4310).',
     );
     return 0;
   }
@@ -114,7 +114,7 @@ int runCheckAiSourceFileSize(
   violations.sort();
   logE(
     'check_ai_source_file_size: found ${violations.length} violation(s) '
-    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4239):',
+    'under $_aiSrcRelDir (ceiling $ceiling; Refs #4310):',
   );
   for (final violation in violations) {
     logE(' - $violation');
