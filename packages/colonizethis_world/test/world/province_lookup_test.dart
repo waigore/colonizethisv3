@@ -4,14 +4,13 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/game_test_fixtures.dart';
 import 'package:colonizethis_test/test.dart';
+import 'package:colonizethis_world/src/world/province_owner_cache.dart';
+import 'package:colonizethis_world/src/world_constants.dart'
+    show kRegionOldWorld;
 
 import '../world_test_support/province_lookup_test_support.dart';
 
 void main() {
-  _province_lookup_testTests();
-}
-
-void _province_lookup_testTests() {
   group('province-list helpers', () {
     const provinces = [
       Province(id: 'oldWorld|p1', regionId: 'oldWorld', fortLevel: 2),
@@ -29,7 +28,6 @@ void _province_lookup_testTests() {
         'oldWorld|p1',
       );
       expect(next.firstWhere((p) => p.id == 'oldWorld|p1').fortLevel, 1);
-      // Already at 0 stays clamped at 0.
       final clamped = decrementFortLevelForProvinceIdIfPresent(
         provinces,
         'oldWorld|p2',
@@ -40,11 +38,13 @@ void _province_lookup_testTests() {
     test(
       'decrementFortLevelForProvinceIdIfPresent returns same list if absent',
       () {
-        final next = decrementFortLevelForProvinceIdIfPresent(
-          provinces,
-          'oldWorld|missing',
+        expect(
+          decrementFortLevelForProvinceIdIfPresent(
+            provinces,
+            'oldWorld|missing',
+          ),
+          same(provinces),
         );
-        expect(next, same(provinces));
       },
     );
   });
@@ -54,8 +54,6 @@ void _province_lookup_testTests() {
 
     test('resolveToFullProvinceId returns prefixed, throws on short id', () {
       expect(resolveToFullProvinceId(world, 'oldWorld|p1'), 'oldWorld|p1');
-      // Unprefixed id passed via variable so the throw-behavior is exercised
-      // without tripping the unprefixed-province-id-literal AST lint.
       const shortId = 'p1';
       expect(() => resolveToFullProvinceId(world, shortId), throwsStateError);
     });
@@ -66,11 +64,13 @@ void _province_lookup_testTests() {
           provinces: [Province(id: 'shortId', regionId: 'oldWorld')],
         ),
       );
-      final hit = resolveProvinceRowForOwnershipTransfer(
-        legacyWorld,
+      expect(
+        resolveProvinceRowForOwnershipTransfer(
+          legacyWorld,
+          'shortId',
+        )!.canonicalProvinceId,
         'shortId',
       );
-      expect(hit!.canonicalProvinceId, 'shortId');
       expect(
         resolveProvinceRowForOwnershipTransfer(legacyWorld, 'nope'),
         isNull,
@@ -86,7 +86,6 @@ void _province_lookup_testTests() {
           'oldWorld|p1',
         );
         expect(keys, ['oldWorld|p1|0|0', 'oldWorld|p1|1|0']);
-        // Mutating the result must not affect the source bucket.
         keys.add('mutation');
         expect(
           landTileKeysForProvinceBucket(world, 'oldWorld', 'oldWorld|p1'),
@@ -100,17 +99,12 @@ void _province_lookup_testTests() {
     );
 
     test('landTileKeysForProvinceBucket is strict full-id only by default', () {
-      // Legacy/fixture bucket keyed by local id only; the default (strict)
-      // lookup must not fall back to it (Refs #3403 Phase 1).
-      final legacy = TestFixtures.worldStateAtOrdersPhase(
-        tileKeysByRegionAndProvince: const {
-          'oldWorld': {
-            'p1': ['oldWorld|p1|0|0'],
-          },
-        },
-      );
       expect(
-        landTileKeysForProvinceBucket(legacy, 'oldWorld', 'oldWorld|p1'),
+        landTileKeysForProvinceBucket(
+          provinceLookupLegacyLocalIdBucketWorld(),
+          'oldWorld',
+          'oldWorld|p1',
+        ),
         isEmpty,
       );
     });
@@ -118,16 +112,9 @@ void _province_lookup_testTests() {
     test(
       'landTileKeysForProvinceBucket opt-in fallback resolves local-id bucket',
       () {
-        final legacy = TestFixtures.worldStateAtOrdersPhase(
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'p1': ['oldWorld|p1|0|0'],
-            },
-          },
-        );
         expect(
           landTileKeysForProvinceBucket(
-            legacy,
+            provinceLookupLegacyLocalIdBucketWorld(),
             'oldWorld',
             'oldWorld|p1',
             allowLocalIdFallback: true,
@@ -140,17 +127,9 @@ void _province_lookup_testTests() {
     test(
       'landTileKeysForProvinceBucket fallback never shadows a full-id bucket',
       () {
-        final mixed = TestFixtures.worldStateAtOrdersPhase(
-          tileKeysByRegionAndProvince: const {
-            'oldWorld': {
-              'oldWorld|p1': ['oldWorld|p1|0|0'],
-              'p1': ['oldWorld|p1|9|9'],
-            },
-          },
-        );
         expect(
           landTileKeysForProvinceBucket(
-            mixed,
+            provinceLookupMixedBucketWorld(),
             'oldWorld',
             'oldWorld|p1',
             allowLocalIdFallback: true,
@@ -199,8 +178,6 @@ void _province_lookup_testTests() {
     });
 
     test('resolveToFullProvinceId throws on short id', () {
-      // Unprefixed id passed via variable so the throw-behavior is exercised
-      // without tripping the unprefixed-province-id-literal AST lint.
       const shortId = 'p1';
       expect(() => world.resolveToFullProvinceId(shortId), throwsStateError);
       expect(world.resolveToFullProvinceId('oldWorld|p1'), 'oldWorld|p1');
@@ -237,10 +214,6 @@ void _province_lookup_testTests() {
       expect(oldWorldProvinceCountOwnedBy(game, 'gp2'), 0);
     });
 
-    // Refs #3393 Phase 6b (slice 5) — behaviour-preserving migration onto
-    // `ProvinceOwnerCache.countOwnedByInRegion`. The projection-backed count
-    // equals both the prior `world.oldWorld.provinces` owner scan and the
-    // cache accessor for the same faction id.
     test('matches the projection accessor and the prior old-world scan', () {
       final world = provinceLookupTestWorld();
       final game = TestFixtures.singlePlayerGame(
@@ -249,58 +222,21 @@ void _province_lookup_testTests() {
         worldState: world,
       );
       final cache = ProvinceOwnerCache.of(world);
-
       int manualOldWorldCount(String id) =>
           world.oldWorld.provinces.where((p) => p.ownerId == id).length;
-
       for (final id in ['gp1', 'gp2', 'unowned']) {
         expect(
           oldWorldProvinceCountOwnedBy(game, id),
           cache.countOwnedByInRegion(id, kRegionOldWorld),
-          reason: 'projection-backed count for $id',
         );
-        expect(
-          oldWorldProvinceCountOwnedBy(game, id),
-          manualOldWorldCount(id),
-          reason: 'matches prior old-world owner scan for $id',
-        );
+        expect(oldWorldProvinceCountOwnedBy(game, id), manualOldWorldCount(id));
       }
     });
   });
 
   group('traverseProvinces', () {
     test('yields provinces from both regions in old-then-new order', () {
-      final world = TestFixtures.worldStateAtOrdersPhase(
-        oldWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'oldWorld|p1',
-              regionId: kRegionOldWorld,
-              ownerId: 'gp1',
-            ),
-            Province(id: 'oldWorld|p2', regionId: kRegionOldWorld),
-          ],
-        ),
-        newWorld: RegionData(
-          provinces: [
-            Province(
-              id: 'newWorld|p9',
-              regionId: kRegionNewWorld,
-              ownerId: 'gp2',
-            ),
-          ],
-        ),
-        tileKeysByRegionAndProvince: {
-          kRegionOldWorld: {
-            'oldWorld|p1': ['oldWorld|p1|0|0'],
-          },
-          kRegionNewWorld: {
-            'newWorld|p9': ['newWorld|p9|1|1'],
-          },
-        },
-      );
-
-      final entries = traverseProvinces(world).toList();
+      final entries = traverseProvinces(provinceLookupTraverseWorld()).toList();
       expect(entries.map((e) => e.provinceId), [
         'oldWorld|p1',
         'oldWorld|p2',
@@ -308,12 +244,12 @@ void _province_lookup_testTests() {
       ]);
       expect(entries[0].regionId, kRegionOldWorld);
       expect(entries[0].tileKeys, ['oldWorld|p1|0|0']);
-      expect(entries[2].regionId, kRegionNewWorld);
+      expect(entries[2].regionId, 'newWorld');
     });
 
     test('where filter excludes provinces', () {
       final world = TestFixtures.worldStateAtOrdersPhase(
-        oldWorld: RegionData(
+        oldWorld: const RegionData(
           provinces: [
             Province(
               id: 'oldWorld|p1',
@@ -323,15 +259,14 @@ void _province_lookup_testTests() {
             Province(id: 'oldWorld|p2', regionId: kRegionOldWorld),
           ],
         ),
-        newWorld: const RegionData(provinces: []),
       );
-
-      final owned = traverseProvinces(
-        world,
-        where: (_, p) => p.ownerId != null,
-      ).map((e) => e.provinceId).toList();
-
-      expect(owned, ['oldWorld|p1']);
+      expect(
+        traverseProvinces(
+          world,
+          where: (_, p) => p.ownerId != null,
+        ).map((e) => e.provinceId).toList(),
+        ['oldWorld|p1'],
+      );
     });
   });
 }
