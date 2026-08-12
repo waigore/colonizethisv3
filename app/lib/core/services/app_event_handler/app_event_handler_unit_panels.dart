@@ -63,6 +63,8 @@ Future<void> appEventHandlerOpenCivilianUnitsPanel(
               event.buildRoadShortcutTargetTileKey,
           buildFortShortcutTargetTileKey:
               event.buildFortShortcutTargetTileKey,
+          buildPortShortcutTargetTileKey:
+              event.buildPortShortcutTargetTileKey,
           purchaseLandShortcutTargetTileKey:
               event.purchaseLandShortcutTargetTileKey,
           upgradeTownShortcutTargetTileKey:

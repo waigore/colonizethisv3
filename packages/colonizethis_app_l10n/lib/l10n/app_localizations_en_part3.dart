@@ -699,6 +699,33 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   }
 
   @override
+  String get provinceOverlay_tileBuildPortTooltip => 'Build port';
+
+  @override
+  String provinceOverlay_tileBuildPortTooltipWithCost(String costs) {
+    return 'Build port ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildPortDisabledNoEngineerTooltip =>
+      'No Engineer available to build port';
+
+  @override
+  String get provinceOverlay_tileBuildPortDisabledTooltip =>
+      'No Engineer can assign port work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildPortDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
+
+  @override
+  String get provinceOverlay_tilePortStatusNone => 'Port: None';
+
+  @override
+  String get provinceOverlay_tilePortStatusPresent => 'Port: Present';
+
+  @override
   String get provinceOverlay_tilePurchaseLandTooltip => 'Purchase land';
 
   @override

@@ -52,7 +52,8 @@ import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
 // raised for military counsel + train military benefit merge headroom (Refs #4307, #4324).
-const _maxMainLines = 72800;
+// raised for MAP20001 Build port Engineer tile shortcut + Port status (Refs #4332).
+const _maxMainLines = 73200;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

@@ -3275,6 +3275,44 @@
       }
     }
   },
+  "provinceOverlay_tileBuildPortTooltip": "Build port",
+  "@provinceOverlay_tileBuildPortTooltip": {
+    "description": "MAP20001 Tile Build port shortcut tooltip when enabled without cost preview"
+  },
+  "provinceOverlay_tileBuildPortTooltipWithCost": "Build port ({costs})",
+  "@provinceOverlay_tileBuildPortTooltipWithCost": {
+    "description": "MAP20001 Tile Build port shortcut tooltip with material cost",
+    "placeholders": {
+      "costs": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tileBuildPortDisabledNoEngineerTooltip": "No Engineer available to build port",
+  "@provinceOverlay_tileBuildPortDisabledNoEngineerTooltip": {
+    "description": "MAP20001 Tile Build port disabled: no Engineer units"
+  },
+  "provinceOverlay_tileBuildPortDisabledTooltip": "No Engineer can assign port work here this turn",
+  "@provinceOverlay_tileBuildPortDisabledTooltip": {
+    "description": "MAP20001 Tile Build port disabled: not assignable this turn"
+  },
+  "provinceOverlay_tileBuildPortDisabledMaterialsTooltip": "{reason}",
+  "@provinceOverlay_tileBuildPortDisabledMaterialsTooltip": {
+    "description": "MAP20001 Tile Build port disabled for materials/treasury shortfall",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "provinceOverlay_tilePortStatusNone": "Port: None",
+  "@provinceOverlay_tilePortStatusNone": {
+    "description": "MAP20001 Tile plain-language port status when province has no seaboard port"
+  },
+  "provinceOverlay_tilePortStatusPresent": "Port: Present",
+  "@provinceOverlay_tilePortStatusPresent": {
+    "description": "MAP20001 Tile plain-language port status when province has a seaboard port"
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",

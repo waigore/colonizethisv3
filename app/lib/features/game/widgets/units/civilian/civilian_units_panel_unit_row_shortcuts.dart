@@ -15,6 +15,7 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
 }) =>
@@ -28,6 +29,8 @@ bool civilianUnitsPanelUnitRowInExplorerShortcutMode({
         buildRoadShortcutTargetTileKey.isNotEmpty) ||
     (buildFortShortcutTargetTileKey != null &&
         buildFortShortcutTargetTileKey.isNotEmpty) ||
+    (buildPortShortcutTargetTileKey != null &&
+        buildPortShortcutTargetTileKey.isNotEmpty) ||
     (purchaseLandShortcutTargetTileKey != null &&
         purchaseLandShortcutTargetTileKey.isNotEmpty) ||
     (upgradeTownShortcutTargetTileKey != null &&
@@ -44,6 +47,7 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
 }) {
@@ -62,6 +66,9 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
   final hasBuildFortShortcut =
       buildFortShortcutTargetTileKey != null &&
       buildFortShortcutTargetTileKey.isNotEmpty;
+  final hasBuildPortShortcut =
+      buildPortShortcutTargetTileKey != null &&
+      buildPortShortcutTargetTileKey.isNotEmpty;
   final hasPurchaseLandShortcut =
       purchaseLandShortcutTargetTileKey != null &&
       purchaseLandShortcutTargetTileKey.isNotEmpty;
@@ -74,6 +81,8 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? buildRoadShortcutTargetTileKey
       : hasBuildFortShortcut
       ? buildFortShortcutTargetTileKey
+      : hasBuildPortShortcut
+      ? buildPortShortcutTargetTileKey
       : hasUpgradeTownShortcut
       ? upgradeTownShortcutTargetTileKey
       : hasBuildImprovementShortcut
@@ -90,6 +99,8 @@ void startCivilianUnitsPanelUnitRowShortcutAssign({
       ? kWorkTargetBuildRoad
       : hasBuildFortShortcut
       ? kWorkTargetBuildFort
+      : hasBuildPortShortcut
+      ? kWorkTargetBuildPort
       : hasUpgradeTownShortcut
       ? kWorkTargetUpgradeTown
       : hasBuildImprovementShortcut

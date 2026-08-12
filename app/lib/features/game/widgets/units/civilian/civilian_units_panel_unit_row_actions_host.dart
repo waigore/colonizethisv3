@@ -76,6 +76,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
   required String? buildImprovementShortcutTargetTileKey,
   required String? buildRoadShortcutTargetTileKey,
   required String? buildFortShortcutTargetTileKey,
+  required String? buildPortShortcutTargetTileKey,
   required String? purchaseLandShortcutTargetTileKey,
   required String? upgradeTownShortcutTargetTileKey,
 }) {
@@ -116,6 +117,7 @@ List<UnitsEntityAction> buildCivilianUnitsPanelUnitRowActions({
                     buildImprovementShortcutTargetTileKey,
                 buildRoadShortcutTargetTileKey: buildRoadShortcutTargetTileKey,
                 buildFortShortcutTargetTileKey: buildFortShortcutTargetTileKey,
+                buildPortShortcutTargetTileKey: buildPortShortcutTargetTileKey,
                 purchaseLandShortcutTargetTileKey:
                     purchaseLandShortcutTargetTileKey,
                 upgradeTownShortcutTargetTileKey:

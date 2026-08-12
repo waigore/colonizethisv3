@@ -103,6 +103,7 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
     this.buildImprovementShortcutTargetTileKey,
     this.buildRoadShortcutTargetTileKey,
     this.buildFortShortcutTargetTileKey,
+    this.buildPortShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
   });
@@ -140,6 +141,9 @@ class OpenCivilianUnitsPanelEvent extends UIActionEvent {
 
   /// Optional tile key used by the province build-fort shortcut flow.
   final String? buildFortShortcutTargetTileKey;
+
+  /// Optional tile key used by the province build-port shortcut flow.
+  final String? buildPortShortcutTargetTileKey;
 
   /// Optional tile key used by the province purchase-land shortcut flow.
   final String? purchaseLandShortcutTargetTileKey;
@@ -313,11 +317,7 @@ class CombatModeChosenEvent extends UIActionEvent {
 
 /// Player choice from the Development panel disconnected-improve warn dialog.
 /// SPEC/ui/development-panel.md — disconnected warn dialog.
-enum DevelopmentDisconnectedAssignChoice {
-  improveAnyway,
-  roadFirst,
-  cancel,
-}
+enum DevelopmentDisconnectedAssignChoice { improveAnyway, roadFirst, cancel }
 
 /// Request the disconnected-improve warn dialog; returns choice via callback.
 /// Handled by the shell-level event handler (app layer).

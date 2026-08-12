@@ -2003,6 +2003,27 @@ abstract class AppLocalizations {
   /// Disabled build-fort shortcut when materials or treasury are short.
   String provinceOverlay_tileBuildFortDisabledMaterialsTooltip(String reason);
 
+  /// Tooltip for enabled build-port shortcut on coastal tile (Refs #4332).
+  String get provinceOverlay_tileBuildPortTooltip;
+
+  /// Enabled build-port shortcut tooltip with material cost hint.
+  String provinceOverlay_tileBuildPortTooltipWithCost(String costs);
+
+  /// Disabled build-port shortcut when no Engineer units exist.
+  String get provinceOverlay_tileBuildPortDisabledNoEngineerTooltip;
+
+  /// Disabled build-port shortcut when no valid Engineer assignment exists.
+  String get provinceOverlay_tileBuildPortDisabledTooltip;
+
+  /// Disabled build-port shortcut when materials or treasury are short.
+  String provinceOverlay_tileBuildPortDisabledMaterialsTooltip(String reason);
+
+  /// Plain-language port status when the province has no seaboard port.
+  String get provinceOverlay_tilePortStatusNone;
+
+  /// Plain-language port status when the province has a seaboard port.
+  String get provinceOverlay_tilePortStatusPresent;
+
   /// Tooltip and semantics label for province tile purchase-land shortcut action.
   String get provinceOverlay_tilePurchaseLandTooltip;
 

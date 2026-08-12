@@ -76,6 +76,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
   required bool buildImprovementEnabled,
   required bool buildRoadEnabled,
   required bool buildFortEnabled,
+  required bool buildPortEnabled,
   required bool purchaseLandEnabled,
   bool upgradeTownEnabled = false,
   String? upgradeTownTargetTileKey,
@@ -97,6 +98,7 @@ ProvinceDetailShortcutCallbacks _callbacks({
       buildImprovementEnabled: buildImprovementEnabled,
       buildRoadEnabled: buildRoadEnabled,
       buildFortEnabled: buildFortEnabled,
+      buildPortEnabled: buildPortEnabled,
       purchaseLandEnabled: purchaseLandEnabled,
       provinceId: provinceId,
       upgradeTownEnabled: upgradeTownEnabled,
@@ -143,6 +145,7 @@ void main() {
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: true,
         bus: bus,
       );
@@ -163,6 +166,7 @@ void main() {
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -183,6 +187,7 @@ void main() {
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -200,6 +205,7 @@ void main() {
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -217,6 +223,7 @@ void main() {
         buildImprovementEnabled: true,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -234,6 +241,7 @@ void main() {
         buildImprovementEnabled: false,
         buildRoadEnabled: true,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: false,
         bus: bus,
       );
@@ -251,6 +259,7 @@ void main() {
         buildImprovementEnabled: false,
         buildRoadEnabled: false,
         buildFortEnabled: false,
+        buildPortEnabled: false,
         purchaseLandEnabled: true,
         bus: bus,
       );
