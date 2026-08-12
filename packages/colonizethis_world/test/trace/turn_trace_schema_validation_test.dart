@@ -59,7 +59,8 @@ void main() {
       final invalidUnknownPhaseField = <String, Object?>{
         'phases': <Object?>[
           <String, Object?>{
-            ...((valid['phases'] as List).first as Map<String, Object?>),
+            ...((valid['phases'] as List<Object?>).first
+                as Map<String, Object?>),
             'unexpectedField': true,
           },
         ],
