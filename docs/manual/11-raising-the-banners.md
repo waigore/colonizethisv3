@@ -52,6 +52,14 @@ On `UNIT20001` **Military Units panel**, the **Generals** strip at the top of th
 
 The Home Army has no Move control and cannot leave the capital. Split it first if you need a marching force.
 
+### Military Counsel (`GAME90001` Military tab)
+
+1. On `UNIT20001`, tap **Counsel** in the header to open `GAME90001` **Counsel** on the **Military** tab.
+2. Review up to three ranked recommendations: **raise** regiment or ship types (with count and cost summary) and **invade** targets (army, province, owner, defender intel when known).
+3. Tap **Agree** on a train card to queue that many build orders when still affordable; otherwise a plain snackbar explains why nothing was staged.
+4. Tap **Agree** on an invade card to stage the army move; when war must be declared first, confirm in the same invasion dialog used by `DLG20001`.
+5. Empty counsel: “No pressing military advice this turn.” Agree is hidden while turn resolution blocks edits.
+
 ## Counsel
 
 **Counsel.** Hark, my liege: a regiment raised in the Home Army is a shield, not yet a spear. Split a field army before promising a campaign beyond the capital.
@@ -78,6 +86,7 @@ Other Great Powers use deterministic planners to weigh expansion, military rebui
 - [ ] Documents `UNIT20001` and `UNIT50001` training flow, including peasant consumption and capital Home Army arrival.
 - [ ] Explains armies, splitting and combining, Home Army purpose, and generals’ combat assignment and medal growth.
 - [ ] Documents `DLG20001` legal movement destinations, pending moves, invasion confirmation, and same-turn war declaration.
+- [ ] Documents `GAME90001` Military Counsel: `UNIT20001` entry, train/invade Agree, war confirm, empty state.
 - [ ] States that the Home Army cannot march and that a field army must be split from it.
 - [ ] Grounds rival military behaviour in the Full AI phase-planning model.
 
@@ -92,5 +101,7 @@ Other Great Powers use deterministic planners to weigh expansion, military rebui
 - `SPEC/ui/military-units-army-management.md`
 - `SPEC/ui/train-military-dialog.md`
 - `SPEC/ui/move-army-dialog.md`
+- `SPEC/ui/counsel-panel.md`
+- `SPEC/program/military-counsel-ranking.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/phase-planner-architecture.md`

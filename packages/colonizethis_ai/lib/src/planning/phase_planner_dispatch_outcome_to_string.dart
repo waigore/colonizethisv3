@@ -1,0 +1,28 @@
+import 'phase_planner_dispatch_outcome.dart';
+
+String phasePlanOutcomeToString(PhasePlanOutcome outcome) =>
+    'PhasePlanOutcome(phase: ${outcome.phase}, '
+    'expandDeclareWarTargetFactionId: '
+    '${outcome.expandDeclareWarTargetFactionId}, '
+    'expandPeaceTargetFactionIdsSorted: '
+    '${outcome.expandPeaceTargetFactionIdsSorted}, '
+    'expandDistractionPeaceTargetFactionIdsSorted: '
+    '${outcome.expandDistractionPeaceTargetFactionIdsSorted}, '
+    'expandEconomyPlan: ${outcome.expandEconomyPlan}, '
+    'expandMilitaryPlan: ${outcome.expandMilitaryPlan}, '
+    'expandGpOnlyInvadableFrontierActive: '
+    '${outcome.expandGpOnlyInvadableFrontierActive}, '
+    'expandPrimaryInvadableGpBlockerFactionId: '
+    '${outcome.expandPrimaryInvadableGpBlockerFactionId}, '
+    'colonialLiteOverturesSorted: ${outcome.colonialLiteOverturesSorted}, '
+    'colonialLiteNavalPlan: ${outcome.colonialLiteNavalPlan}, '
+    'colonialAcquisitionTarget: ${outcome.colonialAcquisitionTarget}, '
+    'colonialPeaceTargetFactionIdsSorted: '
+    '${outcome.colonialPeaceTargetFactionIdsSorted}, '
+    'colonialMilitaryPlan: ${outcome.colonialMilitaryPlan}, '
+    'colonialNavalPlan: ${outcome.colonialNavalPlan}, '
+    'colonialCivilianWorkOrders: ${outcome.colonialCivilianWorkOrders}, '
+    'developPeaceTargetFactionIdsSorted: '
+    '${outcome.developPeaceTargetFactionIdsSorted}, '
+    'developCivilianWorkOrders: ${outcome.developCivilianWorkOrders}, '
+    'priorityWeights: ${outcome.priorityWeights})';

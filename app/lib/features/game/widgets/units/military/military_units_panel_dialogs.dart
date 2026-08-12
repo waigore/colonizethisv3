@@ -7,6 +7,7 @@ import 'package:colonizethis_world/colonizethis_world.dart' show buildPlayerView
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../config/routes.dart';
 import '../../../../../core/services/app_event_bus_panel_nav.dart';
 import '../../../../../core/services/app_event_handler/app_event_handler_scope.dart'
     show trainMilitaryDialogId;
@@ -33,6 +34,16 @@ mixin MilitaryUnitsPanelDialogs on BaseUnitsPanelState<MilitaryUnitsPanel> {
 
   void openTrainDialog() {
     widget.bus.closePanelThenEmit(OpenDialogEvent(trainMilitaryDialogId));
+  }
+
+  void openCounsel() {
+    widget.bus.closePanelThenEmit(
+      NavigateToRouteEvent(Routes.counsel, {
+        'game': widget.game,
+        'humanPlayerId': widget.humanPlayerId,
+        'counselTab': 'military',
+      }),
+    );
   }
 
   void openSplitDialog(ArmyBlock block) {

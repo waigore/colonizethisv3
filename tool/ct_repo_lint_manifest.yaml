@@ -956,7 +956,7 @@ rules:
 
   - rule_id: repo.ai_source_file_size
     group: structure
-    title: colonizethis_ai lib/src files must stay at or below 500 physical lines (Refs #4079)
+    title: colonizethis_ai lib/src files must stay at or below 350 physical lines (Refs #4079, #4310)
     spec: SPEC/program/ai-source-file-size.md
     runner: dart
     script: tool/check_ai_source_file_size.dart
@@ -1628,7 +1628,7 @@ rules:
 
   - rule_id: repo.ai_expand_peace_pin_cases_required
     group: testing
-    title: colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 600 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C)
+    title: colonizethis_ai expand_phase_planner_*peace*_test.dart contracts above 450 physical lines must import a sibling *_cases.dart (Refs #3977, #4104 Slice C, #4310 Slice D)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_expand_peace_pin_suite_size.dart
@@ -1661,6 +1661,188 @@ rules:
     runner: dart
     script: tool/check_ai_treasury_satellite_test_shared_fixtures.dart
 
+  - rule_id: repo.ai_planning_invadable_owners_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning invadable-owner pins must import shared Game fixtures (no local _gameWithGps / gameWithTwoMinors) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_invadable_owners_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_planning_peace_collectors_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning peace-collector pins must import shared Game fixtures (no local _gameWithGps / _snapshotWithAtWar) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_peace_collectors_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_build_planner_civilian_scoring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai build_planner_civilian_scoring pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_build_planner_civilian_scoring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_civilian_build_live_wiring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai civilian_build_live_wiring pin must import shared Game fixtures (no local _gameWithLeader) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_civilian_build_live_wiring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_phase_planner_focus_minor_target_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai focus-minor target case modules must import shared Game fixtures (no local _focusMinorGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_phase_planner_focus_minor_target_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_faction_query_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai faction_query util pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_faction_query_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_region_military_destination_filter_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai region_military_destination_filter pin must import shared Game fixtures (no local _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_region_military_destination_filter_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_diplomatic_candidate_scoring_colonial_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai diplomatic candidate scoring COLONIAL pins must import shared Game fixtures (no local _colonialScenarioGame / _colonialTribeScenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_diplomatic_candidate_scoring_colonial_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_planning_ow_tech_helpers_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning OW / tech helper pins must import shared Game fixtures (no local _gameOwning / _gameWithTechs / _gameWithExhaustedGp) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_ow_tech_helpers_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_phase_planner_sole_gp_war_helpers_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai sole-GP-war helper pins must import shared Game fixtures (no local _gameWithGpsAndMinors / _gameWithProvinces) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_phase_planner_sole_gp_war_helpers_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_transition_boundary_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai observer goal phase transition boundary pins must import shared Game fixtures (no local _scenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_transition_boundary_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_mutual_exhausted_stalemate_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai mutual-exhausted stalemate pins must import shared Game fixtures (no local _exhaustedStalemateGame / _snapshotForOwn) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_mutual_exhausted_stalemate_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_primary_gp_blocker_tiebreak_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai primary GP blocker tiebreak pins must import shared Game fixtures (no local _gameForOwBlocker / _gameForNwBlocker / snapshot builders) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_primary_gp_blocker_tiebreak_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_phase_priority_weights_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai phase_priority_weights pins must import shared Game/snapshot fixtures (no local _gameWithRegiments / _game / _snapshot) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_priority_weights_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_colonial_lite_preconditions_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai COLONIAL-lite precondition pins must import shared Game/snapshot fixtures (no local _gameWithNwOwner / _snapshotOw) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_colonial_lite_preconditions_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_nw_suppression_predicate_matrix_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai NW-suppression predicate matrix pin must import shared Game/snapshot fixtures (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_nw_suppression_predicate_matrix_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_observer_goal_phase_composite_peace_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai composite peace-target pin must import shared Game/snapshot fixtures (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_observer_goal_phase_composite_peace_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_full_ai_planner_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai full_ai_planner_* pins must import shared Game fixtures from full_ai_planner_test_support.dart (no local _minimalGame / _scenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_full_ai_planner_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_economy_satellite_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai economy/orchestrator satellite pins must import shared Game fixtures from economy_satellite_test_support.dart (no local _sellerGame / _cottonOnlyGame / _brokeAtPeaceGame / _bootstrapGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_economy_satellite_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_planning_diplomatic_scans_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai planning_diplomatic_scans pin must import shared Game fixtures (no local _gameWithEvents) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_planning_diplomatic_scans_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_diplomacy_planner_boycott_break_subsidy_wiring_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai diplomacy_planner boycott/break/subsidy wiring pin must import shared Game fixtures (no local _twoGpAtPeaceGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_diplomacy_planner_boycott_break_subsidy_wiring_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_expand_feedstock_seller_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai expand feedstock seller pins must import shared Game fixtures (no local _flaggedSellerGame / _game) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_expand_feedstock_seller_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_phase_planner_economy_build_pick_cargo_bonus_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai phase_planner_economy_build_pick_cargo_bonus pin must import shared Game fixtures (no local _buildGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_phase_planner_economy_build_pick_cargo_bonus_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_growth_stage_industry_counsel_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai growth_stage industry counsel pin must import shared Game fixtures (no local _feedstockTileGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_growth_stage_industry_counsel_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_develop_nw_purchase_suppression_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai develop NW purchase-suppression orchestrator pin must import shared Game fixtures (no local _developScenarioGame) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_develop_nw_purchase_suppression_test_shared_fixtures.dart
+
+  - rule_id: repo.ai_dossier_test_shared_fixtures
+    group: testing
+    title: colonizethis_ai dossier perception pin must import shared Game fixtures (no local _gameWithEvidence) (Refs #4310)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_ai_dossier_test_shared_fixtures.dart
+
   - rule_id: repo.ai_recruitment_planner_test_shared_fixtures
     group: testing
     title: colonizethis_ai recruitment_planner*_test.dart must import recruitmentPlannerTestGameWith (no local _gameWith) (Refs #4104)
@@ -1684,21 +1866,21 @@ rules:
 
   - rule_id: repo.ai_planning_cases_suite_size
     group: testing
-    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 600 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C)
+    title: colonizethis_ai test/planning/*_cases.dart modules must stay at or under 450 physical lines unless registered as an indivisible allowlist entry with issue Ref (Refs #3997, #4104 Slice C, #4310 Slice D)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_planning_cases_suite_size.dart
 
   - rule_id: repo.ai_residual_fat_pin_cases_required
     group: testing
-    title: colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 600 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C)
+    title: colonizethis_ai residual fat-pin contracts (Phase-8/9/10 gated basenames) above 450 physical lines must import a sibling *_cases.dart (Refs #3997, #4079, #4104 Slice C, #4310 Slice D)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_residual_fat_pin_suite_size.dart
 
   - rule_id: repo.ai_s7d_support_suite_size
     group: testing
-    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 600 physical lines (Refs #3997, #4079, #4104 Slice C)
+    title: colonizethis_ai test/support/s7d/*.dart modules must stay at or under 450 physical lines (Refs #3997, #4079, #4104 Slice C, #4310 Slice A)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_ai_s7d_support_suite_size.dart

@@ -18,10 +18,11 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/economy_satellite_test_support.dart';
 
-const String _nationId = 'gp3';
-const String _owHome = 'oldWorld|gp3_0';
-const String _owMinor = 'oldWorld|minor1';
+const String _nationId = economyNavalBootstrapNationId;
+const String _owHome = economyNavalBootstrapHome;
+const String _owMinor = economyNavalBootstrapMinor;
 
 const List<BuildUnitOrder> _galleonAndGrenadiers = [
   BuildUnitOrder(
@@ -35,62 +36,6 @@ const List<BuildUnitOrder> _galleonAndGrenadiers = [
     spawnProvinceId: _owHome,
   ),
 ];
-
-Game _bootstrapGame({int treasury = 0, List<Fleet> fleets = const []}) {
-  return Game(
-    id: 'g-2847-first-naval-bootstrap',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 20),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 7; i++)
-            Province(
-              id: 'oldWorld|gp3_$i',
-              regionId: 'oldWorld',
-              ownerId: _nationId,
-            ),
-          const Province(
-            id: _owMinor,
-            regionId: 'oldWorld',
-            ownerId: 'minor1',
-          ),
-        ],
-      ),
-      newWorld: const RegionData(),
-      fleets: fleets,
-      armies: const [
-        Army(
-          id: 'home_gp3',
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _owHome,
-          regimentUnitIds: const [],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: [
-      Player(
-        id: _nationId,
-        displayName: 'GP3',
-        isHuman: false,
-        treasury: treasury,
-        capitalProvinceId: _owHome,
-      ),
-    ],
-    minorNations: const [
-      MinorNation(id: 'minor1', displayName: 'Minor'),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: 'minor1',
-        state: RelationState.atWar,
-        score: -100,
-      ),
-    ],
-  );
-}
 
 AIWorldSnapshot _bootstrapSnapshot({int treasury = 0}) {
   return AIWorldSnapshot(
@@ -114,7 +59,7 @@ AIWorldSnapshot _bootstrapSnapshot({int treasury = 0}) {
 void main() {
   group('resolvePhaseFirstNavalTransportBootstrapActive (Refs #2847)', () {
     test('override active with zero fleets returns true', () {
-      final game = _bootstrapGame();
+      final game = economyNavalBootstrapGame();
       const expandPlan = ExpandEconomyPlan(
         forceCheapestRegimentBuild: true,
         boostTreasuryRecoveryCargo: true,
@@ -131,7 +76,7 @@ void main() {
     });
 
     test('inactive when GP already owns a cargo-capable hull', () {
-      final game = _bootstrapGame(
+      final game = economyNavalBootstrapGame(
         fleets: [
           Fleet(
             id: 'fleet_1',
@@ -181,7 +126,7 @@ void main() {
       'bootstrap stays active below regiment threshold after partial '
       'seller credits (Refs #2924 Path F)',
       () {
-        final game = _bootstrapGame(treasury: 500);
+        final game = economyNavalBootstrapGame(treasury: 500);
         const expandPlan = ExpandEconomyPlan(
           forceCheapestRegimentBuild: true,
           boostTreasuryRecoveryCargo: true,
@@ -205,7 +150,7 @@ void main() {
       'bootstrap active for mid-below-quota zero-NW GP without '
       'boostTreasuryRecoveryCargo (Refs #2924 Path F)',
       () {
-        final game = _bootstrapGame(treasury: 5000);
+        final game = economyNavalBootstrapGame(treasury: 5000);
         const expandPlan = ExpandEconomyPlan.defaultPlan;
         expect(
           resolvePhaseFirstNavalTransportBootstrapActive(
@@ -223,7 +168,7 @@ void main() {
       'bootstrap active for mid-below-quota zero-NW GP even above '
       'regiment threshold (Refs #2924 Path F)',
       () {
-        final game = _bootstrapGame(treasury: 5000);
+        final game = economyNavalBootstrapGame(treasury: 5000);
         const expandPlan = ExpandEconomyPlan(
           forceCheapestRegimentBuild: true,
           boostTreasuryRecoveryCargo: true,
@@ -248,7 +193,7 @@ void main() {
       '(Refs #2924)',
       () {
         final threshold = cheapestRegimentBuildTreasuryCost();
-        final game = _bootstrapGame(treasury: threshold);
+        final game = economyNavalBootstrapGame(treasury: threshold);
         const expandPlan = ExpandEconomyPlan(
           forceCheapestRegimentBuild: false,
           boostTreasuryRecoveryCargo: true,
@@ -332,7 +277,7 @@ void main() {
       test(
         'bootstrap selects a cargo ship instead of regiment-only crisis pick',
         () {
-          final game = _bootstrapGame();
+          final game = economyNavalBootstrapGame();
           const topology = MapTopology(nodes: [], edges: []);
           final view = buildPlayerView(game, topology, _nationId);
           final snapshot = _bootstrapSnapshot();

@@ -7,8 +7,9 @@ import 'ct_repo_lint_scan_contract.dart';
 /// Physical-line ceiling for residual fat pin contracts after case
 /// extraction (Refs #3997 / #4079 Slice D / #4104 Slice C). Phase-8 used
 /// ≤750-or-cases; Phase-9 tightened to ≤650-or-cases; Phase-10 densify
-/// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D).
-const int residualFatPinSuitePhysicalLineCeiling = 500;
+/// ratchets to ≤500-or-cases for gated basenames (Phase-12 Slice D);
+/// Phase-13 Slice D →450 (Refs #4310).
+const int residualFatPinSuitePhysicalLineCeiling = 450;
 
 const String _planningPrefix = 'packages/colonizethis_ai/test/planning/';
 const String _supportTestPrefix =
@@ -57,6 +58,16 @@ const Set<String> residualFatPinSuiteGatedBasenames = {
   'phase_planner_peace_targets_test.dart',
   'colonial_phase_planner_test.dart',
   'phase_planner_naval_wiring_test.dart',
+  // Phase-13 Slice D ungated ≥500 densify (Refs #4310).
+  'planning_invadable_owners_test.dart',
+  'expand_phase_planner_sole_gp_war_helpers_test.dart',
+  'expand_phase_planner_below_quota_peer_gp_peace_test.dart',
+  'research_planner_multi_slot_test.dart',
+  'observer_goal_phase_transition_boundary_test.dart',
+  'expand_phase_planner_stalled_distraction_peace_test.dart',
+  'phase_planner_dispatch_test.dart',
+  'expand_phase_planner_great_power_war_count_and_pending_declare_war_test.dart',
+  'phase_planner_military_plans_test.dart',
 };
 
 bool aiResidualFatPinSuiteSizePathInScope(String slashPath) {

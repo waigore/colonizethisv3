@@ -42,80 +42,21 @@
 // triple is pinned separately in `phase_planner_dispatch_test.dart`.
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
-import 'package:colonizethis_ai/src/planning/expand_phase_planner.dart'
-    show ExpandEconomyPlan;
-import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'ai_planner_fixtures.dart';
-
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _owProvGp1 = 'oldWorld|gp1_a';
-const String _owProvMinor = 'oldWorld|m1_a';
-
-const ExpandEconomyPlan _defaultExpandPlan = ExpandEconomyPlan.defaultPlan;
-const ExpandEconomyPlan _boostCargoPlan = ExpandEconomyPlan(
-  forceCheapestRegimentBuild: false,
-  boostTreasuryRecoveryCargo: true,
-);
-
-Game _gameWithRegiments(int regimentCount) {
-  return Game(
-    id: 'g-2847-phase-priority-weights-r$regimentCount',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 30, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: _owProvGp1, regionId: kOldWorldRegionId, ownerId: _gp1),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      armies: regimentCount > 0
-          ? [homeArmyWithRegiments(_gp1, regimentCount)]
-          : const [],
-    ),
-    players: const [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: 0),
-      Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-  );
-}
-
-AIWorldSnapshot _snapshot({
-  required int oldWorldProvincesOwned,
-  int treasury = 1000,
-  int newWorldProvincesOwned = 1,
-  List<String> invadable = const [_owProvMinor],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadable,
-    ),
-    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
-
+import '../support/phase_priority_weights_test_support.dart';
 
 void registerPhasePriorityWeightsOverrideCases() {
   group('zero-regiment override (NW acquisition floor 0.30)', () {
     test('fires when regimentCount == 0 and invadable non-empty', () {
       final w = computePhasePriorityWeights(
-        snapshot: _snapshot(
+        snapshot: phasePriorityWeightsSnapshot(
           oldWorldProvincesOwned: 7,
           treasury: 100,
           newWorldProvincesOwned: 1,
         ),
-        game: _gameWithRegiments(0),
-        expandEconomyPlan: _defaultExpandPlan,
+        game: phasePriorityWeightsGameWithRegiments(0),
+        expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
       );
       expect(w.newWorldAcquisition, kPhasePriorityNwZeroRegimentFloor);
       expect(w.oldWorldConquest, 0.95, reason: 'OW never weakened by override');
@@ -123,27 +64,27 @@ void registerPhasePriorityWeightsOverrideCases() {
 
     test('does NOT fire when regimentCount > 0 (negative)', () {
       final w = computePhasePriorityWeights(
-        snapshot: _snapshot(
+        snapshot: phasePriorityWeightsSnapshot(
           oldWorldProvincesOwned: 7,
           treasury: 100,
           newWorldProvincesOwned: 1,
         ),
-        game: _gameWithRegiments(1),
-        expandEconomyPlan: _defaultExpandPlan,
+        game: phasePriorityWeightsGameWithRegiments(1),
+        expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
       );
       expect(w.newWorldAcquisition, 0.05);
     });
 
     test('does NOT fire when invadable list is empty (negative)', () {
       final w = computePhasePriorityWeights(
-        snapshot: _snapshot(
+        snapshot: phasePriorityWeightsSnapshot(
           oldWorldProvincesOwned: 7,
           treasury: 100,
           newWorldProvincesOwned: 1,
           invadable: const [],
         ),
-        game: _gameWithRegiments(0),
-        expandEconomyPlan: _defaultExpandPlan,
+        game: phasePriorityWeightsGameWithRegiments(0),
+        expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
       );
       expect(w.newWorldAcquisition, 0.05);
     });
@@ -154,13 +95,13 @@ void registerPhasePriorityWeightsOverrideCases() {
       'both overrides firing -> larger floor (0.60 treasury-recovery) wins',
       () {
         final w = computePhasePriorityWeights(
-          snapshot: _snapshot(
+          snapshot: phasePriorityWeightsSnapshot(
             oldWorldProvincesOwned: 7,
             treasury: 0,
             newWorldProvincesOwned: 0,
           ),
-          game: _gameWithRegiments(0),
-          expandEconomyPlan: _boostCargoPlan,
+          game: phasePriorityWeightsGameWithRegiments(0),
+          expandEconomyPlan: kPhasePriorityWeightsBoostCargoPlan,
         );
         expect(w.newWorldAcquisition, kPhasePriorityNwTreasuryRecoveryFloor);
         // Pin that the smaller floor did not win.
@@ -175,13 +116,13 @@ void registerPhasePriorityWeightsOverrideCases() {
         // At OW = 12 the curve sits at NW = 0.80 — already above
         // both floors. The override must not pull NW down to 0.60.
         final w = computePhasePriorityWeights(
-          snapshot: _snapshot(
+          snapshot: phasePriorityWeightsSnapshot(
             oldWorldProvincesOwned: 12,
             treasury: 0,
             newWorldProvincesOwned: 0,
           ),
-          game: _gameWithRegiments(0),
-          expandEconomyPlan: _boostCargoPlan,
+          game: phasePriorityWeightsGameWithRegiments(0),
+          expandEconomyPlan: kPhasePriorityWeightsBoostCargoPlan,
         );
         expect(w.newWorldAcquisition, 0.80);
         expect(w.oldWorldConquest, 0.20);
@@ -194,29 +135,29 @@ void registerPhasePriorityWeightsOverrideCases() {
       // be touched by any override).
       for (final ow in const [0, 7, 8, 9, 10, 11, 12, 13]) {
         for (final treasuryPlan in const [
-          _defaultExpandPlan,
-          _boostCargoPlan,
+          kPhasePriorityWeightsDefaultExpandPlan,
+          kPhasePriorityWeightsBoostCargoPlan,
         ]) {
           for (final regiments in const [0, 1, 5]) {
             for (final nwOwned in const [0, 1]) {
               for (final treasury in const [0, 100]) {
                 final w = computePhasePriorityWeights(
-                  snapshot: _snapshot(
+                  snapshot: phasePriorityWeightsSnapshot(
                     oldWorldProvincesOwned: ow,
                     treasury: treasury,
                     newWorldProvincesOwned: nwOwned,
                   ),
-                  game: _gameWithRegiments(regiments),
+                  game: phasePriorityWeightsGameWithRegiments(regiments),
                   expandEconomyPlan: treasuryPlan,
                 );
                 final curve = computePhasePriorityWeights(
-                  snapshot: _snapshot(
+                  snapshot: phasePriorityWeightsSnapshot(
                     oldWorldProvincesOwned: ow,
                     treasury: 100,
                     newWorldProvincesOwned: 1,
                   ),
-                  game: _gameWithRegiments(5),
-                  expandEconomyPlan: _defaultExpandPlan,
+                  game: phasePriorityWeightsGameWithRegiments(5),
+                  expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
                 );
                 expect(
                   w.oldWorldConquest,
@@ -238,21 +179,21 @@ void registerPhasePriorityWeightsOverrideCases() {
 
   group('determinism (Refs #2509 Must-have #7)', () {
     test('identical inputs produce field-equal results across two calls', () {
-      final snapshot = _snapshot(
+      final snapshot = phasePriorityWeightsSnapshot(
         oldWorldProvincesOwned: 10,
         treasury: 0,
         newWorldProvincesOwned: 0,
       );
-      final game = _gameWithRegiments(0);
+      final game = phasePriorityWeightsGameWithRegiments(0);
       final first = computePhasePriorityWeights(
         snapshot: snapshot,
         game: game,
-        expandEconomyPlan: _boostCargoPlan,
+        expandEconomyPlan: kPhasePriorityWeightsBoostCargoPlan,
       );
       final second = computePhasePriorityWeights(
         snapshot: snapshot,
         game: game,
-        expandEconomyPlan: _boostCargoPlan,
+        expandEconomyPlan: kPhasePriorityWeightsBoostCargoPlan,
       );
       expect(first, second);
       expect(first.hashCode, second.hashCode);
@@ -262,14 +203,14 @@ void registerPhasePriorityWeightsOverrideCases() {
       'structurally different inputs produce structurally different results',
       () {
         final low = computePhasePriorityWeights(
-          snapshot: _snapshot(oldWorldProvincesOwned: 5),
-          game: _gameWithRegiments(5),
-          expandEconomyPlan: _defaultExpandPlan,
+          snapshot: phasePriorityWeightsSnapshot(oldWorldProvincesOwned: 5),
+          game: phasePriorityWeightsGameWithRegiments(5),
+          expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
         );
         final high = computePhasePriorityWeights(
-          snapshot: _snapshot(oldWorldProvincesOwned: 13),
-          game: _gameWithRegiments(5),
-          expandEconomyPlan: _defaultExpandPlan,
+          snapshot: phasePriorityWeightsSnapshot(oldWorldProvincesOwned: 13),
+          game: phasePriorityWeightsGameWithRegiments(5),
+          expandEconomyPlan: kPhasePriorityWeightsDefaultExpandPlan,
         );
         expect(low, isNot(high));
       },

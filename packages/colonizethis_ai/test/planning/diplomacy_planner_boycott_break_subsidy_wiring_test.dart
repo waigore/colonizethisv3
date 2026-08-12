@@ -9,6 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/planner_test_helpers.dart';
+import '../support/diplomacy_planner_boycott_break_subsidy_wiring_test_support.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_logic/order_suggestion_api.dart';
 
@@ -44,45 +45,6 @@ final class _SetSubsidyOnlySuggestionAPI extends DefaultOrderSuggestionAPI {
       ),
     ];
   }
-}
-
-Game _twoGpAtPeaceGame({
-  bool formalAlliance = false,
-  bool holdsColony = false,
-}) {
-  return Game(
-    id: 'g-diplomacy-planner-wiring',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 5),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-          Province(id: 'oldWorld|p2', regionId: 'oldWorld', ownerId: 'gp2'),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'A', isHuman: false),
-      Player(id: 'gp2', displayName: 'B', isHuman: false),
-    ],
-    diplomacyRelations: [
-      DiplomacyRelation(
-        factionId1: 'gp1',
-        factionId2: 'gp2',
-        score: 50,
-        level: RelationLevel.neutral,
-        state: RelationState.atPeace,
-        formalAlliance: formalAlliance,
-      ),
-    ],
-    colonyStates: holdsColony
-        ? const [
-            ColonyState(tribeId: 'tribe1', colonyOfGpId: 'gp1', sinceTurn: 1),
-          ]
-        : const [],
-    aiControlByGpId: const {'gp1': true},
-  );
 }
 
 AIWorldSnapshot _neutralSnapshot() => const AIWorldSnapshot(
@@ -124,7 +86,7 @@ void main() {
     test(
       'emits breakAlliance when formal alliance is the sole GP candidate',
       () {
-        final game = _twoGpAtPeaceGame(formalAlliance: true);
+        final game = diplomacyPlannerBoycottBreakSubsidyTwoGpAtPeaceGame(formalAlliance: true);
         final chosen = _chosenOrder(game: game, turnSeed: 42);
         expect(chosen, isNotNull);
         expect(chosen!.type, DiplomaticOrderType.breakAlliance);
@@ -135,7 +97,7 @@ void main() {
     test(
       'emits boycott for a colony-holding backstabber on some diplomacy seed',
       () {
-        final game = _twoGpAtPeaceGame(holdsColony: true);
+        final game = diplomacyPlannerBoycottBreakSubsidyTwoGpAtPeaceGame(holdsColony: true);
         DiplomaticOrder? boycottChosen;
         for (var seed = 1; seed <= 5000; seed++) {
           final chosen = _chosenOrder(game: game, turnSeed: seed);
@@ -156,7 +118,7 @@ void main() {
     );
 
     test('does not emit boycott when the planner GP holds no colony', () {
-      final game = _twoGpAtPeaceGame(holdsColony: false);
+      final game = diplomacyPlannerBoycottBreakSubsidyTwoGpAtPeaceGame(holdsColony: false);
       for (var seed = 1; seed <= 200; seed++) {
         final chosen = _chosenOrder(game: game, turnSeed: seed);
         expect(chosen?.type, isNot(DiplomaticOrderType.boycott));
