@@ -1,6 +1,6 @@
 import 'package:colonizethis_test/test.dart';
 
-import 'world_test_support/turn_trace_schema_test_support.dart';
+import '../world_test_support/turn_trace_schema_test_support.dart';
 
 void main() {
   test(

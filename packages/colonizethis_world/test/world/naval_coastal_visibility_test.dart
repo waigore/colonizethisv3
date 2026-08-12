@@ -3,7 +3,7 @@ import 'package:colonizethis_world/src/world/player_view.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_test_support/world_test_support.dart';
+import '../world_test_support/world_test_support.dart';
 
 void main() {
   const ow = 'oldWorld';
