@@ -13,7 +13,7 @@ Tiles feed the realm only when civilians improve them, bind them with roads and 
 3. Confirm the assignment in the Orders phase. Materials and treasury affordability are checked **at assign**; pending rows on `UNIT10001` show required costs and a **muted shortfall line** when that order cannot be afforded after earlier pending work (orders are not auto-cancelled). For most builds, stockpile materials are reserved/deducted when Build/work applies the order. Rejected assigns surface messages such as **Insufficient treasury** or **Insufficient materials**.
 4. The unit may need to **move** to the work tile in **Movement**; work then ticks in **Build/work**. New extraction yields appear in later turns’ **Extraction** phase once improvements exist and connectivity allows.
 
-`GAME20001` **Production** shows your empire stockpile, queued recipes, and pending material costs for work you have staged. `GAME80001` **Development screen** lists improvable resource tiles across your owned provinces and purchased land (Old World / New World tabs), with an extraction overview and idle Builder/Engineer counts. The panel map respects fog of war (unrevealed tiles stay hidden; fogged tiles are muted) and outlines your land territory; commodity counts and **Assign** only consider tiles you have seen. The overview also lists **assigned civilians** — Builders and Engineers with pending or in-progress work in the active region, with the same turn-progress wording as the Civilian units panel. **Assign** commits a pending `build_improvement` on the best eligible tile (connected tiles preferred). When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway**, **Road first** (commits one Engineer `build_road` step toward the capital — no automatic improve), or **Cancel**. **`MAP20001` Economic** **Extraction** and **Available** rows are different: they **project** what this province would yield from the **current post-resolution world state** — visible immediately on a new game (including bootstrap grain farms), not only after an Extraction phase has run. Staging improve, road, or town draft orders mid-turn does **not** change Extraction or Available until turn resolution applies them. Display-only: your stockpile still receives commodities when the Extraction phase runs (see `SPEC/ui/province-economic-extraction-available.md`).
+`GAME20001` **Production** shows your empire stockpile, queued recipes, and pending material costs for work you have staged. `GAME80001` **Development screen** lists improvable resource tiles across your owned provinces and purchased land (Old World / New World tabs), with an extraction overview and idle Builder/Engineer counts. The header **Counsel** opens `GAME90001` on the **Development** tab for ranked **Build port** advice aligned with the same Engineer scoring the courts use — tap **Agree** to stage one Engineer port work order when it is still legal. The panel map respects fog of war (unrevealed tiles stay hidden; fogged tiles are muted) and outlines your land territory; commodity counts and **Assign** only consider tiles you have seen. The overview also lists **assigned civilians** — Builders and Engineers with pending or in-progress work in the active region, with the same turn-progress wording as the Civilian units panel. **Assign** commits a pending `build_improvement` on the best eligible tile (connected tiles preferred). When the chosen tile is not linked to your capital, a warn dialog offers **Improve anyway**, **Road first** (commits one Engineer `build_road` step toward the capital — no automatic improve), or **Cancel**. **`MAP20001` Economic** **Extraction** and **Available** rows are different: they **project** what this province would yield from the **current post-resolution world state** — visible immediately on a new game (including bootstrap grain farms), not only after an Extraction phase has run. Staging improve, road, or town draft orders mid-turn does **not** change Extraction or Available until turn resolution applies them. Display-only: your stockpile still receives commodities when the Extraction phase runs (see `SPEC/ui/province-economic-extraction-available.md`).
 
 ### Reading Extraction on `MAP20001`
 
@@ -50,7 +50,7 @@ Work completes in **Build/work**; do not expect the improvement to extract on th
 
 ## Counsel
 
-**Counsel.** Hark, my liege: a mine without a road is a jewel in a locked chest — connect before you celebrate the yield.
+**Counsel.** Hark, my liege: a mine without a road is a jewel in a locked chest — connect before you celebrate the yield. When the courts would raise a seaboard port this season, Development Counsel on `GAME90001` names the coast in plain speech; Agree only when you mean the Engineer to dig.
 
 **Tip.** Assign costs bite at commit time. If lumber or cast iron is short, cancel other builds or wait a Production turn rather than scattering half-finished sites.
 
@@ -97,6 +97,8 @@ AI **civilian-work-planner** scores Builder improvement/town work, Engineer road
 - `SPEC/ui/province-economic-extraction-available.md`
 - `SPEC/ui/map-widget.md`
 - `SPEC/ui/development-panel.md`
+- `SPEC/ui/counsel-panel.md`
+- `SPEC/program/development-counsel-ranking.md`
 - `SPEC/ui/production-panel.md`
 - `SPEC/ui/screen-registry.md`
 - `SPEC/ai/civilian-work-planner.md`

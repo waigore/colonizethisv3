@@ -109,4 +109,45 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get provinceOverlay_tilePortStatusPresent => 'Port: Present';
 
+  @override
+  String get developmentCounsel_tabDevelopment => 'Development';
+
+  @override
+  String get developmentCounsel_empty =>
+      'No pressing development advice this turn.';
+
+  @override
+  String get developmentCounsel_action_agree => 'Agree';
+
+  @override
+  String get developmentCounsel_agreeFailed =>
+      'Cannot stage that port work right now — check Engineer availability, materials, and the target tile.';
+
+  @override
+  String get developmentCounsel_title_buildPort => 'Build port';
+
+  @override
+  String developmentCounsel_title_buildPortAt(String location) {
+    return 'Build port · $location';
+  }
+
+  @override
+  String get developmentCounsel_reason_coastalPort_brief =>
+      'A seaboard port would serve this coast.';
+
+  @override
+  String get developmentCounsel_reason_resourceCoast_brief =>
+      'Resource coast — a port would move extraction overseas.';
+
+  @override
+  String get developmentCounsel_reason_newWorldCoast_brief =>
+      'New World coast — a port opens overseas linkage.';
+
+  @override
+  String get developmentCounsel_reason_overseasLinkage_brief =>
+      'Overseas linkage — a port would reconnect unlinked development.';
+
+  @override
+  String get development_counsel => 'Counsel';
+
 }

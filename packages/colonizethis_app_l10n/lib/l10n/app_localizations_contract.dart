@@ -1592,6 +1592,39 @@ abstract class AppLocalizations {
   /// Accessibility label for Train Military dialog counsel star.
   String militaryCounsel_trainStarSemantic(String brief);
 
+  /// Counsel screen Development tab label.
+  String get developmentCounsel_tabDevelopment;
+
+  /// Counsel Development tab empty state.
+  String get developmentCounsel_empty;
+
+  /// Stages one development counsel recommendation.
+  String get developmentCounsel_action_agree;
+
+  /// Shown when development Build port Agree fails re-validation.
+  String get developmentCounsel_agreeFailed;
+
+  /// Fallback development Build port counsel card title.
+  String get developmentCounsel_title_buildPort;
+
+  /// Development Build port counsel card title with location.
+  String developmentCounsel_title_buildPortAt(String location);
+
+  /// Brief development counsel reason for baseline coastal ports.
+  String get developmentCounsel_reason_coastalPort_brief;
+
+  /// Brief development counsel reason for resource-coast ports.
+  String get developmentCounsel_reason_resourceCoast_brief;
+
+  /// Brief development counsel reason for New World coastal ports.
+  String get developmentCounsel_reason_newWorldCoast_brief;
+
+  /// Brief development counsel reason for overseas-linkage ports.
+  String get developmentCounsel_reason_overseasLinkage_brief;
+
+  /// Development panel header button opening Development Counsel.
+  String get development_counsel;
+
   /// Military Units panel header button opening Military Counsel.
   String get military_units_counsel;
 

@@ -6,6 +6,7 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
     show
+        rankDevelopmentCounselRecommendations,
         rankIndustryCounselRecommendations,
         rankMilitaryCounselRecommendations,
         rankTradeCounselRecommendationsForHuman;
@@ -27,6 +28,8 @@ import '../../../../widgets/ct_game_feature_screen_shell.dart';
 import '../../../../widgets/game_feature_screen_top_bar.dart';
 import '../../widgets/shell/shell_player_context.dart';
 import '../../widgets/shell/shell_player_guarded_body.dart';
+import 'counsel_development_apply.dart';
+import 'counsel_development_tab_body.dart';
 import 'counsel_industry_apply.dart';
 import 'counsel_industry_tab_body.dart';
 import 'counsel_military_apply.dart';
@@ -110,6 +113,14 @@ class CounselScreen extends ConsumerWidget {
           currentOrders: currentOrders,
           topology: topology,
         );
+        final developmentRecommendations =
+            rankDevelopmentCounselRecommendations(
+              game: displayGame,
+              playerId: humanPlayerId,
+              currentOrders: currentOrders,
+              topology: topology,
+              tileMapByRegion: tileMapByRegion,
+            );
         final industryCallbacks = CounselIndustryCallbacks(
           onApplyProduceAllocation: canEdit
               ? () {
@@ -275,6 +286,35 @@ class CounselScreen extends ConsumerWidget {
                 }
               : null,
         );
+        final developmentCallbacks = CounselDevelopmentCallbacks(
+          onAgreeBuildPort: canEdit
+              ? (recommendation) {
+                  final orders = shellRef.read(currentOrdersProvider);
+                  final workOrder = developmentCounselPortWorkOrderAfterAgree(
+                    game: displayGame,
+                    playerId: humanPlayerId,
+                    currentOrders: orders,
+                    topology: topology,
+                    recommendation: recommendation,
+                    tileMapByRegion: tileMapByRegion,
+                  );
+                  if (workOrder == null) {
+                    bus.emit(
+                      ShowSnackBarEvent(
+                        message: l10n.developmentCounsel_agreeFailed,
+                      ),
+                    );
+                    return;
+                  }
+                  bus.emit(
+                    UpsertPendingCivilianWorkOrderRequestedEvent(
+                      playerId: humanPlayerId,
+                      workOrder: workOrder,
+                    ),
+                  );
+                }
+              : null,
+        );
         return CounselScreenTabs(
           initialTab: initialTab,
           l10n: l10n,
@@ -283,11 +323,13 @@ class CounselScreen extends ConsumerWidget {
           tradeBook: tradeCounsel.book,
           militaryRecommendations: militaryRecommendations,
           militaryGame: displayGame,
+          developmentRecommendations: developmentRecommendations,
           highlightRecommendationId: highlightRecommendationId,
           canEdit: canEdit,
           industryCallbacks: industryCallbacks,
           tradeCallbacks: tradeCallbacks,
           militaryCallbacks: militaryCallbacks,
+          developmentCallbacks: developmentCallbacks,
         );
       },
     );

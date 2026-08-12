@@ -175,6 +175,24 @@ Widget _counselMilitaryStory(
   return narrowViewport ? mobileViewport(context, child) : child;
 }
 
+Widget _counselDevelopmentStory(
+  BuildContext context, {
+  required Game game,
+  String? highlightRecommendationId,
+  bool narrowViewport = false,
+}) {
+  final screen = CounselScreen(
+    game: game,
+    humanPlayerId: game.players.first.id,
+    highlightRecommendationId: highlightRecommendationId,
+    initialTab: CounselTab.development,
+  );
+  final child = ProviderScope(
+    child: widgetbookEditorialMonocleApp(child: screen),
+  );
+  return narrowViewport ? mobileViewport(context, child) : child;
+}
+
 Widget _counselTradeStory(
   BuildContext context, {
   required Game game,
@@ -275,6 +293,28 @@ List<WidgetbookNode> get counselPanelDirectories => [
       WidgetbookUseCase(
         name: 'Counsel Military (narrow 360)',
         builder: (context) => _counselMilitaryStory(
+          context,
+          game: demoGameForOverlay,
+          narrowViewport: true,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Development (default)',
+        builder: (context) => _counselDevelopmentStory(
+          context,
+          game: demoGameForOverlay,
+        ),
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Development (empty)',
+        builder: (context) {
+          final game = _counselEmptyAdviceGame();
+          return _counselDevelopmentStory(context, game: game);
+        },
+      ),
+      WidgetbookUseCase(
+        name: 'Counsel Development (narrow 360)',
+        builder: (context) => _counselDevelopmentStory(
           context,
           game: demoGameForOverlay,
           narrowViewport: true,

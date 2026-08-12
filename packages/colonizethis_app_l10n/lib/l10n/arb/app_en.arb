@@ -5568,6 +5568,53 @@
       }
     }
   },
+  "developmentCounsel_tabDevelopment": "Development",
+  "@developmentCounsel_tabDevelopment": {
+    "description": "Counsel screen Development tab label."
+  },
+  "developmentCounsel_empty": "No pressing development advice this turn.",
+  "@developmentCounsel_empty": {
+    "description": "Counsel Development tab empty state."
+  },
+  "developmentCounsel_action_agree": "Agree",
+  "@developmentCounsel_action_agree": {
+    "description": "Stages one development counsel recommendation."
+  },
+  "developmentCounsel_agreeFailed": "Cannot stage that port work right now — check Engineer availability, materials, and the target tile.",
+  "@developmentCounsel_agreeFailed": {
+    "description": "Shown when development Build port Agree fails re-validation."
+  },
+  "developmentCounsel_title_buildPort": "Build port",
+  "@developmentCounsel_title_buildPort": {
+    "description": "Fallback development Build port counsel card title."
+  },
+  "developmentCounsel_title_buildPortAt": "Build port · {location}",
+  "@developmentCounsel_title_buildPortAt": {
+    "description": "Development Build port counsel card title with province/tile location.",
+    "placeholders": {
+      "location": { "type": "String" }
+    }
+  },
+  "developmentCounsel_reason_coastalPort_brief": "A seaboard port would serve this coast.",
+  "@developmentCounsel_reason_coastalPort_brief": {
+    "description": "Brief development counsel reason for baseline coastal ports."
+  },
+  "developmentCounsel_reason_resourceCoast_brief": "Resource coast — a port would move extraction overseas.",
+  "@developmentCounsel_reason_resourceCoast_brief": {
+    "description": "Brief development counsel reason for resource-coast ports."
+  },
+  "developmentCounsel_reason_newWorldCoast_brief": "New World coast — a port opens overseas linkage.",
+  "@developmentCounsel_reason_newWorldCoast_brief": {
+    "description": "Brief development counsel reason for New World coastal ports."
+  },
+  "developmentCounsel_reason_overseasLinkage_brief": "Overseas linkage — a port would reconnect unlinked development.",
+  "@developmentCounsel_reason_overseasLinkage_brief": {
+    "description": "Brief development counsel reason for overseas-linkage ports."
+  },
+  "development_counsel": "Counsel",
+  "@development_counsel": {
+    "description": "Development panel header button opening Development Counsel."
+  },
   "military_units_counsel": "Counsel",
   "@military_units_counsel": {
     "description": "Military Units panel header button opening Military Counsel."
