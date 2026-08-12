@@ -1,5 +1,6 @@
 // Physical line ratchet for colonizethis_models lib source
-// (`repo.models_lib_physical_file_size`). Refs #4136 Slice A.
+// (`repo.models_lib_physical_file_size`). Refs #4136 Slice A; wave-3 ceiling
+// 400 → 300 (#4334).
 //
 // Stricter than `repo.domain_package_source_file_size` (500 physical) and
 // complementary to `repo.models_file_size` (500 NCL). Shrink-only grandfather
@@ -11,8 +12,8 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for models wave-2 post-split target (≤400 physical lines).
-const int modelsLibPhysicalFileSizeCeiling = 400;
+/// Ratchet ceiling for models wave-3 post-split target (≤300 physical lines).
+const int modelsLibPhysicalFileSizeCeiling = 300;
 
 const String _modelsLibRelativePath = 'packages/colonizethis_models/lib';
 

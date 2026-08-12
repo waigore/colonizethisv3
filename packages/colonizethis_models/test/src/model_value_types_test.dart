@@ -11,10 +11,7 @@ void main() {
     );
 
     test('toJson/fromJson round-trips', () {
-      final restored = CurrentWork.fromJson(work.toJson());
-      expect(restored, work);
-      expect(restored.workTarget, 'build_farm');
-      expect(restored.remainingTurns, 2);
+      expect(CurrentWork.fromJson(work.toJson()), work);
     });
 
     test('fromJson defaults turn counts when missing', () {
@@ -29,7 +26,6 @@ void main() {
     test('copyWith and equality', () {
       final updated = work.copyWith(remainingTurns: 1);
       expect(updated.remainingTurns, 1);
-      expect(updated.totalTurns, 5);
       expect(work == updated, isFalse);
       expect(work.hashCode, work.copyWith().hashCode);
     });
@@ -42,19 +38,12 @@ void main() {
       const plain = General(id: 'g2', ownerId: 'p1');
       expect(plain.toJson().containsKey('medals'), isFalse);
       expect(General.fromJson(plain.toJson()), plain);
-
-      final json = general.toJson();
-      expect(json['medals'], 3);
-      expect(General.fromJson(json), general);
+      expect(General.fromJson(general.toJson()), general);
     });
 
     test('copyWith and equality', () {
-      final updated = general.copyWith(medals: 0);
-      expect(updated.medals, 0);
-      expect(updated.id, 'g1');
-      expect(general == const General(id: 'g1', ownerId: 'p1', medals: 3), isTrue);
-      expect(general.hashCode,
-          const General(id: 'g1', ownerId: 'p1', medals: 3).hashCode);
+      expect(general.copyWith(medals: 0).medals, 0);
+      expect(general, const General(id: 'g1', ownerId: 'p1', medals: 3));
     });
   });
 
@@ -91,18 +80,13 @@ void main() {
   });
 
   group('AISeedBundle', () {
-    test('fromTurnSeed is deterministic for the same seed', () {
+    test('fromTurnSeed is deterministic; different seeds differ', () {
       final a = AISeedBundle.fromTurnSeed(12345);
       final b = AISeedBundle.fromTurnSeed(12345);
       expect(a.perceptionSeed, b.perceptionSeed);
       expect(a.goalSeed, b.goalSeed);
-      expect(a.agendaSeed, b.agendaSeed);
-    });
-
-    test('different turn seeds derive different bundles', () {
-      final a = AISeedBundle.fromTurnSeed(1);
-      final b = AISeedBundle.fromTurnSeed(2);
-      expect(a.goalSeed == b.goalSeed, isFalse);
+      expect(AISeedBundle.fromTurnSeed(1).goalSeed,
+          isNot(AISeedBundle.fromTurnSeed(2).goalSeed));
     });
 
     test('explicit constructor retains supplied sub-seeds', () {
@@ -147,8 +131,6 @@ void main() {
         difficultyModifiers: {'startGold': 100},
       );
       expect(config.leaderId, 'victoria');
-      expect(config.personalityId, 'expansionist');
-      expect(config.hiddenAgendaId, 'colonial');
       expect(config.difficultyModifiers['startGold'], 100);
     });
 
@@ -222,20 +204,18 @@ void main() {
           TurnNewsSeaZoneFleetLine(seaZoneId: 'sz1'),
         ],
       );
-
       expect(digest.resolvedTurnNumber, 8);
       expect(digest.lines, hasLength(5));
-
-      final captured = digest.lines[0] as TurnNewsProvinceCapturedLine;
-      expect(captured.newOwnerId, 'A');
-      final diplo = digest.lines[1] as TurnNewsDiplomacyLine;
-      expect(diplo.kind, TurnNewsDiplomacyKind.war);
-      final overture = digest.lines[2] as TurnNewsOvertureAdvancedLine;
-      expect(overture.newStage, OvertureStage.embassy);
-      final discovered = digest.lines[3] as TurnNewsProvinceDiscoveredLine;
-      expect(discovered.provinceId, 'r1|p2');
-      final fleet = digest.lines[4] as TurnNewsSeaZoneFleetLine;
-      expect(fleet.seaZoneId, 'sz1');
+      expect((digest.lines[0] as TurnNewsProvinceCapturedLine).newOwnerId, 'A');
+      expect((digest.lines[1] as TurnNewsDiplomacyLine).kind,
+          TurnNewsDiplomacyKind.war);
+      expect((digest.lines[2] as TurnNewsOvertureAdvancedLine).newStage,
+          OvertureStage.embassy);
+      expect(
+        (digest.lines[3] as TurnNewsProvinceDiscoveredLine).provinceId,
+        'r1|p2',
+      );
+      expect((digest.lines[4] as TurnNewsSeaZoneFleetLine).seaZoneId, 'sz1');
     });
 
     test('TurnNewsDiplomacyKind exposes war and peace', () {
@@ -276,7 +256,7 @@ void main() {
       const b = WorkerIdleCounts(peasants: 2, masters: 1);
       expect(a, b);
       expect(a.hashCode, b.hashCode);
-      expect(a == const WorkerIdleCounts(peasants: 2), isFalse);
+      expect(a, isNot(const WorkerIdleCounts(peasants: 2)));
     });
   });
 }

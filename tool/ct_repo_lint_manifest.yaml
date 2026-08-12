@@ -969,9 +969,16 @@ rules:
     runner: dart
     script: tool/check_models_test_file_size.dart
 
+  - rule_id: repo.models_test_mirrors_lib
+    group: architecture
+    title: colonizethis_models tests must mirror lib/ (no loose Dart sources at the test/ root) (Refs #4334)
+    spec: SPEC/program/repo-lint.md
+    runner: dart
+    script: tool/check_models_test_mirrors_lib.dart
+
   - rule_id: repo.models_lib_physical_file_size
     group: structure
-    title: colonizethis_models lib files must stay at or below 400 physical lines (Refs #4136)
+    title: colonizethis_models lib files must stay at or below 300 physical lines (Refs #4334)
     spec: SPEC/program/dart-file-non-comment-line-size.md
     runner: dart
     script: tool/check_models_lib_physical_file_size.dart
