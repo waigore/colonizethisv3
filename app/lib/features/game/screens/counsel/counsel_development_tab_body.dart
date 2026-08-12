@@ -128,40 +128,75 @@ class CounselDevelopmentRecommendationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleSmall,
-                  ),
-                ),
-                if (recommendation.isHighlight)
-                  Text(
-                    '★',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: EditorialMonoclePalette.accentBright,
-                    ),
-                  ),
-              ],
+            _CounselDevelopmentCardTitleRow(
+              title: title,
+              showStar: recommendation.isHighlight,
+              theme: theme,
             ),
             CtGap.m,
             Text(brief, style: theme.textTheme.bodyMedium),
             CtGap.m,
-            Align(
-              alignment: Alignment.centerRight,
-              child: CtNinePatchButton(
-                key: ValueKey<String>(
-                  'development_counsel_agree_${recommendation.recommendationId}',
-                ),
-                onPressed: agreeEnabled
-                    ? () => callbacks.onAgreeBuildPort!(recommendation)
-                    : null,
-                child: Text(l10n.developmentCounsel_action_agree),
-              ),
+            _CounselDevelopmentAgreeButton(
+              recommendationId: recommendation.recommendationId,
+              agreeLabel: l10n.developmentCounsel_action_agree,
+              onPressed: agreeEnabled
+                  ? () => callbacks.onAgreeBuildPort!(recommendation)
+                  : null,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CounselDevelopmentCardTitleRow extends StatelessWidget {
+  const _CounselDevelopmentCardTitleRow({
+    required this.title,
+    required this.showStar,
+    required this.theme,
+  });
+
+  final String title;
+  final bool showStar;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
+        if (showStar)
+          Text(
+            '★',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: EditorialMonoclePalette.accentBright,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CounselDevelopmentAgreeButton extends StatelessWidget {
+  const _CounselDevelopmentAgreeButton({
+    required this.recommendationId,
+    required this.agreeLabel,
+    required this.onPressed,
+  });
+
+  final String recommendationId;
+  final String agreeLabel;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: CtNinePatchButton(
+        key: ValueKey<String>('development_counsel_agree_$recommendationId'),
+        onPressed: onPressed,
+        child: Text(agreeLabel),
       ),
     );
   }
