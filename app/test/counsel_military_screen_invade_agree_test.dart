@@ -1,5 +1,5 @@
 // Counsel screen Military invade Agree integration (Refs #4307).
-// SPEC/ui/counsel-panel.md — at-war move without declare-war dialog.
+// SPEC/ui/counsel-panel.md — at-war move, peace declare-war confirm, Cancel.
 
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app/config/constants.dart';
@@ -297,6 +297,44 @@ void main() {
       final moves = orders.armyMoveOrdersByPlayerId[human] ?? const [];
       expect(moves, hasLength(1));
       expect(moves.single.destinationProvinceId, _invadeProvince);
+    },
+  );
+
+  testWidgets(
+    'peace invade Agree Cancel leaves drafts unchanged (Refs #4307)',
+    (WidgetTester tester) async {
+      const human = kPanelTestHumanPlayerId;
+      final game = buildCounselMilitaryInvadeScreenGame(atWar: false);
+      final armyId = fieldArmyIdFor(human, _fromProvince);
+      final bus = AppEventBus.create();
+      final container = ProviderContainer(
+        overrides: counselInvadeOverrides(game: game, bus: bus),
+      );
+      addTearDown(container.dispose);
+
+      await pumpCounselMilitaryScreen(
+        tester,
+        container: container,
+        game: game,
+        bus: bus,
+      );
+
+      final agree = invadeAgreeFinder(armyId);
+      expect(agree, findsOneWidget);
+
+      await tester.tap(agree);
+      await pumpSettleCapped(tester);
+
+      expect(find.text('Declare war?'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await pumpSettleCapped(tester);
+
+      expect(find.text('Declare war?'), findsNothing);
+
+      final orders = container.read(currentOrdersProvider);
+      expect(orders.diplomaticOrdersByPlayerId[human], isNull);
+      expect(orders.armyMoveOrdersByPlayerId[human], isNull);
     },
   );
 }
