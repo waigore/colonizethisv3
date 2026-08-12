@@ -10,26 +10,9 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/civilian_build_live_wiring_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 import '../support/planner_test_helpers.dart';
-
-Game _gameWithLeader() => Game(
-  id: 'g-civ-wire',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: const [
-    Player(
-      id: 'gp1',
-      displayName: 'Leader',
-      isHuman: false,
-      treasury: 1000,
-      leaderKey: 'victoria',
-    ),
-  ],
-);
 
 PlayerView _viewWithCivilians(Game game, Map<String, Unit> ownUnitsById) =>
     PlayerView(
@@ -45,7 +28,7 @@ PlayerView _viewWithCivilians(Game game, Map<String, Unit> ownUnitsById) =>
 void main() {
   group('buildCivilianBuildScoringInput (Refs #3793 ACWire1/ACWire2)', () {
     test('ACWire1: returns null when the planner is explicitly disabled', () {
-      final game = _gameWithLeader();
+      final game = civilianBuildLiveWiringGameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       final view = _viewWithCivilians(game, {
         'b1': Unit(
@@ -78,7 +61,7 @@ void main() {
       // ceiling), so the production economy build pass emits civilian builds.
       expect(kCivilianBuildPlannerEnabled, isTrue);
 
-      final game = _gameWithLeader();
+      final game = civilianBuildLiveWiringGameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       final view = _viewWithCivilians(game, {
         'b1': Unit(
@@ -109,7 +92,7 @@ void main() {
     });
 
     test('ACWire2: tallies owned civilian counts, phase, and spy demand', () {
-      final game = _gameWithLeader();
+      final game = civilianBuildLiveWiringGameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       final view = _viewWithCivilians(game, {
         'b1': Unit(
@@ -166,7 +149,7 @@ void main() {
     });
 
     test('slice 9: carries the supplied phaseProgress (hysteresis signal)', () {
-      final game = _gameWithLeader();
+      final game = civilianBuildLiveWiringGameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       final view = _viewWithCivilians(game, const {});
       final ctx = buildTestPlannerContext(
@@ -207,7 +190,7 @@ void main() {
         );
 
     Orders runEconomy({required bool civilianBuildPlannerEnabled}) {
-      final game = _gameWithLeader();
+      final game = civilianBuildLiveWiringGameWithLeader();
       const topology = MapTopology(nodes: [], edges: []);
       // No owned Builders → below minBuilders (2) → min-cap hard floor lifts the
       // Builder into the weighted build pool.

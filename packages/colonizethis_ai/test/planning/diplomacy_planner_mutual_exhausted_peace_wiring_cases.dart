@@ -26,120 +26,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _ownNationId = 'gp4';
-const _enemyNationId = 'gp3';
-
-const _ownOwProvinces = <String>[
-  'oldWorld|gp4_1',
-  'oldWorld|gp4_2',
-  'oldWorld|gp4_3',
-  'oldWorld|gp4_4',
-  'oldWorld|gp4_5',
-  'oldWorld|gp4_6',
-  'oldWorld|gp4_7',
-  'oldWorld|gp4_8',
-];
-
-const _enemyOwProvinces = <String>[
-  'oldWorld|gp3_1',
-  'oldWorld|gp3_2',
-  'oldWorld|gp3_3',
-  'oldWorld|gp3_4',
-  'oldWorld|gp3_5',
-  'oldWorld|gp3_6',
-  'oldWorld|gp3_7',
-  'oldWorld|gp3_8',
-  'oldWorld|gp3_9',
-];
-
-Game _exhaustedStalemateGame({
-  int ownTreasury = 0,
-  int enemyTreasury = 0,
-  List<String> ownRegimentIds = const <String>['u_gp4_a', 'u_gp4_b', 'u_gp4_c'],
-  List<String> enemyRegimentIds = const <String>['u_gp3_a', 'u_gp3_b', 'u_gp3_c'],
-  List<String> extraOwnOwProvinces = const <String>[],
-  List<String> extraEnemyOwProvinces = const <String>[],
-  List<DiplomacyRelation> diplomacyRelations = const <DiplomacyRelation>[
-    DiplomacyRelation(
-      factionId1: _ownNationId,
-      factionId2: _enemyNationId,
-      state: RelationState.atWar,
-      score: 20,
-    ),
-  ],
-  List<Player>? playersOverride,
-}) {
-  final ownerships = <Province>[
-    for (final id in _ownOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _ownNationId),
-    for (final id in extraOwnOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _ownNationId),
-    for (final id in _enemyOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _enemyNationId),
-    for (final id in extraEnemyOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _enemyNationId),
-  ];
-  return Game(
-    id: 'g-2509-mutual-exhausted-stalemate',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 95),
-      oldWorld: RegionData(provinces: ownerships),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: 'army_$_ownNationId',
-          ownerId: _ownNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _ownOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(ownRegimentIds),
-          isHomeArmy: true,
-        ),
-        Army(
-          id: 'army_$_enemyNationId',
-          ownerId: _enemyNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _enemyOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(enemyRegimentIds),
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: playersOverride ??
-        [
-          Player(
-            id: _ownNationId,
-            displayName: 'GP4',
-            isHuman: false,
-            treasury: ownTreasury,
-          ),
-          Player(
-            id: _enemyNationId,
-            displayName: 'GP3',
-            isHuman: false,
-            treasury: enemyTreasury,
-          ),
-        ],
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-AIWorldSnapshot _snapshotForOwn({
-  int ownOw = 8,
-  List<String> atWarWith = const <String>[_enemyNationId],
-}) {
-  return AIWorldSnapshot(
-    playerId: _ownNationId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: ownOw,
-      invadableProvinceIdsSorted: const <String>[],
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
+import '../support/mutual_exhausted_stalemate_test_support.dart';
 
 void registerMutualExhaustedPeaceWiringCases() {
   group('mutual-exhausted stalemate wiring into peace orchestration', () {
@@ -155,7 +42,7 @@ void registerMutualExhaustedPeaceWiringCases() {
         // Trim the enemy base from 9 to 8 so adding the invadable frontier
         // province keeps the enemy at 9 OW (below quota, mutual-plateau peer
         // for this GP at 8 OW).
-        final game = _exhaustedStalemateGame();
+        final game = mutualExhaustedStalemateGame();
         final gameWithInvadable = Game(
           id: 'g-2509-mutual-exhausted-blocker-keep',
           worldState: WorldState(
@@ -163,11 +50,11 @@ void registerMutualExhaustedPeaceWiringCases() {
             oldWorld: RegionData(
               provinces: [
                 for (final p in game.worldState.oldWorld.provinces)
-                  if (p.id != _enemyOwProvinces.last) p,
+                  if (p.id != kMutualExhaustedStalemateEnemyOwProvinces.last) p,
                 const Province(
                   id: 'oldWorld|frontier',
                   regionId: 'oldWorld',
-                  ownerId: _enemyNationId,
+                  ownerId: kMutualExhaustedStalemateEnemyNationId,
                 ),
               ],
             ),
@@ -178,8 +65,8 @@ void registerMutualExhaustedPeaceWiringCases() {
           diplomacyRelations: game.diplomacyRelations,
         );
         final snapshot = AIWorldSnapshot(
-          playerId: _ownNationId,
-          threats: const ThreatSummary(atWarWith: [_enemyNationId]),
+          playerId: kMutualExhaustedStalemateOwnNationId,
+          threats: const ThreatSummary(atWarWith: [kMutualExhaustedStalemateEnemyNationId]),
           opportunities: const OpportunitySummary(),
           conquest: const ConquestSummary(
             oldWorldProvincesOwned: 8,
@@ -196,7 +83,7 @@ void registerMutualExhaustedPeaceWiringCases() {
 
         expect(
           targets,
-          contains(_enemyNationId),
+          contains(kMutualExhaustedStalemateEnemyNationId),
           reason:
               'Mutually-exhausted plateau must peace the GP blocker even when '
               'it owns the sole invadable frontier (Refs #2509).',
@@ -211,7 +98,7 @@ void registerMutualExhaustedPeaceWiringCases() {
         // reject `mutualExhaustedBelowQuotaGpStalematePeaceTargets`, but
         // `nearQuotaHoldPeaceTargets` still peaces mutual-plateau peers on a
         // GP-only cleared frontier (Refs #2509).
-        final game = _exhaustedStalemateGame(
+        final game = mutualExhaustedStalemateGame(
           ownTreasury: kMutualExhaustedGpTreasuryMax + 100,
           enemyTreasury: kMutualExhaustedGpTreasuryMax + 100,
           ownRegimentIds: const [
@@ -242,11 +129,11 @@ void registerMutualExhaustedPeaceWiringCases() {
             oldWorld: RegionData(
               provinces: [
                 for (final p in game.worldState.oldWorld.provinces)
-                  if (p.id != _enemyOwProvinces.last) p,
+                  if (p.id != kMutualExhaustedStalemateEnemyOwProvinces.last) p,
                 const Province(
                   id: 'oldWorld|frontier',
                   regionId: 'oldWorld',
-                  ownerId: _enemyNationId,
+                  ownerId: kMutualExhaustedStalemateEnemyNationId,
                 ),
               ],
             ),
@@ -257,8 +144,8 @@ void registerMutualExhaustedPeaceWiringCases() {
           diplomacyRelations: game.diplomacyRelations,
         );
         final snapshot = AIWorldSnapshot(
-          playerId: _ownNationId,
-          threats: const ThreatSummary(atWarWith: [_enemyNationId]),
+          playerId: kMutualExhaustedStalemateOwnNationId,
+          threats: const ThreatSummary(atWarWith: [kMutualExhaustedStalemateEnemyNationId]),
           opportunities: const OpportunitySummary(),
           conquest: const ConquestSummary(
             oldWorldProvincesOwned: 8,
@@ -286,7 +173,7 @@ void registerMutualExhaustedPeaceWiringCases() {
 
         expect(
           targets,
-          contains(_enemyNationId),
+          contains(kMutualExhaustedStalemateEnemyNationId),
           reason:
               'Mutual-plateau near-quota hold peace applies even without '
               'regiment/treasury exhaustion on a GP-only cleared frontier.',

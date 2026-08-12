@@ -73,10 +73,14 @@ void main() {
         of: find.byType(UnitsPanelShell),
         matching: find.byType(CtActionTextButton),
       );
-      expect(headerButtons, findsOneWidget);
-      final train = tester.widget<CtActionTextButton>(headerButtons.first);
-      expect(train.primary, isTrue);
-      expect(train.label, 'Train');
+      expect(headerButtons, findsNWidgets(2));
+      final train = find.descendant(
+        of: find.byType(UnitsPanelShell),
+        matching: find.widgetWithText(CtActionTextButton, 'Train'),
+      );
+      expect(train, findsOneWidget);
+      final trainButton = tester.widget<CtActionTextButton>(train);
+      expect(trainButton.primary, isTrue);
       expect(find.byType(CtNinePatchButton), findsNothing);
     });
 

@@ -26,140 +26,27 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _ownNationId = 'gp4';
-const _enemyNationId = 'gp3';
-
-const _ownOwProvinces = <String>[
-  'oldWorld|gp4_1',
-  'oldWorld|gp4_2',
-  'oldWorld|gp4_3',
-  'oldWorld|gp4_4',
-  'oldWorld|gp4_5',
-  'oldWorld|gp4_6',
-  'oldWorld|gp4_7',
-  'oldWorld|gp4_8',
-];
-
-const _enemyOwProvinces = <String>[
-  'oldWorld|gp3_1',
-  'oldWorld|gp3_2',
-  'oldWorld|gp3_3',
-  'oldWorld|gp3_4',
-  'oldWorld|gp3_5',
-  'oldWorld|gp3_6',
-  'oldWorld|gp3_7',
-  'oldWorld|gp3_8',
-  'oldWorld|gp3_9',
-];
-
-Game _exhaustedStalemateGame({
-  int ownTreasury = 0,
-  int enemyTreasury = 0,
-  List<String> ownRegimentIds = const <String>['u_gp4_a', 'u_gp4_b', 'u_gp4_c'],
-  List<String> enemyRegimentIds = const <String>['u_gp3_a', 'u_gp3_b', 'u_gp3_c'],
-  List<String> extraOwnOwProvinces = const <String>[],
-  List<String> extraEnemyOwProvinces = const <String>[],
-  List<DiplomacyRelation> diplomacyRelations = const <DiplomacyRelation>[
-    DiplomacyRelation(
-      factionId1: _ownNationId,
-      factionId2: _enemyNationId,
-      state: RelationState.atWar,
-      score: 20,
-    ),
-  ],
-  List<Player>? playersOverride,
-}) {
-  final ownerships = <Province>[
-    for (final id in _ownOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _ownNationId),
-    for (final id in extraOwnOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _ownNationId),
-    for (final id in _enemyOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _enemyNationId),
-    for (final id in extraEnemyOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _enemyNationId),
-  ];
-  return Game(
-    id: 'g-2509-mutual-exhausted-stalemate',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 95),
-      oldWorld: RegionData(provinces: ownerships),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: 'army_$_ownNationId',
-          ownerId: _ownNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _ownOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(ownRegimentIds),
-          isHomeArmy: true,
-        ),
-        Army(
-          id: 'army_$_enemyNationId',
-          ownerId: _enemyNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _enemyOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(enemyRegimentIds),
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: playersOverride ??
-        [
-          Player(
-            id: _ownNationId,
-            displayName: 'GP4',
-            isHuman: false,
-            treasury: ownTreasury,
-          ),
-          Player(
-            id: _enemyNationId,
-            displayName: 'GP3',
-            isHuman: false,
-            treasury: enemyTreasury,
-          ),
-        ],
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-AIWorldSnapshot _snapshotForOwn({
-  int ownOw = 8,
-  List<String> atWarWith = const <String>[_enemyNationId],
-}) {
-  return AIWorldSnapshot(
-    playerId: _ownNationId,
-    threats: ThreatSummary(atWarWith: atWarWith),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: ownOw,
-      invadableProvinceIdsSorted: const <String>[],
-    ),
-    economy: const EconomySummary(),
-    relations: const {},
-  );
-}
-
+import '../support/mutual_exhausted_stalemate_test_support.dart';
 
 void registerMutualExhaustedPeaceTargetsCases() {
   group('mutualExhaustedBelowQuotaGpStalematePeaceTargets', () {
     test('positive: gp3/gp4-like exhausted plateau peaces the peer enemy', () {
-      final game = _exhaustedStalemateGame();
-      final snapshot = _snapshotForOwn();
+      final game = mutualExhaustedStalemateGame();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
         snapshot: snapshot,
       );
 
-      expect(targets, [_enemyNationId]);
+      expect(targets, [kMutualExhaustedStalemateEnemyNationId]);
     });
 
     test('negative: own GP already at observer quota returns empty', () {
-      final game = _exhaustedStalemateGame(
+      final game = mutualExhaustedStalemateGame(
         extraOwnOwProvinces: const ['oldWorld|gp4_9', 'oldWorld|gp4_10'],
       );
-      final snapshot = _snapshotForOwn(ownOw: 10);
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn(ownOw: 10);
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -170,10 +57,10 @@ void registerMutualExhaustedPeaceTargetsCases() {
     });
 
     test('negative: own GP outside stalled OW band returns empty', () {
-      final game = _exhaustedStalemateGame();
+      final game = mutualExhaustedStalemateGame();
       final snapshot = AIWorldSnapshot(
-        playerId: _ownNationId,
-        threats: const ThreatSummary(atWarWith: [_enemyNationId]),
+        playerId: kMutualExhaustedStalemateOwnNationId,
+        threats: const ThreatSummary(atWarWith: [kMutualExhaustedStalemateEnemyNationId]),
         opportunities: const OpportunitySummary(),
         conquest: const ConquestSummary(
           oldWorldProvincesOwned: 0,
@@ -196,7 +83,7 @@ void registerMutualExhaustedPeaceTargetsCases() {
       // `kMutualExhaustedGpStalemateMinOw` (8) OW provinces. The early-game /
       // collapsed-survival case is handled by `criticalWeakGpSurvivalPeaceTargets`,
       // not the mutual-exhausted helper.
-      final base = _exhaustedStalemateGame();
+      final base = mutualExhaustedStalemateGame();
       final reduced = Game(
         id: 'g-2509-mutual-exhausted-floor',
         worldState: WorldState(
@@ -204,7 +91,7 @@ void registerMutualExhaustedPeaceTargetsCases() {
           oldWorld: RegionData(
             provinces: [
               for (final p in base.worldState.oldWorld.provinces)
-                if (p.ownerId != _ownNationId ||
+                if (p.ownerId != kMutualExhaustedStalemateOwnNationId ||
                     int.parse(p.id.split('_').last) <
                         kMutualExhaustedGpStalemateMinOw - 1)
                   p,
@@ -218,7 +105,7 @@ void registerMutualExhaustedPeaceTargetsCases() {
       );
       // Own side now holds 7 OW provinces (< floor 8) but is still otherwise
       // in the stalled band.
-      final snapshot = _snapshotForOwn(ownOw: 7);
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn(ownOw: 7);
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: reduced,
@@ -229,10 +116,10 @@ void registerMutualExhaustedPeaceTargetsCases() {
     });
 
     test('negative: own treasury above ceiling returns empty', () {
-      final game = _exhaustedStalemateGame(
+      final game = mutualExhaustedStalemateGame(
         ownTreasury: kMutualExhaustedGpTreasuryMax + 1,
       );
-      final snapshot = _snapshotForOwn();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -247,8 +134,8 @@ void registerMutualExhaustedPeaceTargetsCases() {
         for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
           'u_gp4_$i',
       ];
-      final game = _exhaustedStalemateGame(ownRegimentIds: tooManyRegiments);
-      final snapshot = _snapshotForOwn();
+      final game = mutualExhaustedStalemateGame(ownRegimentIds: tooManyRegiments);
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -259,10 +146,10 @@ void registerMutualExhaustedPeaceTargetsCases() {
     });
 
     test('negative: enemy treasury above ceiling returns empty', () {
-      final game = _exhaustedStalemateGame(
+      final game = mutualExhaustedStalemateGame(
         enemyTreasury: kMutualExhaustedGpTreasuryMax + 1,
       );
-      final snapshot = _snapshotForOwn();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -277,10 +164,10 @@ void registerMutualExhaustedPeaceTargetsCases() {
         for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
           'u_gp3_$i',
       ];
-      final game = _exhaustedStalemateGame(
+      final game = mutualExhaustedStalemateGame(
         enemyRegimentIds: tooManyEnemyRegiments,
       );
-      final snapshot = _snapshotForOwn();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -291,29 +178,29 @@ void registerMutualExhaustedPeaceTargetsCases() {
     });
 
     test('negative: two GP wars (not sole) returns empty', () {
-      final game = _exhaustedStalemateGame(
+      final game = mutualExhaustedStalemateGame(
         diplomacyRelations: const [
           DiplomacyRelation(
-            factionId1: _ownNationId,
-            factionId2: _enemyNationId,
+            factionId1: kMutualExhaustedStalemateOwnNationId,
+            factionId2: kMutualExhaustedStalemateEnemyNationId,
             state: RelationState.atWar,
             score: 20,
           ),
           DiplomacyRelation(
-            factionId1: _ownNationId,
+            factionId1: kMutualExhaustedStalemateOwnNationId,
             factionId2: 'gp5',
             state: RelationState.atWar,
             score: 20,
           ),
         ],
         playersOverride: const [
-          Player(id: _ownNationId, displayName: 'GP4', isHuman: false),
-          Player(id: _enemyNationId, displayName: 'GP3', isHuman: false),
+          Player(id: kMutualExhaustedStalemateOwnNationId, displayName: 'GP4', isHuman: false),
+          Player(id: kMutualExhaustedStalemateEnemyNationId, displayName: 'GP3', isHuman: false),
           Player(id: 'gp5', displayName: 'GP5', isHuman: false),
         ],
       );
-      final snapshot = _snapshotForOwn(
-        atWarWith: const [_enemyNationId, 'gp5'],
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn(
+        atWarWith: const [kMutualExhaustedStalemateEnemyNationId, 'gp5'],
       );
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
@@ -329,11 +216,11 @@ void registerMutualExhaustedPeaceTargetsCases() {
       // (helper's own-side reads from snapshot). Game-state enemy province
       // count read by `provinceCountOwnedBy` is now 6, so gap = |6-8| = 2 → 1
       // greater than the helper's tolerance, must return empty.
-      final fullGame = _exhaustedStalemateGame();
+      final fullGame = mutualExhaustedStalemateGame();
       final droppedIds = <String>{
-        _enemyOwProvinces[7],
-        _enemyOwProvinces[8],
-        _enemyOwProvinces[6],
+        kMutualExhaustedStalemateEnemyOwProvinces[7],
+        kMutualExhaustedStalemateEnemyOwProvinces[8],
+        kMutualExhaustedStalemateEnemyOwProvinces[6],
       };
       final reducedGame = Game(
         id: 'g-2509-mutual-exhausted-stalemate-gap',
@@ -351,7 +238,7 @@ void registerMutualExhaustedPeaceTargetsCases() {
         players: fullGame.players,
         diplomacyRelations: fullGame.diplomacyRelations,
       );
-      final snapshot = _snapshotForOwn();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final targets = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: reducedGame,
@@ -363,8 +250,8 @@ void registerMutualExhaustedPeaceTargetsCases() {
 
     test('determinism: repeated calls return identical results (must-have #7)',
         () {
-      final game = _exhaustedStalemateGame();
-      final snapshot = _snapshotForOwn();
+      final game = mutualExhaustedStalemateGame();
+      final snapshot = mutualExhaustedStalemateSnapshotForOwn();
 
       final a = mutualExhaustedBelowQuotaGpStalematePeaceTargets(
         game: game,
@@ -379,7 +266,7 @@ void registerMutualExhaustedPeaceTargetsCases() {
         snapshot: snapshot,
       );
 
-      expect(a, [_enemyNationId]);
+      expect(a, [kMutualExhaustedStalemateEnemyNationId]);
       expect(b, a);
       expect(c, a);
     });

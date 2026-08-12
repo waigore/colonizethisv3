@@ -12,121 +12,91 @@ import 'package:colonizethis_ai/src/util/faction_query.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const String _gp1 = 'gp1';
-const String _minorA = 'minorA';
-const String _minorB = 'minorB';
-const String _tribeA = 'tribeA';
-const String _tribeB = 'tribeB';
-
-/// Minimal `Game` scaffold with deterministic minor-nation and tribe
-/// rosters; province / world state details are irrelevant for these
-/// predicates.
-Game _game({
-  List<MinorNation> minorNations = const [
-    MinorNation(id: _minorA, displayName: 'Minor A'),
-    MinorNation(id: _minorB, displayName: 'Minor B'),
-  ],
-  List<Tribe> tribes = const [
-    Tribe(id: _tribeA, displayName: 'Tribe A'),
-    Tribe(id: _tribeB, displayName: 'Tribe B'),
-  ],
-}) {
-  return Game(
-    id: 'g-faction-query',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 1, phase: TurnPhase.orders),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-    ),
-    players: const [Player(id: _gp1, displayName: 'GP1', isHuman: false)],
-    minorNations: minorNations,
-    tribes: tribes,
-  );
-}
+import '../support/faction_query_test_support.dart';
 
 void main() {
   group('isMinorFaction', () {
     test('true for ids matching a MinorNation entry', () {
-      final game = _game();
-      expect(isMinorFaction(game, _minorA), isTrue);
-      expect(isMinorFaction(game, _minorB), isTrue);
+      final game = factionQueryGame();
+      expect(isMinorFaction(game, kFactionQueryMinorA), isTrue);
+      expect(isMinorFaction(game, kFactionQueryMinorB), isTrue);
     });
 
     test('false for tribe ids', () {
-      final game = _game();
-      expect(isMinorFaction(game, _tribeA), isFalse);
-      expect(isMinorFaction(game, _tribeB), isFalse);
+      final game = factionQueryGame();
+      expect(isMinorFaction(game, kFactionQueryTribeA), isFalse);
+      expect(isMinorFaction(game, kFactionQueryTribeB), isFalse);
     });
 
     test('false for player ids and unknown ids', () {
-      final game = _game();
-      expect(isMinorFaction(game, _gp1), isFalse);
+      final game = factionQueryGame();
+      expect(isMinorFaction(game, kFactionQueryGp1), isFalse);
       expect(isMinorFaction(game, 'no-such-faction'), isFalse);
       expect(isMinorFaction(game, ''), isFalse);
     });
 
     test('false on an empty minor-nation roster', () {
-      final game = _game(minorNations: const []);
-      expect(isMinorFaction(game, _minorA), isFalse);
+      final game = factionQueryGame(minorNations: const []);
+      expect(isMinorFaction(game, kFactionQueryMinorA), isFalse);
     });
   });
 
   group('isTribeFaction', () {
     test('true for ids matching a Tribe entry', () {
-      final game = _game();
-      expect(isTribeFaction(game, _tribeA), isTrue);
-      expect(isTribeFaction(game, _tribeB), isTrue);
+      final game = factionQueryGame();
+      expect(isTribeFaction(game, kFactionQueryTribeA), isTrue);
+      expect(isTribeFaction(game, kFactionQueryTribeB), isTrue);
     });
 
     test('false for minor-nation ids', () {
-      final game = _game();
-      expect(isTribeFaction(game, _minorA), isFalse);
-      expect(isTribeFaction(game, _minorB), isFalse);
+      final game = factionQueryGame();
+      expect(isTribeFaction(game, kFactionQueryMinorA), isFalse);
+      expect(isTribeFaction(game, kFactionQueryMinorB), isFalse);
     });
 
     test('false for player ids and unknown ids', () {
-      final game = _game();
-      expect(isTribeFaction(game, _gp1), isFalse);
+      final game = factionQueryGame();
+      expect(isTribeFaction(game, kFactionQueryGp1), isFalse);
       expect(isTribeFaction(game, 'no-such-faction'), isFalse);
       expect(isTribeFaction(game, ''), isFalse);
     });
 
     test('false on an empty tribe roster', () {
-      final game = _game(tribes: const []);
-      expect(isTribeFaction(game, _tribeA), isFalse);
+      final game = factionQueryGame(tribes: const []);
+      expect(isTribeFaction(game, kFactionQueryTribeA), isFalse);
     });
   });
 
   group('isMinorOrTribeFaction', () {
     test('true for ids matching a MinorNation entry', () {
-      final game = _game();
-      expect(isMinorOrTribeFaction(game, _minorA), isTrue);
-      expect(isMinorOrTribeFaction(game, _minorB), isTrue);
+      final game = factionQueryGame();
+      expect(isMinorOrTribeFaction(game, kFactionQueryMinorA), isTrue);
+      expect(isMinorOrTribeFaction(game, kFactionQueryMinorB), isTrue);
     });
 
     test('true for ids matching a Tribe entry', () {
-      final game = _game();
-      expect(isMinorOrTribeFaction(game, _tribeA), isTrue);
-      expect(isMinorOrTribeFaction(game, _tribeB), isTrue);
+      final game = factionQueryGame();
+      expect(isMinorOrTribeFaction(game, kFactionQueryTribeA), isTrue);
+      expect(isMinorOrTribeFaction(game, kFactionQueryTribeB), isTrue);
     });
 
     test('false for player ids, empty ids, and unknown ids', () {
-      final game = _game();
-      expect(isMinorOrTribeFaction(game, _gp1), isFalse);
+      final game = factionQueryGame();
+      expect(isMinorOrTribeFaction(game, kFactionQueryGp1), isFalse);
       expect(isMinorOrTribeFaction(game, ''), isFalse);
       expect(isMinorOrTribeFaction(game, 'no-such-faction'), isFalse);
     });
 
     test('false on a game with no minors and no tribes', () {
-      final game = _game(minorNations: const [], tribes: const []);
-      expect(isMinorOrTribeFaction(game, _minorA), isFalse);
-      expect(isMinorOrTribeFaction(game, _tribeA), isFalse);
+      final game = factionQueryGame(minorNations: const [], tribes: const []);
+      expect(isMinorOrTribeFaction(game, kFactionQueryMinorA), isFalse);
+      expect(isMinorOrTribeFaction(game, kFactionQueryTribeA), isFalse);
     });
 
     test('deterministic — repeated calls return the same result', () {
-      final game = _game();
-      final first = isMinorOrTribeFaction(game, _minorA);
-      final second = isMinorOrTribeFaction(game, _minorA);
+      final game = factionQueryGame();
+      final first = isMinorOrTribeFaction(game, kFactionQueryMinorA);
+      final second = isMinorOrTribeFaction(game, kFactionQueryMinorA);
       expect(first, equals(second));
     });
   });

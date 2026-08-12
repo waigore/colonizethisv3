@@ -1544,6 +1544,57 @@ abstract class AppLocalizations {
   /// Brief trade counsel reason for F10 speculative bids.
   String get tradeCounsel_reason_speculativeInventory_brief;
 
+  /// Counsel screen Military tab label.
+  String get militaryCounsel_tabMilitary;
+
+  /// Counsel Military tab empty state.
+  String get militaryCounsel_empty;
+
+  /// Stages one military counsel recommendation.
+  String get militaryCounsel_action_agree;
+
+  /// Shown when military train Agree fails re-validation.
+  String get militaryCounsel_trainAgreeFailed;
+
+  /// Shown when military invade Agree fails validation.
+  String get militaryCounsel_invadeAgreeFailed;
+
+  /// Fallback military train counsel card title.
+  String get militaryCounsel_title_train;
+
+  /// Military train counsel card title.
+  String militaryCounsel_title_trainUnit(String unit, int count);
+
+  /// Fallback military invade counsel card title.
+  String get militaryCounsel_title_invade;
+
+  /// Military invade counsel card title with army id.
+  String militaryCounsel_title_invadeArmy(String army, String province);
+
+  /// Owner line on invade counsel cards.
+  String militaryCounsel_ownerLine(String owner);
+
+  /// Train counsel cost line when no material inputs.
+  String get militaryCounsel_cost_noMaterials;
+
+  /// Train counsel affordability summary.
+  String militaryCounsel_costSummary(int treasury, String materials, int peasants);
+
+  /// Brief military counsel reason for train recommendations.
+  String get militaryCounsel_reason_affordableTrain_brief;
+
+  /// Brief military counsel reason for at-war invasions.
+  String get militaryCounsel_reason_atWarInvasion_brief;
+
+  /// Brief military counsel reason for declare-war invasions.
+  String get militaryCounsel_reason_declareWarInvasion_brief;
+
+  /// Accessibility label for Train Military dialog counsel star.
+  String militaryCounsel_trainStarSemantic(String brief);
+
+  /// Military Units panel header button opening Military Counsel.
+  String get military_units_counsel;
+
   /// Trade Market header button opening Trade Counsel.
   String get tradeMarket_counsel;
 

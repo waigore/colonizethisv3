@@ -28,6 +28,7 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
     required this.onDecrement,
     this.roleLabel,
     this.capabilityLine,
+    this.counselStar,
     this.ongoingCostLine,
   });
 
@@ -58,6 +59,9 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
 
   /// Optional one-line capability gist (cargo holds or combat role).
   final String? capabilityLine;
+
+  /// Optional Military Counsel star (train military dialog only).
+  final Widget? counselStar;
 
   /// Optional ongoing ownership cost (e.g. food upkeep per turn).
   final String? ongoingCostLine;
@@ -92,7 +96,17 @@ class CommodityCostTrainDialogUnitRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TrainDialogUnitNameLine(name: displayName, isLocked: isLocked),
+        Row(
+          children: [
+            Expanded(
+              child: TrainDialogUnitNameLine(
+                name: displayName,
+                isLocked: isLocked,
+              ),
+            ),
+            if (counselStar != null) counselStar!,
+          ],
+        ),
         if (roleLabel != null && capabilityLine != null) ...[
           const SizedBox(height: 2),
           _buildRoleCapabilityLine(l10n),

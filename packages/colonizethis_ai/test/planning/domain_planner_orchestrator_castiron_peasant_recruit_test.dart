@@ -9,38 +9,10 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
 import '../support/domain_planner_test_fake_api.dart';
+import '../support/economy_satellite_test_support.dart';
 import '../support/planner_test_helpers.dart';
 
-const _nationId = 'gp_seller';
-
-Game _sellerGame({int fabricHeld = 2}) {
-  return Game(
-    id: 'g-peasant-recruit',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 40),
-      oldWorld: RegionData(
-        provinces: [
-          for (var i = 0; i < 5; i++)
-            Province(
-              id: 'oldWorld|p$i',
-              regionId: kRegionOldWorld,
-              ownerId: _nationId,
-            ),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(
-        id: _nationId,
-        displayName: 'Seller',
-        isHuman: false,
-        treasury: cheapestRegimentBuildTreasuryCost(),
-        stockpile: Stockpile(quantities: {'fabric': fabricHeld}),
-      ),
-    ],
-  );
-}
+const _nationId = economyCastIronSellerNationId;
 
 void main() {
   group(
@@ -57,7 +29,7 @@ void main() {
       test(
         'emits peasant recruit when expand economy flag is set',
         () {
-          final game = _sellerGame();
+          final game = economyCastIronSellerGame();
           final view = buildPlayerView(game, topology, _nationId);
           final snapshot = AIWorldSnapshot.fromPlayerView(
             view,
@@ -103,7 +75,7 @@ void main() {
       test(
         'does not emit peasant recruit when fabric is below recruit cost',
         () {
-          final game = _sellerGame(fabricHeld: 0);
+          final game = economyCastIronSellerGame(fabricHeld: 0);
           final view = buildPlayerView(game, topology, _nationId);
           final snapshot = AIWorldSnapshot.fromPlayerView(
             view,
@@ -150,7 +122,7 @@ void main() {
       test(
         'does not emit peasant recruit when flag is false',
         () {
-          final game = _sellerGame();
+          final game = economyCastIronSellerGame();
           final view = buildPlayerView(game, topology, _nationId);
           final snapshot = AIWorldSnapshot.fromPlayerView(
             view,

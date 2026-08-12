@@ -52,103 +52,16 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/domain_planner_develop_nw_purchase_suppression_test_support.dart';
 import '../support/domain_planner_test_fake_api.dart';
 
-const String _nationId = 'gp1';
-const String _owProvince = 'oldWorld|home';
-const String _nwOwnedProvince = 'newWorld|owned';
-const String _nwTribeProvince = 'newWorld|tribe';
-const String _owTile = '$_owProvince|0|0';
-const String _nwOwnedTile = '$_nwOwnedProvince|0|0';
-const String _nwTribeTile = '$_nwTribeProvince|0|0';
-
-/// Game with one OW Builder, one NW Builder (in a GP-owned NW province), and
-/// one NW Merchant (in a tribe-owned NW province). Each unit sits on a
-/// deterministic tile so the candidate keys in the fake suggestion API resolve
-/// unambiguously. Phase selection is driven entirely by the snapshot the
-/// caller passes to `runDomainPlanners`.
-Game _developScenarioGame() {
-  return Game(
-    id: 'g-2509-develop-nw-purchase-suppress',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 140),
-      oldWorld: RegionData(
-        provinces: const [
-          Province(id: _owProvince, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-        units: [
-          Unit(
-            id: 'b_ow',
-            type: kUnitTypeBuilder,
-            ownerId: _nationId,
-            locationProvinceId: _owProvince,
-            tileKey: _owTile,
-          ),
-        ],
-      ),
-      newWorld: RegionData(
-        provinces: const [
-          Province(
-            id: _nwOwnedProvince,
-            regionId: 'newWorld',
-            ownerId: _nationId,
-          ),
-          Province(
-            id: _nwTribeProvince,
-            regionId: 'newWorld',
-            ownerId: 'tribe1',
-          ),
-        ],
-        units: [
-          Unit(
-            id: 'b_nw',
-            type: kUnitTypeBuilder,
-            ownerId: _nationId,
-            locationProvinceId: _nwOwnedProvince,
-            tileKey: _nwOwnedTile,
-          ),
-          Unit(
-            id: 'm_nw',
-            type: kUnitTypeMerchant,
-            ownerId: _nationId,
-            locationProvinceId: _nwTribeProvince,
-            tileKey: _nwTribeTile,
-          ),
-        ],
-      ),
-      playerVisibilityByTile: const {
-        _nationId: {
-          _owTile: 'fullyVisible',
-          _nwOwnedTile: 'fullyVisible',
-          _nwTribeTile: 'fullyVisible',
-        },
-      },
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          _owProvince: [_owTile],
-        },
-        'newWorld': {
-          _nwOwnedProvince: [_nwOwnedTile],
-          _nwTribeProvince: [_nwTribeTile],
-        },
-      },
-      resourceByTileKey: const {
-        _owTile: 'grain',
-        _nwOwnedTile: 'grain',
-        _nwTribeTile: 'grain',
-      },
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP',
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-    ],
-    tribes: const [Tribe(id: 'tribe1', displayName: 'T1')],
-  );
-}
+const String _nationId = kDevelopNwPurchaseSuppressionNationId;
+const String _owProvince = kDevelopNwPurchaseSuppressionOwProvince;
+const String _nwOwnedProvince = kDevelopNwPurchaseSuppressionNwOwnedProvince;
+const String _nwTribeProvince = kDevelopNwPurchaseSuppressionNwTribeProvince;
+const String _owTile = kDevelopNwPurchaseSuppressionOwTile;
+const String _nwOwnedTile = kDevelopNwPurchaseSuppressionNwOwnedTile;
+const String _nwTribeTile = kDevelopNwPurchaseSuppressionNwTribeTile;
 
 const FakeOrderSuggestionAPIForDomainPlannerTests _mixedRegionWorkApi =
     FakeOrderSuggestionAPIForDomainPlannerTests(
@@ -192,7 +105,7 @@ void main() {
     test(
       'DEVELOP drops NW purchase_land but keeps NW + OW build_improvement',
       () {
-        final game = _developScenarioGame();
+        final game = developNwPurchaseSuppressionScenarioGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         // OW quota met (>=10) + no colonial acquisition targets → DEVELOP.
@@ -269,7 +182,7 @@ void main() {
     test(
       'COLONIAL keeps NW purchase_land the DEVELOP filter would drop',
       () {
-        final game = _developScenarioGame();
+        final game = developNwPurchaseSuppressionScenarioGame();
         const topology = MapTopology(nodes: [], edges: []);
         final view = buildPlayerView(game, topology, _nationId);
         // OW quota met (>=10) + visible colonial target → COLONIAL.
@@ -331,7 +244,7 @@ void main() {
     );
 
     test('DEVELOP filter outcome is deterministic for identical inputs', () {
-      final game = _developScenarioGame();
+      final game = developNwPurchaseSuppressionScenarioGame();
       const topology = MapTopology(nodes: [], edges: []);
       final view = buildPlayerView(game, topology, _nationId);
       const snapshot = AIWorldSnapshot(

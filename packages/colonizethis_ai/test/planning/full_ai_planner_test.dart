@@ -4,28 +4,12 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-Game _minimalGame({
-  required List<Player> players,
-  Map<String, bool> aiControlByGpId = const {},
-  Map<String, String> hiddenAgendaByGpId = const {},
-}) {
-  return Game(
-    id: 'g1',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(provinces: [], units: []),
-      newWorld: RegionData(provinces: [], units: []),
-    ),
-    players: players,
-    aiControlByGpId: aiControlByGpId,
-    hiddenAgendaByGpId: hiddenAgendaByGpId,
-  );
-}
+import '../support/full_ai_planner_test_support.dart';
 
 void main() {
   group('generateOrdersForPlayerFullAI', () {
     test('unknown player id returns empty orders and default economy plan', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [Player(id: 'gp1', displayName: 'AI', isHuman: false)],
       );
       const topology = MapTopology(nodes: [], edges: []);
@@ -36,7 +20,7 @@ void main() {
     });
 
     test('non-AI-controlled player returns empty', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
         aiControlByGpId: const {'gp1': false},
       );
@@ -47,7 +31,7 @@ void main() {
     });
 
     test('AI player runs strategic path with default suggestion API', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [
           Player(
             id: 'gp1',
@@ -72,7 +56,7 @@ void main() {
     });
 
     test('passes tileMapByRegion, explicit API, and callbacks through', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [
           Player(
             id: 'gp1',
@@ -101,7 +85,7 @@ void main() {
 
   group('generateOrdersForGameFullAI', () {
     test('no AI players yields empty aggregate orders and economy map', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [Player(id: 'gp1', displayName: 'Human', isHuman: true)],
       );
       const topology = MapTopology(nodes: [], edges: []);
@@ -111,7 +95,7 @@ void main() {
     });
 
     test('aggregates one AI player', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [
           Player(
             id: 'gp1',
@@ -128,7 +112,7 @@ void main() {
     });
 
     test('onStagedPlannerProgress emits A–G sequence per AI player', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [
           Player(
             id: 'gp1',
@@ -160,7 +144,7 @@ void main() {
     });
 
     test('includes schema-shaped AI trace section for full AI player', () {
-      final game = _minimalGame(
+      final game = fullAiPlannerMinimalGame(
         players: const [
           Player(
             id: 'gp1',
@@ -212,7 +196,7 @@ void main() {
   // the per-player trace (overridden goal weight + profileId). Mirrors the app
   // wiring (resolveAiProfilesForGame -> generateOrdersForGameFullAI). Refs #3444.
   group('tuned AI profile overrides reach the AI trace (Refs #3444)', () {
-    Game aiGame() => _minimalGame(
+    Game aiGame() => fullAiPlannerMinimalGame(
       players: const [
         Player(
           id: 'gp1',
