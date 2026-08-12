@@ -1,6 +1,5 @@
 import 'package:colonizethis_app/app.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/core/services/app_event_handler/app_event_handler_scope.dart';
 import 'package:colonizethis_app/features/game/widgets/units/military/military_units_panel.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
@@ -20,6 +19,14 @@ void main() {
   suppressLogsForTests();
 
   final harness = TrainMilitaryDialogTestHarness();
+
+  setUpAll(() async {
+    await harness.ensureHandlerHive();
+  });
+
+  tearDownAll(() async {
+    await harness.closeHandlerHive();
+  });
 
   testWidgets('dialog shows existing military orders in steppers on open', (
     WidgetTester tester,
@@ -138,32 +145,18 @@ void main() {
   ) async {
     final richGame = harness.gameWithMilitaryResources();
     await tester.pumpWidget(
-      buildAppShell(
-        overrides: [
-          currentGameProvider.overrideWith(() => CurrentGameNotifier(richGame)),
-          currentOrdersProvider.overrideWith(
-            () => CurrentOrdersNotifier(const Orders()),
-          ),
-          appEventBusProvider.overrideWith((ref) {
-            final bus = AppEventBus.create();
-            ref.onDispose(bus.dispose);
-            return bus;
-          }),
-        ],
-        navigatorKey: appNavigatorKey,
-        shellWrapper: (app) => AppEventHandlerScope(child: app),
-        child: Scaffold(
-          body: Consumer(
-            builder: (context, ref, _) {
-              return MilitaryUnitsPanel(
-                game: richGame,
-                humanPlayerId: harness.humanPlayerId,
-                bus: ref.watch(appEventBusProvider),
-                topology: const MapTopology(),
-                draftOrders: ref.watch(currentOrdersProvider),
-              );
-            },
-          ),
+      harness.handlerShell(
+        panelGame: richGame,
+        body: Consumer(
+          builder: (context, ref, _) {
+            return MilitaryUnitsPanel(
+              game: richGame,
+              humanPlayerId: harness.humanPlayerId,
+              bus: ref.watch(appEventBusProvider),
+              topology: const MapTopology(),
+              draftOrders: ref.watch(currentOrdersProvider),
+            );
+          },
         ),
       ),
     );
