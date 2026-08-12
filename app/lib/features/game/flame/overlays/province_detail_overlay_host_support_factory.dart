@@ -54,6 +54,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
   final buildImprovementState = actionStates.buildImprovement;
   final buildRoadState = actionStates.buildRoad;
   final buildFortState = actionStates.buildFort;
+  final buildPortState = actionStates.buildPort;
   final purchaseLandState = actionStates.purchaseLand;
   final upgradeTownState = GameMapAreaStateLogic.provinceUpgradeTownActionState(
     game: game,
@@ -79,6 +80,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     buildImprovementEnabled: buildImprovementState.enabled,
     buildRoadEnabled: buildRoadState.enabled,
     buildFortEnabled: buildFortState.enabled,
+    buildPortEnabled: buildPortState.enabled,
     purchaseLandEnabled: purchaseLandState.enabled,
     provinceId: displayId,
     upgradeTownEnabled: upgradeTownState.enabled,
@@ -159,6 +161,9 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     showBuildFortActionIcon: canMutateViaUi && buildFortState.showIcon,
     buildFortActionEnabled: canMutateViaUi && buildFortState.enabled,
     buildFortActionHasEngineerUnits: buildFortState.hasEngineerUnits,
+    showBuildPortActionIcon: canMutateViaUi && buildPortState.showIcon,
+    buildPortActionEnabled: canMutateViaUi && buildPortState.enabled,
+    buildPortActionHasEngineerUnits: buildPortState.hasEngineerUnits,
     showPurchaseLandActionIcon: canMutateViaUi && purchaseLandState.showIcon,
     purchaseLandActionEnabled: canMutateViaUi && purchaseLandState.enabled,
     purchaseLandActionHasMerchantUnits: purchaseLandState.hasMerchantUnits,
@@ -168,6 +173,7 @@ ProvinceSeaZoneDetailOverlay buildProvinceSeaZoneDetailOverlayForPanel({
     onBuildImprovementTap: shortcuts.onBuildImprovementTap,
     onBuildRoadTap: shortcuts.onBuildRoadTap,
     onBuildFortTap: shortcuts.onBuildFortTap,
+    onBuildPortTap: shortcuts.onBuildPortTap,
     onPurchaseLandTap: shortcuts.onPurchaseLandTap,
     showUpgradeTownControl:
         canMutateViaUi && upgradeTownState.showControl,

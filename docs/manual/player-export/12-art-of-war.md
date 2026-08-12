@@ -15,6 +15,12 @@ This chapter covers how an army attacks, how you choose between a swift resoluti
 3. End the turn. When the army finishes in an enemy-controlled province, every regiment in that army attacks together. Great Powers initiate these attacks; Minor Nations and Tribes defend.
 4. An enemy province with no combat-capable defenders can be captured without a battle when your army arrives during a war. Otherwise, the combat phase creates a battle.
 
+### Military Counsel (**Counsel screen** Military tab)
+
+1. Open **Military units panel** and tap **Counsel**, or open **Counsel** from Production or Trade and select the **Military** tab.
+2. Ranked cards suggest affordable train builds (type, count, costs) and invasion targets (army, province, owner, defender intel when known). Home Army is never suggested to march.
+3. **Agree** on a train card queues that many build orders when still valid. **Agree** on an invade card stages the move; declare-war confirmation matches **Move army dialog** when required.
+
 If several attackers reach the same province, they fight in initiative order. The surviving side carries its losses into the next engagement; it does not recover between them.
 
 ### Choosing the combat mode

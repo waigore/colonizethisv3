@@ -121,6 +121,7 @@ List<WidgetbookNode> get provinceOverlayDirectories => [
           buildFortActionHasEngineerUnits: false,
         ),
       ),
+      ...provinceOverlayBuildPortUseCases,
       WidgetbookUseCase(
         name: 'Standalone — tile Purchase land enabled',
         builder: (context) => _provinceOverlayPurchaseLandStory(

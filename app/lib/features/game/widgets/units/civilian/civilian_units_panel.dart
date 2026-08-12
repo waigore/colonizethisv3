@@ -30,6 +30,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
     this.buildImprovementShortcutTargetTileKey,
     this.buildRoadShortcutTargetTileKey,
     this.buildFortShortcutTargetTileKey,
+    this.buildPortShortcutTargetTileKey,
     this.purchaseLandShortcutTargetTileKey,
     this.upgradeTownShortcutTargetTileKey,
     this.readOnly = false,
@@ -84,6 +85,7 @@ class CivilianUnitsPanel extends ConsumerStatefulWidget with GamePanelMixin {
 
   /// Optional selected tile key for immediate engineer build-fort assign flow.
   final String? buildFortShortcutTargetTileKey;
+  final String? buildPortShortcutTargetTileKey;
 
   /// Optional selected tile key for immediate merchant purchase-land assign flow.
   final String? purchaseLandShortcutTargetTileKey;

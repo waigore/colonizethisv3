@@ -1,4 +1,4 @@
-/// Narrow export for Industry, Trade, and Military Counsel ranking (human GP advisor).
+/// Narrow export for Industry, Trade, Military, and Development Counsel ranking.
 library;
 
 export 'package:colonizethis_economy/colonizethis_economy.dart'
@@ -6,6 +6,13 @@ export 'package:colonizethis_economy/colonizethis_economy.dart'
         TradeCounselBookResult,
         TradeCounselReasonKey,
         TradeCounselRecommendation;
+export 'package:colonizethis_orders/src/orders/development_counsel_ranking.dart'
+    show rankDevelopmentCounselRecommendations;
+export 'package:colonizethis_orders/src/orders/development_counsel_types.dart'
+    show
+        DevelopmentCounselReasonKey,
+        DevelopmentCounselRecommendation,
+        DevelopmentCounselRecommendationKind;
 export 'package:colonizethis_orders/src/orders/industry_counsel_core_snapshot.dart'
     show
         industryCounselCoreDesiredOutputByRecipe,

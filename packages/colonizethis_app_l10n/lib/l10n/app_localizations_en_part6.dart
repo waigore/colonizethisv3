@@ -82,4 +82,72 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get commodity_spices => 'Spices';
 
+  @override
+  String get provinceOverlay_tileBuildPortTooltip => 'Build port';
+
+  @override
+  String provinceOverlay_tileBuildPortTooltipWithCost(String costs) {
+    return 'Build port ($costs)';
+  }
+
+  @override
+  String get provinceOverlay_tileBuildPortDisabledNoEngineerTooltip =>
+      'No Engineer available to build port';
+
+  @override
+  String get provinceOverlay_tileBuildPortDisabledTooltip =>
+      'No Engineer can assign port work here this turn';
+
+  @override
+  String provinceOverlay_tileBuildPortDisabledMaterialsTooltip(String reason) {
+    return reason;
+  }
+
+  @override
+  String get provinceOverlay_tilePortStatusNone => 'Port: None';
+
+  @override
+  String get provinceOverlay_tilePortStatusPresent => 'Port: Present';
+
+  @override
+  String get developmentCounsel_tabDevelopment => 'Development';
+
+  @override
+  String get developmentCounsel_empty =>
+      'No pressing development advice this turn.';
+
+  @override
+  String get developmentCounsel_action_agree => 'Agree';
+
+  @override
+  String get developmentCounsel_agreeFailed =>
+      'Cannot stage that port work right now — check Engineer availability, materials, and the target tile.';
+
+  @override
+  String get developmentCounsel_title_buildPort => 'Build port';
+
+  @override
+  String developmentCounsel_title_buildPortAt(String location) {
+    return 'Build port · $location';
+  }
+
+  @override
+  String get developmentCounsel_reason_coastalPort_brief =>
+      'A seaboard port would serve this coast.';
+
+  @override
+  String get developmentCounsel_reason_resourceCoast_brief =>
+      'Resource coast — a port would move extraction overseas.';
+
+  @override
+  String get developmentCounsel_reason_newWorldCoast_brief =>
+      'New World coast — a port opens overseas linkage.';
+
+  @override
+  String get developmentCounsel_reason_overseasLinkage_brief =>
+      'Overseas linkage — a port would reconnect unlinked development.';
+
+  @override
+  String get development_counsel => 'Counsel';
+
 }

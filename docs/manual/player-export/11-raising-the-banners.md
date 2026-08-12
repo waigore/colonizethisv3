@@ -26,7 +26,7 @@ A regiment is buildable only after its unlocking technology is researched; era a
 
 1. Open **Military units panel** from the Military Units toolbar button.
 2. Select **Train** to open **Train military dialog**.
-3. Choose unlocked regiments with the row steppers. The dialog accounts for the combined treasury, materials, and peasant cost of all selected regiments.
+3. Choose unlocked regiments with the row steppers. Each row shows the regiment's **category and combat role** (e.g. melee line, ranged firepower, siege guns) plus **ongoing food upkeep per turn** so you can weigh battlefield role and ownership cost against treasury, materials, and peasant build costs before queuing. The dialog accounts for the combined treasury, materials, and peasant cost of all selected regiments.
 4. Close the dialog to queue the training orders. Each regiment consumes one peasant when training resolves, alongside its treasury and material cost.
 5. After turn resolution, the new regiments enter the **Home Army** at the capital. They do not appear directly in a field army.
 
@@ -51,6 +51,14 @@ On **Military units panel**, the **Generals** strip at the top of the land list 
 5. When the turn resolves, every regiment in that army moves with it. The panel shows its pending destination while the order remains in the draft.
 
 The Home Army has no Move control and cannot leave the capital. Split it first if you need a marching force.
+
+### Military Counsel (**Counsel screen** Military tab)
+
+1. On **Military units panel**, tap **Counsel** in the header to open **Counsel screen** on the **Military** tab.
+2. Review up to three ranked recommendations: **raise** regiment or ship types (with count and cost summary) and **invade** targets (army, province, owner, defender intel when known).
+3. Tap **Agree** on a train card to queue that many build orders when still affordable; otherwise a plain snackbar explains why nothing was staged.
+4. Tap **Agree** on an invade card to stage the army move; when war must be declared first, confirm in the same invasion dialog used by **Move army dialog**.
+5. Empty counsel: “No pressing military advice this turn.” Agree is hidden while turn resolution blocks edits.
 
 ## Counsel
 
