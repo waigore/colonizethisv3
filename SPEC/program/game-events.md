@@ -18,7 +18,7 @@ A single event stream for "what happened in the game" consumable by the Flutter 
 
 ## Event types (contract)
 
-Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use keys/ids only; no UI strings. Province ids in any payload are **prefixed** (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md).
+Events are a union or sealed type (e.g. `GameEvent`) with variants. Payloads use keys/ids only; no UI strings. Province ids in any payload are **prefixed** (`regionId|localId`) per [world-model-identity.md](../game/world-model-identity.md). Implementation keeps sealed variants in one Dart library so pattern-switch exhaustiveness stays sound; multi-file splits would need `part` directives (disallowed under world package lint) or a non-sealed base (Refs #4330).
 
 | Event type           | When emitted                    | Payload (minimal) |
 |----------------------|----------------------------------|-------------------|
