@@ -450,33 +450,6 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
       'Treasury below the research debt floor \u2014 0 RP applied this turn.';
 
   @override
-  String get technologyPanel_rpBreakdownSequentialBlocked =>
-      'Not enough gold remains after earlier research slots \u2014 0 RP applied this turn.';
-
-  @override
-  String technologyPanel_rpBreakdownResidualTreasury(int gold) {
-    return 'Treasury before this slot: \u00a3$gold';
-  }
-
-  @override
-  String technologyPanel_researchTurnFundingSummary(int gold, int rp) {
-    return 'Research this turn: \u2212\u00a3$gold \u00b7 +$rp RP';
-  }
-
-  @override
-  String get technologyPanel_researchTurnFundingEmpty =>
-      'Research this turn: no spend';
-
-  @override
-  String get technologyPanel_goldSequentialBlockedHint =>
-      'Not enough gold left after earlier slots';
-
-  @override
-  String technologyPanel_goldCostAfterEarlierSlots(int gold) {
-    return 'Would cost \u00a3$gold if treasury allowed';
-  }
-
-  @override
   String technologyPanel_rpValue(int rp) {
     return '$rp RP';
   }
