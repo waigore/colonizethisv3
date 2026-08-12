@@ -1,4 +1,4 @@
-/// Narrow export for Industry and Trade Counsel ranking (human GP advisor).
+/// Narrow export for Industry, Trade, and Military Counsel ranking (human GP advisor).
 library;
 
 export 'package:colonizethis_economy/colonizethis_economy.dart'
@@ -12,6 +12,18 @@ export 'package:colonizethis_orders/src/orders/industry_counsel_core_snapshot.da
         mergeIndustryCounselCoreDesiredOutput;
 export 'package:colonizethis_orders/src/orders/industry_counsel_ranking.dart'
     show rankIndustryCounselRecommendations;
+export 'package:colonizethis_orders/src/orders/military_counsel_affordance.dart'
+    show militaryCounselGreedyAffordableBuildCount;
+export 'package:colonizethis_orders/src/orders/military_counsel_ranking.dart'
+    show rankMilitaryCounselRecommendations;
+export 'package:colonizethis_orders/src/orders/military_counsel_types.dart'
+    show
+        MilitaryCounselBuildCostSnapshot,
+        MilitaryCounselInvasionIntelLevel,
+        MilitaryCounselInvasionIntelSummary,
+        MilitaryCounselReasonKey,
+        MilitaryCounselRecommendation,
+        MilitaryCounselRecommendationKind;
 export 'package:colonizethis_orders/src/orders/trade_counsel_emission.dart'
     show emitTradeCounselBook, TradeCounselEmissionInput;
 export 'package:colonizethis_orders/src/orders/trade_counsel_ranking.dart'

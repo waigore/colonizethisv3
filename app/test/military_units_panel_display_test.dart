@@ -1,7 +1,9 @@
 // Tests for MilitaryUnitsPanel. SPEC/ui/military-units-panel.md.
 
+import 'package:colonizethis_app/config/routes.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/flame/map_state/map_location_resolver.dart';
@@ -273,5 +275,51 @@ void main() {
 
       expect(find.textContaining('Status: Idle'), findsOneWidget);
     });
+  });
+
+  group('Counsel entry (Refs #4307)', () {
+    testWidgets(
+      'header Counsel emits NavigateToRouteEvent for Military tab on GAME90001',
+      (WidgetTester tester) async {
+        const playerId = 'gp_counsel_entry';
+        final bus = AppEventBus.create();
+        NavigateToRouteEvent? navigateEvent;
+        bus.on<NavigateToRouteEvent>().listen((event) {
+          navigateEvent = event;
+        });
+
+        final panelGame = buildMilitaryArmyAtLisbonDisplayGame(
+          id: 'counsel_entry',
+          playerId: playerId,
+          armyId: 'army_counsel',
+          units: [
+            Unit(
+              id: 'u_counsel',
+              type: 'musketeers',
+              ownerId: playerId,
+              locationProvinceId: 'oldWorld|lisbon',
+            ),
+          ],
+        );
+
+        await pumpMilitaryPanel(
+          tester,
+          game: panelGame,
+          humanPlayerId: playerId,
+          bus: bus,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('military_units_counsel_button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(navigateEvent, isNotNull);
+        expect(navigateEvent!.route, Routes.counsel);
+        final args = navigateEvent!.arguments as Map<String, Object?>?;
+        expect(args?['counselTab'], 'military');
+        expect(args?['humanPlayerId'], playerId);
+      },
+    );
   });
 }
