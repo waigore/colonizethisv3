@@ -174,13 +174,39 @@ lines) for the split domain packages.
   the workspace, when the System runs `runCheckModelsFileSize`, then the checker
   exits non-zero and reports a stale grandfather entry for that path.
 
-## colonizethis_models 400 physical-line lib gate (Refs #4136)
+## colonizethis_models 300 physical-line lib gate (Refs #4334)
+
+Wave 3 tightens the models lib physical ceiling from **400 → 300** after event
+partitions and aggregate codec extracts (#4334). Every non-generated
+`packages/colonizethis_models/lib/**` Dart file must stay at or below **300**
+physical lines under `repo.models_lib_physical_file_size`, with an empty
+shrink-only grandfather allowlist.
+
+Wave 3 also lands `repo.models_test_mirrors_lib`: zero loose Dart sources at
+`packages/colonizethis_models/test/` root; suites live under mirrored
+subdirectories (`test/src/`, `test/app_events/`, etc.) with `test/support/`
+helpers unchanged.
+
+### Acceptance criteria
+
+- Given every non-generated `packages/colonizethis_models/lib/**/*.dart` file,
+  when `runCheckModelsLibPhysicalFileSize` runs at ceiling **300**, then the
+  checker exits zero with an empty grandfather allowlist.
+
+- Given every Dart source under `packages/colonizethis_models/test/` except
+  `test/support/**`, when `runCheckModelsTestMirrorsLib` runs, then no file
+  sits directly at the `test/` root (each path has at least one subdirectory
+  after `test/`).
+
+## colonizethis_models 400 physical-line lib gate (Refs #4136, superseded by wave 3)
 
 `colonizethis_models` is the shared leaf value-model package consumed by every
-domain package and the app. Wave 2 adds a **stricter 400 physical-line cap** on
+domain package and the app. Wave 2 added a **400 physical-line cap** on
 `packages/colonizethis_models/lib/**` under `repo.models_lib_physical_file_size`,
 tighter than `repo.domain_package_source_file_size` (500 physical) for split
-domain packages and complementary to `repo.models_file_size` (500 NCL).
+domain packages and complementary to `repo.models_file_size` (500 NCL). Wave 3
+(#4334) ratchets this ceiling to **300**; the wave-2 section below documents
+the historical gate and slice progress.
 
 | Artifact | Role |
 |----------|------|

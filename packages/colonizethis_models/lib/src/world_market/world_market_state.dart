@@ -2,11 +2,12 @@
 ///
 /// First-class library (Refs #4068 Slice C). SPEC/game/world-market.md.
 
-import '../model_collection_equality.dart';
 import '../stockpile.dart';
 import 'market_activity.dart';
 import 'overseas_profit_credit_record.dart';
 import 'trade_order.dart';
+import 'world_market_state_equality.dart';
+import 'world_market_state_serialization.dart';
 
 /// Aggregate market state stored on `Game` between turns.
 ///
@@ -94,203 +95,14 @@ class WorldMarketState {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'prices': prices,
-    'lastTurnActivity': {
-      for (final entry in lastTurnActivity.entries)
-        entry.key: entry.value.toJson(),
-    },
-    if (carryForwardOffersByFactionId.isNotEmpty)
-      'carryForwardOffersByFactionId': _serializeCarryForward(
-        carryForwardOffersByFactionId,
-      ),
-    if (carryForwardBidsByFactionId.isNotEmpty)
-      'carryForwardBidsByFactionId': _serializeCarryForward(
-        carryForwardBidsByFactionId,
-      ),
-    if (completedTradePairKeys.isNotEmpty)
-      'completedTradePairKeys': completedTradePairKeys.toList(),
-    if (lastTurnOverseasProfitCreditsByGpId.isNotEmpty)
-      'lastTurnOverseasProfitCreditsByGpId':
-          _serializeOverseasProfitCredits(lastTurnOverseasProfitCreditsByGpId),
-  };
+  Map<String, dynamic> toJson() => encodeWorldMarketStateToJson(this);
 
-  static WorldMarketState fromJson(Map<String, dynamic> json) {
-    final pricesRaw = json['prices'];
-    final prices = <CommodityId, int>{};
-    if (pricesRaw is Map<dynamic, dynamic>) {
-      pricesRaw.forEach((key, value) {
-        final id = key.toString();
-        final intValue = _coerceToFlooredInt(value);
-        if (intValue == null) return;
-        prices[id] = intValue;
-      });
-    }
-    final actRaw = json['lastTurnActivity'];
-    final activity = <CommodityId, MarketActivity>{};
-    if (actRaw is Map<dynamic, dynamic>) {
-      actRaw.forEach((key, value) {
-        if (value is Map<dynamic, dynamic>) {
-          activity[key.toString()] = MarketActivity.fromJson(
-            Map<String, dynamic>.from(value),
-          );
-        }
-      });
-    }
-    return WorldMarketState(
-      prices: Map.unmodifiable(prices),
-      lastTurnActivity: Map.unmodifiable(activity),
-      carryForwardOffersByFactionId: _deserializeCarryForward(
-        json['carryForwardOffersByFactionId'],
-      ),
-      carryForwardBidsByFactionId: _deserializeCarryForward(
-        json['carryForwardBidsByFactionId'],
-      ),
-      completedTradePairKeys: _deserializeCompletedTradePairKeys(
-        json['completedTradePairKeys'],
-      ),
-      lastTurnOverseasProfitCreditsByGpId:
-          _deserializeOverseasProfitCredits(
-            json['lastTurnOverseasProfitCreditsByGpId'],
-          ),
-    );
-  }
-
-  /// Coerces a JSON-decoded price value to a non-negative floored int.
-  /// Supports the legacy `double` storage and any string fallback that
-  /// stringified the price (defensive; new saves write int directly via
-  /// `toJson`). Returns `null` for unparseable values so the caller can
-  /// drop the entry entirely.
-  static int? _coerceToFlooredInt(Object? value) {
-    if (value is int) {
-      return value < 0 ? 0 : value;
-    }
-    if (value is num) {
-      final floored = value.floor();
-      return floored < 0 ? 0 : floored;
-    }
-    final parsed = double.tryParse(value?.toString() ?? '');
-    if (parsed == null) return null;
-    final floored = parsed.floor();
-    return floored < 0 ? 0 : floored;
-  }
+  static WorldMarketState fromJson(Map<String, dynamic> json) =>
+      decodeWorldMarketStateFromJson(json);
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is WorldMarketState &&
-          runtimeType == other.runtimeType &&
-          modelMapEquals(prices, other.prices) &&
-          modelMapEquals(lastTurnActivity, other.lastTurnActivity) &&
-          modelMapOfListEquals(
-            carryForwardOffersByFactionId,
-            other.carryForwardOffersByFactionId,
-          ) &&
-          modelMapOfListEquals(
-            carryForwardBidsByFactionId,
-            other.carryForwardBidsByFactionId,
-          ) &&
-          modelSetEquals(completedTradePairKeys, other.completedTradePairKeys) &&
-          modelMapOfListEquals(
-            lastTurnOverseasProfitCreditsByGpId,
-            other.lastTurnOverseasProfitCreditsByGpId,
-          );
+  bool operator ==(Object other) => worldMarketStateEquals(this, other);
 
   @override
-  int get hashCode {
-    final priceEntries = prices.entries
-        .map((e) => Object.hash(e.key, e.value))
-        .toList(growable: false);
-    final activityEntries = lastTurnActivity.entries
-        .map((e) => Object.hash(e.key, e.value))
-        .toList(growable: false);
-    return Object.hash(
-      Object.hashAll(priceEntries),
-      Object.hashAll(activityEntries),
-      Object.hashAll(carryForwardOffersByFactionId.keys),
-      Object.hashAll(carryForwardBidsByFactionId.keys),
-      Object.hashAll(completedTradePairKeys),
-      Object.hashAll(lastTurnOverseasProfitCreditsByGpId.keys),
-    );
-  }
-}
-
-Map<String, List<Map<String, dynamic>>> _serializeOverseasProfitCredits(
-  Map<String, List<OverseasProfitCreditRecord>> map,
-) {
-  final result = <String, List<Map<String, dynamic>>>{};
-  for (final entry in map.entries) {
-    result[entry.key] = entry.value.map((r) => r.toJson()).toList();
-  }
-  return result;
-}
-
-Map<String, List<OverseasProfitCreditRecord>> _deserializeOverseasProfitCredits(
-  Object? raw,
-) {
-  if (raw is! Map<dynamic, dynamic>) {
-    return const <String, List<OverseasProfitCreditRecord>>{};
-  }
-  final result = <String, List<OverseasProfitCreditRecord>>{};
-  raw.forEach((key, value) {
-    if (value is List<dynamic>) {
-      final records = <OverseasProfitCreditRecord>[];
-      for (final entry in value) {
-        if (entry is Map<dynamic, dynamic>) {
-          records.add(
-            OverseasProfitCreditRecord.fromJson(
-              Map<String, dynamic>.from(entry),
-            ),
-          );
-        }
-      }
-      if (records.isNotEmpty) {
-        result[key.toString()] = List<OverseasProfitCreditRecord>.unmodifiable(
-          records,
-        );
-      }
-    }
-  });
-  return Map.unmodifiable(result);
-}
-
-Set<String> _deserializeCompletedTradePairKeys(Object? raw) {
-  if (raw is! List<dynamic>) return const <String>{};
-  final result = <String>{};
-  for (final entry in raw) {
-    final key = entry?.toString();
-    if (key != null && key.isNotEmpty) result.add(key);
-  }
-  return Set<String>.unmodifiable(result);
-}
-
-Map<String, List<Map<String, dynamic>>> _serializeCarryForward(
-  Map<String, List<TradeOrder>> map,
-) {
-  final result = <String, List<Map<String, dynamic>>>{};
-  for (final entry in map.entries) {
-    result[entry.key] = entry.value.map((o) => o.toJson()).toList();
-  }
-  return result;
-}
-
-Map<String, List<TradeOrder>> _deserializeCarryForward(Object? raw) {
-  if (raw is! Map<dynamic, dynamic>) {
-    return const <String, List<TradeOrder>>{};
-  }
-  final result = <String, List<TradeOrder>>{};
-  raw.forEach((key, value) {
-    if (value is List<dynamic>) {
-      final orders = <TradeOrder>[];
-      for (final entry in value) {
-        if (entry is Map<dynamic, dynamic>) {
-          orders.add(TradeOrder.fromJson(Map<String, dynamic>.from(entry)));
-        }
-      }
-      if (orders.isNotEmpty) {
-        result[key.toString()] = List.unmodifiable(orders);
-      }
-    }
-  });
-  return Map.unmodifiable(result);
+  int get hashCode => worldMarketStateHashCode(this);
 }

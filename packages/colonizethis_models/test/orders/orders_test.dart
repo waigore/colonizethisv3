@@ -1,7 +1,7 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
-import 'support/orders_fixtures.dart';
+import '../support/orders_fixtures.dart';
 
 void main() {
   group('Orders', () {

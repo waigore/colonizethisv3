@@ -1,6 +1,6 @@
-import 'model_collection_equality.dart';
 import 'capital_tile.dart';
-import 'province_id.dart';
+import 'player_equality.dart';
+import 'player_serialization.dart';
 import 'research_slot_assignment.dart';
 import 'stockpile.dart';
 import 'worker_pool.dart';
@@ -74,152 +74,9 @@ class Player {
   /// (treated as derive-from-tech or 1 on load). SPEC/game/military-generals.md.
   final int? generalCap;
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'displayName': displayName,
-    'isHuman': isHuman,
-    'stockpile': stockpile.toJson(),
-    'workerPool': workerPool.toJson(),
-    'treasury': treasury,
-    if (capitalProvinceId != null) 'capitalProvinceId': capitalProvinceId,
-    if (capitalTile != null) 'capitalTile': capitalTile!.toJson(),
-    if (techUnlocked != null && techUnlocked!.isNotEmpty)
-      'techUnlocked': techUnlocked,
-    if (militaryLevel != null) 'militaryLevel': militaryLevel,
-    if (leaderKey != null && leaderKey!.isNotEmpty) 'leaderKey': leaderKey,
-    if (personalityId != null && personalityId!.isNotEmpty)
-      'personalityId': personalityId,
-    if (researchProgressByTechId != null &&
-        researchProgressByTechId!.isNotEmpty)
-      'researchProgressByTechId': researchProgressByTechId,
-    if (researchSlots != null) 'researchSlots': researchSlots,
-    if (researchSlotAssignments != null && researchSlotAssignments!.isNotEmpty)
-      'researchSlotAssignments': {
-        for (final e in researchSlotAssignments!.entries)
-          e.key.toString(): e.value.toJson(),
-      },
-    if (generalCap != null) 'generalCap': generalCap,
-  };
+  Map<String, dynamic> toJson() => encodePlayerToJson(this);
 
-  static Player fromJson(Map<String, dynamic> json) {
-    Stockpile _readStockpile() {
-      final raw = json['stockpile'];
-      if (raw is Map<String, dynamic>) {
-        return Stockpile.fromJson(raw);
-      }
-      if (raw is Map<Object?, Object?>) {
-        return Stockpile.fromJson(Map<String, dynamic>.from(raw));
-      }
-      return Stockpile.empty;
-    }
-
-    WorkerPool _readWorkerPool() {
-      final raw = json['workerPool'];
-      if (raw is Map<String, dynamic>) {
-        return WorkerPool.fromJson(raw);
-      }
-      if (raw is Map<Object?, Object?>) {
-        return WorkerPool.fromJson(Map<String, dynamic>.from(raw));
-      }
-      return WorkerPool.empty;
-    }
-
-    int _readTreasury() {
-      final value = json['treasury'];
-      if (value is int) return value;
-      return int.tryParse(value?.toString() ?? '') ?? 0;
-    }
-
-    CapitalTile? _readCapitalTile() {
-      final raw = json['capitalTile'];
-      if (raw is Map<String, dynamic>) return CapitalTile.fromJson(raw);
-      if (raw is Map<Object?, Object?>)
-        return CapitalTile.fromJson(Map<String, dynamic>.from(raw));
-      return null;
-    }
-
-    Map<String, bool>? _readTechUnlocked() {
-      final raw = json['techUnlocked'];
-      if (raw is! Map<Object?, Object?>) return null;
-      return Map<String, bool>.from(
-        raw.map((k, v) => MapEntry(k.toString(), v == true)),
-      );
-    }
-
-    Map<String, int>? _readResearchProgress() {
-      final raw = json['researchProgressByTechId'];
-      if (raw is! Map<Object?, Object?>) return null;
-      return Map<String, int>.from(
-        raw.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0)),
-      );
-    }
-
-    Map<int, ResearchSlotAssignment>? _readResearchSlotAssignments() {
-      final raw = json['researchSlotAssignments'];
-      if (raw is! Map<Object?, Object?>) return null;
-      final out = <int, ResearchSlotAssignment>{};
-      raw.forEach((key, value) {
-        final slotIndex = int.tryParse(key.toString());
-        if (slotIndex == null || slotIndex < 0) return;
-        if (value is! Map<Object?, Object?>) return;
-        final assignment = ResearchSlotAssignment.fromJson(
-          Map<String, dynamic>.from(value),
-        );
-        if (assignment.techId.isEmpty) return;
-        out[slotIndex] = assignment;
-      });
-      return out;
-    }
-
-    final slotAssignments = _readResearchSlotAssignments();
-
-    return Player(
-      id: json['id'] as String,
-      displayName: json['displayName'] as String,
-      isHuman: json['isHuman'] as bool,
-      stockpile: _readStockpile(),
-      workerPool: _readWorkerPool(),
-      treasury: _readTreasury(),
-      capitalProvinceId: ProvinceId.requirePrefixedOrNull(
-        json['capitalProvinceId'] as String?,
-        fieldName: 'Player.capitalProvinceId',
-      ),
-      capitalTile: _readCapitalTile(),
-      techUnlocked: _readTechUnlocked(),
-      militaryLevel: (json['militaryLevel'] as int?),
-      leaderKey: json['leaderKey'] as String?,
-      personalityId: json['personalityId'] as String?,
-      researchProgressByTechId: _pruneOrphanedResearchProgress(
-        _readResearchProgress(),
-        slotAssignments,
-      ),
-      researchSlots: (json['researchSlots'] as num?)?.toInt(),
-      researchSlotAssignments: slotAssignments,
-      generalCap: (json['generalCap'] as num?)?.toInt(),
-    );
-  }
-
-  /// Drops `researchProgressByTechId` entries whose tech is not bound to any
-  /// persisted slot in [assignments]. Legacy saves predate
-  /// `researchSlotAssignments` and may carry in-progress research that no
-  /// longer occupies a slot; per SPEC/game/research-state.md § Slot Occupancy
-  /// Persistence such orphaned progress is forfeited on load so every retained
-  /// in-progress tech is guaranteed to occupy a slot. Entries bound to a slot
-  /// are preserved verbatim. SPEC/game/research-state.md (load discard, d3-8).
-  static Map<String, int>? _pruneOrphanedResearchProgress(
-    Map<String, int>? progress,
-    Map<int, ResearchSlotAssignment>? assignments,
-  ) {
-    if (progress == null || progress.isEmpty) return progress;
-    final boundTechIds = <String>{
-      if (assignments != null)
-        for (final assignment in assignments.values) assignment.techId,
-    };
-    return <String, int>{
-      for (final entry in progress.entries)
-        if (boundTechIds.contains(entry.key)) entry.key: entry.value,
-    };
-  }
+  static Player fromJson(Map<String, dynamic> json) => decodePlayerFromJson(json);
 
   Player copyWith({
     String? id,
@@ -262,57 +119,8 @@ class Player {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Player &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          displayName == other.displayName &&
-          isHuman == other.isHuman &&
-          stockpile == other.stockpile &&
-          workerPool == other.workerPool &&
-          treasury == other.treasury &&
-          capitalProvinceId == other.capitalProvinceId &&
-          capitalTile == other.capitalTile &&
-          modelNullableMapEquals(techUnlocked, other.techUnlocked) &&
-          militaryLevel == other.militaryLevel &&
-          leaderKey == other.leaderKey &&
-          personalityId == other.personalityId &&
-          modelNullableMapEquals(
-            researchProgressByTechId,
-            other.researchProgressByTechId,
-          ) &&
-          researchSlots == other.researchSlots &&
-          modelNullableMapEquals(
-            researchSlotAssignments,
-            other.researchSlotAssignments,
-          ) &&
-          generalCap == other.generalCap;
+  bool operator ==(Object other) => playerEquals(this, other);
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    displayName,
-    isHuman,
-    stockpile,
-    workerPool,
-    treasury,
-    capitalProvinceId,
-    capitalTile,
-    techUnlocked == null ? null : Object.hashAll(techUnlocked!.entries),
-    militaryLevel,
-    leaderKey,
-    personalityId,
-    researchProgressByTechId == null
-        ? null
-        : Object.hashAll(researchProgressByTechId!.entries),
-    researchSlots,
-    researchSlotAssignments == null
-        ? null
-        : Object.hashAll([
-            for (final key in researchSlotAssignments!.keys.toList()..sort())
-              Object.hash(key, researchSlotAssignments![key]),
-          ]),
-    generalCap,
-  );
+  int get hashCode => playerHashCode(this);
 }

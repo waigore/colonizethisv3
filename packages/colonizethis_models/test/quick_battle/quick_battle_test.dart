@@ -1,6 +1,8 @@
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/quick_battle_fixtures.dart';
+
 void main() {
   group('QuickBattleGroup', () {
     test('toJson/fromJson round-trips all fields', () {
@@ -10,9 +12,7 @@ void main() {
         unitIds: ['u1', 'u2'],
         cohesion: 4,
       );
-
       final restored = QuickBattleGroup.fromJson(group.toJson());
-
       expect(restored.lane, QuickBattleLane.center);
       expect(restored.line, QuickBattleLine.support);
       expect(restored.unitIds, ['u1', 'u2']);
@@ -24,9 +24,7 @@ void main() {
         lane: QuickBattleLane.left,
         line: QuickBattleLine.front,
       );
-
       final updated = group.copyWith(lane: QuickBattleLane.right, cohesion: 1);
-
       expect(updated.lane, QuickBattleLane.right);
       expect(updated.line, QuickBattleLine.front);
       expect(updated.cohesion, 1);
@@ -38,7 +36,6 @@ void main() {
         'lane': 'not-a-lane',
         'line': 'not-a-line',
       });
-
       expect(restored.lane, QuickBattleLane.left);
       expect(restored.line, QuickBattleLine.front);
       expect(restored.unitIds, isEmpty);
@@ -58,7 +55,6 @@ void main() {
 
     test('toJson/fromJson round-trips all fields', () {
       final restored = QuickBattleEmplacedGun.fromJson(gun.toJson());
-
       expect(restored.id, 'g1');
       expect(restored.maxHp, 10);
       expect(restored.hp, 7);
@@ -76,16 +72,13 @@ void main() {
         'defenseStrength': 4,
         'rng': 1,
       });
-
       expect(restored.attackStrength, 2.0);
       expect(restored.defenseStrength, 4.0);
     });
 
     test('copyWith overrides only provided fields', () {
-      final updated = gun.copyWith(hp: 0);
-      expect(updated.hp, 0);
-      expect(updated.id, 'g1');
-      expect(updated.maxHp, 10);
+      expect(gun.copyWith(hp: 0).hp, 0);
+      expect(gun.copyWith(hp: 0).id, 'g1');
     });
   });
 
@@ -96,9 +89,7 @@ void main() {
         hp: 0,
         destroyed: true,
       );
-
       final restored = QuickBattleEmplacedGunOutcome.fromJson(outcome.toJson());
-
       expect(restored.id, 'g1');
       expect(restored.hp, 0);
       expect(restored.destroyed, isTrue);
@@ -128,9 +119,7 @@ void main() {
           'center': QuickBattleLaneTerrain.swamp,
         },
       );
-
       final restored = QuickBattleDeployment.fromJson(deployment.toJson());
-
       expect(restored.groups, hasLength(1));
       expect(restored.groups.first.unitIds, ['u1']);
       expect(restored.laneTerrain['left'], QuickBattleLaneTerrain.hill);
@@ -141,7 +130,6 @@ void main() {
       final restored = QuickBattleDeployment.fromJson({
         'laneTerrain': {'right': 'unknown-terrain'},
       });
-
       expect(restored.groups, isEmpty);
       expect(restored.laneTerrain['right'], QuickBattleLaneTerrain.open);
     });
@@ -157,54 +145,9 @@ void main() {
   });
 
   group('QuickBattleInput', () {
-    QuickBattleInput buildInput() => const QuickBattleInput(
-      attackerFactionId: 'A',
-      defenderFactionId: 'D',
-      provinceId: 'r1|p1',
-      regionId: 'r1',
-      attackerDeployment: QuickBattleDeployment(
-        groups: [
-          QuickBattleGroup(
-            lane: QuickBattleLane.left,
-            line: QuickBattleLine.front,
-            unitIds: ['a1'],
-          ),
-        ],
-      ),
-      defenderDeployment: QuickBattleDeployment(
-        groups: [
-          QuickBattleGroup(
-            lane: QuickBattleLane.right,
-            line: QuickBattleLine.support,
-            unitIds: ['d1'],
-          ),
-        ],
-      ),
-      fortLevel: 2,
-      emplacedGuns: [
-        QuickBattleEmplacedGun(
-          id: 'g1',
-          maxHp: 10,
-          hp: 10,
-          attackStrength: 3,
-          defenseStrength: 5,
-          rng: 2,
-        ),
-      ],
-      provinceTerrain: 'hills',
-      seed: 99,
-      maxRounds: 4,
-      attackerLeaderMultiplier: 1.2,
-      defenderLeaderMultiplier: 0.9,
-      attackerCavalryShare: 0.3,
-      defenderCavalryShare: 0.1,
-      attackerGeneralMedals: 2,
-      defenderGeneralMedals: 1,
-    );
-
     test('toJson/fromJson round-trips all fields', () {
-      final restored = QuickBattleInput.fromJson(buildInput().toJson());
-
+      final input = sampleQuickBattleInput();
+      final restored = QuickBattleInput.fromJson(input.toJson());
       expect(restored.attackerFactionId, 'A');
       expect(restored.defenderFactionId, 'D');
       expect(restored.provinceId, 'r1|p1');
@@ -234,7 +177,6 @@ void main() {
         'attackerDeployment': const QuickBattleDeployment().toJson(),
         'defenderDeployment': const QuickBattleDeployment().toJson(),
       });
-
       expect(restored.fortLevel, 0);
       expect(restored.emplacedGuns, isEmpty);
       expect(restored.provinceTerrain, 'plains');
@@ -281,9 +223,7 @@ void main() {
           QuickBattleEmplacedGunOutcome(id: 'g1', hp: 0, destroyed: true),
         ],
       );
-
       final restored = QuickBattleResult.fromJson(result.toJson());
-
       expect(restored.winner, QuickBattleWinner.attacker);
       expect(restored.attackerCasualties, ['a1']);
       expect(restored.defenderCasualties, ['d1', 'd2']);
@@ -302,7 +242,6 @@ void main() {
         'defenderCasualties': const [],
         'provinceFlips': false,
       });
-
       expect(restored.winner, QuickBattleWinner.mutualExhaustion);
       expect(restored.attackerRouts, isFalse);
       expect(restored.defenderRouts, isFalse);
