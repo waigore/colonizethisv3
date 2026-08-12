@@ -8,13 +8,17 @@ import 'supply_probes.dart';
 import 's7d_campaign_rollup_explorer_counters.dart';
 import 's7d_campaign_rollup_trade_counters.dart';
 import 's7d_campaign_rollup_feedstock_counters.dart';
+import 's7d_campaign_rollup_feedstock_labour_counters.dart';
+import 's7d_campaign_rollup_feedstock_extraction_gate_counters.dart';
 
 /// Owns all mutable observation state for one S7-D campaign run.
 class Seed42S7dCampaignRollup
     with
         Seed42S7dCampaignRollupExplorerCounters,
         Seed42S7dCampaignRollupTradeCounters,
-        Seed42S7dCampaignRollupFeedstockCounters {
+        Seed42S7dCampaignRollupFeedstockCounters,
+        Seed42S7dCampaignRollupFeedstockLabourCounters,
+        Seed42S7dCampaignRollupFeedstockExtractionGateCounters {
   Seed42S7dCampaignRollup(this.gpIds);
 
   final List<String> gpIds;

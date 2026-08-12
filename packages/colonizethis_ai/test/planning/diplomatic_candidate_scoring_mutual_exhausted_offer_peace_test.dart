@@ -42,123 +42,14 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _ownNationId = 'gp4';
-const _enemyNationId = 'gp3';
-
-const _ownOwProvinces = <String>[
-  'oldWorld|gp4_1',
-  'oldWorld|gp4_2',
-  'oldWorld|gp4_3',
-  'oldWorld|gp4_4',
-  'oldWorld|gp4_5',
-  'oldWorld|gp4_6',
-  'oldWorld|gp4_7',
-  'oldWorld|gp4_8',
-];
-
-const _enemyOwProvinces = <String>[
-  'oldWorld|gp3_1',
-  'oldWorld|gp3_2',
-  'oldWorld|gp3_3',
-  'oldWorld|gp3_4',
-  'oldWorld|gp3_5',
-  'oldWorld|gp3_6',
-  'oldWorld|gp3_7',
-  'oldWorld|gp3_8',
-  'oldWorld|gp3_9',
-];
+import '../support/mutual_exhausted_stalemate_test_support.dart';
 
 const _offerPeaceCandidates = <DiplomaticOrder>[
   DiplomaticOrder(
     type: DiplomaticOrderType.offerPeace,
-    targetFactionId: _enemyNationId,
+    targetFactionId: kMutualExhaustedStalemateEnemyNationId,
   ),
 ];
-
-// Mirrors `_exhaustedStalemateGame` in
-// `diplomacy_planner_mutual_exhausted_peace_test.dart` so the scoring-side mirror
-// is exercised under the same SPEC-authorized fixture as the collector helper.
-Game _exhaustedStalemateGame({
-  int ownTreasury = 0,
-  int enemyTreasury = 0,
-  List<String> ownRegimentIds = const <String>['u_gp4_a', 'u_gp4_b', 'u_gp4_c'],
-  List<String> enemyRegimentIds = const <String>[
-    'u_gp3_a',
-    'u_gp3_b',
-    'u_gp3_c',
-  ],
-}) {
-  final ownerships = <Province>[
-    for (final id in _ownOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _ownNationId),
-    for (final id in _enemyOwProvinces)
-      Province(id: id, regionId: 'oldWorld', ownerId: _enemyNationId),
-  ];
-  return Game(
-    id: 'g-2509-mutual-exhausted-scoring',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 95),
-      oldWorld: RegionData(provinces: ownerships),
-      newWorld: const RegionData(),
-      armies: [
-        Army(
-          id: 'army_$_ownNationId',
-          ownerId: _ownNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _ownOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(ownRegimentIds),
-          isHomeArmy: true,
-        ),
-        Army(
-          id: 'army_$_enemyNationId',
-          ownerId: _enemyNationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: _enemyOwProvinces.first,
-          regimentUnitIds: List<String>.unmodifiable(enemyRegimentIds),
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: [
-      Player(
-        id: _ownNationId,
-        displayName: 'GP4',
-        isHuman: false,
-        treasury: ownTreasury,
-      ),
-      Player(
-        id: _enemyNationId,
-        displayName: 'GP3',
-        isHuman: false,
-        treasury: enemyTreasury,
-      ),
-    ],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _ownNationId,
-        factionId2: _enemyNationId,
-        state: RelationState.atWar,
-        score: 20,
-      ),
-    ],
-  );
-}
-
-// Snapshot mirrors the collector-side fixture (own OW 8, sole GP war on the
-// enemy, no invadable OW frontier so unrelated GP-blocker / futile-GP bonuses
-// in the offer-peace path stay silent and the mutual-exhausted bonus delta is
-// isolated).
-const _snapshotForOwn = AIWorldSnapshot(
-  playerId: _ownNationId,
-  threats: ThreatSummary(atWarWith: [_enemyNationId]),
-  opportunities: OpportunitySummary(),
-  conquest: ConquestSummary(
-    oldWorldProvincesOwned: 8,
-    invadableProvinceIdsSorted: <String>[],
-  ),
-  economy: EconomySummary(),
-  relations: <String, DiplomacyRelation>{},
-);
 
 // Personality / agenda kept neutral so personality and agenda peace modifiers
 // (`getAgendaPeaceAcceptanceModifier` / `thresholds.peaceTendency - 50`) are
@@ -173,9 +64,9 @@ int _scoreOfferPeaceTowardEnemy(Game game) {
   return computeDiplomaticCandidateScores(
     DiplomaticCandidateScoringInput(
       candidates: _offerPeaceCandidates,
-      nationId: _ownNationId,
+      nationId: kMutualExhaustedStalemateOwnNationId,
       game: game,
-      snapshot: _snapshotForOwn,
+      snapshot: kMutualExhaustedStalemateDefaultSnapshot,
       config: _config,
     ),
   ).single;
@@ -187,7 +78,7 @@ void main() {
     () {
       test('positive: exhausted-plateau offerPeace toward peer enemy scores > 0',
           () {
-        final game = _exhaustedStalemateGame();
+        final game = mutualExhaustedStalemateGame();
 
         expect(_scoreOfferPeaceTowardEnemy(game), greaterThan(0));
       });
@@ -195,8 +86,8 @@ void main() {
       test(
         'delta: own treasury above ceiling drops score by exactly the bonus',
         () {
-          final exhausted = _exhaustedStalemateGame();
-          final ownNotExhausted = _exhaustedStalemateGame(
+          final exhausted = mutualExhaustedStalemateGame();
+          final ownNotExhausted = mutualExhaustedStalemateGame(
             ownTreasury: kMutualExhaustedGpTreasuryMax + 1,
           );
 
@@ -215,8 +106,8 @@ void main() {
       test(
         'delta: enemy treasury above ceiling drops score by exactly the bonus',
         () {
-          final exhausted = _exhaustedStalemateGame();
-          final enemyNotExhausted = _exhaustedStalemateGame(
+          final exhausted = mutualExhaustedStalemateGame();
+          final enemyNotExhausted = mutualExhaustedStalemateGame(
             enemyTreasury: kMutualExhaustedGpTreasuryMax + 1,
           );
 
@@ -239,8 +130,8 @@ void main() {
             for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
               'u_gp4_extra_$i',
           ];
-          final exhausted = _exhaustedStalemateGame();
-          final ownNotExhausted = _exhaustedStalemateGame(
+          final exhausted = mutualExhaustedStalemateGame();
+          final ownNotExhausted = mutualExhaustedStalemateGame(
             ownRegimentIds: tooManyOwnRegiments,
           );
 
@@ -263,8 +154,8 @@ void main() {
             for (var i = 0; i < kMutualExhaustedGpRegimentMax + 1; i++)
               'u_gp3_extra_$i',
           ];
-          final exhausted = _exhaustedStalemateGame();
-          final enemyNotExhausted = _exhaustedStalemateGame(
+          final exhausted = mutualExhaustedStalemateGame();
+          final enemyNotExhausted = mutualExhaustedStalemateGame(
             enemyRegimentIds: tooManyEnemyRegiments,
           );
 
@@ -283,32 +174,32 @@ void main() {
       test(
         'determinism: identical inputs return identical scores (must-have #7)',
         () {
-          final game = _exhaustedStalemateGame();
+          final game = mutualExhaustedStalemateGame();
 
           final first = computeDiplomaticCandidateScores(
             DiplomaticCandidateScoringInput(
               candidates: _offerPeaceCandidates,
-              nationId: _ownNationId,
+              nationId: kMutualExhaustedStalemateOwnNationId,
               game: game,
-              snapshot: _snapshotForOwn,
+              snapshot: kMutualExhaustedStalemateDefaultSnapshot,
               config: _config,
             ),
           );
           final second = computeDiplomaticCandidateScores(
             DiplomaticCandidateScoringInput(
               candidates: _offerPeaceCandidates,
-              nationId: _ownNationId,
+              nationId: kMutualExhaustedStalemateOwnNationId,
               game: game,
-              snapshot: _snapshotForOwn,
+              snapshot: kMutualExhaustedStalemateDefaultSnapshot,
               config: _config,
             ),
           );
           final third = computeDiplomaticCandidateScores(
             DiplomaticCandidateScoringInput(
               candidates: _offerPeaceCandidates,
-              nationId: _ownNationId,
+              nationId: kMutualExhaustedStalemateOwnNationId,
               game: game,
-              snapshot: _snapshotForOwn,
+              snapshot: kMutualExhaustedStalemateDefaultSnapshot,
               config: _config,
             ),
           );

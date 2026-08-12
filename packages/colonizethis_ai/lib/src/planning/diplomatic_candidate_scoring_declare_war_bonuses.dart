@@ -2,7 +2,7 @@ import 'diplomatic_candidate_scoring_declare_war_context.dart';
 import 'phase_planner_diplomacy_filter.dart';
 import 'planning_helpers.dart' show kDiplomaticDefaultBaseScore;
 import 'planning_imports.dart';
-import 'diplomatic_candidate_scoring_declare_war_bonuses_adjacency.dart';
+import 'diplomatic_candidate_scoring_declare_war_bonuses_stalled.dart';
 
 final _log = packageLogger();
 

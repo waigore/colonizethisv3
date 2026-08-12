@@ -12,43 +12,9 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-const _topology = MapTopology(nodes: [], edges: []);
+import '../support/economy_satellite_test_support.dart';
 
-/// A single-GP game whose only fabric feedstock is [cotton] cotton (no wool),
-/// so the only feasible fabric recipe is `fabric_from_cotton`. [techUnlocked]
-/// controls whether the GP has researched `cotton_weaving`.
-Game _cottonOnlyGame({
-  required int cotton,
-  Map<String, bool>? techUnlocked,
-}) {
-  const ow = 'oldWorld';
-  return Game(
-    id: 'g-cotton-gate',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: '$ow|p0', regionId: ow, ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-    ),
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP1',
-        isHuman: false,
-        capitalProvinceId: '$ow|p0',
-        treasury: 100,
-        stockpile: const Stockpile()
-            .applyDelta(CommodityCatalog.grain.id, 30)
-            .applyDelta(CommodityCatalog.cotton.id, cotton),
-        workerPool: const WorkerPool(peasants: 12),
-        techUnlocked: techUnlocked,
-      ),
-    ],
-  );
-}
+const _topology = MapTopology(nodes: [], edges: []);
 
 Set<String> _assignedRecipeIds(EconomyPlan plan) =>
     plan.productionAssignments.map((a) => a.recipeId).toSet();
@@ -62,7 +28,7 @@ void main() {
   final seeds = AISeedBundle.fromTurnSeed(42);
 
   EconomyPlan planFor(Map<String, bool>? techUnlocked) {
-    final game = _cottonOnlyGame(cotton: 100, techUnlocked: techUnlocked);
+    final game = economyCottonOnlyGame(cotton: 100, techUnlocked: techUnlocked);
     return runEconomyPlanner(
       game: game,
       view: buildPlayerView(game, _topology, 'gp1'),

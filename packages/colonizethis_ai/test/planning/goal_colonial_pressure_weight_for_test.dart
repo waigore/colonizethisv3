@@ -35,58 +35,9 @@
 
 import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
-import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'ai_planner_fixtures.dart';
-
-const String _gp1 = 'gp1';
-const String _gp2 = 'gp2';
-const String _owProvGp1 = 'oldWorld|gp1_a';
-const String _owProvMinor = 'oldWorld|m1_a';
-
-Game _game({required int regimentCount, required int treasury}) {
-  return Game(
-    id: 'g-2847-goal-weight-r${regimentCount}_t$treasury',
-    worldState: WorldState(
-      turnState: const TurnState(turnNumber: 30, phase: TurnPhase.orders),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: _owProvGp1, regionId: kOldWorldRegionId, ownerId: _gp1),
-        ],
-      ),
-      newWorld: const RegionData(provinces: []),
-      armies: regimentCount > 0
-          ? [homeArmyWithRegiments(_gp1, regimentCount)]
-          : const [],
-    ),
-    players: [
-      Player(id: _gp1, displayName: 'GP1', isHuman: false, treasury: treasury),
-      const Player(id: _gp2, displayName: 'GP2', isHuman: false),
-    ],
-  );
-}
-
-AIWorldSnapshot _snapshot({
-  required int oldWorldProvincesOwned,
-  required int treasury,
-  required int newWorldProvincesOwned,
-  List<String> invadable = const [_owProvMinor],
-}) {
-  return AIWorldSnapshot(
-    playerId: _gp1,
-    threats: const ThreatSummary(),
-    opportunities: const OpportunitySummary(),
-    conquest: ConquestSummary(
-      oldWorldProvincesOwned: oldWorldProvincesOwned,
-      provincesToVictory: kObserverConquestMinOwProvincesPerGp * 3,
-      invadableProvinceIdsSorted: invadable,
-    ),
-    colonial: ColonialSummary(newWorldProvincesOwned: newWorldProvincesOwned),
-    economy: EconomySummary(treasury: treasury),
-    relations: const {},
-  );
-}
+import '../support/phase_priority_weights_test_support.dart';
 
 void main() {
   group('goalColonialPressureWeightFor', () {
@@ -99,12 +50,15 @@ void main() {
         // because effective treasury (0) is below the cheapest regiment
         // cost, so the treasury-recovery override fires.
         final weight = goalColonialPressureWeightFor(
-          snapshot: _snapshot(
+          snapshot: phasePriorityWeightsSnapshot(
             oldWorldProvincesOwned: 7,
             treasury: 0,
             newWorldProvincesOwned: 0,
           ),
-          game: _game(regimentCount: 2, treasury: 0),
+          game: phasePriorityWeightsGameWithRegimentsAndTreasury(
+            regimentCount: 2,
+            treasury: 0,
+          ),
         );
         expect(weight, kPhasePriorityNwTreasuryRecoveryFloor);
         expect(
@@ -126,12 +80,15 @@ void main() {
         // and the treasury-recovery override cannot fire.
         const treasury = 100000;
         final weight = goalColonialPressureWeightFor(
-          snapshot: _snapshot(
+          snapshot: phasePriorityWeightsSnapshot(
             oldWorldProvincesOwned: 7,
             treasury: treasury,
             newWorldProvincesOwned: 0,
           ),
-          game: _game(regimentCount: 2, treasury: treasury),
+          game: phasePriorityWeightsGameWithRegimentsAndTreasury(
+            regimentCount: 2,
+            treasury: treasury,
+          ),
         );
         expect(weight, 0.05);
       },
@@ -142,24 +99,30 @@ void main() {
       'so the override cannot fire and the curve value (0.40) stands',
       () {
         final weight = goalColonialPressureWeightFor(
-          snapshot: _snapshot(
+          snapshot: phasePriorityWeightsSnapshot(
             oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
             treasury: 0,
             newWorldProvincesOwned: 0,
           ),
-          game: _game(regimentCount: 2, treasury: 0),
+          game: phasePriorityWeightsGameWithRegimentsAndTreasury(
+            regimentCount: 2,
+            treasury: 0,
+          ),
         );
         expect(weight, 0.40);
       },
     );
 
     test('identical inputs yield the same weight (Refs #2509 Must-have #7)', () {
-      final snapshot = _snapshot(
+      final snapshot = phasePriorityWeightsSnapshot(
         oldWorldProvincesOwned: 7,
         treasury: 0,
         newWorldProvincesOwned: 0,
       );
-      final game = _game(regimentCount: 2, treasury: 0);
+      final game = phasePriorityWeightsGameWithRegimentsAndTreasury(
+        regimentCount: 2,
+        treasury: 0,
+      );
       final first = goalColonialPressureWeightFor(
         snapshot: snapshot,
         game: game,

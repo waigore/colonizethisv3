@@ -9,6 +9,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/build_planner_civilian_scoring_test_support.dart';
 import '../support/planner_test_helpers.dart';
 
 const _builder = BuildUnitOrder(
@@ -25,23 +26,6 @@ const _sloop = BuildUnitOrder(
   unitType: 'sloop',
   isMilitary: false,
   spawnProvinceId: 'oldWorld|p1',
-);
-
-Game _game() => Game(
-  id: 'g1',
-  worldState: WorldState(
-    turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-    oldWorld: const RegionData(),
-    newWorld: const RegionData(),
-  ),
-  players: const [
-    Player(
-      id: 'gp1',
-      displayName: 'France',
-      isHuman: false,
-      leaderKey: 'napoleon',
-    ),
-  ],
 );
 
 const _config = AIConfig(
@@ -62,7 +46,7 @@ BuildUnitOrder? _pick({
   int oldWorldProvincesOwned = 31,
 }) {
   final ctx = buildTestPlannerContext(
-    game: _game(),
+    game: buildPlannerCivilianScoringGame(),
     topology: _topology,
     config: _config,
     primaryGoal: goal,

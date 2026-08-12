@@ -7,37 +7,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import 'package:colonizethis_world/colonizethis_world.dart';
 
-Game _feedstockTileGame() {
-  const tileKey = 'oldWorld|p1|0|0';
-  return Game(
-    id: 'g-feedstock',
-    players: [
-      Player(
-        id: 'gp1',
-        displayName: 'GP',
-        isHuman: true,
-        stockpile: const Stockpile(),
-        workerPool: const WorkerPool(),
-      ),
-    ],
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-      oldWorld: RegionData(
-        provinces: [
-          Province(id: 'oldWorld|p1', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {'p1': [tileKey]},
-      },
-      resourceByTileKey: const {tileKey: 'timber'},
-      tileState: const TileMapState(
-        improvementByTile: {tileKey: 1},
-      ),
-    ),
-  );
-}
+import '../support/growth_stage_industry_counsel_test_support.dart';
 
 void main() {
   group('growth stage industry counsel delegation', () {
@@ -69,7 +39,7 @@ void main() {
     });
 
     test('prospectedImprovedFeedstockTileCount matches economy helper', () {
-      final game = _feedstockTileGame();
+      final game = growthStageIndustryCounselFeedstockTileGame();
       expect(
         prospectedImprovedFeedstockTileCount(game, 'gp1'),
         industryCounselProspectedImprovedFeedstockTileCount(game, 'gp1'),
