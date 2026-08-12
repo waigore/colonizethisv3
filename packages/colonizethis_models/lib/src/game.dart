@@ -2,6 +2,7 @@ import 'advanced_start_type.dart';
 import 'combat_mode.dart';
 import 'dossier_evidence.dart';
 import 'diplomacy.dart';
+import 'game_copy_with.dart';
 import 'game_equality.dart';
 import 'game_serialization.dart';
 import 'general.dart';
@@ -218,59 +219,48 @@ class Game {
     Set<String>? ftpPartnershipKeys,
     Set<String>? debugDiplomacyUsedPairKeys,
     AdvancedStartType? advancedStartType,
-  }) {
-    return Game(
-      id: id ?? this.id,
-      worldState: worldState ?? this.worldState,
-      players: players ?? this.players,
-      minorNations: minorNations ?? this.minorNations,
-      tribes: tribes ?? this.tribes,
-      generals: generals ?? this.generals,
-      turnTimeMapping: turnTimeMapping ?? this.turnTimeMapping,
-      defaultCombatMode: defaultCombatMode ?? this.defaultCombatMode,
-      combatModeByProvinceId:
-          combatModeByProvinceId ?? this.combatModeByProvinceId,
-      diplomacyRelations: diplomacyRelations ?? this.diplomacyRelations,
-      overtureStates: overtureStates ?? this.overtureStates,
-      subsidyStates: subsidyStates ?? this.subsidyStates,
-      colonyStates: colonyStates ?? this.colonyStates,
-      boycottStates: boycottStates ?? this.boycottStates,
-      allianceBreakCooldowns:
-          allianceBreakCooldowns ?? this.allianceBreakCooldowns,
-      aiControlByGpId: aiControlByGpId ?? this.aiControlByGpId,
-      aiSeedByGpId: aiSeedByGpId ?? this.aiSeedByGpId,
-      aiProfileByGpId: aiProfileByGpId ?? this.aiProfileByGpId,
-      hiddenAgendaByGpId: hiddenAgendaByGpId ?? this.hiddenAgendaByGpId,
-      dossierEvidenceEntries:
-          dossierEvidenceEntries ?? this.dossierEvidenceEntries,
-      diplomaticHistoryEvents:
-          diplomaticHistoryEvents ?? this.diplomaticHistoryEvents,
-      globalGameSeed: globalGameSeed ?? this.globalGameSeed,
-      greatPowerColorOverride:
-          greatPowerColorOverride ?? this.greatPowerColorOverride,
-      victory: victory ?? this.victory,
-      calendarCampaignHalted:
-          calendarCampaignHalted ?? this.calendarCampaignHalted,
-      infiniteMode: infiniteMode ?? this.infiniteMode,
-      richesCashMultiplier: richesCashMultiplier ?? this.richesCashMultiplier,
-      capitalTileGrainBonusPerTurn:
-          capitalTileGrainBonusPerTurn ?? this.capitalTileGrainBonusPerTurn,
-      politicalGlyphByPlayerId:
-          politicalGlyphByPlayerId ?? this.politicalGlyphByPlayerId,
-      lastHumanCompletedResearchCategory:
-          lastHumanCompletedResearchCategory ??
-          this.lastHumanCompletedResearchCategory,
-      lastHumanResearchCategoryCompletionTurn:
-          lastHumanResearchCategoryCompletionTurn ??
-          this.lastHumanResearchCategoryCompletionTurn,
-      mapViewState: mapViewState ?? this.mapViewState,
-      worldMarketState: worldMarketState ?? this.worldMarketState,
-      ftpPartnershipKeys: ftpPartnershipKeys ?? this.ftpPartnershipKeys,
-      debugDiplomacyUsedPairKeys:
-          debugDiplomacyUsedPairKeys ?? this.debugDiplomacyUsedPairKeys,
-      advancedStartType: advancedStartType ?? this.advancedStartType,
-    );
-  }
+  }) =>
+      gameCopyWith(
+        this,
+        id: id,
+        worldState: worldState,
+        players: players,
+        minorNations: minorNations,
+        tribes: tribes,
+        generals: generals,
+        turnTimeMapping: turnTimeMapping,
+        defaultCombatMode: defaultCombatMode,
+        combatModeByProvinceId: combatModeByProvinceId,
+        diplomacyRelations: diplomacyRelations,
+        overtureStates: overtureStates,
+        subsidyStates: subsidyStates,
+        colonyStates: colonyStates,
+        boycottStates: boycottStates,
+        allianceBreakCooldowns: allianceBreakCooldowns,
+        aiControlByGpId: aiControlByGpId,
+        aiSeedByGpId: aiSeedByGpId,
+        aiProfileByGpId: aiProfileByGpId,
+        hiddenAgendaByGpId: hiddenAgendaByGpId,
+        dossierEvidenceEntries: dossierEvidenceEntries,
+        diplomaticHistoryEvents: diplomaticHistoryEvents,
+        globalGameSeed: globalGameSeed,
+        greatPowerColorOverride: greatPowerColorOverride,
+        victory: victory,
+        calendarCampaignHalted: calendarCampaignHalted,
+        infiniteMode: infiniteMode,
+        richesCashMultiplier: richesCashMultiplier,
+        capitalTileGrainBonusPerTurn: capitalTileGrainBonusPerTurn,
+        politicalGlyphByPlayerId: politicalGlyphByPlayerId,
+        lastHumanCompletedResearchCategory:
+            lastHumanCompletedResearchCategory,
+        lastHumanResearchCategoryCompletionTurn:
+            lastHumanResearchCategoryCompletionTurn,
+        mapViewState: mapViewState,
+        worldMarketState: worldMarketState,
+        ftpPartnershipKeys: ftpPartnershipKeys,
+        debugDiplomacyUsedPairKeys: debugDiplomacyUsedPairKeys,
+        advancedStartType: advancedStartType,
+      );
 
   @override
   bool operator ==(Object other) => gameEquals(this, other);
