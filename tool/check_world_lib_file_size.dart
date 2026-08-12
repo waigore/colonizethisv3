@@ -1,8 +1,11 @@
 // Physical line ratchet for colonizethis_world lib source (repo rule:
 // `repo.colonizethis_world_lib_file_size`).
 //
-// Wave 5 (#4125) splits near-cap world modules so lib files stay below a
-// peer-aligned 400 physical-line ceiling. Generated suffixes are excluded.
+// Wave 6 (#4330) lowers the peer-aligned ceiling from wave-5's 400 to 320
+// physical lines. Preferred 300 is blocked by sealed `GameEvent` living in one
+// library (`lib/src/game_events.dart`, ~317 phys) — splits need `part` (banned)
+// or dropping `sealed` (see SPEC/program/game-events.md). Generated suffixes
+// are excluded.
 import 'dart:convert';
 import 'dart:io';
 
@@ -10,13 +13,13 @@ import 'package:path/path.dart' as p;
 
 import 'ct_repo_lint_scan_contract.dart';
 
-/// Ratchet ceiling for wave-5 post-split target (≤400 physical lines).
-const int worldLibFileSizeCeiling = 400;
+/// Ratchet ceiling for wave-6 post-split target (≤320 physical lines).
+const int worldLibFileSizeCeiling = 320;
 
 const String _worldLibRelativePath = 'packages/colonizethis_world/lib';
 
-/// Hot files still above the wave-5 ceiling during transition slices. Shrink-only
-/// allowlist; remove entries as splits land.
+/// Hot files still above the wave-6 ceiling during transition slices. Shrink-only
+/// allowlist; must stay empty when wave-6 completes.
 const List<String> worldLibFileSizeGrandfathered = <String>[];
 
 final RegExp _generatedSuffix = RegExp(r'\.(g|freezed|mocks|gen)\.dart$');
@@ -79,7 +82,7 @@ int runCheckWorldLibFileSize(
   if (violations.isEmpty) {
     logI(
       'check_world_lib_file_size: no violations found '
-      '(ceiling $ceiling; Refs #4125).',
+      '(ceiling $ceiling; Refs #4330).',
     );
     return 0;
   }
@@ -87,7 +90,7 @@ int runCheckWorldLibFileSize(
   violations.sort();
   logE(
     'check_world_lib_file_size: found ${violations.length} violation(s) '
-    'under $_worldLibRelativePath (wave-5 ceiling $ceiling; Refs #4125):',
+    'under $_worldLibRelativePath (wave-6 ceiling $ceiling; Refs #4330):',
   );
   for (final violation in violations) {
     logE(' - $violation');
