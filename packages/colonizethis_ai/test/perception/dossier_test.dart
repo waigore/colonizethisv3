@@ -4,6 +4,8 @@ import 'package:colonizethis_ai/package_logger.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:logger/logger.dart';
 
+import '../support/dossier_test_support.dart';
+
 void main() {
   group('suspicionBandFromScore', () {
     test('0-2 returns unknown', () {
@@ -28,24 +30,8 @@ void main() {
   });
 
   group('getDossierForSubject', () {
-    Game _gameWithEvidence(List<DossierEvidenceEntry> entries) {
-      return Game(
-        id: 'g1',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 0),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
-        ),
-        players: const [
-          Player(id: 'obs', displayName: 'Observer', isHuman: true),
-          Player(id: 'subj', displayName: 'Subject', isHuman: false),
-        ],
-        dossierEvidenceEntries: entries,
-      );
-    }
-
     test('empty evidence returns empty suspicion and evidence list', () {
-      final game = _gameWithEvidence([]);
+      final game = dossierGameWithEvidence([]);
       final d = getDossierForSubject(game, 'obs', 'subj');
       expect(d.subjectId, 'subj');
       expect(d.suspicionByAgendaType, isEmpty);
@@ -53,7 +39,7 @@ void main() {
     });
 
     test('single entry aggregates score and maps to band', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -69,7 +55,7 @@ void main() {
     });
 
     test('multiple entries for same agenda sum scoreDelta', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -93,7 +79,7 @@ void main() {
     });
 
     test('filters by observerId and subjectId', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -153,7 +139,7 @@ void main() {
     });
 
     test('includes best-guess agenda and confidence from highest suspicion', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -182,7 +168,7 @@ void main() {
     });
 
     test('behavioral notes summarize evidence', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -214,7 +200,7 @@ void main() {
     });
 
     test('timeline is chronological', () {
-      final game = _gameWithEvidence([
+      final game = dossierGameWithEvidence([
         const DossierEvidenceEntry(
           observerId: 'obs',
           subjectId: 'subj',
@@ -247,7 +233,7 @@ void main() {
           scoreDelta: 1,
         ));
       }
-      final game = _gameWithEvidence(entries);
+      final game = dossierGameWithEvidence(entries);
       final d = getDossierForSubject(game, 'obs', 'subj');
       expect(d.evidenceList.length, cap);
       expect(d.evidenceList.first, 'Turn 11: E11');
@@ -258,7 +244,7 @@ void main() {
       'result is identical whether debug logging is filtered or enabled '
       '(guarded hot-path log is behaviour-preserving) (Refs #3288 AC7)',
       () {
-        final game = _gameWithEvidence([
+        final game = dossierGameWithEvidence([
           const DossierEvidenceEntry(
             observerId: 'obs',
             subjectId: 'subj',

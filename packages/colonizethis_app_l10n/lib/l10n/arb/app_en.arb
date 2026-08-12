@@ -5445,6 +5445,95 @@
   "@tradeCounsel_reason_speculativeInventory_brief": {
     "description": "Brief trade counsel reason for F10 speculative bids."
   },
+  "militaryCounsel_tabMilitary": "Military",
+  "@militaryCounsel_tabMilitary": {
+    "description": "Counsel screen Military tab label."
+  },
+  "militaryCounsel_empty": "No pressing military advice this turn.",
+  "@militaryCounsel_empty": {
+    "description": "Counsel Military tab empty state."
+  },
+  "militaryCounsel_action_agree": "Agree",
+  "@militaryCounsel_action_agree": {
+    "description": "Stages one military counsel recommendation."
+  },
+  "militaryCounsel_trainAgreeFailed": "Cannot raise those units right now — check treasury, stockpile, peasants, and queued orders.",
+  "@militaryCounsel_trainAgreeFailed": {
+    "description": "Shown when military train Agree fails re-validation."
+  },
+  "militaryCounsel_invadeAgreeFailed": "Cannot stage that invasion right now — check army, destination, and diplomacy.",
+  "@militaryCounsel_invadeAgreeFailed": {
+    "description": "Shown when military invade Agree fails validation."
+  },
+  "militaryCounsel_title_train": "Raise units",
+  "@militaryCounsel_title_train": {
+    "description": "Fallback military train counsel card title."
+  },
+  "militaryCounsel_title_trainUnit": "Raise {unit} × {count}",
+  "@militaryCounsel_title_trainUnit": {
+    "description": "Military train counsel card title.",
+    "placeholders": {
+      "unit": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "militaryCounsel_title_invade": "Invade province",
+  "@militaryCounsel_title_invade": {
+    "description": "Fallback military invade counsel card title."
+  },
+  "militaryCounsel_title_invadeArmy": "Invade with {army} → {province}",
+  "@militaryCounsel_title_invadeArmy": {
+    "description": "Military invade counsel card title with army id.",
+    "placeholders": {
+      "army": { "type": "String" },
+      "province": { "type": "String" }
+    }
+  },
+  "militaryCounsel_ownerLine": "Owner: {owner}",
+  "@militaryCounsel_ownerLine": {
+    "description": "Owner line on invade counsel cards.",
+    "placeholders": {
+      "owner": { "type": "String" }
+    }
+  },
+  "militaryCounsel_cost_noMaterials": "no extra materials",
+  "@militaryCounsel_cost_noMaterials": {
+    "description": "Train counsel cost line when no material inputs."
+  },
+  "militaryCounsel_costSummary": "Cost: {treasury} treasury; {materials}; {peasants} peasants",
+  "@militaryCounsel_costSummary": {
+    "description": "Train counsel affordability summary.",
+    "placeholders": {
+      "treasury": { "type": "int" },
+      "materials": { "type": "String" },
+      "peasants": { "type": "int" }
+    }
+  },
+  "militaryCounsel_reason_affordableTrain_brief": "Affordable this turn — the planner would raise these units now.",
+  "@militaryCounsel_reason_affordableTrain_brief": {
+    "description": "Brief military counsel reason for train recommendations."
+  },
+  "militaryCounsel_reason_atWarInvasion_brief": "Already at war — a field army can march on this province.",
+  "@militaryCounsel_reason_atWarInvasion_brief": {
+    "description": "Brief military counsel reason for at-war invasions."
+  },
+  "militaryCounsel_reason_declareWarInvasion_brief": "Invasion target — confirm war before the army marches.",
+  "@militaryCounsel_reason_declareWarInvasion_brief": {
+    "description": "Brief military counsel reason for declare-war invasions."
+  },
+  "militaryCounsel_trainStarSemantic": "Military counsel: {brief}",
+  "@militaryCounsel_trainStarSemantic": {
+    "description": "Accessibility label for Train Military dialog counsel star.",
+    "placeholders": {
+      "brief": {
+        "type": "String"
+      }
+    }
+  },
+  "military_units_counsel": "Counsel",
+  "@military_units_counsel": {
+    "description": "Military Units panel header button opening Military Counsel."
+  },
   "tradeMarket_counsel": "Counsel",
   "@tradeMarket_counsel": {
     "description": "Trade Market header button opening Trade Counsel."

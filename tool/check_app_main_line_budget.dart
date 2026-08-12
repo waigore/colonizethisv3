@@ -38,9 +38,12 @@
 // raised for combined Trade Counsel + fort merge headroom after dev integration (Refs #4282).
 // raised for UNIT60001 Train Naval role and cargo/combat gist rows (Refs #4300).
 // raised for GAME80001 lazy per-region Development panel read model (Refs #4175 perf).
+// raised for GAME90001 Military Counsel tab + UNIT20001 counsel entry (Refs #4307).
 // raised for OVL70001 realm economy turn-summary feed row (Refs #4308).
 // raised for GAME80001 Development panel map snapshot cache + deferred paint (Refs #4175 Slice E).
 // raised for MAP20001 Upgrade town political shortcut + level gist (Refs #4316).
+// raised for Military Counsel budget headroom after dev integration (Refs #4307).
+// raised for MAP20001 Upgrade town merge headroom on military counsel branch (Refs #4316).
 // raised for UNIT50001 Train Military benefit vs cost gist rows (Refs #4324).
 import 'dart:convert';
 import 'dart:io';
@@ -48,7 +51,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 const _packageName = 'colonizethis_app';
-const _maxMainLines = 71700;
+// raised for military counsel + train military benefit merge headroom (Refs #4307, #4324).
+const _maxMainLines = 72800;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

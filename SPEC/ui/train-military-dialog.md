@@ -33,6 +33,7 @@ The Train Military dialog lets the player queue military regiment build orders i
   - **food upkeep line** (always visible, muted `10` px body): `{N} food / turn` from `RegimentEconomy.foodUpkeep` for that regiment id. Describes ongoing per-turn consumption after the unit exists; food is **not** paid at train commit. Locked rows keep food upkeep visible (muted at row opacity).
   - build cost summary: treasury + commodity requirements with icons (existing inline cost strip).
   - locked state + `Requires: {tech}` when unlocking tech is missing
+  - when Military Counsel ranks this unit type in the top recommendations, a ★ opens `GAME90001` Military tab with `highlightRecommendationId` (Refs #4307 Slice C)
   - `[-] count [+]` stepper on the right
 - **Footer:** `Reset` button that clears all row counts to `0`.
 

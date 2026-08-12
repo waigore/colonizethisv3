@@ -40,6 +40,12 @@ mixin MilitaryUnitsPanelBuild
       onSelectAll: () => selectAllOrClear(armyIds(flat)),
       onCombine: () => performCombine(flat),
       trailingActions: [
+        if (!readOnly)
+          CtActionTextButton(
+            key: const ValueKey<String>('military_units_counsel_button'),
+            onPressed: openCounsel,
+            label: l10n.military_units_counsel,
+          ),
         CtActionTextButton(
           primary: true,
           onPressed: readOnly ? null : openTrainDialog,

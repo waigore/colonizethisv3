@@ -8,110 +8,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 import '../support/expand_phase_peace_test_support.dart';
 
-const String _gpOwn = 'gp_own';
-const String _gpRival = 'gp_rival';
-const String _minorAlpha = 'minor_alpha';
-const String _minorBeta = 'minor_beta';
-const String _minorGamma = 'minor_gamma';
-const String _tribeOne = 'tribe_one';
-
-/// Builds a minimal `Game` where:
-///   * `gp_own` holds [ownProvinces] OW provinces (so quota-band
-///     ownership counts via `Game.worldState.oldWorld.provinces` are
-///     deterministic without forcing the test to enumerate them).
-///   * Each entry in [minorOwnedInvadables] places that minor as the
-///     owner of every province id in the value list (these are the
-///     ids the snapshot exposes via `invadableProvinceIdsSorted`).
-///   * Every minor in [atWarMinors] is in `RelationState.atWar`
-///     against `gp_own`. Minors not listed here exist on the map but
-///     are at peace.
-///   * Every tribe in [atWarTribes] is in `RelationState.atWar`. The
-///     focused-minor scan iterates `Game.minorNations` only, so
-///     tribes here exercise the "tribes don't participate" rule.
-///   * Every GP in [atWarRivalGps] is in `RelationState.atWar`. The
-///     focused-minor scan never inspects GPs (the same iteration
-///     filter); the GP at-war set keeps the fixture honest about
-///     `threats.atWarWith` mixing in non-minor entries.
-Game _focusMinorGame({
-  required int ownProvinces,
-  Map<String, List<String>> minorOwnedInvadables = const {},
-  List<String> atWarMinors = const [],
-  List<String> atWarTribes = const [],
-  List<String> atWarRivalGps = const [],
-  List<String> peacefulMinors = const [],
-}) {
-  final provinces = <Province>[
-    for (var i = 1; i <= ownProvinces; i++)
-      Province(
-        id: 'oldWorld|${_gpOwn}_$i',
-        regionId: 'oldWorld',
-        ownerId: _gpOwn,
-      ),
-    for (final entry in minorOwnedInvadables.entries)
-      for (final pid in entry.value)
-        Province(id: pid, regionId: 'oldWorld', ownerId: entry.key),
-  ];
-
-  final players = <Player>[
-    const Player(id: _gpOwn, displayName: 'GP_OWN', isHuman: false),
-    for (final id in atWarRivalGps)
-      Player(id: id, displayName: id.toUpperCase(), isHuman: false),
-  ];
-
-  final allMinorIds = <String>{
-    ...minorOwnedInvadables.keys,
-    ...atWarMinors,
-    ...peacefulMinors,
-  };
-  final minorNations = <MinorNation>[
-    for (final minorId in allMinorIds)
-      MinorNation(id: minorId, displayName: minorId),
-  ];
-
-  final tribes = <Tribe>[
-    for (final tribeId in atWarTribes) Tribe(id: tribeId, displayName: tribeId),
-  ];
-
-  final relations = <DiplomacyRelation>[
-    for (final id in atWarMinors)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final id in atWarTribes)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-    for (final id in atWarRivalGps)
-      DiplomacyRelation(
-        factionId1: _gpOwn,
-        factionId2: id,
-        state: RelationState.atWar,
-        score: 30,
-      ),
-  ];
-
-  return Game(
-    id:
-        'g-2509-focus-minor-canonical-'
-        'own$ownProvinces-${minorOwnedInvadables.keys.join("-")}',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 60),
-      oldWorld: RegionData(provinces: provinces),
-      newWorld: const RegionData(),
-    ),
-    players: players,
-    minorNations: minorNations,
-    tribes: tribes,
-    diplomacyRelations: relations,
-  );
-}
-
+import '../support/expand_phase_planner_focus_minor_target_test_support.dart';
 
 void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
   group('stalledFocusMinorTarget — canonical outer guards', () {
@@ -119,18 +16,18 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       // Only a tribe and a rival GP are at war; the
       // Game.minorNations / RelationState.atWar filter rejects every
       // minor candidate before the invadable scan runs.
-      final game = _focusMinorGame(
+      final game = expandPhasePlannerFocusMinorTargetGame(
         ownProvinces: 7,
         minorOwnedInvadables: const {
-          _minorAlpha: ['oldWorld|alpha_1'],
+          kFocusMinorMinorAlpha: ['oldWorld|alpha_1'],
         },
-        peacefulMinors: const [_minorAlpha],
-        atWarTribes: const [_tribeOne],
-        atWarRivalGps: const [_gpRival],
+        peacefulMinors: const [kFocusMinorMinorAlpha],
+        atWarTribes: const [kFocusMinorTribeOne],
+        atWarRivalGps: const [kFocusMinorGpRival],
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [_tribeOne, _gpRival],
+        atWarWith: const [kFocusMinorTribeOne, kFocusMinorGpRival],
         invadableProvinceIdsSorted: const ['oldWorld|alpha_1'],
       );
       expect(
@@ -150,17 +47,17 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         // Both minors are at war but own only non-invadable OW
         // provinces; the bestInvadableCount stays at 0 so the helper
         // returns null without picking an arbitrary minor.
-        final game = _focusMinorGame(
+        final game = expandPhasePlannerFocusMinorTargetGame(
           ownProvinces: 7,
           minorOwnedInvadables: const {
-            _minorAlpha: ['oldWorld|alpha_home'],
-            _minorBeta: ['oldWorld|beta_home'],
+            kFocusMinorMinorAlpha: ['oldWorld|alpha_home'],
+            kFocusMinorMinorBeta: ['oldWorld|beta_home'],
           },
-          atWarMinors: const [_minorAlpha, _minorBeta],
+          atWarMinors: const [kFocusMinorMinorAlpha, kFocusMinorMinorBeta],
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: 7,
-          atWarWith: const [_minorAlpha, _minorBeta],
+          atWarWith: const [kFocusMinorMinorAlpha, kFocusMinorMinorBeta],
           // None of the at-war minors' provinces appear in the
           // invadable frontier.
           invadableProvinceIdsSorted: const [],
@@ -182,17 +79,17 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
     test('returns the at-war minor with the most invadable OW provinces', () {
       // minor_alpha owns 1 invadable; minor_beta owns 2 invadables —
       // beta wins on the strict-greater comparison.
-      final game = _focusMinorGame(
+      final game = expandPhasePlannerFocusMinorTargetGame(
         ownProvinces: 7,
         minorOwnedInvadables: const {
-          _minorAlpha: ['oldWorld|alpha_1'],
-          _minorBeta: ['oldWorld|beta_1', 'oldWorld|beta_2'],
+          kFocusMinorMinorAlpha: ['oldWorld|alpha_1'],
+          kFocusMinorMinorBeta: ['oldWorld|beta_1', 'oldWorld|beta_2'],
         },
-        atWarMinors: const [_minorAlpha, _minorBeta],
+        atWarMinors: const [kFocusMinorMinorAlpha, kFocusMinorMinorBeta],
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [_minorAlpha, _minorBeta],
+        atWarWith: const [kFocusMinorMinorAlpha, kFocusMinorMinorBeta],
         invadableProvinceIdsSorted: const [
           'oldWorld|alpha_1',
           'oldWorld|beta_1',
@@ -201,7 +98,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       );
       expect(
         stalledFocusMinorTarget(game: game, snapshot: snapshot),
-        _minorBeta,
+        kFocusMinorMinorBeta,
         reason:
             'minor_beta owns 2 invadable provinces → strict-greater '
             'comparison vs minor_alpha (1) selects beta as the '
@@ -215,17 +112,17 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       // reach bestInvadableCount keeps the lead. Game.minorNations
       // iterates in construction order (alpha registered before
       // gamma) → alpha wins.
-      final game = _focusMinorGame(
+      final game = expandPhasePlannerFocusMinorTargetGame(
         ownProvinces: 7,
         minorOwnedInvadables: const {
-          _minorAlpha: ['oldWorld|alpha_1'],
-          _minorGamma: ['oldWorld|gamma_1'],
+          kFocusMinorMinorAlpha: ['oldWorld|alpha_1'],
+          kFocusMinorMinorGamma: ['oldWorld|gamma_1'],
         },
-        atWarMinors: const [_minorAlpha, _minorGamma],
+        atWarMinors: const [kFocusMinorMinorAlpha, kFocusMinorMinorGamma],
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [_minorGamma, _minorAlpha],
+        atWarWith: const [kFocusMinorMinorGamma, kFocusMinorMinorAlpha],
         invadableProvinceIdsSorted: const [
           'oldWorld|alpha_1',
           'oldWorld|gamma_1',
@@ -233,7 +130,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       );
       expect(
         stalledFocusMinorTarget(game: game, snapshot: snapshot),
-        _minorAlpha,
+        kFocusMinorMinorAlpha,
         reason:
             'Tie at 1 invadable each → only the first iterated minor '
             'updates bestInvadableCount; later minors with equal '
@@ -247,14 +144,14 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       // neither participates in the focused-minor scan (the loop
       // iterates Game.minorNations only). minor_alpha — the only
       // at-war minor with an invadable — must win.
-      final game = _focusMinorGame(
+      final game = expandPhasePlannerFocusMinorTargetGame(
         ownProvinces: 7,
         minorOwnedInvadables: const {
-          _minorAlpha: ['oldWorld|alpha_1'],
+          kFocusMinorMinorAlpha: ['oldWorld|alpha_1'],
         },
-        atWarMinors: const [_minorAlpha],
-        atWarTribes: const [_tribeOne],
-        atWarRivalGps: const [_gpRival],
+        atWarMinors: const [kFocusMinorMinorAlpha],
+        atWarTribes: const [kFocusMinorTribeOne],
+        atWarRivalGps: const [kFocusMinorGpRival],
       );
       // Tribe and GP owned invadables on the same frontier (added
       // out-of-band so the snapshot exposes them but minor_alpha
@@ -269,12 +166,12 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
               const Province(
                 id: 'oldWorld|tribe_invadable_1',
                 regionId: 'oldWorld',
-                ownerId: _tribeOne,
+                ownerId: kFocusMinorTribeOne,
               ),
               const Province(
                 id: 'oldWorld|gp_rival_invadable_1',
                 regionId: 'oldWorld',
-                ownerId: _gpRival,
+                ownerId: kFocusMinorGpRival,
               ),
             ],
           ),
@@ -287,7 +184,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
       );
       final snapshot = ownSnapshot(
         oldWorldProvincesOwned: 7,
-        atWarWith: const [_minorAlpha, _tribeOne, _gpRival],
+        atWarWith: const [kFocusMinorMinorAlpha, kFocusMinorTribeOne, kFocusMinorGpRival],
         invadableProvinceIdsSorted: const [
           'oldWorld|alpha_1',
           'oldWorld|tribe_invadable_1',
@@ -299,7 +196,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
           game: gameWithTribeAndGpInvadables,
           snapshot: snapshot,
         ),
-        _minorAlpha,
+        kFocusMinorMinorAlpha,
         reason:
             'The focused-minor scan iterates Game.minorNations only; '
             'tribe_one and gp_rival are never considered even when '
@@ -317,16 +214,16 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         // outer guard fires before the inner stalledFocusMinorTarget
         // delegation. Even with minor_alpha clearly leading the
         // invadable count, the helper returns null at quota.
-        final game = _focusMinorGame(
+        final game = expandPhasePlannerFocusMinorTargetGame(
           ownProvinces: kObserverConquestMinOwProvincesPerGp,
           minorOwnedInvadables: const {
-            _minorAlpha: ['oldWorld|alpha_1', 'oldWorld|alpha_2'],
+            kFocusMinorMinorAlpha: ['oldWorld|alpha_1', 'oldWorld|alpha_2'],
           },
-          atWarMinors: const [_minorAlpha],
+          atWarMinors: const [kFocusMinorMinorAlpha],
         );
         final snapshot = ownSnapshot(
           oldWorldProvincesOwned: kObserverConquestMinOwProvincesPerGp,
-          atWarWith: const [_minorAlpha],
+          atWarWith: const [kFocusMinorMinorAlpha],
           invadableProvinceIdsSorted: const [
             'oldWorld|alpha_1',
             'oldWorld|alpha_2',
@@ -347,7 +244,7 @@ void registerExpandPhasePlannerFocusMinorTargetEarlyCases() {
         // (would have returned minor_alpha otherwise).
         expect(
           stalledFocusMinorTarget(game: game, snapshot: snapshot),
-          _minorAlpha,
+          kFocusMinorMinorAlpha,
           reason:
               'Without the below-quota guard the focused-minor scan '
               'would pick minor_alpha; the outer guard is the only '

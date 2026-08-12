@@ -5,28 +5,15 @@ import 'package:colonizethis_ai/src/planning/region_military_destination_filter.
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
-Game _game({
-  required List<Province> oldWorld,
-  required List<Province> newWorld,
-}) {
-  return Game(
-    id: 'region-military-dest-filter',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: oldWorld),
-      newWorld: RegionData(provinces: newWorld),
-    ),
-    players: const [
-      Player(id: 'gp1', displayName: 'GP1', isHuman: false),
-      Player(id: 'gp2', displayName: 'GP2', isHuman: false),
-    ],
-  );
-}
+import '../support/region_military_destination_filter_test_support.dart';
 
 void main() {
   group('planRegionMilitaryDestinations', () {
     test('empty invadable → null (negative / fall-through)', () {
-      final game = _game(oldWorld: const [], newWorld: const []);
+      final game = regionMilitaryDestinationFilterGame(
+        oldWorld: const [],
+        newWorld: const [],
+      );
       expect(
         planRegionMilitaryDestinations(
           game: game,
@@ -39,7 +26,7 @@ void main() {
     });
 
     test('declared-war target owning invadable → single-owner plan', () {
-      final game = _game(
+      final game = regionMilitaryDestinationFilterGame(
         oldWorld: const [
           Province(
             id: 'oldWorld|gp2_a',
@@ -75,7 +62,7 @@ void main() {
     test(
       'declared-war target owns nothing invadable → null (negative)',
       () {
-        final game = _game(
+        final game = regionMilitaryDestinationFilterGame(
           oldWorld: const [
             Province(
               id: 'oldWorld|gp2_a',
@@ -98,7 +85,7 @@ void main() {
     );
 
     test('at-war owners fallback partitions union + sorted owners', () {
-      final game = _game(
+      final game = regionMilitaryDestinationFilterGame(
         oldWorld: const [
           Province(
             id: 'oldWorld|gp2_a',

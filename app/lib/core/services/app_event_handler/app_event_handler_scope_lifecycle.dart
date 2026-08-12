@@ -13,8 +13,10 @@ import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dia
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
 import 'package:colonizethis_app/providers/app_event_bus_provider.dart';
+import 'package:colonizethis_app/providers/game_service_provider.dart';
 import 'package:colonizethis_app/providers/games_provider.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -108,14 +110,17 @@ mixin AppEventHandlerScopeDialogBuilders on ConsumerState<AppEventHandlerScope> 
     if (game == null) {
       return const SizedBox.shrink();
     }
+    final humanPlayerId = resolveShellPanelPlayerId(
+      container.read(shellPlayerContextProvider),
+      game,
+    );
+    final mapData = container.read(gameServiceProvider).getMapData(game.id);
     return TrainMilitaryDialog(
       game: game,
-      humanPlayerId: resolveShellPanelPlayerId(
-        container.read(shellPlayerContextProvider),
-        game,
-      ),
+      humanPlayerId: humanPlayerId,
       currentOrders: container.read(currentOrdersProvider),
       bus: container.read(appEventBusProvider),
+      topology: mapData?.combinedTopology ?? const MapTopology(),
     );
   }
 

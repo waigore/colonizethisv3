@@ -2,19 +2,20 @@
 //
 // SPEC: SPEC/program/repo-lint.md (§ app test file size). Refs #4013, #4021.
 //
-// Cap is 800 physical lines. Files currently over the cap are listed in
-// [appTestFileSizeAllowlistForTests] (shrink-only). A stale allowlist entry
-// (missing file, or file now ≤ cap) fails so the backlog cannot retain slack.
+// Cap is 500 physical lines (Refs #4305 Slice D). Files currently over the cap
+// are listed in [appTestFileSizeAllowlistForTests] (shrink-only). A stale
+// allowlist entry (missing file, or file now ≤ cap) fails so the backlog cannot
+// retain slack.
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
-const _maxPhysicalLines = 800;
+const _maxPhysicalLines = 500;
 
 const String _appTestsRelativePath = 'app/test';
 
-/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4021).
+/// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4305).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
 const List<String> appTestFileSizeAllowlistForTests = <String>[];
 
