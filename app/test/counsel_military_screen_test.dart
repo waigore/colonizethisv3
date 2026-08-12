@@ -22,6 +22,7 @@ import 'package:colonizethis_save/colonizethis_save.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:colonizethis_world/colonizethis_world.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -188,54 +189,121 @@ void main() {
     },
   );
 
+  Game buildTrainCounselScreenGame({required int peasants}) {
+    const human = kPanelTestHumanPlayerId;
+    const capProvince = 'oldWorld|cap';
+    const unitType = 'peasant_levies';
+    final econ = RegimentEconomyCatalog.byId[unitType]!;
+    var stockpile = const Stockpile();
+    for (final entry in econ.buildInputs.entries) {
+      stockpile = stockpile.applyDelta(entry.key, entry.value * 4);
+    }
+    final techUnlocked = <String, bool>{
+      for (final techId in unlockingTechByRegimentId.values) techId: true,
+    };
+    return buildPanelTestGame(
+      id: _trainPanelGameId,
+      players: [
+        Player(
+          id: human,
+          displayName: 'Train GP',
+          isHuman: true,
+          capitalProvinceId: capProvince,
+          capitalTile: const CapitalTile(
+            regionId: 'oldWorld',
+            provinceId: capProvince,
+            x: 0,
+            y: 0,
+          ),
+          treasury: econ.buildTreasuryCost * 4,
+          workerPool: WorkerPool(peasants: peasants),
+          stockpile: stockpile,
+          techUnlocked: techUnlocked,
+        ),
+      ],
+      oldWorldProvinces: const [
+        Province(
+          id: capProvince,
+          regionId: 'oldWorld',
+          ownerId: human,
+          townTileKey: 'oldWorld|cap|0|0',
+        ),
+      ],
+      tileKeysByRegionAndProvince: const {
+        'oldWorld': {
+          capProvince: ['oldWorld|cap|0|0'],
+        },
+      },
+    );
+  }
+
+  testWidgets(
+    'train Agree stages BuildUnitOrders when still affordable (Refs #4307)',
+    (WidgetTester tester) async {
+      const human = kPanelTestHumanPlayerId;
+      const unitType = 'peasant_levies';
+      final game = buildTrainCounselScreenGame(peasants: 2);
+      final bus = AppEventBus.create();
+      final snackbars = <ShowSnackBarEvent>[];
+      bus.on<ShowSnackBarEvent>().listen(snackbars.add);
+      final container = ProviderContainer(
+        overrides: counselScreenOverrides(
+          game: game,
+          bus: bus,
+          gameService: CounselMilitaryTrainMapGameService(
+            gamesBox,
+            GameSaveAdapter(),
+          ),
+        ),
+      );
+      addTearDown(container.dispose);
+
+      await pumpAppShellWithContainer(
+        tester,
+        container: container,
+        navigatorKey: appNavigatorKey,
+        onGenerateRoute: Routes.generate,
+        shellWrapper: (app) => AppEventHandlerScope(child: app),
+        child: CounselScreen(
+          game: game,
+          humanPlayerId: human,
+          initialTab: CounselTab.military,
+        ),
+      );
+      await pumpSettleCapped(tester);
+
+      expect(find.textContaining('Peasant Levies'), findsWidgets);
+      expect(find.textContaining('peasant_levies'), findsNothing);
+
+      final agree = find.byKey(
+        ValueKey<String>('counsel_agree_military_train_$unitType'),
+      );
+      expect(agree, findsOneWidget);
+
+      await tester.tap(agree);
+      await pumpSettleCapped(tester);
+
+      expect(snackbars, isEmpty);
+      final builds =
+          container.read(currentOrdersProvider).buildUnitOrdersByPlayerId[human] ??
+          const [];
+      expect(builds, isNotEmpty);
+      expect(builds.every((o) => o.unitType == unitType), isTrue);
+      expect(builds.every((o) => o.isMilitary), isTrue);
+      expect(
+        builds.every((o) => o.spawnProvinceId == 'oldWorld|cap'),
+        isTrue,
+      );
+    },
+  );
+
   testWidgets(
     'train Agree emits snackbar when recommendation is no longer affordable (Refs #4307)',
     (WidgetTester tester) async {
       const human = kPanelTestHumanPlayerId;
       const capProvince = 'oldWorld|cap';
       const unitType = 'peasant_levies';
-      final econ = RegimentEconomyCatalog.byId[unitType]!;
-      var stockpile = const Stockpile();
-      for (final entry in econ.buildInputs.entries) {
-        stockpile = stockpile.applyDelta(entry.key, entry.value * 4);
-      }
-      final techUnlocked = <String, bool>{
-        for (final techId in unlockingTechByRegimentId.values) techId: true,
-      };
-      final game = buildPanelTestGame(
-        id: _trainPanelGameId,
-        players: [
-          Player(
-            id: human,
-            displayName: 'Train GP',
-            isHuman: true,
-            capitalProvinceId: capProvince,
-            capitalTile: const CapitalTile(
-              regionId: 'oldWorld',
-              provinceId: capProvince,
-              x: 0,
-              y: 0,
-            ),
-            treasury: econ.buildTreasuryCost * 4,
-            workerPool: const WorkerPool(peasants: 2),
-            stockpile: stockpile,
-            techUnlocked: techUnlocked,
-          ),
-        ],
-        oldWorldProvinces: const [
-          Province(
-            id: capProvince,
-            regionId: 'oldWorld',
-            ownerId: human,
-            townTileKey: 'oldWorld|cap|0|0',
-          ),
-        ],
-        tileKeysByRegionAndProvince: const {
-          'oldWorld': {
-            capProvince: ['oldWorld|cap|0|0'],
-          },
-        },
-      );
+      final game = buildTrainCounselScreenGame(peasants: 2);
       final bus = AppEventBus.create();
       final snackbars = <ShowSnackBarEvent>[];
       bus.on<ShowSnackBarEvent>().listen(snackbars.add);
