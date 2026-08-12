@@ -1,7 +1,7 @@
 // Pure-function tests for DiplomacyPanel row building and power-comparison
 // helpers, split out of diplomacy_panel_test.dart to keep each test file at or
 // below the repo dart_file_non_comment_line_size gate. SPEC/ui/diplomacy-panel.md.
-// Shared tables densify residual mid-500 cases (Refs #4021).
+// Shared tables densify residual mid-500 cases (Refs #4021 / #4305).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -11,107 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/features/game/widgets/diplomacy/diplomacy_panel.dart';
 
+import 'diplomacy_panel_rows_test_fixtures.dart';
 import 'panel_test_fixtures.dart';
-
-/// Old World coastal province sea-connected to an unrevealed New World tribe
-/// colony, with **zero** New World tile visibility (Refs #3620 AC-1). Mirrors
-/// the colonial-intel fixture used in the diplomacy package tests.
-const _seaReachableTopology = MapTopology(
-  nodes: [
-    TopologyNode(
-      id: 'oldWorld|home',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.province,
-    ),
-    TopologyNode(
-      id: 'oldWorld|owSea',
-      regionId: 'oldWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|nwSea',
-      regionId: 'newWorld',
-      type: TopologyNodeType.seaZone,
-    ),
-    TopologyNode(
-      id: 'newWorld|colony',
-      regionId: 'newWorld',
-      type: TopologyNodeType.province,
-    ),
-  ],
-  edges: [
-    TopologyEdge(id1: 'oldWorld|home', id2: 'oldWorld|owSea'),
-    TopologyEdge(id1: 'oldWorld|owSea', id2: 'newWorld|nwSea'),
-    TopologyEdge(id1: 'newWorld|nwSea', id2: 'newWorld|colony'),
-  ],
-);
-
-Game _tribeFixture({
-  required String id,
-  required int turnNumber,
-  required Map<String, Map<String, String>> playerVisibilityByTile,
-  List<DiplomacyRelation> diplomacyRelations = const [],
-}) {
-  return Game(
-    id: id,
-    worldState: WorldState(
-      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
-      oldWorld: const RegionData(
-        provinces: [
-          Province(id: 'oldWorld|home', regionId: 'oldWorld', ownerId: 'gp1'),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(id: 'newWorld|colony', regionId: 'newWorld', ownerId: 't1'),
-        ],
-      ),
-      playerVisibilityByTile: playerVisibilityByTile,
-      tileKeysByRegionAndProvince: const {
-        'oldWorld': {
-          'oldWorld|home': ['oldWorld|home|0|0'],
-        },
-        'newWorld': {
-          'newWorld|colony': ['newWorld|colony|0|0'],
-        },
-      },
-    ),
-    players: const [Player(id: 'gp1', displayName: 'Solo', isHuman: true)],
-    tribes: const [Tribe(id: 't1', displayName: 'Tribe One')],
-    diplomacyRelations: diplomacyRelations,
-  );
-}
-
-/// Turn-0 fixture where Tribe `t1` owns a New-World province that is
-/// sea-reachable from the human GP's Old-World anchor, but the GP has **no**
-/// non-`unknown` New-World tile visibility and **no** GP↔Tribe relation
-/// (Refs #3620 AC-1). The tribe must not be surfaced in the Tribes section.
-Game _gameWithSeaReachableTribeNoContact() => _tribeFixture(
-  id: 'sea-reachable-no-contact',
-  turnNumber: 0,
-  playerVisibilityByTile: const {
-    'gp1': {'oldWorld|home|0|0': 'fullyVisible'},
-  },
-);
-
-/// Fixture for the contact-survives-fog-decay AC (Refs #3620 AC-7): the human
-/// GP holds a persisted GP↔Tribe relation with `t1` but currently has **no**
-/// non-`unknown` tile visibility into any province `t1` owns.
-Game _gameWithTribeRelationButNoVisibility() => _tribeFixture(
-  id: 'tribe-relation-fog-decay',
-  turnNumber: 7,
-  playerVisibilityByTile: const {},
-  diplomacyRelations: const [
-    DiplomacyRelation(
-      factionId1: 'gp1',
-      factionId2: 't1',
-      state: RelationState.atPeace,
-      score: 50,
-      sinceTurn: 4,
-      lastInteractionTurn: 4,
-    ),
-  ],
-);
 
 void main() {
   suppressLogsForTests();
@@ -200,22 +101,26 @@ void main() {
 
     test('AC-1 (#3620): turn-0 sea-reachable tribe with no contact yields no '
         'tribe rows and is absent from knownDiplomaticTargetFactionIds', () {
-      final game = _gameWithSeaReachableTribeNoContact();
-      final view = buildPlayerView(game, _seaReachableTopology, 'gp1');
+      final game = diplomacyPanelRowsSeaReachableTribeNoContact();
+      final view = buildPlayerView(
+        game,
+        diplomacyPanelRowsSeaReachableTopology,
+        'gp1',
+      );
       // The shared first-contact gate now lives in the helper itself, so the
       // sea-reachable tribe is excluded at the source (#3620).
       expect(
         knownDiplomaticTargetFactionIds(
           view: view,
           game: game,
-          topology: _seaReachableTopology,
+          topology: diplomacyPanelRowsSeaReachableTopology,
         ),
         isNot(contains('t1')),
       );
 
       final rows = buildDiplomacyRows(
         game,
-        _seaReachableTopology,
+        diplomacyPanelRowsSeaReachableTopology,
         'gp1',
         const Orders(),
       );
@@ -233,7 +138,7 @@ void main() {
       'still surfaces a tribe row (contact survives fog decay)',
       () {
         final rows = buildDiplomacyRows(
-          _gameWithTribeRelationButNoVisibility(),
+          diplomacyPanelRowsTribeRelationButNoVisibility(),
           const MapTopology(nodes: [], edges: []),
           'gp1',
           const Orders(),
@@ -369,159 +274,5 @@ void main() {
         contains(DiplomaticOrderType.declareWar),
       );
     });
-  });
-
-  group('powerComparisonPercent', () {
-    for (final c in <({String name, int gp, int player, int want})>[
-      (
-        name: 'GP stronger than player produces positive percentage',
-        gp: 110,
-        player: 100,
-        want: 10,
-      ),
-      (
-        name: 'GP weaker than player produces negative percentage',
-        gp: 78,
-        player: 100,
-        want: -22,
-      ),
-      (
-        name: 'equal scores produce zero percentage',
-        gp: 100,
-        player: 100,
-        want: 0,
-      ),
-      (
-        name: 'rounding uses banker-agnostic round() (positive mid)',
-        gp: 105,
-        player: 100,
-        want: 5,
-      ),
-      (
-        name: 'rounding uses banker-agnostic round() (positive high)',
-        gp: 114,
-        player: 100,
-        want: 14,
-      ),
-      (
-        name: 'zero playerPowerScore uses max(playerScore, 1) guard',
-        gp: 50,
-        player: 0,
-        want: 5000,
-      ),
-      (name: 'zero/zero is finite 0% (no NaN)', gp: 0, player: 0, want: 0),
-      (
-        name: 'negative playerPowerScore is still guarded by max(.., 1)',
-        gp: 50,
-        player: -10,
-        want: 6000,
-      ),
-    ]) {
-      test(c.name, () {
-        expect(powerComparisonPercent(c.gp, c.player), c.want);
-      });
-    }
-  });
-
-  group('formatPowerComparisonPercent', () {
-    for (final c in <(int, String)>[
-      (10, '+10%'),
-      (1, '+1%'),
-      (-22, '\u221222%'),
-      (-1, '\u22121%'),
-      (0, '0%'),
-    ]) {
-      test('formats ${c.$1} as ${c.$2}', () {
-        expect(formatPowerComparisonPercent(c.$1), c.$2);
-      });
-    }
-
-    test('negative percentage uses unicode minus sign (U+2212)', () {
-      expect(formatPowerComparisonPercent(-22).startsWith('\u2212'), isTrue);
-      expect(formatPowerComparisonPercent(-22).startsWith('-'), isFalse);
-    });
-  });
-
-  group('powerComparisonTier (SPEC § Relative power line boundary table)', () {
-    for (final c in <(int, PowerComparisonTier)>[
-      (0, PowerComparisonTier.roughlyEqual),
-      (10, PowerComparisonTier.roughlyEqual),
-      (-10, PowerComparisonTier.roughlyEqual),
-      (5, PowerComparisonTier.roughlyEqual),
-      (-7, PowerComparisonTier.roughlyEqual),
-      (11, PowerComparisonTier.superior),
-      (30, PowerComparisonTier.superior),
-      (22, PowerComparisonTier.superior),
-      (31, PowerComparisonTier.vastlySuperior),
-      (100, PowerComparisonTier.vastlySuperior),
-      (4900, PowerComparisonTier.vastlySuperior),
-      (-11, PowerComparisonTier.inferior),
-      (-30, PowerComparisonTier.inferior),
-      (-22, PowerComparisonTier.inferior),
-      (-31, PowerComparisonTier.vastlyInferior),
-      (-90, PowerComparisonTier.vastlyInferior),
-    ]) {
-      test('${c.$1} → ${c.$2}', () {
-        expect(powerComparisonTier(c.$1), c.$2);
-      });
-    }
-  });
-
-  group('diplomacyFilterShowsKind', () {
-    test('mode `all` shows every faction kind', () {
-      for (final kind in FactionKind.values) {
-        expect(
-          diplomacyFilterShowsKind(DiplomacyFilterMode.all, kind),
-          isTrue,
-          reason: 'DiplomacyFilterMode.all must accept $kind',
-        );
-      }
-    });
-
-    for (final c
-        in <
-          ({String name, DiplomacyFilterMode mode, FactionKind kind, bool want})
-        >[
-          (
-            name: 'greatPowersOnly shows Great Power',
-            mode: DiplomacyFilterMode.greatPowersOnly,
-            kind: FactionKind.greatPower,
-            want: true,
-          ),
-          (
-            name: 'greatPowersOnly hides Minor',
-            mode: DiplomacyFilterMode.greatPowersOnly,
-            kind: FactionKind.minor,
-            want: false,
-          ),
-          (
-            name: 'greatPowersOnly hides Tribe',
-            mode: DiplomacyFilterMode.greatPowersOnly,
-            kind: FactionKind.tribe,
-            want: false,
-          ),
-          (
-            name: 'minorsOnly shows Minor',
-            mode: DiplomacyFilterMode.minorsOnly,
-            kind: FactionKind.minor,
-            want: true,
-          ),
-          (
-            name: 'minorsOnly shows Tribe',
-            mode: DiplomacyFilterMode.minorsOnly,
-            kind: FactionKind.tribe,
-            want: true,
-          ),
-          (
-            name: 'minorsOnly hides Great Power',
-            mode: DiplomacyFilterMode.minorsOnly,
-            kind: FactionKind.greatPower,
-            want: false,
-          ),
-        ]) {
-      test(c.name, () {
-        expect(diplomacyFilterShowsKind(c.mode, c.kind), c.want);
-      });
-    }
   });
 }

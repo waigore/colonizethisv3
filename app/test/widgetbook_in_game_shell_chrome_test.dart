@@ -23,79 +23,17 @@ import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:widgetbook/widgetbook.dart';
+import 'widgetbook_in_game_shell_chrome_test_support.dart';
 import 'widgetbook_test_harness.dart';
 
 void main() {
   suppressLogsForTests();
 
-  Future<void> pumpStory(
-    WidgetTester tester,
-    List<WidgetbookNode> directories, {
-    required String folder,
-    required String useCase,
-    Duration? extra,
-    bool resetTree = false,
-  }) async {
-    if (resetTree) {
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump();
-    }
-    final story = findWidgetbookUseCase(
-      directories,
-      folderName: folder,
-      useCaseName: useCase,
-    );
-    await tester.pumpWidget(
-      story.builder(tester.element(find.byType(View))),
-    );
-    await tester.pump();
-    if (extra != null) {
-      await tester.pump(extra);
-    }
-  }
-
-  Future<T> pumpStoryAs<T extends Widget>(
-    WidgetTester tester,
-    List<WidgetbookNode> directories, {
-    required String folder,
-    required String useCase,
-    Duration? extra,
-  }) async {
-    await pumpStory(
-      tester,
-      directories,
-      folder: folder,
-      useCase: useCase,
-      extra: extra,
-    );
-    return tester.widget<T>(find.byType(T));
-  }
-
-  Future<void> expectStoriesMount(
-    WidgetTester tester,
-    List<WidgetbookNode> directories, {
-    required String folder,
-    required List<String> useCases,
-    required Type widgetType,
-    Duration? extra,
-  }) async {
-    for (final name in useCases) {
-      await pumpStory(
-        tester,
-        directories,
-        folder: folder,
-        useCase: name,
-        extra: extra,
-      );
-      expect(find.byType(widgetType), findsOneWidget);
-    }
-  }
-
   group('In-game shell chrome Widgetbook stories (Refs #2861 S12)', () {
     testWidgets(
       'Game Top Bar folder exposes default + disabled + observe variants',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           gameTopBarDirectories,
           folder: 'Game Top Bar',
@@ -112,7 +50,7 @@ void main() {
     testWidgets(
       'Game Top Bar disabled variant renders the bar with the muted button',
       (WidgetTester tester) async {
-        final bar = await pumpStoryAs<GameTopBar>(
+        final bar = await pumpWidgetbookStoryAs<GameTopBar>(
           tester,
           gameTopBarDirectories,
           folder: 'Game Top Bar',
@@ -135,7 +73,7 @@ void main() {
           'Players bar toggle — on (active accent)',
           'Players bar toggle — off (dim)',
         ]) {
-          await pumpStory(
+          await pumpWidgetbookStory(
             tester,
             gameTabBarDirectories,
             folder: 'Game Tab Bar',
@@ -154,7 +92,7 @@ void main() {
     testWidgets(
       'Players Bar Toggle folder exposes on and off chrome variants',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           playersBarToggleDirectories,
           folder: 'Players Bar Toggle',
@@ -170,7 +108,7 @@ void main() {
     testWidgets(
       'Game Map Corner Controls folder exposes default + disabled variant',
       (WidgetTester tester) async {
-        final enabled = await pumpStoryAs<GameMapCornerControls>(
+        final enabled = await pumpWidgetbookStoryAs<GameMapCornerControls>(
           tester,
           gameMapCornerControlsDirectories,
           folder: 'Game Map Corner Controls',
@@ -179,7 +117,7 @@ void main() {
         expect(enabled.homeToCapitalEnabled, isTrue);
         expect(enabled.narrow, isFalse);
 
-        final disabled = await pumpStoryAs<GameMapCornerControls>(
+        final disabled = await pumpWidgetbookStoryAs<GameMapCornerControls>(
           tester,
           gameMapCornerControlsDirectories,
           folder: 'Game Map Corner Controls',
@@ -194,7 +132,7 @@ void main() {
       'Game Map Corner Controls folder exposes narrow variant '
       '(Refs #2870 S9)',
       (WidgetTester tester) async {
-        final narrow = await pumpStoryAs<GameMapCornerControls>(
+        final narrow = await pumpWidgetbookStoryAs<GameMapCornerControls>(
           tester,
           gameMapCornerControlsDirectories,
           folder: 'Game Map Corner Controls',
@@ -208,7 +146,7 @@ void main() {
     testWidgets(
       'Game Map Options Dialog folder exposes defaults + all-on + all-off variants',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           gameMapOptionsDialogDirectories,
           folder: 'Game Map Options Dialog',
@@ -226,7 +164,7 @@ void main() {
     testWidgets(
       'Player Turn Event Feed Card folder exposes populated + empty variants',
       (WidgetTester tester) async {
-        final populated = await pumpStoryAs<PlayerTurnEventFeedCard>(
+        final populated = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
           tester,
           playerTurnEventFeedCardDirectories,
           folder: 'Player Turn Event Feed Card',
@@ -235,7 +173,7 @@ void main() {
         expect(populated.entries.length, 3);
         expect(populated.narrow, isFalse);
 
-        final empty = await pumpStoryAs<PlayerTurnEventFeedCard>(
+        final empty = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
           tester,
           playerTurnEventFeedCardDirectories,
           folder: 'Player Turn Event Feed Card',
@@ -250,7 +188,7 @@ void main() {
       'Player Turn Event Feed Card folder exposes market summary variants '
       '(Refs #4270)',
       (WidgetTester tester) async {
-        final market = await pumpStoryAs<PlayerTurnEventFeedCard>(
+        final market = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
           tester,
           playerTurnEventFeedCardDirectories,
           folder: 'Player Turn Event Feed Card',
@@ -263,7 +201,7 @@ void main() {
           'Market: bought £240 · sold £160 · 2 orders carried',
         );
 
-        final combined = await pumpStoryAs<PlayerTurnEventFeedCard>(
+        final combined = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
           tester,
           playerTurnEventFeedCardDirectories,
           folder: 'Player Turn Event Feed Card',
@@ -290,7 +228,7 @@ void main() {
           'Narrow (460 dp) — populated, 50vw mid-range',
           'Narrow (599 dp) — empty, clamp upper bound (260 dp)',
         ]) {
-          final card = await pumpStoryAs<PlayerTurnEventFeedCard>(
+          final card = await pumpWidgetbookStoryAs<PlayerTurnEventFeedCard>(
             tester,
             playerTurnEventFeedCardDirectories,
             folder: 'Player Turn Event Feed Card',
@@ -304,7 +242,7 @@ void main() {
     testWidgets(
       'Game Map Empire Left Rail folder exposes wide, debug-console, and narrow variants',
       (WidgetTester tester) async {
-        final wide = await pumpStoryAs<GameMapEmpireLeftRail>(
+        final wide = await pumpWidgetbookStoryAs<GameMapEmpireLeftRail>(
           tester,
           gameMapEmpireLeftRailDirectories,
           folder: 'Game Map Empire Left Rail',
@@ -313,7 +251,7 @@ void main() {
         expect(wide.narrow, isFalse);
         expect(find.byType(Tooltip), findsWidgets);
 
-        await pumpStory(
+        await pumpWidgetbookStory(
           tester,
           gameMapEmpireLeftRailDirectories,
           folder: 'Game Map Empire Left Rail',
@@ -321,7 +259,7 @@ void main() {
         );
         expect(find.byType(GameMapEmpireLeftRail), findsOneWidget);
 
-        final narrow = await pumpStoryAs<GameMapEmpireLeftRail>(
+        final narrow = await pumpWidgetbookStoryAs<GameMapEmpireLeftRail>(
           tester,
           gameMapEmpireLeftRailDirectories,
           folder: 'Game Map Empire Left Rail',
@@ -334,7 +272,7 @@ void main() {
     testWidgets(
       'Region Minimap folder exposes visible, hidden, and narrow variants',
       (WidgetTester tester) async {
-        final visible = await pumpStoryAs<GameRegionMinimap>(
+        final visible = await pumpWidgetbookStoryAs<GameRegionMinimap>(
           tester,
           gameRegionMinimapDirectories,
           folder: 'Region Minimap',
@@ -343,7 +281,7 @@ void main() {
         expect(visible.narrow, isFalse);
         expect(visible.viewportSnapshot, isNotNull);
 
-        await pumpStory(
+        await pumpWidgetbookStory(
           tester,
           gameRegionMinimapDirectories,
           folder: 'Region Minimap',
@@ -351,7 +289,7 @@ void main() {
         );
         expect(find.byType(GameRegionMinimap), findsOneWidget);
 
-        final narrow = await pumpStoryAs<GameRegionMinimap>(
+        final narrow = await pumpWidgetbookStoryAs<GameRegionMinimap>(
           tester,
           gameRegionMinimapDirectories,
           folder: 'Region Minimap',
@@ -364,7 +302,7 @@ void main() {
     testWidgets(
       'Game Map Province Side Panel folder exposes open + closed variants',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           gameMapProvinceDetailSidePanelDirectories,
           folder: 'Game Map Province Side Panel',
@@ -381,7 +319,7 @@ void main() {
     testWidgets(
       'Players Bar folder exposes wide-layout chip column (S12 story 6)',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           playersBarDirectories,
           folder: 'Players Bar',
@@ -398,7 +336,7 @@ void main() {
     testWidgets(
       'Game Screen folder exposes wide integrated layout (S12 story 7)',
       (WidgetTester tester) async {
-        await pumpStory(
+        await pumpWidgetbookStory(
           tester,
           gameScreenDirectories,
           folder: 'Game Screen',
@@ -412,7 +350,7 @@ void main() {
     testWidgets(
       'Game Side Menu folder exposes open + closed variants (S12 story 8)',
       (WidgetTester tester) async {
-        await expectStoriesMount(
+        await expectWidgetbookStoriesMount(
           tester,
           gameSideMenuDirectories,
           folder: 'Game Side Menu',
@@ -426,7 +364,7 @@ void main() {
     testWidgets(
       'Victory folder exposes full scrim overlay (S12 story 12)',
       (WidgetTester tester) async {
-        await pumpStory(
+        await pumpWidgetbookStory(
           tester,
           victoryUiDirectories,
           folder: 'Victory',
@@ -439,7 +377,7 @@ void main() {
     testWidgets(
       'Exit Confirm Dialog folder exposes default variant (S12 story 13)',
       (WidgetTester tester) async {
-        await pumpStory(
+        await pumpWidgetbookStory(
           tester,
           exitConfirmDialogDirectories,
           folder: 'Exit Confirm Dialog',
@@ -494,7 +432,7 @@ void main() {
           // same element (which would otherwise hit
           // `Tried to change the number of overrides` per Riverpod
           // `ProviderContainer.updateOverrides`).
-          await pumpStory(
+          await pumpWidgetbookStory(
             tester,
             allDirectories,
             folder: folder,

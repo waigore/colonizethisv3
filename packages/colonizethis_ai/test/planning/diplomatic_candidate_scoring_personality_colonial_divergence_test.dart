@@ -71,11 +71,11 @@ import 'package:colonizethis_ai/colonizethis_ai.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 
+import '../support/diplomatic_candidate_scoring_colonial_test_support.dart';
 import '../support/domain_planner_orchestrator_test_support.dart';
 
 const String _nationId = kOrchestratorGp1NationId;
 const String _tribeId = kOrchestratorTribeId;
-const String _tribeNwProvince = kOrchestratorTribeNwProvince;
 
 // COLONIAL-phase tribe target candidates the scoring function ranks.
 // `targetOvertureStage` is `joinEmpire` to match the canonical NW colonial
@@ -96,94 +96,6 @@ const List<DiplomaticOrder> _candidates = <DiplomaticOrder>[
 // Index lookup keeps the assertions readable without coupling to enum order.
 const int _declareWarIdx = 0;
 const int _establishOvertureIdx = 1;
-
-/// COLONIAL-phase Full AI scenario shared by every personality run.
-///
-/// One GP (`gp1`) at OW=11 (above quota), one tribe (`tribe1`) owning a
-/// single sea-reachable NW province, peace + embassy already in place so
-/// both `declareWar` (tribe at peace, relation 30 ≤ default agenda max 50)
-/// and `establishOverture(joinEmpire)` (no overture cooldown events) are
-/// structurally valid scoring candidates. The fixture deliberately omits
-/// OW adjacency (`adjacentOwnerFactionIdsSorted` empty) so the
-/// `_declareWarAdjacencyAndStalledBonuses` branch does not fire and the
-/// score gap is dominated by the personality `warLikelihood` /
-/// `allianceTendency` deltas the AC pins.
-Game _colonialScenarioGame() {
-  return Game(
-    id: 'g-2509-personality-must-have-4-colonial',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 110),
-      oldWorld: RegionData(
-        provinces: [
-          for (final id in kGp1OwProvincesAtQuota)
-            Province(id: id, regionId: 'oldWorld', ownerId: _nationId),
-        ],
-      ),
-      newWorld: const RegionData(
-        provinces: [
-          Province(
-            id: _tribeNwProvince,
-            regionId: 'newWorld',
-            ownerId: _tribeId,
-          ),
-        ],
-      ),
-      // Non-empty Home Army keeps `regimentCountForPlayer` > 0 so the
-      // zero-regiment offer-peace short-circuits in
-      // `_declareWarSuppressedAdjacentGpScore` (GP target only) and any
-      // unrelated stalemate paths cannot zero the declare-war score for the
-      // tribe target this test is pinning.
-      armies: [
-        Army(
-          id: homeArmyIdFor(_nationId),
-          ownerId: _nationId,
-          regionId: 'oldWorld',
-          stationedProvinceId: kGp1OwProvincesAtQuota.first,
-          regimentUnitIds: const ['u_gp1'],
-          isHomeArmy: true,
-        ),
-      ],
-    ),
-    players: const [
-      Player(
-        id: _nationId,
-        displayName: 'GP1',
-        // `leaderKey` is not the personality lookup key for this test —
-        // `AIConfig.personalityId` drives `getThresholdsForLeader` in
-        // `computeDiplomaticCandidateScores`. A neutral leader key here
-        // keeps the fixture free of accidental per-leader bonus paths.
-        isHuman: false,
-        leaderKey: 'victoria',
-      ),
-    ],
-    tribes: const [Tribe(id: _tribeId, displayName: 'T1')],
-    minorNations: const [],
-    diplomacyRelations: const [
-      DiplomacyRelation(
-        factionId1: _nationId,
-        factionId2: _tribeId,
-        // Score 30 sits inside the default declare-war relation window
-        // (`kDeclareWarMaxRelationScoreDefault` = 50) and is **not** in the
-        // <= 25 hostile band that adds the `_resourceNeedBonus`-adjacent
-        // war-desire bump, keeping the warDesire term identical between
-        // personalities (the assertion isolates the warLikelihood delta).
-        state: RelationState.atPeace,
-        score: 30,
-      ),
-    ],
-    // Embassy keeps `establishOverture(joinEmpire)` a valid candidate —
-    // `_isDecisionOnCooldown` returns false in the absence of `overture*`
-    // events, so the overture score is whatever the
-    // `establishOverture` branch computes.
-    overtureStates: const [
-      OvertureState(
-        gpId: _nationId,
-        targetId: _tribeId,
-        stage: OvertureStage.embassy,
-      ),
-    ],
-  );
-}
 
 // COLONIAL-phase snapshot mirroring the AC's "tribe colonial target where
 // both Join Empire and declare-war are valid candidates" preconditions:
@@ -232,7 +144,10 @@ const AIConfig _henryConfig = AIConfig(
 );
 
 List<int> _scoreFor(AIConfig config) {
-  final game = _colonialScenarioGame();
+  final game = diplomaticCandidateScoringColonialTribeScenarioGame(
+    gameId: 'g-2509-personality-must-have-4-colonial',
+    overtureStates: kDiplomaticCandidateScoringPersonalityOvertures,
+  );
   // Shared COLONIAL NW-tribe snapshot (Refs #3997). Scoring pins
   // historically omitted adjacent NW owners so adjacency bonuses cannot
   // mask personality deltas.
