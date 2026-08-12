@@ -1,6 +1,8 @@
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import '../support/session_command_event_cases.dart';
+
 void main() {
   group('UIActionEvent payloads', () {
     test('carry their constructor arguments', () {
@@ -143,162 +145,17 @@ void main() {
         () => FlipDebugProvinceOwnershipEvent(humanPlayerId: 'p1'),
         throwsA(isA<AssertionError>()),
       );
-      const valid = FlipDebugProvinceOwnershipEvent(
-        humanPlayerId: 'p1',
-        fullProvinceId: 'r1|p1',
+      expect(
+        FlipDebugProvinceOwnershipEvent(
+          humanPlayerId: 'p1',
+          fullProvinceId: 'r1|p1',
+        ).fullProvinceId,
+        'r1|p1',
       );
-      expect(valid.fullProvinceId, 'r1|p1');
     });
 
     test('remaining session command payloads carry fields', () {
-      expect(
-        RemovePendingWorkOrderRequestedEvent(playerId: 'p1', index: 2).index,
-        2,
-      );
-      expect(
-        NavalSplitFleetRequestedEvent(
-          humanPlayerId: 'p1',
-          originalFleetId: 'f1',
-          shipInstanceIdsToNewFleet: const ['ship_1'],
-        ).originalFleetId,
-        'f1',
-      );
-      expect(
-        NavalTransferShipsRequestedEvent(
-          humanPlayerId: 'p1',
-          sourceFleetId: 'f1',
-          targetFleetId: 'f2',
-          shipInstanceIdsToTransfer: const ['ship_1'],
-        ).targetFleetId,
-        'f2',
-      );
-      expect(
-        NavalMoveFleetRequestedEvent(
-          humanPlayerId: 'p1',
-          moveOrder: const NavalMoveOrder(
-            fleetId: 'f1',
-            destinationSeaZoneId: 'sz1',
-          ),
-        ).moveOrder.fleetId,
-        'f1',
-      );
-      expect(
-        NavalMissionRequestedEvent(
-          humanPlayerId: 'p1',
-          missionOrder: NavalMissionOrder(
-            fleetId: 'f1',
-            mission: FleetMission.patrol.name,
-          ),
-        ).missionOrder.mission,
-        FleetMission.patrol.name,
-      );
-      expect(
-        NavalMissionCancelRequestedEvent(
-          humanPlayerId: 'p1',
-          fleetId: 'f1',
-        ).fleetId,
-        'f1',
-      );
-      expect(
-        ArmyCombineRequestedEvent(
-          humanPlayerId: 'p1',
-          armyIds: const ['a1'],
-        ).armyIds,
-        ['a1'],
-      );
-      expect(
-        ArmySplitRequestedEvent(
-          humanPlayerId: 'p1',
-          sourceArmyId: 'a1',
-          unitIdsToMove: const ['u1'],
-        ).sourceArmyId,
-        'a1',
-      );
-      expect(
-        ArmyMoveRequestedEvent(
-          humanPlayerId: 'p1',
-          moveOrder: const ArmyMoveOrder(
-            armyId: 'a1',
-            destinationProvinceId: 'r1|p1',
-          ),
-          declareWarTargetFactionId: 'B',
-        ).declareWarTargetFactionId,
-        'B',
-      );
-      expect(
-        const SpawnDebugRegimentAtCapitalEvent(
-          humanPlayerId: 'p1',
-          regimentTypeId: 'line_infantry',
-        ).regimentTypeId,
-        'line_infantry',
-      );
-      expect(
-        const SpawnDebugShipAtCapitalHomeFleetEvent(
-          humanPlayerId: 'p1',
-          shipTypeId: 'carrack',
-        ).shipTypeId,
-        'carrack',
-      );
-      expect(
-        const CreditDebugWorkerPoolEvent(
-          humanPlayerId: 'p1',
-          workerTierId: 'peasants',
-          requestedAmount: 5,
-          creditedAmount: 5,
-        ).workerTierId,
-        'peasants',
-      );
-      expect(
-        const CreditDebugStockpileCommodityEvent(
-          humanPlayerId: 'p1',
-          commodityId: 'grain',
-          requestedAmount: 5,
-          creditedAmount: 5,
-        ).commodityId,
-        'grain',
-      );
-      expect(
-        const RevealDebugProvinceEvent(
-          humanPlayerId: 'p1',
-          target: 'r1|p1',
-          targetIsFullProvinceId: true,
-        ).targetIsFullProvinceId,
-        isTrue,
-      );
-      expect(const SetObserveModeOffEvent(), isA<SessionCommandEvent>());
-      expect(const SetObserveModeGlobalEvent(), isA<SessionCommandEvent>());
-      expect(
-        const SetObserveModePlayerEvent(targetPlayerId: 'p2').targetPlayerId,
-        'p2',
-      );
-      expect(
-        AppendDiplomaticOrderRequestedEvent(
-          playerId: 'p1',
-          order: const DiplomaticOrder(
-            type: DiplomaticOrderType.offerPeace,
-            targetFactionId: 'B',
-          ),
-        ).order.targetFactionId,
-        'B',
-      );
-      expect(
-        RemoveDiplomaticOrderRequestedEvent(
-          playerId: 'p1',
-          type: DiplomaticOrderType.alliance,
-          targetFactionId: 'B',
-        ).type,
-        DiplomaticOrderType.alliance,
-      );
-      expect(
-        const NegotiationMoodUpdateEvent(
-          leaderId: 'v',
-          currentMood: 'neutral',
-          offerQualityDelta: 0.2,
-          stallCounter: 1,
-          seed: 7,
-        ).durationMs,
-        1200,
-      );
+      expectSessionCommandPayloadCases();
     });
   });
 }

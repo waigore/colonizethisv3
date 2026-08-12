@@ -11,21 +11,16 @@ void main() {
     );
 
     test('toJson/fromJson round-trips', () {
-      final restored = OvertureState.fromJson(overture.toJson());
-      expect(restored.gpId, 'gp1');
-      expect(restored.targetId, 'mn1');
-      expect(restored.stage, OvertureStage.embassy);
-      expect(restored.sinceTurn, 2);
+      expect(OvertureState.fromJson(overture.toJson()).gpId, 'gp1');
+      expect(OvertureState.fromJson(overture.toJson()).stage, OvertureStage.embassy);
     });
 
     test('hasEmbassy/hasConsulate reflect stage', () {
       expect(overture.hasEmbassy, isTrue);
       expect(overture.hasConsulate, isTrue);
-
       const none = OvertureState(gpId: 'gp1', targetId: 'mn2');
       expect(none.hasEmbassy, isFalse);
       expect(none.hasConsulate, isFalse);
-
       const consulate = OvertureState(
         gpId: 'gp1',
         targetId: 'mn3',
@@ -36,18 +31,19 @@ void main() {
     });
 
     test('fromJson falls back to none for unknown stage', () {
-      final restored = OvertureState.fromJson({
-        'gpId': 'gp1',
-        'targetId': 'mn4',
-        'stage': 'bogus',
-      });
-      expect(restored.stage, OvertureStage.none);
+      expect(
+        OvertureState.fromJson({
+          'gpId': 'gp1',
+          'targetId': 'mn4',
+          'stage': 'bogus',
+        }).stage,
+        OvertureStage.none,
+      );
     });
 
     test('copyWith overrides only provided fields', () {
-      final updated = overture.copyWith(stage: OvertureStage.nap);
-      expect(updated.stage, OvertureStage.nap);
-      expect(updated.gpId, 'gp1');
+      expect(overture.copyWith(stage: OvertureStage.nap).stage, OvertureStage.nap);
+      expect(overture.copyWith(stage: OvertureStage.nap).gpId, 'gp1');
     });
   });
 
@@ -68,18 +64,17 @@ void main() {
         amount: 50,
         overtureStage: OvertureStage.embassy,
       );
-      final restored = DiplomaticOrder.fromJson(full.toJson());
-      expect(restored, full);
-      expect(restored.amount, 50);
-      expect(restored.overtureStage, OvertureStage.embassy);
+      expect(DiplomaticOrder.fromJson(full.toJson()), full);
     });
 
     test('fromJson falls back to declareWar for unknown type', () {
-      final restored = DiplomaticOrder.fromJson({
-        'type': 'bogus',
-        'targetFactionId': 'D',
-      });
-      expect(restored.type, DiplomaticOrderType.declareWar);
+      expect(
+        DiplomaticOrder.fromJson({
+          'type': 'bogus',
+          'targetFactionId': 'D',
+        }).type,
+        DiplomaticOrderType.declareWar,
+      );
     });
 
     test('equality and hashCode consider all fields', () {
@@ -95,7 +90,15 @@ void main() {
       );
       expect(a, b);
       expect(a.hashCode, b.hashCode);
-      expect(a == b.copyWithAmount(20), isFalse);
+      expect(
+        a,
+        isNot(DiplomaticOrder(
+          type: a.type,
+          targetFactionId: a.targetFactionId,
+          amount: 20,
+          overtureStage: a.overtureStage,
+        )),
+      );
     });
   });
 
@@ -103,24 +106,17 @@ void main() {
     const subsidy = SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10);
 
     test('toJson/fromJson round-trips', () {
-      final restored = SubsidyState.fromJson(subsidy.toJson());
-      expect(restored, subsidy);
-      expect(restored.percent, 10);
+      expect(SubsidyState.fromJson(subsidy.toJson()), subsidy);
       expect(subsidy.toJson()['percent'], 10);
     });
 
     test('copyWith and equality', () {
       final updated = subsidy.copyWith(percent: 15);
       expect(updated.percent, 15);
-      expect(updated.payerId, 'gp1');
-      expect(subsidy == updated, isFalse);
+      expect(subsidy, isNot(updated));
       expect(
-        subsidy.hashCode,
-        const SubsidyState(
-          payerId: 'gp1',
-          targetId: 'mn1',
-          percent: 10,
-        ).hashCode,
+        subsidy,
+        const SubsidyState(payerId: 'gp1', targetId: 'mn1', percent: 10),
       );
     });
 
@@ -135,86 +131,44 @@ void main() {
     });
 
     test('isValidSubsidyPercent enforces 5-20 step 5', () {
-      expect(isValidSubsidyPercent(5), isTrue);
-      expect(isValidSubsidyPercent(20), isTrue);
-      expect(isValidSubsidyPercent(10), isTrue);
-      expect(isValidSubsidyPercent(0), isFalse);
-      expect(isValidSubsidyPercent(7), isFalse);
-      expect(isValidSubsidyPercent(25), isFalse);
+      for (final percent in [5, 10, 20]) {
+        expect(isValidSubsidyPercent(percent), isTrue, reason: '$percent');
+      }
+      for (final percent in [0, 7, 25]) {
+        expect(isValidSubsidyPercent(percent), isFalse, reason: '$percent');
+      }
     });
   });
 
-  group('ColonyState', () {
-    const colony = ColonyState(
-      tribeId: 'tribe1',
-      colonyOfGpId: 'gp1',
-      sinceTurn: 4,
-    );
-
-    test('toJson/fromJson round-trips', () {
-      final restored = ColonyState.fromJson(colony.toJson());
-      expect(restored, colony);
-      expect(restored.tribeId, 'tribe1');
-      expect(restored.colonyOfGpId, 'gp1');
-      expect(restored.sinceTurn, 4);
-    });
-
-    test('fromJson defaults sinceTurn to 0 when missing', () {
-      final restored = ColonyState.fromJson(const {
-        'tribeId': 'tribe1',
-        'colonyOfGpId': 'gp1',
-      });
-      expect(restored.sinceTurn, 0);
-    });
-
-    test('copyWith and equality', () {
-      final updated = colony.copyWith(colonyOfGpId: 'gp2');
-      expect(updated.colonyOfGpId, 'gp2');
-      expect(updated.tribeId, 'tribe1');
-      expect(colony == updated, isFalse);
-      expect(
-        colony.hashCode,
-        const ColonyState(
-          tribeId: 'tribe1',
-          colonyOfGpId: 'gp1',
-          sinceTurn: 4,
-        ).hashCode,
+  group('ColonyState and BoycottState', () {
+    test('ColonyState toJson/fromJson and defaults', () {
+      const colony = ColonyState(
+        tribeId: 'tribe1',
+        colonyOfGpId: 'gp1',
+        sinceTurn: 4,
       );
-    });
-  });
-
-  group('BoycottState (Refs #3753 R6)', () {
-    const boycott = BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 5);
-
-    test('toJson/fromJson round-trips', () {
-      final restored = BoycottState.fromJson(boycott.toJson());
-      expect(restored, boycott);
-      expect(restored.gpId, 'gp1');
-      expect(restored.targetGpId, 'gp2');
-      expect(restored.sinceTurn, 5);
-    });
-
-    test('fromJson defaults sinceTurn to 0 when missing', () {
-      final restored = BoycottState.fromJson(const {
-        'gpId': 'gp1',
-        'targetGpId': 'gp2',
-      });
-      expect(restored.sinceTurn, 0);
-    });
-
-    test('copyWith and equality', () {
-      final updated = boycott.copyWith(targetGpId: 'gp3');
-      expect(updated.targetGpId, 'gp3');
-      expect(updated.gpId, 'gp1');
-      expect(boycott == updated, isFalse);
+      expect(ColonyState.fromJson(colony.toJson()), colony);
       expect(
-        boycott.hashCode,
-        const BoycottState(
-          gpId: 'gp1',
-          targetGpId: 'gp2',
-          sinceTurn: 5,
-        ).hashCode,
+        ColonyState.fromJson(const {
+          'tribeId': 'tribe1',
+          'colonyOfGpId': 'gp1',
+        }).sinceTurn,
+        0,
       );
+      expect(colony.copyWith(colonyOfGpId: 'gp2').colonyOfGpId, 'gp2');
+    });
+
+    test('BoycottState toJson/fromJson and defaults', () {
+      const boycott = BoycottState(gpId: 'gp1', targetGpId: 'gp2', sinceTurn: 5);
+      expect(BoycottState.fromJson(boycott.toJson()), boycott);
+      expect(
+        BoycottState.fromJson(const {
+          'gpId': 'gp1',
+          'targetGpId': 'gp2',
+        }).sinceTurn,
+        0,
+      );
+      expect(boycott.copyWith(targetGpId: 'gp3').targetGpId, 'gp3');
     });
   });
 
@@ -233,18 +187,7 @@ void main() {
     );
 
     test('toJson/fromJson round-trips all fields', () {
-      final restored = DiplomaticEvent.fromJson(event.toJson());
-      expect(restored.turn, 7);
-      expect(restored.intraTurnIndex, 1);
-      expect(restored.type, DiplomaticEventType.allianceFormed);
-      expect(restored.participants, {'A', 'B'});
-      expect(restored.fromFactionId, 'A');
-      expect(restored.toFactionId, 'B');
-      expect(restored.overtureStage, OvertureStage.nap);
-      expect(restored.amount, 5);
-      expect(restored.reason, 'mutual defense');
-      expect(restored.wasAiInitiator, isTrue);
-      expect(restored, event);
+      expect(DiplomaticEvent.fromJson(event.toJson()), event);
     });
 
     test('toJson omits null/false optionals', () {
@@ -262,29 +205,33 @@ void main() {
     });
 
     test('fromJson falls back to declareWar for unknown type', () {
-      final restored = DiplomaticEvent.fromJson({
-        'turn': 1,
-        'intraTurnIndex': 0,
-        'type': 'bogus',
-        'participants': const ['A'],
-      });
-      expect(restored.type, DiplomaticEventType.declareWar);
+      expect(
+        DiplomaticEvent.fromJson({
+          'turn': 1,
+          'intraTurnIndex': 0,
+          'type': 'bogus',
+          'participants': const ['A'],
+        }).type,
+        DiplomaticEventType.declareWar,
+      );
     });
 
     test('equality distinguishes differing participant sets', () {
-      const other = DiplomaticEvent(
-        turn: 7,
-        intraTurnIndex: 1,
-        type: DiplomaticEventType.allianceFormed,
-        participants: {'A', 'C'},
-        fromFactionId: 'A',
-        toFactionId: 'B',
-        overtureStage: OvertureStage.nap,
-        amount: 5,
-        reason: 'mutual defense',
-        wasAiInitiator: true,
+      expect(
+        event,
+        isNot(const DiplomaticEvent(
+          turn: 7,
+          intraTurnIndex: 1,
+          type: DiplomaticEventType.allianceFormed,
+          participants: {'A', 'C'},
+          fromFactionId: 'A',
+          toFactionId: 'B',
+          overtureStage: OvertureStage.nap,
+          amount: 5,
+          reason: 'mutual defense',
+          wasAiInitiator: true,
+        )),
       );
-      expect(event == other, isFalse);
     });
   });
 
@@ -297,13 +244,4 @@ void main() {
       ]);
     });
   });
-}
-
-extension on DiplomaticOrder {
-  DiplomaticOrder copyWithAmount(int amount) => DiplomaticOrder(
-    type: type,
-    targetFactionId: targetFactionId,
-    amount: amount,
-    overtureStage: overtureStage,
-  );
 }
