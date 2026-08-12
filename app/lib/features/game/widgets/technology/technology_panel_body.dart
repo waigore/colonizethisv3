@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app_ui_chrome/widgets/ct_brass_divider.dart';
 import '../../../../widgets/ct_gap.dart';
+import 'research_slot_preview.dart';
+import 'research_turn_funding_header.dart';
 import 'technology_panel_research_slots.dart';
 import 'technology_panel_widgets.dart';
 
@@ -30,6 +32,35 @@ Widget buildTechnologyPanelSlotsBody({
     humanPlayerId,
   );
   final canEdit = onOrdersChanged != null;
+  final occupiedPreviewInputs = <ResearchSlotPreviewInput>[];
+  if (canEdit) {
+    for (var index = 0; index < slots; index++) {
+      final assignment = effectiveTechnologyAssignmentForSlot(
+        player: player,
+        index: index,
+        researchOrdersForPlayer: researchOrdersForPlayer,
+      );
+      final techId = assignment?.techId;
+      final tech = techId == null ? null : techById(techId);
+      if (tech == null || assignment == null) {
+        continue;
+      }
+      occupiedPreviewInputs.add(
+        ResearchSlotPreviewInput(
+          slotIndex: index,
+          tech: tech,
+          committedProgress: progress[techId] ?? 0,
+          funding: assignment.funding,
+        ),
+      );
+    }
+  }
+  final ResearchSlotsTurnPreview? slotsTurnPreview = canEdit
+      ? computeResearchSlotsTurnPreview(
+          player: player,
+          occupiedSlots: occupiedPreviewInputs,
+        )
+      : null;
 
   return Column(
     mainAxisSize: MainAxisSize.min,
@@ -74,6 +105,8 @@ Widget buildTechnologyPanelSlotsBody({
       CtGap.ml,
       TechSectionHeading(l10n.technologyPanel_researchSlotsHeading),
       const SizedBox(height: 6),
+      if (slotsTurnPreview != null)
+        ResearchTurnFundingHeader(preview: slotsTurnPreview),
       // Stretch every slot card to the full panel content width so the
       // locked Slot 4 placeholder is the same width as the active Slots
       // 1–3 (mockup `.slot-card` is a full-width block element).
@@ -96,6 +129,7 @@ Widget buildTechnologyPanelSlotsBody({
             player: player,
             currentOrders: currentOrders,
             onOrdersChanged: onOrdersChanged,
+            turnPreview: slotsTurnPreview?.bySlotIndex[index],
           ),
         ),
       ),

@@ -1835,6 +1835,24 @@ abstract class AppLocalizations {
   /// Breakdown dialog note shown when the spend is debt-blocked (Refs #3512).
   String get technologyPanel_rpBreakdownDebtBlocked;
 
+  /// Breakdown dialog note when blocked after earlier slots spent (Refs #4335).
+  String get technologyPanel_rpBreakdownSequentialBlocked;
+
+  /// Breakdown dialog residual treasury before this slot (Refs #4335).
+  String technologyPanel_rpBreakdownResidualTreasury(int gold);
+
+  /// Empire-wide research funding header when slots will spend (Refs #4335).
+  String technologyPanel_researchTurnFundingSummary(int gold, int rp);
+
+  /// Empire-wide research funding header empty state (Refs #4335).
+  String get technologyPanel_researchTurnFundingEmpty;
+
+  /// Gold row label when sequential-blocked (Refs #4335).
+  String get technologyPanel_goldSequentialBlockedHint;
+
+  /// Secondary gold-row hint on sequential-blocked slots (Refs #4335).
+  String technologyPanel_goldCostAfterEarlierSlots(int gold);
+
   /// Monospace research-point value used in breakdown dialog rows (Refs #3512).
   String technologyPanel_rpValue(int rp);
 

@@ -69,7 +69,26 @@ class ResearchFundingBreakdownDialog extends StatelessWidget {
             label: l10n.technologyPanel_rpBreakdownTreasuryLabel,
             value: l10n.technologyPanel_goldValue(preview.goldCostPerTurn),
           ),
-          if (preview.debtBlocked) ...[
+          if (preview.sequentialBlocked) ...[
+            const SizedBox(height: CtSpacing.s),
+            Text(
+              l10n.technologyPanel_rpBreakdownSequentialBlocked,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: EditorialMonoclePalette.danger,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            if (preview.treasuryBeforeSlot != null)
+              Text(
+                l10n.technologyPanel_rpBreakdownResidualTreasury(
+                  preview.treasuryBeforeSlot!,
+                ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: EditorialMonoclePalette.muted,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ] else if (preview.debtBlocked) ...[
             const SizedBox(height: CtSpacing.s),
             Text(
               l10n.technologyPanel_rpBreakdownDebtBlocked,

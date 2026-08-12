@@ -1,8 +1,9 @@
-// Deterministic per-slot research turn-preview for the GAME40001 Technology
-// panel (Refs #3512). Mirrors the research-phase resolver
-// (`packages/colonizethis_turn/.../research_resolver.dart`) so the slot card
-// shows the same RP/gold effect the next End Turn will apply, without
-// duplicating the funding rate table (single source of truth — Refs #3472).
+// Deterministic per-slot and multi-slot research turn-preview for the
+// GAME40001 Technology panel (Refs #3512, #4335). Mirrors the research-phase
+// resolver (`packages/colonizethis_turn/.../research_resolver.dart`) so slot
+// cards and the empire-wide funding header show the same RP/gold effect the
+// next End Turn will apply, without duplicating the funding rate table (single
+// source of truth — Refs #3472).
 //
 // SPEC: SPEC/ui/technology-panel.md § Slot turn preview;
 // SPEC/program/research-resolution.md.
@@ -12,15 +13,43 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_turn/colonizethis_turn.dart'
     show effectiveResearchPointsForTechAllocation, fundingStats;
 
+/// One occupied research slot's inputs for [computeResearchSlotsTurnPreview].
+class ResearchSlotPreviewInput {
+  const ResearchSlotPreviewInput({
+    required this.slotIndex,
+    required this.tech,
+    required this.committedProgress,
+    required this.funding,
+  });
+
+  final int slotIndex;
+  final TechDefinition tech;
+  final int committedProgress;
+  final ResearchFundingLevel funding;
+}
+
+/// Aggregate research funding for the current turn after a sequential slot walk.
+class ResearchSlotsTurnPreview {
+  const ResearchSlotsTurnPreview({
+    required this.bySlotIndex,
+    required this.totalGoldSpent,
+    required this.totalRp,
+  });
+
+  final Map<int, ResearchSlotTurnPreview> bySlotIndex;
+  final int totalGoldSpent;
+  final int totalRp;
+
+  /// True when at least one slot will spend gold or apply RP next turn.
+  bool get hasSpend => totalGoldSpent > 0 || totalRp > 0;
+}
+
 /// Immutable preview of one assigned research slot's effect on the next turn.
 ///
-/// All values are computed from the player's current treasury snapshot and
-/// the slot's funding level. The treasury check mirrors the resolver's
-/// per-order `nextTreasury < -maxDebt` early-return (see
-/// [computeResearchSlotTurnPreview]); the preview evaluates the slot against
-/// the current `player.treasury` snapshot rather than the cumulative treasury
-/// after other slots in the same turn (a deterministic UI simplification
-/// documented in SPEC/ui/technology-panel.md § Slot turn preview).
+/// Values are computed from the slot's position in the resolver's ascending
+/// slot-index walk. [treasuryBeforeSlot] is the residual treasury after earlier
+/// successful spends in the same turn (defaults to [Player.treasury] for a
+/// single-slot preview).
 class ResearchSlotTurnPreview {
   const ResearchSlotTurnPreview({
     required this.funding,
@@ -32,6 +61,8 @@ class ResearchSlotTurnPreview {
     required this.goldCostPerTurn,
     required this.goldSpentThisTurn,
     required this.debtBlocked,
+    this.sequentialBlocked = false,
+    this.treasuryBeforeSlot,
   });
 
   /// The slot's funding level.
@@ -51,21 +82,29 @@ class ResearchSlotTurnPreview {
   final int industrialBonusRpPerTurn;
 
   /// RP actually applied to progress next turn: `0` when funding is None or the
-  /// spend is debt-blocked, otherwise the effective RP/turn.
+  /// spend is blocked, otherwise the effective RP/turn.
   final int anticipatedRpPerTurn;
 
   /// Treasury (gold) cost per turn for [funding] (0 for None).
   final int goldCostPerTurn;
 
-  /// Gold actually spent next turn: `0` when debt-blocked or None, otherwise
+  /// Gold actually spent next turn: `0` when blocked or None, otherwise
   /// [goldCostPerTurn].
   final int goldSpentThisTurn;
 
-  /// True when funding [goldCostPerTurn] would push treasury below the allowed
-  /// research debt floor, so the resolver applies 0 RP / 0 spend to this slot.
+  /// True when funding [goldCostPerTurn] would push [treasuryBeforeSlot] below
+  /// the allowed research debt floor, so the resolver applies 0 RP / 0 spend.
   final bool debtBlocked;
 
-  /// Effective RP/turn = base + industrial bonus, independent of the debt block.
+  /// True when [debtBlocked] because earlier slots in the same turn already
+  /// consumed treasury (residual treasury is below [startingTreasury]).
+  final bool sequentialBlocked;
+
+  /// Treasury snapshot used to evaluate this slot (residual after earlier
+  /// spends when part of a multi-slot walk).
+  final int? treasuryBeforeSlot;
+
+  /// Effective RP/turn = base + industrial bonus, independent of blocks.
   int get effectiveRpPerTurn => baseRpPerTurn + industrialBonusRpPerTurn;
 
   /// Whether the +20% industrial bonus contributes to this slot.
@@ -95,13 +134,51 @@ class ResearchSlotTurnPreview {
   }
 }
 
+/// Computes per-slot previews in ascending slot-index order, threading residual
+/// treasury exactly like `research_resolver.dart`, plus aggregate −£X / +Y RP.
+ResearchSlotsTurnPreview computeResearchSlotsTurnPreview({
+  required Player player,
+  required List<ResearchSlotPreviewInput> occupiedSlots,
+}) {
+  final sorted = List<ResearchSlotPreviewInput>.from(occupiedSlots)
+    ..sort((a, b) => a.slotIndex.compareTo(b.slotIndex));
+  final int startingTreasury = player.treasury;
+  var residualTreasury = startingTreasury;
+  final bySlot = <int, ResearchSlotTurnPreview>{};
+  var totalGold = 0;
+  var totalRp = 0;
+
+  for (final slot in sorted) {
+    final preview = computeResearchSlotTurnPreview(
+      player: player,
+      tech: slot.tech,
+      committedProgress: slot.committedProgress,
+      funding: slot.funding,
+      treasuryBeforeSlot: residualTreasury,
+      startingTreasury: startingTreasury,
+    );
+    bySlot[slot.slotIndex] = preview;
+    if (preview.goldSpentThisTurn > 0) {
+      residualTreasury -= preview.goldSpentThisTurn;
+      totalGold += preview.goldSpentThisTurn;
+      totalRp += preview.anticipatedRpPerTurn;
+    }
+  }
+
+  return ResearchSlotsTurnPreview(
+    bySlotIndex: bySlot,
+    totalGoldSpent: totalGold,
+    totalRp: totalRp,
+  );
+}
+
 /// Computes the [ResearchSlotTurnPreview] for [tech] assigned at [funding] with
-/// [committedProgress] RP already accrued, given [player]'s current treasury
-/// and unlocked techs.
+/// [committedProgress] RP already accrued, given [player]'s unlocked techs and
+/// the treasury snapshot for this slot's position in the turn walk.
 ///
 /// Mirrors `research_resolver.dart`:
 /// - `funding.cost <= 0` (None) → no spend, 0 RP.
-/// - `nextTreasury = player.treasury - funding.cost`; when
+/// - `nextTreasury = treasuryBeforeSlot - funding.cost`; when
 ///   `nextTreasury < -researchMaxDebtForUnlocked(player.techUnlocked)` the
 ///   slot is debt-blocked → 0 RP, 0 spend.
 /// - Otherwise RP applied = `effectiveResearchPointsForTechAllocation` (base
@@ -111,7 +188,11 @@ ResearchSlotTurnPreview computeResearchSlotTurnPreview({
   required TechDefinition tech,
   required int committedProgress,
   required ResearchFundingLevel funding,
+  int? treasuryBeforeSlot,
+  int? startingTreasury,
 }) {
+  final int treasury = treasuryBeforeSlot ?? player.treasury;
+  final int startTreasury = startingTreasury ?? player.treasury;
   final ({int points, int cost}) stats = fundingStats(funding);
   final int base = stats.points;
   final int effective = effectiveResearchPointsForTechAllocation(
@@ -122,8 +203,9 @@ ResearchSlotTurnPreview computeResearchSlotTurnPreview({
   final int industrialBonus = (effective - base).clamp(0, effective);
   final int goldCost = stats.cost;
   final int maxDebt = researchMaxDebtForUnlocked(player.techUnlocked);
-  final int nextTreasury = player.treasury - goldCost;
+  final int nextTreasury = treasury - goldCost;
   final bool debtBlocked = goldCost > 0 && nextTreasury < -maxDebt;
+  final bool sequentialBlocked = debtBlocked && treasury < startTreasury;
   final bool noSpend =
       funding == ResearchFundingLevel.none || debtBlocked || effective <= 0;
   final int anticipated = noSpend ? 0 : effective;
@@ -138,5 +220,7 @@ ResearchSlotTurnPreview computeResearchSlotTurnPreview({
     goldCostPerTurn: goldCost,
     goldSpentThisTurn: goldSpent,
     debtBlocked: debtBlocked,
+    sequentialBlocked: sequentialBlocked,
+    treasuryBeforeSlot: treasuryBeforeSlot ?? player.treasury,
   );
 }

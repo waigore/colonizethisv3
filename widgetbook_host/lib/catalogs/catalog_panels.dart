@@ -338,6 +338,12 @@ List<WidgetbookNode> get techTreeDirectories => [
         ),
       ),
       WidgetbookUseCase(
+        name: 'Slots — sequential funding preview',
+        builder: (context) => _technologySequentialFundingPreviewStoryHost(
+          context,
+        ),
+      ),
+      WidgetbookUseCase(
         name: 'Slots — persisted in-progress (no fresh orders)',
         builder: (context) => _technologyPersistedSlotStoryHost(context),
       ),
@@ -533,6 +539,37 @@ const List<ResearchFundingLevel> _kFundingPreviewLevels =
   return (player: player, game: game, orders: orders);
 }
 
+/// Builds the editable fixture for the sequential funding preview story: two
+/// slots at Medium funding with treasury `200` so slot 0 spends and slot 1 is
+/// sequential-blocked. SPEC/ui/technology-panel.md § Widgetbook. Refs #4335.
+({Player player, Game game, Orders orders})
+    technologySequentialFundingPreviewFixture({
+  required Game baseGame,
+  required Player basePlayer,
+}) {
+  const techIds = <String>[kTechIdCropRotation, kTechIdSawMill];
+  final player = basePlayer.copyWith(
+    treasury: 200,
+    researchSlots: 3,
+  );
+  final game = baseGame.copyWith(
+    players: [player, ...baseGame.players.skip(1)],
+  );
+  final orders = Orders(
+    researchOrdersByPlayerId: <String, List<ResearchOrder>>{
+      player.id: <ResearchOrder>[
+        for (var i = 0; i < techIds.length; i++)
+          ResearchOrder(
+            slotIndex: i,
+            techId: techIds[i],
+            funding: ResearchFundingLevel.medium,
+          ),
+      ],
+    },
+  );
+  return (player: player, game: game, orders: orders);
+}
+
 /// Builds the editable `(Player, Game)` fixture for the persisted-occupancy
 /// story: a player whose first three research slots are occupied by persisted
 /// `researchSlotAssignments` (with accrued progress) but who has **no** fresh
@@ -682,6 +719,69 @@ class _TechnologyFundingPreviewStoryState
   void initState() {
     super.initState();
     final fixture = technologyFundingPreviewFixture(
+      baseGame: widget.baseGame,
+      basePlayer: widget.basePlayer,
+    );
+    _player = fixture.player;
+    _game = fixture.game;
+    _orders = fixture.orders;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(CtSpacing.l),
+      child: TechnologyPanel(
+        game: _game,
+        player: _player,
+        currentOrders: _orders,
+        onOrdersChanged: (next) => setState(() => _orders = next),
+      ),
+    );
+  }
+}
+
+/// Builds the sequential funding preview Widgetbook story host (Refs #4335).
+Widget _technologySequentialFundingPreviewStoryHost(BuildContext context) {
+  final result = loadSeed42InitGameResult();
+  final game = result.game;
+  if (game.players.isEmpty) {
+    return Center(child: Text(appL10n(context).widgetbook_noPlayers));
+  }
+  return widgetbookEditorialMonocleApp(
+    localizationsDelegates: AppLocalizationsBinding.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    child: _TechnologySequentialFundingPreviewStory(
+      baseGame: game,
+      basePlayer: game.players.first,
+    ),
+  );
+}
+
+class _TechnologySequentialFundingPreviewStory extends StatefulWidget {
+  const _TechnologySequentialFundingPreviewStory({
+    required this.baseGame,
+    required this.basePlayer,
+  });
+
+  final Game baseGame;
+  final Player basePlayer;
+
+  @override
+  State<_TechnologySequentialFundingPreviewStory> createState() =>
+      _TechnologySequentialFundingPreviewStoryState();
+}
+
+class _TechnologySequentialFundingPreviewStoryState
+    extends State<_TechnologySequentialFundingPreviewStory> {
+  late Player _player;
+  late Game _game;
+  late Orders _orders;
+
+  @override
+  void initState() {
+    super.initState();
+    final fixture = technologySequentialFundingPreviewFixture(
       baseGame: widget.baseGame,
       basePlayer: widget.basePlayer,
     );
