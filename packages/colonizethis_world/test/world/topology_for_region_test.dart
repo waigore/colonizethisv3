@@ -2,7 +2,7 @@ import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_world/src/world/topology_helpers.dart';
 import 'package:colonizethis_test/test.dart';
 
-import 'world_test_support/world_test_support.dart';
+import '../world_test_support/world_test_support.dart';
 
 void main() {
   group('topologyForRegion (Refs #2560)', () {
