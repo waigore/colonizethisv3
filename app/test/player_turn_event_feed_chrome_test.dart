@@ -1,85 +1,28 @@
-import 'dart:io' show File;
-
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/features/game/screens/game/game_screen_shared.dart'
-    show kGameMapWideProvinceSidePanelWidth, kPlayerTurnFeedToggleButtonKey;
+    show kGameMapWideProvinceSidePanelWidth;
 import 'package:colonizethis_app/features/game/widgets/shell/player_turn_event_feed.dart';
 import 'package:colonizethis_app/widgets/ct_gradients.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'app_shell_harness.dart';
+import 'player_turn_event_feed_chrome_test_support.dart';
 
 /// Tests for the dark editorial-monocle restyle of the news feed card and
 /// newspaper toggle button (issue #2861 S7).
 ///
 /// SPEC: `SPEC/ui/player-turn-event-feed.md` § Card chrome and § Toggle
 /// button chrome (dark editorial-monocle).
-///
-/// Asserts that:
-///   1. The card surface paints `CtGradients.panelGradient` plus a 1 dp
-///      `accentDim` border (no legacy `Material(color: Colors.black…)`
-///      chrome inside the card subtree).
-///   2. Body text resolves to `EditorialMonoclePalette.fg` and empty-state
-///      copy to `EditorialMonoclePalette.muted` italic (no `Colors.white*`).
-///   3. The toggle button glyph resolves to `accent` (closed) or
-///      `accentBright` (open) and never to a Material default.
-///   4. The unread-count badge background resolves to `EditorialMonoclePalette.danger`
-///      (not `Colors.redAccent`) and the text colour resolves to
-///      `EditorialMonoclePalette.bg` (not `Colors.white`).
-///   5. The source file `player_turn_event_feed.dart` no longer contains
-///      legacy `Colors.black`, `Colors.white`, or `Colors.redAccent`
-///      literals (catalog ban / SPEC AC last bullet).
 void main() {
   suppressLogsForTests();
-
-  Widget hostFeedCard({
-    required List<PlayerTurnEventFeedEntry> entries,
-    String emptyLabel = 'No major events last turn.',
-  }) {
-    return buildAppShell(
-      child: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            Positioned(
-              top: 0,
-              right: 0,
-              child: PlayerTurnEventFeedCard(
-                entries: entries,
-                emptyLabel: emptyLabel,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget hostToggle({
-    required int eventCount,
-    required bool showFeed,
-  }) {
-    return buildAppShell(
-      child: Scaffold(
-        body: Center(
-          child: PlayerTurnEventsFeedToggleButton(
-            eventCount: eventCount,
-            tooltip: 'tooltip',
-            showFeed: showFeed,
-            onPressed: () {},
-          ),
-        ),
-      ),
-    );
-  }
 
   group('PlayerTurnEventFeedCard chrome', () {
     testWidgets(
       'card surface paints panelGradient + 1dp accentDim border (no black Material)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          hostFeedCard(entries: const <PlayerTurnEventFeedEntry>[]),
+          hostPlayerTurnFeedCard(entries: const <PlayerTurnEventFeedEntry>[]),
         );
         await tester.pump();
 
@@ -122,7 +65,7 @@ void main() {
     testWidgets('card width equals the wide province side-panel width',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        hostFeedCard(entries: const <PlayerTurnEventFeedEntry>[]),
+        hostPlayerTurnFeedCard(entries: const <PlayerTurnEventFeedEntry>[]),
       );
       await tester.pump();
 
@@ -138,7 +81,7 @@ void main() {
     testWidgets('event row body text resolves to EditorialMonoclePalette.fg',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        hostFeedCard(
+        hostPlayerTurnFeedCard(
           entries: const <PlayerTurnEventFeedEntry>[
             PlayerTurnEventFeedEntry(text: 'Research complete'),
           ],
@@ -161,7 +104,7 @@ void main() {
       'empty-state copy resolves to EditorialMonoclePalette.muted italic',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          hostFeedCard(
+          hostPlayerTurnFeedCard(
             entries: const <PlayerTurnEventFeedEntry>[],
             emptyLabel: 'No major events last turn.',
           ),
@@ -186,7 +129,7 @@ void main() {
       (WidgetTester tester) async {
         bool tapped = false;
         await tester.pumpWidget(
-          hostFeedCard(
+          hostPlayerTurnFeedCard(
             entries: <PlayerTurnEventFeedEntry>[
               PlayerTurnEventFeedEntry(
                 text: 'Province captured',
@@ -218,7 +161,7 @@ void main() {
     testWidgets('non-tappable row renders raw Text (no InkWell wrapper)',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        hostFeedCard(
+        hostPlayerTurnFeedCard(
           entries: const <PlayerTurnEventFeedEntry>[
             PlayerTurnEventFeedEntry(text: 'Static event'),
           ],
@@ -241,7 +184,7 @@ void main() {
       (WidgetTester tester) async {
         bool tapped = false;
         await tester.pumpWidget(
-          hostFeedCard(
+          hostPlayerTurnFeedCard(
             entries: <PlayerTurnEventFeedEntry>[
               PlayerTurnEventFeedEntry(
                 text: 'Research complete: Crop Rotation unlocked',
@@ -266,7 +209,7 @@ void main() {
         await tester.pumpWidget(
           MediaQuery(
             data: const MediaQueryData(size: Size(360, 800)),
-            child: hostFeedCard(
+            child: hostPlayerTurnFeedCard(
               entries: <PlayerTurnEventFeedEntry>[
                 PlayerTurnEventFeedEntry(
                   text: 'Research complete: Crop Rotation unlocked',
@@ -287,244 +230,6 @@ void main() {
           tester.getSize(inkWellFinder).height,
           greaterThanOrEqualTo(PlayerTurnEventFeedCard.narrowTappableRowMinHeight),
         );
-      },
-    );
-  });
-
-  group('PlayerTurnEventsFeedToggleButton chrome', () {
-    // Resolves the bordered 28 × 22 dp toggle surface Container (the only
-    // Container in the subtree carrying a Border).
-    Container surfaceContainer(WidgetTester tester) {
-      return tester
-          .widgetList<Container>(
-            find.descendant(
-              of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-              matching: find.byType(Container),
-            ),
-          )
-          .firstWhere(
-            (Container c) =>
-                c.decoration is BoxDecoration &&
-                (c.decoration as BoxDecoration).border != null,
-          );
-    }
-
-    testWidgets(
-      'surface is 28 × 22 dp, bg-deep fill, 1 dp border; glyph is not a Material Icon (M3)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          hostToggle(eventCount: 0, showFeed: false),
-        );
-        await tester.pump();
-
-        final Container surface = surfaceContainer(tester);
-        expect(
-          surface.constraints,
-          equals(BoxConstraints.tightFor(width: 28, height: 22)),
-        );
-        final BoxDecoration decoration = surface.decoration as BoxDecoration;
-        expect(decoration.color, equals(EditorialMonoclePalette.bgDeep));
-        final Border border = decoration.border as Border;
-        expect(border.top.width, equals(1));
-
-        // The glyph must be the monochrome NewspaperGlyph vector, not a
-        // Material Icon at 20 dp.
-        expect(
-          find.descendant(
-            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.byType(Icon),
-          ),
-          findsNothing,
-        );
-        expect(
-          find.descendant(
-            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.byType(NewspaperGlyph),
-          ),
-          findsOneWidget,
-        );
-      },
-    );
-
-    testWidgets(
-      'closed-state glyph resolves to accentDim; border resolves to --border',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          hostToggle(eventCount: 0, showFeed: false),
-        );
-        await tester.pump();
-
-        final NewspaperGlyph glyph = tester.widget<NewspaperGlyph>(
-          find.descendant(
-            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.byType(NewspaperGlyph),
-          ),
-        );
-        expect(glyph.size, equals(14));
-        expect(glyph.color, equals(EditorialMonoclePalette.accentDim));
-
-        final BoxDecoration decoration =
-            surfaceContainer(tester).decoration as BoxDecoration;
-        final Border border = decoration.border as Border;
-        expect(border.top.color, equals(EditorialMonoclePalette.border));
-      },
-    );
-
-    testWidgets(
-      'open-state glyph resolves to accent; border resolves to accentDim',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          hostToggle(eventCount: 3, showFeed: true),
-        );
-        await tester.pump();
-
-        final NewspaperGlyph glyph = tester.widget<NewspaperGlyph>(
-          find.descendant(
-            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.byType(NewspaperGlyph),
-          ),
-        );
-        expect(glyph.color, equals(EditorialMonoclePalette.accent));
-
-        final BoxDecoration decoration =
-            surfaceContainer(tester).decoration as BoxDecoration;
-        final Border border = decoration.border as Border;
-        expect(border.top.color, equals(EditorialMonoclePalette.accentDim));
-      },
-    );
-
-    testWidgets(
-      'unread badge background resolves to danger token (not redAccent)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          hostToggle(eventCount: 5, showFeed: false),
-        );
-        await tester.pump();
-
-        // The badge background is the Container wrapping the count Text,
-        // painted with a BoxDecoration whose color resolves to
-        // EditorialMonoclePalette.danger at 0.95 alpha.
-        final Container badge = tester.widget<Container>(
-          find
-              .ancestor(
-                of: find.text('5'),
-                matching: find.byType(Container),
-              )
-              .first,
-        );
-        final BoxDecoration decoration = badge.decoration as BoxDecoration;
-        final Color badgeColor = decoration.color!;
-        final Color expected = EditorialMonoclePalette.danger.withValues(
-          alpha: PlayerTurnEventsFeedToggleButton.badgeBackgroundAlpha,
-        );
-        expect(badgeColor, equals(expected));
-        // Negative regression guard: must not paint legacy redAccent.
-        expect(badgeColor, isNot(equals(Colors.redAccent)));
-      },
-    );
-
-    testWidgets(
-      'unread badge label resolves to EditorialMonoclePalette.bg (not white)',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          hostToggle(eventCount: 7, showFeed: false),
-        );
-        await tester.pump();
-
-        final Text label = tester.widget<Text>(
-          find.descendant(
-            of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-            matching: find.text('7'),
-          ),
-        );
-        expect(label.style?.color, equals(EditorialMonoclePalette.bg));
-        expect(label.style?.color, isNot(equals(Colors.white)));
-      },
-    );
-
-    testWidgets('unread badge clamps overflow counts to "99+"',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        hostToggle(eventCount: 250, showFeed: false),
-      );
-      await tester.pump();
-
-      expect(
-        find.descendant(
-          of: find.byKey(kPlayerTurnFeedToggleButtonKey),
-          matching: find.text('99+'),
-        ),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('button fires onPressed on tap', (WidgetTester tester) async {
-      int taps = 0;
-      await tester.pumpWidget(
-        buildAppShell(
-          child: Scaffold(
-            body: Center(
-              child: PlayerTurnEventsFeedToggleButton(
-                eventCount: 0,
-                tooltip: 'tooltip',
-                showFeed: false,
-                onPressed: () => taps += 1,
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      await tester.tap(find.byKey(kPlayerTurnFeedToggleButtonKey));
-      await tester.pump();
-      expect(taps, equals(1));
-    });
-  });
-
-  group('Source-file legacy-color regression', () {
-    const List<String> feedLibraryPaths = <String>[
-      'lib/features/game/widgets/shell/player_turn_event_feed.dart',
-      'lib/features/game/widgets/shell/player_turn_event_feed_toggle.dart',
-      'lib/features/game/widgets/shell/player_turn_event_feed_card.dart',
-    ];
-
-    test(
-      'player turn event feed library contains no legacy black/white/redAccent literals',
-      () async {
-        // The widget source files must not paint with the legacy Material
-        // chrome tokens (issue #2861 S7 chrome contract / catalog ban per
-        // SPEC/ui/pixel-art-ui-catalog.md § Material design ban).
-        const List<String> forbidden = <String>[
-          'Colors.black.withValues',
-          'Colors.white,',
-          'Colors.white70',
-          'Colors.redAccent',
-        ];
-        for (final String relativePath in feedLibraryPaths) {
-          final File source = File(relativePath);
-          expect(
-            source.existsSync(),
-            isTrue,
-            reason: '$relativePath must exist at the documented path',
-          );
-          final String contents = source.readAsStringSync();
-          final List<String> codeLines = contents
-              .split('\n')
-              .where((String line) => !line.trimLeft().startsWith('//'))
-              .toList();
-          final String codeOnly = codeLines.join('\n');
-          for (final String token in forbidden) {
-            expect(
-              codeOnly.contains(token),
-              isFalse,
-              reason: 'Forbidden legacy chrome token "$token" remains in '
-                  'executable code of $relativePath; replace with '
-                  'the corresponding EditorialMonoclePalette token (see issue '
-                  '#2861 S7).',
-            );
-          }
-        }
       },
     );
   });

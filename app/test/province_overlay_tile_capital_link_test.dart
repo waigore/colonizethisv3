@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
+import 'province_overlay_tile_capital_link_test_cases.dart';
 import 'province_overlay_tile_capital_link_test_fixtures.dart';
 
 void main() {
