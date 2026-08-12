@@ -15,4 +15,25 @@ void main() {
   test('ctAppPerfInstant does not throw', () {
     expect(() => ctAppPerfInstant('test.instant'), returnsNormally);
   });
+
+  test(
+    'Development panel CtAppPerf marker names are DevTools-filterable (Refs #4175 Slice E AC2)',
+    () {
+      // SPEC/program/flutter-performance-tracing.md § Development panel open path.
+      const markers = <String>[
+        'development.readModelReady',
+        'developmentPanel.connectivity',
+        'developmentPanel.staticContext',
+        'developmentPanel.sharedContext',
+        'developmentPanel.regionScopes.oldWorld',
+        'developmentPanel.regionModel.oldWorld',
+        'developmentPanel.assignRowCache.oldWorld',
+      ];
+      for (final name in markers) {
+        expect(name, startsWith('development'));
+        expect(() => ctAppPerfInstant(name), returnsNormally);
+        expect(ctAppPerfSync(name, () => name.length), name.length);
+      }
+    },
+  );
 }

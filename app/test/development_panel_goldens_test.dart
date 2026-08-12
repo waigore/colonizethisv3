@@ -77,7 +77,7 @@ void main() {
   late Box<dynamic> gamesBox;
 
   setUpAll(() async {
-    gamesBox = await openDevelopmentPanelTestHiveBox();
+    gamesBox = await openDevelopmentPanelTestHiveBox(suiteId: 'goldens');
   });
 
   tearDownAll(() async {

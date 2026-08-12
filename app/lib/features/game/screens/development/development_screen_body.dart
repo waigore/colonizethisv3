@@ -1,3 +1,4 @@
+import 'package:colonizethis_app_fixtures/runtime/app_perf_trace.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
@@ -44,6 +45,7 @@ class _DevelopmentScreenBodyState extends ConsumerState<DevelopmentScreenBody> {
     super.initState();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      ctAppPerfInstant('development.readModelReady');
       setState(() => _readModelReady = true);
     });
   }

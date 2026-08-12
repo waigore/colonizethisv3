@@ -50,11 +50,11 @@ Cache invalidation: panel projections recompute when `game`, `currentOrders`, or
 
 ### Profiling summary (Slice E)
 
-Representative fixture: dual-region save with two OW provinces + one NW province, four improvable tiles per region (`development_panel_open_path_timing_test.dart`).
+Representative fixture: dual-region save with two OW provinces (four improvable tiles) plus an amplified NW region (ten provinces × four tiles) so monolithic dual-region cost dominates and the lazy OW-only win stays ≥25% on shared CI runners (`development_panel_open_path_timing_test.dart`; median of three 50-iteration samples).
 
 | Hotspot (pre–Slice E) | Mitigation | Measurable effect |
 |----------------------|------------|-------------------|
-| Eager dual-region `buildDevelopmentPanelModel` on open | Per-region `buildDevelopmentPanelRegionModel` + visited-tab gate | Lazy OW-only build faster than monolithic dual-region build on timing fixture (test-guarded) |
+| Eager dual-region `buildDevelopmentPanelModel` on open | Per-region `buildDevelopmentPanelRegionModel` + visited-tab gate | Lazy OW-only build ≥25% faster than monolithic dual-region on timing fixture (50 iterations; `development_panel_open_path_timing_test.dart` reports µs and % in failure reason) |
 | Duplicate `resolveConnectivity` on order churn | `developmentPanelConnectivityProvider` + `buildDevelopmentPanelBuildContextFromConnectivity` | Connectivity map identity stable across order-only updates (provider + unit tests) |
 | Duplicate `buildPlayerView` (screen + map) | Single `playerView` on `DevelopmentPanelStaticContext` | Eliminated per-map rebuild; [PlayerView] identity stable across order-only updates |
 | `IndexedStack` mounting both region maps | `CtTabStrip.lazyTabBodies` + `_visitedRegionIds` | NW map absent until first tab visit (`development_panel_lazy_open_test.dart`) |
@@ -63,7 +63,7 @@ Representative fixture: dual-region save with two OW provinces + one NW province
 | Full improvable scope scan on assign/cancel draft churn | `developmentPanelRegionScopesProvider` order-independent memoization | Scope rows and extraction projection identity stable across order-only updates (provider unit test) |
 | Full dual-region map view-data | Per-region `buildInitGameMapRegionViewData` + snapshot cache | Map defers one frame; highlight-only rebuilds reuse snapshot |
 
-DevTools timeline captures remain optional owner verification for AC1 qualitative bar; timing tests above are the CI profiling anchor for AC2.
+DevTools timeline captures: filter `CtAppPerf.development` (markers in `SPEC/program/flutter-performance-tracing.md` § Development panel open path). Timing tests below remain the CI profiling anchor for AC2 (measurable µs reduction on read-model build path). **AC1 peer parity:** lazy Old World read-model open path must stay within **2×** the `ProductionScreenBody` synchronous prep surrogate on the same representative fixture (`development_panel_open_path_timing_test.dart`).
 
 ## Acceptance criteria
 
