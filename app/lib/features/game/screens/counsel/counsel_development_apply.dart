@@ -1,4 +1,5 @@
 // Development Counsel Agree apply helpers. SPEC/ui/counsel-panel.md (Refs #4332).
+// Uses per-unit work-tile candidacy (not broad suggestWorkOrders; Refs #2133).
 
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/industry_counsel_api.dart'
@@ -16,29 +17,46 @@ WorkOrder? developmentCounselPortWorkOrderAfterAgree({
   required DevelopmentCounselRecommendation recommendation,
   Map<String, TileMapResult> tileMapByRegion = const {},
 }) {
+  final engineers = idleEngineersForDevelopmentAssign(
+    game: game,
+    playerId: playerId,
+    currentOrders: currentOrders,
+  );
+  if (engineers.isEmpty) return null;
+
   final view = buildPlayerView(game, topology, playerId);
   final mapsOrNull = tileMapByRegion.isEmpty ? null : tileMapByRegion;
-  final suggestions = suggestWorkOrders(
-    view,
-    game,
-    topology,
-    currentOrders,
-    tileMapByRegion: mapsOrNull,
+  final tileKey = recommendation.targetTileKey;
+
+  bool tileValidFor(String unitId) {
+    final valid = getValidWorkOrderTileKeysWithVisibility(
+      game: game,
+      topology: topology,
+      view: view,
+      unitId: unitId,
+      workTarget: kWorkTargetBuildPort,
+      currentOrders: currentOrders,
+      tileMapByRegion: mapsOrNull,
+    );
+    return valid.contains(tileKey);
+  }
+
+  WorkOrder orderFor(String unitId) => WorkOrder(
+    unitId: unitId,
+    target: kWorkTargetBuildPort,
+    targetTileKey: tileKey,
   );
-  final matching = suggestions
-      .where(
-        (o) =>
-            o.target == kWorkTargetBuildPort &&
-            o.targetTileKey == recommendation.targetTileKey,
-      )
-      .toList()
-    ..sort((a, b) => a.unitId.compareTo(b.unitId));
-  if (matching.isEmpty) return null;
+
   final preferredUnitId = recommendation.unitId;
   if (preferredUnitId != null) {
-    for (final order in matching) {
-      if (order.unitId == preferredUnitId) return order;
+    for (final engineer in engineers) {
+      if (engineer.id == preferredUnitId && tileValidFor(preferredUnitId)) {
+        return orderFor(preferredUnitId);
+      }
     }
   }
-  return matching.first;
+  for (final engineer in engineers) {
+    if (tileValidFor(engineer.id)) return orderFor(engineer.id);
+  }
+  return null;
 }

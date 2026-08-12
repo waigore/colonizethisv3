@@ -20,7 +20,7 @@
 - Stable ids: `build_port:<targetTileKey>`.
 - Sort: descending `rankScore`, then ascending tile key.
 - Brief reason keys (player language): `resourceCoast`, `newWorldCoast`, `overseasLinkage`, else `coastalPort`.
-- **Agree apply (UI):** stages one pending `WorkOrder(build_port)` on the first eligible idle Engineer (stable unit id) for the recommended tile when still valid/affordable; else snackbar; not part of this ranking API.
+- **Agree apply (UI):** stages one pending `WorkOrder(build_port)` on the preferred recommendation `unitId` when still idle/valid for that tile via `getValidWorkOrderTileKeysWithVisibility`, else the first idle Engineer (stable unit id) for which the recommended tile remains valid; else snackbar. Must not call broad `suggestWorkOrders` from `app/lib` (`repo.app_lib_no_broad_suggest_work_orders`).
 
 ## Scoring
 
