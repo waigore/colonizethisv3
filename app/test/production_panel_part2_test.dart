@@ -18,6 +18,8 @@ import 'package:colonizethis_app/widgets/ct_section_label.dart';
 import 'package:colonizethis_app/widgets/ct_slider.dart';
 import 'widget_test_pumps.dart';
 import 'production_panel_test_support.dart';
+import 'production_panel_part_helpers.dart';
+import 'production_panel_part2_labour_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -32,8 +34,7 @@ void main() {
 
   group('ProductionPanel', () {
     testWidgets('Total labour displayed', (WidgetTester tester) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       expect(find.textContaining('Total labour:'), findsOneWidget);
     });
@@ -41,23 +42,15 @@ void main() {
     testWidgets('Net changes shown when allocations exist', (
       WidgetTester tester,
     ) async {
-      final isolatedGame = Game(
-        id: 'production-panel-net',
-        worldState: WorldState(
-          turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-          oldWorld: const RegionData(),
-          newWorld: const RegionData(),
+      await pumpProductionPanelSettled(
+        tester,
+        player: fullPlayer,
+        gameOverride: productionPanelIsolatedGame(
+          fullPlayer,
+          id: 'production-panel-net',
         ),
-        players: [fullPlayer],
+        desiredOutputByRecipe: {'lumber_from_timber': 5},
       );
-      await tester.pumpWidget(
-        buildProductionPanel(
-          player: fullPlayer,
-          gameOverride: isolatedGame,
-          desiredOutputByRecipe: {'lumber_from_timber': 5},
-        ),
-      );
-      await pumpSettleCapped(tester);
 
       expect(find.text('Timber'), findsOneWidget);
       expect(find.text('-10'), findsOneWidget);
@@ -68,8 +61,7 @@ void main() {
     testWidgets('Partial availability: sliders capped by achievable runs', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: partialPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: partialPlayer);
 
       expect(
         find.byType(CtSlider),
@@ -82,16 +74,11 @@ void main() {
     testWidgets(
       'Over-allocating labour shows insufficient labour warning in summary',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            desiredOutputByRecipe: {
-              // Choose a recipe and deliberately over-allocate beyond what labour allows.
-              'lumber_from_timber': 999,
-            },
-          ),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          desiredOutputByRecipe: {'lumber_from_timber': 999},
         );
-        await pumpSettleCapped(tester);
 
         // Summary line should turn into an error-coloured warning with explanatory text.
         expect(find.textContaining('Total labour:'), findsOneWidget);
@@ -107,16 +94,11 @@ void main() {
     testWidgets(
       'Unknown recipe ids are ignored when computing total labour (no warning)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            desiredOutputByRecipe: {
-              // Not a real production recipe id; should be ignored by the panel.
-              'definitely_not_a_recipe_id': 5,
-            },
-          ),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          desiredOutputByRecipe: {'definitely_not_a_recipe_id': 5},
         );
-        await pumpSettleCapped(tester);
 
         expect(find.textContaining('Total labour:'), findsOneWidget);
         expect(
@@ -131,8 +113,7 @@ void main() {
     testWidgets('Recipe labels show output with inputs in parentheses', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       expect(find.textContaining('('), findsWidgets);
       expect(find.textContaining('Lumber'), findsWidgets);
@@ -143,8 +124,7 @@ void main() {
       'Available section labels use CtSectionLabel for Food / Raw Materials / '
       'Manufactured / Workers (Refs #2862 S2)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         Finder labelWithText(String text) => find.descendant(
           of: find.byType(CtSectionLabel),
@@ -161,23 +141,15 @@ void main() {
       'Available commodity cells use CtResourceCell with sign-prefixed '
       'positive deltas (Refs #2862 S2)',
       (WidgetTester tester) async {
-        final isolatedGame = Game(
-          id: 'production-panel-dark-positive',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-            oldWorld: const RegionData(),
-            newWorld: const RegionData(),
+        await pumpProductionPanelSettled(
+          tester,
+          player: fullPlayer,
+          gameOverride: productionPanelIsolatedGame(
+            fullPlayer,
+            id: 'production-panel-dark-positive',
           ),
-          players: [fullPlayer],
+          desiredOutputByRecipe: {'lumber_from_timber': 2},
         );
-        await tester.pumpWidget(
-          buildProductionPanel(
-            player: fullPlayer,
-            gameOverride: isolatedGame,
-            desiredOutputByRecipe: {'lumber_from_timber': 2},
-          ),
-        );
-        await pumpSettleCapped(tester);
 
         final lumberCell = find.byKey(
           const ValueKey<String>('production_available_cell_lumber'),
@@ -199,18 +171,7 @@ void main() {
       await tester.pumpWidget(
         buildProductionPanel(
           player: fullPlayer,
-          currentOrders: Orders(
-            tradeOrdersByPlayerId: {
-              fullPlayer.id: [
-                TradeOrder(
-                  commodityId: CommodityCatalog.fabric.id,
-                  type: TradeOrderType.offer,
-                  quantity: 4,
-                  priority: 5,
-                ),
-              ],
-            },
-          ),
+          currentOrders: productionPanelFabricOfferOrders(fullPlayer),
         ),
       );
       await pumpSettleCapped(tester);
@@ -227,8 +188,7 @@ void main() {
       'Available commodity cells omit delta region when net change is zero '
       '(Refs #2862 S2)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         final timberCell = find.byKey(
           const ValueKey<String>('production_available_cell_timber'),
@@ -241,8 +201,7 @@ void main() {
 
     testWidgets('Workers section renders one CtResourceCell per worker tier '
         '(Refs #2862 S2)', (WidgetTester tester) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       for (final tier in const <String>[
         'peasant',
@@ -262,8 +221,7 @@ void main() {
         'ProductionAllocationRowChrome (Refs #2862 S3 / R13)', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       final recipeCount = ProductionRecipesCatalog.all.length;
       expect(recipeCount, greaterThan(1));
@@ -297,8 +255,7 @@ void main() {
       'Allocation row chrome paints CtGradients.rowGradient inside a 1px '
       'accent-dim border (Refs #2862 S3 / R13)',
       (WidgetTester tester) async {
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         final chromes = tester.widgetList<ProductionAllocationRowChrome>(
           find.byType(ProductionAllocationRowChrome),
@@ -326,8 +283,7 @@ void main() {
 
     testWidgets('Allocation rows are separated by exactly N-1 CtBrassDividers '
         '(Refs #2862 S3 / R13)', (WidgetTester tester) async {
-      await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-      await pumpSettleCapped(tester);
+      await pumpProductionPanelSettled(tester, player: fullPlayer);
 
       final recipeCount = ProductionRecipesCatalog.all.length;
       expect(recipeCount, greaterThan(1));
@@ -355,29 +311,11 @@ void main() {
 
     // S7 — Labour Controls subsection placement (Refs #2862 S7a).
 
-    Widget buildPanelWithLabourCallbacks({
-      required Player player,
-      Orders currentOrders = const Orders(),
-      bool canEditLabour = true,
-    }) {
-      return buildProductionPanel(
-        player: player,
-        currentOrders: currentOrders,
-        labourCallbacks: ProductionLabourCallbacks(
-          onAppendRecruitOrder: (_) {},
-          onPopLastRecruitOrder: (_) {},
-          onDisband: (_) {},
-        ),
-        canEditLabour: canEditLabour,
-        height: 700,
-      );
-    }
-
     testWidgets(
       'Labour Controls CtSectionLabel appears below Effective Labour (Refs #2862 S7a)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildPanelWithLabourCallbacks(player: fullPlayer),
+          buildProductionPanelWithLabourCallbacks(player: fullPlayer),
         );
         await pumpSettleCapped(tester);
 
@@ -407,8 +345,7 @@ void main() {
       '(no orphan section label; Refs #2862 S7a)',
       (WidgetTester tester) async {
         // `buildPanel` does not pass currentOrders / labourCallbacks.
-        await tester.pumpWidget(buildProductionPanel(player: fullPlayer));
-        await pumpSettleCapped(tester);
+        await pumpProductionPanelSettled(tester, player: fullPlayer);
 
         expect(
           find.descendant(
@@ -425,7 +362,7 @@ void main() {
       '(no action buttons above Effective Labour; Refs #2862 S7a)',
       (WidgetTester tester) async {
         await tester.pumpWidget(
-          buildPanelWithLabourCallbacks(player: fullPlayer),
+          buildProductionPanelWithLabourCallbacks(player: fullPlayer),
         );
         await pumpSettleCapped(tester);
 

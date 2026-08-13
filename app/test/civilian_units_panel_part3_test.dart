@@ -2,7 +2,6 @@
 
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app/widgets/ct_action_text_button.dart';
@@ -12,17 +11,12 @@ import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_u
 import 'package:colonizethis_app/features/game/widgets/units/shared/units_panel_shell.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart'
     show
-        kWorkTargetBuildFort,
         kWorkTargetBuildImprovement,
-        kWorkTargetBuildPort,
         kWorkTargetBuildRail,
-        kWorkTargetBuildRoad,
-        kWorkTargetCounterSpy,
         kWorkTargetExplore,
-        kWorkTargetProspect,
-        kWorkTargetPurchaseLand,
-        kWorkTargetUpgradeTown;
+        kWorkTargetPurchaseLand;
 
+import 'civilian_units_panel_part3_pending_support.dart';
 import 'civilian_units_panel_part3_pump_support.dart';
 import 'civilian_units_panel_test_support.dart';
 
@@ -59,32 +53,7 @@ void main() {
     testWidgets(
       'AC #4262: second pending build_improvement shows muted shortfall line',
       (WidgetTester tester) async {
-        const tileA = 'oldWorld|p1|0|0';
-        const tileB = 'oldWorld|p1|1|0';
-        await tester.pumpWidget(
-          buildCivilianPanel(
-            game: buildCivilianDualBuilderLowStockGame(
-              id: 'g_civ_dual_shortfall',
-            ),
-            humanPlayerId: civilianPanelPart3HumanId,
-            currentOrders: civilianPendingWorkOrders(
-              humanId: civilianPanelPart3HumanId,
-              workOrders: [
-                WorkOrder(
-                  unitId: 'b1',
-                  target: kWorkTargetBuildImprovement,
-                  targetTileKey: tileA,
-                ),
-                WorkOrder(
-                  unitId: 'b2',
-                  target: kWorkTargetBuildImprovement,
-                  targetTileKey: tileB,
-                ),
-              ],
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+        await pumpCivilianDualBuilderShortfall(tester);
 
         expect(find.textContaining('Assigned to:'), findsNWidgets(2));
         expect(civilianPanelResourceIcon('lumber'), findsNWidgets(2));
@@ -153,91 +122,14 @@ void main() {
     testWidgets(
       'AC: pending rows show faithful remaining-turn number for each work target',
       (WidgetTester tester) async {
-        const targetTileKey = 'oldWorld|p1|1|0';
-        final cases = <({String unitType, String target, int turns})>[
-          (unitType: kUnitTypeExplorer, target: kWorkTargetExplore, turns: 3),
-          (unitType: kUnitTypeExplorer, target: kWorkTargetProspect, turns: 1),
-          (
-            unitType: kUnitTypeBuilder,
-            target: kWorkTargetBuildImprovement,
-            turns: 1,
-          ),
-          (
-            unitType: kUnitTypeBuilder,
-            target: kWorkTargetUpgradeTown,
-            turns: 1,
-          ),
-          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildRoad, turns: 1),
-          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildPort, turns: 1),
-          (unitType: kUnitTypeEngineer, target: kWorkTargetBuildFort, turns: 3),
-          (
-            unitType: kUnitTypeRailBuilder,
-            target: kWorkTargetBuildRail,
-            turns: 1,
-          ),
-          (unitType: kUnitTypeSpy, target: kWorkTargetCounterSpy, turns: 1),
-          (
-            unitType: kUnitTypeMerchant,
-            target: kWorkTargetPurchaseLand,
-            turns: 1,
-          ),
-        ];
-
-        for (var i = 0; i < cases.length; i++) {
-          final c = cases[i];
-          final unitId = 'u_$i';
-          await tester.pumpWidget(
-            buildCivilianPanel(
-              game: buildCivilianOwUnitsGame(
-                id: 'g_civ_pending_turns_${c.target}_$i',
-                humanId: civilianPanelPart3HumanId,
-                fortLevel: 2,
-                resourceByTileKey: const {targetTileKey: 'grain'},
-                tileKeysByRegionAndProvince: const {
-                  'oldWorld': {
-                    'oldWorld|p1': [civilianPanelPart3TileKey, targetTileKey],
-                  },
-                },
-                units: [
-                  civilianIdleUnit(
-                    id: unitId,
-                    type: c.unitType,
-                    ownerId: civilianPanelPart3HumanId,
-                    provinceId: 'oldWorld|p1',
-                    tileKey: civilianPanelPart3TileKey,
-                  ),
-                ],
-              ),
-              humanPlayerId: civilianPanelPart3HumanId,
-              currentOrders: civilianSinglePendingWorkOrder(
-                humanId: civilianPanelPart3HumanId,
-                unitId: unitId,
-                target: c.target,
-                targetTileKey: targetTileKey,
-              ),
-            ),
-          );
-          await tester.pumpAndSettle();
-
-          final lineFinder = find.textContaining('Assigned to:');
-          expect(
-            lineFinder,
-            findsOneWidget,
-            reason: 'Expected one Assigned to line for target ${c.target}',
-          );
-          final line = tester.widget<Text>(lineFinder).data ?? '';
-          final singular = '${c.turns} turn';
-          final plural = '${c.turns} turns';
-          expect(
-            line.contains(singular) || line.contains(plural),
-            isTrue,
-            reason:
-                'Expected target ${c.target} to show $singular/$plural, got: $line',
-          );
-          expect(
-            line.contains('# turn'),
-            isFalse,
-            reason: 'Target ${c.target} should not render placeholder text',
+        for (var i = 0; i < civilianPanelPendingTurnCases.length; i++) {
+          final c = civilianPanelPendingTurnCases[i];
+          await expectCivilianPendingTurnLine(
+            tester,
+            index: i,
+            unitType: c.unitType,
+            target: c.target,
+            turns: c.turns,
           );
         }
       },
@@ -307,8 +199,6 @@ void main() {
         expect(find.text('Civilian Units (Tile)'), findsOneWidget);
         expect(find.text('Tile'), findsOneWidget);
 
-        // Header actions are compact primary pills (CtActionTextButton,
-        // not CtNinePatchButton) per #3514 owner decision #5.
         final shellButtons = find.descendant(
           of: find.byType(UnitsPanelShell),
           matching: find.byType(CtActionTextButton),
@@ -366,10 +256,6 @@ void main() {
           settle: false,
         );
 
-        // Scope to the header Train pill by label: row-action Assign pills are
-        // now also CtActionTextButton (#3514 row-action migration), so the
-        // header control is resolved via its 'Train' label rather than the
-        // first CtActionTextButton in the shell.
         final trainLabel = find.descendant(
           of: find.byType(UnitsPanelShell),
           matching: find.text('Train'),
