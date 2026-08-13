@@ -1059,6 +1059,18 @@ abstract class AppLocalizations {
   /// Mission consequence caption on Beachhead target picker (DLG31002).
   String get naval_mission_targetCaption_beachhead;
 
+  /// Fogged Blockade target row when full naval/military intel is unavailable (DLG31002).
+  String get naval_mission_targetIntel_harborUnknown;
+
+  /// Full-intel Blockade target row when the province has no registered seaboard port (DLG31002).
+  String get naval_mission_targetIntel_noPort;
+
+  /// Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002).
+  String get naval_mission_targetIntel_emptyHarbor;
+
+  /// Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).
+  String naval_mission_targetIntel_fleetsInPort(int count);
+
   /// Empty-state line for fleet with no ships.
   String get naval_units_noShipsInFleet;
 
