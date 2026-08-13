@@ -18,13 +18,7 @@ const String _appTestsRelativePath = 'app/test';
 /// Oversized `app/test/**` files accepted as a shrink-only baseline (Refs #4352).
 /// Remove an entry only after the file is at or under [_maxPhysicalLines].
 const List<String> appTestFileSizeAllowlistForTests = <String>[
-  'app/test/app_event_handler_scope_part1_test.dart',
-  'app/test/app_event_handler_scope_part2_test.dart',
   'app/test/app_event_handler_test.dart',
-  'app/test/civilian_units_panel_part1_test.dart',
-  'app/test/civilian_units_panel_part2_test.dart',
-  'app/test/civilian_units_panel_part3_test.dart',
-  'app/test/ct_region_map_widget_part2_test.dart',
   'app/test/ct_spacing_features_adoption_test.dart',
   'app/test/ct_toggle_switch_test.dart',
   'app/test/debug_console_overlay_panel_test.dart',
@@ -46,9 +40,6 @@ const List<String> appTestFileSizeAllowlistForTests = <String>[
   'app/test/overture_dialogue_overlay_test.dart',
   'app/test/panels_320dp_min_viewport_test.dart',
   'app/test/pause_menu_side_menu_specs_test.dart',
-  'app/test/production_panel_part1_test.dart',
-  'app/test/production_panel_part2_test.dart',
-  'app/test/province_detail_overlay_host_support_test.dart',
   'app/test/province_overlay_extraction_available_test.dart',
   'app/test/screen_spec_acceptance_part2_test.dart',
   'app/test/trade_screen_deal_book_tab_e6_test.dart',
