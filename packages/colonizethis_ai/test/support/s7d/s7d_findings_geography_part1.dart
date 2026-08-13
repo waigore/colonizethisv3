@@ -203,5 +203,3 @@ library;
 ///     gp3, gp3 for gp4, gp6 for gp5, gp5 for gp6 — and the
 ///     invadable OW set (5–8 provinces per GP) is owned entirely
 ///     by that peer.
-
-library;

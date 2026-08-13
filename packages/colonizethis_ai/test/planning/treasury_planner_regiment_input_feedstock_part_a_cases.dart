@@ -6,10 +6,6 @@
 // Transcribed 1:1 from the former `treasury_planner_regiment_input_{market_
 // supply,retention,feedstock}_test.dart` shards.
 
-import 'package:colonizethis_ai/src/planning/cast_iron_labour_gate.dart'
-    show
-        isCastIronLabourPopulationBoundForLockRecoverySeller,
-        isDomesticFabricProductionLabourInfeasible;
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/ai_api.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
@@ -148,68 +144,5 @@ void registerTreasuryRegimentInputFeedstockCasesPartA() {
         equals(runRegimentInputTreasuryPlanner(game)),
       );
     });
-  });
-
-  group(
-    'castIron-labour peasant-recruit fabric feedstock reservation (Refs #2847)',
-    () {
-      final threshold = regimentInputThreshold();
-      const peasantFabricCost = 2;
-      const tileIron = 'oldWorld|p0|2|0';
-
-      Game populationBoundSellerGame({
-        required int fabricHeld,
-        int woolHeld = 20,
-      }) {
-        var stockpile = Stockpile.empty
-            .applyDelta(CommodityCatalog.iron.id, 2)
-            .applyDelta(CommodityCatalog.grain.id, 10);
-        if (woolHeld > 0) {
-          stockpile = stockpile.applyDelta(kRegimentInputWoolId, woolHeld);
-        }
-        if (fabricHeld > 0) {
-          stockpile = stockpile.applyDelta(kRegimentInputFabricId, fabricHeld);
-        }
-        return Game(
-          id: 'g-peasant-recruit-feedstock',
-          worldState: WorldState(
-            turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 50),
-            oldWorld: RegionData(
-              provinces: [
-                for (var i = 0; i < 5; i++)
-                  Province(
-                    id: 'oldWorld|p$i',
-                    regionId: kRegionOldWorld,
-                    ownerId: kRegimentInputSingleGpId,
-                  ),
-              ],
-            ),
-            newWorld: const RegionData(provinces: []),
-            resourceByTileKey: const {tileIron: 'iron'},
-            tileKeysByRegionAndProvince: const {
-              kRegionOldWorld: {
-                'oldWorld|p0': [tileIron],
-              },
-            },
-          ),
-          players: [
-            Player(
-              id: kRegimentInputSingleGpId,
-              displayName: 'Seller',
-              isHuman: false,
-              capitalProvinceId: 'oldWorld|p0',
-              stockpile: stockpile,
-              treasury: threshold,
-              workerPool: const WorkerPool(peasants: 1),
-            ),
-          ],
-          worldMarketState: WorldMarketState.withDefaultPrices(const {
-            'grain': 10,
-            kRegimentInputWoolId: 20,
-            kRegimentInputFabricId: 40,
-          }),
-        );
-      }
-
   });
 }
