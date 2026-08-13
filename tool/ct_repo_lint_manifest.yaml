@@ -367,7 +367,7 @@ rules:
 
   - rule_id: repo.colonizethis_diplomacy_lib_file_size
     group: structure
-    title: colonizethis_diplomacy lib files must stay at or below the wave-5 400 physical-line ceiling (Refs #4130)
+    title: colonizethis_diplomacy lib files must stay at or below the wave-6 300 physical-line ceiling (Refs #4130, #4341)
     spec: SPEC/program/repo-lint.md
     runner: dart
     script: tool/check_diplomacy_lib_file_size.dart
