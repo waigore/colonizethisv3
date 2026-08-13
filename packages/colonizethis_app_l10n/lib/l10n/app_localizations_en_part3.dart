@@ -994,19 +994,4 @@ mixin _AppLocalizationsEnStrings3 on AppLocalizations {
   String provinceOverlay_availableTileCount(int count, String name) {
     return '$count $name';
   }
-
-  @override
-  String get provinceOverlay_sectionMilitary => 'Military';
-
-  @override
-  String get provinceOverlay_sectionCivilian => 'Civilian';
-
-  @override
-  String get provinceOverlay_sectionNaval => 'Naval';
-
-  @override
-  String get provinceOverlay_titleProvince => 'Province';
-
-  @override
-  String get provinceOverlay_titleSeaZone => 'Sea zone';
 }

@@ -150,4 +150,18 @@ mixin _AppLocalizationsEnStrings6 on AppLocalizations {
   @override
   String get development_counsel => 'Counsel';
 
+  @override
+  String get provinceOverlay_sectionMilitary => 'Military';
+
+  @override
+  String get provinceOverlay_sectionCivilian => 'Civilian';
+
+  @override
+  String get provinceOverlay_sectionNaval => 'Naval';
+
+  @override
+  String get provinceOverlay_titleProvince => 'Province';
+
+  @override
+  String get provinceOverlay_titleSeaZone => 'Sea zone';
 }
