@@ -230,10 +230,27 @@ void main() {
         '${mapStateDir.path}/game_map_area_state_logic.dart',
       ).readAsStringSync();
       expect(library.contains('_GameMapAreaStateLogicApi'), isFalse);
-      expect(library.contains('GameMapAreaStateLogicShell.'), isTrue);
-      expect(library.contains('GameMapAreaStateLogicWorkTargets.'), isTrue);
-      expect(library.contains('GameMapAreaStateLogicDraftProjection.'), isTrue);
-      expect(library.contains('GameMapAreaStateLogicProvinceActions.'), isTrue);
+      // Wave-15 Slice C (#4352): stable surface is topic export barrels.
+      expect(
+        library.contains("export 'game_map_area_state_logic_shell.dart';"),
+        isTrue,
+      );
+      expect(
+        library.contains("export 'game_map_area_state_logic_work_targets.dart';"),
+        isTrue,
+      );
+      expect(
+        library.contains(
+          "export 'game_map_area_state_logic_draft_projection.dart';",
+        ),
+        isTrue,
+      );
+      expect(
+        library.contains(
+          "export 'game_map_area_state_logic_province_actions.dart';",
+        ),
+        isTrue,
+      );
     });
 
     test('negative: state-logic library does not declare part directives', () {
