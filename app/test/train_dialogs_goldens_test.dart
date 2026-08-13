@@ -3,13 +3,9 @@
 // SPEC: SPEC/ui/train-civilians-dialog.md (`UNIT40001`),
 // SPEC/ui/components/train-dialog-chrome.md, SPEC/ui/train-military-dialog.md,
 // SPEC/ui/train-naval-dialog.md (`UNIT60001`).
-import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
-import 'package:colonizethis_app/config/themes.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
-import 'package:colonizethis_app/features/game/widgets/train/train_dialog_chrome.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
-import 'package:colonizethis_app/widgets/ct_nine_patch_button.dart';
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
@@ -17,130 +13,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'editorial_monocle_dark_token_assertions.dart';
-import 'game_fixture.dart';
-import 'golden_capture_harness.dart';
-
-/// Canonical golden host viewport for the train dialogs (tall enough to render
-/// the header, resource bar, and the first unit rows without the scroll body
-/// clipping the chrome under test).
-const Size _hostViewport = Size(420, 900);
-
-Widget _host({required Key boundaryKey, required Widget child}) {
-  return wrapGoldenBoundary(
-    boundaryKey: boundaryKey,
-    center: false,
-    scaffoldBackgroundColor: AppThemes.editorialMonocle.scaffoldBackgroundColor,
-    child: child,
-  );
-}
+import 'train_dialogs_goldens_test_support.dart';
 
 void main() {
   suppressLogsForTests();
 
-  late Game game;
-  late String humanPlayerId;
+  late TrainDialogsGoldenFixtures fx;
 
   setUpAll(() {
-    game = loadSeed42Game();
-    humanPlayerId = game.players.firstWhere((p) => p.isHuman).id;
+    fx = loadTrainDialogsGoldenFixtures();
   });
-
-  Player getPlayer(String pid) => game.players.firstWhere((p) => p.id == pid);
-
-  Game gameWithResources({required int treasury, required int paper}) {
-    final player = getPlayer(humanPlayerId);
-    return game.copyWith(
-      players: [
-        player.copyWith(
-          treasury: treasury,
-          stockpile: player.stockpile.merge(
-            Stockpile(quantities: {'paper': paper}),
-          ),
-          capitalProvinceId:
-              player.capitalProvinceId ?? player.capitalTile?.provinceId,
-        ),
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
-  }
-
-  Game gameWithUnlockedTech({
-    required Iterable<String> techIds,
-    required int treasury,
-    required Map<String, int> stockpile,
-  }) {
-    final player = getPlayer(humanPlayerId);
-    final techUnlocked = Map<String, bool>.from(player.techUnlocked ?? {});
-    for (final techId in techIds) {
-      techUnlocked[techId] = true;
-    }
-    return game.copyWith(
-      players: [
-        player.copyWith(
-          treasury: treasury,
-          workerPool: player.workerPool.copyWith(peasants: 20),
-          techUnlocked: techUnlocked,
-          stockpile: player.stockpile.merge(Stockpile(quantities: stockpile)),
-          capitalProvinceId:
-              player.capitalProvinceId ?? player.capitalTile?.provinceId,
-        ),
-        ...game.players.where((p) => p.id != humanPlayerId),
-      ],
-    );
-  }
-
-  Game militaryGameWithResources({int treasury = 10000}) =>
-      gameWithUnlockedTech(
-        techIds: unlockingTechByRegimentId.values,
-        treasury: treasury,
-        stockpile: const {
-          'fabric': 100,
-          'castIron': 100,
-          'lumber': 100,
-          'horses': 100,
-          'steel': 100,
-          'bronze': 100,
-        },
-      );
-
-  /// Naval fixture with every ship tech unlocked and abundant resources so the
-  /// full 12-ship roster renders affordably with `remaining / total` chips
-  /// (#3601 AC8/AC9 — verification gap G1). [treasury] lets callers drop to a
-  /// deficit scenario.
-  Game navalGameWithResources({int treasury = 50000}) => gameWithUnlockedTech(
-    techIds: unlockingTechByShipId.values,
-    treasury: treasury,
-    stockpile: const {
-      'lumber': 100,
-      'fabric': 100,
-      'castIron': 100,
-      'coal': 100,
-    },
-  );
-
-  Future<void> pumpHost(WidgetTester tester, Widget child, Key key) async {
-    await configureGoldenSurface(tester, size: _hostViewport);
-    await tester.pumpWidget(_host(boundaryKey: key, child: child));
-    await pumpForGolden(tester);
-  }
-
-  void expectTrainChromeParity(WidgetTester tester) {
-    expect(find.text('×'), findsNothing);
-    expect(find.byType(TrainDialogSectionDivider), findsNothing);
-    expect(find.byType(TrainDialogResourceBarBox), findsWidgets);
-  }
 
   testWidgets(
     'golden: UNIT40001 Train Civilians dialog — £+comma treasury, boxed '
     'resource bar, name-over-cost rows (Refs #3568 AC1/AC3/AC4)',
     (WidgetTester tester) async {
       const key = ValueKey<String>('train_civilians_dialog_golden');
-      final richGame = gameWithResources(treasury: 5000, paper: 12);
-      await pumpHost(
+      await pumpTrainDialogsGoldenHost(
         tester,
         TrainCiviliansDialog(
-          game: richGame,
-          humanPlayerId: humanPlayerId,
+          game: fx.withResources(treasury: 5000, paper: 12),
+          humanPlayerId: fx.humanPlayerId,
           currentOrders: const Orders(),
           bus: AppEventBus.create(),
         ),
@@ -150,10 +43,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainCiviliansDialog), findsOneWidget);
       expectEditorialMonocleDarkChrome(tester);
-      // AC1: £ + comma grouping, no `k` abbreviation.
       expect(find.textContaining('£5,000'), findsOneWidget);
       expect(find.textContaining('5k'), findsNothing);
-      expectTrainChromeParity(tester);
+      expectTrainDialogChromeParity(tester);
 
       await expectLater(
         find.byKey(key),
@@ -167,25 +59,23 @@ void main() {
     '"Treasury low, Paper low" (Refs #3568 AC5)',
     (WidgetTester tester) async {
       const key = ValueKey<String>('train_civilians_dialog_deficit_golden');
-      final player = getPlayer(humanPlayerId);
+      final player = fx.player(fx.humanPlayerId);
       final capital =
           player.capitalProvinceId ?? player.capitalTile?.provinceId;
       expect(capital, isNotNull, reason: 'debug game needs capital');
-      // Two queued Builders (2,000 treasury, 4 paper) exceed both resources.
-      final limitedPlayer = player.copyWith(
-        treasury: 1500,
-        stockpile: const Stockpile(quantities: {'paper': 3}),
-        capitalProvinceId: capital,
-      );
-      final limitedGame = game.copyWith(
+      final limitedGame = fx.game.copyWith(
         players: [
-          limitedPlayer,
-          ...game.players.where((p) => p.id != humanPlayerId),
+          player.copyWith(
+            treasury: 1500,
+            stockpile: const Stockpile(quantities: {'paper': 3}),
+            capitalProvinceId: capital,
+          ),
+          ...fx.game.players.where((p) => p.id != fx.humanPlayerId),
         ],
       );
       final orders = Orders(
         buildUnitOrdersByPlayerId: {
-          humanPlayerId: [
+          fx.humanPlayerId: [
             BuildUnitOrder(
               unitType: kUnitTypeBuilder,
               isMilitary: false,
@@ -200,11 +90,11 @@ void main() {
         },
       );
 
-      await pumpHost(
+      await pumpTrainDialogsGoldenHost(
         tester,
         TrainCiviliansDialog(
           game: limitedGame,
-          humanPlayerId: humanPlayerId,
+          humanPlayerId: fx.humanPlayerId,
           currentOrders: orders,
           bus: AppEventBus.create(),
         ),
@@ -226,26 +116,22 @@ void main() {
     'total in the resource bar (Refs #3601 AC3, gap G2)',
     (WidgetTester tester) async {
       const key = ValueKey<String>('train_civilians_dialog_reset_golden');
-      final player = getPlayer(humanPlayerId);
+      final player = fx.player(fx.humanPlayerId);
       final capital =
           (player.capitalProvinceId ?? player.capitalTile?.provinceId)!;
-      // Clean stockpile (paper == 12 exactly) so the bar totals are
-      // deterministic across debug-fixture stockpile changes.
-      final richGame = game.copyWith(
+      final richGame = fx.game.copyWith(
         players: [
           player.copyWith(
             treasury: 5000,
             stockpile: const Stockpile(quantities: {'paper': 12}),
             capitalProvinceId: capital,
           ),
-          ...game.players.where((p) => p.id != humanPlayerId),
+          ...fx.game.players.where((p) => p.id != fx.humanPlayerId),
         ],
       );
-      // Two queued Builders (£1,000 + 2 paper each) drop the bar to
-      // `£3,000 / £5,000` and `8 / 12` before the reset under test.
       final orders = Orders(
         buildUnitOrdersByPlayerId: {
-          humanPlayerId: [
+          fx.humanPlayerId: [
             for (var i = 0; i < 2; i++)
               BuildUnitOrder(
                 unitType: kUnitTypeBuilder,
@@ -256,19 +142,17 @@ void main() {
         },
       );
 
-      await pumpHost(
+      await pumpTrainDialogsGoldenHost(
         tester,
         TrainCiviliansDialog(
           game: richGame,
-          humanPlayerId: humanPlayerId,
+          humanPlayerId: fx.humanPlayerId,
           currentOrders: orders,
           bus: AppEventBus.create(),
         ),
         key,
       );
 
-      // Pre-reset the queued orders render remaining below total (AC1 dynamic
-      // display) so the reset golden proves a real state transition.
       expect(find.textContaining('£3,000 / £5,000'), findsOneWidget);
       expect(find.textContaining('8 / 12'), findsOneWidget);
 
@@ -280,7 +164,6 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(TrainCiviliansDialog), findsOneWidget);
       expectEditorialMonocleDarkChrome(tester);
-      // AC3: after reset the bar shows remaining == total for both resources.
       expect(find.textContaining('£5,000 / £5,000'), findsOneWidget);
       expect(find.textContaining('12 / 12'), findsOneWidget);
 
@@ -308,15 +191,15 @@ void main() {
           key: const ValueKey<String>('train_military_dialog_golden'),
           dialog: (g) => TrainMilitaryDialog(
             game: g,
-            humanPlayerId: humanPlayerId,
+            humanPlayerId: fx.humanPlayerId,
             currentOrders: const Orders(),
             bus: AppEventBus.create(),
           ),
-          game: militaryGameWithResources,
+          game: fx.military,
           assertUi: (t) {
             expect(find.byType(TrainMilitaryDialog), findsOneWidget);
             expect(find.textContaining('£10,000'), findsOneWidget);
-            expectTrainChromeParity(t);
+            expectTrainDialogChromeParity(t);
           },
           golden: 'goldens/train_military_dialog_default.png',
         ),
@@ -324,15 +207,15 @@ void main() {
           key: const ValueKey<String>('train_military_dialog_deficit_golden'),
           dialog: (g) => TrainMilitaryDialog(
             game: g,
-            humanPlayerId: humanPlayerId,
+            humanPlayerId: fx.humanPlayerId,
             currentOrders: const Orders(),
             bus: AppEventBus.create(),
           ),
-          game: () => militaryGameWithResources(treasury: 0),
+          game: () => fx.military(treasury: 0),
           assertUi: (t) {
             expect(find.byType(TrainMilitaryDialog), findsOneWidget);
-            expect(_dangerColoredTextCount(t), greaterThan(0));
-            expect(_hasDangerPlusButton(t), isTrue);
+            expect(trainDialogsDangerColoredTextCount(t), greaterThan(0));
+            expect(trainDialogsHasDangerPlusButton(t), isTrue);
           },
           golden: 'goldens/train_military_dialog_deficit.png',
         ),
@@ -340,15 +223,15 @@ void main() {
           key: const ValueKey<String>('train_naval_dialog_golden'),
           dialog: (g) => TrainNavalDialog(
             game: g,
-            humanPlayerId: humanPlayerId,
+            humanPlayerId: fx.humanPlayerId,
             currentOrders: const Orders(),
             bus: AppEventBus.create(),
           ),
-          game: navalGameWithResources,
+          game: fx.naval,
           assertUi: (t) {
             expect(find.byType(TrainNavalDialog), findsOneWidget);
             expect(find.textContaining('£50,000 / £50,000'), findsOneWidget);
-            expectTrainChromeParity(t);
+            expectTrainDialogChromeParity(t);
           },
           golden: 'goldens/train_naval_dialog_default.png',
         ),
@@ -356,21 +239,20 @@ void main() {
           key: const ValueKey<String>('train_naval_dialog_deficit_golden'),
           dialog: (g) => TrainNavalDialog(
             game: g,
-            humanPlayerId: humanPlayerId,
+            humanPlayerId: fx.humanPlayerId,
             currentOrders: const Orders(),
             bus: AppEventBus.create(),
           ),
-          game: () => navalGameWithResources(treasury: 0),
+          game: () => fx.naval(treasury: 0),
           assertUi: (t) {
             expect(find.byType(TrainNavalDialog), findsOneWidget);
-            expect(_dangerColoredTextCount(t), greaterThan(0));
-            expect(_hasDangerPlusButton(t), isTrue);
+            expect(trainDialogsDangerColoredTextCount(t), greaterThan(0));
+            expect(trainDialogsHasDangerPlusButton(t), isTrue);
           },
           golden: 'goldens/train_naval_dialog_deficit.png',
         ),
       ]) {
-        final g = case_.game();
-        await pumpHost(tester, case_.dialog(g), case_.key);
+        await pumpTrainDialogsGoldenHost(tester, case_.dialog(case_.game()), case_.key);
         expect(tester.takeException(), isNull);
         expectEditorialMonocleDarkChrome(tester);
         case_.assertUi(tester);
@@ -381,27 +263,4 @@ void main() {
       }
     },
   );
-}
-
-/// Counts visible [Text] widgets rendered in [EditorialMonoclePalette.danger]
-/// — the per-resource red cost-item styling under test (#3601 R2).
-int _dangerColoredTextCount(WidgetTester tester) {
-  return tester.widgetList<Text>(find.byType(Text)).where((t) {
-    return t.style?.color == EditorialMonoclePalette.danger;
-  }).length;
-}
-
-/// Whether any `[+]` stepper button renders in its danger variant — the red
-/// disabled-stepper styling under test (#3601 R3).
-bool _hasDangerPlusButton(WidgetTester tester) {
-  return tester
-      .widgetList<CtNinePatchButton>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is CtNinePatchButton &&
-              w.child is Text &&
-              (w.child as Text).data == '+',
-        ),
-      )
-      .any((b) => b.dangerVariant);
 }

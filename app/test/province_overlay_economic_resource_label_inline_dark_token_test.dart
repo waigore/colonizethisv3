@@ -9,34 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_ui_chrome/config/editorial_monocle_palette.dart';
 import 'package:colonizethis_app/widgets/resource_icon.dart';
 
-import 'province_overlay_dark_token_scenarios.dart';
-import 'province_overlay_test_harness.dart';
-
-const _regionId = 'oldWorld';
-const _localProvinceId = 'pEconResLabelTest';
-const _humanPlayerId = 'gp1';
-String get _fullProvinceId => '$_regionId|$_localProvinceId';
-
-String _tileKey(int x, int y) => overlayDarkTokenTileKey(
-  regionId: _regionId,
-  localProvinceId: _localProvinceId,
-  x: x,
-  y: y,
-);
-
-/// Selects every `ResourceLabelInline` mounted by the Economic section
-/// for the rendered grain-tile rows. The Tile section's
-/// `ResourceLabelInline` (when present) renders inside
-/// `_buildTileResourceLabelRow` for the selected tile only; this test
-/// mounts a `selectedTileKey` that does not match a province tile, so
-/// the Tile section path emits its non-resource-row branch and no
-/// `ResourceLabelInline` is mounted there. Every `ResourceLabelInline`
-/// found in the overlay tree therefore belongs to the Economic section.
-List<ResourceLabelInline> _allLabels(WidgetTester tester) {
-  return tester
-      .widgetList<ResourceLabelInline>(find.byType(ResourceLabelInline))
-      .toList(growable: false);
-}
+import 'province_overlay_economic_resource_label_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -50,169 +23,29 @@ void main() {
         'Economic improved-row commodity-id label colour)', (
       WidgetTester tester,
     ) async {
-      final tk = _tileKey(0, 0);
-      final game = gameWithGrainTilesForOverlay(
-        gameId: 'economic_res_label_dark_token_test',
-        regionId: _regionId,
-        fullProvinceId: _fullProvinceId,
-        displayName: 'EconResLabelTest',
-        humanPlayerId: _humanPlayerId,
-        tileKeys: [tk],
-        improvementByTile: {tk: 2},
-        provinceOwnerId: _humanPlayerId,
-      );
-      final region = regionMapWithLandCells(
-        regionId: _regionId,
-        localProvinceId: _localProvinceId,
-        coords: [(x: 0, y: 0)],
-        width: 1,
-        height: 1,
-        greatPowerFactionIds: const {_humanPlayerId},
-        resourceId: 'grain',
+      await pumpEconomicResourceLabelOverlay(
+        tester,
+        improvementByTile: {economicResourceLabelTileKey(0, 0): 2},
       );
 
-      // Use a selectedTileKey that does not match any tile in the
-      // region so the Tile section emits no ResourceLabelInline.
-      await tester.pumpWidget(
-        buildProvinceOverlayDarkThemeShell(
-          game: game,
-          region: region,
-          displayId: _fullProvinceId,
-          selectedTileKey: '$_regionId|other|9|9',
-          humanPlayerId: _humanPlayerId,
-          playerView: omniscientPlayerViewForTiles(
-            humanPlayerId: _humanPlayerId,
-            keys: [tk],
-          ),
-          shellWidth: 800,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final all = _allLabels(tester);
-      expect(
-        all,
-        hasLength(1),
-        reason:
-            'Test setup: with one improved grain tile and no Tile-'
-            'section ResourceLabelInline, exactly one ResourceLabelInline '
-            'must be mounted (the Economic improved row\'s leading icon + '
-            'commodity-id label).',
-      );
-      expect(
-        all.single.labelStyle?.color,
-        EditorialMonoclePalette.fg,
-        reason:
-            'Economic improved-row ResourceLabelInline.labelStyle.color '
-            'must resolve to EditorialMonoclePalette.fg per SPEC AC '
-            '"Dark-theme Economic improved-row commodity-id label colour".',
-      );
-
-      // The internal rendered Text(label ?? commodityId) inside the
-      // improved row must inherit the labelStyle color verbatim.
-      final fgGrain = tester.widgetList<Text>(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is Text &&
-              w.data == 'Grain' &&
-              w.style?.color == EditorialMonoclePalette.fg,
-        ),
-      );
-      expect(
-        fgGrain,
-        hasLength(1),
-        reason:
-            'Exactly one rendered "grain" Text widget must carry '
-            'style.color == EditorialMonoclePalette.fg (the Economic '
-            'improved-row commodity-id label inside ResourceLabelInline). '
-            'Found ${fgGrain.length}. Check that the Economic improved-row '
-            'call site forwards an fg-coloured TextStyle through '
-            'ResourceLabelInline.labelStyle.',
-      );
+      expectEconomicGrainLabelColor(tester, EditorialMonoclePalette.fg);
+      expectEconomicGrainTextColor(tester, EditorialMonoclePalette.fg);
     });
+
     testWidgets('improvable-row commodity-id label resolves to '
         'EditorialMonoclePalette.muted under editorialMonocle (positive '
         'AC: Economic improvable-row commodity-id label colour)', (
       WidgetTester tester,
     ) async {
-      final tk = _tileKey(0, 0);
-      final game = gameWithGrainTilesForOverlay(
-        gameId: 'economic_res_label_dark_token_test',
-        regionId: _regionId,
-        fullProvinceId: _fullProvinceId,
-        displayName: 'EconResLabelTest',
-        humanPlayerId: _humanPlayerId,
-        tileKeys: [tk],
+      await pumpEconomicResourceLabelOverlay(
+        tester,
         improvementByTile: const {},
-        provinceOwnerId: _humanPlayerId,
-      );
-      final region = regionMapWithLandCells(
-        regionId: _regionId,
-        localProvinceId: _localProvinceId,
-        coords: [(x: 0, y: 0)],
-        width: 1,
-        height: 1,
-        greatPowerFactionIds: const {_humanPlayerId},
-        resourceId: 'grain',
       );
 
-      await tester.pumpWidget(
-        buildProvinceOverlayDarkThemeShell(
-          game: game,
-          region: region,
-          displayId: _fullProvinceId,
-          selectedTileKey: '$_regionId|other|9|9',
-          humanPlayerId: _humanPlayerId,
-          playerView: omniscientPlayerViewForTiles(
-            humanPlayerId: _humanPlayerId,
-            keys: [tk],
-          ),
-          shellWidth: 800,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final all = _allLabels(tester);
-      expect(
-        all,
-        hasLength(1),
-        reason:
-            'Test setup: with one improvable grain tile and no Tile-'
-            'section ResourceLabelInline, exactly one ResourceLabelInline '
-            'must be mounted (the Economic improvable row\'s leading icon + '
-            'commodity-id label).',
-      );
-      expect(
-        all.single.labelStyle?.color,
-        EditorialMonoclePalette.muted,
-        reason:
-            'Economic improvable-row ResourceLabelInline.labelStyle.color '
-            'must resolve to EditorialMonoclePalette.muted per SPEC AC '
-            '"Dark-theme Economic improvable-row commodity-id label colour".',
-      );
-
-      // The internal rendered Text(label ?? commodityId) inside the
-      // improvable row must inherit the labelStyle color verbatim.
-      final mutedGrain = tester.widgetList<Text>(
-        find.byWidgetPredicate(
-          (Widget w) =>
-              w is Text &&
-              w.data == 'Grain' &&
-              w.style?.color == EditorialMonoclePalette.muted,
-        ),
-      );
-      expect(
-        mutedGrain,
-        hasLength(1),
-        reason:
-            'Exactly one rendered "grain" Text widget must carry '
-            'style.color == EditorialMonoclePalette.muted (the Economic '
-            'improvable-row commodity-id label inside ResourceLabelInline). '
-            'Found ${mutedGrain.length}. Check that the Economic '
-            'improvable-row call site forwards a muted-coloured TextStyle '
-            'through ResourceLabelInline.labelStyle.',
-      );
+      expectEconomicGrainLabelColor(tester, EditorialMonoclePalette.muted);
+      expectEconomicGrainTextColor(tester, EditorialMonoclePalette.muted);
     });
+
     testWidgets(
       'improved-row commodity-id label regression guard — never falls '
       'through DefaultTextStyle and never resolves to Colors.white (the '
@@ -220,88 +53,18 @@ void main() {
       '(negative AC: Economic improved-row commodity-id label Material '
       'fallback regression guard)',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        final game = gameWithGrainTilesForOverlay(
-          gameId: 'economic_res_label_dark_token_test',
-          regionId: _regionId,
-          fullProvinceId: _fullProvinceId,
-          displayName: 'EconResLabelTest',
-          humanPlayerId: _humanPlayerId,
-          tileKeys: [tk],
-          improvementByTile: {tk: 2},
-          provinceOwnerId: _humanPlayerId,
-        );
-        final region = regionMapWithLandCells(
-          regionId: _regionId,
-          localProvinceId: _localProvinceId,
-          coords: [(x: 0, y: 0)],
-          width: 1,
-          height: 1,
-          greatPowerFactionIds: const {_humanPlayerId},
-          resourceId: 'grain',
+        await pumpEconomicResourceLabelOverlay(
+          tester,
+          improvementByTile: {economicResourceLabelTileKey(0, 0): 2},
         );
 
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
-            game: game,
-            region: region,
-            displayId: _fullProvinceId,
-            selectedTileKey: '$_regionId|other|9|9',
-            humanPlayerId: _humanPlayerId,
-            playerView: omniscientPlayerViewForTiles(
-              humanPlayerId: _humanPlayerId,
-              keys: [tk],
-            ),
-            shellWidth: 800,
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final all = _allLabels(tester);
-        expect(
-          all,
-          isNotEmpty,
-          reason:
-              'Economic improved-row commodity-id label must be pinned via '
-              'ResourceLabelInline.labelStyle (SPEC regression guard); no '
-              'ResourceLabelInline is mounted at all in the overlay tree, '
-              'which suggests the Economic section did not render the '
-              'improved row.',
-        );
+        final all = economicResourceLabelWidgets(tester);
+        expect(all, isNotEmpty);
         final style = all.single.labelStyle;
-        expect(
-          style,
-          isNotNull,
-          reason:
-              'Economic improved-row ResourceLabelInline must declare a '
-              'non-null labelStyle so the rendered commodity-id Text does '
-              'not fall through DefaultTextStyle (SPEC AC "Dark-theme '
-              'Economic body — improved-row commodity-id label Material '
-              'fallback regression guard").',
-        );
-        expect(
-          style?.color,
-          isNotNull,
-          reason:
-              'Economic improved-row ResourceLabelInline.labelStyle.color '
-              'must be non-null per SPEC regression guard.',
-        );
-        expect(
-          style?.color,
-          isNot(Colors.white),
-          reason:
-              'Economic improved-row commodity-id label must not regress '
-              'to the dark Material bodyMedium `Colors.white` fallback (SPEC '
-              'regression guard).',
-        );
-        expect(
-          style?.color,
-          EditorialMonoclePalette.fg,
-          reason:
-              'Economic improved-row commodity-id label must resolve to '
-              'EditorialMonoclePalette.fg (SPEC regression guard positive '
-              'token pin).',
-        );
+        expect(style, isNotNull);
+        expect(style?.color, isNotNull);
+        expect(style?.color, isNot(Colors.white));
+        expect(style?.color, EditorialMonoclePalette.fg);
       },
     );
 
@@ -312,103 +75,24 @@ void main() {
       'Economic improvable-row commodity-id label Material fallback '
       'regression guard)',
       (WidgetTester tester) async {
-        final tk = _tileKey(0, 0);
-        final game = gameWithGrainTilesForOverlay(
-          gameId: 'economic_res_label_dark_token_test',
-          regionId: _regionId,
-          fullProvinceId: _fullProvinceId,
-          displayName: 'EconResLabelTest',
-          humanPlayerId: _humanPlayerId,
-          tileKeys: [tk],
+        await pumpEconomicResourceLabelOverlay(
+          tester,
           improvementByTile: const {},
-          provinceOwnerId: _humanPlayerId,
-        );
-        final region = regionMapWithLandCells(
-          regionId: _regionId,
-          localProvinceId: _localProvinceId,
-          coords: [(x: 0, y: 0)],
-          width: 1,
-          height: 1,
-          greatPowerFactionIds: const {_humanPlayerId},
-          resourceId: 'grain',
         );
 
-        await tester.pumpWidget(
-          buildProvinceOverlayDarkThemeShell(
-            game: game,
-            region: region,
-            displayId: _fullProvinceId,
-            selectedTileKey: '$_regionId|other|9|9',
-            humanPlayerId: _humanPlayerId,
-            playerView: omniscientPlayerViewForTiles(
-              humanPlayerId: _humanPlayerId,
-              keys: [tk],
-            ),
-            shellWidth: 800,
-          ),
-        );
-        await tester.pumpAndSettle();
+        final all = economicResourceLabelWidgets(tester);
+        expect(all, isNotEmpty);
+        final style = all.single.labelStyle;
+        expect(style, isNotNull);
+        expect(style?.color, isNotNull);
+        expect(style?.color, isNot(Colors.white));
 
-        final all = _allLabels(tester);
-        expect(
-          all,
-          isNotEmpty,
-          reason:
-              'Economic improvable-row commodity-id label must be pinned '
-              'via ResourceLabelInline.labelStyle (SPEC regression guard); '
-              'no ResourceLabelInline is mounted at all in the overlay '
-              'tree, which suggests the Economic section did not render '
-              'the improvable row.',
-        );
-        final widget = all.single;
-        final style = widget.labelStyle;
-        expect(
-          style,
-          isNotNull,
-          reason:
-              'Economic improvable-row ResourceLabelInline must declare a '
-              'non-null labelStyle so the rendered commodity-id Text does '
-              'not fall through DefaultTextStyle (SPEC AC "Dark-theme '
-              'Economic body — improvable-row commodity-id label Material '
-              'fallback regression guard").',
-        );
-        expect(
-          style?.color,
-          isNotNull,
-          reason:
-              'Economic improvable-row ResourceLabelInline.labelStyle.color '
-              'must be non-null per SPEC regression guard.',
-        );
-        expect(
-          style?.color,
-          isNot(Colors.white),
-          reason:
-              'Economic improvable-row commodity-id label must not regress '
-              'to the dark Material bodyMedium `Colors.white` fallback (SPEC '
-              'regression guard).',
-        );
-        // Locate any Element so we can read Theme.of(context).colorScheme.
         final BuildContext context = tester.element(
           find.byType(ResourceLabelInline).first,
         );
         final Color onSurface = Theme.of(context).colorScheme.onSurface;
-        expect(
-          style?.color,
-          isNot(equals(onSurface)),
-          reason:
-              'Economic improvable-row commodity-id label must not resolve '
-              'to Theme.of(context).colorScheme.onSurface (the dark Material '
-              'bodyMedium proxy — distinct from EditorialMonoclePalette.muted '
-              'under any non-editorialMonocle theme).',
-        );
-        expect(
-          style?.color,
-          EditorialMonoclePalette.muted,
-          reason:
-              'Economic improvable-row commodity-id label must resolve to '
-              'EditorialMonoclePalette.muted (SPEC regression guard positive '
-              'token pin).',
-        );
+        expect(style?.color, isNot(equals(onSurface)));
+        expect(style?.color, EditorialMonoclePalette.muted);
       },
     );
   });

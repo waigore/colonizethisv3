@@ -14,108 +14,9 @@ import 'package:colonizethis_app_fixtures/demo/province_overlay_demo_data.dart'
 import 'package:colonizethis_data/colonizethis_data.dart';
 import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:hive/hive.dart';
 
-Duration _medianDuration(List<Duration> values) {
-  final sorted = List<Duration>.from(values)..sort();
-  return sorted[sorted.length ~/ 2];
-}
-
-ProviderContainer _container({
-  List<Override>? overrides,
-}) {
-  final container = ProviderContainer(overrides: overrides ?? const []);
-  addTearDown(container.dispose);
-  return container;
-}
-
-GameSetupConfig get _standardSetup => GameSetupConfig(
-  selectedGreatPowerIds: const ['england', 'france'],
-  continentCount: 1,
-  minorNationCount: 0,
-  tribeCount: 1,
-  numProvincesOldWorld: 4,
-  numProvincesNewWorld: 2,
-);
-
-Game _createStandardGame(GameService gameService, String id) =>
-    gameService.createNewGame(id: id, config: _standardSetup);
-
-String? _firstHumanUnitId(Game game, String humanId) {
-  for (final unit in [
-    ...game.worldState.oldWorld.units,
-    ...game.worldState.newWorld.units,
-  ]) {
-    if (unit.ownerId == humanId) return unit.id;
-  }
-  return null;
-}
-
-String _fixtureTileVisibility({
-  required int provinceIndex,
-  required int tileIndex,
-}) {
-  if (provinceIndex == 0 && tileIndex == 0) return 'fullyVisible';
-  if (tileIndex == 0) return 'fogged';
-  return 'unknown';
-}
-
-Game _buildExplorerFixtureGame({
-  required String id,
-  required int provinceCount,
-  required int tilesPerProvince,
-}) {
-  const playerId = 'gp1';
-  const tribeId = 'tribe1';
-  const regionId = 'oldWorld';
-  const explorerId = 'explorer_1';
-
-  final provinces = <Province>[];
-  final byProvince = <String, List<String>>{};
-  final visibility = <String, String>{};
-
-  for (var p = 0; p < provinceCount; p++) {
-    final provinceId = '$regionId|p$p';
-    final ownerId = p == 0 ? playerId : tribeId;
-    provinces.add(
-      Province(id: provinceId, regionId: regionId, ownerId: ownerId),
-    );
-    final tiles = <String>[];
-    for (var t = 0; t < tilesPerProvince; t++) {
-      final tileKey = '$regionId|p$p|$t|0';
-      tiles.add(tileKey);
-      visibility[tileKey] = _fixtureTileVisibility(
-        provinceIndex: p,
-        tileIndex: t,
-      );
-    }
-    byProvince[provinceId] = tiles;
-  }
-
-  final explorer = Unit(
-    id: explorerId,
-    type: kUnitTypeExplorer,
-    ownerId: playerId,
-    locationProvinceId: '$regionId|p0',
-    tileKey: '$regionId|p0|0|0',
-    status: UnitStatus.idle,
-  );
-
-  return Game(
-    id: id,
-    players: const [Player(id: playerId, displayName: 'Human', isHuman: true)],
-    tribes: const [Tribe(id: tribeId, displayName: 'Tribe')],
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: RegionData(provinces: provinces, units: [explorer]),
-      newWorld: const RegionData(),
-      tileKeysByRegionAndProvince: {regionId: byProvince},
-      playerVisibilityByTile: {playerId: visibility},
-    ),
-  );
-}
+import 'games_provider_test_support.dart';
 
 void main() {
   suppressLogsForTests();
@@ -133,22 +34,24 @@ void main() {
       await dir.delete(recursive: true);
     }
   });
+
   test('empty-state provider reads when no games / no current game', () async {
-    final container = _container();
+    final container = gamesProviderTestContainer();
     expect(await container.read(gameListIdsProvider.future), isEmpty);
     expect(container.read(availableWorkTargetIdsForUnitProvider('u1')), isEmpty);
     expect(container.read(devExclusiveReservedWorkTileKeysProvider), isEmpty);
   });
+
   test('derived providers compute with a real current game', () {
-    final container = _container();
+    final container = gamesProviderTestContainer();
     final gameService = container.read(gameServiceProvider);
     expect(gameService, isA<GameService>());
 
-    final game = _createStandardGame(gameService, 'games_provider_derived');
+    final game = gamesProviderCreateStandardGame(gameService, 'games_provider_derived');
     container.read(currentGameProvider.notifier).setGame(game);
 
     final humanId = game.players.firstWhere((p) => p.isHuman).id;
-    final anyUnitId = _firstHumanUnitId(game, humanId);
+    final anyUnitId = gamesProviderFirstHumanUnitId(game, humanId);
     if (anyUnitId != null) {
       expect(
         container.read(availableWorkTargetIdsForUnitProvider(anyUnitId)),
@@ -160,10 +63,11 @@ void main() {
       isA<Set<String>>(),
     );
   });
+
   test(
     'availableWorkTargetIdsForUnitProvider matches getAvailableWorkTargetsForUnit',
     () {
-      final container = _container(
+      final container = gamesProviderTestContainer(
         overrides: [
           appEventBusProvider.overrideWith((ref) {
             final bus = AppEventBus.create();
@@ -174,14 +78,14 @@ void main() {
       );
 
       final gameService = container.read(gameServiceProvider);
-      final game = _createStandardGame(
+      final game = gamesProviderCreateStandardGame(
         gameService,
         'games_provider_work_targets',
       );
       container.read(currentGameProvider.notifier).setGame(game);
 
       final humanId = game.players.firstWhere((p) => p.isHuman).id;
-      final unitId = _firstHumanUnitId(game, humanId);
+      final unitId = gamesProviderFirstHumanUnitId(game, humanId);
       expect(unitId, isNotNull);
 
       final mapData = gameService.getMapData(game.id);
@@ -220,8 +124,8 @@ void main() {
     Logger.addLogListener(onLog);
     addTearDown(() => Logger.removeLogListener(onLog));
 
-    final container = _container();
-    final game = _createStandardGame(
+    final container = gamesProviderTestContainer();
+    final game = gamesProviderCreateStandardGame(
       container.read(gameServiceProvider),
       'games_provider_pending_work_log',
     );
@@ -271,8 +175,9 @@ void main() {
     );
     expect(orderSuggestionWorkOrderAcceptanceProbeCountForTests, 0);
   });
+
   test('session providers: intro shown, game/orders, pending diplomacy', () {
-    final container = _container();
+    final container = gamesProviderTestContainer();
 
     expect(container.read(gameIdsWithIntroShownProvider), isEmpty);
     container.read(gameIdsWithIntroShownProvider.notifier).markShown('game_1');
@@ -325,25 +230,25 @@ void main() {
     diplomacy.clear();
     expect(container.read(pendingDiplomacyProvider), isNull);
   });
+
   test(
     'panel-open provider latency median stays within 1.5x from early to late fixture',
     () {
       const explorerId = 'explorer_1';
       const humanId = 'gp1';
       const startTileKey = 'oldWorld|p0|0|0';
-      final earlyGame = _buildExplorerFixtureGame(
+      final earlyGame = gamesProviderExplorerFixture(
         id: 'games_provider_perf_early',
         provinceCount: 5,
         tilesPerProvince: 4,
       );
-      final lateGame = _buildExplorerFixtureGame(
+      final lateGame = gamesProviderExplorerFixture(
         id: 'games_provider_perf_late',
         provinceCount: 30,
         tilesPerProvince: 12,
       );
 
-      final earlyContainer = ProviderContainer();
-      addTearDown(earlyContainer.dispose);
+      final earlyContainer = gamesProviderTestContainer();
       earlyContainer.read(currentGameProvider.notifier).setGame(earlyGame);
       earlyContainer
           .read(currentOrdersProvider.notifier)
@@ -361,8 +266,7 @@ void main() {
             ),
           );
 
-      final lateContainer = ProviderContainer();
-      addTearDown(lateContainer.dispose);
+      final lateContainer = gamesProviderTestContainer();
       lateContainer.read(currentGameProvider.notifier).setGame(lateGame);
       lateContainer
           .read(currentOrdersProvider.notifier)
@@ -380,7 +284,6 @@ void main() {
             ),
           );
 
-      // Warmup avoids one-time setup noise in stopwatch samples.
       for (var i = 0; i < 5; i++) {
         earlyContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
         lateContainer.read(availableWorkTargetIdsForUnitProvider(explorerId));
@@ -400,8 +303,8 @@ void main() {
         lateDurations.add(sw.elapsed);
       }
 
-      final earlyMedian = _medianDuration(earlyDurations);
-      final lateMedian = _medianDuration(lateDurations);
+      final earlyMedian = gamesProviderMedianDuration(earlyDurations);
+      final lateMedian = gamesProviderMedianDuration(lateDurations);
       final denominator = earlyMedian.inMicroseconds == 0
           ? 1
           : earlyMedian.inMicroseconds;
