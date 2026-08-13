@@ -61,6 +61,7 @@ const _packageName = 'colonizethis_app';
 // raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
 // raised for MAP10001 extraction-disc legend (Refs #4367).
+// raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
 const _maxMainLines = 75700;
 
 int runCheckAppMainLineBudget(
