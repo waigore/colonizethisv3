@@ -2,26 +2,7 @@ import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
 import '../support/world_market_test_support.dart';
-
-/// Phase-handler coverage for the world-market treasury clamp (Refs #3115).
-///
-/// SPEC anchors:
-/// - `SPEC/program/world-market-resolution.md` § Step C (treasury clamp,
-///   matchQty formula, running tally, truncation note).
-/// - `SPEC/program/world-market-resolution.md` § Step E (bid-side
-///   filled-quantity aggregation for price discovery).
-/// - `SPEC/game/world-market.md` § Treasury budget for bids
-///   (resolver-side enforcement).
-
-/// Shared clamp fixture: buyer treasury 100, timber @ 30, offer 10 / bid 10
-/// (fills 3 under the budget; used by AC#1 / price-discovery cases).
-Game _runTimberClampTreasury100() => runTreasuryClampPhase(
-      sellerStockpile: const Stockpile().applyDelta('timber', 10),
-      sellerTreasury: 0,
-      buyerTreasury: 100,
-      marketPrices: const {'timber': 30},
-      orders: gpGpTimberTradeOrders(offerQuantity: 10, bidQuantity: 10),
-    );
+import 'world_market_phase_treasury_clamp_cases.dart';
 
 void main() {
   group('worldMarketTurnPhaseHandler — treasury clamp (Refs #3115)', () {
@@ -29,7 +10,7 @@ void main() {
       'AC#1 — treasury 100, bid 10 @ 30 with offer 10 fills only 3; '
       'treasury post-phase = 10; residual 7 carries forward',
       () {
-        final next = _runTimberClampTreasury100();
+        final next = runWorldMarketTimberClampTreasury100();
 
         final buyer = next.players.firstWhere((p) => p.id == 'gpBuyer');
         expect(buyer.treasury, 10,
@@ -151,7 +132,7 @@ void main() {
         // S = 10 submitted bid, F = 3 filled (treasury-truncated); offer
         // submitted = 10. Expected: totalBidQuantity = 3, totalOfferQuantity
         // = 10.
-        final next = _runTimberClampTreasury100();
+        final next = runWorldMarketTimberClampTreasury100();
 
         final activity =
             next.worldMarketState.lastTurnActivity['timber']!;
@@ -172,7 +153,7 @@ void main() {
         // Δ% should be negative (10 offers vs 3 bids); price drops by
         // the capped amount (subject to the 30%-of-base floor).
         const basePriceTimber = 30; // matches ResourceRules baseline
-        final next = _runTimberClampTreasury100();
+        final next = runWorldMarketTimberClampTreasury100();
 
         final priceAfter = next.worldMarketState.prices['timber']!;
         expect(priceAfter, lessThan(basePriceTimber),
