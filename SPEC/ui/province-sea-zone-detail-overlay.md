@@ -511,6 +511,8 @@ The **Standalone (mobile)** use case wraps the overlay in `mobileViewport(contex
 - Given Invade is visible under the cheap conceivable predicate but no army has `P` in the cache snapshot, when Military renders, then Invade is disabled with a cannot-reach reason and tapping stages no order.
 - Given observe / `canMutateViaUi == false`, when Military renders, then Move and Invade controls are not shown (or taps stage no draft).
 - Given overlay rebuilds while the map is panned, when visibility and enablement are computed, then visibility uses only the cheap predicate and enablement reads `PerPlayerArmyMovePickerCache` without live `armyMovePickerDestinations`.
+- Given `MAP20001` Military Move/Invade enabled, disabled, and hidden variants under `AppThemes.editorialMonocle`, when the host golden suite in `app/test/province_overlay_move_invade_goldens_test.dart` captures each keyed `RepaintBoundary`, then each `matchesGoldenFile` baseline under `app/test/goldens/province_overlay_move_*.png` / `province_overlay_invade_*.png` matches the committed PNG (Refs #4350).
+- Given `MAP20001` Political Establish Consulate enabled, disabled, pending, hidden, and 320 dp layouts under `AppThemes.editorialMonocle`, when the System runs the host golden suite in `app/test/province_establish_consulate_shortcut_host_goldens_test.dart` and captures each keyed `RepaintBoundary`, then the UI layer's `matchesGoldenFile` baselines under `app/test/goldens/province_establish_consulate_*.png` match the committed PNGs (Refs #4346).
 
 ### Localization of improvement names and unclaimed owner
 

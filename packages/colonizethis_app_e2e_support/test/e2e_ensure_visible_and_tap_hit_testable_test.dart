@@ -30,17 +30,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 
+import 'support/e2e_tap_counter.dart';
+
 const _kTriggerKey = ValueKey<String>('e2e_evt_trigger');
 const _kSentinelKey = ValueKey<String>('e2e_evt_sentinel');
 const _kScrollableKey = ValueKey<String>('e2e_evt_scrollable');
-
-/// Mutable tap counter held outside the [StatelessWidget] harness so the
-/// `must_be_immutable` lint stays satisfied (a `StatefulWidget`-only test
-/// fixture would otherwise need to leak counter state up through a
-/// `GlobalKey`, which is more brittle than a plain holder).
-class _TapCounter {
-  int value = 0;
-}
 
 void main() {
   suppressLogsForTests();
@@ -68,7 +62,7 @@ void main() {
     'e2eEnsureVisibleAndTapHitTestable taps an on-screen hit-testable trigger '
     'and reports true',
     (WidgetTester tester) async {
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(MaterialApp(home: _TapCountHarness(counter)));
       expect(find.byKey(_kTriggerKey), findsOneWidget);
       final result = await e2eEnsureVisibleAndTapHitTestable(
@@ -99,7 +93,7 @@ void main() {
     'e2eEnsureVisibleAndTapHitTestable scrolls an off-screen trigger into '
     'view before tapping',
     (WidgetTester tester) async {
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(
         MaterialApp(home: _OffScreenTriggerHarness(counter)),
       );
@@ -149,7 +143,7 @@ void main() {
       // `ensureVisible` is invoked in that configuration; the helper's
       // `try`/`catch (_)` must absorb the throw and fall through to the
       // raw-trigger fallback so the tap still fires.
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(
         MaterialApp(home: _UnscrollableTriggerHarness(counter)),
       );
@@ -228,7 +222,7 @@ void main() {
       // not silently switch to a different recipe.
       final Future<bool> Function(WidgetTester, Finder) tearOff =
           ensureVisibleAndTapHitTestable;
-      final counter = _TapCounter();
+      final counter = E2eTapCounter();
       await tester.pumpWidget(MaterialApp(home: _TapCountHarness(counter)));
       final result = await tearOff(tester, find.byKey(_kTriggerKey));
       expect(result, isTrue);
@@ -238,11 +232,11 @@ void main() {
 }
 
 /// Test harness that mounts a single keyed [TextButton] inside the
-/// viewport and bumps [_TapCounter.value] on tap.
+/// viewport and bumps [E2eTapCounter.value] on tap.
 class _TapCountHarness extends StatelessWidget {
   const _TapCountHarness(this.counter);
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +261,7 @@ class _TapCountHarness extends StatelessWidget {
 class _OffScreenTriggerHarness extends StatelessWidget {
   const _OffScreenTriggerHarness(this.counter);
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +303,7 @@ class _OffScreenTriggerHarness extends StatelessWidget {
 class _UnscrollableTriggerHarness extends StatelessWidget {
   const _UnscrollableTriggerHarness(this.counter);
 
-  final _TapCounter counter;
+  final E2eTapCounter counter;
 
   @override
   Widget build(BuildContext context) {
