@@ -106,6 +106,7 @@ import 'package:colonizethis_app/features/game/widgets/unit_orders/move_army_dia
 import 'package:colonizethis_app/features/game/widgets/unit_orders/move_fleet_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_menu_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/unit_orders/naval_mission_target_dialog.dart';
+import 'package:colonizethis_app/features/game/widgets/unit_orders/overlay_army_move_picker_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_civilians_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_military_dialog.dart';
 import 'package:colonizethis_app/features/game/widgets/train/train_naval_dialog.dart';
@@ -159,6 +160,7 @@ import 'package:colonizethis_app/widgets/ct_transfer_list.dart';
 // numbered fragment. The `repo.app_widgetbook_file_naming` gate enforces the
 // no-`catalog_partN` convention.
 part 'catalog_panel_map_build_port_stories.dart';
+part 'catalog_panel_map_move_invade_stories.dart';
 part 'catalog_panel_map_establish_consulate_stories.dart';
 part 'catalog_panel_map_stories.dart';
 part 'catalog_panels.dart';

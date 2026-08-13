@@ -13,8 +13,7 @@ import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
 import 'package:colonizethis_economy/colonizethis_economy.dart'
     show ProvinceImprovableCommodityCount;
-import 'package:colonizethis_world/colonizethis_world.dart'
-    show PlayerView, resourceIdVisibleInPlayerView;
+import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView;
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
@@ -62,6 +61,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.upgradeTownHasBuilderUnits = false,
     this.upgradeTownTargetTileKey,
     this.onUpgradeTownTap,
+    this.showMoveArmyControl = false,
+    this.moveArmyEnabled = false,
+    this.moveArmyTooltip = '',
+    this.onMoveArmyTap,
+    this.showInvadeArmyControl = false,
+    this.invadeArmyEnabled = false,
+    this.invadeArmyTooltip = '',
+    this.onInvadeArmyTap,
     this.showEstablishConsulateControl = false,
     this.establishConsulateEnabled = false,
     this.establishConsulatePending = false,
@@ -116,6 +123,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool upgradeTownHasBuilderUnits;
   final String? upgradeTownTargetTileKey;
   final VoidCallback? onUpgradeTownTap;
+  final bool showMoveArmyControl;
+  final bool moveArmyEnabled;
+  final String moveArmyTooltip;
+  final VoidCallback? onMoveArmyTap;
+  final bool showInvadeArmyControl;
+  final bool invadeArmyEnabled;
+  final String invadeArmyTooltip;
+  final VoidCallback? onInvadeArmyTap;
   final bool showEstablishConsulateControl;
   final bool establishConsulateEnabled;
   final bool establishConsulatePending;
@@ -195,6 +210,14 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
       upgradeTownTargetTileKey: upgradeTownTargetTileKey,
       onUpgradeTownTap: onUpgradeTownTap,
+      showMoveArmyControl: showMoveArmyControl,
+      moveArmyEnabled: moveArmyEnabled,
+      moveArmyTooltip: moveArmyTooltip,
+      onMoveArmyTap: onMoveArmyTap,
+      showInvadeArmyControl: showInvadeArmyControl,
+      invadeArmyEnabled: invadeArmyEnabled,
+      invadeArmyTooltip: invadeArmyTooltip,
+      onInvadeArmyTap: onInvadeArmyTap,
       showEstablishConsulateControl: showEstablishConsulateControl,
       establishConsulateEnabled: establishConsulateEnabled,
       establishConsulatePending: establishConsulatePending,
