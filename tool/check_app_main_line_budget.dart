@@ -55,7 +55,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Build port Engineer tile shortcut + Port status (Refs #4332).
 // raised for GAME90001 Development Counsel tab + GAME80001 counsel entry (Refs #4332 Slice 2).
 // raised for GAME40001 sequential multi-slot research preview + turn funding header (Refs #4335).
-const _maxMainLines = 74000;
+// raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
+const _maxMainLines = 74400;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {

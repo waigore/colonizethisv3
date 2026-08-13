@@ -72,6 +72,10 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
   required bool purchaseLandEnabled,
   bool upgradeTownEnabled = false,
   String? upgradeTownTargetTileKey,
+  bool establishConsulateEnabled = false,
+  bool establishConsulatePending = false,
+  DiplomaticOrder? establishConsulateOrder,
+  String establishConsulateTargetName = '',
   String provinceId = provinceDetailSupportProvinceId,
   required AppEventBus bus,
 }) => buildProvinceDetailShortcutCallbacks(
@@ -95,6 +99,10 @@ ProvinceDetailShortcutCallbacks provinceDetailCallbacks({
   provinceId: provinceId,
   upgradeTownEnabled: upgradeTownEnabled,
   upgradeTownTargetTileKey: upgradeTownTargetTileKey,
+  establishConsulateEnabled: establishConsulateEnabled,
+  establishConsulatePending: establishConsulatePending,
+  establishConsulateOrder: establishConsulateOrder,
+  establishConsulateTargetName: establishConsulateTargetName,
   bus: bus,
 );
 

@@ -1,4 +1,3 @@
-
 import 'package:colonizethis_map/colonizethis_map.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_app_l10n/l10n/l10n.dart';
@@ -12,8 +11,10 @@ import 'province_sea_zone_detail_overlay_chrome.dart';
 import 'province_sea_zone_detail_overlay_province_content.dart';
 import 'province_sea_zone_detail_overlay_sea_zone_content.dart';
 import 'province_sea_zone_detail_overlay_support.dart';
-import 'package:colonizethis_economy/colonizethis_economy.dart' show ProvinceImprovableCommodityCount;
-import 'package:colonizethis_world/colonizethis_world.dart' show PlayerView, resourceIdVisibleInPlayerView;
+import 'package:colonizethis_economy/colonizethis_economy.dart'
+    show ProvinceImprovableCommodityCount;
+import 'package:colonizethis_world/colonizethis_world.dart'
+    show PlayerView, resourceIdVisibleInPlayerView;
 
 class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   /// SPEC/ui/province-sea-zone-detail-overlay.md — [UiScreenIds.provinceSeaZoneOverlay].
@@ -61,6 +62,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
     this.upgradeTownHasBuilderUnits = false,
     this.upgradeTownTargetTileKey,
     this.onUpgradeTownTap,
+    this.showEstablishConsulateControl = false,
+    this.establishConsulateEnabled = false,
+    this.establishConsulatePending = false,
+    this.establishConsulateRejectionReason,
+    this.onEstablishConsulateTap,
     this.omniscientDetail = false,
     this.townProductionBonusByCommodity = const {},
     this.extractionSnapshot,
@@ -110,6 +116,11 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   final bool upgradeTownHasBuilderUnits;
   final String? upgradeTownTargetTileKey;
   final VoidCallback? onUpgradeTownTap;
+  final bool showEstablishConsulateControl;
+  final bool establishConsulateEnabled;
+  final bool establishConsulatePending;
+  final String? establishConsulateRejectionReason;
+  final VoidCallback? onEstablishConsulateTap;
   final bool omniscientDetail;
   final Map<String, int> townProductionBonusByCommodity;
   final ProvinceExtractionSnapshot? extractionSnapshot;
@@ -119,14 +130,17 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNarrow = MediaQuery.sizeOf(context).width < kNarrowBreakpoint;
-    final content = resolveOverlayContent(context);
+    final content = resolveOverlayContent(context, isNarrow: isNarrow);
     return LayoutBuilder(
       builder: (context, constraints) =>
           buildResponsivePanel(context, constraints, isNarrow, content),
     );
   }
 
-  OverlayContent resolveOverlayContent(BuildContext context) {
+  OverlayContent resolveOverlayContent(
+    BuildContext context, {
+    required bool isNarrow,
+  }) {
     final l10n = appL10n(context);
     if (isProvinceSeaZoneOverlaySeaZone(region, displayId)) {
       return seaZoneContent(
@@ -157,7 +171,8 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       onExploreWithExplorerTap: onExploreWithExplorerTap,
       showBuildImprovementActionIcon: showBuildImprovementActionIcon,
       buildImprovementActionEnabled: buildImprovementActionEnabled,
-      buildImprovementActionHasBuilderUnits: buildImprovementActionHasBuilderUnits,
+      buildImprovementActionHasBuilderUnits:
+          buildImprovementActionHasBuilderUnits,
       onBuildImprovementTap: onBuildImprovementTap,
       showBuildRoadActionIcon: showBuildRoadActionIcon,
       buildRoadActionEnabled: buildRoadActionEnabled,
@@ -180,6 +195,12 @@ class ProvinceSeaZoneDetailOverlay extends StatelessWidget {
       upgradeTownHasBuilderUnits: upgradeTownHasBuilderUnits,
       upgradeTownTargetTileKey: upgradeTownTargetTileKey,
       onUpgradeTownTap: onUpgradeTownTap,
+      showEstablishConsulateControl: showEstablishConsulateControl,
+      establishConsulateEnabled: establishConsulateEnabled,
+      establishConsulatePending: establishConsulatePending,
+      establishConsulateRejectionReason: establishConsulateRejectionReason,
+      onEstablishConsulateTap: onEstablishConsulateTap,
+      isNarrow: isNarrow,
       omniscientDetail: omniscientDetail,
       townProductionBonusByCommodity: townProductionBonusByCommodity,
       extractionSnapshot: extractionSnapshot,
