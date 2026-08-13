@@ -160,6 +160,11 @@ const Set<String> _allowedFeatureLocalDialogFiles = <String>{
   // `SPEC/program/app-ui-wiring.md` § "Naval mission (draft wiring)"
   // (Refs #4213, #4343).
   'app/lib/features/game/widgets/unit_orders/naval_mission_flow.dart',
+  // MAP20001 Tile teaching helper — read-only connectivity/port/caption
+  // details opened from transport cluster tap or named Tile details action
+  // within the province overlay (Refs #4369). Same local-by-design rationale
+  // as tech detail / research breakdown dialogs.
+  'app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart',
   // Deferred per #2626 scope (game-side menu game-parameters dialog and
   // production breakdown). Migrating these to typed bus events is
   // explicitly out of scope for #2626 and must be filed as separate
