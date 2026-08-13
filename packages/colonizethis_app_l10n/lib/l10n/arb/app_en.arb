@@ -1981,6 +1981,14 @@
   "@naval_mission_effect_beachhead": {
     "description": "Plain-language effect line for Beachhead mission row (DLG31001)."
   },
+  "naval_mission_sail": "Sail / Move",
+  "@naval_mission_sail": {
+    "description": "DLG31001 row that opens Move fleet (DLG30001) from the mission menu (Refs #4343)."
+  },
+  "naval_mission_effect_sail": "Move this fleet to an adjacent sea zone or owned port.",
+  "@naval_mission_effect_sail": {
+    "description": "Effect line for Sail / Move row on DLG31001 (Refs #4343)."
+  },
   "naval_mission_targetCaption_blockade": "Pressures the target port approaches with stronger interception than Patrol.",
   "@naval_mission_targetCaption_blockade": {
     "description": "Mission consequence caption on Blockade target picker (DLG31002)."

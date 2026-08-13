@@ -1047,6 +1047,12 @@ abstract class AppLocalizations {
   /// Plain-language effect line for Beachhead mission row (DLG31001).
   String get naval_mission_effect_beachhead;
 
+  /// DLG31001 Sail / Move row label (Refs #4343).
+  String get naval_mission_sail;
+
+  /// Effect line for Sail / Move on DLG31001 (Refs #4343).
+  String get naval_mission_effect_sail;
+
   /// Mission consequence caption on Blockade target picker (DLG31002).
   String get naval_mission_targetCaption_blockade;
 
