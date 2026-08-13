@@ -14,6 +14,11 @@ const String aiNoPartDirectivesLibPathPrefix = 'packages/colonizethis_ai/lib/';
 const String aiContractsNoPartDirectivesLibPathPrefix =
     'packages/colonizethis_ai_contracts/lib/';
 
+/// Repo-relative path prefix for `colonizethis_app_e2e_support` `lib/` **and**
+/// `test/` (package root so one invocation covers both trees; Refs #4344).
+const String appE2eSupportNoPartDirectivesPathPrefix =
+    'packages/colonizethis_app_e2e_support/';
+
 /// True when the repo-relative [slashPath] starts with [libPathPrefix].
 bool noPartDirectivesPathInScope(String slashPath, String libPathPrefix) {
   final normalized = slashPath.replaceAll('\\', '/');
@@ -124,6 +129,21 @@ int runCheckAiContractsNoPartDirectives(
     libPathPrefix: aiContractsNoPartDirectivesLibPathPrefix,
     checkerLabel: 'check_ai_contracts_no_part_directives',
     refsIssue: '#4084',
+    info: info,
+    err: err,
+  );
+}
+
+int runCheckAppE2eSupportNoPartDirectives(
+  String repoRoot, {
+  void Function(String line)? info,
+  void Function(String line)? err,
+}) {
+  return runCheckNoPartDirectivesForLibPrefix(
+    repoRoot,
+    libPathPrefix: appE2eSupportNoPartDirectivesPathPrefix,
+    checkerLabel: 'check_app_e2e_support_no_part_directives',
+    refsIssue: '#4344',
     info: info,
     err: err,
   );

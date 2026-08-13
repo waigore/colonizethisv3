@@ -136,6 +136,70 @@ Game simpleAiMilitaryOwGame({
   );
 }
 
+/// OW Game whose province id is the local token `P1` (not prefixed).
+Game simpleAiLocalProvinceIdOwGame({int turnNumber = 7}) {
+  return Game(
+    id: 'g1',
+    worldState: WorldState(
+      turnState: TurnState(phase: TurnPhase.orders, turnNumber: turnNumber),
+      oldWorld: const RegionData(
+        provinces: [
+          Province(id: 'P1', regionId: simpleAiOw, ownerId: simpleAiPlayerId),
+        ],
+      ),
+      newWorld: const RegionData(),
+      playerVisibilityByTile: {
+        simpleAiPlayerId: {'$simpleAiOw|P1|0|0': 'fullyVisible'},
+      },
+    ),
+    players: const [
+      Player(id: simpleAiPlayerId, displayName: 'AI', isHuman: false),
+    ],
+    globalGameSeed: 0,
+    aiSeedByGpId: const {simpleAiPlayerId: 1},
+  );
+}
+
+/// Single owned New World province with a grenadier on that province.
+Game simpleAiNewWorldHomeGame({
+  String regionId = 'newWorld',
+  String localId = 'N1',
+}) {
+  final provinceId = '$regionId|$localId';
+  return Game(
+    id: 'g1',
+    worldState: WorldState(
+      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
+      oldWorld: const RegionData(),
+      newWorld: RegionData(
+        provinces: [
+          Province(
+            id: provinceId,
+            regionId: regionId,
+            ownerId: simpleAiPlayerId,
+          ),
+        ],
+        units: [
+          Unit(
+            id: 'u1',
+            type: 'grenadiers',
+            ownerId: simpleAiPlayerId,
+            locationProvinceId: provinceId,
+          ),
+        ],
+      ),
+      playerVisibilityByTile: {
+        simpleAiPlayerId: {'$provinceId|0|0': 'fullyVisible'},
+      },
+    ),
+    players: const [
+      Player(id: simpleAiPlayerId, displayName: 'AI', isHuman: false),
+    ],
+    globalGameSeed: 0,
+    aiSeedByGpId: const {simpleAiPlayerId: 1},
+  );
+}
+
 /// Single owned OW province Game with optional capital / stockpile / workers.
 Game simpleAiSingleOwProvinceGame({
   String localId = 'P1',

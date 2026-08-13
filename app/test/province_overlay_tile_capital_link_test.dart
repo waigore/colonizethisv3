@@ -11,6 +11,8 @@ import 'package:colonizethis_app_l10n/l10n/l10n.dart';
 
 import 'province_overlay_tile_capital_link_test_cases.dart';
 import 'province_overlay_tile_capital_link_test_fixtures.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_sea_zone_detail_overlay_tile_details.dart'
+    show kProvinceTileDetailsActionKey;
 
 void main() {
   suppressLogsForTests();
@@ -77,8 +79,8 @@ void main() {
     }
   });
 
-  group('ProvinceSeaZoneDetailOverlay tile capital-link goldens (Refs #4149)', () {
-    testWidgets('golden: disconnected tile shows capital link and 0 of F', (
+  group('ProvinceSeaZoneDetailOverlay tile capital-link goldens (Refs #4149 / #4369)', () {
+    testWidgets('golden: disconnected tile shows stranded capital link only', (
       WidgetTester tester,
     ) async {
       const boundaryKey = ValueKey<String>(
@@ -104,8 +106,8 @@ void main() {
         find.textContaining('Capital link: Not connected'),
         findsOneWidget,
       );
-      expect(find.textContaining('Extraction from this tile: 0 of 3'),
-          findsOneWidget);
+      expect(find.textContaining('Extraction from this tile:'), findsNothing);
+      expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile(
@@ -114,7 +116,7 @@ void main() {
       );
     });
 
-    testWidgets('golden: connected tile shows capital link and E of F', (
+    testWidgets('golden: connected tile hides capital link and E of F by default', (
       WidgetTester tester,
     ) async {
       const boundaryKey = ValueKey<String>(
@@ -137,9 +139,9 @@ void main() {
           extractionFull: 3,
         ),
       );
-      expect(find.textContaining('Capital link: Connected'), findsOneWidget);
-      expect(find.textContaining('Extraction from this tile: 2 of 3'),
-          findsOneWidget);
+      expect(find.textContaining('Capital link:'), findsNothing);
+      expect(find.textContaining('Extraction from this tile:'), findsNothing);
+      expect(find.byKey(kProvinceTileDetailsActionKey), findsOneWidget);
       await expectLater(
         find.byKey(boundaryKey),
         matchesGoldenFile(

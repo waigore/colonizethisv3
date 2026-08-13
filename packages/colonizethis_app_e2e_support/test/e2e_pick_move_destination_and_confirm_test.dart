@@ -40,11 +40,12 @@ import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
 import 'support/move_dialog_widget_tester_harness.dart';
 
+import 'support/pick_move_warp_group.dart';
+import 'support/pick_move_sea_group.dart';
+import 'support/pick_move_budget_group.dart';
+import 'support/pick_move_constants_group.dart';
 
-part 'support/pick_move_warp_part.dart';
-part 'support/pick_move_sea_part.dart';
-part 'support/pick_move_budget_part.dart';
-part 'support/pick_move_constants_part.dart';
+
 
 void main() {
   suppressLogsForTests();

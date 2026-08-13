@@ -59,13 +59,6 @@ int _buildRailWorkScore(
 /// candidates: province id first, then full tile key (Refs #3794 AC16). All
 /// candidates share the `build_rail` target, so this never depends on the
 /// target string's alphabetical position.
-int _compareRailCandidate(WorkOrder a, WorkOrder b) {
-  final pa = Unit.provinceIdFromTileKey(a.targetTileKey) ?? '';
-  final pb = Unit.provinceIdFromTileKey(b.targetTileKey) ?? '';
-  final p = pa.compareTo(pb);
-  if (p != 0) return p;
-  return a.targetTileKey.compareTo(b.targetTileKey);
-}
 
 WorkOrder? _bestBuildRailRow(
   List<WorkOrder> candidates,
@@ -76,32 +69,16 @@ WorkOrder? _bestBuildRailRow(
   final rails = candidates
       .where((w) => w.target == kWorkTargetBuildRail)
       .toList();
-  if (rails.isEmpty) return null;
-  var best = rails.first;
-  var bestScore = _buildRailWorkScore(
-    best,
-    game,
-    playerId: playerId,
-    connectivityDev: connectivityDev,
-  );
-  for (var i = 1; i < rails.length; i++) {
-    final w = rails[i];
-    final s = _buildRailWorkScore(
+  return bestScoredWorkRow(
+    rails,
+    scoreOf: (w) => _buildRailWorkScore(
       w,
       game,
       playerId: playerId,
       connectivityDev: connectivityDev,
-    );
-    if (s > bestScore) {
-      bestScore = s;
-      best = w;
-      continue;
-    }
-    if (s == bestScore && _compareRailCandidate(w, best) < 0) {
-      best = w;
-    }
-  }
-  return best;
+    ),
+    compareTieBreak: compareWorkOrderProvinceThenTile,
+  );
 }
 
 void appendRailBuilderPathResult({

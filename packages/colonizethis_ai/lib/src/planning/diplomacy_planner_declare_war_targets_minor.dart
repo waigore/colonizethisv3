@@ -1,0 +1,194 @@
+// Minor-nation declare-war target helpers (Refs #2509; #4365 Slice A).
+import '../perception/perception_snapshot.dart';
+import '../util/faction_query.dart';
+import 'expand_phase_planner.dart';
+import 'planning_helpers.dart'
+    show addInvadableProvinceMinorOwnersNotAtWar, gpFactionIdsAtWarWith;
+import 'planning_imports.dart';
+
+/// First minor nation that owns invadable OW land but is not yet at war, while
+/// this GP is below the observer quota and not fighting any Great Power (Refs #2509).
+///
+/// Also fires during an unwinnable sole-GP war so the GP can pivot to minors.
+String? criticalWeakUninvadedMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  if (!isBelowObserverConquestQuota(snapshot.conquest.oldWorldProvincesOwned)) {
+    return null;
+  }
+  final atWarWithGp = gpFactionIdsAtWarWith(game, snapshot);
+  if (atWarWithGp.length > 2) {
+    return null;
+  }
+  if (atWarWithGp.length == 2) {
+    if (!hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
+    for (final factionId in atWarWithGp) {
+      if (!isMutualBelowQuotaPlateauPeer(
+        ownOw: snapshot.conquest.oldWorldProvincesOwned,
+        partnerOw: provinceCountOwnedBy(game, factionId),
+      )) {
+        return null;
+      }
+    }
+  }
+  if (snapshot.conquest.invadableProvinceIdsSorted.isEmpty) {
+    return null;
+  }
+  final candidates = <String>{};
+  addInvadableProvinceMinorOwnersNotAtWar(
+    game: game,
+    snapshot: snapshot,
+    provinceOwner: getProvinceOwnerMap(game),
+    into: candidates,
+  );
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Any OW minor not yet at war while stalled below the observer quota (Refs #2509).
+String? belowQuotaUninvadedMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kStalledOldWorldProvinceThreshold) {
+    return null;
+  }
+  if (belowQuotaActiveMinorWarTarget(game: game, snapshot: snapshot) != null) {
+    return null;
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final ownerCache = ProvinceOwnerCache.of(game.worldState);
+  final candidates = <String>{
+    for (final minor in game.minorNations)
+      if (!snapshot.threats.atWarWith.contains(minor.id) &&
+          ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld))
+        minor.id,
+  };
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Adjacent minor not yet at war while at 8–9 OW with no GP fronts (Refs #2509).
+String? plateauOwMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isStalledOldWorldExpansion(ownOw) ||
+      !isBelowObserverConquestQuota(ownOw)) {
+    return null;
+  }
+  final gpOnlyFrontier = isOldWorldGpOnlyInvadableFrontier(
+    game: game,
+    snapshot: snapshot,
+  );
+  if (gpOnlyFrontier &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
+  if (gpWars.length > 1) {
+    for (final factionId in gpWars) {
+      if (!isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: provinceCountOwnedBy(game, factionId),
+      )) {
+        return null;
+      }
+    }
+  } else if (gpWars.length == 1) {
+    final partnerOw = provinceCountOwnedBy(game, gpWars.single);
+    if (!isMutualBelowQuotaPlateauPeer(ownOw: ownOw, partnerOw: partnerOw) &&
+        !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+      return null;
+    }
+  }
+  final candidates = <String>{
+    for (final factionId in snapshot.conquest.adjacentOwnerFactionIdsSorted)
+      if (isMinorFaction(game, factionId) &&
+          !snapshot.threats.atWarWith.contains(factionId))
+        factionId,
+  };
+  if (candidates.isEmpty &&
+      snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    addInvadableProvinceMinorOwnersNotAtWar(
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: getProvinceOwnerMap(game),
+      into: candidates,
+    );
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}
+
+/// Any OW minor not yet at war while still at default observer start size (seed-42
+/// gp4 minor-frontier starvation; Refs #2509).
+String? defaultStartOwMinorDeclareTarget({
+  required Game game,
+  required AIWorldSnapshot snapshot,
+}) {
+  final ownOw = snapshot.conquest.oldWorldProvincesOwned;
+  if (!isBelowObserverConquestQuota(ownOw) ||
+      ownOw > kObserverDefaultStartOldWorldProvincesPerGp + 1) {
+    return null;
+  }
+  final gpWars = gpFactionIdsAtWarWith(game, snapshot);
+  if (gpWars.length > 1) {
+    return null;
+  }
+  if (gpWars.length == 1 &&
+      !isMutualBelowQuotaPlateauPeer(
+        ownOw: ownOw,
+        partnerOw: provinceCountOwnedBy(game, gpWars.single),
+      ) &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  if (isOldWorldGpOnlyInvadableFrontier(game: game, snapshot: snapshot) &&
+      !hasUninvadedOldWorldMinor(game: game, snapshot: snapshot)) {
+    return null;
+  }
+  final candidates = <String>{};
+  if (snapshot.conquest.invadableProvinceIdsSorted.isNotEmpty) {
+    addInvadableProvinceMinorOwnersNotAtWar(
+      game: game,
+      snapshot: snapshot,
+      provinceOwner: getProvinceOwnerMap(game),
+      into: candidates,
+    );
+  }
+  if (candidates.isEmpty) {
+    final ownerCache = ProvinceOwnerCache.of(game.worldState);
+    for (final minor in game.minorNations) {
+      if (snapshot.threats.atWarWith.contains(minor.id)) {
+        continue;
+      }
+      if (ownerCache.ownsAnyInRegion(minor.id, kRegionOldWorld)) {
+        candidates.add(minor.id);
+      }
+    }
+  }
+  if (candidates.isEmpty) {
+    return null;
+  }
+  final sorted = candidates.toList()..sort();
+  return sorted.first;
+}

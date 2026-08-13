@@ -3473,6 +3473,14 @@
   "@provinceOverlay_tilePortStatusPresent": {
     "description": "MAP20001 Tile plain-language port status when province has a seaboard port"
   },
+  "provinceOverlay_tileDetailsAction": "Tile details",
+  "@provinceOverlay_tileDetailsAction": {
+    "description": "MAP20001 named affordance opening connectivity/port teaching helper (Refs #4369)"
+  },
+  "provinceOverlay_tileDetailsTitle": "Tile details",
+  "@provinceOverlay_tileDetailsTitle": {
+    "description": "MAP20001 Tile details helper dialog title (Refs #4369)"
+  },
   "provinceOverlay_tileImprovement": "Improvement: {value}",
   "@provinceOverlay_tileImprovement": {
     "description": "Tile section improvement row.",

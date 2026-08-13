@@ -4,6 +4,8 @@ import 'package:colonizethis_logic/colonizethis_logic.dart';
 import 'package:colonizethis_models/colonizethis_models.dart';
 import 'package:colonizethis_test/test.dart';
 
+import 'support/civilian_work_scoring_game_fixture.dart';
+
 /// Rail Builder civilian-work scoring (Refs #3794 § Rail Builder, AC-RAIL-1..8).
 ///
 /// Verifies the unified `build_rail` scored pool replaces the lexicographic
@@ -11,49 +13,41 @@ import 'package:colonizethis_test/test.dart';
 /// steer selection, ties break by province id (not alphabetically), and the
 /// other per-type paths are unaffected.
 void main() {
-  const playerId = 'gp1';
+  const playerId = civilianWorkScoringPlayerId;
 
   Game gameWith({
     Map<String, String> resourceByTileKey = const {},
     String? capitalProvinceId,
-  }) => Game(
-    id: 'g',
-    worldState: WorldState(
-      turnState: const TurnState(phase: TurnPhase.orders, turnNumber: 1),
-      oldWorld: const RegionData(),
-      newWorld: const RegionData(),
-      resourceByTileKey: resourceByTileKey,
-    ),
-    players: [
-      Player(
-        id: playerId,
-        displayName: 'GP',
-        isHuman: false,
-        capitalProvinceId: capitalProvinceId,
-      ),
-    ],
+  }) => civilianWorkScoringGame(
+    resourceByTileKey: resourceByTileKey,
+    capitalProvinceId: capitalProvinceId,
   );
 
-  PlayerView railViewFor(Game game, {String locationProvinceId = 'oldWorld|p1'}) =>
-      PlayerView(
-        playerId: playerId,
-        player: game.players.single,
-        ownUnitsById: {
-          'r1': Unit(
-            id: 'r1',
-            type: kUnitTypeRailBuilder,
-            ownerId: playerId,
-            locationProvinceId: locationProvinceId,
-          ),
-        },
-        provincesById: const {},
-        visibilityByTile: const {},
-        prospectedTiles: const {},
-        diplomacyByOtherId: const {},
-      );
+  PlayerView railViewFor(
+    Game game, {
+    String locationProvinceId = 'oldWorld|p1',
+  }) => PlayerView(
+    playerId: playerId,
+    player: game.players.single,
+    ownUnitsById: {
+      'r1': Unit(
+        id: 'r1',
+        type: kUnitTypeRailBuilder,
+        ownerId: playerId,
+        locationProvinceId: locationProvinceId,
+      ),
+    },
+    provincesById: const {},
+    visibilityByTile: const {},
+    prospectedTiles: const {},
+    diplomacyByOtherId: const {},
+  );
 
-  WorkOrder rail(String tileKey) =>
-      WorkOrder(unitId: 'r1', target: kWorkTargetBuildRail, targetTileKey: tileKey);
+  WorkOrder rail(String tileKey) => WorkOrder(
+    unitId: 'r1',
+    target: kWorkTargetBuildRail,
+    targetTileKey: tileKey,
+  );
 
   group('Rail Builder build_rail scoring', () {
     test('AC-RAIL-1: prefers the resource-carrying road tile', () {
@@ -95,17 +89,20 @@ void main() {
       expect(r.workOrders.single.targetTileKey, tileNw);
     });
 
-    test('AC-RAIL-4: single plain candidate is selected (non-zero baseline)', () {
-      const tile = 'oldWorld|p1|0|0';
-      final game = gameWith();
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: [rail(tile)],
-        view: railViewFor(game),
-        game: game,
-      );
-      expect(r.workOrders.single.targetTileKey, tile);
-      expect(r.idleEvents, isEmpty);
-    });
+    test(
+      'AC-RAIL-4: single plain candidate is selected (non-zero baseline)',
+      () {
+        const tile = 'oldWorld|p1|0|0';
+        final game = gameWith();
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: [rail(tile)],
+          view: railViewFor(game),
+          game: game,
+        );
+        expect(r.workOrders.single.targetTileKey, tile);
+        expect(r.idleEvents, isEmpty);
+      },
+    );
 
     test(
       'AC-RAIL-5: equal scores break by province id (p1 before p2), not target',
@@ -128,18 +125,21 @@ void main() {
       },
     );
 
-    test('AC-RAIL-6: idle Rail Builder with no candidates logs no_suggestions', () {
-      final game = gameWith();
-      final r = selectFullAiCivilianWorkOrders(
-        workSuggestions: const [],
-        view: railViewFor(game),
-        game: game,
-      );
-      expect(r.workOrders, isEmpty);
-      expect(r.idleEvents, hasLength(1));
-      expect(r.idleEvents.single.unitId, 'r1');
-      expect(r.idleEvents.single.reason, 'no_suggestions');
-    });
+    test(
+      'AC-RAIL-6: idle Rail Builder with no candidates logs no_suggestions',
+      () {
+        final game = gameWith();
+        final r = selectFullAiCivilianWorkOrders(
+          workSuggestions: const [],
+          view: railViewFor(game),
+          game: game,
+        );
+        expect(r.workOrders, isEmpty);
+        expect(r.idleEvents, hasLength(1));
+        expect(r.idleEvents.single.unitId, 'r1');
+        expect(r.idleEvents.single.reason, 'no_suggestions');
+      },
+    );
 
     test('AC-RAIL-7: Builder build_improvement path is unaffected', () {
       const resourceTile = 'oldWorld|p1|1|0';
@@ -183,15 +183,18 @@ void main() {
   });
 
   group('Rail Builder GA tunability (AC-RAIL-8)', () {
-    test('all rail scoring constants are registered in the parameter registry', () {
-      for (final name in const [
-        'kBuildRailBaseWorkScore',
-        'kBuildRailResourceOutputBonus',
-        'kBuildRailCapitalConnectorBonus',
-        'kBuildRailNewWorldBonus',
-      ]) {
-        expect(AiParameterRegistry.byName(name), isNotNull, reason: name);
-      }
-    });
+    test(
+      'all rail scoring constants are registered in the parameter registry',
+      () {
+        for (final name in const [
+          'kBuildRailBaseWorkScore',
+          'kBuildRailResourceOutputBonus',
+          'kBuildRailCapitalConnectorBonus',
+          'kBuildRailNewWorldBonus',
+        ]) {
+          expect(AiParameterRegistry.byName(name), isNotNull, reason: name);
+        }
+      },
+    );
   });
 }

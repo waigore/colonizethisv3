@@ -34,18 +34,12 @@
 // helpers (`e2e_close_bottom_sheet_test.dart` and the existing
 // integration paths) and rely on Flame asset loading, so they are not
 // exercised again here.
+library;
 
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 
-import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
-
-import 'support/dismiss_widget_tester_harness.dart';
-
-
-part 'support/dismiss_transient_ui_baseline_part.dart';
-part 'support/dismiss_transient_ui_perf_part.dart';
+import 'support/dismiss_transient_ui_baseline_group.dart';
+import 'support/dismiss_transient_ui_perf_group.dart';
 
 void main() {
   suppressLogsForTests();
