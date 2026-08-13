@@ -1,9 +1,36 @@
-part of 'province_panel_e2e_expected_lines.dart';
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
+// Expected plain-text lines for ProvinceSeaZoneDetailOverlay wide layout (scroll column).
+// Mirrors app/lib/features/game/widgets/province_overlay/province_sea_zone_detail_overlay.dart for e2e.
+// If drift fails tests, align this file with the overlay widget.
 
-const String _kRoadRailPrimitiveVersusRailGloss =
+
+import 'package:colonizethis_data/colonizethis_data.dart'
+    show
+        CommodityCatalog,
+        MapTopology,
+        TileMapResult,
+        isMilitaryUnit,
+        terrainDisplayName;
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_map/colonizethis_map.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+import 'package:colonizethis_app/core/utils/prefixed_id.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_labels.dart';
+import 'package:colonizethis_app/features/game/widgets/province_overlay/province_panel_pending_orders.dart';
+import 'package:colonizethis_app/widgets/commodity_display_name.dart';
+import 'province_panel_e2e_expected_lines_labels.dart';
+
+const String kRoadRailPrimitiveVersusRailGloss =
     'Basic land link for connectivity and yield caps. Railroads are transport level 4.';
 
-String _roadRailSupplementaryLabel(int roadLevel) {
+String roadRailSupplementaryLabel(int roadLevel) {
   return switch (roadLevel) {
     0 => 'none',
     1 => 'primitive road',
@@ -13,12 +40,12 @@ String _roadRailSupplementaryLabel(int roadLevel) {
   };
 }
 
-String _roadRailTransportLevelPrimaryLine(int transportLevel) {
+String roadRailTransportLevelPrimaryLine(int transportLevel) {
   return 'Road / railroad: transport level $transportLevel';
 }
 
-class _ProvincePanelWideExpectedCtx {
-  _ProvincePanelWideExpectedCtx({
+class ProvincePanelWideExpectedCtx {
+  ProvincePanelWideExpectedCtx({
     required this.game,
     required this.region,
     required this.provinceId,
@@ -66,7 +93,7 @@ class _ProvincePanelWideExpectedCtx {
   final List<String> resourceKeysSorted;
 }
 
-_ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
+ProvincePanelWideExpectedCtx buildProvincePanelWideExpectedCtx(
   CtE2eLastPanelSnapshot snap,
 ) {
   final game = snap.game;
@@ -92,7 +119,7 @@ _ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
     );
   }
 
-  final province = _findProvince(game, provinceId);
+  final province = findProvince(game, provinceId);
   final regionData = provinceId.startsWith('newWorld')
       ? game.worldState.newWorld
       : game.worldState.oldWorld;
@@ -133,9 +160,9 @@ _ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
 
     if (visibleRes == null) continue;
 
-    final terrain = _economicTerrainTitleForTile(region, tk) ?? '—';
+    final terrain = economicTerrainTitleForTile(region, tk) ?? '—';
     if (imp > 0) {
-      final impBase = _improvementBaseNameForPlayer(
+      final impBase = improvementBaseNameForPlayer(
         visLevel: visLevel,
         rawResourceId: res,
         visibleResourceId: visibleRes,
@@ -165,7 +192,7 @@ _ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
     ...byResImprovable.keys,
   }.toList()..sort();
 
-  return _ProvincePanelWideExpectedCtx(
+  return ProvincePanelWideExpectedCtx(
     game: game,
     region: region,
     provinceId: provinceId,
@@ -190,7 +217,7 @@ _ProvincePanelWideExpectedCtx _buildProvincePanelWideExpectedCtx(
   );
 }
 
-void _appendProvincePanelSection(
+void appendProvincePanelSection(
   List<String> out,
   String title,
   void Function() body,

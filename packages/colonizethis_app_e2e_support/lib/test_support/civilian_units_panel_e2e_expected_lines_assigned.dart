@@ -1,6 +1,25 @@
-part of 'civilian_units_panel_e2e_expected_lines.dart';
+// coverage:ignore-file
+// E2E test fixture; exercised only by integration_test scenarios (which do not
+// run in `flutter test test/`). Pulled into the test isolate's import graph by
+// `app/integration_test/e2e_test_shared_panel_text_match.dart` (Refs #2336);
+// excluded from the app coverage gate using the same convention as
+// `app/lib/widgetbook/catalog*.dart`.
+// Expected plain-text lines for CivilianUnitsPanel (bottom sheet). Mirrors
+// app/lib/features/game/widgets/units/civilian/civilian_units_panel.dart for e2e.
+// If drift fails tests, align this file with the panel widget.
 
-const Map<String, String> _workTargetLabels = {
+
+import 'package:colonizethis_data/colonizethis_data.dart';
+import 'package:colonizethis_logic/colonizethis_logic.dart';
+import 'package:colonizethis_models/colonizethis_models.dart';
+
+import 'package:colonizethis_app_fixtures/config/ct_e2e_last_panel_snapshot.dart';
+import 'package:colonizethis_app/features/game/widgets/units/civilian/civilian_units_sort.dart';
+import 'package:colonizethis_app/features/game/widgets/units/shared/region_labels.dart';
+import 'package:colonizethis_app_l10n/l10n/l10n.dart';
+
+
+const Map<String, String> workTargetLabels = {
   kWorkTargetExplore: 'Explore',
   kWorkTargetProspect: 'Prospect',
   kWorkTargetBuildImprovement: 'Build improvement',
@@ -17,8 +36,8 @@ const Map<String, String> _workTargetLabels = {
 // file delegates to them to keep e2e expectations aligned with the panel
 // rendering. Refs #2575.
 
-class _PendingAssignedResolution {
-  const _PendingAssignedResolution({
+class PendingAssignedResolution {
+  const PendingAssignedResolution({
     required this.mainLine,
     required this.totalTurns,
     this.materialCosts,
@@ -31,13 +50,13 @@ class _PendingAssignedResolution {
   final int? treasuryAmount;
 }
 
-_PendingAssignedResolution _resolvePendingAssignedResolution(
+PendingAssignedResolution resolvePendingAssignedResolution(
   Game game,
   Unit unit,
   WorkOrder order,
   Map<String, String> provinceNames,
 ) {
-  final workLabel = _workTargetLabels[order.target] ?? order.target;
+  final workLabel = workTargetLabels[order.target] ?? order.target;
   final regionId = Unit.regionIdFromTileKey(order.targetTileKey);
   final provinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
   var location = '';
@@ -56,16 +75,16 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
   if (order.target == kWorkTargetPurchaseLand) {
     final resourceId = game.worldState.resourceByTileKey[order.targetTileKey];
     if (resourceId != null && resourceId.isNotEmpty) {
-      return _PendingAssignedResolution(
+      return PendingAssignedResolution(
         mainLine: base,
         totalTurns: totalTurns,
         treasuryAmount: purchaseLandCost(resourceId),
       );
     }
-    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+    return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
   if (order.target == kWorkTargetCounterSpy) {
-    return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+    return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
   }
 
   final targetProvinceId = Unit.provinceIdFromTileKey(order.targetTileKey);
@@ -87,20 +106,20 @@ _PendingAssignedResolution _resolvePendingAssignedResolution(
     roadLevel: roadLevel,
   );
   if (costMap != null && costMap.isNotEmpty) {
-    return _PendingAssignedResolution(
+    return PendingAssignedResolution(
       mainLine: base,
       totalTurns: totalTurns,
       materialCosts: costMap,
     );
   }
-  return _PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
+  return PendingAssignedResolution(mainLine: base, totalTurns: totalTurns);
 }
 
-List<MapEntry<String, int>> _sortedMaterialCostEntries(Map<String, int> m) {
+List<MapEntry<String, int>> sortedMaterialCostEntries(Map<String, int> m) {
   return m.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
 }
 
-WorkOrder? _pendingWorkOrder(Unit unit, Orders currentOrders, String humanId) {
+WorkOrder? pendingWorkOrder(Unit unit, Orders currentOrders, String humanId) {
   final list = currentOrders.workOrdersByPlayerId[humanId] ?? const [];
   for (final o in list) {
     if (o.unitId == unit.id) return o;
@@ -108,18 +127,18 @@ WorkOrder? _pendingWorkOrder(Unit unit, Orders currentOrders, String humanId) {
   return null;
 }
 
-bool _hasPending(Unit unit, Orders currentOrders, String humanId) =>
-    _pendingWorkOrder(unit, currentOrders, humanId) != null;
+bool hasPending(Unit unit, Orders currentOrders, String humanId) =>
+    pendingWorkOrder(unit, currentOrders, humanId) != null;
 
-bool _isIdleNoPending(Unit unit, Orders currentOrders, String humanId) =>
+bool isIdleNoPending(Unit unit, Orders currentOrders, String humanId) =>
     unit.status == UnitStatus.idle &&
     unit.currentWork == null &&
-    !_hasPending(unit, currentOrders, humanId);
+    !hasPending(unit, currentOrders, humanId);
 
-bool _hasWork(Unit unit, Orders currentOrders, String humanId) =>
-    unit.currentWork != null || _hasPending(unit, currentOrders, humanId);
+bool hasWork(Unit unit, Orders currentOrders, String humanId) =>
+    unit.currentWork != null || hasPending(unit, currentOrders, humanId);
 
-String _assignedToLabelNonPending(
+String assignedToLabelNonPending(
   Unit unit,
   Map<String, String> provinceNames,
   AppLocalizations l10n,
@@ -128,7 +147,7 @@ String _assignedToLabelNonPending(
     return '—';
   }
   final cw = unit.currentWork!;
-  final workLabel = _workTargetLabels[cw.workTarget] ?? cw.workTarget;
+  final workLabel = workTargetLabels[cw.workTarget] ?? cw.workTarget;
   final regionId = Unit.regionIdFromTileKey(cw.tileKey);
   final provinceId = Unit.provinceIdFromTileKey(cw.tileKey);
   var location = '';
@@ -148,7 +167,7 @@ String _assignedToLabelNonPending(
   return '$workLabel$location — $progress';
 }
 
-void _addAssignedLines(
+void addAssignedLines(
   List<String> out,
   Game game,
   Unit unit,
@@ -157,9 +176,9 @@ void _addAssignedLines(
   Map<String, String> provinceNames,
   AppLocalizations l10n,
 ) {
-  final pending = _pendingWorkOrder(unit, currentOrders, humanId);
+  final pending = pendingWorkOrder(unit, currentOrders, humanId);
   if (pending != null) {
-    final r = _resolvePendingAssignedResolution(
+    final r = resolvePendingAssignedResolution(
       game,
       unit,
       pending,
@@ -168,7 +187,7 @@ void _addAssignedLines(
     final turns = l10n.civilian_units_turns(r.totalTurns);
     out.add(l10n.civilian_units_assignedTo('${r.mainLine} — $turns'));
     if (r.materialCosts != null && r.materialCosts!.isNotEmpty) {
-      for (final e in _sortedMaterialCostEntries(r.materialCosts!)) {
+      for (final e in sortedMaterialCostEntries(r.materialCosts!)) {
         out.add(e.value.toString());
       }
     }
@@ -179,7 +198,7 @@ void _addAssignedLines(
   }
   out.add(
     l10n.civilian_units_assignedTo(
-      _assignedToLabelNonPending(unit, provinceNames, l10n),
+      assignedToLabelNonPending(unit, provinceNames, l10n),
     ),
   );
 }

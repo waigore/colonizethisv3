@@ -25,13 +25,13 @@
 /// implementation; AC10 — no silent flakiness from timeout regressions).
 library;
 
-import 'dart:async';
-
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
+
+import 'support/panel_opener_rail_harness.dart';
 
 const _kPrimaryKey = ValueKey<String>('e2e_apohh_primary');
 const _kSecondaryKey = ValueKey<String>('e2e_apohh_secondary');
@@ -44,7 +44,9 @@ void main() {
     'already hit-testable (no pump, no perf event)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _PrimaryHitTestableHarness()),
+        const MaterialApp(
+          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
+        ),
       );
       expect(find.byKey(_kPrimaryKey), findsOneWidget);
       expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
@@ -72,7 +74,9 @@ void main() {
     'hit-testable but primary is not yet rendered',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _SecondaryOnlyHarness()),
+        const MaterialApp(
+          home: SecondaryOnlyHarness(secondaryKey: _kSecondaryKey),
+        ),
       );
       expect(find.byKey(_kPrimaryKey), findsNothing);
       expect(find.byKey(_kSecondaryKey).hitTestable(), findsOneWidget);
@@ -97,43 +101,41 @@ void main() {
     },
   );
 
-  testWidgets(
-    'e2eAwaitPanelOpenerRailHitTestable waits until primary becomes '
-    'hit-testable when initially obscured',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: _DelayedPrimaryHitTestableHarness(
-            uncoverAfter: Duration(milliseconds: 120),
-          ),
+  testWidgets('e2eAwaitPanelOpenerRailHitTestable waits until primary becomes '
+      'hit-testable when initially obscured', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: DelayedPrimaryHitTestableHarness(
+          primaryKey: _kPrimaryKey,
+          uncoverAfter: Duration(milliseconds: 120),
         ),
-      );
-      expect(find.byKey(_kPrimaryKey), findsOneWidget);
-      expect(
-        find.byKey(_kPrimaryKey).hitTestable(),
-        findsNothing,
-        reason:
-            'Test fixture must start with the primary trigger covered so '
-            'the pump-and-poll branch is actually exercised.',
-      );
-      await e2eAwaitPanelOpenerRailHitTestable(
-        tester,
-        primary: find.byKey(_kPrimaryKey),
-        secondary: find.byKey(_kSecondaryKey),
-        timeout: const Duration(seconds: 2),
-        phaseName: 'wait_until_test_rail_hit_testable',
-      );
-      expect(
-        find.byKey(_kPrimaryKey).hitTestable(),
-        findsOneWidget,
-        reason:
-            'After the obscuring overlay clears within the helper '
-            'timeout, the helper must observe the now-hit-testable '
-            'primary and return without throwing (Refs GitHub #2336 '
-            'AC10 — no silent flakiness from off-screen-trigger drops).',
-      );
-    },
-  );
+      ),
+    );
+    expect(find.byKey(_kPrimaryKey), findsOneWidget);
+    expect(
+      find.byKey(_kPrimaryKey).hitTestable(),
+      findsNothing,
+      reason:
+          'Test fixture must start with the primary trigger covered so '
+          'the pump-and-poll branch is actually exercised.',
+    );
+    await e2eAwaitPanelOpenerRailHitTestable(
+      tester,
+      primary: find.byKey(_kPrimaryKey),
+      secondary: find.byKey(_kSecondaryKey),
+      timeout: const Duration(seconds: 2),
+      phaseName: 'wait_until_test_rail_hit_testable',
+    );
+    expect(
+      find.byKey(_kPrimaryKey).hitTestable(),
+      findsOneWidget,
+      reason:
+          'After the obscuring overlay clears within the helper '
+          'timeout, the helper must observe the now-hit-testable '
+          'primary and return without throwing (Refs GitHub #2336 '
+          'AC10 — no silent flakiness from off-screen-trigger drops).',
+    );
+  });
 
   testWidgets(
     'e2eAwaitPanelOpenerRailHitTestable surfaces TestFailure when neither '
@@ -171,7 +173,9 @@ void main() {
     'opener path)',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _PrimaryHitTestableHarness()),
+        const MaterialApp(
+          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
+        ),
       );
       await e2eAwaitPanelOpenerRailHitTestable(
         tester,
@@ -188,99 +192,4 @@ void main() {
       );
     },
   );
-}
-
-/// Harness with a single keyed primary trigger that is hit-testable on the
-/// first pump (no overlay, no scrollable). Used by the short-circuit
-/// fast-path tests above.
-class _PrimaryHitTestableHarness extends StatelessWidget {
-  const _PrimaryHitTestableHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: TextButton(
-        key: _kPrimaryKey,
-        onPressed: () {},
-        child: const Text('Primary'),
-      ),
-    );
-  }
-}
-
-/// Harness with only the secondary trigger rendered (primary is absent).
-/// Mirrors the naval opener's `[marker, rail]` call site when the rail
-/// button has not yet entered the tree.
-class _SecondaryOnlyHarness extends StatelessWidget {
-  const _SecondaryOnlyHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: TextButton(
-        key: _kSecondaryKey,
-        onPressed: () {},
-        child: const Text('Secondary'),
-      ),
-    );
-  }
-}
-
-/// Harness that renders a keyed primary trigger covered by an opaque
-/// modal-barrier-style overlay until an in-test [Timer] fires. The
-/// primary is hit-testable only after the overlay clears, exercising the
-/// pump-and-poll branch of the helper. Mirrors the production-panel
-/// async harness pattern in `app/test/e2e_open_production_panel_test.dart`.
-class _DelayedPrimaryHitTestableHarness extends StatefulWidget {
-  const _DelayedPrimaryHitTestableHarness({required this.uncoverAfter});
-
-  final Duration uncoverAfter;
-
-  @override
-  State<_DelayedPrimaryHitTestableHarness> createState() =>
-      _DelayedPrimaryHitTestableHarnessState();
-}
-
-class _DelayedPrimaryHitTestableHarnessState
-    extends State<_DelayedPrimaryHitTestableHarness> {
-  bool _covered = true;
-  Timer? _uncoverTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _uncoverTimer = Timer(widget.uncoverAfter, () {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _covered = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _uncoverTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          Center(
-            child: TextButton(
-              key: _kPrimaryKey,
-              onPressed: () {},
-              child: const Text('Primary'),
-            ),
-          ),
-          if (_covered)
-            const Positioned.fill(
-              child: ModalBarrier(dismissible: false, color: Colors.black54),
-            ),
-        ],
-      ),
-    );
-  }
 }

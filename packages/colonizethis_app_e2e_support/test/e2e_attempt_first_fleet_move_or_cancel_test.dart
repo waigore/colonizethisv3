@@ -32,144 +32,17 @@ library;
 // `e2e_pick_move_destination_and_confirm_test.dart`.
 // ignore_for_file: deprecated_member_use
 
-import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
-import 'package:colonizethis_app_l10n/l10n/app_localizations_contract.dart';
-import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_app/widgets/ct_dialog_shell.dart';
+import 'package:colonizethis_app_fixtures/config/ct_e2e.dart';
+import 'package:colonizethis_app_l10n/l10n/app_localizations_lookup.dart';
 import 'package:colonizethis_test/test.dart' show suppressLogsForTests;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
-class _MoveButton extends StatelessWidget {
-  const _MoveButton({required this.dialogBuilder});
-
-  final Widget Function(BuildContext context) dialogBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        // Carry the production stable key so the helper's keyed Move finder
-        // ([kCtE2EFleetMoveActionKey]) resolves the control. Production fleet
-        // rows render the Move action icon-only (no `Text('Move')`) at narrow
-        // test-host viewports, so the helper locates it by key (Refs #2336).
-        return TextButton(
-          key: kCtE2EFleetMoveActionKey,
-          onPressed: () {
-            showDialog<void>(context: context, builder: dialogBuilder);
-          },
-          child: const Text('Move'),
-        );
-      },
-    );
-  }
-}
-
-Widget _navalPanel({required List<Widget> children}) => KeyedSubtree(
-  key: kCtE2ENavalPanelRootKey,
-  child: Column(children: children),
-);
-
-Widget _wrap(Widget body) => MaterialApp(
-  home: Scaffold(body: SingleChildScrollView(child: body)),
-);
-
-WidgetBuilder _emptyRadiosDialogBuilder(AppLocalizations l10n) {
-  // Mirror the production `MoveFleetDialog`, which renders as a
-  // [CtDialogShell] (a Material `Dialog`, not an `AlertDialog`) with no
-  // `RadioListTile` destinations — so the helper's keyed dialog wait and
-  // empty-destinations cancel branch exercise the real widget shape.
-  return (context) => CtDialogShell(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('No destinations available.'),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.common_cancel),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SeaPickHost extends StatefulWidget {
-  const _SeaPickHost({required this.l10n});
-
-  final AppLocalizations l10n;
-
-  @override
-  State<_SeaPickHost> createState() => _SeaPickHostState();
-}
-
-class _SeaPickHostState extends State<_SeaPickHost> {
-  dynamic selected;
-  int taps = 0;
-  bool dialogOpen = true;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!dialogOpen) {
-      return const SizedBox.shrink();
-    }
-    // Build `RadioListTile<dynamic>` explicitly so the helper's
-    // `find.byType(RadioListTile<dynamic>)` (exact-type match per Flutter
-    // Finder semantics) actually resolves the radios and the confirmed
-    // branch can be exercised. The production `MoveFleetDialog` instead
-    // renders custom `_MoveFleetDestinationRow` widgets (no `RadioListTile`),
-    // so this finder is empty against the real dialog and the helper always
-    // takes the cancel branch. Refs the "Legacy quirk preserved" note on
-    // `e2eAttemptFirstFleetMoveOrCancel`.
-    return CtDialogShell(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<dynamic>(
-                  title: const Text('sea zone 1'),
-                  value: 0,
-                  groupValue: selected,
-                  onChanged: (next) {
-                    taps++;
-                    setState(() => selected = next);
-                  },
-                ),
-                RadioListTile<dynamic>(
-                  title: const Text('sea zone 2'),
-                  value: 1,
-                  groupValue: selected,
-                  onChanged: (next) {
-                    taps++;
-                    setState(() => selected = next);
-                  },
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => setState(() => dialogOpen = false),
-            child: Text(widget.l10n.common_confirm),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-Future<_SeaPickHostState> _pumpSeaPickDialogStandalone(
-  WidgetTester tester, {
-  required AppLocalizations l10n,
-}) async {
-  await tester.pumpWidget(
-    MaterialApp(home: Scaffold(body: Center(child: _SeaPickHost(l10n: l10n)))),
-  );
-  return tester.state<_SeaPickHostState>(find.byType(_SeaPickHost));
-}
+import 'support/attempt_fleet_move_harness.dart';
+import 'support/naval_fleet_move_harness.dart';
 
 void main() {
   suppressLogsForTests();
@@ -180,7 +53,9 @@ void main() {
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
-        _wrap(_navalPanel(children: const [Text('Empty fleets list')])),
+        wrapNavalScrollBody(
+          navalPanelRoot(children: const [Text('Empty fleets list')]),
+        ),
       );
 
       final outcome = await e2eAttemptFirstFleetMoveOrCancel(tester, l10n);
@@ -201,7 +76,9 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final perf = E2ePerfLog('no_move_button_perf');
       await tester.pumpWidget(
-        _wrap(_navalPanel(children: const [Text('Empty fleets list')])),
+        wrapNavalScrollBody(
+          navalPanelRoot(children: const [Text('Empty fleets list')]),
+        ),
       );
 
       final lines = <String>[];
@@ -235,10 +112,13 @@ void main() {
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
-              _MoveButton(dialogBuilder: _emptyRadiosDialogBuilder(l10n)),
+              FleetMoveButton(
+                buttonKey: kCtE2EFleetMoveActionKey,
+                dialogBuilder: emptyRadiosDialogBuilder(l10n),
+              ),
             ],
           ),
         ),
@@ -263,10 +143,13 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final perf = E2ePerfLog('cancelled_perf');
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
-              _MoveButton(dialogBuilder: _emptyRadiosDialogBuilder(l10n)),
+              FleetMoveButton(
+                buttonKey: kCtE2EFleetMoveActionKey,
+                dialogBuilder: emptyRadiosDialogBuilder(l10n),
+              ),
             ],
           ),
         ),
@@ -300,10 +183,13 @@ void main() {
       (WidgetTester tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _MoveButton(dialogBuilder: (_) => _SeaPickHost(l10n: l10n)),
+                FleetMoveButton(
+                  buttonKey: kCtE2EFleetMoveActionKey,
+                  dialogBuilder: (_) => SeaPickHost(l10n: l10n),
+                ),
               ],
             ),
           ),
@@ -329,10 +215,13 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       final perf = E2ePerfLog('confirmed_perf');
       await tester.pumpWidget(
-        _wrap(
-          _navalPanel(
+        wrapNavalScrollBody(
+          navalPanelRoot(
             children: [
-              _MoveButton(dialogBuilder: (_) => _SeaPickHost(l10n: l10n)),
+              FleetMoveButton(
+                buttonKey: kCtE2EFleetMoveActionKey,
+                dialogBuilder: (_) => SeaPickHost(l10n: l10n),
+              ),
             ],
           ),
         ),
@@ -371,10 +260,11 @@ void main() {
         // against the production `RadioListTile<_MovePick>` dialog.
         final l10n = lookupAppLocalizations(const Locale('en'));
         await tester.pumpWidget(
-          _wrap(
-            _navalPanel(
+          wrapNavalScrollBody(
+            navalPanelRoot(
               children: [
-                _MoveButton(
+                FleetMoveButton(
+                  buttonKey: kCtE2EFleetMoveActionKey,
                   dialogBuilder: (context) => CtDialogShell(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -418,34 +308,43 @@ void main() {
   });
 
   group('e2eAttemptFirstFleetMoveOrCancel — direct sea-pick dialog smoke', () {
-    testWidgets('_SeaPickHost confirms on Confirm tap (fixture sanity)', (
+    testWidgets('SeaPickHost confirms on Confirm tap (fixture sanity)', (
       WidgetTester tester,
     ) async {
       final l10n = lookupAppLocalizations(const Locale('en'));
-      final host = await _pumpSeaPickDialogStandalone(tester, l10n: l10n);
+      final host = await pumpSeaPickDialogStandalone(tester, l10n: l10n);
       expect(host.selected, isNull);
       expect(host.dialogOpen, isTrue);
     });
   });
 
   group('e2eAttemptFirstFleetMoveOrCancel — default constants', () {
-    test('kE2eDefaultFirstFleetMoveDialogOpenTimeout matches legacy 5 s cap', () {
-      expect(
-        kE2eDefaultFirstFleetMoveDialogOpenTimeout,
-        const Duration(seconds: 5),
-      );
-    });
-    test('kE2eDefaultFirstFleetMoveConfirmReadyTimeout matches legacy 2 s cap', () {
-      expect(
-        kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
-        const Duration(seconds: 2),
-      );
-    });
-    test('kE2eDefaultFirstFleetMoveDialogCloseTimeout matches legacy 10 s cap', () {
-      expect(
-        kE2eDefaultFirstFleetMoveDialogCloseTimeout,
-        const Duration(seconds: 10),
-      );
-    });
+    test(
+      'kE2eDefaultFirstFleetMoveDialogOpenTimeout matches legacy 5 s cap',
+      () {
+        expect(
+          kE2eDefaultFirstFleetMoveDialogOpenTimeout,
+          const Duration(seconds: 5),
+        );
+      },
+    );
+    test(
+      'kE2eDefaultFirstFleetMoveConfirmReadyTimeout matches legacy 2 s cap',
+      () {
+        expect(
+          kE2eDefaultFirstFleetMoveConfirmReadyTimeout,
+          const Duration(seconds: 2),
+        );
+      },
+    );
+    test(
+      'kE2eDefaultFirstFleetMoveDialogCloseTimeout matches legacy 10 s cap',
+      () {
+        expect(
+          kE2eDefaultFirstFleetMoveDialogCloseTimeout,
+          const Duration(seconds: 10),
+        );
+      },
+    );
   });
 }

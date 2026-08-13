@@ -33,6 +33,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:colonizethis_app_e2e_support/e2e_helpers.dart';
 import 'package:colonizethis_app_e2e_support/e2e_test_shared.dart';
 
+import 'support/panel_opener_rail_harness.dart';
+
 const _kPrimaryKey = ValueKey<String>('e2e_cpos_primary');
 const _kSecondaryKey = ValueKey<String>('e2e_cpos_secondary');
 
@@ -44,7 +46,9 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: _PrimaryHitTestableHarness()),
+      const MaterialApp(
+        home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
+      ),
     );
     expect(find.byType(BottomSheet), findsNothing);
     expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
@@ -73,7 +77,9 @@ void main() {
     'and returns once the sheet leaves the tree',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _PrimaryWithSheetTriggerHarness()),
+        const MaterialApp(
+          home: PrimaryWithSheetTriggerHarness(primaryKey: _kPrimaryKey),
+        ),
       );
       expect(find.byKey(_kPrimaryKey).hitTestable(), findsOneWidget);
       expect(find.byType(BottomSheet), findsNothing);
@@ -155,7 +161,11 @@ void main() {
     'e2eClosePanelOpenerSheetAndAwaitOpener short-circuits the rail wait '
     'when only the secondary marker is hit-testable',
     (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: _SecondaryOnlyHarness()));
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SecondaryOnlyHarness(secondaryKey: _kSecondaryKey),
+        ),
+      );
       expect(find.byKey(_kPrimaryKey), findsNothing);
       expect(find.byKey(_kSecondaryKey).hitTestable(), findsOneWidget);
       final sw = Stopwatch()..start();
@@ -182,7 +192,9 @@ void main() {
   testWidgets('e2eClosePanelOpenerSheetAndAwaitOpener accepts a null secondary '
       '(future opener path)', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: _PrimaryHitTestableHarness()),
+      const MaterialApp(
+        home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
+      ),
     );
     await e2eClosePanelOpenerSheetAndAwaitOpener(
       tester,
@@ -207,7 +219,9 @@ void main() {
     'the shared implementation with the documented signature',
     (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(home: _PrimaryHitTestableHarness()),
+        const MaterialApp(
+          home: PrimaryHitTestableHarness(primaryKey: _kPrimaryKey),
+        ),
       );
       final Future<void> Function(
         WidgetTester, {
@@ -238,84 +252,4 @@ void main() {
       );
     },
   );
-}
-
-/// Harness with a single keyed primary trigger that is hit-testable on the
-/// first pump (no overlay, no scrollable). Used by the short-circuit
-/// fast-path tests above.
-class _PrimaryHitTestableHarness extends StatelessWidget {
-  const _PrimaryHitTestableHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: TextButton(
-        key: _kPrimaryKey,
-        onPressed: () {},
-        child: const Text('Primary'),
-      ),
-    );
-  }
-}
-
-/// Harness with only the secondary trigger rendered (primary is absent).
-/// Mirrors the naval opener's `[marker, rail]` call site when the rail
-/// button has not yet entered the tree.
-class _SecondaryOnlyHarness extends StatelessWidget {
-  const _SecondaryOnlyHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: TextButton(
-        key: _kSecondaryKey,
-        onPressed: () {},
-        child: const Text('Secondary'),
-      ),
-    );
-  }
-}
-
-/// Harness with a keyed primary trigger and a `open_sheet` text button
-/// that pushes a modal [BottomSheet]. The test opens the sheet, asserts
-/// the rail is covered, then exercises
-/// [e2eClosePanelOpenerSheetAndAwaitOpener] which pops the sheet via
-/// [tester.binding.handlePopRoute] (inside [e2eCloseBottomSheet]) and
-/// awaits the rail becoming hit-testable again.
-class _PrimaryWithSheetTriggerHarness extends StatelessWidget {
-  const _PrimaryWithSheetTriggerHarness();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          Center(
-            child: TextButton(
-              key: _kPrimaryKey,
-              onPressed: () {},
-              child: const Text('Primary'),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () {
-                  showModalBottomSheet<void>(
-                    context: ctx,
-                    builder: (_) => const SizedBox(
-                      height: 400,
-                      child: Center(child: Text('SheetBody')),
-                    ),
-                  );
-                },
-                child: const Text('open_sheet'),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
