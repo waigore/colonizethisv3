@@ -2027,6 +2027,27 @@
   "@naval_mission_targetCaption_beachhead": {
     "description": "Mission consequence caption on Beachhead target picker (DLG31002)."
   },
+  "naval_mission_targetIntel_harborUnknown": "Harbor status unknown",
+  "@naval_mission_targetIntel_harborUnknown": {
+    "description": "Fogged Blockade target row when full naval/military intel is unavailable (DLG31002)."
+  },
+  "naval_mission_targetIntel_noPort": "No port",
+  "@naval_mission_targetIntel_noPort": {
+    "description": "Full-intel Blockade target row when the province has no registered seaboard port (DLG31002)."
+  },
+  "naval_mission_targetIntel_emptyHarbor": "Empty harbor",
+  "@naval_mission_targetIntel_emptyHarbor": {
+    "description": "Full-intel Blockade target row when a port is present and no hostile fleets are in port (DLG31002)."
+  },
+  "naval_mission_targetIntel_fleetsInPort": "{count} fleets in port",
+  "@naval_mission_targetIntel_fleetsInPort": {
+    "description": "Full-intel Blockade target row summarizing hostile fleets docked at the target port (DLG31002).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "naval_units_noShipsInFleet": "No ships in this fleet",
   "@naval_units_noShipsInFleet": {
     "description": "Empty-state line for fleet with no ships."
