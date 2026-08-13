@@ -5709,6 +5709,18 @@
   "@tradeMarket_firstRightTooltip": {
     "description": "On-request help for the Market first-right chip."
   },
+  "tradeMarket_lastTurnVolume": "Last turn: bids {bids} · offers {offers}",
+  "@tradeMarket_lastTurnVolume": {
+    "description": "Market row previous-turn aggregate bid/offer volume line (Refs #4345).",
+    "placeholders": {
+      "bids": { "type": "int" },
+      "offers": { "type": "int" }
+    }
+  },
+  "tradeMarket_priceMovedTooltip": "Last market moved this price. This turn's deals use the price shown.",
+  "@tradeMarket_priceMovedTooltip": {
+    "description": "Tooltip on Market price cluster when a last-turn coin delta is shown (Refs #4345)."
+  },
   "tradeDealBook_matchTagFirstRight": "First right",
   "@tradeDealBook_matchTagFirstRight": {
     "description": "Deal Book audit tag for first-right-of-refusal matches."
