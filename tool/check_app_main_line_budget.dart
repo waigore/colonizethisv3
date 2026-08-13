@@ -59,8 +59,8 @@ const _packageName = 'colonizethis_app';
 // raised for MAP20001 Establish Consulate Political shortcut (Refs #4346).
 // raised for combined #4340+#4346+#4350 merge headroom (DLG31002 intel,
 // Consulate shortcut, Move/Invade overlay Military shortcuts).
-const _maxMainLines = 75200;
-
+// raised for OVL40001 call-to-arms Join/Refuse Effect lines (Refs #4364).
+const _maxMainLines = 75300;
 
 int runCheckAppMainLineBudget(
   String repoRoot, {
