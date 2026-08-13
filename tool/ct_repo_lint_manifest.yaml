@@ -626,7 +626,7 @@ rules:
 
   - rule_id: repo.app_features_screens_lib_physical_file_size
     group: structure
-    title: app/lib/features/game/screens files must stay at or below 400 physical lines (shrink-only grandfather)
+    title: app/lib/features/game/screens files must stay at or below 300 physical lines (shrink-only grandfather)
     spec: SPEC/program/app-features-screens-file-size.md
     runner: dart
     script: tool/check_app_features_screens_lib_physical_file_size.dart
